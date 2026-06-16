@@ -3,8 +3,6 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db";
 import { sendNotification } from "@/lib/notifications";
 
-const appUrl = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
-
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -43,7 +41,14 @@ export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET ?? "dev-build-placeholder-secret-change-me",
   baseURL: process.env.BETTER_AUTH_URL,
   trustedOrigins: [
-    appUrl,
+    process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
+    "https://cubicle.168-144-37-19.sslip.io",
+    "http://cubicle.168-144-37-19.sslip.io",
+    "https://cubicle.168.144.37.19.sslip.io",
+    "http://cubicle.168.144.37.19.sslip.io",
+    "https://localhost:3000",
     "http://localhost:3000",
-  ].filter(Boolean),
+    "https://127.0.0.1:3000",
+    "http://127.0.0.1:3000",
+  ].map((s) => s.replace(/\/$/, "")),
 });
