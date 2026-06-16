@@ -1,0 +1,119 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { createClient, updateClient } from "@/lib/actions/clients";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+interface ClientFormProps {
+  mode: "create" | "edit";
+  defaultValues?: {
+    id?: string;
+    name?: string;
+    companyName?: string;
+    email?: string;
+    phone?: string;
+    website?: string;
+    address?: string;
+    tags?: string[];
+    internalNotes?: string;
+  };
+  onSuccess?: () => void;
+}
+
+export function ClientForm({ mode, defaultValues, onSuccess }: ClientFormProps) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    name: defaultValues?.name ?? "",
+    companyName: defaultValues?.companyName ?? "",
+    email: defaultValues?.email ?? "",
+    phone: defaultValues?.phone ?? "",
+    website: defaultValues?.website ?? "",
+    address: defaultValues?.address ?? "",
+    tags: defaultValues?.tags?.join(", ") ?? "",
+    internalNotes: defaultValues?.internalNotes ?? "",
+  });
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const data = {
+        name: form.name,
+        companyName: form.companyName || undefined,
+        email: form.email || undefined,
+        phone: form.phone || undefined,
+        website: form.website || undefined,
+        address: form.address || undefined,
+        tags: form.tags ? form.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
+        internalNotes: form.internalNotes || undefined,
+      };
+
+      if (mode === "create") {
+        await createClient(data);
+        toast.success("Client created");
+      } else if (defaultValues?.id) {
+        await updateClient(defaultValues.id, data);
+        toast.success("Client updated");
+      }
+
+      router.refresh();
+      onSuccess?.();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function set(k: keyof typeof form, v: string) {
+    setForm((prev) => ({ ...prev, [k]: v }));
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="name">Name *</Label>
+        <Input id="name" value={form.name} onChange={(e) => set("name", e.target.value)} required placeholder="Client contact name" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="companyName">Company</Label>
+        <Input id="companyName" value={form.companyName} onChange={(e) => set("companyName", e.target.value)} placeholder="Company name" />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input id="email" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="client@example.com" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="phone">Phone</Label>
+          <Input id="phone" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+62..." />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="website">Website</Label>
+        <Input id="website" value={form.website} onChange={(e) => set("website", e.target.value)} placeholder="https://..." />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="address">Address</Label>
+        <Input id="address" value={form.address} onChange={(e) => set("address", e.target.value)} placeholder="Full address" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="tags">Tags (comma separated)</Label>
+        <Input id="tags" value={form.tags} onChange={(e) => set("tags", e.target.value)} placeholder="branding, web, social" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="internalNotes">Internal Notes</Label>
+        <Input id="internalNotes" value={form.internalNotes} onChange={(e) => set("internalNotes", e.target.value)} placeholder="Private notes..." />
+      </div>
+      <Button type="submit" disabled={loading} className="w-full">
+        {loading ? "Saving..." : mode === "create" ? "Create Client" : "Save Changes"}
+      </Button>
+    </form>
+  );
+}
