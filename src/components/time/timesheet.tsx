@@ -188,8 +188,8 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex gap-2">
-              <div className="space-y-1 flex-1">
+            <div className="flex flex-col gap-2 sm:flex-row col-span-2 md:col-span-1">
+              <div className="space-y-1 flex-1 min-w-0">
                 <Label className="text-[10px]">From</Label>
                 <Input
                   type="date"
@@ -198,7 +198,7 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
                   className="h-8 text-xs"
                 />
               </div>
-              <div className="space-y-1 flex-1">
+              <div className="space-y-1 flex-1 min-w-0">
                 <Label className="text-[10px]">To</Label>
                 <Input
                   type="date"
