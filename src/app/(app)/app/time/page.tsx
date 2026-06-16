@@ -94,13 +94,13 @@ export default async function TimePage() {
     .limit(200);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 min-w-0">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Time Tracking</h1>
           <p className="text-sm text-muted-foreground mt-1">Track time across projects</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           {canWrite && (
             <ManualEntryForm
               workspaceId={workspaceId}

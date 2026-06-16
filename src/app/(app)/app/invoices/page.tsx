@@ -77,8 +77,8 @@ export default async function InvoicesPage() {
     .orderBy(desc(invoices.createdAt));
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 min-w-0">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Invoices</h1>
           <p className="text-sm text-muted-foreground">
@@ -87,7 +87,7 @@ export default async function InvoicesPage() {
         </div>
         {canWrite && (
           <Link href="/app/invoices/new">
-            <Button className="gap-2">
+            <Button className="gap-2 w-full sm:w-auto">
               <Plus className="h-4 w-4" /> New Invoice
             </Button>
           </Link>
@@ -110,7 +110,7 @@ export default async function InvoicesPage() {
           )}
         </div>
       ) : (
-        <div className="border rounded-lg overflow-x-auto">
+        <div className="border rounded-lg overflow-x-auto min-w-0 max-w-full">
           <Table>
             <TableHeader>
               <TableRow>

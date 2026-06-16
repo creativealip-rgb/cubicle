@@ -5,7 +5,7 @@
 // - Clean up the Jan 2027 odd appointment + 0-minute stub time entry
 // Run: pnpm tsx scripts/seed-demo-polish.ts
 import { db } from "@/db";
-import { files, timeEntries, comments, appointments, tasks, projects, users } from "@/db/schema";
+import { files, timeEntries, comments, appointments, tasks, projects } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 
 const WS_ID = "12fc318e-c946-4a91-b389-60e39e270f33";
@@ -70,7 +70,7 @@ async function main() {
   console.log("+3 comments");
 
   // 4. Clean up odd Jan 2027 QA test appointment
-  const result = await db.delete(appointments).where(sql`${appointments.startTime} > '2026-12-31'`);
+  await db.delete(appointments).where(sql`${appointments.startTime} > '2026-12-31'`);
   console.log("Cleaned future-dated appointments");
 
   console.log("Done.");

@@ -73,8 +73,8 @@ export default async function ProjectsPage({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 min-w-0">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
           <p className="text-sm text-muted-foreground">
@@ -84,7 +84,7 @@ export default async function ProjectsPage({
         {canWrite && (
           <Dialog>
             <DialogTrigger asChild>
-              <Button size="sm" className="gap-1">
+              <Button size="sm" className="gap-1 w-full sm:w-auto">
                 <Plus className="h-4 w-4" />
                 New Project
               </Button>

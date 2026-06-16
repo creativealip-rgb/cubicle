@@ -91,14 +91,14 @@ export default async function TasksPage({
     review: { label: "Review", variant: "outline" },
     done: { label: "Done", variant: "default" },
   };
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 min-w-0">
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Tasks</h1>
-          <p className="text-sm text-muted-foreground">
-            {params.assignee === "me" ? "My tasks" : "All tasks across projects"}
+          <h1 className="text-2xl font-bold tracking-tight">Tasks</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Track work across your projects
           </p>
         </div>
         <Dialog>

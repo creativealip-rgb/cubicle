@@ -141,8 +141,8 @@ export default async function ClientsPage({
       </div>
 
       <Tabs defaultValue={statusFilter} className="space-y-4">
-        <div className="flex items-center justify-between">
-          <TabsList>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <TabsList className="w-full sm:w-auto overflow-x-auto">
             <TabsTrigger value="active" asChild>
               <Link href="?status=active">Active ({tabCounts.active})</Link>
             </TabsTrigger>
@@ -154,7 +154,7 @@ export default async function ClientsPage({
             </TabsTrigger>
           </TabsList>
 
-          <form className="relative w-64">
+          <form className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               name="search"
