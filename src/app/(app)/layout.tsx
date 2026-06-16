@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { and, eq, ne, count } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { AppShell } from "@/components/app-shell";
 import { db } from "@/db";
-import { workspaces, workspaceMembers } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
+import { workspaces, workspaceMembers, tasks } from "@/db/schema";
 
 export default async function AppLayout({
   children,
@@ -33,6 +33,21 @@ export default async function AppLayout({
         .limit(1)
     : [];
 
+  // Count tasks assigned to current user that are not done
+  // (sidebar badge "X tasks assigned to you")
+  const [{ myOpenTasksCount = 0 } = {}] = workspace
+    ? await db
+        .select({ myOpenTasksCount: count() })
+        .from(tasks)
+        .where(
+          and(
+            eq(tasks.workspaceId, workspace.id),
+            eq(tasks.assigneeId, session.user.id),
+            ne(tasks.status, "done"),
+          ),
+        )
+    : [{ myOpenTasksCount: 0 }];
+
   return (
     <AppShell
       user={{
@@ -41,6 +56,7 @@ export default async function AppLayout({
         image: session.user.image,
         role: member?.role ?? "viewer",
       }}
+      myOpenTasksCount={myOpenTasksCount}
     >
       {children}
     </AppShell>

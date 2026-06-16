@@ -32,7 +32,7 @@ const navItems = [
   { label: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard },
   { label: "Clients", href: "/app/clients", icon: Users },
   { label: "Projects", href: "/app/projects", icon: Briefcase },
-  { label: "Tasks", href: "/app/tasks", icon: CheckSquare },
+  { label: "Tasks", href: "/app/tasks", icon: CheckSquare, badgeKey: "myOpenTasks" as const },
   { label: "Files", href: "/app/files", icon: FolderOpen },
   { label: "Time", href: "/app/time", icon: Clock },
   { label: "Invoices", href: "/app/invoices", icon: Receipt },
@@ -44,9 +44,10 @@ const navItems = [
 interface AppSidebarProps {
   collapsed: boolean;
   onToggle: () => void;
+  myOpenTasksCount?: number;
 }
 
-export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
+export function AppSidebar({ collapsed, onToggle, myOpenTasksCount = 0 }: AppSidebarProps) {
   const pathname = usePathname();
   const { mobileOpen, setMobileOpen } = useSidebar();
 
@@ -133,6 +134,10 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                 (item.href !== "/app/dashboard" &&
                   pathname.startsWith(item.href + "/"));
               const Icon = item.icon;
+              const badge =
+                "badgeKey" in item && item.badgeKey === "myOpenTasks"
+                  ? myOpenTasksCount
+                  : 0;
 
               return (
                 <li key={item.href}>
@@ -149,12 +154,32 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                         )}
                       >
                         <Icon className="h-4 w-4 shrink-0" />
-                        {!collapsed && <span>{item.label}</span>}
+                        {!collapsed && <span className="flex-1">{item.label}</span>}
+                        {!collapsed && badge > 0 && (
+                          <span
+                            className={cn(
+                              "ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-semibold",
+                              isActive
+                                ? "bg-sidebar-primary-foreground text-sidebar-primary"
+                                : "bg-blue-600 text-white",
+                            )}
+                            aria-label={`${badge} open tasks assigned to you`}
+                          >
+                            {badge > 99 ? "99+" : badge}
+                          </span>
+                        )}
+                        {collapsed && badge > 0 && (
+                          <span
+                            className="absolute right-1 top-1 inline-flex h-2 w-2 rounded-full bg-blue-500"
+                            aria-label={`${badge} open tasks assigned to you`}
+                          />
+                        )}
                       </Link>
                     </TooltipTrigger>
                     {collapsed && (
                       <TooltipContent side="right">
                         {item.label}
+                        {badge > 0 ? ` (${badge})` : ""}
                       </TooltipContent>
                     )}
                   </Tooltip>

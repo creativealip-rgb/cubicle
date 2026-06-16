@@ -13,6 +13,7 @@ interface AppShellProps {
     image?: string | null;
     role?: "owner" | "member" | "viewer";
   };
+  myOpenTasksCount?: number;
 }
 
 const SidebarContext = createContext<{
@@ -31,7 +32,7 @@ export function useSidebar() {
   return useContext(SidebarContext);
 }
 
-export function AppShell({ children, user }: AppShellProps) {
+export function AppShell({ children, user, myOpenTasksCount = 0 }: AppShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -49,6 +50,7 @@ export function AppShell({ children, user }: AppShellProps) {
         <AppSidebar
           collapsed={collapsed}
           onToggle={() => setCollapsed(!collapsed)}
+          myOpenTasksCount={myOpenTasksCount}
         />
         <div
           className={cn(
