@@ -2,7 +2,7 @@
 
 Target stack:
 - Next.js App Router
-- Neon Postgres
+- PostgreSQL 16 (Docker sibling container `cubicle-pg`)
 - Drizzle ORM
 - Better-Auth
 - Cloudflare R2
@@ -47,10 +47,10 @@ Roles for MVP:
 
 ## 3. App-Layer RLS Replacement
 
-Because stack uses Neon instead of Supabase, access control happens in app layer through shared guard helpers.
+Because Cubicle uses PostgreSQL directly (no Supabase RLS), access control happens in app layer through shared guard helpers. All mutations are wrapped with `assertWorkspaceWritable` and all reads with `assertWorkspaceMember`. Verified end-to-end in P0.6 (see `cubicle_remaining_plan.md`) — viewer role cannot bypass via direct POST.
 
 Main file:
-- `/root/projek/cubicle/docs/cubicle_rls.ts`
+- `/root/projek/cubicle/src/lib/access.ts` (production) — see `docs/cubicle_rls.ts` for the policy reference
 
 Required guards:
 - `requireUser(user)`
@@ -58,6 +58,16 @@ Required guards:
 - `assertWorkspaceWritable(db, userId, workspaceId)`
 - `assertWorkspaceOwner(db, userId, workspaceId)`
 - parent relationship guards for client/project/task/file/invoice
+
+Coverage (8 mutation action files wired with `assertWorkspaceWritable`):
+- `src/lib/actions/clients.ts`
+- `src/lib/actions/files.ts`
+- `src/lib/actions/invoices.ts`
+- `src/lib/actions/projects.ts`
+- `src/lib/actions/prompts.ts`
+- `src/lib/actions/tasks.ts`
+- `src/lib/actions/time.ts`
+- `src/lib/actions/appointments.ts`
 
 Every server action must follow pattern:
 1. parse + validate input with Zod

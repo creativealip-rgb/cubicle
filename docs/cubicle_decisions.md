@@ -378,3 +378,50 @@ Rules:
 Optimistic update:
 - task drag di kanban langsung update UI.
 - rollback kalau server error.
+
+## 19. Post-Sprint Decisions (16 Jun 2026)
+
+Operational decisions made during P0 deep QA + P1/P2 polish sprint. These are not architectural changes — they document *why* a particular workaround is in place, so a future operator doesn't accidentally undo it.
+
+### 19.1 `postcss <8.5.10` accepted (P0.7)
+
+- `next@16.2.9` pins `postcss@8.4.31` as a nested dep. The XSS vector (unescaped `</style>` in CSS stringification) is build-time only, not runtime.
+- pnpm 11 deprecated `pnpm.overrides` for nested transitive deps. Current alternatives (`packageExtensions`, lockfile patches) carry non-trivial risk of breaking Next's CSS pipeline.
+- Cubicle's CSS is fully authored (Tailwind v4) with no user-controlled CSS input → exploitability is zero.
+- **Re-evaluate when:** Next.js ships a release that drops the nested postcss pin, OR pnpm reintroduces a working override mechanism for nested deps. Full analysis: `docs/npm_audit_risk.md`.
+
+### 19.2 Sign-out HTTP 415 workaround (P0.6 follow-up)
+
+- Better-Auth SDK 1.6.18 returns HTTP 415 when `auth.api.signOut` is called with no body (browser's automatic sign-out fetch sends no Content-Type).
+- **Fix:** custom route at `src/app/api/auth/sign-out/route.ts` delegating to `auth.api.signOut({ headers, asResponse: true })`. Better-call `getBody` short-circuits on bodiless requests, skipping the content-type check.
+- Don't replace this with the stock SDK endpoint without testing the bodiless path first.
+
+### 19.3 Forgot-password path (P2.2)
+
+- SDK uses `/api/auth/request-password-reset` (returns 200 with `{status:true, message:...}`).
+- `/forget-password` is the pre-1.x path and returns 404. **Do not** rename the client page (`/forgot-password`) — the form calls `authClient.requestPasswordReset()` which targets the correct path automatically.
+- `/forgot-password` (page) and `/reset-password` (page) both render 200.
+
+### 19.4 Invoice PDF label fix (P2.3)
+
+- Paid and cancelled invoices no longer show "Amount Due" + total — they show "Paid" / "Cancelled" + IDR 0 instead. Confusing for buyers otherwise.
+- Patch lives in `src/components/invoices/invoice-pdf.tsx` (commit `1b300a8`).
+- Multi-page footer "Page X of Y" only meaningful with >1 page items. Tested with 30 extra line items → 3 pages, footer renders clean.
+
+### 19.5 AI prompt default model (P2.4)
+
+- Working default: `notion/haiku-4.5` via 9router. ~3.8s per call, ~$0.0002.
+- Other 9router providers (`openai/*`, `kr/*`, `cx/*`) hit auth or rate-limit issues at the time of testing — **do not** re-add them to the allowlist without re-testing.
+- Upstream response is parsed via brace-walking to handle trailing data (some providers append metadata after the JSON object closes).
+
+### 19.6 Demo workspace `billing_name` seed (P2.3 follow-up)
+
+- Workspace `acme-creative` was missing `billing_name`, so PDF header fell back to "Company Name" placeholder.
+- Seeded via 1-line SQL: `UPDATE workspaces SET billing_name = 'Acme Creative Studio' WHERE slug = 'acme-creative' AND (billing_name IS NULL OR billing_name = '');`
+- For future demo workspaces, set `billing_name` during seed, not after the fact — otherwise invoices render with placeholder until manually patched.
+
+### 19.7 Mobile viewport meta (P1.1 root cause)
+
+- The mobile QA pass 2 found the original `viewport` meta tag was missing on most pages — was the root cause of all squish/clipping symptoms.
+- Now standardized: `viewport` meta in root layout, `min-w-0` on flex-1 children of app shell, `flex-col sm:flex-row` on page headers, `w-full sm:w-auto` on action buttons.
+- QA script: `scripts/mobile-qa-pass2.cjs` (playwright + google-chrome + Better Auth API login → cookie injection). Reusable for future layout regression.

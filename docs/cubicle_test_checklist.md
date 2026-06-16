@@ -146,3 +146,23 @@ Use this before beta release and after every big sprint merge.
 - [ ] portal link works in incognito.
 - [ ] invoice PDF downloads in incognito via shared token.
 - [ ] no server secret appears in browser bundle or HTML.
+
+## 13. Role Backend Guard Audit (P0.6)
+
+Verify viewer role **cannot** bypass app-layer access control via direct API calls. Every mutation must call `assertWorkspaceWritable`; reads must call `assertWorkspaceMember`.
+
+- [ ] Viewer direct POST `/api/...` to create client → 403 / `ForbiddenError: Workspace access denied`
+- [ ] Viewer direct POST update/delete client → 403
+- [ ] Viewer direct POST create project/task → 403
+- [ ] Viewer direct POST create invoice / record payment → 403
+- [ ] Viewer direct POST upload file → 403
+- [ ] Viewer direct POST start/manual time entry → 403
+- [ ] Viewer direct POST create appointment → 403
+- [ ] Viewer direct POST generate prompt → 403
+- [ ] Member cannot remove another owner or demote owner role → 403
+- [ ] Member cannot transfer workspace ownership → 403
+- [ ] Owner can perform all owner actions (create/update/delete/team control)
+- [ ] UI hides restricted controls from viewer (no false affordances)
+- [ ] No role bypass by direct HTTP request (curl/Postman with viewer cookie)
+
+Coverage reference: `src/lib/actions/{clients,files,invoices,projects,prompts,tasks,time,appointments}.ts` all wrap mutations with `assertWorkspaceWritable`. See `cubicle_security.md` for the full guard list. Last verified 2026-06-16 (P0.6 PASS, E2E force-bypass test on viewer confirmed `ForbiddenError`).

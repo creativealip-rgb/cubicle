@@ -2,7 +2,7 @@
 
 Target stack:
 - Next.js App Router
-- Neon Postgres
+- PostgreSQL 16 (Docker sibling container `cubicle-pg`, not exposed publicly)
 - Drizzle ORM
 - Better-Auth
 - Cloudflare R2
@@ -18,20 +18,20 @@ NODE_ENV=development
 
 Rules:
 - `APP_URL` must be public app origin.
-- production value should be Vercel domain or custom domain.
+- production value should be Dokploy/Traefik domain or custom domain (currently `https://cubicle.168-144-37-19.sslip.io`).
 - never expose server secrets to client components.
 
 ## 2. Database
 
 ```env
-DATABASE_URL=postgresql://USER:PASSWORD@HOST/DATABASE?sslmode=require
-DATABASE_MIGRATION_URL=postgresql://USER:PASSWORD@HOST/DATABASE?sslmode=require
+DATABASE_URL=postgresql://USER:***@HOST/DATABASE
 ```
 
 Rules:
-- `DATABASE_URL` used by app runtime.
-- `DATABASE_MIGRATION_URL` optional, used by Drizzle migrations if direct connection needed.
-- Neon SSL required in production.
+- `DATABASE_URL` used by app runtime. On the VPS this resolves to `cubicle-pg:5432` on the internal Docker network — Postgres is **not** exposed to the public internet.
+- No `?sslmode=require` needed for Docker-internal connection; SSL only matters for managed/remote DBs.
+- Migrations run via `npm run db:push` / `npm run db:generate` against the same URL.
+- Daily `pg_dump` + weekly restore-test cron wired (see `cubicle_remaining_plan.md` P2.5).
 
 ## 3. Better-Auth
 
@@ -143,11 +143,11 @@ Before deploy:
 - [ ] `APP_URL` production correct
 - [ ] `BETTER_AUTH_URL` production correct
 - [ ] `BETTER_AUTH_SECRET` random and private
-- [ ] Neon SSL enabled
+- [ ] DB password rotated (see `cubicle_p0_hardening_report.md`)
 - [ ] R2 bucket private
 - [ ] R2 credentials limited to bucket access
-- [ ] email domain verified
+- [ ] email domain verified (Resend)
 - [ ] AI cap configured
-- [ ] rate limiter configured
-- [ ] Vercel env vars set for production and preview
+- [ ] rate limiter configured (deferred — Upstash or Cloudflare Turnstile recommended)
+- [ ] Dokploy env vars set for production
 - [ ] no `NEXT_PUBLIC_*` secret leak

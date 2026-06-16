@@ -160,3 +160,20 @@ Rules:
 - allowed models controlled server-side.
 - store model/tokens/cost.
 - cap enforced per workspace/month.
+- working default model: `notion/haiku-4.5` via 9router (3.8s, ~$0.0002 per call). Other 9router providers (`openai/*`, `kr/*`, `cx/*`) hit auth/rate issues at the time of testing.
+
+## 11. Appointments (Booking)
+
+| Action | Input | Guard | Notes |
+|---|---|---|---|
+| `createAppointment` | workspaceId, clientId, startAt, durationMin, source | writable | server-side double-booking check + Postgres exclusion constraint |
+| `cancelAppointment` | appointmentId, reason? | writable | sets status to `cancelled` |
+| `listAppointments` | workspaceId, filters | member | workspace scoped |
+
+Source file: `src/lib/actions/appointments.ts`
+
+Rules:
+- double-booking blocked at two layers: app-level slot validation + Postgres `tstzrange` exclusion constraint on `appointments` table.
+- `notifyAppointmentBooked` + `notifyAppointmentCancelled` wired to `sendNotification` (Resend) — email delivery gated on `RESEND_API_KEY` + sender domain (HOLD, see P2.2).
+- appointments created from public booking route (`/booking/[slug]`) set `source = "booking_page"`.
+- new appointments surface in `/app/calendar` without manual refresh.
