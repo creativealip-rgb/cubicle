@@ -111,10 +111,8 @@ Production-ready: NO
 
 ```text
 Demo MVP: 99%
-Sellable source/MVP: 97%
-Production client-ready: ~91% (P2.6 Reply-To → ~92%, P2.7 Pre-deal → ~95%,
-                              P2.8 Finance core → ~93%, Sprint E.5 Team UI
-                              → ~93% — closes hidden MVP gap)
+Sellable source/MVP: 98%  (+1: AI Assistant live, demo differentiator)
+Production client-ready: ~92% (+1: AI Assistant raises polish, R2 gaps unchanged)
 ```
 
 > **Update 2026-06-16 (P0 deep QA + P2.4 + P1.5 + extras):**
@@ -122,6 +120,11 @@ Production client-ready: ~91% (P2.6 Reply-To → ~92%, P2.7 Pre-deal → ~95%,
 > - Sellable source/MVP: **97%** (unchanged)
 > - Production client-ready: **~91%** (was ~90% — P1.1 pass 2 + minor
 >   layout polish + P2.3 PDF visual verify lifted quality gate)
+
+> **Update 2026-06-16 (Sprint F AI Assistant v1.1 + Sprint G P2.3 close):**
+> - Demo MVP: **99%** (unchanged)
+> - Sellable source/MVP: **98%** (+1 — AI Assistant is a strong demo differentiator)
+> - Production client-ready: **~92%** (+1 — but R2 still placeholders, Resend still invalid)
 >
 > **Resolved in this continuation session (16 Jun):**
 > - P0.1 rogue /tmp/postgresql regression — confirmed gone (no rebuild)
@@ -181,7 +184,8 @@ Production client-ready: ~91% (P2.6 Reply-To → ~92%, P2.7 Pre-deal → ~95%,
 > P1.4 Handover docs ✅ (prior session)
 > P2.5 Monitoring/backups ✅ (prior session)
 > P2.2 Email flows ⚠️ PARTIAL (prior session)
-> P2.3 Invoice PDF polish ⚠️ PARTIAL (prior session)
+> P2.3 Invoice PDF polish ✅ CLOSED (Sprint G 16 Jun — multi-page verified)
+> Sprint F AI Assistant v1.1 ✅ (16 Jun — 12 tools, persistence, action confirm)
 
 ## 4. P0 — Mandatory Before Production
 
@@ -1033,6 +1037,50 @@ revision round; coach = session cost; translator = word count cost).
 
 ---
 
+### Sprint F — AI Assistant v1.1 ✅ DONE (16 Jun)
+
+Floating chat panel on every `/app/*` page. Answers questions about workspace data and performs 2 action types (with user confirm in UI).
+
+**What shipped:**
+- 10 read tools: list_clients/projects/tasks/invoices, get_client/project/task/invoice, get_workspace_summary, list_workspace_members
+- 2 action tools: update_task_status, draft_invoice_reminder (require UI confirm before write)
+- Conversation persistence: `ai_conversations` + `ai_messages` tables, auto-titled from first user message
+- History sidebar with load/delete/new chat
+- Strip thinking: defensive `stripThinking()` drops `<think>...</think>` blocks from model output (MiniMax-M3 is a reasoning model that leaks by default)
+- 4 API endpoints: `POST /api/ai/chat`, `GET /api/ai/conversations`, `POST/DELETE /api/ai/conversations`, `POST /api/ai/action`
+
+**Stack:** agentic RAG via 9router (OpenAI-compatible), `tr/MiniMax-M3` model. No embeddings — structured Drizzle queries via tool functions. 3 round-trip max per turn. Last 20 messages of history.
+
+**Cost:** ~7-16K tokens per Q, ~$0.01/Q. 1k Qs/month ≈ $10/mo per active workspace.
+
+**Verified live (16 Jun):**
+- "How's the business?" → 1 tool call, summary
+- "Tell me about Kopi Senja" → 1 drill-down, joined projects + open invoices
+- "Mark 'Internal budget review' as done" → confirmation card with currentStatus→newStatus
+- "Draft a payment reminder for INV-0001" → confirmation card with subject+body
+- Action confirm → DB write successful (status: todo → done)
+- Conv list returns 5+ chats with correct message counts
+- No `<think>` blocks leak in user-facing response
+
+**Files (12):**
+- New: `src/lib/ai/{client,strip,tools,system-prompt,conv-store}.ts`
+- New: `src/app/api/ai/{chat,action,conversations}/route.ts`
+- New: `src/components/ai/chat-panel.tsx`
+- New: `scripts/migrate-ai-tables.sql`
+- Modified: `src/db/schema.ts` (2 new tables), `Dockerfile` (AI env vars)
+- Doc: `docs/ai-assistant.md` (full reference)
+
+**Known gaps (not blockers):**
+- No streaming yet (Sprint F.2) — non-streaming, 1-3s first token
+- Resend API key invalid in build → action endpoint gracefully fails
+- R2 storage still placeholders (logo used public screenshot fallback)
+- Hardcoded to `acme-creative` workspace (matches demo data)
+
+**Strategic value:**
+- Standout differentiator vs ClickUp/Asana/Notion (none of them have RAG-over-data chat)
+- Demo-friendly: 1 click → "how's the business" → full data summary
+- Proves 9router + tool-calling pattern works; foundation for Phase 2 (embeddings, smart nudges)
+
 ## 7. Security Hardening Plan
 
 Immediate hardening:
@@ -1331,6 +1379,8 @@ Resolved (closed this session):
   ✅ P2.2 forget-password path closed — SDK uses /request-password-reset (200 OK)
   ✅ P0.8 Lint cleanup — 0 warnings, 0 errors, tsc clean (re-verified)
   ✅ Backup + monitoring setup — daily pg_dump + restore-test + cron
+  ✅ Sprint F AI Assistant v1.1 — 12 tools, persistence, action confirm flow
+  ✅ Sprint G P2.3 PDF polish closed — 3 invoices regen, multi-page "Page X of Y"
 
 Still open:
   1 accepted npm audit (postcss nested in next, moderate, build-time only)

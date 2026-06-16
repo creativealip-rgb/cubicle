@@ -16,30 +16,28 @@
 
 ---
 
-## AI Assistant (RAG over workspace) — ⭐ HIGHLIGHTED
+## AI Assistant (RAG over workspace) — ⭐ HIGHLIGHTED · Sprint F SHIPPED v1.1
 
-> Alip-flagged 16 Jun as menarik. Most differentiating AI feature for
-> Cubicle because has full workspace context competitors don't have.
+> **Status 16 Jun:** v1.1 SHIPPED (12 tools, persistence, action confirm).
+> See `docs/ai-assistant.md` for full reference.
+> Phase 2 (embeddings + semantic search) still in backlog — F-2 below.
 
-**Problem:** freelancer wants quick answers without clicking through tabs.
-"Berapa outstanding invoice Budi?", "Cari project serupa yg udah gue
-selesain", "Buat draft email follow up untuk klien yg overdue 30 hari".
+**v1.1 SHIPPED (16 Jun) — agentic RAG via tool calls:**
+- 10 read tools: list + entity drill-down for clients/projects/tasks/invoices/team
+- 2 action tools: update_task_status, draft_invoice_reminder (UI-confirmed)
+- Conversation persistence (auto-titled, history sidebar)
+- Terse-caveman voice, IDR-formatted, entity names not raw IDs
+- No embeddings — 9router `/v1/embeddings` returned "Invalid API key" on current key
+- Cost: ~$0.01/Q, 1k Qs ≈ $10/mo
 
-**Scope (MVP):**
-
+**Scope (Phase 2 — still pending):**
 ```text
-1. Embed workspace data ke vector store (pgvector or external)
-   - clients, projects, tasks, files (titles + metadata, not content),
-     invoices, time_entries, expenses, prompts
-   - incremental sync on write (Postgres trigger or app-level)
-2. Chat endpoint: POST /api/ai/assistant
-   - input: user question (Bahasa or English)
-   - retrieve top-k relevant context
-   - LLM call (haiku-4.5 or similar fast/cheap)
-   - return answer + cited sources ("from invoice INV-0003")
-3. UI: floating chat panel di /app/* (collapsible)
-4. Quick action buttons: "Outstanding invoices", "Last week's time",
-   "This month's expenses", "Open projects"
+1. Add pgvector + embeddings table + sync-on-write trigger
+   (when /v1/embeddings becomes available)
+2. Drop-in replace tool results with vector search results
+3. Multi-turn: keep last 5-10 question context
+4. Per-file content indexing (currently metadata only)
+5. Code execution sandbox (Phase 3) for "compute my tax"
 ```
 
 **Effort: 1-2 minggu MVP** (basic RAG + chat UI + 5 quick actions)
@@ -60,8 +58,8 @@ their own data model. Cubicle AI = "AI yg tau SEMUA project lo" (clients,
 invoice, time, expense, file, contract — semua di 1 workspace). They
 can't replicate without full client-ops data.
 
-**When to ship:** after P2.8 Finance ships (so reports can be AI-summarized),
-OR standalone if Lo mau bikin Cubicle punya "wow" demo moment.
+**When to ship v2:** after 9router exposes working `/v1/embeddings` endpoint
+OR after P2.8 Finance ships (so reports can be AI-summarized).
 
 **Strategic:** this is THE feature buat "anti-spreadsheet" positioning
 (SOUL.md audience). "Chat with your business" > 6 tabs + spreadsheet.

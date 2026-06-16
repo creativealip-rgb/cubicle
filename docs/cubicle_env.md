@@ -7,6 +7,7 @@ Target stack:
 - Better-Auth
 - Cloudflare R2
 - OpenAI-compatible API
+- 9Router (AI provider gateway for both Prompt Generator + AI Assistant)
 - Resend/nodemailer email
 
 ## 1. App
@@ -77,18 +78,35 @@ Rules:
 workspaces/{workspaceId}/files/{fileId}/{safeFilename}
 ```
 
-## 5. OpenAI-Compatible API
+## 5. OpenAI-Compatible API (Prompt Generator + AI Assistant)
+
+Used by both:
+- **Prompt Generator** (`/app/prompts`) — content generation, template filling
+- **AI Assistant** (chat panel) — agentic RAG with tool calls, conversations
 
 ```env
+# Single 9Router endpoint (works for both)
 OPENAI_API_KEY=your-api-key
-OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_BASE_URL=https://9router-168-144-37-19.sslip.io/v1
 OPENAI_DEFAULT_MODEL=gpt-4o-mini
+
+# AI Assistant specific (optional, defaults shown)
+AI_API_KEY=***            # falls back to OPENAI_COMPATIBLE_API_KEY or /run/secrets/9router_api_key
+AI_BASE_URL=***  AI_MODEL=tr/MiniMax-M3
+
 AI_MONTHLY_CAP_USD=10
 ```
 
+Resolution order (AI Assistant):
+1. `/run/secrets/9router_api_key` (mounted docker secret, prod)
+2. `AI_API_KEY` env
+3. `OPENAI_COMPATIBLE_API_KEY` env (legacy)
+4. `OPENAI_API_KEY` env (legacy)
+
 Rules:
 - API key server-side only.
-- prompt generator must track `model`, `input_tokens`, `output_tokens`, `cost_usd`.
+- prompt generator tracks `model`, `input_tokens`, `output_tokens`, `cost_usd`.
+- AI Assistant tracks tokens via `ai_messages.tokens` column.
 - enforce monthly cap per workspace.
 - allowed model list should be hardcoded or configured server-side.
 
@@ -117,6 +135,7 @@ MVP email events:
 - portal comment received
 - appointment booked
 - invoice viewed
+- AI Assistant: invoice payment reminder (drafted via AI, confirmed by user, sent via Resend)
 
 ## 7. Rate Limit / Security
 

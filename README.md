@@ -15,6 +15,7 @@ Built for freelancers, agencies, and small service teams who want to stop juggli
 - **Client portal** — share selected deliverables/files/invoices with each client via secure token
 - **Calendar** — see appointments + tasks due
 - **AI prompt generator** — built-in prompt templates for creative/service work
+- **AI Assistant** — chat panel that knows your workspace data, can mark tasks done and draft invoice reminders (with your confirm)
 
 ## Stack
 
@@ -74,9 +75,14 @@ R2_PUBLIC_ENDPOINT=<public-r2-url>
 RESEND_API_KEY=<your-resend-key>
 EMAIL_FROM=Cubicle <noreply@your-domain.com>   # optional, defaults to onboarding@resend.dev
 
-# AI (optional, OpenAI-compatible)
+# AI (optional, OpenAI-compatible) — used by Prompt Generator + AI Assistant
 OPENAI_COMPATIBLE_BASE_URL=https://api.example.com/v1
 OPENAI_COMPATIBLE_API_KEY=<key>
+
+# AI Assistant specific (optional, falls back to OPENAI_COMPATIBLE_* above)
+AI_API_KEY=***
+AI_BASE_URL=https://9router-168-144-37-19.sslip.io/v1
+AI_MODEL=tr/MiniMax-M3
 ```
 
 ### 3. Start database
@@ -171,14 +177,16 @@ src/
 │   ├── calendar/                 # Calendar view
 │   ├── files/                    # File upload + viewer
 │   ├── prompts/                  # AI prompt generator
+│   ├── ai/                       # AI Assistant (chat panel, confirm cards)
 │   └── time/                     # Time tracking + timesheet
 ├── db/
 │   ├── index.ts                  # Drizzle client
-│   └── schema.ts                 # All table definitions
+│   └── schema.ts                 # All 24 table definitions
 ├── lib/
 │   ├── auth.ts                   # Better-Auth server config
 │   ├── auth-client.ts            # Better-Auth client config
 │   ├── access.ts                 # Role guards (requireUser, assertWorkspace)
+│   ├── ai/                       # AI Assistant (9router client, tools, system prompt, conv store)
 │   ├── r2.ts                     # Cloudflare R2 helpers
 │   ├── tokens.ts                 # Secure random token generation
 │   └── utils.ts                  # cn() className merge

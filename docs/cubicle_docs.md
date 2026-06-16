@@ -1,13 +1,13 @@
 # Cubicle — Client Operations Hub
 
-> **Status:** MVP Live · **URL:** https://cubicle.168.144.37.19.sslip.io  
-> **Stack:** Next.js 16 · React 19 · Drizzle ORM + PostgreSQL · Better Auth · Tailwind v4 · shadcn/ui · Dokploy + Docker
+> **Status:** MVP Live · **URL:** https://cubicle.168.144.37.19.sslip.io
+> **Stack:** Next.js 16 · React 19 · Drizzle ORM + PostgreSQL · Better Auth · Tailwind v4 · shadcn/ui · Dokploy + Docker · **AI Assistant v1.1 (9router + MiniMax-M3)**
 
 ---
 
 ## 🧠 Overview
 
-Cubicle adalah SaaS client operations hub — satu tempat untuk mengelola klien, proyek, task, file, time tracking, invoice, appointment booking, dan AI prompt generator.
+Cubicle adalah SaaS client operations hub — satu tempat untuk mengelola klien, proyek, task, file, time tracking, invoice, appointment booking, AI prompt generator, **dan AI Assistant (chat panel RAG over workspace data)**.
 
 Target user: agency kecil, freelancer, studio kreatif yang butuh tool all-in-one tanpa ribet.
 
@@ -47,6 +47,7 @@ All demo users belong to workspace **Acme Creative Studio** (`acme-creative`).
 | Generate invoice share token | ✅ | ✅ | ❌ |
 | Record payment      | ✅     | ✅      | ❌      |
 | AI Prompt Generator | ✅     | ✅      | ❌      |
+| AI Assistant (chat)  | ✅     | ✅      | ❌      |
 
 ---
 
@@ -276,6 +277,29 @@ Portal token management:
 
 ---
 
+## 🤖 AI Assistant (new in v1.1)
+
+> See `docs/ai-assistant.md` for full reference. Quick summary below.
+
+Floating sparkle button (bottom-right of every `/app/*` page) → chat panel.
+
+**Capabilities:**
+- Read tools (10): list clients/projects/tasks/invoices + entity drill-down + team lookup
+- Action tools (2): mark task done, draft invoice reminder — both require user confirm in UI
+- Conversation persistence (per-user, auto-titled from first message, history sidebar)
+- Multi-turn context (last 20 messages sent to model)
+- Terse responses, IDR-formatted, entity names not raw IDs
+
+**Stack:**
+- Model: `tr/MiniMax-M3` via 9router (OpenAI-compatible)
+- Architecture: agentic RAG — model calls structured tool functions over Drizzle queries (no embeddings)
+- Schema: `ai_conversations` + `ai_messages` tables
+- Cost: ~$0.01 per question, 1k Qs ≈ $10/mo
+
+**Try it:** click sparkle button → "How's the business?" or "Tell me about Kopi Senja".
+
+---
+
 ## 🤖 Prompt Generator
 
 ```
@@ -337,8 +361,9 @@ Next.js 16 (App Router)
 
 ### Database
 - PostgreSQL 16 via Docker (`cubicle-pg`)
-- 22 tables
+- 24 tables (added `ai_conversations` + `ai_messages` for Assistant v1.1)
 - Migrations via Drizzle
+- AI tables migration: `scripts/migrate-ai-tables.sql`
 
 ### Deployment
 ```
@@ -382,6 +407,9 @@ deploy:  PASS
 | R2_BUCKET_NAME      | ✅ Set          | R2 bucket name                   |
 | RESEND_API_KEY      | ✅ Set          | Email provider                   |
 | RESEND_FROM         | ❌ Empty        | Sender email address             |
+| AI_API_KEY          | ✅ Set          | 9router key (AI Assistant)       |
+| AI_BASE_URL         | ✅ Set          | 9router base URL                 |
+| AI_MODEL            | ✅ Set          | tr/MiniMax-M3                    |
 
 ---
 
@@ -403,6 +431,10 @@ deploy:  PASS
 | Booking submit + success redirect   | ✅      |
 | Prompt generator 9Router connection | ✅ 200  |
 | SSE response parsing                | ✅      |
+| AI Assistant: 12 tools wired        | ✅      |
+| AI Assistant: persistence + history | ✅      |
+| AI Assistant: action confirm flow   | ✅      |
+| Reasoning leak strip                | ✅      |
 | Docker → host 9Router network       | ✅      |
 | Secret file mount permission        | ✅      |
 
@@ -452,6 +484,10 @@ API:
   POST /api/auth/[...all]               — Better Auth endpoints
   GET  /api/time/active                 — Active timer status
   GET  /api/files/[fileId]/download     — File download (auth required)
+  POST /api/ai/chat                     — AI Assistant chat (auth required)
+  GET  /api/ai/chat                     — AI Assistant status
+  GET/POST/DELETE /api/ai/conversations — Conversation list/load/delete/create
+  POST /api/ai/action                   — Execute confirmed action
 ```
 
 ---

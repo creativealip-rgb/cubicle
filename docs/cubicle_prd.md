@@ -232,6 +232,9 @@ AI Usage:
 - track model/tokens/cost per generation
 - monthly workspace cap via env/config
 - API key server-side only
+- **AI Assistant v1.1** (Sprint F, 16 Jun): agentic RAG via 9router + MiniMax-M3,
+  12 tools (10 read + 2 action with UI confirmation), conversation persistence,
+  history sidebar. See `docs/ai-assistant.md`.
 
 Retention:
 - activity logs kept 90 days
