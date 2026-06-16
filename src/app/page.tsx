@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -174,68 +175,28 @@ export default function HomePage() {
 
           <div className="relative">
             <div className="absolute -inset-6 rounded-[2rem] bg-gradient-to-br from-blue-500/20 via-cyan-400/10 to-indigo-500/20 blur-2xl" />
-            <Card className="relative overflow-hidden rounded-[2rem] border-white/80 bg-white/85 shadow-[0_40px_120px_rgba(15,23,42,0.18)] ring-1 ring-slate-950/5 backdrop-blur-xl">
-              <CardContent className="p-0">
-                <div className="border-b border-white/10 bg-[linear-gradient(135deg,#1d4ed8_0%,#2563eb_55%,#06b6d4_140%)] px-5 py-4 text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Acme Creative</p>
-                      <p className="text-xs text-blue-100/75">Client operation workspace</p>
-                    </div>
-                    <Badge className="bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/15">Live</Badge>
-                  </div>
+            <div className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 shadow-[0_40px_120px_rgba(15,23,42,0.18)] ring-1 ring-slate-950/5 backdrop-blur-xl">
+              {/* Browser chrome */}
+              <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50/80 px-4 py-2.5">
+                <div className="flex gap-1.5">
+                  <div className="h-3 w-3 rounded-full bg-red-400" />
+                  <div className="h-3 w-3 rounded-full bg-amber-400" />
+                  <div className="h-3 w-3 rounded-full bg-emerald-400" />
                 </div>
-                <div className="grid gap-4 p-5">
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      ["Active projects", "5"],
-                      ["Billable hours", "42.5"],
-                      ["Unpaid invoices", "$8.4k"],
-                    ].map(([label, value]) => (
-                      <div key={label} className="rounded-2xl border bg-slate-50 p-4">
-                        <p className="text-xs text-slate-500">{label}</p>
-                        <p className="mt-2 text-2xl font-semibold text-slate-950">{value}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="rounded-2xl border bg-white p-4">
-                    <div className="mb-4 flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold">Website redesign</p>
-                        <p className="text-sm text-slate-500">Tasks, files, time, invoice</p>
-                      </div>
-                      <Badge variant="outline">Client-visible</Badge>
-                    </div>
-                    <div className="space-y-3">
-                      {["Homepage wireframe approved", "Upload final brand assets", "Invoice draft ready"].map((task, index) => (
-                        <div key={task} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2 text-sm">
-                          <div className={`h-2.5 w-2.5 rounded-full ${index === 0 ? "bg-emerald-500" : index === 1 ? "bg-blue-500" : "bg-amber-500"}`} />
-                          <span className="text-slate-700">{task}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl border bg-blue-50 p-4">
-                      <div className="flex items-center gap-2 text-blue-700">
-                        <Clock3 className="h-4 w-4" />
-                        <p className="text-sm font-medium">Timer running</p>
-                      </div>
-                      <p className="mt-3 text-2xl font-semibold text-blue-950">01:24:18</p>
-                    </div>
-                    <div className="rounded-2xl border bg-blue-600 p-4 text-white">
-                      <div className="flex items-center gap-2 text-blue-100">
-                        <FileText className="h-4 w-4" />
-                        <p className="text-sm font-medium">Next invoice</p>
-                      </div>
-                      <p className="mt-3 text-2xl font-semibold">Ready</p>
-                    </div>
-                  </div>
+                <div className="ml-2 flex-1 truncate rounded-md bg-white px-3 py-1 text-xs text-slate-500 ring-1 ring-slate-200">
+                  cubicle.app/app/dashboard
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              {/* Real screenshot */}
+              <Image
+                src="/screenshots/dashboard.png"
+                alt="Cubicle dashboard showing active clients, projects, tasks, and invoices"
+                width={1440}
+                height={900}
+                priority
+                className="block w-full"
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -329,22 +290,25 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="mt-12 grid gap-4 lg:grid-cols-3">
+          <div className="mt-12 grid gap-6 lg:grid-cols-3">
             {[
               {
                 label: "Workspace overview",
                 title: "See client health at a glance",
-                stats: ["5 active projects", "19 open tasks", "$8.4k unpaid"],
+                src: "/screenshots/dashboard.png",
+                alt: "Dashboard with KPIs for active clients, projects, tasks, and unpaid invoices",
               },
               {
                 label: "Delivery board",
                 title: "Track work from brief to handoff",
-                stats: ["Client-visible tasks", "Deliverable files", "Internal notes"],
+                src: "/screenshots/tasks.png",
+                alt: "Task list with priorities, assignees, and statuses",
               },
               {
                 label: "Billing flow",
                 title: "Connect time, invoice, and payment",
-                stats: ["42.5 billable hours", "Invoice draft ready", "Public invoice link"],
+                src: "/screenshots/invoices.png",
+                alt: "Invoices table with statuses and public payment links",
               },
             ].map((demo) => (
               <Card key={demo.label} className="overflow-hidden border-slate-200 bg-white shadow-xl shadow-slate-200/50">
@@ -353,14 +317,13 @@ export default function HomePage() {
                     <p className="text-xs font-medium uppercase tracking-[0.2em] text-blue-200">{demo.label}</p>
                     <h3 className="mt-2 text-lg font-semibold">{demo.title}</h3>
                   </div>
-                  <div className="space-y-3 p-5">
-                    {demo.stats.map((stat, index) => (
-                      <div key={stat} className="flex items-center justify-between rounded-2xl border bg-slate-50 px-4 py-3 text-sm">
-                        <span className="text-slate-700">{stat}</span>
-                        <span className={`h-2.5 w-2.5 rounded-full ${index === 0 ? "bg-blue-500" : index === 1 ? "bg-emerald-500" : "bg-amber-500"}`} />
-                      </div>
-                    ))}
-                  </div>
+                  <Image
+                    src={demo.src}
+                    alt={demo.alt}
+                    width={1440}
+                    height={900}
+                    className="block w-full"
+                  />
                 </CardContent>
               </Card>
             ))}
