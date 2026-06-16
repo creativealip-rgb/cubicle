@@ -445,9 +445,9 @@ CTA visible
 
 ### P1.2 Real product screenshots for landing
 
-Current landing uses vector/card mockups.
+**Status 2026-06-16: PASS.**
 
-Upgrade:
+Current landing uses vector/card mockups. Upgrade:
 
 ```text
 1. Capture real dashboard screenshot
@@ -463,6 +463,18 @@ Landing has real product proof
 Visual feels more trustworthy
 No sensitive data in screenshots
 ```
+
+Done:
+- 5 screenshots captured via puppeteer-core at 1440×900:
+  dashboard, clients, tasks, invoices, time-tracking.
+- Hero mockup card replaced with real dashboard screenshot
+  in browser-chrome frame (traffic lights + URL bar).
+- Product tour section's 3 mockup cards replaced with real
+  dashboard / tasks / invoices screenshots.
+- Files in `public/screenshots/`, served via `next/image`.
+- Note: screenshot data shows Indonesian demo workspace
+  (Kopi Senja, Klinik Harmoni, IDR currency). Acceptable
+  for current audience; global reach is phase 2.
 
 ### P1.3 Demo workspace polish
 

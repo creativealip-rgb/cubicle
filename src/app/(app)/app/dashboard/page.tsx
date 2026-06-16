@@ -149,7 +149,7 @@ export default async function DashboardPage() {
     .where(
       and(
         eq(invoices.workspaceId, workspaceId),
-        sql`${invoices.status} in ('sent', 'overdue', 'draft')`,
+        sql`${invoices.status} in ('sent', 'overdue')`,
       ),
     )
     .orderBy(desc(invoices.dueDate))
@@ -279,17 +279,17 @@ export default async function DashboardPage() {
             )}
             {recentActivity.map((item, i) => (
               <div key={item.id}>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-0.5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 space-y-0.5">
                     <p className="text-sm font-medium">
                       {formatAction(item.action)}
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground truncate">
                       {item.entityType}
                       {item.actorName && ` by ${item.actorName}`}
                     </p>
                   </div>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  <span className="shrink-0 text-xs text-muted-foreground whitespace-nowrap">
                     {formatRelative(item.createdAt)}
                   </span>
                 </div>

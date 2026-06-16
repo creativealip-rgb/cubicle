@@ -140,11 +140,13 @@ export default async function InvoicesPage() {
                       ? new Date(inv.dueDate).toLocaleDateString()
                       : "-"}
                   </TableCell>
-                  <TableCell className="text-right font-mono">
-                    {Number(inv.total).toLocaleString("en-US", {
+                  <TableCell className="text-right font-medium tabular-nums">
+                    {new Intl.NumberFormat("id-ID", {
                       style: "currency",
                       currency: inv.currency,
-                    })}
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    }).format(Number(inv.total))}
                   </TableCell>
                   <TableCell>
                     <Badge variant={statusVariant(inv.status)}>
