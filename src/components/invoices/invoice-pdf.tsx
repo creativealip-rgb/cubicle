@@ -341,9 +341,13 @@ export function InvoicePDF({ invoice, workspace, client, items }: InvoicePDFProp
             <Text style={styles.infoValue}>{formatDate(invoice.dueDate)}</Text>
           </View>
           <View>
-            <Text style={styles.infoLabel}>Amount Due</Text>
+            <Text style={styles.infoLabel}>
+              {invoice.status === "paid" ? "Paid" : invoice.status === "cancelled" ? "Cancelled" : "Amount Due"}
+            </Text>
             <Text style={styles.infoValue}>
-              {formatCurrency(total, invoice.currency)}
+              {invoice.status === "paid" || invoice.status === "cancelled"
+                ? formatCurrency(0, invoice.currency)
+                : formatCurrency(total, invoice.currency)}
             </Text>
           </View>
         </View>
