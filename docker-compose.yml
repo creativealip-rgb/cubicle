@@ -1,0 +1,106 @@
+services:
+  cubicle-pg:
+    image: postgres:16
+    container_name: cubicle-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cubicle
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${CUBICLE_DB_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+    volumes:
+      - cubicle-pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "PGPASSWORD=$$CUBICLE_DB_PASSWORD pg_isready -U postgres -d cubicle"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dokploy-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.2"
+          memory: 256M
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  cubicle:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DATABASE_URL: postgresql://postgres:${CUBICLE_DB_PASSWORD}@cubicle-pg:5432/cubicle
+        BETTER_AUTH_SECRET: ${CUBICLE_BETTER_AUTH_SECRET}
+        BETTER_AUTH_URL: ${CUBICLE_BETTER_AUTH_URL}
+        R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
+        R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+        R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+        R2_BUCKET_NAME: ${R2_BUCKET_NAME:-}
+        R2_PUBLIC_ENDPOINT: ${R2_PUBLIC_ENDPOINT:-}
+        OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+        OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+        OPENAI_COMPATIBLE_BASE_URL: ${OPENAI_COMPATIBLE_BASE_URL:-}
+        OPENAI_COMPATIBLE_API_KEY: ${OPENAI_COMPATIBLE_API_KEY:-}
+        RESEND_API_KEY: ${RESEND_API_KEY:-}
+        MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}
+        SIGNED_URL_TTL_SECONDS: ${SIGNED_URL_TTL_SECONDS:-300}
+    environment:
+      DATABASE_URL: postgresql://postgres:${CUBICLE_DB_PASSWORD}@cubicle-pg:5432/cubicle
+      BETTER_AUTH_SECRET: ${CUBICLE_BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${CUBICLE_BETTER_AUTH_URL}
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+      R2_BUCKET_NAME: ${R2_BUCKET_NAME:-}
+      R2_PUBLIC_ENDPOINT: ${R2_PUBLIC_ENDPOINT:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      OPENAI_COMPATIBLE_BASE_URL: ${OPENAI_COMPATIBLE_BASE_URL:-}
+      OPENAI_COMPATIBLE_API_KEY: ${OPENAI_COMPATIBLE_API_KEY:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}
+      SIGNED_URL_TTL_SECONDS: ${SIGNED_URL_TTL_SECONDS:-300}
+    volumes:
+      - /root/9router-public-api-key.txt:/run/secrets/9router_api_key:ro
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=dokploy-network
+      - traefik.http.routers.cubicle.rule=Host(`cubicle.168-144-37-19.sslip.io`)
+      - traefik.http.routers.cubicle.entrypoints=websecure
+      - traefik.http.routers.cubicle.tls.certresolver=letsencrypt
+      - traefik.http.services.cubicle.loadbalancer.server.port=3000
+      - traefik.http.routers.cubicle-http.rule=Host(`cubicle.168-144-37-19.sslip.io`)
+      - traefik.http.routers.cubicle-http.entrypoints=web
+      - traefik.http.routers.cubicle-http.middlewares=cubicle-https-redirect
+      - traefik.middlewares.cubicle-https-redirect.redirectscheme.scheme=https
+    depends_on:
+      cubicle-pg:
+        condition: service_healthy
+    networks:
+      - dokploy-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1G
+        reservations:
+          cpus: "0.2"
+          memory: 256M
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  cubicle-pg-data:
+    name: cubicle-pg-data
+
+networks:
+  dokploy-network:
+    external: true
