@@ -221,6 +221,14 @@ Canonical security/access docs:
 - `/root/projek/cubicle/docs/cubicle_security.md`
 - `/root/projek/cubicle/docs/cubicle_rls.ts`
 
+Supporting engineering docs:
+- `/root/projek/cubicle/docs/cubicle_env.md`
+- `/root/projek/cubicle/docs/cubicle_api_actions.md`
+- `/root/projek/cubicle/docs/cubicle_acceptance_criteria.md`
+- `/root/projek/cubicle/docs/cubicle_test_checklist.md`
+- `/root/projek/cubicle/docs/cubicle_seed.md`
+- `/root/projek/cubicle/docs/cubicle_decisions.md`
+
 No Supabase RLS. Access control is app-layer through shared guards.
 
 Internal rules:
@@ -342,6 +350,11 @@ Copy
 Canonical sprint tasks sekarang ada di:
 - `/root/projek/cubicle/docs/cubicle_dev_tasks.md`
 
+Acceptance and QA docs:
+- `/root/projek/cubicle/docs/cubicle_acceptance_criteria.md`
+- `/root/projek/cubicle/docs/cubicle_test_checklist.md`
+- `/root/projek/cubicle/docs/cubicle_seed.md`
+
 ### Sprint 1 — Setup
 - create Next.js app
 - setup Tailwind/shadcn
@@ -398,6 +411,9 @@ Canonical sprint tasks sekarang ada di:
 Canonical build prompt sekarang ada di:
 - `/root/projek/cubicle/docs/cubicle_cursor_prompt.md`
 
+Canonical UI/UX direction:
+- `/root/projek/cubicle/docs/cubicle_uiux.md`
+
 Key guardrails:
 - Do NOT use Supabase.
 - Use Neon Postgres + Drizzle + Better-Auth + Cloudflare R2.
@@ -410,18 +426,73 @@ Key guardrails:
 - Invoice totals recalc after every item mutation.
 - Appointment double-booking blocked at DB level.
 
-## 15. Next Steps
+## 15. Design & Engineering Decisions
 
-1. bikin repo
-2. install Next.js + Tailwind + shadcn/ui
-3. setup Neon Postgres
-4. setup Drizzle ORM + migrations
-5. setup Better-Auth
-6. setup Cloudflare R2 private bucket
-7. apply schema from `cubicle_schema.sql`
-8. implement access guards from `cubicle_rls.ts`
-9. build auth/workspace
-10. build client/project/task
+### Workspace Onboarding
+- after signup, redirect to `/app/onboarding`
+- user creates workspace (name + slug)
+- system auto-adds user as `owner` in `workspace_members`
+- if user already invited to workspace, show option to skip creation and enter existing workspace
+- workspace switcher: dropdown in topbar
+
+### Team Invite
+- MVP includes invite via shareable link
+- owner generates invite link with role preset
+- link opens signup/login flow, auto-joins workspace
+- email invite is Should Have (not blocking MVP)
+
+### Timer Collision
+- only one running timer per user per workspace (enforced by partial unique index)
+- starting new timer auto-stops previous running timer
+- UI shows warning before auto-stop
+
+### PDF Invoice Library
+- use `@react-pdf/renderer` — React components to PDF, no headless browser needed
+- lightweight, server-side compatible, good shadcn/ui integration pattern
+
+### Notifications (MVP minimal)
+- no realtime push in MVP
+- email notifications for critical events only:
+  - portal comment received
+  - appointment booked
+  - invoice viewed (via portal access log)
+- use simple email via Resend or nodemailer
+- in-app notification feed: phase 2
+
+### Search Scope
+- MVP: per-page filter only (search input filters current list client-side)
+- global search (cmd+k): phase 2
+- no full-text search index needed for MVP
+
+### Kanban DnD
+- use `@dnd-kit/core` + `@dnd-kit/sortable`
+- modern, accessible, maintained
+- MVP: drag task between status columns only
+- reorder within column updates `position` field
+
+### Dark Mode
+- MVP: light only
+- Tailwind dark mode classes can be added phase 2
+- no dark palette needed now
+
+### Bulk Actions
+- not MVP
+- phase 2: select multiple tasks/time entries/files for batch operations
+
+### Currency Formatting
+- use `Intl.NumberFormat` with workspace `default_currency`
+- invoice uses its own `currency` field (can differ from workspace default)
+- no multi-currency conversion — just formatting
+
+### Responsive Cards
+- tables switch to card layout below `md` breakpoint (768px)
+- card shows: primary info bold, secondary info muted, action menu
+- pattern: use `<TableCard>` wrapper that renders table on desktop, cards on mobile
+
+### Loading Pattern
+- use shadcn `Skeleton` shimmer for page loads
+- use spinner for action buttons (submit/save)
+- progressive: show shell immediately, skeleton for data areas
 
 ## 16. Original Excel Source
 

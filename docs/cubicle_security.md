@@ -50,7 +50,7 @@ Roles for MVP:
 Because stack uses Neon instead of Supabase, access control happens in app layer through shared guard helpers.
 
 Main file:
-- `/root/.hermes/cache/documents/cubicle_rls.ts`
+- `/root/projek/cubicle/docs/cubicle_rls.ts`
 
 Required guards:
 - `requireUser(user)`

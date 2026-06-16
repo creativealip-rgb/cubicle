@@ -20,6 +20,7 @@ create table if not exists workspaces (
   billing_name text,
   billing_address text,
   logo_url text,
+  booking_slug text unique,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -97,6 +98,7 @@ create table if not exists tasks (
   priority text not null default 'medium' check (priority in ('low','medium','high','urgent')),
   assignee_id text references users(id) on delete set null,
   due_date date,
+  position integer not null default 0,
   client_visible boolean not null default false,
   created_by text references users(id) on delete set null,
   created_at timestamptz not null default now(),
@@ -167,6 +169,11 @@ create table if not exists time_entries (
   updated_at timestamptz not null default now(),
   check (end_time is null or start_time is null or end_time >= start_time)
 );
+
+-- Only one running timer per user per workspace at a time.
+create unique index if not exists uniq_running_timer_per_user
+  on time_entries(workspace_id, user_id)
+  where end_time is null and start_time is not null;
 
 create table if not exists workspace_invoice_counters (
   workspace_id uuid primary key references workspaces(id) on delete cascade,

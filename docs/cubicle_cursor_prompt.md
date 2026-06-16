@@ -35,6 +35,12 @@ Use these planning files:
 - cubicle_schema.sql
 - cubicle_rls.ts
 - cubicle_security.md
+- cubicle_uiux.md
+- cubicle_env.md
+- cubicle_api_actions.md
+- cubicle_acceptance_criteria.md
+- cubicle_test_checklist.md
+- cubicle_seed.md
 
 Requirements:
 - Use clean app directory structure.

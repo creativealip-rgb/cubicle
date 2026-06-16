@@ -181,8 +181,15 @@ MVP harus membuktikan:
 ## Security Model
 
 Security detail ada di:
-- `/root/.hermes/cache/documents/cubicle_security.md`
-- `/root/.hermes/cache/documents/cubicle_rls.ts`
+- `/root/projek/cubicle/docs/cubicle_security.md`
+- `/root/projek/cubicle/docs/cubicle_rls.ts`
+
+Engineering support docs:
+- `/root/projek/cubicle/docs/cubicle_env.md`
+- `/root/projek/cubicle/docs/cubicle_api_actions.md`
+- `/root/projek/cubicle/docs/cubicle_acceptance_criteria.md`
+- `/root/projek/cubicle/docs/cubicle_test_checklist.md`
+- `/root/projek/cubicle/docs/cubicle_seed.md`
 
 Core rules:
 - tenant boundary = `workspace_id`
