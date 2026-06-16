@@ -7,6 +7,7 @@ import {
   View,
   StyleSheet,
   Font,
+  Image,
 } from "@react-pdf/renderer";
 
 Font.register({
@@ -23,171 +24,227 @@ Font.register({
   ],
 });
 
+const ACCENT = "#6366f1";
+const ACCENT_DARK = "#4f46e5";
+const TEXT = "#1e293b";
+const MUTED = "#64748b";
+const SUBTLE = "#94a3b8";
+const BORDER = "#e2e8f0";
+const ROW_ALT = "#f8fafc";
+
+const STATUS_STYLES: Record<string, { bg: string; fg: string; label: string }> = {
+  draft: { bg: "#f1f5f9", fg: "#475569", label: "DRAFT" },
+  sent: { bg: "#dbeafe", fg: "#1e40af", label: "SENT" },
+  viewed: { bg: "#fef3c7", fg: "#92400e", label: "VIEWED" },
+  paid: { bg: "#dcfce7", fg: "#166534", label: "PAID" },
+  overdue: { bg: "#fee2e2", fg: "#991b1b", label: "OVERDUE" },
+  cancelled: { bg: "#e5e7eb", fg: "#374151", label: "CANCELLED" },
+};
+
 const styles = StyleSheet.create({
   page: {
     padding: 48,
+    paddingBottom: 64, // leave room for footer
     fontFamily: "Inter",
     fontSize: 10,
-    color: "#1e293b",
+    color: TEXT,
   },
+  // Top accent stripe
+  accentBar: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 6,
+    backgroundColor: ACCENT,
+  },
+  // Header
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 32,
+    marginBottom: 28,
+    marginTop: 4,
   },
+  brandBlock: { flexDirection: "row", alignItems: "center", flex: 1 },
+  logo: { width: 44, height: 44, marginRight: 12 },
   companyName: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 700,
     color: "#0f172a",
-    marginBottom: 4,
+    marginBottom: 2,
   },
   companyAddress: {
     fontSize: 9,
-    color: "#64748b",
-    maxWidth: 220,
+    color: MUTED,
+    maxWidth: 240,
+    lineHeight: 1.4,
   },
+  invoiceMeta: { alignItems: "flex-end" },
   invoiceTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 700,
     color: "#0f172a",
-    textAlign: "right",
-    marginBottom: 4,
+    letterSpacing: 2,
+    marginBottom: 6,
   },
   invoiceNumber: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 700,
-    color: "#6366f1",
-    textAlign: "right",
+    color: ACCENT_DARK,
+    marginBottom: 6,
   },
+  statusBadge: {
+    fontSize: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+    fontWeight: 700,
+    letterSpacing: 1,
+  },
+  // Info row (issue / due / status)
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 8,
+    marginBottom: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: BORDER,
   },
   infoLabel: {
-    fontSize: 9,
-    color: "#64748b",
+    fontSize: 8,
+    color: MUTED,
     fontWeight: 700,
     textTransform: "uppercase",
-    marginBottom: 2,
+    letterSpacing: 0.6,
+    marginBottom: 3,
   },
-  infoValue: {
-    fontSize: 10,
-    color: "#1e293b",
-  },
-  billToSection: {
-    marginBottom: 24,
-    marginTop: 16,
-  },
+  infoValue: { fontSize: 10, color: TEXT, fontWeight: 700 },
+  // Bill To
+  billToSection: { marginBottom: 20 },
   billToTitle: {
-    fontSize: 10,
+    fontSize: 8,
     fontWeight: 700,
-    color: "#64748b",
+    color: MUTED,
     textTransform: "uppercase",
+    letterSpacing: 0.6,
     marginBottom: 4,
   },
   clientName: {
     fontSize: 13,
     fontWeight: 700,
     color: "#0f172a",
+    marginBottom: 2,
   },
-  clientAddress: {
-    fontSize: 10,
-    color: "#475569",
-  },
-  table: {
-    marginBottom: 24,
-  },
+  clientAddress: { fontSize: 9, color: "#475569", lineHeight: 1.4 },
+  // Table
+  table: { marginBottom: 20 },
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#f8fafc",
+    backgroundColor: ROW_ALT,
     borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
+    borderBottomColor: BORDER,
     borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
-    paddingVertical: 6,
+    borderTopColor: BORDER,
+    paddingVertical: 8,
   },
   tableRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: "#f1f5f9",
-    paddingVertical: 6,
+    paddingVertical: 8,
   },
+  tableRowAlt: { backgroundColor: "#fafbfc" },
   colDesc: { flex: 3, paddingHorizontal: 8 },
-  colQty: { flex: 1, paddingHorizontal: 8, textAlign: "right" },
+  colQty: { flex: 0.8, paddingHorizontal: 8, textAlign: "right" },
   colRate: { flex: 1.2, paddingHorizontal: 8, textAlign: "right" },
   colAmount: { flex: 1.2, paddingHorizontal: 8, textAlign: "right" },
-  headerText: { fontSize: 8, fontWeight: 700, color: "#64748b", textTransform: "uppercase" },
-  cellText: { fontSize: 9, color: "#334155" },
-  totalsSection: {
-    alignItems: "flex-end",
-    marginBottom: 24,
+  headerText: {
+    fontSize: 8,
+    fontWeight: 700,
+    color: MUTED,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
   },
+  cellText: { fontSize: 9, color: "#334155", lineHeight: 1.4 },
+  // Totals
+  totalsSection: { alignItems: "flex-end", marginBottom: 24 },
   totalRow: {
     flexDirection: "row",
     justifyContent: "flex-end",
     marginBottom: 4,
-    width: "50%",
+    width: "55%",
   },
   totalLabel: {
     fontSize: 9,
-    color: "#64748b",
+    color: MUTED,
     flex: 1,
     textAlign: "right",
-    paddingRight: 12,
+    paddingRight: 16,
   },
   totalValue: {
-    fontSize: 9,
-    color: "#1e293b",
-    width: 80,
+    fontSize: 10,
+    color: TEXT,
+    width: 90,
     textAlign: "right",
   },
   totalValueBold: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 700,
     color: "#0f172a",
-    width: 80,
+    width: 90,
     textAlign: "right",
   },
   totalBorder: {
     borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
-    paddingTop: 4,
+    borderTopColor: BORDER,
+    paddingTop: 6,
     marginTop: 4,
   },
+  // Notes & terms
   notesSection: {
-    marginTop: 24,
+    marginTop: 20,
     borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
-    paddingTop: 16,
+    borderTopColor: BORDER,
+    paddingTop: 14,
   },
   notesTitle: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: 700,
-    color: "#64748b",
+    color: MUTED,
     textTransform: "uppercase",
+    letterSpacing: 0.6,
     marginBottom: 4,
   },
-  notes: {
-    fontSize: 9,
-    color: "#475569",
-    lineHeight: 1.5,
-  },
-  statusBadge: {
+  notes: { fontSize: 9, color: "#475569", lineHeight: 1.5 },
+  // Footer
+  footer: {
+    position: "absolute",
+    bottom: 24,
+    left: 48,
+    right: 48,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: BORDER,
     fontSize: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-    alignSelf: "flex-start",
+    color: SUBTLE,
   },
+  footerLeft: { fontWeight: 700, color: MUTED, letterSpacing: 0.4 },
 });
 
 function formatCurrency(amount: number | string, currency: string): string {
   const num = typeof amount === "string" ? Number(amount) : amount;
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency || "USD",
-  }).format(num);
+  if (!Number.isFinite(num)) return "-";
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency || "USD",
+    }).format(num);
+  } catch {
+    return `${currency} ${num.toFixed(2)}`;
+  }
 }
 
 function formatDate(dateStr: string | null): string {
@@ -235,24 +292,42 @@ interface InvoicePDFProps {
 export function InvoicePDF({ invoice, workspace, client, items }: InvoicePDFProps) {
   const sub = Number(invoice.subtotal);
   const tax = Number(invoice.tax);
+  const discount = Number(invoice.discount);
   const total = Number(invoice.total);
+  const statusStyle = STATUS_STYLES[invoice.status] ?? STATUS_STYLES.draft;
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        {/* Top accent stripe */}
+        <View style={styles.accentBar} fixed />
+
         {/* Header */}
         <View style={styles.header}>
-          <View>
-            <Text style={styles.companyName}>
-              {workspace.billingName || "Company Name"}
-            </Text>
-            {workspace.billingAddress && (
-              <Text style={styles.companyAddress}>{workspace.billingAddress}</Text>
-            )}
+          <View style={styles.brandBlock}>
+            {workspace.logoUrl ? (
+              <Image src={workspace.logoUrl} style={styles.logo} />
+            ) : null}
+            <View style={{ flex: 1 }}>
+              <Text style={styles.companyName}>
+                {workspace.billingName || "Company Name"}
+              </Text>
+              {workspace.billingAddress && (
+                <Text style={styles.companyAddress}>{workspace.billingAddress}</Text>
+              )}
+            </View>
           </View>
-          <View>
+          <View style={styles.invoiceMeta}>
             <Text style={styles.invoiceTitle}>INVOICE</Text>
-            <Text style={styles.invoiceNumber}>{invoice.invoiceNumber}</Text>
+            <Text style={styles.invoiceNumber}>#{invoice.invoiceNumber}</Text>
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: statusStyle.bg, color: statusStyle.fg },
+              ]}
+            >
+              <Text style={{ color: statusStyle.fg }}>{statusStyle.label}</Text>
+            </View>
           </View>
         </View>
 
@@ -267,9 +342,9 @@ export function InvoicePDF({ invoice, workspace, client, items }: InvoicePDFProp
             <Text style={styles.infoValue}>{formatDate(invoice.dueDate)}</Text>
           </View>
           <View>
-            <Text style={styles.infoLabel}>Status</Text>
+            <Text style={styles.infoLabel}>Amount Due</Text>
             <Text style={styles.infoValue}>
-              {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+              {formatCurrency(total, invoice.currency)}
             </Text>
           </View>
         </View>
@@ -303,7 +378,10 @@ export function InvoicePDF({ invoice, workspace, client, items }: InvoicePDFProp
           </View>
 
           {items.map((item, i) => (
-            <View key={item.id || i} style={styles.tableRow}>
+            <View
+              key={item.id || i}
+              style={i % 2 === 1 ? [styles.tableRow, styles.tableRowAlt] : styles.tableRow}
+            >
               <View style={styles.colDesc}>
                 <Text style={styles.cellText}>{item.description}</Text>
               </View>
@@ -330,10 +408,18 @@ export function InvoicePDF({ invoice, workspace, client, items }: InvoicePDFProp
             <Text style={styles.totalLabel}>Subtotal</Text>
             <Text style={styles.totalValue}>{formatCurrency(sub, invoice.currency)}</Text>
           </View>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Tax</Text>
-            <Text style={styles.totalValue}>{formatCurrency(tax, invoice.currency)}</Text>
-          </View>
+          {discount > 0 && (
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Discount</Text>
+              <Text style={styles.totalValue}>-{formatCurrency(discount, invoice.currency)}</Text>
+            </View>
+          )}
+          {tax > 0 && (
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Tax</Text>
+              <Text style={styles.totalValue}>{formatCurrency(tax, invoice.currency)}</Text>
+            </View>
+          )}
           <View style={[styles.totalRow, styles.totalBorder]}>
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalValueBold}>{formatCurrency(total, invoice.currency)}</Text>
@@ -344,10 +430,10 @@ export function InvoicePDF({ invoice, workspace, client, items }: InvoicePDFProp
         {(invoice.notes || invoice.terms) && (
           <View style={styles.notesSection}>
             {invoice.notes && (
-              <>
+              <View>
                 <Text style={styles.notesTitle}>Notes</Text>
                 <Text style={styles.notes}>{invoice.notes}</Text>
-              </>
+              </View>
             )}
             {invoice.terms && (
               <View style={{ marginTop: 12 }}>
@@ -357,6 +443,16 @@ export function InvoicePDF({ invoice, workspace, client, items }: InvoicePDFProp
             )}
           </View>
         )}
+
+        {/* Footer */}
+        <View style={styles.footer} fixed>
+          <Text style={styles.footerLeft}>
+            {workspace.billingName || "Cubicle"}
+          </Text>
+          <Text
+            render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}
+          />
+        </View>
       </Page>
     </Document>
   );

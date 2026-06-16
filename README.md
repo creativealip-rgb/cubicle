@@ -72,6 +72,7 @@ R2_PUBLIC_ENDPOINT=<public-r2-url>
 
 # Email (Resend)
 RESEND_API_KEY=<your-resend-key>
+EMAIL_FROM=Cubicle <noreply@your-domain.com>   # optional, defaults to onboarding@resend.dev
 
 # AI (optional, OpenAI-compatible)
 OPENAI_COMPATIBLE_BASE_URL=https://api.example.com/v1
@@ -205,14 +206,23 @@ src/
 
 ### Database backups
 
-Recommended: nightly `pg_dump` of the cubicle database, retained 7 days.
+**Already wired on this VPS** (see `/root/scripts/cubicle_pg_backup.sh`):
+
+- Daily `pg_dump` of the cubicle database + `pg_dumpall --globals-only` for roles
+- `sha256` checksums for tamper detection
+- 7 daily + 4 weekly retention (30-day safety net)
+- Optional Telegram alert on failure (`--alert-on-fail` flag)
+- Cron: `0 19 * * *` (02:00 WIB) on the host
+- Restore-test cron: `0 20 * * 0` (Sun 03:00 WIB) — spins up throwaway
+  postgres, loads latest dump, asserts ≥10 public tables, prints row
+  counts on key tables, cleans up
+
+Manual run:
 
 ```bash
-docker exec cubicle-pg pg_dump -U postgres cubicle \
-  | gzip > /backups/cubicle-$(date +%F).sql.gz
+bash /root/scripts/cubicle_pg_backup.sh            # local backup
+bash /root/scripts/cubicle_pg_restore_test.sh     # verify latest backup
 ```
-
-See `scripts/backup-cubicle-db.sh` (todo) for full automation.
 
 ### Logs
 

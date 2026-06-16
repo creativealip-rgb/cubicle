@@ -12,6 +12,7 @@ import { eq, and, gte, lte, desc, or } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { notifyAppointmentBooked, notifyAppointmentCancelled } from "@/lib/notifications";
 
 async function getWorkspaceId(): Promise<string> {
   const [ws] = await db
@@ -182,8 +183,12 @@ export async function cancelAppointment(appointmentId: string) {
   await writeActivityLog(workspaceId, user.id, "cancelled_appointment", "appointment", appointmentId);
 
   if (apt.attendeeEmail) {
-    // Notification placeholder
-    console.log(`[NOTIFY] Appointment cancelled: ${apt.title} for ${apt.attendeeEmail}`);
+    await notifyAppointmentCancelled({
+      attendeeEmail: apt.attendeeEmail,
+      attendeeName: apt.attendeeName,
+      appointmentTitle: apt.title,
+      dateTime: apt.startTime.toISOString(),
+    });
   }
 
   return updated;
@@ -218,7 +223,7 @@ export async function createPublicAppointment(
 
   // Check workspace exists and has booking enabled
   const [ws] = await db
-    .select({ id: workspaces.id, bookingSlug: workspaces.bookingSlug })
+    .select({ id: workspaces.id, bookingSlug: workspaces.bookingSlug, name: workspaces.name })
     .from(workspaces)
     .where(eq(workspaces.id, parsed.workspaceId))
     .limit(1);
@@ -283,8 +288,14 @@ export async function createPublicAppointment(
 
   await writeActivityLog(parsed.workspaceId, null, "booked_appointment_public", "appointment", appointment.id);
 
-  // Send notification
-  console.log(`[NOTIFY] New public booking: ${parsed.title} by ${parsed.attendeeName} <${parsed.attendeeEmail}>`);
+  // Notify attendee + workspace owner
+  await notifyAppointmentBooked({
+    attendeeEmail: parsed.attendeeEmail,
+    attendeeName: parsed.attendeeName,
+    appointmentTitle: parsed.title,
+    dateTime: startTime.toISOString(),
+    workspaceName: ws.name,
+  });
 
   return appointment;
 }

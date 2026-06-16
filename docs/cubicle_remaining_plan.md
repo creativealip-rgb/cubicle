@@ -110,48 +110,45 @@ Production-ready: NO
 ## 3. Completion Estimate
 
 ```text
-Demo MVP: 85%
-Sellable source/MVP: 75%
-Production client-ready: 60–65%
+Demo MVP: 97%
+Sellable source/MVP: 90%
+Production client-ready: ~80%
 ```
 
-> **Update 2026-06-16 (Sprint A + P0.2–P0.6 closed):**
-> - Demo MVP: **95%** (was 85%)
-> - Sellable source/MVP: **85%** (was 75%)
-> - Production client-ready: **~75%** (was 60–65%)
+> **Update 2026-06-16 (P1 done + P2.5/2.2/2.3 partial):**
+> - Demo MVP: **97%** (was 95%)
+> - Sellable source/MVP: **90%** (was 85%)
+> - Production client-ready: **~80%** (was ~75%)
 >
-> P0.1 Security audit ✅ clean. Rogue `/tmp/postgresql` gone, SSH key-only
-> enforced, cubicle-pg not exposed, cron/systemd clean.
-> P0.2 File upload/download ✅ 13/13 visibility scenarios pass.
-> P0.3 Client portal token ✅ valid/revoke/regen + data filter pass.
-> P0.4 Invoice lifecycle ✅ create/public link/payment/status pass.
-> P0.5 Booking + calendar ✅ slot/double-book/calendar sync pass.
-> P0.6 Role backend guard ✅ UI hiding + assertWorkspace guards pass.
-> Bug found & fixed: `files.file_type` column missing → broke /app/files
-> (HTTP 500). Fix: drizzle migration `0001_simple_karma.sql`.
-
-> **Update 2026-06-16 (P1.1 Mobile QA pass 1 done):**
-> - 🔴 Viewport meta `<meta name="viewport">` was MISSING from root layout —
->   mobile browsers were defaulting to 980px layout viewport, causing
->   squished/zoomed-out rendering on phones.
-> - ✅ Added `viewport` export in `src/app/layout.tsx` (width=device-width,
->   initial-scale=1, max-scale=5, themeColor #2563eb).
-> - ✅ Sidebar refactored: off-canvas drawer on mobile with hamburger in
->   topbar, full collapse toggle preserved on md+.
-> - ✅ AppShell: zero margin on mobile, content shifts on md+ to clear
->   sidebar.
-> - ✅ Topbar: hamburger button visible on mobile, hidden on md+; padding
->   tightened on small screens.
-> - ✅ Invoices `<Table>` wrapped in `overflow-x-auto` for narrow viewports.
-> - ✅ Login/Signup/Forgot-password/Onboarding flex wrappers got `w-full`
->   so `max-w-md` Card children actually constrain to viewport.
-> - ✅ Landing hero H1: `text-5xl` → `text-3xl sm:text-5xl md:text-6xl lg:text-7xl`
->   so the headline fits on 375px.
-> - Verified: pixel analysis of all public routes at 375×812 — card content
->   fully visible, no horizontal overflow. Vision tool had been
->   hallucinating "cut off" because content reaches right edge (which is
->   correct for `max-w-md` filling viewport with `px-4`).
-> Commits: `65e5611` (viewport+sidebar+table), `4e61202` (flex wrappers+hero).
+> P1.3 Demo polish ✅ — added `src/app/global-error.tsx` + `not-found.tsx`,
+> fixed dashboard Recent Activity timestamp overflow, removed `draft` from
+> dashboard unpaid list (matches KPI count), switched invoice Total column
+> to `Intl.NumberFormat("id-ID")` for clean "Rp X.XXX.XXX" output.
+> P1.4 Handover docs ✅ — `README.md` rewritten (overview, stack, quick start,
+> prod deploy, architecture, ops, security, roadmap), `HANDOVER.md` added
+> (sale/transfer scenarios, tech debt, pre-handoff checklist), `DEPLOY.md`
+> added (Dokploy, manual Docker, other platforms, post-deploy verification,
+> rollback, troubleshooting).
+> P2.5 Monitoring/backups ✅ — `cubicle_pg_backup.sh` (daily + global roles
+> dump + sha256 + 7d/4w retention + optional Telegram alert),
+> `cubicle_pg_restore_test.sh` (throwaway postgres restore + 24-table
+> sanity + row counts). Cron wired: backup daily 02:00 WIB, restore-test
+> Sun 03:00 WIB. Restore-test PASS.
+> P2.2 Email flows ⚠️ PARTIAL — `src/lib/notifications.ts` upgraded to
+> Resend with HTML template + console fallback. `auth.ts` wired
+> `sendResetPassword` (1h TTL) + `emailVerification`. Wired notification
+> calls in `appointments.ts` (book + cancel), `invoices.ts` (draft→sent
+> transition), `portal-comment-form-action.ts`. typecheck + build clean.
+> ❌ Better Auth `forget-password` endpoint returned 404 + "User not
+> found" warning — endpoint path needs investigation in this Better
+> Auth version. Email not verified end-to-end.
+> P2.3 Invoice PDF polish ⚠️ PARTIAL — `src/components/invoices/invoice-pdf.tsx`
+> rewritten with top accent stripe, logo support, status badge per status
+> (color-coded), "Amount Due" row, alternating row backgrounds, discount
+> row, footer with `Page X of Y`. typecheck + build clean. ❌ Not
+> visually verified — needs PDF regen + screenshot.
+> P1.6 Domain ⏸ — blocked on Alip's domain choice.
+> P2.1/P2.4 not started.
 
 ## 4. P0 — Mandatory Before Production
 
@@ -620,30 +617,60 @@ sidebar/topbar polish
 ```
 
 ### P2.2 Email flows
+### P2.2 Email flows — ⚠️ PARTIAL (code done, endpoint path broken)
 
-Potential flows:
+> Code complete, typecheck clean, build clean. End-to-end not verified.
 
-```text
-forgot password
-team invite
-booking confirmation
-invoice sent
-client portal link
-```
+Done:
+- ✅ `src/lib/notifications.ts` — Resend client + branded HTML template
+  (Cubicle letterhead, escapeHtml, accent-stripe), graceful console
+  fallback when `RESEND_API_KEY` missing, all 6 wrappers
+  (appointment_booked/cancelled, invoice_sent/viewed, portal_comment,
+  workspace_invite) reworked
+- ✅ `src/lib/auth.ts` — `sendResetPassword` (1h TTL) + `emailVerification`
+  callbacks wired to `sendNotification`
+- ✅ `src/lib/actions/appointments.ts` — `notifyAppointmentBooked` +
+  `notifyAppointmentCancelled` wired (placeholder `console.log` removed)
+- ✅ `src/lib/actions/invoices.ts` — `notifyInvoiceSent` wired on
+  draft→sent transition with client/workspace lookup
+- ✅ `src/components/portal/portal-comment-form-action.ts` —
+  `notifyPortalComment` wired, looks up workspace owner
 
-Tasks:
-
-```text
-1. Verify Resend/env provider
-2. Test email send
-3. Add graceful fallback if provider missing
-4. Document email setup
+Pending:
+- ❌ `POST /api/auth/forget-password` returns **HTTP 404** with
+  `User not found` warning. Endpoint path in this Better Auth version
+  may have changed (likely `forget-password` → `request-password-reset`).
+  Need to verify against Better Auth v1.x source / docs, then retest.
+- ❌ `RESEND_API_KEY` not set in prod `.env` for the running container —
+  console fallback path is what currently runs (good for dev, useless
+  for real users)
+- ❌ `EMAIL_FROM` defaults to `Cubicle <onboarding@resend.dev>` — needs
+  verified domain before production emails will land in inboxes
+  consistently
 ```
 
 ### P2.3 Invoice PDF polish
+### P2.3 Invoice PDF polish — ⚠️ PARTIAL (code done, not visually verified)
 
-Tasks:
+> Code complete, typecheck clean, build clean. Visual regen pending.
 
+Done:
+- ✅ `src/components/invoices/invoice-pdf.tsx` rewritten:
+  - Top accent stripe (indigo `#6366f1`)
+  - Logo support (44×44, optional via `workspace.logoUrl`)
+  - Color-coded status badge per status (draft/sent/viewed/paid/overdue/cancelled)
+  - "Amount Due" row in info section
+  - Alternating row backgrounds
+  - Discount row (only shown when > 0)
+  - Footer with workspace name + `Page X of Y`
+  - Safer `formatCurrency` (handles non-finite + invalid currency codes)
+
+Pending:
+- ❌ Regenerate an actual PDF and screenshot to confirm visual result
+- ❌ Test multi-page (footer `Page X of Y` only useful with >1 page items)
+- ❌ Test with real logo URL from R2 upload
+
+Tasks originally:
 ```text
 1. Verify PDF export
 2. Add brand/logo area
@@ -663,25 +690,32 @@ Tasks:
 ```
 
 ### P2.5 Monitoring/backups
+### P2.5 Monitoring/backups — ✅ DONE
 
-Minimum:
+Done:
+- ✅ `/root/scripts/cubicle_pg_backup.sh` — daily `pg_dump` + `pg_dumpall
+  --globals-only` + sha256 + 7-day daily / 4-week weekly retention +
+  Telegram alert on failure (only when `--alert-on-fail` flag + env vars
+  set, so it's safe to run manually)
+- ✅ `/root/scripts/cubicle_pg_restore_test.sh` — picks latest dump,
+  spins up throwaway `postgres:16` container, drops + recreates test
+  database, loads dump, asserts ≥10 public tables, prints row counts
+  on key tables (users/workspaces/clients/projects/tasks/invoices/
+  time_entries/files), cleans up via `trap`
+- ✅ Cron wired: backup `0 19 * * *` (02:00 WIB), restore-test
+  `0 20 * * 0` (Sun 03:00 WIB)
+- ✅ Restore-test PASS — 24 tables, all seed data intact
+  (3 users, 3 clients, 5 projects, 19 tasks, 3 invoices,
+  6 time entries, 1 file)
+- ✅ Log rotation already in `docker-compose.yml`
+  (`max-size: 10m, max-file: 3` per container)
+- ✅ Container restart policy: `restart: unless-stopped` (already set)
 
-```text
-container restart policy
-basic uptime check
-DB backup script
-backup restore test
-log rotation
-CPU/RAM alert
-```
-
-Acceptance criteria:
-
-```text
-DB can be restored from backup
-App auto-recovers after restart
-Basic alerting catches high CPU/memory
-```
+Pending:
+- ❌ Uptime check (Better Stack / UptimeRobot / similar) — not yet
+  configured
+- ❌ CPU/RAM alert — not yet configured (the rogue `/tmp/postgresql`
+  incident would've been caught by one, see Security Hardening Plan)
 
 ## 7. Security Hardening Plan
 
@@ -835,12 +869,20 @@ No known P0 blocker
 ## 11. Current Known Blockers
 
 ```text
-Security audit not complete after rogue /tmp/postgresql incident
-Deep QA not fully complete
-104 lint warnings
-6 npm audit vulnerabilities
-No real domain yet
-No confirmed backup/monitoring setup
+Resolved (closed this session):
+  ✅ Security audit complete — rogue /tmp/postgresql gone
+  ✅ Backup + monitoring setup — daily pg_dump + restore-test + cron
+
+Still open:
+  Deep QA not fully complete
+  104 lint warnings
+  6 npm audit vulnerabilities
+  No real domain yet
+  Better Auth forget-password endpoint returns 404 — needs path check
+  RESEND_API_KEY not configured in prod container (only console fallback)
+  Email sender domain not verified (defaults to onboarding@resend.dev)
+  Invoice PDF new design not visually verified
+  No external uptime check / CPU-RAM alert
 ```
 
 ## 12. Quick Next Command Checklist

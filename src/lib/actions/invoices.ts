@@ -17,6 +17,7 @@ import { z } from "zod";
 import { createHash, randomBytes } from "crypto";
 import { requireUser, assertWorkspaceWritable, assertWorkspaceMember } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { notifyInvoiceSent } from "@/lib/notifications";
 
 async function getWorkspaceId(): Promise<string> {
   const [ws] = await db
@@ -163,6 +164,17 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
 
   const parsed = updateInvoiceSchema.parse(input);
 
+  // Detect draft -> sent transition so we can email the client.
+  let priorStatus: string | null = null;
+  if (parsed.status !== undefined && parsed.status === "sent") {
+    const [prev] = await db
+      .select({ status: invoices.status })
+      .from(invoices)
+      .where(eq(invoices.id, invoiceId))
+      .limit(1);
+    priorStatus = prev?.status ?? null;
+  }
+
   const updateData: Record<string, unknown> = { updatedAt: new Date() };
   if (parsed.clientId !== undefined) updateData.clientId = parsed.clientId;
   if (parsed.issueDate !== undefined) updateData.issueDate = parsed.issueDate;
@@ -181,6 +193,37 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
     .returning();
 
   await writeActivityLog(workspaceId, user.id, "updated_invoice", "invoice", invoiceId);
+
+  // Fire client email on first transition to "sent"
+  if (priorStatus === "draft" && inv.status === "sent") {
+    try {
+      const appUrl = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+      const [client] = await db
+        .select({ name: clients.name, email: clients.email })
+        .from(clients)
+        .where(eq(clients.id, inv.clientId))
+        .limit(1);
+      const [ws] = await db
+        .select({ name: workspaces.name })
+        .from(workspaces)
+        .where(eq(workspaces.id, workspaceId))
+        .limit(1);
+      if (client?.email) {
+        const portalUrl = `${appUrl}/invoice/${inv.id}`;
+        await notifyInvoiceSent({
+          clientEmail: client.email,
+          clientName: client.name ?? "there",
+          invoiceNumber: inv.invoiceNumber ?? invoiceId.slice(0, 8),
+          amount: `${inv.currency} ${inv.total}`,
+          portalUrl,
+          workspaceName: ws?.name,
+        });
+      }
+    } catch (err) {
+      console.error("[invoice-send-notify-fail]", err);
+    }
+  }
+
   return inv;
 }
 

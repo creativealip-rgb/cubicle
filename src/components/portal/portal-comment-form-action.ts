@@ -1,8 +1,10 @@
 "use server";
 
 import { db } from "@/db";
-import { comments } from "@/db/schema";
+import { comments, workspaces, users } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { notifyPortalComment } from "@/lib/notifications";
 
 const portalCommentSchema = z.object({
   entityType: z.enum(["project", "task", "file"]),
@@ -31,6 +33,27 @@ export async function createPortalComment(
       source: "portal",
     })
     .returning();
+
+  // Notify workspace owner (best-effort, never throw to caller)
+  try {
+    const [owner] = await db
+      .select({ email: users.email })
+      .from(workspaces)
+      .innerJoin(users, eq(users.id, workspaces.ownerId))
+      .where(eq(workspaces.id, parsed.workspaceId))
+      .limit(1);
+
+    if (owner?.email) {
+      await notifyPortalComment({
+        workspaceEmail: owner.email,
+        clientName: parsed.authorName,
+        entityType: parsed.entityType,
+        commentPreview: parsed.body.slice(0, 140),
+      });
+    }
+  } catch (err) {
+    console.error("[portal-comment-notify-fail]", err);
+  }
 
   return comment;
 }
