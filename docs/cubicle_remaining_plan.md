@@ -112,7 +112,7 @@ Production-ready: NO
 ```text
 Demo MVP: 99%
 Sellable source/MVP: 97%
-Production client-ready: ~91%
+Production client-ready: ~91% (P2.6 Reply-To in next sprint → ~92%)
 ```
 
 > **Update 2026-06-16 (P0 deep QA + P2.4 + P1.5 + extras):**
@@ -757,6 +757,54 @@ Pending:
 - ❌ CPU/RAM alert — not yet configured (the rogue `/tmp/postgresql`
   incident would've been caught by one, see Security Hardening Plan)
 
+### P2.6 Reply-To email header — 📋 NEXT SPRINT (Alip-approved 16 Jun)
+
+> Fast follow-up to P2.2: avoid Gmail OAuth complexity by using Resend's
+> Reply-To header. User sets their Gmail in workspace settings → all
+> outbound emails have Reply-To pointing at their address, so customer
+> replies land in their personal inbox.
+
+Why this vs Gmail OAuth send:
+
+```text
+Gmail OAuth  →  1-2 mgu code + 4-6 mgu Google verification + per-user setup
+                + restricted-scope compliance + token refresh/revoke handling
+Resend + Reply-To  →  1-2 jam code + $12 domain + zero OAuth
+                       + 80% of the perceived effect (replies still arrive)
+```
+
+Tasks:
+
+```text
+1. Buy domain (cubicle.app or similar) — Alip decision
+2. Add domain in Resend dashboard, set TXT records, wait for verify
+3. Set RESEND_API_KEY + EMAIL_FROM=noreply@<domain> in prod .env
+4. Add `reply_to_email text` column to workspaces table (Drizzle migration)
+5. Add input field in /app/settings → "Reply-to email" (email format validation)
+   - Default: empty (no Reply-To header, replies go to default)
+   - Option: auto-fill from session.user.email (skip step 5, no UI)
+6. Update src/lib/notifications.ts → read workspace.reply_to_email
+   and pass as `replyTo` to Resend (all 6 wrappers)
+7. E2E test: kirim invoice ke alip+test@gmail.com, reply, verify nyampe
+   ke Reply-To address
+```
+
+Acceptance criteria:
+
+```text
+Reply-to email field exists in workspace settings
+Outbound emails include Reply-To header when set
+Customer reply to invoice/appointment/portal notification lands in user's inbox
+Resend default fallback (no Reply-To) still works
+Empty/invalid email gracefully skipped, not crash
+```
+
+Effort: ~1-2 jam code + $12 domain + 30 min DNS setup
+Blocked by: domain purchase (P1.6, same domain satisfies both)
+Risk: low — header additive, doesn't break existing email flow
+
+---
+
 ## 7. Security Hardening Plan
 
 Immediate hardening:
@@ -881,6 +929,24 @@ no heavy build running
 5. Domain setup
 ```
 
+### Sprint E — Email Reply-To (next sprint, post-16 Jun)
+
+> Triggered by Alip's request: customer reply should land in their
+> inbox, not bounce to no-reply. Resend + Reply-To header approach
+> approved over Gmail OAuth. Blocks on P1.6 (domain purchase).
+
+```text
+1. Buy domain (cubicle.app or similar) — $12, 10 min
+2. Add domain in Resend dashboard, verify DKIM/SPF/DMARC — 30 min
+3. Set RESEND_API_KEY + EMAIL_FROM in prod .env — 5 min
+4. Add `reply_to_email` to workspaces schema (Drizzle migration) — 5 min
+5. Add input field in workspace settings — 15 min
+6. Update src/lib/notifications.ts (6 wrappers) to pass Reply-To — 15 min
+7. E2E test: send invoice to Gmail, reply, verify arrives — 15 min
+```
+
+Effort total: ~2 jam code + 45 min domain/DNS setup.
+
 ## 10. Definition of Done
 
 ### MVP sellable done
@@ -930,6 +996,8 @@ Still open:
   ⏸️ HOLD per Alip 16 Jun: External uptime + CPU/RAM alert (P2.5) — revisit when needed
   ⏸️ HOLD per Alip 16 Jun: RESEND_API_KEY prod + sender domain (P2.2) — needs API key + domain first
   Test with real logo URL from R2 upload (P2.3, not exercised yet)
+  📋 NEXT SPRINT: P2.6 Reply-To email header (Sprint E) — Alip-approved 16 Jun,
+     blocked by P1.6 (same domain purchase unblocks both P1.6 and P2.6)
 ```
 
 ## 12. Quick Next Command Checklist
