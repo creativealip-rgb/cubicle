@@ -118,8 +118,8 @@ Production client-ready: ~88%
 > **Update 2026-06-16 (P0 deep QA + P2.4 + P1.5 + extras):**
 > - Demo MVP: **99%** (unchanged — was already 99%)
 > - Sellable source/MVP: **97%** (unchanged)
-> - Production client-ready: **~89%** (was ~88% — small lift from
->   PDF route live + demo data populated + audit resolved)
+> - Production client-ready: **~90%** (was ~89% — P1.1 pass 2 + minor
+>   layout polish lifted quality gate)
 >
 > **Resolved in this continuation session (16 Jun):**
 > - P0.1 rogue /tmp/postgresql regression — confirmed gone (no rebuild)
@@ -128,12 +128,14 @@ Production client-ready: ~88%
 >   exploitable in authored-CSS pipeline)
 > - P0.8 lint cleanup — re-verified 0 warn / 0 err / tsc clean
 >   (was already cleared in commit a149097)
-> - P2.2 forget-password path — closed (SDK uses
->   /api/auth/request-password-reset, 200 OK; old /forget-password
->   was pre-1.x path, now stale)
+> - P1.1 mobile QA pass 2 — authed /app/* verified 4 viewports
+>   × 8 pages, 32/32 OK, overflow 17→1 (iPad edge case acceptable)
 > - P1.3 demo workspace polish — files 1→9 (6 client + 3 internal),
 >   time_entries 6→9 (+3 realistic, -1 stub), comments 4→8 (+4),
 >   appointments 3→2 (-1 odd Jan 2027)
+> - P2.2 forget-password path — closed (SDK uses
+>   /api/auth/request-password-reset, 200 OK; old /forget-password
+>   was pre-1.x path, now stale)
 > - P2.3 PDF visual verify — route live
 >   (GET /api/invoices/[invoiceId]/pdf), 3/3 invoices render
 >   with purple accent stripe, color-coded status badges
@@ -147,10 +149,11 @@ Production client-ready: ~88%
 > - P2.2 RESEND prod + sender domain — blocked by P1.6
 >
 > **Still open low-priority:**
-> - P1.1 mobile QA pass 2 — authed /app/* routes
 > - 1 npm audit (accepted, see P0.7 notes)
 > - workspace `billingName` not set → PDF header shows
 >   "Company Name" placeholder (cosmetic, easy seed fix)
+> - iPad 768px invoice detail table: 38px overflow (accept, table
+>   has horizontal scroll within overflow-x-auto wrapper)
 >
 > P0.6 role backend guard ✅ — `assertWorkspaceWritable` in 8 mutation
 > action files (clients/files/invoices/projects/prompts/tasks/time/appointments).
@@ -430,7 +433,7 @@ Tables/cards readable
 CTA visible
 ```
 
-**Status 2026-06-16: PASS pass 1.**
+**Status 2026-06-16: PASS pass 2.**
 
 - All public routes verified via 375×812 headless chromium screenshots
   + pixel-level overflow analysis.
@@ -442,10 +445,28 @@ CTA visible
 - Landing hero H1 scales: text-3xl on mobile → text-7xl on lg.
 - Invoices `<Table>` wrapped in `overflow-x-auto`.
 - App shell (post-auth /app/*) — sidebar hidden, hamburger visible.
-  Not yet pixel-tested on authed routes (no cookie in headless script).
-- Reminder: pass 2 needed on authed `/app/*` routes (add cookie
-  injection to headless script) before signing off P1.1 as fully
-  done.
+- Pass 2 (this session): 32/32 authed routes load (4 viewports
+  × 8 pages) with cookie injection via Better Auth API → context
+  cookie. Overflow: 17 → 1 (iPad 768px invoice detail table needs
+  horizontal scroll within overflow-x-auto wrapper, expected).
+  Key fixes:
+  - `app-shell.tsx` content area + `<main>` + topbar search form
+    all got `min-w-0` to allow flex-1 children to shrink below
+    their intrinsic content size
+  - Page header pattern `flex items-center justify-between` →
+    `flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between`
+    on 6 pages (clients/projects/tasks/files/time/invoices)
+  - Action buttons: `w-full sm:w-auto` (full-width on mobile)
+  - Time filters: From/To date inputs stack vertically on mobile,
+    span 2 cols; original grid was overflowing 90+px
+  - File list metadata row: `flex-wrap` with `truncate max-w-[X]`
+    on long mimeType and uploaderName spans
+  - Invoice detail line items: compact columns on mobile
+    (w-14/w-20/w-20/w-6 + gaps-2), restore w-20/w-28/w-28/w-10
+    + gaps-4 at sm breakpoint
+- QA script: `scripts/mobile-qa-pass2.cjs` (committed) — reusable
+  for regression testing future layout changes. Uses playwright
+  + google-chrome + Better Auth API login → cookie injection.
 
 ### P1.2 Real product screenshots for landing
 
@@ -898,7 +919,7 @@ Still open:
   ⏸️ HOLD per Alip 16 Jun: No real domain yet (P1.6) — revisit when Alip decides
   ⏸️ HOLD per Alip 16 Jun: External uptime + CPU/RAM alert (P2.5) — revisit when needed
   ⏸️ HOLD per Alip 16 Jun: RESEND_API_KEY prod + sender domain (P2.2) — needs API key + domain first
-  P1.1 mobile QA pass 2 — authed /app/* routes (cookie injection to headless script)
+  workspace billingName not seeded → PDF header shows "Company Name" (1-line SQL fix)
 ```
 
 ## 12. Quick Next Command Checklist
