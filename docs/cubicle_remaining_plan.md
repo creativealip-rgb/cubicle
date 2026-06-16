@@ -355,30 +355,16 @@ No role bypass by direct request
 >   mechanism for nested transitive deps.
 
 ### P0.8 Lint cleanup
+### P0.8 Lint cleanup — ✅ DONE (verified 2026-06-16)
 
-Current known:
-
-```text
-npm run lint PASS but 104 warnings remain
-```
-
-Tasks:
-
-```text
-Remove unused imports
-Remove unused variables
-Fix image alt warning
-Avoid suppressing real issues globally
-```
-
-Acceptance criteria:
-
-```text
-npm run lint returns 0 errors
-warnings ideally 0
-npx tsc --noEmit pass
-npx next build pass
-```
+> All checks pass clean:
+> - `pnpm lint` → 0 warnings, 0 errors
+> - `npx eslint . --max-warnings=0` → exit 0
+> - `npx tsc --noEmit` → 0 errors
+>
+> The "104 warnings" from the original plan was cleared in
+> commit `a149097 chore(security): pnpm override esbuild 0.28.1
+> + clean lint`. Current pass is a no-op re-verification.
 
 ## 5. P1 — Sellable/Handover Readiness
 
@@ -872,10 +858,10 @@ Resolved (closed this session):
   ✅ Sign-out 415 fix — custom route at /api/auth/sign-out
   ✅ P2.4 Prompt generator real test — notion/haiku-4.5, 3.8s, $0.0002
   ✅ P2.2 forget-password path closed — SDK uses /request-password-reset (200 OK)
+  ✅ P0.8 Lint cleanup — 0 warnings, 0 errors, tsc clean (re-verified)
   ✅ Backup + monitoring setup — daily pg_dump + restore-test + cron
 
 Still open:
-  104 lint warnings
   1 accepted npm audit (postcss nested in next, moderate, build-time only)
   No real domain yet
   RESEND_API_KEY not configured in prod container (only console fallback)
