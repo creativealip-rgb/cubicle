@@ -115,6 +115,44 @@ Sellable source/MVP: 75%
 Production client-ready: 60–65%
 ```
 
+> **Update 2026-06-16 (Sprint A + P0.2–P0.6 closed):**
+> - Demo MVP: **95%** (was 85%)
+> - Sellable source/MVP: **85%** (was 75%)
+> - Production client-ready: **~75%** (was 60–65%)
+>
+> P0.1 Security audit ✅ clean. Rogue `/tmp/postgresql` gone, SSH key-only
+> enforced, cubicle-pg not exposed, cron/systemd clean.
+> P0.2 File upload/download ✅ 13/13 visibility scenarios pass.
+> P0.3 Client portal token ✅ valid/revoke/regen + data filter pass.
+> P0.4 Invoice lifecycle ✅ create/public link/payment/status pass.
+> P0.5 Booking + calendar ✅ slot/double-book/calendar sync pass.
+> P0.6 Role backend guard ✅ UI hiding + assertWorkspace guards pass.
+> Bug found & fixed: `files.file_type` column missing → broke /app/files
+> (HTTP 500). Fix: drizzle migration `0001_simple_karma.sql`.
+
+> **Update 2026-06-16 (P1.1 Mobile QA pass 1 done):**
+> - 🔴 Viewport meta `<meta name="viewport">` was MISSING from root layout —
+>   mobile browsers were defaulting to 980px layout viewport, causing
+>   squished/zoomed-out rendering on phones.
+> - ✅ Added `viewport` export in `src/app/layout.tsx` (width=device-width,
+>   initial-scale=1, max-scale=5, themeColor #2563eb).
+> - ✅ Sidebar refactored: off-canvas drawer on mobile with hamburger in
+>   topbar, full collapse toggle preserved on md+.
+> - ✅ AppShell: zero margin on mobile, content shifts on md+ to clear
+>   sidebar.
+> - ✅ Topbar: hamburger button visible on mobile, hidden on md+; padding
+>   tightened on small screens.
+> - ✅ Invoices `<Table>` wrapped in `overflow-x-auto` for narrow viewports.
+> - ✅ Login/Signup/Forgot-password/Onboarding flex wrappers got `w-full`
+>   so `max-w-md` Card children actually constrain to viewport.
+> - ✅ Landing hero H1: `text-5xl` → `text-3xl sm:text-5xl md:text-6xl lg:text-7xl`
+>   so the headline fits on 375px.
+> - Verified: pixel analysis of all public routes at 375×812 — card content
+>   fully visible, no horizontal overflow. Vision tool had been
+>   hallucinating "cut off" because content reaches right edge (which is
+>   correct for `max-w-md` filling viewport with `px-4`).
+> Commits: `65e5611` (viewport+sidebar+table), `4e61202` (flex wrappers+hero).
+
 ## 4. P0 — Mandatory Before Production
 
 ### P0.1 Security audit VPS/container
@@ -387,6 +425,23 @@ Forms usable
 Tables/cards readable
 CTA visible
 ```
+
+**Status 2026-06-16: PASS pass 1.**
+
+- All public routes verified via 375×812 headless chromium screenshots
+  + pixel-level overflow analysis.
+- Viewport meta added (was missing — was the root cause of all
+  mobile squish/clipping symptoms).
+- Sidebar → off-canvas drawer on mobile (hamburger in topbar).
+- Flex wrappers (login/signup/forgot-password/onboarding) got
+  `w-full` so Card `max-w-md` children constrain to viewport.
+- Landing hero H1 scales: text-3xl on mobile → text-7xl on lg.
+- Invoices `<Table>` wrapped in `overflow-x-auto`.
+- App shell (post-auth /app/*) — sidebar hidden, hamburger visible.
+  Not yet pixel-tested on authed routes (no cookie in headless script).
+- Reminder: pass 2 needed on authed `/app/*` routes (add cookie
+  injection to headless script) before signing off P1.1 as fully
+  done.
 
 ### P1.2 Real product screenshots for landing
 
