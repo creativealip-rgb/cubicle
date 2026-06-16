@@ -50,6 +50,9 @@ services:
         RESEND_API_KEY: ${RESEND_API_KEY:-}
         MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}
         SIGNED_URL_TTL_SECONDS: ${SIGNED_URL_TTL_SECONDS:-300}
+        AI_API_KEY: ${AI_API_KEY:-}
+        AI_BASE_URL: ${AI_BASE_URL:-https://9router-168-144-37-19.sslip.io/v1}
+        AI_MODEL: ${AI_MODEL:-tr/MiniMax-M3}
     environment:
       DATABASE_URL: postgresql://postgres:${CUBICLE_DB_PASSWORD}@cubicle-pg:5432/cubicle
       BETTER_AUTH_SECRET: ${CUBICLE_BETTER_AUTH_SECRET}
@@ -66,6 +69,9 @@ services:
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}
       SIGNED_URL_TTL_SECONDS: ${SIGNED_URL_TTL_SECONDS:-300}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_BASE_URL: ${AI_BASE_URL:-https://9router-168-144-37-19.sslip.io/v1}
+      AI_MODEL: ${AI_MODEL:-tr/MiniMax-M3}
     volumes:
       - /root/9router-public-api-key.txt:/run/secrets/9router_api_key:ro
     labels:

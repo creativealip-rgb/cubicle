@@ -4,6 +4,7 @@ import { createContext, useContext, useState } from "react";
 import { cn } from "@/lib/utils";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppTopbar } from "@/components/app-topbar";
+import { AIChatPanel } from "@/components/ai/chat-panel";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -65,6 +66,7 @@ export function AppShell({ children, user, myOpenTasksCount = 0 }: AppShellProps
           <AppTopbar user={user} />
           <main className="min-w-0 flex-1 p-4 md:p-6">{children}</main>
         </div>
+        <AIChatPanel />
       </div>
     </SidebarContext.Provider>
   );
