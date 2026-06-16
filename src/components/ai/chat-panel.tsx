@@ -1,17 +1,57 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, X, Send, Loader2, AlertCircle } from "lucide-react";
+import {
+  Sparkles,
+  X,
+  Send,
+  Loader2,
+  AlertCircle,
+  Check,
+  XCircle,
+  MessageSquarePlus,
+  History,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { stripThinking } from "@/lib/ai/strip";
 
+type Role = "user" | "assistant" | "tool";
+
+type Confirmation =
+  | {
+      kind: "update_task_status";
+      taskId: string;
+      taskTitle: string;
+      currentStatus: string;
+      newStatus: string;
+      reason: string | null;
+    }
+  | {
+      kind: "draft_invoice_reminder";
+      invoiceId: string;
+      invoiceNumber: string;
+      to: string | null;
+      subject: string;
+      body: string;
+    };
+
 type Message = {
-  role: "user" | "assistant";
+  role: Role;
   content: string;
   pending?: boolean;
   error?: string;
   meta?: string;
+  confirmation?: Confirmation;
+  confirmationStatus?: "pending" | "done" | "failed";
+};
+
+type Conv = {
+  id: string;
+  title: string;
+  updatedAt: string;
+  messageCount: number;
 };
 
 const SUGGESTIONS = [
@@ -20,6 +60,8 @@ const SUGGESTIONS = [
   "What's pending for Kopi Senja?",
   "List active clients",
   "Show me open tasks",
+  "Mark the overdue task as done",
+  "Draft a reminder for INV-0001",
 ];
 
 export function AIChatPanel() {
@@ -27,10 +69,13 @@ export function AIChatPanel() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<Conv[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
-  // Autofocus input when opened
+  // Autofocus
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
@@ -41,6 +86,62 @@ export function AIChatPanel() {
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages, open]);
 
+  // Load conversation list when opened
+  useEffect(() => {
+    if (open) loadConversations();
+  }, [open]);
+
+  async function loadConversations() {
+    try {
+      const r = await fetch("/api/ai/conversations");
+      if (!r.ok) return;
+      const data = await r.json();
+      setConversations(data.conversations ?? []);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  async function loadConversation(id: string) {
+    setConversationId(id);
+    setShowHistory(false);
+    try {
+      const r = await fetch(`/api/ai/conversations?id=${id}`);
+      if (!r.ok) return;
+      const data = await r.json();
+      const loaded: Message[] = (data.messages ?? []).map(
+        (m: {
+          role: Role;
+          content: string;
+          toolName: string | null;
+        }) => ({
+          role: m.role === "tool" ? "assistant" : m.role,
+          content: m.content,
+          meta: m.toolName ?? undefined,
+        }),
+      );
+      setMessages(loaded);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function startNewChat() {
+    setConversationId(null);
+    setMessages([]);
+    setShowHistory(false);
+  }
+
+  async function deleteConversation(id: string) {
+    try {
+      await fetch(`/api/ai/conversations?id=${id}`, { method: "DELETE" });
+      if (conversationId === id) startNewChat();
+      loadConversations();
+    } catch {
+      /* ignore */
+    }
+  }
+
   async function send(text: string) {
     const trimmed = text.trim();
     if (!trimmed || busy) return;
@@ -48,7 +149,6 @@ export function AIChatPanel() {
     setInput("");
     setMessages((prev) => [...prev, { role: "user", content: trimmed }]);
     setBusy(true);
-    // placeholder assistant message
     setMessages((prev) => [
       ...prev,
       { role: "assistant", content: "", pending: true },
@@ -62,6 +162,7 @@ export function AIChatPanel() {
           messages: [...messages, { role: "user", content: trimmed }].map(
             (m) => ({ role: m.role, content: m.content }),
           ),
+          conversationId: conversationId ?? undefined,
         }),
       });
       const data = await res.json();
@@ -80,7 +181,6 @@ export function AIChatPanel() {
       const meta = data.toolCalls
         ? `${data.toolCalls} tool call${data.toolCalls === 1 ? "" : "s"}`
         : "direct";
-      // UI defense in depth: strip any leaked reasoning tags
       const cleanContent = stripThinking(data.message?.content ?? "");
       setMessages((prev) => {
         const copy = [...prev];
@@ -88,9 +188,15 @@ export function AIChatPanel() {
           role: "assistant",
           content: cleanContent || "(no content)",
           meta,
+          confirmation: data.message?.confirmation ?? undefined,
+          confirmationStatus: data.message?.confirmation ? "pending" : undefined,
         };
         return copy;
       });
+      if (data.conversationId && !conversationId) {
+        setConversationId(data.conversationId);
+        loadConversations();
+      }
     } catch (err) {
       setMessages((prev) => {
         const copy = [...prev];
@@ -104,6 +210,65 @@ export function AIChatPanel() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function confirmAction(idx: number) {
+    const msg = messages[idx];
+    if (!msg?.confirmation) return;
+
+    // Mark as executing
+    setMessages((prev) => {
+      const copy = [...prev];
+      copy[idx] = { ...copy[idx], confirmationStatus: "pending" };
+      return copy;
+    });
+
+    try {
+      const r = await fetch("/api/ai/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: msg.confirmation.kind,
+          payload: msg.confirmation,
+        }),
+      });
+      const data = await r.json();
+      if (!r.ok || !data.ok) {
+        setMessages((prev) => {
+          const copy = [...prev];
+          copy[idx] = {
+            ...copy[idx],
+            confirmationStatus: "failed",
+            error: data.error || `HTTP ${r.status}`,
+          };
+          return copy;
+        });
+        return;
+      }
+      setMessages((prev) => {
+        const copy = [...prev];
+        copy[idx] = { ...copy[idx], confirmationStatus: "done" };
+        return copy;
+      });
+    } catch (err) {
+      setMessages((prev) => {
+        const copy = [...prev];
+        copy[idx] = {
+          ...copy[idx],
+          confirmationStatus: "failed",
+          error: err instanceof Error ? err.message : "Network error",
+        };
+        return copy;
+      });
+    }
+  }
+
+  function dismissAction(idx: number) {
+    setMessages((prev) => {
+      const copy = [...prev];
+      copy[idx] = { ...copy[idx], confirmationStatus: "done" }; // hide card
+      return copy;
+    });
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -132,141 +297,306 @@ export function AIChatPanel() {
       {open && (
         <div
           className={cn(
-            "fixed bottom-4 right-4 z-50 flex flex-col overflow-hidden rounded-2xl border bg-white shadow-2xl",
-            "h-[min(560px,80vh)] w-[min(380px,calc(100vw-2rem))]",
+            "fixed bottom-4 right-4 z-50 flex overflow-hidden rounded-2xl border bg-white shadow-2xl",
+            showHistory
+              ? "h-[min(560px,80vh)] w-[min(680px,calc(100vw-2rem))]"
+              : "h-[min(560px,80vh)] w-[min(380px,calc(100vw-2rem))]",
             "md:bottom-6 md:right-6",
           )}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between gap-2 border-b bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-white">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
-              <div>
-                <p className="text-sm font-semibold leading-none">Cubicle AI</p>
-                <p className="text-[10px] text-blue-100">
-                  Workspace assistant · tr/MiniMax-M3
-                </p>
+          {/* History sidebar */}
+          {showHistory && (
+            <div className="flex w-64 flex-col border-r bg-slate-50">
+              <div className="flex items-center justify-between border-b px-3 py-2">
+                <span className="text-sm font-semibold text-slate-700">
+                  History
+                </span>
+                <button
+                  onClick={startNewChat}
+                  className="rounded-md p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
+                  aria-label="New chat"
+                  title="New chat"
+                >
+                  <MessageSquarePlus className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-2">
+                {conversations.length === 0 ? (
+                  <p className="px-2 py-4 text-center text-xs text-slate-400">
+                    No chats yet
+                  </p>
+                ) : (
+                  conversations.map((c) => (
+                    <div
+                      key={c.id}
+                      className={cn(
+                        "group flex items-center gap-1 rounded-md px-2 py-1.5 text-xs",
+                        c.id === conversationId
+                          ? "bg-blue-100 text-blue-900"
+                          : "text-slate-700 hover:bg-slate-200",
+                      )}
+                    >
+                      <button
+                        onClick={() => loadConversation(c.id)}
+                        className="flex-1 truncate text-left"
+                      >
+                        {c.title}
+                      </button>
+                      <button
+                        onClick={() => deleteConversation(c.id)}
+                        className="opacity-0 group-hover:opacity-100"
+                        aria-label="Delete"
+                      >
+                        <Trash2 className="h-3 w-3 text-slate-400 hover:text-red-500" />
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
-            <button
-              onClick={() => setOpen(false)}
-              className="rounded-md p-1 text-white/80 hover:bg-white/10 hover:text-white"
-              aria-label="Close"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
+          )}
 
-          {/* Messages */}
-          <div
-            ref={scrollRef}
-            className="flex-1 space-y-3 overflow-y-auto bg-slate-50 px-3 py-4"
-          >
-            {messages.length === 0 && (
-              <div className="space-y-3">
-                <div className="rounded-lg bg-white p-3 text-xs text-slate-600 ring-1 ring-slate-200">
-                  Hi! I can look up clients, projects, tasks, and invoices. Try
-                  one of these:
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {SUGGESTIONS.map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => send(s)}
-                      className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-                    >
-                      {s}
-                    </button>
-                  ))}
+          {/* Main chat area */}
+          <div className="flex flex-1 flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between gap-2 border-b bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-white">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                <div>
+                  <p className="text-sm font-semibold leading-none">Cubicle AI</p>
+                  <p className="text-[10px] text-blue-100">
+                    Workspace assistant · tr/MiniMax-M3
+                  </p>
                 </div>
               </div>
-            )}
-            {messages.map((m, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "flex",
-                  m.role === "user" ? "justify-end" : "justify-start",
-                )}
-              >
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setShowHistory((v) => !v)}
+                  className="rounded-md p-1 text-white/80 hover:bg-white/10 hover:text-white"
+                  aria-label="Toggle history"
+                  title="History"
+                >
+                  <History className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setOpen(false)}
+                  className="rounded-md p-1 text-white/80 hover:bg-white/10 hover:text-white"
+                  aria-label="Close"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div
+              ref={scrollRef}
+              className="flex-1 space-y-3 overflow-y-auto bg-slate-50 px-3 py-4"
+            >
+              {messages.length === 0 && (
+                <div className="space-y-3">
+                  <div className="rounded-lg bg-white p-3 text-xs text-slate-600 ring-1 ring-slate-200">
+                    Hi! I can look up clients, projects, tasks, and invoices.
+                    I can also mark tasks done or draft invoice reminders.
+                    Try one of these:
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {SUGGESTIONS.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => send(s)}
+                        className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {messages.map((m, i) => (
                 <div
+                  key={i}
                   className={cn(
-                    "max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm",
-                    m.role === "user"
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-slate-900 ring-1 ring-slate-200",
-                    m.error && "bg-red-50 ring-red-200 text-red-900",
+                    "flex",
+                    m.role === "user" ? "justify-end" : "justify-start",
                   )}
                 >
-                  {m.pending ? (
-                    <div className="flex items-center gap-2 text-slate-500">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      <span>Thinking…</span>
-                    </div>
-                  ) : m.error ? (
-                    <div className="flex items-start gap-2">
-                      <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                      <span className="text-xs">{m.error}</span>
-                    </div>
-                  ) : (
-                    <div className="whitespace-pre-wrap break-words">
-                      {m.content || (
-                        <span className="text-slate-400">(empty)</span>
-                      )}
-                    </div>
-                  )}
-                  {m.meta && !m.error && !m.pending && (
-                    <div className="mt-1 text-[10px] text-slate-400">
-                      {m.meta}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+                  <div
+                    className={cn(
+                      "max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm",
+                      m.role === "user"
+                        ? "bg-blue-600 text-white"
+                        : "bg-white text-slate-900 ring-1 ring-slate-200",
+                      m.error && "bg-red-50 ring-red-200 text-red-900",
+                    )}
+                  >
+                    {m.pending ? (
+                      <div className="flex items-center gap-2 text-slate-500">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span>Thinking…</span>
+                      </div>
+                    ) : m.error ? (
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                        <span className="text-xs">{m.error}</span>
+                      </div>
+                    ) : (
+                      <div className="whitespace-pre-wrap break-words">
+                        {m.content || (
+                          <span className="text-slate-400">(empty)</span>
+                        )}
+                      </div>
+                    )}
 
-          {/* Input */}
-          <div className="border-t bg-white p-2">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                send(input);
-              }}
-              className="flex items-end gap-2"
-            >
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={onKeyDown}
-                placeholder="Ask about clients, projects, tasks, invoices…"
-                rows={1}
-                disabled={busy}
-                className={cn(
-                  "flex-1 resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm",
-                  "focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500",
-                  "max-h-24 disabled:opacity-50",
-                )}
-              />
-              <Button
-                type="submit"
-                size="icon"
-                disabled={busy || !input.trim()}
-                className="h-9 w-9 shrink-0"
+                    {/* Confirmation card */}
+                    {m.confirmation && m.confirmationStatus === "pending" && (
+                      <ConfirmationCard
+                        conf={m.confirmation}
+                        onConfirm={() => confirmAction(i)}
+                        onDismiss={() => dismissAction(i)}
+                      />
+                    )}
+                    {m.confirmation && m.confirmationStatus === "done" && (
+                      <div className="mt-2 flex items-center gap-1 text-xs text-green-700">
+                        <Check className="h-3 w-3" />
+                        <span>Done</span>
+                      </div>
+                    )}
+                    {m.confirmation && m.confirmationStatus === "failed" && (
+                      <div className="mt-2 flex items-center gap-1 text-xs text-red-700">
+                        <XCircle className="h-3 w-3" />
+                        <span>Action failed</span>
+                      </div>
+                    )}
+
+                    {m.meta && !m.error && !m.pending && !m.confirmation && (
+                      <div className="mt-1 text-[10px] text-slate-400">
+                        {m.meta}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Input */}
+            <div className="border-t bg-white p-2">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  send(input);
+                }}
+                className="flex items-end gap-2"
               >
-                {busy ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </Button>
-            </form>
-            <p className="px-1 pt-1 text-[10px] text-slate-400">
-              Press Enter to send · Shift+Enter for newline
-            </p>
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={onKeyDown}
+                  placeholder="Ask about clients, projects, tasks, invoices…"
+                  rows={1}
+                  disabled={busy}
+                  className={cn(
+                    "flex-1 resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm",
+                    "focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500",
+                    "max-h-24 disabled:opacity-50",
+                  )}
+                />
+                <Button
+                  type="submit"
+                  size="icon"
+                  disabled={busy || !input.trim()}
+                  className="h-9 w-9 shrink-0"
+                >
+                  {busy ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
+              </form>
+              <p className="px-1 pt-1 text-[10px] text-slate-400">
+                Press Enter to send · Shift+Enter for newline
+              </p>
+            </div>
           </div>
         </div>
       )}
     </>
+  );
+}
+
+function ConfirmationCard({
+  conf,
+  onConfirm,
+  onDismiss,
+}: {
+  conf: Confirmation;
+  onConfirm: () => void;
+  onDismiss: () => void;
+}) {
+  if (conf.kind === "update_task_status") {
+    return (
+      <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+        <p className="font-semibold">Confirm action</p>
+        <p className="mt-1">
+          Change task <b>{conf.taskTitle}</b> from{" "}
+          <span className="rounded bg-amber-200 px-1.5 py-0.5">
+            {conf.currentStatus}
+          </span>{" "}
+          to{" "}
+          <span className="rounded bg-amber-200 px-1.5 py-0.5">
+            {conf.newStatus}
+          </span>
+        </p>
+        {conf.reason && (
+          <p className="mt-1 text-amber-800">Reason: {conf.reason}</p>
+        )}
+        <div className="mt-2 flex gap-2">
+          <button
+            onClick={onConfirm}
+            className="rounded-md bg-amber-600 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-700"
+          >
+            Confirm
+          </button>
+          <button
+            onClick={onDismiss}
+            className="rounded-md border border-amber-300 bg-white px-3 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+  // draft_invoice_reminder
+  return (
+    <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+      <p className="font-semibold">Confirm action — send payment reminder</p>
+      <p className="mt-1">
+        To: <b>{conf.to ?? "(no email on client)"}</b>
+      </p>
+      <p className="mt-1">
+        Subject: <b>{conf.subject}</b>
+      </p>
+      <pre className="mt-1 max-h-32 overflow-y-auto whitespace-pre-wrap rounded bg-white p-2 text-[11px] text-slate-800 ring-1 ring-amber-200">
+        {conf.body}
+      </pre>
+      <div className="mt-2 flex gap-2">
+        <button
+          onClick={onConfirm}
+          disabled={!conf.to}
+          className="rounded-md bg-amber-600 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
+        >
+          Send email
+        </button>
+        <button
+          onClick={onDismiss}
+          className="rounded-md border border-amber-300 bg-white px-3 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
   );
 }

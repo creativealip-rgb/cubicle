@@ -1,41 +1,48 @@
 /**
- * AI assistant tools (Phase 1 MVP).
+ * AI assistant tools.
  *
- * Five structured-query tools the assistant can call to retrieve
- * workspace data. Each tool returns a JSON-serializable object the
- * assistant can summarize for the user.
+ * Read tools (always allowed): list_clients, list_projects, list_tasks,
+ *   list_invoices, get_workspace_summary, list_workspace_members,
+ *   get_client, get_project, get_task, get_invoice
  *
- * Phase 2 idea: add embedding-based semantic search once 9router
- * exposes an /embeddings endpoint on this key.
+ * Action tools (user must confirm): update_task_status, draft_invoice_reminder
+ *   Action tools return a `confirmation` payload — the UI shows a
+ *   confirm card before any DB write happens.
  */
 
 import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   clients,
+  invoiceItems,
   invoices,
+  payments,
   projects,
   tasks,
+  users,
   workspaceMembers,
   workspaces,
 } from "@/db/schema";
 import type { ToolDefinition } from "./client";
 
-async function getWorkspaceId(): Promise<string> {
+let _workspaceIdCache: { id: string; slug: string; name: string } | null = null;
+async function getWorkspace(): Promise<{ id: string; slug: string; name: string }> {
+  if (_workspaceIdCache) return _workspaceIdCache;
   const [ws] = await db
-    .select({ id: workspaces.id })
+    .select({ id: workspaces.id, slug: workspaces.slug, name: workspaces.name })
     .from(workspaces)
     .where(eq(workspaces.slug, "acme-creative"))
     .limit(1);
   if (!ws) throw new Error("Workspace not found");
-  return ws.id;
+  _workspaceIdCache = ws;
+  return ws;
 }
 
-// ─── Tool implementations ──────────────────────────────────────────
+// ─── Read: list ────────────────────────────────────────────────────
 
 async function listClients(args: { status?: string; limit?: number }) {
-  const workspaceId = await getWorkspaceId();
-  const conditions = [eq(clients.workspaceId, workspaceId)];
+  const ws = await getWorkspace();
+  const conditions = [eq(clients.workspaceId, ws.id)];
   if (args.status) conditions.push(eq(clients.status, args.status as "active"));
   const rows = await db
     .select({
@@ -58,8 +65,8 @@ async function listProjects(args: {
   clientId?: string;
   limit?: number;
 }) {
-  const workspaceId = await getWorkspaceId();
-  const conditions = [eq(projects.workspaceId, workspaceId)];
+  const ws = await getWorkspace();
+  const conditions = [eq(projects.workspaceId, ws.id)];
   if (args.status)
     conditions.push(
       eq(projects.status, args.status as "draft" | "active" | "on_hold"),
@@ -87,8 +94,8 @@ async function listTasks(args: {
   dueBefore?: string;
   limit?: number;
 }) {
-  const workspaceId = await getWorkspaceId();
-  const conditions = [eq(tasks.workspaceId, workspaceId)];
+  const ws = await getWorkspace();
+  const conditions = [eq(tasks.workspaceId, ws.id)];
   if (args.status) {
     const statuses = args.status.split(",").map((s) => s.trim());
     if (statuses.length === 1) {
@@ -119,8 +126,8 @@ async function listTasks(args: {
 }
 
 async function listInvoices(args: { status?: string; limit?: number }) {
-  const workspaceId = await getWorkspaceId();
-  const conditions = [eq(invoices.workspaceId, workspaceId)];
+  const ws = await getWorkspace();
+  const conditions = [eq(invoices.workspaceId, ws.id)];
   if (args.status) {
     const statuses = args.status.split(",").map((s) => s.trim());
     if (statuses.length === 1) {
@@ -146,15 +153,14 @@ async function listInvoices(args: { status?: string; limit?: number }) {
     .where(and(...conditions))
     .orderBy(desc(invoices.issueDate))
     .limit(Math.min(args.limit ?? 20, 50));
-  // Sum totals
   const unpaidTotal = rows
-    .filter((r) => r.status !== "paid" && r.status !== "cancelled")
-    .reduce((s, r) => s + Number(r.total ?? 0), 0);
+    .filter((r: { status: string }) => r.status !== "paid" && r.status !== "cancelled")
+    .reduce((s: number, r: { total: unknown }) => s + Number(r.total ?? 0), 0);
   return { count: rows.length, unpaidTotal, invoices: rows };
 }
 
 async function getWorkspaceSummary() {
-  const workspaceId = await getWorkspaceId();
+  const ws = await getWorkspace();
   const today = new Date().toISOString().slice(0, 10);
 
   const [clientStats] = await db
@@ -163,7 +169,7 @@ async function getWorkspaceSummary() {
       active: sql<number>`count(*) filter (where ${clients.status} = 'active')::int`,
     })
     .from(clients)
-    .where(eq(clients.workspaceId, workspaceId));
+    .where(eq(clients.workspaceId, ws.id));
 
   const [projectStats] = await db
     .select({
@@ -171,7 +177,7 @@ async function getWorkspaceSummary() {
       active: sql<number>`count(*) filter (where ${projects.status} = 'active')::int`,
     })
     .from(projects)
-    .where(eq(projects.workspaceId, workspaceId));
+    .where(eq(projects.workspaceId, ws.id));
 
   const [taskStats] = await db
     .select({
@@ -180,7 +186,7 @@ async function getWorkspaceSummary() {
       overdue: sql<number>`count(*) filter (where ${tasks.dueDate} < ${today} and ${tasks.status} != 'done')::int`,
     })
     .from(tasks)
-    .where(eq(tasks.workspaceId, workspaceId));
+    .where(eq(tasks.workspaceId, ws.id));
 
   const [invoiceStats] = await db
     .select({
@@ -189,20 +195,321 @@ async function getWorkspaceSummary() {
       unpaidAmount: sql<string>`coalesce(sum(case when ${invoices.status} not in ('paid', 'cancelled') then ${invoices.total}::numeric else 0 end), 0)::text`,
     })
     .from(invoices)
-    .where(eq(invoices.workspaceId, workspaceId));
+    .where(eq(invoices.workspaceId, ws.id));
 
   const [teamSize] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(workspaceMembers)
-    .where(eq(workspaceMembers.workspaceId, workspaceId));
+    .where(eq(workspaceMembers.workspaceId, ws.id));
 
   return {
     asOf: new Date().toISOString(),
+    workspace: { id: ws.id, name: ws.name },
     clients: clientStats,
     projects: projectStats,
     tasks: taskStats,
     invoices: invoiceStats,
     teamSize: teamSize.count,
+  };
+}
+
+async function listWorkspaceMembers() {
+  const ws = await getWorkspace();
+  const rows = await db
+    .select({
+      userId: workspaceMembers.userId,
+      role: workspaceMembers.role,
+      name: users.name,
+      email: users.email,
+    })
+    .from(workspaceMembers)
+    .innerJoin(users, eq(users.id, workspaceMembers.userId))
+    .where(eq(workspaceMembers.workspaceId, ws.id));
+  return { count: rows.length, members: rows };
+}
+
+// ─── Read: entity (single) ─────────────────────────────────────────
+
+async function getClient(args: { id?: string; name?: string }) {
+  const ws = await getWorkspace();
+  if (!args.id && !args.name) {
+    return { error: "Provide either id or name" };
+  }
+  const conditions = [eq(clients.workspaceId, ws.id)];
+  if (args.id) conditions.push(eq(clients.id, args.id));
+  // Naive name match — case-insensitive contains. For "Kopi Senja" → matches.
+  if (!args.id && args.name) {
+    conditions.push(sql`${clients.name} ILIKE ${"%" + args.name + "%"}`);
+  }
+  const [row] = await db
+    .select({
+      id: clients.id,
+      name: clients.name,
+      companyName: clients.companyName,
+      email: clients.email,
+      phone: clients.phone,
+      website: clients.website,
+      address: clients.address,
+      status: clients.status,
+      tags: clients.tags,
+      internalNotes: clients.internalNotes,
+      portalEnabled: clients.portalEnabled,
+    })
+    .from(clients)
+    .where(and(...conditions))
+    .limit(1);
+  if (!row) return { found: false };
+  // Also include recent projects + open invoices for context
+  const recentProjects = await db
+    .select({
+      id: projects.id,
+      name: projects.name,
+      status: projects.status,
+      dueDate: projects.dueDate,
+    })
+    .from(projects)
+    .where(eq(projects.clientId, row.id))
+    .orderBy(desc(projects.updatedAt))
+    .limit(5);
+  const openInvoices = await db
+    .select({
+      id: invoices.id,
+      invoiceNumber: invoices.invoiceNumber,
+      status: invoices.status,
+      total: invoices.total,
+      dueDate: invoices.dueDate,
+    })
+    .from(invoices)
+    .where(
+      and(
+        eq(invoices.clientId, row.id),
+        sql`${invoices.status} not in ('paid', 'cancelled')`,
+      ),
+    )
+    .limit(10);
+  return { found: true, client: row, recentProjects, openInvoices };
+}
+
+async function getProject(args: { id?: string; name?: string }) {
+  const ws = await getWorkspace();
+  if (!args.id && !args.name) return { error: "Provide either id or name" };
+  const conditions = [eq(projects.workspaceId, ws.id)];
+  if (args.id) conditions.push(eq(projects.id, args.id));
+  if (!args.id && args.name) {
+    conditions.push(sql`${projects.name} ILIKE ${"%" + args.name + "%"}`);
+  }
+  const [row] = await db
+    .select({
+      id: projects.id,
+      name: projects.name,
+      description: projects.description,
+      status: projects.status,
+      dueDate: projects.dueDate,
+      clientId: projects.clientId,
+    })
+    .from(projects)
+    .where(and(...conditions))
+    .limit(1);
+  if (!row) return { found: false };
+  const [client] = await db
+    .select({ name: clients.name, email: clients.email })
+    .from(clients)
+    .where(eq(clients.id, row.clientId))
+    .limit(1);
+  const projectTasks = await db
+    .select({
+      id: tasks.id,
+      title: tasks.title,
+      status: tasks.status,
+      priority: tasks.priority,
+      dueDate: tasks.dueDate,
+      assigneeId: tasks.assigneeId,
+    })
+    .from(tasks)
+    .where(eq(tasks.projectId, row.id))
+    .orderBy(tasks.dueDate)
+    .limit(20);
+  return { found: true, project: row, client, tasks: projectTasks };
+}
+
+async function getTask(args: { id?: string; title?: string }) {
+  const ws = await getWorkspace();
+  if (!args.id && !args.title) return { error: "Provide either id or title" };
+  const conditions = [eq(tasks.workspaceId, ws.id)];
+  if (args.id) conditions.push(eq(tasks.id, args.id));
+  if (!args.id && args.title) {
+    conditions.push(sql`${tasks.title} ILIKE ${"%" + args.title + "%"}`);
+  }
+  const [row] = await db
+    .select({
+      id: tasks.id,
+      title: tasks.title,
+      description: tasks.description,
+      status: tasks.status,
+      priority: tasks.priority,
+      dueDate: tasks.dueDate,
+      projectId: tasks.projectId,
+      assigneeId: tasks.assigneeId,
+    })
+    .from(tasks)
+    .where(and(...conditions))
+    .limit(1);
+  if (!row) return { found: false };
+  const [project] = await db
+    .select({ name: projects.name, clientId: projects.clientId })
+    .from(projects)
+    .where(eq(projects.id, row.projectId))
+    .limit(1);
+  const [assignee] = row.assigneeId
+    ? await db
+        .select({ name: users.name, email: users.email })
+        .from(users)
+        .where(eq(users.id, row.assigneeId))
+        .limit(1)
+    : [];
+  return { found: true, task: row, project, assignee };
+}
+
+async function getInvoice(args: { id?: string; number?: string }) {
+  const ws = await getWorkspace();
+  if (!args.id && !args.number) return { error: "Provide either id or number" };
+  const conditions = [eq(invoices.workspaceId, ws.id)];
+  if (args.id) conditions.push(eq(invoices.id, args.id));
+  if (!args.id && args.number) {
+    conditions.push(eq(invoices.invoiceNumber, args.number));
+  }
+  const [row] = await db
+    .select({
+      id: invoices.id,
+      invoiceNumber: invoices.invoiceNumber,
+      status: invoices.status,
+      currency: invoices.currency,
+      subtotal: invoices.subtotal,
+      discount: invoices.discount,
+      tax: invoices.tax,
+      total: invoices.total,
+      issueDate: invoices.issueDate,
+      dueDate: invoices.dueDate,
+      notes: invoices.notes,
+      terms: invoices.terms,
+      clientId: invoices.clientId,
+    })
+    .from(invoices)
+    .where(and(...conditions))
+    .limit(1);
+  if (!row) return { found: false };
+  const [client] = await db
+    .select({ name: clients.name, email: clients.email })
+    .from(clients)
+    .where(eq(clients.id, row.clientId))
+    .limit(1);
+  // Items
+  const items = await db
+    .select({
+      description: invoiceItems.description,
+      quantity: invoiceItems.quantity,
+      unitPrice: invoiceItems.unitPrice,
+      amount: invoiceItems.amount,
+    })
+    .from(invoiceItems)
+    .where(eq(invoiceItems.invoiceId, row.id));
+  // Payments
+  const pmts = await db
+    .select({
+      amount: payments.amount,
+      paidAt: payments.paidAt,
+      method: payments.method,
+    })
+    .from(payments)
+    .where(eq(payments.invoiceId, row.id))
+    .orderBy(desc(payments.paidAt));
+  return { found: true, invoice: row, client, items, payments: pmts };
+}
+
+// ─── Action: requires user confirmation ───────────────────────────
+
+async function updateTaskStatus(args: {
+  taskId: string;
+  newStatus: "todo" | "in_progress" | "review" | "done";
+  reason?: string;
+}) {
+  const ws = await getWorkspace();
+  // Verify task belongs to workspace
+  const [task] = await db
+    .select({
+      id: tasks.id,
+      title: tasks.title,
+      status: tasks.status,
+      workspaceId: tasks.workspaceId,
+    })
+    .from(tasks)
+    .where(eq(tasks.id, args.taskId))
+    .limit(1);
+  if (!task || task.workspaceId !== ws.id) {
+    return { error: "Task not found in this workspace" };
+  }
+  if (task.status === args.newStatus) {
+    return { confirmation: null, message: `Already ${args.newStatus}, no change` };
+  }
+  // Return a confirmation payload — UI shows "Confirm?" card
+  return {
+    confirmation: {
+      kind: "update_task_status" as const,
+      taskId: task.id,
+      taskTitle: task.title,
+      currentStatus: task.status,
+      newStatus: args.newStatus,
+      reason: args.reason ?? null,
+    },
+  };
+}
+
+async function draftInvoiceReminder(args: { invoiceId: string }) {
+  const ws = await getWorkspace();
+  const [inv] = await db
+    .select({
+      id: invoices.id,
+      invoiceNumber: invoices.invoiceNumber,
+      status: invoices.status,
+      total: invoices.total,
+      currency: invoices.currency,
+      dueDate: invoices.dueDate,
+      workspaceId: invoices.workspaceId,
+      clientId: invoices.clientId,
+    })
+    .from(invoices)
+    .where(eq(invoices.id, args.invoiceId))
+    .limit(1);
+  if (!inv || inv.workspaceId !== ws.id) {
+    return { error: "Invoice not found in this workspace" };
+  }
+  if (inv.status === "paid" || inv.status === "cancelled") {
+    return { error: `Invoice is ${inv.status}, no need to chase` };
+  }
+  const [client] = await db
+    .select({ name: clients.name, email: clients.email, contactName: clients.name })
+    .from(clients)
+    .where(eq(clients.id, inv.clientId))
+    .limit(1);
+  const due = inv.dueDate ? new Date(inv.dueDate).toISOString().slice(0, 10) : "—";
+  const subject = `Friendly reminder: ${inv.invoiceNumber} (${inv.currency} ${Number(inv.total).toLocaleString()})`;
+  const body = [
+    `Hi ${client?.name ?? "there"},`,
+    ``,
+    `Just a quick note that invoice ${inv.invoiceNumber} for ${inv.currency} ${Number(inv.total).toLocaleString()} is due ${due}.`,
+    `If payment is already on its way, please ignore this. Otherwise, let me know if there's anything I can help with.`,
+    ``,
+    `Thanks!`,
+  ].join("\n");
+  return {
+    confirmation: {
+      kind: "draft_invoice_reminder" as const,
+      invoiceId: inv.id,
+      invoiceNumber: inv.invoiceNumber,
+      to: client?.email ?? null,
+      subject,
+      body,
+    },
   };
 }
 
@@ -214,16 +521,12 @@ export const TOOL_DEFS: ToolDefinition[] = [
     function: {
       name: "list_clients",
       description:
-        "List workspace clients. Returns name, company, email, status, tags. Use when user asks about clients, customers, or contacts.",
+        "List workspace clients. Returns name, company, email, status, tags.",
       parameters: {
         type: "object",
         properties: {
-          status: {
-            type: "string",
-            enum: ["active", "inactive", "archived"],
-            description: "Filter by client status. Omit for all clients.",
-          },
-          limit: { type: "number", description: "Max results (default 20, max 50)" },
+          status: { type: "string", enum: ["active", "inactive", "archived"] },
+          limit: { type: "number" },
         },
       },
     },
@@ -232,8 +535,7 @@ export const TOOL_DEFS: ToolDefinition[] = [
     type: "function",
     function: {
       name: "list_projects",
-      description:
-        "List workspace projects. Returns name, status, due date. Use for project questions.",
+      description: "List workspace projects. Use for project-level questions.",
       parameters: {
         type: "object",
         properties: {
@@ -241,7 +543,7 @@ export const TOOL_DEFS: ToolDefinition[] = [
             type: "string",
             enum: ["draft", "active", "on_hold", "completed", "cancelled"],
           },
-          clientId: { type: "string", description: "Filter by client UUID" },
+          clientId: { type: "string" },
           limit: { type: "number" },
         },
       },
@@ -251,25 +553,17 @@ export const TOOL_DEFS: ToolDefinition[] = [
     type: "function",
     function: {
       name: "list_tasks",
-      description:
-        "List workspace tasks. Returns title, status, priority, due date, project, assignee. Use for 'what's pending', 'my tasks', 'overdue tasks' etc.",
+      description: "List workspace tasks. Use for 'what's pending', 'overdue', 'my tasks' etc.",
       parameters: {
         type: "object",
         properties: {
           status: {
             type: "string",
-            description:
-              "Comma-separated statuses. Valid: todo,in_progress,review,done. Omit for all.",
+            description: "Comma-separated. Valid: todo,in_progress,review,done",
           },
           projectId: { type: "string" },
-          assigneeId: {
-            type: "string",
-            description: "User UUID. Use 'me' style only if known — pass actual id.",
-          },
-          dueBefore: {
-            type: "string",
-            description: "ISO date (YYYY-MM-DD). Returns tasks due before this date.",
-          },
+          assigneeId: { type: "string", description: "User UUID" },
+          dueBefore: { type: "string", description: "ISO date YYYY-MM-DD" },
           limit: { type: "number" },
         },
       },
@@ -279,15 +573,13 @@ export const TOOL_DEFS: ToolDefinition[] = [
     type: "function",
     function: {
       name: "list_invoices",
-      description:
-        "List workspace invoices. Returns invoice number, status, total, due date. Use for billing, outstanding, paid questions.",
+      description: "List workspace invoices. Use for billing/outstanding/paid questions.",
       parameters: {
         type: "object",
         properties: {
           status: {
             type: "string",
-            description:
-              "Comma-separated. Valid: draft,sent,viewed,paid,overdue,cancelled. Try 'sent,viewed,overdue' for unpaid.",
+            description: "Comma-separated. Valid: draft,sent,viewed,paid,overdue,cancelled. Try 'sent,viewed,overdue' for unpaid.",
           },
           limit: { type: "number" },
         },
@@ -298,9 +590,107 @@ export const TOOL_DEFS: ToolDefinition[] = [
     type: "function",
     function: {
       name: "get_workspace_summary",
-      description:
-        "High-level workspace metrics: client count, project count, open tasks, overdue tasks, unpaid invoice total, team size. Use for 'how is the business doing', 'summary', 'overview'.",
+      description: "High-level workspace metrics. Use for 'how is the business doing', 'summary'.",
       parameters: { type: "object", properties: {} },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_workspace_members",
+      description: "List team members with role, name, email. Use for 'who's on the team', 'find user <name>'.",
+      parameters: { type: "object", properties: {} },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_client",
+      description: "Get one client by id or name. Returns contact info, recent projects, open invoices.",
+      parameters: {
+        type: "object",
+        properties: {
+          id: { type: "string", description: "Client UUID" },
+          name: { type: "string", description: "Client name (partial match OK)" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_project",
+      description: "Get one project by id or name. Returns client, tasks. Use for drill-down.",
+      parameters: {
+        type: "object",
+        properties: {
+          id: { type: "string" },
+          name: { type: "string", description: "Project name (partial match OK)" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_task",
+      description: "Get one task by id or title. Returns project + assignee.",
+      parameters: {
+        type: "object",
+        properties: {
+          id: { type: "string" },
+          title: { type: "string", description: "Task title (partial match OK)" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_invoice",
+      description: "Get one invoice by id or invoice number. Returns client, items, payments.",
+      parameters: {
+        type: "object",
+        properties: {
+          id: { type: "string" },
+          number: { type: "string", description: "e.g. INV-0001" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_task_status",
+      description:
+        "Change a task's status. Returns a confirmation payload — user must confirm in UI before the write happens.",
+      parameters: {
+        type: "object",
+        properties: {
+          taskId: { type: "string" },
+          newStatus: {
+            type: "string",
+            enum: ["todo", "in_progress", "review", "done"],
+          },
+          reason: { type: "string" },
+        },
+        required: ["taskId", "newStatus"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "draft_invoice_reminder",
+      description:
+        "Draft a payment reminder email for an unpaid invoice. Returns a confirmation payload (subject + body) — user must confirm in UI. Sending happens only after user clicks Send.",
+      parameters: {
+        type: "object",
+        properties: {
+          invoiceId: { type: "string" },
+        },
+        required: ["invoiceId"],
+      },
     },
   },
 ];
@@ -310,7 +700,19 @@ export type ToolName =
   | "list_projects"
   | "list_tasks"
   | "list_invoices"
-  | "get_workspace_summary";
+  | "get_workspace_summary"
+  | "list_workspace_members"
+  | "get_client"
+  | "get_project"
+  | "get_task"
+  | "get_invoice"
+  | "update_task_status"
+  | "draft_invoice_reminder";
+
+export const ACTION_TOOLS = new Set<string>([
+  "update_task_status",
+  "draft_invoice_reminder",
+]);
 
 export async function executeTool(
   name: string,
@@ -328,6 +730,22 @@ export async function executeTool(
       return listInvoices(args as { status?: string; limit?: number });
     case "get_workspace_summary":
       return getWorkspaceSummary();
+    case "list_workspace_members":
+      return listWorkspaceMembers();
+    case "get_client":
+      return getClient(args as { id?: string; name?: string });
+    case "get_project":
+      return getProject(args as { id?: string; name?: string });
+    case "get_task":
+      return getTask(args as { id?: string; title?: string });
+    case "get_invoice":
+      return getInvoice(args as { id?: string; number?: string });
+    case "update_task_status":
+      return updateTaskStatus(
+        args as { taskId: string; newStatus: "todo" | "in_progress" | "review" | "done"; reason?: string },
+      );
+    case "draft_invoice_reminder":
+      return draftInvoiceReminder(args as { invoiceId: string });
     default:
       throw new Error(`Unknown tool: ${name}`);
   }

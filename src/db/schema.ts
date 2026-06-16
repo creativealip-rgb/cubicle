@@ -378,3 +378,36 @@ export const projectRelations = relations(projects, ({ one, many }) => ({
 export const taskRelations = relations(tasks, ({ one }) => ({
   project: one(projects, { fields: [tasks.projectId], references: [projects.id] }),
 }));
+
+// ─── AI Assistant ───
+
+export const aiConversations = pgTable("ai_conversations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull().default("New chat"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const aiMessages = pgTable("ai_messages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  conversationId: uuid("conversation_id").notNull().references(() => aiConversations.id, { onDelete: "cascade" }),
+  role: text("role", { enum: ["user", "assistant", "tool"] }).notNull(),
+  content: text("content").notNull().default(""),
+  toolCalls: jsonb("tool_calls").notNull().default(sql`'[]'::jsonb`),
+  toolName: text("tool_name"),
+  tokens: integer("tokens").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const aiConversationRelations = relations(aiConversations, ({ many }) => ({
+  messages: many(aiMessages),
+}));
+
+export const aiMessageRelations = relations(aiMessages, ({ one }) => ({
+  conversation: one(aiConversations, {
+    fields: [aiMessages.conversationId],
+    references: [aiConversations.id],
+  }),
+}));
