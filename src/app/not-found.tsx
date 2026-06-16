@@ -11,7 +11,7 @@ export default function NotFound() {
         </div>
         <h1 className="text-xl font-semibold text-slate-950">Page not found</h1>
         <p className="mt-2 text-sm text-slate-600">
-          We can't find the page you're looking for. It may have been moved or never existed.
+          We can&apos;t find the page you&apos;re looking for. It may have been moved or never existed.
         </p>
         <div className="mt-6 flex justify-center gap-2">
           <Button asChild>

@@ -306,6 +306,7 @@ export function InvoicePDF({ invoice, workspace, client, items }: InvoicePDFProp
         <View style={styles.header}>
           <View style={styles.brandBlock}>
             {workspace.logoUrl ? (
+              // eslint-disable-next-line jsx-a11y/alt-text -- @react-pdf/renderer Image has no alt prop API
               <Image src={workspace.logoUrl} style={styles.logo} />
             ) : null}
             <View style={{ flex: 1 }}>
