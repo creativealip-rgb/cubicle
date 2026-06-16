@@ -1,0 +1,1 @@
+ALTER TABLE "files" ADD COLUMN "file_type" text DEFAULT 'working_file' NOT NULL;

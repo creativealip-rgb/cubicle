@@ -8,6 +8,13 @@
       "when": 1781527523030,
       "tag": "0000_fantastic_red_wolf",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1781588836023,
+      "tag": "0001_simple_karma",
+      "breakpoints": true
     }
   ]
 }
