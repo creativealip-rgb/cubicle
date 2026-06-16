@@ -112,14 +112,14 @@ Production-ready: NO
 ```text
 Demo MVP: 99%
 Sellable source/MVP: 97%
-Production client-ready: ~88%
+Production client-ready: ~91%
 ```
 
 > **Update 2026-06-16 (P0 deep QA + P2.4 + P1.5 + extras):**
 > - Demo MVP: **99%** (unchanged — was already 99%)
 > - Sellable source/MVP: **97%** (unchanged)
-> - Production client-ready: **~90%** (was ~89% — P1.1 pass 2 + minor
->   layout polish lifted quality gate)
+> - Production client-ready: **~91%** (was ~90% — P1.1 pass 2 + minor
+>   layout polish + P2.3 PDF visual verify lifted quality gate)
 >
 > **Resolved in this continuation session (16 Jun):**
 > - P0.1 rogue /tmp/postgresql regression — confirmed gone (no rebuild)
@@ -141,7 +141,10 @@ Production client-ready: ~88%
 >   with purple accent stripe, color-coded status badges
 >   (SENT/DRAFT/PAID), line items, totals, footer with "Cubicle"
 >   + "Page X of Y". Fix: removed "use client" from
->   invoice-pdf.tsx (was breaking server render)
+>   invoice-pdf.tsx (was breaking server render). Re-verified in
+>   continuation session: multi-page (3 pages) "Page 3 of 3"
+>   footer OK, paid invoices now show "Paid" + IDR 0 instead
+>   of "Amount Due" + total. Commit 1b300a8.
 >
 > **Held per Alip 16 Jun (low priority until needed):**
 > - P2.5 external uptime + CPU/RAM alert — revisit when needed
@@ -680,9 +683,9 @@ Pending:
 ```
 
 ### P2.3 Invoice PDF polish
-### P2.3 Invoice PDF polish — ⚠️ PARTIAL (code done, not visually verified)
+### P2.3 Invoice PDF polish — ✅ DONE (verified 2026-06-16, commit 1b300a8)
 
-> Code complete, typecheck clean, build clean. Visual regen pending.
+> Code complete, typecheck clean, lint clean, visual verified.
 
 Done:
 - ✅ `src/components/invoices/invoice-pdf.tsx` rewritten:
@@ -695,10 +698,17 @@ Done:
   - Footer with workspace name + `Page X of Y`
   - Safer `formatCurrency` (handles non-finite + invalid currency codes)
 
-Pending:
-- ❌ Regenerate an actual PDF and screenshot to confirm visual result
-- ❌ Test multi-page (footer `Page X of Y` only useful with >1 page items)
-- ❌ Test with real logo URL from R2 upload
+Verified 2026-06-16 (commit 1b300a8):
+- ✅ Workspace `billing_name` seeded → PDF header shows "Acme Creative Studio"
+  (was "Company Name" placeholder)
+- ✅ Status badge color coding confirmed: DRAFT gray, SENT blue, PAID green
+- ✅ Multi-page render tested (added 30 items → INV-0002 = 3 pages, footer
+  "Page 3 of 3" + workspace name renders clean)
+- ✅ Bug fix: paid/cancelled invoices now show "Paid"/"Cancelled" label
+  + IDR 0 instead of "Amount Due" + total (was confusing on paid invoices)
+- ✅ Reverted test data — all 3 invoices back to original state
+- ✅ Rebuild + restart cubicle-cubicle-1: PDF routes still 200
+- ✅ Lint clean, tsc clean, push to main OK
 
 Tasks originally:
 ```text
@@ -919,7 +929,7 @@ Still open:
   ⏸️ HOLD per Alip 16 Jun: No real domain yet (P1.6) — revisit when Alip decides
   ⏸️ HOLD per Alip 16 Jun: External uptime + CPU/RAM alert (P2.5) — revisit when needed
   ⏸️ HOLD per Alip 16 Jun: RESEND_API_KEY prod + sender domain (P2.2) — needs API key + domain first
-  workspace billingName not seeded → PDF header shows "Company Name" (1-line SQL fix)
+  Test with real logo URL from R2 upload (P2.3, not exercised yet)
 ```
 
 ## 12. Quick Next Command Checklist
