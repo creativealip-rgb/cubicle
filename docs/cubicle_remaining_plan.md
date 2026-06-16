@@ -1048,6 +1048,20 @@ Immediate hardening:
 8. Keep system packages updated
 ```
 
+**✅ Hardening status (16 Jun 2026, P0.9 shipped):**
+
+- ✅ App container `cap_drop: [ALL]`, `cap_add: [NET_BIND_SERVICE]`, `no-new-privileges`
+- ✅ `npm install --ignore-scripts` (supply chain hardening)
+- ✅ `/api/health` endpoint with DB ping (200 ok / 503 degraded)
+- ✅ Docker healthcheck: `wget http://127.0.0.1:3000/api/health` (IPv4 explicit)
+- ✅ Security headers: HSTS preload, X-Frame-Options DENY, X-Content-Type-Options,
+  Referrer-Policy strict-origin-when-cross-origin, Permissions-Policy (no camera/mic/geo/FLoC)
+- ✅ Resource limits: app 1.5 CPU/1G mem, PG 1.0 CPU/1G mem
+- ✅ Non-root user (nextjs uid 1001)
+- ⏸ pids_limit: dropped (compose conflict with deploy.resources)
+- ⏸ fail2ban/SSH hardening: VPS-level, separate workstream
+- ⏸ DB port closure: not applicable (sibling container, no public exposure)
+
 Docker resource limits suggestion:
 
 ```yaml
