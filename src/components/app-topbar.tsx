@@ -130,8 +130,8 @@ export function AppTopbar({ user }: AppTopbarProps) {
         <Menu className="h-5 w-5" />
       </Button>
       {/* Search */}
-      <form onSubmit={handleSearch} className="relative flex-1 max-w-md">
-        <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <form onSubmit={handleSearch} className="relative min-w-0 flex-1 max-w-md">
+        <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
         <Input
           type="search"
           placeholder="Search... (Ctrl+K)"

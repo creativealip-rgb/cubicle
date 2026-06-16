@@ -52,7 +52,7 @@ export function AppShell({ children, user }: AppShellProps) {
         />
         <div
           className={cn(
-            "flex flex-1 flex-col transition-all duration-200",
+            "flex min-w-0 flex-1 flex-col transition-all duration-200",
             // Desktop: shift for sidebar width
             "md:ml-[260px]",
             collapsed && "md:ml-[68px]",
