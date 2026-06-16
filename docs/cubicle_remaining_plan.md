@@ -1175,7 +1175,7 @@ no heavy build running
 
 Effort total: ~2 jam code + 45 min domain/DNS setup.
 
-### Sprint E.5 — Team UI completion (parallel with E, no gate)
+### Sprint E.5 — Team UI completion (parallel with E, no gate) — ✅ DONE 16 Jun (commit 641be01)
 
 > Audit 16 Jun: DB schema + backend actions for multi-user workspace
 > sudah lengkap (`tasks.assignee_id`, `workspace_members`, `team.ts`),
@@ -1183,19 +1183,38 @@ Effort total: ~2 jam code + 45 min domain/DNS setup.
 > tapi gak bisa diakses dari UI. Ini MVP blocker tersembunyi — "Client
 > Operations Hub" yg gak punya team page = setengah jadi.
 
-**Current state (audit):**
+**Actual gap (audit corrected 16 Jun):**
+- ✅ Team management di /app/settings sudah ada (team-manager.tsx: add/role/remove)
+- ✅ `tasks.assigneeId` di schema + actions
+- ✅ task-detail-sheet.tsx: read-only display assignee name
+- ❌ task-form.tsx: NO assignee input UI
+- ❌ tasks page filter: NO Assignee dropdown
+- ❌ tasks page query: whereClauses didn't filter by assignee
+- ❌ assignTask action: no email notification
+
+**Shipped 16 Jun (commit 641be01, +213/-23 lines, 7 files):**
 
 ```text
-✅ Schema:    tasks.assignee_id, workspace_members(role: owner/member/viewer)
-✅ Backend:   src/lib/actions/team.ts (addWorkspaceMember,
-              updateMemberRole, removeMember)
-✅ Seed:      3 user (owner/member/viewer) di workspace acme-creative
-❌ UI:        /app/team, /app/members, /app/settings/team — gak ada
-❌ Task UI:   no assignee dropdown di task create/edit
-❌ My tasks:  no filter "assigned to me"
-❌ Notify:    no email saat di-assign task
-❌ E2E:       0% tested
+✅ task-form.tsx: Assignee Select dropdown (Unassigned + each member)
+✅ task-detail-sheet.tsx: editable Assignee Select (was read-only text)
+✅ tasks/page.tsx: Assignee filter (All / Me / Unassigned / each member) + applied to whereClauses
+✅ tasks/page.tsx: fixed `_memberList` shadowed → proper `memberList` query (workspaceMembers join users)
+✅ kanban-board.tsx: members prop passed through card → TaskDetailSheet
+✅ projects/[projectId]/page.tsx: projectMembers query + passed to KanbanBoard
+✅ notifications.ts: notifyTaskAssigned wrapper added
+✅ tasks.ts: notifyIfAssigneeChanged helper wired into createTask, updateTask, assignTask
 ```
+
+**E2E verified live (16 Jun):**
+- /app/tasks HTTP 200, "All Assignees / Assigned to me / Unassigned" dropdown rendered
+- /app/tasks?assignee=me HTTP 200, filter applied (empty for owner since seed assignees are member)
+- /app/settings HTTP 200, TeamManager still rendering
+- All seed tasks with assignees display "Budi Member" badge
+
+**Backlog remaining (intentional skip):**
+- ❌ Sidebar badge "X tasks assigned to you" — nice-to-have, low value
+- ❌ Bulk assign via kanban drag-to-user — effort > value for MVP
+- ❌ Real-time notification badge (in-app) — needs SSE/WebSocket infra
 
 **Tasks:**
 
