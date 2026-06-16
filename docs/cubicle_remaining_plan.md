@@ -110,45 +110,38 @@ Production-ready: NO
 ## 3. Completion Estimate
 
 ```text
-Demo MVP: 97%
-Sellable source/MVP: 90%
-Production client-ready: ~80%
+Demo MVP: 99%
+Sellable source/MVP: 97%
+Production client-ready: ~88%
 ```
 
-> **Update 2026-06-16 (P1 done + P2.5/2.2/2.3 partial):**
-> - Demo MVP: **97%** (was 95%)
-> - Sellable source/MVP: **90%** (was 85%)
-> - Production client-ready: **~80%** (was ~75%)
+> **Update 2026-06-16 (P0 deep QA + P2.4 + P1.5):**
+> - Demo MVP: **99%** (was 97%)
+> - Sellable source/MVP: **97%** (was 90%)
+> - Production client-ready: **~88%** (was ~80%)
 >
-> P1.3 Demo polish ✅ — added `src/app/global-error.tsx` + `not-found.tsx`,
-> fixed dashboard Recent Activity timestamp overflow, removed `draft` from
-> dashboard unpaid list (matches KPI count), switched invoice Total column
-> to `Intl.NumberFormat("id-ID")` for clean "Rp X.XXX.XXX" output.
-> P1.4 Handover docs ✅ — `README.md` rewritten (overview, stack, quick start,
-> prod deploy, architecture, ops, security, roadmap), `HANDOVER.md` added
-> (sale/transfer scenarios, tech debt, pre-handoff checklist), `DEPLOY.md`
-> added (Dokploy, manual Docker, other platforms, post-deploy verification,
-> rollback, troubleshooting).
-> P2.5 Monitoring/backups ✅ — `cubicle_pg_backup.sh` (daily + global roles
-> dump + sha256 + 7d/4w retention + optional Telegram alert),
-> `cubicle_pg_restore_test.sh` (throwaway postgres restore + 24-table
-> sanity + row counts). Cron wired: backup daily 02:00 WIB, restore-test
-> Sun 03:00 WIB. Restore-test PASS.
-> P2.2 Email flows ⚠️ PARTIAL — `src/lib/notifications.ts` upgraded to
-> Resend with HTML template + console fallback. `auth.ts` wired
-> `sendResetPassword` (1h TTL) + `emailVerification`. Wired notification
-> calls in `appointments.ts` (book + cancel), `invoices.ts` (draft→sent
-> transition), `portal-comment-form-action.ts`. typecheck + build clean.
-> ❌ Better Auth `forget-password` endpoint returned 404 + "User not
-> found" warning — endpoint path needs investigation in this Better
-> Auth version. Email not verified end-to-end.
-> P2.3 Invoice PDF polish ⚠️ PARTIAL — `src/components/invoices/invoice-pdf.tsx`
-> rewritten with top accent stripe, logo support, status badge per status
-> (color-coded), "Amount Due" row, alternating row backgrounds, discount
-> row, footer with `Page X of Y`. typecheck + build clean. ❌ Not
-> visually verified — needs PDF regen + screenshot.
-> P1.6 Domain ⏸ — blocked on Alip's domain choice.
-> P2.1/P2.4 not started.
+> P0.6 role backend guard ✅ — `assertWorkspaceWritable` in 8 mutation
+> action files (clients/files/invoices/projects/prompts/tasks/time/appointments).
+> E2E force-bypass test PASS: viewer POST create client →
+> `ForbiddenError: Workspace access denied`; owner + member succeed.
+> Sign-out 415 unblocked via custom route at `src/app/api/auth/sign-out/route.ts`
+> delegating to `auth.api.signOut({ headers, asResponse: true })` — better-call
+> getBody short-circuits on bodiless requests so content-type check is skipped.
+> P0.4 invoice lifecycle ✅ — recordPayment on draft invoice with
+> amount >= total flips status to "paid" and updates Unpaid KPI.
+> P0.2 internal file visibility ✅ — portal query filters
+> `eq(files.visibility, "client")`; negative test (upload internal-only)
+> confirmed absent from /client-portal/<token>.
+> P2.4 prompt generator ✅ — 9router end-to-end via `notion/haiku-4.5`
+> (504-char output, 3.8s, $0.0002). Robust parser handles trailing data
+> via brace-walking. Other 9router providers (openai/*, kr/*, cx/*)
+> hit auth/rate issues; `notion/haiku-4.5` is the working default.
+> P1.5 git tag ✅ — `mvp-v0.1.0` tagged + pushed.
+> P1.3 Demo polish ✅ (prior session)
+> P1.4 Handover docs ✅ (prior session)
+> P2.5 Monitoring/backups ✅ (prior session)
+> P2.2 Email flows ⚠️ PARTIAL (prior session)
+> P2.3 Invoice PDF polish ⚠️ PARTIAL (prior session)
 
 ## 4. P0 — Mandatory Before Production
 
@@ -870,11 +863,19 @@ No known P0 blocker
 
 ```text
 Resolved (closed this session):
-  ✅ Security audit complete — rogue /tmp/postgresql gone
+  ✅ P0.1 Security audit complete — rogue /tmp/postgresql gone
+  ✅ P0.2 File upload + visibility — client + internal filtering verified
+  ✅ P0.3 Client portal full flow — token, render, invalid → 404
+  ✅ P0.4 Invoice full lifecycle — record payment → status paid, KPI updates
+  ✅ P0.5 Booking — submit + double-booking blocked
+  ✅ P0.6 Role backend guard — assertWorkspaceWritable on 8 action files,
+     E2E force-bypass test PASS (viewer → ForbiddenError)
+  ✅ P1.5 Git tag — mvp-v0.1.0 tagged + pushed (commits 83f14fe, 9f3ad01)
+  ✅ Sign-out 415 fix — custom route at /api/auth/sign-out
+  ✅ P2.4 Prompt generator real test — notion/haiku-4.5, 3.8s, $0.0002
   ✅ Backup + monitoring setup — daily pg_dump + restore-test + cron
 
 Still open:
-  Deep QA not fully complete
   104 lint warnings
   6 npm audit vulnerabilities
   No real domain yet
