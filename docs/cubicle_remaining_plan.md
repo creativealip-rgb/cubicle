@@ -113,8 +113,8 @@ Production-ready: NO
 Demo MVP: 99%
 Sellable source/MVP: 97%
 Production client-ready: ~91% (P2.6 Reply-To → ~92%, P2.7 Pre-deal → ~95%,
-                              P2.8 Finance core → ~93% — note 2.7+2.8 partially
-                              overlap on "more complete product" lift)
+                              P2.8 Finance core → ~93%, Sprint E.5 Team UI
+                              → ~93% — closes hidden MVP gap)
 ```
 
 > **Update 2026-06-16 (P0 deep QA + P2.4 + P1.5 + extras):**
@@ -1175,6 +1175,87 @@ no heavy build running
 
 Effort total: ~2 jam code + 45 min domain/DNS setup.
 
+### Sprint E.5 — Team UI completion (parallel with E, no gate)
+
+> Audit 16 Jun: DB schema + backend actions for multi-user workspace
+> sudah lengkap (`tasks.assignee_id`, `workspace_members`, `team.ts`),
+> tapi **UI belum ada**. Seed punya 3 user (owner Alex + member + viewer)
+> tapi gak bisa diakses dari UI. Ini MVP blocker tersembunyi — "Client
+> Operations Hub" yg gak punya team page = setengah jadi.
+
+**Current state (audit):**
+
+```text
+✅ Schema:    tasks.assignee_id, workspace_members(role: owner/member/viewer)
+✅ Backend:   src/lib/actions/team.ts (addWorkspaceMember,
+              updateMemberRole, removeMember)
+✅ Seed:      3 user (owner/member/viewer) di workspace acme-creative
+❌ UI:        /app/team, /app/members, /app/settings/team — gak ada
+❌ Task UI:   no assignee dropdown di task create/edit
+❌ My tasks:  no filter "assigned to me"
+❌ Notify:    no email saat di-assign task
+❌ E2E:       0% tested
+```
+
+**Tasks:**
+
+```text
+1. /app/team page                                  2-3 hari
+   - List members + role badges
+   - Invite by email (create user or link existing)
+   - Update role (owner only)
+   - Remove member (owner only, can't remove self)
+   - "Pending invites" list
+
+2. Task assignee selector                          2-3 hari
+   - Dropdown di task create/edit form
+   - Shows workspace members
+   - Search/filter
+   - Optional: bulk assign (kanban drag-to-user)
+
+3. "My tasks" view + filter                        1-2 hari
+   - /app/tasks?assignee=me
+   - /app/tasks?assignee=<userId> for managers
+   - Badge counter di sidebar ("3 tasks assigned to you")
+
+4. Notification on assignment                      1 hari
+   - Reuses notifications.ts (P2.6 Reply-To)
+   - Email: "You were assigned 'Logo revision' by Alex"
+   - In-app notification (future)
+
+5. E2E test (manual + 1-2 Playwright)              1 hari
+   - Owner invite member → member gets email → accepts → task assign → member sees in "my tasks"
+```
+
+**Acceptance criteria:**
+
+```text
+Owner can invite user by email
+Member can see all assigned tasks
+Member can see only their tasks via filter
+Viewer cannot assign (already enforced via assertWorkspaceWritable)
+Email sent to assignee on new task assignment
+UI shows team page at /app/team
+Role badges (owner/member/viewer) visible in UI
+```
+
+**Effort: 1-1.5 minggu (5-7 hari kerja)**
+
+**Why parallel, not gated:**
+- No ICP decision needed (pure existing feature completion)
+- Schema + backend udah ready (50% work done)
+- Demo blocker — currently demo cuma 1-user workflow
+- Alip-approved 16 Jun as next-sprint parallel
+
+**Strategic:** after this + P2.6 Reply-To + existing features, Cubicle punya
+team workflow lengkap. Baru bisa demo "3-user agency workflow" ke prospect
+secara convincing.
+
+**When to ship:** immediately after Sprint E (P2.6 Reply-To) finishes,
+or parallel if 2 dev streams.
+
+---
+
 ## 10. Definition of Done
 
 ### MVP sellable done
@@ -1228,6 +1309,9 @@ Still open:
   Test with real logo URL from R2 upload (P2.3, not exercised yet)
   📋 NEXT SPRINT: P2.6 Reply-To email header (Sprint E) — Alip-approved 16 Jun,
      blocked by P1.6 (same domain purchase unblocks both P1.6 and P2.6)
+  📋 NEXT SPRINT (parallel): Sprint E.5 Team UI completion (1-1.5 mgu) —
+     Alip-approved 16 Jun, not gated, no ICP dependency. Closes hidden MVP
+     gap: backend + schema already support multi-user but UI doesn't expose it.
   📋 PLANNED: P2.7 Pre-deal workflow (Proposal + Questionnaire + Contract) —
      Alip-approved 16 Jun, gated on ICP decision, ~4-8 minggu depending on
      e-sig path (in-house vs DocuSign/HelloSign embed)
