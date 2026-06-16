@@ -325,38 +325,34 @@ UI hides restricted controls
 Backend blocks restricted mutation
 No role bypass by direct request
 ```
-
 ### P0.7 npm audit vulnerabilities
+### P0.7 npm audit vulnerabilities — ⚠️ 1 ACCEPTED (was 6)
 
-Current known:
-
-```text
-6 vulnerabilities
-4 moderate
-2 high
-```
-
-Tasks:
-
-```bash
-npm audit
-npm audit --json > docs/npm-audit-report.json
-```
-
-Rules:
-
-```text
-Do not run npm audit fix --force blindly
-Prefer safe minor/patch upgrade
-Document accepted vulnerabilities if not exploitable
-```
-
-Acceptance criteria:
-
-```text
-0 high vulnerabilities OR documented exception
-No breaking dependency upgrade without test/build pass
-```
+> Status 2026-06-16: **5 of 6 fixed**, 1 accepted with documented reason.
+>
+> **Fixed by `overrides` in `package.json`:**
+> - esbuild ^0.28.1 (overrides top-level)
+> - @esbuild-kit/core-utils (transitive, esbuild)
+> - @esbuild-kit/esm-loader (transitive)
+> - better-auth high-vuln entry (drizzle-kit chained)
+> - drizzle-kit high-vuln entry
+>
+> **Remaining 1 (ACCEPTED):**
+> - **postcss <8.5.10** (XSS via unescaped `</style>` in CSS
+>   stringify — moderate, build-time only)
+> - Path: `.>next>postcss` + `.>better-auth>next>postcss`
+> - Reason accepted: `next@16.2.9` is the latest stable Next.js
+>   version available and pins postcss@8.4.31 as a nested dep.
+>   pnpm 11 deprecated the `pnpm.overrides` field that was the
+>   standard escape hatch; current options to fully fix it
+>   (`pnpm.packageExtensions`, lockfile patches) carry non-trivial
+>   risk of breaking Next's CSS pipeline. The vulnerability is in
+>   CSS stringification during build, not in any user-facing
+>   runtime path. Cubicle's CSS is fully authored (Tailwind v4),
+>   no user-controlled CSS input, so exploitability is zero.
+> - Re-evaluate when: Next.js ships a release that drops the
+>   nested postcss pin, OR pnpm reintroduces a working override
+>   mechanism for nested transitive deps.
 
 ### P0.8 Lint cleanup
 
@@ -630,10 +626,12 @@ Done:
   `notifyPortalComment` wired, looks up workspace owner
 
 Pending:
-- ❌ `POST /api/auth/forget-password` returns **HTTP 404** with
-  `User not found` warning. Endpoint path in this Better Auth version
-  may have changed (likely `forget-password` → `request-password-reset`).
-  Need to verify against Better Auth v1.x source / docs, then retest.
+- ✅ `POST /api/auth/request-password-reset` (Better Auth 1.6.18 path)
+  returns **HTTP 200** with standard `{status:true, message:...}` body.
+  `/forget-password` was the pre-1.x path and returns 404, but the
+  client forms use `authClient.requestPasswordReset()` / `.resetPassword()`
+  which target the correct path automatically. Both `/forgot-password`
+  and `/reset-password` pages render 200. Item **closed**.
 - ❌ `RESEND_API_KEY` not set in prod `.env` for the running container —
   console fallback path is what currently runs (good for dev, useless
   for real users)
@@ -873,13 +871,13 @@ Resolved (closed this session):
   ✅ P1.5 Git tag — mvp-v0.1.0 tagged + pushed (commits 83f14fe, 9f3ad01)
   ✅ Sign-out 415 fix — custom route at /api/auth/sign-out
   ✅ P2.4 Prompt generator real test — notion/haiku-4.5, 3.8s, $0.0002
+  ✅ P2.2 forget-password path closed — SDK uses /request-password-reset (200 OK)
   ✅ Backup + monitoring setup — daily pg_dump + restore-test + cron
 
 Still open:
   104 lint warnings
-  6 npm audit vulnerabilities
+  1 accepted npm audit (postcss nested in next, moderate, build-time only)
   No real domain yet
-  Better Auth forget-password endpoint returns 404 — needs path check
   RESEND_API_KEY not configured in prod container (only console fallback)
   Email sender domain not verified (defaults to onboarding@resend.dev)
   Invoice PDF new design not visually verified
