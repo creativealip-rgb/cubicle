@@ -195,16 +195,62 @@ export async function generatePrompt(
       throw new Error(`OpenAI API error: ${response.status} ${errBody}`);
     }
 
-    const rawText = await response.text();
-    const chunks = rawText
+    const rawText = (await response.text()).trimEnd();
+    // Try SSE parsing first; fall back to plain JSON; strip any trailing noise.
+    const dataLines = rawText
       .split("\n")
-      .filter((line) => line.startsWith("data: "))
-      .map((line) => line.slice(6).trim())
-      .filter((line) => line && line !== "[DONE]");
-    const data = chunks.length > 0 ? JSON.parse(chunks.at(-1) || "{}") : JSON.parse(rawText);
+      .map((l) => l.trim())
+      .filter((l) => l.startsWith("data:"))
+      .map((l) => l.slice(5).trim())
+      .filter((l) => l && l !== "[DONE]");
+
+    let data: { choices?: Array<{ message?: { content?: string }; delta?: { content?: string } }>; usage?: { prompt_tokens?: number; completion_tokens?: number } } = {};
+    if (dataLines.length > 0) {
+      // Use the LAST valid data line (SSE final chunk has finish_reason).
+      for (let i = dataLines.length - 1; i >= 0; i--) {
+        try {
+          data = JSON.parse(dataLines[i]);
+          break;
+        } catch {
+          /* try previous line */
+        }
+      }
+    } else {
+      // Plain JSON response: extract first complete JSON object, ignore trailing data.
+      const firstBrace = rawText.indexOf("{");
+      if (firstBrace < 0) {
+        throw new Error("No JSON object found in response");
+      }
+      // Walk braces to find the end of the first top-level JSON object.
+      let depth = 0;
+      let inString = false;
+      let escape = false;
+      let endIdx = -1;
+      for (let i = firstBrace; i < rawText.length; i++) {
+        const ch = rawText[i];
+        if (escape) { escape = false; continue; }
+        if (inString) {
+          if (ch === "\\") { escape = true; continue; }
+          if (ch === '"') { inString = false; }
+          continue;
+        }
+        if (ch === '"') { inString = true; continue; }
+        if (ch === "{") depth++;
+        else if (ch === "}") {
+          depth--;
+          if (depth === 0) { endIdx = i + 1; break; }
+        }
+      }
+      const jsonSlice = endIdx > 0 ? rawText.slice(firstBrace, endIdx) : rawText.slice(firstBrace);
+      try {
+        data = JSON.parse(jsonSlice);
+      } catch (e) {
+        throw new Error(`Failed to parse LLM response JSON: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
     const generatedOutput =
       data.choices?.[0]?.message?.content ??
-      chunks
+      dataLines
         .map((chunk) => {
           try {
             return JSON.parse(chunk).choices?.[0]?.delta?.content ?? "";
