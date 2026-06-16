@@ -112,7 +112,8 @@ Production-ready: NO
 ```text
 Demo MVP: 99%
 Sellable source/MVP: 97%
-Production client-ready: ~91% (P2.6 Reply-To in next sprint → ~92%)
+Production client-ready: ~91% (P2.6 Reply-To in next sprint → ~92%,
+                              P2.7 Pre-deal in pipeline → ~95% if shipped)
 ```
 
 > **Update 2026-06-16 (P0 deep QA + P2.4 + P1.5 + extras):**
@@ -803,6 +804,111 @@ Effort: ~1-2 jam code + $12 domain + 30 min DNS setup
 Blocked by: domain purchase (P1.6, same domain satisfies both)
 Risk: low — header additive, doesn't break existing email flow
 
+### P2.7 Pre-deal workflow — Proposal + Questionnaire + Contract (Alip-approved 16 Jun)
+
+> Closes the gap vs HoneyBook / Bonsai / 17hats / Dubsado, all of which
+> have full pre-deal chain (proposal → contract → intake). Cubicle currently
+> covers only post-deal (booking → invoice → portal). 3 interlocked features
+> that form one workflow.
+
+**Why this matters:** without these 3, freelancer can only manage existing
+client work — no tooling for *acquiring* new clients through the product.
+Every Indonesian competitor (Jurnal, Moka, Mekari) targets different segment
+so this is whitespace; global competitors own the segment but are English/USD.
+
+#### P2.7.1 Proposal
+
+Send a price + scope + timeline document to a prospective client. On accept,
+auto-create a project + down-payment invoice.
+
+Tasks:
+
+```text
+1. `proposals` table (id, workspace_id, client_id, template_id, line_items jsonb,
+   total, status, valid_until, shared_token, accept_at, decline_at)
+2. `proposal_templates` table (workspace_id, name, body_markdown, default_items)
+3. `/app/proposals` list + create/edit page
+4. Public route `/proposal/[token]` → render branded doc, Accept/Decline buttons
+5. On accept: create `projects` row + `invoices` row (50% down payment) + activity log
+6. On decline: status → declined, log reason (optional note)
+7. Email notification (reuses P2.6 Reply-To)
+```
+
+Effort: 1-2 minggu
+Risk: medium (template system + state machine has edge cases)
+
+#### P2.7.2 Questionnaire (Client Intake)
+
+Form builder → send to client → responses become project brief.
+
+Tasks:
+
+```text
+1. `questionnaires` table (id, workspace_id, name, schema jsonb)
+2. `questionnaire_responses` (id, questionnaire_id, client_id, answers jsonb, submitted_at)
+3. `/app/questionnaires` list + form builder UI (text/textarea/select/multi-choice/file)
+4. Public route `/intake/[token]` → fill form
+5. On submit: answers stored + linked to project (post-creation) or stored as "pending brief"
+6. Email notification to workspace owner
+```
+
+Effort: 1-2 minggu
+Risk: medium (form builder UI takes time, schema validation tricky)
+
+#### P2.7.3 Contract (E-signature)
+
+Template + send → client signs → audit trail + signed PDF stored.
+
+Tasks:
+
+```text
+1. `contracts` table (id, workspace_id, client_id, template_id, body, status,
+   signature_data_url, signed_at, ip_address, user_agent)
+2. `contract_templates` table (workspace_id, name, body_markdown, variables)
+3. `/app/contracts` list + template manager
+4. Public route `/contract/[token]` → render doc, sign button, draw signature pad
+5. On sign: capture data URL + IP + UA, generate signed PDF (reuse @react-pdf/renderer),
+   store in R2, lock the contract
+6. Activity log + email notification
+```
+
+Effort: 2-3 minggu
+Risk: high (legal weight — needs audit trail, IP/UA capture, PDF tamper-resistance;
+or use DocuSign/HelloSign embed which is faster but $20-50/mo per workspace)
+
+#### Combined acceptance criteria
+
+```text
+Proposal → accepted → project + invoice auto-created
+Questionnaire → submitted → answers visible in project brief
+Contract → signed → audit trail + signed PDF in R2
+All 3 send via Reply-To email (P2.6)
+Public routes work in incognito (token-based, no account)
+```
+
+#### Combined effort
+
+```text
+Naive (build all from scratch):  ~6-8 minggu
+With DocuSign embed for contract: ~4-5 minggu (saves 1-2 mgu)
+With HelloSign embed: same, ~$25/mo per workspace
+```
+
+#### When to ship
+
+```text
+Phase 1 (MVP+):  Proposal + Questionnaire  — 3-4 minggu
+Phase 2 (Pro):    Contract (e-sig)         — 2-3 minggu (or DocuSign embed)
+```
+
+#### Strategic note
+
+These 3 features only matter if Cubicle targets *new-client-acquisition-heavy*
+freelancers (designers, agencies, coaches). For *repeat-client* freelancers
+(1-2 long-term clients), Proposal/Questionnaire are bloat — current
+booking → invoice flow is enough. **Pick ICP first** (per A/B/C discussion),
+then commit to P2.7 phases.
+
 ---
 
 ## 7. Security Hardening Plan
@@ -995,9 +1101,14 @@ Still open:
   ⏸️ HOLD per Alip 16 Jun: No real domain yet (P1.6) — revisit when Alip decides
   ⏸️ HOLD per Alip 16 Jun: External uptime + CPU/RAM alert (P2.5) — revisit when needed
   ⏸️ HOLD per Alip 16 Jun: RESEND_API_KEY prod + sender domain (P2.2) — needs API key + domain first
+  ⏸️ HOLD per Alip 16 Jun: Payment gateway decision (Midtrans/Xendit/Stripe) — blocks pricing + onboarding + self-serve billing
+  ⏸️ HOLD per Alip 16 Jun: ICP decision (A/B/C/D) — blocks P2.7 scope commitment
   Test with real logo URL from R2 upload (P2.3, not exercised yet)
   📋 NEXT SPRINT: P2.6 Reply-To email header (Sprint E) — Alip-approved 16 Jun,
      blocked by P1.6 (same domain purchase unblocks both P1.6 and P2.6)
+  📋 PLANNED: P2.7 Pre-deal workflow (Proposal + Questionnaire + Contract) —
+     Alip-approved 16 Jun, gated on ICP decision, ~4-8 minggu depending on
+     e-sig path (in-house vs DocuSign/HelloSign embed)
 ```
 
 ## 12. Quick Next Command Checklist
