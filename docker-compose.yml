@@ -84,6 +84,12 @@ services:
         condition: service_healthy
     networks:
       - dokploy-network
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
     deploy:
       resources:
         limits:
@@ -92,6 +98,12 @@ services:
         reservations:
           cpus: "0.2"
           memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
     logging:
       options:
         max-size: "10m"
