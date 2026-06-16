@@ -11,6 +11,7 @@ import {
   LogOut,
   Settings,
   HelpCircle,
+  Menu,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
+import { useSidebar } from "@/components/app-shell";
 
 interface AppTopbarProps {
   user: {
@@ -60,6 +62,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
   const [search, setSearch] = useState("");
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
   const [elapsed, setElapsed] = useState("00:00");
+  const { setMobileOpen } = useSidebar();
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -115,7 +118,17 @@ export function AppTopbar({ user }: AppTopbarProps) {
     .slice(0, 2);
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4">
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background px-3 md:gap-4 md:px-4">
+      {/* Mobile hamburger */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-9 w-9 shrink-0 md:hidden"
+        onClick={() => setMobileOpen(true)}
+        aria-label="Open menu"
+      >
+        <Menu className="h-5 w-5" />
+      </Button>
       {/* Search */}
       <form onSubmit={handleSearch} className="relative flex-1 max-w-md">
         <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

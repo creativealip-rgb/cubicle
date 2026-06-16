@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
@@ -13,8 +13,15 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#2563eb",
+};
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://cubicle.168.144.37.19.sslip.io"),
+  metadataBase: new URL("https://cubicle.168-144-37-19.sslip.io"),
   title: {
     default: "Cubicle — Client Operations Hub",
     template: "%s | Cubicle",

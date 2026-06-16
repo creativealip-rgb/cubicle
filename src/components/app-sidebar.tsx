@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +24,9 @@ import {
   Settings,
   PanelLeftClose,
   PanelLeft,
+  X,
 } from "lucide-react";
+import { useSidebar } from "@/components/app-shell";
 
 const navItems = [
   { label: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard },
@@ -45,19 +48,30 @@ interface AppSidebarProps {
 
 export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const pathname = usePathname();
+  const { mobileOpen, setMobileOpen } = useSidebar();
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname, setMobileOpen]);
 
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-40 flex flex-col border-r bg-sidebar-background transition-all duration-200",
-        collapsed ? "w-[68px]" : "w-[260px]",
+        "fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-sidebar-background transition-all duration-200",
+        // Desktop: always visible, normal collapse behavior
+        "md:translate-x-0",
+        collapsed ? "md:w-[68px]" : "md:w-[260px]",
+        // Mobile: off-canvas by default, slide in when open
+        "w-[260px] -translate-x-full",
+        mobileOpen && "translate-x-0"
       )}
     >
       {/* Logo */}
       <div
         className={cn(
           "flex h-14 items-center border-b border-sidebar-border px-3",
-          collapsed ? "justify-center" : "justify-between",
+          collapsed ? "md:justify-center" : "md:justify-between justify-between"
         )}
       >
         {!collapsed && (
@@ -71,17 +85,27 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
           </Link>
         )}
         {collapsed && (
-          <Link href="/app/dashboard" className="flex h-7 w-7 items-center justify-center rounded-md bg-sidebar-primary">
+          <Link href="/app/dashboard" className="hidden md:flex h-7 w-7 items-center justify-center rounded-md bg-sidebar-primary">
             <span className="text-xs font-bold text-sidebar-primary-foreground">
               C
             </span>
           </Link>
         )}
+        {/* Mobile close button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent md:hidden"
+          onClick={() => setMobileOpen(false)}
+          aria-label="Close menu"
+        >
+          <X className="h-4 w-4" />
+        </Button>
         {!collapsed && (
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"
+            className="hidden md:flex h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"
             onClick={onToggle}
           >
             <PanelLeftClose className="h-4 w-4" />
@@ -91,7 +115,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent absolute -right-3 top-3 rounded-full border bg-background shadow-sm"
+            className="hidden md:flex h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent absolute -right-3 top-3 rounded-full border bg-background shadow-sm"
             onClick={onToggle}
           >
             <PanelLeft className="h-3 w-3" />

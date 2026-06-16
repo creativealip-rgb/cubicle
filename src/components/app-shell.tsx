@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { cn } from "@/lib/utils";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppTopbar } from "@/components/app-topbar";
@@ -15,24 +15,55 @@ interface AppShellProps {
   };
 }
 
+const SidebarContext = createContext<{
+  collapsed: boolean;
+  setCollapsed: (v: boolean) => void;
+  mobileOpen: boolean;
+  setMobileOpen: (v: boolean) => void;
+}>({
+  collapsed: false,
+  setCollapsed: () => {},
+  mobileOpen: false,
+  setMobileOpen: () => {},
+});
+
+export function useSidebar() {
+  return useContext(SidebarContext);
+}
+
 export function AppShell({ children, user }: AppShellProps) {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen">
-      <AppSidebar
-        collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
-      <div
-        className={cn(
-          "flex flex-1 flex-col transition-all duration-200",
-          sidebarCollapsed ? "ml-[68px]" : "ml-[260px]",
+    <SidebarContext.Provider value={{ collapsed, setCollapsed, mobileOpen, setMobileOpen }}>
+      <div className="flex min-h-screen">
+        {/* Mobile overlay backdrop */}
+        {mobileOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/50 md:hidden"
+            onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
+          />
         )}
-      >
-        <AppTopbar user={user} />
-        <main className="flex-1 p-6">{children}</main>
+        <AppSidebar
+          collapsed={collapsed}
+          onToggle={() => setCollapsed(!collapsed)}
+        />
+        <div
+          className={cn(
+            "flex flex-1 flex-col transition-all duration-200",
+            // Desktop: shift for sidebar width
+            "md:ml-[260px]",
+            collapsed && "md:ml-[68px]",
+            // Mobile: no margin (sidebar overlays)
+            "ml-0"
+          )}
+        >
+          <AppTopbar user={user} />
+          <main className="flex-1 p-4 md:p-6">{children}</main>
+        </div>
       </div>
-    </div>
+    </SidebarContext.Provider>
   );
 }
