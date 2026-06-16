@@ -273,6 +273,8 @@ Highlights:
 
 See `docs/cubicle_remaining_plan.md` for the full P0/P1/P2 breakdown.
 
+See `docs/feature.md` for backlog feature ideas (not committed to sprint).
+
 Current status:
 - Demo MVP: **99%**
 - Sellable source/MVP: **97%**
