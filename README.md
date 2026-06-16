@@ -274,9 +274,9 @@ Highlights:
 See `docs/cubicle_remaining_plan.md` for the full P0/P1/P2 breakdown.
 
 Current status:
-- Demo MVP: **95%**
-- Sellable source/MVP: **85%**
-- Production client-ready: **~75%**
+- Demo MVP: **99%**
+- Sellable source/MVP: **97%**
+- Production client-ready: **~91%**
 
 ## License
 

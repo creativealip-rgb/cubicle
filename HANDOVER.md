@@ -61,13 +61,14 @@ R2 buckets are not bundled with this repo. Two options:
 ## What the new owner inherits
 
 ### Technical debt (known)
-- 🟡 25 lint warnings remaining (mostly React Hooks dependency arrays, non-blocking)
+- 🟢 Lint clean (0 warn / 0 err) + tsc clean — verified 2026-06-16
 - 🟡 R2 file upload E2E not fully tested (placeholders in env)
 - 🟡 No automated test suite (manual QA checklist in `docs/cubicle_test_checklist.md`)
-- 🟡 Email flows implemented but not all E2E tested
+- 🟡 Email flows implemented but not all E2E tested (RESEND_API_KEY + sender domain not set in prod)
 - 🟡 No payment gateway integration (manual "mark as paid" only)
 - 🟡 No rate limiting on auth or public endpoints
 - 🟡 No background job queue (cron-style booking reminders not implemented)
+- 🟢 npm audit: 5/6 fixed, 1 accepted (postcss nested in next@16.2.9, build-time only, zero exploit in authored-CSS)
 
 ### Operational knowledge
 - Demo accounts and seed data are designed to be reset with `npm run db:seed`
