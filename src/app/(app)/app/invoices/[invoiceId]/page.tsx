@@ -230,36 +230,36 @@ export default async function InvoiceDetailPage({
             </p>
           ) : (
             <div className="space-y-0">
-              <div className="flex items-center gap-4 py-2 text-xs uppercase text-muted-foreground border-b">
-                <div className="flex-1">Description</div>
-                <div className="w-20 text-right">Qty</div>
-                <div className="w-28 text-right">Rate</div>
-                <div className="w-28 text-right">Amount</div>
-                <div className="w-10" />
+              <div className="flex items-center gap-2 py-2 text-xs uppercase text-muted-foreground border-b sm:gap-4">
+                <div className="min-w-0 flex-1">Description</div>
+                <div className="w-14 text-right sm:w-20">Qty</div>
+                <div className="w-20 text-right sm:w-28">Rate</div>
+                <div className="w-20 text-right sm:w-28">Amount</div>
+                <div className="w-6 sm:w-10" />
               </div>
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center gap-4 py-2 border-b last:border-0 text-sm"
+                  className="flex items-center gap-2 py-2 border-b last:border-0 text-sm sm:gap-4"
                 >
-                  <div className="flex-1">
-                    <p>{item.description}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate">{item.description}</p>
                     {item.sourceType === "time_entry" && (
                       <span className="text-xs text-muted-foreground">
                         (from time entry)
                       </span>
                     )}
                   </div>
-                  <div className="w-20 text-right">
+                  <div className="w-14 text-right sm:w-20">
                     {Number(item.quantity).toFixed(2)}
                   </div>
-                  <div className="w-28 text-right font-mono">
+                  <div className="w-20 text-right font-mono sm:w-28">
                     {formatCurrency(item.unitPrice, inv.currency)}
                   </div>
-                  <div className="w-28 text-right font-mono font-medium">
+                  <div className="w-20 text-right font-mono font-medium sm:w-28">
                     {formatCurrency(item.amount, inv.currency)}
                   </div>
-                  <div className="w-10 text-right">
+                  <div className="w-6 text-right sm:w-10">
                     <DeleteItemButton itemId={item.id} />
                   </div>
                 </div>
