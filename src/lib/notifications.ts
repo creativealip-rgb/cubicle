@@ -190,3 +190,23 @@ export async function notifyWorkspaceInvite(opts: {
     type: "workspace_invite",
   });
 }
+
+export async function notifyTaskAssigned(opts: {
+  assigneeEmail: string;
+  assigneeName: string;
+  taskTitle: string;
+  taskId: string;
+  assignerName: string;
+  dueDate?: string | null;
+}) {
+  return sendNotification({
+    to: opts.assigneeEmail,
+    subject: `You were assigned: ${opts.taskTitle}`,
+    text:
+      `Hi ${opts.assigneeName},\n\n` +
+      `${opts.assignerName} assigned you a new task: "${opts.taskTitle}".\n\n` +
+      (opts.dueDate ? `Due: ${opts.dueDate}\n\n` : ``) +
+      `Open in Cubicle: /app/tasks?assignee=me`,
+    type: "task_assigned",
+  });
+}

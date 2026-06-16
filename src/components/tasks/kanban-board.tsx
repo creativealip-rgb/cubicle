@@ -49,6 +49,7 @@ interface Task {
 interface KanbanBoardProps {
   projectId: string;
   tasks: Task[];
+  members?: Array<{ id: string; name: string | null; email: string | null }>;
 }
 
 const columns = [
@@ -65,9 +66,9 @@ const priorityColors: Record<string, string> = {
   urgent: "border-red-300",
 };
 
-function KanbanCard({ task, isDragging }: { task: Task; isDragging?: boolean }) {
+function KanbanCard({ task, members = [], isDragging }: { task: Task; members?: Array<{ id: string; name: string | null; email: string | null }>; isDragging?: boolean }) {
   return (
-    <TaskDetailSheet task={task}>
+    <TaskDetailSheet task={task} members={members}>
       <Card
         className={cn(
           "cursor-pointer hover:shadow-md transition-shadow",
@@ -109,7 +110,7 @@ function KanbanCard({ task, isDragging }: { task: Task; isDragging?: boolean }) 
   );
 }
 
-function SortableCard({ task, isDragOverlay }: { task: Task; isDragOverlay?: boolean }) {
+function SortableCard({ task, members = [], isDragOverlay }: { task: Task; members?: Array<{ id: string; name: string | null; email: string | null }>; isDragOverlay?: boolean }) {
   const {
     attributes,
     listeners,
@@ -127,19 +128,19 @@ function SortableCard({ task, isDragOverlay }: { task: Task; isDragOverlay?: boo
   if (isDragOverlay) {
     return (
       <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-        <KanbanCard task={task} isDragging />
+        <KanbanCard task={task} members={members} isDragging />
       </div>
     );
   }
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <KanbanCard task={task} isDragging={isDragging} />
+      <KanbanCard task={task} members={members} isDragging={isDragging} />
     </div>
   );
 }
 
-export function KanbanBoard({ projectId, tasks: initialTasks }: KanbanBoardProps) {
+export function KanbanBoard({ projectId, tasks: initialTasks, members = [] }: KanbanBoardProps) {
   const [taskMap, setTaskMap] = useState<Record<string, Task[]>>({});
   const [_activeId, setActiveId] = useState<string | null>(null);
 
@@ -266,6 +267,7 @@ export function KanbanBoard({ projectId, tasks: initialTasks }: KanbanBoardProps
                       mode="create"
                       projectId={projectId}
                       defaultValues={{ status: col.id }}
+                      members={members}
                     />
                   </DialogContent>
                 </Dialog>
@@ -277,7 +279,7 @@ export function KanbanBoard({ projectId, tasks: initialTasks }: KanbanBoardProps
               >
                 <div className="space-y-2 min-h-[80px]">
                   {colTasks.map((task) => (
-                    <SortableCard key={task.id} task={task} />
+                    <SortableCard key={task.id} task={task} members={members} />
                   ))}
                   {colTasks.length === 0 && (
                     <div className="text-center py-6 text-xs text-muted-foreground border-2 border-dashed rounded-lg">

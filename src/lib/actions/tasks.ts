@@ -3,16 +3,57 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { tasks, workspaces } from "@/db/schema";
+import { tasks, workspaces, users, workspaceMembers } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceWritable, assertTaskInWorkspace } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { notifyTaskAssigned } from "@/lib/notifications";
 
 async function getWorkspaceId(): Promise<string> {
   const [ws] = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.slug, "acme-creative")).limit(1);
   if (!ws) throw new Error("Workspace not found");
   return ws.id;
+}
+
+async function notifyIfAssigneeChanged(
+  workspaceId: string,
+  taskId: string,
+  taskTitle: string,
+  newAssigneeId: string | null,
+  dueDate: string | null,
+  assignerId: string,
+) {
+  if (!newAssigneeId || newAssigneeId === assignerId) return;
+
+  const [assignee] = await db
+    .select({ id: users.id, name: users.name, email: users.email })
+    .from(users)
+    .innerJoin(workspaceMembers, eq(workspaceMembers.userId, users.id))
+    .where(and(eq(users.id, newAssigneeId), eq(workspaceMembers.workspaceId, workspaceId)))
+    .limit(1);
+
+  if (!assignee?.email) return;
+
+  const [assigner] = await db
+    .select({ name: users.name, email: users.email })
+    .from(users)
+    .where(eq(users.id, assignerId))
+    .limit(1);
+  const assignerName = assigner?.name ?? assigner?.email ?? "Someone";
+
+  try {
+    await notifyTaskAssigned({
+      assigneeEmail: assignee.email,
+      assigneeName: assignee.name ?? assignee.email,
+      taskTitle,
+      taskId,
+      assignerName,
+      dueDate,
+    });
+  } catch {
+    // best-effort, don't fail the action
+  }
 }
 
 const taskSchema = z.object({
@@ -65,6 +106,16 @@ export async function createTask(input: z.infer<typeof taskSchema>) {
   }).returning();
 
   await writeActivityLog(workspaceId, user.id, "created_task", "task", task.id);
+
+  await notifyIfAssigneeChanged(
+    workspaceId,
+    task.id,
+    task.title,
+    task.assigneeId,
+    task.dueDate,
+    user.id,
+  );
+
   return task;
 }
 
@@ -92,6 +143,18 @@ export async function updateTask(taskId: string, input: z.infer<typeof updateTas
     .returning();
 
   await writeActivityLog(workspaceId, user.id, "updated_task", "task", taskId);
+
+  if (parsed.assigneeId !== undefined) {
+    await notifyIfAssigneeChanged(
+      workspaceId,
+      task.id,
+      task.title,
+      parsed.assigneeId,
+      task.dueDate,
+      user.id,
+    );
+  }
+
   return task;
 }
 
@@ -137,11 +200,22 @@ export async function assignTask(taskId: string, assigneeId: string | null) {
   await assertWorkspaceWritable(db, user.id, workspaceId);
   await assertTaskInWorkspace(db, user.id, workspaceId, taskId);
 
-  await db.update(tasks)
+  const [task] = await db.update(tasks)
     .set({ assigneeId, updatedAt: new Date() })
-    .where(eq(tasks.id, taskId));
+    .where(eq(tasks.id, taskId))
+    .returning();
 
   await writeActivityLog(workspaceId, user.id, "assigned_task", "task", taskId);
+
+  await notifyIfAssigneeChanged(
+    workspaceId,
+    task.id,
+    task.title,
+    assigneeId,
+    task.dueDate,
+    user.id,
+  );
+
   return { success: true };
 }
 

@@ -23,10 +23,11 @@ interface TaskFormProps {
     dueDate?: string;
     clientVisible?: boolean;
   };
+  members?: Array<{ id: string; name: string | null; email: string | null }>;
   onSuccess?: () => void;
 }
 
-export function TaskForm({ mode, projectId, defaultValues, onSuccess }: TaskFormProps) {
+export function TaskForm({ mode, projectId, defaultValues, members = [], onSuccess }: TaskFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -122,6 +123,23 @@ export function TaskForm({ mode, projectId, defaultValues, onSuccess }: TaskForm
             </SelectContent>
           </Select>
         </div>
+      </div>
+      <div className="space-y-2">
+        <Label>Assignee</Label>
+        <Select
+          value={form.assigneeId || "unassigned"}
+          onValueChange={(v) => setForm((p) => ({ ...p, assigneeId: v === "unassigned" ? "" : v }))}
+        >
+          <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="unassigned">Unassigned</SelectItem>
+            {members.map((m) => (
+              <SelectItem key={m.id} value={m.id}>
+                {m.name || m.email || m.id.slice(0, 8)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div className="space-y-2">
         <Label htmlFor="dueDate">Due Date</Label>

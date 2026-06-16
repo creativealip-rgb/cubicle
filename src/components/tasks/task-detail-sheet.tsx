@@ -46,10 +46,11 @@ interface Task {
 
 interface TaskDetailSheetProps {
   task: Task;
+  members?: Array<{ id: string; name: string | null; email: string | null }>;
   children: React.ReactNode;
 }
 
-export function TaskDetailSheet({ task, children }: TaskDetailSheetProps) {
+export function TaskDetailSheet({ task, members = [], children }: TaskDetailSheetProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -98,6 +99,20 @@ export function TaskDetailSheet({ task, children }: TaskDetailSheetProps) {
     try {
       await updateTask(task.id, { clientVisible: !task.clientVisible });
       toast.success(task.clientVisible ? "Hidden from client" : "Visible to client");
+      router.refresh();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleAssigneeChange(assigneeId: string) {
+    setLoading(true);
+    try {
+      const next = assigneeId === "unassigned" ? null : assigneeId;
+      await updateTask(task.id, { assigneeId: next });
+      toast.success(next ? "Assigned" : "Unassigned");
       router.refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed");
@@ -190,7 +205,23 @@ export function TaskDetailSheet({ task, children }: TaskDetailSheetProps) {
             <Label className="text-xs flex items-center gap-1">
               <User className="h-3 w-3" /> Assignee
             </Label>
-            <p className="text-sm">{task.assigneeName || "Unassigned"}</p>
+            <Select
+              value={task.assigneeId ?? "unassigned"}
+              onValueChange={handleAssigneeChange}
+              disabled={loading}
+            >
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="Unassigned" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unassigned">Unassigned</SelectItem>
+                {members.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.name || m.email || m.id.slice(0, 8)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Client Visible */}

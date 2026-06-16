@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { projects, clients, tasks, comments, files, timeEntries, workspaces, users } from "@/db/schema";
+import { projects, clients, tasks, comments, files, timeEntries, workspaces, workspaceMembers, users } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { requireUser, assertProjectInWorkspace } from "@/lib/access";
 import { notFound } from "next/navigation";
@@ -64,6 +64,18 @@ export default async function ProjectDetailPage({
   if (!project) notFound();
 
   const progress = await getProjectProgress(projectId);
+
+  // Workspace members for assignee selector on task create
+  const projectMembers = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+    })
+    .from(workspaceMembers)
+    .innerJoin(users, eq(users.id, workspaceMembers.userId))
+    .where(eq(workspaceMembers.workspaceId, workspaceId))
+    .orderBy(workspaceMembers.role);
 
   // Tasks for kanban
   const projectTasks = await db
@@ -203,7 +215,7 @@ export default async function ProjectDetailPage({
         </TabsList>
 
         <TabsContent value="tasks" className="pt-4">
-          <KanbanBoard projectId={projectId} tasks={projectTasks} />
+          <KanbanBoard projectId={projectId} tasks={projectTasks} members={projectMembers} />
         </TabsContent>
 
         <TabsContent value="files" className="pt-4 space-y-3">

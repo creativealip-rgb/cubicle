@@ -1,8 +1,8 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { tasks, projects, users, workspaces } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { tasks, projects, users, workspaces, workspaceMembers } from "@/db/schema";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,6 +31,7 @@ export default async function TasksPage({
 }) {
   const session = await auth.api.getSession({ headers: await headers() });
   const _user = requireUser(session?.user);
+  const currentUserId = _user.id;
   const workspaceId = await getWorkspaceId();
   const params = await searchParams;
 
@@ -44,6 +45,15 @@ export default async function TasksPage({
   }
   if (params.projectId) {
     whereClauses.push(eq(tasks.projectId, params.projectId));
+  }
+  if (params.assignee && params.assignee !== "all") {
+    if (params.assignee === "me") {
+      whereClauses.push(eq(tasks.assigneeId, currentUserId));
+    } else if (params.assignee === "unassigned") {
+      whereClauses.push(sql`${tasks.assigneeId} IS NULL`);
+    } else {
+      whereClauses.push(eq(tasks.assigneeId, params.assignee));
+    }
   }
 
   const taskList = await db
@@ -73,10 +83,17 @@ export default async function TasksPage({
     .from(projects)
     .where(eq(projects.workspaceId, workspaceId));
 
-  // Get workspace members for filter
-  const _memberList = await db
-    .select({ id: users.id, name: users.name })
-    .from(users);
+  // Get workspace members for filter + assignee selector
+  const memberList = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+    })
+    .from(workspaceMembers)
+    .innerJoin(users, eq(users.id, workspaceMembers.userId))
+    .where(eq(workspaceMembers.workspaceId, workspaceId))
+    .orderBy(workspaceMembers.role);
 
   const priorityColors: Record<string, string> = {
     low: "border-slate-300 text-slate-600",
@@ -111,7 +128,7 @@ export default async function TasksPage({
             <DialogHeader>
               <DialogTitle>New Task</DialogTitle>
             </DialogHeader>
-            <TaskForm mode="create" projectId={params.projectId} />
+            <TaskForm mode="create" projectId={params.projectId} members={memberList} />
           </DialogContent>
         </Dialog>
       </div>
@@ -157,6 +174,22 @@ export default async function TasksPage({
             </SelectContent>
           </Select>
 
+          <Select name="assignee" defaultValue={params.assignee ?? "all"}>
+            <SelectTrigger className="w-[150px] h-8 text-xs">
+              <SelectValue placeholder="Assignee" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Assignees</SelectItem>
+              <SelectItem value="me">Assigned to me</SelectItem>
+              <SelectItem value="unassigned">Unassigned</SelectItem>
+              {memberList.map((m) => (
+                <SelectItem key={m.id} value={m.id}>
+                  {m.name || m.email || m.id.slice(0, 8)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <Button type="submit" variant="outline" size="sm" className="h-8 gap-1">
             <Filter className="h-3 w-3" /> Filter
           </Button>
@@ -173,7 +206,7 @@ export default async function TasksPage({
         {taskList.map((task) => {
           const sb = statusBadges[task.status] ?? statusBadges.todo;
           return (
-            <TaskDetailSheet key={task.id} task={task}>
+            <TaskDetailSheet key={task.id} task={task} members={memberList}>
               <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
