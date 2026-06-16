@@ -115,10 +115,42 @@ Sellable source/MVP: 97%
 Production client-ready: ~88%
 ```
 
-> **Update 2026-06-16 (P0 deep QA + P2.4 + P1.5):**
-> - Demo MVP: **99%** (was 97%)
-> - Sellable source/MVP: **97%** (was 90%)
-> - Production client-ready: **~88%** (was ~80%)
+> **Update 2026-06-16 (P0 deep QA + P2.4 + P1.5 + extras):**
+> - Demo MVP: **99%** (unchanged — was already 99%)
+> - Sellable source/MVP: **97%** (unchanged)
+> - Production client-ready: **~89%** (was ~88% — small lift from
+>   PDF route live + demo data populated + audit resolved)
+>
+> **Resolved in this continuation session (16 Jun):**
+> - P0.1 rogue /tmp/postgresql regression — confirmed gone (no rebuild)
+> - P0.7 npm audit — 5 of 6 fixed via `overrides: esbuild ^0.28.1`,
+>   1 accepted (postcss nested in next@16.2.9, build-time, not
+>   exploitable in authored-CSS pipeline)
+> - P0.8 lint cleanup — re-verified 0 warn / 0 err / tsc clean
+>   (was already cleared in commit a149097)
+> - P2.2 forget-password path — closed (SDK uses
+>   /api/auth/request-password-reset, 200 OK; old /forget-password
+>   was pre-1.x path, now stale)
+> - P1.3 demo workspace polish — files 1→9 (6 client + 3 internal),
+>   time_entries 6→9 (+3 realistic, -1 stub), comments 4→8 (+4),
+>   appointments 3→2 (-1 odd Jan 2027)
+> - P2.3 PDF visual verify — route live
+>   (GET /api/invoices/[invoiceId]/pdf), 3/3 invoices render
+>   with purple accent stripe, color-coded status badges
+>   (SENT/DRAFT/PAID), line items, totals, footer with "Cubicle"
+>   + "Page X of Y". Fix: removed "use client" from
+>   invoice-pdf.tsx (was breaking server render)
+>
+> **Held per Alip 16 Jun (low priority until needed):**
+> - P2.5 external uptime + CPU/RAM alert — revisit when needed
+> - P1.6 real domain — needs Alip's purchase decision
+> - P2.2 RESEND prod + sender domain — blocked by P1.6
+>
+> **Still open low-priority:**
+> - P1.1 mobile QA pass 2 — authed /app/* routes
+> - 1 npm audit (accepted, see P0.7 notes)
+> - workspace `billingName` not set → PDF header shows
+>   "Company Name" placeholder (cosmetic, easy seed fix)
 >
 > P0.6 role backend guard ✅ — `assertWorkspaceWritable` in 8 mutation
 > action files (clients/files/invoices/projects/prompts/tasks/time/appointments).
@@ -863,11 +895,10 @@ Resolved (closed this session):
 
 Still open:
   1 accepted npm audit (postcss nested in next, moderate, build-time only)
-  No real domain yet
-  RESEND_API_KEY not configured in prod container (only console fallback)
-  Email sender domain not verified (defaults to onboarding@resend.dev)
-  Invoice PDF new design not visually verified
-  No external uptime check / CPU-RAM alert
+  ⏸️ HOLD per Alip 16 Jun: No real domain yet (P1.6) — revisit when Alip decides
+  ⏸️ HOLD per Alip 16 Jun: External uptime + CPU/RAM alert (P2.5) — revisit when needed
+  ⏸️ HOLD per Alip 16 Jun: RESEND_API_KEY prod + sender domain (P2.2) — needs API key + domain first
+  P1.1 mobile QA pass 2 — authed /app/* routes (cookie injection to headless script)
 ```
 
 ## 12. Quick Next Command Checklist
