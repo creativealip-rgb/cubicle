@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
-import { db } from "@/lib/db";
+import { db } from "@/db";
 
 /**
  * Health check endpoint for Docker / uptime monitoring.
