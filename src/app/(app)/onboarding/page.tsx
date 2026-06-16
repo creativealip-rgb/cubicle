@@ -63,7 +63,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center">
+    <div className="flex min-h-[calc(100vh-3.5rem)] w-full items-center justify-center px-4">
       <Card className="w-full max-w-lg">
         <CardHeader className="space-y-1 text-center">
           {/* Step indicators */}

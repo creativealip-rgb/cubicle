@@ -141,7 +141,7 @@ export default function HomePage() {
             <Badge className="mb-6 border border-blue-200/70 bg-white/70 px-3 py-1 text-blue-700 shadow-sm shadow-blue-100/60 backdrop-blur hover:bg-white/70">
               Built for client-service teams
             </Badge>
-            <h1 className="max-w-4xl text-5xl font-semibold tracking-[-0.055em] text-slate-950 sm:text-6xl lg:text-7xl">
+            <h1 className="max-w-4xl text-3xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-5xl sm:tracking-[-0.055em] md:text-6xl lg:text-7xl">
               Run client work from request to invoice.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600 sm:text-xl">
