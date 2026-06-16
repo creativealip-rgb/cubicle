@@ -112,8 +112,9 @@ Production-ready: NO
 ```text
 Demo MVP: 99%
 Sellable source/MVP: 97%
-Production client-ready: ~91% (P2.6 Reply-To in next sprint → ~92%,
-                              P2.7 Pre-deal in pipeline → ~95% if shipped)
+Production client-ready: ~91% (P2.6 Reply-To → ~92%, P2.7 Pre-deal → ~95%,
+                              P2.8 Finance core → ~93% — note 2.7+2.8 partially
+                              overlap on "more complete product" lift)
 ```
 
 > **Update 2026-06-16 (P0 deep QA + P2.4 + P1.5 + extras):**
@@ -909,6 +910,127 @@ freelancers (designers, agencies, coaches). For *repeat-client* freelancers
 booking → invoice flow is enough. **Pick ICP first** (per A/B/C discussion),
 then commit to P2.7 phases.
 
+### P2.8 Finance module — Income + Expense + Reports (Alip-approved 16 Jun)
+
+> Alip decision: Option B (income from invoices + manual expense entry),
+> manual entry only (no CSV import, no AI receipt OCR in this iteration),
+> skip tax helpers (PPN/PPh/e-Faktur) for now. Real freelancer pain:
+> "gue bingung bulan ini untung apa rugi" + "expense project mana paling
+> gede". Currently no P&L view, no expense tracking, no report layer.
+
+**Why merge with invoice, not separate app:**
+
+```text
+❌ Separate finance app
+   → 2x manual entry (invoice di Cubicle, income/expense di finance app)
+   → reconcile manual antara 2 app tiap bulan
+   → user drop minggu ke-2
+✅ Gabung sebagai view layer
+   → income auto-derive dari invoices (zero entry)
+   → expense 1x entry di Cubicle, tag ke project
+   → report cross-reference income vs expense per project
+```
+
+**Architecture (minimum):**
+
+```text
+Existing (no change):           New:
+  invoices (income source)        expenses table
+  projects (tag expense)            columns: id, workspace_id, project_id? (nullable),
+  time_entries                       category, amount, currency, date,
+  clients                            description, receipt_url? (R2), vendor?,
+  bookings                           tax_included bool, created_at
+  workspace_billing (for email)
+                                 expense_categories table
+                                   columns: id, workspace_id, name, color, icon
+                                 (optional later) expense_recurring table
+```
+
+**Reports auto-generated (zero entry, just SQL aggregate):**
+
+| Report | Source | Use case |
+|---|---|---|
+| Daily P&L | invoices (paid today) + expenses (today) | "Hari ini gue untung/rugi" |
+| Monthly P&L | aggregate by month | Tax prep, monthly review |
+| Yearly summary | aggregate by year | e-Faktur ready (future) |
+| Per-client revenue | invoices grouped by client_id | "Client mana paling profitable" |
+| Per-project P&L | invoice income + tagged expenses | "Project A 40% margin, B 25%" |
+| Unpaid invoice aging | invoices where status != paid | "Siapa belum bayar, berapa lama" |
+| Top expense categories | expenses grouped by category | "Software paling gede, cut?" |
+| Cash flow forecast | upcoming invoices + recurring expenses | "Bulan depan cukup ga" |
+
+**Reduce manual entry friction (manual-only mode):**
+
+```text
+1. Quick-add form: 4 fields (date, amount, category, project?)
+2. Project dropdown auto-filled dari existing projects
+3. Category dropdown dari workspace's expense_categories
+4. Receipt upload ke R2 (reuse file infrastructure) — opsional
+5. Default categories seeded: Software, Hardware, Travel, Meals,
+   Office, Marketing, Professional Services, Other
+6. Currency per workspace (default IDR, USD juga bisa)
+```
+
+**Out of scope (per Alip, skip dulu):**
+
+```text
+❌ Bank CSV import (batch entry)              — future
+❌ AI receipt OCR (snap foto struk)            — future
+❌ Bank reconciliation                        — future
+❌ Multi-currency conversion (auto FX)        — future
+❌ Tax helpers (PPN 11%, PPh 23, e-Faktur)    — future (P2.9 candidate)
+❌ Recurring expense auto-create               — future
+```
+
+**Phased plan:**
+
+```text
+P2.8.1 Expense CRUD + categories + per-project tag     2 mgu
+  - expenses + expense_categories tables
+  - /app/expenses list + create/edit/delete
+  - Project dropdown, category dropdown
+  - Receipt upload ke R2 (opsional, not blocking)
+  - Default category seed
+
+P2.8.2 Auto reports (P&L, aging, top expenses)         1 mgu
+  - /app/reports dashboard
+  - 5-6 widgets/charts (Chart.js or Recharts)
+  - Date range filter (day/month/year/custom)
+  - Export to CSV
+  - Per-project + per-client + aggregate views
+                                                       -----
+                                                       3 mgu core
+```
+
+**Acceptance criteria (P2.8.1 + P2.8.2 combined):**
+
+```text
+User can add expense in <30 seconds (4 fields)
+Expense tagged to project (or untagged) correctly
+Monthly P&L shows real number (sum of paid invoices - expenses in period)
+Per-project P&L shows margin correctly
+Unpaid invoice aging shows days outstanding
+CSV export downloads with all data
+Default categories seeded for new workspace
+Empty state for new workspace ("Add your first expense")
+```
+
+**Strategic note:**
+
+Finance module paling kuat untuk **🅐 Indonesian depth direction** —
+PPN 11% + PPh 23 helpers di Phase 2 = real differentiation vs Jurnal/MEKARI
+(mereka punya tapi generic, lo punya project-aware + Indonesian-first).
+
+Untuk **🅱 minimalist** — P2.8.1 doang cukup (expense tracking, no reports).
+P2.8.2 reports bisa di-skip kalau target anti-tool.
+
+Untuk **🅒 vertical** — tailor reports ke vertical (designer = budget per
+revision round; coach = session cost; translator = word count cost).
+
+**Gated on:** ICP decision (A/B/C/D) seperti P2.7.
+
+**Score impact (if shipped):** 91% → ~93% (P2.8.1+2.8.2 core).
+
 ---
 
 ## 7. Security Hardening Plan
@@ -1109,6 +1231,12 @@ Still open:
   📋 PLANNED: P2.7 Pre-deal workflow (Proposal + Questionnaire + Contract) —
      Alip-approved 16 Jun, gated on ICP decision, ~4-8 minggu depending on
      e-sig path (in-house vs DocuSign/HelloSign embed)
+  📋 PLANNED: P2.8 Finance module (income from invoice + manual expense +
+     auto reports) — Alip-approved 16 Jun, Option B manual-only, skip tax
+     helpers for now. ~3 mgu core. Gated on ICP decision.
+  📋 FUTURE: P2.9 Tax helpers (PPN 11%, PPh 23, e-Faktur) — Indonesian depth
+     direction, big scope (~6+ mgu + legal/compliance knowledge). Wait for
+     🅐 direction commit or skip.
 ```
 
 ## 12. Quick Next Command Checklist
