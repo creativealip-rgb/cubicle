@@ -90,12 +90,12 @@ export function FileList({ files, workspaceId }: FileListProps) {
               {getFileIcon(file.mimeType)}
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate">{file.name}</p>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                  <span>{file.mimeType || "Unknown"}</span>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
+                  <span className="truncate max-w-[160px]">{file.mimeType || "Unknown"}</span>
                   <span>·</span>
                   <span>{formatBytes(file.sizeBytes)}</span>
                   <span>·</span>
-                  <span>{file.uploaderName || "Unknown"}</span>
+                  <span className="truncate max-w-[100px]">{file.uploaderName || "Unknown"}</span>
                   <span>·</span>
                   <span>{new Date(file.createdAt).toLocaleDateString()}</span>
                 </div>
