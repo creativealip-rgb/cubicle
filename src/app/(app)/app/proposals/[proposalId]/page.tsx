@@ -1,0 +1,160 @@
+import { notFound } from "next/navigation";
+import { headers } from "next/headers";
+import Link from "next/link";
+import { auth } from "@/lib/auth";
+import { db } from "@/db";
+import { proposals, clients, workspaces, invoices, projects } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
+import { requireUser, assertWorkspaceMember } from "@/lib/access";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { SendProposalButton } from "@/components/proposals/send-proposal-button";
+import { ArrowLeft, ExternalLink, FileText } from "lucide-react";
+
+function formatMoney(amount: string | number, currency: string) {
+  const n = typeof amount === "string" ? parseFloat(amount) : amount;
+  if (currency === "IDR") return `Rp ${n.toLocaleString("id-ID", { maximumFractionDigits: 0 })}`;
+  return `${currency} ${n.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+}
+
+export default async function ProposalDetailPage({ params }: { params: Promise<{ proposalId: string }> }) {
+  const { proposalId } = await params;
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const [ws] = await db.select().from(workspaces).where(eq(workspaces.slug, "acme-creative")).limit(1);
+  if (!ws) throw new Error("Workspace not found");
+  const member = await assertWorkspaceMember(db, user.id, ws.id);
+  const canWrite = member.role === "owner" || member.role === "member";
+
+  const [p] = await db
+    .select({
+      id: proposals.id,
+      title: proposals.title,
+      body: proposals.body,
+      lineItems: proposals.lineItems,
+      subtotal: proposals.subtotal,
+      tax: proposals.tax,
+      total: proposals.total,
+      currency: proposals.currency,
+      downPaymentPercent: proposals.downPaymentPercent,
+      validUntil: proposals.validUntil,
+      status: proposals.status,
+      sentAt: proposals.sentAt,
+      acceptedAt: proposals.acceptedAt,
+      declinedAt: proposals.declinedAt,
+      declineReason: proposals.declineReason,
+      projectId: proposals.projectId,
+      clientId: clients.id,
+      clientName: clients.name,
+      clientEmail: clients.email,
+    })
+    .from(proposals)
+    .innerJoin(clients, eq(clients.id, proposals.clientId))
+    .where(and(eq(proposals.id, proposalId), eq(proposals.workspaceId, ws.id)))
+    .limit(1);
+  if (!p) notFound();
+
+  const items = (p.lineItems as Array<{ description: string; quantity: number; unitPrice: number; amount: number }>) ?? [];
+
+  // Get created project if accepted
+  let projectName: string | null = null;
+  if (p.projectId) {
+    const [proj] = await db.select({ name: projects.name }).from(projects).where(eq(projects.id, p.projectId)).limit(1);
+    projectName = proj?.name ?? null;
+  }
+
+  return (
+    <div className="space-y-6 p-6 max-w-4xl">
+      <div className="flex items-center justify-between">
+        <div>
+          <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2">
+            <Link href="/app/proposals">
+              <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+              All proposals
+            </Link>
+          </Button>
+          <h1 className="text-2xl font-semibold tracking-tight">{p.title}</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            For <Link href={`/app/clients/${p.clientId}`} className="text-slate-700 hover:underline">{p.clientName}</Link>
+            {p.clientEmail && <> · {p.clientEmail}</>}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant={p.status === "accepted" ? "default" : p.status === "declined" ? "destructive" : "secondary"}>
+            {p.status}
+          </Badge>
+          {p.status === "draft" && canWrite && <SendProposalButton proposalId={p.id} />}
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Line items</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Description</TableHead>
+                <TableHead className="text-right w-20">Qty</TableHead>
+                <TableHead className="text-right w-32">Unit</TableHead>
+                <TableHead className="text-right w-32">Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map((li, i) => (
+                <TableRow key={i}>
+                  <TableCell className="text-sm">{li.description}</TableCell>
+                  <TableCell className="text-right tabular-nums text-sm">{li.quantity}</TableCell>
+                  <TableCell className="text-right tabular-nums text-sm">{formatMoney(li.unitPrice, p.currency)}</TableCell>
+                  <TableCell className="text-right tabular-nums text-sm font-medium">{formatMoney(li.amount, p.currency)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <div className="border-t pt-3 mt-3 text-sm space-y-1">
+            <div className="flex justify-end gap-8"><span className="text-slate-500">Subtotal</span><span className="tabular-nums w-32 text-right">{formatMoney(p.subtotal, p.currency)}</span></div>
+            {parseFloat(p.tax) > 0 && <div className="flex justify-end gap-8"><span className="text-slate-500">Tax</span><span className="tabular-nums w-32 text-right">{formatMoney(p.tax, p.currency)}</span></div>}
+            <div className="flex justify-end gap-8 pt-2 border-t font-semibold"><span>Total</span><span className="tabular-nums w-32 text-right">{formatMoney(p.total, p.currency)}</span></div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {p.body && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Scope</CardTitle></CardHeader>
+          <CardContent><p className="text-sm text-slate-700 whitespace-pre-wrap">{p.body}</p></CardContent>
+        </Card>
+      )}
+
+      {p.status === "accepted" && p.projectId && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Outcome</CardTitle></CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <p>✅ Project created: <Link href={`/app/projects/${p.projectId}`} className="text-blue-600 hover:underline">{projectName ?? "View project"}</Link></p>
+            <p>✅ Down-payment invoice sent to {p.clientName}.</p>
+            <p className="text-xs text-slate-500">Accepted {p.acceptedAt && new Date(p.acceptedAt).toLocaleString()}</p>
+          </CardContent>
+        </Card>
+      )}
+      {p.status === "declined" && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Declined</CardTitle></CardHeader>
+          <CardContent className="text-sm">
+            {p.declineReason && <p>Reason: {p.declineReason}</p>}
+            <p className="text-xs text-slate-500 mt-2">Declined {p.declinedAt && new Date(p.declinedAt).toLocaleString()}</p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}

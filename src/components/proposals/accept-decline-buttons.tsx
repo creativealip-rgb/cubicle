@@ -1,0 +1,104 @@
+"use client";
+
+import { useState } from "react";
+import { Check, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { acceptProposalPublic, declineProposalPublic } from "@/lib/actions/proposals";
+
+interface AcceptDeclineButtonsProps {
+  proposalId: string;
+  token: string;
+}
+
+export function AcceptDeclineButtons({ proposalId, token }: AcceptDeclineButtonsProps) {
+  const [loading, setLoading] = useState<"accept" | "decline" | null>(null);
+  const [declineOpen, setDeclineOpen] = useState(false);
+  const [reason, setReason] = useState("");
+
+  async function handleAccept() {
+    if (!confirm("Accept this proposal? A project will be created and a down-payment invoice sent.")) return;
+    setLoading("accept");
+    try {
+      const result = await acceptProposalPublic(proposalId, token);
+      toast.success("Proposal accepted! Project + down-payment invoice created.");
+      // Reload to show accepted state
+      window.location.reload();
+      console.log(result);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      toast.error(msg);
+      setLoading(null);
+    }
+  }
+
+  async function handleDecline() {
+    setLoading("decline");
+    try {
+      await declineProposalPublic(proposalId, token, reason || undefined);
+      toast.success("Proposal declined");
+      setDeclineOpen(false);
+      window.location.reload();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      toast.error(msg);
+      setLoading(null);
+    }
+  }
+
+  return (
+    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+      <Button
+        size="lg"
+        onClick={handleAccept}
+        disabled={loading !== null}
+        className="bg-emerald-600 hover:bg-emerald-700"
+      >
+        <Check className="h-4 w-4 mr-2" />
+        {loading === "accept" ? "Accepting..." : "Accept proposal"}
+      </Button>
+      <Button
+        size="lg"
+        variant="outline"
+        onClick={() => setDeclineOpen(true)}
+        disabled={loading !== null}
+      >
+        <X className="h-4 w-4 mr-2" />
+        Decline
+      </Button>
+      <Dialog open={declineOpen} onOpenChange={setDeclineOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Decline proposal?</DialogTitle>
+            <DialogDescription>
+              Optionally let us know why so we can improve. This can&apos;t be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            placeholder="Reason (optional)"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            rows={3}
+          />
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDeclineOpen(false)} disabled={loading === "decline"}>
+              Cancel
+            </Button>
+            <Button onClick={handleDecline} disabled={loading === "decline"} variant="destructive">
+              {loading === "decline" ? "Declining..." : "Confirm decline"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

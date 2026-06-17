@@ -9,6 +9,7 @@ import {
   expenseCategories,
   payments,
   projects,
+  expenseRecurring,
   workspaces,
 } from "@/db/schema";
 import { eq, and, sql, desc, gte } from "drizzle-orm";
@@ -214,6 +215,64 @@ export default async function ReportsPage() {
     (s, m) => s + (expensesByMonth[m]?.USD ?? 0),
     0,
   );
+
+  // ─── Cash flow forecast (next 3 months) ───
+  const todayFc = new Date().toISOString().slice(0, 10);
+  const fcLimit = new Date();
+  fcLimit.setMonth(fcLimit.getMonth() + 3);
+  const fcLimitStr = fcLimit.toISOString().slice(0, 10);
+
+  const upcomingInvoices = await db
+    .select({
+      month: sql<string>`to_char(${invoices.dueDate}, 'YYYY-MM')`,
+      total: sql<string>`sum(${invoices.total})`,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(invoices)
+    .where(and(
+      eq(invoices.workspaceId, ws.id),
+      sql`${invoices.status} not in ('paid', 'cancelled')`,
+      sql`${invoices.dueDate} is not null`,
+      sql`${invoices.dueDate} >= ${todayFc}`,
+      sql`${invoices.dueDate} <= ${fcLimitStr}`,
+    ))
+    .groupBy(sql`to_char(${invoices.dueDate}, 'YYYY-MM')`);
+
+  const recurringRows = await db
+    .select()
+    .from(expenseRecurring)
+    .where(and(eq(expenseRecurring.workspaceId, ws.id), eq(expenseRecurring.isActive, true)));
+
+  const fcMonths: string[] = [];
+  const fcNow = new Date();
+  for (let i = 0; i < 3; i++) {
+    const d = new Date(fcNow.getFullYear(), fcNow.getMonth() + i, 1);
+    fcMonths.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+  const incomeFc: Record<string, { total: number; count: number }> = {};
+  upcomingInvoices.forEach((r) => { incomeFc[r.month] = { total: parseFloat(r.total ?? "0"), count: Number(r.count ?? 0) }; });
+
+  const cashFlow = fcMonths.map((m) => {
+    const recTotals: Record<string, number> = {};
+    for (const r of recurringRows) {
+      const startMonth = r.startDate.slice(0, 7);
+      const endMonth = r.endDate ? r.endDate.slice(0, 7) : null;
+      if (startMonth > m) continue;
+      if (endMonth && endMonth < m) continue;
+      const monthsDiff = (new Date(m + "-01").getFullYear() - new Date(startMonth + "-01").getFullYear()) * 12 +
+        (new Date(m + "-01").getMonth() - new Date(startMonth + "-01").getMonth());
+      const applies =
+        (r.frequency === "monthly" && monthsDiff >= 0) ||
+        (r.frequency === "quarterly" && monthsDiff >= 0 && monthsDiff % 3 === 0) ||
+        (r.frequency === "yearly" && monthsDiff >= 0 && monthsDiff % 12 === 0);
+      if (applies) recTotals[r.currency] = (recTotals[r.currency] ?? 0) + parseFloat(r.amount);
+    }
+    return {
+      month: m,
+      expectedIncome: incomeFc[m] ?? { total: 0, count: 0 },
+      recurringExpenses: recTotals,
+    };
+  });
 
   return (
     <div className="space-y-6 p-6">
@@ -441,6 +500,63 @@ export default async function ReportsPage() {
                 ))}
               </TableBody>
             </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Cash flow forecast */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Cash flow forecast (next 3 months)</CardTitle>
+          <CardDescription>
+            Expected income from unpaid invoices + projected recurring expenses.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {cashFlow.map((cf) => {
+              const inc = cf.expectedIncome.total;
+              const expIDR = cf.recurringExpenses.IDR ?? 0;
+              const expUSD = cf.recurringExpenses.USD ?? 0;
+              const net = inc - expIDR;
+              return (
+                <div key={cf.month} className="border rounded-lg p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{cf.month}</span>
+                    {cf.expectedIncome.count > 0 && (
+                      <span className="text-xs text-slate-500">{cf.expectedIncome.count} inv</span>
+                    )}
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Income</span>
+                      <span className="tabular-nums text-emerald-700">+{formatMoney(inc, "IDR")}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Recurring</span>
+                      <span className="tabular-nums text-red-600">−{formatMoney(expIDR, "IDR")}</span>
+                    </div>
+                    {expUSD > 0 && (
+                      <div className="flex justify-between text-xs text-slate-500">
+                        <span>+ USD</span>
+                        <span>−{formatMoney(expUSD, "USD")}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-t pt-1 font-semibold">
+                      <span>Net</span>
+                      <span className={`tabular-nums ${net >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                        {formatMoney(net, "IDR")}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {recurringRows.length === 0 && (
+            <p className="text-xs text-slate-500 mt-3">
+              No recurring expenses tracked. Add some in Expenses to see accurate forecasts.
+            </p>
           )}
         </CardContent>
       </Card>

@@ -10,7 +10,7 @@
  *   confirm card before any DB write happens.
  */
 
-import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lt, lte, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   clients,
@@ -25,6 +25,8 @@ import {
   promptTemplates,
   expenses,
   expenseCategories,
+  proposals,
+  expenseRecurring,
 } from "@/db/schema";
 import type { ToolDefinition } from "./client";
 
@@ -1004,6 +1006,171 @@ async function topExpenseCategories(args: { limit?: number; fromDate?: string; t
   return { count: rows.length, categories: rows };
 }
 
+// ─── Read: pre-deal proposals (Sprint J — P2.7 phase 1) ───
+
+async function listProposals(args: { status?: string; limit?: number; clientId?: string }) {
+  const ws = await getWorkspace();
+  const conds = [eq(proposals.workspaceId, ws.id)];
+  if (args.status) conds.push(eq(proposals.status, args.status as "draft" | "sent" | "viewed" | "accepted" | "declined" | "expired"));
+  if (args.clientId) conds.push(eq(proposals.clientId, args.clientId));
+  const limit = Math.min(args.limit ?? 20, 100);
+  const rows = await db
+    .select({
+      id: proposals.id,
+      title: proposals.title,
+      status: proposals.status,
+      total: proposals.total,
+      currency: proposals.currency,
+      downPaymentPercent: proposals.downPaymentPercent,
+      sentAt: proposals.sentAt,
+      acceptedAt: proposals.acceptedAt,
+      declinedAt: proposals.declinedAt,
+      createdAt: proposals.createdAt,
+      clientName: clients.name,
+    })
+    .from(proposals)
+    .leftJoin(clients, eq(clients.id, proposals.clientId))
+    .where(and(...conds))
+    .orderBy(desc(proposals.createdAt))
+    .limit(limit);
+  return { count: rows.length, proposals: rows };
+}
+
+async function getProposal(args: { id?: string; title?: string }) {
+  const ws = await getWorkspace();
+  if (!args.id && !args.title) return { error: "Provide id or title" };
+  const conds = [eq(proposals.workspaceId, ws.id)];
+  if (args.id) conds.push(eq(proposals.id, args.id));
+  if (args.title) conds.push(sql`${proposals.title} ILIKE ${"%" + args.title + "%"}`);
+  const [row] = await db
+    .select({
+      id: proposals.id,
+      title: proposals.title,
+      body: proposals.body,
+      lineItems: proposals.lineItems,
+      subtotal: proposals.subtotal,
+      tax: proposals.tax,
+      total: proposals.total,
+      currency: proposals.currency,
+      downPaymentPercent: proposals.downPaymentPercent,
+      validUntil: proposals.validUntil,
+      status: proposals.status,
+      sentAt: proposals.sentAt,
+      acceptedAt: proposals.acceptedAt,
+      declinedAt: proposals.declinedAt,
+      declineReason: proposals.declineReason,
+      projectId: proposals.projectId,
+      clientName: clients.name,
+      clientEmail: clients.email,
+    })
+    .from(proposals)
+    .leftJoin(clients, eq(clients.id, proposals.clientId))
+    .where(and(...conds))
+    .limit(1);
+  if (!row) return { error: "Not found" };
+  return row;
+}
+
+// ─── Read: cash flow + recurring (Sprint K — P2.8 phase 3) ───
+
+async function cashFlowForecast(args: { months?: number }) {
+  const ws = await getWorkspace();
+  const monthCount = Math.min(args.months ?? 3, 12);
+  // Upcoming income: unpaid invoices with dueDate in the next N months
+  const today = new Date().toISOString().slice(0, 10);
+  const futureLimit = new Date();
+  futureLimit.setMonth(futureLimit.getMonth() + monthCount);
+  const futureLimitStr = futureLimit.toISOString().slice(0, 10);
+
+  const upcomingRows = await db
+    .select({
+      month: sql<string>`to_char(${invoices.dueDate}, 'YYYY-MM')`,
+      total: sql<string>`sum(${invoices.total})`,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(invoices)
+    .where(and(
+      eq(invoices.workspaceId, ws.id),
+      sql`${invoices.status} not in ('paid', 'cancelled')`,
+      sql`${invoices.dueDate} is not null`,
+      gte(invoices.dueDate, today),
+      lte(invoices.dueDate, futureLimitStr),
+    ))
+    .groupBy(sql`to_char(${invoices.dueDate}, 'YYYY-MM')`);
+
+  // Recurring expenses by month
+  const recurringRows = await db
+    .select()
+    .from(expenseRecurring)
+    .where(and(eq(expenseRecurring.workspaceId, ws.id), eq(expenseRecurring.isActive, true)));
+
+  const months: string[] = [];
+  const now = new Date();
+  for (let i = 0; i < monthCount; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+
+  const incomeByMonth: Record<string, { total: number; count: number }> = {};
+  upcomingRows.forEach((r) => {
+    incomeByMonth[r.month] = { total: parseFloat(r.total ?? "0"), count: Number(r.count ?? 0) };
+  });
+
+  // For each month, project recurring expenses (assume monthly/quarterly/yearly)
+  const forecast = months.map((m, idx) => {
+    let recurringTotal: Record<string, number> = {};
+    for (const r of recurringRows) {
+      const startMonth = r.startDate.slice(0, 7);
+      const endMonth = r.endDate ? r.endDate.slice(0, 7) : null;
+      if (startMonth > m) continue;
+      if (endMonth && endMonth < m) continue;
+      const monthsDiff = (new Date(m + "-01").getFullYear() - new Date(startMonth + "-01").getFullYear()) * 12 +
+        (new Date(m + "-01").getMonth() - new Date(startMonth + "-01").getMonth());
+      if (r.frequency === "monthly" && monthsDiff >= 0) {
+        recurringTotal[r.currency] = (recurringTotal[r.currency] ?? 0) + parseFloat(r.amount);
+      } else if (r.frequency === "quarterly" && monthsDiff >= 0 && monthsDiff % 3 === 0) {
+        recurringTotal[r.currency] = (recurringTotal[r.currency] ?? 0) + parseFloat(r.amount);
+      } else if (r.frequency === "yearly" && monthsDiff >= 0 && monthsDiff % 12 === 0) {
+        recurringTotal[r.currency] = (recurringTotal[r.currency] ?? 0) + parseFloat(r.amount);
+      }
+    }
+    return {
+      month: m,
+      expectedIncome: incomeByMonth[m] ?? { total: 0, count: 0 },
+      recurringExpenses: recurringTotal,
+    };
+  });
+
+  return { months: forecast, recurringCount: recurringRows.length };
+}
+
+async function listRecurring(args: { isActive?: boolean; limit?: number }) {
+  const ws = await getWorkspace();
+  const conds = [eq(expenseRecurring.workspaceId, ws.id)];
+  if (args.isActive !== undefined) conds.push(eq(expenseRecurring.isActive, args.isActive));
+  const limit = Math.min(args.limit ?? 30, 100);
+  const rows = await db
+    .select({
+      id: expenseRecurring.id,
+      name: expenseRecurring.name,
+      amount: expenseRecurring.amount,
+      currency: expenseRecurring.currency,
+      frequency: expenseRecurring.frequency,
+      startDate: expenseRecurring.startDate,
+      endDate: expenseRecurring.endDate,
+      lastGeneratedDate: expenseRecurring.lastGeneratedDate,
+      isActive: expenseRecurring.isActive,
+      categoryName: expenseCategories.name,
+      projectName: projects.name,
+    })
+    .from(expenseRecurring)
+    .leftJoin(expenseCategories, eq(expenseCategories.id, expenseRecurring.categoryId))
+    .leftJoin(projects, eq(projects.id, expenseRecurring.projectId))
+    .where(and(...conds))
+    .limit(limit);
+  return { count: rows.length, recurring: rows };
+}
+
 // ─── Tool registry ─────────────────────────────────────────────────
 
 export const TOOL_DEFS: ToolDefinition[] = [
@@ -1253,6 +1420,66 @@ export const TOOL_DEFS: ToolDefinition[] = [
   {
     type: "function",
     function: {
+      name: "list_proposals",
+      description:
+        "List proposals. Use for 'show open proposals', 'which proposals are pending', 'declined proposals'.",
+      parameters: {
+        type: "object",
+        properties: {
+          status: { type: "string", enum: ["draft", "sent", "viewed", "accepted", "declined", "expired"] },
+          clientId: { type: "string" },
+          limit: { type: "number" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_proposal",
+      description:
+        "Fetch a single proposal by id or partial title. Returns full line items, totals, status, accept/decline timestamps.",
+      parameters: {
+        type: "object",
+        properties: {
+          id: { type: "string" },
+          title: { type: "string", description: "Partial title match" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "cash_flow_forecast",
+      description:
+        "Forecast next N months: expected income (unpaid invoices with dueDate) + recurring expenses projected. Use for 'cash flow', 'can I pay next month', 'forecast'.",
+      parameters: {
+        type: "object",
+        properties: {
+          months: { type: "number", description: "Months ahead (default 3, max 12)" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_recurring",
+      description:
+        "List recurring expense rules. Use for 'what recurring expenses do I have', 'subscriptions'.",
+      parameters: {
+        type: "object",
+        properties: {
+          isActive: { type: "boolean" },
+          limit: { type: "number" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "get_client",
       description: "Get one client by id or name. Returns contact info, recent projects, open invoices.",
       parameters: {
@@ -1360,6 +1587,10 @@ export type ToolName =
   | "client_revenue"
   | "invoice_aging"
   | "top_expense_categories"
+  | "list_proposals"
+  | "get_proposal"
+  | "cash_flow_forecast"
+  | "list_recurring"
   | "get_client"
   | "get_project"
   | "get_task"
@@ -1410,6 +1641,14 @@ export async function executeTool(
       return invoiceAging();
     case "top_expense_categories":
       return topExpenseCategories(args as { limit?: number; fromDate?: string; toDate?: string });
+    case "list_proposals":
+      return listProposals(args as { status?: string; limit?: number; clientId?: string });
+    case "get_proposal":
+      return getProposal(args as { id?: string; title?: string });
+    case "cash_flow_forecast":
+      return cashFlowForecast(args as { months?: number });
+    case "list_recurring":
+      return listRecurring(args as { isActive?: boolean; limit?: number });
     case "get_client":
       return getClient(args as { id?: string; name?: string });
     case "get_project":

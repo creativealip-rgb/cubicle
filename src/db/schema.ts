@@ -455,3 +455,68 @@ export const expenseRelations = relations(expenses, ({ one }) => ({
   client: one(clients, { fields: [expenses.clientId], references: [clients.id] }),
   createdByUser: one(users, { fields: [expenses.createdBy], references: [users.id] }),
 }));
+
+// ─── Pre-deal: Proposals (Sprint J — P2.7 phase 1) ───
+
+export const proposals = pgTable("proposals", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
+  title: text("title").notNull(),
+  body: text("body"),
+  // Stored as JSONB array: [{ description, quantity, unitPrice, amount }]
+  lineItems: jsonb("line_items").notNull().default(sql`'[]'::jsonb`),
+  subtotal: numeric("subtotal", { precision: 12, scale: 2 }).notNull().default("0"),
+  tax: numeric("tax", { precision: 12, scale: 2 }).notNull().default("0"),
+  total: numeric("total", { precision: 12, scale: 2 }).notNull().default("0"),
+  currency: text("currency").notNull().default("IDR"),
+  downPaymentPercent: numeric("down_payment_percent", { precision: 5, scale: 2 }).notNull().default("50"),
+  validUntil: date("valid_until"),
+  status: text("status", { enum: ["draft", "sent", "viewed", "accepted", "declined", "expired"] }).notNull().default("draft"),
+  declineReason: text("decline_reason"),
+  sharedTokenHash: text("shared_token_hash").unique(),
+  sharedTokenExpiresAt: timestamp("shared_token_expires_at", { withTimezone: true }),
+  sharedTokenRevokedAt: timestamp("shared_token_revoked_at", { withTimezone: true }),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  viewedAt: timestamp("viewed_at", { withTimezone: true }),
+  acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+  declinedAt: timestamp("declined_at", { withTimezone: true }),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const proposalRelations = relations(proposals, ({ one }) => ({
+  workspace: one(workspaces, { fields: [proposals.workspaceId], references: [workspaces.id] }),
+  client: one(clients, { fields: [proposals.clientId], references: [clients.id] }),
+  project: one(projects, { fields: [proposals.projectId], references: [projects.id] }),
+  createdByUser: one(users, { fields: [proposals.createdBy], references: [users.id] }),
+}));
+
+// ─── Finance: Recurring Expenses (Sprint K — P2.8 phase 3) ───
+
+export const expenseRecurring = pgTable("expense_recurring", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+  currency: text("currency").notNull().default("IDR"),
+  categoryId: uuid("category_id").references(() => expenseCategories.id, { onDelete: "set null" }),
+  projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
+  frequency: text("frequency", { enum: ["monthly", "quarterly", "yearly"] }).notNull().default("monthly"),
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date"),
+  lastGeneratedDate: date("last_generated_date"),
+  isActive: boolean("is_active").notNull().default(true),
+  notes: text("notes"),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const expenseRecurringRelations = relations(expenseRecurring, ({ one }) => ({
+  workspace: one(workspaces, { fields: [expenseRecurring.workspaceId], references: [workspaces.id] }),
+  category: one(expenseCategories, { fields: [expenseRecurring.categoryId], references: [expenseCategories.id] }),
+  project: one(projects, { fields: [expenseRecurring.projectId], references: [projects.id] }),
+}));
