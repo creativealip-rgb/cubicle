@@ -12,6 +12,9 @@ import {
   MessageSquarePlus,
   History,
   Trash2,
+  Download,
+  Mic,
+  MicOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -74,6 +77,15 @@ export function AIChatPanel() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conv[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [lastUsage, setLastUsage] = useState<{
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  } | null>(null);
+  const [listening, setListening] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  const recognitionRef = useRef<unknown>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -92,6 +104,48 @@ export function AIChatPanel() {
   useEffect(() => {
     if (open) loadConversations();
   }, [open]);
+
+  // Voice input — feature-detect Web Speech API (Chrome/Edge only)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const SR =
+      (window as unknown as { SpeechRecognition?: unknown }).SpeechRecognition ||
+      (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
+    if (!SR) return;
+    setVoiceSupported(true);
+    const Ctor = SR as new () => {
+      lang: string;
+      continuous: boolean;
+      interimResults: boolean;
+      onresult: (ev: { results: ArrayLike<ArrayLike<{ transcript: string }>>; resultIndex: number }) => void;
+      onerror: (ev: { error: string }) => void;
+      onend: () => void;
+      start: () => void;
+      stop: () => void;
+      abort: () => void;
+    };
+    const r = new Ctor();
+    r.lang = navigator.language || "en-US";
+    r.continuous = false;
+    r.interimResults = false;
+    r.onresult = (ev) => {
+      let text = "";
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        text += ev.results[i][0].transcript;
+      }
+      if (text) setInput((prev) => (prev ? prev + " " + text : text));
+    };
+    r.onerror = () => setListening(false);
+    r.onend = () => setListening(false);
+    recognitionRef.current = r;
+    return () => {
+      try {
+        r.abort();
+      } catch {
+        /* ignore */
+      }
+    };
+  }, []);
 
   async function loadConversations() {
     try {
@@ -144,6 +198,34 @@ export function AIChatPanel() {
     }
   }
 
+  function stopStream() {
+    abortRef.current?.abort();
+    abortRef.current = null;
+  }
+
+  function toggleVoice() {
+    if (!recognitionRef.current) return;
+    const r = recognitionRef.current as {
+      start: () => void;
+      stop: () => void;
+    };
+    if (listening) {
+      try {
+        r.stop();
+      } catch {
+        /* ignore */
+      }
+      setListening(false);
+    } else {
+      try {
+        r.start();
+        setListening(true);
+      } catch {
+        setListening(false);
+      }
+    }
+  }
+
   async function send(text: string) {
     const trimmed = text.trim();
     if (!trimmed || busy) return;
@@ -161,6 +243,10 @@ export function AIChatPanel() {
         toolEvents: [],
       },
     ]);
+    setLastUsage(null);
+
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     let res: Response;
     try {
@@ -173,8 +259,13 @@ export function AIChatPanel() {
           ),
           conversationId: conversationId ?? undefined,
         }),
+        signal: controller.signal,
       });
     } catch (err) {
+      if ((err as Error)?.name === "AbortError") {
+        // User cancelled — already handled by stopStream
+        return;
+      }
       setMessages((prev) => {
         const copy = [...prev];
         copy[copy.length - 1] = {
@@ -331,6 +422,10 @@ export function AIChatPanel() {
               // from `?cid` if exposed. For now, fetch history list anyway.)
               loadConversations();
               const toolCalls = Number(payload.toolCalls ?? 0);
+              const usage = payload.usage as
+                | { prompt_tokens: number; completion_tokens: number; total_tokens: number }
+                | undefined;
+              if (usage) setLastUsage(usage);
               updateTail({
                 pending: false,
                 status: undefined,
@@ -352,6 +447,14 @@ export function AIChatPanel() {
         }
       }
     } catch (err) {
+      if ((err as Error)?.name === "AbortError") {
+        updateTail({
+          pending: false,
+          status: undefined,
+          error: "Stopped by user",
+        });
+        return;
+      }
       updateTail({
         pending: false,
         status: undefined,
@@ -699,21 +802,57 @@ export function AIChatPanel() {
                   )}
                 />
                 <Button
-                  type="submit"
+                  type="button"
                   size="icon"
-                  disabled={busy || !input.trim()}
-                  className="h-9 w-9 shrink-0"
+                  variant="ghost"
+                  onClick={toggleVoice}
+                  disabled={!voiceSupported}
+                  className={cn(
+                    "h-9 w-9 shrink-0",
+                    listening && "bg-red-50 text-red-600 hover:bg-red-100",
+                  )}
+                  aria-label={listening ? "Stop listening" : "Voice input"}
+                  title={
+                    !voiceSupported
+                      ? "Voice input not supported in this browser"
+                      : listening
+                        ? "Stop listening"
+                        : "Voice input"
+                  }
+                >
+                  {listening ? (
+                    <MicOff className="h-4 w-4 animate-pulse" />
+                  ) : (
+                    <Mic className="h-4 w-4" />
+                  )}
+                </Button>
+                <Button
+                  type={busy ? "button" : "submit"}
+                  size="icon"
+                  disabled={!busy && !input.trim()}
+                  onClick={busy ? stopStream : undefined}
+                  className={cn(
+                    "h-9 w-9 shrink-0",
+                    busy && "bg-red-500 hover:bg-red-600",
+                  )}
+                  aria-label={busy ? "Stop" : "Send"}
+                  title={busy ? "Stop" : "Send"}
                 >
                   {busy ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <XCircle className="h-4 w-4" />
                   ) : (
                     <Send className="h-4 w-4" />
                   )}
                 </Button>
               </form>
-              <p className="px-1 pt-1 text-[10px] text-slate-400">
-                Press Enter to send · Shift+Enter for newline
-              </p>
+              <div className="flex items-center justify-between px-1 pt-1 text-[10px] text-slate-400">
+                <span>Press Enter to send · Shift+Enter for newline</span>
+                {lastUsage && (
+                  <span title={`prompt: ${lastUsage.prompt_tokens} · completion: ${lastUsage.completion_tokens}`}>
+                    {lastUsage.total_tokens.toLocaleString()} tokens
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>

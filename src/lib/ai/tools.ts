@@ -22,6 +22,7 @@ import {
   users,
   workspaceMembers,
   workspaces,
+  promptTemplates,
 } from "@/db/schema";
 import type { ToolDefinition } from "./client";
 
@@ -226,6 +227,200 @@ async function listWorkspaceMembers() {
     .innerJoin(users, eq(users.id, workspaceMembers.userId))
     .where(eq(workspaceMembers.workspaceId, ws.id));
   return { count: rows.length, members: rows };
+}
+
+// ─── Read: search (semantic via pg_trgm) ────────────────────
+
+type SearchHit = {
+  kind: "client" | "project" | "task" | "invoice";
+  id: string;
+  title: string;
+  subtitle: string | null;
+  similarity: number;
+  status?: string | null;
+};
+
+async function searchWorkspace(
+  args: { q: string; limit?: number; kinds?: string[] },
+): Promise<{ query: string; count: number; results: SearchHit[] }> {
+  const ws = await getWorkspace();
+  const q = (args.q ?? "").trim();
+  const limit = Math.min(args.limit ?? 10, 30);
+  const allowedKinds = new Set((args.kinds ?? ["client", "project", "task", "invoice"]));
+  if (!q) return { query: "", count: 0, results: [] };
+
+  // Use trigram similarity (case-insensitive). Threshold 0.15 catches
+  // typos and partial matches; higher = stricter.
+  const results: SearchHit[] = [];
+
+  if (allowedKinds.has("client")) {
+    const rows = await db
+      .select({
+        id: clients.id,
+        name: clients.name,
+        company: clients.companyName,
+        status: clients.status,
+        sim: sql<number>`similarity(${clients.name}, ${q})`,
+      })
+      .from(clients)
+      .where(
+        and(
+          eq(clients.workspaceId, ws.id),
+          sql`${clients.name} % ${q}`,
+        ),
+      )
+      .orderBy(sql`similarity(${clients.name}, ${q}) desc`)
+      .limit(limit);
+    for (const r of rows) {
+      results.push({
+        kind: "client",
+        id: r.id,
+        title: r.name,
+        subtitle: r.company,
+        similarity: Number(r.sim),
+        status: r.status,
+      });
+    }
+  }
+
+  if (allowedKinds.has("project")) {
+    const rows = await db
+      .select({
+        id: projects.id,
+        name: projects.name,
+        status: projects.status,
+        sim: sql<number>`similarity(${projects.name}, ${q})`,
+      })
+      .from(projects)
+      .where(
+        and(
+          eq(projects.workspaceId, ws.id),
+          sql`${projects.name} % ${q}`,
+        ),
+      )
+      .orderBy(sql`similarity(${projects.name}, ${q}) desc`)
+      .limit(limit);
+    for (const r of rows) {
+      results.push({
+        kind: "project",
+        id: r.id,
+        title: r.name,
+        subtitle: null,
+        similarity: Number(r.sim),
+        status: r.status,
+      });
+    }
+  }
+
+  if (allowedKinds.has("task")) {
+    const rows = await db
+      .select({
+        id: tasks.id,
+        title: tasks.title,
+        status: tasks.status,
+        sim: sql<number>`similarity(${tasks.title}, ${q})`,
+      })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.workspaceId, ws.id),
+          sql`${tasks.title} % ${q}`,
+        ),
+      )
+      .orderBy(sql`similarity(${tasks.title}, ${q}) desc`)
+      .limit(limit);
+    for (const r of rows) {
+      results.push({
+        kind: "task",
+        id: r.id,
+        title: r.title,
+        subtitle: null,
+        similarity: Number(r.sim),
+        status: r.status,
+      });
+    }
+  }
+
+  if (allowedKinds.has("invoice")) {
+    const rows = await db
+      .select({
+        id: invoices.id,
+        number: invoices.invoiceNumber,
+        status: invoices.status,
+        sim: sql<number>`similarity(${invoices.invoiceNumber}, ${q})`,
+      })
+      .from(invoices)
+      .where(
+        and(
+          eq(invoices.workspaceId, ws.id),
+          sql`${invoices.invoiceNumber} % ${q}`,
+        ),
+      )
+      .orderBy(sql`similarity(${invoices.invoiceNumber}, ${q}) desc`)
+      .limit(limit);
+    for (const r of rows) {
+      results.push({
+        kind: "invoice",
+        id: r.id,
+        title: r.number,
+        subtitle: null,
+        similarity: Number(r.sim),
+        status: r.status,
+      });
+    }
+  }
+
+  results.sort((a, b) => b.similarity - a.similarity);
+  return { query: q, count: results.length, results: results.slice(0, limit) };
+}
+
+// ─── Read: prompt library ────────────────────────────────────
+
+async function listPrompts(args: { category?: string; limit?: number }) {
+  const ws = await getWorkspace();
+  const limit = Math.min(args.limit ?? 20, 50);
+  const conds = [eq(promptTemplates.workspaceId, ws.id)];
+  if (args.category) conds.push(eq(promptTemplates.category, args.category));
+  const rows = await db
+    .select({
+      id: promptTemplates.id,
+      name: promptTemplates.name,
+      category: promptTemplates.category,
+      description: promptTemplates.description,
+      isSystem: promptTemplates.isSystem,
+    })
+    .from(promptTemplates)
+    .where(and(...conds))
+    .orderBy(desc(promptTemplates.createdAt))
+    .limit(limit);
+  return { count: rows.length, prompts: rows };
+}
+
+async function getPrompt(args: { id?: string; name?: string; category?: string }) {
+  const ws = await getWorkspace();
+  if (!args.id && !args.name) {
+    return { error: "Provide id or name" };
+  }
+  const conds = [eq(promptTemplates.workspaceId, ws.id)];
+  if (args.id) conds.push(eq(promptTemplates.id, args.id));
+  if (args.name) {
+    if (args.category) conds.push(eq(promptTemplates.category, args.category));
+    conds.push(sql`${promptTemplates.name} ILIKE ${"%" + args.name + "%"}`);
+  }
+  const [row] = await db
+    .select()
+    .from(promptTemplates)
+    .where(and(...conds))
+    .limit(1);
+  if (!row) return { found: false };
+  return {
+    found: true,
+    id: row.id,
+    name: row.name,
+    category: row.category,
+    description: row.description,
+    template: row.template,
+  };
 }
 
 // ─── Read: entity (single) ─────────────────────────────────────────
@@ -605,6 +800,58 @@ export const TOOL_DEFS: ToolDefinition[] = [
   {
     type: "function",
     function: {
+      name: "search_workspace",
+      description:
+        "Fuzzy search across clients, projects, tasks, and invoices by name/title. Returns ranked matches with similarity scores. Use when the user says 'find anything about X', 'search for X', or you don't know the exact name.",
+      parameters: {
+        type: "object",
+        properties: {
+          q: { type: "string", description: "Search query (partial match OK, typo-tolerant)" },
+          limit: { type: "number", description: "Max total results, default 10, max 30" },
+          kinds: {
+            type: "array",
+            items: { type: "string", enum: ["client", "project", "task", "invoice"] },
+            description: "Filter by entity kind. Omit to search all.",
+          },
+        },
+        required: ["q"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_prompts",
+      description:
+        "List prompt templates in the workspace. Use for 'what prompts do I have', 'show me the cold outreach templates'.",
+      parameters: {
+        type: "object",
+        properties: {
+          category: { type: "string", description: "Filter by category (e.g. 'outreach', 'proposal')" },
+          limit: { type: "number" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_prompt",
+      description:
+        "Fetch a prompt template by id or partial name. Returns the full template body so you can use it.",
+      parameters: {
+        type: "object",
+        properties: {
+          id: { type: "string", description: "Prompt UUID" },
+          name: { type: "string", description: "Prompt name (partial match OK)" },
+          category: { type: "string", description: "Optional category to disambiguate" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "get_client",
       description: "Get one client by id or name. Returns contact info, recent projects, open invoices.",
       parameters: {
@@ -702,6 +949,9 @@ export type ToolName =
   | "list_invoices"
   | "get_workspace_summary"
   | "list_workspace_members"
+  | "search_workspace"
+  | "list_prompts"
+  | "get_prompt"
   | "get_client"
   | "get_project"
   | "get_task"
@@ -732,6 +982,12 @@ export async function executeTool(
       return getWorkspaceSummary();
     case "list_workspace_members":
       return listWorkspaceMembers();
+    case "search_workspace":
+      return searchWorkspace(args as { q: string; limit?: number; kinds?: string[] });
+    case "list_prompts":
+      return listPrompts(args as { category?: string; limit?: number });
+    case "get_prompt":
+      return getPrompt(args as { id?: string; name?: string; category?: string });
     case "get_client":
       return getClient(args as { id?: string; name?: string });
     case "get_project":
