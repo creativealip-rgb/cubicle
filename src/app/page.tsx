@@ -130,10 +130,16 @@ export default function HomePage() {
         <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1fr_0.95fr]">
           <div className="relative">
             <div className="absolute -left-10 -top-10 hidden h-32 w-32 rounded-full bg-cyan-300/20 blur-3xl lg:block" />
-            <Badge className="mb-6 border border-blue-200/70 bg-white/70 px-3 py-1.5 text-blue-700 shadow-sm shadow-blue-100/60 backdrop-blur hover:bg-white/70">
-              <span className="mr-2 inline-flex h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-              Live in beta · v0.1
-            </Badge>
+            <div className="relative mb-6 inline-flex">
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,#0091ff,#ff02f0,#f76808,#6647f0,#0091ff)] opacity-70 blur-md"
+              />
+              <Badge className="relative rounded-full border-0 bg-white/90 px-3 py-1.5 text-blue-700 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)] hover:bg-white/90">
+                <span className="mr-2 inline-flex h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+                Live in beta · v0.1
+              </Badge>
+            </div>
             <h1 className="max-w-4xl text-3xl font-semibold tracking-normal text-slate-950 sm:text-5xl sm:tracking-normal md:text-6xl lg:text-7xl">
               Run client work from request to invoice.
             </h1>
@@ -141,13 +147,13 @@ export default function HomePage() {
               One calm workspace for clients, projects, deliverables, time, invoices, booking, and portals.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="h-12 bg-blue-600 px-6 text-white hover:bg-blue-700">
+              <Button asChild size="lg" className="h-12 rounded-xl bg-slate-950 px-6 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12),0_4px_12px_rgba(15,23,42,0.15)] tracking-[-0.01em] hover:bg-slate-900">
                 <Link href="/signup">
                   Start managing clients
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="h-12 border-slate-300 bg-white/70 px-6">
+              <Button asChild size="lg" variant="outline" className="h-12 rounded-xl border-0 bg-white/70 px-6 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.08)] tracking-[-0.01em] hover:bg-white">
                 <Link href="/login">View demo workspace</Link>
               </Button>
             </div>
@@ -240,7 +246,10 @@ export default function HomePage() {
 
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {operationPillars.map((feature) => (
-              <Card key={feature.title} className="group border-slate-950/5 bg-white/75 shadow-sm backdrop-blur transition hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/70">
+              <Card
+                key={feature.title}
+                className="group rounded-2xl border-0 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),inset_0_0_0_1px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(15,23,42,0.08),inset_0_0_0_1px_rgba(15,23,42,0.08)]"
+              >
                 <CardContent className="p-6">
                   <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 transition group-hover:bg-blue-600 group-hover:text-white">
                     <feature.icon className="h-5 w-5" />
@@ -288,14 +297,14 @@ export default function HomePage() {
 
             <div className="relative">
               <div className="absolute -inset-6 rounded-[2rem] bg-gradient-to-br from-blue-500/15 via-cyan-400/8 to-indigo-500/15 blur-2xl" />
-              <div className="relative overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-xl shadow-slate-200/50">
-                <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2.5">
+              <div className="relative overflow-hidden rounded-[1.5rem] border-0 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.12),inset_0_0_0_1px_rgba(15,23,42,0.06)]">
+                <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50/60 px-4 py-2.5">
                   <div className="flex gap-1.5">
                     <div className="h-3 w-3 rounded-full bg-red-400" />
                     <div className="h-3 w-3 rounded-full bg-amber-400" />
                     <div className="h-3 w-3 rounded-full bg-emerald-400" />
                   </div>
-                  <div className="ml-2 flex-1 truncate rounded-md bg-white px-3 py-1 text-xs text-slate-500 ring-1 ring-slate-200">
+                  <div className="ml-2 flex-1 truncate rounded-md bg-white px-3 py-1 text-xs text-slate-500 ring-1 ring-slate-100">
                     cubicle.app/app/dashboard
                   </div>
                 </div>
@@ -390,7 +399,7 @@ export default function HomePage() {
               Other client-ops tools charge $20–$52/month per seat and still miss the portal or booking. Cubicle keeps the full loop free for solo work.
             </p>
           </div>
-          <div className="mt-12 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/50">
+          <div className="mt-12 overflow-hidden rounded-2xl border-0 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.1),inset_0_0_0_1px_rgba(15,23,42,0.06)]">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-[0.12em] text-slate-500">
                 <tr>
@@ -441,10 +450,10 @@ export default function HomePage() {
                 role: "Marketing consultant",
               },
             ].map((t) => (
-              <Card key={t.author} className="border-slate-200 bg-white">
+              <Card key={t.author} className="rounded-2xl border-0 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),inset_0_0_0_1px_rgba(15,23,42,0.06)]">
                 <CardContent className="p-6">
                   <p className="text-sm leading-7 text-slate-700">&ldquo;{t.quote}&rdquo;</p>
-                  <div className="mt-4 border-t pt-4">
+                  <div className="mt-4 border-t border-slate-100 pt-4">
                     <p className="text-sm font-semibold text-slate-950">{t.author}</p>
                     <p className="text-xs text-slate-500">{t.role}</p>
                   </div>
@@ -473,36 +482,58 @@ export default function HomePage() {
               Start with the core client operations workflow. Scale into team roles, branded portals, and studio-level support when ready.
             </p>
           </div>
-          <div className="mt-12 grid gap-4 lg:grid-cols-3">
+          <div className="mt-12 grid gap-6 lg:grid-cols-3">
             {pricing.map((plan) => (
-              <Card key={plan.name} className={plan.featured ? "border-blue-200 bg-white shadow-xl shadow-blue-100/70" : "border-slate-200 bg-white"}>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="text-xl font-semibold tracking-[0.03em] text-slate-950">{plan.name}</h3>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">{plan.description}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className={`text-2xl font-semibold tracking-[0.03em] ${plan.featured ? "text-blue-700" : "text-slate-950"}`}>{plan.price}</div>
-                      {plan.priceSub && <p className="text-xs text-slate-500 mt-0.5">{plan.priceSub}</p>}
-                    </div>
-                  </div>
-                  <div className="mt-6 space-y-3">
-                    {plan.items.map((item) => (
-                      <div key={item} className="flex items-center gap-2 text-sm text-slate-700">
-                        <CheckCircle2 className="h-4 w-4 text-blue-600" />
-                        <span>{item}</span>
+              <div key={plan.name} className="relative">
+                {plan.featured && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -inset-[1px] rounded-2xl bg-[conic-gradient(from_140deg,#0091ff,#ff02f0,#f76808,#6647f0,#0091ff)] opacity-90"
+                  />
+                )}
+                <Card
+                  className={
+                    plan.featured
+                      ? "relative rounded-2xl border-0 bg-white shadow-[0_24px_60px_rgba(37,99,235,0.18)]"
+                      : "rounded-2xl border-0 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),inset_0_0_0_1px_rgba(15,23,42,0.06)]"
+                  }
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="text-xl font-semibold tracking-[0.03em] text-slate-950">{plan.name}</h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">{plan.description}</p>
                       </div>
-                    ))}
-                  </div>
-                  <Button asChild className={plan.featured ? "mt-7 w-full bg-blue-600 text-white hover:bg-blue-700" : "mt-7 w-full"} variant={plan.featured ? "default" : "outline"}>
-                    <Link href={plan.href}>
-                      {plan.cta}
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
+                      <div className="text-right">
+                        <div className={`text-2xl font-semibold tracking-[0.03em] ${plan.featured ? "text-blue-700" : "text-slate-950"}`}>{plan.price}</div>
+                        {plan.priceSub && <p className="text-xs text-slate-500 mt-0.5">{plan.priceSub}</p>}
+                      </div>
+                    </div>
+                    <div className="mt-6 space-y-3">
+                      {plan.items.map((item) => (
+                        <div key={item} className="flex items-center gap-2 text-sm text-slate-700">
+                          <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                          <span>{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <Button
+                      asChild
+                      className={
+                        plan.featured
+                          ? "mt-7 w-full rounded-xl bg-slate-950 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)] tracking-[-0.01em] hover:bg-slate-900"
+                          : "mt-7 w-full rounded-xl border-0 bg-white text-slate-900 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.08)] tracking-[-0.01em] hover:bg-slate-50"
+                      }
+                      variant={plan.featured ? "default" : "outline"}
+                    >
+                      <Link href={plan.href}>
+                        {plan.cta}
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
             ))}
           </div>
         </div>
@@ -528,13 +559,13 @@ export default function HomePage() {
             Replace scattered updates, forgotten billable hours, and manual handoffs with one client operations hub.
           </p>
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-            <Button asChild size="lg" className="h-12 bg-white px-6 text-blue-700 hover:bg-blue-50">
+            <Button asChild size="lg" className="h-12 rounded-xl bg-white px-6 text-slate-950 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)] tracking-[-0.01em] hover:bg-blue-50">
               <Link href="/signup">
                 Create workspace
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="h-12 border-white/30 bg-white/10 px-6 text-white hover:bg-white/10 hover:text-white">
+            <Button asChild size="lg" variant="outline" className="h-12 rounded-xl border-0 bg-white/10 px-6 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)] tracking-[-0.01em] hover:bg-white/15 hover:text-white">
               <Link href="/login">Sign in</Link>
             </Button>
           </div>
