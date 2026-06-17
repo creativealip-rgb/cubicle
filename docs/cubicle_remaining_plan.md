@@ -135,6 +135,11 @@ Production client-ready: ~93% (+1: AI Assistant raises polish, R2 gaps unchanged
 - Demo MVP: **99%** (unchanged — both features in app shell)
 - Sellable source/MVP: **99%** (unchanged — already 99%)
 - Production client-ready: **~93%** (+1 — Proposal adds client-acquisition flow, Recurring adds ops utility, Cash flow adds strategic insight)
+
+| **Update 2026-06-19 (Sprint L — P2.7.2 Questionnaire):**
+- Demo MVP: **99%** (unchanged — in app shell)
+- Sellable source/MVP: **99%** (unchanged — already 99%)
+- Production client-ready: **~93%** (unchanged — utility feature, not infra/differentiator)
 >
 > **Resolved in this continuation session (16 Jun):**
 > - P0.1 rogue /tmp/postgresql regression — confirmed gone (no rebuild)
@@ -202,6 +207,7 @@ Sprint H P2.8.1 Expense CRUD ✅ (18 Jun — expenses, categories, project-tag)
 Sprint I P2.8.2 Reports ✅ (18 Jun — 4 new AI tools, /app/reports dashboard)
 Sprint J P2.7.1 Proposal ✅ (18 Jun — accept flow, auto-create project+invoice)
 Sprint K P2.8 Recurring + Cash flow ✅ (18 Jun — 2 new AI tools, forecast card)
+Sprint L P2.7.2 Questionnaire ✅ (19 Jun — form builder, public /intake, 8 field types)
 
 ## 4. P0 — Mandatory Before Production
 
@@ -880,6 +886,8 @@ Risk: medium (form builder UI takes time, schema validation tricky)
 
 **Status 2026-06-18: ⏳ PLANNED (Sprint L).** Schema + send/fill/response flow. Will ship before P2.7.3.
 
+**Status 2026-06-19: ✅ SHIPPED (Sprint L).** `questionnaires` + `questionnaire_responses` tables, list/create/detail pages, form builder (8 field types: text/textarea/select/multiselect/number/date/email/url), public `/intake/[token]` route, response viewer. Accept → answers become project brief (or stand-alone intake). AI tools deferred (gated on usage).
+
 #### P2.7.3 Contract (E-signature)
 
 Template + send → client signs → audit trail + signed PDF stored.
@@ -1184,6 +1192,39 @@ Closes the last gaps in finance module: recurring expenses (rent, SaaS subs) and
 - Reports page shows Cash flow card with month-by-month breakdown
 
 **Score impact:** Production client-ready ~92% → ~93% (Recurring adds ops utility, Cash flow adds strategic insight, Proposal adds client-acquisition flow).
+
+### Sprint L — P2.7.2 Questionnaire ✅ DONE (19 Jun 2026)
+
+Client intake forms: build a form, send to a client, get back structured responses that become the project brief.
+
+**What shipped:**
+- `questionnaires` table (workspace_id, name, description, schema jsonb)
+- `questionnaire_responses` table (questionnaire_id, client_id, project_id?, respondent_name/email, answers jsonb, status [pending|submitted], shared_token_hash, expires_at)
+- 8 field types supported: text, textarea, email, url, number, date, select, multiselect
+- Form builder UI: add/remove/reorder fields, label/required/placeholder, options for select/multiselect
+- Public route `/intake/[token]` — branded render, no auth required
+- Status flow: draft → send (generates token) → pending → submitted (locked)
+- Response viewer in /app/questionnaires/[id] — expand each response to see field-by-field answers
+- Per-field types: text/textarea/email/url/date → input; number → numeric input; select → dropdown; multiselect → checkbox group
+
+**Files (8 new + 1 modified):**
+- New: `drizzle/0005_questionnaires.sql`, `src/lib/actions/questionnaires.ts`
+- New: `src/app/(app)/app/questionnaires/{page,new/page,[questionnaireId]/page}.tsx`
+- New: `src/app/intake/[token]/page.tsx`
+- New: `src/components/questionnaires/{questionnaire-builder,send-questionnaire-button,response-viewer,intake-form}.tsx`
+- Modified: `src/db/schema.ts` (+2 tables, +2 relations), `src/components/app-sidebar.tsx` (nav entry)
+
+**Verified live (19 Jun):**
+- /app/questionnaires 200 (authed)
+- Build clean (tsc 0, pnpm build OK)
+- Container rebuilt + restarted
+
+**Deferred:**
+- AI tools (list/get) — gated on usage; add if AI panel users start asking about responses
+- File upload field type — would need R2 wiring; current 8 types cover the common cases
+- Auto-link response to project on accept — responses are project-aware via project_id at send time
+
+**Score impact:** Production client-ready unchanged at ~93% (utility feature, not strategic differentiator).
 
 ## 7. Security Hardening Plan
 
