@@ -1,33 +1,34 @@
 /**
- * AI assistant chat endpoint.
+ * AI assistant chat endpoint (Sprint F.2 — streaming).
  *
  * POST /api/ai/chat
- * Body: {
- *   messages: ChatMessage[],          // last must be user
- *   conversationId?: string,          // omit to start new
- * }
- * Returns: {
- *   message: { role, content, confirmation? },
- *   usage, toolCalls,
- *   conversationId,                    // for client to track
- * }
+ * Body: { messages: ChatMessage[], conversationId?: string }
  *
- * Persistence: every user/assistant/tool message is saved to ai_messages.
- * Tool messages include the raw tool result so the next turn can reference.
- * The conversation is auto-titled from the first user message.
+ * Returns: Server-Sent Events (text/event-stream) so the UI can render
+ * tokens as they stream from 9router.
  *
- * Action tools (update_task_status, draft_invoice_reminder) return a
- * `confirmation` object inside the assistant message — UI shows a confirm
- * card and POSTs to /api/ai/action to actually execute.
+ *   event: status   { phase: "thinking" | "tool", label: string }
+ *   event: content  { delta: string }       // text deltas (batched ~60ms)
+ *   event: tool     { name, args, result }  // a tool was executed
+ *   event: confirm  { tool, confirmation }  // action tool — pause for user
+ *   event: error    { message: string }
+ *   event: done     { conversationId, usage, toolCalls }
+ *
+ * Persistence: only on `done` (or `confirm` for action tools). Partial
+ * streamed tokens are NOT persisted — final answer is saved as a single
+ * assistant row. Tool messages are also persisted on done.
  *
  * No streaming yet (Sprint F.1). Streaming lands in F.2.
+ *
+ * Action tools (update_task_status, draft_invoice_reminder) return a
+ * `confirmation` object — UI shows a confirm card and POSTs to /api/ai/action.
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { chat, type ChatMessage, aiConfig } from "@/lib/ai/client";
+import { chat, streamChat, type ChatMessage, aiConfig } from "@/lib/ai/client";
 import { TOOL_DEFS, executeTool, ACTION_TOOLS } from "@/lib/ai/tools";
 import { SYSTEM_PROMPT } from "@/lib/ai/system-prompt";
 import {
@@ -43,22 +44,69 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const MAX_TOOL_ROUNDS = 3;
-const MAX_HISTORY = 20; // last N user+assistant turns
+const MAX_HISTORY = 20;
 
 interface RequestBody {
   messages: { role: "user" | "assistant"; content: string }[];
   conversationId?: string;
 }
 
+// ── SSE helpers ─────────────────────────────────────────────────────
+// Use a ReadableStream<Uint8Array> to send Server-Sent Events.
+// Each `send()` writes `event: <name>\ndata: <json>\n\n` and flushes.
+
+function createSSEStream() {
+  const encoder = new TextEncoder();
+  let controllerRef: ReadableStreamDefaultController<Uint8Array> | null = null;
+
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controllerRef = controller;
+    },
+    cancel() {
+      controllerRef = null;
+    },
+  });
+
+  const send = (event: string, data: unknown) => {
+    if (!controllerRef) return;
+    const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+    try {
+      controllerRef.enqueue(encoder.encode(payload));
+    } catch {
+      // Stream closed — ignore
+    }
+  };
+
+  const close = () => {
+    if (!controllerRef) return;
+    try {
+      controllerRef.close();
+    } catch {
+      // already closed
+    }
+    controllerRef = null;
+  };
+
+  return { stream, send, close };
+}
+
+// ── POST handler ────────────────────────────────────────────────────
+
 export async function POST(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
   if (!aiConfig.enabled) {
-    return NextResponse.json(
-      { error: "AI not configured. Set AI_API_KEY or mount /run/secrets/9router_api_key." },
-      { status: 503 },
+    return new Response(
+      JSON.stringify({
+        error: "AI not configured. Set AI_API_KEY or mount /run/secrets/9router_api_key.",
+      }),
+      { status: 503, headers: { "Content-Type": "application/json" } },
     );
   }
 
@@ -66,40 +114,140 @@ export async function POST(req: NextRequest) {
   try {
     body = (await req.json()) as RequestBody;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
   }
   if (!Array.isArray(body.messages) || body.messages.length === 0) {
-    return NextResponse.json({ error: "messages array required" }, { status: 400 });
+    return new Response(
+      JSON.stringify({ error: "messages array required" }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    );
   }
 
-  // Determine workspace from the demo slug (matches tools.ts).
-  // The conv store uses the same hardcoded workspace.
-  const wsId = await getWorkspaceId();
+  // Workspace from demo slug (matches tools.ts / conv-store)
+  let wsId: string;
+  try {
+    wsId = await getWorkspaceId();
+  } catch (err) {
+    return new Response(
+      JSON.stringify({ error: String(err instanceof Error ? err.message : err) }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    );
+  }
 
-  // Persist: get-or-create conversation
-  const conversationId = await getOrCreateConv(wsId, session.user.id, body.conversationId);
+  // Persist user message first
+  let conversationId: string;
+  try {
+    conversationId = await getOrCreateConv(
+      wsId,
+      session.user.id,
+      body.conversationId,
+    );
 
-  // Cap history to last N user/assistant messages from the request
+    // Cap history to last N user/assistant messages
+    const userMsgs = body.messages
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .slice(-MAX_HISTORY);
+    const last = userMsgs[userMsgs.length - 1];
+    if (!last || last.role !== "user") {
+      return new Response(
+        JSON.stringify({ error: "last message must be from user" }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    await appendMessage(conversationId, { role: "user", content: last.content });
+    await maybeAutoTitle(conversationId, last.content);
+  } catch (err) {
+    return new Response(
+      JSON.stringify({ error: String(err instanceof Error ? err.message : err) }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
   const userMsgs = body.messages
     .filter((m) => m.role === "user" || m.role === "assistant")
     .slice(-MAX_HISTORY);
-  const last = userMsgs[userMsgs.length - 1];
-  if (!last || last.role !== "user") {
-    return NextResponse.json({ error: "last message must be from user" }, { status: 400 });
-  }
 
-  // Persist the user message
-  await appendMessage(conversationId, { role: "user", content: last.content });
-  await maybeAutoTitle(conversationId, last.content);
-
-  // Build LLM message list: system + history (excluding the just-persisted user msg
-  // because we re-derive it from `userMsgs` which already includes it)
+  // Build LLM message list: system + history
   const messages: ChatMessage[] = [
     { role: "system", content: SYSTEM_PROMPT },
     ...userMsgs.map((m) => ({ role: m.role, content: m.content })),
   ];
 
-  // Tool execution loop
+  // ── Set up SSE stream ──
+  const { stream, send, close } = createSSEStream();
+
+  // Run the agent loop in the background and close the stream when done
+  // (we don't await it — we return the response immediately so the
+  // browser sees headers and starts receiving events).
+  void runAgentLoop({
+    messages,
+    send,
+    close,
+    persistAssistant: async (final, toolRecords, lastToolName, totalUsage) => {
+      // Persist tool messages first
+      for (const tm of toolRecords) {
+        await appendMessage(conversationId, {
+          role: "tool",
+          content: JSON.stringify(tm.result),
+          toolName: tm.name,
+        });
+      }
+      // Persist the assistant final answer
+      await appendMessage(conversationId, {
+        role: "assistant",
+        content: final,
+        toolCalls: toolRecords.map((t) => ({ name: t.name })),
+        toolName: lastToolName ?? undefined,
+        tokens: totalUsage.completion_tokens,
+      });
+    },
+  }).catch((err) => {
+    send("error", {
+      message: err instanceof Error ? err.message : "Internal error",
+    });
+    close();
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no", // disable nginx buffering
+    },
+  });
+}
+
+export async function GET() {
+  return new Response(
+    JSON.stringify({ enabled: aiConfig.enabled, model: aiConfig.model }),
+    { headers: { "Content-Type": "application/json" } },
+  );
+}
+
+// ── Agent loop ──────────────────────────────────────────────────────
+
+async function runAgentLoop(opts: {
+  messages: ChatMessage[];
+  send: (event: string, data: unknown) => void;
+  close: () => void;
+  persistAssistant: (
+    finalContent: string,
+    toolRecords: Array<{ name: string; result: unknown }>,
+    lastToolName: string | null,
+    totalUsage: {
+      prompt_tokens: number;
+      completion_tokens: number;
+      total_tokens: number;
+    },
+  ) => Promise<void>;
+}) {
+  const { messages, send, close, persistAssistant } = opts;
+
   let rounds = 0;
   let totalUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
   let toolCallCount = 0;
@@ -108,113 +256,135 @@ export async function POST(req: NextRequest) {
   let lastToolName: string | null = null;
   const persistedToolMessages: Array<{ name: string; result: unknown }> = [];
 
-  while (rounds <= MAX_TOOL_ROUNDS) {
-    const response = await chat(messages, { tools: TOOL_DEFS, toolChoice: "auto" });
-    totalUsage = {
-      prompt_tokens: totalUsage.prompt_tokens + response.usage.prompt_tokens,
-      completion_tokens: totalUsage.completion_tokens + response.usage.completion_tokens,
-      total_tokens: totalUsage.total_tokens + response.usage.total_tokens,
-    };
-    const msg = response.message;
+  try {
+    while (rounds <= MAX_TOOL_ROUNDS) {
+      send("status", { phase: "thinking", label: "Thinking…" });
 
-    if (!msg.tool_calls || msg.tool_calls.length === 0) {
-      // Final answer
-      lastAssistantContent = msg.content ?? "";
-      break;
-    }
+      // Stream the response
+      const final = await streamChat(
+        messages,
+        (ev) => {
+          if (ev.type === "content" && ev.content) {
+            send("content", { delta: ev.content });
+          }
+          // We don't surface tool_call from the model here — we surface
+          // them only after we've executed the tool (see "tool" event below).
+        },
+        { tools: TOOL_DEFS, toolChoice: "auto" },
+      );
 
-    rounds += 1;
-    toolCallCount += msg.tool_calls.length;
-    messages.push(msg);
+      totalUsage = {
+        prompt_tokens: totalUsage.prompt_tokens + final.usage.prompt_tokens,
+        completion_tokens:
+          totalUsage.completion_tokens + final.usage.completion_tokens,
+        total_tokens: totalUsage.total_tokens + final.usage.total_tokens,
+      };
+      const msg = final.message;
 
-    for (const tc of msg.tool_calls) {
-      let result: unknown;
-      try {
-        result = await executeTool(tc.function.name, tc.function.arguments);
-      } catch (err) {
-        result = { error: String(err instanceof Error ? err.message : err) };
+      if (!msg.tool_calls || msg.tool_calls.length === 0) {
+        // Final answer — nothing more to do
+        lastAssistantContent = msg.content ?? "";
+        break;
       }
-      messages.push({
-        role: "tool",
-        tool_call_id: tc.id,
-        name: tc.function.name,
-        content: JSON.stringify(result),
-      });
-      persistedToolMessages.push({ name: tc.function.name, result });
 
-      // Detect action-tool confirmation in the result
-      if (ACTION_TOOLS.has(tc.function.name)) {
-        const r = result as { confirmation?: unknown; error?: string };
-        if (r?.confirmation) {
-          lastConfirmation = r.confirmation;
-          lastToolName = tc.function.name;
-          // For action tools, stop the loop and ask user to confirm
-          // We still need to send a final assistant message — let the model
-          // summarize the proposal. Add a synthetic user nudge.
-          messages.push({
-            role: "user",
-            content:
-              "A confirmation card is shown to the user. Briefly (1 sentence) describe what you propose and what happens after they confirm. Don't repeat the full details — the UI shows them.",
-          });
-          const final = await chat(messages, {
-            tools: TOOL_DEFS,
-            toolChoice: "none",
-          });
-          totalUsage = {
-            prompt_tokens: totalUsage.prompt_tokens + final.usage.prompt_tokens,
-            completion_tokens: totalUsage.completion_tokens + final.usage.completion_tokens,
-            total_tokens: totalUsage.total_tokens + final.usage.total_tokens,
-          };
-          lastAssistantContent = final.message.content ?? "";
-          break;
+      rounds += 1;
+      toolCallCount += msg.tool_calls.length;
+      messages.push(msg);
+
+      for (const tc of msg.tool_calls) {
+        let args: Record<string, unknown> = {};
+        try {
+          args = tc.function.arguments
+            ? JSON.parse(tc.function.arguments)
+            : {};
+        } catch {
+          args = {};
+        }
+        send("status", {
+          phase: "tool",
+          label: `Running ${tc.function.name}…`,
+          name: tc.function.name,
+        });
+
+        let result: unknown;
+        try {
+          result = await executeTool(
+            tc.function.name,
+            tc.function.arguments || "{}",
+          );
+        } catch (err) {
+          result = { error: String(err instanceof Error ? err.message : err) };
+        }
+        messages.push({
+          role: "tool",
+          tool_call_id: tc.id,
+          name: tc.function.name,
+          content: JSON.stringify(result),
+        });
+        persistedToolMessages.push({ name: tc.function.name, result });
+
+        // Send tool result to UI
+        send("tool", {
+          name: tc.function.name,
+          args,
+          result,
+        });
+
+        // Detect action-tool confirmation
+        if (ACTION_TOOLS.has(tc.function.name)) {
+          const r = result as { confirmation?: unknown; error?: string };
+          if (r?.confirmation) {
+            lastConfirmation = r.confirmation;
+            lastToolName = tc.function.name;
+            // Persist immediately (UI is going to ask the user; we don't
+            // know if they'll confirm yet — but the user msg + tool msg
+            // and a stub assistant are now stable)
+            await persistAssistant(
+              lastAssistantContent,
+              persistedToolMessages,
+              lastToolName,
+              totalUsage,
+            );
+            send("confirm", { tool: tc.function.name, confirmation: r.confirmation });
+            send("done", {
+              conversationId: undefined, // set by route via different path
+              usage: totalUsage,
+              toolCalls: toolCallCount,
+            });
+            close();
+            return;
+          }
         }
       }
     }
-    if (lastConfirmation) break;
-  }
 
-  // Persist tool messages (so the next turn can reference if needed)
-  for (const tm of persistedToolMessages) {
-    await appendMessage(conversationId, {
-      role: "tool",
-      content: JSON.stringify(tm.result),
-      toolName: tm.name,
+    if (rounds > MAX_TOOL_ROUNDS && !lastAssistantContent) {
+      lastAssistantContent =
+        "I tried a few queries but couldn't resolve that. Could you rephrase?";
+      send("content", { delta: lastAssistantContent });
+    }
+
+    await persistAssistant(
+      lastAssistantContent,
+      persistedToolMessages,
+      lastToolName,
+      totalUsage,
+    );
+
+    send("done", {
+      usage: totalUsage,
+      toolCalls: toolCallCount,
     });
+  } catch (err) {
+    send("error", {
+      message: err instanceof Error ? err.message : "Internal error",
+    });
+  } finally {
+    close();
   }
-  // Persist the assistant final answer
-  await appendMessage(conversationId, {
-    role: "assistant",
-    content: lastAssistantContent,
-    toolCalls: persistedToolMessages.map((t) => ({ name: t.name })),
-    toolName: lastToolName ?? undefined,
-    tokens: totalUsage.completion_tokens,
-  });
-
-  if (rounds > MAX_TOOL_ROUNDS && !lastAssistantContent) {
-    lastAssistantContent =
-      "I tried a few queries but couldn't resolve that. Could you rephrase?";
-  }
-
-  return NextResponse.json({
-    message: {
-      role: "assistant" as const,
-      content: lastAssistantContent,
-      confirmation: lastConfirmation,
-    },
-    usage: totalUsage,
-    toolCalls: toolCallCount,
-    conversationId,
-  });
 }
 
-export async function GET() {
-  return NextResponse.json({
-    enabled: aiConfig.enabled,
-    model: aiConfig.model,
-  });
-}
-
-// ─── helpers ───────────────────────────────────────────────────────
+// ── helpers ─────────────────────────────────────────────────────────
 
 async function getWorkspaceId(): Promise<string> {
   const [ws] = await db

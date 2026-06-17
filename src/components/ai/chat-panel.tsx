@@ -45,6 +45,8 @@ type Message = {
   meta?: string;
   confirmation?: Confirmation;
   confirmationStatus?: "pending" | "done" | "failed";
+  status?: string; // "Thinking…" / "Running list_clients…" / undefined
+  toolEvents?: Array<{ name: string; result: unknown }>;
 };
 
 type Conv = {
@@ -151,13 +153,20 @@ export function AIChatPanel() {
     setBusy(true);
     setMessages((prev) => [
       ...prev,
-      { role: "assistant", content: "", pending: true },
+      {
+        role: "assistant",
+        content: "",
+        pending: true,
+        status: "Thinking…",
+        toolEvents: [],
+      },
     ]);
 
+    let res: Response;
     try {
-      const res = await fetch("/api/ai/chat", {
+      res = await fetch("/api/ai/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
         body: JSON.stringify({
           messages: [...messages, { role: "user", content: trimmed }].map(
             (m) => ({ role: m.role, content: m.content }),
@@ -165,38 +174,6 @@ export function AIChatPanel() {
           conversationId: conversationId ?? undefined,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setMessages((prev) => {
-          const copy = [...prev];
-          copy[copy.length - 1] = {
-            role: "assistant",
-            content: "",
-            error: data.error || `HTTP ${res.status}`,
-          };
-          return copy;
-        });
-        return;
-      }
-      const meta = data.toolCalls
-        ? `${data.toolCalls} tool call${data.toolCalls === 1 ? "" : "s"}`
-        : "direct";
-      const cleanContent = stripThinking(data.message?.content ?? "");
-      setMessages((prev) => {
-        const copy = [...prev];
-        copy[copy.length - 1] = {
-          role: "assistant",
-          content: cleanContent || "(no content)",
-          meta,
-          confirmation: data.message?.confirmation ?? undefined,
-          confirmationStatus: data.message?.confirmation ? "pending" : undefined,
-        };
-        return copy;
-      });
-      if (data.conversationId && !conversationId) {
-        setConversationId(data.conversationId);
-        loadConversations();
-      }
     } catch (err) {
       setMessages((prev) => {
         const copy = [...prev];
@@ -206,6 +183,179 @@ export function AIChatPanel() {
           error: err instanceof Error ? err.message : "Network error",
         };
         return copy;
+      });
+      setBusy(false);
+      return;
+    }
+
+    if (!res.ok) {
+      // Non-streaming error (auth, 503, etc.)
+      const text = await res.text();
+      setMessages((prev) => {
+        const copy = [...prev];
+        copy[copy.length - 1] = {
+          role: "assistant",
+          content: "",
+          error: text || `HTTP ${res.status}`,
+        };
+        return copy;
+      });
+      setBusy(false);
+      return;
+    }
+    if (!res.body) {
+      setMessages((prev) => {
+        const copy = [...prev];
+        copy[copy.length - 1] = {
+          role: "assistant",
+          content: "",
+          error: "No response body",
+        };
+        return copy;
+      });
+      setBusy(false);
+      return;
+    }
+
+    // ── Consume SSE stream ──
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let buffer = "";
+
+    type SseEvent = { event: string; data: string };
+    const parseSseBlock = (block: string): SseEvent | null => {
+      // Each SSE event: lines of `event: <name>` and `data: <json>`, separated by \n\n
+      let eventName = "message";
+      const dataLines: string[] = [];
+      for (const line of block.split("\n")) {
+        if (line.startsWith("event:")) {
+          eventName = line.slice(6).trim();
+        } else if (line.startsWith("data:")) {
+          dataLines.push(line.slice(5).trimStart());
+        }
+      }
+      if (dataLines.length === 0 && eventName === "message") return null;
+      return { event: eventName, data: dataLines.join("\n") };
+    };
+
+    // We track the assistant message in flight at the tail. When SSE arrives
+    // we mutate it in place. The Message type is shared with React state, so
+    // we re-set on each event to trigger re-render (cheap, message list is small).
+    const updateTail = (patch: Partial<Message>) => {
+      setMessages((prev) => {
+        const copy = [...prev];
+        const last = copy[copy.length - 1];
+        if (!last || last.role !== "assistant") return prev;
+        copy[copy.length - 1] = { ...last, ...patch };
+        return copy;
+      });
+    };
+
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        let sep: number;
+        while ((sep = buffer.indexOf("\n\n")) !== -1) {
+          const block = buffer.slice(0, sep);
+          buffer = buffer.slice(sep + 2);
+          const ev = parseSseBlock(block);
+          if (!ev) continue;
+          let payload: Record<string, unknown> = {};
+          try {
+            payload = ev.data ? JSON.parse(ev.data) : {};
+          } catch {
+            // ignore malformed event
+            continue;
+          }
+
+          switch (ev.event) {
+            case "status": {
+              const label = String(payload.label ?? "");
+              updateTail({ status: label || undefined });
+              break;
+            }
+            case "content": {
+              const delta = String(payload.delta ?? "");
+              if (!delta) break;
+              // We need to read the current content from state — use a callback
+              setMessages((prev) => {
+                const copy = [...prev];
+                const last = copy[copy.length - 1];
+                if (!last || last.role !== "assistant") return prev;
+                const stripped = stripThinking(delta);
+                if (!stripped) return prev;
+                copy[copy.length - 1] = {
+                  ...last,
+                  content: last.content + stripped,
+                  status: undefined, // first token: clear "Thinking…"
+                };
+                return copy;
+              });
+              break;
+            }
+            case "tool": {
+              const name = String(payload.name ?? "tool");
+              setMessages((prev) => {
+                const copy = [...prev];
+                const last = copy[copy.length - 1];
+                if (!last || last.role !== "assistant") return prev;
+                copy[copy.length - 1] = {
+                  ...last,
+                  toolEvents: [
+                    ...(last.toolEvents ?? []),
+                    { name, result: payload.result },
+                  ],
+                  status: undefined,
+                };
+                return copy;
+              });
+              break;
+            }
+            case "confirm": {
+              const confirmation = payload.confirmation as Confirmation;
+              updateTail({
+                pending: false,
+                status: undefined,
+                confirmation,
+                confirmationStatus: "pending",
+              });
+              break;
+            }
+            case "done": {
+              // Optional: loadConversations if we got a new convId from header
+              // (we don't have access to it here — we rely on the API to set
+              // it in the response, but since we streamed, we can pull it
+              // from `?cid` if exposed. For now, fetch history list anyway.)
+              loadConversations();
+              const toolCalls = Number(payload.toolCalls ?? 0);
+              updateTail({
+                pending: false,
+                status: undefined,
+                meta: toolCalls
+                  ? `${toolCalls} tool call${toolCalls === 1 ? "" : "s"}`
+                  : "direct",
+              });
+              break;
+            }
+            case "error": {
+              updateTail({
+                pending: false,
+                status: undefined,
+                error: String(payload.message ?? "Stream error"),
+              });
+              break;
+            }
+          }
+        }
+      }
+    } catch (err) {
+      updateTail({
+        pending: false,
+        status: undefined,
+        error: err instanceof Error ? err.message : "Stream error",
       });
     } finally {
       setBusy(false);
@@ -431,9 +581,33 @@ export function AIChatPanel() {
                     )}
                   >
                     {m.pending ? (
-                      <div className="flex items-center gap-2 text-slate-500">
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        <span>Thinking…</span>
+                      <div className="flex flex-col gap-1.5 text-slate-500">
+                        {/* Status line — replaces the static "Thinking…" */}
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          <span>{m.status || "Thinking…"}</span>
+                        </div>
+                        {/* Live-streamed content + caret */}
+                        {m.content && (
+                          <div className="text-slate-900">
+                            {m.content}
+                            <span className="ml-0.5 inline-block h-3 w-1.5 animate-pulse bg-slate-400 align-middle" />
+                          </div>
+                        )}
+                        {/* Tool chips — only show tools that finished while pending */}
+                        {m.toolEvents && m.toolEvents.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {m.toolEvents.map((te, j) => (
+                              <span
+                                key={j}
+                                className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-slate-200"
+                              >
+                                <Sparkles className="h-2.5 w-2.5" />
+                                {te.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ) : m.error ? (
                       <div className="flex items-start gap-2">
@@ -441,11 +615,33 @@ export function AIChatPanel() {
                         <span className="text-xs">{m.error}</span>
                       </div>
                     ) : (
-                      <div className="whitespace-pre-wrap break-words">
-                        {m.content || (
-                          <span className="text-slate-400">(empty)</span>
+                      <>
+                        {/* Tool chips — show what the assistant queried */}
+                        {m.toolEvents && m.toolEvents.length > 0 && (
+                          <div className="mb-1.5 flex flex-wrap gap-1">
+                            {m.toolEvents.map((te, j) => (
+                              <span
+                                key={j}
+                                className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-slate-200"
+                              >
+                                <Sparkles className="h-2.5 w-2.5" />
+                                {te.name}
+                              </span>
+                            ))}
+                          </div>
                         )}
-                      </div>
+                        {m.content && (
+                          <div className="whitespace-pre-wrap break-words">
+                            {m.content}
+                          </div>
+                        )}
+                        {/* Action proposals get a small lead-in even when content is empty */}
+                        {!m.content && m.confirmation && (
+                          <p className="text-xs text-slate-600">
+                            I have a proposal — please confirm below.
+                          </p>
+                        )}
+                      </>
                     )}
 
                     {/* Confirmation card */}
