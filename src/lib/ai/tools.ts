@@ -833,6 +833,177 @@ async function monthlyPL(args: { months?: number }) {
   return { months: pl };
 }
 
+async function projectPL(args: { projectId?: string; projectName?: string }) {
+  const ws = await getWorkspace();
+  if (!args.projectId && !args.projectName) {
+    return { error: "Provide projectId or projectName" };
+  }
+  let projectId = args.projectId;
+  if (!projectId && args.projectName) {
+    const [p] = await db
+      .select({ id: projects.id, name: projects.name })
+      .from(projects)
+      .where(and(eq(projects.workspaceId, ws.id), sql`${projects.name} ILIKE ${"%" + args.projectName + "%"}`))
+      .limit(1);
+    if (!p) return { error: `No project matching "${args.projectName}"` };
+    projectId = p.id;
+  }
+  // Expenses tagged to this project (income: invoice has no projectId,
+  // so we sum invoices for the project's client as a proxy)
+  const expenseRows = await db
+    .select({
+      total: sql<string>`coalesce(sum(${expenses.amount}), 0)::text`,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(expenses)
+    .where(and(eq(expenses.workspaceId, ws.id), eq(expenses.projectId, projectId!)));
+  const [proj] = await db
+    .select({
+      id: projects.id,
+      name: projects.name,
+      status: projects.status,
+      clientId: projects.clientId,
+      clientName: clients.name,
+    })
+    .from(projects)
+    .leftJoin(clients, eq(clients.id, projects.clientId))
+    .where(eq(projects.id, projectId!))
+    .limit(1);
+  // Income from paid invoices for the project's client (proxy)
+  const incomeRows = proj?.clientId
+    ? await db
+        .select({
+          total: sql<string>`coalesce(sum(${payments.amount}), 0)::text`,
+          count: sql<number>`count(distinct ${invoices.id})::int`,
+        })
+        .from(payments)
+        .innerJoin(invoices, eq(invoices.id, payments.invoiceId))
+        .where(and(eq(invoices.workspaceId, ws.id), eq(invoices.clientId, proj.clientId)))
+    : [{ total: "0", count: 0 }];
+  const exp = parseFloat(expenseRows[0]?.total ?? "0");
+  const income = parseFloat(incomeRows[0]?.total ?? "0");
+  return {
+    project: proj,
+    incomeFromClient: income, // proxy: invoice schema lacks projectId
+    expensesTagged: exp,
+    net: income - exp,
+    expenseCount: expenseRows[0]?.count ?? 0,
+    note: "Income is aggregated from all paid invoices for this project's client (invoices have no projectId).",
+  };
+}
+
+async function clientRevenue(args: { limit?: number; fromDate?: string }) {
+  const ws = await getWorkspace();
+  const conds = [eq(invoices.workspaceId, ws.id)];
+  if (args.fromDate) conds.push(sql`${invoices.issueDate} >= ${args.fromDate}`);
+  // Aggregate by client: total invoiced, total paid, total unpaid
+  const rows = await db
+    .select({
+      clientId: clients.id,
+      clientName: clients.name,
+      totalInvoiced: sql<string>`coalesce(sum(${invoices.total}), 0)::text`,
+      totalPaid: sql<string>`coalesce(sum(case when ${invoices.status} = 'paid' then ${invoices.total} else 0 end), 0)::text`,
+      invoiceCount: sql<number>`count(*)::int`,
+    })
+    .from(invoices)
+    .innerJoin(clients, eq(clients.id, invoices.clientId))
+    .where(and(...conds))
+    .groupBy(clients.id, clients.name)
+    .orderBy(desc(sql`sum(${invoices.total})`))
+    .limit(Math.min(args.limit ?? 10, 50));
+  return {
+    count: rows.length,
+    clients: rows.map((r) => ({
+      ...r,
+      totalUnpaid: (parseFloat(r.totalInvoiced) - parseFloat(r.totalPaid)).toFixed(2),
+    })),
+  };
+}
+
+async function invoiceAging() {
+  const ws = await getWorkspace();
+  const today = new Date().toISOString().slice(0, 10);
+  // All unpaid invoices with dueDate
+  const rows = await db
+    .select({
+      id: invoices.id,
+      invoiceNumber: invoices.invoiceNumber,
+      clientName: clients.name,
+      total: invoices.total,
+      dueDate: invoices.dueDate,
+      status: invoices.status,
+      daysOverdue: sql<number>`case when ${invoices.dueDate} < ${today}::date then (${today}::date - ${invoices.dueDate})::int else 0 end`,
+    })
+    .from(invoices)
+    .innerJoin(clients, eq(clients.id, invoices.clientId))
+    .where(and(
+      eq(invoices.workspaceId, ws.id),
+      sql`${invoices.status} not in ('paid', 'cancelled')`,
+    ))
+    .orderBy(invoices.dueDate);
+  // Bucket
+  const buckets = { current: { count: 0, total: 0 }, days_0_30: { count: 0, total: 0 }, days_31_60: { count: 0, total: 0 }, days_61_90: { count: 0, total: 0 }, days_90_plus: { count: 0, total: 0 } };
+  const items: Array<{ invoiceNumber: string; client: string; total: string; dueDate: string; daysOverdue: number; status: string }> = [];
+  for (const r of rows) {
+    const total = parseFloat(r.total);
+    const od = r.daysOverdue ?? 0;
+    if (od === 0 || r.dueDate === null) {
+      buckets.current.count += 1;
+      buckets.current.total += total;
+    } else if (od <= 30) {
+      buckets.days_0_30.count += 1;
+      buckets.days_0_30.total += total;
+    } else if (od <= 60) {
+      buckets.days_31_60.count += 1;
+      buckets.days_31_60.total += total;
+    } else if (od <= 90) {
+      buckets.days_61_90.count += 1;
+      buckets.days_61_90.total += total;
+    } else {
+      buckets.days_90_plus.count += 1;
+      buckets.days_90_plus.total += total;
+    }
+    if (od > 0) {
+      items.push({
+        invoiceNumber: r.invoiceNumber,
+        client: r.clientName,
+        total: r.total,
+        dueDate: r.dueDate ?? "",
+        daysOverdue: od,
+        status: r.status,
+      });
+    }
+  }
+  return {
+    totalUnpaid: rows.length,
+    totalUnpaidAmount: rows.reduce((s, r) => s + parseFloat(r.total), 0).toFixed(2),
+    buckets,
+    overdueItems: items.sort((a, b) => b.daysOverdue - a.daysOverdue).slice(0, 20),
+  };
+}
+
+async function topExpenseCategories(args: { limit?: number; fromDate?: string; toDate?: string }) {
+  const ws = await getWorkspace();
+  const conds = [eq(expenses.workspaceId, ws.id)];
+  if (args.fromDate) conds.push(sql`${expenses.date} >= ${args.fromDate}`);
+  if (args.toDate) conds.push(sql`${expenses.date} <= ${args.toDate}`);
+  const rows = await db
+    .select({
+      categoryName: expenseCategories.name,
+      categoryColor: expenseCategories.color,
+      currency: expenses.currency,
+      total: sql<string>`sum(${expenses.amount})`,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(expenses)
+    .leftJoin(expenseCategories, eq(expenseCategories.id, expenses.categoryId))
+    .where(and(...conds))
+    .groupBy(expenseCategories.name, expenseCategories.color, expenses.currency)
+    .orderBy(desc(sql`sum(${expenses.amount})`))
+    .limit(Math.min(args.limit ?? 10, 30));
+  return { count: rows.length, categories: rows };
+}
+
 // ─── Tool registry ─────────────────────────────────────────────────
 
 export const TOOL_DEFS: ToolDefinition[] = [
@@ -1024,6 +1195,64 @@ export const TOOL_DEFS: ToolDefinition[] = [
   {
     type: "function",
     function: {
+      name: "project_pl",
+      description:
+        "Profit & loss for a single project: income (paid invoices), expenses tagged, net margin, unpaid invoices. Use for 'is project X profitable', 'project P&L'.",
+      parameters: {
+        type: "object",
+        properties: {
+          projectId: { type: "string", description: "Project UUID" },
+          projectName: { type: "string", description: "Project name (partial match OK)" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "client_revenue",
+      description:
+        "Top clients by revenue. Returns total invoiced, paid, unpaid per client. Use for 'which client pays most', 'top clients', 'revenue by client'.",
+      parameters: {
+        type: "object",
+        properties: {
+          limit: { type: "number", description: "Max clients (default 10, max 50)" },
+          fromDate: { type: "string", description: "YYYY-MM-DD start" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "invoice_aging",
+      description:
+        "Aging buckets for unpaid invoices: current, 0-30, 31-60, 61-90, 90+ days overdue. Use for 'who owes me money', 'overdue invoices', 'AR aging'.",
+      parameters: {
+        type: "object",
+        properties: {},
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "top_expense_categories",
+      description:
+        "Top spending categories sorted by total. Use for 'where does my money go', 'biggest expense categories', 'software spend'.",
+      parameters: {
+        type: "object",
+        properties: {
+          limit: { type: "number", description: "Max categories (default 10, max 30)" },
+          fromDate: { type: "string", description: "YYYY-MM-DD start" },
+          toDate: { type: "string", description: "YYYY-MM-DD end" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "get_client",
       description: "Get one client by id or name. Returns contact info, recent projects, open invoices.",
       parameters: {
@@ -1127,6 +1356,10 @@ export type ToolName =
   | "list_expenses"
   | "expense_summary"
   | "monthly_pl"
+  | "project_pl"
+  | "client_revenue"
+  | "invoice_aging"
+  | "top_expense_categories"
   | "get_client"
   | "get_project"
   | "get_task"
@@ -1169,6 +1402,14 @@ export async function executeTool(
       return expenseSummary(args as { fromDate?: string; toDate?: string });
     case "monthly_pl":
       return monthlyPL(args as { months?: number });
+    case "project_pl":
+      return projectPL(args as { projectId?: string; projectName?: string });
+    case "client_revenue":
+      return clientRevenue(args as { limit?: number; fromDate?: string });
+    case "invoice_aging":
+      return invoiceAging();
+    case "top_expense_categories":
+      return topExpenseCategories(args as { limit?: number; fromDate?: string; toDate?: string });
     case "get_client":
       return getClient(args as { id?: string; name?: string });
     case "get_project":

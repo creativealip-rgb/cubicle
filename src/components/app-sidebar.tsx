@@ -26,6 +26,7 @@ import {
   PanelLeft,
   X,
   Wallet,
+  BarChart3,
 } from "lucide-react";
 import { useSidebar } from "@/components/app-shell";
 
@@ -38,6 +39,7 @@ const navItems = [
   { label: "Time", href: "/app/time", icon: Clock },
   { label: "Invoices", href: "/app/invoices", icon: Receipt },
   { label: "Expenses", href: "/app/expenses", icon: Wallet },
+  { label: "Reports", href: "/app/reports", icon: BarChart3 },
   { label: "Calendar", href: "/app/calendar", icon: Calendar },
   { label: "Prompts", href: "/app/prompts", icon: Sparkles },
   { label: "Settings", href: "/app/settings", icon: Settings },
