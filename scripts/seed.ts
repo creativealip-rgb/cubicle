@@ -48,6 +48,8 @@ async function seed() {
     defaultHourlyRate: "250000",
     defaultTaxRate: "11",
     bookingSlug: "acme-creative",
+    billingName: "Acme Creative Studio",
+    billingAddress: "Jl. Sudirman No. 1, Jakarta Pusat, Indonesia",
   })
 
   await db.insert(workspaceMembers).values([

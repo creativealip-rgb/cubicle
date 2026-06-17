@@ -1,6 +1,6 @@
 # Cubicle Remaining Plan — From MVP Demo to Production-Ready
 
-Last updated: 2026-06-16
+Last updated: 2026-06-17
 
 ## 1. Current Status
 
@@ -1436,9 +1436,6 @@ Still open:
   Test with real logo URL from R2 upload (P2.3, not exercised yet)
   📋 NEXT SPRINT: P2.6 Reply-To email header (Sprint E) — Alip-approved 16 Jun,
      blocked by P1.6 (same domain purchase unblocks both P1.6 and P2.6)
-  📋 NEXT SPRINT (parallel): Sprint E.5 Team UI completion (1-1.5 mgu) —
-     Alip-approved 16 Jun, not gated, no ICP dependency. Closes hidden MVP
-     gap: backend + schema already support multi-user but UI doesn't expose it.
   📋 PLANNED: P2.7 Pre-deal workflow (Proposal + Questionnaire + Contract) —
      Alip-approved 16 Jun, gated on ICP decision, ~4-8 minggu depending on
      e-sig path (in-house vs DocuSign/HelloSign embed)
