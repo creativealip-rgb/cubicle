@@ -520,3 +520,52 @@ export const expenseRecurringRelations = relations(expenseRecurring, ({ one }) =
   category: one(expenseCategories, { fields: [expenseRecurring.categoryId], references: [expenseCategories.id] }),
   project: one(projects, { fields: [expenseRecurring.projectId], references: [projects.id] }),
 }));
+
+// ─── Pre-deal: Questionnaires (Sprint L — P2.7.2) ───
+
+// `schema` JSONB: array of fields
+// Field shape: { id: string, type: "text"|"textarea"|"select"|"multiselect"|"number"|"date"|"email"|"url", label: string, required: boolean, options?: string[], placeholder?: string }
+export const questionnaires = pgTable("questionnaires", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  schema: jsonb("schema").notNull().default(sql`'[]'::jsonb`),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// `answers` JSONB: { [fieldId: string]: string | string[] | number }
+export const questionnaireResponses = pgTable("questionnaire_responses", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  questionnaireId: uuid("questionnaire_id").notNull().references(() => questionnaires.id, { onDelete: "cascade" }),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "set null" }),
+  projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
+  // Client metadata (filled on public form)
+  respondentName: text("respondent_name"),
+  respondentEmail: text("respondent_email"),
+  // `answers` is the submitted form data: { fieldId: value }
+  answers: jsonb("answers").notNull().default(sql`'{}'::jsonb`),
+  status: text("status", { enum: ["pending", "submitted"] }).notNull().default("pending"),
+  sharedTokenHash: text("shared_token_hash").unique(),
+  sharedTokenExpiresAt: timestamp("shared_token_expires_at", { withTimezone: true }),
+  sharedTokenRevokedAt: timestamp("shared_token_revoked_at", { withTimezone: true }),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const questionnaireRelations = relations(questionnaires, ({ one, many }) => ({
+  workspace: one(workspaces, { fields: [questionnaires.workspaceId], references: [workspaces.id] }),
+  createdByUser: one(users, { fields: [questionnaires.createdBy], references: [users.id] }),
+  responses: many(questionnaireResponses),
+}));
+
+export const questionnaireResponseRelations = relations(questionnaireResponses, ({ one }) => ({
+  workspace: one(workspaces, { fields: [questionnaireResponses.workspaceId], references: [workspaces.id] }),
+  questionnaire: one(questionnaires, { fields: [questionnaireResponses.questionnaireId], references: [questionnaires.id] }),
+  client: one(clients, { fields: [questionnaireResponses.clientId], references: [clients.id] }),
+  project: one(projects, { fields: [questionnaireResponses.projectId], references: [projects.id] }),
+}));

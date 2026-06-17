@@ -111,8 +111,8 @@ Production-ready: NO
 
 ```text
 Demo MVP: 99%
-Sellable source/MVP: 98%  (+1: AI Assistant live, demo differentiator)
-Production client-ready: ~92% (+1: AI Assistant raises polish, R2 gaps unchanged)
+Sellable source/MVP: 99%  (+1: AI Assistant live, demo differentiator)
+Production client-ready: ~93% (+1: AI Assistant raises polish, R2 gaps unchanged)
 ```
 
 > **Update 2026-06-16 (P0 deep QA + P2.4 + P1.5 + extras):**
@@ -126,10 +126,15 @@ Production client-ready: ~92% (+1: AI Assistant raises polish, R2 gaps unchanged
 > - Sellable source/MVP: **98%** (+1 — AI Assistant is a strong demo differentiator)
 > - Production client-ready: **~92%** (+1 — but R2 still placeholders, Resend still invalid)
 >
-> **Update 2026-06-17 (Sprint F.3 AI Assistant v1.2):**
-> - Demo MVP: **99%** (unchanged)
-> - Sellable source/MVP: **99%** (+1 — typo-tolerant search + prompt library + voice + export make the AI Assistant demo-ready for real use)
-> - Production client-ready: **~92%** (unchanged — no infra work in F.3)
+| **Update 2026-06-17 (Sprint F.3 AI Assistant v1.2):**
+- Demo MVP: **99%** (unchanged)
+- Sellable source/MVP: **99%** (+1 — typo-tolerant search + prompt library + voice + export make the AI Assistant demo-ready for real use)
+- Production client-ready: **~92%** (unchanged — no infra work in F.3)
+
+| **Update 2026-06-18 (Sprint J+K — P2.7.1 Proposal + P2.8 Recurring/Cash flow):**
+- Demo MVP: **99%** (unchanged — both features in app shell)
+- Sellable source/MVP: **99%** (unchanged — already 99%)
+- Production client-ready: **~93%** (+1 — Proposal adds client-acquisition flow, Recurring adds ops utility, Cash flow adds strategic insight)
 >
 > **Resolved in this continuation session (16 Jun):**
 > - P0.1 rogue /tmp/postgresql regression — confirmed gone (no rebuild)
@@ -193,6 +198,10 @@ Production client-ready: ~92% (+1: AI Assistant raises polish, R2 gaps unchanged
 > Sprint F AI Assistant v1.1 ✅ (16 Jun — 12 tools, persistence, action confirm)
 > Sprint F.2 AI streaming ✅ (16 Jun — SSE, Stop, 9router fix)
 > Sprint F.3 AI v1.2 ✅ (17 Jun — search, prompt library, voice, export, 15 tools)
+Sprint H P2.8.1 Expense CRUD ✅ (18 Jun — expenses, categories, project-tag)
+Sprint I P2.8.2 Reports ✅ (18 Jun — 4 new AI tools, /app/reports dashboard)
+Sprint J P2.7.1 Proposal ✅ (18 Jun — accept flow, auto-create project+invoice)
+Sprint K P2.8 Recurring + Cash flow ✅ (18 Jun — 2 new AI tools, forecast card)
 
 ## 4. P0 — Mandatory Before Production
 
@@ -849,6 +858,8 @@ Tasks:
 Effort: 1-2 minggu
 Risk: medium (template system + state machine has edge cases)
 
+**Status 2026-06-18: ✅ SHIPPED (Sprint J).** MVP scope: `proposals` table, list+create+detail pages, public `/proposal/[token]`, Accept/Decline flow that auto-creates project + 50% down-payment invoice. `proposal_templates` and email notification deferred (reuse P2.6 when email goes prod). AI tools: `list_proposals`, `get_proposal` (26 total tools).
+
 #### P2.7.2 Questionnaire (Client Intake)
 
 Form builder → send to client → responses become project brief.
@@ -866,6 +877,8 @@ Tasks:
 
 Effort: 1-2 minggu
 Risk: medium (form builder UI takes time, schema validation tricky)
+
+**Status 2026-06-18: ⏳ PLANNED (Sprint L).** Schema + send/fill/response flow. Will ship before P2.7.3.
 
 #### P2.7.3 Contract (E-signature)
 
@@ -887,6 +900,8 @@ Tasks:
 Effort: 2-3 minggu
 Risk: high (legal weight — needs audit trail, IP/UA capture, PDF tamper-resistance;
 or use DocuSign/HelloSign embed which is faster but $20-50/mo per workspace)
+
+**Status 2026-06-18: ⏳ PLANNED (Sprint M).** Will reuse P2.7.2 patterns + @react-pdf/renderer for signed PDF.
 
 #### Combined acceptance criteria
 
@@ -1042,6 +1057,11 @@ revision round; coach = session cost; translator = word count cost).
 
 **Score impact (if shipped):** 91% → ~93% (P2.8.1+2.8.2 core).
 
+**Status 2026-06-18: ✅ SHIPPED 3/3 (Sprints H + I + K).**
+- **P2.8.1 Expense CRUD + categories + per-project tag** (Sprint H) — `expenses` + `expense_categories` tables, /app/expenses list/create/edit/delete, 8 default categories seeded, project dropdown, per-project view
+- **P2.8.2 Auto reports (P&L, aging, top expenses)** (Sprint I) — /app/reports with YTD P&L + monthly bar chart + per-project + per-client + aging buckets + top categories. AI tools: `project_pl`, `client_revenue`, `invoice_aging`, `top_expense_categories`
+- **Sprint K extension: Recurring + Cash flow forecast** — `expense_recurring` table, `generateFromRecurring` action, cash flow card on Reports with 3-month outlook. AI tools: `cash_flow_forecast`, `list_recurring`
+
 ---
 
 ### Sprint F — AI Assistant v1.1 ✅ DONE (16 Jun)
@@ -1122,6 +1142,48 @@ Daily-driver usability pass on the AI panel: workspace search, prompt library, v
 - Standout differentiator vs ClickUp/Asana/Notion (none of them have RAG-over-data chat)
 - Demo-friendly: 1 click → "how's the business" → full data summary
 - Proves 9router + tool-calling pattern works; foundation for Phase 2 (embeddings, smart nudges)
+
+### Sprint J — P2.7.1 Proposal ✅ DONE (18 Jun 2026)
+
+Pre-deal workflow phase 1: send a proposal to a prospective client, on accept auto-create project + down-payment invoice.
+
+**What shipped:**
+- `proposals` table (workspace_id, client_id, title, line_items jsonb, total, currency, status, valid_until, shared_token, accept_at, decline_at)
+- Server actions: `createProposal`, `updateProposal`, `deleteProposal`, `sendProposal` (regenerates token), `acceptProposal` (idempotent), `declineProposal`
+- Public route `/proposal/[token]` — branded render, Accept/Decline buttons, no auth required
+- `/app/proposals` list, `/app/proposals/new`, `/app/proposals/[id]` detail with status + actions
+- On accept: auto-create `projects` row + `invoices` row (50% down payment) + activity log
+- AI tools: `list_proposals`, `get_proposal`
+
+**Files (4 new + 3 modified):**
+- New: `src/lib/actions/proposals.ts`, `src/app/proposal/[token]/page.tsx`, `src/app/app/proposals/{page,new/page,id/page}.tsx`
+- New: `src/db/schema.ts` (+`proposals` table)
+- Modified: `src/lib/ai/tools.ts` (+2 tools, 24→26), `src/components/app-shell.tsx` (sidebar nav), `src/db/schema.ts` enum
+
+**Verified live (18 Jun):**
+- /app/proposals 200, "Brand refresh — phase 1" draft IDR 5,550,000 renders
+- "what proposals do I have?" → AI returns full details + suggests "Want send?"
+- Public /proposal/[token] renders branded doc, Accept/Decline buttons
+
+**Deferred (gated on P2.6 email prod):**
+- Email notification when proposal sent (reuse P2.6 Reply-To)
+- `proposal_templates` table (use case is power-user; MVP inline-edit is enough)
+
+### Sprint K — P2.8 Recurring + Cash flow ✅ DONE (18 Jun 2026)
+
+Closes the last gaps in finance module: recurring expenses (rent, SaaS subs) and forward-looking cash flow.
+
+**What shipped:**
+- `expense_recurring` table (workspace_id, category_id, project_id?, amount, currency, frequency enum [monthly/quarterly/yearly], start_date, end_date?, is_active, last_generated_at)
+- Server actions: `createRecurring`, `updateRecurring`, `deleteRecurring`, `generateFromRecurring` (auto-advances `last_generated_at`)
+- Cash flow forecast card on Reports page: 3-month outlook = (projected income from upcoming invoices) - (projected expenses from active recurring rules)
+- AI tools: `cash_flow_forecast` (months?, max 12), `list_recurring` (isActive?)
+
+**Verified live (18 Jun):**
+- "will I have enough cash next 3 months?" → cash_flow_forecast with per-month table, AI flags "Zero recurring expenses likely means rules not setup"
+- Reports page shows Cash flow card with month-by-month breakdown
+
+**Score impact:** Production client-ready ~92% → ~93% (Recurring adds ops utility, Cash flow adds strategic insight, Proposal adds client-acquisition flow).
 
 ## 7. Security Hardening Plan
 
