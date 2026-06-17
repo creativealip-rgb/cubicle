@@ -199,49 +199,118 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="relative border-y border-white/10 bg-[radial-gradient(circle_at_18%_8%,rgba(6,182,212,0.28),transparent_30%),linear-gradient(135deg,#1e40af_0%,#2563eb_52%,#0ea5e9_120%)] px-4 py-16 text-white sm:px-6 lg:px-8">
-        <div className="pointer-events-none absolute inset-x-0 -top-16 h-16 bg-gradient-to-b from-transparent to-blue-700/20" />
-        <div className="pointer-events-none absolute inset-x-0 -bottom-16 h-16 bg-gradient-to-b from-blue-700/20 to-transparent" />
-        <div className="relative mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+      <section className="relative overflow-hidden border-y border-white/10 bg-[radial-gradient(ellipse_at_top_left,rgba(102,71,240,0.18),transparent_50%),radial-gradient(ellipse_at_bottom_right,rgba(0,145,255,0.15),transparent_50%),linear-gradient(135deg,#0f0a1f_0%,#1e1b4b_45%,#312e81_100%)] px-4 py-20 text-white sm:px-6 lg:px-8">
+        {/* decorative glow orbs */}
+        <div className="pointer-events-none absolute -left-32 top-0 h-72 w-72 rounded-full bg-[#6647F0]/30 blur-3xl" />
+        <div className="pointer-events-none absolute -right-32 bottom-0 h-72 w-72 rounded-full bg-[#0091FF]/25 blur-3xl" />
+        {/* dotted grid pattern */}
+        <div className="pointer-events-none absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+        <div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-300">Why Cubicle</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-[0.03em] sm:text-4xl">
-              Project management stops at tasks. Cubicle keeps going.
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 backdrop-blur">
+              <span className="inline-flex h-1.5 w-1.5 rounded-full bg-[#6647F0]" />
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Why Cubicle</p>
+            </div>
+            <h2 className="mt-5 text-3xl font-semibold leading-tight tracking-[-0.01em] text-white sm:text-4xl lg:text-[2.75rem]">
+              Project management stops at tasks.{' '}
+              <span className="bg-gradient-to-r from-[#A78BFA] via-[#6647F0] to-[#0091FF] bg-clip-text text-transparent">
+                Cubicle keeps going.
+              </span>
             </h2>
           </div>
-          <p className="text-lg leading-8 text-blue-100">
-            Generic project tools stop at tasks. Client-service businesses still need portals, deliverables, tracked time, booking, invoices, and a clean way to keep clients updated. Cubicle connects those pieces from day one.
-          </p>
+          <div className="relative">
+            <p className="text-lg leading-8 text-white/85">
+              Generic project tools stop at tasks. Client-service businesses still need{' '}
+              <span className="font-medium text-white">portals, deliverables, tracked time, booking, invoices</span>
+              {' '}— and a clean way to keep clients updated. Cubicle connects those pieces from day one.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-2">
+              {['Portals', 'Deliverables', 'Time', 'Booking', 'Invoices'].map((tag) => (
+                <span key={tag} className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-medium text-white/85 backdrop-blur">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Stats band — concrete numbers beat promises */}
-      <section className="border-y border-slate-950/5 bg-white/70 px-4 py-10 backdrop-blur sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-8 sm:grid-cols-4">
+      <section className="relative overflow-hidden border-y border-slate-950/5 bg-white px-4 py-14 sm:px-6 lg:px-8">
+        {/* subtle decorative gradient */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(102,71,240,0.04),transparent_70%)]" />
+        <div className="relative mx-auto grid max-w-7xl grid-cols-2 gap-8 sm:grid-cols-4">
           {[
-            { value: "12", label: "Service teams in beta" },
-            { value: "4h", label: "Saved per weekly close" },
-            { value: "1", label: "Workspace, not 6" },
-            { value: "0", label: "Spreadsheets to keep updated" },
-          ].map((stat) => (
-            <div key={stat.label} className="text-center sm:text-left">
-              <div className="text-3xl font-semibold tracking-[0.03em] text-slate-950 sm:text-4xl">{stat.value}</div>
-              <div className="mt-1 text-xs font-medium uppercase tracking-[0.18em] text-slate-500">{stat.label}</div>
+            { value: "12", label: "Service teams in beta", accent: "#6647F0" },
+            { value: "4h", label: "Saved per weekly close", accent: "#0091FF" },
+            { value: "1", label: "Workspace, not 6", accent: "#10B981" },
+            { value: "0", label: "Spreadsheets to keep updated", accent: "#FF02F0" },
+          ].map((stat, i) => (
+            <div key={stat.label} className={`relative text-center sm:text-left ${i > 0 ? "sm:border-l sm:border-slate-200 sm:pl-8" : ""}`}>
+              {/* accent dot */}
+              <div className="mb-2 flex justify-center sm:justify-start">
+                <span
+                  className="inline-block h-1 w-10 rounded-full"
+                  style={{ backgroundColor: stat.accent }}
+                />
+              </div>
+              <div
+                className="text-4xl font-bold tracking-[-0.03em] sm:text-5xl"
+                style={{ color: stat.accent }}
+              >
+                {stat.value}
+              </div>
+              <div className="mt-2 text-xs font-semibold uppercase leading-tight tracking-[0.15em] text-slate-700">
+                {stat.label}
+              </div>
             </div>
           ))}
         </div>
       </section>
 
-      <section id="features" className="px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="max-w-3xl">
-            <Badge variant="outline" className="mb-4">Client Operations Hub</Badge>
-            <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
-              Everything around client delivery, connected.
-            </h2>
-            <p className="mt-4 text-lg leading-8 text-slate-600">
-              Manage work around clients, not scattered boards. Cubicle keeps the full delivery loop close: scope, tasks, files, time, portal, and billing.
-            </p>
+      <section id="features" className="relative overflow-hidden px-4 py-20 sm:px-6 lg:px-8">
+        {/* decorative bg blobs */}
+        <div className="pointer-events-none absolute -right-40 top-20 h-80 w-80 rounded-full bg-[#6647F0]/5 blur-3xl" />
+        <div className="pointer-events-none absolute -left-32 bottom-20 h-72 w-72 rounded-full bg-[#0091FF]/5 blur-3xl" />
+        <div className="relative mx-auto max-w-7xl">
+          <div className="grid items-end gap-10 lg:grid-cols-[1.4fr_1fr]">
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#6647F0]/20 bg-[#F4F0FF] px-3 py-1.5">
+                <span className="inline-flex h-1.5 w-1.5 rounded-full bg-[#6647F0]" />
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6647F0]">Client Operations Hub</p>
+              </div>
+              <h2 className="mt-5 text-3xl font-semibold leading-[1.15] tracking-[-0.01em] text-[#292D34] sm:text-5xl">
+                Everything around client delivery.{' '}
+                <span className="relative inline-block">
+                  <span className="relative z-10">Connected.</span>
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-x-0 bottom-1 -z-0 h-3 bg-[#6647F0]/15"
+                  />
+                </span>
+              </h2>
+              <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
+                Manage work around clients, not scattered boards. Cubicle keeps the full delivery loop close: scope, tasks, files, time, portal, and billing.
+              </p>
+            </div>
+            {/* inline mini-metric cluster */}
+            <div className="grid grid-cols-3 gap-3 lg:justify-self-end">
+              {[
+                { label: 'Pillars', value: '6' },
+                { label: 'Loop stages', value: '8' },
+                { label: 'Tools replaced', value: '5+' },
+              ].map((m) => (
+                <div
+                  key={m.label}
+                  className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-[0_4px_4px_rgba(13,21,48,0.04),inset_0_0_0_1px_rgba(15,23,42,0.04)]"
+                >
+                  <div className="text-2xl font-bold tracking-[-0.02em] text-[#6647F0] sm:text-3xl">{m.value}</div>
+                  <div className="mt-1 text-[10px] font-semibold uppercase leading-tight tracking-[0.15em] text-slate-600">
+                    {m.label}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
