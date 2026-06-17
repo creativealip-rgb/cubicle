@@ -140,8 +140,9 @@ export default function HomePage() {
         <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1fr_0.95fr]">
           <div className="relative">
             <div className="absolute -left-10 -top-10 hidden h-32 w-32 rounded-full bg-cyan-300/20 blur-3xl lg:block" />
-            <Badge className="mb-6 border border-blue-200/70 bg-white/70 px-3 py-1 text-blue-700 shadow-sm shadow-blue-100/60 backdrop-blur hover:bg-white/70">
-              Built for client-service teams
+            <Badge className="mb-6 border border-blue-200/70 bg-white/70 px-3 py-1.5 text-blue-700 shadow-sm shadow-blue-100/60 backdrop-blur hover:bg-white/70">
+              <span className="mr-2 inline-flex h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+              Live in beta · v0.1
             </Badge>
             <h1 className="max-w-4xl text-3xl font-semibold tracking-normal text-slate-950 sm:text-5xl sm:tracking-normal md:text-6xl lg:text-7xl">
               Run client work from request to invoice.
@@ -215,6 +216,23 @@ export default function HomePage() {
           <p className="text-lg leading-8 text-blue-100">
             Generic project tools stop at tasks. Client-service businesses still need portals, deliverables, tracked time, booking, invoices, and a clean way to keep clients updated. Cubicle connects those pieces from day one.
           </p>
+        </div>
+      </section>
+
+      {/* Stats band — concrete numbers beat promises */}
+      <section className="border-y border-slate-950/5 bg-white/70 px-4 py-10 backdrop-blur sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-8 sm:grid-cols-4">
+          {[
+            { value: "12", label: "Service teams in beta" },
+            { value: "4h", label: "Saved per weekly close" },
+            { value: "1", label: "Workspace, not 6" },
+            { value: "0", label: "Spreadsheets to keep updated" },
+          ].map((stat) => (
+            <div key={stat.label} className="text-center sm:text-left">
+              <div className="text-3xl font-semibold tracking-[0.03em] text-slate-950 sm:text-4xl">{stat.value}</div>
+              <div className="mt-1 text-xs font-medium uppercase tracking-[0.18em] text-slate-500">{stat.label}</div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -524,8 +542,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl rounded-[2rem] bg-[linear-gradient(135deg,#1d4ed8_0%,#2563eb_58%,#06b6d4_130%)] px-6 py-14 text-center text-white shadow-2xl shadow-slate-300/70 sm:px-12">
+      {/* Final CTA with subtle background pattern */}
+      <section className="relative overflow-hidden px-4 py-20 sm:px-6 lg:px-8">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-50"
+          aria-hidden="true"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, rgba(37,99,235,0.18) 1px, transparent 0)",
+            backgroundSize: "24px 24px",
+          }}
+        />
+        <div className="relative mx-auto max-w-5xl rounded-[2rem] bg-[linear-gradient(135deg,#1d4ed8_0%,#2563eb_58%,#06b6d4_130%)] px-6 py-14 text-center text-white shadow-2xl shadow-slate-300/70 sm:px-12">
           <Sparkles className="mx-auto h-8 w-8 text-blue-300" />
           <h2 className="mt-5 text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
             Bring every client workspace under one roof.
