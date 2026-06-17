@@ -207,9 +207,9 @@ export default function HomePage() {
         <div className="pointer-events-none absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
         <div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 backdrop-blur">
-              <span className="inline-flex h-1.5 w-1.5 rounded-full bg-[#6647F0]" />
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Why Cubicle</p>
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#A78BFA]/30 bg-[#6647F0]/20 px-3 py-1.5 backdrop-blur">
+              <span className="inline-flex h-1.5 w-1.5 rounded-full bg-[#A78BFA]" />
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white">Why Cubicle</p>
             </div>
             <h2 className="mt-5 text-3xl font-semibold leading-tight tracking-[-0.01em] text-white sm:text-4xl lg:text-[2.75rem]">
               Project management stops at tasks.{' '}
@@ -226,7 +226,11 @@ export default function HomePage() {
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
               {['Portals', 'Deliverables', 'Time', 'Booking', 'Invoices'].map((tag) => (
-                <span key={tag} className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-medium text-white/85 backdrop-blur">
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#A78BFA]/30 bg-[#6647F0]/15 px-3 py-1 text-xs font-medium text-white backdrop-blur"
+                >
+                  <span className="inline-flex h-1 w-1 rounded-full bg-[#A78BFA]" />
                   {tag}
                 </span>
               ))}
@@ -239,25 +243,24 @@ export default function HomePage() {
       <section className="relative overflow-hidden border-y border-slate-950/5 bg-white px-4 py-14 sm:px-6 lg:px-8">
         {/* subtle decorative gradient */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(102,71,240,0.04),transparent_70%)]" />
-        <div className="relative mx-auto grid max-w-7xl grid-cols-2 gap-8 sm:grid-cols-4">
+        <div className="relative mx-auto grid max-w-7xl grid-cols-3 gap-8 sm:gap-10">
           {[
-            { value: "12", label: "Service teams in beta", accent: "#6647F0" },
             { value: "4h", label: "Saved per weekly close", accent: "#0091FF" },
-            { value: "1", label: "Workspace, not 6", accent: "#10B981" },
-            { value: "0", label: "Spreadsheets to keep updated", accent: "#FF02F0" },
+            { value: "1", label: "Workspace, not 6", accent: "#6647F0" },
+            { value: "0", label: "Spreadsheets to keep updated", accent: "#ED5F00" },
           ].map((stat, i) => (
-            <div key={stat.label} className={`relative text-center sm:text-left ${i > 0 ? "sm:border-l sm:border-slate-200 sm:pl-8" : ""}`}>
+            <div
+              key={stat.label}
+              className={`relative text-center ${i > 0 ? "sm:border-l sm:border-slate-200 sm:pl-10" : ""}`}
+            >
               {/* accent dot */}
-              <div className="mb-2 flex justify-center sm:justify-start">
+              <div className="mb-3 flex justify-center">
                 <span
                   className="inline-block h-1 w-10 rounded-full"
                   style={{ backgroundColor: stat.accent }}
                 />
               </div>
-              <div
-                className="text-4xl font-bold tracking-[-0.03em] sm:text-5xl"
-                style={{ color: stat.accent }}
-              >
+              <div className="text-4xl font-bold tracking-[-0.03em] text-[#292D34] sm:text-5xl">
                 {stat.value}
               </div>
               <div className="mt-2 text-xs font-semibold uppercase leading-tight tracking-[0.15em] text-slate-700">
