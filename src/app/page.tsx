@@ -199,19 +199,23 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden border-y border-white/10 bg-[radial-gradient(ellipse_at_top_left,rgba(102,71,240,0.18),transparent_50%),radial-gradient(ellipse_at_bottom_right,rgba(0,145,255,0.15),transparent_50%),linear-gradient(135deg,#0f0a1f_0%,#1e1b4b_45%,#312e81_100%)] px-4 py-20 text-white sm:px-6 lg:px-8">
-        {/* decorative glow orbs */}
-        <div className="pointer-events-none absolute -left-32 top-0 h-72 w-72 rounded-full bg-[#6647F0]/30 blur-3xl" />
-        <div className="pointer-events-none absolute -right-32 bottom-0 h-72 w-72 rounded-full bg-[#0091FF]/25 blur-3xl" />
-        {/* dotted grid pattern */}
-        <div className="pointer-events-none absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+      <section
+        className="relative overflow-hidden border-y border-slate-200/60 px-4 py-20 sm:px-6 lg:px-8"
+        style={{
+          background:
+            'radial-gradient(ellipse at top left, rgba(102,71,240,0.10), transparent 55%), radial-gradient(ellipse at bottom right, rgba(0,145,255,0.08), transparent 55%), #FAFBFC',
+        }}
+      >
+        {/* decorative soft blobs — very subtle on light */}
+        <div className="pointer-events-none absolute -left-32 top-0 h-72 w-72 rounded-full bg-[#6647F0]/6 blur-3xl" />
+        <div className="pointer-events-none absolute -right-32 bottom-0 h-72 w-72 rounded-full bg-[#0091FF]/5 blur-3xl" />
         <div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border !border-[#A78BFA]/30 bg-[#6647F0]/20 px-3 py-1.5 backdrop-blur">
-              <span className="inline-flex h-1.5 w-1.5 rounded-full bg-[#A78BFA]" />
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white">Why Cubicle</p>
+            <div className="inline-flex items-center gap-2 rounded-full border !border-[#A78BFA]/40 bg-white px-3 py-1.5 shadow-sm">
+              <span className="inline-flex h-1.5 w-1.5 rounded-full bg-[#6647F0]" />
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6647F0]">Why Cubicle</p>
             </div>
-            <h2 className="mt-5 text-3xl font-semibold leading-tight tracking-[-0.01em] text-white sm:text-4xl lg:text-[2.75rem]">
+            <h2 className="mt-5 text-3xl font-semibold leading-tight tracking-[-0.01em] text-[#292D34] sm:text-4xl lg:text-[2.75rem]">
               Project management stops at tasks.{' '}
               <span className="bg-gradient-to-r from-[#A78BFA] via-[#6647F0] to-[#0091FF] bg-clip-text text-transparent">
                 Cubicle keeps going.
@@ -219,18 +223,18 @@ export default function HomePage() {
             </h2>
           </div>
           <div className="relative">
-            <p className="text-lg leading-8 text-white/85">
+            <p className="text-lg leading-8 text-slate-600">
               Generic project tools stop at tasks. Client-service businesses still need{' '}
-              <span className="font-medium text-white">portals, deliverables, tracked time, booking, invoices</span>
+              <span className="font-medium text-[#292D34]">portals, deliverables, tracked time, booking, invoices</span>
               {' '}— and a clean way to keep clients updated. Cubicle connects those pieces from day one.
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
               {['Portals', 'Deliverables', 'Time', 'Booking', 'Invoices'].map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1.5 rounded-full border !border-[#A78BFA]/30 bg-[#6647F0]/15 px-3 py-1 text-xs font-medium text-white backdrop-blur"
+                  className="inline-flex items-center gap-1.5 rounded-full border !border-[#6647F0]/25 bg-white px-3 py-1 text-xs font-medium text-[#6647F0] shadow-sm"
                 >
-                  <span className="inline-flex h-1 w-1 rounded-full bg-[#A78BFA]" />
+                  <span className="inline-flex h-1 w-1 rounded-full bg-[#6647F0]" />
                   {tag}
                 </span>
               ))}
