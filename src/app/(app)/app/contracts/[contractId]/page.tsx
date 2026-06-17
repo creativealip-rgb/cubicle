@@ -73,6 +73,14 @@ export default async function ContractDetailPage({ params }: { params: Promise<{
           )}
         </div>
         <div className="flex items-center gap-2">
+          {canWrite && (
+            <Button variant="outline" asChild>
+              <a href={`/api/contracts/${c.id}/pdf`} target="_blank" rel="noopener noreferrer">
+                <FileText className="h-4 w-4 mr-1" />
+                Download PDF
+              </a>
+            </Button>
+          )}
           {(c.status === "draft") && canWrite && (
             <SendContractButton contractId={c.id} />
           )}

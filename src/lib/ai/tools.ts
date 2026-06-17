@@ -28,6 +28,8 @@ import {
   proposals,
   expenseRecurring,
   contracts,
+  questionnaires,
+  questionnaireResponses,
 } from "@/db/schema";
 import type { ToolDefinition } from "./client";
 
@@ -1134,6 +1136,82 @@ async function getContract(args: { contractId?: string; title?: string }) {
   return row;
 }
 
+// ─── Read: questionnaires (Sprint N — P2.7.2 AI tools) ───
+
+async function listQuestionnaires(args: { limit?: number }) {
+  const ws = await getWorkspace();
+  const limit = Math.min(args.limit ?? 20, 100);
+  const rows = await db
+    .select({
+      id: questionnaires.id,
+      name: questionnaires.name,
+      description: questionnaires.description,
+      schema: questionnaires.schema,
+      createdAt: questionnaires.createdAt,
+    })
+    .from(questionnaires)
+    .where(eq(questionnaires.workspaceId, ws.id))
+    .orderBy(desc(questionnaires.createdAt))
+    .limit(limit);
+  return rows.map(r => ({
+    ...r,
+    fieldCount: Array.isArray(r.schema) ? (r.schema as unknown[]).length : 0,
+  }));
+}
+
+async function listQuestionnaireResponses(args: { questionnaireId: string; status?: string; limit?: number }) {
+  const ws = await getWorkspace();
+  const conds = [
+    eq(questionnaireResponses.workspaceId, ws.id),
+    eq(questionnaireResponses.questionnaireId, args.questionnaireId),
+  ];
+  if (args.status) conds.push(eq(questionnaireResponses.status, args.status as "pending" | "submitted"));
+  const limit = Math.min(args.limit ?? 20, 100);
+  const rows = await db
+    .select({
+      id: questionnaireResponses.id,
+      respondentName: questionnaireResponses.respondentName,
+      respondentEmail: questionnaireResponses.respondentEmail,
+      status: questionnaireResponses.status,
+      answers: questionnaireResponses.answers,
+      submittedAt: questionnaireResponses.submittedAt,
+      createdAt: questionnaireResponses.createdAt,
+      clientName: clients.name,
+    })
+    .from(questionnaireResponses)
+    .leftJoin(clients, eq(clients.id, questionnaireResponses.clientId))
+    .where(and(...conds))
+    .orderBy(desc(questionnaireResponses.createdAt))
+    .limit(limit);
+  return rows;
+}
+
+async function getQuestionnaireResponse(args: { responseId: string }) {
+  const ws = await getWorkspace();
+  const [row] = await db
+    .select({
+      id: questionnaireResponses.id,
+      respondentName: questionnaireResponses.respondentName,
+      respondentEmail: questionnaireResponses.respondentEmail,
+      status: questionnaireResponses.status,
+      answers: questionnaireResponses.answers,
+      submittedAt: questionnaireResponses.submittedAt,
+      createdAt: questionnaireResponses.createdAt,
+      clientName: clients.name,
+      projectName: projects.name,
+    })
+    .from(questionnaireResponses)
+    .leftJoin(clients, eq(clients.id, questionnaireResponses.clientId))
+    .leftJoin(projects, eq(projects.id, questionnaireResponses.projectId))
+    .where(and(
+      eq(questionnaireResponses.id, args.responseId),
+      eq(questionnaireResponses.workspaceId, ws.id),
+    ))
+    .limit(1);
+  if (!row) return { error: "Not found" };
+  return row;
+}
+
 // ─── Read: cash flow + recurring (Sprint K — P2.8 phase 3) ───
 
 async function cashFlowForecast(args: { months?: number }) {
@@ -1574,6 +1652,52 @@ export const TOOL_DEFS: ToolDefinition[] = [
   {
     type: "function",
     function: {
+      name: "list_questionnaires",
+      description:
+        "List intake questionnaires defined in the workspace. Use for 'what questionnaires do I have', 'intake forms'.",
+      parameters: {
+        type: "object",
+        properties: {
+          limit: { type: "number" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_questionnaire_responses",
+      description:
+        "List responses for a questionnaire. Returns respondent name/email, status (pending/submitted), submitted date, and answers summary. Use for 'who has filled out the intake', 'show me the responses'.",
+      parameters: {
+        type: "object",
+        properties: {
+          questionnaireId: { type: "string" },
+          status: { type: "string", enum: ["pending", "submitted"] },
+          limit: { type: "number" },
+        },
+        required: ["questionnaireId"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_questionnaire_response",
+      description:
+        "Get full details of a single questionnaire response: respondent name/email, status, all answers. Use for 'show me response X', 'what did they answer'.",
+      parameters: {
+        type: "object",
+        properties: {
+          responseId: { type: "string" },
+        },
+        required: ["responseId"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "get_client",
       description: "Get one client by id or name. Returns contact info, recent projects, open invoices.",
       parameters: {
@@ -1687,6 +1811,9 @@ export type ToolName =
   | "list_recurring"
   | "list_contracts"
   | "get_contract"
+  | "list_questionnaires"
+  | "list_questionnaire_responses"
+  | "get_questionnaire_response"
   | "get_client"
   | "get_project"
   | "get_task"
@@ -1749,6 +1876,12 @@ export async function executeTool(
       return listContracts(args as { status?: string; limit?: number; clientId?: string });
     case "get_contract":
       return getContract(args as { contractId?: string; title?: string });
+    case "list_questionnaires":
+      return listQuestionnaires(args as { limit?: number });
+    case "list_questionnaire_responses":
+      return listQuestionnaireResponses(args as { questionnaireId: string; status?: string; limit?: number });
+    case "get_questionnaire_response":
+      return getQuestionnaireResponse(args as { responseId: string });
     case "get_client":
       return getClient(args as { id?: string; name?: string });
     case "get_project":
