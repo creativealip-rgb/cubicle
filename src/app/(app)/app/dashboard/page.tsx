@@ -73,6 +73,57 @@ export default async function DashboardPage() {
     // ignore
   }
 
+  // Cash flow forecast — unpaid invoices bucketed by due date
+  const cashflowResult = await db.execute(
+    sql`SELECT
+      coalesce(sum(total) FILTER (WHERE due_date >= current_date AND due_date <= current_date + interval '30 days'), 0)::decimal AS d30,
+      coalesce(sum(total) FILTER (WHERE due_date > current_date + interval '30 days' AND due_date <= current_date + interval '60 days'), 0)::decimal AS d60,
+      coalesce(sum(total) FILTER (WHERE due_date > current_date + interval '60 days' AND due_date <= current_date + interval '90 days'), 0)::decimal AS d90,
+      coalesce(sum(total) FILTER (WHERE due_date < current_date), 0)::decimal AS overdue
+    FROM invoices
+    WHERE workspace_id = ${workspaceId}
+      AND status IN ('sent','overdue','viewed')`,
+  );
+  const cashflow = cashflowResult.rows[0] as {
+    d30: string | number;
+    d60: string | number;
+    d90: string | number;
+    overdue: string | number;
+  };
+  const cf30 = Number(cashflow.d30) || 0;
+  const cf60 = Number(cashflow.d60) || 0;
+  const cf90 = Number(cashflow.d90) || 0;
+  const cfOverdue = Number(cashflow.overdue) || 0;
+  const cfMax = Math.max(cf30, cf60, cf90, 1);
+
+  // Client health — active clients + last activity buckets
+  const clientHealthResult = await db.execute(
+    sql`SELECT
+      count(*) FILTER (WHERE c.status = 'active')::int AS active,
+      count(*) FILTER (WHERE c.status = 'active' AND EXISTS (
+        SELECT 1 FROM projects p
+        WHERE p.client_id = c.id
+          AND p.status = 'active'
+          AND p.updated_at > current_date - interval '14 days'
+      ))::int AS healthy,
+      count(*) FILTER (WHERE c.status = 'active' AND NOT EXISTS (
+        SELECT 1 FROM projects p
+        WHERE p.client_id = c.id
+          AND p.updated_at > current_date - interval '30 days'
+      ))::int AS at_risk
+    FROM clients c
+    WHERE c.workspace_id = ${workspaceId}`,
+  );
+  const clientHealth = clientHealthResult.rows[0] as {
+    active: number;
+    healthy: number;
+    at_risk: number;
+  };
+  const chActive = clientHealth.active || 0;
+  const chHealthy = clientHealth.healthy || 0;
+  const chAtRisk = clientHealth.at_risk || 0;
+  const chIdle = Math.max(chActive - chHealthy - chAtRisk, 0);
+
   // Revenue sparkline — last 14 days, paid invoices per day (payments.paid_at)
   const sparklineResult = await db.execute(
     sql`WITH days AS (
@@ -300,7 +351,7 @@ export default async function DashboardPage() {
                 asChild
                 variant="outline"
                 size="sm"
-                className="gap-1.5 bg-white"
+                className="gap-1.5 bg-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-50 hover:border-blue-300 hover:shadow-sm"
               >
                 <Link href={qa.href}>
                   <Icon className="h-3.5 w-3.5" />
@@ -317,8 +368,8 @@ export default async function DashboardPage() {
         {kpiCards.map((kpi) => {
           const Icon = kpi.icon;
           return (
-            <Link key={kpi.label} href={kpi.href} className="lg:col-span-1">
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <Link key={kpi.label} href={kpi.href} className="lg:col-span-1 group">
+              <Card className="relative cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:ring-1 hover:ring-slate-950/10">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="space-y-2">
@@ -328,10 +379,13 @@ export default async function DashboardPage() {
                       </p>
                       <p className="text-xs text-muted-foreground">{kpi.change}</p>
                     </div>
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${kpi.iconBg}`}>
+                    <div
+                      className={`flex h-10 w-10 items-center justify-center rounded-lg transition-transform group-hover:scale-110 ${kpi.iconBg}`}
+                    >
                       <Icon className="h-5 w-5" />
                     </div>
                   </div>
+                  <ArrowUpRight className="absolute right-3 top-3 h-3.5 w-3.5 text-slate-300 opacity-0 transition-opacity group-hover:opacity-100" />
                 </CardContent>
               </Card>
             </Link>
@@ -384,6 +438,113 @@ export default async function DashboardPage() {
                 strokeLinecap="round"
               />
             </svg>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Client Health + Cash Flow Forecast */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* Client health */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between text-base font-semibold">
+              <span>Client health</span>
+              <Link
+                href="/app/clients"
+                className="text-xs font-normal text-muted-foreground hover:text-slate-950"
+              >
+                View all →
+              </Link>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex h-3 w-full overflow-hidden rounded-full bg-slate-100">
+              {chActive > 0 && chHealthy > 0 && (
+                <div
+                  className="bg-emerald-500 transition-all"
+                  style={{ width: `${(chHealthy / chActive) * 100}%` }}
+                  title={`${chHealthy} healthy`}
+                />
+              )}
+              {chActive > 0 && chIdle > 0 && (
+                <div
+                  className="bg-amber-400 transition-all"
+                  style={{ width: `${(chIdle / chActive) * 100}%` }}
+                  title={`${chIdle} idle`}
+                />
+              )}
+              {chActive > 0 && chAtRisk > 0 && (
+                <div
+                  className="bg-red-500 transition-all"
+                  style={{ width: `${(chAtRisk / chActive) * 100}%` }}
+                  title={`${chAtRisk} at risk`}
+                />
+              )}
+            </div>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-lg border border-emerald-100 bg-emerald-50/50 p-3">
+                <p className="text-2xl font-bold text-emerald-700">{chHealthy}</p>
+                <p className="text-xs font-medium text-emerald-700/80">Healthy</p>
+              </div>
+              <div className="rounded-lg border border-amber-100 bg-amber-50/50 p-3">
+                <p className="text-2xl font-bold text-amber-700">{chIdle}</p>
+                <p className="text-xs font-medium text-amber-700/80">Idle</p>
+              </div>
+              <div className="rounded-lg border border-red-100 bg-red-50/50 p-3">
+                <p className="text-2xl font-bold text-red-700">{chAtRisk}</p>
+                <p className="text-xs font-medium text-red-700/80">At risk</p>
+              </div>
+            </div>
+            {chAtRisk > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {chAtRisk} {chAtRisk === 1 ? "client has" : "clients have"} no project activity in 30+ days.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Cash flow forecast */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between text-base font-semibold">
+              <span>Cash flow forecast</span>
+              <Link
+                href="/app/reports"
+                className="text-xs font-normal text-muted-foreground hover:text-slate-950"
+              >
+                Reports →
+              </Link>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {[
+              { label: "Next 30 days", amt: cf30, color: "bg-blue-500" },
+              { label: "31–60 days", amt: cf60, color: "bg-blue-400" },
+              { label: "61–90 days", amt: cf90, color: "bg-blue-300" },
+            ].map((bucket) => (
+              <div key={bucket.label} className="space-y-1.5">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-slate-700">{bucket.label}</span>
+                  <span className="font-semibold tabular-nums text-slate-950">
+                    Rp {Math.round(bucket.amt).toLocaleString("id-ID")}
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className={`h-full ${bucket.color} transition-all`}
+                    style={{ width: `${(bucket.amt / cfMax) * 100}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+            {cfOverdue > 0 && (
+              <div className="mt-3 flex items-center justify-between rounded-lg border border-red-100 bg-red-50/50 px-3 py-2 text-sm">
+                <span className="font-medium text-red-700">Already overdue</span>
+                <span className="font-semibold tabular-nums text-red-700">
+                  Rp {Math.round(cfOverdue).toLocaleString("id-ID")}
+                </span>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
