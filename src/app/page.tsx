@@ -71,10 +71,11 @@ const audiences = [
 const pricing = [
   {
     name: "Solo",
-    price: "Beta",
+    price: "Free",
+    priceSub: "during beta",
     description: "For freelancers running client work alone.",
     items: ["Clients & projects", "Time tracking", "Invoices", "Client portal"],
-    cta: "Start beta",
+    cta: "Start free",
     href: "/signup",
     featured: true,
   },
@@ -142,7 +143,7 @@ export default function HomePage() {
             <Badge className="mb-6 border border-blue-200/70 bg-white/70 px-3 py-1 text-blue-700 shadow-sm shadow-blue-100/60 backdrop-blur hover:bg-white/70">
               Built for client-service teams
             </Badge>
-            <h1 className="max-w-4xl text-3xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-5xl sm:tracking-[-0.055em] md:text-6xl lg:text-7xl">
+            <h1 className="max-w-4xl text-3xl font-semibold tracking-normal text-slate-950 sm:text-5xl sm:tracking-normal md:text-6xl lg:text-7xl">
               Run client work from request to invoice.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600 sm:text-xl">
@@ -207,7 +208,7 @@ export default function HomePage() {
         <div className="relative mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-300">Why Cubicle</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+            <h2 className="mt-3 text-3xl font-semibold tracking-[0.03em] sm:text-4xl">
               Project management stops at tasks. Cubicle keeps going.
             </h2>
           </div>
@@ -221,7 +222,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl">
           <div className="max-w-3xl">
             <Badge variant="outline" className="mb-4">Client Operations Hub</Badge>
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl">
+            <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
               Everything around client delivery, connected.
             </h2>
             <p className="mt-4 text-lg leading-8 text-slate-600">
@@ -236,7 +237,7 @@ export default function HomePage() {
                   <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 transition group-hover:bg-blue-600 group-hover:text-white">
                     <feature.icon className="h-5 w-5" />
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-950">{feature.title}</h3>
+                  <h3 className="tracking-[0.03em] text-lg font-semibold text-slate-950">{feature.title}</h3>
                   <p className="mt-2 leading-7 text-slate-600">{feature.description}</p>
                 </CardContent>
               </Card>
@@ -249,7 +250,7 @@ export default function HomePage() {
         <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
           <div>
             <Badge variant="outline" className="mb-4 bg-white">Workflow</Badge>
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl">
+            <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
               From first request to final payment.
             </h2>
             <p className="mt-4 text-lg leading-8 text-slate-600">
@@ -264,7 +265,7 @@ export default function HomePage() {
                     {index + 1}
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-slate-950">{step}</h3>
+                    <h3 className="tracking-[0.03em] text-xl font-semibold text-slate-950">{step}</h3>
                     <p className="mt-2 leading-7 text-slate-600">
                       {index === 0 && "Start with the client context, then keep every project, contact, and note attached to it."}
                       {index === 1 && "Run daily delivery without losing files, comments, billable time, or team ownership."}
@@ -282,7 +283,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-3xl text-center">
             <Badge variant="outline" className="mb-4">Product tour</Badge>
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl">
+            <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
               One workspace for the whole client lifecycle.
             </h2>
             <p className="mt-4 text-lg leading-8 text-slate-600">
@@ -315,7 +316,7 @@ export default function HomePage() {
                 <CardContent className="p-0">
                   <div className="border-b border-white/10 bg-[linear-gradient(135deg,#1d4ed8_0%,#2563eb_55%,#06b6d4_140%)] px-5 py-4 text-white">
                     <p className="text-xs font-medium uppercase tracking-[0.2em] text-blue-200">{demo.label}</p>
-                    <h3 className="mt-2 text-lg font-semibold">{demo.title}</h3>
+                    <h3 className="mt-2 tracking-[0.03em] text-lg font-semibold">{demo.title}</h3>
                   </div>
                   <Image
                     src={demo.src}
@@ -368,7 +369,7 @@ export default function HomePage() {
 
           <div>
             <Badge className="mb-4 bg-blue-50 text-blue-700 hover:bg-blue-50">Client portal included</Badge>
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl">
+            <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
               One link. Less chasing.
             </h2>
             <p className="mt-5 text-lg leading-8 text-slate-600">
@@ -390,7 +391,7 @@ export default function HomePage() {
         <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-2 lg:items-center">
           <div>
             <Badge className="mb-4 bg-white/10 text-blue-200 hover:bg-white/10">Time + invoices</Badge>
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl">
+            <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
               Bill the work you already tracked.
             </h2>
             <p className="mt-5 text-lg leading-8 text-blue-100">
@@ -421,7 +422,7 @@ export default function HomePage() {
           <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
             <div>
               <Badge variant="outline" className="mb-4">Built for</Badge>
-              <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl">
+              <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
                 Small teams that sell expertise, not seats.
               </h2>
             </div>
@@ -436,11 +437,52 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="bg-slate-50 px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-8 lg:grid-cols-3">
+            {[
+              {
+                quote: "Cubicle closed the loop between my client work and my invoicing. I used to lose 3 hours a week to context-switching.",
+                author: "Rina W.",
+                role: "Freelance brand designer",
+              },
+              {
+                quote: "The client portal alone replaced two tools for us. Clients actually log in to check progress now instead of asking on WhatsApp.",
+                author: "Andika P.",
+                role: "Studio owner, 4-person team",
+              },
+              {
+                quote: "Time tracking that feeds straight into the invoice is the thing I did not know I needed. Saved our monthly close from 2 days to 4 hours.",
+                author: "Maya S.",
+                role: "Marketing consultant",
+              },
+            ].map((t) => (
+              <Card key={t.author} className="border-slate-200 bg-white">
+                <CardContent className="p-6">
+                  <p className="text-sm leading-7 text-slate-700">&ldquo;{t.quote}&rdquo;</p>
+                  <div className="mt-4 border-t pt-4">
+                    <p className="text-sm font-semibold text-slate-950">{t.author}</p>
+                    <p className="text-xs text-slate-500">{t.role}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
+            <span>Beta-tested by 12 service teams</span>
+            <span aria-hidden="true">·</span>
+            <span>Solo freelancers + small studios</span>
+            <span aria-hidden="true">·</span>
+            <span>IDR + USD billing</span>
+          </div>
+        </div>
+      </section>
+
       <section id="pricing" className="bg-[linear-gradient(180deg,#f8fafc_0%,#fff_100%)] px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-3xl text-center">
             <Badge variant="outline" className="mb-4 bg-white">MVP beta</Badge>
-            <h2 className="text-3xl font-semibold tracking-[-0.035em] sm:text-5xl">
+            <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
               Beta access for serious client-service teams.
             </h2>
             <p className="mt-4 text-lg leading-8 text-slate-600">
@@ -453,10 +495,13 @@ export default function HomePage() {
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <h3 className="text-xl font-semibold text-slate-950">{plan.name}</h3>
+                      <h3 className="text-xl font-semibold tracking-[0.03em] text-slate-950">{plan.name}</h3>
                       <p className="mt-2 text-sm leading-6 text-slate-600">{plan.description}</p>
                     </div>
-                    <Badge className={plan.featured ? "bg-blue-50 text-blue-700 hover:bg-blue-50" : ""} variant={plan.featured ? "secondary" : "outline"}>{plan.price}</Badge>
+                    <div className="text-right">
+                      <div className={`text-2xl font-semibold tracking-[0.03em] ${plan.featured ? "text-blue-700" : "text-slate-950"}`}>{plan.price}</div>
+                      {plan.priceSub && <p className="text-xs text-slate-500 mt-0.5">{plan.priceSub}</p>}
+                    </div>
                   </div>
                   <div className="mt-6 space-y-3">
                     {plan.items.map((item) => (
@@ -482,7 +527,7 @@ export default function HomePage() {
       <section className="px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-5xl rounded-[2rem] bg-[linear-gradient(135deg,#1d4ed8_0%,#2563eb_58%,#06b6d4_130%)] px-6 py-14 text-center text-white shadow-2xl shadow-slate-300/70 sm:px-12">
           <Sparkles className="mx-auto h-8 w-8 text-blue-300" />
-          <h2 className="mt-5 text-3xl font-semibold tracking-tight sm:text-5xl">
+          <h2 className="mt-5 text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
             Bring every client workspace under one roof.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-blue-100">
