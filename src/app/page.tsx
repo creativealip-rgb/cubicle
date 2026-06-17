@@ -95,7 +95,7 @@ export default function HomePage() {
       <header className="sticky top-0 z-30 border-b border-slate-950/5 bg-white/75 backdrop-blur-2xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-3">
-            <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm">
+            <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-[#6647F0] text-sm font-bold text-white shadow-sm">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.35),transparent_35%)]" />
               <SquareStack className="relative h-4 w-4" />
             </div>
@@ -116,7 +116,7 @@ export default function HomePage() {
             <Button asChild variant="ghost" className="hidden sm:inline-flex">
               <Link href="/login">Sign in</Link>
             </Button>
-            <Button asChild className="bg-blue-600 text-white hover:bg-blue-700">
+            <Button asChild className="bg-[#6647F0] text-white shadow-[0_4px_4px_rgba(13,21,48,0.04)] hover:bg-[#5333DD] hover:shadow-[0_8px_8px_rgba(13,21,48,0.08)] active:bg-[#4A2AD0] focus-visible:ring-2 focus-visible:ring-[#6647F0] focus-visible:ring-offset-2">
               <Link href="/signup">
                 Get started
                 <ArrowRight className="h-4 w-4" />
@@ -135,7 +135,7 @@ export default function HomePage() {
                 aria-hidden="true"
                 className="absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,#0091ff,#ff02f0,#f76808,#6647f0,#0091ff)] opacity-70 blur-md"
               />
-              <Badge className="relative rounded-full border-0 bg-white/90 px-3 py-1.5 text-blue-700 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)] hover:bg-white/90">
+              <Badge className="relative rounded-full border-0 bg-white/90 px-3 py-1.5 text-[#6647F0] shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)] hover:bg-white/90">
                 <span className="mr-2 inline-flex h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
                 Live in beta · v0.1
               </Badge>
@@ -147,7 +147,7 @@ export default function HomePage() {
               One calm workspace for clients, projects, deliverables, time, invoices, booking, and portals.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="h-12 rounded-xl bg-[#6647F0] px-6 text-white shadow-[0_4px_4px_rgba(13,21,48,0.04)] hover:bg-[#5333DD] hover:shadow-[0_8px_8px_rgba(13,21,48,0.08)] tracking-[-0.01em] font-normal">
+              <Button asChild size="lg" className="h-12 rounded-xl bg-[#6647F0] px-6 text-white shadow-[0_4px_4px_rgba(13,21,48,0.04)] hover:bg-[#5333DD] hover:shadow-[0_8px_8px_rgba(13,21,48,0.08)] active:bg-[#4A2AD0] focus-visible:ring-2 focus-visible:ring-[#6647F0] focus-visible:ring-offset-2 tracking-[-0.01em] font-normal">
                 <Link href="/signup">
                   Start managing clients
                   <ArrowRight className="h-4 w-4" />
@@ -164,7 +164,7 @@ export default function HomePage() {
                 "No scattered handoffs",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                  <CheckCircle2 className="h-4 w-4 text-[#6647F0]" />
                   <span>{item}</span>
                 </div>
               ))}
@@ -251,7 +251,7 @@ export default function HomePage() {
                 className="group rounded-2xl border-0 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),inset_0_0_0_1px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(15,23,42,0.08),inset_0_0_0_1px_rgba(15,23,42,0.08)]"
               >
                 <CardContent className="p-6">
-                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 transition group-hover:bg-blue-600 group-hover:text-white">
+                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F4F0FF] text-[#6647F0] transition group-hover:bg-[#6647F0] group-hover:text-white">
                     <feature.icon className="h-5 w-5" />
                   </div>
                   <h3 className="tracking-[0.03em] text-lg font-semibold text-slate-950">{feature.title}</h3>
@@ -280,7 +280,7 @@ export default function HomePage() {
             <ol className="space-y-8">
               {workflow.map((step, index) => (
                 <li key={step} className="flex gap-5">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-lg font-semibold text-white shadow-md shadow-blue-200">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#6647F0] text-lg font-semibold text-white shadow-md shadow-purple-900/40">
                     {index + 1}
                   </div>
                   <div>
@@ -357,7 +357,7 @@ export default function HomePage() {
           </div>
 
           <div>
-            <Badge className="mb-4 bg-blue-50 text-blue-700 hover:bg-blue-50">Client portal included</Badge>
+            <Badge className="mb-4 bg-[#F4F0FF] text-[#6647F0] hover:bg-[#F4F0FF]">Client portal included</Badge>
             <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
               One link. Less chasing.
             </h2>
@@ -367,7 +367,7 @@ export default function HomePage() {
             <div className="mt-7 grid gap-3 text-slate-700 sm:grid-cols-2">
               {["Visible projects", "Deliverable files", "Client comments", "Invoice links", "Portal tokens", "Internal data hidden"].map((item) => (
                 <div key={item} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                  <CheckCircle2 className="h-4 w-4 text-[#6647F0]" />
                   <span>{item}</span>
                 </div>
               ))}
@@ -512,7 +512,7 @@ export default function HomePage() {
                     <div className="mt-6 space-y-3">
                       {plan.items.map((item) => (
                         <div key={item} className="flex items-center gap-2 text-sm text-slate-700">
-                          <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                          <CheckCircle2 className="h-4 w-4 text-[#6647F0]" />
                           <span>{item}</span>
                         </div>
                       ))}
@@ -521,7 +521,7 @@ export default function HomePage() {
                       asChild
                       className={
                         plan.featured
-                          ? "mt-7 w-full rounded-xl bg-[#6647F0] text-white shadow-[0_4px_4px_rgba(13,21,48,0.04)] hover:bg-[#5333DD] hover:shadow-[0_8px_8px_rgba(13,21,48,0.08)] tracking-[-0.01em] font-normal"
+                          ? "mt-7 w-full rounded-xl bg-[#6647F0] text-white shadow-[0_4px_4px_rgba(13,21,48,0.04)] hover:bg-[#5333DD] hover:shadow-[0_8px_8px_rgba(13,21,48,0.08)] active:bg-[#4A2AD0] focus-visible:ring-2 focus-visible:ring-[#6647F0] focus-visible:ring-offset-2 tracking-[-0.01em] font-normal"
                           : "mt-7 w-full rounded-xl border border-[#D9D9D9] bg-white text-[#292D34] shadow-[0_4px_4px_rgba(13,21,48,0.04)] hover:border-[#C0C0C0] hover:bg-[#F8F9FA] tracking-[-0.01em] font-normal"
                       }
                       variant={plan.featured ? "default" : "outline"}
@@ -551,7 +551,7 @@ export default function HomePage() {
           }}
         />
         <div className="relative mx-auto max-w-5xl rounded-[2rem] bg-[linear-gradient(135deg,#1d4ed8_0%,#2563eb_58%,#06b6d4_130%)] px-6 py-14 text-center text-white shadow-2xl shadow-slate-300/70 sm:px-12">
-          <Sparkles className="mx-auto h-8 w-8 text-blue-300" />
+          <Sparkles className="mx-auto h-8 w-8 text-[#B19EE8]" />
           <h2 className="mt-5 text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
             Bring every client workspace under one roof.
           </h2>
