@@ -411,3 +411,47 @@ export const aiMessageRelations = relations(aiMessages, ({ one }) => ({
     references: [aiConversations.id],
   }),
 }));
+
+// ─── Finance: Expenses (Sprint H) ───
+
+export const expenseCategories = pgTable("expense_categories", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  color: text("color").notNull().default("#64748b"),
+  icon: text("icon"),
+  isDefault: boolean("is_default").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [unique().on(table.workspaceId, table.name)]);
+
+export const expenses = pgTable("expenses", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  categoryId: uuid("category_id").references(() => expenseCategories.id, { onDelete: "set null" }),
+  projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "set null" }),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+  currency: text("currency").notNull().default("USD"),
+  date: date("date").notNull(),
+  description: text("description").notNull(),
+  vendor: text("vendor"),
+  receiptUrl: text("receipt_url"),
+  taxIncluded: boolean("tax_included").notNull().default(false),
+  taxAmount: numeric("tax_amount", { precision: 12, scale: 2 }),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const expenseCategoryRelations = relations(expenseCategories, ({ one, many }) => ({
+  workspace: one(workspaces, { fields: [expenseCategories.workspaceId], references: [workspaces.id] }),
+  expenses: many(expenses),
+}));
+
+export const expenseRelations = relations(expenses, ({ one }) => ({
+  workspace: one(workspaces, { fields: [expenses.workspaceId], references: [workspaces.id] }),
+  category: one(expenseCategories, { fields: [expenses.categoryId], references: [expenseCategories.id] }),
+  project: one(projects, { fields: [expenses.projectId], references: [projects.id] }),
+  client: one(clients, { fields: [expenses.clientId], references: [clients.id] }),
+  createdByUser: one(users, { fields: [expenses.createdBy], references: [users.id] }),
+}));

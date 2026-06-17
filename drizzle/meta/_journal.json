@@ -15,6 +15,13 @@
       "when": 1781588836023,
       "tag": "0001_simple_karma",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781661930054,
+      "tag": "0003_finance",
+      "breakpoints": true
     }
   ]
 }

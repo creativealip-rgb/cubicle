@@ -23,6 +23,8 @@ import {
   workspaceMembers,
   workspaces,
   promptTemplates,
+  expenses,
+  expenseCategories,
 } from "@/db/schema";
 import type { ToolDefinition } from "./client";
 
@@ -203,6 +205,19 @@ async function getWorkspaceSummary() {
     .from(workspaceMembers)
     .where(eq(workspaceMembers.workspaceId, ws.id));
 
+  // Monthly expense totals (current month) by currency
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  const monthStartStr = monthStart.toISOString().slice(0, 10);
+  const expenseMonthRows = await db
+    .select({
+      currency: expenses.currency,
+      total: sql<string>`coalesce(sum(${expenses.amount}), 0)::text`,
+    })
+    .from(expenses)
+    .where(and(eq(expenses.workspaceId, ws.id), sql`${expenses.date} >= ${monthStartStr}`))
+    .groupBy(expenses.currency);
+
   return {
     asOf: new Date().toISOString(),
     workspace: { id: ws.id, name: ws.name },
@@ -211,6 +226,7 @@ async function getWorkspaceSummary() {
     tasks: taskStats,
     invoices: invoiceStats,
     teamSize: teamSize.count,
+    expensesThisMonth: expenseMonthRows,
   };
 }
 
@@ -708,6 +724,115 @@ async function draftInvoiceReminder(args: { invoiceId: string }) {
   };
 }
 
+// ─── Read: finance (Sprint H) ─────────────────────────────────────
+
+async function listExpenses(args: { categoryId?: string; projectId?: string; limit?: number; fromDate?: string; toDate?: string }) {
+  const ws = await getWorkspace();
+  const conds = [eq(expenses.workspaceId, ws.id)];
+  if (args.categoryId) conds.push(eq(expenses.categoryId, args.categoryId));
+  if (args.projectId) conds.push(eq(expenses.projectId, args.projectId));
+  if (args.fromDate) conds.push(sql`${expenses.date} >= ${args.fromDate}`);
+  if (args.toDate) conds.push(sql`${expenses.date} <= ${args.toDate}`);
+  const limit = Math.min(args.limit ?? 50, 200);
+  const rows = await db
+    .select({
+      id: expenses.id,
+      date: expenses.date,
+      amount: expenses.amount,
+      currency: expenses.currency,
+      description: expenses.description,
+      vendor: expenses.vendor,
+      categoryName: expenseCategories.name,
+      projectName: projects.name,
+      clientName: clients.name,
+    })
+    .from(expenses)
+    .leftJoin(expenseCategories, eq(expenseCategories.id, expenses.categoryId))
+    .leftJoin(projects, eq(projects.id, expenses.projectId))
+    .leftJoin(clients, eq(clients.id, expenses.clientId))
+    .where(and(...conds))
+    .orderBy(desc(expenses.date))
+    .limit(limit);
+  return { count: rows.length, expenses: rows };
+}
+
+async function expenseSummary(args: { fromDate?: string; toDate?: string }) {
+  const ws = await getWorkspace();
+  const conds = [eq(expenses.workspaceId, ws.id)];
+  if (args.fromDate) conds.push(sql`${expenses.date} >= ${args.fromDate}`);
+  if (args.toDate) conds.push(sql`${expenses.date} <= ${args.toDate}`);
+  // Totals by currency
+  const totals = await db
+    .select({
+      currency: expenses.currency,
+      total: sql<string>`sum(${expenses.amount})`,
+      count: sql<number>`count(*)`,
+    })
+    .from(expenses)
+    .where(and(...conds))
+    .groupBy(expenses.currency);
+  // By category (IDR only for share calc)
+  const byCategory = await db
+    .select({
+      categoryName: expenseCategories.name,
+      currency: expenses.currency,
+      total: sql<string>`sum(${expenses.amount})`,
+    })
+    .from(expenses)
+    .leftJoin(expenseCategories, eq(expenseCategories.id, expenses.categoryId))
+    .where(and(...conds))
+    .groupBy(expenseCategories.name, expenses.currency)
+    .orderBy(desc(sql`sum(${expenses.amount})`));
+  return { totals, byCategory };
+}
+
+async function monthlyPL(args: { months?: number }) {
+  const ws = await getWorkspace();
+  const monthCount = Math.min(args.months ?? 6, 24);
+  // Income from paid invoices by month (use payments.paidAt)
+  const incomeRows = await db
+    .select({
+      month: sql<string>`to_char(${payments.paidAt}, 'YYYY-MM')`,
+      total: sql<string>`sum(${payments.amount})`,
+    })
+    .from(payments)
+    .innerJoin(invoices, eq(invoices.id, payments.invoiceId))
+    .where(eq(invoices.workspaceId, ws.id))
+    .groupBy(sql`to_char(${payments.paidAt}, 'YYYY-MM')`)
+    .orderBy(sql`to_char(${payments.paidAt}, 'YYYY-MM')`);
+  // Expense by month by currency
+  const expenseRows = await db
+    .select({
+      month: sql<string>`to_char(${expenses.date}, 'YYYY-MM')`,
+      currency: expenses.currency,
+      total: sql<string>`sum(${expenses.amount})`,
+    })
+    .from(expenses)
+    .where(eq(expenses.workspaceId, ws.id))
+    .groupBy(sql`to_char(${expenses.date}, 'YYYY-MM')`, expenses.currency)
+    .orderBy(sql`to_char(${expenses.date}, 'YYYY-MM')`);
+  // Merge by month (last N months from current)
+  const months: string[] = [];
+  const now = new Date();
+  for (let i = monthCount - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+  const incomeByMonth: Record<string, number> = {};
+  incomeRows.forEach((r) => { incomeByMonth[r.month] = parseFloat(r.total ?? "0"); });
+  const expensesByMonth: Record<string, Record<string, number>> = {};
+  expenseRows.forEach((r) => {
+    if (!expensesByMonth[r.month]) expensesByMonth[r.month] = {};
+    expensesByMonth[r.month][r.currency] = parseFloat(r.total ?? "0");
+  });
+  const pl = months.map((m) => ({
+    month: m,
+    income: incomeByMonth[m] ?? 0,
+    expenses: expensesByMonth[m] ?? {},
+  }));
+  return { months: pl };
+}
+
 // ─── Tool registry ─────────────────────────────────────────────────
 
 export const TOOL_DEFS: ToolDefinition[] = [
@@ -852,6 +977,53 @@ export const TOOL_DEFS: ToolDefinition[] = [
   {
     type: "function",
     function: {
+      name: "list_expenses",
+      description:
+        "List expenses in the workspace. Use for 'show my expenses', 'what did I spend on software', 'recent expenses'.",
+      parameters: {
+        type: "object",
+        properties: {
+          categoryId: { type: "string", description: "Filter by category UUID" },
+          projectId: { type: "string", description: "Filter by project UUID" },
+          fromDate: { type: "string", description: "YYYY-MM-DD start" },
+          toDate: { type: "string", description: "YYYY-MM-DD end" },
+          limit: { type: "number" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "expense_summary",
+      description:
+        "Aggregate expenses by currency and category. Use for 'how much did I spend this month', 'where does my money go'.",
+      parameters: {
+        type: "object",
+        properties: {
+          fromDate: { type: "string", description: "YYYY-MM-DD" },
+          toDate: { type: "string", description: "YYYY-MM-DD" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "monthly_pl",
+      description:
+        "Income vs expenses by month (last N months). Income auto-derived from paid invoices. Use for 'P&L', 'am I profitable', 'monthly trend'.",
+      parameters: {
+        type: "object",
+        properties: {
+          months: { type: "number", description: "How many months back (default 6, max 24)" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "get_client",
       description: "Get one client by id or name. Returns contact info, recent projects, open invoices.",
       parameters: {
@@ -952,6 +1124,9 @@ export type ToolName =
   | "search_workspace"
   | "list_prompts"
   | "get_prompt"
+  | "list_expenses"
+  | "expense_summary"
+  | "monthly_pl"
   | "get_client"
   | "get_project"
   | "get_task"
@@ -988,6 +1163,12 @@ export async function executeTool(
       return listPrompts(args as { category?: string; limit?: number });
     case "get_prompt":
       return getPrompt(args as { id?: string; name?: string; category?: string });
+    case "list_expenses":
+      return listExpenses(args as { categoryId?: string; projectId?: string; limit?: number; fromDate?: string; toDate?: string });
+    case "expense_summary":
+      return expenseSummary(args as { fromDate?: string; toDate?: string });
+    case "monthly_pl":
+      return monthlyPL(args as { months?: number });
     case "get_client":
       return getClient(args as { id?: string; name?: string });
     case "get_project":

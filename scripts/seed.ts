@@ -1,5 +1,5 @@
 import { db } from "@/db"
-import { users, workspaces, workspaceMembers, clients, projects, projectMembers, tasks, comments, files, timeEntries, invoices, invoiceItems, payments, appointments, availabilityRules, promptTemplates, promptGenerations, activityLogs } from "@/db/schema"
+import { users, workspaces, workspaceMembers, clients, projects, projectMembers, tasks, comments, files, timeEntries, invoices, invoiceItems, payments, appointments, availabilityRules, promptTemplates, promptGenerations, activityLogs, expenseCategories, expenses } from "@/db/schema"
 import { randomUUID } from "crypto"
 
 async function seed() {
@@ -203,6 +203,55 @@ async function seed() {
     { workspaceId: wsId, actorId: ownerId, action: "sent_invoice", entityType: "invoice", entityId: inv1Id },
   ])
   console.log("✅ Activity logs: 8")
+
+  // ─── Finance: Expense Categories + Sample Expenses (Sprint H) ───
+  const defaultCategories = [
+    { name: "Software", color: "#8b5cf6", icon: "code" },
+    { name: "Hardware", color: "#06b6d4", icon: "laptop" },
+    { name: "Travel", color: "#f59e0b", icon: "plane" },
+    { name: "Meals", color: "#ec4899", icon: "utensils" },
+    { name: "Office", color: "#10b981", icon: "building" },
+    { name: "Marketing", color: "#ef4444", icon: "megaphone" },
+    { name: "Professional Services", color: "#3b82f6", icon: "briefcase" },
+    { name: "Other", color: "#64748b", icon: "more-horizontal" },
+  ]
+  const categoryIds: Record<string, string> = {}
+  for (const c of defaultCategories) {
+    const id = randomUUID()
+    categoryIds[c.name] = id
+    await db.insert(expenseCategories).values({
+      id,
+      workspaceId: wsId,
+      name: c.name,
+      color: c.color,
+      icon: c.icon,
+      isDefault: true,
+    })
+  }
+  console.log("✅ Expense categories: 8 (default)")
+
+  const sampleExpenses = [
+    { category: "Software", project: projectIds[0], amount: "29.00", vendor: "Figma", desc: "Figma Pro — June", date: "2026-06-05" },
+    { category: "Software", project: projectIds[1], amount: "20.00", vendor: "Notion", desc: "Notion AI add-on", date: "2026-06-08" },
+    { category: "Meals", project: null, amount: "185000", vendor: "Warung Upnormal", desc: "Team lunch", date: "2026-06-12" },
+    { category: "Travel", project: projectIds[0], amount: "350000", vendor: "Grab", desc: "Client meeting transport", date: "2026-06-14" },
+    { category: "Hardware", project: null, amount: "2500000", vendor: "Apple Authorized Reseller", desc: "External SSD for backup", date: "2026-06-01" },
+    { category: "Office", project: null, amount: "450000", vendor: "Plaza Indonesia", desc: "Coworking day pass", date: "2026-06-10" },
+  ]
+  for (const e of sampleExpenses) {
+    await db.insert(expenses).values({
+      workspaceId: wsId,
+      categoryId: categoryIds[e.category],
+      projectId: e.project,
+      amount: e.amount,
+      currency: e.amount.includes("000") || parseFloat(e.amount) > 1000 ? "IDR" : "USD",
+      date: e.date,
+      description: e.desc,
+      vendor: e.vendor,
+      createdBy: ownerId,
+    })
+  }
+  console.log("✅ Expenses: 6 (sample)")
 
   // Summary
   console.log("\n📊 Seed Summary:")
