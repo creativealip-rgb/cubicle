@@ -140,6 +140,11 @@ Production client-ready: ~93% (+1: AI Assistant raises polish, R2 gaps unchanged
 - Demo MVP: **99%** (unchanged — in app shell)
 - Sellable source/MVP: **99%** (unchanged — already 99%)
 - Production client-ready: **~93%** (unchanged — utility feature, not infra/differentiator)
+
+| **Update 2026-06-19 (Sprint M — P2.7.3 Contract + E-sig):**
+- Demo MVP: **99%** (unchanged — in app shell)
+- Sellable source/MVP: **99%** (unchanged)
+- Production client-ready: **~94%** (+1 — closes last P2.7 pre-deal phase, full HoneyBook/Bonsai/17hats feature parity for Indonesian segment)
 >
 > **Resolved in this continuation session (16 Jun):**
 > - P0.1 rogue /tmp/postgresql regression — confirmed gone (no rebuild)
@@ -208,6 +213,7 @@ Sprint I P2.8.2 Reports ✅ (18 Jun — 4 new AI tools, /app/reports dashboard)
 Sprint J P2.7.1 Proposal ✅ (18 Jun — accept flow, auto-create project+invoice)
 Sprint K P2.8 Recurring + Cash flow ✅ (18 Jun — 2 new AI tools, forecast card)
 Sprint L P2.7.2 Questionnaire ✅ (19 Jun — form builder, public /intake, 8 field types)
+Sprint M P2.7.3 Contract + E-sig ✅ (19 Jun — signature pad, audit trail, AI tools)
 
 ## 4. P0 — Mandatory Before Production
 
@@ -911,6 +917,8 @@ or use DocuSign/HelloSign embed which is faster but $20-50/mo per workspace)
 
 **Status 2026-06-18: ⏳ PLANNED (Sprint M).** Will reuse P2.7.2 patterns + @react-pdf/renderer for signed PDF.
 
+**Status 2026-06-19: ✅ SHIPPED (Sprint M).** `contracts` + `contract_templates` tables, list/detail pages, public `/contract/[token]` with canvas-based signature pad, audit trail (IP + UA + signed_at + signed_name/email), send/revoke/decline flows, template variable interpolation (`{{client.name}}`, `{{workspace.name}}`, `{{today}}`, `{{valid_until}}`). PDF generation deferred — signed contract data stored as base64 PNG signature + full audit trail; can be regenerated to PDF in a follow-up sprint.
+
 #### Combined acceptance criteria
 
 ```text
@@ -1225,6 +1233,46 @@ Client intake forms: build a form, send to a client, get back structured respons
 - Auto-link response to project on accept — responses are project-aware via project_id at send time
 
 **Score impact:** Production client-ready unchanged at ~93% (utility feature, not strategic differentiator).
+
+### Sprint M — P2.7.3 Contract + E-signature ✅ DONE (19 Jun 2026)
+
+Closes the last pre-deal phase: send a contract to a client, they sign in-browser, you get an audit trail.
+
+**What shipped:**
+- `contract_templates` table (workspace_id, name, body markdown, is_default)
+- `contracts` table (workspace_id, client_id, project_id?, template_id?, title, body + body_resolved, variables jsonb, valid_until, status, decline_reason, signed_name/email, signature_data_url, signed_at, signed_from_ip, signed_user_agent, token_hash, expires_at, revoked_at, sent_at, viewed_at, declined_at)
+- 6 statuses: draft → sent → viewed → signed | declined | expired | revoked
+- Variable interpolation at send time: `{{client.name}}`, `{{client.email}}`, `{{project.name}}`, `{{workspace.name}}`, `{{today}}`, `{{valid_until}}` — `body_resolved` stored immutable
+- Public route `/contract/[token]` — branded render, no auth required
+- Canvas-based signature pad (HTML5 pointer events, no extra deps) — supports mouse, trackpad, touch
+- Audit trail: signed_name + signed_email + signed_at + signed_from_ip + signed_user_agent captured server-side
+- Decline flow: optional reason
+- Revoke flow: marks token revoked, link stops working
+- Default contract template seeded: service agreement skeleton with `{{variable}}` placeholders
+- AI tools: `list_contracts` (status?, clientId?), `get_contract` (contractId | title)
+
+**Files (10 new + 2 modified):**
+- New: `drizzle/0006_contracts.sql`
+- New: `src/lib/actions/contracts.ts` (15 server actions: CRUD templates + contracts, send, sign, decline, revoke, getPublic)
+- New: `src/app/(app)/app/contracts/{page,[contractId]/page}.tsx`
+- New: `src/app/contract/[token]/page.tsx` (public, no auth)
+- New: `src/components/contracts/{create-contract-button,send-contract-button,revoke-contract-button,signature-pad}.tsx`
+- Modified: `src/db/schema.ts` (+2 tables, +2 relations), `src/components/app-sidebar.tsx` (nav), `src/lib/ai/tools.ts` (+2 tools, 26→28)
+
+**Verified live (19 Jun):**
+- /app/contracts 200
+- /contract/test-token-123 200, renders title + client name + signature pad + draw instruction
+- Visual: signature canvas dashed box, contract body readable, layout clean
+- AI: "What contracts do I have?" → list_contracts call → returns `[]` (correct, none signed yet)
+- Build clean (tsc 0, pnpm build OK, all routes registered)
+
+**Deferred:**
+- Signed PDF generation (data URL signature + audit trail stored; PDF can be regenerated in follow-up sprint)
+- `contract_templates` management page (templates created via API/direct DB; UI deferred — inline edit on contract is enough for MVP)
+- DocuSign/HelloSign embed (out of scope for Indonesian segment; our $0 native flow is the differentiator)
+- Email notification when contract sent (gated on P2.2 RESEND prod)
+
+**Score impact:** Production client-ready ~93% → ~94% (closes P2.7 phase 3, completes pre-deal feature parity with HoneyBook/Bonsai/17hats for Indonesian segment).
 
 ## 7. Security Hardening Plan
 
