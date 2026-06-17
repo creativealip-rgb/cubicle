@@ -207,7 +207,7 @@ export default function HomePage() {
         <div className="pointer-events-none absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
         <div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#A78BFA]/30 bg-[#6647F0]/20 px-3 py-1.5 backdrop-blur">
+            <div className="inline-flex items-center gap-2 rounded-full border !border-[#A78BFA]/30 bg-[#6647F0]/20 px-3 py-1.5 backdrop-blur">
               <span className="inline-flex h-1.5 w-1.5 rounded-full bg-[#A78BFA]" />
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white">Why Cubicle</p>
             </div>
@@ -228,7 +228,7 @@ export default function HomePage() {
               {['Portals', 'Deliverables', 'Time', 'Booking', 'Invoices'].map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[#A78BFA]/30 bg-[#6647F0]/15 px-3 py-1 text-xs font-medium text-white backdrop-blur"
+                  className="inline-flex items-center gap-1.5 rounded-full border !border-[#A78BFA]/30 bg-[#6647F0]/15 px-3 py-1 text-xs font-medium text-white backdrop-blur"
                 >
                   <span className="inline-flex h-1 w-1 rounded-full bg-[#A78BFA]" />
                   {tag}
