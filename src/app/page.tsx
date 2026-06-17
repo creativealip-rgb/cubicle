@@ -140,20 +140,20 @@ export default function HomePage() {
                 Live in beta · v0.1
               </Badge>
             </div>
-            <h1 className="max-w-4xl text-3xl font-semibold tracking-normal text-slate-950 sm:text-5xl sm:tracking-normal md:text-6xl lg:text-7xl">
+            <h1 className="max-w-4xl text-3xl font-semibold tracking-normal text-[#292D34] sm:text-5xl sm:tracking-normal md:text-6xl lg:text-7xl" style={{ fontWeight: 650 }}>
               Run client work from request to invoice.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600 sm:text-xl">
               One calm workspace for clients, projects, deliverables, time, invoices, booking, and portals.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="h-12 rounded-xl bg-slate-950 px-6 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12),0_4px_12px_rgba(15,23,42,0.15)] tracking-[-0.01em] hover:bg-slate-900">
+              <Button asChild size="lg" className="h-12 rounded-xl bg-[#6647F0] px-6 text-white shadow-[0_4px_4px_rgba(13,21,48,0.04)] hover:bg-[#5333DD] hover:shadow-[0_8px_8px_rgba(13,21,48,0.08)] tracking-[-0.01em] font-normal">
                 <Link href="/signup">
                   Start managing clients
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="h-12 rounded-xl border-0 bg-white/70 px-6 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.08)] tracking-[-0.01em] hover:bg-white">
+              <Button asChild size="lg" variant="outline" className="h-12 rounded-xl border border-[#D9D9D9] bg-white px-6 text-[#292D34] shadow-[0_4px_4px_rgba(13,21,48,0.04)] hover:border-[#C0C0C0] hover:bg-[#F8F9FA] tracking-[-0.01em] font-normal">
                 <Link href="/login">View demo workspace</Link>
               </Button>
             </div>
@@ -406,7 +406,7 @@ export default function HomePage() {
                   <th className="px-6 py-4 font-medium"></th>
                   <th className="px-6 py-4 font-medium">HoneyBook</th>
                   <th className="px-6 py-4 font-medium">Bonsai</th>
-                  <th className="px-6 py-4 font-medium text-blue-700">Cubicle</th>
+                  <th className="px-6 py-4 font-medium text-[#6647F0]">Cubicle</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -421,7 +421,7 @@ export default function HomePage() {
                     <td className="px-6 py-4 font-medium text-slate-700">{row.label}</td>
                     <td className="px-6 py-4 text-slate-500">{row.h}</td>
                     <td className="px-6 py-4 text-slate-500">{row.b}</td>
-                    <td className="px-6 py-4 font-semibold text-blue-700">{row.c}</td>
+                    <td className="px-6 py-4 font-semibold text-[#6647F0]">{row.c}</td>
                   </tr>
                 ))}
               </tbody>
@@ -505,7 +505,7 @@ export default function HomePage() {
                         <p className="mt-2 text-sm leading-6 text-slate-600">{plan.description}</p>
                       </div>
                       <div className="text-right">
-                        <div className={`text-2xl font-semibold tracking-[0.03em] ${plan.featured ? "text-blue-700" : "text-slate-950"}`}>{plan.price}</div>
+                        <div className={`text-2xl font-semibold tracking-[0.03em] ${plan.featured ? "text-[#6647F0]" : "text-[#292D34]"}`}>{plan.price}</div>
                         {plan.priceSub && <p className="text-xs text-slate-500 mt-0.5">{plan.priceSub}</p>}
                       </div>
                     </div>
@@ -521,8 +521,8 @@ export default function HomePage() {
                       asChild
                       className={
                         plan.featured
-                          ? "mt-7 w-full rounded-xl bg-slate-950 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)] tracking-[-0.01em] hover:bg-slate-900"
-                          : "mt-7 w-full rounded-xl border-0 bg-white text-slate-900 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.08)] tracking-[-0.01em] hover:bg-slate-50"
+                          ? "mt-7 w-full rounded-xl bg-[#6647F0] text-white shadow-[0_4px_4px_rgba(13,21,48,0.04)] hover:bg-[#5333DD] hover:shadow-[0_8px_8px_rgba(13,21,48,0.08)] tracking-[-0.01em] font-normal"
+                          : "mt-7 w-full rounded-xl border border-[#D9D9D9] bg-white text-[#292D34] shadow-[0_4px_4px_rgba(13,21,48,0.04)] hover:border-[#C0C0C0] hover:bg-[#F8F9FA] tracking-[-0.01em] font-normal"
                       }
                       variant={plan.featured ? "default" : "outline"}
                     >
@@ -559,13 +559,13 @@ export default function HomePage() {
             Replace scattered updates, forgotten billable hours, and manual handoffs with one client operations hub.
           </p>
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-            <Button asChild size="lg" className="h-12 rounded-xl bg-white px-6 text-slate-950 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)] tracking-[-0.01em] hover:bg-blue-50">
+            <Button asChild size="lg" className="h-12 rounded-xl bg-white px-6 text-[#292D34] shadow-[0_4px_4px_rgba(13,21,48,0.04)] tracking-[-0.01em] hover:bg-[#F8F9FA] font-normal">
               <Link href="/signup">
                 Create workspace
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="h-12 rounded-xl border-0 bg-white/10 px-6 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)] tracking-[-0.01em] hover:bg-white/15 hover:text-white">
+            <Button asChild size="lg" variant="outline" className="h-12 rounded-xl border border-white/30 bg-white/10 px-6 text-white shadow-[0_4px_4px_rgba(13,21,48,0.04)] tracking-[-0.01em] hover:bg-white/20 hover:text-white font-normal">
               <Link href="/login">Sign in</Link>
             </Button>
           </div>
