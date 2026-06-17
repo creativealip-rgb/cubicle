@@ -146,10 +146,15 @@ Production client-ready: ~93% (+1: AI Assistant raises polish, R2 gaps unchanged
 - Sellable source/MVP: **99%** (unchanged)
 - Production client-ready: **~94%** (+1 — closes last P2.7 pre-deal phase, full HoneyBook/Bonsai/17hats feature parity for Indonesian segment)
 
-| **Update 2026-06-19 (Sprint N — Signed Contract PDF + Questionnaire AI tools):**
+> **Update 2026-06-19 (Sprint N — Signed Contract PDF + Questionnaire AI tools):**
 - Demo MVP: **99%** (unchanged)
 - Sellable source/MVP: **99%** (unchanged)
 - Production client-ready: **~95%** (+1 — downloadable signed contract with embedded signature + audit trail is a legal-grade deliverable; AI coverage 28→31 tools)
+
+> **Update 2026-06-19 (Sprint N-ext — Contract Templates CRUD + Demo Seed):**
+- Demo MVP: **99%** (unchanged)
+- Sellable source/MVP: **99%** (unchanged)
+- Production client-ready: **~95%** (unchanged — templates CRUD is dev/owner-only, no new client-facing surface; demo seed makes the demo "click" without manual setup)
 >
 > **Resolved in this continuation session (16 Jun):**
 > - P0.1 rogue /tmp/postgresql regression — confirmed gone (no rebuild)
@@ -1307,6 +1312,45 @@ Closes the last two gaps from Sprint L+M: downloadable signed contract PDF + AI 
 **Score impact:** Production client-ready ~94% → ~95% (downloadable signed contract with embedded signature + audit trail is a legal-grade deliverable; AI coverage now 28→31 tools with questionnaire support).
 
 **Held items unchanged:** P1.6 real domain, P2.2 RESEND prod, P2.5 external monitoring, contract_templates UI page, signed PDF auto-store.
+
+### Sprint N-ext — Contract Templates CRUD + Demo Seed ✅ DONE (19 Jun 2026)
+
+Closes two follow-ons from Sprint M+N: dev/owner can now manage contract template library via UI (no DB SQL needed), and the demo workspace is pre-loaded with realistic data so the demo "clicks" without manual setup.
+
+**What shipped:**
+- **Contract Templates UI** (4 new pages + 1 client component):
+  - `/app/contract-templates` — list with default badge + usage count
+  - `/app/contract-templates/new` — builder with name + textarea + 9 variable chips
+  - `/app/contract-templates/[id]` — edit existing template (delete + save)
+  - `ContractTemplateBuilder` — name input, body textarea (mono font, char counter), 9 clickable variable chips (client.name/email/company, project.name, workspace.name, today, valid_until, value, scope), default toggle, 50000 char limit
+  - Sidebar "Templates" link (between Contracts and Calendar)
+- **Demo seed** (`scripts/seed-demo.sql`, idempotent):
+  - 1 default contract template (Standard Service Agreement, 5-section, with placeholders)
+  - 1 signed contract (Kopi Senja / Brand Refresh — Rp 18M, Rina Wijaya signed 8 days ago, IP+UA captured)
+  - 1 sent proposal (Klinik Harmoni / Website Redesign — Rp 35M, 4 line items, valid until 15 Jul 2026)
+  - 1 submitted questionnaire response (Budi Santoso / PT Awan Digital — Rp 45M budget, 1-2 weeks timeline)
+  - 3 invoices in mixed states (paid / sent / overdue) for dashboard color
+
+**Files (5 new + 1 modified):**
+- New: `src/app/(app)/app/contract-templates/page.tsx` (list)
+- New: `src/app/(app)/app/contract-templates/new/page.tsx`
+- New: `src/app/(app)/app/contract-templates/[templateId]/page.tsx`
+- New: `src/components/contracts/contract-template-builder.tsx` (320 lines, client component, useTransition + useRouter)
+- New: `scripts/seed-demo.sql` (idempotent, ~120 lines, PL/pgSQL block)
+- Modified: `src/components/app-sidebar.tsx` (+1 nav item)
+- Bug fix: `count()` destructuring in list page — was passing object to `Number()` causing `toLocaleString` crash; fixed to `Number(result[0]?.c ?? 0)`
+
+**Verified live (19 Jun):**
+- `/app/contract-templates` → 200, 2 templates render (Standard Service Agreement = default + 1 contract; NDA — Mutual = 0 contracts)
+- `/app/contract-templates/new` → 200, builder renders, sidebar Templates link visible, all 9 variable chips clickable
+- `/app/contract-templates/[id]` → 200, edit page renders with delete + save
+- `/app/contracts/[id]` for demo contract → 200, all resolved data renders (Brand Refresh, Kopi Senja, Rina Wijaya, Rp 18,000,000, June/August dates)
+- `/api/contracts/[id]/pdf` → 200, 20521 bytes, **2-page** valid PDF-1.3 (longer demo body)
+- Demo seed: 2 templates / 2 contracts / 2 proposals / 2 questionnaire responses / 6 invoices live
+
+**Score impact:** No change to top-line score (templates CRUD is owner-facing not client-facing; demo seed makes existing 99% demo actually feel populated).
+
+**Held items unchanged:** P1.6 real domain, P2.2 RESEND prod, P2.5 external monitoring, signed PDF auto-store.
 
 ## 7. Security Hardening Plan
 
