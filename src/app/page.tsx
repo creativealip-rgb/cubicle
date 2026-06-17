@@ -3,7 +3,6 @@ import Image from "next/image";
 import {
   ArrowRight,
   BriefcaseBusiness,
-  CalendarDays,
   CheckCircle2,
   Clock3,
   FileText,
@@ -57,15 +56,6 @@ const workflow = [
   "Add client, scope, and project",
   "Manage tasks, files, comments, and time",
   "Share portal, send invoice, get paid",
-];
-
-const audiences = [
-  "Freelancers",
-  "Creative agencies",
-  "Software studios",
-  "Marketing teams",
-  "Consultants",
-  "Client-service teams",
 ];
 
 const pricing = [
@@ -264,22 +254,24 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="workflow" className="bg-slate-50 px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
-          <div>
-            <Badge variant="outline" className="mb-4 bg-white">Workflow</Badge>
+      {/* How it works — 3 steps + 1 hero screenshot */}
+      <section id="workflow" className="px-4 py-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="mx-auto max-w-3xl text-center">
+            <Badge variant="outline" className="mb-4">How it works</Badge>
             <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
               From first request to final payment.
             </h2>
             <p className="mt-4 text-lg leading-8 text-slate-600">
-              Cubicle is not trying to be another giant task database. It is built around how service teams actually deliver work to clients.
+              One workspace, not six. Three steps.
             </p>
           </div>
-          <div className="grid gap-4">
-            {workflow.map((step, index) => (
-              <Card key={step} className="border-slate-200 bg-white">
-                <CardContent className="flex gap-5 p-6">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-lg font-semibold text-white">
+
+          <div className="mt-16 grid items-center gap-12 lg:grid-cols-[0.9fr_1.1fr]">
+            <ol className="space-y-8">
+              {workflow.map((step, index) => (
+                <li key={step} className="flex gap-5">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-lg font-semibold text-white shadow-md shadow-blue-200">
                     {index + 1}
                   </div>
                   <div>
@@ -290,62 +282,32 @@ export default function HomePage() {
                       {index === 2 && "Give clients a clean portal, share invoice links, and close the loop without rebuilding admin work."}
                     </p>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+                </li>
+              ))}
+            </ol>
 
-      <section className="px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="mx-auto max-w-3xl text-center">
-            <Badge variant="outline" className="mb-4">Product tour</Badge>
-            <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
-              One workspace for the whole client lifecycle.
-            </h2>
-            <p className="mt-4 text-lg leading-8 text-slate-600">
-              Cubicle keeps the delivery view, client context, billable work, and handoff flow close together so small teams can move faster without adding more tools.
-            </p>
-          </div>
-
-          <div className="mt-12 grid gap-6 lg:grid-cols-3">
-            {[
-              {
-                label: "Workspace overview",
-                title: "See client health at a glance",
-                src: "/screenshots/dashboard.png",
-                alt: "Dashboard with KPIs for active clients, projects, tasks, and unpaid invoices",
-              },
-              {
-                label: "Delivery board",
-                title: "Track work from brief to handoff",
-                src: "/screenshots/tasks.png",
-                alt: "Task list with priorities, assignees, and statuses",
-              },
-              {
-                label: "Billing flow",
-                title: "Connect time, invoice, and payment",
-                src: "/screenshots/invoices.png",
-                alt: "Invoices table with statuses and public payment links",
-              },
-            ].map((demo) => (
-              <Card key={demo.label} className="overflow-hidden border-slate-200 bg-white shadow-xl shadow-slate-200/50">
-                <CardContent className="p-0">
-                  <div className="border-b border-white/10 bg-[linear-gradient(135deg,#1d4ed8_0%,#2563eb_55%,#06b6d4_140%)] px-5 py-4 text-white">
-                    <p className="text-xs font-medium uppercase tracking-[0.2em] text-blue-200">{demo.label}</p>
-                    <h3 className="mt-2 tracking-[0.03em] text-lg font-semibold">{demo.title}</h3>
+            <div className="relative">
+              <div className="absolute -inset-6 rounded-[2rem] bg-gradient-to-br from-blue-500/15 via-cyan-400/8 to-indigo-500/15 blur-2xl" />
+              <div className="relative overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-xl shadow-slate-200/50">
+                <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2.5">
+                  <div className="flex gap-1.5">
+                    <div className="h-3 w-3 rounded-full bg-red-400" />
+                    <div className="h-3 w-3 rounded-full bg-amber-400" />
+                    <div className="h-3 w-3 rounded-full bg-emerald-400" />
                   </div>
-                  <Image
-                    src={demo.src}
-                    alt={demo.alt}
-                    width={1440}
-                    height={900}
-                    className="block w-full"
-                  />
-                </CardContent>
-              </Card>
-            ))}
+                  <div className="ml-2 flex-1 truncate rounded-md bg-white px-3 py-1 text-xs text-slate-500 ring-1 ring-slate-200">
+                    cubicle.app/app/dashboard
+                  </div>
+                </div>
+                <Image
+                  src="/screenshots/dashboard.png"
+                  alt="Cubicle dashboard with KPIs and active projects"
+                  width={1440}
+                  height={900}
+                  className="block w-full"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -405,52 +367,56 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-[radial-gradient(circle_at_80%_20%,rgba(125,211,252,0.32),transparent_26%),linear-gradient(135deg,#1e3a8a_0%,#2563eb_56%,#0ea5e9_120%)] px-4 py-24 text-white sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-2 lg:items-center">
-          <div>
-            <Badge className="mb-4 bg-white/10 text-blue-200 hover:bg-white/10">Time + invoices</Badge>
-            <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
-              Bill the work you already tracked.
-            </h2>
-            <p className="mt-5 text-lg leading-8 text-blue-100">
-              Track time where the work happens, mark entries as billable, summarize the work, then invoice with context still attached.
-            </p>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {[
-              [Clock3, "Start/stop timer"],
-              [CheckCircle2, "Manual entries"],
-              [FileText, "Invoice from time"],
-              [CalendarDays, "Booking pages"],
-            ].map(([Icon, label]) => {
-              const ItemIcon = Icon as typeof Clock3;
-              return (
-                <div key={label as string} className="rounded-3xl border border-white/25 bg-white/10 p-6 shadow-sm shadow-blue-950/10">
-                  <ItemIcon className="h-6 w-6 text-blue-300" />
-                  <p className="mt-4 text-lg font-semibold">{label as string}</p>
-                </div>
-              );
-            })}
-          </div>
+      <section id="built-for" className="border-y border-slate-950/5 bg-white px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-5 text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+            Built for
+          </p>
+          <p className="text-lg leading-8 text-slate-700 sm:text-xl">
+            Freelancers · Creative agencies · Software studios · Marketing teams · Consultants
+          </p>
         </div>
       </section>
 
-      <section className="px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
-            <div>
-              <Badge variant="outline" className="mb-4">Built for</Badge>
-              <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
-                Small teams that sell expertise, not seats.
-              </h2>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {audiences.map((audience) => (
-                <div key={audience} className="rounded-2xl border bg-white p-5 text-sm font-medium text-slate-700 shadow-sm">
-                  {audience}
-                </div>
-              ))}
-            </div>
+      {/* Comparison row — Cubicle vs category leaders */}
+      <section className="px-4 py-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <Badge variant="outline" className="mb-4">Why switch</Badge>
+            <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
+              Less tool sprawl. Less spend.
+            </h2>
+            <p className="mt-4 text-lg leading-8 text-slate-600">
+              Other client-ops tools charge $20–$52/month per seat and still miss the portal or booking. Cubicle keeps the full loop free for solo work.
+            </p>
+          </div>
+          <div className="mt-12 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/50">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-50 text-xs uppercase tracking-[0.12em] text-slate-500">
+                <tr>
+                  <th className="px-6 py-4 font-medium"></th>
+                  <th className="px-6 py-4 font-medium">HoneyBook</th>
+                  <th className="px-6 py-4 font-medium">Bonsai</th>
+                  <th className="px-6 py-4 font-medium text-blue-700">Cubicle</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {[
+                  { label: "Solo entry price", h: "$19/mo", b: "$17/mo", c: "Free" },
+                  { label: "Client portal included", h: "Yes", b: "Add-on", c: "Yes" },
+                  { label: "Booking pages", h: "Yes", b: "Add-on", c: "Yes" },
+                  { label: "Native IDR billing", h: "—", b: "—", c: "Yes" },
+                  { label: "Setup time", h: "1–2 hours", b: "1–2 hours", c: "5 minutes" },
+                ].map((row) => (
+                  <tr key={row.label}>
+                    <td className="px-6 py-4 font-medium text-slate-700">{row.label}</td>
+                    <td className="px-6 py-4 text-slate-500">{row.h}</td>
+                    <td className="px-6 py-4 text-slate-500">{row.b}</td>
+                    <td className="px-6 py-4 font-semibold text-blue-700">{row.c}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
