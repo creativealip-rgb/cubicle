@@ -1,7 +1,7 @@
 # Cubicle — Client Operations Hub
 
 > **Status:** MVP Live · **URL:** https://cubicle.168.144.37.19.sslip.io
-> **Stack:** Next.js 16 · React 19 · Drizzle ORM + PostgreSQL · Better Auth · Tailwind v4 · shadcn/ui · Dokploy + Docker · **AI Assistant v1.1 (9router + MiniMax-M3)**
+> **Stack:** Next.js 16 · React 19 · Drizzle ORM + PostgreSQL · Better Auth · Tailwind v4 · shadcn/ui · Dokploy + Docker · **AI Assistant v1.2 (9router + MiniMax-M3 + pg_trgm + Web Speech API)**
 
 ---
 
@@ -277,11 +277,13 @@ Portal token management:
 
 ---
 
-## 🤖 AI Assistant (new in v1.1)
+## 🤖 AI Assistant (v1.2 — Sprint F.3)
 
 > See `docs/ai-assistant.md` for full reference. Quick summary below.
 
 Floating sparkle button (bottom-right of every `/app/*` page) → chat panel.
+
+**v1.2 adds**: workspace fuzzy search (pg_trgm), prompt library tools, voice input (Web Speech API), stop streaming, token display, export conversation to `.md`. Total **15 tools** (10 entity, 2 action, 3 utility).
 
 **Capabilities:**
 - Read tools (10): list clients/projects/tasks/invoices + entity drill-down + team lookup
@@ -431,7 +433,7 @@ deploy:  PASS
 | Booking submit + success redirect   | ✅      |
 | Prompt generator 9Router connection | ✅ 200  |
 | SSE response parsing                | ✅      |
-| AI Assistant: 12 tools wired        | ✅      |
+| AI Assistant: 15 tools wired        | ✅      |
 | AI Assistant: persistence + history | ✅      |
 | AI Assistant: action confirm flow   | ✅      |
 | Reasoning leak strip                | ✅      |
@@ -488,6 +490,7 @@ API:
   GET  /api/ai/chat                     — AI Assistant status
   GET/POST/DELETE /api/ai/conversations — Conversation list/load/delete/create
   POST /api/ai/action                   — Execute confirmed action
+  GET  /api/ai/conversations/export?conv=ID — Export conversation as .md (F.3)
 ```
 
 ---

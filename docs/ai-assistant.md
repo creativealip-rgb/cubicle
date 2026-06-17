@@ -34,9 +34,9 @@ UI renders assistant bubble (no leaked reasoning tags)
 
 **No embeddings.** 9router's `/v1/embeddings` endpoint is unavailable on the current key. Phase 2 (deferred) will add pgvector + sync-on-write for semantic search.
 
-## Tools (12)
+## Tools (15)
 
-### Read (always safe, 10)
+### Read (always safe, 13)
 
 | Tool | Purpose | Key args |
 |---|---|---|
@@ -50,6 +50,9 @@ UI renders assistant bubble (no leaked reasoning tags)
 | `get_project` | Single project + client + tasks | `id` OR `name` |
 | `get_task` | Single task + project + assignee | `id` OR `title` |
 | `get_invoice` | Single invoice + client + items + payments | `id` OR `number` |
+| `search_workspace` *(F.3)* | Typo-tolerant fuzzy search via `pg_trgm` GIN indexes | `query`, `entityTypes`, `limit` |
+| `list_prompts` *(F.3)* | Enumerate system prompt templates | `category` |
+| `get_prompt` *(F.3)* | Pull a prompt's full body | `name` OR `id` |
 
 ### Action (user must confirm, 2)
 
@@ -86,13 +89,14 @@ Resolution order: `/run/secrets/9router_api_key` → `AI_API_KEY` env.
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
-| `POST` | `/api/ai/chat` | required | Send a user message, get assistant reply. Body: `{ messages, conversationId? }`. Persists to DB. Returns `{ message, usage, toolCalls, conversationId }` |
+| `POST` | `/api/ai/chat` | required | Send a user message, get assistant reply (SSE stream). Body: `{ messages, conversationId? }`. Persists to DB. Returns `text/event-stream` chunks ending in `[DONE]`. |
 | `GET` | `/api/ai/chat` | — | Status: `{ enabled, model }` |
 | `GET` | `/api/ai/conversations` | required | List user's conversations |
 | `GET` | `/api/ai/conversations?id=...` | required | Load one conversation's messages |
 | `POST` | `/api/ai/conversations` | required | Create empty (or get-or-create if `id` passed) |
 | `DELETE` | `/api/ai/conversations?id=...` | required | Delete conversation |
 | `POST` | `/api/ai/action` | required | Execute confirmed action. Body: `{ kind: "update_task_status" \| "draft_invoice_reminder", payload }` |
+| `GET` | `/api/ai/conversations/export?conv=ID` *(F.3)* | required | Returns `.md` file with all messages + tool call details. Used by "Export" button in panel header. |
 
 ## Security & limits
 
@@ -121,18 +125,24 @@ Resolution order: `/run/secrets/9router_api_key` → `AI_API_KEY` env.
 |---|---|
 | `src/lib/ai/client.ts` | 9router client (server-only, `fs` import) |
 | `src/lib/ai/strip.ts` | Pure `stripThinking()` — Client-safe |
-| `src/lib/ai/tools.ts` | 12 tool defs + DB executors |
+| `src/lib/ai/tools.ts` | 15 tool defs + DB executors |
 | `src/lib/ai/system-prompt.ts` | Terse-caveman system prompt with tool rules |
 | `src/lib/ai/conv-store.ts` | Persistence helpers (get/create/list/append/autoTitle) |
 | `src/app/api/ai/chat/route.ts` | Chat endpoint with tool loop + action-confirm |
 | `src/app/api/ai/action/route.ts` | Execute confirmed action |
 | `src/app/api/ai/conversations/route.ts` | List/load/delete/create |
-| `src/components/ai/chat-panel.tsx` | Floating button + panel + history sidebar + confirm cards |
+| `src/components/ai/chat-panel.tsx` | Floating button + panel + history sidebar + confirm cards + Mic/Stop/Token/Export UI |
 | `scripts/migrate-ai-tables.sql` | Schema for `ai_conversations` + `ai_messages` |
+| `drizzle/0002_ai_search_indexes.sql` *(F.3)* | `pg_trgm` extension + 4 GIN indexes for fuzzy search |
+| `src/app/api/ai/conversations/export/route.ts` *(F.3)* | Export conversation as `.md` |
 
 ## Known gaps
 
-- **No streaming yet** (Sprint F.2). First-token latency 1-3s, response appears all at once.
+- **Streaming** (Sprint F.2) — SSE, Stop button cancels mid-stream, "X,XXX tokens" shown after each response.
+- **Voice input** (Sprint F.3) — Web Speech API mic button, live transcript.
+- **Workspace search** (Sprint F.3) — `search_workspace` tool, pg_trgm fuzzy match, typo-tolerant.
+- **Prompt library** (Sprint F.3) — `list_prompts` + `get_prompt` tools to propose reusable templates.
+- **Export** (Sprint F.3) — download any conversation as `.md` via `GET /api/ai/conversations/export?conv=ID`.
 - **Action endpoint depends on real Resend key** for actual email delivery. Dev mode logs to console.
 - **Streaming**, **embeddings** (semantic search), **smart nudges** (proactive dashboard banner) all deferred to Phase 2/3.
 - **Workspace is hardcoded to `acme-creative`** in `tools.ts` and `chat/route.ts` (matches demo data). Production would resolve from session.

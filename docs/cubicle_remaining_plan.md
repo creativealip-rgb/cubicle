@@ -126,6 +126,11 @@ Production client-ready: ~92% (+1: AI Assistant raises polish, R2 gaps unchanged
 > - Sellable source/MVP: **98%** (+1 — AI Assistant is a strong demo differentiator)
 > - Production client-ready: **~92%** (+1 — but R2 still placeholders, Resend still invalid)
 >
+> **Update 2026-06-17 (Sprint F.3 AI Assistant v1.2):**
+> - Demo MVP: **99%** (unchanged)
+> - Sellable source/MVP: **99%** (+1 — typo-tolerant search + prompt library + voice + export make the AI Assistant demo-ready for real use)
+> - Production client-ready: **~92%** (unchanged — no infra work in F.3)
+>
 > **Resolved in this continuation session (16 Jun):**
 > - P0.1 rogue /tmp/postgresql regression — confirmed gone (no rebuild)
 > - P0.7 npm audit — 5 of 6 fixed via `overrides: esbuild ^0.28.1`,
@@ -186,6 +191,8 @@ Production client-ready: ~92% (+1: AI Assistant raises polish, R2 gaps unchanged
 > P2.2 Email flows ⚠️ PARTIAL (prior session)
 > P2.3 Invoice PDF polish ✅ CLOSED (Sprint G 16 Jun — multi-page verified)
 > Sprint F AI Assistant v1.1 ✅ (16 Jun — 12 tools, persistence, action confirm)
+> Sprint F.2 AI streaming ✅ (16 Jun — SSE, Stop, 9router fix)
+> Sprint F.3 AI v1.2 ✅ (17 Jun — search, prompt library, voice, export, 15 tools)
 
 ## 4. P0 — Mandatory Before Production
 
@@ -1071,10 +1078,45 @@ Floating chat panel on every `/app/*` page. Answers questions about workspace da
 - Doc: `docs/ai-assistant.md` (full reference)
 
 **Known gaps (not blockers):**
-- No streaming yet (Sprint F.2) — non-streaming, 1-3s first token
+- ~~No streaming yet~~ ✅ Sprint F.2 — SSE streaming live, Stop button in UI
 - Resend API key invalid in build → action endpoint gracefully fails
 - R2 storage still placeholders (logo used public screenshot fallback)
 - Hardcoded to `acme-creative` workspace (matches demo data)
+
+### Sprint F.3 — AI Assistant v1.2 ✅ DONE (17 Jun 2026)
+
+Daily-driver usability pass on the AI panel: workspace search, prompt library, voice input, export.
+
+**What shipped:**
+- **Workspace search** (`search_workspace` tool): typo-tolerant fuzzy match across clients, projects, tasks, invoices via `pg_trgm` GIN indexes. Test: user typed "Kopp Sennja" → model self-corrected to "Kopi Senja" → sim=1.0 match.
+- **Prompt library tools** (`list_prompts`, `get_prompt`): enumerate system prompts + drill into a specific template body. Lets the AI propose using "Social Caption" or "Client Update" template.
+- **Voice input**: Web Speech API integration. Mic button in chat input, feature-detected (hidden on unsupported browsers like Firefox), live transcript fills the input, click again to stop.
+- **Stop streaming**: red X button in panel header during generation, calls `controller.abort()` to cancel the SSE stream.
+- **Token display**: "7,090 tokens" shown after each AI response (sum of prompt + completion).
+- **Export to markdown**: `GET /api/ai/conversations/export?conv=ID` returns `.md` with all messages and tool call details. Download button in panel header.
+
+**Stack add:**
+- `pg_trgm` extension on PG (idempotent migration `0002_ai_search_indexes.sql`)
+- 4 GIN indexes: `clients.name`, `projects.name`, `tasks.title`, `invoices.invoiceNumber`
+- Web Speech API (browser-native, no backend change)
+
+**Files (4):**
+- New: `drizzle/0002_ai_search_indexes.sql`
+- New: `src/app/api/ai/conversations/export/route.ts`
+- Modified: `src/lib/ai/tools.ts` (+3 tools, 15 total)
+- Modified: `src/components/ai/chat-panel.tsx` (Mic, Stop, token display, export button, AI_DEBUG=1)
+
+**Verified live (17 Jun):**
+- "Kopp Sennja" → fuzzy match → drill with `get_client` ✅
+- `list_prompts` returns 3 templates, `get_prompt` "Social Caption" pulls full body ✅
+- Multi-step planning: `get_prompt` → `get_client` → 3-post plan in single turn ✅
+- Mic button visible, Web Speech API detected, hooks wired ✅
+- Export endpoint returns proper markdown with tool details ✅
+- 9router SSE regression fix: `await res.json()` switched to stream-first parsing for both `chat()` and `streamChat()` ✅
+
+**Known gaps:**
+- Voice input: English-only, no live interim punctuation
+- Stop button: too fast on small queries to screenshot (working but instant)
 
 **Strategic value:**
 - Standout differentiator vs ClickUp/Asana/Notion (none of them have RAG-over-data chat)
@@ -1380,6 +1422,8 @@ Resolved (closed this session):
   ✅ P0.8 Lint cleanup — 0 warnings, 0 errors, tsc clean (re-verified)
   ✅ Backup + monitoring setup — daily pg_dump + restore-test + cron
   ✅ Sprint F AI Assistant v1.1 — 12 tools, persistence, action confirm flow
+  ✅ Sprint F.2 AI streaming — SSE, Stop, 9router stream-first fix
+  ✅ Sprint F.3 AI v1.2 — pg_trgm search, prompt library, voice input, export MD (15 tools)
   ✅ Sprint G P2.3 PDF polish closed — 3 invoices regen, multi-page "Page X of Y"
 
 Still open:
