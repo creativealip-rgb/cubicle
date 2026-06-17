@@ -145,6 +145,11 @@ Production client-ready: ~93% (+1: AI Assistant raises polish, R2 gaps unchanged
 - Demo MVP: **99%** (unchanged — in app shell)
 - Sellable source/MVP: **99%** (unchanged)
 - Production client-ready: **~94%** (+1 — closes last P2.7 pre-deal phase, full HoneyBook/Bonsai/17hats feature parity for Indonesian segment)
+
+| **Update 2026-06-19 (Sprint N — Signed Contract PDF + Questionnaire AI tools):**
+- Demo MVP: **99%** (unchanged)
+- Sellable source/MVP: **99%** (unchanged)
+- Production client-ready: **~95%** (+1 — downloadable signed contract with embedded signature + audit trail is a legal-grade deliverable; AI coverage 28→31 tools)
 >
 > **Resolved in this continuation session (16 Jun):**
 > - P0.1 rogue /tmp/postgresql regression — confirmed gone (no rebuild)
@@ -214,6 +219,7 @@ Sprint J P2.7.1 Proposal ✅ (18 Jun — accept flow, auto-create project+invoic
 Sprint K P2.8 Recurring + Cash flow ✅ (18 Jun — 2 new AI tools, forecast card)
 Sprint L P2.7.2 Questionnaire ✅ (19 Jun — form builder, public /intake, 8 field types)
 Sprint M P2.7.3 Contract + E-sig ✅ (19 Jun — signature pad, audit trail, AI tools)
+Sprint N Contract PDF + Q AI ✅ (19 Jun — downloadable signed PDF, 3 new AI tools)
 
 ## 4. P0 — Mandatory Before Production
 
@@ -1273,6 +1279,34 @@ Closes the last pre-deal phase: send a contract to a client, they sign in-browse
 - Email notification when contract sent (gated on P2.2 RESEND prod)
 
 **Score impact:** Production client-ready ~93% → ~94% (closes P2.7 phase 3, completes pre-deal feature parity with HoneyBook/Bonsai/17hats for Indonesian segment).
+
+### Sprint N — Contract PDF + Questionnaire AI tools ✅ DONE (19 Jun 2026)
+
+Closes the last two gaps from Sprint L+M: downloadable signed contract PDF + AI coverage for questionnaires.
+
+**What shipped:**
+- `ContractPDF` React-PDF document: branded header (Provider / To), 2-column parties block, resolved body (markdown headings + paragraphs), signature block with embedded signature image + audit trail (name, email, IP, signed_at), purple accent stripe, page footer with "Page X of Y" + workspace name
+- `GET /api/contracts/[contractId]/pdf` — server-side render, auth + workspace membership check, returns application/pdf inline (browser preview or download)
+- "Download PDF" button on /app/contracts/[id] detail page (owner + member can download; viewer can also since it's a view op)
+- Decision: **on-demand generation** (not auto-stored on sign) — saves DB space, signature data already in DB for audit trail, re-renderable any time
+- AI tools: `list_questionnaires`, `list_questionnaire_responses` (questionnaireId required, status? pending/submitted), `get_questionnaire_response` (responseId required) — 28→31 total
+
+**Files (3 new + 2 modified):**
+- New: `src/components/contracts/contract-pdf.tsx` (React-PDF Document, 350+ lines, 6 status badge styles, light markdown parser for h1/h2/p)
+- New: `src/lib/pdf/contract-pdf.ts` (renderContractPdf helper)
+- New: `src/app/api/contracts/[contractId]/pdf/route.ts` (auth + membership + render)
+- Modified: `src/app/(app)/app/contracts/[contractId]/page.tsx` (+ Download PDF button)
+- Modified: `src/lib/ai/tools.ts` (+3 tool defs, +3 functions, +3 dispatch cases, +2 schema imports)
+
+**Verified live (19 Jun):**
+- `GET /api/contracts/a9f48554-.../pdf` → 200, application/pdf, 13292 bytes, valid PDF-1.3, 1 page
+- AI "What intake questionnaires do I have?" → list_questionnaires → `[]` → suggests "Want me to help draft one?"
+- AI "Show me the latest intake response" → multi-step: list_questionnaires → list_questionnaire_responses → formatted output with budget, timeline, project goals
+- AI self-corrects from invalid UUID (test-q) → search_workspace → list_questionnaires → correct response
+
+**Score impact:** Production client-ready ~94% → ~95% (downloadable signed contract with embedded signature + audit trail is a legal-grade deliverable; AI coverage now 28→31 tools with questionnaire support).
+
+**Held items unchanged:** P1.6 real domain, P2.2 RESEND prod, P2.5 external monitoring, contract_templates UI page, signed PDF auto-store.
 
 ## 7. Security Hardening Plan
 
