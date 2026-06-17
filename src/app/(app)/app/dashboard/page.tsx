@@ -23,6 +23,10 @@ import {
   Calendar,
   AlertCircle,
   ListChecks,
+  Plus,
+  Timer,
+  FileText,
+  TrendingUp,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -68,6 +72,23 @@ export default async function DashboardPage() {
   } catch {
     // ignore
   }
+
+  // Revenue sparkline — last 14 days, paid invoices per day (payments.paid_at)
+  const sparklineResult = await db.execute(
+    sql`WITH days AS (
+      SELECT generate_series(current_date - interval '13 days', current_date, interval '1 day')::date AS day
+    )
+    SELECT d.day, coalesce(sum(p.amount), 0)::decimal AS amt
+    FROM days d
+    LEFT JOIN payments p ON p.paid_at = d.day
+      AND p.invoice_id IN (SELECT id FROM invoices WHERE workspace_id = ${workspaceId})
+    GROUP BY d.day
+    ORDER BY d.day ASC`,
+  );
+  const sparkline: { day: string; amt: number }[] = sparklineResult.rows.map((r) => ({
+    day: String((r as { day: string | Date }).day),
+    amt: Number((r as { amt: string | number }).amt) || 0,
+  }));
 
   // Active timer
   const [activeTimer] = await db
@@ -223,21 +244,80 @@ export default async function DashboardPage() {
     },
   ];
 
+  // Greeting + quick action chips
+  const hour = new Date().getHours();
+  const greeting = hour < 11 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const todayLong = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+  const firstName = (session?.user?.name || "there").split(" ")[0];
+
+  // Sparkline geometry
+  const sparkW = 240;
+  const sparkH = 56;
+  const maxAmt = Math.max(...sparkline.map((d) => d.amt), 1);
+  const sparkPoints = sparkline.map((d, i) => {
+    const x = (i / Math.max(sparkline.length - 1, 1)) * sparkW;
+    const y = sparkH - (d.amt / maxAmt) * (sparkH - 6) - 3;
+    return `${x},${y}`;
+  });
+  const sparkPath = sparkPoints.length > 0 ? `M ${sparkPoints.join(" L ")}` : "";
+  const sparkArea =
+    sparkPoints.length > 0
+      ? `M 0,${sparkH} L ${sparkPoints.join(" L ")} L ${sparkW},${sparkH} Z`
+      : "";
+  const sparkTotal = sparkline.reduce((s, d) => s + d.amt, 0);
+  const sparkPrevTotal = sparkline.slice(0, 7).reduce((s, d) => s + d.amt, 0);
+  const sparkTrend = sparkPrevTotal > 0 ? ((sparkTotal - sparkPrevTotal) / sparkPrevTotal) * 100 : 0;
+
+  const quickActions = [
+    { label: "New task", icon: CheckSquare, href: "/app/tasks" },
+    { label: "New invoice", icon: FileText, href: "/app/invoices" },
+    { label: "Start timer", icon: Timer, href: "/app/time" },
+    { label: "Add client", icon: Plus, href: "/app/clients" },
+  ];
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          Welcome back! Here&apos;s what&apos;s happening today.
-        </p>
+      {/* Greeting + quick actions */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {greeting}, {firstName}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {todayLong} · {activeProjects} active projects · {dueTasks} tasks due
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {quickActions.map((qa) => {
+            const Icon = qa.icon;
+            return (
+              <Button
+                key={qa.label}
+                asChild
+                variant="outline"
+                size="sm"
+                className="gap-1.5 bg-white"
+              >
+                <Link href={qa.href}>
+                  <Icon className="h-3.5 w-3.5" />
+                  {qa.label}
+                </Link>
+              </Button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* KPI Cards + Revenue trend (sparkline card) */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {kpiCards.map((kpi) => {
           const Icon = kpi.icon;
           return (
-            <Link key={kpi.label} href={kpi.href}>
+            <Link key={kpi.label} href={kpi.href} className="lg:col-span-1">
               <Card className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
@@ -257,6 +337,55 @@ export default async function DashboardPage() {
             </Link>
           );
         })}
+
+        {/* Revenue sparkline — 14d */}
+        <Card className="lg:col-span-1">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Revenue (14d)</p>
+                <p className="text-2xl font-bold tracking-tight">
+                  Rp {Math.round(sparkTotal).toLocaleString("id-ID")}
+                </p>
+                <p
+                  className={`text-xs font-medium ${
+                    sparkTrend >= 0 ? "text-emerald-600" : "text-red-600"
+                  }`}
+                >
+                  <TrendingUp
+                    className={`mr-1 inline h-3 w-3 ${
+                      sparkTrend < 0 ? "rotate-180" : ""
+                    }`}
+                  />
+                  {sparkTrend >= 0 ? "+" : ""}
+                  {sparkTrend.toFixed(0)}% vs prior 7d
+                </p>
+              </div>
+            </div>
+            <svg
+              viewBox={`0 0 ${sparkW} ${sparkH}`}
+              className="mt-4 h-14 w-full"
+              preserveAspectRatio="none"
+              aria-label="Revenue trend last 14 days"
+            >
+              <defs>
+                <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#2563eb" stopOpacity="0.25" />
+                  <stop offset="100%" stopColor="#2563eb" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <path d={sparkArea} fill="url(#sparkFill)" />
+              <path
+                d={sparkPath}
+                fill="none"
+                stroke="#2563eb"
+                strokeWidth="2"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
+            </svg>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
