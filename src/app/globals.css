@@ -35,8 +35,9 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-jakarta), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
 }
 
 :root {
@@ -129,6 +130,13 @@
 
 * {
   border-color: var(--border);
+}
+
+/* ClickUp spec: Plus Jakarta Sans for all headings (display), Inter for body */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+  color: var(--foreground);
 }
 
 body {
