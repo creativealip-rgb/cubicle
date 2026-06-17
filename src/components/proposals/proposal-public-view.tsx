@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import {
   Table,
   TableBody,
@@ -12,8 +13,10 @@ import {
 
 interface LineItem {
   description: string;
-  quantity: number;
-  unitPrice: number;
+  quantity?: number;
+  qty?: number;
+  unitPrice?: number;
+  unit_price?: number;
   amount: number;
 }
 
@@ -35,6 +38,9 @@ interface ProposalPublicViewProps {
 
 export function ProposalPublicView({ proposal, formatMoney }: ProposalPublicViewProps) {
   const items = (proposal.lineItems as LineItem[]) ?? [];
+  const subtotal = proposal.subtotal ?? items.reduce((s, li) => s + Number(li.amount ?? 0), 0);
+  const tax = proposal.tax ?? 0;
+  const total = proposal.total ?? (subtotal + Number(tax));
   return (
     <div className="bg-white rounded-2xl shadow-sm border p-8 space-y-6">
       <div className="border-b pb-4">
@@ -45,8 +51,8 @@ export function ProposalPublicView({ proposal, formatMoney }: ProposalPublicView
       </div>
 
       {proposal.body && (
-        <div className="prose prose-sm max-w-none text-slate-700 whitespace-pre-wrap">
-          {proposal.body}
+        <div className="prose prose-sm max-w-none text-slate-700">
+          <ReactMarkdown>{proposal.body}</ReactMarkdown>
         </div>
       )}
 
@@ -63,12 +69,12 @@ export function ProposalPublicView({ proposal, formatMoney }: ProposalPublicView
           {items.map((li, i) => (
             <TableRow key={i}>
               <TableCell className="text-sm">{li.description}</TableCell>
-              <TableCell className="text-right tabular-nums text-sm">{li.quantity}</TableCell>
+              <TableCell className="text-right tabular-nums text-sm">{li.quantity ?? li.qty ?? 1}</TableCell>
               <TableCell className="text-right tabular-nums text-sm">
-                {formatMoney(li.unitPrice, proposal.currency)}
+                {formatMoney(li.unitPrice ?? li.unit_price ?? 0, proposal.currency)}
               </TableCell>
               <TableCell className="text-right tabular-nums text-sm font-medium">
-                {formatMoney(li.amount, proposal.currency)}
+                {formatMoney(li.amount ?? 0, proposal.currency)}
               </TableCell>
             </TableRow>
           ))}
@@ -78,18 +84,18 @@ export function ProposalPublicView({ proposal, formatMoney }: ProposalPublicView
       <div className="border-t pt-4 space-y-1 text-sm">
         <div className="flex justify-end gap-8">
           <span className="text-slate-500">Subtotal</span>
-          <span className="tabular-nums w-32 text-right">{formatMoney(proposal.subtotal, proposal.currency)}</span>
+          <span className="tabular-nums w-32 text-right">{formatMoney(subtotal, proposal.currency)}</span>
         </div>
-        {parseFloat(proposal.tax) > 0 && (
+        {Number(tax) > 0 && (
           <div className="flex justify-end gap-8">
             <span className="text-slate-500">Tax</span>
-            <span className="tabular-nums w-32 text-right">{formatMoney(proposal.tax, proposal.currency)}</span>
+            <span className="tabular-nums w-32 text-right">{formatMoney(tax, proposal.currency)}</span>
           </div>
         )}
         <div className="flex justify-end gap-8 pt-2 border-t">
           <span className="font-semibold">Total</span>
           <span className="tabular-nums w-32 text-right font-semibold">
-            {formatMoney(proposal.total, proposal.currency)}
+            {formatMoney(total, proposal.currency)}
           </span>
         </div>
       </div>

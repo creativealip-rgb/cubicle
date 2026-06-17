@@ -29,14 +29,14 @@ async function getWorkspaceId(): Promise<string> {
 
 function statusVariant(
   status: string,
-): "default" | "secondary" | "destructive" | "outline" {
+): "default" | "secondary" | "destructive" | "success" | "warning" | "info" | "outline" {
   switch (status) {
     case "paid":
-      return "default";
+      return "success";
     case "sent":
-      return "secondary";
+      return "info";
     case "viewed":
-      return "secondary";
+      return "info";
     case "overdue":
       return "destructive";
     case "cancelled":

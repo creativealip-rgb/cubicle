@@ -67,6 +67,7 @@ export default async function ReportsPage() {
     .select({
       clientId: clients.id,
       clientName: clients.name,
+      currency: invoices.currency,
       totalInvoiced: sql<string>`coalesce(sum(${invoices.total}), 0)::text`,
       totalPaid: sql<string>`coalesce(sum(case when ${invoices.status} = 'paid' then ${invoices.total} else 0 end), 0)::text`,
       invoiceCount: sql<number>`count(*)::int`,
@@ -74,7 +75,7 @@ export default async function ReportsPage() {
     .from(invoices)
     .innerJoin(clients, eq(clients.id, invoices.clientId))
     .where(and(eq(invoices.workspaceId, ws.id), gte(invoices.issueDate, yearStart)))
-    .groupBy(clients.id, clients.name)
+    .groupBy(clients.id, clients.name, invoices.currency)
     .orderBy(desc(sql`sum(${invoices.total})`))
     .limit(10);
 
@@ -309,8 +310,9 @@ export default async function ReportsPage() {
           <CardContent>
             <div className="text-2xl font-semibold">{formatMoney(ytdExpenseIDR, "IDR")}</div>
             {ytdExpenseUSD > 0 && (
-              <p className="text-xs text-slate-500 mt-1">+ {formatMoney(ytdExpenseUSD, "USD")}</p>
+              <div className="text-sm text-slate-600 mt-1">+ {formatMoney(ytdExpenseUSD, "USD")}</div>
             )}
+            <p className="text-xs text-slate-500 mt-1">All currencies shown separately</p>
           </CardContent>
         </Card>
         <Card>
@@ -322,7 +324,9 @@ export default async function ReportsPage() {
             <div className={`text-2xl font-semibold ${ytdIncome - ytdExpenseIDR >= 0 ? "text-emerald-600" : "text-red-600"}`}>
               {formatMoney(ytdIncome - ytdExpenseIDR, "IDR")}
             </div>
-            <p className="text-xs text-slate-500 mt-1">IDR only</p>
+            {ytdExpenseUSD > 0 && (
+              <div className="text-xs text-slate-500 mt-1">USD net not shown (paid invoices are IDR only)</div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -390,17 +394,17 @@ export default async function ReportsPage() {
                     const paid = parseFloat(c.totalPaid);
                     const unpaid = inv - paid;
                     return (
-                      <TableRow key={c.clientId}>
+                      <TableRow key={`${c.clientId}-${c.currency}`}>
                         <TableCell>
                           <Link href={`/app/clients/${c.clientId}`} className="text-sm font-medium hover:underline">
                             {c.clientName}
                           </Link>
                           <div className="text-xs text-slate-500">{c.invoiceCount} invoice{c.invoiceCount === 1 ? "" : "s"}</div>
                         </TableCell>
-                        <TableCell className="text-right tabular-nums text-sm">{formatMoney(inv, "IDR")}</TableCell>
+                        <TableCell className="text-right tabular-nums text-sm">{formatMoney(inv, c.currency)}</TableCell>
                         <TableCell className="text-right tabular-nums text-sm">
                           {unpaid > 0 ? (
-                            <span className="text-red-600">{formatMoney(unpaid, "IDR")}</span>
+                            <span className="text-red-600">{formatMoney(unpaid, c.currency)}</span>
                           ) : (
                             <span className="text-slate-400">—</span>
                           )}

@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 import { CheckCircle2, AlertCircle, FileText, X } from "lucide-react";
 
 export default async function ContractPage({ params }: { params: Promise<{ token: string }> }) {
@@ -72,8 +73,8 @@ export default async function ContractPage({ params }: { params: Promise<{ token
           </div>
 
           <div className="px-6 py-6 max-h-[60vh] overflow-y-auto">
-            <div className="prose prose-sm prose-slate max-w-none whitespace-pre-wrap text-sm leading-relaxed">
-              {contract.bodyResolved || contract.body}
+            <div className="prose prose-sm prose-slate max-w-none text-sm leading-relaxed">
+              <ReactMarkdown>{contract.bodyResolved || contract.body}</ReactMarkdown>
             </div>
           </div>
 

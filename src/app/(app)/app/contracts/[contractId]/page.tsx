@@ -13,6 +13,7 @@ import Link from "next/link";
 import { ArrowLeft, FileSignature, Send, CheckCircle2, X, FileText } from "lucide-react";
 import { notFound } from "next/navigation";
 import Image from "next/image";
+import ReactMarkdown from "react-markdown";
 
 async function getWorkspaceId(): Promise<string> {
   const [ws] = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.slug, "acme-creative")).limit(1);
@@ -162,8 +163,8 @@ export default async function ContractDetailPage({ params }: { params: Promise<{
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="prose prose-sm prose-slate max-w-none whitespace-pre-wrap text-sm leading-relaxed">
-            {c.bodyResolved || c.body}
+          <div className="prose prose-sm prose-slate max-w-none text-sm leading-relaxed">
+            <ReactMarkdown>{c.bodyResolved || c.body}</ReactMarkdown>
           </div>
         </CardContent>
       </Card>

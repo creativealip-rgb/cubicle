@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { proposals, clients, workspaces, invoices, projects } from "@/db/schema";
@@ -63,7 +64,15 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
     .limit(1);
   if (!p) notFound();
 
-  const items = (p.lineItems as Array<{ description: string; quantity: number; unitPrice: number; amount: number }>) ?? [];
+  const items = (p.lineItems as Array<{ description: string; quantity?: number; qty?: number; unitPrice?: number; unit_price?: number; amount: number }> | null ?? []).map((li) => ({
+    description: li.description,
+    quantity: li.quantity ?? li.qty ?? 1,
+    unitPrice: li.unitPrice ?? li.unit_price ?? 0,
+    amount: li.amount ?? ((li.quantity ?? li.qty ?? 1) * (li.unitPrice ?? li.unit_price ?? 0)),
+  }));
+  const subtotal = p.subtotal ?? items.reduce((s, li) => s + Number(li.amount), 0);
+  const tax = p.tax ?? 0;
+  const total = p.total ?? (subtotal + Number(tax));
 
   // Get created project if accepted
   let projectName: string | null = null;
@@ -122,9 +131,9 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
             </TableBody>
           </Table>
           <div className="border-t pt-3 mt-3 text-sm space-y-1">
-            <div className="flex justify-end gap-8"><span className="text-slate-500">Subtotal</span><span className="tabular-nums w-32 text-right">{formatMoney(p.subtotal, p.currency)}</span></div>
-            {parseFloat(p.tax) > 0 && <div className="flex justify-end gap-8"><span className="text-slate-500">Tax</span><span className="tabular-nums w-32 text-right">{formatMoney(p.tax, p.currency)}</span></div>}
-            <div className="flex justify-end gap-8 pt-2 border-t font-semibold"><span>Total</span><span className="tabular-nums w-32 text-right">{formatMoney(p.total, p.currency)}</span></div>
+            <div className="flex justify-end gap-8"><span className="text-slate-500">Subtotal</span><span className="tabular-nums w-32 text-right">{formatMoney(subtotal, p.currency)}</span></div>
+            {Number(tax) > 0 && <div className="flex justify-end gap-8"><span className="text-slate-500">Tax</span><span className="tabular-nums w-32 text-right">{formatMoney(tax, p.currency)}</span></div>}
+            <div className="flex justify-end gap-8 pt-2 border-t font-semibold"><span>Total</span><span className="tabular-nums w-32 text-right">{formatMoney(total, p.currency)}</span></div>
           </div>
         </CardContent>
       </Card>
@@ -132,7 +141,7 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
       {p.body && (
         <Card>
           <CardHeader><CardTitle className="text-base">Scope</CardTitle></CardHeader>
-          <CardContent><p className="text-sm text-slate-700 whitespace-pre-wrap">{p.body}</p></CardContent>
+          <CardContent><div className="prose prose-sm max-w-none text-slate-700"><ReactMarkdown>{p.body}</ReactMarkdown></div></CardContent>
         </Card>
       )}
 
