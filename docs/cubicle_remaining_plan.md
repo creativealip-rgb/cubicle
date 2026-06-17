@@ -1696,3 +1696,35 @@ curl -k -I https://cubicle.168.144.37.19.sslip.io/
 curl -k -I https://cubicle.168.144.37.19.sslip.io/login
 curl -k -I https://cubicle.168.144.37.19.sslip.io/signup
 ```
+
+---
+
+## Sprint O — 2026-06-17 — 4 QA fixes + typography plugin
+
+**Tag:** `mvp-v0.1.1`
+**Commit:** `0358f90`
+
+**Bugs found via live browser QA:**
+
+1. **CRITICAL** — Contract/proposal body showed raw markdown chars (`#`, `**`, `---`)
+   - Fix: `react-markdown` integrated in 4 render points
+   - Verified: semantic h1/h2/strong/hr visible
+
+2. **MEDIUM** — Invoice status badges non-conventional colors
+   - Fix: added `success`/`info`/`warning` variants to `badge.tsx`
+   - Verified: paid=green, sent=blue, overdue=red, draft=gray
+
+3. **MINOR** — Reports currency aggregation mixed IDR+USD in one card
+   - Fix: YTD cards stack currencies cleanly; top clients group by `invoices.currency`
+   - Verified: IDR+USD shown separately with context notes
+
+4. **BONUS** — Proposal detail crashed with `toLocaleString` on undefined
+   - Root cause: real data uses `qty`/`unit_price` (snake), code expected `quantity`/`unitPrice` (camel)
+   - Fix: snake/camel fallback in normalization + server-side subtotal/total compute from line items
+   - Verified: line items + Subtotal Rp 35.000.000 + Total Rp 35.000.000 all render
+
+5. **DISCOVERY** — `prose` class had no effect (Tailwind v4 needs `@tailwindcss/typography`)
+   - Fix: installed plugin, added `@plugin` directive in `globals.css`
+   - Verified: h1/h2 properly sized in proposal body
+
+**Live tested on https://cubicle.168-144-37-19.sslip.io/ with owner@cubicle.test / password123**
