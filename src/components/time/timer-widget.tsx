@@ -52,14 +52,27 @@ interface TimerWidgetProps {
   initialTimer: ActiveTimer | null;
 }
 
-function formatElapsed(startTime: Date | string): string {
+function formatElapsed(startTime: Date | string | null | undefined): string {
+  if (!startTime) return "--:--:--";
   const start = new Date(startTime).getTime();
+  if (!Number.isFinite(start) || start <= 0) return "--:--:--";
   const now = Date.now();
   const diff = Math.max(0, Math.floor((now - start) / 1000));
-  const h = Math.floor(diff / 3600);
-  const m = Math.floor((diff % 3600) / 60);
-  const s = diff % 60;
+  // Cap at 99h:59m:59s to surface stale timers visually
+  const capped = Math.min(diff, 99 * 3600 + 59 * 60 + 59);
+  const h = Math.floor(capped / 3600);
+  const m = Math.floor((capped % 3600) / 60);
+  const s = capped % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+function isStaleTimer(timer: ActiveTimer | null): boolean {
+  if (!timer) return false;
+  if (!timer.startTime) return true;
+  const start = new Date(timer.startTime).getTime();
+  if (!Number.isFinite(start) || start <= 0) return true;
+  // Older than 24h = stale (likely forgotten)
+  return Date.now() - start > 24 * 3600 * 1000;
 }
 
 export function TimerWidget({
@@ -171,6 +184,23 @@ export function TimerWidget({
     }
   }, [activeTimer, router]);
 
+  const handleDiscard = useCallback(async () => {
+    if (!activeTimer) return;
+    setLoading(true);
+    try {
+      // stopTimer is defensive: deletes entries with null startTime
+      await stopTimer(activeTimer.id);
+      setActiveTimer(null);
+      setElapsed("00:00:00");
+      toast.success("Stale timer discarded");
+      router.refresh();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to discard timer");
+    } finally {
+      setLoading(false);
+    }
+  }, [activeTimer, router]);
+
   return (
     <Card>
       <CardContent className="p-6">
@@ -179,31 +209,51 @@ export function TimerWidget({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-sm font-medium text-red-600">Recording</span>
+                <div className={`h-3 w-3 rounded-full ${isStaleTimer(activeTimer) ? "bg-amber-500" : "bg-red-500 animate-pulse"}`} />
+                <span className={`text-sm font-medium ${isStaleTimer(activeTimer) ? "text-amber-700" : "text-red-600"}`}>
+                  {isStaleTimer(activeTimer) ? "Stale (24h+)" : "Recording"}
+                </span>
               </div>
               <span className="text-3xl font-mono font-bold tabular-nums">{elapsed}</span>
             </div>
+            {isStaleTimer(activeTimer) && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                This timer has been running for over 24 hours. Stop and restart, or discard if it was left on by accident.
+              </div>
+            )}
             <div className="text-sm text-muted-foreground space-y-0.5">
               {activeTimer.clientName && <p>Client: {activeTimer.clientName}</p>}
               {activeTimer.projectName && <p>Project: {activeTimer.projectName}</p>}
               {activeTimer.taskTitle && <p>Task: {activeTimer.taskTitle}</p>}
               {activeTimer.description && <p>Note: {activeTimer.description}</p>}
             </div>
-            <Button
-              variant="destructive"
-              size="lg"
-              className="w-full gap-2"
-              onClick={handleStop}
-              disabled={loading}
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Square className="h-4 w-4" />
+            <div className="flex gap-2">
+              <Button
+                variant="destructive"
+                size="lg"
+                className="flex-1 gap-2"
+                onClick={handleStop}
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Square className="h-4 w-4" />
+                )}
+                Stop Timer
+              </Button>
+              {isStaleTimer(activeTimer) && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={handleDiscard}
+                  disabled={loading}
+                  title="Discard this stale timer without saving"
+                >
+                  Discard
+                </Button>
               )}
-              Stop Timer
-            </Button>
+            </div>
           </div>
         ) : (
           /* New timer form */

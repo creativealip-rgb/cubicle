@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { timeEntries, workspaces, clients, projects, tasks, users } from "@/db/schema";
-import { eq, and, gte, lte, isNull, desc } from "drizzle-orm";
+import { eq, and, gte, lte, isNull, isNotNull, desc } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
@@ -106,9 +106,21 @@ export async function stopTimer(entryId: string) {
 
   if (!entry) throw new Error("Time entry not found");
 
+  // Defensive: if startTime is null, entry is corrupt — delete instead of saving garbage
+  if (!entry.startTime) {
+    await db.delete(timeEntries).where(eq(timeEntries.id, entryId));
+    await writeActivityLog(workspaceId, user.id, "discarded_timer", "time_entry", entryId);
+    return { discarded: true };
+  }
+
+  // Defensive: cap stop at sane duration (no > 24h single entries)
+  const endTime = new Date();
+  const maxEnd = new Date(entry.startTime.getTime() + 24 * 3600 * 1000);
+  const finalEnd = endTime > maxEnd ? maxEnd : endTime;
+
   const [updated] = await db
     .update(timeEntries)
-    .set({ endTime: new Date(), updatedAt: new Date() })
+    .set({ endTime: finalEnd, updatedAt: new Date() })
     .where(eq(timeEntries.id, entryId))
     .returning();
 
@@ -276,6 +288,9 @@ export async function getActiveTimer(workspaceId: string, userId: string) {
         eq(timeEntries.workspaceId, workspaceId),
         eq(timeEntries.userId, userId),
         isNull(timeEntries.endTime),
+        // Defensive: never return an active timer without a valid startTime
+        // (corrupt seed data would otherwise display 56+ year elapsed values)
+        isNotNull(timeEntries.startTime),
       ),
     )
     .limit(1);
