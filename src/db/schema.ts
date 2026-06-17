@@ -569,3 +569,66 @@ export const questionnaireResponseRelations = relations(questionnaireResponses, 
   client: one(clients, { fields: [questionnaireResponses.clientId], references: [clients.id] }),
   project: one(projects, { fields: [questionnaireResponses.projectId], references: [projects.id] }),
 }));
+
+// ─── Pre-deal: Contracts + E-signature (Sprint M — P2.7.3) ───
+
+// `body` is markdown template with `{{variable}}` placeholders
+// Variables resolved at send time: client.name, client.email, project.name, workspace.name, today, valid_until
+export const contractTemplates = pgTable("contract_templates", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  body: text("body").notNull(),
+  isDefault: boolean("is_default").notNull().default(false),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// `body_resolved` is the rendered contract at send time (immutable after send)
+// `variables` jsonb stores the {client_name, project_name, etc} snapshot used to render
+export const contracts = pgTable("contracts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
+  templateId: uuid("template_id").references(() => contractTemplates.id, { onDelete: "set null" }),
+  title: text("title").notNull(),
+  body: text("body"), // original template body (with placeholders), for record
+  bodyResolved: text("body_resolved"), // rendered at send, immutable
+  variables: jsonb("variables").notNull().default(sql`'{}'::jsonb`),
+  validUntil: date("valid_until"),
+  status: text("status", { enum: ["draft", "sent", "viewed", "signed", "declined", "expired", "revoked"] }).notNull().default("draft"),
+  declineReason: text("decline_reason"),
+  // Signature data
+  signedName: text("signed_name"),
+  signedEmail: text("signed_email"),
+  signatureDataUrl: text("signature_data_url"), // base64 PNG from canvas
+  signedAt: timestamp("signed_at", { withTimezone: true }),
+  signedFromIp: text("signed_from_ip"),
+  signedUserAgent: text("signed_user_agent"),
+  // Token
+  sharedTokenHash: text("shared_token_hash").unique(),
+  sharedTokenExpiresAt: timestamp("shared_token_expires_at", { withTimezone: true }),
+  sharedTokenRevokedAt: timestamp("shared_token_revoked_at", { withTimezone: true }),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  viewedAt: timestamp("viewed_at", { withTimezone: true }),
+  declinedAt: timestamp("declined_at", { withTimezone: true }),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const contractTemplateRelations = relations(contractTemplates, ({ one, many }) => ({
+  workspace: one(workspaces, { fields: [contractTemplates.workspaceId], references: [workspaces.id] }),
+  createdByUser: one(users, { fields: [contractTemplates.createdBy], references: [users.id] }),
+  contracts: many(contracts),
+}));
+
+export const contractRelations = relations(contracts, ({ one }) => ({
+  workspace: one(workspaces, { fields: [contracts.workspaceId], references: [workspaces.id] }),
+  client: one(clients, { fields: [contracts.clientId], references: [clients.id] }),
+  project: one(projects, { fields: [contracts.projectId], references: [projects.id] }),
+  template: one(contractTemplates, { fields: [contracts.templateId], references: [contractTemplates.id] }),
+  createdByUser: one(users, { fields: [contracts.createdBy], references: [users.id] }),
+}));

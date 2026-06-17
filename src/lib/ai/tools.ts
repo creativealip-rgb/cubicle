@@ -27,6 +27,7 @@ import {
   expenseCategories,
   proposals,
   expenseRecurring,
+  contracts,
 } from "@/db/schema";
 import type { ToolDefinition } from "./client";
 
@@ -1071,6 +1072,68 @@ async function getProposal(args: { id?: string; title?: string }) {
   return row;
 }
 
+// ─── Read: contracts (Sprint M — P2.7.3) ───
+
+async function listContracts(args: { status?: string; limit?: number; clientId?: string }) {
+  const ws = await getWorkspace();
+  const conds = [eq(contracts.workspaceId, ws.id)];
+  if (args.status) conds.push(eq(contracts.status, args.status as "draft" | "sent" | "viewed" | "signed" | "declined" | "expired" | "revoked"));
+  if (args.clientId) conds.push(eq(contracts.clientId, args.clientId));
+  const limit = Math.min(args.limit ?? 20, 100);
+  const rows = await db
+    .select({
+      id: contracts.id,
+      title: contracts.title,
+      status: contracts.status,
+      validUntil: contracts.validUntil,
+      sentAt: contracts.sentAt,
+      signedAt: contracts.signedAt,
+      declinedAt: contracts.declinedAt,
+      createdAt: contracts.createdAt,
+      clientId: contracts.clientId,
+      clientName: clients.name,
+      signedName: contracts.signedName,
+    })
+    .from(contracts)
+    .innerJoin(clients, eq(clients.id, contracts.clientId))
+    .where(and(...conds))
+    .orderBy(desc(contracts.createdAt))
+    .limit(limit);
+  return rows;
+}
+
+async function getContract(args: { contractId?: string; title?: string }) {
+  const ws = await getWorkspace();
+  if (!args.contractId && !args.title) return { error: "Provide contractId or title" };
+  const conds = [eq(contracts.workspaceId, ws.id)];
+  if (args.contractId) conds.push(eq(contracts.id, args.contractId));
+  if (args.title) conds.push(sql`${contracts.title} ILIKE ${"%" + args.title + "%"}`);
+  const [row] = await db
+    .select({
+      id: contracts.id,
+      title: contracts.title,
+      body: contracts.body,
+      bodyResolved: contracts.bodyResolved,
+      status: contracts.status,
+      validUntil: contracts.validUntil,
+      sentAt: contracts.sentAt,
+      viewedAt: contracts.viewedAt,
+      signedAt: contracts.signedAt,
+      declinedAt: contracts.declinedAt,
+      signedName: contracts.signedName,
+      signedEmail: contracts.signedEmail,
+      signedFromIp: contracts.signedFromIp,
+      clientName: clients.name,
+      clientEmail: clients.email,
+    })
+    .from(contracts)
+    .leftJoin(clients, eq(clients.id, contracts.clientId))
+    .where(and(...conds))
+    .limit(1);
+  if (!row) return { error: "Not found" };
+  return row;
+}
+
 // ─── Read: cash flow + recurring (Sprint K — P2.8 phase 3) ───
 
 async function cashFlowForecast(args: { months?: number }) {
@@ -1480,6 +1543,37 @@ export const TOOL_DEFS: ToolDefinition[] = [
   {
     type: "function",
     function: {
+      name: "list_contracts",
+      description:
+        "List contracts in the workspace. Filter by status (draft/sent/viewed/signed/declined/expired/revoked) or clientId. Use for 'what contracts do I have', 'pending signatures', 'signed contracts'.",
+      parameters: {
+        type: "object",
+        properties: {
+          status: { type: "string", enum: ["draft", "sent", "viewed", "signed", "declined", "expired", "revoked"] },
+          clientId: { type: "string" },
+          limit: { type: "number" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_contract",
+      description:
+        "Get full contract details by contractId or title. Returns body, client, status, signature info if signed. Use for 'show me contract X', 'has the contract been signed'.",
+      parameters: {
+        type: "object",
+        properties: {
+          contractId: { type: "string" },
+          title: { type: "string" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "get_client",
       description: "Get one client by id or name. Returns contact info, recent projects, open invoices.",
       parameters: {
@@ -1591,6 +1685,8 @@ export type ToolName =
   | "get_proposal"
   | "cash_flow_forecast"
   | "list_recurring"
+  | "list_contracts"
+  | "get_contract"
   | "get_client"
   | "get_project"
   | "get_task"
@@ -1649,6 +1745,10 @@ export async function executeTool(
       return cashFlowForecast(args as { months?: number });
     case "list_recurring":
       return listRecurring(args as { isActive?: boolean; limit?: number });
+    case "list_contracts":
+      return listContracts(args as { status?: string; limit?: number; clientId?: string });
+    case "get_contract":
+      return getContract(args as { contractId?: string; title?: string });
     case "get_client":
       return getClient(args as { id?: string; name?: string });
     case "get_project":
