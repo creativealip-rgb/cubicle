@@ -46,6 +46,7 @@ const navItems = [
   { label: "Proposals", href: "/app/proposals", icon: FileText },
   { label: "Questionnaires", href: "/app/questionnaires", icon: ClipboardList },
   { label: "Contracts", href: "/app/contracts", icon: FileSignature },
+  { label: "Templates", href: "/app/contract-templates", icon: FileText },
   { label: "Calendar", href: "/app/calendar", icon: Calendar },
   { label: "Prompts", href: "/app/prompts", icon: Sparkles },
   { label: "Settings", href: "/app/settings", icon: Settings },
