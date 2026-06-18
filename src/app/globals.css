@@ -128,19 +128,20 @@
   --sidebar-ring: #3b82f6;
 }
 
-* {
-  border-color: var(--border);
-}
+@layer base {
+  * {
+    border-color: var(--border);
+  }
 
-/* ClickUp spec: Plus Jakarta Sans for all headings (display), Inter for body */
-h1, h2, h3, h4 {
-  font-family: var(--font-display);
-  letter-spacing: -0.01em;
-  color: var(--foreground);
-}
+  /* ClickUp spec: Plus Jakarta Sans for headings; color inherits so text-* utilities can override */
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
 }
