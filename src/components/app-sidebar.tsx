@@ -34,22 +34,22 @@ import {
 import { useSidebar } from "@/components/app-shell";
 
 const navItems = [
-  { label: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard },
-  { label: "Clients", href: "/app/clients", icon: Users },
-  { label: "Projects", href: "/app/projects", icon: Briefcase },
-  { label: "Tasks", href: "/app/tasks", icon: CheckSquare, badgeKey: "myOpenTasks" as const },
-  { label: "Files", href: "/app/files", icon: FolderOpen },
-  { label: "Time", href: "/app/time", icon: Clock },
-  { label: "Invoices", href: "/app/invoices", icon: Receipt },
-  { label: "Expenses", href: "/app/expenses", icon: Wallet },
-  { label: "Reports", href: "/app/reports", icon: BarChart3 },
-  { label: "Proposals", href: "/app/proposals", icon: FileText },
-  { label: "Questionnaires", href: "/app/questionnaires", icon: ClipboardList },
-  { label: "Contracts", href: "/app/contracts", icon: FileSignature },
-  { label: "Templates", href: "/app/contract-templates", icon: FileText },
-  { label: "Calendar", href: "/app/calendar", icon: Calendar },
-  { label: "Prompts", href: "/app/prompts", icon: Sparkles },
-  { label: "Settings", href: "/app/settings", icon: Settings },
+  { label: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard, group: null },
+  { label: "Clients", href: "/app/clients", icon: Users, group: "Work" },
+  { label: "Projects", href: "/app/projects", icon: Briefcase, group: "Work" },
+  { label: "Tasks", href: "/app/tasks", icon: CheckSquare, group: "Work", badgeKey: "myOpenTasks" as const },
+  { label: "Time", href: "/app/time", icon: Clock, group: "Work" },
+  { label: "Calendar", href: "/app/calendar", icon: Calendar, group: "Work" },
+  { label: "Files", href: "/app/files", icon: FolderOpen, group: "Work" },
+  { label: "Invoices", href: "/app/invoices", icon: Receipt, group: "Money" },
+  { label: "Expenses", href: "/app/expenses", icon: Wallet, group: "Money" },
+  { label: "Reports", href: "/app/reports", icon: BarChart3, group: "Money" },
+  { label: "Proposals", href: "/app/proposals", icon: FileText, group: "Sales" },
+  { label: "Contracts", href: "/app/contracts", icon: FileSignature, group: "Sales" },
+  { label: "Forms", href: "/app/questionnaires", icon: ClipboardList, group: "Sales" },
+  { label: "Templates", href: "/app/contract-templates", icon: FileText, group: "Sales" },
+  { label: "Prompts", href: "/app/prompts", icon: Sparkles, group: "AI" },
+  { label: "Settings", href: "/app/settings", icon: Settings, group: null },
 ];
 
 interface AppSidebarProps {
@@ -66,6 +66,17 @@ export function AppSidebar({ collapsed, onToggle, myOpenTasksCount = 0 }: AppSid
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname, setMobileOpen]);
+
+  // Group nav items by section for visual grouping
+  const groupedItems: Array<{ name: string | null; items: typeof navItems }> = [];
+  for (const item of navItems) {
+    const last = groupedItems[groupedItems.length - 1];
+    if (!last || last.name !== item.group) {
+      groupedItems.push({ name: item.group, items: [item] });
+    } else {
+      last.items.push(item);
+    }
+  }
 
   return (
     <aside
@@ -138,66 +149,77 @@ export function AppSidebar({ collapsed, onToggle, myOpenTasksCount = 0 }: AppSid
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-2 py-3">
         <TooltipProvider delayDuration={300}>
-          <ul className="space-y-1">
-            {navItems.map((item) => {
-              const isActive =
-                pathname === item.href ||
-                (item.href !== "/app/dashboard" &&
-                  pathname.startsWith(item.href + "/"));
-              const Icon = item.icon;
-              const badge =
-                "badgeKey" in item && item.badgeKey === "myOpenTasks"
-                  ? myOpenTasksCount
-                  : 0;
+          <div className="space-y-3">
+            {groupedItems.map((g) => (
+              <div key={g.name ?? "_main"}>
+                {!collapsed && g.name && (
+                  <p className="px-3 pb-1.5 pt-1 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
+                    {g.name}
+                  </p>
+                )}
+                <ul className="space-y-1">
+                  {g.items.map((item) => {
+                    const isActive =
+                      pathname === item.href ||
+                      (item.href !== "/app/dashboard" &&
+                        pathname.startsWith(item.href + "/"));
+                    const Icon = item.icon;
+                    const badge =
+                      "badgeKey" in item && item.badgeKey === "myOpenTasks"
+                        ? myOpenTasksCount
+                        : 0;
 
-              return (
-                <li key={item.href}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link
-                        href={item.href}
-                        className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                          isActive
-                            ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                          collapsed && "justify-center px-2",
-                        )}
-                      >
-                        <Icon className="h-4 w-4 shrink-0" />
-                        {!collapsed && <span className="flex-1">{item.label}</span>}
-                        {!collapsed && badge > 0 && (
-                          <span
-                            className={cn(
-                              "ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-semibold",
-                              isActive
-                                ? "bg-sidebar-primary-foreground text-sidebar-primary"
-                                : "bg-blue-600 text-white",
-                            )}
-                            aria-label={`${badge} open tasks assigned to you`}
-                          >
-                            {badge > 99 ? "99+" : badge}
-                          </span>
-                        )}
-                        {collapsed && badge > 0 && (
-                          <span
-                            className="absolute right-1 top-1 inline-flex h-2 w-2 rounded-full bg-blue-500"
-                            aria-label={`${badge} open tasks assigned to you`}
-                          />
-                        )}
-                      </Link>
-                    </TooltipTrigger>
-                    {collapsed && (
-                      <TooltipContent side="right">
-                        {item.label}
-                        {badge > 0 ? ` (${badge})` : ""}
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </li>
-              );
-            })}
-          </ul>
+                    return (
+                      <li key={item.href}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Link
+                              href={item.href}
+                              className={cn(
+                                "relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                                isActive
+                                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                                collapsed && "justify-center px-2",
+                              )}
+                            >
+                              <Icon className="h-4 w-4 shrink-0" />
+                              {!collapsed && <span className="flex-1">{item.label}</span>}
+                              {!collapsed && badge > 0 && (
+                                <span
+                                  className={cn(
+                                    "ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-semibold",
+                                    isActive
+                                      ? "bg-sidebar-primary-foreground text-sidebar-primary"
+                                      : "bg-blue-600 text-white",
+                                  )}
+                                  aria-label={`${badge} open tasks assigned to you`}
+                                >
+                                  {badge > 99 ? "99+" : badge}
+                                </span>
+                              )}
+                              {collapsed && badge > 0 && (
+                                <span
+                                  className="absolute right-1 top-1 inline-flex h-2 w-2 rounded-full bg-blue-500"
+                                  aria-label={`${badge} open tasks assigned to you`}
+                                />
+                              )}
+                            </Link>
+                          </TooltipTrigger>
+                          {collapsed && (
+                            <TooltipContent side="right">
+                              {item.label}
+                              {badge > 0 ? ` (${badge})` : ""}
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
         </TooltipProvider>
       </nav>
 
@@ -205,7 +227,7 @@ export function AppSidebar({ collapsed, onToggle, myOpenTasksCount = 0 }: AppSid
       <div className="border-t border-sidebar-border p-3">
         {!collapsed && (
           <p className="text-xs text-muted-foreground">
-            Cubicle v0.1.0
+            Cubicle v0.1.21
           </p>
         )}
       </div>
