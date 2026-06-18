@@ -15,6 +15,17 @@ import {
   Mic,
   MicOff,
   Clock,
+  Plus,
+  Settings2,
+  MessageSquare,
+  Users,
+  FolderKanban,
+  CheckSquare,
+  Receipt,
+  FileText,
+  Calendar,
+  TrendingUp,
+  FileQuestion,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -84,11 +95,42 @@ const SUGGESTIONS = [
   "Draft a reminder for INV-0001",
 ];
 
+// Full-page welcome — bigger, more specific (matches AI workspace hub feel)
+const SUGGESTED_CARDS = [
+  {
+    icon: <TrendingUp className="h-4 w-4" />,
+    title: "Summarize this week",
+    desc: "Revenue, deliverables, what's still open",
+    prompt: "Summarize this week — revenue, deliverables, what's still open.",
+  },
+  {
+    icon: <Receipt className="h-4 w-4" />,
+    title: "Review overdue invoices",
+    desc: "List unpaid invoices and how long they're past due",
+    prompt: "List all overdue invoices and how long they've been past due.",
+  },
+  {
+    icon: <FileQuestion className="h-4 w-4" />,
+    title: "Draft a client update",
+    desc: "Generate a status update I can send to a client",
+    prompt: "Draft a client status update I can send. Ask me which client.",
+  },
+];
+
+// App integration bar — Cubicle-native modules
+const MODULE_ICONS = [
+  { icon: <Users className="h-3.5 w-3.5" />, label: "Clients" },
+  { icon: <FolderKanban className="h-3.5 w-3.5" />, label: "Projects" },
+  { icon: <CheckSquare className="h-3.5 w-3.5" />, label: "Tasks" },
+  { icon: <Receipt className="h-3.5 w-3.5" />, label: "Invoices" },
+  { icon: <Clock className="h-3.5 w-3.5" />, label: "Time" },
+  { icon: <FileText className="h-3.5 w-3.5" />, label: "Files" },
+  { icon: <Calendar className="h-3.5 w-3.5" />, label: "Calendar" },
+];
+
 export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "fullpage" } = {}) {
   const isFullpage = variant === "fullpage";
-  const [open, setOpen] = useState(isFullpage); // fullpage: always open
-  // Hide on fullpage — the topbar AI button shouldn't do anything there
-  // (Brain page is the dedicated AI workspace)
+  const [open, setOpen] = useState(isFullpage);
   useEffect(() => {
     if (isFullpage) setOpen(true);
   }, [isFullpage]);
@@ -97,7 +139,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
   const [busy, setBusy] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conv[]>([]);
-  const [showHistoryBelow, setShowHistoryBelow] = useState(true); // visible when empty chat by default
+  const [showHistoryBelow, setShowHistoryBelow] = useState(true);
   const [lastUsage, setLastUsage] = useState<{
     prompt_tokens: number;
     completion_tokens: number;
@@ -110,12 +152,10 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
-  // Autofocus
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
 
-  // Listen for topbar AI button toggle (floating only)
   useEffect(() => {
     if (isFullpage) return;
     if (typeof window === "undefined") return;
@@ -124,23 +164,19 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
     return () => window.removeEventListener("cubicle:toggle-ai", handler);
   }, [isFullpage]);
 
-  // Scroll to bottom on new message
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages, open]);
 
-  // Auto-hide history when chat has messages; auto-show when chat empties
   useEffect(() => {
     setShowHistoryBelow(messages.length === 0);
   }, [messages.length]);
 
-  // Load conversation list when opened
   useEffect(() => {
     if (open) loadConversations();
   }, [open]);
 
-  // Voice input — feature-detect Web Speech API (Chrome/Edge only)
   useEffect(() => {
     if (typeof window === "undefined") return;
     const SR =
@@ -220,7 +256,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
   function startNewChat() {
     setConversationId(null);
     setMessages([]);
-    setShowHistoryBelow(true); // back to empty state → show history list
+    setShowHistoryBelow(true);
   }
 
   async function deleteConversation(id: string) {
@@ -297,10 +333,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
         signal: controller.signal,
       });
     } catch (err) {
-      if ((err as Error)?.name === "AbortError") {
-        // User cancelled — already handled by stopStream
-        return;
-      }
+      if ((err as Error)?.name === "AbortError") return;
       setMessages((prev) => {
         const copy = [...prev];
         copy[copy.length - 1] = {
@@ -315,7 +348,6 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
     }
 
     if (!res.ok) {
-      // Non-streaming error (auth, 503, etc.)
       const text = await res.text();
       setMessages((prev) => {
         const copy = [...prev];
@@ -343,14 +375,12 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
       return;
     }
 
-    // ── Consume SSE stream ──
     const reader = res.body.getReader();
     const decoder = new TextDecoder("utf-8");
     let buffer = "";
 
     type SseEvent = { event: string; data: string };
     const parseSseBlock = (block: string): SseEvent | null => {
-      // Each SSE event: lines of `event: <name>` and `data: <json>`, separated by \n\n
       let eventName = "message";
       const dataLines: string[] = [];
       for (const line of block.split("\n")) {
@@ -364,9 +394,6 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
       return { event: eventName, data: dataLines.join("\n") };
     };
 
-    // We track the assistant message in flight at the tail. When SSE arrives
-    // we mutate it in place. The Message type is shared with React state, so
-    // we re-set on each event to trigger re-render (cheap, message list is small).
     const updateTail = (patch: Partial<Message>) => {
       setMessages((prev) => {
         const copy = [...prev];
@@ -393,7 +420,6 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
           try {
             payload = ev.data ? JSON.parse(ev.data) : {};
           } catch {
-            // ignore malformed event
             continue;
           }
 
@@ -406,7 +432,6 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
             case "content": {
               const delta = String(payload.delta ?? "");
               if (!delta) break;
-              // We need to read the current content from state — use a callback
               setMessages((prev) => {
                 const copy = [...prev];
                 const last = copy[copy.length - 1];
@@ -416,7 +441,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                 copy[copy.length - 1] = {
                   ...last,
                   content: last.content + stripped,
-                  status: undefined, // first token: clear "Thinking…"
+                  status: undefined,
                 };
                 return copy;
               });
@@ -451,10 +476,6 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
               break;
             }
             case "done": {
-              // Optional: loadConversations if we got a new convId from header
-              // (we don't have access to it here — we rely on the API to set
-              // it in the response, but since we streamed, we can pull it
-              // from `?cid` if exposed. For now, fetch history list anyway.)
               loadConversations();
               const toolCalls = Number(payload.toolCalls ?? 0);
               const usage = payload.usage as
@@ -504,7 +525,6 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
     const msg = messages[idx];
     if (!msg?.confirmation) return;
 
-    // Mark as executing
     setMessages((prev) => {
       const copy = [...prev];
       copy[idx] = { ...copy[idx], confirmationStatus: "pending" };
@@ -554,7 +574,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
   function dismissAction(idx: number) {
     setMessages((prev) => {
       const copy = [...prev];
-      copy[idx] = { ...copy[idx], confirmationStatus: "done" }; // hide card
+      copy[idx] = { ...copy[idx], confirmationStatus: "done" };
       return copy;
     });
   }
@@ -568,228 +588,456 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
 
   return (
     <>
-      {/* Floating button removed - now in topbar (see app-topbar.tsx).
-          Listens for window event to allow external toggle. */}
-
-      {/* Panel */}
       {open && (
         <div
           className={cn(
             isFullpage
-              ? "flex h-[calc(100vh-9rem)] w-full max-w-4xl mx-auto flex-col overflow-hidden rounded-2xl border bg-white shadow-sm"
+              ? "flex h-full w-full max-w-4xl mx-auto flex-col overflow-hidden rounded-2xl border bg-white shadow-sm"
               : "fixed bottom-4 right-4 z-50 flex flex-col overflow-hidden rounded-2xl border bg-white shadow-2xl",
             isFullpage
               ? ""
               : "h-[min(640px,85vh)] w-[min(420px,calc(100vw-2rem))] md:bottom-20 md:right-6",
           )}
         >
-          {/* Main chat area */}
           <div className="flex min-h-0 flex-1 flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between gap-2 border-b bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-white">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
-                <div>
-                  <p className="text-sm font-semibold leading-none">Cubicle AI</p>
-                  <p className="text-[10px] text-blue-100">
-                    Workspace assistant · tr/MiniMax-M3
-                  </p>
+            {/* Full-page welcome (empty state, big screen) — AI workspace hub feel */}
+            {isFullpage && messages.length === 0 ? (
+              <WelcomeScreen
+                input={input}
+                setInput={setInput}
+                send={send}
+                onKeyDown={onKeyDown}
+                busy={busy}
+                stopStream={stopStream}
+                listening={listening}
+                voiceSupported={voiceSupported}
+                toggleVoice={toggleVoice}
+                inputRef={inputRef}
+                conversations={conversations}
+                conversationId={conversationId}
+                loadConversation={loadConversation}
+                deleteConversation={deleteConversation}
+                startNewChat={startNewChat}
+              />
+            ) : (
+              <>
+                {/* Header */}
+                <div className="flex items-center justify-between gap-2 border-b bg-gradient-to-r from-[var(--cu-purple)] to-[var(--cu-purple-hover)] px-4 py-3 text-white">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    <div>
+                      <p className="text-sm font-semibold leading-none">Cubicle AI</p>
+                      <p className="text-[10px] text-purple-100">
+                        Workspace assistant · tr/MiniMax-M3
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={startNewChat}
+                      className="rounded-md p-1 text-white/80 hover:bg-white/10 hover:text-white"
+                      aria-label="New chat"
+                      title="New chat"
+                    >
+                      <MessageSquarePlus className="h-4 w-4" />
+                    </button>
+                    {messages.length > 0 && (
+                      <button
+                        onClick={() => setShowHistoryBelow((v) => !v)}
+                        className={cn(
+                          "rounded-md p-1 hover:bg-white/10",
+                          showHistoryBelow ? "bg-white/15 text-white" : "text-white/80 hover:text-white",
+                        )}
+                        aria-label="Toggle history"
+                        title="History"
+                      >
+                        <History className="h-4 w-4" />
+                      </button>
+                    )}
+                    {!isFullpage && (
+                      <button
+                        onClick={() => setOpen(false)}
+                        className="rounded-md p-1 text-white/80 hover:bg-white/10 hover:text-white"
+                        aria-label="Close"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
+
+                {/* Messages */}
+                <div
+                  ref={scrollRef}
+                  className="flex-1 space-y-3 overflow-y-auto bg-slate-50 px-3 py-4"
+                >
+                  {messages.length === 0 && !isFullpage && (
+                    <div className="space-y-3">
+                      <div className="rounded-lg bg-white p-3 text-xs text-slate-600 ring-1 ring-slate-200">
+                        Hi! I can look up clients, projects, tasks, and invoices.
+                        I can also mark tasks done or draft invoice reminders.
+                        Try one of these:
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {SUGGESTIONS.map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => send(s)}
+                            className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-[var(--cu-purple)] hover:bg-purple-50 hover:text-[var(--cu-purple)]"
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {messages.map((m, i) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        "flex",
+                        m.role === "user" ? "justify-end" : "justify-start",
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm",
+                          m.role === "user"
+                            ? "bg-[var(--cu-purple)] text-white"
+                            : "bg-white text-slate-900 ring-1 ring-slate-200",
+                          m.error && "bg-red-50 ring-red-200 text-red-900",
+                        )}
+                      >
+                        {m.pending ? (
+                          <div className="flex flex-col gap-1.5 text-slate-500">
+                            <div className="flex items-center gap-2">
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              <span>{m.status || "Thinking…"}</span>
+                            </div>
+                            {m.content && (
+                              <div className="text-slate-900">
+                                {m.content}
+                                <span className="ml-0.5 inline-block h-3 w-1.5 animate-pulse bg-slate-400 align-middle" />
+                              </div>
+                            )}
+                            {m.toolEvents && m.toolEvents.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {m.toolEvents.map((te, j) => (
+                                  <span
+                                    key={j}
+                                    className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-slate-200"
+                                  >
+                                    <Sparkles className="h-2.5 w-2.5" />
+                                    {te.name}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : m.error ? (
+                          <div className="flex items-start gap-2">
+                            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                            <span className="text-xs">{m.error}</span>
+                          </div>
+                        ) : (
+                          <>
+                            {m.toolEvents && m.toolEvents.length > 0 && (
+                              <div className="mb-1.5 flex flex-wrap gap-1">
+                                {m.toolEvents.map((te, j) => (
+                                  <span
+                                    key={j}
+                                    className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-slate-200"
+                                  >
+                                    <Sparkles className="h-2.5 w-2.5" />
+                                    {te.name}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            {m.content && (
+                              <div className="whitespace-pre-wrap break-words">
+                                {m.content}
+                              </div>
+                            )}
+                            {!m.content && m.confirmation && (
+                              <p className="text-xs text-slate-600">
+                                I have a proposal — please confirm below.
+                              </p>
+                            )}
+                          </>
+                        )}
+
+                        {m.confirmation && m.confirmationStatus === "pending" && (
+                          <ConfirmationCard
+                            conf={m.confirmation}
+                            onConfirm={() => confirmAction(i)}
+                            onDismiss={() => dismissAction(i)}
+                          />
+                        )}
+                        {m.confirmation && m.confirmationStatus === "done" && (
+                          <div className="mt-2 flex items-center gap-1 text-xs text-green-700">
+                            <Check className="h-3 w-3" />
+                            <span>Done</span>
+                          </div>
+                        )}
+                        {m.confirmation && m.confirmationStatus === "failed" && (
+                          <div className="mt-2 flex items-center gap-1 text-xs text-red-700">
+                            <XCircle className="h-3 w-3" />
+                            <span>Action failed</span>
+                          </div>
+                        )}
+
+                        {m.meta && !m.error && !m.pending && !m.confirmation && (
+                          <div className="mt-1 text-[10px] text-slate-400">
+                            {m.meta}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Input — always visible above history */}
+                <div className="border-t bg-white p-2">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      send(input);
+                    }}
+                    className="flex items-end gap-2"
+                  >
+                    <textarea
+                      ref={inputRef}
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={onKeyDown}
+                      placeholder="Ask about clients, projects, tasks, invoices…"
+                      rows={1}
+                      disabled={busy}
+                      className={cn(
+                        "flex-1 resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm",
+                        "focus:border-[var(--cu-purple)] focus:outline-none focus:ring-1 focus:ring-[var(--cu-purple)]",
+                        "max-h-24 disabled:opacity-50",
+                      )}
+                    />
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={toggleVoice}
+                      disabled={!voiceSupported}
+                      className={cn(
+                        "h-9 w-9 shrink-0",
+                        listening && "bg-red-50 text-red-600 hover:bg-red-100",
+                      )}
+                      aria-label={listening ? "Stop listening" : "Voice input"}
+                      title={
+                        !voiceSupported
+                          ? "Voice input not supported in this browser"
+                          : listening
+                            ? "Stop listening"
+                            : "Voice input"
+                      }
+                    >
+                      {listening ? (
+                        <MicOff className="h-4 w-4 animate-pulse" />
+                      ) : (
+                        <Mic className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <Button
+                      type={busy ? "button" : "submit"}
+                      size="icon"
+                      disabled={!busy && !input.trim()}
+                      onClick={busy ? stopStream : undefined}
+                      className={cn(
+                        "h-9 w-9 shrink-0",
+                        busy && "bg-red-500 hover:bg-red-600",
+                      )}
+                      aria-label={busy ? "Stop" : "Send"}
+                      title={busy ? "Stop" : "Send"}
+                    >
+                      {busy ? (
+                        <XCircle className="h-4 w-4" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </form>
+                  <div className="flex items-center justify-between px-1 pt-1 text-[10px] text-slate-400">
+                    <span>Press Enter to send · Shift+Enter for newline</span>
+                    {lastUsage && (
+                      <span title={`prompt: ${lastUsage.prompt_tokens} · completion: ${lastUsage.completion_tokens}`}>
+                        {lastUsage.total_tokens.toLocaleString()} tokens
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* History list */}
+                {showHistoryBelow && (
+                  <div className="border-t bg-slate-50/50">
+                    <div className="flex items-center justify-between px-4 pt-3 pb-1">
+                      <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                        <Clock className="h-3 w-3" />
+                        Recent
+                      </div>
+                      {messages.length > 0 && (
+                        <button
+                          onClick={() => setShowHistoryBelow(false)}
+                          className="rounded p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700"
+                          aria-label="Hide history"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-44 overflow-y-auto px-2 pb-2">
+                      {conversations.length === 0 ? (
+                        <p className="px-2 py-3 text-center text-xs text-slate-400">
+                          No chats yet. Start one above.
+                        </p>
+                      ) : (
+                        <ul className="space-y-0.5">
+                          {conversations.map((c) => (
+                            <li
+                              key={c.id}
+                              className={cn(
+                                "group flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs",
+                                c.id === conversationId
+                                  ? "bg-purple-100 text-[var(--cu-purple)]"
+                                  : "text-slate-700 hover:bg-white",
+                              )}
+                            >
+                              <button
+                                onClick={() => loadConversation(c.id)}
+                                className="flex min-w-0 flex-1 flex-col items-start text-left"
+                              >
+                                <span className="w-full truncate font-medium">
+                                  {c.title}
+                                </span>
+                                <span className="text-[10px] text-slate-400">
+                                  {formatRelativeTime(c.updatedAt)}
+                                </span>
+                              </button>
+                              <button
+                                onClick={() => deleteConversation(c.id)}
+                                className="shrink-0 rounded p-1 text-slate-400 opacity-0 hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
+                                aria-label="Delete conversation"
+                                title="Delete"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Full-page welcome screen — ChatGPT/Notion AI-style hub layout
+// ────────────────────────────────────────────────────────────────────────────
+function WelcomeScreen({
+  input,
+  setInput,
+  send,
+  onKeyDown,
+  busy,
+  stopStream,
+  listening,
+  voiceSupported,
+  toggleVoice,
+  inputRef,
+  conversations,
+  conversationId,
+  loadConversation,
+  deleteConversation,
+  startNewChat,
+}: {
+  input: string;
+  setInput: (v: string) => void;
+  send: (text: string) => void;
+  onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  busy: boolean;
+  stopStream: () => void;
+  listening: boolean;
+  voiceSupported: boolean;
+  toggleVoice: () => void;
+  inputRef: React.RefObject<HTMLTextAreaElement | null>;
+  conversations: Conv[];
+  conversationId: string | null;
+  loadConversation: (id: string) => void;
+  deleteConversation: (id: string) => void;
+  startNewChat: () => void;
+}) {
+  return (
+    <div className="flex-1 overflow-y-auto bg-white">
+      <div className="mx-auto w-full max-w-2xl px-4 pt-10 pb-6 md:pt-16">
+        {/* Logo + Greeting */}
+        <div className="flex flex-col items-center text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[var(--cu-purple)] to-[var(--cu-purple-hover)] text-white shadow-lg">
+            <Sparkles className="h-7 w-7" />
+          </div>
+          <h2 className="mt-5 text-2xl font-semibold tracking-tight text-slate-900">
+            How can I help with your client work today?
+          </h2>
+          <p className="mt-2 text-sm text-slate-500">
+            Ask about clients, projects, tasks, invoices — or anything in your workspace data.
+          </p>
+        </div>
+
+        {/* Input — large rounded box, purple focus */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            send(input);
+          }}
+          className="mt-8"
+        >
+          <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm transition focus-within:border-[var(--cu-purple)] focus-within:shadow-md focus-within:ring-2 focus-within:ring-[var(--cu-purple)]/20">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={onKeyDown}
+              placeholder="Ask anything about your client work…"
+              rows={1}
+              disabled={busy}
+              className="w-full resize-none border-0 bg-transparent px-3 py-2 text-sm focus:outline-none max-h-32 disabled:opacity-50"
+            />
+            <div className="flex items-center justify-between border-t border-slate-100 px-1 pt-2">
               <div className="flex items-center gap-1">
                 <button
-                  onClick={startNewChat}
-                  className="rounded-md p-1 text-white/80 hover:bg-white/10 hover:text-white"
-                  aria-label="New chat"
-                  title="New chat"
+                  type="button"
+                  className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                  aria-label="Add context"
+                  title="Add context"
                 >
-                  <MessageSquarePlus className="h-4 w-4" />
+                  <Plus className="h-4 w-4" />
                 </button>
-                {messages.length > 0 && (
-                  <button
-                    onClick={() => setShowHistoryBelow((v) => !v)}
-                    className={cn(
-                      "rounded-md p-1 hover:bg-white/10",
-                      showHistoryBelow ? "bg-white/15 text-white" : "text-white/80 hover:text-white",
-                    )}
-                    aria-label="Toggle history"
-                    title="History"
-                  >
-                    <History className="h-4 w-4" />
-                  </button>
-                )}
-                {!isFullpage && (
-                  <button
-                    onClick={() => setOpen(false)}
-                    className="rounded-md p-1 text-white/80 hover:bg-white/10 hover:text-white"
-                    aria-label="Close"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Messages */}
-            <div
-              ref={scrollRef}
-              className="flex-1 space-y-3 overflow-y-auto bg-slate-50 px-3 py-4"
-            >
-              {messages.length === 0 && (
-                <div className="space-y-3">
-                  <div className="rounded-lg bg-white p-3 text-xs text-slate-600 ring-1 ring-slate-200">
-                    Hi! I can look up clients, projects, tasks, and invoices.
-                    I can also mark tasks done or draft invoice reminders.
-                    Try one of these:
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {SUGGESTIONS.map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => send(s)}
-                        className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {messages.map((m, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "flex",
-                    m.role === "user" ? "justify-end" : "justify-start",
-                  )}
+                <button
+                  type="button"
+                  className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                  aria-label="Settings"
+                  title="Settings"
                 >
-                  <div
-                    className={cn(
-                      "max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm",
-                      m.role === "user"
-                        ? "bg-blue-600 text-white"
-                        : "bg-white text-slate-900 ring-1 ring-slate-200",
-                      m.error && "bg-red-50 ring-red-200 text-red-900",
-                    )}
-                  >
-                    {m.pending ? (
-                      <div className="flex flex-col gap-1.5 text-slate-500">
-                        {/* Status line — replaces the static "Thinking…" */}
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                          <span>{m.status || "Thinking…"}</span>
-                        </div>
-                        {/* Live-streamed content + caret */}
-                        {m.content && (
-                          <div className="text-slate-900">
-                            {m.content}
-                            <span className="ml-0.5 inline-block h-3 w-1.5 animate-pulse bg-slate-400 align-middle" />
-                          </div>
-                        )}
-                        {/* Tool chips — only show tools that finished while pending */}
-                        {m.toolEvents && m.toolEvents.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {m.toolEvents.map((te, j) => (
-                              <span
-                                key={j}
-                                className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-slate-200"
-                              >
-                                <Sparkles className="h-2.5 w-2.5" />
-                                {te.name}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ) : m.error ? (
-                      <div className="flex items-start gap-2">
-                        <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                        <span className="text-xs">{m.error}</span>
-                      </div>
-                    ) : (
-                      <>
-                        {/* Tool chips — show what the assistant queried */}
-                        {m.toolEvents && m.toolEvents.length > 0 && (
-                          <div className="mb-1.5 flex flex-wrap gap-1">
-                            {m.toolEvents.map((te, j) => (
-                              <span
-                                key={j}
-                                className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-slate-200"
-                              >
-                                <Sparkles className="h-2.5 w-2.5" />
-                                {te.name}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        {m.content && (
-                          <div className="whitespace-pre-wrap break-words">
-                            {m.content}
-                          </div>
-                        )}
-                        {/* Action proposals get a small lead-in even when content is empty */}
-                        {!m.content && m.confirmation && (
-                          <p className="text-xs text-slate-600">
-                            I have a proposal — please confirm below.
-                          </p>
-                        )}
-                      </>
-                    )}
-
-                    {/* Confirmation card */}
-                    {m.confirmation && m.confirmationStatus === "pending" && (
-                      <ConfirmationCard
-                        conf={m.confirmation}
-                        onConfirm={() => confirmAction(i)}
-                        onDismiss={() => dismissAction(i)}
-                      />
-                    )}
-                    {m.confirmation && m.confirmationStatus === "done" && (
-                      <div className="mt-2 flex items-center gap-1 text-xs text-green-700">
-                        <Check className="h-3 w-3" />
-                        <span>Done</span>
-                      </div>
-                    )}
-                    {m.confirmation && m.confirmationStatus === "failed" && (
-                      <div className="mt-2 flex items-center gap-1 text-xs text-red-700">
-                        <XCircle className="h-3 w-3" />
-                        <span>Action failed</span>
-                      </div>
-                    )}
-
-                    {m.meta && !m.error && !m.pending && !m.confirmation && (
-                      <div className="mt-1 text-[10px] text-slate-400">
-                        {m.meta}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Input — always visible above history */}
-            <div className="border-t bg-white p-2">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  send(input);
-                }}
-                className="flex items-end gap-2"
-              >
-                <textarea
-                  ref={inputRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={onKeyDown}
-                  placeholder="Ask about clients, projects, tasks, invoices…"
-                  rows={1}
-                  disabled={busy}
-                  className={cn(
-                    "flex-1 resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm",
-                    "focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500",
-                    "max-h-24 disabled:opacity-50",
-                  )}
-                />
+                  <Settings2 className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                  Auto
+                </span>
                 <Button
                   type="button"
                   size="icon"
@@ -797,7 +1045,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                   onClick={toggleVoice}
                   disabled={!voiceSupported}
                   className={cn(
-                    "h-9 w-9 shrink-0",
+                    "h-8 w-8",
                     listening && "bg-red-50 text-red-600 hover:bg-red-100",
                   )}
                   aria-label={listening ? "Stop listening" : "Voice input"}
@@ -821,7 +1069,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                   disabled={!busy && !input.trim()}
                   onClick={busy ? stopStream : undefined}
                   className={cn(
-                    "h-9 w-9 shrink-0",
+                    "h-8 w-8 bg-[var(--cu-purple)] hover:bg-[var(--cu-purple-hover)] text-white",
                     busy && "bg-red-500 hover:bg-red-600",
                   )}
                   aria-label={busy ? "Stop" : "Send"}
@@ -833,83 +1081,120 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                     <Send className="h-4 w-4" />
                   )}
                 </Button>
-              </form>
-              <div className="flex items-center justify-between px-1 pt-1 text-[10px] text-slate-400">
-                <span>Press Enter to send · Shift+Enter for newline</span>
-                {lastUsage && (
-                  <span title={`prompt: ${lastUsage.prompt_tokens} · completion: ${lastUsage.completion_tokens}`}>
-                    {lastUsage.total_tokens.toLocaleString()} tokens
-                  </span>
-                )}
               </div>
             </div>
+          </div>
+        </form>
 
-            {/* History list — below the input (auto-shown on new chat,
-                toggleable from header) */}
-            {showHistoryBelow && (
-              <div className="border-t bg-slate-50/50">
-                <div className="flex items-center justify-between px-4 pt-3 pb-1">
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                    <Clock className="h-3 w-3" />
-                    Recent
-                  </div>
-                  {messages.length > 0 && (
-                    <button
-                      onClick={() => setShowHistoryBelow(false)}
-                      className="rounded p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700"
-                      aria-label="Hide history"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  )}
-                </div>
-                <div className="max-h-44 overflow-y-auto px-2 pb-2">
-                  {conversations.length === 0 ? (
-                    <p className="px-2 py-3 text-center text-xs text-slate-400">
-                      No chats yet. Start one above.
-                    </p>
-                  ) : (
-                    <ul className="space-y-0.5">
-                      {conversations.map((c) => (
-                        <li
-                          key={c.id}
-                          className={cn(
-                            "group flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs",
-                            c.id === conversationId
-                              ? "bg-blue-100 text-blue-900"
-                              : "text-slate-700 hover:bg-white",
-                          )}
-                        >
-                          <button
-                            onClick={() => loadConversation(c.id)}
-                            className="flex min-w-0 flex-1 flex-col items-start text-left"
-                          >
-                            <span className="w-full truncate font-medium">
-                              {c.title}
-                            </span>
-                            <span className="text-[10px] text-slate-400">
-                              {formatRelativeTime(c.updatedAt)}
-                            </span>
-                          </button>
-                          <button
-                            onClick={() => deleteConversation(c.id)}
-                            className="shrink-0 rounded p-1 text-slate-400 opacity-0 hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
-                            aria-label="Delete conversation"
-                            title="Delete"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-            )}
+        {/* App integration bar */}
+        <div className="mt-3 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs">
+          <span className="font-medium text-slate-500">Works with your Cubicle data</span>
+          <div className="flex items-center gap-1">
+            {MODULE_ICONS.map((m) => (
+              <span
+                key={m.label}
+                title={m.label}
+                className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-50 text-slate-600 ring-1 ring-slate-200/70"
+              >
+                {m.icon}
+              </span>
+            ))}
           </div>
         </div>
-      )}
-    </>
+
+        {/* 2-col: Recent + Suggested */}
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+          {/* Recent */}
+          <div>
+            <div className="flex items-center justify-between px-1 pb-2">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                Recent
+              </h3>
+              {conversations.length > 0 && (
+                <span className="text-[10px] text-slate-400">
+                  {conversations.length} total
+                </span>
+              )}
+            </div>
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+              {conversations.length === 0 ? (
+                <p className="px-3 py-6 text-center text-xs text-slate-400">
+                  No chats yet. Start one above.
+                </p>
+              ) : (
+                <ul className="divide-y divide-slate-100">
+                  {conversations.slice(0, 5).map((c) => (
+                    <li
+                      key={c.id}
+                      className={cn(
+                        "group flex items-center gap-2 px-3 py-2 text-xs transition",
+                        c.id === conversationId
+                          ? "bg-purple-50/60"
+                          : "hover:bg-slate-50",
+                      )}
+                    >
+                      <MessageSquare className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                      <button
+                        onClick={() => loadConversation(c.id)}
+                        className="flex-1 truncate text-left font-medium text-slate-700 hover:text-[var(--cu-purple)]"
+                      >
+                        {c.title}
+                      </button>
+                      <span className="shrink-0 text-[10px] text-slate-400">
+                        {formatRelativeTime(c.updatedAt)}
+                      </span>
+                      <button
+                        onClick={() => deleteConversation(c.id)}
+                        className="shrink-0 rounded p-1 text-slate-400 opacity-0 hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
+                        aria-label="Delete conversation"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+
+          {/* Suggested */}
+          <div>
+            <div className="flex items-center justify-between px-1 pb-2">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                Suggested
+              </h3>
+            </div>
+            <div className="space-y-2">
+              {SUGGESTED_CARDS.map((s) => (
+                <button
+                  key={s.title}
+                  onClick={() => send(s.prompt)}
+                  className="group w-full rounded-xl border border-slate-200 bg-white p-3 text-left transition hover:border-[var(--cu-purple)] hover:shadow-sm"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-600 transition group-hover:bg-[var(--cu-purple)]/10 group-hover:text-[var(--cu-purple)]">
+                      {s.icon}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-slate-900">
+                        {s.title}
+                      </p>
+                      <p className="text-xs text-slate-500">{s.desc}</p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer hint */}
+        <p className="mt-6 text-center text-[10px] text-slate-400">
+          Press Enter to send · Shift+Enter for newline
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -956,7 +1241,6 @@ function ConfirmationCard({
       </div>
     );
   }
-  // draft_invoice_reminder
   return (
     <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
       <p className="font-semibold">Confirm action — send payment reminder</p>
