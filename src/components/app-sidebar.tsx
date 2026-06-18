@@ -21,7 +21,7 @@ import {
   Receipt,
   Calendar,
   Sparkles,
-  Settings,
+  Brain as BrainIcon,
   PanelLeftClose,
   PanelLeft,
   ClipboardList,
@@ -48,8 +48,7 @@ const navItems = [
   { label: "Contracts", href: "/app/contracts", icon: FileSignature, group: "Sales", badgeKey: "draftContracts" as const },
   { label: "Forms", href: "/app/questionnaires", icon: ClipboardList, group: "Sales" },
   { label: "Templates", href: "/app/contract-templates", icon: FileText, group: "Sales" },
-  { label: "Prompts", href: "/app/prompts", icon: Sparkles, group: "AI" },
-  { label: "Settings", href: "/app/settings", icon: Settings, group: null },
+  { label: "Brain", href: "/app/brain", icon: BrainIcon, group: "AI" },
 ];
 
 export type SidebarBadgeKey =

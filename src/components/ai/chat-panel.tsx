@@ -68,8 +68,14 @@ const SUGGESTIONS = [
   "Draft a reminder for INV-0001",
 ];
 
-export function AIChatPanel() {
-  const [open, setOpen] = useState(false);
+export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "fullpage" } = {}) {
+  const isFullpage = variant === "fullpage";
+  const [open, setOpen] = useState(isFullpage); // fullpage: always open
+  // Hide on fullpage — the topbar AI button shouldn't do anything there
+  // (Brain page is the dedicated AI workspace)
+  useEffect(() => {
+    if (isFullpage) setOpen(true);
+  }, [isFullpage]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -92,6 +98,15 @@ export function AIChatPanel() {
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
+
+  // Listen for topbar AI button toggle (floating only)
+  useEffect(() => {
+    if (isFullpage) return;
+    if (typeof window === "undefined") return;
+    const handler = () => setOpen((v) => !v);
+    window.addEventListener("cubicle:toggle-ai", handler);
+    return () => window.removeEventListener("cubicle:toggle-ai", handler);
+  }, [isFullpage]);
 
   // Scroll to bottom on new message
   useEffect(() => {
@@ -532,28 +547,24 @@ export function AIChatPanel() {
 
   return (
     <>
-      {/* Floating button */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className={cn(
-          "fixed bottom-4 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-all md:bottom-20 md:right-6",
-          "bg-blue-600 text-white hover:bg-blue-700 hover:scale-105",
-          open && "scale-90 opacity-0 pointer-events-none",
-        )}
-        aria-label="Open AI assistant"
-      >
-        <Sparkles className="h-5 w-5" />
-      </button>
+      {/* Floating button removed - now in topbar (see app-topbar.tsx).
+          Listens for window event to allow external toggle. */}
 
       {/* Panel */}
       {open && (
         <div
           className={cn(
-            "fixed bottom-4 right-4 z-50 flex overflow-hidden rounded-2xl border bg-white shadow-2xl",
+            isFullpage
+              ? "flex h-[calc(100vh-9rem)] w-full max-w-4xl mx-auto overflow-hidden rounded-2xl border bg-white shadow-sm"
+              : "fixed bottom-4 right-4 z-50 flex overflow-hidden rounded-2xl border bg-white shadow-2xl",
             showHistory
-              ? "h-[min(560px,80vh)] w-[min(680px,calc(100vw-2rem))]"
-              : "h-[min(560px,80vh)] w-[min(380px,calc(100vw-2rem))]",
-            "md:bottom-20 md:right-6",
+              ? isFullpage
+                ? ""
+                : "h-[min(560px,80vh)] w-[min(680px,calc(100vw-2rem))]"
+              : isFullpage
+                ? ""
+                : "h-[min(560px,80vh)] w-[min(380px,calc(100vw-2rem))]",
+            isFullpage ? "" : "md:bottom-20 md:right-6",
           )}
         >
           {/* History sidebar */}
@@ -630,13 +641,15 @@ export function AIChatPanel() {
                 >
                   <History className="h-4 w-4" />
                 </button>
-                <button
-                  onClick={() => setOpen(false)}
-                  className="rounded-md p-1 text-white/80 hover:bg-white/10 hover:text-white"
-                  aria-label="Close"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                {!isFullpage && (
+                  <button
+                    onClick={() => setOpen(false)}
+                    className="rounded-md p-1 text-white/80 hover:bg-white/10 hover:text-white"
+                    aria-label="Close"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             </div>
 

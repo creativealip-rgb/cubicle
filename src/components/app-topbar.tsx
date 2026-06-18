@@ -12,6 +12,7 @@ import {
   Settings,
   HelpCircle,
   Menu,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -194,6 +195,18 @@ export function AppTopbar({ user }: AppTopbarProps) {
           <span className="hidden sm:inline">{elapsed}</span>
         </Button>
         )}
+
+        {/* AI assistant button (replaces floating FAB to avoid overlap) */}
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-9 w-9 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+          onClick={() => window.dispatchEvent(new Event("cubicle:toggle-ai"))}
+          aria-label="Toggle AI assistant"
+          title="AI assistant"
+        >
+          <Sparkles className="h-4 w-4" />
+        </Button>
 
         {/* Notifications */}
         <NotificationsBell />

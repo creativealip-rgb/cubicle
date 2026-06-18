@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { AppSidebar, type SidebarBadgeCounts } from "@/components/app-sidebar";
 import { AppTopbar } from "@/components/app-topbar";
@@ -37,6 +38,9 @@ export function AppShell({ children, user, badgeCounts }: AppShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const pathname = usePathname();
+  // Brain page renders the full-page AI panel itself; skip the floating one.
+  const onBrainPage = pathname?.startsWith("/app/brain") ?? false;
 
   // Restore collapsed state from localStorage after hydration
   useEffect(() => {
@@ -86,9 +90,9 @@ export function AppShell({ children, user, badgeCounts }: AppShellProps) {
           )}
         >
           <AppTopbar user={user} />
-          <main className="min-w-0 flex-1 p-4 md:p-6">{children}</main>
+          <main className="min-w-0 flex-1 p-4 pb-24 md:p-6 md:pb-28">{children}</main>
         </div>
-        <AIChatPanel />
+        {!onBrainPage && <AIChatPanel variant="floating" />}
       </div>
     </SidebarContext.Provider>
   );
