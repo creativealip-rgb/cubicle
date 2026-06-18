@@ -9,6 +9,7 @@ import { z } from "zod";
 import { requireUser, assertWorkspaceWritable, assertTaskInWorkspace } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyTaskAssigned } from "@/lib/notifications";
+import { createNotification } from "@/lib/in-app-notifications";
 
 async function getWorkspaceId(): Promise<string> {
   const [ws] = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.slug, "acme-creative")).limit(1);
@@ -52,7 +53,24 @@ async function notifyIfAssigneeChanged(
       dueDate,
     });
   } catch {
-    // best-effort, don't fail the action
+    // best-effort email, don't fail the action
+  }
+
+  // In-app bell notification for assignee
+  try {
+    await createNotification({
+      workspaceId,
+      userId: newAssigneeId,
+      type: "task_assigned",
+      title: `${assignerName} assigned you: ${taskTitle}`,
+      body: dueDate ? `Due ${dueDate}` : undefined,
+      link: `/app/tasks?focus=${taskId}`,
+      entityType: "task",
+      entityId: taskId,
+      actorId: assignerId,
+    });
+  } catch {
+    // best-effort
   }
 }
 

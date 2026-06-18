@@ -69,7 +69,7 @@ export const workspaces = pgTable("workspaces", {
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   ownerId: text("owner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  defaultCurrency: text("default_currency").notNull().default("USD"),
+  defaultCurrency: text("default_currency").notNull().default("IDR"),
   defaultHourlyRate: numeric("default_hourly_rate", { precision: 12, scale: 2 }),
   defaultInvoiceTerms: text("default_invoice_terms"),
   defaultTaxRate: numeric("default_tax_rate", { precision: 5, scale: 2 }).notNull().default("0"),
@@ -203,6 +203,7 @@ export const files = pgTable("files", {
   visibility: text("visibility", { enum: ["internal", "client"] }).notNull().default("internal"),
   fileType: text("file_type", { enum: ["working_file", "deliverable"] }).notNull().default("working_file"),
   uploadedBy: text("uploaded_by").references(() => users.id, { onDelete: "set null" }),
+  lastViewedAt: timestamp("last_viewed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -634,4 +635,62 @@ export const contractRelations = relations(contracts, ({ one }) => ({
   project: one(projects, { fields: [contracts.projectId], references: [projects.id] }),
   template: one(contractTemplates, { fields: [contracts.templateId], references: [contractTemplates.id] }),
   createdByUser: one(users, { fields: [contracts.createdBy], references: [users.id] }),
+}));
+
+// ─── Notifications ───
+
+export const notifications = pgTable("notifications", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  type: text("type", {
+    enum: [
+      "task_assigned",      // X assigned you to task Y
+      "task_commented",     // X commented on your task
+      "client_comment",     // client posted comment via portal
+      "file_viewed",        // client viewed file via portal
+      "invoice_paid",       // invoice marked paid
+      "invoice_sent",       // invoice sent to client
+      "proposal_viewed",    // client viewed proposal
+      "contract_signed",    // client signed contract
+      "contract_viewed",    // client viewed contract
+      "questionnaire_answered", // client answered questionnaire
+      "booking_created",    // client booked via booking page
+      "mention",            // @mentioned in comment
+    ],
+  }).notNull(),
+  title: text("title").notNull(),
+  body: text("body"),
+  // Link to navigate to when clicked (relative path)
+  link: text("link"),
+  // Optional resource ref for grouping/dedup
+  entityType: text("entity_type"),
+  entityId: uuid("entity_id"),
+  actorId: text("actor_id").references(() => users.id, { onDelete: "set null" }),
+  readAt: timestamp("read_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const notificationRelations = relations(notifications, ({ one }) => ({
+  workspace: one(workspaces, { fields: [notifications.workspaceId], references: [workspaces.id] }),
+  user: one(users, { fields: [notifications.userId], references: [users.id] }),
+  actor: one(users, { fields: [notifications.actorId], references: [users.id] }),
+}));
+
+// ─── Portal visit audit ───
+
+export const portalVisits = pgTable("portal_visits", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  resourceType: text("resource_type").notNull(),
+  resourceId: uuid("resource_id").notNull(),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "cascade" }),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  visitedAt: timestamp("visited_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const portalVisitRelations = relations(portalVisits, ({ one }) => ({
+  workspace: one(workspaces, { fields: [portalVisits.workspaceId], references: [workspaces.id] }),
+  client: one(clients, { fields: [portalVisits.clientId], references: [clients.id] }),
 }));

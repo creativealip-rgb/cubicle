@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
 import { useSidebar } from "@/components/app-shell";
+import { NotificationsBell } from "@/components/notifications-bell";
 
 interface AppTopbarProps {
   user: {
@@ -189,6 +190,9 @@ export function AppTopbar({ user }: AppTopbarProps) {
           <span className="hidden sm:inline">{elapsed}</span>
         </Button>
         )}
+
+        {/* Notifications */}
+        <NotificationsBell />
 
         {/* Workspace switcher */}
         <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">

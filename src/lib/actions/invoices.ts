@@ -18,6 +18,8 @@ import { createHash, randomBytes } from "crypto";
 import { requireUser, assertWorkspaceWritable, assertWorkspaceMember } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyInvoiceSent } from "@/lib/notifications";
+import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
+import { formatMoney } from "@/lib/utils";
 
 async function getWorkspaceId(): Promise<string> {
   const [ws] = await db
@@ -450,6 +452,21 @@ export async function recordPayment(input: z.infer<typeof recordPaymentSchema>) 
       .update(invoices)
       .set({ status: "paid", updatedAt: new Date() })
       .where(eq(invoices.id, parsed.invoiceId));
+
+    // In-app notify whole workspace about payment received
+    try {
+      await notifyWorkspaceMembers(workspaceId, {
+        type: "invoice_paid",
+        title: `Invoice ${inv.invoiceNumber} marked paid`,
+        body: formatMoney(inv.total, inv.currency || "IDR"),
+        link: `/app/invoices/${parsed.invoiceId}`,
+        entityType: "invoice",
+        entityId: parsed.invoiceId,
+        actorId: user.id,
+      });
+    } catch {
+      // best-effort
+    }
   }
 
   await writeActivityLog(workspaceId, user.id, "recorded_payment", "payment", payment.id);

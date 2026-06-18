@@ -141,6 +141,29 @@ export async function createPortalComment(input: z.infer<typeof createPortalComm
     source: "portal",
   }).returning();
 
+  // Notify workspace team about client portal comment (actor=null since client isn't a user)
+  try {
+    const { notifyWorkspaceMembers } = await import("@/lib/in-app-notifications");
+    const preview = parsed.body.length > 80 ? parsed.body.slice(0, 77) + "..." : parsed.body;
+    const link =
+      parsed.entityType === "project" ? `/app/projects/${parsed.entityId}` :
+      parsed.entityType === "task" ? `/app/tasks?focus=${parsed.entityId}` :
+      parsed.entityType === "file" ? `/app/files?focus=${parsed.entityId}` :
+      parsed.entityType === "invoice" ? `/app/invoices/${parsed.entityId}` :
+      `/app/clients`;
+    await notifyWorkspaceMembers(wsId, {
+      type: "client_comment",
+      title: `${parsed.authorName} commented on ${parsed.entityType}`,
+      body: preview,
+      link,
+      entityType: parsed.entityType,
+      entityId: parsed.entityId,
+      actorId: null,
+    });
+  } catch {
+    // best-effort
+  }
+
   return comment;
 }
 

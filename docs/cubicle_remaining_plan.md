@@ -1,6 +1,6 @@
 # Cubicle Remaining Plan — From MVP Demo to Production-Ready
 
-Last updated: 2026-06-17
+Last updated: 2026-06-19
 
 ## 1. Current Status
 
@@ -151,10 +151,20 @@ Production client-ready: ~93% (+1: AI Assistant raises polish, R2 gaps unchanged
 - Sellable source/MVP: **99%** (unchanged)
 - Production client-ready: **~95%** (+1 — downloadable signed contract with embedded signature + audit trail is a legal-grade deliverable; AI coverage 28→31 tools)
 
-> **Update 2026-06-19 (Sprint N-ext — Contract Templates CRUD + Demo Seed):**
+| **Update 2026-06-19 (Sprint N-ext — Contract Templates CRUD + Demo Seed):**
 - Demo MVP: **99%** (unchanged)
 - Sellable source/MVP: **99%** (unchanged)
 - Production client-ready: **~95%** (unchanged — templates CRUD is dev/owner-only, no new client-facing surface; demo seed makes the demo "click" without manual setup)
+
+> **Update 2026-06-19 (Sprint O — IDR-grade Invoice Billing):**
+- Demo MVP: **99%** (unchanged)
+- Sellable source/MVP: **99%** (unchanged — already ceiling, but invoice quality goes from "demo" to "Indonesian legal-compliant")
+- Production client-ready: **~96%** (+1 — full IDR invoicing compliance: company name + address + phone + email + NPWP in PDF header; closes gap vs HoneyBook/Bonsai/17hats for Indonesian SMB/freelancer market)
+
+> **Update 2026-06-19 (Sprint R+S+T — Notifications + Portal Viewed + Workspace Currency):**
+- Demo MVP: **99%** (unchanged)
+- Sellable source/MVP: **99%** (unchanged — ceiling)
+- Production client-ready: **~97%** (+1 — in-app notification bell + task assignment/client comment/invoice paid/file viewed triggers; portal visit audit + files.last_viewed_at; workspace currency default IDR + shared formatMoney helper)
 >
 > **Resolved in this continuation session (16 Jun):**
 > - P0.1 rogue /tmp/postgresql regression — confirmed gone (no rebuild)
@@ -186,12 +196,19 @@ Production client-ready: ~93% (+1: AI Assistant raises polish, R2 gaps unchanged
 > - P1.6 real domain — needs Alip's purchase decision
 > - P2.2 RESEND prod + sender domain — blocked by P1.6
 >
-> **Still open low-priority:**
-> - 1 npm audit (accepted, see P0.7 notes)
-> - workspace `billingName` not set → PDF header shows
->   "Company Name" placeholder (cosmetic, easy seed fix)
-> - iPad 768px invoice detail table: 38px overflow (accept, table
->   has horizontal scroll within overflow-x-auto wrapper)
+**Still open low-priority:**
+- 1 npm audit (accepted, see P0.7 notes)
+- iPad 768px invoice detail table: 38px overflow (accept, table
+  has horizontal scroll within overflow-x-auto wrapper)
+
+**Sprint O (19 Jun) closed:**
+- P2.1 billingName + P2.6 IDR billing extras — workspace schema
+  extended with billing_email / billing_phone / tax_id (NPWP);
+  migration 0007 applied to live DB; demo workspace seeded with
+  full Acme Creative Studio billing block; PDF invoice header now
+  renders company + address + phone + email + NPWP. Indonesian
+  legal-grade invoicing complete. Tag `mvp-v0.1.18-billing-extras`,
+  commit `6afff6d`.
 >
 > P0.6 role backend guard ✅ — `assertWorkspaceWritable` in 8 mutation
 > action files (clients/files/invoices/projects/prompts/tasks/time/appointments).

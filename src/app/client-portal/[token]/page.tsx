@@ -7,8 +7,9 @@ import {
   files,
   invoices,
   comments,
+  portalVisits,
 } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { getClientPortalAccess, logPortalAccess } from "@/lib/actions/portal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -158,6 +159,51 @@ export default async function ClientPortalPage({
       )
       .limit(100);
     projectFilesMap.set(projectId, projectFiles);
+  }
+
+  // Track file visibility on portal open: mark files last viewed, audit visits,
+  // and notify workspace on first ever portal view per file.
+  try {
+    const headersList = await headers();
+    const ipAddress = headersList.get("x-forwarded-for") || undefined;
+    const userAgent = headersList.get("user-agent") || undefined;
+    const { notifyWorkspaceMembers } = await import("@/lib/in-app-notifications");
+    for (const projectFiles of projectFilesMap.values()) {
+      for (const file of projectFiles) {
+        const [{ seen = 0 } = {}] = await db
+          .select({ seen: sql<number>`count(*)::int` })
+          .from(portalVisits)
+          .where(and(eq(portalVisits.resourceType, "file"), eq(portalVisits.resourceId, file.id)));
+
+        await db.insert(portalVisits).values({
+          workspaceId: client.workspaceId,
+          clientId: client.id,
+          resourceType: "file",
+          resourceId: file.id,
+          ipAddress,
+          userAgent,
+        });
+
+        await db
+          .update(files)
+          .set({ lastViewedAt: new Date() })
+          .where(eq(files.id, file.id));
+
+        if (seen === 0) {
+          await notifyWorkspaceMembers(client.workspaceId, {
+            type: "file_viewed",
+            title: `${client.name} viewed ${file.name}`,
+            body: "First portal view",
+            link: `/app/files?focus=${file.id}`,
+            entityType: "file",
+            entityId: file.id,
+            actorId: null,
+          });
+        }
+      }
+    }
+  } catch {
+    // non-critical analytics / notification
   }
 
   // Fetch client-visible comments per project
