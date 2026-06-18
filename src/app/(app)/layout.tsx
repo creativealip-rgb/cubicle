@@ -1,10 +1,17 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { and, eq, ne, count } from "drizzle-orm";
+import { and, eq, ne, count, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { AppShell } from "@/components/app-shell";
 import { db } from "@/db";
-import { workspaces, workspaceMembers, tasks } from "@/db/schema";
+import {
+  workspaces,
+  workspaceMembers,
+  tasks,
+  invoices,
+  proposals,
+  contracts,
+} from "@/db/schema";
 
 export default async function AppLayout({
   children,
@@ -48,6 +55,45 @@ export default async function AppLayout({
         )
     : [{ myOpenTasksCount: 0 }];
 
+  // Sidebar badge counts (workspace-scoped)
+  async function countInvoices(sqlFilter: ReturnType<typeof sql>) {
+    if (!workspace) return 0;
+    const [row] = await db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(invoices)
+      .where(and(eq(invoices.workspaceId, workspace.id), sqlFilter));
+    return row?.n ?? 0;
+  }
+  async function countProposals(sqlFilter: ReturnType<typeof sql>) {
+    if (!workspace) return 0;
+    const [row] = await db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(proposals)
+      .where(and(eq(proposals.workspaceId, workspace.id), sqlFilter));
+    return row?.n ?? 0;
+  }
+  async function countContracts(sqlFilter: ReturnType<typeof sql>) {
+    if (!workspace) return 0;
+    const [row] = await db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(contracts)
+      .where(and(eq(contracts.workspaceId, workspace.id), sqlFilter));
+    return row?.n ?? 0;
+  }
+
+  const [unpaidInvoices, draftProposals, draftContracts] = await Promise.all([
+    countInvoices(sql`${invoices.status} in ('sent','viewed','overdue')`),
+    countProposals(sql`${proposals.status} = 'draft'`),
+    countContracts(sql`${contracts.status} = 'draft'`),
+  ]);
+
+  const badgeCounts = {
+    myOpenTasks: myOpenTasksCount,
+    unpaidInvoices,
+    draftProposals,
+    draftContracts,
+  };
+
   return (
     <AppShell
       user={{
@@ -56,7 +102,7 @@ export default async function AppLayout({
         image: session.user.image,
         role: member?.role ?? "viewer",
       }}
-      myOpenTasksCount={myOpenTasksCount}
+      badgeCounts={badgeCounts}
     >
       {children}
     </AppShell>

@@ -41,24 +41,37 @@ const navItems = [
   { label: "Time", href: "/app/time", icon: Clock, group: "Work" },
   { label: "Calendar", href: "/app/calendar", icon: Calendar, group: "Work" },
   { label: "Files", href: "/app/files", icon: FolderOpen, group: "Work" },
-  { label: "Invoices", href: "/app/invoices", icon: Receipt, group: "Money" },
+  { label: "Invoices", href: "/app/invoices", icon: Receipt, group: "Money", badgeKey: "unpaidInvoices" as const },
   { label: "Expenses", href: "/app/expenses", icon: Wallet, group: "Money" },
   { label: "Reports", href: "/app/reports", icon: BarChart3, group: "Money" },
-  { label: "Proposals", href: "/app/proposals", icon: FileText, group: "Sales" },
-  { label: "Contracts", href: "/app/contracts", icon: FileSignature, group: "Sales" },
+  { label: "Proposals", href: "/app/proposals", icon: FileText, group: "Sales", badgeKey: "draftProposals" as const },
+  { label: "Contracts", href: "/app/contracts", icon: FileSignature, group: "Sales", badgeKey: "draftContracts" as const },
   { label: "Forms", href: "/app/questionnaires", icon: ClipboardList, group: "Sales" },
   { label: "Templates", href: "/app/contract-templates", icon: FileText, group: "Sales" },
   { label: "Prompts", href: "/app/prompts", icon: Sparkles, group: "AI" },
   { label: "Settings", href: "/app/settings", icon: Settings, group: null },
 ];
 
+export type SidebarBadgeKey =
+  | "myOpenTasks"
+  | "unpaidInvoices"
+  | "draftProposals"
+  | "draftContracts";
+
+export interface SidebarBadgeCounts {
+  myOpenTasks?: number;
+  unpaidInvoices?: number;
+  draftProposals?: number;
+  draftContracts?: number;
+}
+
 interface AppSidebarProps {
   collapsed: boolean;
   onToggle: () => void;
-  myOpenTasksCount?: number;
+  badgeCounts?: SidebarBadgeCounts;
 }
 
-export function AppSidebar({ collapsed, onToggle, myOpenTasksCount = 0 }: AppSidebarProps) {
+export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps) {
   const pathname = usePathname();
   const { mobileOpen, setMobileOpen } = useSidebar();
 
@@ -165,9 +178,17 @@ export function AppSidebar({ collapsed, onToggle, myOpenTasksCount = 0 }: AppSid
                         pathname.startsWith(item.href + "/"));
                     const Icon = item.icon;
                     const badge =
-                      "badgeKey" in item && item.badgeKey === "myOpenTasks"
-                        ? myOpenTasksCount
+                      item.badgeKey
+                        ? (badgeCounts?.[item.badgeKey] ?? 0)
                         : 0;
+                    const badgeLabel = item.badgeKey
+                      ? ({
+                          myOpenTasks: "open tasks assigned to you",
+                          unpaidInvoices: "unpaid invoices",
+                          draftProposals: "draft proposals to send",
+                          draftContracts: "draft contracts to send",
+                        }[item.badgeKey])
+                      : "";
 
                     return (
                       <li key={item.href}>
@@ -193,7 +214,7 @@ export function AppSidebar({ collapsed, onToggle, myOpenTasksCount = 0 }: AppSid
                                       ? "bg-sidebar-primary-foreground text-sidebar-primary"
                                       : "bg-blue-600 text-white",
                                   )}
-                                  aria-label={`${badge} open tasks assigned to you`}
+                                  aria-label={`${badge} ${badgeLabel}`}
                                 >
                                   {badge > 99 ? "99+" : badge}
                                 </span>
@@ -201,7 +222,7 @@ export function AppSidebar({ collapsed, onToggle, myOpenTasksCount = 0 }: AppSid
                               {collapsed && badge > 0 && (
                                 <span
                                   className="absolute right-1 top-1 inline-flex h-2 w-2 rounded-full bg-blue-500"
-                                  aria-label={`${badge} open tasks assigned to you`}
+                                  aria-label={`${badge} ${badgeLabel}`}
                                 />
                               )}
                             </Link>

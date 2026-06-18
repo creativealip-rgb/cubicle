@@ -1,8 +1,8 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar, type SidebarBadgeCounts } from "@/components/app-sidebar";
 import { AppTopbar } from "@/components/app-topbar";
 import { AIChatPanel } from "@/components/ai/chat-panel";
 
@@ -14,7 +14,7 @@ interface AppShellProps {
     image?: string | null;
     role?: "owner" | "member" | "viewer";
   };
-  myOpenTasksCount?: number;
+  badgeCounts?: SidebarBadgeCounts;
 }
 
 const SidebarContext = createContext<{
@@ -33,9 +33,31 @@ export function useSidebar() {
   return useContext(SidebarContext);
 }
 
-export function AppShell({ children, user, myOpenTasksCount = 0 }: AppShellProps) {
+export function AppShell({ children, user, badgeCounts }: AppShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Restore collapsed state from localStorage after hydration
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem("cubicle:sidebarCollapsed");
+      if (stored === "1") setCollapsed(true);
+    } catch {
+      // ignore (e.g. SSR or storage disabled)
+    }
+    setHydrated(true);
+  }, []);
+
+  // Persist collapsed state
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      window.localStorage.setItem("cubicle:sidebarCollapsed", collapsed ? "1" : "0");
+    } catch {
+      // ignore
+    }
+  }, [collapsed, hydrated]);
 
   return (
     <SidebarContext.Provider value={{ collapsed, setCollapsed, mobileOpen, setMobileOpen }}>
@@ -51,7 +73,7 @@ export function AppShell({ children, user, myOpenTasksCount = 0 }: AppShellProps
         <AppSidebar
           collapsed={collapsed}
           onToggle={() => setCollapsed(!collapsed)}
-          myOpenTasksCount={myOpenTasksCount}
+          badgeCounts={badgeCounts}
         />
         <div
           className={cn(
