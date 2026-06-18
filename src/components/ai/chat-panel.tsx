@@ -592,7 +592,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
         <div
           className={cn(
             isFullpage
-              ? "flex h-full w-full max-w-4xl mx-auto flex-col overflow-hidden rounded-2xl border bg-white shadow-sm"
+              ? "flex h-full w-full max-w-4xl mx-auto flex-col"
               : "fixed bottom-4 right-4 z-50 flex flex-col overflow-hidden rounded-2xl border bg-white shadow-2xl",
             isFullpage
               ? ""
