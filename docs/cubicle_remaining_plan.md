@@ -1728,3 +1728,49 @@ curl -k -I https://cubicle.168.144.37.19.sslip.io/signup
    - Verified: h1/h2 properly sized in proposal body
 
 **Live tested on https://cubicle.168-144-37-19.sslip.io/ with owner@cubicle.test / password123**
+
+## Sprint P — 2026-06-18 — Landing visual cascade fixes (4 commits, post-19 Jun plan)
+
+**Tags:** `mvp-v0.1.14` → `mvp-v0.1.17`
+**Commits:** `46a9352` → `788caef`
+
+**Bugs found via live browser color audit + vision:**
+
+1. **Pill + badge border color silent-fail** (v0.1.14)
+   - Root cause: Tailwind v4 global `* { border-color: var(--border) }` override
+     `border-[#A78BFA]/30` → `#E8E8E8` (gray instead of purple)
+   - Fix: `!border-[#A78BFA]/30` (Tailwind `!` important prefix)
+   - Verified: pills now show purple tint, badge visible on dark bg
+
+2. **"Why Cubicle" H2 nyaru on dark navy bg** (v0.1.15)
+   - Root cause: dark gradient `#0f0a1f → #312e81` + H2 white low contrast first sentence;
+     `bg-[radial-gradient(...)]` arbitrary value silently fail in Tailwind v4
+   - Fix: switch section to light off-white `#FAFBFC` + soft purple/blue radial;
+     inline `style={{ background }}` instead of arbitrary class;
+     H2 → navy `#292D34`; pills/badge inverted (white bg, purple text)
+   - Verified: vision confirms high contrast, no nyaru
+
+3. **Final CTA card H2 + P invisible** (v0.1.16)
+   - Root cause: `h1, h2, h3, h4 { color: var(--foreground) }` in globals.css
+     overrides Tailwind `text-white` via cascade order (not specificity)
+   - Fix (temp): inline `style={{ color: '#ffffff' }}` on H2 + P + wrapper
+   - Verified: white text on blue gradient high contrast
+
+4. **Systemic heading cascade** (v0.1.17)
+   - Root cause: global heading rule not in Tailwind `@layer base`
+   - Fix: wrap `* { border-color }`, `h1-h4 { font-family, letter-spacing }`, `body`
+     in `@layer base {}`; remove forced `color: var(--foreground)` from h1-h4
+   - Verified: Tailwind `text-*` utilities now win consistently; reverted
+     inline-style workaround in final CTA back to clean class-based
+   - Side benefit: any future heading with custom color class works as expected
+
+**Held / cosmetic status updates:**
+- `workspace.billingName` — already seeded with "Acme Creative Studio" for demo
+  workspace; PDF header shows real name not "Company Name". Plan note
+  "billingName not set" was outdated — verified live 2026-06-18 via
+  `/api/invoices/<id>/pdf` returning clean header.
+
+**Score unchanged:** Demo 99% · Sellable 99% · Production ~95% (pure UI hardening,
+not feature/infra work).
+
+**Live tested on https://cubicle.168-144-37-19.sslip.io/ with owner@cubicle.test / password123**
