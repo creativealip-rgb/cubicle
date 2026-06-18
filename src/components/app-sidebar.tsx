@@ -49,6 +49,7 @@ const navItems = [
   { label: "Forms", href: "/app/questionnaires", icon: ClipboardList, group: "Sales" },
   { label: "Templates", href: "/app/contract-templates", icon: FileText, group: "Sales" },
   { label: "Brain", href: "/app/brain", icon: BrainIcon, group: "AI" },
+  { label: "Prompts", href: "/app/prompts", icon: Sparkles, group: "AI" },
 ];
 
 export type SidebarBadgeKey =
