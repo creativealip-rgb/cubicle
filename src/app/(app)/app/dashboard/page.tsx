@@ -32,18 +32,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { formatMoney, formatMoneyCompact } from "@/lib/utils";
 import Link from "next/link";
 
-async function getWorkspaceId() {
-  const [ws] = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.slug, "acme-creative")).limit(1);
+async function getWorkspace() {
+  const [ws] = await db
+    .select({ id: workspaces.id, defaultCurrency: workspaces.defaultCurrency })
+    .from(workspaces)
+    .where(eq(workspaces.slug, "acme-creative"))
+    .limit(1);
   if (!ws) throw new Error("Workspace not found");
-  return ws.id;
+  return ws;
 }
 
 export default async function DashboardPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   const _user = requireUser(session?.user);
-  const workspaceId = await getWorkspaceId();
+  const workspace = await getWorkspace();
+  const workspaceId = workspace.id;
+  const workspaceCurrency = workspace.defaultCurrency || "IDR";
 
   // KPI counts
   const result = await db.execute(
@@ -52,7 +59,7 @@ export default async function DashboardPage() {
       (SELECT count(*)::int FROM projects WHERE workspace_id = ${workspaceId} AND status = 'active') as active_projects,
       (SELECT count(*)::int FROM tasks WHERE workspace_id = ${workspaceId} AND status != 'done') as due_tasks,
       (SELECT count(*)::int FROM tasks WHERE workspace_id = ${workspaceId} AND status != 'done' AND due_date IS NOT NULL AND due_date < current_date) as overdue_tasks,
-      (SELECT count(*)::int FROM invoices WHERE workspace_id = ${workspaceId} AND status IN ('sent','overdue')) as unpaid_invoices
+      (SELECT count(*)::int FROM invoices WHERE workspace_id = ${workspaceId} AND status IN ('sent','viewed','overdue')) as unpaid_invoices
     `,
   );
   const counts = result.rows[0] as Record<string, number>;
@@ -66,7 +73,7 @@ export default async function DashboardPage() {
   let unpaidAmount = 0;
   try {
     const result = await db.execute(
-      sql`SELECT coalesce(sum(total), 0)::decimal as amt FROM invoices WHERE workspace_id = ${workspaceId} AND status = 'sent'`,
+      sql`SELECT coalesce(sum(total), 0)::decimal as amt FROM invoices WHERE workspace_id = ${workspaceId} AND status IN ('sent','viewed','overdue')`,
     );
     unpaidAmount = Number((result.rows[0] as { amt: string })?.amt ?? 0);
   } catch {
@@ -202,7 +209,13 @@ export default async function DashboardPage() {
         sql`${tasks.status} != 'done'`
       )
     )
-    .orderBy(tasks.priority)
+    .orderBy(sql`case ${tasks.priority}
+      when 'urgent' then 1
+      when 'high' then 2
+      when 'medium' then 3
+      when 'low' then 4
+      else 5
+    end`)
     .limit(5);
 
   // Unpaid invoices list
@@ -221,7 +234,7 @@ export default async function DashboardPage() {
     .where(
       and(
         eq(invoices.workspaceId, workspaceId),
-        sql`${invoices.status} in ('sent', 'overdue')`,
+        sql`${invoices.status} in ('sent', 'viewed', 'overdue')`,
       ),
     )
     .orderBy(desc(invoices.dueDate))
@@ -287,7 +300,7 @@ export default async function DashboardPage() {
     },
     {
       label: "Unpaid Invoices",
-      value: `Rp ${unpaidAmount.toLocaleString("id-ID")}`,
+      value: formatMoneyCompact(unpaidAmount, workspaceCurrency),
       change: `${unpaidCount} pending`,
       icon: Receipt,
       iconBg: "bg-red-100 text-red-600",
@@ -399,7 +412,7 @@ export default async function DashboardPage() {
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Revenue (14d)</p>
                 <p className="text-2xl font-bold tracking-tight">
-                  Rp {Math.round(sparkTotal).toLocaleString("id-ID")}
+                  {formatMoneyCompact(sparkTotal, workspaceCurrency)}
                 </p>
                 <p
                   className={`text-xs font-medium ${
@@ -526,7 +539,7 @@ export default async function DashboardPage() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium text-slate-700">{bucket.label}</span>
                   <span className="font-semibold tabular-nums text-slate-950">
-                    Rp {Math.round(bucket.amt).toLocaleString("id-ID")}
+                    {formatMoney(bucket.amt, workspaceCurrency)}
                   </span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
@@ -541,7 +554,7 @@ export default async function DashboardPage() {
               <div className="mt-3 flex items-center justify-between rounded-lg border border-red-100 bg-red-50/50 px-3 py-2 text-sm">
                 <span className="font-medium text-red-700">Already overdue</span>
                 <span className="font-semibold tabular-nums text-red-700">
-                  Rp {Math.round(cfOverdue).toLocaleString("id-ID")}
+                  {formatMoney(cfOverdue, workspaceCurrency)}
                 </span>
               </div>
             )}
@@ -558,7 +571,7 @@ export default async function DashboardPage() {
             </CardTitle>
             <Button variant="ghost" size="sm" className="gap-1 text-xs" asChild>
               <Link href="/app/tasks">
-                View all
+                View tasks
                 <ArrowUpRight className="h-3 w-3" />
               </Link>
             </Button>
@@ -623,9 +636,11 @@ export default async function DashboardPage() {
                   <p className="text-xs text-muted-foreground">
                     Start tracking time on a task
                   </p>
-                  <Button variant="outline" size="sm" className="mt-3 gap-1">
-                    <Clock className="h-3 w-3" />
-                    Start Timer
+                  <Button variant="outline" size="sm" className="mt-3 gap-1" asChild>
+                    <Link href="/app/time">
+                      <Clock className="h-3 w-3" />
+                      Start Timer
+                    </Link>
                   </Button>
                 </div>
               )}
@@ -711,7 +726,7 @@ export default async function DashboardPage() {
                       {inv.status}
                     </Badge>
                     <span className="text-sm font-semibold">
-                      {inv.currency} {Number(inv.total).toLocaleString()}
+                      {formatMoney(inv.total, inv.currency || workspaceCurrency)}
                     </span>
                   </div>
                 </div>
