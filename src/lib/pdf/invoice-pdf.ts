@@ -18,6 +18,9 @@ interface InvoiceData {
   workspace: {
     billingName: string | null;
     billingAddress: string | null;
+    billingEmail: string | null;
+    billingPhone: string | null;
+    taxId: string | null;
     logoUrl: string | null;
   };
   client: {

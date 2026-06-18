@@ -76,6 +76,9 @@ export async function GET(
     workspace: {
       billingName: ws?.billingName ?? null,
       billingAddress: ws?.billingAddress ?? null,
+      billingEmail: ws?.billingEmail ?? null,
+      billingPhone: ws?.billingPhone ?? null,
+      taxId: ws?.taxId ?? null,
       logoUrl: ws?.logoUrl ?? null,
     },
     client: {

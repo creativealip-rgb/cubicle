@@ -271,6 +271,9 @@ interface InvoicePDFProps {
   workspace: {
     billingName: string | null;
     billingAddress: string | null;
+    billingEmail: string | null;
+    billingPhone: string | null;
+    taxId: string | null;
     logoUrl: string | null;
   };
   client: {
@@ -313,6 +316,15 @@ export function InvoicePDF({ invoice, workspace, client, items }: InvoicePDFProp
               </Text>
               {workspace.billingAddress && (
                 <Text style={styles.companyAddress}>{workspace.billingAddress}</Text>
+              )}
+              {workspace.billingPhone && (
+                <Text style={styles.companyAddress}>{workspace.billingPhone}</Text>
+              )}
+              {workspace.billingEmail && (
+                <Text style={styles.companyAddress}>{workspace.billingEmail}</Text>
+              )}
+              {workspace.taxId && (
+                <Text style={styles.companyAddress}>NPWP: {workspace.taxId}</Text>
               )}
             </View>
           </View>

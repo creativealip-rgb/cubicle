@@ -50,6 +50,9 @@ async function seed() {
     bookingSlug: "acme-creative",
     billingName: "Acme Creative Studio",
     billingAddress: "Jl. Sudirman No. 1, Jakarta Pusat, Indonesia",
+    billingEmail: "finance@acme-creative.id",
+    billingPhone: "+62 21 555 1234",
+    taxId: "01.234.567.8-901.000",
   })
 
   await db.insert(workspaceMembers).values([
