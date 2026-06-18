@@ -191,6 +191,25 @@ export async function updateTaskStatus(taskId: string, status: string, position?
     .returning();
 
   await writeActivityLog(workspaceId, user.id, "updated_task_status", "task", taskId);
+
+  if (task.assigneeId && task.assigneeId !== user.id) {
+    try {
+      await createNotification({
+        workspaceId,
+        userId: task.assigneeId,
+        type: "task_status_changed",
+        title: `Task moved to ${status.replace(/_/g, " ")}`,
+        body: task.title,
+        link: `/app/tasks?focus=${taskId}`,
+        entityType: "task",
+        entityId: taskId,
+        actorId: user.id,
+      });
+    } catch {
+      // best-effort
+    }
+  }
+
   return task;
 }
 

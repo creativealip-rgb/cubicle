@@ -36,6 +36,9 @@ const TYPE_ICON: Record<string, string> = {
   contract_viewed: "👁",
   questionnaire_answered: "📝",
   booking_created: "📅",
+  task_status_changed: "🔄",
+  task_due_soon: "⏰",
+  invoice_overdue: "⚠️",
   mention: "@",
 };
 

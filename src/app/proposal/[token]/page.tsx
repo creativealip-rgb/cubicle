@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { proposals, clients, workspaces } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
 import crypto from "crypto";
 import { notFound } from "next/navigation";
 import { AcceptDeclineButtons } from "@/components/proposals/accept-decline-buttons";
@@ -28,6 +29,7 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
   const [proposal] = await db
     .select({
       id: proposals.id,
+      workspaceId: proposals.workspaceId,
       title: proposals.title,
       body: proposals.body,
       lineItems: proposals.lineItems,
@@ -43,6 +45,7 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
       declineReason: proposals.declineReason,
       sharedTokenExpiresAt: proposals.sharedTokenExpiresAt,
       sentAt: proposals.sentAt,
+      viewedAt: proposals.viewedAt,
       clientName: clients.name,
       clientEmail: clients.email,
       workspaceName: workspaces.name,
@@ -60,8 +63,26 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
   const isDraft = proposal.status === "draft";
   const isActionable = !expired && !isAccepted && !isDeclined && !isDraft;
 
-  // Mark viewed (server action) — non-blocking; best effort
-  // Skipped in render to avoid mutation; rely on accept/decline to track engagement.
+  // Mark viewed + notify workspace once (first view only)
+  if (!proposal.viewedAt && proposal.status === "sent") {
+    try {
+      await db
+        .update(proposals)
+        .set({ viewedAt: new Date(), status: "viewed", updatedAt: new Date() })
+        .where(eq(proposals.id, proposal.id));
+      await notifyWorkspaceMembers(proposal.workspaceId, {
+        type: "proposal_viewed",
+        title: `${proposal.clientName} viewed proposal`,
+        body: proposal.title,
+        link: `/app/proposals/${proposal.id}`,
+        entityType: "proposal",
+        entityId: proposal.id,
+        actorId: null,
+      });
+    } catch {
+      // best-effort
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4">

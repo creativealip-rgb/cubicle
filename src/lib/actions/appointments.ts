@@ -13,6 +13,7 @@ import { z } from "zod";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyAppointmentBooked, notifyAppointmentCancelled } from "@/lib/notifications";
+import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
 
 async function getWorkspaceId(): Promise<string> {
   const [ws] = await db
@@ -296,6 +297,20 @@ export async function createPublicAppointment(
     dateTime: startTime.toISOString(),
     workspaceName: ws.name,
   });
+
+  try {
+    await notifyWorkspaceMembers(parsed.workspaceId, {
+      type: "booking_created",
+      title: `${parsed.attendeeName} booked ${parsed.title}`,
+      body: startTime.toISOString(),
+      link: `/app/calendar`,
+      entityType: "appointment",
+      entityId: appointment.id,
+      actorId: null,
+    });
+  } catch {
+    // best-effort
+  }
 
   return appointment;
 }

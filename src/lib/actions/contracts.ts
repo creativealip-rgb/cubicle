@@ -9,6 +9,7 @@ import { z } from "zod";
 import crypto from "crypto";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
 
 async function getWorkspaceId(): Promise<string> {
   const [ws] = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.slug, "acme-creative")).limit(1);
@@ -321,11 +322,25 @@ export async function getPublicContract(token: string) {
   const [client] = await db.select({ name: clients.name, email: clients.email })
     .from(clients).where(eq(clients.id, c.clientId)).limit(1);
 
-  // Mark as viewed (idempotent)
+  // Mark as viewed (idempotent) + notify workspace on first view
   if (!c.viewedAt && c.status === "sent") {
     await db.update(contracts)
       .set({ viewedAt: new Date(), status: "viewed", updatedAt: new Date() })
       .where(eq(contracts.id, c.id));
+
+    try {
+      await notifyWorkspaceMembers(c.workspaceId, {
+        type: "contract_viewed",
+        title: `${client?.name ?? "Client"} viewed contract`,
+        body: c.title,
+        link: `/app/contracts/${c.id}`,
+        entityType: "contract",
+        entityId: c.id,
+        actorId: null,
+      });
+    } catch {
+      // best-effort
+    }
   }
 
   return {
@@ -385,6 +400,20 @@ export async function signContract(input: {
     signedName: input.signedName,
     signedFromIp: ip,
   });
+
+  try {
+    await notifyWorkspaceMembers(c.workspaceId, {
+      type: "contract_signed",
+      title: `${input.signedName.trim()} signed contract`,
+      body: c.title,
+      link: `/app/contracts/${c.id}`,
+      entityType: "contract",
+      entityId: c.id,
+      actorId: null,
+    });
+  } catch {
+    // best-effort
+  }
 
   return updated;
 }

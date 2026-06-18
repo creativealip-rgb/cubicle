@@ -9,6 +9,7 @@ import { z } from "zod";
 import crypto from "crypto";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
 
 // Field schema for the form builder
 const fieldSchema = z.object({
@@ -259,6 +260,20 @@ export async function submitQuestionnaire(input: {
   await writeActivityLog(resp.workspaceId, resp.respondentEmail || "anonymous", "submitted_questionnaire", "questionnaire_response", resp.id, {
     questionnaireName: q.name,
   });
+
+  try {
+    await notifyWorkspaceMembers(resp.workspaceId, {
+      type: "questionnaire_answered",
+      title: `${resp.respondentName ?? resp.respondentEmail ?? "Client"} answered questionnaire`,
+      body: q.name,
+      link: `/app/questionnaires/${q.id}`,
+      entityType: "questionnaire_response",
+      entityId: resp.id,
+      actorId: null,
+    });
+  } catch {
+    // best-effort
+  }
 
   return updated;
 }

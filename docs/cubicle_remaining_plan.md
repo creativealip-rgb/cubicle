@@ -165,6 +165,11 @@ Production client-ready: ~93% (+1: AI Assistant raises polish, R2 gaps unchanged
 - Demo MVP: **99%** (unchanged)
 - Sellable source/MVP: **99%** (unchanged — ceiling)
 - Production client-ready: **~97%** (+1 — in-app notification bell + task assignment/client comment/invoice paid/file viewed triggers; portal visit audit + files.last_viewed_at; workspace currency default IDR + shared formatMoney helper)
+
+> **Update 2026-06-19 (Sprint U — Notification Trigger Expansion):**
+- Demo MVP: **99%** (unchanged)
+- Sellable source/MVP: **99%** (unchanged — ceiling)
+- Production client-ready: **~97.5%** (+0.5 — notification coverage expanded across proposal viewed, contract viewed/signed, questionnaire answered, booking created, task status changed, @mentions, due-date reminders, overdue invoice alerts)
 >
 > **Resolved in this continuation session (16 Jun):**
 > - P0.1 rogue /tmp/postgresql regression — confirmed gone (no rebuild)

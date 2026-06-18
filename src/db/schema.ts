@@ -656,6 +656,9 @@ export const notifications = pgTable("notifications", {
       "contract_viewed",    // client viewed contract
       "questionnaire_answered", // client answered questionnaire
       "booking_created",    // client booked via booking page
+      "task_status_changed", // task status changed
+      "task_due_soon",      // due date reminder
+      "invoice_overdue",    // invoice overdue reminder
       "mention",            // @mentioned in comment
     ],
   }).notNull(),
