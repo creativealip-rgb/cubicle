@@ -94,9 +94,13 @@ export function AppTopbar({ user }: AppTopbarProps) {
 
     loadActiveTimer();
     const poll = window.setInterval(loadActiveTimer, 15000);
+    window.addEventListener("cubicle:timer-changed", loadActiveTimer);
+    window.addEventListener("focus", loadActiveTimer);
     return () => {
       alive = false;
       window.clearInterval(poll);
+      window.removeEventListener("cubicle:timer-changed", loadActiveTimer);
+      window.removeEventListener("focus", loadActiveTimer);
     };
   }, []);
 

@@ -12,7 +12,6 @@ import {
   MessageSquarePlus,
   History,
   Trash2,
-  Download,
   Mic,
   MicOff,
 } from "lucide-react";
@@ -537,7 +536,7 @@ export function AIChatPanel() {
       <button
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "fixed bottom-4 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-all md:bottom-6 md:right-6",
+          "fixed bottom-4 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-all md:bottom-20 md:right-6",
           "bg-blue-600 text-white hover:bg-blue-700 hover:scale-105",
           open && "scale-90 opacity-0 pointer-events-none",
         )}
@@ -554,7 +553,7 @@ export function AIChatPanel() {
             showHistory
               ? "h-[min(560px,80vh)] w-[min(680px,calc(100vw-2rem))]"
               : "h-[min(560px,80vh)] w-[min(380px,calc(100vw-2rem))]",
-            "md:bottom-6 md:right-6",
+            "md:bottom-20 md:right-6",
           )}
         >
           {/* History sidebar */}

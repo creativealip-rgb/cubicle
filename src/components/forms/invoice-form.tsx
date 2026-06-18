@@ -63,8 +63,9 @@ export function InvoiceForm({ mode, defaultValues, clients, onSuccess }: Invoice
       };
 
       if (mode === "create") {
-        await createInvoice(data);
+        const invoice = await createInvoice(data);
         toast.success("Invoice created");
+        router.push(`/app/invoices/${invoice.id}`);
       } else if (defaultValues?.id) {
         await updateInvoice(defaultValues.id, data);
         toast.success("Invoice updated");

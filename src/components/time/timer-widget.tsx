@@ -158,6 +158,7 @@ export function TimerWidget({
         projectName: project?.name ?? null,
         taskTitle: task?.title ?? null,
       });
+      window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
 
       toast.success("Timer started");
       router.refresh();
@@ -175,6 +176,7 @@ export function TimerWidget({
       await stopTimer(activeTimer.id);
       setActiveTimer(null);
       setElapsed("00:00:00");
+      window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
       toast.success("Timer stopped");
       router.refresh();
     } catch (err: unknown) {
@@ -192,6 +194,7 @@ export function TimerWidget({
       await stopTimer(activeTimer.id);
       setActiveTimer(null);
       setElapsed("00:00:00");
+      window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
       toast.success("Stale timer discarded");
       router.refresh();
     } catch (err: unknown) {

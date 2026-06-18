@@ -53,6 +53,7 @@ function statusVariant(
     case "viewed":
       return "secondary";
     case "overdue":
+    case "payment due":
       return "destructive";
     case "cancelled":
       return "outline";
@@ -128,6 +129,7 @@ export default async function InvoiceDetailPage({
     : false;
 
   const isPaid = Number(inv.total) > 0 && totalPaid >= Number(inv.total);
+  const displayStatus = inv.status === "paid" && !isPaid ? "payment due" : inv.status;
 
   return (
     <div className="space-y-6 min-w-0">
@@ -150,10 +152,10 @@ export default async function InvoiceDetailPage({
         </div>
         <div className="flex items-center gap-2">
           <Badge
-            variant={statusVariant(inv.status)}
+            variant={statusVariant(displayStatus)}
             className="text-sm px-3 py-1"
           >
-            {inv.status}
+            {displayStatus}
           </Badge>
           {isPaid && inv.status !== "paid" && (
             <Badge variant="default" className="text-sm px-3 py-1">
