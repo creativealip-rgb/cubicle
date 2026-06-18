@@ -10,8 +10,10 @@ import {
   timeEntries,
   workspaces,
   users,
+  contracts,
+  notifications,
 } from "@/db/schema";
-import { eq, and, desc, sql, gte, lte } from "drizzle-orm";
+import { eq, and, desc, sql, gte, lte, isNull } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import {
   Users,
@@ -27,6 +29,9 @@ import {
   Timer,
   FileText,
   TrendingUp,
+  Bell,
+  FileSignature,
+  ArrowRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -68,6 +73,24 @@ export default async function DashboardPage() {
   const dueTasks = counts.due_tasks || 0;
   const overdueTasks = counts.overdue_tasks || 0;
   const unpaidCount = counts.unpaid_invoices || 0;
+
+  // Attention Needed — counts surfaced as actionable summary
+  const todayStr = new Date().toISOString().split("T")[0]!;
+  const attention = await db
+    .select({
+      overdueInvoices: sql<number>`(SELECT count(*)::int FROM invoices WHERE workspace_id = ${workspaceId} AND status = 'overdue')`,
+      tasksDueToday: sql<number>`(SELECT count(*)::int FROM tasks WHERE workspace_id = ${workspaceId} AND status != 'done' AND due_date = ${todayStr})`,
+      contractsAwaiting: sql<number>`(SELECT count(*)::int FROM contracts WHERE workspace_id = ${workspaceId} AND status IN ('draft','sent','viewed'))`,
+      unreadNotifications: sql<number>`(SELECT count(*)::int FROM notifications WHERE workspace_id = ${workspaceId} AND user_id = ${session?.user?.id ?? ""} AND read_at IS NULL)`,
+    })
+    .from(sql`(select 1) as _`)
+    .limit(1);
+  const att = attention[0] ?? {
+    overdueInvoices: 0,
+    tasksDueToday: 0,
+    contractsAwaiting: 0,
+    unreadNotifications: 0,
+  };
 
   // Unpaid invoices total
   let unpaidAmount = 0;
@@ -375,6 +398,96 @@ export default async function DashboardPage() {
           })}
         </div>
       </div>
+
+      {/* Attention Needed — only shown if any count > 0 */}
+      {(att.overdueInvoices > 0 ||
+        att.tasksDueToday > 0 ||
+        att.contractsAwaiting > 0 ||
+        att.unreadNotifications > 0) && (
+        <div className="relative overflow-hidden rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 p-5 shadow-sm">
+          <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-amber-200/30 blur-2xl" />
+          <div className="relative flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-200 text-amber-800">
+                <AlertCircle className="h-4 w-4" />
+              </div>
+              <h2 className="text-sm font-semibold tracking-tight text-amber-900">
+                Attention needed
+              </h2>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {att.overdueInvoices > 0 && (
+                <Link
+                  href="/app/invoices?status=overdue"
+                  className="group flex flex-col gap-1.5 rounded-lg border border-rose-200/60 bg-white/80 p-3 transition-all hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  <div className="flex items-center gap-1.5 text-rose-700">
+                    <Receipt className="h-3.5 w-3.5" />
+                    <span className="text-xs font-medium">Overdue invoices</span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-2xl font-bold text-rose-700">
+                      {att.overdueInvoices}
+                    </span>
+                    <ArrowRight className="h-3.5 w-3.5 text-rose-400 opacity-0 transition-opacity group-hover:opacity-100" />
+                  </div>
+                </Link>
+              )}
+              {att.tasksDueToday > 0 && (
+                <Link
+                  href="/app/tasks?filter=today"
+                  className="group flex flex-col gap-1.5 rounded-lg border border-amber-200/60 bg-white/80 p-3 transition-all hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  <div className="flex items-center gap-1.5 text-amber-700">
+                    <CheckSquare className="h-3.5 w-3.5" />
+                    <span className="text-xs font-medium">Tasks due today</span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-2xl font-bold text-amber-700">
+                      {att.tasksDueToday}
+                    </span>
+                    <ArrowRight className="h-3.5 w-3.5 text-amber-400 opacity-0 transition-opacity group-hover:opacity-100" />
+                  </div>
+                </Link>
+              )}
+              {att.contractsAwaiting > 0 && (
+                <Link
+                  href="/app/contracts"
+                  className="group flex flex-col gap-1.5 rounded-lg border border-blue-200/60 bg-white/80 p-3 transition-all hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  <div className="flex items-center gap-1.5 text-blue-700">
+                    <FileSignature className="h-3.5 w-3.5" />
+                    <span className="text-xs font-medium">Contracts waiting</span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-2xl font-bold text-blue-700">
+                      {att.contractsAwaiting}
+                    </span>
+                    <ArrowRight className="h-3.5 w-3.5 text-blue-400 opacity-0 transition-opacity group-hover:opacity-100" />
+                  </div>
+                </Link>
+              )}
+              {att.unreadNotifications > 0 && (
+                <Link
+                  href="/app/dashboard"
+                  className="group flex flex-col gap-1.5 rounded-lg border border-purple-200/60 bg-white/80 p-3 transition-all hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  <div className="flex items-center gap-1.5 text-purple-700">
+                    <Bell className="h-3.5 w-3.5" />
+                    <span className="text-xs font-medium">Unread alerts</span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-2xl font-bold text-purple-700">
+                      {att.unreadNotifications}
+                    </span>
+                    <ArrowRight className="h-3.5 w-3.5 text-purple-400 opacity-0 transition-opacity group-hover:opacity-100" />
+                  </div>
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* KPI Cards + Revenue trend (sparkline card) */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">

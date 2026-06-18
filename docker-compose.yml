@@ -54,7 +54,7 @@ services:
         AI_BASE_URL: ${AI_BASE_URL:-https://9router-168-144-37-19.sslip.io/v1}
         AI_MODEL: ${AI_MODEL:-tr/MiniMax-M3}
     environment:
-      DATABASE_URL: postgresql://postgres:${CUBICLE_DB_PASSWORD}@cubicle-pg:5432/cubicle
+      DATABASE_URL: postgresql://postgres:***@cubicle-pg:5432/cubicle
       BETTER_AUTH_SECRET: ${CUBICLE_BETTER_AUTH_SECRET}
       BETTER_AUTH_URL: ${CUBICLE_BETTER_AUTH_URL}
       R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
@@ -72,6 +72,8 @@ services:
       AI_API_KEY: ${AI_API_KEY:-}
       AI_BASE_URL: ${AI_BASE_URL:-https://9router-168-144-37-19.sslip.io/v1}
       AI_MODEL: ${AI_MODEL:-tr/MiniMax-M3}
+      CRON_SECRET: ${CRON_SECRET:-}
+      CUBICLE_URL: ${CUBICLE_URL:-}
     volumes:
       - /root/9router-public-api-key.txt:/run/secrets/9router_api_key:ro
     labels:
@@ -83,7 +85,7 @@ services:
       - traefik.http.services.cubicle.loadbalancer.server.port=3000
       - traefik.http.routers.cubicle-http.rule=Host(`cubicle.168-144-37-19.sslip.io`) || Host(`cubicle.168.144.37.19.sslip.io`)
       - traefik.http.routers.cubicle-http.entrypoints=web
-      - traefik.http.routers.cubicle-http.middlewares=cubicle-https-redirect
+      - traefik.http.routers.cubicle-http.middlewares=redirect-to-https
       - traefik.middlewares.cubicle-https-redirect.redirectscheme.scheme=https
     depends_on:
       cubicle-pg:
