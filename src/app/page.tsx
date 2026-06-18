@@ -626,12 +626,12 @@ export default function HomePage() {
             backgroundSize: "24px 24px",
           }}
         />
-        <div className="relative mx-auto max-w-5xl rounded-[2rem] bg-[linear-gradient(135deg,#1d4ed8_0%,#2563eb_58%,#06b6d4_130%)] px-6 py-14 text-center text-white shadow-2xl shadow-slate-300/70 sm:px-12">
+        <div className="relative mx-auto max-w-5xl rounded-[2rem] bg-[linear-gradient(135deg,#1d4ed8_0%,#2563eb_58%,#06b6d4_130%)] px-6 py-14 text-center shadow-2xl shadow-slate-300/70 sm:px-12" style={{ color: '#ffffff' }}>
           <Sparkles className="mx-auto h-8 w-8 text-[#B19EE8]" />
-          <h2 className="mt-5 text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
+          <h2 className="mt-5 text-3xl font-semibold tracking-[0.03em] sm:text-5xl" style={{ color: '#ffffff' }}>
             Bring every client workspace under one roof.
           </h2>
-          <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-blue-100">
+          <p className="mx-auto mt-5 max-w-2xl text-lg leading-8" style={{ color: 'rgba(255,255,255,0.92)' }}>
             Replace scattered updates, forgotten billable hours, and manual handoffs with one client operations hub.
           </p>
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
