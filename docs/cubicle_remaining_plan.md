@@ -207,6 +207,11 @@ Production client-ready: ~93% (+1: AI Assistant raises polish, R2 gaps unchanged
 - Sellable source/MVP: **99%** (unchanged — already 99%)
 - Production client-ready: **~93%** (unchanged — utility feature, not infra/differentiator)
 
+| **Update 2026-06-19 (Sprint N — Invoice create page + browser QA polish):**
+- Demo MVP: **99%** (unchanged — New Invoice page now reachable, full flow)
+- Sellable source/MVP: **99%** (unchanged)
+- Production client-ready: **~93%** (unchanged — UI-only polish + counter seed fix)
+
 | **Update 2026-06-19 (Sprint M — P2.7.3 Contract + E-sig):**
 - Demo MVP: **99%** (unchanged — in app shell)
 - Sellable source/MVP: **99%** (unchanged)
@@ -1859,6 +1864,47 @@ curl -k -I https://cubicle.168.144.37.19.sslip.io/signup
   `/api/invoices/<id>/pdf` returning clean header.
 
 **Score unchanged:** Demo 99% · Sellable 99% · Production ~95% (pure UI hardening,
-not feature/infra work).
+not feature/infra work.)
+
+**Live tested on https://cubicle.168-144-37-19.sslip.io/ with owner@cubicle.test / password123**
+
+## Sprint N — 2026-06-19 — Invoice create page + browser QA polish + counter seed fix
+
+**Tag:** (not tagged yet — follow-up)
+**Commits:** `77a7d8b`, `f476a6d`, `423b598`
+
+**Bugs found via live browser QA:**
+
+1. **P0 — `/app/invoices/new` crashed with UUID parse error**
+   - Root cause: route hit `[invoiceId]` catch-all, treating `"new"` as UUID
+   - Fix: new `src/app/(app)/app/invoices/new/page.tsx` with `InvoiceForm`
+     (clients select + writable guard + back-link + no-client fallback)
+   - Verified: page loads, draft invoice creates, redirects to detail page
+
+2. **P1 — AI floating button overlaps invoice table Actions / dashboard cash flow**
+   - Fix: desktop position `bottom-6` → `bottom-20` (button + panel)
+   - Verified: AI button sits above action region, no visual obstruction
+
+3. **P1 — Timer topbar stale after stop**
+   - Root cause: topbar only polled `/api/time/active` every 15s + on focus
+   - Fix: timer widget dispatches `cubicle:timer-changed` CustomEvent on
+     start/stop/discard; topbar listens + on focus + on visibility
+   - Verified: timer start → topbar ticked `00:02`, stop → instant `00:00`
+     + title `No active timer`
+
+4. **P1 — Paid invoice with remaining balance shows green "paid" badge**
+   - Fix: display status derived — if DB `paid` but `totalPaid < total`,
+     show `payment due` (destructive variant)
+   - Verified: `INV-2026-0042` now renders `payment due` red badge
+
+5. **P0 — Invoice counter hard-codes `INV-0001` for first create**
+   - Root cause: counter seed ignored existing seed data
+   - Fix: when no counter row exists, compute `MAX(trailing digits)` from
+     existing invoice numbers via SQL regex `INV-([0-9]+)$`
+   - Verified: seeded new `INV-9999` via DB; counter + numbering safe for
+     both `INV-0001` and `INV-YYYY-0042` formats
+
+**Score unchanged:** Demo 99% · Sellable 99% · Production-ready ~93%
+(UI polish + counter robustness; no infra or feature scope change.)
 
 **Live tested on https://cubicle.168-144-37-19.sslip.io/ with owner@cubicle.test / password123**
