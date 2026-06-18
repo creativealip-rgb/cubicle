@@ -107,7 +107,10 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
     .limit(1);
 
   const invoice = await db.transaction(async (tx) => {
-    // Generate invoice number inside transaction
+    // Generate invoice number inside transaction.
+    // The counter is authoritative once it exists; first-ever insert seeds
+    // from the largest existing standard invoice number to avoid collisions
+    // when seed data already used INV-0001.
     const [counter] = await tx
       .select()
       .from(workspaceInvoiceCounters)
@@ -117,11 +120,19 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
 
     let invoiceNumber: string;
     if (!counter) {
+      const [maxRow] = await tx
+        .select({
+          maxNum: sql<number>`COALESCE(MAX(CAST(SUBSTRING(${invoices.invoiceNumber} FROM 5) AS INTEGER)), 0)`,
+        })
+        .from(invoices)
+        .where(eq(invoices.workspaceId, workspaceId));
+
+      const nextNum = (maxRow?.maxNum ?? 0) + 1;
+      invoiceNumber = `INV-${String(nextNum).padStart(4, "0")}`;
       await tx.insert(workspaceInvoiceCounters).values({
         workspaceId,
-        nextNumber: 2,
+        nextNumber: nextNum + 1,
       });
-      invoiceNumber = "INV-0001";
     } else {
       const num = counter.nextNumber;
       invoiceNumber = `INV-${String(num).padStart(4, "0")}`;
