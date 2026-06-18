@@ -25,15 +25,81 @@ Auth/protected redirect jalan
 Dashboard/app shell jalan
 ```
 
-Latest verified:
+Latest verified (2026-06-18 full audit):
 
 ```text
-/              200
-/login         200
-/signup        200
-/app/dashboard 307 unauthenticated redirect, expected
-cubicle-mvp    Up
-cubicle-pg     Up
+PUBLIC ROUTES (no auth):
+/                                200  131043 bytes  landing
+/login                           200   14383 bytes
+/signup                          200   17895 bytes
+/forgot-password                 200   16722 bytes
+/reset-password                  200   17725 bytes
+
+APP PAGES (authenticated as owner@cubicle.test):
+/app/dashboard                   200  133835 bytes
+/app/clients                     200   93476 bytes
+/app/projects                    200   90445 bytes
+/app/tasks                       200  139277 bytes
+/app/time                        200   98126 bytes
+/app/calendar                    200   66482 bytes
+/app/invoices                    200   87744 bytes
+/app/contracts                   200   59540 bytes
+/app/proposals                   200   60928 bytes
+/app/questionnaires              200   57050 bytes
+/app/expenses                    200  101064 bytes
+/app/files                       200  105113 bytes
+/app/prompts                     200   67362 bytes
+/app/reports                     200  124672 bytes
+/app/settings                    200   75216 bytes
+/onboarding                      200   53262 bytes
+
+APP PAGES (unauthenticated):
+all 16 app routes return 307 redirect to /login (correct)
+
+PUBLIC TOKEN ROUTES (with invalid token):
+/booking/[slug]                 404
+/client-portal/[token]           404
+/contract/[token]               200 (renders invalid token page)
+/intake/[token]                 200 (renders invalid token page)
+/invoice/[token]                404
+/proposal/[token]                404
+
+DETAIL PAGES (fake IDs, authenticated):
+/app/clients/[id]                200 (renders not-found UI)
+/app/projects/[id]               200
+/app/invoices/[id]               200
+/app/contracts/[id]              200
+/app/proposals/[id]              200
+/app/questionnaires/[id]         200
+
+ROLE-BASED ACCESS:
+owner@cubicle.test               login 200 + all pages 200
+member@cubicle.test              login 200 + all pages 200
+viewer@cubicle.test              login 200 + all pages 200
+
+API ENDPOINTS:
+/api/health                                   200  {"status":"ok","db":"ok"}
+/api/notifications             (auth)          200  {items:[invoice_overdue: INV-2026-0044 Rp 6.500.000]}
+/api/notifications/reminders   (no auth)       401  {"error":"unauthorized"}
+/api/notifications/reminders   (Bearer CS)     200  {"ok":true,"dueTaskCount":1,"overdueInvoiceCount":3}
+/api/notifications/reminders   (auth cookie)   200
+/api/time/active               (auth)          200  {"activeTimer":null}
+/api/ai/chat                   (no auth)       200  {"enabled":true,"model":"tr/MiniMax-M3"}
+/api/ai/chat                   (auth)          200
+/api/ai/action                 (no auth)       405  (GET, needs POST)
+/api/ai/action                 (POST, no auth) 401  {"error":"Unauthorized"}
+/api/ai/conversations          (auth)          200  2 conversations present
+/api/auth/get-session                          200
+/api/auth/sign-in/email                       200  issues session cookie
+
+PDF GENERATION (live data):
+/api/invoices/[id]/pdf                        200  93854 bytes  application/pdf  %PDF-1.3
+/api/contracts/[id]/pdf                       200  13292 bytes  application/pdf  %PDF-1.3
+
+LIVE DATA (demo seed):
+1 task due today
+3 overdue invoices
+2 AI conversations
 ```
 
 Important security note:
