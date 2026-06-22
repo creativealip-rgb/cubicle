@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   ArrowRight,
+  Calendar,
   BriefcaseBusiness,
   CheckCircle2,
   Clock3,
@@ -22,13 +23,13 @@ import { Card, CardContent } from "@/components/ui/card";
 const operationPillars = [
   {
     icon: Users,
-    title: "Client CRM",
+    title: "Clients",
     description: "Keep contacts, notes, projects, portal access, and client history in one place.",
   },
   {
     icon: BriefcaseBusiness,
-    title: "Project delivery",
-    description: "Plan projects, track tasks, assign work, and keep delivery status clear.",
+    title: "Projects",
+    description: "Plan projects, assign teams, track progress, and keep delivery status clear.",
   },
   {
     icon: FolderOpen,
@@ -50,6 +51,16 @@ const operationPillars = [
     title: "Client portal",
     description: "Give clients one clean link for shared projects, tasks, files, comments, and invoices.",
   },
+  {
+    icon: Calendar,
+    title: "Calendar",
+    description: "View upcoming appointments, deadlines, and scheduled work in one place.",
+  },
+  {
+    icon: Sparkles,
+    title: "AI assistant",
+    description: "Built-in AI that understands your workspace data — generate prompts, summaries, and answers.",
+  },
 ];
 
 const workflow = [
@@ -64,7 +75,7 @@ const pricing = [
     price: "Free",
     priceSub: "during beta",
     description: "For freelancers running client work alone.",
-    items: ["Clients & projects", "Time tracking", "Invoices", "Client portal"],
+    items: ["Clients & projects", "Time tracking", "Invoices", "Client portal", "Calendar", "AI assistant"],
     cta: "Start free",
     href: "/signup",
     featured: true,
@@ -182,7 +193,7 @@ export default function HomePage() {
                   <div className="h-3 w-3 rounded-full bg-emerald-400" />
                 </div>
                 <div className="ml-2 flex-1 truncate rounded-md bg-white px-3 py-1 text-xs text-slate-500 ring-1 ring-slate-200">
-                  cubicle.app/app/dashboard
+                  cubiqlo.com/app/dashboard
                 </div>
               </div>
               {/* Real screenshot */}
@@ -229,7 +240,7 @@ export default function HomePage() {
               {' '}— and a clean way to keep clients updated. Cubiqlo connects those pieces from day one.
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
-              {['Portals', 'Deliverables', 'Time', 'Booking', 'Invoices'].map((tag) => (
+              {['Portals', 'Deliverables', 'Time', 'Calendar', 'AI', 'Invoices'].map((tag) => (
                 <span
                   key={tag}
                   className="inline-flex items-center gap-1.5 rounded-full border !border-[#6647F0]/25 bg-white px-3 py-1 text-xs font-medium text-[#6647F0] shadow-sm"
@@ -303,9 +314,9 @@ export default function HomePage() {
             {/* inline mini-metric cluster */}
             <div className="grid grid-cols-3 gap-3 lg:justify-self-end">
               {[
-                { label: 'Pillars', value: '6' },
-                { label: 'Loop stages', value: '8' },
-                { label: 'Tools replaced', value: '5+' },
+                { label: 'Pillars', value: '8' },
+                { label: 'Loop stages', value: '10' },
+                { label: 'Tools replaced', value: '7+' },
               ].map((m) => (
                 <div
                   key={m.label}
@@ -381,11 +392,11 @@ export default function HomePage() {
                     <div className="h-3 w-3 rounded-full bg-emerald-400" />
                   </div>
                   <div className="ml-2 flex-1 truncate rounded-md bg-white px-3 py-1 text-xs text-slate-500 ring-1 ring-slate-100">
-                    cubicle.app/app/dashboard
+                    cubiqlo.com/app/dashboard
                   </div>
                 </div>
                 <Image
-                  src="/screenshots/dashboard.png"
+                  src="/screenshots/tasks.png"
                   alt="Cubiqlo dashboard with KPIs and active projects"
                   width={1440}
                   height={900}
@@ -404,7 +415,7 @@ export default function HomePage() {
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <div>
                   <p className="font-semibold">Client Portal</p>
-                  <p className="text-sm text-blue-100/75">portal.cubicle/client/acme</p>
+                  <p className="text-sm text-blue-100/75">cubiqlo.com/client-portal/acme</p>
                 </div>
                 <ShieldCheck className="h-5 w-5 text-emerald-300" />
               </div>
@@ -492,6 +503,8 @@ export default function HomePage() {
                   { label: "Booking pages", h: "Yes", b: "Add-on", c: "Yes" },
                   { label: "Native IDR billing", h: "—", b: "—", c: "Yes" },
                   { label: "Setup time", h: "1–2 hours", b: "1–2 hours", c: "5 minutes" },
+                  { label: "AI assistant", h: "—", b: "—", c: "Built-in" },
+                  { label: "Calendar view", h: "—", b: "Add-on", c: "Yes" },
                 ].map((row) => (
                   <tr key={row.label}>
                     <td className="px-6 py-4 font-medium text-slate-700">{row.label}</td>
