@@ -5,12 +5,12 @@
  *   → 200 text/markdown (Content-Disposition: attachment)
  *
  * Body:
- *   # Cubicle AI — <conversation title>
+ *   # Cubiqlo AI — <conversation title>
  *   *Exported YYYY-MM-DD HH:mm UTC*
  *   ---
  *   **You** · 2026-06-16 14:00
  *   List all invoices.
- *   **Cubicle AI** · 2026-06-16 14:00 · 1 tool call · 320 tokens
+ *   **Cubiqlo AI** · 2026-06-16 14:00 · 1 tool call · 320 tokens
  *   3 invoices...
  */
 
@@ -96,7 +96,7 @@ function renderMarkdown(
 ): string {
   const exportedAt = new Date().toISOString().replace("T", " ").slice(0, 16) + " UTC";
   const lines: string[] = [];
-  lines.push(`# Cubicle AI — ${title || "Untitled conversation"}`);
+  lines.push(`# Cubiqlo AI — ${title || "Untitled conversation"}`);
   lines.push("");
   lines.push(`*Exported ${exportedAt} · ${rows.length} message${rows.length === 1 ? "" : "s"}*`);
   lines.push("");
@@ -123,7 +123,7 @@ function renderMarkdown(
       if (tcCount > 0) meta.push(`${tcCount} tool call${tcCount === 1 ? "" : "s"}`);
       if (r.tokens) meta.push(`${r.tokens} tokens`);
       const metaStr = meta.length ? ` · ${meta.join(" · ")}` : "";
-      lines.push(`**Cubicle AI** · ${ts}${metaStr}`);
+      lines.push(`**Cubiqlo AI** · ${ts}${metaStr}`);
       lines.push("");
       if (tcCount > 0 && Array.isArray(r.toolCalls)) {
         for (const tc of r.toolCalls as Array<{ name: string }>) {

@@ -60,7 +60,7 @@ export function SignupForm() {
         </div>
         <CardTitle className="text-2xl">Create an account</CardTitle>
         <CardDescription>
-          Start your free Cubicle workspace
+          Start your free Cubiqlo workspace
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>

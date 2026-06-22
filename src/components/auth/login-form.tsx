@@ -60,7 +60,7 @@ export function LoginForm() {
         </div>
         <CardTitle className="text-2xl">Welcome back</CardTitle>
         <CardDescription>
-          Sign in to your Cubicle workspace
+          Sign in to your Cubiqlo workspace
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>

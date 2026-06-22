@@ -208,7 +208,7 @@ export async function sendContract(input: {
     "client.name": client?.name || "",
     "client.email": client?.email || "",
     "project.name": project?.name || "",
-    "workspace.name": ws?.name || "Cubicle",
+    "workspace.name": ws?.name || "Cubiqlo",
     "today": new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
     "valid_until": c.validUntil ? new Date(c.validUntil).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "",
   };

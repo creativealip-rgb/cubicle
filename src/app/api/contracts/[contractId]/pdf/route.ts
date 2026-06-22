@@ -70,7 +70,7 @@ export async function GET(
       declineReason: c.declineReason,
     },
     workspace: {
-      name: ws?.name || "Cubicle",
+      name: ws?.name || "Cubiqlo",
       billingName: ws?.billingName ?? null,
       billingAddress: ws?.billingAddress ?? null,
     },

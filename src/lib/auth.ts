@@ -14,10 +14,10 @@ export const auth = betterAuth({
     sendResetPassword: async ({ user, url }) => {
       await sendNotification({
         to: user.email,
-        subject: "Reset your Cubicle password",
+        subject: "Reset your Cubiqlo password",
         text:
           `Hi ${user.name ?? ""},\n\n` +
-          `We received a request to reset your Cubicle password.\n\n` +
+          `We received a request to reset your Cubiqlo password.\n\n` +
           `Click the link below to choose a new password (valid for 1 hour):\n${url}\n\n` +
           `If you didn't request this, you can safely ignore this email.`,
         type: "password_reset",
@@ -29,10 +29,10 @@ export const auth = betterAuth({
     sendVerificationEmail: async ({ user, url }) => {
       await sendNotification({
         to: user.email,
-        subject: "Verify your Cubicle email",
+        subject: "Verify your Cubiqlo email",
         text:
           `Hi ${user.name ?? ""},\n\n` +
-          `Welcome to Cubicle! Please verify your email address by clicking:\n${url}\n\n` +
+          `Welcome to Cubiqlo! Please verify your email address by clicking:\n${url}\n\n` +
           `If you didn't sign up, ignore this email.`,
         type: "email_verification",
       });
@@ -44,6 +44,10 @@ export const auth = betterAuth({
     process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
     "https://cubicle.168-144-37-19.sslip.io",
     "http://cubicle.168-144-37-19.sslip.io",
+    "https://cubiqlo.com",
+    "http://cubiqlo.com",
+    "https://www.cubiqlo.com",
+    "http://www.cubiqlo.com",
     "https://cubicle.168.144.37.19.sslip.io",
     "http://cubicle.168.144.37.19.sslip.io",
     "https://localhost:3000",

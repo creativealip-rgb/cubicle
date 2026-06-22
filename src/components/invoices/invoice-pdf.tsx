@@ -462,7 +462,7 @@ export function InvoicePDF({ invoice, workspace, client, items }: InvoicePDFProp
         {/* Footer */}
         <View style={styles.footer} fixed>
           <Text style={styles.footerLeft}>
-            {workspace.billingName || "Cubicle"}
+            {workspace.billingName || "Cubiqlo"}
           </Text>
           <Text
             render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}

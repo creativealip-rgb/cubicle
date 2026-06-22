@@ -117,7 +117,7 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
                 C
               </span>
             </div>
-            <span className="text-sm">Cubicle</span>
+            <span className="text-sm">Cubiqlo</span>
           </Link>
         )}
         {collapsed && (
@@ -248,7 +248,7 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
       <div className="border-t border-sidebar-border p-3">
         {!collapsed && (
           <p className="text-xs text-muted-foreground">
-            Cubicle v0.1.21
+            Cubiqlo v0.1.21
           </p>
         )}
       </div>

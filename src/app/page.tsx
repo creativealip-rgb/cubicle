@@ -100,7 +100,7 @@ export default function HomePage() {
               <SquareStack className="relative h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm font-semibold leading-none">Cubicle</p>
+              <p className="text-sm font-semibold leading-none">Cubiqlo</p>
               <p className="text-xs text-slate-500">Client Operations Hub</p>
             </div>
           </Link>
@@ -188,7 +188,7 @@ export default function HomePage() {
               {/* Real screenshot */}
               <Image
                 src="/screenshots/dashboard.png"
-                alt="Cubicle dashboard showing active clients, projects, tasks, and invoices"
+                alt="Cubiqlo dashboard showing active clients, projects, tasks, and invoices"
                 width={1440}
                 height={900}
                 priority
@@ -213,12 +213,12 @@ export default function HomePage() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border !border-[#A78BFA]/40 bg-white px-3 py-1.5 shadow-sm">
               <span className="inline-flex h-1.5 w-1.5 rounded-full bg-[#6647F0]" />
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6647F0]">Why Cubicle</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6647F0]">Why Cubiqlo</p>
             </div>
             <h2 className="mt-5 text-3xl font-semibold leading-tight tracking-[-0.01em] text-[#292D34] sm:text-4xl lg:text-[2.75rem]">
               Project management stops at tasks.{' '}
               <span className="bg-gradient-to-r from-[#A78BFA] via-[#6647F0] to-[#0091FF] bg-clip-text text-transparent">
-                Cubicle keeps going.
+                Cubiqlo keeps going.
               </span>
             </h2>
           </div>
@@ -226,7 +226,7 @@ export default function HomePage() {
             <p className="text-lg leading-8 text-slate-600">
               Generic project tools stop at tasks. Client-service businesses still need{' '}
               <span className="font-medium text-[#292D34]">portals, deliverables, tracked time, booking, invoices</span>
-              {' '}— and a clean way to keep clients updated. Cubicle connects those pieces from day one.
+              {' '}— and a clean way to keep clients updated. Cubiqlo connects those pieces from day one.
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
               {['Portals', 'Deliverables', 'Time', 'Booking', 'Invoices'].map((tag) => (
@@ -297,7 +297,7 @@ export default function HomePage() {
                 </span>
               </h2>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                Manage work around clients, not scattered boards. Cubicle keeps the full delivery loop close: scope, tasks, files, time, portal, and billing.
+                Manage work around clients, not scattered boards. Cubiqlo keeps the full delivery loop close: scope, tasks, files, time, portal, and billing.
               </p>
             </div>
             {/* inline mini-metric cluster */}
@@ -386,7 +386,7 @@ export default function HomePage() {
                 </div>
                 <Image
                   src="/screenshots/dashboard.png"
-                  alt="Cubicle dashboard with KPIs and active projects"
+                  alt="Cubiqlo dashboard with KPIs and active projects"
                   width={1440}
                   height={900}
                   className="block w-full"
@@ -463,7 +463,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Comparison row — Cubicle vs category leaders */}
+      {/* Comparison row — Cubiqlo vs category leaders */}
       <section className="px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
@@ -472,7 +472,7 @@ export default function HomePage() {
               Less tool sprawl. Less spend.
             </h2>
             <p className="mt-4 text-lg leading-8 text-slate-600">
-              Other client-ops tools charge $20–$52/month per seat and still miss the portal or booking. Cubicle keeps the full loop free for solo work.
+              Other client-ops tools charge $20–$52/month per seat and still miss the portal or booking. Cubiqlo keeps the full loop free for solo work.
             </p>
           </div>
           <div className="mt-12 overflow-hidden rounded-2xl border-0 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.1),inset_0_0_0_1px_rgba(15,23,42,0.06)]">
@@ -482,7 +482,7 @@ export default function HomePage() {
                   <th className="px-6 py-4 font-medium"></th>
                   <th className="px-6 py-4 font-medium">HoneyBook</th>
                   <th className="px-6 py-4 font-medium">Bonsai</th>
-                  <th className="px-6 py-4 font-medium text-[#6647F0]">Cubicle</th>
+                  <th className="px-6 py-4 font-medium text-[#6647F0]">Cubiqlo</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -511,7 +511,7 @@ export default function HomePage() {
           <div className="grid gap-8 lg:grid-cols-3">
             {[
               {
-                quote: "Cubicle closed the loop between my client work and my invoicing. I used to lose 3 hours a week to context-switching.",
+                quote: "Cubiqlo closed the loop between my client work and my invoicing. I used to lose 3 hours a week to context-switching.",
                 author: "Rina W.",
                 role: "Freelance brand designer",
               },
@@ -656,7 +656,7 @@ export default function HomePage() {
               <SquareStack className="relative h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm font-semibold">Cubicle</p>
+              <p className="text-sm font-semibold">Cubiqlo</p>
               <p className="text-xs text-slate-500">Manage client work from request to invoice.</p>
             </div>
           </div>

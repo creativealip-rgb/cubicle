@@ -1,6 +1,6 @@
 // Notifications — Resend-backed with console fallback when API key missing.
 // Set RESEND_API_KEY in env to enable. Set EMAIL_FROM to override sender
-// (default: Cubicle <onboarding@resend.dev> until you verify a domain).
+// (default: Cubiqlo <onboarding@resend.dev> until you verify a domain).
 
 import { Resend } from "resend";
 
@@ -13,7 +13,7 @@ type SendOpts = {
 };
 
 const apiKey = process.env.RESEND_API_KEY;
-const fromAddress = process.env.EMAIL_FROM ?? "Cubicle <onboarding@resend.dev>";
+const fromAddress = process.env.EMAIL_FROM ?? "Cubiqlo <onboarding@resend.dev>";
 
 const resend = apiKey ? new Resend(apiKey) : null;
 
@@ -34,11 +34,11 @@ function wrapTemplate(opts: { title: string; bodyHtml: string }): string {
   <tr><td align="center">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;border:1px solid #e5e7eb;">
       <tr><td style="padding:24px 32px;border-bottom:1px solid #e5e7eb;">
-        <div style="font-size:14px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#6b7280;">Cubicle</div>
+        <div style="font-size:14px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#6b7280;">Cubiqlo</div>
       </td></tr>
       <tr><td style="padding:32px;font-size:15px;line-height:1.6;color:#1a1d24;">${opts.bodyHtml}</td></tr>
       <tr><td style="padding:16px 32px;border-top:1px solid #e5e7eb;font-size:12px;color:#6b7280;text-align:center;">
-        Sent by Cubicle — client operations hub
+        Sent by Cubiqlo — client operations hub
       </td></tr>
     </table>
   </td></tr>
@@ -128,7 +128,7 @@ export async function notifyInvoiceSent(opts: {
 }) {
   return sendNotification({
     to: opts.clientEmail,
-    subject: `Invoice ${opts.invoiceNumber} from ${opts.workspaceName ?? "Cubicle"}`,
+    subject: `Invoice ${opts.invoiceNumber} from ${opts.workspaceName ?? "Cubiqlo"}`,
     text:
       `Hi ${opts.clientName},\n\n` +
       `A new invoice ${opts.invoiceNumber} for ${opts.amount} is ready.\n\n` +
@@ -185,7 +185,7 @@ export async function notifyWorkspaceInvite(opts: {
     subject: `${opts.inviterName} invited you to ${opts.workspaceName}`,
     text:
       `Hi,\n\n` +
-      `${opts.inviterName} has invited you to join the "${opts.workspaceName}" workspace on Cubicle.\n\n` +
+      `${opts.inviterName} has invited you to join the "${opts.workspaceName}" workspace on Cubiqlo.\n\n` +
       `Accept the invitation: ${opts.inviteUrl}`,
     type: "workspace_invite",
   });
@@ -206,7 +206,7 @@ export async function notifyTaskAssigned(opts: {
       `Hi ${opts.assigneeName},\n\n` +
       `${opts.assignerName} assigned you a new task: "${opts.taskTitle}".\n\n` +
       (opts.dueDate ? `Due: ${opts.dueDate}\n\n` : ``) +
-      `Open in Cubicle: /app/tasks?assignee=me`,
+      `Open in Cubiqlo: /app/tasks?assignee=me`,
     type: "task_assigned",
   });
 }

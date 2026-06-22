@@ -287,7 +287,7 @@ export function ContractPDF({ contract, workspace, client }: ContractData) {
 
   return (
     <Document
-      title={`${contract.title} — Cubicle`}
+      title={`${contract.title} — Cubiqlo`}
       author={workspace.billingName || workspace.name}
       subject="Service Agreement"
     >
@@ -373,7 +373,7 @@ export function ContractPDF({ contract, workspace, client }: ContractData) {
         )}
 
         <View style={styles.footer} fixed>
-          <Text>{workspace.billingName || workspace.name} · Powered by Cubicle</Text>
+          <Text>{workspace.billingName || workspace.name} · Powered by Cubiqlo</Text>
           <Text
             render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}
           />

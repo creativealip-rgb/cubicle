@@ -79,11 +79,11 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=dokploy-network
-      - traefik.http.routers.cubicle.rule=Host(`cubicle.168-144-37-19.sslip.io`) || Host(`cubicle.168.144.37.19.sslip.io`)
+      - traefik.http.routers.cubicle.rule=Host(`cubicle.168-144-37-19.sslip.io`) || Host(`cubicle.168.144.37.19.sslip.io`) || Host(`cubiqlo.com`) || Host(`www.cubiqlo.com`)
       - traefik.http.routers.cubicle.entrypoints=websecure
       - traefik.http.routers.cubicle.tls.certresolver=letsencrypt
       - traefik.http.services.cubicle.loadbalancer.server.port=3000
-      - traefik.http.routers.cubicle-http.rule=Host(`cubicle.168-144-37-19.sslip.io`) || Host(`cubicle.168.144.37.19.sslip.io`)
+      - traefik.http.routers.cubicle-http.rule=Host(`cubicle.168-144-37-19.sslip.io`) || Host(`cubicle.168.144.37.19.sslip.io`) || Host(`cubiqlo.com`) || Host(`www.cubiqlo.com`)
       - traefik.http.routers.cubicle-http.entrypoints=web
       - traefik.http.routers.cubicle-http.middlewares=redirect-to-https@file
     depends_on:

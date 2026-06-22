@@ -9,7 +9,7 @@ export function cn(...inputs: ClassValue[]) {
 // Per-workspace currency. Pass a 3-letter ISO 4217 code (e.g. "IDR", "USD", "EUR").
 // Returns a localized money string with the right symbol/precision.
 //
-// Default: IDR (Cubicle's primary market is Indonesia).
+// Default: IDR (Cubiqlo's primary market is Indonesia).
 const LOCALE_FOR_CURRENCY: Record<string, string> = {
   IDR: "id-ID",
   USD: "en-US",

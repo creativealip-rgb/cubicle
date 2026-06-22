@@ -32,13 +32,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://cubicle.168-144-37-19.sslip.io"),
+  metadataBase: new URL("https://cubiqlo.com"),
   title: {
-    default: "Cubicle — Client Operations Hub",
-    template: "%s | Cubicle",
+    default: "Cubiqlo — Client Operations Hub",
+    template: "%s | Cubiqlo",
   },
   description:
-    "Manage client work from request to invoice. Cubicle helps freelancers and small service teams manage clients, projects, files, time tracking, invoices, booking, and client portals.",
+    "Manage client work from request to invoice. Cubiqlo helps freelancers and small service teams manage clients, projects, files, time tracking, invoices, booking, and client portals.",
   keywords: [
     "client operations hub",
     "client portal",
@@ -47,21 +47,21 @@ export const metadata: Metadata = {
     "time tracking invoicing",
     "client work management",
   ],
-  authors: [{ name: "Cubicle" }],
-  creator: "Cubicle",
-  publisher: "Cubicle",
+  authors: [{ name: "Cubiqlo" }],
+  creator: "Cubiqlo",
+  publisher: "Cubiqlo",
   openGraph: {
-    title: "Cubicle — Run client work from request to invoice",
+    title: "Cubiqlo — Run client work from request to invoice",
     description:
       "One calm workspace for clients, projects, tasks, files, time tracking, invoices, booking, and client portals.",
     url: "/",
-    siteName: "Cubicle",
+    siteName: "Cubiqlo",
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cubicle — Client Operations Hub",
+    title: "Cubiqlo — Client Operations Hub",
     description:
       "Manage client work from request to invoice in one calm workspace.",
   },

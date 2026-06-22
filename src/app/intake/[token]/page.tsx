@@ -45,7 +45,7 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 via-white to-white">
       <div className="max-w-2xl mx-auto p-6 space-y-6">
         <div className="text-center pt-6">
-          <Link href="/" className="inline-block text-2xl font-semibold text-slate-900">Cubicle</Link>
+          <Link href="/" className="inline-block text-2xl font-semibold text-slate-900">Cubiqlo</Link>
           <p className="text-xs text-slate-500 mt-1">Client intake</p>
         </div>
 
@@ -61,7 +61,7 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
         </div>
 
         <p className="text-center text-xs text-slate-400">
-          Powered by <Link href="/" className="hover:underline">Cubicle</Link>
+          Powered by <Link href="/" className="hover:underline">Cubiqlo</Link>
         </p>
       </div>
     </div>

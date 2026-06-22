@@ -103,7 +103,7 @@ export function ResetPasswordForm() {
         </div>
         <CardTitle className="text-2xl">Set a new password</CardTitle>
         <CardDescription>
-          Enter a new password for your Cubicle account.
+          Enter a new password for your Cubiqlo account.
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>

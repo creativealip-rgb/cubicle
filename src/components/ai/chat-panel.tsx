@@ -117,7 +117,7 @@ const SUGGESTED_CARDS = [
   },
 ];
 
-// App integration bar — Cubicle-native modules
+// App integration bar — Cubiqlo-native modules
 const MODULE_ICONS = [
   { icon: <Users className="h-3.5 w-3.5" />, label: "Clients" },
   { icon: <FolderKanban className="h-3.5 w-3.5" />, label: "Projects" },
@@ -625,7 +625,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
                     <div>
-                      <p className="text-sm font-semibold leading-none">Cubicle AI</p>
+                      <p className="text-sm font-semibold leading-none">Cubiqlo AI</p>
                       <p className="text-[10px] text-purple-100">
                         Workspace assistant · tr/MiniMax-M3
                       </p>
@@ -1085,7 +1085,7 @@ function WelcomeScreen({
 
         {/* App integration bar */}
         <div className="mt-3 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs">
-          <span className="font-medium text-slate-500">Works with your Cubicle data</span>
+          <span className="font-medium text-slate-500">Works with your Cubiqlo data</span>
           <div className="flex items-center gap-1">
             {MODULE_ICONS.map((m) => (
               <span

@@ -14,7 +14,7 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     // Log to console for now; wire to Sentry/PostHog later
-    console.error("Cubicle global error:", error);
+    console.error("Cubiqlo global error:", error);
   }, [error]);
 
   return (

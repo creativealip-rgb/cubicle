@@ -454,7 +454,7 @@ export default async function ClientPortalPage({
         </section>
 
         <p className="text-center text-xs text-muted-foreground pt-8">
-          Powered by <span className="font-medium">Cubicle</span> — Client
+          Powered by <span className="font-medium">Cubiqlo</span> — Client
           Portal
         </p>
       </div>
