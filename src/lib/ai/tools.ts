@@ -1258,8 +1258,8 @@ async function cashFlowForecast(args: { months?: number }) {
   });
 
   // For each month, project recurring expenses (assume monthly/quarterly/yearly)
-  const forecast = months.map((m, idx) => {
-    let recurringTotal: Record<string, number> = {};
+  const forecast = months.map((m) => {
+    const recurringTotal: Record<string, number> = {};
     for (const r of recurringRows) {
       const startMonth = r.startDate.slice(0, 7);
       const endMonth = r.endDate ? r.endDate.slice(0, 7) : null;

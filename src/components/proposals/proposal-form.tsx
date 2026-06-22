@@ -37,19 +37,20 @@ interface LineItemDraft {
 }
 
 const blankItem = (): LineItemDraft => ({ description: "", quantity: 1, unitPrice: 0 });
+const defaultValidUntil = () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
 export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, clients }: ProposalFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState(() => ({
     clientId: clients[0]?.id ?? "",
     title: "",
     body: "",
     currency: defaultCurrency,
     taxRate: parseFloat(defaultTaxRate) || 0,
     downPaymentPercent: 50,
-    validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-  });
+    validUntil: defaultValidUntil(),
+  }));
   const [items, setItems] = useState<LineItemDraft[]>([blankItem()]);
 
   const subtotal = items.reduce((s, li) => s + li.quantity * li.unitPrice, 0);

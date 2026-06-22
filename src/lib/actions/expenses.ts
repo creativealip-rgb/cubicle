@@ -3,10 +3,10 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { expenses, expenseCategories, workspaces, projects, clients } from "@/db/schema";
-import { eq, and, gte, lte, desc, asc, sql } from "drizzle-orm";
+import { expenses, expenseCategories, workspaces } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import { z } from "zod";
-import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
+import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 
 async function getWorkspaceId(): Promise<string> {

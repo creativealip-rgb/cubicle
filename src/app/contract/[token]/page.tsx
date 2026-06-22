@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
-import { CheckCircle2, AlertCircle, FileText, X } from "lucide-react";
+import { CheckCircle2, AlertCircle, FileText } from "lucide-react";
 
 export default async function ContractPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -39,8 +39,6 @@ export default async function ContractPage({ params }: { params: Promise<{ token
   }
 
   const { contract, client } = result;
-  const variables = (contract.variables as Record<string, string>) || {};
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-white">
       <div className="max-w-3xl mx-auto p-4 md:p-8 space-y-6">

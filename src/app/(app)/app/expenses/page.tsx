@@ -2,10 +2,9 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { expenses, expenseCategories, projects, clients, workspaces, payments, invoices } from "@/db/schema";
-import { eq, desc, and, sql, gte, lte, isNotNull } from "drizzle-orm";
+import { eq, desc, and, gte } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -16,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import { ExpenseForm, type CategoryOption, type ProjectOption, type ClientOption } from "@/components/expenses/expense-form";
 import { DeleteExpenseButton } from "@/components/expenses/delete-expense-button";
-import { TrendingDown, TrendingUp, Wallet, Calendar, Tag } from "lucide-react";
+import { TrendingDown, TrendingUp, Wallet, Tag } from "lucide-react";
 
 async function getWorkspace() {
   const [ws] = await db

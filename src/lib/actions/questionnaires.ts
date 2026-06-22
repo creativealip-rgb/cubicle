@@ -3,8 +3,8 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { questionnaires, questionnaireResponses, clients, projects, workspaces } from "@/db/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { questionnaires, questionnaireResponses, clients, workspaces } from "@/db/schema";
+import { eq, and, desc } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";

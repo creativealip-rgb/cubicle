@@ -2,8 +2,8 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { questionnaires, questionnaireResponses, clients, workspaces } from "@/db/schema";
-import { eq, desc, count } from "drizzle-orm";
+import { questionnaires, questionnaireResponses, workspaces } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, ClipboardList, Inbox } from "lucide-react";
+import { Plus, ClipboardList } from "lucide-react";
 
 async function getWorkspaceId(): Promise<string> {
   const [ws] = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.slug, "acme-creative")).limit(1);

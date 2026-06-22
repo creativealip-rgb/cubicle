@@ -3,9 +3,8 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { contracts, clients, workspaces } from "@/db/schema";
-import { eq, desc, count } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -15,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, FileSignature, PenLine } from "lucide-react";
+import { FileSignature } from "lucide-react";
 import { CreateContractButton } from "@/components/contracts/create-contract-button";
 
 async function getWorkspaceId(): Promise<string> {

@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, GripVertical, Save, Loader2 } from "lucide-react";
+import { Plus, Trash2, Save, Loader2 } from "lucide-react";
 import { createQuestionnaire } from "@/lib/actions/questionnaires";
 import Link from "next/link";
 
@@ -156,7 +156,7 @@ export function QuestionnaireBuilder({
         {fields.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-sm text-slate-500">
-              No fields yet. Click "Add field" to start building.
+              No fields yet. Click &ldquo;Add field&rdquo; to start building.
             </CardContent>
           </Card>
         ) : (

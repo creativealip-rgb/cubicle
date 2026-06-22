@@ -63,7 +63,7 @@ export function IntakeForm({ token, fields }: { token: string; fields: Field[] }
       <div className="py-8 text-center space-y-3">
         <CheckCircle2 className="h-12 w-12 mx-auto text-emerald-500" />
         <h2 className="text-xl font-semibold">Thank you!</h2>
-        <p className="text-sm text-slate-500">Your responses have been received. We'll be in touch soon.</p>
+        <p className="text-sm text-slate-500">Your responses have been received. We&apos;ll be in touch soon.</p>
       </div>
     );
   }

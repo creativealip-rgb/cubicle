@@ -3,11 +3,11 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { proposals, projects, invoices, invoiceItems, clients, workspaces, workspaceInvoiceCounters } from "@/db/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { proposals, projects, invoices, invoiceItems, workspaces, workspaceInvoiceCounters } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
-import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
+import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 
 async function getWorkspaceId(): Promise<string> {
@@ -147,7 +147,7 @@ export async function sendProposal(proposalId: string) {
   const tokenHash = hashToken(token);
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
 
-  const [proposal] = await db.update(proposals)
+  await db.update(proposals)
     .set({
       status: "sent",
       sharedTokenHash: tokenHash,
@@ -155,8 +155,7 @@ export async function sendProposal(proposalId: string) {
       sentAt: new Date(),
       updatedAt: new Date(),
     })
-    .where(eq(proposals.id, proposalId))
-    .returning();
+    .where(eq(proposals.id, proposalId));
 
   await writeActivityLog(workspaceId, user.id, "sent_proposal", "proposal", proposalId);
   return { id: proposalId, token };
@@ -208,7 +207,6 @@ export async function acceptProposalPublic(proposalId: string, token: string) {
     .limit(1);
   const nextNumber = (counter?.nextNumber ?? 1);
   const invoiceNumber = `INV-${String(nextNumber).padStart(4, "0")}`;
-  const items = (p.lineItems as Array<{ description: string; quantity: number; unitPrice: number; amount: number }>);
   const downPaymentAmount = parseFloat(p.total) * (parseFloat(p.downPaymentPercent) / 100);
   const dpSubtotal = downPaymentAmount;
   const dpTax = 0; // down-payment typically a simple fraction

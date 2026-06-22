@@ -31,7 +31,7 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
     );
   }
 
-  const { response, questionnaire } = result;
+  const { questionnaire } = result;
   const fields = (questionnaire.schema as Array<{
     id: string;
     type: "text" | "textarea" | "select" | "multiselect" | "number" | "date" | "email" | "url";

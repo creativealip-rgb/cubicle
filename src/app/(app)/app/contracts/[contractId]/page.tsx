@@ -10,9 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SendContractButton } from "@/components/contracts/send-contract-button";
 import { RevokeContractButton } from "@/components/contracts/revoke-contract-button";
 import Link from "next/link";
-import { ArrowLeft, FileSignature, Send, CheckCircle2, X, FileText } from "lucide-react";
+import { ArrowLeft, CheckCircle2, X, FileText } from "lucide-react";
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 
 async function getWorkspaceId(): Promise<string> {

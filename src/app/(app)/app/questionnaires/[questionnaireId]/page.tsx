@@ -112,14 +112,14 @@ export default async function QuestionnaireDetailPage({ params }: { params: Prom
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {fields.map((f, i) => (
+          {fields.map((f) => (
             <div key={f.id} className="border-l-2 border-slate-200 pl-3">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">{f.label}</span>
                 {f.required && <Badge variant="destructive" className="text-[10px] h-4">required</Badge>}
                 <Badge variant="outline" className="text-[10px] h-4">{f.type}</Badge>
               </div>
-              {f.placeholder && <p className="text-xs text-slate-500 mt-0.5">"{f.placeholder}"</p>}
+              {f.placeholder && <p className="text-xs text-slate-500 mt-0.5">&ldquo;{f.placeholder}&rdquo;</p>}
               {f.options && f.options.length > 0 && (
                 <p className="text-xs text-slate-500 mt-0.5">Options: {f.options.join(", ")}</p>
               )}

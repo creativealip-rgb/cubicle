@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, FileText, Send } from "lucide-react";
+import { Plus, FileText } from "lucide-react";
 import { SendProposalButton } from "@/components/proposals/send-proposal-button";
 
 async function getWorkspaceId(): Promise<string> {

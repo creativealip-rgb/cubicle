@@ -10,10 +10,8 @@ import {
   timeEntries,
   workspaces,
   users,
-  contracts,
-  notifications,
 } from "@/db/schema";
-import { eq, and, desc, sql, gte, lte, isNull } from "drizzle-orm";
+import { eq, and, desc, sql, gte, lte } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import {
   Users,

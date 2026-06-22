@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { workspaces, clients, projects } from "@/db/schema";
+import { workspaces } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { QuestionnaireBuilder } from "@/components/questionnaires/questionnaire-builder";
@@ -20,11 +20,6 @@ export default async function NewQuestionnairePage() {
   const user = requireUser(session?.user);
   const ws = await getWorkspace();
   await assertWorkspaceWritable(db, user.id, ws.id);
-
-  const clientsList = await db.select({ id: clients.id, name: clients.name })
-    .from(clients).where(eq(clients.workspaceId, ws.id));
-  const projectsList = await db.select({ id: projects.id, name: projects.name })
-    .from(projects).where(eq(projects.workspaceId, ws.id));
 
   return (
     <div className="space-y-6 p-6 max-w-4xl">

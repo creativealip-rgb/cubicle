@@ -28,7 +28,7 @@ import { NextRequest } from "next/server";
 import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { chat, streamChat, type ChatMessage, aiConfig } from "@/lib/ai/client";
+import { streamChat, type ChatMessage, aiConfig } from "@/lib/ai/client";
 import { TOOL_DEFS, executeTool, ACTION_TOOLS } from "@/lib/ai/tools";
 import { SYSTEM_PROMPT } from "@/lib/ai/system-prompt";
 import {
@@ -252,7 +252,6 @@ async function runAgentLoop(opts: {
   let totalUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
   let toolCallCount = 0;
   let lastAssistantContent = "";
-  let lastConfirmation: unknown = null;
   let lastToolName: string | null = null;
   const persistedToolMessages: Array<{ name: string; result: unknown }> = [];
 
@@ -334,7 +333,6 @@ async function runAgentLoop(opts: {
         if (ACTION_TOOLS.has(tc.function.name)) {
           const r = result as { confirmation?: unknown; error?: string };
           if (r?.confirmation) {
-            lastConfirmation = r.confirmation;
             lastToolName = tc.function.name;
             // Persist immediately (UI is going to ask the user; we don't
             // know if they'll confirm yet — but the user msg + tool msg

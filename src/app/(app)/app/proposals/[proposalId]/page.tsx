@@ -4,7 +4,7 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { proposals, clients, workspaces, invoices, projects } from "@/db/schema";
+import { proposals, clients, workspaces, projects } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SendProposalButton } from "@/components/proposals/send-proposal-button";
-import { ArrowLeft, ExternalLink, FileText } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 function formatMoney(amount: string | number, currency: string) {
   const n = typeof amount === "string" ? parseFloat(amount) : amount;

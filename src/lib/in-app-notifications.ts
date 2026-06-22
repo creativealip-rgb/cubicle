@@ -11,7 +11,7 @@
 
 import { db } from "@/db";
 import { notifications, workspaceMembers } from "@/db/schema";
-import { and, eq, isNull, sql, inArray } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 
 export type NotificationType =
   | "task_assigned"

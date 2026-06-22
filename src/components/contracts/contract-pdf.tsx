@@ -351,6 +351,7 @@ export function ContractPDF({ contract, workspace, client }: ContractData) {
                 <Text style={styles.signatureLabel}>Signature</Text>
                 <View style={styles.signatureImageBox}>
                   {contract.signatureDataUrl ? (
+                    // eslint-disable-next-line jsx-a11y/alt-text -- @react-pdf/renderer Image has no alt prop.
                     <Image src={contract.signatureDataUrl} style={styles.signatureImage} />
                   ) : (
                     <Text style={styles.signaturePlaceholder}>(no signature data)</Text>

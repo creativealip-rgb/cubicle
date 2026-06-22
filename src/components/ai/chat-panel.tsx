@@ -617,7 +617,6 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                 conversationId={conversationId}
                 loadConversation={loadConversation}
                 deleteConversation={deleteConversation}
-                startNewChat={startNewChat}
               />
             ) : (
               <>
@@ -962,7 +961,6 @@ function WelcomeScreen({
   conversationId,
   loadConversation,
   deleteConversation,
-  startNewChat,
 }: {
   input: string;
   setInput: (v: string) => void;
@@ -978,10 +976,9 @@ function WelcomeScreen({
   conversationId: string | null;
   loadConversation: (id: string) => void;
   deleteConversation: (id: string) => void;
-  startNewChat: () => void;
 }) {
   return (
-    <div className="flex-1 overflow-y-auto bg-white">
+    <div className="bg-white">
       <div className="mx-auto w-full max-w-2xl px-4 pt-10 pb-6 md:pt-16">
         {/* Logo + Greeting */}
         <div className="flex flex-col items-center text-center">

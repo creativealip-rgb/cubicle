@@ -13,7 +13,7 @@ import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { tasks, invoices } from "@/db/schema";
+import { tasks } from "@/db/schema";
 import { sendNotification } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
