@@ -197,14 +197,17 @@ export default function HomePage() {
                 </div>
               </div>
               {/* Real screenshot */}
-              <Image
-                src="/screenshots/dashboard.png"
-                alt="Cubiqlo dashboard showing active clients, projects, tasks, and invoices"
-                width={1440}
-                height={900}
-                priority
-                className="block w-full"
-              />
+              <div className="relative h-80 overflow-hidden lg:h-[420px]">
+                <Image
+                  src="/screenshots/dashboard.png"
+                  alt="Cubiqlo dashboard showing active clients, projects, tasks, and invoices"
+                  width={1440}
+                  height={900}
+                  priority
+                  className="block w-full object-top"
+                  style={{ objectFit: 'cover', objectPosition: 'top' }}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -395,13 +398,16 @@ export default function HomePage() {
                     cubiqlo.com/app/dashboard
                   </div>
                 </div>
-                <Image
-                  src="/screenshots/tasks.png"
-                  alt="Cubiqlo dashboard with KPIs and active projects"
-                  width={1440}
-                  height={900}
-                  className="block w-full"
-                />
+                <div className="relative h-72 overflow-hidden lg:h-96">
+                  <Image
+                    src="/screenshots/tasks.png"
+                    alt="Cubiqlo tasks with filters and priorities"
+                    width={1440}
+                    height={900}
+                    className="block w-full"
+                    style={{ objectFit: 'cover', objectPosition: 'top' }}
+                  />
+                </div>
               </div>
             </div>
           </div>
