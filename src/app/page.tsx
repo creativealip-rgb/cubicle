@@ -373,9 +373,9 @@ export default function HomePage() {
                   <div>
                     <h3 className="tracking-[0.03em] text-xl font-semibold text-slate-950">{step}</h3>
                     <p className="mt-2 leading-7 text-slate-600">
-                      {index === 0 && "Start with the client context, then keep every project, contact, and note attached to it."}
-                      {index === 1 && "Run daily delivery without losing files, comments, billable time, or team ownership."}
-                      {index === 2 && "Give clients a clean portal, share invoice links, and close the loop without rebuilding admin work."}
+                      {index === 0 && "Clients, contacts, and notes — all in one place."}
+                      {index === 1 && "Tasks, files, time, and comments — nothing falls through the cracks."}
+                      {index === 2 && "Share a portal, send invoices, get paid."}
                     </p>
                   </div>
                 </li>

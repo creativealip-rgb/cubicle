@@ -487,26 +487,73 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* KPI Cards + Revenue trend (sparkline card) */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      {/* Revenue sparkline — hero bar */}
+      <Card className="bg-gradient-to-r from-slate-50 to-white">
+        <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Revenue (last 14 days)</p>
+            <p className="text-3xl font-bold tracking-tight">
+              {formatMoneyCompact(sparkTotal, workspaceCurrency)}
+            </p>
+            <p
+              className={`text-xs font-medium ${
+                sparkTrend >= 0 ? "text-emerald-600" : "text-red-600"
+              }`}
+            >
+              <TrendingUp
+                className={`mr-1 inline h-3 w-3 ${
+                  sparkTrend < 0 ? "rotate-180" : ""
+                }`}
+              />
+              {sparkTrend >= 0 ? "+" : ""}
+              {sparkTrend.toFixed(0)}% vs prior 7d
+            </p>
+          </div>
+          <svg
+            viewBox={`0 0 ${sparkW} ${sparkH}`}
+            className="h-16 w-full max-w-xs sm:max-w-sm"
+            preserveAspectRatio="none"
+            aria-label="Revenue trend last 14 days"
+          >
+            <defs>
+              <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#2563eb" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#2563eb" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <path d={sparkArea} fill="url(#sparkFill)" />
+            <path
+              d={sparkPath}
+              fill="none"
+              stroke="#2563eb"
+              strokeWidth="2"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          </svg>
+        </CardContent>
+      </Card>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {kpiCards.map((kpi) => {
           const Icon = kpi.icon;
           return (
-            <Link key={kpi.label} href={kpi.href} className="lg:col-span-1 group">
+            <Link key={kpi.label} href={kpi.href} className="group">
               <Card className="relative cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:ring-1 hover:ring-slate-950/10">
-                <CardContent className="p-6">
+                <CardContent className="p-5">
                   <div className="flex items-start justify-between">
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <p className="text-sm text-muted-foreground">{kpi.label}</p>
-                      <p className="text-3xl font-bold tracking-tight">
+                      <p className="text-2xl font-bold tracking-tight">
                         {kpi.value}
                       </p>
                       <p className="text-xs text-muted-foreground">{kpi.change}</p>
                     </div>
                     <div
-                      className={`flex h-10 w-10 items-center justify-center rounded-lg transition-transform group-hover:scale-110 ${kpi.iconBg}`}
+                      className={`flex h-9 w-9 items-center justify-center rounded-lg transition-transform group-hover:scale-110 ${kpi.iconBg}`}
                     >
-                      <Icon className="h-5 w-5" />
+                      <Icon className="h-4 w-4" />
                     </div>
                   </div>
                   <ArrowUpRight className="absolute right-3 top-3 h-3.5 w-3.5 text-slate-300 opacity-0 transition-opacity group-hover:opacity-100" />
@@ -515,55 +562,6 @@ export default async function DashboardPage() {
             </Link>
           );
         })}
-
-        {/* Revenue sparkline — 14d */}
-        <Card className="lg:col-span-1">
-          <CardContent className="p-6">
-            <div className="flex items-start justify-between">
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Revenue (14d)</p>
-                <p className="text-2xl font-bold tracking-tight">
-                  {formatMoneyCompact(sparkTotal, workspaceCurrency)}
-                </p>
-                <p
-                  className={`text-xs font-medium ${
-                    sparkTrend >= 0 ? "text-emerald-600" : "text-red-600"
-                  }`}
-                >
-                  <TrendingUp
-                    className={`mr-1 inline h-3 w-3 ${
-                      sparkTrend < 0 ? "rotate-180" : ""
-                    }`}
-                  />
-                  {sparkTrend >= 0 ? "+" : ""}
-                  {sparkTrend.toFixed(0)}% vs prior 7d
-                </p>
-              </div>
-            </div>
-            <svg
-              viewBox={`0 0 ${sparkW} ${sparkH}`}
-              className="mt-4 h-14 w-full"
-              preserveAspectRatio="none"
-              aria-label="Revenue trend last 14 days"
-            >
-              <defs>
-                <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#2563eb" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#2563eb" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path d={sparkArea} fill="url(#sparkFill)" />
-              <path
-                d={sparkPath}
-                fill="none"
-                stroke="#2563eb"
-                strokeWidth="2"
-                strokeLinejoin="round"
-                strokeLinecap="round"
-              />
-            </svg>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Client Health + Cash Flow Forecast */}
@@ -714,131 +712,84 @@ export default async function DashboardPage() {
         </Card>
 
         {/* Right column */}
-        <div className="space-y-6">
+        <div className="space-y-4">
+          {/* Active Timer + Upcoming — merged */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                Active Timer
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {activeTimer ? (
-                <div className="space-y-3">
+            <CardContent className="divide-y divide-slate-100 p-0">
+              {/* Timer */}
+              <div className="p-4">
+                <div className="mb-2 flex items-center gap-2">
+                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">Active Timer</span>
+                </div>
+                {activeTimer ? (
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">{activeTimer.description || "Untitled"}</p>
-                      <p className="text-xs text-muted-foreground">{activeTimer.userName || "Unknown"}</p>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{activeTimer.description || "Untitled"}</p>
+                      <p className="text-xs text-muted-foreground">{activeTimer.userName}</p>
                     </div>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
-                      <Clock className="h-5 w-5 text-emerald-600 animate-pulse" />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+                      <Clock className="h-4 w-4 text-emerald-600 animate-pulse" />
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Started {activeTimer.startTime ? formatRelative(activeTimer.startTime) : "—"}
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-6 text-center">
-                  <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full border-4 border-muted">
-                    <Clock className="h-6 w-6 text-muted-foreground" />
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <p className="text-sm text-muted-foreground">No active timer</p>
+                    <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" asChild>
+                      <Link href="/app/time">Start</Link>
+                    </Button>
                   </div>
-                  <p className="text-sm font-medium">No active timer</p>
-                  <p className="text-xs text-muted-foreground">
-                    Start tracking time on a task
-                  </p>
-                  <Button variant="outline" size="sm" className="mt-3 gap-1" asChild>
-                    <Link href="/app/time">
-                      <Clock className="h-3 w-3" />
-                      Start Timer
-                    </Link>
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                )}
+              </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                Upcoming
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {upcomingAppts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-6 text-center">
-                  <Calendar className="mb-3 h-10 w-10 text-muted-foreground/50" />
-                  <p className="text-sm font-medium">No upcoming events</p>
-                  <p className="text-xs text-muted-foreground">
-                    Your schedule is clear
-                  </p>
+              {/* Upcoming */}
+              <div className="p-4">
+                <div className="mb-2 flex items-center gap-2">
+                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">Upcoming</span>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {upcomingAppts.map((apt) => (
-                    <div key={apt.id} className="flex items-center gap-3">
-                      <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{apt.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(apt.startTime).toLocaleDateString("en-US", {
-                            weekday: "short",
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
+                {upcomingAppts.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No upcoming events</p>
+                ) : (
+                  <div className="space-y-2">
+                    {upcomingAppts.slice(0, 3).map((apt) => (
+                      <div key={apt.id} className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
+                        <p className="min-w-0 truncate text-sm">{apt.title}</p>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {new Date(apt.startTime).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                        </span>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <Receipt className="h-4 w-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <Receipt className="h-3.5 w-3.5 text-muted-foreground" />
                 Unpaid Invoices
               </CardTitle>
-              <Button variant="ghost" size="sm" className="gap-1 text-xs" asChild>
-                <Link href="/app/invoices">
-                  View all
-                  <ArrowUpRight className="h-3 w-3" />
-                </Link>
+              <Button variant="ghost" size="sm" className="h-6 gap-1 text-xs" asChild>
+                <Link href="/app/invoices">View all</Link>
               </Button>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2 pt-0">
               {unpaidInvoices.length === 0 && (
-                <p className="text-xs text-muted-foreground py-4 text-center">No unpaid invoices</p>
+                <p className="py-3 text-center text-xs text-muted-foreground">No unpaid invoices</p>
               )}
               {unpaidInvoices.map((inv) => (
-                <div
-                  key={inv.id}
-                  className="flex items-center justify-between rounded-lg border p-3"
-                >
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-medium">{inv.invoiceNumber}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {inv.clientName || "Unknown"} · Due {inv.dueDate || "—"}
-                    </p>
+                <div key={inv.id} className="flex items-center justify-between rounded-lg px-2 py-1.5 hover:bg-slate-50">
+                  <div className="min-w-0 space-y-0.5">
+                    <p className="truncate text-sm font-medium">{inv.invoiceNumber}</p>
+                    <p className="text-xs text-muted-foreground">{inv.clientName}</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      variant={inv.status === "overdue" ? "destructive" : "secondary"}
-                      className="text-xs"
-                    >
-                      {inv.status === "overdue" && (
-                        <AlertCircle className="mr-1 h-3 w-3" />
-                      )}
-                      {inv.status}
-                    </Badge>
-                    <span className="text-sm font-semibold">
-                      {formatMoney(inv.total, inv.currency || workspaceCurrency)}
-                    </span>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {inv.status === "overdue" && <AlertCircle className="h-3 w-3 text-red-500" />}
+                    <span className="text-sm font-semibold tabular-nums">{formatMoney(inv.total, inv.currency || workspaceCurrency)}</span>
                   </div>
                 </div>
               ))}
@@ -846,42 +797,28 @@ export default async function DashboardPage() {
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <ListChecks className="h-4 w-4 text-muted-foreground" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <ListChecks className="h-3.5 w-3.5 text-muted-foreground" />
                 Today&apos;s Tasks
               </CardTitle>
-              <Button variant="ghost" size="sm" className="gap-1 text-xs" asChild>
-                <Link href="/app/tasks">
-                  View all
-                  <ArrowUpRight className="h-3 w-3" />
-                </Link>
+              <Button variant="ghost" size="sm" className="h-6 gap-1 text-xs" asChild>
+                <Link href="/app/tasks">View all</Link>
               </Button>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2 pt-0">
               {todayTasks.length === 0 && (
-                <p className="text-xs text-muted-foreground py-4 text-center">No tasks due today</p>
+                <p className="py-3 text-center text-xs text-muted-foreground">No tasks due today</p>
               )}
               {todayTasks.map((task) => (
-                <div
-                  key={task.id}
-                  className="flex items-center justify-between rounded-lg border p-3"
-                >
-                  <div className="space-y-0.5 min-w-0">
-                    <p className="text-sm font-medium truncate">{task.title}</p>
-                    {task.assigneeName && (
-                      <p className="text-xs text-muted-foreground">{task.assigneeName}</p>
-                    )}
+                <div key={task.id} className="flex items-center justify-between rounded-lg px-2 py-1.5 hover:bg-slate-50">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{task.title}</p>
+                    {task.assigneeName && <p className="text-xs text-muted-foreground">{task.assigneeName}</p>}
                   </div>
                   <Badge
-                    variant={
-                      task.priority === "urgent"
-                        ? "destructive"
-                        : task.priority === "high"
-                          ? "default"
-                          : "secondary"
-                    }
-                    className="text-xs shrink-0"
+                    variant={task.priority === "urgent" ? "destructive" : task.priority === "high" ? "default" : "secondary"}
+                    className="shrink-0 text-xs"
                   >
                     {task.priority}
                   </Badge>
