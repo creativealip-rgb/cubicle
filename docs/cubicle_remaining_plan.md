@@ -246,6 +246,7 @@ Production client-ready: ~93% (+1: AI Assistant raises polish, R2 gaps unchanged
 - Demo MVP: **99%** (unchanged — live smoke routes pass)
 - Sellable source/MVP: **99%** (unchanged — clean lint/typecheck/build restored)
 - Production client-ready: **~97.5%** (unchanged — build/runtime/security quick pass improved confidence, but R2 E2E, Resend production E2E, rate limiting, real domain, and automated tests remain open)
+- R2 file E2E blocked: live `.env` still has placeholder `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and `R2_BUCKET_NAME`; direct R2 TLS/API test fails before upload. Provision real Cloudflare R2 credentials before file-flow QA.
 - Commit `97b2d53 chore: restore clean lint and production build` pushed to `origin/main` and deployed via `docker compose up -d --build cubicle`.
 - Verification after deploy: `/` 200, `/api/health` 200 `{"status":"ok","db":"ok"}`, `/login` 200, `/signup` 200, `/app/brain` 307 protected redirect.
 - Runtime after deploy: `cubicle-cubicle-1` healthy, `cubicle-pg` healthy, low CPU/RAM.

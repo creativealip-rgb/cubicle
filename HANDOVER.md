@@ -64,7 +64,7 @@ R2 buckets are not bundled with this repo. Two options:
 - 🟢 Lint clean (0 warn / 0 err), TypeScript clean, production build clean — re-verified 2026-06-22 in commit `97b2d53`.
 - 🟢 Latest `origin/main` deployed on VPS via Docker Compose on 2026-06-22; live smoke pass for `/`, `/api/health`, `/login`, `/signup`, and protected `/app/brain` redirect.
 - 🟢 P0 quick container security pass 2026-06-22: no rogue `/tmp/postgresql`, `cubicle-pg` process list normal, `/tmp` clean, app/DB ports not directly published, containers only on `dokploy-network`, expected mounts only.
-- 🟡 R2 file upload E2E not fully tested (placeholders/env-dependent).
+- 🔴 R2 file upload E2E blocked as of 2026-06-22: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and `R2_BUCKET_NAME` are placeholder values in live `.env`; direct R2 TLS/API test fails before upload. Provision real Cloudflare R2 credentials before file-flow QA.
 - 🟡 No automated test suite (manual QA checklist in `docs/cubicle_test_checklist.md`).
 - 🟡 Email flows implemented but not all E2E tested (RESEND_API_KEY + sender domain not set in prod).
 - 🟡 No payment gateway integration (manual "mark as paid" only).
