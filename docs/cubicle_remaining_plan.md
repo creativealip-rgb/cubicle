@@ -242,6 +242,16 @@ Production client-ready: ~93% (+1: AI Assistant raises polish, R2 gaps unchanged
 - Sellable source/MVP: **99%** (unchanged — ceiling)
 - Production client-ready: **~97.5%** (+0.5 — notification coverage expanded across proposal viewed, contract viewed/signed, questionnaire answered, booking created, task status changed, @mentions, due-date reminders, overdue invoice alerts)
 >
+> **Update 2026-06-22 (Lint/build recovery + live deploy + P0 quick security pass):**
+- Demo MVP: **99%** (unchanged — live smoke routes pass)
+- Sellable source/MVP: **99%** (unchanged — clean lint/typecheck/build restored)
+- Production client-ready: **~97.5%** (unchanged — build/runtime/security quick pass improved confidence, but R2 E2E, Resend production E2E, rate limiting, real domain, and automated tests remain open)
+- Commit `97b2d53 chore: restore clean lint and production build` pushed to `origin/main` and deployed via `docker compose up -d --build cubicle`.
+- Verification after deploy: `/` 200, `/api/health` 200 `{"status":"ok","db":"ok"}`, `/login` 200, `/signup` 200, `/app/brain` 307 protected redirect.
+- Runtime after deploy: `cubicle-cubicle-1` healthy, `cubicle-pg` healthy, low CPU/RAM.
+- P0 quick security pass: no rogue `/tmp/postgresql`, Postgres process list normal, `/tmp` clean, app and DB ports not directly published, containers only on `dokploy-network`, mounts expected.
+- Notable VPS hardening follow-up: SSH auth log shows ongoing internet brute-force attempts against random usernames; consider fail2ban/SSH hardening.
+>
 > **Resolved in this continuation session (16 Jun):**
 > - P0.1 rogue /tmp/postgresql regression — confirmed gone (no rebuild)
 > - P0.7 npm audit — 5 of 6 fixed via `overrides: esbuild ^0.28.1`,

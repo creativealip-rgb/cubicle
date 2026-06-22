@@ -61,14 +61,17 @@ R2 buckets are not bundled with this repo. Two options:
 ## What the new owner inherits
 
 ### Technical debt (known)
-- 🟢 Lint clean (0 warn / 0 err) + tsc clean — verified 2026-06-16
-- 🟡 R2 file upload E2E not fully tested (placeholders in env)
-- 🟡 No automated test suite (manual QA checklist in `docs/cubicle_test_checklist.md`)
-- 🟡 Email flows implemented but not all E2E tested (RESEND_API_KEY + sender domain not set in prod)
-- 🟡 No payment gateway integration (manual "mark as paid" only)
-- 🟡 No rate limiting on auth or public endpoints
-- 🟡 No background job queue (cron-style booking reminders not implemented)
-- 🟢 npm audit: 5/6 fixed, 1 accepted (postcss nested in next@16.2.9, build-time only, zero exploit in authored-CSS)
+- 🟢 Lint clean (0 warn / 0 err), TypeScript clean, production build clean — re-verified 2026-06-22 in commit `97b2d53`.
+- 🟢 Latest `origin/main` deployed on VPS via Docker Compose on 2026-06-22; live smoke pass for `/`, `/api/health`, `/login`, `/signup`, and protected `/app/brain` redirect.
+- 🟢 P0 quick container security pass 2026-06-22: no rogue `/tmp/postgresql`, `cubicle-pg` process list normal, `/tmp` clean, app/DB ports not directly published, containers only on `dokploy-network`, expected mounts only.
+- 🟡 R2 file upload E2E not fully tested (placeholders/env-dependent).
+- 🟡 No automated test suite (manual QA checklist in `docs/cubicle_test_checklist.md`).
+- 🟡 Email flows implemented but not all E2E tested (RESEND_API_KEY + sender domain not set in prod).
+- 🟡 No payment gateway integration (manual "mark as paid" only).
+- 🟡 No rate limiting on auth or public endpoints.
+- 🟡 No background job queue (cron-style booking reminders not implemented).
+- 🟡 VPS SSH receives ongoing public brute-force attempts; UFW is active, but fail2ban/SSH hardening is recommended.
+- 🟢 npm audit: 5/6 fixed, 1 accepted (postcss nested in next@16.2.9, build-time only, zero exploit in authored-CSS).
 
 ### Operational knowledge
 - Demo accounts and seed data are designed to be reset with `npm run db:seed`
