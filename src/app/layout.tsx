@@ -65,6 +65,11 @@ export const metadata: Metadata = {
     description:
       "Manage client work from request to invoice in one calm workspace.",
   },
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/favicon.ico",
+    apple: "/icon-192.png",
+  },
   robots: {
     index: true,
     follow: true,
