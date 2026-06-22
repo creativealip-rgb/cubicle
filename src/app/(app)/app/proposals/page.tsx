@@ -17,26 +17,13 @@ import {
 } from "@/components/ui/table";
 import { Plus, FileText } from "lucide-react";
 import { SendProposalButton } from "@/components/proposals/send-proposal-button";
+import { formatMoney } from "@/lib/utils";
+import { projectStatusVariant } from "@/lib/status-badge";
 
 async function getWorkspaceId(): Promise<string> {
   const [ws] = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.slug, "acme-creative")).limit(1);
   if (!ws) throw new Error("Workspace not found");
   return ws.id;
-}
-
-function formatMoney(amount: string, currency: string) {
-  const n = parseFloat(amount);
-  if (currency === "IDR") return `Rp ${n.toLocaleString("id-ID", { maximumFractionDigits: 0 })}`;
-  return `${currency} ${n.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
-}
-
-function statusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
-  switch (status) {
-    case "accepted": return "default";
-    case "sent": case "viewed": return "secondary";
-    case "declined": case "expired": return "destructive";
-    default: return "outline";
-  }
 }
 
 export default async function ProposalsPage() {
@@ -110,7 +97,9 @@ export default async function ProposalsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((p) => (
+              {rows.map((p) => {
+                const status = projectStatusVariant(p.status);
+                return (
                 <TableRow key={p.id}>
                   <TableCell>
                     <Link href={`/app/proposals/${p.id}`} className="font-medium text-sm hover:underline">
@@ -123,7 +112,7 @@ export default async function ProposalsPage() {
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={statusVariant(p.status)}>{p.status}</Badge>
+                    <Badge variant={status.variant}>{status.label}</Badge>
                   </TableCell>
                   <TableCell className="text-right tabular-nums text-sm">
                     {formatMoney(p.total, p.currency)}
@@ -140,7 +129,8 @@ export default async function ProposalsPage() {
                     )}
                   </TableCell>
                 </TableRow>
-              ))}
+              );
+              })}
             </TableBody>
           </Table>
         </div>

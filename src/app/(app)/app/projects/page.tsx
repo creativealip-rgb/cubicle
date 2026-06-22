@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ProjectForm } from "@/components/forms/project-form";
+import { EmptyState } from "@/components/empty-state";
 
 async function getWorkspaceId() {
   const [ws] = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.slug, "acme-creative")).limit(1);
@@ -110,15 +111,68 @@ export default async function ProjectsPage({
         </div>
 
         {projectsList.length === 0 && (
-          <div className="p-8 text-center text-sm text-muted-foreground">
-            No projects yet
-          </div>
+          <EmptyState
+            icon={Plus}
+            title="No projects yet"
+            description="Create your first project to start tracking work."
+          />
         )}
+
+        <div className="md:hidden divide-y">
+          {projectsList.map((project) => (
+            <div key={project.id} className="p-4 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <Link href={`/app/projects/${project.id}`} className="font-medium hover:underline">
+                    {project.name}
+                  </Link>
+                  <div className="text-sm text-muted-foreground truncate">
+                    {project.clientName || "—"}
+                  </div>
+                </div>
+                <Badge variant="outline" className="text-xs capitalize shrink-0">
+                  {project.status.replace("_", " ")}
+                </Badge>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Progress</span>
+                  <span>{project.doneTasks}/{project.totalTasks}</span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${statusColors[project.status] ?? "bg-slate-400"}`}
+                    style={{
+                      width: `${project.totalTasks > 0 ? Math.round((project.doneTasks / project.totalTasks) * 100) : 0}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                <span>
+                  {project.dueDate ? (
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {new Date(project.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
+                </span>
+                {project.clientVisible && (
+                  <Badge variant="outline" className="text-[10px]">Client visible</Badge>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
 
         {projectsList.map((project) => (
           <div
             key={project.id}
-            className="grid grid-cols-12 gap-4 p-3 items-center border-b last:border-0 hover:bg-muted/50 transition-colors"
+            className="hidden md:grid grid-cols-12 gap-4 p-3 items-center border-b last:border-0 hover:bg-muted/50 transition-colors"
           >
             <div className="col-span-3">
               <Link href={`/app/projects/${project.id}`} className="font-medium hover:underline">

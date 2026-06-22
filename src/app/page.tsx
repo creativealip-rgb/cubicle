@@ -398,12 +398,13 @@ export default function HomePage() {
                     cubiqlo.com/app/dashboard
                   </div>
                 </div>
-                <div className="relative h-72 overflow-hidden lg:h-96">
+                <div className="relative h-72 overflow-hidden bg-slate-100 lg:h-96">
                   <Image
                     src="/screenshots/tasks.png"
                     alt="Cubiqlo tasks with filters and priorities"
                     width={1440}
                     height={900}
+                    priority
                     className="block w-full"
                     style={{ objectFit: 'cover', objectPosition: 'top' }}
                   />

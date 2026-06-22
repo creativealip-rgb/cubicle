@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { EmptyState } from "@/components/empty-state";
 import {
   Clock,
   Trash2,
@@ -214,10 +215,11 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
 
       {/* Entries table */}
       {filteredEntries.length === 0 ? (
-        <div className="text-center py-12 text-sm text-muted-foreground">
-          <Clock className="h-10 w-10 mx-auto mb-3 opacity-30" />
-          No time entries found
-        </div>
+        <EmptyState
+          icon={Clock}
+          title="No time entries found"
+          description="No time entries match your current filters. Try adjusting filters or track some time."
+        />
       ) : (
         <div className="space-y-2">
           {filteredEntries.map((entry) => (

@@ -16,20 +16,12 @@ import {
 } from "@/components/ui/table";
 import { FileSignature } from "lucide-react";
 import { CreateContractButton } from "@/components/contracts/create-contract-button";
+import { projectStatusVariant } from "@/lib/status-badge";
 
 async function getWorkspaceId(): Promise<string> {
   const [ws] = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.slug, "acme-creative")).limit(1);
   if (!ws) throw new Error("Workspace not found");
   return ws.id;
-}
-
-function statusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
-  switch (status) {
-    case "signed": return "default";
-    case "sent": case "viewed": return "secondary";
-    case "declined": case "expired": case "revoked": return "destructive";
-    default: return "outline";
-  }
 }
 
 export default async function ContractsPage() {
@@ -91,7 +83,9 @@ export default async function ContractsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((c) => (
+              {rows.map((c) => {
+                const status = projectStatusVariant(c.status);
+                return (
                 <TableRow key={c.id}>
                   <TableCell>
                     <Link href={`/app/contracts/${c.id}`} className="font-medium text-sm hover:underline">
@@ -104,7 +98,7 @@ export default async function ContractsPage() {
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={statusVariant(c.status)}>{c.status}</Badge>
+                    <Badge variant={status.variant}>{status.label}</Badge>
                   </TableCell>
                   <TableCell className="text-xs text-slate-500">
                     {c.signedAt ? `Signed ${new Date(c.signedAt).toLocaleDateString()}` :
@@ -119,7 +113,8 @@ export default async function ContractsPage() {
                     </Link>
                   </TableCell>
                 </TableRow>
-              ))}
+              );
+              })}
             </TableBody>
           </Table>
         </div>

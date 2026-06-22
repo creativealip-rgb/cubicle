@@ -380,7 +380,8 @@ export default async function ReportsPage() {
             {clientRows.length === 0 ? (
               <p className="text-sm text-slate-500 py-4 text-center">No invoices yet</p>
             ) : (
-              <Table>
+              <div className="overflow-x-auto">
+              <Table className="min-w-[600px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Client</TableHead>
@@ -414,6 +415,7 @@ export default async function ReportsPage() {
                   })}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -472,7 +474,8 @@ export default async function ReportsPage() {
           {overdueItems.length === 0 ? (
             <p className="text-sm text-slate-500 py-2 text-center">No overdue invoices 🎉</p>
           ) : (
-            <Table>
+            <div className="overflow-x-auto">
+            <Table className="min-w-[600px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Invoice</TableHead>
@@ -504,6 +507,7 @@ export default async function ReportsPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -578,7 +582,8 @@ export default async function ReportsPage() {
           {projectRows.length === 0 ? (
             <p className="text-sm text-slate-500 py-4 text-center">No projects yet</p>
           ) : (
-            <Table>
+            <div className="overflow-x-auto">
+            <Table className="min-w-[600px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Project</TableHead>
@@ -613,6 +618,7 @@ export default async function ReportsPage() {
                 })}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

@@ -16,6 +16,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, FileText, Eye } from "lucide-react";
+import { formatMoney } from "@/lib/utils";
+import { invoiceStatusVariant } from "@/lib/status-badge";
+import { EmptyState } from "@/components/empty-state";
 
 async function getWorkspaceId(): Promise<string> {
   const [ws] = await db
@@ -27,23 +30,14 @@ async function getWorkspaceId(): Promise<string> {
   return ws.id;
 }
 
-function statusVariant(
-  status: string,
-): "default" | "secondary" | "destructive" | "success" | "warning" | "info" | "outline" {
-  switch (status) {
-    case "paid":
-      return "success";
-    case "sent":
-      return "info";
-    case "viewed":
-      return "info";
-    case "overdue":
-      return "destructive";
-    case "cancelled":
-      return "outline";
-    default:
-      return "outline";
-  }
+function formatInvoiceId(num: string): string {
+  if (/^INV-\d{4}-\d{4}$/.test(num)) return num;
+
+  const match = num.match(/^INV-(\d{1,4})$/);
+  if (!match) return num;
+
+  const year = new Date().getFullYear();
+  return `INV-${year}-${match[1].padStart(4, "0")}`;
 }
 
 export default async function InvoicesPage() {
@@ -95,22 +89,15 @@ export default async function InvoicesPage() {
       </div>
 
       {invoiceList.length === 0 ? (
-        <div className="text-center py-16 border rounded-lg">
-          <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-30" />
-          <h3 className="text-lg font-semibold mb-2">No invoices yet</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Create your first invoice to start billing your clients.
-          </p>
-          {canWrite && (
-            <Link href="/app/invoices/new">
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" /> Create Invoice
-              </Button>
-            </Link>
-          )}
-        </div>
+        <EmptyState
+          icon={FileText}
+          title="No invoices yet"
+          description="Create your first invoice to start billing your clients."
+          action={canWrite ? { label: "Create Invoice", href: "/app/invoices/new" } : undefined}
+        />
       ) : (
-        <div className="border rounded-lg overflow-x-auto min-w-0 max-w-full">
+        <>
+        <div className="hidden md:block border rounded-lg overflow-x-auto min-w-0 max-w-full">
           <Table>
             <TableHeader>
               <TableRow>
@@ -124,10 +111,12 @@ export default async function InvoicesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {invoiceList.map((inv) => (
+              {invoiceList.map((inv) => {
+                const status = invoiceStatusVariant(inv.status);
+                return (
                 <TableRow key={inv.id}>
                   <TableCell className="font-mono text-sm font-medium">
-                    {inv.invoiceNumber}
+                    {formatInvoiceId(inv.invoiceNumber)}
                   </TableCell>
                   <TableCell>{inv.clientCompany || inv.clientName}</TableCell>
                   <TableCell>
@@ -140,17 +129,12 @@ export default async function InvoicesPage() {
                       ? new Date(inv.dueDate).toLocaleDateString()
                       : "-"}
                   </TableCell>
-                  <TableCell className="text-right font-medium tabular-nums">
-                    {new Intl.NumberFormat("id-ID", {
-                      style: "currency",
-                      currency: inv.currency,
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }).format(Number(inv.total))}
+                  <TableCell className="text-right tabular-nums font-medium">
+                    {formatMoney(inv.total, inv.currency)}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={statusVariant(inv.status)}>
-                      {inv.status}
+                    <Badge variant={status.variant}>
+                      {status.label}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -163,10 +147,46 @@ export default async function InvoicesPage() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              );
+              })}
             </TableBody>
           </Table>
         </div>
+        <div className="md:hidden space-y-3">
+          {invoiceList.map((inv) => {
+            const status = invoiceStatusVariant(inv.status);
+            return (
+              <div key={inv.id} className="rounded-lg border bg-card p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <Link href={`/app/invoices/${inv.id}`} className="font-mono text-sm font-medium hover:underline">
+                      {formatInvoiceId(inv.invoiceNumber)}
+                    </Link>
+                    <div className="text-sm text-muted-foreground truncate">
+                      {inv.clientCompany || inv.clientName}
+                    </div>
+                  </div>
+                  <Badge variant={status.variant} className="shrink-0">
+                    {status.label}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs text-muted-foreground">Total</span>
+                  <span className="tabular-nums font-medium">{formatMoney(inv.total, inv.currency)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs text-muted-foreground">Due</span>
+                  <span className="text-sm">
+                    {inv.dueDate
+                      ? new Date(inv.dueDate).toLocaleDateString()
+                      : "-"}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        </>
       )}
     </div>
   );
