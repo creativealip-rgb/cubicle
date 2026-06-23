@@ -301,6 +301,7 @@ export default async function DashboardPage() {
       change: `${activeClients} total`,
       icon: Users,
       iconBg: "bg-blue-100 text-blue-600",
+      accentBorder: "border-l-blue-500",
       href: "/app/clients",
     },
     {
@@ -309,6 +310,7 @@ export default async function DashboardPage() {
       change: `${activeProjects} in progress`,
       icon: Briefcase,
       iconBg: "bg-emerald-100 text-emerald-600",
+      accentBorder: "border-l-emerald-500",
       href: "/app/projects",
     },
     {
@@ -317,6 +319,7 @@ export default async function DashboardPage() {
       change: `${overdueTasks} overdue`,
       icon: CheckSquare,
       iconBg: "bg-amber-100 text-amber-600",
+      accentBorder: "border-l-amber-500",
       href: "/app/tasks",
     },
     {
@@ -325,6 +328,7 @@ export default async function DashboardPage() {
       change: `${unpaidCount} pending`,
       icon: Receipt,
       iconBg: "bg-red-100 text-red-600",
+      accentBorder: "border-l-red-500",
       href: "/app/invoices",
     },
   ];
@@ -540,7 +544,7 @@ export default async function DashboardPage() {
           const Icon = kpi.icon;
           return (
             <Link key={kpi.label} href={kpi.href} className="group">
-              <Card className="relative cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:ring-1 hover:ring-slate-950/10">
+              <Card className={`relative cursor-pointer border-l-4 ${kpi.accentBorder} transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg`}>
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1.5">

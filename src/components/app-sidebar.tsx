@@ -94,7 +94,7 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-sidebar-background transition-all duration-200",
+        "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200/80 bg-sidebar-background transition-all duration-200",
         // Desktop: always visible, normal collapse behavior
         "md:translate-x-0",
         collapsed ? "md:w-[68px]" : "md:w-[260px]",

@@ -124,7 +124,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
     .slice(0, 2);
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background px-3 md:gap-4 md:px-4">
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl px-3 md:gap-4 md:px-4">
       {/* Mobile hamburger */}
       <Button
         variant="ghost"
