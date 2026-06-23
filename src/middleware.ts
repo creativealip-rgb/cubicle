@@ -11,6 +11,14 @@ const LOGIN_RATE_LIMIT = { limit: 5, windowSec: 300 } // 5 req/5min per IP (stri
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const host = request.headers.get("host") || ""
+
+  // Redirect sslip.io domains to cubiqlo.com
+  if (host.includes("sslip.io")) {
+    const url = new URL(`https://cubiqlo.com${pathname}`)
+    url.search = request.nextUrl.search
+    return NextResponse.redirect(url, 301)
+  }
 
   // Rate limit auth API endpoints
   if (pathname.startsWith("/api/auth")) {
