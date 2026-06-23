@@ -414,6 +414,9 @@ deploy:  PASS (Docker Compose, cubicle-cubicle-1 healthy)
 | AI_API_KEY          | ✅ Set          | 9router key (AI Assistant)       |
 | AI_BASE_URL         | ✅ Set          | 9router base URL                 |
 | AI_MODEL            | ✅ Set          | `ag/gemini-3-flash`              |
+| PAKASIR_PROJECT     | ✅ Set          | `cubiqlo` project slug           |
+| PAKASIR_API_KEY     | ✅ Set          | Server-side Pakasir API key      |
+| NEXT_PUBLIC_APP_URL | ✅ Set          | `https://cubiqlo.com`            |
 
 ---
 

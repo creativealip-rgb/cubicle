@@ -197,7 +197,8 @@ Production client-ready: ~98% (payment gateway still open)
 - Security/ops: auth rate limiting active; fail2ban recidive jail active; local + external uptime monitoring active; DB backup/restore-test cron active.
 - QA: 17 Vitest unit tests + 13 Playwright E2E tests passing.
 - Product: Free tier now limited to 3 clients server-side with upgrade UI; pricing localized to Rp 49rb Solo / Rp 99rb Team; landing copy polished for Indonesian market using mixed Indo + SaaS English tone.
-- Remaining strategic gap: Midtrans/payment gateway and billing automation.
+- Payment gateway v1 started: Pakasir QRIS checkout/webhook for Solo/Team plans using project `cubiqlo`.
+- Remaining strategic gap: subscription automation polish (renewal reminders, grace period, receipt email, plan downgrade automation).
 
 > **Update 2026-06-16 (P0 deep QA + P2.4 + P1.5 + extras):**
 > - Demo MVP: **99%** (unchanged — was already 99%)

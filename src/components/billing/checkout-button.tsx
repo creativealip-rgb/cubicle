@@ -1,0 +1,39 @@
+"use client";
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+
+type Plan = "solo" | "team";
+
+export function CheckoutButton({ plan, children }: { plan: Plan; children: React.ReactNode }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function checkout() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Gagal membuat checkout");
+      window.location.href = json.data.paymentUrl;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal membuat checkout");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <Button onClick={checkout} disabled={loading} className="w-full bg-[#6647F0] text-white hover:bg-[#5333DD]">
+        {loading ? "Membuat QRIS..." : children}
+      </Button>
+      {error && <p className="text-xs text-red-600">{error}</p>}
+    </div>
+  );
+}

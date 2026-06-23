@@ -30,6 +30,7 @@ import {
   Wallet,
   BarChart3,
   FileText,
+  CreditCard,
 } from "lucide-react";
 import { useSidebar } from "@/components/app-shell";
 
@@ -44,6 +45,7 @@ const navItems = [
   { label: "Invoices", href: "/app/invoices", icon: Receipt, group: "Money", badgeKey: "unpaidInvoices" as const },
   { label: "Expenses", href: "/app/expenses", icon: Wallet, group: "Money" },
   { label: "Reports", href: "/app/reports", icon: BarChart3, group: "Money" },
+  { label: "Billing", href: "/app/billing", icon: CreditCard, group: "Money" },
   { label: "Proposals", href: "/app/proposals", icon: FileText, group: "Sales", badgeKey: "draftProposals" as const },
   { label: "Contracts", href: "/app/contracts", icon: FileSignature, group: "Sales", badgeKey: "draftContracts" as const },
   { label: "Forms", href: "/app/questionnaires", icon: ClipboardList, group: "Sales" },

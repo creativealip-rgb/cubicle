@@ -87,6 +87,20 @@ export const workspaces = pgTable("workspaces", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const pakasirPayments = pgTable("pakasir_payments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  orderId: text("order_id").notNull().unique(),
+  plan: text("plan", { enum: ["solo", "team"] }).notNull(),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+  status: text("status", { enum: ["pending", "completed", "failed"] }).notNull().default("pending"),
+  paymentMethod: text("payment_method").notNull().default("PAKASIR_QRIS"),
+  rawPayload: jsonb("raw_payload"),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const workspaceMembers = pgTable("workspace_members", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
