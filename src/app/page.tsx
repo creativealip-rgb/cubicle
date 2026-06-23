@@ -22,17 +22,17 @@ import { Card, CardContent } from "@/components/ui/card";
 const operationPillars = [
   {
     icon: Users,
-    title: "Clients",
+    title: "Klien",
     description: "Keep contacts, notes, projects, portal access, and client history in one place.",
   },
   {
     icon: BriefcaseBusiness,
-    title: "Projects",
+    title: "Proyek",
     description: "Plan projects, assign teams, track progress, and keep delivery status clear.",
   },
   {
     icon: FolderOpen,
-    title: "Files & deliverables",
+    title: "File & deliverable",
     description: "Separate internal files from client-visible deliverables ready for handoff.",
   },
   {
@@ -63,9 +63,9 @@ const operationPillars = [
 ];
 
 const workflow = [
-  "Add client, scope, and project",
-  "Manage tasks, files, comments, and time",
-  "Share portal, send invoice, get paid",
+  "Tambah klien, scope, dan proyek",
+  "Kelola task, file, komentar, dan waktu",
+  "Bagikan portal, kirim invoice, terima bayaran",
 ];
 
 const pricing = [
@@ -74,7 +74,7 @@ const pricing = [
     price: "Rp 0",
     priceSub: "selamanya",
     description: "Coba dulu, tanpa kartu kredit.",
-    items: ["1 user", "3 clients", "Projects & tasks", "Invoices", "Time tracking"],
+    items: ["1 user", "3 clients", "Proyek & task", "Invoices", "Time tracking"],
     cta: "Start free",
     href: "/signup",
     featured: false,
@@ -115,19 +115,19 @@ export default function HomePage() {
           </Link>
 
           <nav className="hidden items-center gap-7 text-sm font-medium text-slate-600 md:flex">
-            <a href="#features" className="transition-colors duration-200 hover:text-[#6647F0]">Features</a>
-            <a href="#workflow" className="transition-colors duration-200 hover:text-[#6647F0]">Workflow</a>
+            <a href="#features" className="transition-colors duration-200 hover:text-[#6647F0]">Fitur</a>
+            <a href="#workflow" className="transition-colors duration-200 hover:text-[#6647F0]">Alur</a>
             <a href="#portal" className="transition-colors duration-200 hover:text-[#6647F0]">Portal</a>
-            <a href="#pricing" className="transition-colors duration-200 hover:text-[#6647F0]">Pricing</a>
+            <a href="#pricing" className="transition-colors duration-200 hover:text-[#6647F0]">Harga</a>
           </nav>
 
           <div className="flex items-center gap-2">
             <Button asChild variant="ghost" className="hidden sm:inline-flex">
-              <Link href="/login">Sign in</Link>
+              <Link href="/login">Masuk</Link>
             </Button>
             <Button asChild className="bg-[#6647F0] text-white shadow-[0_4px_4px_rgba(13,21,48,0.04)] transition-all duration-200 hover:scale-[1.02] hover:bg-[#5333DD] hover:shadow-[0_8px_20px_rgba(102,71,240,0.25)] active:bg-[#4A2AD0] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-[#6647F0] focus-visible:ring-offset-2">
               <Link href="/signup">
-                Get started
+                Mulai
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -146,31 +146,31 @@ export default function HomePage() {
               />
               <Badge className="relative rounded-full border-0 bg-white/90 px-3 py-1.5 text-[#6647F0] shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)] hover:bg-white/90">
                 <span className="mr-2 inline-flex h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-                Live in beta · v0.1
+                Versi beta · v0.1
               </Badge>
             </div>
             <h1 className="max-w-4xl text-3xl font-semibold tracking-normal text-[#292D34] sm:text-5xl sm:tracking-normal md:text-6xl lg:text-7xl" style={{ fontWeight: 650 }}>
-              Run client work from request to invoice.
+              Kelola klien dari awal sampai invoice.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600 sm:text-xl">
-              One calm workspace for clients, projects, deliverables, time, invoices, booking, and portals.
+              Satu workspace untuk klien, proyek, file, waktu, invoice, booking, dan portal.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" className="h-12 rounded-xl bg-[#6647F0] px-6 text-white shadow-[0_4px_4px_rgba(13,21,48,0.04)] transition-all duration-200 hover:scale-[1.02] hover:bg-[#5333DD] hover:shadow-[0_8px_20px_rgba(102,71,240,0.25)] active:bg-[#4A2AD0] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-[#6647F0] focus-visible:ring-offset-2 tracking-[-0.01em] font-normal">
                 <Link href="/signup">
-                  Start managing clients
+                  Mulai kelola klien
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="h-12 rounded-xl border border-[#D9D9D9] bg-white px-6 text-[#292D34] shadow-[0_4px_4px_rgba(13,21,48,0.04)] hover:border-[#C0C0C0] hover:bg-[#F8F9FA] tracking-[-0.01em] font-normal">
-                <Link href="/login">View demo workspace</Link>
+                <Link href="/login">Masuk</Link>
               </Button>
             </div>
             <div className="mt-8 flex flex-wrap gap-3 text-sm text-slate-600">
               {[
-                "Client portal included",
-                "Time-to-invoice workflow",
-                "No scattered handoffs",
+                "Portal klien tersedia",
+                "Alur kerja dari waktu ke invoice",
+                "Semua terpusat di satu tempat",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-[#6647F0]" />
@@ -226,23 +226,23 @@ export default function HomePage() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border !border-[#A78BFA]/40 bg-white px-3 py-1.5 shadow-sm">
               <span className="inline-flex h-1.5 w-1.5 rounded-full bg-[#6647F0]" />
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6647F0]">Why Cubiqlo</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6647F0]">Kenapa Cubiqlo</p>
             </div>
             <h2 className="mt-5 text-3xl font-semibold leading-tight tracking-[-0.01em] text-[#292D34] sm:text-4xl lg:text-[2.75rem]">
-              Project management stops at tasks.{' '}
+              Project management berhenti di task.{' '}
               <span className="bg-gradient-to-r from-[#A78BFA] via-[#6647F0] to-[#0091FF] bg-clip-text text-transparent">
-                Cubiqlo keeps going.
+                Cubiqlo terus sampai selesai.
               </span>
             </h2>
           </div>
           <div className="relative">
             <p className="text-lg leading-8 text-slate-600">
-              Generic project tools stop at tasks. Client-service businesses still need{' '}
+              Tool PM biasa berhenti di task. Bisnis jasa masih butuh{' '}
               <span className="font-medium text-[#292D34]">portals, deliverables, tracked time, booking, invoices</span>
-              {' '}— and a clean way to keep clients updated. Cubiqlo connects those pieces from day one.
+              {' '}— dan cara rapi untuk update klien. Cubiqlo hubungkan semua dari hari pertama.
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
-              {['Portals', 'Deliverables', 'Time', 'Calendar', 'AI', 'Invoices'].map((tag) => (
+              {['Portal', 'File', 'Waktu', 'Kalender', 'AI', 'Invoice'].map((tag) => (
                 <span
                   key={tag}
                   className="inline-flex items-center gap-1.5 rounded-full border !border-[#6647F0]/25 bg-white px-3 py-1 text-xs font-medium text-[#6647F0] shadow-sm"
@@ -262,9 +262,9 @@ export default function HomePage() {
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(102,71,240,0.04),transparent_70%)]" />
         <div className="relative mx-auto grid max-w-7xl grid-cols-3 gap-8 sm:gap-10">
           {[
-            { value: "4h", label: "Saved per weekly close", accent: "#0091FF" },
-            { value: "1", label: "Workspace, not 6", accent: "#6647F0" },
-            { value: "0", label: "Spreadsheets to keep updated", accent: "#ED5F00" },
+            { value: "4h", label: "Jam hemat per minggu", accent: "#0091FF" },
+            { value: "1", label: "Workspace, bukan 6", accent: "#6647F0" },
+            { value: "0", label: "Spreadsheet yang harus diupdate", accent: "#ED5F00" },
           ].map((stat, i) => (
             <div
               key={stat.label}
@@ -300,7 +300,7 @@ export default function HomePage() {
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6647F0]">Client Operations Hub</p>
               </div>
               <h2 className="mt-5 text-3xl font-semibold leading-[1.15] tracking-[-0.01em] text-[#292D34] sm:text-5xl">
-                Everything around client delivery.{' '}
+                Semua yang dibutuhkan untuk delivery klien. Terhubung.
                 <span className="relative inline-block">
                   <span className="relative z-10">Connected.</span>
                   <span
@@ -310,7 +310,7 @@ export default function HomePage() {
                 </span>
               </h2>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                Manage work around clients, not scattered boards. Cubiqlo keeps the full delivery loop close: scope, tasks, files, time, portal, and billing.
+                Kelola kerja berdasarkan klien, bukan board tersebar. Cubiqlo simpan seluruh alur delivery: scope, task, file, waktu, portal, dan billing.
               </p>
             </div>
             {/* inline mini-metric cluster */}
@@ -352,16 +352,16 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* How it works — 3 steps + 1 hero screenshot */}
+      {/* Cara kerja — 3 steps + 1 hero screenshot */}
       <section id="workflow" className="px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-3xl text-center">
-            <Badge variant="outline" className="mb-4">How it works</Badge>
+            <Badge variant="outline" className="mb-4">Cara kerja</Badge>
             <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
-              From first request to final payment.
+              Dari permintaan pertama sampai pembayaran.
             </h2>
             <p className="mt-4 text-lg leading-8 text-slate-600">
-              One workspace, not six. Three steps.
+              Satu workspace, bukan enam. Tiga langkah.
             </p>
           </div>
 
@@ -449,15 +449,15 @@ export default function HomePage() {
           </div>
 
           <div>
-            <Badge className="mb-4 bg-[#F4F0FF] text-[#6647F0] hover:bg-[#F4F0FF]">Client portal included</Badge>
+            <Badge className="mb-4 bg-[#F4F0FF] text-[#6647F0] hover:bg-[#F4F0FF]">Portal klien tersedia</Badge>
             <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
-              One link. Less chasing.
+              Satu link. Kurangin kejar-kejaran.
             </h2>
             <p className="mt-5 text-lg leading-8 text-slate-600">
-              Share only what clients should see: project progress, selected tasks, deliverable files, public comments, and invoice links. Internal work stays internal.
+              Bagikan hanya yang perlu klien lihat: progress proyek, task terpilih, file deliverable, komentar publik, dan link invoice. Kerjaan internal tetap internal.
             </p>
             <div className="mt-7 grid gap-3 text-slate-700 sm:grid-cols-2">
-              {["Visible projects", "Deliverable files", "Client comments", "Invoice links", "Portal tokens", "Internal data hidden"].map((item) => (
+              {["Proyek terlihat", "File deliverable", "Komentar klien", "Link invoice", "Token portal", "Data internal tersembunyi"].map((item) => (
                 <div key={item} className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-[#6647F0]" />
                   <span>{item}</span>
@@ -474,7 +474,7 @@ export default function HomePage() {
             Built for
           </p>
           <p className="text-lg leading-8 text-slate-700 sm:text-xl">
-            Freelancers · Creative agencies · Software studios · Marketing teams · Consultants
+            Freelancer · Agency kreatif · Studio software · Tim marketing · Konsultan
           </p>
         </div>
       </section>
@@ -483,12 +483,12 @@ export default function HomePage() {
       <section className="px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
-            <Badge variant="outline" className="mb-4">Why switch</Badge>
+            <Badge variant="outline" className="mb-4">Kenapa pindah</Badge>
             <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
-              Less tool sprawl. Less spend.
+              Kurangi tool. Kurangi biaya.
             </h2>
             <p className="mt-4 text-lg leading-8 text-slate-600">
-              Other client-ops tools charge $20–$52/month per seat and still miss the portal or booking. Cubiqlo keeps the full loop free for solo work.
+              Tool client-ops lain charge $20–$52/bulan per seat dan masih kurang portal atau booking. Cubiqlo tetap gratis untuk kerja solo.
             </p>
           </div>
           <div className="mt-12 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_4px_16px_rgba(13,21,48,0.04),0_16px_48px_rgba(13,21,48,0.08)]">
@@ -503,11 +503,11 @@ export default function HomePage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {[
-                  { label: "Solo entry price", h: "$19/mo", b: "$17/mo", c: "Free" },
-                  { label: "Client portal included", h: "Yes", b: "Add-on", c: "Yes" },
-                  { label: "Booking pages", h: "Yes", b: "Add-on", c: "Yes" },
-                  { label: "Native IDR billing", h: "—", b: "—", c: "Yes" },
-                  { label: "Setup time", h: "1–2 hours", b: "1–2 hours", c: "5 minutes" },
+                  { label: "Harga masuk", h: "$19/mo", b: "$17/mo", c: "Free" },
+                  { label: "Portal klien tersedia", h: "Yes", b: "Add-on", c: "Yes" },
+                  { label: "Halaman booking", h: "Yes", b: "Add-on", c: "Yes" },
+                  { label: "Billing IDR", h: "—", b: "—", c: "Yes" },
+                  { label: "Waktu setup", h: "1–2 hours", b: "1–2 hours", c: "5 menit" },
                   { label: "AI assistant", h: "—", b: "—", c: "Built-in" },
                   { label: "Calendar view", h: "—", b: "Add-on", c: "Yes" },
                 ].map((row) => (
@@ -660,7 +660,7 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-5xl rounded-[2rem] bg-[linear-gradient(135deg,#1d4ed8_0%,#2563eb_58%,#06b6d4_130%)] px-6 py-14 text-center text-white shadow-2xl shadow-slate-300/70 sm:px-12">
           <Sparkles className="mx-auto h-8 w-8 text-[#B19EE8]" />
           <h2 className="mt-5 text-3xl font-semibold tracking-[0.03em] text-white sm:text-5xl">
-            Bring every client workspace under one roof.
+            Satukan semua workspace klien di satu tempat.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-white/90">
             Replace scattered updates, forgotten billable hours, and manual handoffs with one client operations hub.
@@ -668,12 +668,12 @@ export default function HomePage() {
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
             <Button asChild size="lg" className="h-12 rounded-xl bg-white px-6 text-[#292D34] shadow-[0_4px_4px_rgba(13,21,48,0.04)] tracking-[-0.01em] hover:bg-[#F8F9FA] font-normal">
               <Link href="/signup">
-                Create workspace
+                Buat workspace
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="h-12 rounded-xl border border-white/30 bg-white/10 px-6 text-white shadow-[0_4px_4px_rgba(13,21,48,0.04)] tracking-[-0.01em] hover:bg-white/20 hover:text-white font-normal">
-              <Link href="/login">Sign in</Link>
+              <Link href="/login">Masuk</Link>
             </Button>
           </div>
         </div>
@@ -689,8 +689,8 @@ export default function HomePage() {
             </div>
           </div>
           <div className="flex gap-5 text-sm text-slate-500">
-            <Link href="/login" className="hover:text-slate-950">Login</Link>
-            <Link href="/signup" className="hover:text-slate-950">Signup</Link>
+            <Link href="/login" className="hover:text-slate-950">Masuk</Link>
+            <Link href="/signup" className="hover:text-slate-950">Daftar</Link>
             <a href="#features" className="hover:text-slate-950">Features</a>
           </div>
         </div>

@@ -57,6 +57,12 @@ export default async function ClientsPage({
     .limit(1);
   const canWrite = member?.role === "owner" || member?.role === "member";
 
+  // Check plan for limit enforcement
+  const [workspace] = await db.select({ plan: workspaces.plan }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  const currentPlan = workspace?.plan ?? "free";
+  const [{ clientCount }] = await db.select({ clientCount: sql<number>`count(*)::int` }).from(clients).where(eq(clients.workspaceId, workspaceId));
+  const isAtLimit = currentPlan === "free" && clientCount >= 3;
+
   const params = await searchParams;
   const search = params.search ?? "";
   const statusFilter = params.status ?? "active";
@@ -123,22 +129,43 @@ export default async function ClientsPage({
           </p>
         </div>
         {canWrite && (
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button size="sm" className="gap-1">
-                <Plus className="h-4 w-4" />
-                Add Client
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>New Client</DialogTitle>
-              </DialogHeader>
-              <ClientForm mode="create" />
-            </DialogContent>
-          </Dialog>
+          isAtLimit ? (
+            <Button size="sm" className="gap-1" disabled>
+              <Plus className="h-4 w-4" />
+              Upgrade to add more
+            </Button>
+          ) : (
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button size="sm" className="gap-1">
+                  <Plus className="h-4 w-4" />
+                  Add Client
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>New Client</DialogTitle>
+                </DialogHeader>
+                <ClientForm mode="create" />
+              </DialogContent>
+            </Dialog>
+          )
         )}
       </div>
+
+      {isAtLimit && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-amber-900">Free plan limit reached</p>
+              <p className="text-sm text-amber-700 mt-1">You have {clientCount}/3 clients. Upgrade to Solo for unlimited clients.</p>
+            </div>
+            <Button size="sm" className="bg-[#6647F0] hover:bg-[#5333DD] shrink-0">
+              Upgrade to Solo — Rp 49rb/bln
+            </Button>
+          </div>
+        </div>
+      )}
 
       <Tabs defaultValue={statusFilter} className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

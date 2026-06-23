@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { clients, workspaces } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceWritable, assertClientInWorkspace } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
@@ -34,6 +34,15 @@ export async function createClient(input: z.infer<typeof clientSchema>) {
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  // Check plan limits
+  const [ws] = await db.select({ plan: workspaces.plan }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  if (ws?.plan === "free") {
+    const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(clients).where(eq(clients.workspaceId, workspaceId));
+    if (count >= 3) {
+      throw new Error("Free plan limited to 3 clients. Upgrade to Solo for unlimited clients.");
+    }
+  }
 
   const parsed = clientSchema.parse(input);
 
