@@ -23,42 +23,42 @@ const operationPillars = [
   {
     icon: Users,
     title: "Klien",
-    description: "Keep contacts, notes, projects, portal access, and client history in one place.",
+    description: "Simpan kontak, notes, project, akses portal, dan riwayat client di satu tempat.",
   },
   {
     icon: BriefcaseBusiness,
     title: "Proyek",
-    description: "Plan projects, assign teams, track progress, and keep delivery status clear.",
+    description: "Atur project, assign team, pantau progress, dan bikin status delivery tetap jelas.",
   },
   {
     icon: FolderOpen,
     title: "File & deliverable",
-    description: "Separate internal files from client-visible deliverables ready for handoff.",
+    description: "Pisahkan file internal dari deliverable yang siap dibagikan ke client.",
   },
   {
     icon: Clock3,
     title: "Time tracking",
-    description: "Track billable work with timers, manual entries, summaries, and CSV exports.",
+    description: "Catat jam billable pakai timer, input manual, summary, dan export CSV.",
   },
   {
     icon: FileText,
     title: "Invoices",
-    description: "Turn billable work into invoices, share public links, and record payments.",
+    description: "Ubah kerja billable jadi invoice, bagikan link, dan catat pembayaran.",
   },
   {
     icon: MessageSquareText,
     title: "Client portal",
-    description: "Give clients one clean link for shared projects, tasks, files, comments, and invoices.",
+    description: "Kasih client satu link rapi untuk lihat project, task, file, komentar, dan invoice.",
   },
   {
     icon: Calendar,
     title: "Calendar",
-    description: "View upcoming appointments, deadlines, and scheduled work in one place.",
+    description: "Lihat appointment, deadline, dan jadwal kerja dari satu calendar.",
   },
   {
     icon: Sparkles,
     title: "AI assistant",
-    description: "Built-in AI that understands your workspace data — generate prompts, summaries, and answers.",
+    description: "AI assistant yang paham data workspace: bikin prompt, summary, dan jawaban cepat.",
   },
 ];
 
@@ -74,8 +74,8 @@ const pricing = [
     price: "Rp 0",
     priceSub: "selamanya",
     description: "Coba dulu, tanpa kartu kredit.",
-    items: ["1 user", "3 clients", "Proyek & task", "Invoices", "Time tracking"],
-    cta: "Start free",
+    items: ["1 user", "3 clients", "Project & task", "Invoice", "Time tracking"],
+    cta: "Mulai gratis",
     href: "/signup",
     featured: false,
   },
@@ -83,8 +83,8 @@ const pricing = [
     name: "Solo",
     price: "Rp 49rb",
     priceSub: "/bulan",
-    description: "Untuk freelancer yang serius kelola klien.",
-    items: ["1 user", "Unlimited clients", "Client portal", "AI assistant", "Calendar & booking", "Proposals & contracts"],
+    description: "Untuk freelancer yang mulai serius kelola client work.",
+    items: ["1 user", "Unlimited clients", "Client portal", "AI assistant", "Calendar & booking", "Proposal & contract"],
     cta: "Mulai Rp 49rb",
     href: "/signup",
     featured: true,
@@ -93,8 +93,8 @@ const pricing = [
     name: "Team",
     price: "Rp 99rb",
     priceSub: "/bulan",
-    description: "Untuk tim kecil yang deliver bareng.",
-    items: ["5 users", "Shared workspace", "Team roles", "File handoff", "Advanced reporting", "Priority support"],
+    description: "Untuk team kecil yang handle banyak client bareng.",
+    items: ["5 users", "Shared workspace", "Team roles", "File handoff", "Advanced report", "Priority support"],
     cta: "Mulai Team",
     href: "/signup",
     featured: false,
@@ -150,15 +150,15 @@ export default function HomePage() {
               </Badge>
             </div>
             <h1 className="max-w-4xl text-3xl font-semibold tracking-normal text-[#292D34] sm:text-5xl sm:tracking-normal md:text-6xl lg:text-7xl" style={{ fontWeight: 650 }}>
-              Kelola klien dari awal sampai invoice.
+              Kelola client work dari satu workspace.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600 sm:text-xl">
-              Satu workspace untuk klien, proyek, file, waktu, invoice, booking, dan portal.
+              Cubiqlo bantu freelancer, agency, dan studio mengatur client, project, task, file, time tracking, invoice, booking, dan client portal tanpa pindah-pindah tool.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" className="h-12 rounded-xl bg-[#6647F0] px-6 text-white shadow-[0_4px_4px_rgba(13,21,48,0.04)] transition-all duration-200 hover:scale-[1.02] hover:bg-[#5333DD] hover:shadow-[0_8px_20px_rgba(102,71,240,0.25)] active:bg-[#4A2AD0] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-[#6647F0] focus-visible:ring-offset-2 tracking-[-0.01em] font-normal">
                 <Link href="/signup">
-                  Mulai kelola klien
+                  Mulai gratis
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
@@ -168,9 +168,9 @@ export default function HomePage() {
             </div>
             <div className="mt-8 flex flex-wrap gap-3 text-sm text-slate-600">
               {[
-                "Portal klien tersedia",
-                "Alur kerja dari waktu ke invoice",
-                "Semua terpusat di satu tempat",
+                "Client portal tersedia",
+                "Dari time tracking ke invoice",
+                "Semua kerja client dalam satu workspace",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-[#6647F0]" />
@@ -229,17 +229,14 @@ export default function HomePage() {
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6647F0]">Kenapa Cubiqlo</p>
             </div>
             <h2 className="mt-5 text-3xl font-semibold leading-tight tracking-[-0.01em] text-[#292D34] sm:text-4xl lg:text-[2.75rem]">
-              Project management berhenti di task.{' '}
-              <span className="bg-gradient-to-r from-[#A78BFA] via-[#6647F0] to-[#0091FF] bg-clip-text text-transparent">
-                Cubiqlo terus sampai selesai.
-              </span>
+              Project management berhenti di task. Cubiqlo lanjut sampai invoice.
             </h2>
           </div>
           <div className="relative">
             <p className="text-lg leading-8 text-slate-600">
               Tool PM biasa berhenti di task. Bisnis jasa masih butuh{' '}
-              <span className="font-medium text-[#292D34]">portals, deliverables, tracked time, booking, invoices</span>
-              {' '}— dan cara rapi untuk update klien. Cubiqlo hubungkan semua dari hari pertama.
+              <span className="font-medium text-[#292D34]">client portal, deliverable, time tracking, booking, invoice</span>
+              {' '}— plus cara rapi buat update client. Cubiqlo satukan semuanya dari hari pertama.
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
               {['Portal', 'File', 'Waktu', 'Kalender', 'AI', 'Invoice'].map((tag) => (
@@ -262,9 +259,9 @@ export default function HomePage() {
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(102,71,240,0.04),transparent_70%)]" />
         <div className="relative mx-auto grid max-w-7xl grid-cols-3 gap-8 sm:gap-10">
           {[
-            { value: "4h", label: "Jam hemat per minggu", accent: "#0091FF" },
-            { value: "1", label: "Workspace, bukan 6", accent: "#6647F0" },
-            { value: "0", label: "Spreadsheet yang harus diupdate", accent: "#ED5F00" },
+            { value: "4h", label: "Hemat per minggu", accent: "#0091FF" },
+            { value: "1", label: "Workspace, bukan 6 tool", accent: "#6647F0" },
+            { value: "0", label: "Spreadsheet manual", accent: "#ED5F00" },
           ].map((stat, i) => (
             <div
               key={stat.label}
@@ -300,7 +297,7 @@ export default function HomePage() {
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6647F0]">Client Operations Hub</p>
               </div>
               <h2 className="mt-5 text-3xl font-semibold leading-[1.15] tracking-[-0.01em] text-[#292D34] sm:text-5xl">
-                Semua yang dibutuhkan untuk delivery klien. Terhubung.
+                Semua yang dibutuhkan untuk deliver ke client.{' '}
                 <span className="relative inline-block">
                   <span className="relative z-10">Connected.</span>
                   <span
@@ -310,7 +307,7 @@ export default function HomePage() {
                 </span>
               </h2>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                Kelola kerja berdasarkan klien, bukan board tersebar. Cubiqlo simpan seluruh alur delivery: scope, task, file, waktu, portal, dan billing.
+                Kelola kerja berdasarkan client, bukan board yang tercecer. Cubiqlo simpan seluruh workflow: scope, task, file, time tracking, portal, dan billing.
               </p>
             </div>
             {/* inline mini-metric cluster */}
@@ -358,10 +355,10 @@ export default function HomePage() {
           <div className="mx-auto max-w-3xl text-center">
             <Badge variant="outline" className="mb-4">Cara kerja</Badge>
             <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
-              Dari permintaan pertama sampai pembayaran.
+              Dari request pertama sampai pembayaran.
             </h2>
             <p className="mt-4 text-lg leading-8 text-slate-600">
-              Satu workspace, bukan enam. Tiga langkah.
+              Satu workspace. Tiga langkah. Tanpa lompat-lompat tool.
             </p>
           </div>
 
@@ -375,9 +372,9 @@ export default function HomePage() {
                   <div>
                     <h3 className="tracking-[0.03em] text-xl font-semibold text-slate-950">{step}</h3>
                     <p className="mt-2 leading-7 text-slate-600">
-                      {index === 0 && "Clients, contacts, and notes — all in one place."}
-                      {index === 1 && "Tasks, files, time, and comments — nothing falls through the cracks."}
-                      {index === 2 && "Share a portal, send invoices, get paid."}
+                      {index === 0 && "Client, kontak, dan notes rapi dari awal."}
+                      {index === 1 && "Task, file, waktu kerja, dan komentar tetap nyambung."}
+                      {index === 2 && "Share portal, kirim invoice, lalu terima pembayaran."}
                     </p>
                   </div>
                 </li>
@@ -427,10 +424,10 @@ export default function HomePage() {
               </div>
               <div className="mt-6 grid gap-4">
                 {[
-                  [LayoutDashboard, "Project status", "In progress · 68%"],
-                  [FolderOpen, "Deliverables", "3 client-visible files"],
-                  [MessageSquareText, "Updates", "2 new comments"],
-                  [FileText, "Invoice", "INV-2026-004 ready"],
+                  [LayoutDashboard, "Status project", "In progress · 68%"],
+                  [FolderOpen, "Deliverable", "3 file terlihat oleh client"],
+                  [MessageSquareText, "Update", "2 komentar baru"],
+                  [FileText, "Invoice", "INV-2026-004 siap dikirim"],
                 ].map(([Icon, title, meta]) => {
                   const PortalIcon = Icon as typeof LayoutDashboard;
                   return (
@@ -449,15 +446,15 @@ export default function HomePage() {
           </div>
 
           <div>
-            <Badge className="mb-4 bg-[#F4F0FF] text-[#6647F0] hover:bg-[#F4F0FF]">Portal klien tersedia</Badge>
+            <Badge className="mb-4 bg-[#F4F0FF] text-[#6647F0] hover:bg-[#F4F0FF]">Client portal tersedia</Badge>
             <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
-              Satu link. Kurangin kejar-kejaran.
+              Satu link. Kurangi follow-up bolak-balik.
             </h2>
             <p className="mt-5 text-lg leading-8 text-slate-600">
-              Bagikan hanya yang perlu klien lihat: progress proyek, task terpilih, file deliverable, komentar publik, dan link invoice. Kerjaan internal tetap internal.
+              Bagikan hanya yang perlu client lihat: progress project, task terpilih, file deliverable, komentar publik, dan link invoice. Kerjaan internal tetap aman.
             </p>
             <div className="mt-7 grid gap-3 text-slate-700 sm:grid-cols-2">
-              {["Proyek terlihat", "File deliverable", "Komentar klien", "Link invoice", "Token portal", "Data internal tersembunyi"].map((item) => (
+              {["Project terlihat", "File deliverable", "Komentar client", "Link invoice", "Token portal", "Data internal aman"].map((item) => (
                 <div key={item} className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-[#6647F0]" />
                   <span>{item}</span>
@@ -474,7 +471,7 @@ export default function HomePage() {
             Built for
           </p>
           <p className="text-lg leading-8 text-slate-700 sm:text-xl">
-            Freelancer · Agency kreatif · Studio software · Tim marketing · Konsultan
+            Freelancer · Creative agency · Software studio · Marketing team · Konsultan
           </p>
         </div>
       </section>
@@ -485,10 +482,10 @@ export default function HomePage() {
           <div className="mx-auto max-w-2xl text-center">
             <Badge variant="outline" className="mb-4">Kenapa pindah</Badge>
             <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
-              Kurangi tool. Kurangi biaya.
+              Kurangi tool. Kurangi biaya operasional.
             </h2>
             <p className="mt-4 text-lg leading-8 text-slate-600">
-              Tool client-ops lain charge $20–$52/bulan per seat dan masih kurang portal atau booking. Cubiqlo tetap gratis untuk kerja solo.
+              Tool client ops lain mulai dari $20/seat per bulan, sering masih perlu add-on untuk portal atau booking. Cubiqlo kasih free workspace untuk mulai kerja rapi.
             </p>
           </div>
           <div className="mt-12 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_4px_16px_rgba(13,21,48,0.04),0_16px_48px_rgba(13,21,48,0.08)]">
@@ -503,13 +500,13 @@ export default function HomePage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {[
-                  { label: "Harga masuk", h: "$19/mo", b: "$17/mo", c: "Free" },
-                  { label: "Portal klien tersedia", h: "Yes", b: "Add-on", c: "Yes" },
-                  { label: "Halaman booking", h: "Yes", b: "Add-on", c: "Yes" },
-                  { label: "Billing IDR", h: "—", b: "—", c: "Yes" },
-                  { label: "Waktu setup", h: "1–2 hours", b: "1–2 hours", c: "5 menit" },
-                  { label: "AI assistant", h: "—", b: "—", c: "Built-in" },
-                  { label: "Calendar view", h: "—", b: "Add-on", c: "Yes" },
+                  { label: "Harga mulai", h: "$19/mo", b: "$17/mo", c: "Gratis" },
+                  { label: "Client portal", h: "Ada", b: "Add-on", c: "Ada" },
+                  { label: "Booking page", h: "Ada", b: "Add-on", c: "Ada" },
+                  { label: "Billing IDR", h: "—", b: "—", c: "Ada" },
+                  { label: "Waktu setup", h: "1–2 jam", b: "1–2 jam", c: "5 menit" },
+                  { label: "AI assistant", h: "—", b: "—", c: "Sudah termasuk" },
+                  { label: "Calendar view", h: "—", b: "Add-on", c: "Ada" },
                 ].map((row) => (
                   <tr key={row.label} className="transition-colors hover:bg-slate-50/80">
                     <td className="px-6 py-4 font-medium text-slate-700">{row.label}</td>
@@ -529,17 +526,17 @@ export default function HomePage() {
           <div className="grid gap-8 lg:grid-cols-3">
             {[
               {
-                quote: "Cubiqlo closed the loop between my client work and my invoicing. I used to lose 3 hours a week to context-switching.",
+                quote: "Cubiqlo nyambungin kerjaan client sampai invoice. Biasanya gue buang 3 jam seminggu cuma buat pindah-pindah konteks.",
                 author: "Rina W.",
                 role: "Freelance brand designer",
               },
               {
-                quote: "The client portal alone replaced two tools for us. Clients actually log in to check progress now instead of asking on WhatsApp.",
+                quote: "Client portal-nya aja sudah ganti dua tool di workflow kami. Client sekarang cek progress sendiri, bukan nanya terus di WhatsApp.",
                 author: "Andika P.",
-                role: "Studio owner, 4-person team",
+                role: "Studio owner, team 4 orang",
               },
               {
-                quote: "Time tracking that feeds straight into the invoice is the thing I did not know I needed. Saved our monthly close from 2 days to 4 hours.",
+                quote: "Time tracking yang langsung nyambung ke invoice ternyata fitur yang kami butuhkan. Closing bulanan turun dari 2 hari jadi 4 jam.",
                 author: "Maya S.",
                 role: "Marketing consultant",
               },
@@ -578,10 +575,10 @@ export default function HomePage() {
           <div className="mx-auto max-w-3xl text-center">
             <Badge variant="outline" className="mb-4 bg-white">Harga transparan</Badge>
             <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
-              Mulai gratis, upgrade kapan saja.
+              Mulai gratis. Upgrade saat butuh lebih banyak client.
             </h2>
             <p className="mt-4 text-lg leading-8 text-slate-600">
-              Bayar sesuai kebutuhan. Tidak ada kontrak, tidak ada biaya tersembunyi.
+              Mulai dari free workspace. Naik plan saat client dan team makin banyak.
             </p>
           </div>
           <div className="mt-12 grid gap-6 lg:grid-cols-3">
@@ -660,15 +657,15 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-5xl rounded-[2rem] bg-[linear-gradient(135deg,#1d4ed8_0%,#2563eb_58%,#06b6d4_130%)] px-6 py-14 text-center text-white shadow-2xl shadow-slate-300/70 sm:px-12">
           <Sparkles className="mx-auto h-8 w-8 text-[#B19EE8]" />
           <h2 className="mt-5 text-3xl font-semibold tracking-[0.03em] text-white sm:text-5xl">
-            Satukan semua workspace klien di satu tempat.
+            Satukan semua client work di satu workspace.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-white/90">
-            Replace scattered updates, forgotten billable hours, and manual handoffs with one client operations hub.
+            Ganti update yang tercecer, jam billable yang lupa dicatat, dan handoff manual dengan satu client operations hub.
           </p>
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
             <Button asChild size="lg" className="h-12 rounded-xl bg-white px-6 text-[#292D34] shadow-[0_4px_4px_rgba(13,21,48,0.04)] tracking-[-0.01em] hover:bg-[#F8F9FA] font-normal">
               <Link href="/signup">
-                Buat workspace
+                Buat workspace gratis
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -691,7 +688,7 @@ export default function HomePage() {
           <div className="flex gap-5 text-sm text-slate-500">
             <Link href="/login" className="hover:text-slate-950">Masuk</Link>
             <Link href="/signup" className="hover:text-slate-950">Daftar</Link>
-            <a href="#features" className="hover:text-slate-950">Features</a>
+            <a href="#features" className="hover:text-slate-950">Fitur</a>
           </div>
         </div>
       </footer>
