@@ -5,11 +5,6 @@ const Card = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      style={{
-        // ClickUp spec: borderless + inset ring + 12px radius + soft desaturated shadow
-        boxShadow:
-          "inset 0 0 0 1px rgba(15,23,42,0.06), 0 4px 4px 0 rgba(13,21,48,0.04)",
-      }}
       className={cn(
         "rounded-xl border-0 bg-card text-card-foreground transition-shadow hover:shadow-[0_6px_6px_rgba(13,21,48,0.06)]",
         className,
