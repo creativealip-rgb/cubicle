@@ -53,6 +53,9 @@ services:
         AI_API_KEY: ${AI_API_KEY:-}
         AI_BASE_URL: ${AI_BASE_URL:-http://10.0.1.12:20128/v1}
         AI_MODEL: ${AI_MODEL:-tr/MiniMax-M3}
+        PAKASIR_PROJECT: ${PAKASIR_PROJECT:-}
+        PAKASIR_API_KEY: ${PAKASIR_API_KEY:-}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://cubiqlo.com}
     environment:
       DATABASE_URL: postgresql://postgres:${CUBICLE_DB_PASSWORD}@cubicle-pg:5432/cubicle
       BETTER_AUTH_SECRET: ${CUBICLE_BETTER_AUTH_SECRET}
@@ -72,6 +75,9 @@ services:
       AI_API_KEY: ${AI_API_KEY:-}
       AI_BASE_URL: ${AI_BASE_URL:-http://10.0.1.12:20128/v1}
       AI_MODEL: ${AI_MODEL:-tr/MiniMax-M3}
+      PAKASIR_PROJECT: ${PAKASIR_PROJECT:-}
+      PAKASIR_API_KEY: ${PAKASIR_API_KEY:-}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://cubiqlo.com}
       CRON_SECRET: ${CRON_SECRET:-}
       CUBICLE_URL: ${CUBICLE_URL:-}
     volumes:
