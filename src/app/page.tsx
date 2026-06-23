@@ -324,7 +324,7 @@ export default function HomePage() {
               ].map((m) => (
                 <div
                   key={m.label}
-                  className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-[0_4px_4px_rgba(13,21,48,0.04),inset_0_0_0_1px_rgba(15,23,42,0.04)]"
+                  className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.06)]"
                 >
                   <div className="text-2xl font-bold tracking-[-0.02em] text-[#6647F0] sm:text-3xl">{m.value}</div>
                   <div className="mt-1 text-[10px] font-semibold uppercase leading-tight tracking-[0.15em] text-slate-600">
@@ -339,7 +339,7 @@ export default function HomePage() {
             {operationPillars.map((feature) => (
               <Card
                 key={feature.title}
-                className="group rounded-2xl border border-slate-100 bg-white shadow-[0_2px_8px_rgba(13,21,48,0.04),0_8px_24px_rgba(13,21,48,0.06)] transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-[#6647F0]/15 hover:shadow-[0_4px_16px_rgba(102,71,240,0.10),0_20px_48px_rgba(13,21,48,0.10)]"
+                className="group rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_6px_16px_rgba(0,0,0,0.06)] transition-all duration-300 ease-out hover:-translate-y-2 hover:border-[#6647F0]/25 hover:shadow-[0_8px_24px_rgba(102,71,240,0.12),0_24px_48px_rgba(0,0,0,0.08)]"
               >
                 <CardContent className="p-6">
                   <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#F4F0FF] to-[#E8E0FF] text-[#6647F0] shadow-[0_2px_8px_rgba(102,71,240,0.15)] transition-all duration-300 group-hover:scale-110 group-hover:bg-gradient-to-br group-hover:from-[#6647F0] group-hover:to-[#5333DD] group-hover:text-white group-hover:shadow-[0_4px_16px_rgba(102,71,240,0.30)]">
@@ -548,7 +548,7 @@ export default function HomePage() {
                 role: "Marketing consultant",
               },
             ].map((t) => (
-              <Card key={t.author} className="group rounded-2xl border border-slate-100 bg-white shadow-[0_2px_8px_rgba(13,21,48,0.04),0_8px_24px_rgba(13,21,48,0.06)] transition-all duration-300 ease-out hover:-translate-y-1 hover:border-[#6647F0]/10 hover:shadow-[0_4px_16px_rgba(102,71,240,0.08),0_16px_40px_rgba(13,21,48,0.08)]">
+              <Card key={t.author} className="group rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_6px_16px_rgba(0,0,0,0.06)] transition-all duration-300 ease-out hover:-translate-y-2 hover:border-[#6647F0]/20 hover:shadow-[0_8px_24px_rgba(102,71,240,0.10),0_20px_40px_rgba(0,0,0,0.08)]">
                 <CardContent className="p-6">
                   <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-lg bg-[#F4F0FF]">
                     <span className="text-lg font-bold text-[#6647F0]">&ldquo;</span>
@@ -606,7 +606,7 @@ export default function HomePage() {
                   className={
                     plan.featured
                       ? "relative rounded-2xl border-0 bg-white shadow-[0_24px_60px_rgba(37,99,235,0.18)]"
-                      : "group rounded-2xl border border-slate-100 bg-white shadow-[0_2px_8px_rgba(13,21,48,0.04),0_8px_24px_rgba(13,21,48,0.06)] transition-all duration-300 ease-out hover:-translate-y-1 hover:border-[#6647F0]/10 hover:shadow-[0_4px_16px_rgba(102,71,240,0.08),0_16px_40px_rgba(13,21,48,0.08)]"
+                      : "group rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_6px_16px_rgba(0,0,0,0.06)] transition-all duration-300 ease-out hover:-translate-y-2 hover:border-[#6647F0]/20 hover:shadow-[0_8px_24px_rgba(102,71,240,0.10),0_20px_40px_rgba(0,0,0,0.08)]"
                   }
                 >
                   <CardContent className="p-6">
