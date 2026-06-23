@@ -48,11 +48,13 @@ R2 buckets are not bundled with this repo. Two options:
 - **Fresh bucket**: new operator sets up new bucket, all old files become inaccessible (acceptable if data is recent)
 
 ### 5. DNS / domain transfer
-- Current URL is a free sslip.io subdomain
-- For production: register a domain, point A record to new host IP
+- Production domain: `cubiqlo.com` (Cloudflare DNS, proxied)
+- sslip.io domains (`cubicle.168-144-37-19.sslip.io`) auto-redirect 301 to `cubiqlo.com` via Next.js middleware
+- For new domain: register, point A record to new host IP
 - Update `APP_URL` and `BETTER_AUTH_URL` env vars
 - Update Traefik labels in `docker-compose.yml`
 - Update `metadataBase` in `src/app/layout.tsx`
+- Update SSLIP_HOSTS list in `src/middleware.ts` if domain changes
 
 ### 6. Deployment
 - Deploy via Dokploy (recommended) using the included `docker-compose.yml`
