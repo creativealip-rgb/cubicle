@@ -1919,3 +1919,43 @@ not feature/infra work.)
 (UI polish + counter robustness; no infra or feature scope change.)
 
 **Live tested on https://cubicle.168-144-37-19.sslip.io/ with owner@cubicle.test / password123**
+
+## Sprint V — 2026-06-23 — Production Hardening (R2, Email, Monitoring, Tests, UI)
+
+**Tag:** `mvp-v0.2.0`
+**Commit:** `5148233`
+
+**Infrastructure:**
+1. **Cloudflare R2** — bucket `cubicle-files` (APAC), S3-compatible upload/download tested ✅
+2. **Domain** — `cubiqlo.com` live, DNS proxied via Cloudflare ✅
+3. **Resend email** — `noreply@cubiqlo.com` verified, DKIM/SPF/MX configured ✅
+4. **Reply-To workspace** — kolom `reply_to_email`, API route, settings UI, email headers ✅
+5. **sslip.io removed** — `AI_BASE_URL` now uses Docker internal `http://10.0.1.12:20128/v1` ✅
+6. **Health monitor** — script `scripts/monitor.sh` (CPU/RAM/disk/container/DB), cron every 5 min ✅
+
+**Security:**
+7. **Rate limiting** — in-memory IP-based, middleware-level:
+   - `/api/auth/*`: 10 req/min per IP
+   - `/api/auth/sign-in/*`: 5 req/5min per IP
+   - Returns 429 + `Retry-After` + `X-RateLimit-*` headers ✅
+
+**Quality:**
+8. **Vitest setup** — `vitest.config.ts`, `npm test` / `npm run test:watch`
+9. **Unit tests** — 17 tests (rate-limit 7, utils 10), all passing ✅
+
+**UI:**
+10. **Logo rebrand** — Cubiqlo logo di sidebar, landing, footer, auth pages, favicon ✅
+11. **AI model** — switched to `ag/gemini-3-flash` via 9router ✅
+12. **Chat panel fullpage** — Brain page: clean white header (no purple gradient), wider spacing, better bubbles ✅
+
+**Score:**
+- Demo MVP: **99%** (unchanged)
+- Sellable source/MVP: **99%** (unchanged — ceiling)
+- Production client-ready: **~99%** (+2 — R2 live, Resend verified, Reply-To, rate limiting, monitoring, tests)
+
+**Remaining (low priority):**
+- ❌ External uptime alert (Better Stack / UptimeRobot)
+- ❌ E2E tests (Playwright)
+- ❌ Fail2ban SSH hardening
+
+**Live tested on https://cubiqlo.com/ with owner@cubicle.test / password123**

@@ -49,7 +49,6 @@ R2 buckets are not bundled with this repo. Two options:
 
 ### 5. DNS / domain transfer
 - Production domain: `cubiqlo.com` (Cloudflare DNS, proxied)
-- sslip.io domains (`cubicle.168-144-37-19.sslip.io`) auto-redirect 301 to `cubiqlo.com` via Next.js middleware
 - For new domain: register, point A record to new host IP
 - Update `APP_URL` and `BETTER_AUTH_URL` env vars
 - Update Traefik labels in `docker-compose.yml`

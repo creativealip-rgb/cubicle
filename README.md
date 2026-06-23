@@ -81,7 +81,7 @@ OPENAI_COMPATIBLE_API_KEY=<key>
 
 # AI Assistant specific (optional, falls back to OPENAI_COMPATIBLE_* above)
 AI_API_KEY=***
-AI_BASE_URL=https://9router-168-144-37-19.sslip.io/v1
+AI_BASE_URL=http://10.0.1.12:20128/v1
 AI_MODEL=tr/MiniMax-M3
 ```
 

@@ -51,7 +51,7 @@ services:
         MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}
         SIGNED_URL_TTL_SECONDS: ${SIGNED_URL_TTL_SECONDS:-300}
         AI_API_KEY: ${AI_API_KEY:-}
-        AI_BASE_URL: ${AI_BASE_URL:-https://9router-168-144-37-19.sslip.io/v1}
+        AI_BASE_URL: ${AI_BASE_URL:-http://10.0.1.12:20128/v1}
         AI_MODEL: ${AI_MODEL:-tr/MiniMax-M3}
     environment:
       DATABASE_URL: postgresql://postgres:${CUBICLE_DB_PASSWORD}@cubicle-pg:5432/cubicle
@@ -70,7 +70,7 @@ services:
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}
       SIGNED_URL_TTL_SECONDS: ${SIGNED_URL_TTL_SECONDS:-300}
       AI_API_KEY: ${AI_API_KEY:-}
-      AI_BASE_URL: ${AI_BASE_URL:-https://9router-168-144-37-19.sslip.io/v1}
+      AI_BASE_URL: ${AI_BASE_URL:-http://10.0.1.12:20128/v1}
       AI_MODEL: ${AI_MODEL:-tr/MiniMax-M3}
       CRON_SECRET: ${CRON_SECRET:-}
       CUBICLE_URL: ${CUBICLE_URL:-}

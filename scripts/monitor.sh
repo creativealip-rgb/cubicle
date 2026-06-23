@@ -7,8 +7,8 @@ CPU_THRESHOLD=85
 RAM_THRESHOLD=85
 DISK_THRESHOLD=90
 
-LOG="/root/projek/cubicle/scripts/monitor.log"
-ALERT_FILE="/root/projek/cubicle/scripts/.last_alert"
+LOG="/root/projects/cubicle/scripts/monitor.log"
+ALERT_FILE="/root/projects/cubicle/scripts/.last_alert"
 
 # Health check
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$HEALTH_URL" 2>/dev/null)

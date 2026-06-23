@@ -9,21 +9,8 @@ const authPages = ["/login", "/signup", "/forgot-password"]
 const AUTH_RATE_LIMIT = { limit: 10, windowSec: 60 } // 10 req/min per IP
 const LOGIN_RATE_LIMIT = { limit: 5, windowSec: 300 } // 5 req/5min per IP (stricter)
 
-const SSLIP_HOSTS = [
-  "cubicle.168-144-37-19.sslip.io",
-  "cubicle.168.144.37.19.sslip.io",
-]
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const host = request.headers.get("host") || ""
-
-  // Redirect sslip.io domains to cubiqlo.com
-  if (SSLIP_HOSTS.some((h) => host.startsWith(h))) {
-    const url = new URL(`https://cubiqlo.com${pathname}`)
-    url.search = request.nextUrl.search
-    return NextResponse.redirect(url, 301)
-  }
 
   // Rate limit auth API endpoints
   if (pathname.startsWith("/api/auth")) {
@@ -77,7 +64,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Catch all paths for sslip redirect + protected/auth routes + rate limiting
+    // Catch all paths for protected/auth routes + rate limiting
     "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 }

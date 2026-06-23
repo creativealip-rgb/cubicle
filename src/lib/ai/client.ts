@@ -22,7 +22,7 @@ function getApiKey(): string {
 function getBaseUrl(): string {
   return (
     process.env.AI_BASE_URL ||
-    "https://9router-168-144-37-19.sslip.io/v1"
+    "http://10.0.1.12:20128/v1"
   );
 }
 

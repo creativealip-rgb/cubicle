@@ -1,5 +1,5 @@
 // Cubicle Mobile QA Pass 2 — authed /app/* routes with cookie injection
-// Usage: node /root/projek/cubicle/scripts/mobile-qa-pass2.cjs
+// Usage: node /root/projects/cubicle/scripts/mobile-qa-pass2.cjs
 /* eslint-disable @typescript-eslint/no-require-imports */
 const { chromium } = require("/root/projects/monev/node_modules/playwright");
 

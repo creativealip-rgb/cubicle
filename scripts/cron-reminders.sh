@@ -3,9 +3,9 @@
 # Schedule: every hour via cron / UptimeRobot / Better Stack / GH Actions.
 #
 #   crontab example:
-#     0 * * * * /root/projek/cubicle/scripts/cron-reminders.sh >> /var/log/cubicle-cron.log 2>&1
+#     0 * * * * /root/projects/cubicle/scripts/cron-reminders.sh >> /var/log/cubicle-cron.log 2>&1
 #
-# Required env (in /root/projek/cubicle/.env or environment):
+# Required env (in /root/projects/cubicle/.env or environment):
 #   CRON_SECRET=***
 #   CUBICLE_URL=https://cubicle.your-domain.tld
 
