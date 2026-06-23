@@ -5,7 +5,7 @@ For transferring ownership of the project to a new operator / buyer.
 ## What is being delivered
 
 - Source code (this repo)
-- Production deployment (currently at `https://cubicle.168-144-37-19.sslip.io`)
+- Production deployment (currently at `https://cubiqlo.com`)
 - Demo workspace seed data
 - Documentation set in `docs/`
 
@@ -18,7 +18,7 @@ For transferring ownership of the project to a new operator / buyer.
 | Cloudflare R2 bucket | Cloudflare dashboard | Yes (file uploads) |
 | Resend API key | Resend | Yes (transactional email) |
 | OpenAI-compatible API | Any | Optional (AI prompt generator) |
-| Custom domain | Any registrar | Optional (currently uses sslip.io) |
+| Custom domain | Any registrar | Yes — production is `cubiqlo.com` |
 
 ## Transfer steps
 

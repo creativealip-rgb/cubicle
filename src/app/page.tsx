@@ -117,17 +117,17 @@ export default function HomePage() {
           </Link>
 
           <nav className="hidden items-center gap-7 text-sm font-medium text-slate-600 md:flex">
-            <a href="#features" className="transition hover:text-slate-950">Features</a>
-            <a href="#workflow" className="transition hover:text-slate-950">Workflow</a>
-            <a href="#portal" className="transition hover:text-slate-950">Portal</a>
-            <a href="#pricing" className="transition hover:text-slate-950">Pricing</a>
+            <a href="#features" className="transition-colors duration-200 hover:text-[#6647F0]">Features</a>
+            <a href="#workflow" className="transition-colors duration-200 hover:text-[#6647F0]">Workflow</a>
+            <a href="#portal" className="transition-colors duration-200 hover:text-[#6647F0]">Portal</a>
+            <a href="#pricing" className="transition-colors duration-200 hover:text-[#6647F0]">Pricing</a>
           </nav>
 
           <div className="flex items-center gap-2">
             <Button asChild variant="ghost" className="hidden sm:inline-flex">
               <Link href="/login">Sign in</Link>
             </Button>
-            <Button asChild className="bg-[#6647F0] text-white shadow-[0_4px_4px_rgba(13,21,48,0.04)] hover:bg-[#5333DD] hover:shadow-[0_8px_8px_rgba(13,21,48,0.08)] active:bg-[#4A2AD0] focus-visible:ring-2 focus-visible:ring-[#6647F0] focus-visible:ring-offset-2">
+            <Button asChild className="bg-[#6647F0] text-white shadow-[0_4px_4px_rgba(13,21,48,0.04)] transition-all duration-200 hover:scale-[1.02] hover:bg-[#5333DD] hover:shadow-[0_8px_20px_rgba(102,71,240,0.25)] active:bg-[#4A2AD0] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-[#6647F0] focus-visible:ring-offset-2">
               <Link href="/signup">
                 Get started
                 <ArrowRight className="h-4 w-4" />
@@ -158,7 +158,7 @@ export default function HomePage() {
               One calm workspace for clients, projects, deliverables, time, invoices, booking, and portals.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="h-12 rounded-xl bg-[#6647F0] px-6 text-white shadow-[0_4px_4px_rgba(13,21,48,0.04)] hover:bg-[#5333DD] hover:shadow-[0_8px_8px_rgba(13,21,48,0.08)] active:bg-[#4A2AD0] focus-visible:ring-2 focus-visible:ring-[#6647F0] focus-visible:ring-offset-2 tracking-[-0.01em] font-normal">
+              <Button asChild size="lg" className="h-12 rounded-xl bg-[#6647F0] px-6 text-white shadow-[0_4px_4px_rgba(13,21,48,0.04)] transition-all duration-200 hover:scale-[1.02] hover:bg-[#5333DD] hover:shadow-[0_8px_20px_rgba(102,71,240,0.25)] active:bg-[#4A2AD0] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-[#6647F0] focus-visible:ring-offset-2 tracking-[-0.01em] font-normal">
                 <Link href="/signup">
                   Start managing clients
                   <ArrowRight className="h-4 w-4" />
@@ -184,7 +184,7 @@ export default function HomePage() {
 
           <div className="relative">
             <div className="absolute -inset-6 rounded-[2rem] bg-gradient-to-br from-blue-500/20 via-cyan-400/10 to-indigo-500/20 blur-2xl" />
-            <div className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 shadow-[0_40px_120px_rgba(15,23,42,0.18)] ring-1 ring-slate-950/5 backdrop-blur-xl">
+            <div className="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 shadow-[0_40px_120px_rgba(15,23,42,0.18)] ring-1 ring-slate-950/5 backdrop-blur-xl" style={{ transform: 'perspective(1200px) rotateX(2deg)' }}>
               {/* Browser chrome */}
               <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50/80 px-4 py-2.5">
                 <div className="flex gap-1.5">
@@ -207,6 +207,7 @@ export default function HomePage() {
                   className="block w-full object-top"
                   style={{ objectFit: 'cover', objectPosition: 'top' }}
                 />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-white/90 to-transparent" />
               </div>
             </div>
           </div>
@@ -338,10 +339,10 @@ export default function HomePage() {
             {operationPillars.map((feature) => (
               <Card
                 key={feature.title}
-                className="group rounded-2xl border-0 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),inset_0_0_0_1px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(15,23,42,0.08),inset_0_0_0_1px_rgba(15,23,42,0.08)]"
+                className="group rounded-2xl border border-slate-100 bg-white shadow-[0_2px_8px_rgba(13,21,48,0.04),0_8px_24px_rgba(13,21,48,0.06)] transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-[#6647F0]/15 hover:shadow-[0_4px_16px_rgba(102,71,240,0.10),0_20px_48px_rgba(13,21,48,0.10)]"
               >
                 <CardContent className="p-6">
-                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F4F0FF] text-[#6647F0] transition group-hover:bg-[#6647F0] group-hover:text-white">
+                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#F4F0FF] to-[#E8E0FF] text-[#6647F0] shadow-[0_2px_8px_rgba(102,71,240,0.15)] transition-all duration-300 group-hover:scale-110 group-hover:bg-gradient-to-br group-hover:from-[#6647F0] group-hover:to-[#5333DD] group-hover:text-white group-hover:shadow-[0_4px_16px_rgba(102,71,240,0.30)]">
                     <feature.icon className="h-5 w-5" />
                   </div>
                   <h3 className="tracking-[0.03em] text-lg font-semibold text-slate-950">{feature.title}</h3>
@@ -387,7 +388,7 @@ export default function HomePage() {
 
             <div className="relative">
               <div className="absolute -inset-6 rounded-[2rem] bg-gradient-to-br from-blue-500/15 via-cyan-400/8 to-indigo-500/15 blur-2xl" />
-              <div className="relative overflow-hidden rounded-[1.5rem] border-0 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.12),inset_0_0_0_1px_rgba(15,23,42,0.06)]">
+              <div className="relative overflow-hidden rounded-[1.5rem] border border-slate-100 bg-white shadow-[0_8px_32px_rgba(13,21,48,0.08),0_24px_60px_rgba(13,21,48,0.06)]" style={{ transform: 'perspective(1200px) rotateY(-2deg)' }}>
                 <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50/60 px-4 py-2.5">
                   <div className="flex gap-1.5">
                     <div className="h-3 w-3 rounded-full bg-red-400" />
@@ -408,6 +409,7 @@ export default function HomePage() {
                     className="block w-full"
                     style={{ objectFit: 'cover', objectPosition: 'top' }}
                   />
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white/80 to-transparent" />
                 </div>
               </div>
             </div>
@@ -417,7 +419,7 @@ export default function HomePage() {
 
       <section id="portal" className="px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-2 lg:items-center">
-          <div className="rounded-[2rem] border bg-white p-6 shadow-xl shadow-slate-200/60">
+          <div className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-[0_8px_32px_rgba(13,21,48,0.08),0_24px_60px_rgba(13,21,48,0.06)]">
             <div className="rounded-[1.5rem] bg-[linear-gradient(135deg,#1d4ed8_0%,#2563eb_58%,#06b6d4_130%)] p-5 text-white">
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <div>
@@ -493,7 +495,7 @@ export default function HomePage() {
               Other client-ops tools charge $20–$52/month per seat and still miss the portal or booking. Cubiqlo keeps the full loop free for solo work.
             </p>
           </div>
-          <div className="mt-12 overflow-hidden rounded-2xl border-0 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.1),inset_0_0_0_1px_rgba(15,23,42,0.06)]">
+          <div className="mt-12 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_4px_16px_rgba(13,21,48,0.04),0_16px_48px_rgba(13,21,48,0.08)]">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-[0.12em] text-slate-500">
                 <tr>
@@ -513,7 +515,7 @@ export default function HomePage() {
                   { label: "AI assistant", h: "—", b: "—", c: "Built-in" },
                   { label: "Calendar view", h: "—", b: "Add-on", c: "Yes" },
                 ].map((row) => (
-                  <tr key={row.label}>
+                  <tr key={row.label} className="transition-colors hover:bg-slate-50/80">
                     <td className="px-6 py-4 font-medium text-slate-700">{row.label}</td>
                     <td className="px-6 py-4 text-slate-500">{row.h}</td>
                     <td className="px-6 py-4 text-slate-500">{row.b}</td>
@@ -546,12 +548,20 @@ export default function HomePage() {
                 role: "Marketing consultant",
               },
             ].map((t) => (
-              <Card key={t.author} className="rounded-2xl border-0 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),inset_0_0_0_1px_rgba(15,23,42,0.06)]">
+              <Card key={t.author} className="group rounded-2xl border border-slate-100 bg-white shadow-[0_2px_8px_rgba(13,21,48,0.04),0_8px_24px_rgba(13,21,48,0.06)] transition-all duration-300 ease-out hover:-translate-y-1 hover:border-[#6647F0]/10 hover:shadow-[0_4px_16px_rgba(102,71,240,0.08),0_16px_40px_rgba(13,21,48,0.08)]">
                 <CardContent className="p-6">
+                  <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-lg bg-[#F4F0FF]">
+                    <span className="text-lg font-bold text-[#6647F0]">&ldquo;</span>
+                  </div>
                   <p className="text-sm leading-7 text-slate-700">&ldquo;{t.quote}&rdquo;</p>
-                  <div className="mt-4 border-t border-slate-100 pt-4">
-                    <p className="text-sm font-semibold text-slate-950">{t.author}</p>
-                    <p className="text-xs text-slate-500">{t.role}</p>
+                  <div className="mt-4 flex items-center gap-3 border-t border-slate-100 pt-4">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#6647F0] to-[#0091FF] text-xs font-semibold text-white">
+                      {t.author.split(' ').map(n => n[0]).join('')}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950">{t.author}</p>
+                      <p className="text-xs text-slate-500">{t.role}</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -580,18 +590,23 @@ export default function HomePage() {
           </div>
           <div className="mt-12 grid gap-6 lg:grid-cols-3">
             {pricing.map((plan) => (
-              <div key={plan.name} className="relative">
+              <div key={plan.name} className={`relative ${plan.featured ? 'z-10 scale-[1.03]' : ''}`}>
                 {plan.featured && (
-                  <span
-                    aria-hidden="true"
-                    className="absolute -inset-[1px] rounded-2xl bg-[conic-gradient(from_140deg,#0091ff,#ff02f0,#f76808,#6647f0,#0091ff)] opacity-90"
-                  />
+                  <>
+                    <span
+                      aria-hidden="true"
+                      className="absolute -inset-[1px] rounded-2xl bg-[conic-gradient(from_140deg,#0091ff,#ff02f0,#f76808,#6647f0,#0091ff)] opacity-90"
+                    />
+                    <span className="absolute -top-3 left-1/2 z-20 -translate-x-1/2 rounded-full bg-gradient-to-r from-[#6647F0] to-[#0091FF] px-4 py-1 text-xs font-semibold text-white shadow-[0_4px_12px_rgba(102,71,240,0.30)]">
+                      Most Popular
+                    </span>
+                  </>
                 )}
                 <Card
                   className={
                     plan.featured
                       ? "relative rounded-2xl border-0 bg-white shadow-[0_24px_60px_rgba(37,99,235,0.18)]"
-                      : "rounded-2xl border-0 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),inset_0_0_0_1px_rgba(15,23,42,0.06)]"
+                      : "group rounded-2xl border border-slate-100 bg-white shadow-[0_2px_8px_rgba(13,21,48,0.04),0_8px_24px_rgba(13,21,48,0.06)] transition-all duration-300 ease-out hover:-translate-y-1 hover:border-[#6647F0]/10 hover:shadow-[0_4px_16px_rgba(102,71,240,0.08),0_16px_40px_rgba(13,21,48,0.08)]"
                   }
                 >
                   <CardContent className="p-6">
@@ -617,8 +632,8 @@ export default function HomePage() {
                       asChild
                       className={
                         plan.featured
-                          ? "mt-7 w-full rounded-xl bg-[#6647F0] text-white shadow-[0_4px_4px_rgba(13,21,48,0.04)] hover:bg-[#5333DD] hover:shadow-[0_8px_8px_rgba(13,21,48,0.08)] active:bg-[#4A2AD0] focus-visible:ring-2 focus-visible:ring-[#6647F0] focus-visible:ring-offset-2 tracking-[-0.01em] font-normal"
-                          : "mt-7 w-full rounded-xl border border-[#D9D9D9] bg-white text-[#292D34] shadow-[0_4px_4px_rgba(13,21,48,0.04)] hover:border-[#C0C0C0] hover:bg-[#F8F9FA] tracking-[-0.01em] font-normal"
+                          ? "mt-7 w-full rounded-xl bg-[#6647F0] text-white shadow-[0_4px_4px_rgba(13,21,48,0.04)] transition-all duration-200 hover:scale-[1.02] hover:bg-[#5333DD] hover:shadow-[0_8px_20px_rgba(102,71,240,0.25)] active:bg-[#4A2AD0] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-[#6647F0] focus-visible:ring-offset-2 tracking-[-0.01em] font-normal"
+                          : "mt-7 w-full rounded-xl border-[1.5px] border-[#292D34] bg-white text-[#292D34] shadow-[0_2px_4px_rgba(13,21,48,0.04)] hover:bg-[#292D34] hover:text-white hover:shadow-[0_4px_12px_rgba(41,45,52,0.15)] tracking-[-0.01em] font-normal transition-all duration-200"
                       }
                       variant={plan.featured ? "default" : "outline"}
                     >
