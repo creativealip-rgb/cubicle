@@ -11,7 +11,6 @@ import {
   LayoutDashboard,
   MessageSquareText,
   ShieldCheck,
-  SquareStack,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -106,10 +105,7 @@ export default function HomePage() {
       <header className="sticky top-0 z-30 border-b border-slate-950/5 bg-white/75 backdrop-blur-2xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-3">
-            <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-[#6647F0] text-sm font-bold text-white shadow-sm">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.35),transparent_35%)]" />
-              <SquareStack className="relative h-4 w-4" />
-            </div>
+            <img src="/icon-192.png" alt="Cubiqlo" className="h-9 w-9 rounded-xl object-cover shadow-sm" />
             <div>
               <p className="text-sm font-semibold leading-none">Cubiqlo</p>
               <p className="text-xs text-slate-500">Client Operations Hub</p>
@@ -684,10 +680,7 @@ export default function HomePage() {
       <footer className="border-t bg-white px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-slate-950 text-sm font-bold text-white">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.35),transparent_35%)]" />
-              <SquareStack className="relative h-4 w-4" />
-            </div>
+            <img src="/icon-192.png" alt="Cubiqlo" className="h-9 w-9 rounded-xl object-cover" />
             <div>
               <p className="text-sm font-semibold">Cubiqlo</p>
               <p className="text-xs text-slate-500">Manage client work from request to invoice.</p>

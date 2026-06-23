@@ -619,56 +619,103 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                 deleteConversation={deleteConversation}
               />
             ) : (
-              <>
-                {/* Header */}
-                <div className="flex items-center justify-between gap-2 border-b bg-gradient-to-r from-[var(--cu-purple)] to-[var(--cu-purple-hover)] px-4 py-3 text-white">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    <div>
-                      <p className="text-sm font-semibold leading-none">Cubiqlo AI</p>
-                      <p className="text-[10px] text-purple-100">
-                        Workspace assistant · tr/MiniMax-M3
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={startNewChat}
-                      className="rounded-md p-1 text-white/80 hover:bg-white/10 hover:text-white"
-                      aria-label="New chat"
-                      title="New chat"
-                    >
-                      <MessageSquarePlus className="h-4 w-4" />
-                    </button>
-                    {messages.length > 0 && (
-                      <button
-                        onClick={() => setShowHistoryBelow((v) => !v)}
-                        className={cn(
-                          "rounded-md p-1 hover:bg-white/10",
-                          showHistoryBelow ? "bg-white/15 text-white" : "text-white/80 hover:text-white",
+              <>{/* Header */}
+                  {isFullpage ? (
+                    <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-6 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[var(--cu-purple)] to-[var(--cu-purple-hover)] text-white">
+                          <Sparkles className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">Cubiqlo AI</p>
+                          <p className="text-[11px] text-slate-400">gemini-3-flash · workspace assistant</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={startNewChat}
+                          className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                          aria-label="New chat"
+                          title="New chat"
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <MessageSquarePlus className="h-3.5 w-3.5" />
+                            New chat
+                          </span>
+                        </button>
+                        {messages.length > 0 && (
+                          <button
+                            onClick={() => setShowHistoryBelow((v) => !v)}
+                            className={cn(
+                              "rounded-lg px-3 py-1.5 text-xs font-medium transition",
+                              showHistoryBelow
+                                ? "bg-purple-50 text-[var(--cu-purple)]"
+                                : "text-slate-500 hover:bg-slate-100 hover:text-slate-900",
+                            )}
+                            aria-label="Toggle history"
+                            title="History"
+                          >
+                            <span className="flex items-center gap-1.5">
+                              <History className="h-3.5 w-3.5" />
+                              History
+                            </span>
+                          </button>
                         )}
-                        aria-label="Toggle history"
-                        title="History"
-                      >
-                        <History className="h-4 w-4" />
-                      </button>
-                    )}
-                    {!isFullpage && (
-                      <button
-                        onClick={() => setOpen(false)}
-                        className="rounded-md p-1 text-white/80 hover:bg-white/10 hover:text-white"
-                        aria-label="Close"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between gap-2 border-b bg-gradient-to-r from-[var(--cu-purple)] to-[var(--cu-purple-hover)] px-4 py-3 text-white">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4" />
+                        <div>
+                          <p className="text-sm font-semibold leading-none">Cubiqlo AI</p>
+                          <p className="text-[10px] text-purple-100">
+                            Workspace assistant · gemini-3-flash
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={startNewChat}
+                          className="rounded-md p-1 text-white/80 hover:bg-white/10 hover:text-white"
+                          aria-label="New chat"
+                          title="New chat"
+                        >
+                          <MessageSquarePlus className="h-4 w-4" />
+                        </button>
+                        {messages.length > 0 && (
+                          <button
+                            onClick={() => setShowHistoryBelow((v) => !v)}
+                            className={cn(
+                              "rounded-md p-1 hover:bg-white/10",
+                              showHistoryBelow ? "bg-white/15 text-white" : "text-white/80 hover:text-white",
+                            )}
+                            aria-label="Toggle history"
+                            title="History"
+                          >
+                            <History className="h-4 w-4" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setOpen(false)}
+                          className="rounded-md p-1 text-white/80 hover:bg-white/10 hover:text-white"
+                          aria-label="Close"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                 {/* Messages */}
                 <div
                   ref={scrollRef}
-                  className="flex-1 space-y-3 overflow-y-auto bg-slate-50 px-3 py-4"
+                  className={cn(
+                    "flex-1 space-y-4 overflow-y-auto",
+                    isFullpage
+                      ? "bg-white px-6 py-6"
+                      : "space-y-3 bg-slate-50 px-3 py-4",
+                  )}
                 >
                   {messages.length === 0 && !isFullpage && (
                     <div className="space-y-3">
@@ -700,10 +747,13 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                     >
                       <div
                         className={cn(
-                          "max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm",
+                          "rounded-2xl px-4 py-3 text-sm shadow-sm",
+                          isFullpage ? "max-w-[75%]" : "max-w-[85%]",
                           m.role === "user"
                             ? "bg-[var(--cu-purple)] text-white"
-                            : "bg-white text-slate-900 ring-1 ring-slate-200",
+                            : isFullpage
+                              ? "bg-slate-50 text-slate-900 ring-1 ring-slate-100"
+                              : "bg-white text-slate-900 ring-1 ring-slate-200",
                           m.error && "bg-red-50 ring-red-200 text-red-900",
                         )}
                       >
@@ -797,13 +847,13 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                 </div>
 
                 {/* Input — always visible above history */}
-                <div className="border-t bg-white p-2">
+                <div className={cn("border-t", isFullpage ? "border-slate-200 bg-white px-6 py-4" : "bg-white p-2")}>
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
                       send(input);
                     }}
-                    className="flex items-end gap-2"
+                    className={cn("flex items-end gap-2", isFullpage && "max-w-4xl")}
                   >
                     <textarea
                       ref={inputRef}
@@ -814,9 +864,12 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                       rows={1}
                       disabled={busy}
                       className={cn(
-                        "flex-1 resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm",
-                        "focus:border-[var(--cu-purple)] focus:outline-none focus:ring-1 focus:ring-[var(--cu-purple)]",
+                        "flex-1 resize-none border px-3 py-2.5 text-sm",
+                        "focus:outline-none focus:ring-1",
                         "max-h-24 disabled:opacity-50",
+                        isFullpage
+                          ? "rounded-xl border-slate-200 bg-white focus:border-[var(--cu-purple)] focus:ring-[var(--cu-purple)]"
+                          : "rounded-lg border-slate-200 bg-slate-50 focus:border-[var(--cu-purple)] focus:ring-[var(--cu-purple)]",
                       )}
                     />
                     <Button
@@ -850,8 +903,11 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                       disabled={!busy && !input.trim()}
                       onClick={busy ? stopStream : undefined}
                       className={cn(
-                        "h-9 w-9 shrink-0",
-                        busy && "bg-red-500 hover:bg-red-600",
+                        "h-10 w-10 shrink-0",
+                        isFullpage && "rounded-xl",
+                        busy
+                          ? "bg-red-500 hover:bg-red-600"
+                          : "bg-[var(--cu-purple)] hover:bg-[var(--cu-purple-hover)] text-white",
                       )}
                       aria-label={busy ? "Stop" : "Send"}
                       title={busy ? "Stop" : "Send"}
@@ -875,8 +931,8 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
 
                 {/* History list */}
                 {showHistoryBelow && (
-                  <div className="border-t bg-slate-50/50">
-                    <div className="flex items-center justify-between px-4 pt-3 pb-1">
+                  <div className={cn("border-t", isFullpage ? "border-slate-200 bg-white" : "bg-slate-50/50")}>
+                    <div className={cn("flex items-center justify-between pt-3 pb-1", isFullpage ? "px-6" : "px-4")}>
                       <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                         <Clock className="h-3 w-3" />
                         Recent
@@ -891,7 +947,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                         </button>
                       )}
                     </div>
-                    <div className="max-h-44 overflow-y-auto px-2 pb-2">
+                    <div className={cn("max-h-44 overflow-y-auto pb-2", isFullpage ? "px-4" : "px-2")}>
                       {conversations.length === 0 ? (
                         <p className="px-2 py-3 text-center text-xs text-slate-400">
                           No chats yet. Start one above.

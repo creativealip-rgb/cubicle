@@ -6,7 +6,7 @@
  *   1. /run/secrets/9router_api_key (production docker secret)
  *   2. AI_API_KEY env (fallback)
  * Base URL: AI_BASE_URL env, default 9router.
- * Model: AI_MODEL env, default tr/MiniMax-M3.
+ * Model: AI_MODEL env, default ag/gemini-3-flash.
  */
 
 import { readFileSync } from "fs";
@@ -27,7 +27,7 @@ function getBaseUrl(): string {
 }
 
 function getModel(): string {
-  return process.env.AI_MODEL || "tr/MiniMax-M3";
+  return process.env.AI_MODEL || "ag/gemini-3-flash";
 }
 
 export interface ChatMessage {

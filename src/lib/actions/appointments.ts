@@ -184,11 +184,17 @@ export async function cancelAppointment(appointmentId: string) {
   await writeActivityLog(workspaceId, user.id, "cancelled_appointment", "appointment", appointmentId);
 
   if (apt.attendeeEmail) {
+    const [ws] = await db
+      .select({ replyToEmail: workspaces.replyToEmail })
+      .from(workspaces)
+      .where(eq(workspaces.id, workspaceId))
+      .limit(1);
     await notifyAppointmentCancelled({
       attendeeEmail: apt.attendeeEmail,
       attendeeName: apt.attendeeName,
       appointmentTitle: apt.title,
       dateTime: apt.startTime.toISOString(),
+      replyTo: ws?.replyToEmail ?? undefined,
     });
   }
 
@@ -224,7 +230,7 @@ export async function createPublicAppointment(
 
   // Check workspace exists and has booking enabled
   const [ws] = await db
-    .select({ id: workspaces.id, bookingSlug: workspaces.bookingSlug, name: workspaces.name })
+    .select({ id: workspaces.id, bookingSlug: workspaces.bookingSlug, name: workspaces.name, replyToEmail: workspaces.replyToEmail })
     .from(workspaces)
     .where(eq(workspaces.id, parsed.workspaceId))
     .limit(1);
@@ -296,6 +302,7 @@ export async function createPublicAppointment(
     appointmentTitle: parsed.title,
     dateTime: startTime.toISOString(),
     workspaceName: ws.name,
+    replyTo: ws.replyToEmail ?? undefined,
   });
 
   try {

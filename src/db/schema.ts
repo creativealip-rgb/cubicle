@@ -79,6 +79,7 @@ export const workspaces = pgTable("workspaces", {
   billingPhone: text("billing_phone"),
   taxId: text("tax_id"),
   logoUrl: text("logo_url"),
+  replyToEmail: text("reply_to_email"),
   bookingSlug: text("booking_slug").unique(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

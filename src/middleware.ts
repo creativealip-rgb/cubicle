@@ -1,8 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getSessionCookie } from "better-auth/cookies"
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
 
 const protectedPrefixes = ["/app", "/onboarding"]
 const authPages = ["/login", "/signup", "/forgot-password"]
+
+// Rate limit config for auth endpoints
+const AUTH_RATE_LIMIT = { limit: 10, windowSec: 60 } // 10 req/min per IP
+const LOGIN_RATE_LIMIT = { limit: 5, windowSec: 300 } // 5 req/5min per IP (stricter)
 
 const SSLIP_HOSTS = [
   "cubicle.168-144-37-19.sslip.io",
@@ -18,6 +23,37 @@ export async function middleware(request: NextRequest) {
     const url = new URL(`https://cubiqlo.com${pathname}`)
     url.search = request.nextUrl.search
     return NextResponse.redirect(url, 301)
+  }
+
+  // Rate limit auth API endpoints
+  if (pathname.startsWith("/api/auth")) {
+    const ip = getClientIp(request)
+    const isLogin = pathname.includes("sign-in") || pathname.includes("login")
+    const config = isLogin ? LOGIN_RATE_LIMIT : AUTH_RATE_LIMIT
+    const { allowed, remaining, resetAt } = checkRateLimit(`auth:${ip}`, config)
+
+    if (!allowed) {
+      const retryAfter = Math.ceil((resetAt - Date.now()) / 1000)
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(retryAfter),
+            "X-RateLimit-Limit": String(config.limit),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": String(Math.ceil(resetAt / 1000)),
+          },
+        },
+      )
+    }
+
+    // Continue with rate limit headers
+    const response = NextResponse.next()
+    response.headers.set("X-RateLimit-Limit", String(config.limit))
+    response.headers.set("X-RateLimit-Remaining", String(remaining))
+    response.headers.set("X-RateLimit-Reset", String(Math.ceil(resetAt / 1000)))
+    return response
   }
 
   const sessionCookie = getSessionCookie(request)
@@ -41,7 +77,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Catch all paths for sslip redirect + protected/auth routes
-    "/((?!_next/static|_next/image|favicon.ico|api).*)",
+    // Catch all paths for sslip redirect + protected/auth routes + rate limiting
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 }

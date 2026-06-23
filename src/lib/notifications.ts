@@ -10,6 +10,7 @@ type SendOpts = {
   html?: string;
   text?: string;
   type?: string;
+  replyTo?: string;
 };
 
 const apiKey = process.env.RESEND_API_KEY;
@@ -67,6 +68,7 @@ export async function sendNotification(opts: SendOpts) {
       subject: opts.subject,
       html,
       text,
+      ...(opts.replyTo ? { replyTo: [opts.replyTo] } : {}),
     });
     if ((result as { error?: unknown }).error) {
       console.error(`[NOTIFY-FAIL ${opts.type}] Resend error:`, (result as { error: unknown }).error);
@@ -87,6 +89,7 @@ export async function notifyAppointmentBooked(opts: {
   appointmentTitle: string;
   dateTime: string;
   workspaceName?: string;
+  replyTo?: string;
 }) {
   const text =
     `Hi ${opts.attendeeName},\n\n` +
@@ -98,6 +101,7 @@ export async function notifyAppointmentBooked(opts: {
     subject: `Appointment Confirmed: ${opts.appointmentTitle}`,
     text,
     type: "appointment_booked",
+    replyTo: opts.replyTo,
   });
 }
 
@@ -106,6 +110,7 @@ export async function notifyAppointmentCancelled(opts: {
   attendeeName: string | null;
   appointmentTitle: string;
   dateTime: string;
+  replyTo?: string;
 }) {
   return sendNotification({
     to: opts.attendeeEmail,
@@ -115,6 +120,7 @@ export async function notifyAppointmentCancelled(opts: {
       `Your appointment "${opts.appointmentTitle}" scheduled for ${opts.dateTime} has been cancelled.\n\n` +
       `If this was a mistake, please book a new slot.`,
     type: "appointment_cancelled",
+    replyTo: opts.replyTo,
   });
 }
 
@@ -125,6 +131,7 @@ export async function notifyInvoiceSent(opts: {
   amount: string;
   portalUrl: string;
   workspaceName?: string;
+  replyTo?: string;
 }) {
   return sendNotification({
     to: opts.clientEmail,
@@ -135,6 +142,7 @@ export async function notifyInvoiceSent(opts: {
       `View and pay online: ${opts.portalUrl}\n\n` +
       `Thank you for your business.`,
     type: "invoice_sent",
+    replyTo: opts.replyTo,
   });
 }
 
@@ -179,6 +187,7 @@ export async function notifyWorkspaceInvite(opts: {
   workspaceName: string;
   inviterName: string;
   inviteUrl: string;
+  replyTo?: string;
 }) {
   return sendNotification({
     to: opts.email,
@@ -188,6 +197,7 @@ export async function notifyWorkspaceInvite(opts: {
       `${opts.inviterName} has invited you to join the "${opts.workspaceName}" workspace on Cubiqlo.\n\n` +
       `Accept the invitation: ${opts.inviteUrl}`,
     type: "workspace_invite",
+    replyTo: opts.replyTo,
   });
 }
 

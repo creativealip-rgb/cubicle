@@ -98,9 +98,7 @@ export function ResetPasswordForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1 text-center">
-        <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-          <span className="text-lg font-bold text-primary-foreground">C</span>
-        </div>
+        <img src="/icon-192.png" alt="Cubiqlo" className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover" />
         <CardTitle className="text-2xl">Set a new password</CardTitle>
         <CardDescription>
           Enter a new password for your Cubiqlo account.

@@ -217,7 +217,7 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
         .where(eq(clients.id, inv.clientId))
         .limit(1);
       const [ws] = await db
-        .select({ name: workspaces.name })
+        .select({ name: workspaces.name, replyToEmail: workspaces.replyToEmail })
         .from(workspaces)
         .where(eq(workspaces.id, workspaceId))
         .limit(1);
@@ -230,6 +230,7 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
           amount: `${inv.currency} ${inv.total}`,
           portalUrl,
           workspaceName: ws?.name,
+          replyTo: ws?.replyToEmail ?? undefined,
         });
       }
     } catch (err) {

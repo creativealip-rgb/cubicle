@@ -7,8 +7,9 @@ import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Settings, Users, Receipt, Calendar, Sparkles } from "lucide-react";
+import { Settings, Users, Receipt, Calendar, Sparkles, Mail } from "lucide-react";
 import { TeamManager } from "@/components/settings/team-manager";
+import { ReplyToEmailForm } from "@/components/settings/reply-to-email-form";
 
 async function getWorkspaceId() {
   const [ws] = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.slug, "acme-creative")).limit(1);
@@ -83,6 +84,17 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Mail className="h-5 w-5" /> Email Reply-To</CardTitle>
+          <CardDescription>Set a Reply-To address so client replies go to your personal inbox.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ReplyToEmailForm workspaceId={workspace.id} currentValue={workspace.replyToEmail} />
+          <p className="text-xs text-muted-foreground mt-2">Leave empty to use default sender. Replies will go to this address when set.</p>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
