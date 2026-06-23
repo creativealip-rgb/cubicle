@@ -419,16 +419,15 @@ export default function HomePage() {
 
       <section id="portal" className="px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-2 lg:items-center">
-          <div className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-[0_8px_32px_rgba(13,21,48,0.08),0_24px_60px_rgba(13,21,48,0.06)]">
-            <div className="rounded-[1.5rem] bg-[linear-gradient(135deg,#1d4ed8_0%,#2563eb_58%,#06b6d4_130%)] p-5 text-white">
+          <div className="rounded-[2rem] bg-[linear-gradient(135deg,#1d4ed8_0%,#2563eb_58%,#06b6d4_130%)] p-8 text-white shadow-[0_8px_32px_rgba(29,78,216,0.20),0_24px_60px_rgba(13,21,48,0.12)]">
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <div>
-                  <p className="font-semibold">Client Portal</p>
+                  <p className="text-lg font-semibold">Client Portal</p>
                   <p className="text-sm text-blue-100/75">cubiqlo.com/client-portal/acme</p>
                 </div>
                 <ShieldCheck className="h-5 w-5 text-emerald-300" />
               </div>
-              <div className="mt-5 grid gap-3">
+              <div className="mt-6 grid gap-4">
                 {[
                   [LayoutDashboard, "Project status", "In progress · 68%"],
                   [FolderOpen, "Deliverables", "3 client-visible files"],
@@ -437,7 +436,7 @@ export default function HomePage() {
                 ].map(([Icon, title, meta]) => {
                   const PortalIcon = Icon as typeof LayoutDashboard;
                   return (
-                    <div key={title as string} className="flex items-center gap-3 rounded-2xl bg-white/10 p-4">
+                    <div key={title as string} className="flex items-center gap-3 rounded-2xl bg-white/10 p-4 backdrop-blur-sm">
                       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10">
                         <PortalIcon className="h-5 w-5" />
                       </div>
@@ -449,7 +448,6 @@ export default function HomePage() {
                   );
                 })}
               </div>
-            </div>
           </div>
 
           <div>
