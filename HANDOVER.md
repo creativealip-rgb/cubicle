@@ -61,17 +61,18 @@ R2 buckets are not bundled with this repo. Two options:
 
 ## What the new owner inherits
 
-### Technical debt (known)
-- 🟢 Lint clean (0 warn / 0 err), TypeScript clean, production build clean — re-verified 2026-06-22 in commit `97b2d53`.
-- 🟢 Latest `origin/main` deployed on VPS via Docker Compose on 2026-06-22; live smoke pass for `/`, `/api/health`, `/login`, `/signup`, and protected `/app/brain` redirect.
-- 🟢 P0 quick container security pass 2026-06-22: no rogue `/tmp/postgresql`, `cubicle-pg` process list normal, `/tmp` clean, app/DB ports not directly published, containers only on `dokploy-network`, expected mounts only.
-- 🔴 R2 file upload E2E blocked as of 2026-06-22: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and `R2_BUCKET_NAME` are placeholder values in live `.env`; direct R2 TLS/API test fails before upload. Provision real Cloudflare R2 credentials before file-flow QA.
-- 🟡 No automated test suite (manual QA checklist in `docs/cubicle_test_checklist.md`).
-- 🟡 Email flows implemented but not all E2E tested (RESEND_API_KEY + sender domain not set in prod).
-- 🟡 No payment gateway integration (manual "mark as paid" only).
-- 🟡 No rate limiting on auth or public endpoints.
-- 🟡 No background job queue (cron-style booking reminders not implemented).
-- 🟡 VPS SSH receives ongoing public brute-force attempts; UFW is active, but fail2ban/SSH hardening is recommended.
+### Technical debt / status (known)
+- 🟢 Production domain live: `https://cubiqlo.com` (Cloudflare + Traefik HTTPS).
+- 🟢 `sslip.io` legacy host redirects 301 to `https://cubiqlo.com/`.
+- 🟢 Latest `origin/main` deployed on VPS via Docker Compose on 2026-06-23; `cubicle-cubicle-1` and `cubicle-pg` healthy.
+- 🟢 Cloudflare R2 configured (`cubicle-files`) and upload/download smoke test passed.
+- 🟢 Resend domain verified for `noreply@cubiqlo.com`; Reply-To setting exists in workspace settings.
+- 🟢 Automated tests exist: 17 Vitest unit tests + 13 Playwright E2E tests passing as of 2026-06-23.
+- 🟢 Auth rate limiting active on `/api/auth/*`; Fail2ban recidive jail configured on VPS.
+- 🟢 Monitoring/backups active: local monitor cron, Hermes external health check, daily DB backup + weekly restore test.
+- 🟢 Free plan enforcement active: Free workspace limited to 3 clients server-side + UI upgrade prompt.
+- 🟡 No payment gateway integration yet (manual "mark as paid" only).
+- 🟡 No background job queue; cron-style scripts cover monitoring/backups only.
 - 🟢 npm audit: 5/6 fixed, 1 accepted (postcss nested in next@16.2.9, build-time only, zero exploit in authored-CSS).
 
 ### Operational knowledge
@@ -82,14 +83,14 @@ R2 buckets are not bundled with this repo. Two options:
 
 ### Active maintenance
 - None — the project is feature-complete for MVP
-- Future work would be: payment integration, multi-workspace, mobile app, automated tests
+- Future work would be: payment gateway (Midtrans), multi-workspace billing, mobile app, deeper localization/ICP-specific landing pages
 
 ## Pre-handoff checklist
 
 - [ ] All customer data exported / agreed to be discarded
 - [ ] Secrets rotated and delivered
 - [ ] DNS TTL set to 5 min (or similar) 24h before cutover
-- [ ] New owner has Dokploy + DB + R2 + Resend accounts provisioned
+- [ ] New owner has Dokploy + DB + R2 + Resend/Cloudflare accounts provisioned
 - [ ] First deploy on new host verified end-to-end
 - [ ] Demo accounts (`owner@cubicle.test` etc.) reset with new passwords
 - [ ] Source code repo access transferred

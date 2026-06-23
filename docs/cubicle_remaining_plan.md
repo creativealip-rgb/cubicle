@@ -1,28 +1,32 @@
 # Cubicle Remaining Plan — From MVP Demo to Production-Ready
 
-Last updated: 2026-06-19
+Last updated: 2026-06-23
 
 ## 1. Current Status
 
-Cubicle sekarang sudah live sebagai MVP demo/internal beta.
+Cubicle/Cubiqlo sekarang live sebagai production beta di domain brand.
 
 Live URL:
 
 ```text
-https://cubicle.168.144.37.19.sslip.io/
+https://cubiqlo.com/
 ```
 
 Current strengths:
 
 ```text
-Landing/brand sudah bagus
-Positioning sudah jelas: Client Operations Hub
-Core app routes sudah ada
-Docker deploy sudah jalan
-Traefik HTTPS sudah jalan
-Smoke test public routes pass
-Auth/protected redirect jalan
-Dashboard/app shell jalan
+Landing/brand sudah polished dengan Indo + SaaS English copy
+Positioning jelas: Client Operations Hub untuk freelancer/agency/studio
+Core app routes + pre-deal + finance routes sudah ada
+Domain cubiqlo.com live, HTTPS jalan
+Cloudflare R2 upload/download smoke pass
+Resend noreply@cubiqlo.com verified + Reply-To settings
+Auth rate limiting aktif
+Monitoring/backups aktif
+Vitest unit tests 17/17 pass
+Playwright E2E 13/13 pass
+Free tier 3-client limit enforced server-side
+Docker deploy healthy via dokploy-network
 ```
 
 Latest verified (2026-06-18 full audit):
@@ -149,7 +153,7 @@ handover docs ada
 Current status:
 
 ```text
-MVP sellable: PARTIAL
+MVP sellable: YES
 ```
 
 ### Production-ready
@@ -170,16 +174,30 @@ domain brand asli dipasang
 Current status:
 
 ```text
-Production-ready: NO
+Production-ready: BETA / NEAR-READY
 ```
 
 ## 3. Completion Estimate
 
 ```text
 Demo MVP: 99%
-Sellable source/MVP: 99%  (+1: AI Assistant live, demo differentiator)
-Production client-ready: ~93% (+1: AI Assistant raises polish, R2 gaps unchanged)
+Sellable source/MVP: 99%
+Production client-ready: ~98% (payment gateway still open)
 ```
+
+
+> **Update 2026-06-23 (Production beta infra + pricing/landing polish):**
+- Demo MVP: **99%** (unchanged)
+- Sellable source/MVP: **99%** (complete for source sale/demo)
+- Production client-ready: **~98%** (+0.5 — R2 real credentials + Resend domain + domain live + rate limiting + monitoring + automated tests + local pricing/free-tier enforcement close most infra gaps)
+- Domain: `https://cubiqlo.com` live; legacy `sslip.io` redirects 301 to canonical domain.
+- Storage: Cloudflare R2 bucket `cubicle-files` configured; upload/download smoke passed.
+- Email: Resend domain verified; sender `noreply@cubiqlo.com`; Reply-To setting shipped.
+- AI: model switched to `ag/gemini-3-flash` via internal 9router Docker URL.
+- Security/ops: auth rate limiting active; fail2ban recidive jail active; local + external uptime monitoring active; DB backup/restore-test cron active.
+- QA: 17 Vitest unit tests + 13 Playwright E2E tests passing.
+- Product: Free tier now limited to 3 clients server-side with upgrade UI; pricing localized to Rp 49rb Solo / Rp 99rb Team; landing copy polished for Indonesian market using mixed Indo + SaaS English tone.
+- Remaining strategic gap: Midtrans/payment gateway and billing automation.
 
 > **Update 2026-06-16 (P0 deep QA + P2.4 + P1.5 + extras):**
 > - Demo MVP: **99%** (unchanged — was already 99%)
@@ -284,6 +302,8 @@ Production client-ready: ~93% (+1: AI Assistant raises polish, R2 gaps unchanged
 > - P2.2 RESEND prod + sender domain — blocked by P1.6
 >
 **Still open low-priority:**
+- Payment gateway / Midtrans integration for paid plan checkout and invoice payment links
+- Multi-workspace billing/subscription management
 - 1 npm audit (accepted, see P0.7 notes)
 - iPad 768px invoice detail table: 38px overflow (accept, table
   has horizontal scroll within overflow-x-auto wrapper)
@@ -1796,9 +1816,9 @@ npx next build
 npm audit
 
 # Live checks
-curl -k -I https://cubicle.168.144.37.19.sslip.io/
-curl -k -I https://cubicle.168.144.37.19.sslip.io/login
-curl -k -I https://cubicle.168.144.37.19.sslip.io/signup
+curl -k -I https://cubiqlo.com/
+curl -k -I https://cubiqlo.com/login
+curl -k -I https://cubiqlo.com/signup
 ```
 
 ---

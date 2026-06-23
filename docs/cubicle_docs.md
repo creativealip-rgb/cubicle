@@ -1,15 +1,15 @@
 # Cubicle — Client Operations Hub
 
-> **Status:** MVP Live · **URL:** https://cubicle.168.144.37.19.sslip.io
-> **Stack:** Next.js 16 · React 19 · Drizzle ORM + PostgreSQL · Better Auth · Tailwind v4 · shadcn/ui · Dokploy + Docker · **AI Assistant v1.2 (9router + MiniMax-M3 + pg_trgm + Web Speech API)**
+> **Status:** Production beta live · **URL:** https://cubiqlo.com
+> **Stack:** Next.js 16 · React 19 · Drizzle ORM + PostgreSQL · Better Auth · Tailwind v4 · shadcn/ui · Dokploy + Docker · Cloudflare R2 · Resend · Playwright/Vitest · **AI Assistant (9router + ag/gemini-3-flash)**
 
 ---
 
 ## 🧠 Overview
 
-Cubicle adalah SaaS client operations hub — satu tempat untuk mengelola klien, proyek, task, file, time tracking, invoice, appointment booking, AI prompt generator, **dan AI Assistant (chat panel RAG over workspace data)**.
+Cubiqlo (repo masih `cubicle`) adalah SaaS client operations hub — satu workspace untuk mengelola client, project, task, file, time tracking, invoice, booking, client portal, proposal, questionnaire, contract/e-sign, finance report, AI prompt generator, dan AI Assistant.
 
-Target user: agency kecil, freelancer, studio kreatif yang butuh tool all-in-one tanpa ribet.
+Target user: freelancer, agency kecil, software/design studio, marketing team, dan konsultan yang butuh client work rapi tanpa pindah-pindah tool.
 
 ---
 
@@ -293,7 +293,7 @@ Floating sparkle button (bottom-right of every `/app/*` page) → chat panel.
 - Terse responses, IDR-formatted, entity names not raw IDs
 
 **Stack:**
-- Model: `tr/MiniMax-M3` via 9router (OpenAI-compatible)
+- Model: `ag/gemini-3-flash` via 9router (OpenAI-compatible, internal Docker URL)
 - Architecture: agentic RAG — model calls structured tool functions over Drizzle queries (no embeddings)
 - Schema: `ai_conversations` + `ai_messages` tables
 - Cost: ~$0.01 per question, 1k Qs ≈ $10/mo
@@ -311,7 +311,7 @@ GET /app/prompts
 AI-powered content generation.
 
 ### Provider:
-- **9Router** (local proxy) → model `ag/gemini-pro-agent`
+- **9Router** (local proxy) → model `ag/gemini-3-flash`
 - OpenAI-compatible API
 
 ### Template system:
@@ -357,7 +357,7 @@ Next.js 16 (App Router)
 ├── @dnd-kit (kanban drag & drop)
 ├── @react-pdf/renderer (invoice PDF)
 ├── AWS SDK S3 (R2 storage)
-├── Resend (email — not yet configured)
+├── Resend (email — noreply@cubiqlo.com verified)
 └── 9Router (AI provider gateway)
 ```
 
@@ -374,7 +374,7 @@ Docker + Dokploy + Traefik
 ├── Container: cubicle-pg (PostgreSQL, port 5432)
 ├── Network: dokploy-network
 ├── TLS: Let's Encrypt via Traefik
-└── Host: cubicle.168.144.37.19.sslip.io
+└── Host: cubiqlo.com (sslip.io redirects to canonical domain)
 ```
 
 ### Build pipeline
@@ -387,10 +387,12 @@ docker compose up -d --build  # Deploy
 
 ### Current build status
 ```
-lint:    PASS (104 warnings, 0 errors)
+lint:    PASS
 tsc:     PASS
-build:   PASS
-deploy:  PASS
+build:   PASS (verified 2026-06-23)
+unit:    PASS (17 Vitest tests)
+e2e:     PASS (13 Playwright tests)
+deploy:  PASS (Docker Compose, cubicle-cubicle-1 healthy)
 ```
 
 ---
@@ -408,10 +410,10 @@ deploy:  PASS
 | R2_SECRET_ACCESS_KEY| ✅ Set          | R2 secret key                    |
 | R2_BUCKET_NAME      | ✅ Set          | R2 bucket name                   |
 | RESEND_API_KEY      | ✅ Set          | Email provider                   |
-| RESEND_FROM         | ❌ Empty        | Sender email address             |
+| EMAIL_FROM / RESEND_FROM | ✅ Set    | `noreply@cubiqlo.com` sender      |
 | AI_API_KEY          | ✅ Set          | 9router key (AI Assistant)       |
 | AI_BASE_URL         | ✅ Set          | 9router base URL                 |
-| AI_MODEL            | ✅ Set          | tr/MiniMax-M3                    |
+| AI_MODEL            | ✅ Set          | `ag/gemini-3-flash`              |
 
 ---
 
@@ -444,12 +446,9 @@ deploy:  PASS
 
 | Item                                | Status     |
 |-------------------------------------|:----------:|
-| Real R2 upload dari UI              | ⚠️ Belum E2E |
-| Email notification (Resend)         | ⚠️ Belum dikonfigurasi |
-| Invoice PDF export                  | ⚠️ Komponen ada, belum test |
-| Lint warnings cleanup (104)         | ⚠️ Non-blocking |
+| Payment gateway                    | ⚠️ Belum (manual payment/mark paid) |
+| Multi-workspace billing             | ⚠️ Phase 2 |
 | Pause/resume timer                  | ⚠️ Phase 2 |
-| Production monitoring/backup        | ⚠️ Belum |
 
 ---
 
@@ -498,7 +497,7 @@ API:
 ## 🚀 Quick Start (Development)
 
 ```bash
-cd /root/projek/cubicle
+cd /root/projects/cubicle
 cp .env.example .env
 # fill required env variables
 npm install
@@ -515,7 +514,7 @@ docker compose up -d --build  # deploy to Docker
 1. Login sebagai owner/member
 2. Buat client → `/app/clients` → Add Client
 3. Generate portal token → client detail → Portal Token
-4. Kirim link portal ke client: `https://cubicle.../client-portal/{token}`
+4. Kirim link portal ke client: `https://cubiqlo.com/client-portal/{token}`
 
 ### 2. Track project
 1. Buat project → `/app/projects` → New Project (pilih client)
@@ -527,12 +526,12 @@ docker compose up -d --build  # deploy to Docker
 1. Buat invoice → `/app/invoices` → New Invoice (pilih client)
 2. Tambah item manual atau import time entries
 3. Generate share token → invoice detail → Generate Share Link
-4. Kirim link ke client: `https://cubicle.../invoice/{token}`
+4. Kirim link ke client: `https://cubiqlo.com/invoice/{token}`
 5. Client buka → status jadi `viewed`
 6. Record payment saat client bayar → status jadi `paid`
 
 ### 4. Client self-booking
-1. Client buka: `https://cubicle.../booking/acme-creative`
+1. Client buka: `https://cubiqlo.com/booking/acme-creative`
 2. Pilih tanggal, lihat slot tersedia
 3. Isi nama, email, judul → submit
 4. Appointment muncul di calendar workspace
@@ -564,8 +563,14 @@ QA & deploy                                   ✅
 Post-QA role guard fix                        ✅
 File download security fix                    ✅
 9Router prompt integration                    ✅
+Cloudflare R2 + Resend + cubiqlo.com          ✅
+Reply-To email settings                       ✅
+Auth rate limiting + monitoring + backups     ✅
+Vitest unit tests + Playwright E2E            ✅
+Free tier 3-client enforcement                ✅
+Landing copy polish (Indo + SaaS English)     ✅
 ```
 
 ---
 
-*Last updated: 15 June 2026 · Wowo (Hermes agent)*
+*Last updated: 23 June 2026 · Coder 2 (Hermes agent)*
