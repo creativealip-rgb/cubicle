@@ -70,30 +70,32 @@ const workflow = [
 
 const pricing = [
   {
-    name: "Solo",
-    price: "Free",
-    priceSub: "during beta",
-    description: "For freelancers running client work alone.",
-    items: ["Clients & projects", "Time tracking", "Invoices", "Client portal", "Calendar", "AI assistant"],
+    name: "Free",
+    price: "Rp 0",
+    priceSub: "selamanya",
+    description: "Coba dulu, tanpa kartu kredit.",
+    items: ["1 user", "3 clients", "Projects & tasks", "Invoices", "Time tracking"],
     cta: "Start free",
+    href: "/signup",
+    featured: false,
+  },
+  {
+    name: "Solo",
+    price: "Rp 49rb",
+    priceSub: "/bulan",
+    description: "Untuk freelancer yang serius kelola klien.",
+    items: ["1 user", "Unlimited clients", "Client portal", "AI assistant", "Calendar & booking", "Proposals & contracts"],
+    cta: "Mulai Rp 49rb",
     href: "/signup",
     featured: true,
   },
   {
     name: "Team",
-    price: "Soon",
-    description: "For small teams that deliver client projects together.",
-    items: ["Team roles", "Shared workspace", "File handoff", "Booking pages"],
-    cta: "Join waitlist",
-    href: "/signup",
-    featured: false,
-  },
-  {
-    name: "Studio",
-    price: "Custom",
-    description: "For agencies that need a branded client operation hub.",
-    items: ["White-label portal", "Priority support", "Advanced setup", "Custom workflow"],
-    cta: "Talk to us",
+    price: "Rp 99rb",
+    priceSub: "/bulan",
+    description: "Untuk tim kecil yang deliver bareng.",
+    items: ["5 users", "Shared workspace", "Team roles", "File handoff", "Advanced reporting", "Priority support"],
+    cta: "Mulai Team",
     href: "/signup",
     featured: false,
   },
@@ -574,12 +576,12 @@ export default function HomePage() {
       <section id="pricing" className="bg-[linear-gradient(180deg,#f8fafc_0%,#fff_100%)] px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-3xl text-center">
-            <Badge variant="outline" className="mb-4 bg-white">MVP beta</Badge>
+            <Badge variant="outline" className="mb-4 bg-white">Harga transparan</Badge>
             <h2 className="text-3xl font-semibold tracking-[0.03em] sm:text-5xl">
-              Beta access for serious client-service teams.
+              Mulai gratis, upgrade kapan saja.
             </h2>
             <p className="mt-4 text-lg leading-8 text-slate-600">
-              Start with the core client operations workflow. Scale into team roles, branded portals, and studio-level support when ready.
+              Bayar sesuai kebutuhan. Tidak ada kontrak, tidak ada biaya tersembunyi.
             </p>
           </div>
           <div className="mt-12 grid gap-6 lg:grid-cols-3">
@@ -592,7 +594,7 @@ export default function HomePage() {
                       className="absolute -inset-[1px] rounded-2xl bg-[conic-gradient(from_140deg,#0091ff,#ff02f0,#f76808,#6647f0,#0091ff)] opacity-90"
                     />
                     <span className="absolute -top-3 left-1/2 z-20 -translate-x-1/2 rounded-full bg-gradient-to-r from-[#6647F0] to-[#0091FF] px-4 py-1 text-xs font-semibold text-white shadow-[0_4px_12px_rgba(102,71,240,0.30)]">
-                      Most Popular
+                      Paling Populer
                     </span>
                   </>
                 )}
