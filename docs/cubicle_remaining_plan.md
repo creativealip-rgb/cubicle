@@ -28,6 +28,8 @@ Playwright E2E 13/13 pass
 Free tier 3-client limit enforced server-side
 Pakasir QRIS payment gateway active (Solo Rp 49rb / Team Rp 99rb)
 Dashboard fully translated to Indonesian
+All internal app pages translated to Indonesian (Clients, Invoices, Tasks, Projects, Settings, Time, Files, Reports)
+Client-facing pages in English (Invoice PDF, Portal, Proposal, Contract, Booking, Intake, Email)
 Docker deploy healthy via dokploy-network
 ```
 

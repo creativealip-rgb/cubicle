@@ -75,6 +75,8 @@ R2 buckets are not bundled with this repo. Two options:
 - 🟢 Free plan enforcement active: Free workspace limited to 3 clients server-side + UI upgrade prompt.
 - 🟢 Payment gateway v1 active: Pakasir QRIS checkout for Solo (Rp 49rb) / Team (Rp 99rb) plans; webhook auto-upgrades workspace plan; upgrade-only guard (same-plan & downgrade blocked).
 - 🟢 Dashboard fully translated to Indonesian (greeting, KPI labels, attention cards, cash flow, client health, activity, timers, tasks, invoices).
+- 🟢 All internal app pages translated to Indonesian (Clients, Invoices, Tasks, Projects, Settings, Time, Files, Reports).
+- 🟢 Client-facing pages kept in English for international clients (Invoice PDF/viewer, Client Portal, Proposal, Contract, Booking, Intake, Email templates).
 - 🟡 No background job queue; cron-style scripts cover monitoring/backups only.
 - 🟢 npm audit: 5/6 fixed, 1 accepted (postcss nested in next@16.2.9, build-time only, zero exploit in authored-CSS).
 

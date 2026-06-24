@@ -51,6 +51,22 @@ All demo users belong to workspace **Acme Creative Studio** (`acme-creative`).
 
 ---
 
+## 🌐 Localization / Bahasa
+
+Split bahasa berdasarkan route:
+
+### Indonesian (internal — `(app)/app/` routes)
+Dashboard, Clients, Invoices, Tasks, Projects, Settings, Time, Files, Reports, Billing.
+Target user: freelancer/agency Indonesia.
+
+### English (client-facing — public token/slug routes)
+Invoice PDF, Invoice viewer, Client Portal, Proposal, Contract, Booking, Intake form, Email templates.
+Target user: international clients.
+
+Tidak pakai i18n library — hardcode string per context. Cukup buat MVP.
+
+---
+
 ## 📊 Dashboard
 
 ```
