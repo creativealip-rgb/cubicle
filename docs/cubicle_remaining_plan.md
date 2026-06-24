@@ -1,6 +1,6 @@
 # Cubicle Remaining Plan — From MVP Demo to Production-Ready
 
-Last updated: 2026-06-23
+Last updated: 2026-06-24
 
 ## 1. Current Status
 
@@ -26,6 +26,8 @@ Monitoring/backups aktif
 Vitest unit tests 17/17 pass
 Playwright E2E 13/13 pass
 Free tier 3-client limit enforced server-side
+Pakasir QRIS payment gateway active (Solo Rp 49rb / Team Rp 99rb)
+Dashboard fully translated to Indonesian
 Docker deploy healthy via dokploy-network
 ```
 
@@ -182,9 +184,18 @@ Production-ready: BETA / NEAR-READY
 ```text
 Demo MVP: 99%
 Sellable source/MVP: 99%
-Production client-ready: ~98% (payment gateway still open)
+Production client-ready: ~98% (payment gateway v1 done, subscription automation remaining)
 ```
 
+
+> **Update 2026-06-24 (Payment gateway + Dashboard localization):**
+- Demo MVP: **99%** (unchanged)
+- Sellable source/MVP: **99%** (unchanged)
+- Production client-ready: **~98%** (payment gateway v1 closes the last open infra gap)
+- Payment: Pakasir QRIS integration complete — checkout, webhook, plan auto-upgrade, upgrade-only guard, idempotent transactions.
+- Billing UI: `/app/billing` page with Solo/Team cards, disabled current plan button, upgrade flow.
+- Localization: Dashboard fully translated to Indonesian (greeting, KPIs, attention cards, cash flow, client health, activity, timers, tasks, invoices).
+- DB: `pakasir_payments` table added (26 tables total).
 
 > **Update 2026-06-23 (Production beta infra + pricing/landing polish):**
 - Demo MVP: **99%** (unchanged)

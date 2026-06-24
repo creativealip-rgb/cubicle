@@ -57,11 +57,23 @@ All demo users belong to workspace **Acme Creative Studio** (`acme-creative`).
 GET /app/dashboard
 ```
 
-Ringkasan instant:
-- **Active Clients** — jumlah klien
-- **Active Projects** — jumlah proyek
-- **Due Tasks** — task yang overdue/ due soon
-- **Unpaid Invoices** — invoice belum paid
+Ringkasan instant (full Indonesian UI):
+- **Klien Aktif** — jumlah klien
+- **Project Aktif** — jumlah proyek
+- **Task Jatuh Tempo** — task yang overdue / due soon
+- **Invoice Belum Dibayar** — invoice belum paid
+
+Fitur dashboard:
+- Greeting dinamis (Selamat pagi/siang/malam + nama user)
+- Quick actions: Task baru, Invoice baru, Mulai timer, Tambah klien
+- Attention needed: Invoice terlambat, Task hari ini, Kontrak menunggu, Notifikasi belum dibaca
+- Revenue sparkline (14 hari terakhir)
+- Kesehatan klien (Sehat / Diam / Berisiko)
+- Proyeksi arus kas (30/60/90 hari)
+- Aktivitas Terbaru
+- Timer Aktif + Jadwal Mendatang
+- Invoice Belum Dibayar
+- Task Hari Ini
 
 ---
 
@@ -332,6 +344,48 @@ AI-powered content generation.
 
 ---
 
+## 💳 Billing & Payments (Pakasir)
+
+```
+GET /app/billing
+POST /api/billing/checkout
+POST /api/webhooks/pakasir
+```
+
+Pakasir QRIS payment gateway untuk upgrade plan workspace.
+
+### Plans
+
+| Plan  | Harga       | Limit              |
+|-------|-------------|---------------------|
+| Free  | Rp 0        | 3 klien max         |
+| Solo  | Rp 49rb/bln | Unlimited klien, 1 user |
+| Team  | Rp 99rb/bln | Unlimited klien, 5 users |
+
+### Checkout flow
+1. Owner klik "Bayar Solo/Team QRIS" di `/app/billing`
+2. `POST /api/billing/checkout` → create Pakasir transaction
+3. Redirect ke Pakasir QRIS page
+4. User bayar via QRIS
+5. Pakasir kirim webhook ke `/api/webhooks/pakasir`
+6. Webhook verify → update `workspace.plan` + `plan_expires_at` (+30 hari)
+7. `pakasir_payments` table tracks all transactions
+
+### Guards
+- Same plan → blocked (409)
+- Downgrade → blocked (409)
+- Upgrade (free→solo, free→team, solo→team) → allowed walau plan belum expired
+- Free plan checkout → blocked (400)
+- Non-owner → blocked (403)
+
+### Webhook endpoint
+```
+POST https://cubiqlo.com/api/webhooks/pakasir
+```
+Set di Pakasir dashboard sebagai callback URL.
+
+---
+
 ## ⚙️ Settings / Team Management
 
 ```
@@ -363,7 +417,7 @@ Next.js 16 (App Router)
 
 ### Database
 - PostgreSQL 16 via Docker (`cubicle-pg`)
-- 24 tables (added `ai_conversations` + `ai_messages` for Assistant v1.1)
+- 26 tables (added `ai_conversations` + `ai_messages` + `pakasir_payments`)
 - Migrations via Drizzle
 - AI tables migration: `scripts/migrate-ai-tables.sql`
 

@@ -33,6 +33,8 @@ Current secrets in `.env` (encrypted at rest on Dokploy):
 - `DATABASE_URL` — provisioned on the new host
 - `R2_*` — generate new R2 access keys
 - `RESEND_API_KEY` — generate new key in Resend dashboard
+- `PAKASIR_PROJECT` — Pakasir project slug (e.g. `cubiqlo`)
+- `PAKASIR_API_KEY` — generate new key in Pakasir dashboard
 - `OPENAI_*` — generate new API key
 
 Hand these over via 1Password / Bitwarden / secure channel. **Never commit to git.**
@@ -71,7 +73,8 @@ R2 buckets are not bundled with this repo. Two options:
 - 🟢 Auth rate limiting active on `/api/auth/*`; Fail2ban recidive jail configured on VPS.
 - 🟢 Monitoring/backups active: local monitor cron, Hermes external health check, daily DB backup + weekly restore test.
 - 🟢 Free plan enforcement active: Free workspace limited to 3 clients server-side + UI upgrade prompt.
-- 🟡 No payment gateway integration yet (manual "mark as paid" only).
+- 🟢 Payment gateway v1 active: Pakasir QRIS checkout for Solo (Rp 49rb) / Team (Rp 99rb) plans; webhook auto-upgrades workspace plan; upgrade-only guard (same-plan & downgrade blocked).
+- 🟢 Dashboard fully translated to Indonesian (greeting, KPI labels, attention cards, cash flow, client health, activity, timers, tasks, invoices).
 - 🟡 No background job queue; cron-style scripts cover monitoring/backups only.
 - 🟢 npm audit: 5/6 fixed, 1 accepted (postcss nested in next@16.2.9, build-time only, zero exploit in authored-CSS).
 
@@ -83,7 +86,7 @@ R2 buckets are not bundled with this repo. Two options:
 
 ### Active maintenance
 - None — the project is feature-complete for MVP
-- Future work would be: payment gateway (Midtrans), multi-workspace billing, mobile app, deeper localization/ICP-specific landing pages
+- Future work would be: subscription automation (renewal reminders, grace period, receipt email, plan downgrade), multi-workspace billing, mobile app, deeper localization/ICP-specific landing pages
 
 ## Pre-handoff checklist
 
