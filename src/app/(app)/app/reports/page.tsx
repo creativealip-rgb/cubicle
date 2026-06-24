@@ -279,13 +279,13 @@ export default async function ReportsPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Reports</h1>
-          <p className="text-sm text-slate-500 mt-1">Your numbers, at a glance.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Laporan</h1>
+          <p className="text-sm text-slate-500 mt-1">Angkamu sekilas.</p>
         </div>
         <Button asChild variant="outline" size="sm">
           <Link href="/app/expenses">
             <Wallet className="h-4 w-4 mr-1" />
-            Track expense
+            Catat pengeluaran
           </Link>
         </Button>
       </div>
@@ -294,17 +294,17 @@ export default async function ReportsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">YTD income</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-600">Pendapatan YTD</CardTitle>
             <TrendingUp className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-semibold">{formatMoney(ytdIncome, "IDR")}</div>
-            <p className="text-xs text-slate-500 mt-1">from paid invoices (last 6 mo)</p>
+            <p className="text-xs text-slate-500 mt-1">dari invoice terbayar (6 bln terakhir)</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">YTD expenses</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-600">Pengeluaran YTD</CardTitle>
             <TrendingDown className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
@@ -312,12 +312,12 @@ export default async function ReportsPage() {
             {ytdExpenseUSD > 0 && (
               <div className="text-sm text-slate-600 mt-1">+ {formatMoney(ytdExpenseUSD, "USD")}</div>
             )}
-            <p className="text-xs text-slate-500 mt-1">All currencies shown separately</p>
+            <p className="text-xs text-slate-500 mt-1">Semua mata uang ditampilkan terpisah</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">YTD net</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-600">Bersih YTD</CardTitle>
             <BarChart3 className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
@@ -325,7 +325,7 @@ export default async function ReportsPage() {
               {formatMoney(ytdIncome - ytdExpenseIDR, "IDR")}
             </div>
             {ytdExpenseUSD > 0 && (
-              <div className="text-xs text-slate-500 mt-1">USD net not shown (paid invoices are IDR only)</div>
+              <div className="text-xs text-slate-500 mt-1">USD bersih tidak ditampilkan (invoice terbayar hanya IDR)</div>
             )}
           </CardContent>
         </Card>
@@ -334,8 +334,8 @@ export default async function ReportsPage() {
       {/* Monthly P&L bar chart */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Monthly P&L (last 6 months)</CardTitle>
-          <CardDescription>Income (auto) vs expenses (IDR)</CardDescription>
+          <CardTitle className="text-base">Laba Rugi Bulanan (6 bulan terakhir)</CardTitle>
+          <CardDescription>Pendapatan (otomatis) vs pengeluaran (IDR)</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -373,20 +373,20 @@ export default async function ReportsPage() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Users className="h-4 w-4" />
-              Top clients (YTD)
+              Klien teratas (YTD)
             </CardTitle>
           </CardHeader>
           <CardContent>
             {clientRows.length === 0 ? (
-              <p className="text-sm text-slate-500 py-4 text-center">No invoices yet</p>
+              <p className="text-sm text-slate-500 py-4 text-center">Belum ada invoice</p>
             ) : (
               <div className="overflow-x-auto">
               <Table className="min-w-[600px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Client</TableHead>
-                    <TableHead className="text-right">Invoiced</TableHead>
-                    <TableHead className="text-right">Unpaid</TableHead>
+                    <TableHead>Klien</TableHead>
+                    <TableHead className="text-right">Ditagihkan</TableHead>
+                    <TableHead className="text-right">Belum dibayar</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -423,18 +423,18 @@ export default async function ReportsPage() {
         {/* Top expense categories */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Top spending (YTD)</CardTitle>
+            <CardTitle className="text-base">Pengeluaran terbesar (YTD)</CardTitle>
           </CardHeader>
           <CardContent>
             {topCats.length === 0 ? (
-              <p className="text-sm text-slate-500 py-4 text-center">No expenses yet</p>
+              <p className="text-sm text-slate-500 py-4 text-center">Belum ada pengeluaran</p>
             ) : (
               <div className="space-y-2">
                 {topCats.map((c) => (
                   <div key={`${c.name}-${c.currency}`} className="flex items-center gap-3">
                     <div className="flex items-center gap-2 w-40">
                       <span className="h-2 w-2 rounded-full" style={{ backgroundColor: c.color ?? "#64748b" }} />
-                      <span className="text-sm">{c.name ?? "Uncategorized"}</span>
+                      <span className="text-sm">{c.name ?? "Tanpa kategori"}</span>
                     </div>
                     <span className="text-xs text-slate-500 w-12">{c.count}x</span>
                     <span className="text-sm tabular-nums flex-1 text-right">{formatMoney(c.total, c.currency)}</span>
@@ -451,9 +451,9 @@ export default async function ReportsPage() {
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <AlertCircle className="h-4 w-4" />
-            Invoice aging (AR)
+            Umur Invoice (AR)
           </CardTitle>
-          <CardDescription>Unpaid invoices bucketed by days overdue</CardDescription>
+          <CardDescription>Invoice belum dibayar berdasarkan hari terlambat</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
@@ -472,17 +472,17 @@ export default async function ReportsPage() {
             ))}
           </div>
           {overdueItems.length === 0 ? (
-            <p className="text-sm text-slate-500 py-2 text-center">No overdue invoices 🎉</p>
+            <p className="text-sm text-slate-500 py-2 text-center">Tidak ada invoice terlambat 🎉</p>
           ) : (
             <div className="overflow-x-auto">
             <Table className="min-w-[600px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Invoice</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Due</TableHead>
-                  <TableHead className="text-right">Overdue</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead>Klien</TableHead>
+                  <TableHead>Jatuh Tempo</TableHead>
+                  <TableHead className="text-right">Terlambat</TableHead>
+                  <TableHead className="text-right">Jumlah</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -515,9 +515,9 @@ export default async function ReportsPage() {
       {/* Cash flow forecast */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Cash flow forecast (next 3 months)</CardTitle>
+          <CardTitle className="text-base">Proyeksi arus kas (3 bulan ke depan)</CardTitle>
           <CardDescription>
-            Expected income from unpaid invoices + projected recurring expenses.
+            Estimasi pendapatan dari invoice belum dibayar + proyeksi pengeluaran rutin.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -537,11 +537,11 @@ export default async function ReportsPage() {
                   </div>
                   <div className="space-y-1 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Income</span>
+                      <span className="text-slate-500">Pendapatan</span>
                       <span className="tabular-nums text-emerald-700">+{formatMoney(inc, "IDR")}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Recurring</span>
+                      <span className="text-slate-500">Rutin</span>
                       <span className="tabular-nums text-red-600">−{formatMoney(expIDR, "IDR")}</span>
                     </div>
                     {expUSD > 0 && (
@@ -563,7 +563,7 @@ export default async function ReportsPage() {
           </div>
           {recurringRows.length === 0 && (
             <p className="text-xs text-slate-500 mt-3">
-              No recurring expenses tracked. Add some in Expenses to see accurate forecasts.
+              Belum ada pengeluaran rutin. Tambahkan di Pengeluaran untuk proyeksi lebih akurat.
             </p>
           )}
         </CardContent>
@@ -572,23 +572,22 @@ export default async function ReportsPage() {
       {/* Per-project P&L */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Per-project spend</CardTitle>
+          <CardTitle className="text-base">Pengeluaran per project</CardTitle>
           <CardDescription>
-            Expenses tagged to each project. Income is aggregated from the
-            project&apos;s client&apos;s paid invoices (invoices lack projectId).
+            Pengeluaran per project. Pendapatan diambil dari invoice terbayar klien project.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {projectRows.length === 0 ? (
-            <p className="text-sm text-slate-500 py-4 text-center">No projects yet</p>
+            <p className="text-sm text-slate-500 py-4 text-center">Belum ada project</p>
           ) : (
             <div className="overflow-x-auto">
             <Table className="min-w-[600px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Project</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead className="text-right">Expenses</TableHead>
+                  <TableHead>Klien</TableHead>
+                  <TableHead className="text-right">Pengeluaran</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>

@@ -74,15 +74,15 @@ export default async function InvoicesPage() {
     <div className="space-y-6 min-w-0">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Invoices</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Invoice</h1>
           <p className="text-sm text-muted-foreground">
-            Create and manage invoices for your clients
+            Buat dan kelola invoice untuk klienmu
           </p>
         </div>
         {canWrite && (
           <Link href="/app/invoices/new">
             <Button className="gap-2 w-full sm:w-auto">
-              <Plus className="h-4 w-4" /> New Invoice
+              <Plus className="h-4 w-4" /> Invoice Baru
             </Button>
           </Link>
         )}
@@ -91,9 +91,9 @@ export default async function InvoicesPage() {
       {invoiceList.length === 0 ? (
         <EmptyState
           icon={FileText}
-          title="No invoices yet"
-          description="Create your first invoice to start billing your clients."
-          action={canWrite ? { label: "Create Invoice", href: "/app/invoices/new" } : undefined}
+          title="Belum ada invoice"
+          description="Buat invoice pertama untuk mulai tagih klienmu."
+          action={canWrite ? { label: "Buat Invoice", href: "/app/invoices/new" } : undefined}
         />
       ) : (
         <>
@@ -101,13 +101,13 @@ export default async function InvoicesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Number</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Issue Date</TableHead>
-                <TableHead>Due Date</TableHead>
+                <TableHead>No.</TableHead>
+                <TableHead>Klien</TableHead>
+                <TableHead>Tanggal Terbit</TableHead>
+                <TableHead>Jatuh Tempo</TableHead>
                 <TableHead className="text-right">Total</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -175,7 +175,7 @@ export default async function InvoicesPage() {
                   <span className="tabular-nums font-medium">{formatMoney(inv.total, inv.currency)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs text-muted-foreground">Due</span>
+                  <span className="text-xs text-muted-foreground">Jatuh Tempo</span>
                   <span className="text-sm">
                     {inv.dueDate
                       ? new Date(inv.dueDate).toLocaleDateString()

@@ -102,20 +102,20 @@ export default async function TasksPage({
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Tasks</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Task</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Track work across your projects
+            Pantau pekerjaan di semua project
           </p>
         </div>
         <Dialog>
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1">
-              <Plus className="h-4 w-4" /> New Task
+              <Plus className="h-4 w-4" /> Task Baru
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>New Task</DialogTitle>
+              <DialogTitle>Task Baru</DialogTitle>
             </DialogHeader>
             <TaskForm mode="create" projectId={params.projectId} members={memberList} />
           </DialogContent>
@@ -130,11 +130,11 @@ export default async function TasksPage({
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="all">Semua Status</SelectItem>
               <SelectItem value="todo">Todo</SelectItem>
-              <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="in_progress">Sedang Dikerjakan</SelectItem>
               <SelectItem value="review">Review</SelectItem>
-              <SelectItem value="done">Done</SelectItem>
+              <SelectItem value="done">Selesai</SelectItem>
             </SelectContent>
           </Select>
 
@@ -143,11 +143,11 @@ export default async function TasksPage({
               <SelectValue placeholder="Priority" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Priority</SelectItem>
+              <SelectItem value="all">Semua Prioritas</SelectItem>
               <SelectItem value="urgent">Urgent</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
+              <SelectItem value="high">Tinggi</SelectItem>
+              <SelectItem value="medium">Sedang</SelectItem>
+              <SelectItem value="low">Rendah</SelectItem>
             </SelectContent>
           </Select>
 
@@ -156,7 +156,7 @@ export default async function TasksPage({
               <SelectValue placeholder="Project" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Projects</SelectItem>
+              <SelectItem value="all">Semua Project</SelectItem>
               {projectList.map((p) => (
                 <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
               ))}
@@ -168,9 +168,9 @@ export default async function TasksPage({
               <SelectValue placeholder="Assignee" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Assignees</SelectItem>
-              <SelectItem value="me">Assigned to me</SelectItem>
-              <SelectItem value="unassigned">Unassigned</SelectItem>
+              <SelectItem value="all">Semua</SelectItem>
+              <SelectItem value="me">Ditugaskan ke saya</SelectItem>
+              <SelectItem value="unassigned">Belum ditugaskan</SelectItem>
               {memberList.map((m) => (
                 <SelectItem key={m.id} value={m.id}>
                   {m.name || m.email || m.id.slice(0, 8)}
@@ -189,19 +189,19 @@ export default async function TasksPage({
       <div className="overflow-hidden rounded-lg border bg-card">
         {taskList.length > 0 && (
           <div className="hidden items-center gap-4 border-b bg-muted/40 px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:flex">
-            <div className="min-w-0 flex-1">Title</div>
+            <div className="min-w-0 flex-1">Judul</div>
             <div className="w-32">Project</div>
             <div className="w-28">Assignee</div>
-            <div className="w-24">Due</div>
-            <div className="w-20">Priority</div>
+            <div className="w-24">Jatuh Tempo</div>
+            <div className="w-20">Prioritas</div>
             <div className="w-24">Status</div>
           </div>
         )}
         {taskList.length === 0 && (
           <EmptyState
             icon={Filter}
-            title="No tasks found"
-            description="No tasks match your current filters. Try adjusting filters or create a new task."
+            title="Tidak ada task ditemukan"
+            description="Tidak ada task yang cocok dengan filter. Coba ubah filter atau buat task baru."
           />
         )}
         {taskList.map((task) => {
@@ -214,10 +214,10 @@ export default async function TasksPage({
                     <p className="truncate text-sm font-medium">{task.title}</p>
                   </div>
                   <div className="text-xs text-muted-foreground md:w-32 md:truncate">
-                    {task.projectName ?? "No project"}
+                    {task.projectName ?? "Tanpa project"}
                   </div>
                   <div className="text-xs text-muted-foreground md:w-28 md:truncate">
-                    {task.assigneeName ?? "Unassigned"}
+                    {task.assigneeName ?? "Belum ditugaskan"}
                   </div>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground md:w-24">
                     {task.dueDate ? (
@@ -226,7 +226,7 @@ export default async function TasksPage({
                         {new Date(task.dueDate).toLocaleDateString()}
                       </>
                     ) : (
-                      "No due"
+                      "Tanpa tenggat"
                     )}
                   </div>
                   <div className="md:w-20">

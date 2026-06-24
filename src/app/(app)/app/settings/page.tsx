@@ -41,21 +41,21 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground mt-1">Workspace configuration and team access.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">Pengaturan</h1>
+        <p className="text-sm text-muted-foreground mt-1">Konfigurasi workspace dan akses tim.</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Settings className="h-5 w-5" /> Workspace</CardTitle>
-            <CardDescription>Core workspace info</CardDescription>
+            <CardDescription>Info workspace utama</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Name</span><span>{workspace.name}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Nama</span><span>{workspace.name}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Slug</span><Badge variant="secondary">{workspace.slug}</Badge></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Currency</span><span>{workspace.defaultCurrency}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>{workspace.defaultTaxRate}%</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Mata Uang</span><span>{workspace.defaultCurrency}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Pajak</span><span>{workspace.defaultTaxRate}%</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Booking slug</span><span>{workspace.bookingSlug}</span></div>
           </CardContent>
         </Card>
@@ -63,7 +63,7 @@ export default async function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" /> Team</CardTitle>
-            <CardDescription>{canManageTeam ? "Add existing users, change roles, or remove members." : "View workspace team members."}</CardDescription>
+            <CardDescription>{canManageTeam ? "Tambah user, ubah role, atau hapus anggota." : "Lihat anggota tim workspace."}</CardDescription>
           </CardHeader>
           <CardContent>
             {canManageTeam ? (
@@ -88,18 +88,18 @@ export default async function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Mail className="h-5 w-5" /> Email Reply-To</CardTitle>
-          <CardDescription>Set a Reply-To address so client replies go to your personal inbox.</CardDescription>
+          <CardDescription>Atur alamat Reply-To agar balasan klien masuk ke inbox pribadimu.</CardDescription>
         </CardHeader>
         <CardContent>
           <ReplyToEmailForm workspaceId={workspace.id} currentValue={workspace.replyToEmail} />
-          <p className="text-xs text-muted-foreground mt-2">Leave empty to use default sender. Replies will go to this address when set.</p>
+          <p className="text-xs text-muted-foreground mt-2">Kosongkan untuk gunakan pengirim default. Balasan akan dikirim ke alamat ini jika diatur.</p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Module settings</CardTitle>
-          <CardDescription>MVP placeholders. Edit forms belum disambung.</CardDescription>
+          <CardTitle>Pengaturan Modul</CardTitle>
+          <CardDescription>Placeholder MVP. Form edit belum disambung.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-4">
           <Button variant="outline" className="justify-start gap-2"><Receipt className="h-4 w-4" /> Billing</Button>

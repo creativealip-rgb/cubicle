@@ -77,9 +77,9 @@ export default async function ProjectsPage({
     <div className="space-y-6 min-w-0">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Project</h1>
           <p className="text-sm text-muted-foreground">
-            Track your project pipeline
+            Pantau pipeline project-mu
           </p>
         </div>
         {canWrite && (
@@ -87,12 +87,12 @@ export default async function ProjectsPage({
             <DialogTrigger asChild>
               <Button size="sm" className="gap-1 w-full sm:w-auto">
                 <Plus className="h-4 w-4" />
-                New Project
+                Project Baru
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
-                <DialogTitle>New Project</DialogTitle>
+                <DialogTitle>Project Baru</DialogTitle>
               </DialogHeader>
               <ProjectForm mode="create" />
             </DialogContent>
@@ -103,18 +103,18 @@ export default async function ProjectsPage({
       <div className="rounded-lg border bg-card">
         <div className="hidden md:grid grid-cols-12 gap-4 p-3 text-xs font-medium text-muted-foreground border-b">
           <div className="col-span-3">Project</div>
-          <div className="col-span-2">Client</div>
+          <div className="col-span-2">Klien</div>
           <div className="col-span-2">Status</div>
           <div className="col-span-2">Progress</div>
-          <div className="col-span-1">Due</div>
-          <div className="col-span-2 text-right">Actions</div>
+          <div className="col-span-1">Jatuh Tempo</div>
+          <div className="col-span-2 text-right">Aksi</div>
         </div>
 
         {projectsList.length === 0 && (
           <EmptyState
             icon={Plus}
-            title="No projects yet"
-            description="Create your first project to start tracking work."
+            title="Belum ada project"
+            description="Buat project pertama untuk mulai pantau pekerjaan."
           />
         )}
 
@@ -162,7 +162,7 @@ export default async function ProjectsPage({
                   )}
                 </span>
                 {project.clientVisible && (
-                  <Badge variant="outline" className="text-[10px]">Client visible</Badge>
+                  <Badge variant="outline" className="text-[10px]">Terlihat klien</Badge>
                 )}
               </div>
             </div>
@@ -179,7 +179,7 @@ export default async function ProjectsPage({
                 {project.name}
               </Link>
               {project.clientVisible && (
-                <Badge variant="outline" className="ml-2 text-[10px]">Client visible</Badge>
+                <Badge variant="outline" className="ml-2 text-[10px]">Terlihat klien</Badge>
               )}
             </div>
             <div className="col-span-2 text-sm text-muted-foreground truncate">
@@ -224,10 +224,10 @@ export default async function ProjectsPage({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
-                    <Link href={`/app/projects/${project.id}`}>View Details</Link>
+                    <Link href={`/app/projects/${project.id}`}>Lihat Detail</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href={`/app/tasks?projectId=${project.id}`}>View Tasks</Link>
+                    <Link href={`/app/tasks?projectId=${project.id}`}>Lihat Task</Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

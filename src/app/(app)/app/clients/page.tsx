@@ -123,28 +123,28 @@ export default async function ClientsPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Clients</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Klien</h1>
           <p className="text-sm text-muted-foreground">
-            Manage your client relationships
+            Kelola hubungan klienmu
           </p>
         </div>
         {canWrite && (
           isAtLimit ? (
             <Button size="sm" className="gap-1" disabled>
               <Plus className="h-4 w-4" />
-              Upgrade to add more
+              Upgrade dulu
             </Button>
           ) : (
             <Dialog>
               <DialogTrigger asChild>
                 <Button size="sm" className="gap-1">
                   <Plus className="h-4 w-4" />
-                  Add Client
+                  Tambah Klien
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                  <DialogTitle>New Client</DialogTitle>
+                  <DialogTitle>Klien Baru</DialogTitle>
                 </DialogHeader>
                 <ClientForm mode="create" />
               </DialogContent>
@@ -157,11 +157,11 @@ export default async function ClientsPage({
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-amber-900">Free plan limit reached</p>
-              <p className="text-sm text-amber-700 mt-1">You have {clientCount}/3 clients. Upgrade to Solo for unlimited clients.</p>
+              <p className="text-sm font-medium text-amber-900">Batas free plan tercapai</p>
+              <p className="text-sm text-amber-700 mt-1">Kamu punya {clientCount}/3 klien. Upgrade ke Solo untuk unlimited klien.</p>
             </div>
             <Button size="sm" className="bg-[#6647F0] hover:bg-[#5333DD] shrink-0">
-              Upgrade to Solo — Rp 49rb/bln
+              Upgrade ke Solo — Rp 49rb/bln
             </Button>
           </div>
         </div>
@@ -171,13 +171,13 @@ export default async function ClientsPage({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <TabsList className="w-full sm:w-auto overflow-x-auto">
             <TabsTrigger value="active" asChild>
-              <Link href="?status=active">Active ({tabCounts.active})</Link>
+              <Link href="?status=active">Aktif ({tabCounts.active})</Link>
             </TabsTrigger>
             <TabsTrigger value="inactive" asChild>
-              <Link href="?status=inactive">Inactive ({tabCounts.inactive})</Link>
+              <Link href="?status=inactive">Tidak aktif ({tabCounts.inactive})</Link>
             </TabsTrigger>
             <TabsTrigger value="archived" asChild>
-              <Link href="?status=archived">Archived ({tabCounts.archived})</Link>
+              <Link href="?status=archived">Arsip ({tabCounts.archived})</Link>
             </TabsTrigger>
           </TabsList>
 
@@ -186,7 +186,7 @@ export default async function ClientsPage({
             <Input
               name="search"
               defaultValue={search}
-              placeholder="Search clients..."
+              placeholder="Cari klien..."
               className="pl-8"
             />
           </form>
@@ -196,16 +196,16 @@ export default async function ClientsPage({
           {/* Desktop Table */}
           <div className="hidden md:block rounded-lg border bg-card">
             <div className="grid grid-cols-7 gap-4 p-3 text-xs font-medium text-muted-foreground border-b">
-              <div className="col-span-2">Client</div>
-              <div>Company</div>
-              <div>Projects</div>
+              <div className="col-span-2">Klien</div>
+              <div>Perusahaan</div>
+              <div>Project</div>
               <div>Portal</div>
               <div>Status</div>
-              <div className="text-right">Actions</div>
+              <div className="text-right">Aksi</div>
             </div>
             {filtered.length === 0 && (
               <div className="p-8 text-center text-sm text-muted-foreground">
-                No clients found
+                Tidak ada klien ditemukan
               </div>
             )}
             {filtered.map((client) => (
@@ -234,7 +234,7 @@ export default async function ClientsPage({
                 <div>
                   {client.portalEnabled ? (
                     <Badge variant="outline" className="gap-1 text-xs border-green-200 text-green-700">
-                      <Globe className="h-3 w-3" /> Active
+                      <Globe className="h-3 w-3" /> Aktif
                     </Badge>
                   ) : (
                     <span className="text-xs text-muted-foreground">—</span>
@@ -257,10 +257,10 @@ export default async function ClientsPage({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem asChild>
-                        <Link href={`/app/clients/${client.id}`}>View Details</Link>
+                        <Link href={`/app/clients/${client.id}`}>Lihat Detail</Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href={`/app/projects?clientId=${client.id}`}>View Projects</Link>
+                        <Link href={`/app/projects?clientId=${client.id}`}>Lihat Project</Link>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -273,7 +273,7 @@ export default async function ClientsPage({
           <div className="md:hidden space-y-3">
             {filtered.length === 0 && (
               <div className="p-8 text-center text-sm text-muted-foreground">
-                No clients found
+                Tidak ada klien ditemukan
               </div>
             )}
             {filtered.map((client) => (
@@ -289,7 +289,7 @@ export default async function ClientsPage({
                       )}
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Badge variant="outline" className="text-[10px]">
-                          {client.projectCount} projects
+                          {client.projectCount} project
                         </Badge>
                         <Badge
                           variant={client.status === "active" ? "default" : "secondary"}
@@ -307,7 +307,7 @@ export default async function ClientsPage({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/app/clients/${client.id}`}>View Details</Link>
+                          <Link href={`/app/clients/${client.id}`}>Lihat Detail</Link>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

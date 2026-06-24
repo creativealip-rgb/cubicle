@@ -72,8 +72,8 @@ export default async function FilesPage({
     <div className="space-y-6 min-w-0">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Files</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage your workspace files</p>
+          <h1 className="text-2xl font-bold tracking-tight">File</h1>
+          <p className="text-sm text-muted-foreground mt-1">Kelola file workspace-mu</p>
         </div>
         {canWrite && (
           <UploadButton
@@ -90,7 +90,7 @@ export default async function FilesPage({
         <Card className="lg:col-span-1 h-fit">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <FileText className="h-4 w-4" /> Browse
+              <FileText className="h-4 w-4" /> Jelajahi
             </CardTitle>
           </CardHeader>
           <CardContent>
