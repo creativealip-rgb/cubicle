@@ -94,7 +94,9 @@ export default async function BillingPage() {
                   {plan.features.map((feature) => <li key={feature}>✓ {feature}</li>)}
                 </ul>
                 {paid ? (
-                  <CheckoutButton plan={plan.key}>{plan.key === "solo" ? "Bayar Solo QRIS" : "Bayar Team QRIS"}</CheckoutButton>
+                  <CheckoutButton plan={plan.key} disabled={current}>
+                    {current ? "Plan aktif" : plan.key === "solo" ? "Bayar Solo QRIS" : "Bayar Team QRIS"}
+                  </CheckoutButton>
                 ) : (
                   <div className="rounded-lg bg-slate-100 px-4 py-2 text-center text-sm font-medium text-slate-600">Default plan</div>
                 )}

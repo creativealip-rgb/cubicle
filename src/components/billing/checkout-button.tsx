@@ -5,7 +5,15 @@ import { Button } from "@/components/ui/button";
 
 type Plan = "solo" | "team";
 
-export function CheckoutButton({ plan, children }: { plan: Plan; children: React.ReactNode }) {
+export function CheckoutButton({
+  plan,
+  children,
+  disabled = false,
+}: {
+  plan: Plan;
+  children: React.ReactNode;
+  disabled?: boolean;
+}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,8 +38,8 @@ export function CheckoutButton({ plan, children }: { plan: Plan; children: React
 
   return (
     <div className="space-y-2">
-      <Button onClick={checkout} disabled={loading} className="w-full bg-[#6647F0] text-white hover:bg-[#5333DD]">
-        {loading ? "Membuat QRIS..." : children}
+      <Button onClick={checkout} disabled={disabled || loading} className="w-full bg-[#6647F0] text-white hover:bg-[#5333DD] disabled:bg-slate-200 disabled:text-slate-500">
+        {disabled ? "Plan aktif" : loading ? "Membuat QRIS..." : children}
       </Button>
       {error && <p className="text-xs text-red-600">{error}</p>}
     </div>

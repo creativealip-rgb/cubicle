@@ -47,13 +47,33 @@ export async function POST(request: Request) {
   }
 
   const [workspace] = await db
-    .select({ id: workspaces.id, slug: workspaces.slug, plan: workspaces.plan })
+    .select({
+      id: workspaces.id,
+      slug: workspaces.slug,
+      plan: workspaces.plan,
+      planExpiresAt: workspaces.planExpiresAt,
+    })
     .from(workspaces)
     .where(and(eq(workspaces.id, membership.workspaceId), eq(workspaces.ownerId, session.user.id)))
     .limit(1);
 
   if (!workspace) {
     return NextResponse.json({ error: "Workspace owner mismatch" }, { status: 403 });
+  }
+
+  const now = new Date();
+  if (workspace.plan === plan) {
+    return NextResponse.json(
+      { error: `Workspace sudah di plan ${PLANS[plan].label}` },
+      { status: 409 },
+    );
+  }
+
+  if (workspace.plan !== "free" && workspace.planExpiresAt && workspace.planExpiresAt > now) {
+    return NextResponse.json(
+      { error: "Plan aktif belum expired. Upgrade/downgrade belum tersedia." },
+      { status: 409 },
+    );
   }
 
   const amount = PLANS[plan].amount;
