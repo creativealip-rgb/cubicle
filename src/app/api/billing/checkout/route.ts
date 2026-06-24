@@ -7,14 +7,25 @@ import { pakasirPayments, workspaceMembers, workspaces } from "@/db/schema";
 import { createPakasirTransaction, isPakasirConfigured, pakasirPaymentUrl } from "@/lib/pakasir";
 
 const PLANS = {
+  free: { amount: 0, label: "Free" },
   solo: { amount: 49000, label: "Solo" },
   team: { amount: 99000, label: "Team" },
 } as const;
 
+const PLAN_RANK: Record<Plan, number> = {
+  free: 0,
+  solo: 1,
+  team: 2,
+};
+
 type Plan = keyof typeof PLANS;
 
 function isPlan(value: unknown): value is Plan {
-  return value === "solo" || value === "team";
+  return value === "free" || value === "solo" || value === "team";
+}
+
+function isUpgrade(current: Plan, target: Plan) {
+  return PLAN_RANK[target] > PLAN_RANK[current];
 }
 
 export async function POST(request: Request) {
@@ -31,6 +42,9 @@ export async function POST(request: Request) {
   const plan = String(body.plan || "").toLowerCase();
   if (!isPlan(plan)) {
     return NextResponse.json({ error: "Plan tidak valid. Pilih solo atau team." }, { status: 400 });
+  }
+  if (plan === "free") {
+    return NextResponse.json({ error: "Plan free tidak butuh pembayaran." }, { status: 400 });
   }
 
   const [membership] = await db
@@ -61,17 +75,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Workspace owner mismatch" }, { status: 403 });
   }
 
+  const currentPlan = (workspace.plan ?? "free") as Plan;
   const now = new Date();
-  if (workspace.plan === plan) {
+
+  if (currentPlan === plan) {
     return NextResponse.json(
       { error: `Workspace sudah di plan ${PLANS[plan].label}` },
       { status: 409 },
     );
   }
 
-  if (workspace.plan !== "free" && workspace.planExpiresAt && workspace.planExpiresAt > now) {
+  if (!isUpgrade(currentPlan, plan)) {
+    if (currentPlan !== "free" && workspace.planExpiresAt && workspace.planExpiresAt > now) {
+      return NextResponse.json(
+        { error: "Downgrade belum tersedia. Plan aktif masih berjalan." },
+        { status: 409 },
+      );
+    }
+
     return NextResponse.json(
-      { error: "Plan aktif belum expired. Upgrade/downgrade belum tersedia." },
+      { error: "Hanya upgrade ke plan lebih tinggi yang diizinkan." },
       { status: 409 },
     );
   }
