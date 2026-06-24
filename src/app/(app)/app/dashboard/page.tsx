@@ -280,11 +280,11 @@ export default async function DashboardPage() {
     const now = new Date();
     const diffMs = now.getTime() - new Date(date).getTime();
     const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-    if (diffHrs < 1) return "Just now";
-    if (diffHrs < 24) return `${diffHrs}h ago`;
+    if (diffHrs < 1) return "Baru saja";
+    if (diffHrs < 24) return `${diffHrs}j lalu`;
     const diffDays = Math.floor(diffHrs / 24);
-    if (diffDays === 1) return "Yesterday";
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffDays === 1) return "Kemarin";
+    if (diffDays < 7) return `${diffDays}h lalu`;
     return new Date(date).toLocaleDateString();
   }
 
@@ -296,7 +296,7 @@ export default async function DashboardPage() {
 
   const kpiCards = [
     {
-      label: "Active Clients",
+      label: "Klien Aktif",
       value: String(activeClients),
       change: `${activeClients} total`,
       icon: Users,
@@ -305,27 +305,27 @@ export default async function DashboardPage() {
       href: "/app/clients",
     },
     {
-      label: "Active Projects",
+      label: "Project Aktif",
       value: String(activeProjects),
-      change: `${activeProjects} in progress`,
+      change: `${activeProjects} berjalan`,
       icon: Briefcase,
       iconBg: "bg-emerald-100 text-emerald-600",
       accentBorder: "border-l-emerald-500",
       href: "/app/projects",
     },
     {
-      label: "Due Tasks",
+      label: "Task Jatuh Tempo",
       value: String(dueTasks),
-      change: `${overdueTasks} overdue`,
+      change: `${overdueTasks} terlambat`,
       icon: CheckSquare,
       iconBg: "bg-amber-100 text-amber-600",
       accentBorder: "border-l-amber-500",
       href: "/app/tasks",
     },
     {
-      label: "Unpaid Invoices",
+      label: "Invoice Belum Dibayar",
       value: formatMoneyCompact(unpaidAmount, workspaceCurrency),
-      change: `${unpaidCount} pending`,
+      change: `${unpaidCount} belum dibayar`,
       icon: Receipt,
       iconBg: "bg-red-100 text-red-600",
       accentBorder: "border-l-red-500",
@@ -335,13 +335,13 @@ export default async function DashboardPage() {
 
   // Greeting + quick action chips
   const hour = new Date().getHours();
-  const greeting = hour < 11 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-  const todayLong = new Date().toLocaleDateString("en-US", {
+  const greeting = hour < 11 ? "Selamat pagi" : hour < 18 ? "Selamat siang" : "Selamat malam";
+  const todayLong = new Date().toLocaleDateString("id-ID", {
     weekday: "long",
-    month: "long",
     day: "numeric",
+    month: "long",
   });
-  const firstName = (session?.user?.name || "there").split(" ")[0];
+  const firstName = (session?.user?.name || "User").split(" ")[0];
 
   // Sparkline geometry
   const sparkW = 240;
@@ -362,10 +362,10 @@ export default async function DashboardPage() {
   const sparkTrend = sparkPrevTotal > 0 ? ((sparkTotal - sparkPrevTotal) / sparkPrevTotal) * 100 : 0;
 
   const quickActions = [
-    { label: "New task", icon: CheckSquare, href: "/app/tasks" },
-    { label: "New invoice", icon: FileText, href: "/app/invoices" },
-    { label: "Start timer", icon: Timer, href: "/app/time" },
-    { label: "Add client", icon: Plus, href: "/app/clients" },
+    { label: "Task baru", icon: CheckSquare, href: "/app/tasks" },
+    { label: "Invoice baru", icon: FileText, href: "/app/invoices" },
+    { label: "Mulai timer", icon: Timer, href: "/app/time" },
+    { label: "Tambah klien", icon: Plus, href: "/app/clients" },
   ];
 
   return (
@@ -377,7 +377,7 @@ export default async function DashboardPage() {
             {greeting}, {firstName}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {todayLong} · {activeProjects} active projects · {dueTasks} tasks due
+            {todayLong} · {activeProjects} project aktif · {dueTasks} task jatuh tempo
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -414,7 +414,7 @@ export default async function DashboardPage() {
                 <AlertCircle className="h-4 w-4" />
               </div>
               <h2 className="text-sm font-semibold tracking-tight text-amber-900">
-                Attention needed
+                Perlu perhatian
               </h2>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -425,7 +425,7 @@ export default async function DashboardPage() {
                 >
                   <div className="flex items-center gap-1.5 text-rose-700">
                     <Receipt className="h-3.5 w-3.5" />
-                    <span className="text-xs font-medium">Overdue invoices</span>
+                    <span className="text-xs font-medium">Invoice terlambat</span>
                   </div>
                   <div className="flex items-baseline justify-between">
                     <span className="text-2xl font-bold text-rose-700">
@@ -442,7 +442,7 @@ export default async function DashboardPage() {
                 >
                   <div className="flex items-center gap-1.5 text-amber-700">
                     <CheckSquare className="h-3.5 w-3.5" />
-                    <span className="text-xs font-medium">Tasks due today</span>
+                    <span className="text-xs font-medium">Task hari ini</span>
                   </div>
                   <div className="flex items-baseline justify-between">
                     <span className="text-2xl font-bold text-amber-700">
@@ -459,7 +459,7 @@ export default async function DashboardPage() {
                 >
                   <div className="flex items-center gap-1.5 text-blue-700">
                     <FileSignature className="h-3.5 w-3.5" />
-                    <span className="text-xs font-medium">Contracts waiting</span>
+                    <span className="text-xs font-medium">Kontrak menunggu</span>
                   </div>
                   <div className="flex items-baseline justify-between">
                     <span className="text-2xl font-bold text-blue-700">
@@ -476,7 +476,7 @@ export default async function DashboardPage() {
                 >
                   <div className="flex items-center gap-1.5 text-purple-700">
                     <Bell className="h-3.5 w-3.5" />
-                    <span className="text-xs font-medium">Unread alerts</span>
+                    <span className="text-xs font-medium">Notifikasi belum dibaca</span>
                   </div>
                   <div className="flex items-baseline justify-between">
                     <span className="text-2xl font-bold text-purple-700">
@@ -495,7 +495,7 @@ export default async function DashboardPage() {
       <Card className="bg-gradient-to-r from-slate-50 to-white">
         <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Revenue (last 14 days)</p>
+            <p className="text-sm text-muted-foreground">Pendapatan (14 hari terakhir)</p>
             <p className="text-3xl font-bold tracking-tight">
               {formatMoneyCompact(sparkTotal, workspaceCurrency)}
             </p>
@@ -510,7 +510,7 @@ export default async function DashboardPage() {
                 }`}
               />
               {sparkTrend >= 0 ? "+" : ""}
-              {sparkTrend.toFixed(0)}% vs prior 7d
+              {sparkTrend.toFixed(0)}% vs 7 hari sebelumnya
             </p>
           </div>
           <svg
@@ -574,12 +574,12 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between text-base font-semibold">
-              <span>Client health</span>
+              <span>Kesehatan klien</span>
               <Link
                 href="/app/clients"
                 className="text-xs font-normal text-muted-foreground hover:text-slate-950"
               >
-                View all →
+                Lihat semua →
               </Link>
             </CardTitle>
           </CardHeader>
@@ -610,20 +610,20 @@ export default async function DashboardPage() {
             <div className="grid grid-cols-3 gap-3 text-center">
               <div className="rounded-lg border border-emerald-100 bg-emerald-50/50 p-3">
                 <p className="text-2xl font-bold text-emerald-700">{chHealthy}</p>
-                <p className="text-xs font-medium text-emerald-700/80">Healthy</p>
+                <p className="text-xs font-medium text-emerald-700/80">Sehat</p>
               </div>
               <div className="rounded-lg border border-amber-100 bg-amber-50/50 p-3">
                 <p className="text-2xl font-bold text-amber-700">{chIdle}</p>
-                <p className="text-xs font-medium text-amber-700/80">Idle</p>
+                <p className="text-xs font-medium text-amber-700/80">Diam</p>
               </div>
               <div className="rounded-lg border border-red-100 bg-red-50/50 p-3">
                 <p className="text-2xl font-bold text-red-700">{chAtRisk}</p>
-                <p className="text-xs font-medium text-red-700/80">At risk</p>
+                <p className="text-xs font-medium text-red-700/80">Berisiko</p>
               </div>
             </div>
             {chAtRisk > 0 && (
               <p className="text-xs text-muted-foreground">
-                {chAtRisk} {chAtRisk === 1 ? "client has" : "clients have"} no project activity in 30+ days.
+                {chAtRisk} klien tidak ada aktivitas project 30+ hari terakhir.
               </p>
             )}
           </CardContent>
@@ -633,20 +633,20 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between text-base font-semibold">
-              <span>Cash flow forecast</span>
+              <span>Proyeksi arus kas</span>
               <Link
                 href="/app/reports"
                 className="text-xs font-normal text-muted-foreground hover:text-slate-950"
               >
-                Reports →
+                Laporan →
               </Link>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {[
-              { label: "Next 30 days", amt: cf30, color: "bg-blue-500" },
-              { label: "31–60 days", amt: cf60, color: "bg-blue-400" },
-              { label: "61–90 days", amt: cf90, color: "bg-blue-300" },
+              { label: "30 hari ke depan", amt: cf30, color: "bg-blue-500" },
+              { label: "31–60 hari", amt: cf60, color: "bg-blue-400" },
+              { label: "61–90 hari", amt: cf90, color: "bg-blue-300" },
             ].map((bucket) => (
               <div key={bucket.label} className="space-y-1.5">
                 <div className="flex items-center justify-between text-sm">
@@ -665,7 +665,7 @@ export default async function DashboardPage() {
             ))}
             {cfOverdue > 0 && (
               <div className="mt-3 flex items-center justify-between rounded-lg border border-red-100 bg-red-50/50 px-3 py-2 text-sm">
-                <span className="font-medium text-red-700">Already overdue</span>
+                <span className="font-medium text-red-700">Sudah terlambat</span>
                 <span className="font-semibold tabular-nums text-red-700">
                   {formatMoney(cfOverdue, workspaceCurrency)}
                 </span>
@@ -680,18 +680,18 @@ export default async function DashboardPage() {
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base font-semibold">
-              Recent Activity
+              Aktivitas Terbaru
             </CardTitle>
             <Button variant="ghost" size="sm" className="gap-1 text-xs" asChild>
               <Link href="/app/tasks">
-                View tasks
+                Lihat task
                 <ArrowUpRight className="h-3 w-3" />
               </Link>
             </Button>
           </CardHeader>
           <CardContent className="space-y-4">
             {recentActivity.length === 0 && (
-              <p className="text-sm text-muted-foreground py-4 text-center">No activity yet</p>
+              <p className="text-sm text-muted-foreground py-4 text-center">Belum ada aktivitas</p>
             )}
             {recentActivity.map((item, i) => (
               <div key={item.id}>
@@ -702,7 +702,7 @@ export default async function DashboardPage() {
                     </p>
                     <p className="text-sm text-muted-foreground truncate">
                       {item.entityType}
-                      {item.actorName && ` by ${item.actorName}`}
+                      {item.actorName && ` oleh ${item.actorName}`}
                     </p>
                   </div>
                   <span className="shrink-0 text-xs text-muted-foreground whitespace-nowrap">
@@ -724,12 +724,12 @@ export default async function DashboardPage() {
               <div className="p-4">
                 <div className="mb-2 flex items-center gap-2">
                   <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">Active Timer</span>
+                  <span className="text-xs font-medium text-muted-foreground">Timer Aktif</span>
                 </div>
                 {activeTimer ? (
                   <div className="flex items-center justify-between">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{activeTimer.description || "Untitled"}</p>
+                      <p className="truncate text-sm font-medium">{activeTimer.description || "Tanpa judul"}</p>
                       <p className="text-xs text-muted-foreground">{activeTimer.userName}</p>
                     </div>
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100">
@@ -738,9 +738,9 @@ export default async function DashboardPage() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-3">
-                    <p className="text-sm text-muted-foreground">No active timer</p>
+                    <p className="text-sm text-muted-foreground">Tidak ada timer aktif</p>
                     <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" asChild>
-                      <Link href="/app/time">Start</Link>
+                      <Link href="/app/time">Mulai</Link>
                     </Button>
                   </div>
                 )}
@@ -750,10 +750,10 @@ export default async function DashboardPage() {
               <div className="p-4">
                 <div className="mb-2 flex items-center gap-2">
                   <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">Upcoming</span>
+                  <span className="text-xs font-medium text-muted-foreground">Jadwal Mendatang</span>
                 </div>
                 {upcomingAppts.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No upcoming events</p>
+                  <p className="text-sm text-muted-foreground">Tidak ada jadwal</p>
                 ) : (
                   <div className="space-y-2">
                     {upcomingAppts.slice(0, 3).map((apt) => (
@@ -761,7 +761,7 @@ export default async function DashboardPage() {
                         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
                         <p className="min-w-0 truncate text-sm">{apt.title}</p>
                         <span className="shrink-0 text-xs text-muted-foreground">
-                          {new Date(apt.startTime).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                          {new Date(apt.startTime).toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short" })}
                         </span>
                       </div>
                     ))}
@@ -775,15 +775,15 @@ export default async function DashboardPage() {
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                 <Receipt className="h-3.5 w-3.5 text-muted-foreground" />
-                Unpaid Invoices
+                Invoice Belum Dibayar
               </CardTitle>
               <Button variant="ghost" size="sm" className="h-6 gap-1 text-xs" asChild>
-                <Link href="/app/invoices">View all</Link>
+                <Link href="/app/invoices">Lihat semua</Link>
               </Button>
             </CardHeader>
             <CardContent className="space-y-2 pt-0">
               {unpaidInvoices.length === 0 && (
-                <p className="py-3 text-center text-xs text-muted-foreground">No unpaid invoices</p>
+                <p className="py-3 text-center text-xs text-muted-foreground">Tidak ada invoice belum dibayar</p>
               )}
               {unpaidInvoices.map((inv) => (
                 <div key={inv.id} className="flex items-center justify-between rounded-lg px-2 py-1.5 hover:bg-slate-50">
@@ -804,15 +804,15 @@ export default async function DashboardPage() {
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                 <ListChecks className="h-3.5 w-3.5 text-muted-foreground" />
-                Today&apos;s Tasks
+                Task Hari Ini
               </CardTitle>
               <Button variant="ghost" size="sm" className="h-6 gap-1 text-xs" asChild>
-                <Link href="/app/tasks">View all</Link>
+                <Link href="/app/tasks">Lihat semua</Link>
               </Button>
             </CardHeader>
             <CardContent className="space-y-2 pt-0">
               {todayTasks.length === 0 && (
-                <p className="py-3 text-center text-xs text-muted-foreground">No tasks due today</p>
+                <p className="py-3 text-center text-xs text-muted-foreground">Tidak ada task hari ini</p>
               )}
               {todayTasks.map((task) => (
                 <div key={task.id} className="flex items-center justify-between rounded-lg px-2 py-1.5 hover:bg-slate-50">
