@@ -67,27 +67,27 @@ test.describe("Cubicle E2E", () => {
 
     test("dashboard loads with KPIs", async ({ page }) => {
       await page.goto("/app/dashboard")
-      await expect(page.getByText("Revenue").first()).toBeVisible({ timeout: 10000 })
+      await expect(page.getByText(/Arus Kas|Cash Flow|Revenue/i).first()).toBeVisible({ timeout: 10000 })
     })
 
     test("clients page loads", async ({ page }) => {
       await page.goto("/app/clients")
-      await expect(page.getByRole("heading", { name: "Clients" })).toBeVisible({ timeout: 10000 })
+      await expect(page.getByRole("heading", { name: /Klien|Clients/i })).toBeVisible({ timeout: 10000 })
     })
 
     test("invoices page loads", async ({ page }) => {
       await page.goto("/app/invoices")
-      await expect(page.getByRole("heading", { name: "Invoices" })).toBeVisible({ timeout: 10000 })
+      await expect(page.getByRole("heading", { name: /Invoice|Invoices/i })).toBeVisible({ timeout: 10000 })
     })
 
     test("brain page loads", async ({ page }) => {
       await page.goto("/app/brain")
-      await expect(page.getByText("How can I help")).toBeVisible({ timeout: 10000 })
+      await expect(page.locator('h2:has-text("How can I help")').first()).toBeVisible({ timeout: 10000 })
     })
 
     test("settings page loads", async ({ page }) => {
       await page.goto("/app/settings")
-      await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible({ timeout: 10000 })
+      await expect(page.getByRole("heading", { name: /Pengaturan|Settings/i })).toBeVisible({ timeout: 10000 })
     })
   })
 
