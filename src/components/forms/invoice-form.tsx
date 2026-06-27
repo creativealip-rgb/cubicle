@@ -64,17 +64,17 @@ export function InvoiceForm({ mode, defaultValues, clients, onSuccess }: Invoice
 
       if (mode === "create") {
         const invoice = await createInvoice(data);
-        toast.success("Invoice created");
+        toast.success("Invoice dibuat");
         router.push(`/app/invoices/${invoice.id}`);
       } else if (defaultValues?.id) {
         await updateInvoice(defaultValues.id, data);
-        toast.success("Invoice updated");
+        toast.success("Invoice diperbarui");
       }
 
       router.refresh();
       onSuccess?.();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong";
+      const msg = err instanceof Error ? err.message : "Terjadi kesalahan";
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -88,7 +88,7 @@ export function InvoiceForm({ mode, defaultValues, clients, onSuccess }: Invoice
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="clientId">Client *</Label>
+        <Label htmlFor="clientId">Klien *</Label>
         <Select
           value={form.clientId}
           onValueChange={(v) => set("clientId", v)}
@@ -96,7 +96,7 @@ export function InvoiceForm({ mode, defaultValues, clients, onSuccess }: Invoice
           required
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select a client" />
+            <SelectValue placeholder="Pilih klien" />
           </SelectTrigger>
           <SelectContent>
             {clients.map((c) => (
@@ -110,7 +110,7 @@ export function InvoiceForm({ mode, defaultValues, clients, onSuccess }: Invoice
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="issueDate">Issue Date *</Label>
+          <Label htmlFor="issueDate">Tanggal Terbit *</Label>
           <Input
             id="issueDate"
             type="date"
@@ -120,7 +120,7 @@ export function InvoiceForm({ mode, defaultValues, clients, onSuccess }: Invoice
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="dueDate">Due Date</Label>
+          <Label htmlFor="dueDate">Jatuh Tempo</Label>
           <Input
             id="dueDate"
             type="date"
@@ -131,7 +131,7 @@ export function InvoiceForm({ mode, defaultValues, clients, onSuccess }: Invoice
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="currency">Currency</Label>
+        <Label htmlFor="currency">Mata Uang</Label>
         <Select value={form.currency} onValueChange={(v) => set("currency", v)}>
           <SelectTrigger>
             <SelectValue />
@@ -147,28 +147,28 @@ export function InvoiceForm({ mode, defaultValues, clients, onSuccess }: Invoice
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
+        <Label htmlFor="notes">Catatan</Label>
         <Textarea
           id="notes"
           value={form.notes}
           onChange={(e) => set("notes", e.target.value)}
-          placeholder="Notes visible on the invoice..."
+          placeholder="Catatan yang tampil di invoice..."
           rows={3}
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="terms">Terms</Label>
+        <Label htmlFor="terms">Syarat</Label>
         <Input
           id="terms"
           value={form.terms}
           onChange={(e) => set("terms", e.target.value)}
-          placeholder="e.g. Net 30, Payment due within 14 days..."
+          placeholder="contoh: Net 30, jatuh tempo dalam 14 hari..."
         />
       </div>
 
       <Button type="submit" disabled={loading} className="w-full">
-        {loading ? "Saving..." : mode === "create" ? "Create Invoice" : "Save Changes"}
+        {loading ? "Menyimpan..." : mode === "create" ? "Buat Invoice" : "Simpan Perubahan"}
       </Button>
     </form>
   );

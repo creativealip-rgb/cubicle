@@ -58,7 +58,7 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], onSucce
 
       if (mode === "create") {
         await createTask(data);
-        toast.success("Task created");
+        toast.success("Task dibuat");
       } else if (defaultValues?.id) {
         const updateData: Record<string, unknown> = {};
         if (data.title !== undefined) updateData.title = data.title;
@@ -69,13 +69,13 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], onSucce
         if (data.dueDate !== undefined) updateData.dueDate = data.dueDate;
         if (data.clientVisible !== undefined) updateData.clientVisible = data.clientVisible;
         await updateTask(defaultValues.id, updateData);
-        toast.success("Task updated");
+        toast.success("Task diperbarui");
       }
 
       router.refresh();
       onSuccess?.();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong";
+      const msg = err instanceof Error ? err.message : "Terjadi kesalahan";
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -85,17 +85,17 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], onSucce
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="title">Title *</Label>
-        <Input id="title" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} required placeholder="Task title" />
+        <Label htmlFor="title">Judul *</Label>
+        <Input id="title" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} required placeholder="Judul task" />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Input id="description" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="Details..." />
+        <Label htmlFor="description">Deskripsi</Label>
+        <Input id="description" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="Detail..." />
       </div>
       {!projectId && (
         <div className="space-y-2">
           <Label htmlFor="projectId">Project *</Label>
-          <Input id="projectId" value={form.projectId} onChange={(e) => setForm((p) => ({ ...p, projectId: e.target.value }))} required placeholder="Project ID" />
+          <Input id="projectId" value={form.projectId} onChange={(e) => setForm((p) => ({ ...p, projectId: e.target.value }))} required placeholder="ID project" />
         </div>
       )}
       <div className="grid grid-cols-2 gap-4">
@@ -105,34 +105,34 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], onSucce
             <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todo">Todo</SelectItem>
-              <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="in_progress">Dalam Proses</SelectItem>
               <SelectItem value="review">Review</SelectItem>
-              <SelectItem value="done">Done</SelectItem>
+              <SelectItem value="done">Selesai</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
-          <Label>Priority</Label>
+          <Label>Prioritas</Label>
           <Select value={form.priority} onValueChange={(v) => setForm((p) => ({ ...p, priority: v }))}>
-            <SelectTrigger><SelectValue placeholder="Priority" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="Prioritas" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="low">Low</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="high">High</SelectItem>
+              <SelectItem value="low">Rendah</SelectItem>
+              <SelectItem value="medium">Sedang</SelectItem>
+              <SelectItem value="high">Tinggi</SelectItem>
               <SelectItem value="urgent">Urgent</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
       <div className="space-y-2">
-        <Label>Assignee</Label>
+        <Label>Penanggung Jawab</Label>
         <Select
           value={form.assigneeId || "unassigned"}
           onValueChange={(v) => setForm((p) => ({ ...p, assigneeId: v === "unassigned" ? "" : v }))}
         >
-          <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
+          <SelectTrigger><SelectValue placeholder="Belum ditugaskan" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="unassigned">Unassigned</SelectItem>
+            <SelectItem value="unassigned">Belum ditugaskan</SelectItem>
             {members.map((m) => (
               <SelectItem key={m.id} value={m.id}>
                 {m.name || m.email || m.id.slice(0, 8)}
@@ -142,7 +142,7 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], onSucce
         </Select>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="dueDate">Due Date</Label>
+        <Label htmlFor="dueDate">Jatuh Tempo</Label>
         <Input id="dueDate" type="date" value={form.dueDate} onChange={(e) => setForm((p) => ({ ...p, dueDate: e.target.value }))} />
       </div>
       <div className="flex items-center gap-2">
@@ -153,10 +153,10 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], onSucce
           onChange={(e) => setForm((p) => ({ ...p, clientVisible: e.target.checked }))}
           className="h-4 w-4 rounded border-gray-300"
         />
-        <Label htmlFor="clientVisible">Client visible</Label>
+        <Label htmlFor="clientVisible">Terlihat oleh klien</Label>
       </div>
       <Button type="submit" disabled={loading} className="w-full">
-        {loading ? "Saving..." : mode === "create" ? "Create Task" : "Save Changes"}
+        {loading ? "Menyimpan..." : mode === "create" ? "Buat Task" : "Simpan Perubahan"}
       </Button>
     </form>
   );

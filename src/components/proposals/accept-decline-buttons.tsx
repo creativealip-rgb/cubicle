@@ -29,11 +29,10 @@ export function AcceptDeclineButtons({ proposalId, token }: AcceptDeclineButtons
     if (!confirm("Accept this proposal? A project will be created and a down-payment invoice sent.")) return;
     setLoading("accept");
     try {
-      const result = await acceptProposalPublic(proposalId, token);
+      await acceptProposalPublic(proposalId, token);
       toast.success("Proposal accepted! Project + down-payment invoice created.");
       // Reload to show accepted state
       window.location.reload();
-      console.log(result);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
       toast.error(msg);

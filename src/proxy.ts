@@ -9,7 +9,7 @@ const authPages = ["/login", "/signup", "/forgot-password"]
 const AUTH_RATE_LIMIT = { limit: 10, windowSec: 60 } // 10 req/min per IP
 const LOGIN_RATE_LIMIT = { limit: 5, windowSec: 300 } // 5 req/5min per IP (stricter)
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const host = request.headers.get("host") || ""
 

@@ -285,6 +285,16 @@ Production client-ready: ~98% (payment gateway v1 done, subscription automation 
 - P0 quick security pass: no rogue `/tmp/postgresql`, Postgres process list normal, `/tmp` clean, app and DB ports not directly published, containers only on `dokploy-network`, mounts expected.
 - Notable VPS hardening follow-up: SSH auth log shows ongoing internet brute-force attempts against random usernames; consider fail2ban/SSH hardening.
 >
+> **Update 2026-06-27 (Localization polish + lint zero-warning pass + Docker rebuild):**
+>- Demo MVP: **99%** (unchanged — live app healthy)
+>- Sellable source/MVP: **99%** (unchanged — feature complete for demo/source sale)
+>- Production client-ready: **~97.5%** (+1.5 vs current working estimate — internal invoice/proposal/form copy now Indonesian-first, static logo `<img>` warnings removed, npm audit 0 vuln, typecheck/lint/build pass)
+>- Internal app localization pass completed for invoices, proposals, shared forms (clients/projects/tasks/invoices/proposals), date/currency/status labels.
+>- Non-IDR internal money display avoids `$` symbol and uses ISO prefix; IDR stays `Rp`.
+>- Removed proposal acceptance debug `console.log`.
+>- Rebuilt Docker production image and verified live health (`/api/health` ok, app/db containers healthy).
+>- Remaining meaningful product gaps: subscription lifecycle automation, optional background job queue, mobile deep QA, and Next.js middleware→proxy cleanup.
+>
 > **Resolved in this continuation session (16 Jun):**
 > - P0.1 rogue /tmp/postgresql regression — confirmed gone (no rebuild)
 > - P0.7 npm audit — 5 of 6 fixed via `overrides: esbuild ^0.28.1`,

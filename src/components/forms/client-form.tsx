@@ -55,16 +55,16 @@ export function ClientForm({ mode, defaultValues, onSuccess }: ClientFormProps) 
 
       if (mode === "create") {
         await createClient(data);
-        toast.success("Client created");
+        toast.success("Klien dibuat");
       } else if (defaultValues?.id) {
         await updateClient(defaultValues.id, data);
-        toast.success("Client updated");
+        toast.success("Klien diperbarui");
       }
 
       router.refresh();
       onSuccess?.();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong";
+      const msg = err instanceof Error ? err.message : "Terjadi kesalahan";
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -78,12 +78,12 @@ export function ClientForm({ mode, defaultValues, onSuccess }: ClientFormProps) 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="name">Name *</Label>
-        <Input id="name" value={form.name} onChange={(e) => set("name", e.target.value)} required placeholder="Client contact name" />
+        <Label htmlFor="name">Nama *</Label>
+        <Input id="name" value={form.name} onChange={(e) => set("name", e.target.value)} required placeholder="Nama kontak klien" />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="companyName">Company</Label>
-        <Input id="companyName" value={form.companyName} onChange={(e) => set("companyName", e.target.value)} placeholder="Company name" />
+        <Label htmlFor="companyName">Perusahaan</Label>
+        <Input id="companyName" value={form.companyName} onChange={(e) => set("companyName", e.target.value)} placeholder="Perusahaan name" />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -91,7 +91,7 @@ export function ClientForm({ mode, defaultValues, onSuccess }: ClientFormProps) 
           <Input id="email" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="client@example.com" />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone</Label>
+          <Label htmlFor="phone">Telepon</Label>
           <Input id="phone" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+62..." />
         </div>
       </div>
@@ -100,19 +100,19 @@ export function ClientForm({ mode, defaultValues, onSuccess }: ClientFormProps) 
         <Input id="website" value={form.website} onChange={(e) => set("website", e.target.value)} placeholder="https://..." />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="address">Address</Label>
-        <Input id="address" value={form.address} onChange={(e) => set("address", e.target.value)} placeholder="Full address" />
+        <Label htmlFor="address">Alamat</Label>
+        <Input id="address" value={form.address} onChange={(e) => set("address", e.target.value)} placeholder="Alamat lengkap" />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="tags">Tags (comma separated)</Label>
+        <Label htmlFor="tags">Tag (pisahkan dengan koma)</Label>
         <Input id="tags" value={form.tags} onChange={(e) => set("tags", e.target.value)} placeholder="branding, web, social" />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="internalNotes">Internal Notes</Label>
-        <Input id="internalNotes" value={form.internalNotes} onChange={(e) => set("internalNotes", e.target.value)} placeholder="Private notes..." />
+        <Label htmlFor="internalNotes">Catatan Internal</Label>
+        <Input id="internalNotes" value={form.internalNotes} onChange={(e) => set("internalNotes", e.target.value)} placeholder="Catatan privat..." />
       </div>
       <Button type="submit" disabled={loading} className="w-full">
-        {loading ? "Saving..." : mode === "create" ? "Create Client" : "Save Changes"}
+        {loading ? "Menyimpan..." : mode === "create" ? "Buat Klien" : "Simpan Perubahan"}
       </Button>
     </form>
   );

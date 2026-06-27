@@ -64,7 +64,7 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (items.length === 0 || items.every((li) => !li.description.trim())) {
-      toast.error("Add at least one line item");
+      toast.error("Tambahkan minimal satu item");
       return;
     }
     setLoading(true);
@@ -88,10 +88,10 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
         downPaymentPercent: form.downPaymentPercent,
         validUntil: form.validUntil,
       });
-      toast.success("Proposal created");
+      toast.success("Proposal dibuat");
       router.push(`/app/proposals/${created.id}`);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong";
+      const msg = err instanceof Error ? err.message : "Terjadi kesalahan";
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -102,14 +102,14 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Details</CardTitle>
+          <CardTitle className="text-base">Detail</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label htmlFor="client">Client</Label>
+              <Label htmlFor="client">Klien</Label>
               <Select value={form.clientId} onValueChange={(v) => setForm({ ...form, clientId: v })}>
-                <SelectTrigger id="client"><SelectValue placeholder="Pick a client" /></SelectTrigger>
+                <SelectTrigger id="client"><SelectValue placeholder="Pilih klien" /></SelectTrigger>
                 <SelectContent>
                   {clients.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -118,11 +118,11 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
               </Select>
             </div>
             <div className="space-y-1">
-              <Label htmlFor="title">Title</Label>
-              <Input id="title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Brand refresh — phase 1" required />
+              <Label htmlFor="title">Judul</Label>
+              <Input id="title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="contoh: Brand refresh — fase 1" required />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="currency">Currency</Label>
+              <Label htmlFor="currency">Mata Uang</Label>
               <Select value={form.currency} onValueChange={(v) => setForm({ ...form, currency: v })}>
                 <SelectTrigger id="currency"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -134,21 +134,21 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
               </Select>
             </div>
             <div className="space-y-1">
-              <Label htmlFor="valid">Valid until</Label>
+              <Label htmlFor="valid">Berlaku sampai</Label>
               <Input id="valid" type="date" value={form.validUntil} onChange={(e) => setForm({ ...form, validUntil: e.target.value })} />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="tax">Tax rate (%)</Label>
+              <Label htmlFor="tax">Pajak (%)</Label>
               <Input id="tax" type="number" min="0" max="100" step="0.01" value={form.taxRate} onChange={(e) => setForm({ ...form, taxRate: parseFloat(e.target.value) || 0 })} />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="dp">Down payment (%)</Label>
+              <Label htmlFor="dp">DP (%)</Label>
               <Input id="dp" type="number" min="0" max="100" step="1" value={form.downPaymentPercent} onChange={(e) => setForm({ ...form, downPaymentPercent: parseFloat(e.target.value) || 0 })} />
             </div>
           </div>
           <div className="space-y-1">
-            <Label htmlFor="body">Scope / description (optional)</Label>
-            <Textarea id="body" rows={4} value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} placeholder="What's included, timeline, assumptions…" />
+            <Label htmlFor="body">Scope / deskripsi (opsional)</Label>
+            <Textarea id="body" rows={4} value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} placeholder="Yang termasuk, timeline, asumsi…" />
           </div>
         </CardContent>
       </Card>
@@ -156,10 +156,10 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center justify-between">
-            Line items
+            Rincian item
             <Button type="button" variant="ghost" size="sm" onClick={() => setItems([...items, blankItem()])}>
               <Plus className="h-3.5 w-3.5 mr-1" />
-              Add
+              Tambah
             </Button>
           </CardTitle>
         </CardHeader>
@@ -167,15 +167,15 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
           {items.map((li, i) => (
             <div key={i} className="grid grid-cols-12 gap-2 items-end">
               <div className="col-span-6">
-                <Label htmlFor={`desc-${i}`} className="text-xs">Description</Label>
-                <Input id={`desc-${i}`} value={li.description} onChange={(e) => updateItem(i, { description: e.target.value })} placeholder="e.g. Logo design" />
+                <Label htmlFor={`desc-${i}`} className="text-xs">Deskripsi</Label>
+                <Input id={`desc-${i}`} value={li.description} onChange={(e) => updateItem(i, { description: e.target.value })} placeholder="contoh: Desain logo" />
               </div>
               <div className="col-span-2">
                 <Label htmlFor={`qty-${i}`} className="text-xs">Qty</Label>
                 <Input id={`qty-${i}`} type="number" min="0" step="0.5" value={li.quantity} onChange={(e) => updateItem(i, { quantity: parseFloat(e.target.value) || 0 })} />
               </div>
               <div className="col-span-3">
-                <Label htmlFor={`price-${i}`} className="text-xs">Unit price</Label>
+                <Label htmlFor={`price-${i}`} className="text-xs">Harga satuan</Label>
                 <Input id={`price-${i}`} type="number" min="0" step="0.01" value={li.unitPrice} onChange={(e) => updateItem(i, { unitPrice: parseFloat(e.target.value) || 0 })} />
               </div>
               <div className="col-span-1">
@@ -190,7 +190,7 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
           <div className="border-t pt-3 text-sm space-y-1">
             <div className="flex justify-end gap-8"><span className="text-slate-500">Subtotal</span><span className="tabular-nums w-32 text-right">{form.currency === "IDR" ? "Rp" : form.currency} {subtotal.toLocaleString(form.currency === "IDR" ? "id-ID" : "en-US")}</span></div>
             {form.taxRate > 0 && (
-              <div className="flex justify-end gap-8"><span className="text-slate-500">Tax ({form.taxRate}%)</span><span className="tabular-nums w-32 text-right">{form.currency === "IDR" ? "Rp" : form.currency} {tax.toLocaleString(form.currency === "IDR" ? "id-ID" : "en-US")}</span></div>
+              <div className="flex justify-end gap-8"><span className="text-slate-500">Pajak ({form.taxRate}%)</span><span className="tabular-nums w-32 text-right">{form.currency === "IDR" ? "Rp" : form.currency} {tax.toLocaleString(form.currency === "IDR" ? "id-ID" : "en-US")}</span></div>
             )}
             <div className="flex justify-end gap-8 pt-2 border-t font-semibold"><span>Total</span><span className="tabular-nums w-32 text-right">{form.currency === "IDR" ? "Rp" : form.currency} {total.toLocaleString(form.currency === "IDR" ? "id-ID" : "en-US")}</span></div>
           </div>
@@ -198,8 +198,8 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
       </Card>
 
       <div className="flex gap-2">
-        <Button type="submit" disabled={loading}>{loading ? "Creating..." : "Create draft"}</Button>
-        <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
+        <Button type="submit" disabled={loading}>{loading ? "Membuat..." : "Buat draft"}</Button>
+        <Button type="button" variant="ghost" onClick={() => router.back()}>Batal</Button>
       </div>
     </form>
   );

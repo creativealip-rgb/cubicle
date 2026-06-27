@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -114,13 +115,13 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
       >
         {!collapsed && (
           <Link href="/app/dashboard" className="flex items-center gap-2 font-semibold text-sidebar-foreground">
-            <img src="/icon-192.png" alt="Cubiqlo" className="h-7 w-7 rounded-md object-cover" />
+            <Image src="/icon-192.png" alt="Cubiqlo" width={28} height={28} className="h-7 w-7 rounded-md object-cover" />
             <span className="text-sm">Cubiqlo</span>
           </Link>
         )}
         {collapsed && (
           <Link href="/app/dashboard" className="hidden md:flex">
-            <img src="/icon-192.png" alt="Cubiqlo" className="h-7 w-7 rounded-md object-cover" />
+            <Image src="/icon-192.png" alt="Cubiqlo" width={28} height={28} className="h-7 w-7 rounded-md object-cover" />
           </Link>
         )}
         {/* Mobile close button */}
