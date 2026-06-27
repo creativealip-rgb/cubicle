@@ -3,7 +3,7 @@ import { getSessionCookie } from "better-auth/cookies"
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
 
 const protectedPrefixes = ["/app", "/onboarding"]
-const authPages = ["/login", "/signup", "/forgot-password", "/verify-email"]
+const authPages = ["/login", "/signup", "/forgot-password", "/verify-email", "/verify-email/success"]
 
 // Rate limit config for auth endpoints
 const AUTH_RATE_LIMIT = { limit: 10, windowSec: 60 } // 10 req/min per IP

@@ -44,7 +44,7 @@ export function InvoiceForm({ mode, defaultValues, clients, onSuccess }: Invoice
     clientId: defaultValues?.clientId ?? "",
     issueDate: defaultValues?.issueDate ?? new Date().toISOString().split("T")[0],
     dueDate: defaultValues?.dueDate ?? "",
-    currency: defaultValues?.currency ?? "USD",
+    currency: defaultValues?.currency ?? "IDR",
     notes: defaultValues?.notes ?? "",
     terms: defaultValues?.terms ?? "",
   });
@@ -137,8 +137,8 @@ export function InvoiceForm({ mode, defaultValues, clients, onSuccess }: Invoice
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="USD">USD - US Dollar</SelectItem>
             <SelectItem value="IDR">IDR - Indonesian Rupiah</SelectItem>
+            <SelectItem value="USD">USD - US Dollar</SelectItem>
             <SelectItem value="EUR">EUR - Euro</SelectItem>
             <SelectItem value="GBP">GBP - British Pound</SelectItem>
             <SelectItem value="SGD">SGD - Singapore Dollar</SelectItem>
