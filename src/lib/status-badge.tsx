@@ -19,17 +19,19 @@ export function invoiceStatusVariant(status: string): StatusBadgeConfig {
     case "draft":
       return { variant: "secondary", label: "Draft" };
     case "sent":
-      return { variant: "info", label: "Sent" };
+      return { variant: "info", label: "Terkirim" };
     case "viewed":
-      return { variant: "info", label: "Viewed" };
+      return { variant: "info", label: "Dilihat" };
     case "overdue":
-      return { variant: "destructive", label: "Overdue" };
+      return { variant: "destructive", label: "Terlambat" };
     case "paid":
-      return { variant: "success", label: "Paid" };
+      return { variant: "success", label: "Lunas" };
+    case "payment due":
+      return { variant: "destructive", label: "Perlu dibayar" };
     case "cancelled":
-      return { variant: "outline", label: "Cancelled" };
+      return { variant: "outline", label: "Dibatalkan" };
     default:
-      return { variant: "outline", label: titleize(status) || "Unknown" };
+      return { variant: "outline", label: titleize(status) || "Tidak diketahui" };
   }
 }
 

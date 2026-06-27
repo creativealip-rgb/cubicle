@@ -23,14 +23,25 @@ const LOCALE_FOR_CURRENCY: Record<string, string> = {
 
 const SYMBOL_PREFIX: Record<string, string> = {
   IDR: "Rp",
-  USD: "$",
-  EUR: "€",
-  JPY: "¥",
-  SGD: "S$",
-  MYR: "RM",
-  AUD: "A$",
-  GBP: "£",
+  USD: "USD",
+  EUR: "EUR",
+  JPY: "JPY",
+  SGD: "SGD",
+  MYR: "MYR",
+  AUD: "AUD",
+  GBP: "GBP",
 };
+
+export function normalizeCurrency(currencyCode?: string | null): string {
+  return (currencyCode || "IDR").toUpperCase();
+}
+
+export function formatDateID(date: string | Date | null | undefined): string {
+  if (!date) return "-";
+  const d = typeof date === "string" ? new Date(date) : date;
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
+}
 
 // Currencies with no fractional units
 const ZERO_DECIMAL = new Set(["IDR", "JPY"]);

@@ -36,12 +36,12 @@ export function InvoiceItemManager({ invoiceId }: { invoiceId: string }) {
         quantity: Number(form.quantity),
         unitPrice: Number(form.unitPrice),
       });
-      toast.success("Item added");
+      toast.success("Item ditambahkan");
       setOpen(false);
       setForm({ description: "", quantity: "1", unitPrice: "0" });
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed");
+      toast.error(err instanceof Error ? err.message : "Gagal");
     } finally {
       setLoading(false);
     }
@@ -51,29 +51,29 @@ export function InvoiceItemManager({ invoiceId }: { invoiceId: string }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1">
-          <Plus className="h-3.5 w-3.5" /> Add Item
+          <Plus className="h-3.5 w-3.5" /> Tambah Item
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Line Item</DialogTitle>
+          <DialogTitle>Tambah Rincian Item</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Deskripsi</Label>
             <Input
               id="description"
               value={form.description}
               onChange={(e) =>
                 setForm((p) => ({ ...p, description: e.target.value }))
               }
-              placeholder="Website design"
+              placeholder="Desain website"
               required
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="quantity">Quantity</Label>
+              <Label htmlFor="quantity">Qty</Label>
               <Input
                 id="quantity"
                 type="number"
@@ -86,7 +86,7 @@ export function InvoiceItemManager({ invoiceId }: { invoiceId: string }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="unitPrice">Unit Price</Label>
+              <Label htmlFor="unitPrice">Harga Satuan</Label>
               <Input
                 id="unitPrice"
                 type="number"
@@ -100,7 +100,7 @@ export function InvoiceItemManager({ invoiceId }: { invoiceId: string }) {
             </div>
           </div>
           <Button type="submit" disabled={loading} className="w-full">
-            {loading ? "Adding..." : "Add Item"}
+            {loading ? "Menambahkan..." : "Tambah Item"}
           </Button>
         </form>
       </DialogContent>

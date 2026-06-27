@@ -93,7 +93,7 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
           </Button>
           <h1 className="text-2xl font-semibold tracking-tight">{p.title}</h1>
           <p className="text-sm text-slate-500 mt-1">
-            For <Link href={`/app/clients/${p.clientId}`} className="text-slate-700 hover:underline">{p.clientName}</Link>
+            Untuk <Link href={`/app/clients/${p.clientId}`} className="text-slate-700 hover:underline">{p.clientName}</Link>
             {p.clientEmail && <> · {p.clientEmail}</>}
           </p>
         </div>
@@ -113,10 +113,10 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Description</TableHead>
+                <TableHead>Deskripsi</TableHead>
                 <TableHead className="text-right w-20">Qty</TableHead>
-                <TableHead className="text-right w-32">Unit</TableHead>
-                <TableHead className="text-right w-32">Amount</TableHead>
+                <TableHead className="text-right w-32">Satuan</TableHead>
+                <TableHead className="text-right w-32">Jumlah</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -147,20 +147,20 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
 
       {p.status === "accepted" && p.projectId && (
         <Card>
-          <CardHeader><CardTitle className="text-base">Outcome</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">Hasil</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <p>✅ Project created: <Link href={`/app/projects/${p.projectId}`} className="text-blue-600 hover:underline">{projectName ?? "View project"}</Link></p>
-            <p>✅ Down-payment invoice sent to {p.clientName}.</p>
-            <p className="text-xs text-slate-500">Accepted {p.acceptedAt && new Date(p.acceptedAt).toLocaleString()}</p>
+            <p>✅ Project dibuat: <Link href={`/app/projects/${p.projectId}`} className="text-blue-600 hover:underline">{projectName ?? "Lihat project"}</Link></p>
+            <p>✅ Invoice DP dikirim ke {p.clientName}.</p>
+            <p className="text-xs text-slate-500">Diterima {p.acceptedAt && new Date(p.acceptedAt).toLocaleString()}</p>
           </CardContent>
         </Card>
       )}
       {p.status === "declined" && (
         <Card>
-          <CardHeader><CardTitle className="text-base">Declined</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">Ditolak</CardTitle></CardHeader>
           <CardContent className="text-sm">
-            {p.declineReason && <p>Reason: {p.declineReason}</p>}
-            <p className="text-xs text-slate-500 mt-2">Declined {p.declinedAt && new Date(p.declinedAt).toLocaleString()}</p>
+            {p.declineReason && <p>Alasan: {p.declineReason}</p>}
+            <p className="text-xs text-slate-500 mt-2">Ditolak {p.declinedAt && new Date(p.declinedAt).toLocaleString()}</p>
           </CardContent>
         </Card>
       )}

@@ -23,6 +23,8 @@ import { DeleteItemButton } from "./delete-item-button";
 import { ImportTimeSection } from "./import-time-section";
 import { PaymentSection } from "./payment-section";
 import { ShareTokenSection } from "./share-token-section";
+import { formatDateID, formatMoney } from "@/lib/utils";
+import { invoiceStatusVariant } from "@/lib/status-badge";
 
 async function getWorkspaceId(): Promise<string> {
   const [ws] = await db
@@ -32,14 +34,6 @@ async function getWorkspaceId(): Promise<string> {
     .limit(1);
   if (!ws) throw new Error("Workspace not found");
   return ws.id;
-}
-
-function formatCurrency(amount: string | number, currency: string): string {
-  const num = typeof amount === "string" ? Number(amount) : amount;
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency || "USD",
-  }).format(num);
 }
 
 function statusVariant(
@@ -155,11 +149,11 @@ export default async function InvoiceDetailPage({
             variant={statusVariant(displayStatus)}
             className="text-sm px-3 py-1"
           >
-            {displayStatus}
+            {invoiceStatusVariant(displayStatus).label}
           </Badge>
           {isPaid && inv.status !== "paid" && (
             <Badge variant="default" className="text-sm px-3 py-1">
-              Fully Paid
+              Lunas
             </Badge>
           )}
         </div>
@@ -170,35 +164,31 @@ export default async function InvoiceDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs uppercase text-muted-foreground">
-              Issue Date
+              Tanggal Terbit
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm font-medium">
-              {inv.issueDate
-                ? new Date(inv.issueDate).toLocaleDateString()
-                : "-"}
+              {formatDateID(inv.issueDate)}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs uppercase text-muted-foreground">
-              Due Date
+              Jatuh Tempo
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm font-medium">
-              {inv.dueDate
-                ? new Date(inv.dueDate).toLocaleDateString()
-                : "-"}
+              {formatDateID(inv.dueDate)}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs uppercase text-muted-foreground">
-              Currency
+              Mata Uang
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -213,7 +203,7 @@ export default async function InvoiceDetailPage({
           </CardHeader>
           <CardContent>
             <p className="text-lg font-bold font-mono">
-              {formatCurrency(inv.total, inv.currency)}
+              {formatMoney(inv.total, inv.currency)}
             </p>
           </CardContent>
         </Card>
@@ -222,21 +212,21 @@ export default async function InvoiceDetailPage({
       {/* Items */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Line Items</CardTitle>
+          <CardTitle>Rincian Item</CardTitle>
           <InvoiceItemManager invoiceId={invoiceId} />
         </CardHeader>
         <CardContent>
           {items.length === 0 ? (
             <p className="text-sm text-muted-foreground py-6 text-center">
-              No items yet. Add items to this invoice.
+              Belum ada item. Tambahkan item ke invoice ini.
             </p>
           ) : (
             <div className="space-y-0">
               <div className="flex items-center gap-2 py-2 text-xs uppercase text-muted-foreground border-b sm:gap-4">
-                <div className="min-w-0 flex-1">Description</div>
+                <div className="min-w-0 flex-1">Deskripsi</div>
                 <div className="w-14 text-right sm:w-20">Qty</div>
-                <div className="w-20 text-right sm:w-28">Rate</div>
-                <div className="w-20 text-right sm:w-28">Amount</div>
+                <div className="w-20 text-right sm:w-28">Tarif</div>
+                <div className="w-20 text-right sm:w-28">Jumlah</div>
                 <div className="w-6 sm:w-10" />
               </div>
               {items.map((item) => (
@@ -248,7 +238,7 @@ export default async function InvoiceDetailPage({
                     <p className="truncate">{item.description}</p>
                     {item.sourceType === "time_entry" && (
                       <span className="text-xs text-muted-foreground">
-                        (from time entry)
+                        (dari catatan waktu)
                       </span>
                     )}
                   </div>
@@ -256,10 +246,10 @@ export default async function InvoiceDetailPage({
                     {Number(item.quantity).toFixed(2)}
                   </div>
                   <div className="w-20 text-right font-mono sm:w-28">
-                    {formatCurrency(item.unitPrice, inv.currency)}
+                    {formatMoney(item.unitPrice, inv.currency)}
                   </div>
                   <div className="w-20 text-right font-mono font-medium sm:w-28">
-                    {formatCurrency(item.amount, inv.currency)}
+                    {formatMoney(item.amount, inv.currency)}
                   </div>
                   <div className="w-6 text-right sm:w-10">
                     <DeleteItemButton itemId={item.id} />
@@ -272,19 +262,19 @@ export default async function InvoiceDetailPage({
                 <div className="flex justify-end gap-8 text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
                   <span className="font-mono w-28 text-right">
-                    {formatCurrency(inv.subtotal, inv.currency)}
+                    {formatMoney(inv.subtotal, inv.currency)}
                   </span>
                 </div>
                 <div className="flex justify-end gap-8 text-sm">
-                  <span className="text-muted-foreground">Tax</span>
+                  <span className="text-muted-foreground">Pajak</span>
                   <span className="font-mono w-28 text-right">
-                    {formatCurrency(inv.tax, inv.currency)}
+                    {formatMoney(inv.tax, inv.currency)}
                   </span>
                 </div>
                 <div className="flex justify-end gap-8 text-base font-bold pt-1">
                   <span>Total</span>
                   <span className="font-mono w-28 text-right">
-                    {formatCurrency(inv.total, inv.currency)}
+                    {formatMoney(inv.total, inv.currency)}
                   </span>
                 </div>
               </div>
@@ -297,7 +287,7 @@ export default async function InvoiceDetailPage({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Clock className="h-4 w-4" /> Import Time Entries
+            <Clock className="h-4 w-4" /> Import Catatan Waktu
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -305,10 +295,10 @@ export default async function InvoiceDetailPage({
         </CardContent>
       </Card>
 
-      {/* Payments */}
+      {/* Pembayaran */}
       <Card>
         <CardHeader>
-          <CardTitle>Payments</CardTitle>
+          <CardTitle>Pembayaran</CardTitle>
         </CardHeader>
         <CardContent>
           <PaymentSection
@@ -328,7 +318,7 @@ export default async function InvoiceDetailPage({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Share2 className="h-4 w-4" /> Share Invoice
+            <Share2 className="h-4 w-4" /> Link Berbagi Invoice
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -340,12 +330,12 @@ export default async function InvoiceDetailPage({
         </CardContent>
       </Card>
 
-      {/* Notes & Terms */}
+      {/* Catatan & Syarat */}
       <Card>
         <CardContent className="py-4 space-y-4">
           {inv.notes && (
             <div>
-              <h4 className="text-sm font-medium mb-1">Notes</h4>
+              <h4 className="text-sm font-medium mb-1">Catatan</h4>
               <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                 {inv.notes}
               </p>
@@ -353,7 +343,7 @@ export default async function InvoiceDetailPage({
           )}
           {inv.terms && (
             <div>
-              <h4 className="text-sm font-medium mb-1">Terms</h4>
+              <h4 className="text-sm font-medium mb-1">Syarat</h4>
               <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                 {inv.terms}
               </p>
@@ -361,7 +351,7 @@ export default async function InvoiceDetailPage({
           )}
           {!inv.notes && !inv.terms && (
             <p className="text-sm text-muted-foreground">
-              No notes or terms added.
+              Belum ada catatan atau syarat.
             </p>
           )}
         </CardContent>

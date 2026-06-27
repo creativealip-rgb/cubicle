@@ -46,7 +46,7 @@ export function ImportTimeSection({
 
   async function handleImport() {
     if (selected.size === 0) {
-      toast.error("Select at least one time entry");
+      toast.error("Pilih minimal satu catatan waktu");
       return;
     }
     setLoading(true);
@@ -55,11 +55,11 @@ export function ImportTimeSection({
         invoiceId,
         timeEntryIds: Array.from(selected),
       });
-      toast.success(`Imported ${selected.size} time entries`);
+      toast.success(`Berhasil import ${selected.size} catatan waktu`);
       setSelected(new Set());
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed");
+      toast.error(err instanceof Error ? err.message : "Gagal");
     } finally {
       setLoading(false);
     }
@@ -68,7 +68,7 @@ export function ImportTimeSection({
   if (timeEntries.length === 0) {
     return (
       <p className="text-sm text-muted-foreground py-4 text-center">
-        No unbilled time entries for this client.
+        Tidak ada catatan waktu yang belum ditagihkan untuk klien ini.
       </p>
     );
   }
@@ -82,14 +82,14 @@ export function ImportTimeSection({
           className="text-xs"
           onClick={toggleAll}
         >
-          {selected.size === timeEntries.length ? "Deselect All" : "Select All"}
+          {selected.size === timeEntries.length ? "Batal Pilih Semua" : "Pilih Semua"}
         </Button>
         <Button
           size="sm"
           onClick={handleImport}
           disabled={loading || selected.size === 0}
         >
-          {loading ? "Importing..." : `Import ${selected.size} Selected`}
+          {loading ? "Mengimpor..." : `Import ${selected.size} Dipilih`}
         </Button>
       </div>
       <div className="border rounded-lg divide-y max-h-64 overflow-y-auto">
@@ -116,10 +116,10 @@ export function ImportTimeSection({
               />
               <div className="flex-1 min-w-0">
                 <p className="text-sm truncate">
-                  {te.description || "No description"}
+                  {te.description || "Tanpa deskripsi"}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {hours}h @ {rate}/hr = {amount}
+                  {hours}j @ {rate}/jam = {amount}
                 </p>
               </div>
               <Badge variant="outline" className="text-[10px]">

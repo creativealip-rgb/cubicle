@@ -31,8 +31,8 @@ export default async function NewProposalPage() {
   return (
     <div className="space-y-6 p-6 max-w-4xl">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">New proposal</h1>
-        <p className="text-sm text-slate-500 mt-1">Send scope + price to a prospective client.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">Proposal Baru</h1>
+        <p className="text-sm text-slate-500 mt-1">Kirim scope + harga ke calon klien.</p>
       </div>
       <ProposalForm
         workspaceId={ws.id}

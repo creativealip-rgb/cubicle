@@ -29,21 +29,21 @@ export function ShareTokenSection({
     try {
       const result = await generateInvoiceShareToken(invoiceId);
       setToken(result.token);
-      toast.success("Share link generated");
+      toast.success("Link berbagi dibuat");
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed");
+      toast.error(err instanceof Error ? err.message : "Gagal");
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleRevoke() {
+  async function handleCabut() {
     setLoading(true);
     try {
       await revokeInvoiceShareToken(invoiceId);
       setToken(null);
-      toast.success("Share link revoked");
+      toast.success("Link berbagi dicabut");
       router.refresh();
     } finally {
       setLoading(false);
@@ -56,7 +56,7 @@ export function ShareTokenSection({
       const url = `${baseUrl}/invoice/${token}`;
       await navigator.clipboard.writeText(url);
       setCopied(true);
-      toast.success("Share link copied");
+      toast.success("Link berbagi disalin");
       setTimeout(() => setCopied(false), 2000);
     }
   }
@@ -65,27 +65,26 @@ export function ShareTokenSection({
     <div className="space-y-3">
       {!hasToken && !isExpired && (
         <p className="text-sm text-muted-foreground">
-          Generate a shareable link for this invoice. Anyone with the link can
-          view it.
+          Buat link berbagi untuk invoice ini. Siapa pun yang punya link bisa melihatnya.
         </p>
       )}
 
       {hasToken && !isExpired && (
         <p className="text-sm text-muted-foreground">
-          This invoice has an active share link. Revoke it to disable access.
+          Invoice ini punya link berbagi aktif. Cabut untuk menonaktifkan akses.
         </p>
       )}
 
       {isExpired && (
         <p className="text-sm text-amber-600">
-          The share link has expired. Generate a new one.
+          Link berbagi sudah kedaluwarsa. Buat link baru.
         </p>
       )}
 
       {token && (
         <div className="rounded-lg border bg-muted/50 p-3 space-y-2">
           <p className="text-xs font-medium text-muted-foreground">
-            Share Link (shown only once)
+            Link Berbagi (hanya tampil sekali)
           </p>
           <div className="flex items-center gap-2">
             <code className="flex-1 text-xs bg-background rounded px-2 py-1 break-all">
@@ -118,18 +117,18 @@ export function ShareTokenSection({
           disabled={loading}
         >
           <RefreshCw className="h-3 w-3" />
-          {loading ? "Generating..." : "Generate Share Link"}
+          {loading ? "Membuat..." : "Buat Link Berbagi"}
         </Button>
         {hasToken && !isExpired && (
           <Button
             variant="outline"
             size="sm"
             className="gap-1 text-red-600 hover:text-red-700"
-            onClick={handleRevoke}
+            onClick={handleCabut}
             disabled={loading}
           >
             <X className="h-3 w-3" />
-            Revoke
+            Cabut
           </Button>
         )}
       </div>

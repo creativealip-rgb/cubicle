@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, FileText, Eye } from "lucide-react";
-import { formatMoney } from "@/lib/utils";
+import { formatDateID, formatMoney } from "@/lib/utils";
 import { invoiceStatusVariant } from "@/lib/status-badge";
 import { EmptyState } from "@/components/empty-state";
 
@@ -120,14 +120,10 @@ export default async function InvoicesPage() {
                   </TableCell>
                   <TableCell>{inv.clientCompany || inv.clientName}</TableCell>
                   <TableCell>
-                    {inv.issueDate
-                      ? new Date(inv.issueDate).toLocaleDateString()
-                      : "-"}
+                    {formatDateID(inv.issueDate)}
                   </TableCell>
                   <TableCell>
-                    {inv.dueDate
-                      ? new Date(inv.dueDate).toLocaleDateString()
-                      : "-"}
+                    {formatDateID(inv.dueDate)}
                   </TableCell>
                   <TableCell className="text-right tabular-nums font-medium">
                     {formatMoney(inv.total, inv.currency)}
@@ -177,9 +173,7 @@ export default async function InvoicesPage() {
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs text-muted-foreground">Jatuh Tempo</span>
                   <span className="text-sm">
-                    {inv.dueDate
-                      ? new Date(inv.dueDate).toLocaleDateString()
-                      : "-"}
+                    {formatDateID(inv.dueDate)}
                   </span>
                 </div>
               </div>

@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus } from "lucide-react";
+import { formatDateID, formatMoney } from "@/lib/utils";
 
 interface Payment {
   id: string;
@@ -37,7 +38,7 @@ export function PaymentSection({
   invoiceId,
   payments,
   total,
-  currency,
+  currency: _currency,
 }: {
   invoiceId: string;
   payments: Payment[];
@@ -68,7 +69,7 @@ export function PaymentSection({
         method: form.method || undefined,
         notes: form.notes || undefined,
       });
-      toast.success("Payment recorded");
+      toast.success("Pembayaran dicatat");
       setOpen(false);
       setForm({
         amount: "",
@@ -78,30 +79,25 @@ export function PaymentSection({
       });
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed");
+      toast.error(err instanceof Error ? err.message : "Gagal");
     } finally {
       setLoading(false);
     }
   }
 
-  function fmtCurrency(amount: number): string {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency || "USD",
-    }).format(amount);
-  }
+
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between text-sm">
         <span>
-          Total: <strong>{fmtCurrency(total)}</strong>
+          Total: <strong>{formatMoney(total)}</strong>
         </span>
         <span>
-          Paid: <strong>{fmtCurrency(paidSoFar)}</strong>
+          Dibayar: <strong>{formatMoney(paidSoFar)}</strong>
         </span>
         <span>
-          Remaining: <strong>{fmtCurrency(remaining)}</strong>
+          Sisa: <strong>{formatMoney(remaining)}</strong>
         </span>
       </div>
 
@@ -111,10 +107,10 @@ export function PaymentSection({
             <div key={p.id} className="flex items-center justify-between p-3 text-sm">
               <div>
                 <span className="font-mono font-medium">
-                  {fmtCurrency(Number(p.amount))}
+                  {formatMoney(Number(p.amount))}
                 </span>
                 <span className="text-muted-foreground ml-2">
-                  {p.paidAt ? new Date(p.paidAt).toLocaleDateString() : "-"}
+                  {formatDateID(p.paidAt)}
                 </span>
               </div>
               <span className="text-xs text-muted-foreground">
@@ -128,16 +124,16 @@ export function PaymentSection({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button variant="outline" size="sm" className="gap-1">
-            <Plus className="h-3.5 w-3.5" /> Record Payment
+            <Plus className="h-3.5 w-3.5" /> Catat Pembayaran
           </Button>
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Record Payment</DialogTitle>
+            <DialogTitle>Catat Pembayaran</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount *</Label>
+              <Label htmlFor="amount">Jumlah *</Label>
               <Input
                 id="amount"
                 type="number"
@@ -152,7 +148,7 @@ export function PaymentSection({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="paidAt">Payment Date *</Label>
+              <Label htmlFor="paidAt">Tanggal Pembayaran *</Label>
               <Input
                 id="paidAt"
                 type="date"
@@ -164,7 +160,7 @@ export function PaymentSection({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="method">Method</Label>
+              <Label htmlFor="method">Metode</Label>
               <Select
                 value={form.method}
                 onValueChange={(v) => setForm((p) => ({ ...p, method: v }))}
@@ -173,27 +169,27 @@ export function PaymentSection({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                  <SelectItem value="credit_card">Credit Card</SelectItem>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="check">Check</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="bank_transfer">Transfer Bank</SelectItem>
+                  <SelectItem value="credit_card">Kartu Kredit</SelectItem>
+                  <SelectItem value="cash">Tunai</SelectItem>
+                  <SelectItem value="check">Cek</SelectItem>
+                  <SelectItem value="other">Lainnya</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="pnotes">Notes</Label>
+              <Label htmlFor="pnotes">Catatan</Label>
               <Input
                 id="pnotes"
                 value={form.notes}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, notes: e.target.value }))
                 }
-                placeholder="Payment reference..."
+                placeholder="Referensi pembayaran..."
               />
             </div>
             <Button type="submit" disabled={loading} className="w-full">
-              {loading ? "Recording..." : "Record Payment"}
+              {loading ? "Mencatat..." : "Catat Pembayaran"}
             </Button>
           </form>
         </DialogContent>

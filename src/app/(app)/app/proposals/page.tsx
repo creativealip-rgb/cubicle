@@ -58,13 +58,13 @@ export default async function ProposalsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Proposals</h1>
-          <p className="text-sm text-slate-500 mt-1">Send scope + price to a prospective client. They accept and you start work.</p>
+          <p className="text-sm text-slate-500 mt-1">Kirim scope + harga ke calon klien. Setelah diterima, kerja bisa dimulai.</p>
         </div>
         {canWrite && (
           <Button asChild>
             <Link href="/app/proposals/new">
               <Plus className="h-4 w-4 mr-1" />
-              New proposal
+              Proposal Baru
             </Link>
           </Button>
         )}
@@ -73,12 +73,12 @@ export default async function ProposalsPage() {
       {rows.length === 0 ? (
         <div className="bg-white rounded-2xl border p-12 text-center">
           <FileText className="h-10 w-10 mx-auto text-slate-300 mb-3" />
-          <p className="text-sm text-slate-500 mb-4">No proposals yet. Create one to start sending scopes.</p>
+          <p className="text-sm text-slate-500 mb-4">Belum ada proposal. Buat proposal untuk mulai kirim scope.</p>
           {canWrite && (
             <Button asChild>
               <Link href="/app/proposals/new">
                 <Plus className="h-4 w-4 mr-1" />
-                Create your first proposal
+                Buat proposal pertama
               </Link>
             </Button>
           )}
@@ -88,11 +88,11 @@ export default async function ProposalsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Client</TableHead>
+                <TableHead>Judul</TableHead>
+                <TableHead>Klien</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Total</TableHead>
-                <TableHead>Updated</TableHead>
+                <TableHead>Diperbarui</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -118,10 +118,10 @@ export default async function ProposalsPage() {
                     {formatMoney(p.total, p.currency)}
                   </TableCell>
                   <TableCell className="text-xs text-slate-500">
-                    {p.acceptedAt ? `Accepted ${new Date(p.acceptedAt).toLocaleDateString()}` :
-                     p.declinedAt ? `Declined ${new Date(p.declinedAt).toLocaleDateString()}` :
-                     p.sentAt ? `Sent ${new Date(p.sentAt).toLocaleDateString()}` :
-                     `Draft ${new Date(p.createdAt).toLocaleDateString()}`}
+                    {p.acceptedAt ? `Diterima ${new Date(p.acceptedAt).toLocaleDateString("id-ID")}` :
+                     p.declinedAt ? `Ditolak ${new Date(p.declinedAt).toLocaleDateString("id-ID")}` :
+                     p.sentAt ? `Terkirim ${new Date(p.sentAt).toLocaleDateString("id-ID")}` :
+                     `Draft ${new Date(p.createdAt).toLocaleDateString("id-ID")}`}
                   </TableCell>
                   <TableCell className="text-right">
                     {p.status === "draft" && canWrite && (
