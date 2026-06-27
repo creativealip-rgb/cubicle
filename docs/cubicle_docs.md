@@ -56,8 +56,12 @@ All demo users belong to workspace **Acme Creative Studio** (`acme-creative`).
 Split bahasa berdasarkan route:
 
 ### Indonesian (internal — `(app)/app/` routes)
-Dashboard, Clients, Invoices, Tasks, Projects, Settings, Time, Files, Reports, Billing.
+Dashboard, Clients, Invoices, Proposals, Tasks, Projects, Settings, Time, Files, Reports, Billing.
 Target user: freelancer/agency Indonesia.
+
+Internal non-IDR money display intentionally avoids `$` symbol and uses ISO currency prefix (example: `USD 1,000.00`). IDR stays `Rp`.
+
+Latest localization pass (2026-06-27): invoice list/detail, invoice item/payment/share-link dialogs, proposal list/new/detail, status labels, and internal date formatting.
 
 ### English (client-facing — public token/slug routes)
 Invoice PDF, Invoice viewer, Client Portal, Proposal, Contract, Booking, Intake form, Email templates.

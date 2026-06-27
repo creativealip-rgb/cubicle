@@ -66,17 +66,18 @@ R2 buckets are not bundled with this repo. Two options:
 ### Technical debt / status (known)
 - 🟢 Production domain live: `https://cubiqlo.com` (Cloudflare + Traefik HTTPS).
 - 🟢 `sslip.io` legacy host redirects 301 to `https://cubiqlo.com/`.
-- 🟢 Latest `origin/main` deployed on VPS via Docker Compose on 2026-06-23; `cubicle-cubicle-1` and `cubicle-pg` healthy.
+- 🟢 Latest `origin/main` deployed on VPS via Docker Compose on 2026-06-27; `cubicle-cubicle-1` and `cubicle-pg` healthy.
+- 🟢 Production image rebuilt and running: `cubicle-cubicle:latest` image `a7eaf5cd3a5e`; health endpoint returned `{"status":"ok","db":"ok"}`.
 - 🟢 Cloudflare R2 configured (`cubicle-files`) and upload/download smoke test passed.
 - 🟢 Resend domain verified for `noreply@cubiqlo.com`; Reply-To setting exists in workspace settings.
-- 🟢 Automated tests exist: 17 Vitest unit tests + 13 Playwright E2E tests passing as of 2026-06-23.
+- 🟢 Automated validation latest run on 2026-06-27: `npx tsc --noEmit`, `npm run lint`, and `npm run build` passed.
 - 🟢 Auth rate limiting active on `/api/auth/*`; Fail2ban recidive jail configured on VPS.
 - 🟢 Monitoring/backups active: local monitor cron, Hermes external health check, daily DB backup + weekly restore test.
 - 🟢 Free plan enforcement active: Free workspace limited to 3 clients server-side + UI upgrade prompt.
 - 🟢 Payment gateway v1 active: Pakasir QRIS checkout for Solo (Rp 49rb) / Team (Rp 99rb) plans; webhook auto-upgrades workspace plan; upgrade-only guard (same-plan & downgrade blocked).
-- 🟢 Dashboard fully translated to Indonesian (greeting, KPI labels, attention cards, cash flow, client health, activity, timers, tasks, invoices).
-- 🟢 All internal app pages translated to Indonesian (Clients, Invoices, Tasks, Projects, Settings, Time, Files, Reports).
-- 🟢 Client-facing pages kept in English for international clients (Invoice PDF/viewer, Client Portal, Proposal, Contract, Booking, Intake, Email templates).
+- 🟢 Internal app UI is Indonesian-first for owner/member workspace use, including Dashboard, Clients, Invoices, Proposals, Tasks, Projects, Settings, Time, Files, Reports, and Billing.
+- 🟢 Non-IDR currency in internal app avoids `$` symbol; formatter uses ISO prefix (e.g. `USD 1,000.00`) while IDR stays `Rp`.
+- 🟢 Client-facing pages kept in English for international clients (Invoice PDF/viewer, Client Portal, public Proposal, Contract, Booking, Intake, Email templates).
 - 🟡 No background job queue; cron-style scripts cover monitoring/backups only.
 - 🟢 npm audit: 5/6 fixed, 1 accepted (postcss nested in next@16.2.9, build-time only, zero exploit in authored-CSS).
 
