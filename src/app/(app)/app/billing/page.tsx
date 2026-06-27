@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { workspaceMembers, workspaces } from "@/db/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckoutButton } from "@/components/billing/checkout-button";
+import { getSubscriptionStatus } from "@/lib/subscription";
 
 const plans = [
   {
@@ -12,21 +13,21 @@ const plans = [
     name: "Free",
     price: "Rp 0",
     description: "Coba dulu buat client work kecil.",
-    features: ["1 user", "3 clients", "Project & task", "Invoice", "Time tracking"],
+    features: ["1 pengguna", "3 klien", "Project & task", "Invoice", "Time tracking"],
   },
   {
     key: "solo",
     name: "Solo",
     price: "Rp 49rb/bulan",
     description: "Untuk freelancer yang butuh unlimited clients.",
-    features: ["1 user", "Unlimited clients", "Client portal", "AI assistant", "Booking", "Proposal & contract"],
+    features: ["1 pengguna", "Klien unlimited", "Client portal", "AI assistant", "Booking", "Proposal & kontrak"],
   },
   {
     key: "team",
     name: "Team",
     price: "Rp 99rb/bulan",
     description: "Untuk team kecil yang handle banyak client bareng.",
-    features: ["5 users", "Shared workspace", "Team roles", "Advanced report", "Priority support"],
+    features: ["5 pengguna", "Workspace bersama", "Peran tim", "Laporan lanjutan", "Prioritas support"],
   },
 ] as const;
 
@@ -53,7 +54,7 @@ export default async function BillingPage() {
     <div className="space-y-8">
       <div>
         <p className="text-sm font-medium text-[#6647F0]">Billing</p>
-        <h1 className="text-3xl font-semibold text-slate-950">Upgrade workspace</h1>
+        <h1 className="text-3xl font-semibold text-slate-950">Langganan</h1>
         <p className="mt-2 text-slate-600">
           Bayar via Pakasir QRIS. Plan aktif otomatis setelah webhook payment diterima.
         </p>
@@ -61,14 +62,22 @@ export default async function BillingPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Current plan</CardTitle>
+          <CardTitle>Plan saat ini</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-slate-600">
           <p><span className="font-medium text-slate-950">Workspace:</span> {workspace?.name ?? "-"}</p>
           <p><span className="font-medium text-slate-950">Plan:</span> {(workspace?.plan ?? "free").toUpperCase()}</p>
           {workspace?.planExpiresAt && (
-            <p><span className="font-medium text-slate-950">Expires:</span> {workspace.planExpiresAt.toLocaleDateString("id-ID")}</p>
+            <p><span className="font-medium text-slate-950">Berlaku hingga:</span> {workspace.planExpiresAt.toLocaleDateString("id-ID")}</p>
           )}
+          {workspace && (() => {
+            const sub = getSubscriptionStatus(workspace.planExpiresAt, workspace.plan ?? "free");
+            const badgeClass = sub.status === "active" ? "bg-emerald-50 text-emerald-800" :
+              sub.status === "expiring" ? "bg-amber-50 text-amber-800" :
+              sub.status === "grace" ? "bg-orange-50 text-orange-800" :
+              "bg-red-50 text-red-800";
+            return <p className={`mt-2 rounded-lg px-3 py-2 text-sm ${badgeClass}`}>{sub.message}</p>;
+          })()}
           {workspace?.role !== "owner" && (
             <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-amber-800">Hanya owner workspace yang bisa upgrade.</p>
           )}
@@ -84,7 +93,7 @@ export default async function BillingPage() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   {plan.name}
-                  {current && <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">Current</span>}
+                  {current && <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">Aktif</span>}
                 </CardTitle>
                 <p className="text-2xl font-semibold text-slate-950">{plan.price}</p>
                 <p className="text-sm text-slate-600">{plan.description}</p>
@@ -98,7 +107,7 @@ export default async function BillingPage() {
                     {current ? "Plan aktif" : plan.key === "solo" ? "Bayar Solo QRIS" : "Bayar Team QRIS"}
                   </CheckoutButton>
                 ) : (
-                  <div className="rounded-lg bg-slate-100 px-4 py-2 text-center text-sm font-medium text-slate-600">Default plan</div>
+                  <div className="rounded-lg bg-slate-100 px-4 py-2 text-center text-sm font-medium text-slate-600">Plan default</div>
                 )}
               </CardContent>
             </Card>

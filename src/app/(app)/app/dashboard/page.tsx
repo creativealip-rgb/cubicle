@@ -288,10 +288,48 @@ export default async function DashboardPage() {
     return new Date(date).toLocaleDateString();
   }
 
+  const ACTION_LABELS: Record<string, string> = {
+    started_timer: "Mulai Timer",
+    stopped_timer: "Stop Timer",
+    booked_appointment_public: "Janji Temu Publik Dibuat",
+    generated_invoice_share_token: "Link Berbagi Invoice Dibuat",
+    recorded_payment: "Pembayaran Dicatat",
+    imported_time_to_invoice: "Catatan Waktu Diimport",
+    generated_portal_token: "Token Portal Dibuat",
+    created_comment: "Komentar Dibuat",
+    updated_task: "Task Diperbarui",
+    created_invoice: "Invoice Dibuat",
+    created_client: "Klien Dibuat",
+    created_project: "Project Dibuat",
+    created_task: "Task Dibuat",
+    updated_project: "Project Diperbarui",
+    updated_invoice: "Invoice Diperbarui",
+    sent_invoice: "Invoice Dikirim",
+    sent_proposal: "Proposal Dikirim",
+    accepted_proposal: "Proposal Diterima",
+    declined_proposal: "Proposal Ditolak",
+    uploaded_file: "File Diupload",
+    created_appointment: "Janji Temu Dibuat",
+    cancelled_appointment: "Janji Temu Dibatalkan",
+  };
+  const ENTITY_LABELS: Record<string, string> = {
+    time_entry: "catatan waktu",
+    appointment: "janji temu",
+    invoice: "invoice",
+    payment: "pembayaran",
+    client: "klien",
+    comment: "komentar",
+    task: "task",
+    project: "project",
+    proposal: "proposal",
+    file: "file",
+    contract: "kontrak",
+  };
   function formatAction(action: string): string {
-    return action
-      .replace(/_/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase());
+    return ACTION_LABELS[action] ?? action.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+  function formatEntity(entityType: string): string {
+    return ENTITY_LABELS[entityType] ?? entityType;
   }
 
   const kpiCards = [
@@ -701,7 +739,7 @@ export default async function DashboardPage() {
                       {formatAction(item.action)}
                     </p>
                     <p className="text-sm text-muted-foreground truncate">
-                      {item.entityType}
+                      {formatEntity(item.entityType)}
                       {item.actorName && ` oleh ${item.actorName}`}
                     </p>
                   </div>
