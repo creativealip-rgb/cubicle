@@ -8,11 +8,10 @@ import { QuestionnaireBuilder } from "@/components/questionnaires/questionnaire-
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 
 async function getWorkspace() {
-  const [ws] = await db.select().from(workspaces).where(eq(workspaces.slug, "acme-creative")).limit(1);
-  if (!ws) throw new Error("Workspace not found");
-  return ws;
+  return getWorkspaceFullForCurrentUser();
 }
 
 export default async function NewQuestionnairePage() {

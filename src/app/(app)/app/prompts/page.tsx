@@ -1,3 +1,4 @@
+import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
@@ -10,14 +11,8 @@ import { PromptForm } from "@/components/prompts/prompt-form";
 import { PromptHistory } from "@/components/prompts/prompt-history";
 import { Sparkles, BarChart3, DollarSign, Zap } from "lucide-react";
 
-async function getWorkspaceId() {
-  const [ws] = await db
-    .select({ id: workspaces.id })
-    .from(workspaces)
-    .where(eq(workspaces.slug, "acme-creative"))
-    .limit(1);
-  if (!ws) throw new Error("Workspace not found");
-  return ws.id;
+async function getWorkspaceId(): Promise<string> {
+  return getWorkspaceForCurrentUser();
 }
 
 export default async function PromptsPage() {

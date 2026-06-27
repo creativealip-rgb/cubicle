@@ -37,15 +37,10 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatMoney, formatMoneyCompact } from "@/lib/utils";
 import Link from "next/link";
+import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 
 async function getWorkspace() {
-  const [ws] = await db
-    .select({ id: workspaces.id, defaultCurrency: workspaces.defaultCurrency })
-    .from(workspaces)
-    .where(eq(workspaces.slug, "acme-creative"))
-    .limit(1);
-  if (!ws) throw new Error("Workspace not found");
-  return ws;
+  return getWorkspaceFullForCurrentUser();
 }
 
 export default async function DashboardPage() {

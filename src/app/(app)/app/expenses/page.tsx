@@ -16,15 +16,10 @@ import {
 import { ExpenseForm, type CategoryOption, type ProjectOption, type ClientOption } from "@/components/expenses/expense-form";
 import { DeleteExpenseButton } from "@/components/expenses/delete-expense-button";
 import { TrendingDown, TrendingUp, Wallet, Tag } from "lucide-react";
+import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 
 async function getWorkspace() {
-  const [ws] = await db
-    .select({ id: workspaces.id, defaultCurrency: workspaces.defaultCurrency })
-    .from(workspaces)
-    .where(eq(workspaces.slug, "acme-creative"))
-    .limit(1);
-  if (!ws) throw new Error("Workspace not found");
-  return ws;
+  return getWorkspaceFullForCurrentUser();
 }
 
 function formatMoney(amount: string | number, currency: string) {

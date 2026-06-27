@@ -1,3 +1,4 @@
+import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
@@ -16,7 +17,7 @@ export async function GET() {
   const [workspace] = await db
     .select({ id: workspaces.id })
     .from(workspaces)
-    .where(eq(workspaces.slug, "acme-creative"))
+    .where(eq(workspaces.id, await getWorkspaceForCurrentUser()))
     .limit(1);
 
   if (!workspace) {

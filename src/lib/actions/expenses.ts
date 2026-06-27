@@ -1,4 +1,5 @@
 "use server";
+import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -10,9 +11,7 @@ import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 
 async function getWorkspaceId(): Promise<string> {
-  const [ws] = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.slug, "acme-creative")).limit(1);
-  if (!ws) throw new Error("Workspace not found");
-  return ws.id;
+  return getWorkspaceForCurrentUser();
 }
 
 const createExpenseSchema = z.object({

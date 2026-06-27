@@ -32,18 +32,11 @@ import {
   questionnaireResponses,
 } from "@/db/schema";
 import type { ToolDefinition } from "./client";
+import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 
 let _workspaceIdCache: { id: string; slug: string; name: string } | null = null;
-async function getWorkspace(): Promise<{ id: string; slug: string; name: string }> {
-  if (_workspaceIdCache) return _workspaceIdCache;
-  const [ws] = await db
-    .select({ id: workspaces.id, slug: workspaces.slug, name: workspaces.name })
-    .from(workspaces)
-    .where(eq(workspaces.slug, "acme-creative"))
-    .limit(1);
-  if (!ws) throw new Error("Workspace not found");
-  _workspaceIdCache = ws;
-  return ws;
+async function getWorkspace() {
+  return getWorkspaceFullForCurrentUser();
 }
 
 // ─── Read: list ────────────────────────────────────────────────────

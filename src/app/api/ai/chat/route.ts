@@ -1,3 +1,4 @@
+import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 /**
  * AI assistant chat endpoint (Sprint F.2 — streaming).
  *
@@ -129,7 +130,7 @@ export async function POST(req: NextRequest) {
   // Workspace from demo slug (matches tools.ts / conv-store)
   let wsId: string;
   try {
-    wsId = await getWorkspaceId();
+    wsId = await getWorkspaceForCurrentUser();
   } catch (err) {
     return new Response(
       JSON.stringify({ error: String(err instanceof Error ? err.message : err) }),
@@ -384,12 +385,3 @@ async function runAgentLoop(opts: {
 
 // ── helpers ─────────────────────────────────────────────────────────
 
-async function getWorkspaceId(): Promise<string> {
-  const [ws] = await db
-    .select({ id: workspaces.id })
-    .from(workspaces)
-    .where(eq(workspaces.slug, "acme-creative"))
-    .limit(1);
-  if (!ws) throw new Error("Workspace not found");
-  return ws.id;
-}

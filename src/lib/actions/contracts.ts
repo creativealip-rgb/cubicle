@@ -1,4 +1,5 @@
 "use server";
+import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -12,9 +13,7 @@ import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
 
 async function getWorkspaceId(): Promise<string> {
-  const [ws] = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.slug, "acme-creative")).limit(1);
-  if (!ws) throw new Error("Workspace not found");
-  return ws.id;
+  return getWorkspaceForCurrentUser();
 }
 
 function generateToken() {

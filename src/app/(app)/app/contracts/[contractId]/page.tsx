@@ -1,3 +1,4 @@
+import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
@@ -15,9 +16,7 @@ import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 
 async function getWorkspaceId(): Promise<string> {
-  const [ws] = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.slug, "acme-creative")).limit(1);
-  if (!ws) throw new Error("Workspace not found");
-  return ws.id;
+  return getWorkspaceForCurrentUser();
 }
 
 function statusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {

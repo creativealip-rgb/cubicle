@@ -1,3 +1,4 @@
+import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
@@ -18,9 +19,7 @@ import {
 import { Plus, ClipboardList } from "lucide-react";
 
 async function getWorkspaceId(): Promise<string> {
-  const [ws] = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.slug, "acme-creative")).limit(1);
-  if (!ws) throw new Error("Workspace not found");
-  return ws.id;
+  return getWorkspaceForCurrentUser();
 }
 
 export default async function QuestionnairesPage() {

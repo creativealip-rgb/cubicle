@@ -1,3 +1,4 @@
+import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
@@ -9,7 +10,7 @@ import { ContractTemplateBuilder } from "@/components/contracts/contract-templat
 export default async function NewContractTemplatePage() {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
-  const [ws] = await db.select().from(workspaces).where(eq(workspaces.slug, "acme-creative")).limit(1);
+  const [ws] = await db.select().from(workspaces).where(eq(workspaces.id, await getWorkspaceForCurrentUser())).limit(1);
   if (!ws) throw new Error("Workspace not found");
   await assertWorkspaceWritable(db, user.id, ws.id);
 

@@ -1,3 +1,4 @@
+import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
@@ -10,10 +11,8 @@ import { FolderTree } from "@/components/files/folder-tree";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText } from "lucide-react";
 
-async function getWorkspaceId() {
-  const [ws] = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.slug, "acme-creative")).limit(1);
-  if (!ws) throw new Error("Workspace not found");
-  return ws.id;
+async function getWorkspaceId(): Promise<string> {
+  return getWorkspaceForCurrentUser();
 }
 
 export default async function FilesPage({

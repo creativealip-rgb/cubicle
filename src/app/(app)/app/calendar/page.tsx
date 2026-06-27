@@ -16,21 +16,16 @@ import { Separator } from "@/components/ui/separator";
 import { cancelAppointment } from "@/lib/actions/appointments";
 import { Calendar, Clock, MapPin, XCircle } from "lucide-react";
 import Link from "next/link";
+import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 
-async function getWorkspaceId() {
-  const [ws] = await db
-    .select({ id: workspaces.id, bookingSlug: workspaces.bookingSlug })
-    .from(workspaces)
-    .where(eq(workspaces.slug, "acme-creative"))
-    .limit(1);
-  if (!ws) throw new Error("Workspace not found");
-  return ws;
+async function getWorkspace() {
+  return getWorkspaceFullForCurrentUser();
 }
 
 export default async function CalendarPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
-  const ws = await getWorkspaceId();
+  const ws = await getWorkspaceFullForCurrentUser();
   const workspaceId = ws.id;
   await assertWorkspaceMember(db, user.id, workspaceId);
 

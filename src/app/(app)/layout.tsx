@@ -1,3 +1,4 @@
+import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { and, eq, ne, count, sql } from "drizzle-orm";
@@ -29,7 +30,7 @@ export default async function AppLayout({
   const [workspace] = await db
     .select({ id: workspaces.id })
     .from(workspaces)
-    .where(eq(workspaces.slug, "acme-creative"))
+    .where(eq(workspaces.id, await getWorkspaceForCurrentUser()))
     .limit(1);
 
   const [member] = workspace

@@ -1,3 +1,4 @@
+import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 /**
  * List + create AI conversations for the current user.
  *
@@ -17,18 +18,8 @@ import { listConversations, listMessages, getOrCreateConv } from "@/lib/ai/conv-
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-async function getWorkspaceIdFromSession(userId: string): Promise<string> {
-  // The AI assistant is workspace-scoped; we just use the user's first workspace.
-  // For now, hardcode the demo workspace (same as tools.ts).
-  const { workspaces } = await import("@/db/schema");
-  const [ws] = await db
-    .select({ id: workspaces.id })
-    .from(workspaces)
-    .where(eq(workspaces.slug, "acme-creative"))
-    .limit(1);
-  if (!ws) throw new Error("Workspace not found");
-  void userId;
-  return ws.id;
+async function getWorkspaceId(): Promise<string> {
+  return getWorkspaceForCurrentUser();
 }
 
 export async function GET(req: NextRequest) {
@@ -36,7 +27,7 @@ export async function GET(req: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const wsId = await getWorkspaceIdFromSession(session.user.id);
+  const wsId = await getWorkspaceForCurrentUser();
   const id = req.nextUrl.searchParams.get("id");
 
   if (id) {
@@ -57,7 +48,7 @@ export async function DELETE(req: NextRequest) {
   if (!id) {
     return NextResponse.json({ error: "id required" }, { status: 400 });
   }
-  const wsId = await getWorkspaceIdFromSession(session.user.id);
+  const wsId = await getWorkspaceForCurrentUser();
   await db
     .delete(aiConversations)
     .where(
@@ -76,7 +67,7 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const wsId = await getWorkspaceIdFromSession(session.user.id);
+  const wsId = await getWorkspaceForCurrentUser();
   const body = (await req.json().catch(() => ({}))) as { id?: string };
   const id = await getOrCreateConv(wsId, session.user.id, body.id);
   return NextResponse.json({ id });

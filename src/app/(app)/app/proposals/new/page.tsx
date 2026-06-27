@@ -5,15 +5,10 @@ import { clients, workspaces } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { ProposalForm } from "@/components/proposals/proposal-form";
+import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 
 async function getWorkspace() {
-  const [ws] = await db
-    .select({ id: workspaces.id, defaultCurrency: workspaces.defaultCurrency, defaultTaxRate: workspaces.defaultTaxRate })
-    .from(workspaces)
-    .where(eq(workspaces.slug, "acme-creative"))
-    .limit(1);
-  if (!ws) throw new Error("Workspace not found");
-  return ws;
+  return getWorkspaceFullForCurrentUser();
 }
 
 export default async function NewProposalPage() {

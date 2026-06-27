@@ -16,11 +16,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, FileText, Star } from "lucide-react";
+import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 
 async function getWorkspace() {
-  const [ws] = await db.select().from(workspaces).where(eq(workspaces.slug, "acme-creative")).limit(1);
-  if (!ws) throw new Error("Workspace not found");
-  return ws;
+  return getWorkspaceFullForCurrentUser();
 }
 
 export default async function ContractTemplatesPage() {

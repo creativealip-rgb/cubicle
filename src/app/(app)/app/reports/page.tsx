@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import {
   TrendingUp,
   TrendingDown,
@@ -36,13 +37,7 @@ import {
 } from "lucide-react";
 
 async function getWorkspace() {
-  const [ws] = await db
-    .select({ id: workspaces.id, defaultCurrency: workspaces.defaultCurrency })
-    .from(workspaces)
-    .where(eq(workspaces.slug, "acme-creative"))
-    .limit(1);
-  if (!ws) throw new Error("Workspace not found");
-  return ws;
+  return getWorkspaceFullForCurrentUser();
 }
 
 function formatMoney(amount: string | number, currency: string) {
