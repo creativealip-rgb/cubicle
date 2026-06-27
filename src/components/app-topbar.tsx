@@ -17,6 +17,9 @@ import {
   Building2,
   PlusCircle,
   Loader2,
+  Crown,
+  UserPlus,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +36,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { useSidebar } from "@/components/app-shell";
 import { NotificationsBell } from "@/components/notifications-bell";
-import { getUserWorkspaces, switchWorkspace } from "@/lib/actions/workspace-switch";
+import { getUserWorkspaces, switchWorkspace, createWorkspace } from "@/lib/actions/workspace-switch";
 
 interface AppTopbarProps {
   user: {
@@ -61,6 +64,14 @@ type WorkspaceItem = {
   isActive: boolean;
 };
 
+type WorkspaceData = {
+  workspaces: WorkspaceItem[];
+  plan: string;
+  canCreate: boolean;
+  canCreateReason?: string;
+  canInvite: boolean;
+};
+
 function formatElapsed(startTime?: string | null) {
   if (!startTime) return "00:00";
   const seconds = Math.max(0, Math.floor((Date.now() - new Date(startTime).getTime()) / 1000));
@@ -78,9 +89,9 @@ export function AppTopbar({ user }: AppTopbarProps) {
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
   const [elapsed, setElapsed] = useState("00:00");
   const { setMobileOpen } = useSidebar();
-  const [workspaces, setWorkspaces] = useState<WorkspaceItem[]>([]);
-  const [wsLoading, setWsLoading] = useState(false);
+  const [wsData, setWsData] = useState<WorkspaceData | null>(null);
   const [switching, setSwitching] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -95,16 +106,12 @@ export function AppTopbar({ user }: AppTopbarProps) {
     router.refresh();
   }
 
-  // Load workspaces
   const loadWorkspaces = useCallback(async () => {
-    setWsLoading(true);
     try {
       const data = await getUserWorkspaces();
-      setWorkspaces(data);
+      setWsData(data);
     } catch {
       // silent
-    } finally {
-      setWsLoading(false);
     }
   }, []);
 
@@ -121,6 +128,22 @@ export function AppTopbar({ user }: AppTopbarProps) {
     }
   }
 
+  async function handleCreateWorkspace() {
+    const name = prompt("Nama workspace baru:");
+    if (!name?.trim()) return;
+    setCreating(true);
+    try {
+      const result = await createWorkspace(name.trim());
+      if (result.ok) {
+        router.refresh();
+      } else {
+        alert(result.error);
+      }
+    } finally {
+      setCreating(false);
+    }
+  }
+
   useEffect(() => {
     let alive = true;
 
@@ -131,7 +154,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
         const data = (await res.json()) as { activeTimer: ActiveTimer | null };
         if (alive) setActiveTimer(data.activeTimer);
       } catch {
-        // keep timer quiet in topbar
+        // silent
       }
     }
 
@@ -166,7 +189,9 @@ export function AppTopbar({ user }: AppTopbarProps) {
     .toUpperCase()
     .slice(0, 2);
 
-  const activeWorkspace = workspaces.find(w => w.isActive);
+  const activeWorkspace = wsData?.workspaces.find(w => w.isActive);
+  const isFree = !wsData || wsData.plan === "free";
+  const hasMultipleWs = (wsData?.workspaces.length ?? 0) > 1;
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl px-3 md:gap-4 md:px-4">
@@ -267,47 +292,84 @@ export function AppTopbar({ user }: AppTopbarProps) {
               <ChevronDown className="h-3 w-3 shrink-0" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64">
+          <DropdownMenuContent align="end" className="w-72">
+            {/* Current workspace */}
             <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
               Workspace
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {wsLoading ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              </div>
-            ) : workspaces.length === 0 ? (
-              <div className="px-3 py-4 text-center text-xs text-muted-foreground">
-                Belum ada workspace
-              </div>
+
+            {/* Workspace list */}
+            {wsData?.workspaces.map((ws) => (
+              <DropdownMenuItem
+                key={ws.id}
+                onClick={() => handleSwitchWorkspace(ws.id)}
+                className="flex items-center gap-2 cursor-pointer"
+                disabled={switching === ws.id}
+              >
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-sidebar-primary/10 text-sidebar-primary text-xs font-semibold">
+                  {ws.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{ws.name}</p>
+                  <p className="text-[10px] text-muted-foreground capitalize">{ws.role}</p>
+                </div>
+                {ws.isActive && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                {switching === ws.id && <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />}
+              </DropdownMenuItem>
+            ))}
+
+            <DropdownMenuSeparator />
+
+            {/* Create workspace — gated */}
+            {isFree ? (
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href="/app/billing" className="flex items-center gap-2">
+                  <Crown className="h-4 w-4 text-amber-500" />
+                  <div className="flex-1">
+                    <p className="text-xs font-medium">Upgrade untuk multi workspace</p>
+                    <p className="text-[10px] text-muted-foreground">Solo · Rp 49rb/bulan</p>
+                  </div>
+                </Link>
+              </DropdownMenuItem>
             ) : (
-              workspaces.map((ws) => (
-                <DropdownMenuItem
-                  key={ws.id}
-                  onClick={() => handleSwitchWorkspace(ws.id)}
-                  className="flex items-center gap-2 cursor-pointer"
-                  disabled={switching === ws.id}
-                >
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-sidebar-primary/10 text-sidebar-primary text-xs font-semibold">
-                    {ws.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{ws.name}</p>
-                    <p className="text-[10px] text-muted-foreground capitalize">{ws.role}</p>
-                  </div>
-                  {ws.isActive && (
-                    <Check className="h-4 w-4 shrink-0 text-primary" />
-                  )}
-                  {switching === ws.id && (
-                    <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
-                  )}
-                </DropdownMenuItem>
-              ))
+              <DropdownMenuItem
+                onClick={handleCreateWorkspace}
+                className="cursor-pointer"
+                disabled={creating || !wsData?.canCreate}
+              >
+                {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
+                <span className="text-xs">
+                  {wsData?.canCreate ? "Buat workspace baru" : wsData?.canCreateReason || "Batas workspace tercapai"}
+                </span>
+              </DropdownMenuItem>
             )}
+
+            {/* Invite member — gated */}
+            {isFree ? (
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href="/app/billing" className="flex items-center gap-2">
+                  <Crown className="h-4 w-4 text-amber-500" />
+                  <div className="flex-1">
+                    <p className="text-xs font-medium">Upgrade untuk undang anggota</p>
+                    <p className="text-[10px] text-muted-foreground">Team · Rp 99rb/bulan</p>
+                  </div>
+                </Link>
+              </DropdownMenuItem>
+            ) : wsData?.canInvite ? (
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href="/app/settings?tab=members" className="flex items-center gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  <span className="text-xs">Undang anggota</span>
+                </Link>
+              </DropdownMenuItem>
+            ) : null}
+
+            {/* Manage workspace */}
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild className="cursor-pointer">
               <Link href="/app/settings" className="flex items-center gap-2">
-                <PlusCircle className="h-4 w-4" />
+                <Users className="h-4 w-4" />
                 <span className="text-xs">Kelola workspace</span>
               </Link>
             </DropdownMenuItem>
