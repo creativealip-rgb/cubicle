@@ -26,6 +26,7 @@ import {
   Calendar,
   TrendingUp,
   FileQuestion,
+  Crown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -786,7 +787,18 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                         ) : m.error ? (
                           <div className="flex items-start gap-2">
                             <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                            <span className="text-xs">{m.error}</span>
+                            <div className="flex-1">
+                              <span className="text-xs">{m.error}</span>
+                              {(m.error.includes("plan") || m.error.includes("Upgrade") || m.error.includes("Batas")) && (
+                                <a
+                                  href="/app/billing"
+                                  className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 hover:text-amber-700 hover:underline"
+                                >
+                                  <Crown className="h-3 w-3" />
+                                  Upgrade plan
+                                </a>
+                              )}
+                            </div>
                           </div>
                         ) : (
                           <>

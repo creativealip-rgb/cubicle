@@ -35,12 +35,11 @@ export async function createClient(input: z.infer<typeof clientSchema>) {
   await assertWorkspaceWritable(db, user.id, workspaceId);
 
   // Check plan limits
-  const [ws] = await db.select({ plan: workspaces.plan }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
-  if (ws?.plan === "free") {
-    const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(clients).where(eq(clients.workspaceId, workspaceId));
-    if (count >= 3) {
-      throw new Error("Free plan limited to 3 clients. Upgrade to Solo for unlimited clients.");
-    }
+  const { getWorkspacePlan, checkEntityLimit } = await import("@/lib/plan");
+  const plan = await getWorkspacePlan(workspaceId);
+  const clientLimit = await checkEntityLimit(workspaceId, "clients", plan);
+  if (!clientLimit.allowed) {
+    throw new Error(clientLimit.reason!);
   }
 
   const parsed = clientSchema.parse(input);

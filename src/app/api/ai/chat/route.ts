@@ -138,6 +138,31 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Rate limit: AI requests per day based on plan
+  const { getWorkspacePlan, checkWorkspaceRateLimit, getPlanLimits } = await import("@/lib/plan");
+  const plan = await getWorkspacePlan(wsId);
+  const limits = getPlanLimits(plan);
+
+  if (!limits.hasAiAssistant) {
+    return new Response(
+      JSON.stringify({ error: "AI assistant tidak tersedia di plan Free. Upgrade ke Solo atau Team." }),
+      { status: 403, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  const aiRate = checkWorkspaceRateLimit(wsId, "ai", plan);
+  if (!aiRate.allowed) {
+    const resetDate = new Date(aiRate.resetAt).toISOString();
+    return new Response(
+      JSON.stringify({
+        error: `Batas ${aiRate.limit} request AI/hari tercapai. Reset setelah ${resetDate}.`,
+        limit: aiRate.limit,
+        resetAt: aiRate.resetAt,
+      }),
+      { status: 429, headers: { "Content-Type": "application/json", "X-RateLimit-Reset": resetDate } },
+    );
+  }
+
   // Persist user message first
   let conversationId: string;
   try {

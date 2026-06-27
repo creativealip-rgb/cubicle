@@ -29,6 +29,14 @@ export async function createProject(input: z.infer<typeof projectSchema>) {
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
 
+  // Check plan limits
+  const { getWorkspacePlan, checkEntityLimit } = await import("@/lib/plan");
+  const plan = await getWorkspacePlan(workspaceId);
+  const projLimit = await checkEntityLimit(workspaceId, "projects", plan);
+  if (!projLimit.allowed) {
+    throw new Error(projLimit.reason!);
+  }
+
   const parsed = projectSchema.parse(input);
 
   const [project] = await db.insert(projects).values({

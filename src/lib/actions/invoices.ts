@@ -93,6 +93,14 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
 
+  // Check plan limits
+  const { getWorkspacePlan, checkEntityLimit } = await import("@/lib/plan");
+  const plan = await getWorkspacePlan(workspaceId);
+  const invLimit = await checkEntityLimit(workspaceId, "invoices", plan);
+  if (!invLimit.allowed) {
+    throw new Error(invLimit.reason!);
+  }
+
   const parsed = createInvoiceSchema.parse(input);
 
   const [ws] = await db
