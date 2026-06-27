@@ -87,7 +87,7 @@ export function LoginForm() {
         <Image src="/icon-192.png" alt="Cubiqlo" width={40} height={40} className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover" />
         <CardTitle className="text-2xl">Welcome back</CardTitle>
         <CardDescription>
-          Sign in to your Cubiqlo workspace
+          Masuk ke workspace Cubiqlo kamu
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -141,7 +141,7 @@ export function LoginForm() {
                 href="/forgot-password"
                 className="text-xs text-muted-foreground underline-offset-4 hover:underline"
               >
-                Forgot password?
+                Lupa password?
               </Link>
             </div>
             <Input
@@ -156,18 +156,18 @@ export function LoginForm() {
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Sign in
+            Masuk
           </Button>
         </CardContent>
       </form>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
+          Belum punya akun?{" "}
           <Link
             href="/signup"
             className="font-medium text-primary underline-offset-4 hover:underline"
           >
-            Sign up
+            Daftar
           </Link>
         </p>
       </CardFooter>

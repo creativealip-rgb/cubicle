@@ -37,22 +37,22 @@ import { useSidebar } from "@/components/app-shell";
 
 const navItems = [
   { label: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard, group: null },
-  { label: "Clients", href: "/app/clients", icon: Users, group: "Work" },
-  { label: "Projects", href: "/app/projects", icon: Briefcase, group: "Work" },
-  { label: "Tasks", href: "/app/tasks", icon: CheckSquare, group: "Work", badgeKey: "myOpenTasks" as const },
-  { label: "Time", href: "/app/time", icon: Clock, group: "Work" },
-  { label: "Calendar", href: "/app/calendar", icon: Calendar, group: "Work" },
-  { label: "Files", href: "/app/files", icon: FolderOpen, group: "Work" },
-  { label: "Invoices", href: "/app/invoices", icon: Receipt, group: "Money", badgeKey: "unpaidInvoices" as const },
-  { label: "Expenses", href: "/app/expenses", icon: Wallet, group: "Money" },
-  { label: "Reports", href: "/app/reports", icon: BarChart3, group: "Money" },
-  { label: "Billing", href: "/app/billing", icon: CreditCard, group: "Money" },
-  { label: "Proposals", href: "/app/proposals", icon: FileText, group: "Sales", badgeKey: "draftProposals" as const },
-  { label: "Contracts", href: "/app/contracts", icon: FileSignature, group: "Sales", badgeKey: "draftContracts" as const },
-  { label: "Forms", href: "/app/questionnaires", icon: ClipboardList, group: "Sales" },
-  { label: "Templates", href: "/app/contract-templates", icon: FileText, group: "Sales" },
+  { label: "Klien", href: "/app/clients", icon: Users, group: "Kerja" },
+  { label: "Proyek", href: "/app/projects", icon: Briefcase, group: "Kerja" },
+  { label: "Tugas", href: "/app/tasks", icon: CheckSquare, group: "Kerja", badgeKey: "myOpenTasks" as const },
+  { label: "Waktu", href: "/app/time", icon: Clock, group: "Kerja" },
+  { label: "Kalender", href: "/app/calendar", icon: Calendar, group: "Kerja" },
+  { label: "File", href: "/app/files", icon: FolderOpen, group: "Kerja" },
+  { label: "Invoice", href: "/app/invoices", icon: Receipt, group: "Keuangan", badgeKey: "unpaidInvoices" as const },
+  { label: "Pengeluaran", href: "/app/expenses", icon: Wallet, group: "Keuangan" },
+  { label: "Laporan", href: "/app/reports", icon: BarChart3, group: "Keuangan" },
+  { label: "Tagihan", href: "/app/billing", icon: CreditCard, group: "Keuangan" },
+  { label: "Proposal", href: "/app/proposals", icon: FileText, group: "Penjualan", badgeKey: "draftProposals" as const },
+  { label: "Kontrak", href: "/app/contracts", icon: FileSignature, group: "Penjualan", badgeKey: "draftContracts" as const },
+  { label: "Formulir", href: "/app/questionnaires", icon: ClipboardList, group: "Penjualan" },
+  { label: "Template", href: "/app/contract-templates", icon: FileText, group: "Penjualan" },
   { label: "Brain", href: "/app/brain", icon: BrainIcon, group: "AI" },
-  { label: "Prompts", href: "/app/prompts", icon: Sparkles, group: "AI" },
+  { label: "Prompt", href: "/app/prompts", icon: Sparkles, group: "AI" },
 ];
 
 export type SidebarBadgeKey =
@@ -180,10 +180,10 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
                         : 0;
                     const badgeLabel = item.badgeKey
                       ? ({
-                          myOpenTasks: "open tasks assigned to you",
-                          unpaidInvoices: "unpaid invoices",
-                          draftProposals: "draft proposals to send",
-                          draftContracts: "draft contracts to send",
+                          myOpenTasks: "tugas terbuka",
+                          unpaidInvoices: "invoice belum dibayar",
+                          draftProposals: "proposal belum dikirim",
+                          draftContracts: "kontrak belum dikirim",
                         }[item.badgeKey])
                       : "";
 

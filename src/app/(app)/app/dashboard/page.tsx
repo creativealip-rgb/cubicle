@@ -285,19 +285,19 @@ export default async function DashboardPage() {
 
   const ACTION_LABELS: Record<string, string> = {
     started_timer: "Mulai Timer",
-    stopped_timer: "Stop Timer",
+    stopped_timer: "Hentikan Timer",
     booked_appointment_public: "Janji Temu Publik Dibuat",
     generated_invoice_share_token: "Link Berbagi Invoice Dibuat",
     recorded_payment: "Pembayaran Dicatat",
     imported_time_to_invoice: "Catatan Waktu Diimport",
     generated_portal_token: "Token Portal Dibuat",
     created_comment: "Komentar Dibuat",
-    updated_task: "Task Diperbarui",
+    updated_task: "Tugas Diperbarui",
     created_invoice: "Invoice Dibuat",
     created_client: "Klien Dibuat",
-    created_project: "Project Dibuat",
-    created_task: "Task Dibuat",
-    updated_project: "Project Diperbarui",
+    created_project: "Proyek Dibuat",
+    created_task: "Tugas Dibuat",
+    updated_project: "Proyek Diperbarui",
     updated_invoice: "Invoice Diperbarui",
     sent_invoice: "Invoice Dikirim",
     sent_proposal: "Proposal Dikirim",
@@ -314,8 +314,8 @@ export default async function DashboardPage() {
     payment: "pembayaran",
     client: "klien",
     comment: "komentar",
-    task: "task",
-    project: "project",
+    task: "tugas",
+    project: "proyek",
     proposal: "proposal",
     file: "file",
     contract: "kontrak",
@@ -338,7 +338,7 @@ export default async function DashboardPage() {
       href: "/app/clients",
     },
     {
-      label: "Project Aktif",
+      label: "Proyek Aktif",
       value: String(activeProjects),
       change: `${activeProjects} berjalan`,
       icon: Briefcase,
@@ -347,7 +347,7 @@ export default async function DashboardPage() {
       href: "/app/projects",
     },
     {
-      label: "Task Jatuh Tempo",
+      label: "Tugas Jatuh Tempo",
       value: String(dueTasks),
       change: `${overdueTasks} terlambat`,
       icon: CheckSquare,
@@ -395,7 +395,7 @@ export default async function DashboardPage() {
   const sparkTrend = sparkPrevTotal > 0 ? ((sparkTotal - sparkPrevTotal) / sparkPrevTotal) * 100 : 0;
 
   const quickActions = [
-    { label: "Task baru", icon: CheckSquare, href: "/app/tasks" },
+    { label: "Tugas baru", icon: CheckSquare, href: "/app/tasks" },
     { label: "Invoice baru", icon: FileText, href: "/app/invoices" },
     { label: "Mulai timer", icon: Timer, href: "/app/time" },
     { label: "Tambah klien", icon: Plus, href: "/app/clients" },
@@ -410,7 +410,7 @@ export default async function DashboardPage() {
             {greeting}, {firstName}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {todayLong} · {activeProjects} project aktif · {dueTasks} task jatuh tempo
+            {todayLong} · {activeProjects} proyek aktif · {dueTasks} tugas jatuh tempo
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -656,7 +656,7 @@ export default async function DashboardPage() {
             </div>
             {chAtRisk > 0 && (
               <p className="text-xs text-muted-foreground">
-                {chAtRisk} klien tidak ada aktivitas project 30+ hari terakhir.
+                {chAtRisk} klien tidak ada aktivitas proyek 30+ hari terakhir.
               </p>
             )}
           </CardContent>
@@ -717,7 +717,7 @@ export default async function DashboardPage() {
             </CardTitle>
             <Button variant="ghost" size="sm" className="gap-1 text-xs" asChild>
               <Link href="/app/tasks">
-                Lihat task
+                Lihat tugas
                 <ArrowUpRight className="h-3 w-3" />
               </Link>
             </Button>
@@ -837,7 +837,7 @@ export default async function DashboardPage() {
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                 <ListChecks className="h-3.5 w-3.5 text-muted-foreground" />
-                Task Hari Ini
+                Tugas Hari Ini
               </CardTitle>
               <Button variant="ghost" size="sm" className="h-6 gap-1 text-xs" asChild>
                 <Link href="/app/tasks">Lihat semua</Link>
@@ -845,7 +845,7 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent className="space-y-2 pt-0">
               {todayTasks.length === 0 && (
-                <p className="py-3 text-center text-xs text-muted-foreground">Tidak ada task hari ini</p>
+                <p className="py-3 text-center text-xs text-muted-foreground">Tidak ada tugas hari ini</p>
               )}
               {todayTasks.map((task) => (
                 <div key={task.id} className="flex items-center justify-between rounded-lg px-2 py-1.5 hover:bg-slate-50">

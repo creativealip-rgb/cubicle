@@ -131,7 +131,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
         size="icon"
         className="h-9 w-9 shrink-0 md:hidden"
         onClick={() => setMobileOpen(true)}
-        aria-label="Open menu"
+        aria-label="Buka menu"
       >
         <Menu className="h-5 w-5" />
       </Button>
@@ -140,7 +140,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
         <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
         <Input
           type="search"
-          placeholder="Search... (Ctrl+K)"
+          placeholder="Cari... (Ctrl+K)"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="h-9 pl-9 text-sm"
@@ -154,20 +154,20 @@ export function AppTopbar({ user }: AppTopbarProps) {
           <DropdownMenuTrigger asChild>
             <Button size="sm" className="gap-1">
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">New</span>
+              <span className="hidden sm:inline">Baru</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuLabel>Create new</DropdownMenuLabel>
+            <DropdownMenuLabel>Buat baru</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/app/projects/new">Project</Link>
+              <Link href="/app/projects/new">Proyek</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/app/tasks/new">Task</Link>
+              <Link href="/app/tasks/new">Tugas</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/app/clients/new">Client</Link>
+              <Link href="/app/clients/new">Klien</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href="/app/invoices/new">Invoice</Link>
@@ -188,7 +188,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
               ? [activeTimer.clientName, activeTimer.projectName, activeTimer.taskTitle, activeTimer.description]
                   .filter(Boolean)
                   .join(" • ")
-              : "No active timer"
+              : "Tidak ada timer aktif"
           }
         >
           <Timer className="h-4 w-4" />
@@ -202,8 +202,8 @@ export function AppTopbar({ user }: AppTopbarProps) {
           size="icon"
           className="h-9 w-9 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
           onClick={() => window.dispatchEvent(new Event("cubicle:toggle-ai"))}
-          aria-label="Toggle AI assistant"
-          title="AI assistant"
+          aria-label="Asisten AI"
+          title="Asisten AI"
         >
           <Sparkles className="h-4 w-4" />
         </Button>
@@ -214,7 +214,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
         {/* Workspace switcher */}
         <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
           <span className="hidden sm:inline text-xs font-medium">
-            My Workspace
+            Workspace Saya
           </span>
           <ChevronDown className="h-3 w-3" />
         </Button>
@@ -251,14 +251,14 @@ export function AppTopbar({ user }: AppTopbarProps) {
               <DropdownMenuItem asChild>
                 <Link href="/app/help" className="cursor-pointer">
                   <HelpCircle className="h-4 w-4" />
-                  Help & Support
+                  Bantuan & Dukungan
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
               <LogOut className="h-4 w-4" />
-              Sign out
+              Keluar
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

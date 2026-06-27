@@ -56,7 +56,7 @@ export function SignupForm() {
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1 text-center">
         <Image src="/icon-192.png" alt="Cubiqlo" width={40} height={40} className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover" />
-        <CardTitle className="text-2xl">Create an account</CardTitle>
+        <CardTitle className="text-2xl">Buat akun</CardTitle>
         <CardDescription>
           Start your free Cubiqlo workspace
         </CardDescription>
@@ -116,12 +116,12 @@ export function SignupForm() {
       </form>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
-          Already have an account?{" "}
+          Sudah punya akun?{" "}
           <Link
             href="/login"
             className="font-medium text-primary underline-offset-4 hover:underline"
           >
-            Sign in
+            Masuk
           </Link>
         </p>
       </CardFooter>
