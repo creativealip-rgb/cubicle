@@ -44,8 +44,7 @@ export function SignupForm() {
         return;
       }
 
-      router.push("/onboarding");
-      router.refresh();
+      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
