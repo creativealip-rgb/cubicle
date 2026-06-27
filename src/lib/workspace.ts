@@ -1,16 +1,18 @@
 "use server";
 
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { eq } from "drizzle-orm";
+import { headers, cookies } from "next/headers";
+import { eq, and } from "drizzle-orm";
 import { db } from "@/db";
 import { users, workspaceMembers, workspaces } from "@/db/schema";
+
+const COOKIE_NAME = "active_workspace_id";
 
 type WorkspaceRow = typeof workspaces.$inferSelect;
 
 /**
  * Get workspace ID for the current authenticated user.
- * Auto-creates workspace if user has none (new signup).
+ * Checks cookie first, then membership, auto-creates if none.
  */
 export async function getWorkspaceForCurrentUser(): Promise<string> {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -23,7 +25,6 @@ export async function getWorkspaceForCurrentUser(): Promise<string> {
 
 /**
  * Get full workspace record for the current user.
- * Auto-creates workspace if user has none (new signup).
  */
 export async function getWorkspaceFullForCurrentUser(): Promise<WorkspaceRow> {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -35,10 +36,35 @@ export async function getWorkspaceFullForCurrentUser(): Promise<WorkspaceRow> {
 
 /**
  * Get workspace record for a specific user by ID.
- * Auto-creates workspace if user has none.
+ * Priority: cookie → first membership → auto-create.
  */
 export async function getWorkspaceRecordForUser(userId: string): Promise<WorkspaceRow> {
-  // Look up workspace via membership
+  const cookieStore = await cookies();
+  const cookieWsId = cookieStore.get(COOKIE_NAME)?.value;
+
+  // If cookie exists, verify membership
+  if (cookieWsId) {
+    const [membership] = await db
+      .select({ workspaceId: workspaceMembers.workspaceId })
+      .from(workspaceMembers)
+      .where(and(
+        eq(workspaceMembers.userId, userId),
+        eq(workspaceMembers.workspaceId, cookieWsId),
+      ))
+      .limit(1);
+
+    if (membership) {
+      const [ws] = await db
+        .select()
+        .from(workspaces)
+        .where(eq(workspaces.id, membership.workspaceId))
+        .limit(1);
+      if (ws) return ws;
+    }
+    // Cookie invalid — fall through to default
+  }
+
+  // Fallback: first membership
   const [membership] = await db
     .select({ workspaceId: workspaceMembers.workspaceId })
     .from(workspaceMembers)
@@ -54,7 +80,7 @@ export async function getWorkspaceRecordForUser(userId: string): Promise<Workspa
     if (ws) return ws;
   }
 
-  // No workspace found — auto-create for this user
+  // No workspace found — auto-create
   return createWorkspaceForUser(userId);
 }
 
@@ -62,7 +88,6 @@ export async function getWorkspaceRecordForUser(userId: string): Promise<Workspa
  * Create a new workspace for a user and add them as owner.
  */
 async function createWorkspaceForUser(userId: string): Promise<WorkspaceRow> {
-  // Get user info for workspace name
   const [user] = await db
     .select({ name: users.name, email: users.email })
     .from(users)
@@ -84,7 +109,6 @@ async function createWorkspaceForUser(userId: string): Promise<WorkspaceRow> {
     })
     .returning();
 
-  // Add user as owner
   await db.insert(workspaceMembers).values({
     workspaceId: ws.id,
     userId,

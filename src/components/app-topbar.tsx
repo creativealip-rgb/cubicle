@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -13,6 +13,10 @@ import {
   HelpCircle,
   Menu,
   Sparkles,
+  Check,
+  Building2,
+  PlusCircle,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +33,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { useSidebar } from "@/components/app-shell";
 import { NotificationsBell } from "@/components/notifications-bell";
+import { getUserWorkspaces, switchWorkspace } from "@/lib/actions/workspace-switch";
 
 interface AppTopbarProps {
   user: {
@@ -48,6 +53,14 @@ type ActiveTimer = {
   description?: string | null;
 };
 
+type WorkspaceItem = {
+  id: string;
+  name: string;
+  slug: string;
+  role: string;
+  isActive: boolean;
+};
+
 function formatElapsed(startTime?: string | null) {
   if (!startTime) return "00:00";
   const seconds = Math.max(0, Math.floor((Date.now() - new Date(startTime).getTime()) / 1000));
@@ -65,6 +78,9 @@ export function AppTopbar({ user }: AppTopbarProps) {
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
   const [elapsed, setElapsed] = useState("00:00");
   const { setMobileOpen } = useSidebar();
+  const [workspaces, setWorkspaces] = useState<WorkspaceItem[]>([]);
+  const [wsLoading, setWsLoading] = useState(false);
+  const [switching, setSwitching] = useState<string | null>(null);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -77,6 +93,32 @@ export function AppTopbar({ user }: AppTopbarProps) {
     await authClient.signOut();
     router.push("/login");
     router.refresh();
+  }
+
+  // Load workspaces
+  const loadWorkspaces = useCallback(async () => {
+    setWsLoading(true);
+    try {
+      const data = await getUserWorkspaces();
+      setWorkspaces(data);
+    } catch {
+      // silent
+    } finally {
+      setWsLoading(false);
+    }
+  }, []);
+
+  async function handleSwitchWorkspace(wsId: string) {
+    if (switching) return;
+    setSwitching(wsId);
+    try {
+      const result = await switchWorkspace(wsId);
+      if (result.ok) {
+        router.refresh();
+      }
+    } finally {
+      setSwitching(null);
+    }
   }
 
   useEffect(() => {
@@ -94,6 +136,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
     }
 
     loadActiveTimer();
+    loadWorkspaces();
     const poll = window.setInterval(loadActiveTimer, 15000);
     window.addEventListener("cubicle:timer-changed", loadActiveTimer);
     window.addEventListener("focus", loadActiveTimer);
@@ -103,7 +146,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
       window.removeEventListener("cubicle:timer-changed", loadActiveTimer);
       window.removeEventListener("focus", loadActiveTimer);
     };
-  }, []);
+  }, [loadWorkspaces]);
 
   useEffect(() => {
     setElapsed(formatElapsed(activeTimer?.startTime));
@@ -122,6 +165,8 @@ export function AppTopbar({ user }: AppTopbarProps) {
     .join("")
     .toUpperCase()
     .slice(0, 2);
+
+  const activeWorkspace = workspaces.find(w => w.isActive);
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl px-3 md:gap-4 md:px-4">
@@ -196,7 +241,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
         </Button>
         )}
 
-        {/* AI assistant button (replaces floating FAB to avoid overlap) */}
+        {/* AI assistant button */}
         <Button
           variant="outline"
           size="icon"
@@ -212,12 +257,62 @@ export function AppTopbar({ user }: AppTopbarProps) {
         <NotificationsBell />
 
         {/* Workspace switcher */}
-        <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
-          <span className="hidden sm:inline text-xs font-medium">
-            Workspace Saya
-          </span>
-          <ChevronDown className="h-3 w-3" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground max-w-[180px]">
+              <Building2 className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden sm:inline text-xs font-medium truncate">
+                {activeWorkspace?.name || "Workspace"}
+              </span>
+              <ChevronDown className="h-3 w-3 shrink-0" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64">
+            <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+              Workspace
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {wsLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              </div>
+            ) : workspaces.length === 0 ? (
+              <div className="px-3 py-4 text-center text-xs text-muted-foreground">
+                Belum ada workspace
+              </div>
+            ) : (
+              workspaces.map((ws) => (
+                <DropdownMenuItem
+                  key={ws.id}
+                  onClick={() => handleSwitchWorkspace(ws.id)}
+                  className="flex items-center gap-2 cursor-pointer"
+                  disabled={switching === ws.id}
+                >
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-sidebar-primary/10 text-sidebar-primary text-xs font-semibold">
+                    {ws.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{ws.name}</p>
+                    <p className="text-[10px] text-muted-foreground capitalize">{ws.role}</p>
+                  </div>
+                  {ws.isActive && (
+                    <Check className="h-4 w-4 shrink-0 text-primary" />
+                  )}
+                  {switching === ws.id && (
+                    <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
+                  )}
+                </DropdownMenuItem>
+              ))
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link href="/app/settings" className="flex items-center gap-2">
+                <PlusCircle className="h-4 w-4" />
+                <span className="text-xs">Kelola workspace</span>
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* User menu */}
         <DropdownMenu>
@@ -245,7 +340,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
               <DropdownMenuItem asChild>
                 <Link href="/app/settings" className="cursor-pointer">
                   <Settings className="h-4 w-4" />
-                  Settings
+                  Pengaturan
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
