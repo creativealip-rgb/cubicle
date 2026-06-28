@@ -488,7 +488,78 @@ export async function recordPayment(input: z.infer<typeof recordPaymentSchema>) 
   return payment;
 }
 
-// ─── Shared Token ───
+// ─── Send / Shared Token ───
+
+async function sendInvoiceEmailForInvoice(invoiceId: string, actorId: string, workspaceId: string) {
+  const [inv] = await db
+    .select()
+    .from(invoices)
+    .where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId)))
+    .limit(1);
+  if (!inv) throw new Error("Invoice not found");
+
+  const [client] = await db
+    .select({ name: clients.name, email: clients.email })
+    .from(clients)
+    .where(eq(clients.id, inv.clientId))
+    .limit(1);
+  if (!client?.email) throw new Error("Client email is missing");
+
+  const [ws] = await db
+    .select({ name: workspaces.name, replyToEmail: workspaces.replyToEmail })
+    .from(workspaces)
+    .where(eq(workspaces.id, workspaceId))
+    .limit(1);
+
+  // Raw share tokens are shown only once, so sending always rotates a fresh link.
+  const generated = await generateInvoiceShareToken(invoiceId);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+  const portalUrl = `${appUrl}/invoice/${generated.token}`;
+  await notifyInvoiceSent({
+    clientEmail: client.email,
+    clientName: client.name ?? "there",
+    invoiceNumber: inv.invoiceNumber ?? invoiceId.slice(0, 8),
+    amount: formatMoney(inv.total, inv.currency || "IDR"),
+    portalUrl,
+    workspaceName: ws?.name,
+    replyTo: ws?.replyToEmail ?? undefined,
+  });
+
+  await db
+    .update(invoices)
+    .set({ status: inv.status === "paid" ? inv.status : "sent", updatedAt: new Date() })
+    .where(eq(invoices.id, invoiceId));
+
+  await writeActivityLog(workspaceId, actorId, "sent_invoice_email", "invoice", invoiceId, {
+    clientEmail: client.email,
+    portalUrl,
+  });
+
+  try {
+    await notifyWorkspaceMembers(workspaceId, {
+      type: "invoice_sent",
+      title: `Invoice ${inv.invoiceNumber} sent`,
+      body: `${client.name} · ${formatMoney(inv.total, inv.currency || "IDR")}`,
+      link: `/app/invoices/${invoiceId}`,
+      entityType: "invoice",
+      entityId: invoiceId,
+      actorId,
+    });
+  } catch {
+    // best-effort
+  }
+
+  return { success: true, portalUrl };
+}
+
+export async function sendInvoiceEmail(invoiceId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertInvoiceInWorkspace(invoiceId, workspaceId);
+  return sendInvoiceEmailForInvoice(invoiceId, user.id, workspaceId);
+}
 
 export async function generateInvoiceShareToken(invoiceId: string, expiresAt?: string) {
   const session = await auth.api.getSession({ headers: await headers() });

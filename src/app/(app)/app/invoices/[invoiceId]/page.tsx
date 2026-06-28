@@ -24,6 +24,7 @@ import { DeleteItemButton } from "./delete-item-button";
 import { ImportTimeSection } from "./import-time-section";
 import { PaymentSection } from "./payment-section";
 import { ShareTokenSection } from "./share-token-section";
+import { SendInvoiceButton } from "./send-invoice-button";
 import { formatDateID, formatMoney } from "@/lib/utils";
 import { invoiceStatusVariant } from "@/lib/status-badge";
 
@@ -139,7 +140,8 @@ export default async function InvoiceDetailPage({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <SendInvoiceButton invoiceId={invoiceId} disabled={!client?.email || items.length === 0} />
           <Badge
             variant={statusVariant(displayStatus)}
             className="text-sm px-3 py-1"
