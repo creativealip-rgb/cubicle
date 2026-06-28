@@ -8,6 +8,7 @@ import {
   invoices,
   comments,
   portalVisits,
+  portalRequests,
 } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { getClientPortalAccess, logPortalAccess } from "@/lib/actions/portal";
@@ -24,6 +25,7 @@ import { PortalProjectCard } from "@/components/portal/portal-project-card";
 import { PortalTaskList } from "@/components/portal/portal-task-list";
 import { PortalFileList } from "@/components/portal/portal-file-list";
 import { PortalCommentForm } from "@/components/portal/portal-comment-form";
+import { PortalRequestList } from "@/components/portal/portal-request-list";
 
 export default async function ClientPortalPage({
   params,
@@ -238,6 +240,25 @@ export default async function ClientPortalPage({
     projectCommentsMap.set(projectId, projectComments);
   }
 
+  const clientPortalRequests = await db
+    .select({
+      id: portalRequests.id,
+      title: portalRequests.title,
+      description: portalRequests.description,
+      type: portalRequests.type,
+      status: portalRequests.status,
+      dueDate: portalRequests.dueDate,
+      projectId: portalRequests.projectId,
+    })
+    .from(portalRequests)
+    .where(
+      and(
+        eq(portalRequests.workspaceId, client.workspaceId),
+        eq(portalRequests.clientId, client.id),
+      ),
+    )
+    .limit(100);
+
   // Fetch shared invoices
   const sharedInvoices = await db
     .select({
@@ -283,6 +304,17 @@ export default async function ClientPortalPage({
             Client Portal — Secured Access
           </p>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" /> Requests & reminders
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PortalRequestList requests={clientPortalRequests} token={token} />
+          </CardContent>
+        </Card>
 
         {/* Projects Section */}
         <section>

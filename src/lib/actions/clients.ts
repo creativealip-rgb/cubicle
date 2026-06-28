@@ -15,6 +15,14 @@ async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
 }
 
+const slugSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, numbers, and hyphens only")
+  .min(3)
+  .max(60);
+
 const clientSchema = z.object({
   name: z.string().min(1, "Name is required"),
   companyName: z.string().optional(),
@@ -24,6 +32,8 @@ const clientSchema = z.object({
   address: z.string().optional(),
   tags: z.array(z.string()).default([]),
   internalNotes: z.string().optional(),
+  portalSlug: slugSchema.optional().or(z.literal("")),
+  portalSlugEnabled: z.boolean().optional(),
 });
 
 // ─── CRUD Actions ───
@@ -54,6 +64,8 @@ export async function createClient(input: z.infer<typeof clientSchema>) {
     address: parsed.address || null,
     tags: parsed.tags,
     internalNotes: parsed.internalNotes || null,
+    portalSlug: parsed.portalSlug || null,
+    portalSlugEnabled: parsed.portalSlugEnabled ?? true,
     status: "active",
   }).returning();
 
@@ -79,6 +91,8 @@ export async function updateClient(clientId: string, input: Partial<z.infer<type
   if (parsed.address !== undefined) updateData.address = parsed.address;
   if (parsed.tags !== undefined) updateData.tags = parsed.tags;
   if (parsed.internalNotes !== undefined) updateData.internalNotes = parsed.internalNotes;
+  if (parsed.portalSlug !== undefined) updateData.portalSlug = parsed.portalSlug || null;
+  if (parsed.portalSlugEnabled !== undefined) updateData.portalSlugEnabled = parsed.portalSlugEnabled;
   if (input.status !== undefined) updateData.status = input.status;
   updateData.updatedAt = new Date();
 

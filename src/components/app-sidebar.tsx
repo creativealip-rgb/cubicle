@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +32,7 @@ import {
   BarChart3,
   FileText,
   CreditCard,
+  ChevronDown,
 } from "lucide-react";
 import { useSidebar } from "@/components/app-shell";
 
@@ -77,6 +78,33 @@ interface AppSidebarProps {
 export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps) {
   const pathname = usePathname();
   const { mobileOpen, setMobileOpen } = useSidebar();
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
+    Kerja: true,
+    Keuangan: true,
+    Penjualan: true,
+    AI: true,
+  });
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("cubiqlo_sidebar_groups");
+      if (saved) setOpenGroups(JSON.parse(saved));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  function toggleGroup(name: string) {
+    setOpenGroups((prev) => {
+      const next = { ...prev, [name]: prev[name] === false };
+      try {
+        window.localStorage.setItem("cubiqlo_sidebar_groups", JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -160,13 +188,21 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
       <nav className="flex-1 overflow-y-auto px-2 py-3">
         <TooltipProvider delayDuration={300}>
           <div className="space-y-3">
-            {groupedItems.map((g) => (
+            {groupedItems.map((g) => {
+              const isGroupOpen = !g.name || collapsed || openGroups[g.name] !== false;
+              return (
               <div key={g.name ?? "_main"}>
                 {!collapsed && g.name && (
-                  <p className="px-3 pb-1.5 pt-1 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
-                    {g.name}
-                  </p>
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(g.name!)}
+                    className="flex w-full items-center justify-between rounded-md px-3 pb-1.5 pt-1 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70 hover:bg-sidebar-accent"
+                  >
+                    <span>{g.name}</span>
+                    <ChevronDown className={cn("h-3 w-3 transition-transform", !isGroupOpen && "-rotate-90")} />
+                  </button>
                 )}
+                {isGroupOpen && (
                 <ul className="space-y-1">
                   {g.items.map((item) => {
                     const isActive =
@@ -235,8 +271,10 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
                     );
                   })}
                 </ul>
+                )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </TooltipProvider>
       </nav>

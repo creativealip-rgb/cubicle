@@ -2,7 +2,7 @@ import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/li
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { clients, projects, tasks, workspaces, files, invoices, appointments } from "@/db/schema";
+import { clients, projects, tasks, files, invoices, appointments, portalRequests } from "@/db/schema";
 import { eq, desc, sql } from "drizzle-orm";
 import { requireUser, assertClientInWorkspace } from "@/lib/access";
 import { notFound } from "next/navigation";
@@ -24,6 +24,7 @@ import {
   Users,
 } from "lucide-react";
 import { PortalTokenSection } from "./portal-section";
+import { PortalRequestAdmin } from "@/components/portal/portal-request-admin";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -87,6 +88,20 @@ export default async function ClientDetailPage({
     .where(eq(appointments.clientId, clientId))
     .orderBy(desc(appointments.startTime));
 
+  const clientPortalRequests = await db
+    .select({
+      id: portalRequests.id,
+      title: portalRequests.title,
+      description: portalRequests.description,
+      type: portalRequests.type,
+      status: portalRequests.status,
+      dueDate: portalRequests.dueDate,
+      projectId: portalRequests.projectId,
+    })
+    .from(portalRequests)
+    .where(eq(portalRequests.clientId, clientId))
+    .orderBy(desc(portalRequests.createdAt));
+
   // Notes — use internal notes field + comments on visible projects
   // (no direct client comments in schema)
 
@@ -134,6 +149,8 @@ export default async function ClientDetailPage({
                   address: client.address ?? "",
                   tags: client.tags ?? [],
                   internalNotes: client.internalNotes ?? "",
+                  portalSlug: client.portalSlug ?? "",
+                  portalSlugEnabled: client.portalSlugEnabled ?? true,
                 }}
               />
             </DialogContent>
@@ -246,6 +263,9 @@ export default async function ClientDetailPage({
           <TabsTrigger value="appointments" className="gap-1">
             <Calendar className="h-3 w-3" /> Appointments
           </TabsTrigger>
+          <TabsTrigger value="portal" className="gap-1">
+            <Globe className="h-3 w-3" /> Portal
+          </TabsTrigger>
           <TabsTrigger value="notes" className="gap-1">
             <MessageSquare className="h-3 w-3" /> Notes
           </TabsTrigger>
@@ -253,6 +273,15 @@ export default async function ClientDetailPage({
 
         <TabsContent value="overview" className="space-y-4 pt-4">
           <PortalTokenSection client={client} />
+        </TabsContent>
+
+        <TabsContent value="portal" className="space-y-4 pt-4">
+          <PortalTokenSection client={client} />
+          <PortalRequestAdmin
+            clientId={client.id}
+            initialRequests={clientPortalRequests}
+            projects={clientProjects.map((project) => ({ id: project.id, name: project.name }))}
+          />
         </TabsContent>
 
         <TabsContent value="projects" className="space-y-4 pt-4">

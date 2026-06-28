@@ -133,6 +133,8 @@ export const clients = pgTable("clients", {
   portalTokenHash: text("portal_token_hash").unique(),
   portalTokenExpiresAt: timestamp("portal_token_expires_at", { withTimezone: true }),
   portalTokenRevokedAt: timestamp("portal_token_revoked_at", { withTimezone: true }),
+  portalSlug: text("portal_slug").unique(),
+  portalSlugEnabled: boolean("portal_slug_enabled").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -174,6 +176,23 @@ export const tasks = pgTable("tasks", {
   dueDate: date("due_date"),
   position: integer("position").notNull().default(0),
   clientVisible: boolean("client_visible").notNull().default(false),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+
+export const portalRequests = pgTable("portal_requests", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  type: text("type", { enum: ["document", "approval", "info", "other"] }).notNull().default("document"),
+  status: text("status", { enum: ["pending", "completed", "cancelled"] }).notNull().default("pending"),
+  dueDate: date("due_date"),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
   createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

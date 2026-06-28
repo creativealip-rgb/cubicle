@@ -20,6 +20,8 @@ interface ClientFormProps {
     address?: string;
     tags?: string[];
     internalNotes?: string;
+    portalSlug?: string;
+    portalSlugEnabled?: boolean;
   };
   onSuccess?: () => void;
 }
@@ -36,6 +38,8 @@ export function ClientForm({ mode, defaultValues, onSuccess }: ClientFormProps) 
     address: defaultValues?.address ?? "",
     tags: defaultValues?.tags?.join(", ") ?? "",
     internalNotes: defaultValues?.internalNotes ?? "",
+    portalSlug: defaultValues?.portalSlug ?? "",
+    portalSlugEnabled: defaultValues?.portalSlugEnabled ?? true,
   });
 
   async function handleSubmit(e: React.FormEvent) {
@@ -51,6 +55,8 @@ export function ClientForm({ mode, defaultValues, onSuccess }: ClientFormProps) 
         address: form.address || undefined,
         tags: form.tags ? form.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
         internalNotes: form.internalNotes || undefined,
+        portalSlug: form.portalSlug || undefined,
+        portalSlugEnabled: form.portalSlugEnabled,
       };
 
       if (mode === "create") {
@@ -71,7 +77,7 @@ export function ClientForm({ mode, defaultValues, onSuccess }: ClientFormProps) 
     }
   }
 
-  function set(k: keyof typeof form, v: string) {
+  function set(k: keyof typeof form, v: string | boolean) {
     setForm((prev) => ({ ...prev, [k]: v }));
   }
 
@@ -110,6 +116,17 @@ export function ClientForm({ mode, defaultValues, onSuccess }: ClientFormProps) 
       <div className="space-y-2">
         <Label htmlFor="internalNotes">Catatan Internal</Label>
         <Input id="internalNotes" value={form.internalNotes} onChange={(e) => set("internalNotes", e.target.value)} placeholder="Catatan privat..." />
+      </div>
+      <div className="grid grid-cols-[1fr_auto] items-end gap-3 rounded-lg border p-3">
+        <div className="space-y-2">
+          <Label htmlFor="portalSlug">Client portal slug</Label>
+          <Input id="portalSlug" value={form.portalSlug} onChange={(e) => set("portalSlug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))} placeholder="alip" />
+          <p className="text-xs text-muted-foreground">Short link: /client-portal/{form.portalSlug || "slug"}</p>
+        </div>
+        <label className="flex items-center gap-2 pb-2 text-sm">
+          <input type="checkbox" checked={form.portalSlugEnabled} onChange={(e) => set("portalSlugEnabled", e.target.checked)} />
+          Aktif
+        </label>
       </div>
       <Button type="submit" disabled={loading} className="w-full">
         {loading ? "Menyimpan..." : mode === "create" ? "Buat Klien" : "Simpan Perubahan"}

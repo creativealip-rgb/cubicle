@@ -15,12 +15,15 @@ interface PortalTokenSectionProps {
     portalTokenHash: string | null;
     portalTokenExpiresAt: Date | string | null;
     portalTokenRevokedAt: Date | string | null;
+    portalSlug?: string | null;
+    portalSlugEnabled?: boolean;
   };
 }
 
 export function PortalTokenSection({ client }: PortalTokenSectionProps) {
   const [showToken, setShowToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedShort, setCopiedShort] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleGenerate() {
@@ -54,6 +57,15 @@ export function PortalTokenSection({ client }: PortalTokenSectionProps) {
       toast.success("Copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
     }
+  }
+
+  async function handleCopyShortLink() {
+    if (!client.portalSlug) return;
+    const url = `${window.location.origin}/client-portal/${client.portalSlug}`;
+    await navigator.clipboard.writeText(url);
+    setCopiedShort(true);
+    toast.success("Short portal URL copied");
+    setTimeout(() => setCopiedShort(false), 2000);
   }
 
   const isExpired = client.portalTokenExpiresAt
@@ -97,6 +109,23 @@ export function PortalTokenSection({ client }: PortalTokenSectionProps) {
             </div>
             <p className="text-xs text-muted-foreground">
               Copy this token now. You won&apos;t see it again. Store hash in DB.
+            </p>
+          </div>
+        )}
+
+        {client.portalSlug && (
+          <div className="rounded-lg border bg-muted/40 p-3">
+            <p className="text-xs font-medium text-muted-foreground">Short portal link</p>
+            <div className="mt-1 flex items-center gap-2">
+              <code className="block flex-1 break-all rounded bg-background px-2 py-1 text-xs">
+                /client-portal/{client.portalSlug}
+              </code>
+              <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={handleCopyShortLink}>
+                {copiedShort ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
+              </Button>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {client.portalSlugEnabled ? "Slug enabled" : "Slug disabled"}
             </p>
           </div>
         )}
