@@ -77,23 +77,25 @@ Tidak pakai i18n library — hardcode string per context. Cukup buat MVP.
 GET /app/dashboard
 ```
 
-Ringkasan instant (full Indonesian UI):
-- **Klien Aktif** — jumlah klien
-- **Project Aktif** — jumlah proyek
-- **Task Jatuh Tempo** — task yang overdue / due soon
-- **Invoice Belum Dibayar** — invoice belum paid
+Ringkasan instant:
+- **Klien Aktif / Active Clients** — jumlah klien
+- **Project Aktif / Active Projects** — jumlah proyek
+- **Task Jatuh Tempo / Due Tasks** — task yang overdue / due soon
+- **Invoice Belum Dibayar / Unpaid Invoices** — invoice belum paid
 
 Fitur dashboard:
-- Greeting dinamis (Selamat pagi/siang/malam + nama user)
-- Quick actions: Task baru, Invoice baru, Mulai timer, Tambah klien
-- Attention needed: Invoice terlambat, Task hari ini, Kontrak menunggu, Notifikasi belum dibaca
-- Revenue sparkline (14 hari terakhir)
-- Kesehatan klien (Sehat / Diam / Berisiko)
-- Proyeksi arus kas (30/60/90 hari)
-- Aktivitas Terbaru
-- Timer Aktif + Jadwal Mendatang
-- Invoice Belum Dibayar
-- Task Hari Ini
+- [x] Language switch `ID / EN` di dashboard
+- [x] Preferensi bahasa disimpan di cookie `cubiqlo_lang`
+- [x] Greeting dinamis (Selamat pagi/siang/malam + nama user)
+- [x] Quick actions: Task baru, Invoice baru, Mulai timer, Tambah klien
+- [x] Attention needed: Invoice terlambat, Task hari ini, Kontrak menunggu, Notifikasi belum dibaca
+- [x] Revenue sparkline (14 hari terakhir)
+- [x] Kesehatan klien (Sehat / Diam / Berisiko)
+- [x] Proyeksi arus kas (30/60/90 hari)
+- [x] Aktivitas Terbaru
+- [x] Timer Aktif + Jadwal Mendatang
+- [x] Invoice Belum Dibayar
+- [x] Task Hari Ini
 
 ---
 
@@ -110,14 +112,19 @@ Tabel semua klien dengan nama, company, email, status, projects count.
 GET /app/clients/[clientId]
 ```
 Detail satu klien termasuk:
-- Info dasar (nama, company, email, phone, address)
-- Portal token management (generate / revoke)
-- Associated projects
+- [x] Info dasar (nama, company, email, phone, address)
+- [x] Portal token management (generate / revoke)
+- [x] Short portal slug management (`/client-portal/[slug]`)
+- [x] Portal tab untuk document request/reminder
+- [x] Associated projects
 
 ### Actions
-- **Add Client** — owner/member only
-- **Edit Client** — owner/member only
-- **Portal Token** — generate token untuk client portal access
+- [x] **Add Client** — owner/member only
+- [x] **Edit Client** — owner/member only
+- [x] **Portal Token** — generate token untuk client portal access
+- [x] **Portal Slug** — custom short link, lowercase/number/hyphen
+- [x] **Portal Request** — create reminder/document request untuk client portal
+- [x] **Portal Request Status** — mark done, cancel, reopen
 
 ---
 
@@ -288,24 +295,35 @@ GET /booking/acme-creative
 
 ```
 GET /client-portal/[token]
+GET /client-portal/[slug]
 ```
 
-Client bisa akses tanpa login, menggunakan portal token.
+Client bisa akses tanpa login, menggunakan portal token atau custom slug pendek.
 
 Yang muncul:
-- Nama/perusahaan client
-- Projects (hanya `clientVisible=true`)
-- Tasks per project (hanya `clientVisible=true`)
-- Files per project (hanya `visibility=client`)
-- Deliverable badge untuk file `file_type=deliverable`
-- Shared invoices (yang punya active share token)
-- Comment form — client bisa kirim komentar (source=portal)
+- [x] Nama/perusahaan client
+- [x] Requests & reminders (`portal_requests`)
+- [x] Client bisa mark request done
+- [x] Projects (hanya `clientVisible=true`)
+- [x] Tasks per project (hanya `clientVisible=true`)
+- [x] Files per project (hanya `visibility=client`)
+- [x] Deliverable badge untuk file `file_type=deliverable`
+- [x] Shared invoices (yang punya active share token)
+- [x] Comment form — client bisa kirim komentar (source=portal)
 
-Portal token management:
-- Generate token via client detail page
-- Expiry configurable
-- Revoke kapan saja
-- Access logged ke `portal_access_logs`
+Portal token/slug management:
+- [x] Generate token via client detail page
+- [x] Expiry configurable
+- [x] Revoke kapan saja
+- [x] Custom `portal_slug` via edit client form
+- [x] Toggle `portal_slug_enabled`
+- [x] Copy full short URL button
+- [x] Access logged ke `portal_access_logs`
+
+Notifications:
+- [x] Portal comment bikin in-app notification ke semua workspace members
+- [x] Portal comment kirim email via Resend helper
+- [ ] WhatsApp notification provider
 
 ---
 

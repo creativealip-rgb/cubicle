@@ -190,6 +190,18 @@ Production client-ready: ~98% (payment gateway v1 done, subscription automation 
 ```
 
 
+
+> **Update 2026-06-28 (Phase 1 — Client Portal Collaboration):**
+>- Dashboard ID/EN switch shipped with cookie `cubiqlo_lang`.
+>- Short client portal links shipped via `clients.portal_slug` and `/client-portal/[slug]`; old token links still work.
+>- Client detail now has Portal tab with token/slug display and copy short URL.
+>- `portal_requests` shipped for document requests/reminders; admin can create, mark done, cancel, reopen; client can mark done in portal.
+>- Portal comments now notify all workspace members in-app and via Resend email helper (console fallback if email env missing).
+>- Sidebar groups are collapsible and persist in `localStorage`.
+>- Migration `drizzle/0012_phase1_portal_slug_requests.sql` applied to Docker DB.
+>- Build passed, pushed commit `c7c3add`, container restarted, health check OK.
+>- Detailed checklist: `docs/phase-1-client-portal-plan.md`.
+
 > **Update 2026-06-24 (Payment gateway + Dashboard localization):**
 - Demo MVP: **99%** (unchanged)
 - Sellable source/MVP: **99%** (unchanged)
