@@ -22,6 +22,7 @@ interface InvoiceData {
     billingPhone: string | null;
     taxId: string | null;
     logoUrl: string | null;
+    defaultInvoiceTerms?: string | null;
   };
   client: {
     name: string;

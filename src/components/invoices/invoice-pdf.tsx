@@ -24,6 +24,7 @@ Font.register({
 
 const ACCENT = "#6366f1";
 const ACCENT_DARK = "#4f46e5";
+const ACCENT_SOFT = "#eef2ff";
 const TEXT = "#1e293b";
 const MUTED = "#64748b";
 const SUBTLE = "#94a3b8";
@@ -41,8 +42,8 @@ const STATUS_STYLES: Record<string, { bg: string; fg: string; label: string }> =
 
 const styles = StyleSheet.create({
   page: {
-    padding: 48,
-    paddingBottom: 64, // leave room for footer
+    padding: 44,
+    paddingBottom: 66, // leave room for footer
     fontFamily: "Inter",
     fontSize: 10,
     color: TEXT,
@@ -53,18 +54,39 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 6,
+    height: 8,
     backgroundColor: ACCENT,
+  },
+  heroBox: {
+    position: "absolute",
+    top: 8,
+    left: 0,
+    right: 0,
+    height: 92,
+    backgroundColor: ACCENT_SOFT,
   },
   // Header
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 28,
-    marginTop: 4,
+    marginTop: 12,
+    paddingBottom: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: "#c7d2fe",
   },
   brandBlock: { flexDirection: "row", alignItems: "center", flex: 1 },
-  logo: { width: 44, height: 44, marginRight: 12 },
+  logo: { width: 48, height: 48, marginRight: 12, borderRadius: 8 },
+  logoFallback: {
+    width: 48,
+    height: 48,
+    marginRight: 12,
+    borderRadius: 10,
+    backgroundColor: ACCENT,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logoFallbackText: { color: "#ffffff", fontSize: 18, fontWeight: 700 },
   companyName: {
     fontSize: 18,
     fontWeight: 700,
@@ -79,7 +101,7 @@ const styles = StyleSheet.create({
   },
   invoiceMeta: { alignItems: "flex-end" },
   invoiceTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 700,
     color: "#0f172a",
     letterSpacing: 2,
@@ -104,9 +126,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 24,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: BORDER,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: BORDER,
+    borderRadius: 10,
+    backgroundColor: "#ffffff",
   },
   infoLabel: {
     fontSize: 8,
@@ -118,7 +142,7 @@ const styles = StyleSheet.create({
   },
   infoValue: { fontSize: 10, color: TEXT, fontWeight: 700 },
   // Bill To
-  billToSection: { marginBottom: 20 },
+  billToSection: { marginBottom: 20, padding: 14, borderWidth: 1, borderColor: BORDER, borderRadius: 10 },
   billToTitle: {
     fontSize: 8,
     fontWeight: 700,
@@ -138,12 +162,14 @@ const styles = StyleSheet.create({
   table: { marginBottom: 20 },
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: ROW_ALT,
+    backgroundColor: "#f1f5f9",
     borderBottomWidth: 1,
     borderBottomColor: BORDER,
     borderTopWidth: 1,
     borderTopColor: BORDER,
-    paddingVertical: 8,
+    paddingVertical: 9,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
   },
   tableRow: {
     flexDirection: "row",
@@ -186,9 +212,9 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   totalValueBold: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: 700,
-    color: "#0f172a",
+    color: ACCENT_DARK,
     width: 90,
     textAlign: "right",
   },
@@ -204,6 +230,15 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: BORDER,
     paddingTop: 14,
+  },
+  paymentBox: {
+    marginTop: 4,
+    marginBottom: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#c7d2fe",
+    borderRadius: 10,
+    backgroundColor: ACCENT_SOFT,
   },
   notesTitle: {
     fontSize: 8,
@@ -230,6 +265,7 @@ const styles = StyleSheet.create({
     color: SUBTLE,
   },
   footerLeft: { fontWeight: 700, color: MUTED, letterSpacing: 0.4 },
+  thankYou: { fontSize: 11, fontWeight: 700, color: ACCENT_DARK, marginBottom: 8 },
 });
 
 function formatCurrency(amount: number | string, currency: string): string {
@@ -275,6 +311,7 @@ interface InvoicePDFProps {
     billingPhone: string | null;
     taxId: string | null;
     logoUrl: string | null;
+    defaultInvoiceTerms?: string | null;
   };
   client: {
     name: string;
@@ -291,6 +328,8 @@ interface InvoicePDFProps {
 }
 
 export function InvoicePDF({ invoice, workspace, client, items }: InvoicePDFProps) {
+  const companyName = workspace.billingName || "Cubiqlo";
+  const initials = companyName.slice(0, 2).toUpperCase();
   const sub = Number(invoice.subtotal);
   const tax = Number(invoice.tax);
   const discount = Number(invoice.discount);
@@ -302,6 +341,7 @@ export function InvoicePDF({ invoice, workspace, client, items }: InvoicePDFProp
       <Page size="A4" style={styles.page}>
         {/* Top accent stripe */}
         <View style={styles.accentBar} fixed />
+        <View style={styles.heroBox} fixed />
 
         {/* Header */}
         <View style={styles.header}>
@@ -309,10 +349,14 @@ export function InvoicePDF({ invoice, workspace, client, items }: InvoicePDFProp
             {workspace.logoUrl ? (
               // eslint-disable-next-line jsx-a11y/alt-text -- @react-pdf/renderer Image has no alt prop API
               <Image src={workspace.logoUrl} style={styles.logo} />
-            ) : null}
+            ) : (
+              <View style={styles.logoFallback}>
+                <Text style={styles.logoFallbackText}>{initials}</Text>
+              </View>
+            )}
             <View style={{ flex: 1 }}>
               <Text style={styles.companyName}>
-                {workspace.billingName || "Company Name"}
+                {companyName}
               </Text>
               {workspace.billingAddress && (
                 <Text style={styles.companyAddress}>{workspace.billingAddress}</Text>
@@ -441,6 +485,12 @@ export function InvoicePDF({ invoice, workspace, client, items }: InvoicePDFProp
           </View>
         </View>
 
+        {/* Payment hint */}
+        <View style={styles.paymentBox}>
+          <Text style={styles.thankYou}>Thank you for your business.</Text>
+          <Text style={styles.notes}>Please include invoice number #{invoice.invoiceNumber} when making payment.</Text>
+        </View>
+
         {/* Notes & Terms */}
         {(invoice.notes || invoice.terms) && (
           <View style={styles.notesSection}>
@@ -462,7 +512,7 @@ export function InvoicePDF({ invoice, workspace, client, items }: InvoicePDFProp
         {/* Footer */}
         <View style={styles.footer} fixed>
           <Text style={styles.footerLeft}>
-            {workspace.billingName || "Cubiqlo"}
+            {companyName}
           </Text>
           <Text
             render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}

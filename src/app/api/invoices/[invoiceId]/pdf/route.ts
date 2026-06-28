@@ -80,6 +80,7 @@ export async function GET(
       billingPhone: ws?.billingPhone ?? null,
       taxId: ws?.taxId ?? null,
       logoUrl: ws?.logoUrl ?? null,
+      defaultInvoiceTerms: ws?.defaultInvoiceTerms ?? null,
     },
     client: {
       name: client?.name ?? "Unknown",
