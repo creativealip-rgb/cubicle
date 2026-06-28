@@ -56,6 +56,40 @@ const navItems = [
   { label: "Prompt", href: "/app/prompts", icon: Sparkles, group: "AI" },
 ];
 
+const groupLabels = {
+  Kerja: { id: "Kerja", en: "Work" },
+  Keuangan: { id: "Keuangan", en: "Finance" },
+  Penjualan: { id: "Penjualan", en: "Sales" },
+  AI: { id: "AI", en: "AI" },
+} as const;
+
+const navLabels: Record<string, { id: string; en: string }> = {
+  Dashboard: { id: "Dashboard", en: "Dashboard" },
+  Klien: { id: "Klien", en: "Clients" },
+  Proyek: { id: "Proyek", en: "Projects" },
+  Tugas: { id: "Tugas", en: "Tasks" },
+  Waktu: { id: "Waktu", en: "Time" },
+  Kalender: { id: "Kalender", en: "Calendar" },
+  File: { id: "File", en: "Files" },
+  Invoice: { id: "Invoice", en: "Invoices" },
+  Pengeluaran: { id: "Pengeluaran", en: "Expenses" },
+  Laporan: { id: "Laporan", en: "Reports" },
+  Tagihan: { id: "Tagihan", en: "Billing" },
+  Proposal: { id: "Proposal", en: "Proposals" },
+  Kontrak: { id: "Kontrak", en: "Contracts" },
+  Formulir: { id: "Formulir", en: "Forms" },
+  Template: { id: "Template", en: "Templates" },
+  Brain: { id: "Brain", en: "Brain" },
+  Prompt: { id: "Prompt", en: "Prompts" },
+};
+
+const badgeLabels: Record<SidebarBadgeKey, { id: string; en: string }> = {
+  myOpenTasks: { id: "tugas terbuka", en: "open tasks" },
+  unpaidInvoices: { id: "invoice belum dibayar", en: "unpaid invoices" },
+  draftProposals: { id: "proposal belum dikirim", en: "unsent proposals" },
+  draftContracts: { id: "kontrak belum dikirim", en: "unsent contracts" },
+};
+
 export type SidebarBadgeKey =
   | "myOpenTasks"
   | "unpaidInvoices"
@@ -78,21 +112,37 @@ interface AppSidebarProps {
 export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps) {
   const pathname = usePathname();
   const { mobileOpen, setMobileOpen } = useSidebar();
+  const [lang, setLang] = useState<"id" | "en">("id");
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     Kerja: true,
-    Keuangan: true,
-    Penjualan: true,
-    AI: true,
+    Keuangan: false,
+    Penjualan: false,
+    AI: false,
   });
+  const t = (id: string, en: string) => (lang === "en" ? en : id);
 
   useEffect(() => {
+    function syncLang() {
+      const cookieLang = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("cubiqlo_lang="))
+        ?.split("=")[1];
+      setLang(cookieLang === "en" ? "en" : "id");
+    }
+
+    syncLang();
     try {
       const saved = window.localStorage.getItem("cubiqlo_sidebar_groups");
-      if (saved) setOpenGroups(JSON.parse(saved));
+      if (saved) {
+        setOpenGroups({ Kerja: true, Keuangan: false, Penjualan: false, AI: false, ...JSON.parse(saved) });
+      }
     } catch {
       // ignore
     }
-  }, []);
+
+    window.addEventListener("focus", syncLang);
+    return () => window.removeEventListener("focus", syncLang);
+  }, [pathname]);
 
   function toggleGroup(name: string) {
     setOpenGroups((prev) => {
@@ -198,7 +248,7 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
                     onClick={() => toggleGroup(g.name!)}
                     className="flex w-full items-center justify-between rounded-md px-3 pb-1.5 pt-1 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70 hover:bg-sidebar-accent"
                   >
-                    <span>{g.name}</span>
+                    <span>{g.name ? t(groupLabels[g.name as keyof typeof groupLabels].id, groupLabels[g.name as keyof typeof groupLabels].en) : ""}</span>
                     <ChevronDown className={cn("h-3 w-3 transition-transform", !isGroupOpen && "-rotate-90")} />
                   </button>
                 )}
@@ -215,12 +265,7 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
                         ? (badgeCounts?.[item.badgeKey] ?? 0)
                         : 0;
                     const badgeLabel = item.badgeKey
-                      ? ({
-                          myOpenTasks: "tugas terbuka",
-                          unpaidInvoices: "invoice belum dibayar",
-                          draftProposals: "proposal belum dikirim",
-                          draftContracts: "kontrak belum dikirim",
-                        }[item.badgeKey])
+                      ? t(badgeLabels[item.badgeKey].id, badgeLabels[item.badgeKey].en)
                       : "";
 
                     return (
@@ -238,7 +283,7 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
                               )}
                             >
                               <Icon className="h-4 w-4 shrink-0" />
-                              {!collapsed && <span className="flex-1">{item.label}</span>}
+                              {!collapsed && <span className="flex-1">{t(navLabels[item.label]?.id ?? item.label, navLabels[item.label]?.en ?? item.label)}</span>}
                               {!collapsed && badge > 0 && (
                                 <span
                                   className={cn(
@@ -262,7 +307,7 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
                           </TooltipTrigger>
                           {collapsed && (
                             <TooltipContent side="right">
-                              {item.label}
+                              {t(navLabels[item.label]?.id ?? item.label, navLabels[item.label]?.en ?? item.label)}
                               {badge > 0 ? ` (${badge})` : ""}
                             </TooltipContent>
                           )}
