@@ -146,6 +146,31 @@ export async function notifyInvoiceSent(opts: {
   });
 }
 
+export async function notifyInvoicePaymentReminder(opts: {
+  clientEmail: string;
+  clientName: string;
+  invoiceNumber: string;
+  amount: string;
+  dueDate?: string | null;
+  portalUrl: string;
+  workspaceName?: string;
+  replyTo?: string;
+}) {
+  const dueLine = opts.dueDate ? `This invoice was due on ${opts.dueDate}.\n\n` : "";
+  return sendNotification({
+    to: opts.clientEmail,
+    subject: `Payment reminder: Invoice ${opts.invoiceNumber}`,
+    text:
+      `Hi ${opts.clientName},\n\n` +
+      `Friendly reminder that invoice ${opts.invoiceNumber} for ${opts.amount} is still unpaid.\n\n` +
+      dueLine +
+      `View invoice: ${opts.portalUrl}\n\n` +
+      `If you've already paid, please ignore this email.`,
+    type: "invoice_payment_reminder",
+    replyTo: opts.replyTo,
+  });
+}
+
 export async function notifyInvoiceViewed(opts: {
   workspaceEmail: string;
   invoiceNumber: string;

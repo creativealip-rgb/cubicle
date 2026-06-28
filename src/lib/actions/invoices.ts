@@ -13,12 +13,12 @@ import {
   workspaces,
   clients,
 } from "@/db/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, inArray, lt } from "drizzle-orm";
 import { z } from "zod";
 import { createHash, randomBytes } from "crypto";
 import { requireUser, assertWorkspaceWritable, assertWorkspaceMember } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
-import { notifyInvoiceSent } from "@/lib/notifications";
+import { notifyInvoicePaymentReminder, notifyInvoiceSent } from "@/lib/notifications";
 import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
 import { formatMoney } from "@/lib/utils";
 
@@ -603,6 +603,104 @@ export async function revokeInvoiceShareToken(invoiceId: string) {
 
   await writeActivityLog(workspaceId, user.id, "revoked_invoice_share_token", "invoice", invoiceId);
   return { success: true };
+}
+
+export async function markOverdueInvoices(workspaceId?: string) {
+  const today = new Date().toISOString().slice(0, 10);
+  const conditions = [
+    lt(invoices.dueDate, today),
+    inArray(invoices.status, ["sent", "viewed"]),
+  ];
+  if (workspaceId) conditions.push(eq(invoices.workspaceId, workspaceId));
+
+  const updated = await db
+    .update(invoices)
+    .set({ status: "overdue", updatedAt: new Date() })
+    .where(and(...conditions))
+    .returning({ id: invoices.id, workspaceId: invoices.workspaceId, invoiceNumber: invoices.invoiceNumber });
+
+  for (const inv of updated) {
+    await writeActivityLog(inv.workspaceId, null, "marked_invoice_overdue", "invoice", inv.id);
+    try {
+      await notifyWorkspaceMembers(inv.workspaceId, {
+        type: "invoice_overdue",
+        title: `Invoice ${inv.invoiceNumber} is overdue`,
+        body: "Payment reminder may be sent from invoice detail.",
+        link: `/app/invoices/${inv.id}`,
+        entityType: "invoice",
+        entityId: inv.id,
+      });
+    } catch {
+      // best-effort
+    }
+  }
+
+  return { updated: updated.length, invoices: updated };
+}
+
+export async function sendInvoicePaymentReminder(invoiceId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  const inv = await assertInvoiceInWorkspace(invoiceId, workspaceId);
+  if (["paid", "cancelled", "draft"].includes(inv.status)) {
+    throw new Error("Only sent, viewed, or overdue invoices can receive reminders");
+  }
+
+  const [client] = await db
+    .select({ name: clients.name, email: clients.email })
+    .from(clients)
+    .where(eq(clients.id, inv.clientId))
+    .limit(1);
+  if (!client?.email) throw new Error("Client email is missing");
+
+  const [ws] = await db
+    .select({ name: workspaces.name, replyToEmail: workspaces.replyToEmail })
+    .from(workspaces)
+    .where(eq(workspaces.id, workspaceId))
+    .limit(1);
+
+  const generated = await generateInvoiceShareToken(invoiceId);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+  const portalUrl = `${appUrl}/invoice/${generated.token}`;
+
+  await notifyInvoicePaymentReminder({
+    clientEmail: client.email,
+    clientName: client.name ?? "there",
+    invoiceNumber: inv.invoiceNumber ?? invoiceId.slice(0, 8),
+    amount: formatMoney(inv.total, inv.currency || "IDR"),
+    dueDate: inv.dueDate ? String(inv.dueDate) : null,
+    portalUrl,
+    workspaceName: ws?.name,
+    replyTo: ws?.replyToEmail ?? undefined,
+  });
+
+  await db
+    .update(invoices)
+    .set({ status: inv.status === "paid" ? inv.status : "overdue", updatedAt: new Date() })
+    .where(eq(invoices.id, invoiceId));
+
+  await writeActivityLog(workspaceId, user.id, "sent_invoice_payment_reminder", "invoice", invoiceId, {
+    clientEmail: client.email,
+    portalUrl,
+  });
+
+  try {
+    await notifyWorkspaceMembers(workspaceId, {
+      type: "invoice_overdue",
+      title: `Reminder sent for ${inv.invoiceNumber}`,
+      body: `${client.name} · ${formatMoney(inv.total, inv.currency || "IDR")}`,
+      link: `/app/invoices/${invoiceId}`,
+      entityType: "invoice",
+      entityId: invoiceId,
+      actorId: user.id,
+    });
+  } catch {
+    // best-effort
+  }
+
+  return { success: true, portalUrl };
 }
 
 // ─── Queries ───

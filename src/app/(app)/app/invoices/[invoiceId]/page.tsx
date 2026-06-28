@@ -25,6 +25,7 @@ import { ImportTimeSection } from "./import-time-section";
 import { PaymentSection } from "./payment-section";
 import { ShareTokenSection } from "./share-token-section";
 import { SendInvoiceButton } from "./send-invoice-button";
+import { SendReminderButton } from "./send-reminder-button";
 import { formatDateID, formatMoney } from "@/lib/utils";
 import { invoiceStatusVariant } from "@/lib/status-badge";
 
@@ -148,6 +149,10 @@ export default async function InvoiceDetailPage({
             </Link>
           </Button>
           <SendInvoiceButton invoiceId={invoiceId} disabled={!client?.email || items.length === 0} />
+          <SendReminderButton
+            invoiceId={invoiceId}
+            disabled={!client?.email || items.length === 0 || ["draft", "paid", "cancelled"].includes(inv.status)}
+          />
           <Badge
             variant={statusVariant(displayStatus)}
             className="text-sm px-3 py-1"
