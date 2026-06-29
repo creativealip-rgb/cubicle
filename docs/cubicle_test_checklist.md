@@ -138,6 +138,27 @@ Use this before beta release and after every big sprint merge.
 
 ## 12. Production Smoke Test
 
+Automated baseline:
+
+```bash
+SMOKE_BASE_URL=https://cubiqlo.com npm run smoke
+```
+
+With guarded env audit:
+
+```bash
+SMOKE_BASE_URL=https://cubiqlo.com CRON_SECRET=*** npm run smoke
+```
+
+Script covers:
+- [ ] `/`, `/login`, `/signup`, `/forgot-password` return 200.
+- [ ] `/api/health` returns ok.
+- [ ] `/app/dashboard` redirects unauthenticated users.
+- [ ] invalid client portal/invoice tokens fail safely.
+- [ ] `/api/health/env` rejects missing bearer.
+- [ ] cron endpoint rejects missing bearer in production.
+
+Manual smoke still required:
 - [ ] deploy succeeds.
 - [ ] migrations run clean on production DB.
 - [ ] auth callback/session works on production domain.

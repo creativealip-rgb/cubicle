@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-29 — Phase 3C smoke test script
+
+- Added `scripts/smoke.mjs` and `npm run smoke`.
+- Smoke checks cover public routes, health, unauthenticated app redirect, invalid public tokens, guarded env audit, and cron guard behavior.
+- Updated `docs/cubicle_test_checklist.md` with automated smoke command and manual smoke boundaries.
+
 ## 2026-06-29 — Phase 3B env/security hardening
 
 - Added safe environment audit helper and guarded endpoint:
