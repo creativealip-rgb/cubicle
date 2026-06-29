@@ -38,8 +38,15 @@ Phase 3H deeper QA added:
 - verified invoice detail page loads with generated invoice number
 - observed invoice share-link button click did not create token in this browser run; needs follow-up with manual browser/devtools check
 
+Phase 3I/3K follow-up QA added:
+- project creation modal now shows workspace client select, and project creation via selected client produced `Project dibuat`
+- invoice share token generation produced a public invoice link and public invoice page loaded
+- fixed fresh-account workspace bootstrap race after duplicate `workspaces_slug_unique` was observed
+- fresh signup/login after fix loaded dashboard with workspace name correctly
+- client creation through fresh account succeeded when form submit was dispatched; browser element click still had automation inconsistency, so manual browser check remains recommended
+
 Still requires deeper credentialed/manual browser QA:
-- project/task creation through UI without automation limitations
+- project/task creation through UI in manual browser without automation limitations
 - file upload/download through R2
 - client portal share link full flow
 - invoice share link/send/reminder full flow

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-06-29 — Phase 3K workspace bootstrap hardening
+
+- Made workspace auto-bootstrap idempotent: reuse existing owner workspace, recover existing slug, and insert membership with conflict ignore.
+- Fixed fresh-account workspace race that could raise duplicate `workspaces_slug_unique` and break first client/project actions after signup.
+- Verified `npm run lint`, `npm run build`, Docker rebuild, `/api/health`, and production smoke pass.
+- Production QA: fresh signup/login works; client creation succeeds when form submit fires; project creation select and invoice share flow remained usable from Phase 3J retest.
+
 ## 2026-06-29 — Phase 3I project form + invoice share action fixes
 
 - Replaced project creation client ID text field with workspace client select when creating projects from `/app/projects`.
