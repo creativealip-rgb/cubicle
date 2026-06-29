@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { createClientFromForm } from "@/lib/actions/clients";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +20,7 @@ export default function NewClientPage() {
           <CardTitle>Klien Baru</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={createClientFromForm} className="space-y-4">
+          <form action="/api/clients/create" method="post" className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nama *</Label>
               <Input id="name" name="name" required placeholder="Nama kontak klien" />
