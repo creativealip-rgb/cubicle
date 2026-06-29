@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-29 — Phase 3I project form + invoice share action fixes
+
+- Replaced project creation client ID text field with workspace client select when creating projects from `/app/projects`.
+- Set invoice share-link generate/revoke buttons to `type="button"` to prevent accidental form-submit behavior in nested/interactive layouts.
+- Verified `npm run lint`, `npm run build`, Docker rebuild, `/api/health`, and production smoke pass.
+
 ## 2026-06-29 — Phase 3H deeper product QA pass
 
 - Created `TRST Deep QA Client` through production UI.
