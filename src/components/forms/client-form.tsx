@@ -42,8 +42,8 @@ export function ClientForm({ mode, defaultValues, onSuccess }: ClientFormProps) 
     portalSlugEnabled: defaultValues?.portalSlugEnabled ?? true,
   });
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSave() {
+    if (loading) return;
     setLoading(true);
     try {
       const data = {
@@ -75,6 +75,11 @@ export function ClientForm({ mode, defaultValues, onSuccess }: ClientFormProps) 
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    await handleSave();
   }
 
   function set(k: keyof typeof form, v: string | boolean) {
@@ -128,7 +133,7 @@ export function ClientForm({ mode, defaultValues, onSuccess }: ClientFormProps) 
           Aktif
         </label>
       </div>
-      <Button type="submit" disabled={loading} className="w-full">
+      <Button type="button" onClick={handleSave} disabled={loading} className="w-full">
         {loading ? "Menyimpan..." : mode === "create" ? "Buat Klien" : "Simpan Perubahan"}
       </Button>
     </form>
