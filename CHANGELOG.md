@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-06-29 — Phase 3L final launch QA
+
+- Fixed native invoice share route auth by reading session from route request headers and updating invoice token hash directly.
+- Verified production public invoice link for `TRST-P3L-1782725600` returned 200 and marked invoice viewed.
+- Verified R2 upload/download/delete against production bucket with disposable QA object.
+- Verified client portal visibility allowlist: visible project/task shown, internal project/task sentinels hidden.
+- Verified monitor script healthy on production host.
+- Updated launch QA decision to technical launch QA pass with remaining paid-launch caveats for Pakasir live payment, viewer mutation guard, and real external alert delivery.
+
+## 2026-06-29 — Phase 3M client creation native fallback
+
+- Moved client creation from flaky modal/hydration flow to dedicated `/app/clients/new` page.
+- Added classic POST route `/api/clients/create` so core client creation works without client-side JS.
+- Verified production DB row for `TRST Phase3M2 Native Client 1782725507`.
+- Verified lint, build, Docker health, `/api/health`, and production smoke after deploy.
+
 ## 2026-06-29 — Phase 3K workspace bootstrap hardening
 
 - Made workspace auto-bootstrap idempotent: reuse existing owner workspace, recover existing slug, and insert membership with conflict ignore.

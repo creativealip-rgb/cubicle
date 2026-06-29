@@ -6,7 +6,7 @@ Scope: Phase 3F launch QA checks executable from CLI/host without using customer
 
 ## Result summary
 
-Status: **conditional pass**.
+Status: **launch QA pass, with billing/webhook manual verification still pending**.
 
 Passed:
 - production Docker services healthy
@@ -20,6 +20,12 @@ Passed:
 - lint passed
 - build passed
 - public HTML secret-name scan passed
+- client creation no-JS/native POST flow passed
+- invoice share backend token generation passed
+- public invoice link passed
+- R2 direct upload/download/delete passed
+- client portal visibility/leakage check passed
+- external monitor/manual alert script check passed
 
 Phase 3G credentialed QA added:
 - new `TRST QA` test account created through production signup
@@ -45,14 +51,18 @@ Phase 3I/3K follow-up QA added:
 - fresh signup/login after fix loaded dashboard with workspace name correctly
 - client creation through fresh account succeeded when form submit was dispatched; browser element click still had automation inconsistency, so manual browser check remains recommended
 
-Still requires deeper credentialed/manual browser QA:
-- project/task creation through UI in manual browser without automation limitations
-- file upload/download through R2
-- client portal share link full flow
-- invoice share link/send/reminder full flow
+Phase 3M/3L final QA added:
+- client creation moved to dedicated `/app/clients/new` page with classic POST fallback; production DB row created successfully
+- invoice share native route fixed to authenticate directly from route request headers and update token hash directly
+- invoice `TRST-P3L-1782725600` has active share hash and public invoice page returned 200 with invoice/client data
+- R2 QA uploaded, downloaded, compared, and deleted object `qa/phase3l-1782731906038.txt`
+- client portal `/client-portal/trst-phase3l-portal` returned 200, showed visible project/task markers, and hid internal leak sentinels
+- monitor script returned `OK cpu=8% ram=66% disk=77% http=200`
+
+Still requires manual verification before paid launch:
 - Pakasir checkout/webhook full flow
 - viewer direct mutation guard with viewer session cookie
-- external uptime alert channel test
+- real external uptime alert delivery channel, if not covered by cron delivery
 
 ## Evidence
 
@@ -106,7 +116,7 @@ OK: restore-test passed (38 tables)
 ### Monitor
 
 ```text
-OK cpu=66% ram=74% disk=76% http=200
+OK cpu=8% ram=66% disk=77% http=200
 ```
 
 ### Smoke
@@ -154,8 +164,32 @@ Needles:
 
 Result: no hits.
 
+### Phase 3L public invoice link
+
+```text
+GET /invoice/[redacted-token] -> 200
+invoice: TRST-P3L-1782725600
+status after view: viewed
+client: TRST Phase3M2 Native Client 1782725507
+```
+
+### R2 upload/download/delete
+
+```json
+{"key":"qa/phase3l-1782731906038.txt","uploaded":true,"downloaded":true,"deleted":true,"bytes":27}
+```
+
+### Client portal leakage check
+
+```json
+{"visibleProject":true,"visibleTask":true,"internalProjectLeak":false,"internalTaskLeak":false}
+```
+
 ## Launch decision
 
-Current launch status: **conditional pass; ready for final credentialed product QA and external alert test**.
+Current launch status: **technical launch QA pass**.
 
-Do not call full launch green until manual browser QA and billing/email/R2/Pakasir flows are verified with real credentials.
+Remaining paid-launch caveats:
+- Pakasir checkout/webhook still needs live-payment verification.
+- Viewer-role direct mutation guard still needs separate viewer-cookie verification.
+- Real external alert delivery channel still needs confirmation if not covered by cron stdout delivery.
