@@ -23,14 +23,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClientForm } from "@/components/forms/client-form";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -134,20 +126,12 @@ export default async function ClientsPage({
               Upgrade dulu
             </Button>
           ) : (
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button size="sm" className="gap-1">
-                  <Plus className="h-4 w-4" />
-                  Tambah Klien
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                  <DialogTitle>Klien Baru</DialogTitle>
-                </DialogHeader>
-                <ClientForm mode="create" />
-              </DialogContent>
-            </Dialog>
+            <Button size="sm" className="gap-1" asChild>
+              <Link href="/app/clients/new">
+                <Plus className="h-4 w-4" />
+                Tambah Klien
+              </Link>
+            </Button>
           )
         )}
       </div>

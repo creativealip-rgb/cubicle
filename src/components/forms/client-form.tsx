@@ -24,9 +24,10 @@ interface ClientFormProps {
     portalSlugEnabled?: boolean;
   };
   onSuccess?: () => void;
+  redirectTo?: string;
 }
 
-export function ClientForm({ mode, defaultValues, onSuccess }: ClientFormProps) {
+export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: ClientFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -69,6 +70,7 @@ export function ClientForm({ mode, defaultValues, onSuccess }: ClientFormProps) 
 
       router.refresh();
       onSuccess?.();
+      if (redirectTo) router.push(redirectTo);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Terjadi kesalahan";
       toast.error(msg);
@@ -133,7 +135,7 @@ export function ClientForm({ mode, defaultValues, onSuccess }: ClientFormProps) 
           Aktif
         </label>
       </div>
-      <Button type="button" onClick={handleSave} disabled={loading} className="w-full">
+      <Button type="submit" disabled={loading} className="w-full">
         {loading ? "Menyimpan..." : mode === "create" ? "Buat Klien" : "Simpan Perubahan"}
       </Button>
     </form>
