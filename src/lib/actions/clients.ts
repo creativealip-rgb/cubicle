@@ -1,4 +1,5 @@
 "use server";
+import { redirect } from "next/navigation";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 
 import { auth } from "@/lib/auth";
@@ -38,11 +39,8 @@ const clientSchema = z.object({
 
 // ─── CRUD Actions ───
 
-export async function createClient(input: z.infer<typeof clientSchema>) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const user = requireUser(session?.user);
-  const workspaceId = await getWorkspaceId();
-  await assertWorkspaceWritable(db, user.id, workspaceId);
+async function assertCanCreateClient(workspaceId: string, userId: string) {
+  await assertWorkspaceWritable(db, userId, workspaceId);
 
   // Check plan limits
   const { getWorkspacePlan, checkEntityLimit } = await import("@/lib/plan");
@@ -51,7 +49,9 @@ export async function createClient(input: z.infer<typeof clientSchema>) {
   if (!clientLimit.allowed) {
     throw new Error(clientLimit.reason!);
   }
+}
 
+async function insertClient(workspaceId: string, userId: string, input: z.infer<typeof clientSchema>) {
   const parsed = clientSchema.parse(input);
 
   const [client] = await db.insert(clients).values({
@@ -69,8 +69,41 @@ export async function createClient(input: z.infer<typeof clientSchema>) {
     status: "active",
   }).returning();
 
-  await writeActivityLog(workspaceId, user.id, "created_client", "client", client.id);
+  await writeActivityLog(workspaceId, userId, "created_client", "client", client.id);
   return client;
+}
+
+export async function createClient(input: z.infer<typeof clientSchema>) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertCanCreateClient(workspaceId, user.id);
+  return insertClient(workspaceId, user.id, input);
+}
+
+export async function createClientFromForm(formData: FormData) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertCanCreateClient(workspaceId, user.id);
+
+  await insertClient(workspaceId, user.id, {
+    name: String(formData.get("name") ?? ""),
+    companyName: String(formData.get("companyName") ?? "") || undefined,
+    email: String(formData.get("email") ?? "") || undefined,
+    phone: String(formData.get("phone") ?? "") || undefined,
+    website: String(formData.get("website") ?? "") || undefined,
+    address: String(formData.get("address") ?? "") || undefined,
+    tags: String(formData.get("tags") ?? "")
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean),
+    internalNotes: String(formData.get("internalNotes") ?? "") || undefined,
+    portalSlug: String(formData.get("portalSlug") ?? "") || undefined,
+    portalSlugEnabled: formData.get("portalSlugEnabled") === "on",
+  });
+
+  redirect("/app/clients");
 }
 
 export async function updateClient(clientId: string, input: Partial<z.infer<typeof clientSchema>> & { status?: string }) {
