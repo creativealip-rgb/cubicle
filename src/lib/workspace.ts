@@ -88,6 +88,17 @@ export async function getWorkspaceRecordForUser(userId: string): Promise<Workspa
  * Create a new workspace for a user and add them as owner.
  */
 async function createWorkspaceForUser(userId: string): Promise<WorkspaceRow> {
+  const [existingOwnedWorkspace] = await db
+    .select()
+    .from(workspaces)
+    .where(eq(workspaces.ownerId, userId))
+    .limit(1);
+
+  if (existingOwnedWorkspace) {
+    await ensureWorkspaceMembership(existingOwnedWorkspace.id, userId);
+    return existingOwnedWorkspace;
+  }
+
   const [user] = await db
     .select({ name: users.name, email: users.email })
     .from(users)
@@ -98,7 +109,7 @@ async function createWorkspaceForUser(userId: string): Promise<WorkspaceRow> {
   const workspaceName = `${baseName}'s Workspace`;
   const slug = `ws-${userId.slice(0, 8)}`;
 
-  const [ws] = await db
+  const insertedWorkspaces = await db
     .insert(workspaces)
     .values({
       name: workspaceName,
@@ -107,13 +118,30 @@ async function createWorkspaceForUser(userId: string): Promise<WorkspaceRow> {
       defaultCurrency: "IDR",
       plan: "free",
     })
+    .onConflictDoNothing({ target: workspaces.slug })
     .returning();
 
-  await db.insert(workspaceMembers).values({
-    workspaceId: ws.id,
-    userId,
-    role: "owner",
-  });
+  const ws = insertedWorkspaces[0] ?? (await db
+    .select()
+    .from(workspaces)
+    .where(eq(workspaces.slug, slug))
+    .limit(1))[0];
 
+  if (!ws) throw new Error("Failed to create workspace");
+
+  await ensureWorkspaceMembership(ws.id, userId);
   return ws;
+}
+
+async function ensureWorkspaceMembership(workspaceId: string, userId: string) {
+  await db
+    .insert(workspaceMembers)
+    .values({
+      workspaceId,
+      userId,
+      role: "owner",
+    })
+    .onConflictDoNothing({
+      target: [workspaceMembers.workspaceId, workspaceMembers.userId],
+    });
 }
