@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-29 — Phase 3F launch QA execution
+
+- Added `docs/launch_qa_result.md` with launch QA evidence and remaining manual/credentialed checks.
+- Verified production Docker health, `/api/health`, guarded env audit, backup checksum, restore test, monitor script, smoke, lint, build, and public HTML secret-name scan.
+- Updated final launch checklist to conditional pass: automated/env/backup/restore checks pass; credentialed product QA and external alert test still pending.
+
 ## 2026-06-29 — Phase 3E backup/monitor ops sync
 
 - Added `docs/cubicle_ops.md` covering production services, cron jobs, backup, restore test, monitoring, alerting, and emergency restore outline.

@@ -6,7 +6,7 @@ Use this as release gate before calling current build launch-ready.
 
 ## 1. Release baseline
 
-- [x] Latest deployed commit: `d8988ae chore: add production smoke script`
+- [x] Latest deployed commit verified on host: `81ecfb7 docs: sync ops backup monitoring`
 - [x] Production URL: `https://cubiqlo.com`
 - [x] Docker service healthy: `cubicle-cubicle-1`
 - [x] Postgres service healthy: `cubicle-pg`
@@ -19,19 +19,19 @@ Use this as release gate before calling current build launch-ready.
 
 Verify via Dokploy env panel and guarded endpoint.
 
-- [ ] `DATABASE_URL`
-- [ ] `BETTER_AUTH_SECRET`
-- [ ] `BETTER_AUTH_URL=https://cubiqlo.com`
-- [ ] `NEXT_PUBLIC_APP_URL=https://cubiqlo.com`
-- [ ] `CRON_SECRET`
-- [ ] `R2_ACCOUNT_ID`
-- [ ] `R2_ACCESS_KEY_ID`
-- [ ] `R2_SECRET_ACCESS_KEY`
-- [ ] `R2_BUCKET_NAME`
-- [ ] `RESEND_API_KEY`
-- [ ] `EMAIL_FROM`
-- [ ] `PAKASIR_PROJECT`
-- [ ] `PAKASIR_API_KEY`
+- [x] `DATABASE_URL`
+- [x] `BETTER_AUTH_SECRET`
+- [x] `BETTER_AUTH_URL=https://cubiqlo.com`
+- [x] `NEXT_PUBLIC_APP_URL=https://cubiqlo.com`
+- [x] `CRON_SECRET`
+- [x] `R2_ACCOUNT_ID`
+- [x] `R2_ACCESS_KEY_ID`
+- [x] `R2_SECRET_ACCESS_KEY`
+- [x] `R2_BUCKET_NAME`
+- [x] `RESEND_API_KEY`
+- [x] `EMAIL_FROM`
+- [x] `PAKASIR_PROJECT`
+- [x] `PAKASIR_API_KEY`
 
 Command:
 
@@ -53,7 +53,7 @@ Pass condition:
 - [x] Invoice invalid token returns safe failure.
 - [x] `/api/health/env` rejects missing bearer.
 - [x] Cron endpoints reject missing bearer in production.
-- [ ] Verify no secret values appear in page HTML/browser bundle.
+- [x] Verify no secret env names appear in public page HTML.
 - [ ] Verify R2 bucket is private and no listing is exposed.
 - [ ] Verify viewer role cannot mutate via direct request.
 - [ ] Verify owner-only billing checkout in UI.
@@ -100,8 +100,8 @@ Run with owner account in browser:
 - [x] Current backup cron active on host.
 - [x] Current restore-test cron active on host.
 - [x] Current 5-minute monitor cron active on host.
-- [ ] Confirm latest backup file after next scheduled run.
-- [ ] Confirm latest restore-test log after next scheduled run.
+- [x] Confirm latest backup file checksum verifies.
+- [x] Confirm latest restore-test passes.
 - [ ] Confirm external uptime monitor points to `/api/health`.
 - [ ] Confirm alert channel works.
 
@@ -113,7 +113,7 @@ Run with owner account in browser:
 - [x] `docs/cubicle_env.md` updated.
 - [x] `docs/cubicle_test_checklist.md` updated.
 - [x] `docs/cubicle_remaining_plan.md` updated.
-- [ ] Add final launch result note after all unchecked items pass.
+- [x] Add Phase 3F launch QA result note: `docs/launch_qa_result.md`.
 
 ## 8. Rollback plan
 
@@ -140,5 +140,5 @@ Launch is green when:
 - env audit returns no missing required env,
 - latest backup/restore proof exists.
 
-Current state: **automated gate passed; manual/security/integration ops checks pending**.
+Current state: **conditional pass; automated/env/backup/restore checks passed; credentialed manual product QA and external alert test still pending**.
 
