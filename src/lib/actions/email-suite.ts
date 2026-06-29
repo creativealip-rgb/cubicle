@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { clients, emailMessages, projects, workspaces } from "@/db/schema";
+import { clients, emailMessages, emailTemplates, projects, workspaces } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { assertWorkspaceWritable, requireUser } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
@@ -20,12 +20,69 @@ const emailSchema = z.object({
   projectId: z.string().uuid().optional().or(z.literal("")),
 });
 
+const templateSchema = z.object({
+  name: z.string().min(1).max(120),
+  subject: z.string().min(1).max(200),
+  body: z.string().min(1).max(10000),
+  category: z.string().min(1).max(80).default("general"),
+});
+
 async function getContext() {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   return { user, workspaceId };
+}
+
+export async function listEmailTemplates() {
+  const { workspaceId } = await getContext();
+  return db
+    .select()
+    .from(emailTemplates)
+    .where(eq(emailTemplates.workspaceId, workspaceId))
+    .orderBy(emailTemplates.category, emailTemplates.name)
+    .limit(100);
+}
+
+export async function createEmailTemplate(input: z.infer<typeof templateSchema>) {
+  const { user, workspaceId } = await getContext();
+  const parsed = templateSchema.parse(input);
+  const [template] = await db
+    .insert(emailTemplates)
+    .values({
+      workspaceId,
+      userId: user.id,
+      name: parsed.name,
+      subject: parsed.subject,
+      body: parsed.body,
+      category: parsed.category,
+    })
+    .onConflictDoUpdate({
+      target: [emailTemplates.workspaceId, emailTemplates.name],
+      set: {
+        subject: parsed.subject,
+        body: parsed.body,
+        category: parsed.category,
+        updatedAt: new Date(),
+      },
+    })
+    .returning();
+  await writeActivityLog(workspaceId, user.id, "upserted_email_template", "email_template", template.id);
+  revalidatePath("/app/email");
+  return template;
+}
+
+export async function deleteEmailTemplate(templateId: string) {
+  const { user, workspaceId } = await getContext();
+  const [template] = await db
+    .delete(emailTemplates)
+    .where(and(eq(emailTemplates.id, templateId), eq(emailTemplates.workspaceId, workspaceId)))
+    .returning({ id: emailTemplates.id });
+  if (!template) throw new Error("Template not found");
+  await writeActivityLog(workspaceId, user.id, "deleted_email_template", "email_template", templateId);
+  revalidatePath("/app/email");
+  return { success: true };
 }
 
 export async function listEmailMessages() {

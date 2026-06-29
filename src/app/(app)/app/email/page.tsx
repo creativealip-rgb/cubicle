@@ -3,7 +3,15 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { clients, projects } from "@/db/schema";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
-import { createEmailDraft, listEmailMessages, sendEmailMessage, deleteEmailMessage } from "@/lib/actions/email-suite";
+import {
+  createEmailDraft,
+  createEmailTemplate,
+  deleteEmailMessage,
+  deleteEmailTemplate,
+  listEmailMessages,
+  listEmailTemplates,
+  sendEmailMessage,
+} from "@/lib/actions/email-suite";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,8 +26,9 @@ function formatDate(value: Date | string | null) {
 
 export default async function EmailPage() {
   const workspaceId = await getWorkspaceForCurrentUser();
-  const [messages, clientList, projectList] = await Promise.all([
+  const [messages, templates, clientList, projectList] = await Promise.all([
     listEmailMessages(),
+    listEmailTemplates(),
     db.select({ id: clients.id, name: clients.name, email: clients.email }).from(clients).where(eq(clients.workspaceId, workspaceId)).orderBy(clients.name).limit(200),
     db.select({ id: projects.id, name: projects.name }).from(projects).where(eq(projects.workspaceId, workspaceId)).orderBy(projects.name).limit(200),
   ]);
@@ -51,6 +60,23 @@ export default async function EmailPage() {
   async function removeMessage(formData: FormData) {
     "use server";
     await deleteEmailMessage(String(formData.get("messageId") ?? ""));
+    redirect("/app/email");
+  }
+
+  async function saveTemplate(formData: FormData) {
+    "use server";
+    await createEmailTemplate({
+      name: String(formData.get("name") ?? ""),
+      category: String(formData.get("category") ?? "general") || "general",
+      subject: String(formData.get("templateSubject") ?? ""),
+      body: String(formData.get("templateBody") ?? ""),
+    });
+    redirect("/app/email");
+  }
+
+  async function removeTemplate(formData: FormData) {
+    "use server";
+    await deleteEmailTemplate(String(formData.get("templateId") ?? ""));
     redirect("/app/email");
   }
 
@@ -106,6 +132,54 @@ export default async function EmailPage() {
               <Button formAction={sendNow} className="gap-2"><Send className="h-4 w-4" /> Send now</Button>
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Email templates</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <form action={saveTemplate} className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <label htmlFor="name" className="text-sm font-medium">Template name</label>
+              <Input id="name" name="name" placeholder="Project update" required />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="category" className="text-sm font-medium">Category</label>
+              <Input id="category" name="category" placeholder="follow-up" defaultValue="general" />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <label htmlFor="templateSubject" className="text-sm font-medium">Subject</label>
+              <Input id="templateSubject" name="templateSubject" placeholder="Update: {{project}}" required />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <label htmlFor="templateBody" className="text-sm font-medium">Body</label>
+              <Textarea id="templateBody" name="templateBody" rows={5} placeholder="Hi {{client}}, ..." required />
+            </div>
+            <div className="md:col-span-2">
+              <Button type="submit" variant="outline" className="gap-2"><Save className="h-4 w-4" /> Save template</Button>
+            </div>
+          </form>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            {templates.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Belum ada template.</p>
+            ) : templates.map((template) => (
+              <div key={template.id} className="rounded-lg border p-4 space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="font-medium">{template.name}</div>
+                    <div className="text-xs text-muted-foreground">{template.category}</div>
+                  </div>
+                  <form action={removeTemplate}>
+                    <input type="hidden" name="templateId" value={template.id} />
+                    <Button type="submit" size="sm" variant="ghost" aria-label="Delete template"><Trash2 className="h-4 w-4" /></Button>
+                  </form>
+                </div>
+                <div className="text-sm font-medium">{template.subject}</div>
+                <p className="line-clamp-3 whitespace-pre-wrap text-sm text-muted-foreground">{template.body}</p>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 

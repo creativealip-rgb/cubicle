@@ -204,6 +204,11 @@ Production client-ready: ~99% (Phase 2C–2G + Phase 3A done; final security/env
 >- Deferred intentionally: Gmail/IMAP sync, shared inbox, automation sequences, large knowledge base, WhatsApp provider.
 >- Detailed checklist: `docs/phase-4-email-personal-workspace.md`.
 >
+> **Update 2026-06-29 (Phase 4B — Templates + personal note edit/search):**
+>- Email templates/snippets shipped with `email_templates`, create/update/delete actions, and `/app/email` UI.
+>- Personal workspace now supports note edit and search (`/app/personal?q=...`).
+>- Migration `drizzle/0014_p4b_email_templates_note_edit.sql` added.
+>
 > **Update 2026-06-29 (Phase 2C–2G + Phase 3A):**
 >- Phase 2C shipped invoice overdue reminders: cron route, auto-overdue, manual remind, reminder email, fresh invoice share links, notifications, activity logs.
 >- Phase 2D shipped internal project timeline events on project detail.

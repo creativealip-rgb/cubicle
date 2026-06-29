@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-06-29 — Phase 4B templates + personal note edit/search
+
+- Added `email_templates` table and migration `drizzle/0014_p4b_email_templates_note_edit.sql`.
+- Added email template create/update/delete actions and template section on `/app/email`.
+- Added personal note edit action and inline edit UI on `/app/personal`.
+- Added personal note search via `/app/personal?q=...`.
+- Updated Phase 4 docs with shipped/remaining scope.
+
 ## 2026-06-29 — Phase 4 email suite + personal workspace v0
 
 - Added `/app/email` with compose, save draft, send now via existing Resend helper, optional client/project linking, and recent email log.

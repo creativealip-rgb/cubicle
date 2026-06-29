@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, ilike, or } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { personalNotes } from "@/db/schema";
@@ -24,12 +24,16 @@ async function getContext() {
   return { user, workspaceId };
 }
 
-export async function listPersonalNotes() {
+export async function listPersonalNotes(query?: string) {
   const { user, workspaceId } = await getContext();
+  const base = and(eq(personalNotes.workspaceId, workspaceId), eq(personalNotes.userId, user.id));
+  const where = query?.trim()
+    ? and(base, or(ilike(personalNotes.title, `%${query.trim()}%`), ilike(personalNotes.body, `%${query.trim()}%`)))
+    : base;
   return db
     .select()
     .from(personalNotes)
-    .where(and(eq(personalNotes.workspaceId, workspaceId), eq(personalNotes.userId, user.id)))
+    .where(where)
     .orderBy(desc(personalNotes.pinned), desc(personalNotes.updatedAt))
     .limit(100);
 }
@@ -47,6 +51,24 @@ export async function createPersonalNote(input: z.infer<typeof noteSchema>) {
       pinned: parsed.pinned ?? false,
     })
     .returning();
+  revalidatePath("/app/personal");
+  return note;
+}
+
+export async function updatePersonalNote(noteId: string, input: z.infer<typeof noteSchema>) {
+  const { user, workspaceId } = await getContext();
+  const parsed = noteSchema.parse(input);
+  const [note] = await db
+    .update(personalNotes)
+    .set({
+      title: parsed.title,
+      body: parsed.body || null,
+      pinned: parsed.pinned ?? false,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(personalNotes.id, noteId), eq(personalNotes.workspaceId, workspaceId), eq(personalNotes.userId, user.id)))
+    .returning();
+  if (!note) throw new Error("Note not found");
   revalidatePath("/app/personal");
   return note;
 }

@@ -718,6 +718,18 @@ export const notificationRelations = relations(notifications, ({ one }) => ({
 
 // ─── P4: Email suite + personal workspace ───
 
+export const emailTemplates = pgTable("email_templates", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
+  name: text("name").notNull(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  category: text("category").notNull().default("general"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [unique().on(table.workspaceId, table.name)]);
+
 export const emailMessages = pgTable("email_messages", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),

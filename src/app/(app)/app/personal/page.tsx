@@ -4,6 +4,7 @@ import {
   deletePersonalNote,
   listPersonalNotes,
   togglePersonalNotePinned,
+  updatePersonalNote,
   updatePersonalNoteStatus,
 } from "@/lib/actions/personal-notes";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,12 +18,27 @@ function formatDate(value: Date | string) {
   return new Date(value).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
 }
 
-export default async function PersonalPage() {
-  const notes = await listPersonalNotes();
+export default async function PersonalPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const query = (await searchParams).q?.trim() ?? "";
+  const notes = await listPersonalNotes(query);
 
   async function createNote(formData: FormData) {
     "use server";
     await createPersonalNote({
+      title: String(formData.get("title") ?? ""),
+      body: String(formData.get("body") ?? "") || undefined,
+      pinned: formData.get("pinned") === "on",
+    });
+    redirect("/app/personal");
+  }
+
+  async function updateNote(formData: FormData) {
+    "use server";
+    await updatePersonalNote(String(formData.get("noteId") ?? ""), {
       title: String(formData.get("title") ?? ""),
       body: String(formData.get("body") ?? "") || undefined,
       pinned: formData.get("pinned") === "on",
@@ -63,6 +79,11 @@ export default async function PersonalPage() {
         <h1 className="text-2xl font-bold tracking-tight">Personal Workspace</h1>
         <p className="text-sm text-muted-foreground mt-1">Catatan pribadi user di workspace ini. Tidak tampil ke client.</p>
       </div>
+
+      <form action="/app/personal" className="flex gap-2">
+        <Input name="q" placeholder="Search notes..." defaultValue={query} />
+        <Button type="submit" variant="outline">Search</Button>
+      </form>
 
       <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
         <Card className="h-fit">
@@ -129,6 +150,18 @@ export default async function PersonalPage() {
                   </div>
                 </div>
                 {note.body && <p className="whitespace-pre-wrap text-sm text-muted-foreground">{note.body}</p>}
+                <details className="rounded-md bg-muted/40 p-3">
+                  <summary className="cursor-pointer text-sm font-medium">Edit</summary>
+                  <form action={updateNote} className="mt-3 space-y-3">
+                    <input type="hidden" name="noteId" value={note.id} />
+                    <Input name="title" defaultValue={note.title} required />
+                    <Textarea name="body" defaultValue={note.body ?? ""} rows={4} />
+                    <label className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" name="pinned" defaultChecked={note.pinned} /> Pin note
+                    </label>
+                    <Button type="submit" size="sm">Save changes</Button>
+                  </form>
+                </details>
               </div>
             ))}
           </CardContent>

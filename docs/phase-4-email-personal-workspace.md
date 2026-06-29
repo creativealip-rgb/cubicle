@@ -68,9 +68,15 @@ personal_notes
 
 ## Remaining P4 options
 
+Phase 4B shipped:
+
+- [x] Email templates/snippets with create/update/delete
+- [x] Personal note edit
+- [x] Personal note search
+
 Email suite next:
 
-- [ ] Email templates/snippets
+- [ ] Use template to prefill compose fields client-side
 - [ ] Re-send draft
 - [ ] Convert email to task/follow-up
 - [ ] Email event timeline per client
@@ -78,8 +84,6 @@ Email suite next:
 
 Personal workspace next:
 
-- [ ] Edit note
-- [ ] Search/filter notes
 - [ ] Convert note to task/project idea
 - [ ] Daily planner view
 - [ ] Markdown preview
