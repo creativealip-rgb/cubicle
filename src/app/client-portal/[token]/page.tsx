@@ -9,8 +9,9 @@ import {
   comments,
   portalVisits,
   portalRequests,
+  activityLogs,
 } from "@/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, desc, inArray } from "drizzle-orm";
 import { getClientPortalAccess, logPortalAccess } from "@/lib/actions/portal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,7 @@ import {
   FileText,
   CheckCircle2,
   MessageSquare,
+  Activity,
 } from "lucide-react";
 import { PortalProjectCard } from "@/components/portal/portal-project-card";
 import { PortalTaskList } from "@/components/portal/portal-task-list";
@@ -240,6 +242,61 @@ export default async function ClientPortalPage({
     projectCommentsMap.set(projectId, projectComments);
   }
 
+  const clientVisibleActionLabels: Record<string, string> = {
+    created_project: "Project created",
+    updated_project: "Project updated",
+    updated_project_visibility: "Project shared",
+    created_task: "Task added",
+    updated_task: "Task updated",
+    updated_task_status: "Task status updated",
+    uploaded_file: "File shared",
+    created_comment: "Comment added",
+  };
+
+  const projectTimelineMap = new Map<string, Array<{
+    id: string;
+    action: string;
+    entityType: string;
+    createdAt: Date;
+  }>>();
+
+  for (const project of clientProjects) {
+    const projectTasks = projectTasksMap.get(project.id) || [];
+    const projectFiles = projectFilesMap.get(project.id) || [];
+    const projectComments = projectCommentsMap.get(project.id) || [];
+    const visibleEntityIds = [
+      project.id,
+      ...projectTasks.map((task) => task.id),
+      ...projectFiles.map((file) => file.id),
+      ...projectComments.map((comment) => comment.id),
+    ];
+
+    if (visibleEntityIds.length === 0) {
+      projectTimelineMap.set(project.id, []);
+      continue;
+    }
+
+    const timeline = await db
+      .select({
+        id: activityLogs.id,
+        action: activityLogs.action,
+        entityType: activityLogs.entityType,
+        createdAt: activityLogs.createdAt,
+      })
+      .from(activityLogs)
+      .where(
+        and(
+          eq(activityLogs.workspaceId, client.workspaceId),
+          inArray(activityLogs.entityId, visibleEntityIds),
+          inArray(activityLogs.action, Object.keys(clientVisibleActionLabels)),
+        ),
+      )
+      .orderBy(desc(activityLogs.createdAt))
+      .limit(12);
+
+    projectTimelineMap.set(project.id, timeline);
+  }
+
   const clientPortalRequests = await db
     .select({
       id: portalRequests.id,
@@ -334,6 +391,7 @@ export default async function ClientPortalPage({
                 const projectTasks = projectTasksMap.get(project.id) || [];
                 const projectFiles = projectFilesMap.get(project.id) || [];
                 const projectComments = projectCommentsMap.get(project.id) || [];
+                const projectTimeline = projectTimelineMap.get(project.id) || [];
 
                 return (
                   <Card key={project.id}>
@@ -397,6 +455,33 @@ export default async function ClientPortalPage({
                             }))}
                             token={token}
                           />
+                        </div>
+                      )}
+
+                      {/* Timeline */}
+                      {projectTimeline.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                            <Activity className="h-4 w-4" /> Timeline
+                          </h4>
+                          <div className="rounded-lg border divide-y">
+                            {projectTimeline.map((event) => (
+                              <div key={event.id} className="flex items-center justify-between gap-3 p-3 text-sm">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
+                                  <span className="truncate">
+                                    {clientVisibleActionLabels[event.action] ?? event.action.replace(/_/g, " ")}
+                                  </span>
+                                </div>
+                                <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                                  <Badge variant="outline" className="text-[10px] capitalize">
+                                    {event.entityType.replace(/_/g, " ")}
+                                  </Badge>
+                                  <span>{new Date(event.createdAt).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
 
