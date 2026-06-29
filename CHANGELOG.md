@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-29 — Phase 3G test account + credentialed QA smoke
+
+- Created new `TRST QA` production test account via signup and marked email verified for QA.
+- Verified login, dashboard, clients page, billing owner buttons, and reports quick actions on production.
+- Updated `docs/launch_qa_result.md` with credentialed QA smoke status and remaining deeper manual checks.
+
 ## 2026-06-29 — Phase 3F launch QA execution
 
 - Added `docs/launch_qa_result.md` with launch QA evidence and remaining manual/credentialed checks.

@@ -21,15 +21,21 @@ Passed:
 - build passed
 - public HTML secret-name scan passed
 
-Still requires credentialed/manual browser QA:
-- owner login/logout
-- dashboard KPI visual check
-- create client/project/task
+Phase 3G credentialed QA added:
+- new `TRST QA` test account created through production signup
+- email verification set true in DB for QA account
+- login succeeded on production domain
+- dashboard loaded for new workspace
+- clients page loaded for new workspace
+- billing page loaded and owner QRIS buttons visible
+- reports page loaded and quick actions visible
+
+Still requires deeper credentialed/manual browser QA:
+- create client/project/task through UI
 - file upload/download through R2
 - client portal share link full flow
 - invoice creation/send/reminder full flow
 - Pakasir checkout/webhook full flow
-- owner-only billing UI check
 - viewer direct mutation guard with viewer session cookie
 - external uptime alert channel test
 
