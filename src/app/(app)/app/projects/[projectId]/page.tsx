@@ -2,8 +2,8 @@ import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/li
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { projects, clients, tasks, comments, files, timeEntries, workspaces, workspaceMembers, users } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { projects, clients, tasks, comments, files, timeEntries, activityLogs, workspaceMembers, users } from "@/db/schema";
+import { eq, and, desc, inArray, or } from "drizzle-orm";
 import { requireUser, assertProjectInWorkspace } from "@/lib/access";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,7 @@ import {
   FileText,
   MessageSquare,
   CheckSquare,
+  Activity,
 } from "lucide-react";
 
 async function getWorkspaceId(): Promise<string> {
@@ -128,6 +129,59 @@ export default async function ProjectDetailPage({
     .orderBy(desc(timeEntries.createdAt))
     .limit(20);
 
+  const timelineEntityIds = [
+    projectId,
+    ...projectTasks.map((task) => task.id),
+    ...projectFiles.map((file) => file.id),
+    ...projectComments.map((comment) => comment.id),
+    ...projectTimeEntries.map((entry) => entry.id),
+  ];
+
+  const projectTimeline = await db
+    .select({
+      id: activityLogs.id,
+      action: activityLogs.action,
+      entityType: activityLogs.entityType,
+      entityId: activityLogs.entityId,
+      metadata: activityLogs.metadata,
+      createdAt: activityLogs.createdAt,
+      actorName: users.name,
+      actorEmail: users.email,
+    })
+    .from(activityLogs)
+    .leftJoin(users, eq(users.id, activityLogs.actorId))
+    .where(
+      and(
+        eq(activityLogs.workspaceId, workspaceId),
+        or(
+          inArray(activityLogs.entityId, timelineEntityIds),
+        ),
+      ),
+    )
+    .orderBy(desc(activityLogs.createdAt))
+    .limit(50);
+
+  const actionLabels: Record<string, string> = {
+    created_project: "Created project",
+    updated_project: "Updated project",
+    archived_project: "Archived project",
+    updated_project_visibility: "Updated project visibility",
+    added_project_member: "Added project member",
+    removed_project_member: "Removed project member",
+    created_task: "Created task",
+    updated_task: "Updated task",
+    updated_task_status: "Moved task",
+    reordered_task: "Reordered task",
+    deleted_task: "Deleted task",
+    uploaded_file: "Uploaded file",
+    deleted_file: "Deleted file",
+    created_comment: "Added comment",
+    started_timer: "Started timer",
+    stopped_timer: "Stopped timer",
+    created_time_entry: "Logged time",
+    updated_time_entry: "Updated time entry",
+  };
+
   const statusColors: Record<string, string> = {
     active: "bg-emerald-500",
     draft: "bg-slate-400",
@@ -211,6 +265,9 @@ export default async function ProjectDetailPage({
           <TabsTrigger value="comments" className="gap-1">
             <MessageSquare className="h-3 w-3" /> Comments ({projectComments.length})
           </TabsTrigger>
+          <TabsTrigger value="timeline" className="gap-1">
+            <Activity className="h-3 w-3" /> Timeline ({projectTimeline.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="tasks" className="pt-4">
@@ -275,6 +332,38 @@ export default async function ProjectDetailPage({
               createdAt: c.createdAt,
             }))}
           />
+        </TabsContent>
+
+        <TabsContent value="timeline" className="pt-4">
+          <Card>
+            <CardContent className="p-0">
+              {projectTimeline.length === 0 && (
+                <p className="text-sm text-muted-foreground py-8 text-center">No timeline events yet</p>
+              )}
+              <div className="divide-y">
+                {projectTimeline.map((event) => (
+                  <div key={event.id} className="flex gap-3 p-4">
+                    <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
+                      <Activity className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-medium">
+                          {actionLabels[event.action] ?? event.action.replace(/_/g, " ")}
+                        </p>
+                        <Badge variant="outline" className="text-[10px] capitalize">
+                          {event.entityType.replace(/_/g, " ")}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {event.actorName || event.actorEmail || "System"} · {new Date(event.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
