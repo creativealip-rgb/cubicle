@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-29 — Phase 3D final launch checklist
+
+- Added `docs/launch_checklist.md` as final release gate.
+- Checklist covers baseline, env, security, core product, integrations, ops, docs, rollback, and launch decision.
+- Current state marked: automated gate passed; manual/security/integration ops checks pending.
+
 ## 2026-06-29 — Phase 3C smoke test script
 
 - Added `scripts/smoke.mjs` and `npm run smoke`.
