@@ -28,7 +28,7 @@ ENDPOINT="$CUBICLE_URL/api/notifications/reminders"
 
 echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] POST $ENDPOINT"
 curl -fsS -X POST \
-  -H "Authorization: Bearer $CRON_SECRET" \
+  -H "Authorization: Bearer ${CRON_SECRET}" \
   -H "Content-Type: application/json" \
   "$ENDPOINT"
 echo

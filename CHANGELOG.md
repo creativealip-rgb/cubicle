@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-06-29 — Phase 3E backup/monitor ops sync
+
+- Added `docs/cubicle_ops.md` covering production services, cron jobs, backup, restore test, monitoring, alerting, and emergency restore outline.
+- Verified host crontab has hourly reminders, daily DB backup, weekly restore-test, and 5-minute monitor jobs.
+- Updated final launch checklist ops gate with active cron status.
+- Fixed `scripts/cron-reminders.sh` to send `Authorization: Bearer ${CRON_SECRET}` correctly.
+
 ## 2026-06-29 — Phase 3D final launch checklist
 
 - Added `docs/launch_checklist.md` as final release gate.

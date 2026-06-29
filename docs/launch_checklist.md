@@ -94,11 +94,14 @@ Run with owner account in browser:
 ## 6. Ops gate
 
 - [x] Docker log rotation configured.
-- [x] Daily DB backup documented.
-- [x] Weekly restore test documented.
+- [x] Daily DB backup documented in `docs/cubicle_ops.md`.
+- [x] Weekly restore test documented in `docs/cubicle_ops.md`.
 - [x] Health smoke script exists.
-- [ ] Confirm current backup cron active on host.
-- [ ] Confirm latest restore test passed.
+- [x] Current backup cron active on host.
+- [x] Current restore-test cron active on host.
+- [x] Current 5-minute monitor cron active on host.
+- [ ] Confirm latest backup file after next scheduled run.
+- [ ] Confirm latest restore-test log after next scheduled run.
 - [ ] Confirm external uptime monitor points to `/api/health`.
 - [ ] Confirm alert channel works.
 
