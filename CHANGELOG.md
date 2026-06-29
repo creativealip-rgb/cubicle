@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-06-29 — Phase 3N viewer mutation guards
+
+- Guarded `/api/settings/reply-to` with authenticated workspace-owner authorization before mutating workspace reply-to email.
+- Guarded `/api/ai/action` task-status updates and invoice-reminder sends with owner/member workspace write checks.
+- Verified fresh TRST viewer account receives 403 for reply-to update, AI task status update, and AI invoice reminder direct requests.
+- Verified `npm run lint`, `npm run build`, Docker rebuild, `/api/health`, and production smoke pass.
+
 ## 2026-06-29 — Phase 3L final launch QA
 
 - Fixed native invoice share route auth by reading session from route request headers and updating invoice token hash directly.

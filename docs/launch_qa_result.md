@@ -59,9 +59,14 @@ Phase 3M/3L final QA added:
 - client portal `/client-portal/trst-phase3l-portal` returned 200, showed visible project/task markers, and hid internal leak sentinels
 - monitor script returned `OK cpu=8% ram=66% disk=77% http=200`
 
+Phase 3N viewer mutation guard QA added:
+- created fresh TRST viewer account and attached it to existing QA workspace as `viewer`
+- patched `/api/settings/reply-to` to require workspace owner
+- patched `/api/ai/action` to require owner/member access before task status updates or invoice-reminder sends
+- direct viewer requests returned 403 for reply-to update, AI task status update, and AI invoice reminder send
+
 Still requires manual verification before paid launch:
 - Pakasir checkout/webhook full flow
-- viewer direct mutation guard with viewer session cookie
 - real external uptime alert delivery channel, if not covered by cron delivery
 
 ## Evidence
@@ -191,5 +196,4 @@ Current launch status: **technical launch QA pass**.
 
 Remaining paid-launch caveats:
 - Pakasir checkout/webhook still needs live-payment verification.
-- Viewer-role direct mutation guard still needs separate viewer-cookie verification.
 - Real external alert delivery channel still needs confirmation if not covered by cron stdout delivery.
