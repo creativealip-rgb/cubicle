@@ -109,29 +109,37 @@ export function ShareTokenSection({
       )}
 
       <div className="flex gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="gap-1"
-          onClick={handleGenerate}
-          disabled={loading}
-        >
-          <RefreshCw className="h-3 w-3" />
-          {loading ? "Membuat..." : "Buat Link Berbagi"}
-        </Button>
-        {hasToken && !isExpired && (
+        <form action="/api/invoices/share" method="post">
+          <input type="hidden" name="invoiceId" value={invoiceId} />
+          <input type="hidden" name="action" value="generate" />
           <Button
-            type="button"
+            type="submit"
             variant="outline"
             size="sm"
-            className="gap-1 text-red-600 hover:text-red-700"
-            onClick={handleCabut}
+            className="gap-1"
+            onClick={handleGenerate}
             disabled={loading}
           >
-            <X className="h-3 w-3" />
-            Cabut
+            <RefreshCw className="h-3 w-3" />
+            {loading ? "Membuat..." : "Buat Link Berbagi"}
           </Button>
+        </form>
+        {hasToken && !isExpired && (
+          <form action="/api/invoices/share" method="post">
+            <input type="hidden" name="invoiceId" value={invoiceId} />
+            <input type="hidden" name="action" value="revoke" />
+            <Button
+              type="submit"
+              variant="outline"
+              size="sm"
+              className="gap-1 text-red-600 hover:text-red-700"
+              onClick={handleCabut}
+              disabled={loading}
+            >
+              <X className="h-3 w-3" />
+              Cabut
+            </Button>
+          </form>
         )}
       </div>
     </div>
