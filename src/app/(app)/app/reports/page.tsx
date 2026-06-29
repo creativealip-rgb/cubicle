@@ -10,7 +10,6 @@ import {
   payments,
   projects,
   expenseRecurring,
-  workspaces,
 } from "@/db/schema";
 import { eq, and, sql, desc, gte } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
@@ -25,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
+import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import {
   TrendingUp,
   TrendingDown,
@@ -211,6 +210,17 @@ export default async function ReportsPage() {
     (s, m) => s + (expensesByMonth[m]?.USD ?? 0),
     0,
   );
+  const ytdNetIDR = ytdIncome - ytdExpenseIDR;
+  const totalInvoicedYtd = clientRows.reduce((sum, row) => sum + parseFloat(row.totalInvoiced), 0);
+  const totalPaidYtd = clientRows.reduce((sum, row) => sum + parseFloat(row.totalPaid), 0);
+  const collectionRate = totalInvoicedYtd > 0 ? Math.round((totalPaidYtd / totalInvoicedYtd) * 100) : 0;
+  const outstandingTotal = agingRows.reduce((sum, row) => sum + parseFloat(row.total), 0);
+  const overdueTotal = overdueItems.reduce((sum, row) => sum + parseFloat(row.total), 0);
+  const overdueRate = outstandingTotal > 0 ? Math.round((overdueTotal / outstandingTotal) * 100) : 0;
+  const pnlMax = Math.max(
+    ...months.flatMap((m) => [incomeByMonth[m] ?? 0, expensesByMonth[m]?.IDR ?? 0]),
+    1,
+  );
 
   // ─── Cash flow forecast (next 3 months) ───
   const todayFc = new Date().toISOString().slice(0, 10);
@@ -275,18 +285,28 @@ export default async function ReportsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Laporan</h1>
-          <p className="text-sm text-slate-500 mt-1">Angkamu sekilas.</p>
+          <p className="text-sm text-slate-500 mt-1">
+            Pendapatan, aging invoice, pengeluaran, dan proyeksi kas.
+          </p>
         </div>
-        <Button asChild variant="outline" size="sm">
-          <Link href="/app/expenses">
-            <Wallet className="h-4 w-4 mr-1" />
-            Catat pengeluaran
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/app/invoices/new">
+              <TrendingUp className="h-4 w-4 mr-1" />
+              Invoice baru
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/app/expenses">
+              <Wallet className="h-4 w-4 mr-1" />
+              Catat pengeluaran
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* YTD summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">Pendapatan YTD</CardTitle>
@@ -316,12 +336,24 @@ export default async function ReportsPage() {
             <BarChart3 className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-semibold ${ytdIncome - ytdExpenseIDR >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-              {formatMoney(ytdIncome - ytdExpenseIDR, "IDR")}
+            <div className={`text-2xl font-semibold ${ytdNetIDR >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+              {formatMoney(ytdNetIDR, "IDR")}
             </div>
             {ytdExpenseUSD > 0 && (
               <div className="text-xs text-slate-500 mt-1">USD bersih tidak ditampilkan (invoice terbayar hanya IDR)</div>
             )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Collection health</CardTitle>
+            <AlertCircle className={`h-4 w-4 ${overdueRate > 30 ? "text-red-500" : "text-emerald-500"}`} />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-semibold">{collectionRate}%</div>
+            <p className="text-xs text-slate-500 mt-1">
+              {formatMoney(overdueTotal, "IDR")} overdue · {overdueRate}% dari outstanding
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -337,19 +369,18 @@ export default async function ReportsPage() {
             {months.map((m) => {
               const inc = incomeByMonth[m] ?? 0;
               const exp = expensesByMonth[m]?.IDR ?? 0;
-              const max = Math.max(inc, exp, 1);
               return (
                 <div key={m} className="flex items-center gap-3">
                   <span className="text-xs font-mono w-16 text-slate-500">{m}</span>
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2">
-                      <div className="h-3 bg-emerald-500 rounded" style={{ width: `${(inc / max) * 100}%` }} />
+                      <div className="h-3 bg-emerald-500 rounded" style={{ width: `${(inc / pnlMax) * 100}%` }} />
                       <span className="text-xs tabular-nums w-32 text-right text-emerald-700">
                         +{formatMoney(inc, "IDR")}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="h-3 bg-red-400 rounded" style={{ width: `${(exp / max) * 100}%` }} />
+                      <div className="h-3 bg-red-400 rounded" style={{ width: `${(exp / pnlMax) * 100}%` }} />
                       <span className="text-xs tabular-nums w-32 text-right text-red-600">
                         −{formatMoney(exp, "IDR")}
                       </span>
