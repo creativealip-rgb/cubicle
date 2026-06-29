@@ -13,7 +13,8 @@ import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { tasks } from "@/db/schema";
+import { invoices, tasks } from "@/db/schema";
+import { assertWorkspaceWritable } from "@/lib/access";
 import { sendNotification } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
@@ -50,14 +51,21 @@ export async function POST(req: NextRequest) {
       if (!p.taskId || !p.newStatus) {
         return NextResponse.json({ error: "Missing taskId/newStatus" }, { status: 400 });
       }
+      const [task] = await db
+        .select({ id: tasks.id, workspaceId: tasks.workspaceId })
+        .from(tasks)
+        .where(eq(tasks.id, p.taskId))
+        .limit(1);
+      if (!task) {
+        return NextResponse.json({ error: "Task not found" }, { status: 404 });
+      }
+      await assertWorkspaceWritable(db, session.user.id, task.workspaceId);
+
       const [updated] = await db
         .update(tasks)
         .set({ status: p.newStatus, updatedAt: new Date() })
         .where(eq(tasks.id, p.taskId))
         .returning({ id: tasks.id, title: tasks.title, status: tasks.status });
-      if (!updated) {
-        return NextResponse.json({ error: "Task not found" }, { status: 404 });
-      }
       return NextResponse.json({ ok: true, result: { task: updated } });
     }
 
@@ -69,6 +77,16 @@ export async function POST(req: NextRequest) {
           { status: 400 },
         );
       }
+      const [invoice] = await db
+        .select({ id: invoices.id, workspaceId: invoices.workspaceId })
+        .from(invoices)
+        .where(eq(invoices.id, p.invoiceId))
+        .limit(1);
+      if (!invoice) {
+        return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+      }
+      await assertWorkspaceWritable(db, session.user.id, invoice.workspaceId);
+
       // Send via existing email helper. If RESEND_API_KEY not set, returns
       // { success: true, fallback: "console" } — recorded in dev mode.
       const sendResult = await sendNotification({
@@ -82,9 +100,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: `Unknown kind: ${body.kind}` }, { status: 400 });
   } catch (err) {
+    const status = err instanceof Error && err.name === "ForbiddenError" ? 403 : 500;
     return NextResponse.json(
       { error: err instanceof Error ? err.message : String(err) },
-      { status: 500 },
+      { status },
     );
   }
 }
