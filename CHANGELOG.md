@@ -14,7 +14,7 @@
 - Verified R2 upload/download/delete against production bucket with disposable QA object.
 - Verified client portal visibility allowlist: visible project/task shown, internal project/task sentinels hidden.
 - Verified monitor script healthy on production host.
-- Updated launch QA decision to technical launch QA pass with remaining paid-launch caveats for Pakasir live payment, viewer mutation guard, and real external alert delivery.
+- Updated launch QA decision to technical launch QA pass with remaining paid-launch caveats for Pakasir live payment and real external alert delivery.
 
 ## 2026-06-29 — Phase 3M client creation native fallback
 

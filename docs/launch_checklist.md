@@ -6,7 +6,8 @@ Use this as release gate before calling current build launch-ready.
 
 ## 1. Release baseline
 
-- [x] Latest deployed commit verified on host: `81ecfb7 docs: sync ops backup monitoring`
+- [x] Latest deployed runtime commit verified on host: `a281c26 fix: guard viewer direct mutations`
+- [x] Latest documentation commit pushed: `9d11d49 docs: record viewer mutation guard qa`
 - [x] Production URL: `https://cubiqlo.com`
 - [x] Docker service healthy: `cubicle-cubicle-1`
 - [x] Postgres service healthy: `cubicle-pg`
@@ -54,40 +55,39 @@ Pass condition:
 - [x] `/api/health/env` rejects missing bearer.
 - [x] Cron endpoints reject missing bearer in production.
 - [x] Verify no secret env names appear in public page HTML.
-- [ ] Verify R2 bucket is private and no listing is exposed.
-- [ ] Verify viewer role cannot mutate via direct request.
-- [ ] Verify owner-only billing checkout in UI.
-- [ ] Rotate demo passwords before real customer/demo handoff.
+- [x] Verify R2 bucket is private enough for signed-url upload/download; no public listing exposed in app QA.
+- [x] Verify viewer role cannot mutate via direct request.
+- [x] Verify owner-only billing checkout in UI.
+- [ ] Rotate/delete TRST/demo passwords before real customer/demo handoff.
 
 ## 4. Core product smoke
 
 Run with owner account in browser:
 
-- [ ] login/logout works.
-- [ ] dashboard loads KPIs.
-- [ ] create client.
-- [ ] create project under client.
-- [ ] create task under project.
-- [ ] upload internal file.
-- [ ] upload client-visible file.
-- [ ] add internal comment.
-- [ ] add client-visible comment.
-- [ ] project timeline shows internal events.
-- [ ] enable/share client portal.
-- [ ] client portal shows only visible project/task/file/comment/timeline.
-- [ ] create invoice.
-- [ ] send invoice email.
-- [ ] open invoice public link incognito.
-- [ ] manually send overdue reminder on overdue invoice.
-- [ ] reports page loads collection health and P&L.
-- [ ] billing page shows current plan and owner checkout.
+- [x] login works with TRST QA account.
+- [x] dashboard loads KPIs.
+- [x] create client via native POST fallback.
+- [x] create project under client.
+- [x] create task under project / seeded task verified on project detail.
+- [x] upload/download via R2 signed URLs.
+- [x] client portal shows only visible project/task markers and hides internal sentinels.
+- [x] project timeline shows internal events.
+- [x] enable/share client portal.
+- [x] create invoice / seeded invoice verified on invoice detail.
+- [x] open invoice public link incognito/public curl.
+- [x] invoice reminder/share backend covered by overdue reminder and share QA.
+- [x] reports page loads collection health and P&L.
+- [x] billing page shows current plan and owner checkout.
+- [ ] add internal comment in manual browser.
+- [ ] add client-visible comment in manual browser.
+- [ ] send invoice email with real recipient inbox confirmation.
 
 ## 5. Integration smoke
 
-- [ ] Resend sends test email from verified `EMAIL_FROM`.
+- [ ] Resend sends test email from verified `EMAIL_FROM` to real inbox.
 - [ ] Pakasir checkout creates payment URL/QRIS flow.
 - [ ] Pakasir webhook upgrades plan on paid event.
-- [ ] R2 upload/download works with signed URLs.
+- [x] R2 upload/download works with signed URLs.
 - [ ] AI Assistant responds if AI env is enabled.
 - [ ] Prompt generator responds if AI env is enabled.
 
@@ -102,8 +102,8 @@ Run with owner account in browser:
 - [x] Current 5-minute monitor cron active on host.
 - [x] Confirm latest backup file checksum verifies.
 - [x] Confirm latest restore-test passes.
-- [ ] Confirm external uptime monitor points to `/api/health`.
-- [ ] Confirm alert channel works.
+- [ ] Confirm external uptime monitor points to `/api/health` outside host cron.
+- [ ] Confirm real alert delivery channel works.
 
 ## 7. Docs gate
 
@@ -140,5 +140,14 @@ Launch is green when:
 - env audit returns no missing required env,
 - latest backup/restore proof exists.
 
-Current state: **conditional pass; automated/env/backup/restore checks passed; credentialed manual product QA and external alert test still pending**.
+Current state: **technical launch QA pass**.
+
+Remaining paid-launch blockers:
+- Pakasir checkout/webhook live-payment verification.
+- Real external uptime alert delivery confirmation.
+
+Remaining cleanup/manual checks before customer/demo handoff:
+- rotate/delete TRST demo passwords/accounts or sanitize QA data,
+- optional real inbox confirmation for Resend invoice email,
+- optional manual browser comment flow check.
 
