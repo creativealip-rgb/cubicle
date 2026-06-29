@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-06-29 — Phase 3B env/security hardening
+
+- Added safe environment audit helper and guarded endpoint:
+  - `/api/health/env`
+  - requires `Authorization: Bearer $CRON_SECRET`
+  - returns only env names/statuses, never secret values
+- Added production-required env checks for DB, auth, app URL, cron secret, R2, Resend, and Pakasir.
+- Hardened cron routes so missing `CRON_SECRET` locks cron endpoints in production instead of leaving them open.
+- Updated `.env.example` with `CRON_SECRET`.
+- Rewrote `docs/cubicle_env.md` with current production env names, guarded endpoints, and launch checklist.
+- Verified:
+  - `npm run lint` ✅
+  - `npm run build` ✅
+
 ## 2026-06-29 — Phase 2C–2G + Phase 3A
 
 - Added invoice overdue reminder system:

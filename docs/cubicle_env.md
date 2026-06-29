@@ -1,4 +1,4 @@
-# Cubicle / Kubikel — Environment Variables
+# Cubicle / Cubiqlo — Environment Variables
 
 Target stack:
 - Next.js App Router
@@ -6,167 +6,115 @@ Target stack:
 - Drizzle ORM
 - Better-Auth
 - Cloudflare R2
-- OpenAI-compatible API
-- 9Router (AI provider gateway for both Prompt Generator + AI Assistant)
-- Resend/nodemailer email
+- Resend email
+- Pakasir QRIS billing
+- OpenAI-compatible AI endpoint / 9Router
 
-## 1. App
-
-```env
-APP_URL=http://localhost:3000
-NODE_ENV=development
-```
-
-Rules:
-- `APP_URL` must be public app origin.
-- production value should be Dokploy/Traefik domain or custom domain (currently `https://cubicle.168-144-37-19.sslip.io`).
-- never expose server secrets to client components.
-
-## 2. Database
+## 1. Required production env
 
 ```env
-DATABASE_URL=postgresql://USER:***@HOST/DATABASE
-```
-
-Rules:
-- `DATABASE_URL` used by app runtime. On the VPS this resolves to `cubicle-pg:5432` on the internal Docker network — Postgres is **not** exposed to the public internet.
-- No `?sslmode=require` needed for Docker-internal connection; SSL only matters for managed/remote DBs.
-- Migrations run via `npm run db:push` / `npm run db:generate` against the same URL.
-- Daily `pg_dump` + weekly restore-test cron wired (see `cubicle_remaining_plan.md` P2.5).
-
-## 3. Better-Auth
-
-```env
+DATABASE_URL=postgresql://USER:PASSWORD@HOST/DATABASE
 BETTER_AUTH_SECRET=replace-with-random-secret
-BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_URL=https://cubiqlo.com
+NEXT_PUBLIC_APP_URL=https://cubiqlo.com
+CRON_SECRET=replace-with-random-cron-secret
+
+R2_ACCOUNT_ID=your-account-id
+R2_ACCESS_KEY_ID=your-access-key-id
+R2_SECRET_ACCESS_KEY=your-secret-access-key
+R2_BUCKET_NAME=cubicle-files
+R2_PUBLIC_ENDPOINT=https://files.example.com
+
+RESEND_API_KEY=your-resend-api-key
+EMAIL_FROM=Cubiqlo <noreply@cubiqlo.com>
+
+PAKASIR_PROJECT=cubiqlo
+PAKASIR_API_KEY=your-pakasir-api-key
 ```
 
 Rules:
-- `BETTER_AUTH_URL` should equal `APP_URL`.
-- production secret must be generated with secure random source.
-- session cookie must be secure in production.
+- `BETTER_AUTH_URL` and `NEXT_PUBLIC_APP_URL` must be same canonical production origin.
+- `BETTER_AUTH_SECRET` and `CRON_SECRET` must be random and private.
+- Do not put secrets in `NEXT_PUBLIC_*` variables.
+- Postgres should stay internal to Docker/Dokploy network unless using managed DB.
 
-Generate local secret:
+Generate secrets:
 
 ```bash
 openssl rand -base64 32
 ```
 
-## 4. Cloudflare R2
+## 2. Optional AI env
 
 ```env
-R2_ACCOUNT_ID=your-account-id
-R2_ACCESS_KEY_ID=your-access-key-id
-R2_SECRET_ACCESS_KEY=your-secret-access-key
-R2_BUCKET=cubicle-private-files
-R2_ENDPOINT=https://ACCOUNT_ID.r2.cloudflarestorage.com
-R2_REGION=auto
-SIGNED_URL_TTL_SECONDS=300
-MAX_UPLOAD_MB=25
+AI_API_KEY=your-ai-api-key
+AI_BASE_URL=https://your-openai-compatible-endpoint/v1
+AI_MODEL=ag/gemini-3-flash
+AI_MONTHLY_CAP_USD=5
+
+# Legacy/fallback names used by prompt generator:
+OPENAI_API_KEY=
+OPENAI_API_BASE=
+NINE_ROUTER_API_KEY=
+ROUTER_API_KEY=
 ```
 
-Rules:
-- bucket must be private.
-- app stores `storage_key`, never public URL.
-- downloads use short-lived signed URLs only.
-- signed download URL max 5 minutes.
-- MVP max file size 25 MB.
-- validate mime type server-side.
-- object key format:
+Resolution notes:
+- AI Assistant reads Docker secret `/run/secrets/9router_api_key` first, then `AI_API_KEY`.
+- Prompt generator supports legacy OpenAI/9Router env names.
+- AI is optional for core CRM/invoice/portal features.
 
-```text
-workspaces/{workspaceId}/files/{fileId}/{safeFilename}
+## 3. Guarded endpoints
+
+`CRON_SECRET` protects cron/admin health endpoints with:
+
+```http
+Authorization: Bearer <CRON_SECRET>
 ```
 
-## 5. OpenAI-Compatible API (Prompt Generator + AI Assistant)
+Guarded endpoints:
+- `/api/cron/invoice-overdue`
+- `/api/cron/plan-reminders`
+- `/api/cron/expire-plans`
+- `/api/notifications/reminders`
+- `/api/health/env`
 
-Used by both:
-- **Prompt Generator** (`/app/prompts`) — content generation, template filling
-- **AI Assistant** (chat panel) — agentic RAG with tool calls, conversations
+If `CRON_SECRET` is missing in production, these endpoints stay locked.
 
-```env
-# Single 9Router endpoint (works for both)
-OPENAI_API_KEY=your-api-key
-OPENAI_BASE_URL=https://9router-168-144-37-19.sslip.io/v1
-OPENAI_DEFAULT_MODEL=gpt-4o-mini
+## 4. Environment audit endpoint
 
-# AI Assistant specific (optional, defaults shown)
-AI_API_KEY=***            # falls back to OPENAI_COMPATIBLE_API_KEY or /run/secrets/9router_api_key
-AI_BASE_URL=***  AI_MODEL=tr/MiniMax-M3
+Use after deploy:
 
-AI_MONTHLY_CAP_USD=10
+```bash
+curl -H "Authorization: Bearer ***" https://cubiqlo.com/api/health/env
 ```
 
-Resolution order (AI Assistant):
-1. `/run/secrets/9router_api_key` (mounted docker secret, prod)
-2. `AI_API_KEY` env
-3. `OPENAI_COMPATIBLE_API_KEY` env (legacy)
-4. `OPENAI_API_KEY` env (legacy)
+Response includes env names and configured/missing status only. It never returns secret values.
 
-Rules:
-- API key server-side only.
-- prompt generator tracks `model`, `input_tokens`, `output_tokens`, `cost_usd`.
-- AI Assistant tracks tokens via `ai_messages.tokens` column.
-- enforce monthly cap per workspace.
-- allowed model list should be hardcoded or configured server-side.
+Expected production result:
 
-## 6. Email
-
-Preferred: Resend.
-
-```env
-RESEND_API_KEY=your-resend-api-key
-EMAIL_FROM=Cubicle <no-reply@yourdomain.com>
+```json
+{
+  "ok": true,
+  "nodeEnv": "production",
+  "missingRequired": []
+}
 ```
 
-Alternative: SMTP/nodemailer.
+## 5. Production checklist
 
-```env
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USER=user
-SMTP_PASS=password
-EMAIL_FROM=Cubicle <no-reply@yourdomain.com>
-```
-
-MVP email events:
-- forgot password
-- workspace invite link
-- portal comment received
-- appointment booked
-- invoice viewed
-- AI Assistant: invoice payment reminder (drafted via AI, confirmed by user, sent via Resend)
-
-## 7. Rate Limit / Security
-
-```env
-RATE_LIMIT_REDIS_URL=
-RATE_LIMIT_REDIS_TOKEN=
-```
-
-If Redis unavailable in MVP:
-- use in-memory limiter for local dev only.
-- production should use Upstash Redis or similar.
-
-Routes requiring rate limit:
-- login
-- signup
-- forgot password
-- `/client-portal/[token]`
-- `/invoice/[token]`
-- file download route
-
-## 8. Production Checklist
-
-Before deploy:
-- [ ] `APP_URL` production correct
-- [ ] `BETTER_AUTH_URL` production correct
+Before launch:
+- [ ] `DATABASE_URL` points to production database
+- [ ] `BETTER_AUTH_URL` is production origin
+- [ ] `NEXT_PUBLIC_APP_URL` is production origin
 - [ ] `BETTER_AUTH_SECRET` random and private
-- [ ] DB password rotated (see `cubicle_p0_hardening_report.md`)
+- [ ] `CRON_SECRET` random and private
 - [ ] R2 bucket private
 - [ ] R2 credentials limited to bucket access
-- [ ] email domain verified (Resend)
-- [ ] AI cap configured
-- [ ] rate limiter configured (deferred — Upstash or Cloudflare Turnstile recommended)
-- [ ] Dokploy env vars set for production
+- [ ] Resend domain verified
+- [ ] `EMAIL_FROM` uses verified sender
+- [ ] Pakasir project/API key set
+- [ ] AI cap configured if AI enabled
 - [ ] no `NEXT_PUBLIC_*` secret leak
+- [ ] `/api/health` returns ok
+- [ ] `/api/health/env` returns `ok: true` with bearer token
