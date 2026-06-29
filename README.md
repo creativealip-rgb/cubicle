@@ -11,9 +11,12 @@ Built for freelancers, agencies, and small service teams who want to stop juggli
 - **Files** — upload, share, control who sees what (internal vs client-visible)
 - **Time tracking** — running timer + manual entry, billable/non-billable
 - **Invoices** — generate from billable time, send public payment link, mark paid
+- **Invoice reminders** — overdue cron, manual reminders, fresh share links, notifications, activity logs
 - **Booking page** — public scheduling, clients pick a slot, double-booking prevented
-- **Client portal** — share selected deliverables/files/invoices with each client via secure token
+- **Client portal** — share selected projects, timeline events, deliverables/files/invoices with each client via secure token or slug
+- **Project timeline** — internal and client-visible activity feed for project/task/file/comment updates
 - **Calendar** — see appointments + tasks due
+- **Reports & billing** — AR aging, P&L, cash-flow forecast, Pakasir QRIS Solo/Team checkout
 - **AI prompt generator** — built-in prompt templates for creative/service work
 - **AI Assistant** — chat panel that knows your workspace data, can mark tasks done and draft invoice reminders (with your confirm)
 
@@ -199,7 +202,7 @@ src/
 2. Server actions validate session + workspace membership (`assertWorkspace`)
 3. Drizzle ORM queries Postgres (RLS-enforced at the app layer)
 4. Mutations trigger `activityLogs` rows for the audit trail
-5. File uploads stream to R2 via signed URLs; metadata stored in `files` table with `visibility = 'internal' | 'client_visible'`
+5. File uploads stream to R2 via signed URLs; metadata stored in `files` table with `visibility = 'internal' | 'client'`
 6. Public routes (`/booking/[slug]`, `/client-portal/[token]`, `/invoice/[token]`) use unguessable tokens, not session cookies
 
 ### Key design decisions

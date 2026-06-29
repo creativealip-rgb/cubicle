@@ -1,6 +1,6 @@
 # Cubicle Remaining Plan — From MVP Demo to Production-Ready
 
-Last updated: 2026-06-24
+Last updated: 2026-06-29
 
 ## 1. Current Status
 
@@ -31,6 +31,11 @@ Dashboard fully translated to Indonesian
 All internal app pages translated to Indonesian (Clients, Invoices, Tasks, Projects, Settings, Time, Files, Reports)
 Client-facing pages in English (Invoice PDF, Portal, Proposal, Contract, Booking, Intake, Email)
 Docker deploy healthy via dokploy-network
+Invoice overdue reminders live (cron/manual/email/fresh links/notifications/activity)
+Project timeline live internally and in client portal with client-safe visibility
+Reports dashboard polished with collection health and comparable P&L bars
+Onboarding persists workspace name; billing checkout owner-only
+npm run lint + npm run build pass cleanly
 ```
 
 Latest verified (2026-06-18 full audit):
@@ -186,8 +191,18 @@ Production-ready: BETA / NEAR-READY
 ```text
 Demo MVP: 99%
 Sellable source/MVP: 99%
-Production client-ready: ~98% (payment gateway v1 done, subscription automation remaining)
+Production client-ready: ~99% (Phase 2C–2G + Phase 3A done; final security/env hardening remains)
 ```
+
+> **Update 2026-06-29 (Phase 2C–2G + Phase 3A):**
+>- Phase 2C shipped invoice overdue reminders: cron route, auto-overdue, manual remind, reminder email, fresh invoice share links, notifications, activity logs.
+>- Phase 2D shipped internal project timeline events on project detail.
+>- Phase 2E shipped client portal project timeline with client-safe visibility filters.
+>- Phase 2F polished reports: collection health, overdue risk, better P&L chart, quick actions.
+>- Phase 2G cleaned lint issues across app/actions/components; `npm run lint` passes.
+>- Phase 3A hardened onboarding and billing: onboarding persists workspace name via server action, logs completion, billing checkout is owner-only.
+>- Latest deployed commit: `0be4460 feat: harden onboarding and billing`.
+>- Docker rebuild/recreate done; `cubicle-cubicle-1` and `cubicle-pg` healthy; `/api/health` returned `{"ok":true}`.
 
 
 

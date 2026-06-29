@@ -1,5 +1,51 @@
 # Changelog
 
+## 2026-06-29 — Phase 2C–2G + Phase 3A
+
+- Added invoice overdue reminder system:
+  - `/api/cron/invoice-overdue`
+  - auto-mark `sent/viewed` invoices as `overdue`
+  - manual `Remind` button on invoice detail
+  - reminder email to client
+  - fresh invoice share link per reminder
+  - in-app notifications + activity logs
+- Added project timeline events:
+  - internal timeline tab on project detail
+  - activity-log based feed for project/task/file/comment/time events
+  - client portal timeline with client-safe allowlist
+  - hides internal-only tasks/files/comments/activity from portal
+- Polished reports dashboard:
+  - quick actions for new invoice and expense logging
+  - collection health KPI
+  - overdue total/rate metrics
+  - comparable monthly P&L bars
+- Completed QA/lint cleanup:
+  - `npm run lint` passes
+  - `npm run build` passes
+  - unused imports/vars cleaned across app/actions/components
+- Hardened onboarding + billing:
+  - onboarding saves workspace name via server action
+  - workspace name validation + UI error state
+  - activity log `completed_onboarding`
+  - fake onboarding delay removed
+  - billing checkout disabled for non-owner users
+- Latest commits:
+  - `b8fdad6 feat: add invoice overdue reminders`
+  - `3c07119 feat: add project timeline events`
+  - `233c2ad feat: show client portal timeline`
+  - `8110e11 feat: polish reports dashboard`
+  - `8258e71 chore: clean up lint warnings`
+  - `0be4460 feat: harden onboarding and billing`
+
+### Verification
+
+- `npm run lint` ✅
+- `npm run build` ✅
+- Docker Compose rebuild/recreate ✅
+- `cubicle-cubicle-1` healthy ✅
+- `cubicle-pg` healthy ✅
+- `/api/health` returned `{"ok":true}` ✅
+
 ## 2026-06-27 — Internal localization + Docker redeploy
 
 - Localized internal invoice UI (`/app/invoices`, `/app/invoices/[invoiceId]`) to Indonesian for owner/member workspace use.

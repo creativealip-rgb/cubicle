@@ -75,6 +75,12 @@ R2 buckets are not bundled with this repo. Two options:
 - 🟢 Monitoring/backups active: local monitor cron, Hermes external health check, daily DB backup + weekly restore test.
 - 🟢 Free plan enforcement active: Free workspace limited to 3 clients server-side + UI upgrade prompt.
 - 🟢 Payment gateway v1 active: Pakasir QRIS checkout for Solo (Rp 49rb) / Team (Rp 99rb) plans; webhook auto-upgrades workspace plan; upgrade-only guard (same-plan & downgrade blocked).
+- 🟢 Billing checkout now owner-only in UI; non-owner users see disabled owner-only action.
+- 🟢 Onboarding now persists workspace name through server action and logs `completed_onboarding`.
+- 🟢 Invoice overdue reminders active: cron route, manual remind, fresh invoice links, email, in-app notifications, activity logs.
+- 🟢 Project timeline active in internal project detail and client portal with client-safe visibility filtering.
+- 🟢 Reports dashboard polished with collection health, overdue risk, and comparable P&L bars.
+- 🟢 Latest validation on 2026-06-29: `npm run lint` and `npm run build` passed.
 - 🟢 Internal app UI is Indonesian-first for owner/member workspace use, including Dashboard, Clients, Invoices, Proposals, Tasks, Projects, Settings, Time, Files, Reports, and Billing.
 - 🟢 Non-IDR currency in internal app avoids `$` symbol; formatter uses ISO prefix (e.g. `USD 1,000.00`) while IDR stays `Rp`.
 - 🟢 Client-facing pages kept in English for international clients (Invoice PDF/viewer, Client Portal, public Proposal, Contract, Booking, Intake, Email templates).
