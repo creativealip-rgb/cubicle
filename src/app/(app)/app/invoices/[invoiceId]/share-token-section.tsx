@@ -3,10 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import {
-  generateInvoiceShareToken,
-  revokeInvoiceShareToken,
-} from "@/lib/actions/invoices";
+import { revokeInvoiceShareToken } from "@/lib/actions/invoices";
 import { Button } from "@/components/ui/button";
 import { Copy, Check, RefreshCw, X } from "lucide-react";
 
@@ -23,20 +20,6 @@ export function ShareTokenSection({
   const [token, setToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  async function handleGenerate() {
-    setLoading(true);
-    try {
-      const result = await generateInvoiceShareToken(invoiceId);
-      setToken(result.token);
-      toast.success("Link berbagi dibuat");
-      router.refresh();
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Gagal");
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function handleCabut() {
     setLoading(true);
@@ -109,21 +92,18 @@ export function ShareTokenSection({
       )}
 
       <div className="flex gap-2">
-        <form action="/api/invoices/share" method="post">
-          <input type="hidden" name="invoiceId" value={invoiceId} />
-          <input type="hidden" name="action" value="generate" />
-          <Button
-            type="submit"
-            variant="outline"
-            size="sm"
-            className="gap-1"
-            onClick={handleGenerate}
-            disabled={loading}
-          >
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-1"
+          asChild
+        >
+          <a href={`/api/invoices/share/generate?invoiceId=${invoiceId}`}>
             <RefreshCw className="h-3 w-3" />
             {loading ? "Membuat..." : "Buat Link Berbagi"}
-          </Button>
-        </form>
+          </a>
+        </Button>
         {hasToken && !isExpired && (
           <form action="/api/invoices/share" method="post">
             <input type="hidden" name="invoiceId" value={invoiceId} />
