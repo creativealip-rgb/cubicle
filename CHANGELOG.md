@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-06-29 — Phase 3H deeper product QA pass
+
+- Created `TRST Deep QA Client` through production UI.
+- Verified client detail, project detail with task count, and invoice detail page using TRST QA account.
+- Seeded QA project/task/invoice records for page verification after browser automation could not complete project select cleanly.
+- Noted invoice share-link click did not create token in this browser run; kept as manual follow-up.
+- Updated `docs/launch_qa_result.md` with Phase 3H status.
+
 ## 2026-06-29 — Phase 3G test account + credentialed QA smoke
 
 - Created new `TRST QA` production test account via signup and marked email verified for QA.

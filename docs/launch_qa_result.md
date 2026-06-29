@@ -30,11 +30,19 @@ Phase 3G credentialed QA added:
 - billing page loaded and owner QRIS buttons visible
 - reports page loaded and quick actions visible
 
+Phase 3H deeper QA added:
+- created client through production UI: `TRST Deep QA Client`
+- verified client detail page loads
+- seeded QA project/task/invoice for page verification after UI project form could not complete selection cleanly in browser automation
+- verified project detail page loads with task count and `TRST Deep QA Task`
+- verified invoice detail page loads with generated invoice number
+- observed invoice share-link button click did not create token in this browser run; needs follow-up with manual browser/devtools check
+
 Still requires deeper credentialed/manual browser QA:
-- create client/project/task through UI
+- project/task creation through UI without automation limitations
 - file upload/download through R2
 - client portal share link full flow
-- invoice creation/send/reminder full flow
+- invoice share link/send/reminder full flow
 - Pakasir checkout/webhook full flow
 - viewer direct mutation guard with viewer session cookie
 - external uptime alert channel test
