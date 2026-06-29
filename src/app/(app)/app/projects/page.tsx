@@ -64,6 +64,12 @@ export default async function ProjectsPage({
     .groupBy(projects.id, clients.name)
     .orderBy(desc(projects.createdAt));
 
+  const clientOptions = await db
+    .select({ id: clients.id, name: clients.name })
+    .from(clients)
+    .where(eq(clients.workspaceId, workspaceId))
+    .orderBy(clients.name);
+
   const statusColors: Record<string, string> = {
     active: "bg-emerald-500",
     draft: "bg-slate-400",
@@ -93,7 +99,7 @@ export default async function ProjectsPage({
               <DialogHeader>
                 <DialogTitle>Project Baru</DialogTitle>
               </DialogHeader>
-              <ProjectForm mode="create" />
+              <ProjectForm mode="create" clients={clientOptions} />
             </DialogContent>
           </Dialog>
         )}

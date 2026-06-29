@@ -110,6 +110,7 @@ export function ShareTokenSection({
 
       <div className="flex gap-2">
         <Button
+          type="button"
           variant="outline"
           size="sm"
           className="gap-1"
@@ -121,6 +122,7 @@ export function ShareTokenSection({
         </Button>
         {hasToken && !isExpired && (
           <Button
+            type="button"
             variant="outline"
             size="sm"
             className="gap-1 text-red-600 hover:text-red-700"

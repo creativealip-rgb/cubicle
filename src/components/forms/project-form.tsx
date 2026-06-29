@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 interface ProjectFormProps {
   mode: "create" | "edit";
   clientId?: string;
+  clients?: Array<{ id: string; name: string }>;
   defaultValues?: {
     id?: string;
     name?: string;
@@ -24,7 +25,7 @@ interface ProjectFormProps {
   onSuccess?: () => void;
 }
 
-export function ProjectForm({ mode, clientId, defaultValues, onSuccess }: ProjectFormProps) {
+export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuccess }: ProjectFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -80,7 +81,22 @@ export function ProjectForm({ mode, clientId, defaultValues, onSuccess }: Projec
       {!clientId && (
         <div className="space-y-2">
           <Label htmlFor="clientId">Klien *</Label>
-          <Input id="clientId" value={form.clientId} onChange={(e) => setForm((p) => ({ ...p, clientId: e.target.value }))} required placeholder="ID klien" />
+          {clients.length > 0 ? (
+            <Select value={form.clientId} onValueChange={(v) => setForm((p) => ({ ...p, clientId: v }))} required>
+              <SelectTrigger id="clientId">
+                <SelectValue placeholder="Pilih klien" />
+              </SelectTrigger>
+              <SelectContent>
+                {clients.map((client) => (
+                  <SelectItem key={client.id} value={client.id}>
+                    {client.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Input id="clientId" value={form.clientId} onChange={(e) => setForm((p) => ({ ...p, clientId: e.target.value }))} required placeholder="ID klien" />
+          )}
         </div>
       )}
       <div className="grid grid-cols-2 gap-4">
