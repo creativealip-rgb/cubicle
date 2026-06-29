@@ -1,11 +1,11 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { clients, workspaces } from "@/db/schema";
+import { clients } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { ProposalForm } from "@/components/proposals/proposal-form";
-import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
+import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 
 async function getWorkspace() {
   return getWorkspaceFullForCurrentUser();

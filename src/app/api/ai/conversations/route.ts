@@ -18,10 +18,6 @@ import { listConversations, listMessages, getOrCreateConv } from "@/lib/ai/conv-
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-async function getWorkspaceId(): Promise<string> {
-  return getWorkspaceForCurrentUser();
-}
-
 export async function GET(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user?.id) {

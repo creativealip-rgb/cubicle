@@ -7,7 +7,6 @@ import { db } from "@/db";
 import {
   promptTemplates,
   promptGenerations,
-  workspaces,
   projects,
 } from "@/db/schema";
 import { eq, and, desc, gte, sql } from "drizzle-orm";

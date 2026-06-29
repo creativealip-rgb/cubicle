@@ -1,4 +1,4 @@
-import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
+import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -9,7 +9,6 @@ import {
   invoiceItems,
   payments,
   clients,
-  workspaces,
   timeEntries,
 } from "@/db/schema";
 import { eq, and } from "drizzle-orm";

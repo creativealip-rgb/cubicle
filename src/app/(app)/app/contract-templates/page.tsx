@@ -2,7 +2,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { contractTemplates, workspaces, contracts } from "@/db/schema";
+import { contractTemplates, contracts } from "@/db/schema";
 import { eq, desc, count } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, FileText, Star } from "lucide-react";
-import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
+import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 
 async function getWorkspace() {
   return getWorkspaceFullForCurrentUser();

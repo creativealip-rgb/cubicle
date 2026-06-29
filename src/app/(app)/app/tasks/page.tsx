@@ -1,8 +1,8 @@
-import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
+import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { tasks, projects, users, workspaces, workspaceMembers } from "@/db/schema";
+import { tasks, projects, users, workspaceMembers } from "@/db/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { Badge } from "@/components/ui/badge";

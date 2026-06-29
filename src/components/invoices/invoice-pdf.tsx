@@ -29,8 +29,6 @@ const TEXT = "#1e293b";
 const MUTED = "#64748b";
 const SUBTLE = "#94a3b8";
 const BORDER = "#e2e8f0";
-const ROW_ALT = "#f8fafc";
-
 const STATUS_STYLES: Record<string, { bg: string; fg: string; label: string }> = {
   draft: { bg: "#f1f5f9", fg: "#475569", label: "DRAFT" },
   sent: { bg: "#dbeafe", fg: "#1e40af", label: "SENT" },

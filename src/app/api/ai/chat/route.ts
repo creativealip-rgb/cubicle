@@ -27,7 +27,6 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 
 import { NextRequest } from "next/server";
 import { headers } from "next/headers";
-import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { streamChat, type ChatMessage, aiConfig } from "@/lib/ai/client";
 import { TOOL_DEFS, executeTool, ACTION_TOOLS } from "@/lib/ai/tools";
@@ -37,8 +36,6 @@ import {
   getOrCreateConv,
   maybeAutoTitle,
 } from "@/lib/ai/conv-store";
-import { db } from "@/db";
-import { workspaces } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

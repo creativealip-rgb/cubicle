@@ -1,8 +1,8 @@
-import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
+import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { promptTemplates, workspaces } from "@/db/schema";
+import { promptTemplates } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { listGenerations, getMonthlyUsage } from "@/lib/actions/prompts";

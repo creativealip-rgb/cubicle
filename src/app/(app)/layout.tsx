@@ -1,4 +1,4 @@
-import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
+import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { and, eq, ne, count, sql } from "drizzle-orm";

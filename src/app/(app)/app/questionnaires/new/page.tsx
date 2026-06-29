@@ -1,14 +1,12 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { workspaces } from "@/db/schema";
-import { eq } from "drizzle-orm";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { QuestionnaireBuilder } from "@/components/questionnaires/questionnaire-builder";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
+import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 
 async function getWorkspace() {
   return getWorkspaceFullForCurrentUser();

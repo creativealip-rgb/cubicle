@@ -191,8 +191,6 @@ export function AppTopbar({ user }: AppTopbarProps) {
 
   const activeWorkspace = wsData?.workspaces.find(w => w.isActive);
   const isFree = !wsData || wsData.plan === "free";
-  const hasMultipleWs = (wsData?.workspaces.length ?? 0) > 1;
-
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl px-3 md:gap-4 md:px-4">
       {/* Mobile hamburger */}

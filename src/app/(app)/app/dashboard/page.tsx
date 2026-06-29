@@ -8,7 +8,6 @@ import {
   appointments,
   activityLogs,
   timeEntries,
-  workspaces,
   users,
 } from "@/db/schema";
 import { eq, and, desc, sql, gte, lte } from "drizzle-orm";

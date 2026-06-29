@@ -4,7 +4,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { files, workspaces, users } from "@/db/schema";
+import { files, users } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";

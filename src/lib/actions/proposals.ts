@@ -4,7 +4,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { proposals, projects, invoices, invoiceItems, workspaces, workspaceInvoiceCounters } from "@/db/schema";
+import { proposals, projects, invoices, invoiceItems, workspaceInvoiceCounters } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";

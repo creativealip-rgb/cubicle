@@ -1,8 +1,8 @@
-import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
+import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { timeEntries, workspaces, clients, projects, tasks, users } from "@/db/schema";
+import { timeEntries, clients, projects, tasks, users } from "@/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { TimerWidget } from "@/components/time/timer-widget";

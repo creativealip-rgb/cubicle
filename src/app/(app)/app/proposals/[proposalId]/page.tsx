@@ -1,4 +1,4 @@
-import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
+import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import Link from "next/link";

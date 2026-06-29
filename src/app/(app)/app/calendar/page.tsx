@@ -4,7 +4,6 @@ import { db } from "@/db";
 import {
   appointments,
   availabilityRules,
-  workspaces,
   users,
 } from "@/db/schema";
 import { eq, and, gte } from "drizzle-orm";
@@ -16,11 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { cancelAppointment } from "@/lib/actions/appointments";
 import { Calendar, Clock, MapPin, XCircle } from "lucide-react";
 import Link from "next/link";
-import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
-
-async function getWorkspace() {
-  return getWorkspaceFullForCurrentUser();
-}
+import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 
 export default async function CalendarPage() {
   const session = await auth.api.getSession({ headers: await headers() });

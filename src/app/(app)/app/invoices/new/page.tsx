@@ -1,10 +1,10 @@
-import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
+import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { clients, workspaces } from "@/db/schema";
+import { clients } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { Button } from "@/components/ui/button";

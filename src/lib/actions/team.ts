@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { users, workspaceMembers, workspaces } from "@/db/schema";
+import { users, workspaceMembers } from "@/db/schema";
 import { assertWorkspaceOwner, requireUser } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 

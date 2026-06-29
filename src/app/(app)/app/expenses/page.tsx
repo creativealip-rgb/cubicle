@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { expenses, expenseCategories, projects, clients, workspaces, payments, invoices } from "@/db/schema";
+import { expenses, expenseCategories, projects, clients, payments, invoices } from "@/db/schema";
 import { eq, desc, and, gte } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +16,7 @@ import {
 import { ExpenseForm, type CategoryOption, type ProjectOption, type ClientOption } from "@/components/expenses/expense-form";
 import { DeleteExpenseButton } from "@/components/expenses/delete-expense-button";
 import { TrendingDown, TrendingUp, Wallet, Tag } from "lucide-react";
-import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
+import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 
 async function getWorkspace() {
   return getWorkspaceFullForCurrentUser();

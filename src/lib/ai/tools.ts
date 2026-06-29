@@ -21,7 +21,6 @@ import {
   tasks,
   users,
   workspaceMembers,
-  workspaces,
   promptTemplates,
   expenses,
   expenseCategories,
@@ -32,9 +31,9 @@ import {
   questionnaireResponses,
 } from "@/db/schema";
 import type { ToolDefinition } from "./client";
-import { getWorkspaceForCurrentUser, getWorkspaceFullForCurrentUser } from "@/lib/workspace";
+import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 
-let _workspaceIdCache: { id: string; slug: string; name: string } | null = null;
+const _workspaceIdCache: { id: string; slug: string; name: string } | null = null;
 async function getWorkspace() {
   return getWorkspaceFullForCurrentUser();
 }
