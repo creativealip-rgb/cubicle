@@ -23,6 +23,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { finishOnboarding } from "@/lib/actions/onboarding";
 
 const steps = [
   { id: 1, label: "Workspace", icon: Building2 },
@@ -34,6 +35,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Step 1: Workspace
   const [workspaceName, setWorkspaceName] = useState("");
@@ -55,11 +57,22 @@ export default function OnboardingPage() {
   }
 
   async function handleFinish() {
+    if (!workspaceName.trim()) {
+      setError("Workspace name is required.");
+      setStep(1);
+      return;
+    }
+
     setLoading(true);
-    // In production: save workspace + send invites via server action
-    await new Promise((r) => setTimeout(r, 800));
-    setLoading(false);
-    router.push("/app/dashboard");
+    setError(null);
+    try {
+      await finishOnboarding({ workspaceName });
+      router.push("/app/dashboard");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to finish onboarding.");
+      setLoading(false);
+    }
   }
 
   return (
@@ -100,6 +113,12 @@ export default function OnboardingPage() {
         </CardHeader>
 
         <CardContent>
+          {error && (
+            <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+
           {/* Step 1: Workspace name */}
           {step === 1 && (
             <div className="space-y-4">
@@ -204,7 +223,7 @@ export default function OnboardingPage() {
                 {invites.length > 0 && (
                   <Badge variant="secondary">
                     <Check className="mr-1 h-3 w-3" />
-                    {invites.length} invite{invites.length > 1 ? "s" : ""} sent
+                    {invites.length} invite{invites.length > 1 ? "s" : ""} prepared
                   </Badge>
                 )}
               </div>
