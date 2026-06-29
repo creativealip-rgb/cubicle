@@ -194,6 +194,16 @@ Sellable source/MVP: 99%
 Production client-ready: ~99% (Phase 2C–2G + Phase 3A done; final security/env hardening remains)
 ```
 
+> **Update 2026-06-29 (Phase 4 — Email suite + Personal workspace v0):**
+>- P4 v0 shipped with strict non-bloat scope.
+>- Email suite added `/app/email`: compose, save draft, send via existing Resend helper, optional client/project linking, recent log, and `email_messages` table.
+>- Personal workspace added `/app/personal`: private user-scoped notes with pin, done/open, archive, delete, and `personal_notes` table.
+>- Sidebar now has `Komunikasi → Email` and `Personal → Personal`.
+>- Migration `drizzle/0013_p4_email_personal_workspace.sql` applied to production Docker DB.
+>- `npm run lint` and `npm run build` passed.
+>- Deferred intentionally: Gmail/IMAP sync, shared inbox, automation sequences, large knowledge base, WhatsApp provider.
+>- Detailed checklist: `docs/phase-4-email-personal-workspace.md`.
+>
 > **Update 2026-06-29 (Phase 2C–2G + Phase 3A):**
 >- Phase 2C shipped invoice overdue reminders: cron route, auto-overdue, manual remind, reminder email, fresh invoice share links, notifications, activity logs.
 >- Phase 2D shipped internal project timeline events on project detail.

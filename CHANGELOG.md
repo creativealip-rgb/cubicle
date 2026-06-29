@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-06-29 — Phase 4 email suite + personal workspace v0
+
+- Added `/app/email` with compose, save draft, send now via existing Resend helper, optional client/project linking, and recent email log.
+- Added `email_messages` table and activity logs for draft/send/failure/delete.
+- Added `/app/personal` with user-scoped private notes, pin/unpin, done/open, archive, and delete.
+- Added `personal_notes` table.
+- Added sidebar entries for `Komunikasi → Email` and `Personal → Personal`.
+- Added `docs/phase-4-email-personal-workspace.md` with strict P4 MVP scope and deferred items.
+- Verified migration applied to production Docker DB, `npm run lint`, and `npm run build` pass.
+
 ## 2026-06-29 — Phase 3N viewer mutation guards
 
 - Guarded `/api/settings/reply-to` with authenticated workspace-owner authorization before mutating workspace reply-to email.

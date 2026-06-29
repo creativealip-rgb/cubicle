@@ -33,6 +33,8 @@ import {
   FileText,
   CreditCard,
   ChevronDown,
+  Mail,
+  NotebookPen,
 } from "lucide-react";
 import { useSidebar } from "@/components/app-shell";
 
@@ -48,6 +50,8 @@ const navItems = [
   { label: "Pengeluaran", href: "/app/expenses", icon: Wallet, group: "Keuangan" },
   { label: "Laporan", href: "/app/reports", icon: BarChart3, group: "Keuangan" },
   { label: "Tagihan", href: "/app/billing", icon: CreditCard, group: "Keuangan" },
+  { label: "Email", href: "/app/email", icon: Mail, group: "Komunikasi" },
+  { label: "Personal", href: "/app/personal", icon: NotebookPen, group: "Personal" },
   { label: "Proposal", href: "/app/proposals", icon: FileText, group: "Penjualan", badgeKey: "draftProposals" as const },
   { label: "Kontrak", href: "/app/contracts", icon: FileSignature, group: "Penjualan", badgeKey: "draftContracts" as const },
   { label: "Formulir", href: "/app/questionnaires", icon: ClipboardList, group: "Penjualan" },
@@ -59,6 +63,8 @@ const navItems = [
 const groupLabels = {
   Kerja: { id: "Kerja", en: "Work" },
   Keuangan: { id: "Keuangan", en: "Finance" },
+  Komunikasi: { id: "Komunikasi", en: "Comms" },
+  Personal: { id: "Personal", en: "Personal" },
   Penjualan: { id: "Penjualan", en: "Sales" },
   AI: { id: "AI", en: "AI" },
 } as const;
@@ -75,6 +81,8 @@ const navLabels: Record<string, { id: string; en: string }> = {
   Pengeluaran: { id: "Pengeluaran", en: "Expenses" },
   Laporan: { id: "Laporan", en: "Reports" },
   Tagihan: { id: "Tagihan", en: "Billing" },
+  Email: { id: "Email", en: "Email" },
+  Personal: { id: "Personal", en: "Personal" },
   Proposal: { id: "Proposal", en: "Proposals" },
   Kontrak: { id: "Kontrak", en: "Contracts" },
   Formulir: { id: "Formulir", en: "Forms" },
@@ -116,6 +124,8 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     Kerja: true,
     Keuangan: false,
+    Komunikasi: false,
+    Personal: false,
     Penjualan: false,
     AI: false,
   });
