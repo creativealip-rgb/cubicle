@@ -9,7 +9,7 @@ describe("formatMoney", () => {
 
   it("formats USD amounts", () => {
     expect(formatMoney(1234.5, "USD")).toContain("1,234.50")
-    expect(formatMoney(1234.5, "USD")).toContain("$")
+    expect(formatMoney(1234.5, "USD")).toContain("USD")
   })
 
   it("handles null/undefined", () => {

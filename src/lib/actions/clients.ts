@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { clients } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceWritable, assertClientInWorkspace } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
@@ -161,6 +161,7 @@ export async function generatePortalToken(clientId: string) {
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertClientInWorkspace(db, user.id, workspaceId, clientId);
 
   const rawToken = randomBytes(32).toString("hex");
   const tokenHash = createHash("sha256").update(rawToken).digest("hex");
@@ -174,7 +175,7 @@ export async function generatePortalToken(clientId: string) {
       portalTokenRevokedAt: null,
       updatedAt: new Date(),
     })
-    .where(eq(clients.id, clientId));
+    .where(and(eq(clients.id, clientId), eq(clients.workspaceId, workspaceId)));
 
   await writeActivityLog(workspaceId, user.id, "generated_portal_token", "client", clientId);
   return { token: rawToken, expiresAt };
@@ -185,6 +186,7 @@ export async function revokePortalToken(clientId: string) {
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertClientInWorkspace(db, user.id, workspaceId, clientId);
 
   await db.update(clients)
     .set({
@@ -192,7 +194,7 @@ export async function revokePortalToken(clientId: string) {
       portalEnabled: false,
       updatedAt: new Date(),
     })
-    .where(eq(clients.id, clientId));
+    .where(and(eq(clients.id, clientId), eq(clients.workspaceId, workspaceId)));
 
   await writeActivityLog(workspaceId, user.id, "revoked_portal_token", "client", clientId);
   return { success: true };
