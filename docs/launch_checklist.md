@@ -102,8 +102,8 @@ Run with owner account in browser:
 - [x] Current 5-minute monitor cron active on host.
 - [x] Confirm latest backup file checksum verifies.
 - [x] Confirm latest restore-test passes.
-- [ ] Confirm external uptime monitor points to `/api/health` outside host cron.
-- [ ] Confirm real alert delivery channel works.
+- [x] Confirm external uptime monitor points to `/api/health` outside host cron.
+- [x] Confirm real alert delivery channel works via Hermes `cubicle-health-monitor` Telegram delivery and manual test message.
 
 ## 7. Docs gate
 
@@ -144,7 +144,6 @@ Current state: **technical launch QA pass**.
 
 Remaining paid-launch blockers:
 - Pakasir checkout/webhook live-payment verification.
-- Real external uptime alert delivery confirmation.
 
 Remaining cleanup/manual checks before customer/demo handoff:
 - rotate/delete TRST demo passwords/accounts or sanitize QA data,
