@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cubiqlo — Fitur & Roadmap</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      color: #1a1a2e;
+      background: #fff;
+      font-size: 11px;
+      line-height: 1.6;
+      padding: 48px 56px;
+    }
+
+    .cover {
+      text-align: center;
+      padding: 80px 0 40px;
+      border-bottom: 3px solid #2563eb;
+      margin-bottom: 40px;
+    }
+    .cover h1 {
+      font-size: 42px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+    }
+    .cover .subtitle {
+      font-size: 16px;
+      color: #64748b;
+      margin-top: 8px;
+      font-weight: 500;
+    }
+    .cover .tagline {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-top: 16px;
+    }
+    .cover .meta {
+      margin-top: 24px;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 36px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e40af;
+      margin: 20px 0 8px;
+    }
+    h4 {
+      font-size: 12px;
+      font-weight: 600;
+      color: #334155;
+      margin: 12px 0 4px;
+    }
+
+    p { margin-bottom: 8px; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      vertical-align: middle;
+    }
+    .badge-live { background: #dcfce7; color: #166534; }
+    .badge-soon { background: #fef9c3; color: #854d0e; }
+    .badge-beta { background: #dbeafe; color: #1e40af; }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 12px 0;
+    }
+    .feature-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px;
+      background: #f8fafc;
+      page-break-inside: avoid;
+    }
+    .feature-card h4 {
+      margin: 0 0 4px;
+      color: #0f172a;
+      font-size: 12px;
+    }
+    .feature-card p {
+      font-size: 10.5px;
+      color: #475569;
+      margin: 0;
+    }
+    .feature-card .icon {
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    ul {
+      padding-left: 18px;
+      margin: 6px 0 10px;
+    }
+    li {
+      margin-bottom: 3px;
+      color: #334155;
+    }
+
+    .roadmap-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f1f5f9;
+      page-break-inside: avoid;
+    }
+    .roadmap-item:last-child { border-bottom: none; }
+    .roadmap-num {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      background: #2563eb;
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .roadmap-content h4 { margin: 0 0 2px; }
+    .roadmap-content p { margin: 0; font-size: 10.5px; color: #64748b; }
+
+    .tech-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 8px 0;
+    }
+    .tech-tag {
+      background: #eff6ff;
+      color: #1e40af;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 500;
+    }
+
+    .pricing-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 10.5px;
+    }
+    .pricing-table th {
+      background: #1e293b;
+      color: #fff;
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+    .pricing-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .pricing-table tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    .section-divider {
+      border: none;
+      border-top: 1px solid #e2e8f0;
+      margin: 28px 0;
+    }
+
+    .page-break { page-break-before: always; }
+
+    .footer {
+      margin-top: 48px;
+      padding-top: 16px;
+      border-top: 2px solid #e2e8f0;
+      text-align: center;
+      font-size: 10px;
+      color: #94a3b8;
+    }
+
+    @media print {
+      body { padding: 36px 44px; }
+      .page-break { page-break-before: always; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <h1>Cubiqlo</h1>
+  <div class="subtitle">Client Operations Hub</div>
+  <div class="tagline">Kelola client work dari request sampai invoice — dalam satu workspace yang tenang.</div>
+  <div class="meta">Dokumen Fitur & Roadmap &bull; Juli 2025 &bull; cubiqlo.com</div>
+</div>
+
+<!-- RINGKASAN EKSEKUTIF -->
+<h2>Ringkasan Eksekutif</h2>
+<p>
+  <strong>Cubiqlo</strong> adalah platform operasional client yang dirancang untuk freelancer, agensi, dan tim kecil jasa.
+  Menggantikan tumpukan spreadsheet, email, dan 3–4 tool berbeda dengan satu workspace yang terintegrasi.
+  Semua data — dari prospek awal (proposal) sampai pembayaran (invoice) — terhubung dalam satu alur kerja.
+</p>
+<p>
+  Platform ini <span class="badge badge-live">LIVE</span> di <strong>cubiqlo.com</strong> dengan fitur produksi yang sudah lengkap
+  dan roadmap pengembangan yang jelas.
+</p>
+
+<!-- TECH STACK -->
+<h3>Stack Teknologi</h3>
+<div class="tech-stack">
+  <span class="tech-tag">Next.js 16</span>
+  <span class="tech-tag">React 19</span>
+  <span class="tech-tag">TypeScript</span>
+  <span class="tech-tag">Tailwind CSS v4</span>
+  <span class="tech-tag">shadcn/ui</span>
+  <span class="tech-tag">PostgreSQL 16</span>
+  <span class="tech-tag">Drizzle ORM</span>
+  <span class="tech-tag">Better Auth</span>
+  <span class="tech-tag">Cloudflare R2</span>
+  <span class="tech-tag">Resend Email</span>
+  <span class="tech-tag">Docker + Dokploy</span>
+  <span class="tech-tag">AI (OpenAI-compatible)</span>
+</div>
+
+<!-- FITUR UTAMA -->
+<h2>Fitur Utama <span class="badge badge-live">PRODUCTION READY</span></h2>
+
+<!-- 1. CLIENTS -->
+<h3>1. Manajemen Klien</h3>
+<div class="feature-grid">
+  <div class="feature-card">
+    <div class="icon">👤</div>
+    <h4>Database Klien</h4>
+    <p>Simpan kontak, perusahaan, email, telepon, alamat, website, tag, dan catatan internal untuk setiap klien.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">🏷️</div>
+    <h4>Status & Tags</h4>
+    <p>Filter klien berdasarkan status (aktif / non-aktif / arsip) dan tag kustom untuk segmentasi cepat.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">📁</div>
+    <h4>Detail Klien</h4>
+    <p>Halaman detail per klien menampilkan semua project, file, invoice, dan aktivitas terkait dalam satu view.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">🔗</div>
+    <h4>Client Portal</h4>
+    <p>Setiap klien bisa mendapatkan akses portal (token/slug) untuk melihat project, task, file, komentar, dan invoice mereka.</p>
+  </div>
+</div>
+
+<!-- 2. PROJECTS -->
+<h3>2. Proyek & Task</h3>
+<div class="feature-grid">
+  <div class="feature-card">
+    <div class="icon">📋</div>
+    <h4>Manajemen Proyek</h4>
+    <p>Buat project per klien, assign tim, set status (draft/active/on hold/completed/cancelled), dan tentukan deadline.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">✅</div>
+    <h4>Task Board (Kanban)</h4>
+    <p>Drag-and-drop task antar status: To Do → In Progress → Review → Done. Set prioritas (low/medium/high/urgent) dan assign ke anggota tim.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">👥</div>
+    <h4>Multi-user & Roles</h4>
+    <p>Workspace mendukung banyak anggota dengan peran: Owner, Member, Viewer. Setiap project bisa di-assign ke anggota tertentu.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">👁️</div>
+    <h4>Client Visibility</h4>
+    <p>Kontrol task dan file mana yang terlihat oleh klien di portal mereka. File dipisah: internal vs deliverable.</p>
+  </div>
+</div>
+
+<!-- 3. FILES -->
+<h3>3. File & Deliverable</h3>
+<div class="feature-grid">
+  <div class="feature-card">
+    <div class="icon">📂</div>
+    <h4>File Manager</h4>
+    <p>Upload, organize dalam folder bersarang (nested), dan hubungkan ke project atau klien. Storage di Cloudflare R2.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">📤</div>
+    <h4>Internal vs Deliverable</h4>
+    <p>Setiap file punya visibility (internal/client) dan tipe (working_file/deliverable). Hanya deliverable yang muncul di portal klien.</p>
+  </div>
+</div>
+
+<!-- 4. TIME TRACKING -->
+<h3>4. Time Tracking</h3>
+<div class="feature-grid">
+  <div class="feature-card">
+    <div class="icon">⏱️</div>
+    <h4>Timer & Manual Entry</h4>
+    <p>Catat jam kerja dengan timer real-time atau input manual. Setiap entry terhubung ke project, task, dan klien.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">💰</div>
+    <h4>Billable Hours</h4>
+    <p>Tandai setiap entry sebagai billable/non-billable. Set tarif per-jam per entry (override tarif default workspace).</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">📊</div>
+    <h4>Summary & Export</h4>
+    <p>Ringkasan jam per project/klien/periode. Export data time tracking ke CSV untuk keperluan eksternal.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">🔄</div>
+    <h4>Invoice dari Time Entry</h4>
+    <p>Konversi time entry billable langsung menjadi line item di invoice — tanpa input ulang.</p>
+  </div>
+</div>
+
+<!-- 5. INVOICES -->
+<h3>5. Invoice & Pembayaran</h3>
+<div class="feature-grid">
+  <div class="feature-card">
+    <div class="icon">🧾</div>
+    <h4>Buat & Kirim Invoice</h4>
+    <p>Generate invoice dengan nomor urut otomatis. Tambah line item manual atau dari time entry. Set PPN, diskon, dan syarat pembayaran.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">🔗</div>
+    <h4>Public Invoice Link</h4>
+    <p>Bagikan link invoice ke klien — mereka bisa lihat detail, status, dan unduh PDF tanpa login.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">💵</div>
+    <h4>Record Payment</h4>
+    <p>Catat pembayaran (parsial/penuh) dengan tanggal, metode, dan catatan. Status invoice otomatis berubah.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">⏰</div>
+    <h4>Overdue Reminders</h4>
+    <p>Sistem cron otomatis mengirim reminder email untuk invoice yang jatuh tempo. Manual reminder juga tersedia.</p>
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- 6. PROPOSALS -->
+<h3>6. Proposal</h3>
+<div class="feature-grid">
+  <div class="feature-card">
+    <div class="icon">📄</div>
+    <h4>Buat & Kirim Proposal</h4>
+    <p>Tulis body proposal (Markdown), tambah line items harga, set down payment %, dan masa berlaku. Kirim link ke klien.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">✅</div>
+    <h4>Accept / Decline</h4>
+    <p>Klien bisa menerima atau menolak proposal via link publik. Status ter-tracking: draft → sent → viewed → accepted/declined/expired.</p>
+  </div>
+</div>
+
+<!-- 7. CONTRACTS -->
+<h3>7. Kontrak & Tanda Tangan Digital</h3>
+<div class="feature-grid">
+  <div class="feature-card">
+    <div class="icon">📝</div>
+    <h4>Template Kontrak</h4>
+    <p>Buat template dengan variabel ({{client.name}}, {{project.name}}, dll). Render otomatis saat dikirim.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">✍️</div>
+    <h4>E-Signature</h4>
+    <p>Klien menandatangani kontrak langsung di browser (canvas drawing). Data tersimpan: nama, email, gambar tanda tangan, IP, timestamp.</p>
+  </div>
+</div>
+
+<!-- 8. QUESTIONNAIRES -->
+<h3>8. Kuesioner / Intake Form</h3>
+<div class="feature-grid">
+  <div class="feature-card">
+    <div class="icon">📋</div>
+    <h4>Form Builder</h4>
+    <p>Buat form dengan berbagai tipe field: text, textarea, select, multiselect, number, date, email, URL. Atur required/optional.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">🔗</div>
+    <h4>Public Intake Link</h4>
+    <p>Bagikan link kuesioner ke prospek/klien. Jawaban masuk langsung ke sistem dan bisa dihubungkan ke project.</p>
+  </div>
+</div>
+
+<!-- 9. BOOKING -->
+<h3>9. Booking Page</h3>
+<div class="feature-grid">
+  <div class="feature-card">
+    <div class="icon">📅</div>
+    <h4>Public Scheduling</h4>
+    <p>Halaman publik (cubiqlo.com/booking/[slug]) di mana klien bisa pilih slot waktu yang tersedia. Mencegah double-booking otomatis.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">⚙️</div>
+    <h4>Availability Rules</h4>
+    <p>Atur jam kerja per hari per anggota tim. Sistem hanya menampilkan slot yang benar-benar available.</p>
+  </div>
+</div>
+
+<!-- 10. CLIENT PORTAL -->
+<h3>10. Client Portal</h3>
+<div class="feature-grid">
+  <div class="feature-card full-width">
+    <div class="icon">🌐</div>
+    <h4>Portal Klien Terintegrasi</h4>
+    <p>Satu link untuk setiap klien (token atau slug custom) yang menampilkan: project yang client-visible, task status, file deliverable, komentar, invoice, proposal, dan kontrak. Klien bisa komentar langsung dari portal. Semua aktivitas di-log (portal access logs, visit audit).</p>
+  </div>
+</div>
+
+<!-- 11. CALENDAR -->
+<h3>11. Kalender</h3>
+<div class="feature-grid">
+  <div class="feature-card full-width">
+    <div class="icon">📆</div>
+    <h4>Unified Calendar</h4>
+    <p>Satu kalender yang menampilkan appointment (booking), deadline task, dan jadwal kerja tim. Terintegrasi dengan data project dan booking page.</p>
+  </div>
+</div>
+
+<!-- 12. REPORTS -->
+<h3>12. Laporan & Keuangan</h3>
+<div class="feature-grid">
+  <div class="feature-card">
+    <div class="icon">📊</div>
+    <h4>Reports Dashboard</h4>
+    <p>Top klien by revenue (YTD), AR aging (outstanding invoices), P&L (revenue vs expenses), dan cash-flow forecast.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">💸</div>
+    <h4>Expense Tracking</h4>
+    <p>Catat pengeluaran per project/klien dengan kategori, vendor, dan bukti. Mendukung recurring expense (bulanan/triwulan/tahunan).</p>
+  </div>
+</div>
+
+<!-- 13. AI -->
+<h3>13. AI Assistant & Prompt Generator</h3>
+<div class="feature-grid">
+  <div class="feature-card">
+    <div class="icon">🧠</div>
+    <h4>AI Chat (Brain)</h4>
+    <p>Chat panel full-page yang terhubung ke data workspace. Bisa menjawab pertanyaan tentang data klien/project, mark task done, dan draft invoice reminder.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">⚡</div>
+    <h4>Prompt Templates</h4>
+    <p>Template prompt bawaan untuk pekerjaan kreatif/jasa. Custom template per workspace. Tracking token usage dan cost.</p>
+  </div>
+</div>
+
+<!-- 14. EMAIL -->
+<h3>14. Email Suite</h3>
+<div class="feature-grid">
+  <div class="feature-card">
+    <div class="icon">📧</div>
+    <h4>Email Templates & Sending</h4>
+    <p>Template email per kategori (general, invoice, proposal, dll). Kirim email langsung dari sistem. Log semua email terkirim.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">🔔</div>
+    <h4>Notifikasi</h4>
+    <p>14 tipe notifikasi: task assigned, comment, file viewed, invoice paid/sent, proposal/contract viewed, booking created, overdue reminder, @mention, dll.</p>
+  </div>
+</div>
+
+<!-- 15. PERSONAL -->
+<h3>15. Personal Notes</h3>
+<div class="feature-grid">
+  <div class="feature-card full-width">
+    <div class="icon">🗒️</div>
+    <h4>Catatan Pribadi</h4>
+    <p>Notes personal per user di dalam workspace. Bisa dipin (pinned), di-archive, dan di-set status (open/done/archived). Untuk catatan cepat yang tidak terkait project.</p>
+  </div>
+</div>
+
+<!-- 16. AUTH & SECURITY -->
+<h3>16. Autentikasi & Keamanan</h3>
+<div class="feature-grid">
+  <div class="feature-card">
+    <div class="icon">🔐</div>
+    <h4>Better Auth</h4>
+    <p>Email/password login, session management, email verification, forgot/reset password. Semua token di-hash sebelum disimpan.</p>
+  </div>
+  <div class="feature-card">
+    <div class="icon">🛡️</div>
+    <h4>Access Control</h4>
+    <p>Workspace-level access control. Portal tokens bisa di-revoke. Activity logs dan portal access logs untuk audit trail.</p>
+  </div>
+</div>
+
+<hr class="section-divider">
+
+<!-- HALAMAN PUBLIK -->
+<h2>Halaman Publik</h2>
+<ul>
+  <li><strong>/</strong> — Landing page dengan fitur, pricing, dan CTA</li>
+  <li><strong>/login, /signup</strong> — Autentikasi user</li>
+  <li><strong>/verify-email</strong> — Verifikasi email setelah signup</li>
+  <li><strong>/forgot-password, /reset-password</strong> — Reset password flow</li>
+  <li><strong>/booking/[slug]</strong> — Public booking page per workspace</li>
+  <li><strong>/client-portal/[token]</strong> — Client portal (token-based)</li>
+  <li><strong>/invoice/[token]</strong> — Public invoice view</li>
+  <li><strong>/proposal/[token]</strong> — Public proposal view + accept/decline</li>
+  <li><strong>/contract/[token]</strong> — Public contract view + e-signature</li>
+  <li><strong>/intake/[token]</strong> — Public kuesioner/intake form</li>
+</ul>
+
+<!-- PRICING -->
+<h2>Model Pricing</h2>
+<table class="pricing-table">
+  <thead>
+    <tr>
+      <th>Plan</th>
+      <th>Harga</th>
+      <th>Fitur Utama</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Free</strong></td>
+      <td>Rp 0</td>
+      <td>1 user, 3 klien, project & task, invoice, time tracking</td>
+    </tr>
+    <tr>
+      <td><strong>Solo</strong></td>
+      <td>Rp 49.000/bulan</td>
+      <td>1 user, unlimited klien, client portal, AI assistant, booking, proposal & kontrak</td>
+    </tr>
+    <tr>
+      <td><strong>Team</strong></td>
+      <td>Rp 99.000/bulan</td>
+      <td>5 user, workspace bersama, peran tim, laporan lanjutan, prioritas support</td>
+    </tr>
+  </tbody>
+</table>
+<p>Pembayaran via <strong>Pakasir QRIS</strong> — mendukung semua e-wallet dan bank di Indonesia.</p>
+
+<div class="page-break"></div>
+
+<!-- ROADMAP -->
+<h2>Roadmap — Fitur yang Akan Datang</h2>
+<p>Berikut fitur yang sedang dalam perencanaan atau pengembangan:</p>
+
+<div class="roadmap-item">
+  <div class="roadmap-num">1</div>
+  <div class="roadmap-content">
+    <h4>Recurring Invoice <span class="badge badge-soon">PLANNED</span></h4>
+    <p>Generate invoice otomatis secara berkala (bulanan/triwulan) untuk retainer client. Mirip recurring expense tapi untuk sisi revenue.</p>
+  </div>
+</div>
+
+<div class="roadmap-item">
+  <div class="roadmap-num">2</div>
+  <div class="roadmap-content">
+    <h4>Online Payment Integration <span class="badge badge-soon">PLANNED</span></h4>
+    <p>Tombol "Bayar Sekarang" di halaman invoice publik yang terintegrasi payment gateway (Pakasir/Midtrans). Klien bisa bayar invoice langsung dari link.</p>
+  </div>
+</div>
+
+<div class="roadmap-item">
+  <div class="roadmap-num">3</div>
+  <div class="roadmap-content">
+    <h4>Multi-workspace per User <span class="badge badge-soon">PLANNED</span></h4>
+    <p>Satu user bisa menjadi anggota di beberapa workspace berbeda (misal: punya agensi sendiri + freelance di workspace lain).</p>
+  </div>
+</div>
+
+<div class="roadmap-item">
+  <div class="roadmap-num">4</div>
+  <div class="roadmap-content">
+    <h4>Client-facing Chat / Messaging <span class="badge badge-soon">PLANNED</span></h4>
+    <p>Real-time messaging antara tim dan klien langsung di dalam portal. Menggantikan kebutuhan WhatsApp/email untuk komunikasi project.</p>
+  </div>
+</div>
+
+<div class="roadmap-item">
+  <div class="roadmap-num">5</div>
+  <div class="roadmap-content">
+    <h4>Mobile App (PWA Enhanced) <span class="badge badge-soon">PLANNED</span></h4>
+    <p>PWA yang lebih matang: push notification, offline mode, dan experience yang mendekati native app untuk timer dan task management di mobile.</p>
+  </div>
+</div>
+
+<div class="roadmap-item">
+  <div class="roadmap-num">6</div>
+  <div class="roadmap-content">
+    <h4>Custom Domain Client Portal <span class="badge badge-soon">PLANNED</span></h4>
+    <p>Klien bisa menggunakan domain sendiri (portal.klien.com) untuk portal mereka, bukan cubiqlo.com/client-portal/... White-label experience.</p>
+  </div>
+</div>
+
+<div class="roadmap-item">
+  <div class="roadmap-num">7</div>
+  <div class="roadmap-content">
+    <h4>Advanced Reporting & Dashboard <span class="badge badge-soon">PLANNED</span></h4>
+    <p>Charts interaktif (revenue trend, utilization rate, project profitability), export PDF report, dan custom date range untuk semua laporan.</p>
+  </div>
+</div>
+
+<div class="roadmap-item">
+  <div class="roadmap-num">8</div>
+  <div class="roadmap-content">
+    <h4>Integrasi Third-party <span class="badge badge-soon">PLANNED</span></h4>
+    <p>Webhook/API untuk integrasi dengan tool lain: Google Calendar sync, Slack notification, accounting software (Jurnal.id, Zahir), dan Zapier/Make.</p>
+  </div>
+</div>
+
+<hr class="section-divider">
+
+<!-- KESIMPULAN -->
+<h2>Kesimpulan</h2>
+<p>
+  Cubiqlo sudah mencakup siklus lengkap operasional client work: <strong>proposal → kontrak → kuesioner → project → task → file → time tracking → invoice → pembayaran</strong>.
+  Ditambah AI assistant, client portal, booking page, dan laporan keuangan.
+</p>
+<p>
+  Dengan pricing yang sangat terjangkau (Rp 49rb–99rb/bulan) dan fitur yang setara dengan tool internasional seperti Dubsado, HoneyBook, atau Bonsai,
+  Cubiqlo adalah solusi yang tepat untuk freelancer dan agensi di Indonesia.
+</p>
+
+<div class="footer">
+  <p>Cubiqlo — Client Operations Hub &bull; cubiqlo.com &bull; Dibuat dengan ❤️ di Indonesia</p>
+  <p>Dokumen ini dibuat Juli 2025. Fitur dan roadmap dapat berubah sesuai pengembangan.</p>
+</div>
+
+</body>
+</html>
