@@ -6,8 +6,8 @@ Use this as release gate before calling current build launch-ready.
 
 ## 1. Release baseline
 
-- [x] Latest deployed runtime commit verified on host: `ac3c2a8 feat: add email templates and personal note edit`
-- [x] Latest documentation commit pushed: `3c295cb docs: update launch checklist status`
+- [x] Latest deployed runtime commit verified on host: `4393af8 fix: scope client portal token actions`
+- [x] Latest documentation commit pushed: `8d30217 docs: add Cubiqlo feature roadmap exports`
 - [x] Production URL: `https://cubiqlo.com`
 - [x] Docker service healthy: `cubicle-cubicle-1`
 - [x] Postgres service healthy: `cubicle-pg`
