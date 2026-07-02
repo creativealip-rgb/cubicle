@@ -7,7 +7,12 @@ import { z } from "zod";
 import { db } from "@/db";
 import { clients, emailMessages, emailTemplates, projects, workspaces } from "@/db/schema";
 import { auth } from "@/lib/auth";
-import { assertWorkspaceWritable, requireUser } from "@/lib/access";
+import {
+  assertWorkspaceWritable,
+  assertClientInWorkspace,
+  assertProjectInWorkspace,
+  requireUser,
+} from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { sendNotification } from "@/lib/notifications";
 import { writeActivityLog } from "@/lib/actions/activity";
@@ -33,6 +38,19 @@ async function getContext() {
   const workspaceId = await getWorkspaceForCurrentUser();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   return { user, workspaceId };
+}
+
+async function assertEmailRelations(
+  userId: string,
+  workspaceId: string,
+  parsed: Pick<z.infer<typeof emailSchema>, "clientId" | "projectId">,
+) {
+  if (parsed.clientId) {
+    await assertClientInWorkspace(db, userId, workspaceId, parsed.clientId);
+  }
+  if (parsed.projectId) {
+    await assertProjectInWorkspace(db, userId, workspaceId, parsed.projectId);
+  }
 }
 
 export async function listEmailTemplates() {
@@ -111,6 +129,7 @@ export async function listEmailMessages() {
 export async function createEmailDraft(input: z.infer<typeof emailSchema>) {
   const { user, workspaceId } = await getContext();
   const parsed = emailSchema.parse(input);
+  await assertEmailRelations(user.id, workspaceId, parsed);
   const [draft] = await db
     .insert(emailMessages)
     .values({
@@ -132,6 +151,7 @@ export async function createEmailDraft(input: z.infer<typeof emailSchema>) {
 export async function sendEmailMessage(input: z.infer<typeof emailSchema>) {
   const { user, workspaceId } = await getContext();
   const parsed = emailSchema.parse(input);
+  await assertEmailRelations(user.id, workspaceId, parsed);
   const [workspace] = await db
     .select({ name: workspaces.name, replyToEmail: workspaces.replyToEmail })
     .from(workspaces)

@@ -16,6 +16,10 @@ export async function inviteMember(email: string, role: "member" | "viewer" = "m
   ok: boolean;
   error?: string;
 }> {
+  if (role !== "member" && role !== "viewer") {
+    return { ok: false, error: "Role undangan tidak valid" };
+  }
+
   const session = await auth.api.getSession({ headers: await headers() });
   const userId = session?.user?.id;
   if (!userId) return { ok: false, error: "Tidak terautentikasi" };

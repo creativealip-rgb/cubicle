@@ -9,7 +9,7 @@ import {
   availabilityRules,
   workspaces,
 } from "@/db/schema";
-import { eq, and, gte, lte, desc, or } from "drizzle-orm";
+import { eq, and, gte, lte, lt, gt, desc } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
@@ -243,7 +243,9 @@ export async function createPublicAppointment(
 
   if (!owner) throw new Error("No available user for booking");
 
-  // Check double-booking: app-layer check
+  // Check double-booking: app-layer interval overlap check.
+  // Half-open interval semantics: [start, end), so a booking ending exactly at
+  // requested start or starting exactly at requested end is allowed.
   const conflicting = await db
     .select({ id: appointments.id })
     .from(appointments)
@@ -251,20 +253,8 @@ export async function createPublicAppointment(
       and(
         eq(appointments.workspaceId, parsed.workspaceId),
         eq(appointments.status, "scheduled"),
-        or(
-          and(
-            lte(appointments.startTime, startTime),
-            gte(appointments.endTime, startTime)
-          ),
-          and(
-            lte(appointments.startTime, endTime),
-            gte(appointments.endTime, endTime)
-          ),
-          and(
-            gte(appointments.startTime, startTime),
-            lte(appointments.endTime, endTime)
-          )
-        )!
+        lt(appointments.startTime, endTime),
+        gt(appointments.endTime, startTime),
       )
     )
     .limit(1);

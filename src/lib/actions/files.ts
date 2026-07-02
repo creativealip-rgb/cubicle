@@ -7,7 +7,13 @@ import { db } from "@/db";
 import { files, users } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { z } from "zod";
-import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
+import {
+  requireUser,
+  assertWorkspaceMember,
+  assertWorkspaceWritable,
+  assertClientInWorkspace,
+  assertProjectInWorkspace,
+} from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { getSignedUploadUrl as getR2UploadUrl, buildFileKey } from "@/lib/r2";
 
@@ -48,6 +54,12 @@ export async function getSignedUploadUrl(
   await assertWorkspaceWritable(db, user.id, input.workspaceId);
 
   const parsed = uploadUrlReqSchema.parse(input);
+  if (parsed.clientId) {
+    await assertClientInWorkspace(db, user.id, parsed.workspaceId, parsed.clientId);
+  }
+  if (parsed.projectId) {
+    await assertProjectInWorkspace(db, user.id, parsed.workspaceId, parsed.projectId);
+  }
 
   const crypto = await import("crypto");
   const tempFileId = crypto.randomUUID();
@@ -65,6 +77,15 @@ export async function completeUpload(input: z.infer<typeof completeUploadReqSche
   await assertWorkspaceWritable(db, user.id, input.workspaceId);
 
   const parsed = completeUploadReqSchema.parse(input);
+  if (!parsed.storageKey.startsWith(`workspaces/${parsed.workspaceId}/`)) {
+    throw new Error("Invalid storage key for workspace");
+  }
+  if (parsed.clientId) {
+    await assertClientInWorkspace(db, user.id, parsed.workspaceId, parsed.clientId);
+  }
+  if (parsed.projectId) {
+    await assertProjectInWorkspace(db, user.id, parsed.workspaceId, parsed.projectId);
+  }
 
   const [file] = await db.insert(files).values({
     workspaceId: parsed.workspaceId,

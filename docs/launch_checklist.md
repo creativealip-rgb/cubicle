@@ -1,6 +1,6 @@
 # Cubicle / Cubiqlo — Final Launch Checklist
 
-Last updated: 2026-06-29
+Last updated: 2026-07-02
 
 Use this as release gate before calling current build launch-ready.
 
@@ -58,7 +58,7 @@ Pass condition:
 - [x] Verify R2 bucket is private enough for signed-url upload/download; no public listing exposed in app QA.
 - [x] Verify viewer role cannot mutate via direct request.
 - [x] Verify owner-only billing checkout in UI.
-- [ ] Rotate/delete TRST/demo passwords before real customer/demo handoff.
+- [x] Rotate/delete TRST/demo passwords before real customer/demo handoff; QA/demo users deleted after backup.
 
 ## 4. Core product smoke
 
@@ -85,10 +85,10 @@ Run with owner account in browser:
 ## 5. Integration smoke
 
 - [ ] Resend sends test email from verified `EMAIL_FROM` to real inbox.
-- [ ] Pakasir checkout creates payment URL/QRIS flow.
-- [ ] Pakasir webhook upgrades plan on paid event.
+- [x] Pakasir checkout creates payment URL/QRIS flow.
+- [x] Pakasir webhook upgrades plan on paid event.
 - [x] R2 upload/download works with signed URLs.
-- [ ] AI Assistant responds if AI env is enabled.
+- [x] AI Assistant responds if AI env is enabled.
 - [ ] Prompt generator responds if AI env is enabled.
 
 ## 6. Ops gate
@@ -142,6 +142,16 @@ Launch is green when:
 
 Current state: **technical launch QA pass**.
 
+Final QA hardening pass (2026-07-02):
+- [x] AI assistant real browser use returned `AI_OK` after `AI_BASE_URL` fix to `http://9router:20128/v1`.
+- [x] Booking overlap logic hardened to half-open interval semantics.
+- [x] File upload completion now validates workspace-owned `storageKey`, `clientId`, and `projectId`.
+- [x] Email draft/send now validates related `clientId` and `projectId` ownership.
+- [x] Team invite now validates role at runtime (`member`/`viewer`).
+- [x] Mobile UI sweep passed for dashboard, brain, clients, projects, tasks, invoices, contracts, proposals, questionnaires, calendar, files, expenses, email, settings, billing.
+- [x] QA/demo users deleted after backup: `pakasir-sandbox-qa-1782919000@example.com`, `owner@cubicle.test`, `member@cubicle.test`, `viewer@cubicle.test`.
+- [x] Final live smoke passed after cleanup.
+
 Pakasir checkout/webhook verification:
 - [x] Created fresh production QA account `pakasir-sandbox-qa-1782919000@example.com`.
 - [x] Created Solo QRIS sandbox checkout through `/api/billing/checkout`.
@@ -153,7 +163,7 @@ Remaining paid-launch blockers:
 - none from technical QA.
 
 Remaining cleanup/manual checks before customer/demo handoff:
-- rotate/delete TRST demo passwords/accounts or sanitize QA data,
+- QA/demo users deleted after backup,
 - optional real inbox confirmation for Resend invoice email,
 - optional manual browser comment flow check.
 
