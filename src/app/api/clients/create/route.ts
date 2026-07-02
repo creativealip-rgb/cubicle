@@ -20,5 +20,6 @@ export async function POST(req: NextRequest) {
     portalSlugEnabled: formData.get("portalSlugEnabled") === "on",
   });
 
-  return NextResponse.redirect(new URL("/app/clients", req.url), 303);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.BETTER_AUTH_URL ?? req.url;
+  return NextResponse.redirect(new URL("/app/clients", appUrl), 303);
 }

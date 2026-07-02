@@ -16,5 +16,6 @@ export async function POST(req: NextRequest) {
     await generateInvoiceShareToken(invoiceId);
   }
 
-  return NextResponse.redirect(new URL(`/app/invoices/${invoiceId}`, req.url), 303);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.BETTER_AUTH_URL ?? req.url;
+  return NextResponse.redirect(new URL(`/app/invoices/${invoiceId}`, appUrl), 303);
 }

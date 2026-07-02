@@ -213,7 +213,7 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
   // Fire client email on first transition to "sent"
   if (priorStatus === "draft" && inv.status === "sent") {
     try {
-      const appUrl = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.BETTER_AUTH_URL ?? "https://cubiqlo.com";
       const [client] = await db
         .select({ name: clients.name, email: clients.email })
         .from(clients)
@@ -513,7 +513,7 @@ async function sendInvoiceEmailForInvoice(invoiceId: string, actorId: string, wo
 
   // Raw share tokens are shown only once, so sending always rotates a fresh link.
   const generated = await generateInvoiceShareToken(invoiceId);
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.BETTER_AUTH_URL ?? "https://cubiqlo.com";
   const portalUrl = `${appUrl}/invoice/${generated.token}`;
   await notifyInvoiceSent({
     clientEmail: client.email,
@@ -662,7 +662,7 @@ export async function sendInvoicePaymentReminder(invoiceId: string) {
     .limit(1);
 
   const generated = await generateInvoiceShareToken(invoiceId);
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.BETTER_AUTH_URL ?? "https://cubiqlo.com";
   const portalUrl = `${appUrl}/invoice/${generated.token}`;
 
   await notifyInvoicePaymentReminder({
