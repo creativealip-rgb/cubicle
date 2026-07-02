@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { CheckCircle2, Clock, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ interface PortalRequest {
 export function PortalRequestList({ requests, token }: { requests: PortalRequest[]; token: string }) {
   const [items, setItems] = useState(requests);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
 
   async function markDone(requestId: string) {
     setLoadingId(requestId);
@@ -29,6 +30,28 @@ export function PortalRequestList({ requests, token }: { requests: PortalRequest
       toast.error(err instanceof Error ? err.message : "Failed");
     } finally {
       setLoadingId(null);
+    }
+  }
+
+  async function uploadFile(requestId: string, file?: File) {
+    if (!file) return;
+    setLoadingId(requestId);
+    try {
+      const form = new FormData();
+      form.append("token", token);
+      form.append("requestId", requestId);
+      form.append("file", file);
+      const res = await fetch("/api/client-portal/requests/upload", { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Upload failed");
+      setItems((prev) => prev.map((r) => r.id === requestId ? { ...r, status: "completed" } : r));
+      toast.success("File uploaded");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setLoadingId(null);
+      const input = fileInputs.current[requestId];
+      if (input) input.value = "";
     }
   }
 
@@ -59,9 +82,28 @@ export function PortalRequestList({ requests, token }: { requests: PortalRequest
               )}
             </div>
             {!done && (
-              <Button size="sm" variant="outline" disabled={loadingId === request.id} onClick={() => markDone(request.id)}>
-                {loadingId === request.id ? "Saving..." : "Mark done"}
-              </Button>
+              <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+                {request.type === "document" && (
+                  <>
+                    <input
+                      ref={(node) => { fileInputs.current[request.id] = node; }}
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => uploadFile(request.id, e.target.files?.[0])}
+                    />
+                    <Button
+                      size="sm"
+                      disabled={loadingId === request.id}
+                      onClick={() => fileInputs.current[request.id]?.click()}
+                    >
+                      {loadingId === request.id ? "Uploading..." : "Upload file"}
+                    </Button>
+                  </>
+                )}
+                <Button size="sm" variant="outline" disabled={loadingId === request.id} onClick={() => markDone(request.id)}>
+                  {loadingId === request.id ? "Saving..." : "Mark done"}
+                </Button>
+              </div>
             )}
           </div>
         );
