@@ -19,9 +19,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ProjectForm } from "@/components/forms/project-form";
 import { EmptyState } from "@/components/empty-state";
+import { ProjectCreateDialog } from "@/components/projects/project-create-dialog";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -87,22 +86,7 @@ export default async function ProjectsPage({
             Pantau pipeline project-mu
           </p>
         </div>
-        {canWrite && (
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button size="sm" className="gap-1 w-full sm:w-auto">
-                <Plus className="h-4 w-4" />
-                Project Baru
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Project Baru</DialogTitle>
-              </DialogHeader>
-              <ProjectForm mode="create" clients={clientOptions} />
-            </DialogContent>
-          </Dialog>
-        )}
+        {canWrite && <ProjectCreateDialog clients={clientOptions} />}
       </div>
 
       <div className="rounded-lg border bg-card">
