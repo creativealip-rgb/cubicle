@@ -113,13 +113,13 @@ export function FileList({ files, workspaceId }: FileListProps) {
                 <Badge className="text-[10px]">Deliverable</Badge>
               )}
               <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1"
                 onClick={() => handleDownload(file.id)}
-                title="Download"
+                title="Open file"
               >
-                <Download className="h-3.5 w-3.5" />
+                <Download className="h-3.5 w-3.5" /> Open
               </Button>
               <Button
                 variant="ghost"

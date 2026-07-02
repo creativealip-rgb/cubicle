@@ -22,6 +22,7 @@ import {
   Pencil,
   Receipt,
   Users,
+  Download,
 } from "lucide-react";
 import { PortalTokenSection } from "./portal-section";
 import { PortalRequestAdmin } from "@/components/portal/portal-request-admin";
@@ -330,7 +331,14 @@ export default async function ClientDetailPage({
                     </p>
                   </div>
                 </div>
-                <Badge variant="outline" className="text-[10px]">{file.visibility}</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-[10px]">{file.visibility}</Badge>
+                  <Button asChild size="sm" variant="outline" className="gap-1">
+                    <a href={`/api/files/${file.id}/download`} target="_blank" rel="noopener noreferrer">
+                      <Download className="h-3 w-3" /> Open
+                    </a>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
