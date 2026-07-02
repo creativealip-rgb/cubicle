@@ -31,6 +31,7 @@ const createManualEntrySchema = z.object({
   date: z.string().min(1),
   durationMinutes: z.number().positive(),
   billable: z.boolean().default(true),
+  hourlyRate: z.number().nonnegative().optional(),
 });
 
 const updateTimeEntrySchema = z.object({
@@ -145,6 +146,7 @@ export async function createManualEntry(input: z.infer<typeof createManualEntryS
     endTime: null,
     manualMinutes: parsed.durationMinutes,
     billable: parsed.billable,
+    hourlyRate: parsed.billable && parsed.hourlyRate !== undefined ? String(parsed.hourlyRate) : null,
     status: "draft",
   }).returning();
 

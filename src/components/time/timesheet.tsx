@@ -23,6 +23,7 @@ interface TimeEntry {
   description: string | null;
   durationMinutes: number | null;
   billable: boolean;
+  hourlyRate: string | number | null;
   startTime: Date | string | null;
   endTime: Date | string | null;
   status: string;
@@ -94,6 +95,17 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
     const m = minutes % 60;
     if (h === 0) return `${m}m`;
     return `${h}h ${m}m`;
+  }
+
+  function formatRate(rate: string | number | null): string | null {
+    if (rate === null || rate === "") return null;
+    const numericRate = Number(rate);
+    if (!Number.isFinite(numericRate) || numericRate <= 0) return null;
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      maximumFractionDigits: 0,
+    }).format(numericRate);
   }
 
   async function handleDelete(entryId: string) {
@@ -259,7 +271,8 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {entry.billable && (
                     <Badge variant="outline" className="text-[10px] gap-0.5">
-                      <DollarSign className="h-2.5 w-2.5" /> Billable
+                      <DollarSign className="h-2.5 w-2.5" />
+                      {formatRate(entry.hourlyRate) ? `${formatRate(entry.hourlyRate)} / jam` : "Billable"}
                     </Badge>
                   )}
                   <Badge variant="secondary" className="text-[10px]">

@@ -46,6 +46,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
   const [hours, setHours] = useState("0");
   const [minutes, setMinutes] = useState("0");
   const [billable, setBillable] = useState(true);
+  const [hourlyRate, setHourlyRate] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -69,6 +70,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
         date,
         durationMinutes,
         billable,
+        hourlyRate: billable && hourlyRate ? Number(hourlyRate) : undefined,
       });
       toast.success("Time entry added");
       setOpen(false);
@@ -80,6 +82,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
       setHours("0");
       setMinutes("0");
       setBillable(true);
+      setHourlyRate("");
       router.refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to add entry");
@@ -188,15 +191,31 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="billable"
-              checked={billable}
-              onChange={(e) => setBillable(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300"
-            />
-            <Label htmlFor="billable" className="text-sm">Billable</Label>
+          <div className="grid gap-3 sm:grid-cols-[auto_1fr] sm:items-end">
+            <div className="flex items-center gap-2 pb-2">
+              <input
+                type="checkbox"
+                id="billable"
+                checked={billable}
+                onChange={(e) => setBillable(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="billable" className="text-sm">Billable</Label>
+            </div>
+            {billable && (
+              <div className="space-y-2">
+                <Label className="text-xs">Hourly rate</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="1000"
+                  value={hourlyRate}
+                  onChange={(e) => setHourlyRate(e.target.value)}
+                  placeholder="e.g. 150000"
+                  className="h-9"
+                />
+              </div>
+            )}
           </div>
 
           <Button type="submit" disabled={loading} className="w-full">
