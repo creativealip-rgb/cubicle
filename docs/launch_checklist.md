@@ -142,8 +142,15 @@ Launch is green when:
 
 Current state: **technical launch QA pass**.
 
+Pakasir checkout/webhook verification:
+- [x] Created fresh production QA account `pakasir-sandbox-qa-1782919000@example.com`.
+- [x] Created Solo QRIS sandbox checkout through `/api/billing/checkout`.
+- [x] Simulated Pakasir sandbox payment.
+- [x] Verified webhook upgraded workspace plan to `solo` until `2026-08-01`.
+- Order ID: `CUB-514241307A-SOLO-1782952813220`.
+
 Remaining paid-launch blockers:
-- Pakasir checkout/webhook live-payment verification.
+- none from technical QA.
 
 Remaining cleanup/manual checks before customer/demo handoff:
 - rotate/delete TRST demo passwords/accounts or sanitize QA data,
