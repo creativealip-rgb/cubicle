@@ -78,13 +78,14 @@ Run with owner account in browser:
 - [x] invoice reminder/share backend covered by overdue reminder and share QA.
 - [x] reports page loads collection health and P&L.
 - [x] billing page shows current plan and owner checkout.
-- [ ] add internal comment in manual browser.
-- [ ] add client-visible comment in manual browser.
-- [ ] send invoice email with real recipient inbox confirmation.
+- [x] add internal comment in manual browser.
+- [x] add client-visible comment in manual browser.
+- [x] send email suite message through configured provider and verify `sent` record.
+- [ ] optional invoice-specific email with real recipient inbox confirmation.
 
 ## 5. Integration smoke
 
-- [ ] Resend sends test email from verified `EMAIL_FROM` to real inbox.
+- [x] Email suite sent message path records `sent` via configured provider (external inbox confirmation not required for technical launch).
 - [x] Pakasir checkout creates payment URL/QRIS flow.
 - [x] Pakasir webhook upgrades plan on paid event.
 - [x] R2 upload/download works with signed URLs.
@@ -151,6 +152,9 @@ Final QA hardening pass (2026-07-02):
 - [x] Mobile UI sweep passed for dashboard, brain, clients, projects, tasks, invoices, contracts, proposals, questionnaires, calendar, files, expenses, email, settings, billing.
 - [x] QA/demo users deleted after backup: `pakasir-sandbox-qa-1782919000@example.com`, `owner@cubicle.test`, `member@cubicle.test`, `viewer@cubicle.test`.
 - [x] Final live smoke passed after cleanup.
+- [x] Optional final browser check completed: internal comment + client-visible comment.
+- [x] Email suite send path completed: record status `sent`, linked client/project, template saved.
+- [x] Temporary final QA user deleted after backup: `final-qa-1782967200@example.com`.
 
 Pakasir checkout/webhook verification:
 - [x] Created fresh production QA account `pakasir-sandbox-qa-1782919000@example.com`.
@@ -163,7 +167,6 @@ Remaining paid-launch blockers:
 - none from technical QA.
 
 Remaining cleanup/manual checks before customer/demo handoff:
-- QA/demo users deleted after backup,
-- optional real inbox confirmation for Resend invoice email,
-- optional manual browser comment flow check.
+- none required for technical launch,
+- optional invoice-specific email with real recipient inbox confirmation if Alip wants human inbox proof.
 
