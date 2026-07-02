@@ -121,14 +121,14 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
   const pathname = usePathname();
   const { mobileOpen, setMobileOpen } = useSidebar();
   const [lang, setLang] = useState<"id" | "en">("id");
-  const openGroups: Record<string, boolean> = {
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     Kerja: true,
     Keuangan: false,
     Komunikasi: false,
     Personal: false,
     Penjualan: false,
     AI: false,
-  };
+  });
   const t = (id: string, en: string) => (lang === "en" ? en : id);
 
   useEffect(() => {
@@ -146,6 +146,29 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
     return () => window.removeEventListener("focus", syncLang);
   }, [pathname]);
 
+  function toggleGroup(name: string) {
+    setOpenGroups((prev) => {
+      if (name === "Kerja") {
+        return {
+          Kerja: true,
+          Keuangan: prev.Keuangan ?? false,
+          Komunikasi: prev.Komunikasi ?? false,
+          Personal: prev.Personal ?? false,
+          Penjualan: prev.Penjualan ?? false,
+          AI: prev.AI ?? false,
+        };
+      }
+      return {
+        Kerja: true,
+        Keuangan: false,
+        Komunikasi: false,
+        Personal: false,
+        Penjualan: false,
+        AI: false,
+        [name]: prev[name] === false,
+      };
+    });
+  }
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -234,12 +257,17 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
               return (
               <div key={g.name ?? "_main"}>
                 {!collapsed && g.name && (
-                  <div
-                    className="flex w-full items-center justify-between rounded-md px-3 pb-1.5 pt-1 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70"
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(g.name!)}
+                    className={cn(
+                      "flex w-full items-center justify-between rounded-md px-3 pb-1.5 pt-1 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70 hover:bg-sidebar-accent",
+                      g.name === "Kerja" && "cursor-default hover:bg-transparent",
+                    )}
                   >
                     <span>{g.name ? t(groupLabels[g.name as keyof typeof groupLabels].id, groupLabels[g.name as keyof typeof groupLabels].en) : ""}</span>
-                    <ChevronDown className={cn("h-3 w-3", !isGroupOpen && "-rotate-90")} />
-                  </div>
+                    <ChevronDown className={cn("h-3 w-3 transition-transform", !isGroupOpen && "-rotate-90")} />
+                  </button>
                 )}
                 {isGroupOpen && (
                 <ul className="space-y-1">
