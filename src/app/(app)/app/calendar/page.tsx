@@ -12,10 +12,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { cancelAppointment } from "@/lib/actions/appointments";
+import { cancelAppointment, deleteAvailabilityRule } from "@/lib/actions/appointments";
 import { Calendar, Clock, MapPin, XCircle } from "lucide-react";
 import Link from "next/link";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
+import { AvailabilityRuleForm } from "@/components/calendar/availability-rule-form";
 
 export default async function CalendarPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -106,11 +107,12 @@ export default async function CalendarPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Availability Rules */}
         <Card className="lg:col-span-1">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between gap-3">
             <CardTitle className="text-base font-semibold">
               <Clock className="mr-2 inline h-4 w-4" />
               Availability Rules
             </CardTitle>
+            <AvailabilityRuleForm />
           </CardHeader>
           <CardContent className="space-y-2">
             {rules.length === 0 && (
@@ -133,6 +135,16 @@ export default async function CalendarPage() {
                     {rule.startTime.substring(0, 5)} – {rule.endTime.substring(0, 5)} ({rule.timezone})
                   </p>
                 </div>
+                <form
+                  action={async () => {
+                    "use server";
+                    await deleteAvailabilityRule(rule.id);
+                  }}
+                >
+                  <Button variant="ghost" size="icon" className="h-7 w-7" type="submit">
+                    <XCircle className="h-4 w-4 text-red-500" />
+                  </Button>
+                </form>
               </div>
             ))}
           </CardContent>

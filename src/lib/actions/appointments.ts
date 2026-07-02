@@ -36,6 +36,9 @@ export async function createAvailabilityRule(
   await assertWorkspaceWritable(db, user.id, workspaceId);
 
   const parsed = availabilitySchema.parse(input);
+  if (parsed.startTime >= parsed.endTime) {
+    throw new Error("End time must be after start time");
+  }
 
   const [rule] = await db
     .insert(availabilityRules)
