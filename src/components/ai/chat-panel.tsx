@@ -859,7 +859,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                 </div>
 
                 {/* Input — always visible above history */}
-                <div className={cn("border-t", isFullpage ? "border-slate-200 bg-white px-6 py-4" : "bg-white p-2")}>
+                <div className={cn("border-t", isFullpage ? "sticky bottom-0 z-20 border-slate-200 bg-white px-6 py-4 shadow-[0_-12px_24px_rgba(15,23,42,0.06)]" : "bg-white p-2")}>
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
