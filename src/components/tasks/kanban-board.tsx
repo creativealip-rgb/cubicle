@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -9,6 +9,7 @@ import {
   useSensor,
   useSensors,
   closestCenter,
+  useDroppable,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -140,6 +141,22 @@ function SortableCard({ task, members = [], isDragOverlay }: { task: Task; membe
   );
 }
 
+function KanbanColumn({ id, children }: { id: string; children: ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "space-y-2 min-h-[140px] rounded-lg transition-colors",
+        isOver && "bg-primary/5 ring-2 ring-primary/30",
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function KanbanBoard({ projectId, tasks: initialTasks, members = [] }: KanbanBoardProps) {
   const [taskMap, setTaskMap] = useState<Record<string, Task[]>>({});
   const [_activeId, setActiveId] = useState<string | null>(null);
@@ -197,13 +214,14 @@ export function KanbanBoard({ projectId, tasks: initialTasks, members = [] }: Ka
 
     if (!overCol || !columns.find((c) => c.id === overCol)) return;
 
-    const oldCol = taskMap[activeCol];
-    const newCol = taskMap[overCol];
+    const oldCol = [...taskMap[activeCol]];
+    const newCol = activeCol === overCol ? oldCol : [...taskMap[overCol]];
 
     const taskIndex = oldCol.findIndex((t) => t.id === activeId);
     if (taskIndex === -1) return;
 
     const [movedTask] = oldCol.splice(taskIndex, 1);
+    movedTask.status = overCol;
 
     // Find target index
     let targetIndex = 0;
@@ -217,7 +235,7 @@ export function KanbanBoard({ projectId, tasks: initialTasks, members = [] }: Ka
     }
 
     // Update positions
-    const updatedMap = { ...taskMap, [activeCol]: [...oldCol], [overCol]: [...newCol] };
+    const updatedMap = { ...taskMap, [activeCol]: oldCol, [overCol]: newCol };
     setTaskMap(updatedMap);
 
     try {
@@ -277,7 +295,7 @@ export function KanbanBoard({ projectId, tasks: initialTasks, members = [] }: Ka
                 items={colTasks.map((t) => t.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <div className="space-y-2 min-h-[80px]">
+                <KanbanColumn id={col.id}>
                   {colTasks.map((task) => (
                     <SortableCard key={task.id} task={task} members={members} />
                   ))}
@@ -286,7 +304,7 @@ export function KanbanBoard({ projectId, tasks: initialTasks, members = [] }: Ka
                       Drop tasks here
                     </div>
                   )}
-                </div>
+                </KanbanColumn>
               </SortableContext>
             </div>
           );
