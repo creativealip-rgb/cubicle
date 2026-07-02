@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { createPortalRequest, updatePortalRequestAdmin } from "@/lib/actions/portal-requests";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,14 +43,21 @@ export function PortalRequestAdmin({
     e.preventDefault();
     setLoading(true);
     try {
-      const row = await createPortalRequest({
+      const res = await fetch("/api/portal-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
         clientId,
         title: form.title,
         description: form.description || undefined,
         type: form.type,
         dueDate: form.dueDate || undefined,
         projectId: form.projectId || undefined,
+        }),
       });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      const row = data.row;
       setRequests((prev) => [row as RequestRow, ...prev]);
       setForm({ title: "", description: "", type: "document", dueDate: "", projectId: "" });
       toast.success("Portal request dibuat");
@@ -65,7 +71,13 @@ export function PortalRequestAdmin({
   async function updateStatus(requestId: string, status: "pending" | "completed" | "cancelled") {
     setLoading(true);
     try {
-      await updatePortalRequestAdmin({ requestId, status });
+      const res = await fetch("/api/portal-requests", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId, status }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
       setRequests((prev) => prev.map((r) => r.id === requestId ? { ...r, status } : r));
       toast.success(`Request ${status}`);
     } catch (err) {
