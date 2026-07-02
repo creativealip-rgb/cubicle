@@ -139,10 +139,11 @@ export async function generatePrompt(
         return "";
       }
     })() ||
+    process.env.AI_API_KEY ||
     process.env.NINE_ROUTER_API_KEY ||
     process.env.ROUTER_API_KEY ||
     process.env.OPENAI_API_KEY;
-  const apiBase = process.env.OPENAI_API_BASE || "http://172.17.0.1:20128/v1";
+  const apiBase = process.env.OPENAI_API_BASE || process.env.AI_BASE_URL || "http://9router:20128/v1";
 
   if (!apiKey) {
     // Fallback: return placeholder for local dev

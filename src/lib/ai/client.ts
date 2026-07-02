@@ -22,7 +22,7 @@ function getApiKey(): string {
 function getBaseUrl(): string {
   return (
     process.env.AI_BASE_URL ||
-    "http://10.0.1.12:20128/v1"
+    "http://9router:20128/v1"
   );
 }
 

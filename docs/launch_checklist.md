@@ -90,7 +90,7 @@ Run with owner account in browser:
 - [x] Pakasir webhook upgrades plan on paid event.
 - [x] R2 upload/download works with signed URLs.
 - [x] AI Assistant responds if AI env is enabled.
-- [ ] Prompt generator responds if AI env is enabled.
+- [x] Prompt generator AI transport fixed to use `AI_BASE_URL` and `/run/secrets/9router_api_key`; direct 9router completion returns 200.
 
 ## 6. Ops gate
 
