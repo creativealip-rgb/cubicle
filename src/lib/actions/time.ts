@@ -20,6 +20,7 @@ const startTimerSchema = z.object({
   projectId: z.string().uuid(),
   taskId: z.string().uuid().optional(),
   description: z.string().optional(),
+  hourlyRate: z.number().nonnegative().optional(),
 });
 
 const createManualEntrySchema = z.object({
@@ -85,6 +86,7 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
     endTime: null,
     manualMinutes: null,
     billable: true,
+    hourlyRate: parsed.hourlyRate !== undefined ? String(parsed.hourlyRate) : null,
     status: "draft",
   }).returning();
 

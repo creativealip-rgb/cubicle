@@ -94,6 +94,7 @@ export function TimerWidget({
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [selectedTaskId, setSelectedTaskId] = useState<string>("");
   const [description, setDescription] = useState("");
+  const [hourlyRate, setHourlyRate] = useState("");
 
   // Filtered projects based on selected client
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
@@ -141,6 +142,7 @@ export function TimerWidget({
         projectId: selectedProjectId,
         taskId: selectedTaskId || undefined,
         description: description || undefined,
+        hourlyRate: hourlyRate ? Number(hourlyRate) : undefined,
       });
 
       const client = clients.find((c) => c.id === selectedClientId);
@@ -167,7 +169,7 @@ export function TimerWidget({
     } finally {
       setLoading(false);
     }
-  }, [selectedClientId, selectedProjectId, selectedTaskId, description, workspaceId, clients, allProjects, allTasks, router]);
+  }, [selectedClientId, selectedProjectId, selectedTaskId, description, hourlyRate, workspaceId, clients, allProjects, allTasks, router]);
 
   const handleStop = useCallback(async () => {
     if (!activeTimer) return;
@@ -323,6 +325,19 @@ export function TimerWidget({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="What are you working on?"
+                className="h-9"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Hourly rate</Label>
+              <Input
+                type="number"
+                min="0"
+                step="1000"
+                value={hourlyRate}
+                onChange={(e) => setHourlyRate(e.target.value)}
+                placeholder="e.g. 150000"
                 className="h-9"
               />
             </div>
