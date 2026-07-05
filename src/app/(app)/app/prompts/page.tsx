@@ -9,6 +9,7 @@ import { listGenerations, getMonthlyUsage } from "@/lib/actions/prompts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PromptForm } from "@/components/prompts/prompt-form";
 import { PromptHistory } from "@/components/prompts/prompt-history";
+import { AutoFeedsStudio } from "@/components/prompts/auto-feeds-studio";
 import { Sparkles, BarChart3, DollarSign, Zap } from "lucide-react";
 
 async function getWorkspaceId(): Promise<string> {
@@ -33,11 +34,13 @@ export default async function PromptsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Prompt Generator</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Prompt Studio</h1>
         <p className="text-sm text-muted-foreground">
-          Generate content, proposals, and insights using AI
+          Studio prompt visual ala Auto Feeds untuk banner, carousel, feed campaign, thumbnail, copy, dan storyboard.
         </p>
       </div>
+
+      <AutoFeedsStudio />
 
       {/* Usage Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
