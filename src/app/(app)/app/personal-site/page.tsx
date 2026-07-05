@@ -99,7 +99,10 @@ export default async function PersonalSiteBuilderPage() {
           <h1 className="text-2xl font-bold tracking-tight">Personal Landing Page Builder</h1>
           <p className="mt-1 text-sm text-muted-foreground">Edit konten, tambah section, atur CTA/link, lalu lihat preview kanan.</p>
         </div>
-        <Button variant="outline" asChild><a href="#preview">Jump to preview</a></Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild><a href="#preview">Jump to preview</a></Button>
+          <Button asChild><a href="/site/preview" target="_blank" rel="noreferrer">Open full page</a></Button>
+        </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[460px_1fr]">
