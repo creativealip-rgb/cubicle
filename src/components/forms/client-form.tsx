@@ -27,9 +27,19 @@ interface ClientFormProps {
   redirectTo?: string;
 }
 
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
+}
+
 export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: ClientFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [slugTouched, setSlugTouched] = useState(Boolean(defaultValues?.portalSlug));
   const [form, setForm] = useState({
     name: defaultValues?.name ?? "",
     companyName: defaultValues?.companyName ?? "",
@@ -85,7 +95,23 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
   }
 
   function set(k: keyof typeof form, v: string | boolean) {
-    setForm((prev) => ({ ...prev, [k]: v }));
+    setForm((prev) => {
+      const next = { ...prev, [k]: v };
+      if (k === "name" && typeof v === "string" && !slugTouched) {
+        next.portalSlug = slugify(v);
+      }
+      return next;
+    });
+  }
+
+  function setPortalSlug(value: string) {
+    setSlugTouched(true);
+    set("portalSlug", slugify(value));
+  }
+
+  function regeneratePortalSlug() {
+    setSlugTouched(true);
+    set("portalSlug", slugify(form.companyName || form.name));
   }
 
   return (
@@ -124,11 +150,15 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
         <Label htmlFor="internalNotes">Catatan Internal</Label>
         <Input id="internalNotes" value={form.internalNotes} onChange={(e) => set("internalNotes", e.target.value)} placeholder="Catatan privat..." />
       </div>
-      <div className="grid grid-cols-[1fr_auto] items-end gap-3 rounded-lg border p-3">
+      <div className="grid gap-3 rounded-lg border p-3 md:grid-cols-[1fr_auto] md:items-end">
         <div className="space-y-2">
           <Label htmlFor="portalSlug">Client portal slug</Label>
-          <Input id="portalSlug" value={form.portalSlug} onChange={(e) => set("portalSlug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))} placeholder="alip" />
+          <div className="flex gap-2">
+            <Input id="portalSlug" value={form.portalSlug} onChange={(e) => setPortalSlug(e.target.value)} placeholder="kopi-senja" />
+            <Button type="button" variant="outline" onClick={regeneratePortalSlug}>Generate</Button>
+          </div>
           <p className="text-xs text-muted-foreground">Short link: /client-portal/{form.portalSlug || "slug"}</p>
+          <p className="text-xs text-muted-foreground">Use lowercase letters, numbers, and dashes. Must be unique.</p>
         </div>
         <label className="flex items-center gap-2 pb-2 text-sm">
           <input type="checkbox" checked={form.portalSlugEnabled} onChange={(e) => set("portalSlugEnabled", e.target.checked)} />

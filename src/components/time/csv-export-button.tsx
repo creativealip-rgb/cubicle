@@ -5,6 +5,10 @@ import { Button } from "@/components/ui/button";
 import { exportTimeCsv } from "@/lib/actions/time";
 
 export function CsvExportButton({ workspaceId }: { workspaceId: string }) {
+  const handlePdfExport = () => {
+    window.open("/api/time/export/pdf", "_blank", "noopener,noreferrer");
+  };
+
   const handleExport = async () => {
     try {
       const csv = await exportTimeCsv({ workspaceId });
@@ -22,8 +26,13 @@ export function CsvExportButton({ workspaceId }: { workspaceId: string }) {
   };
 
   return (
-    <Button variant="outline" size="sm" className="gap-1" onClick={handleExport}>
-      <Download className="h-3 w-3" /> Export CSV
-    </Button>
+    <div className="flex gap-2">
+      <Button variant="outline" size="sm" className="gap-1" onClick={handleExport}>
+        <Download className="h-3 w-3" /> Export CSV
+      </Button>
+      <Button variant="outline" size="sm" className="gap-1" onClick={handlePdfExport}>
+        <Download className="h-3 w-3" /> Export PDF
+      </Button>
+    </div>
   );
 }

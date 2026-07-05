@@ -1,5 +1,5 @@
-import { auth } from "@/lib/auth";
-import { cookies, headers } from "next/headers";
+import { requireAppSession } from "@/lib/app-auth";
+import { getCurrentLang, getLocale, createT } from "@/lib/i18n";
 import { db } from "@/db";
 import {
   clients,
@@ -44,12 +44,11 @@ async function getWorkspace() {
 }
 
 export default async function DashboardPage() {
-  const langCookie = (await cookies()).get("cubiqlo_lang")?.value;
-  const lang: "id" | "en" = langCookie === "en" ? "en" : "id";
-  const t = (id: string, en: string) => (lang === "en" ? en : id);
-  const locale = lang === "en" ? "en-US" : "id-ID";
-  const session = await auth.api.getSession({ headers: await headers() });
-  const _user = requireUser(session?.user);
+  const lang = await getCurrentLang();
+  const t = createT(lang);
+  const locale = getLocale(lang);
+  const session = await requireAppSession("/app/dashboard");
+  const _user = requireUser(session.user);
   const workspace = await getWorkspace();
   const workspaceId = workspace.id;
   const workspaceCurrency = workspace.defaultCurrency || "IDR";

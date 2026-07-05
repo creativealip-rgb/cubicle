@@ -202,6 +202,9 @@ export default async function CalendarPage() {
                     >
                       {apt.status}
                     </Badge>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/api/calendar/${apt.id}/ics`} target="_blank">.ics</Link>
+                    </Button>
                     {/* Cancel button — inline form for server action */}
                     <form
                       action={async () => {
