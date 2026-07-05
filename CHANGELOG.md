@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-07-05 — Docs sync + personal landing page publishing
+
+- Added `docs/feature-status.md` with full feature inventory, current status, shipped scope, partial/process items, and next build order.
+- Added public personal landing pages via `/site/[slug]`; default live URL verified at `/site/alip`.
+- Added private full-page preview route `/site/preview`.
+- Expanded `/app/personal-site` builder with slug, publish toggle, editable sections, links, theme label, accent color, dashboard preview, and `Open live page` action.
+- Verified live health: `/api/health` returns `{"status":"ok","db":"ok"}` and `/site/alip` returns `HTTP/2 200`.
+
 ## 2026-06-29 — Phase 4B templates + personal note edit/search
 
 - Added `email_templates` table and migration `drizzle/0014_p4b_email_templates_note_edit.sql`.
@@ -79,7 +87,7 @@
 - Added `docs/cubicle_ops.md` covering production services, cron jobs, backup, restore test, monitoring, alerting, and emergency restore outline.
 - Verified host crontab has hourly reminders, daily DB backup, weekly restore-test, and 5-minute monitor jobs.
 - Updated final launch checklist ops gate with active cron status.
-- Fixed `scripts/cron-reminders.sh` to send `Authorization: Bearer ${CRON_SECRET}` correctly.
+- Fixed `scripts/cron-reminders.sh` to send `Authorization: Bearer *** correctly.
 
 ## 2026-06-29 — Phase 3D final launch checklist
 
@@ -97,7 +105,7 @@
 
 - Added safe environment audit helper and guarded endpoint:
   - `/api/health/env`
-  - requires `Authorization: Bearer $CRON_SECRET`
+  - requires `Authorization: Bearer ***
   - returns only env names/statuses, never secret values
 - Added production-required env checks for DB, auth, app URL, cron secret, R2, Resend, and Pakasir.
 - Hardened cron routes so missing `CRON_SECRET` locks cron endpoints in production instead of leaving them open.

@@ -1,8 +1,10 @@
 # Cubicle Remaining Plan — From MVP Demo to Production-Ready
 
-Last updated: 2026-06-29
+Last updated: 2026-07-05
 
 ## 1. Current Status
+
+> **Update 2026-07-05:** Full current feature inventory is now maintained in `docs/feature-status.md`. Personal landing pages now publish publicly via `/site/[slug]`; default verified URL: `https://cubiqlo.com/site/alip`.
 
 Cubicle/Cubiqlo sekarang live sebagai production beta di domain brand.
 
