@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Check, Copy, Sparkles, Wand2 } from "lucide-react";
+import { generateVisualPrompt } from "@/lib/actions/visual-prompts";
+import { Check, Copy, Loader2, Sparkles, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 
 const modes = [
@@ -39,6 +40,8 @@ export function AutoFeedsStudio() {
   const [ratio, setRatio] = useState(ratios[0]);
   const [color, setColor] = useState("gold, ivory, deep emerald");
   const [notes, setNotes] = useState("Produk harus terlihat premium, clean, dan siap dipakai untuk ads.");
+  const [aiOutput, setAiOutput] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const selected = modes.find((item) => item.id === mode) ?? modes[0];
@@ -65,8 +68,34 @@ export function AutoFeedsStudio() {
     return `${base}\n\nTASK:\nGenerate a commercial-grade visual prompt for AI image/design generation. Requirements:\n- clean product hierarchy\n- strong typography placement\n- conversion-focused layout\n- realistic lighting and premium composition\n- platform-ready ${ratio}\n- include headline, subheadline, CTA, badge, background direction\n- avoid messy text, distorted logo, extra fingers, unreadable typography\n\nOUTPUT:\n1. Final visual prompt\n2. Overlay copy\n3. Layout composition\n4. Negative prompt\n5. Export checklist`;
   }, [audience, brand, color, mode, notes, offer, product, ratio, selected.name, selected.id, style]);
 
+  const displayedOutput = aiOutput || output;
+
+  async function handleGenerateAi() {
+    setIsGenerating(true);
+    try {
+      const result = await generateVisualPrompt({
+        mode: selected.name,
+        brand,
+        product,
+        offer,
+        audience,
+        style,
+        ratio,
+        color,
+        notes,
+        draftPrompt: output,
+      });
+      setAiOutput(result.generation.generatedOutput || "");
+      toast.success("AI output generated");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "AI generation failed");
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
   async function copyOutput() {
-    await navigator.clipboard.writeText(output);
+    await navigator.clipboard.writeText(displayedOutput);
     setCopied(true);
     toast.success("Prompt copied");
     setTimeout(() => setCopied(false), 1500);
@@ -135,12 +164,18 @@ export function AutoFeedsStudio() {
                 <p className="text-sm font-semibold">Output prompt</p>
                 <p className="text-xs text-muted-foreground">Mode aktif: {selected.name}</p>
               </div>
-              <Button onClick={copyOutput} className="gap-2">
+              <div className="flex flex-wrap gap-2">
+              <Button onClick={handleGenerateAi} disabled={isGenerating} className="gap-2">
+                {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                {isGenerating ? "Generating..." : "Generate with AI"}
+              </Button>
+              <Button onClick={copyOutput} variant="outline" className="gap-2">
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 Copy
               </Button>
+              </div>
             </div>
-            <Textarea value={output} readOnly rows={18} className="font-mono text-xs leading-5" />
+            <Textarea value={displayedOutput} readOnly rows={18} className="font-mono text-xs leading-5" />
             <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1"><Wand2 className="h-3 w-3" /> Siap paste ke AI image/design tool</span>
               <span className="inline-flex items-center gap-1"><Sparkles className="h-3 w-3" /> Bisa dipakai untuk client campaign</span>
