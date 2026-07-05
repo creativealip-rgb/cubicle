@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 const KEY = "[site]";
 
 type SiteData = {
+  slug: string;
+  published: boolean;
   title: string;
   subtitle: string;
   hero: string;
@@ -21,6 +23,8 @@ type SiteData = {
 };
 
 const defaults: SiteData = {
+  slug: "alip",
+  published: true,
   title: "Your Name / Studio",
   subtitle: "Freelancer · Agency · Consultant",
   hero: "Simple client-facing landing page for your services.",
@@ -49,6 +53,15 @@ function safeHref(value?: string) {
   return `https://${href}`;
 }
 
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48) || "alip";
+}
+
 function parseRows(text: string, divider: string) {
   return text
     .split("\n")
@@ -64,10 +77,13 @@ export default async function PersonalSiteBuilderPage() {
   const existing = (await listPersonalNotes(KEY)).find((note) => note.title === KEY);
   const site = parseSite(existing?.body);
   const accent = site.accent || defaults.accent;
+  const publicUrl = `/site/${site.slug || defaults.slug}`;
 
   async function saveSite(formData: FormData) {
     "use server";
     const payload: SiteData = {
+      slug: slugify(String(formData.get("slug") || defaults.slug)),
+      published: formData.get("published") === "on",
       title: String(formData.get("title") || defaults.title),
       subtitle: String(formData.get("subtitle") || defaults.subtitle),
       hero: String(formData.get("hero") || defaults.hero),
@@ -101,7 +117,7 @@ export default async function PersonalSiteBuilderPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" asChild><a href="#preview">Jump to preview</a></Button>
-          <Button asChild><a href="/site/preview" target="_blank" rel="noreferrer">Open full page</a></Button>
+          <Button asChild><a href={publicUrl} target="_blank" rel="noreferrer">Open live page</a></Button>
         </div>
       </div>
 
@@ -110,6 +126,11 @@ export default async function PersonalSiteBuilderPage() {
           <CardHeader><CardTitle>Builder controls</CardTitle></CardHeader>
           <CardContent>
             <form action={saveSite} className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+                <div className="space-y-2"><label className="text-sm font-medium">Public slug</label><Input name="slug" defaultValue={site.slug} placeholder="alip" /></div>
+                <label className="mt-8 flex items-center gap-2 text-sm font-medium"><input name="published" type="checkbox" defaultChecked={site.published} /> Published</label>
+              </div>
+              <p className="text-xs text-muted-foreground">Live URL: https://cubiqlo.com{publicUrl}</p>
               <div className="space-y-2"><label className="text-sm font-medium">Title</label><Input name="title" defaultValue={site.title} /></div>
               <div className="space-y-2"><label className="text-sm font-medium">Subtitle / tagline</label><Input name="subtitle" defaultValue={site.subtitle} /></div>
               <div className="space-y-2"><label className="text-sm font-medium">Hero text</label><Textarea name="hero" rows={3} defaultValue={site.hero} /></div>
