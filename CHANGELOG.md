@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-07-07 — Cubiqlo meeting P1 execution
+
+- Added client PDF exports: single client and bulk combined PDF.
+- Added project billing type (`by project` / `by hours`) plus start and finish dates.
+- Added time entry tags and expanded PDF reporting options.
+- Simplified sidebar/navigation: moved billing and support to avatar menu, hid email, removed nodes, renamed personal area toward Notes.
+- Added navbar timer quick actions.
+- Fixed task modal close after save and generalized form close-before-refresh behavior for client/project/invoice/task forms.
+- Latest deployed commit after this batch: `2babd61 fix: close forms before refresh`.
+
 ## 2026-07-07 — P0 dashboard fixes from meeting plan
 
 - Completed P0 dashboard reorder: `REMINDER` → `KERJA` → `KEUANGAN`.

@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-05
 Live app: https://cubiqlo.com
-Latest verified commit: `3101df9 feat: publish personal landing pages`
+Latest verified commit: `2babd61 fix: close forms before refresh`
 
 ## Status legend
 
@@ -39,6 +39,7 @@ Latest verified commit: `3101df9 feat: publish personal landing pages`
 | Clients list | `/app/clients` | DONE | Client management page exists. |
 | Client create | `/app/clients/new`, `/api/clients/create` | DONE | Dedicated non-modal fallback created. |
 | Client detail | `/app/clients/[clientId]` | DONE | Client profile/detail route exists. |
+| Client PDF export | `/api/clients/[clientId]/export/pdf`, `/api/clients/export/pdf` | DONE | Single client PDF and bulk combined PDF shipped. |
 | Client portal token route | `/client-portal/[token]` | DONE | Public client-facing portal route exists. |
 | Short client portal slug UX | Client form / portal fields | DONE | Auto slug generation and cleanup in client form. |
 | Portal access audit | `portal_visits` | PARTIAL | Schema exists; deeper analytics/reporting pending. |
@@ -48,18 +49,20 @@ Latest verified commit: `3101df9 feat: publish personal landing pages`
 | Feature | Route | Status | Notes |
 | --- | --- | --- | --- |
 | Projects list | `/app/projects` | DONE | Workspace project page exists. |
+| Project billing type + dates | project form/schema | DONE | Supports `by project` / `by hours`, start date, finish date. |
 | Project detail | `/app/projects/[projectId]` | DONE | Detail page with related data. |
 | Tasks | `/app/tasks` | DONE | Task board/list exists. |
 | Project timeline | Project detail + portal | DONE | Internal timeline and client-safe visibility shipped earlier. |
-| Nodes/reminder center | `/app/nodes` | PARTIAL | Central view for reminders/due items exists; true scheduler/recur/snooze pending. |
+| Nodes/reminder center | `/app/nodes` | REMOVED | Removed from sidebar and route because meeting clarified this should be Notes/reminders. |
 
 ## Time tracking + reports
 
 | Feature | Route/API | Status | Notes |
 | --- | --- | --- | --- |
 | Time tracking | `/app/time` | DONE | Time page and active timer endpoint exist. |
+| Time tags | time entry forms/table | DONE | Project > Task > Tag detail added with default/custom tag support. |
 | Time CSV export | Existing time export | DONE | Existing export supported. |
-| Time PDF export | `/api/time/export/pdf` | DONE | PDF route added; unauthenticated returns `401` instead of `500`. |
+| Time PDF export | `/api/time/export/pdf` | DONE | PDF dashboard/detailed report options added; unauthenticated returns `401` instead of `500`. |
 | Reports | `/app/reports` | DONE | Collection health and P&L/report basics exist. |
 
 ## Finance + invoices

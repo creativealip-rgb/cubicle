@@ -39,7 +39,7 @@ Dokumen ini hanya fokus hasil meeting untuk Cubiqlo, bukan Whaledive.
 | P0 Greeting spacing | DONE | Header spacing refined; greeting/date no longer too tight. |
 | P0 Greeting realtime | DONE | Greeting moved to client component and updates every 60 seconds using Jakarta time. |
 | P0 Select/modal bug | DONE | Global Dialog/Select patch prevents select portal click from closing modal and losing form state. |
-| Live deploy | DONE | Latest deployed commit: `1d29758 fix: use Jakarta time for dashboard greeting`. |
+| Live deploy | DONE | Latest deployed commit: `2babd61 fix: close forms before refresh`. |
 
 ## Priority overview
 
@@ -47,10 +47,10 @@ Dokumen ini hanya fokus hasil meeting untuk Cubiqlo, bukan Whaledive.
 | --- | --- | --- | --- |
 | P0 | Bug modal select | DONE | Stop data loss saat user pilih opsi default/sama. |
 | P0 | Dashboard cleanup/reorder | DONE | Sesuaikan struktur dashboard hasil meeting. |
-| P1 | Client PDF export | TODO | Detail client + bulk combined PDF. |
-| P1 | Project type + dates | TODO | Tambah `by project/by hours`, start date, finish date. |
-| P1 | Time tags + reports | TODO | Tracking lebih jelas sampai level tag + PDF report. |
-| P1 | Sidebar/menu restructure | TODO | Kalender/Formulir, Billing/Profile, Support/Profile, Email hidden, Nodes removed. |
+| P1 | Client PDF export | DONE | Detail client + bulk combined PDF shipped. |
+| P1 | Project type + dates | DONE | Added `by project/by hours`, start date, finish date. |
+| P1 | Time tags + reports | DONE | Time entry tags + expanded PDF dashboard/detailed report shipped. |
+| P1 | Sidebar/menu restructure | DONE | Billing/Profile, Support/Profile, Email hidden, Nodes removed, sidebar simplified. |
 | P2 | Personal Notes recurrence | TODO | Notes jadi personal reminder dengan notifikasi. |
 | P2 | Landing page v1 interactive | PARTIAL | Builder sudah ada; section manager/interactivity v2 belum. |
 | P2 | Timer dropdown | TODO | Pause/stop dari navbar. |
