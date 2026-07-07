@@ -20,6 +20,7 @@ import {
   Crown,
   UserPlus,
   Users,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -404,7 +405,13 @@ export function AppTopbar({ user }: AppTopbarProps) {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/app/help" className="cursor-pointer">
+                <Link href="/app/billing" className="cursor-pointer">
+                  <CreditCard className="h-4 w-4" />
+                  Tagihan
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/app/support" className="cursor-pointer">
                   <HelpCircle className="h-4 w-4" />
                   Bantuan & Dukungan
                 </Link>
