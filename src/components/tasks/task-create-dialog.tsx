@@ -9,9 +9,11 @@ import { TaskForm } from "@/components/forms/task-form";
 export function TaskCreateDialog({
   projectId,
   members,
+  projects,
 }: {
   projectId?: string;
   members?: Array<{ id: string; name: string | null; email: string | null }>;
+  projects?: Array<{ id: string; name: string }>;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -26,7 +28,7 @@ export function TaskCreateDialog({
         <DialogHeader>
           <DialogTitle>Task Baru</DialogTitle>
         </DialogHeader>
-        <TaskForm mode="create" projectId={projectId} members={members} onSuccess={() => setOpen(false)} />
+        <TaskForm mode="create" projectId={projectId} members={members} projects={projects} onSuccess={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );

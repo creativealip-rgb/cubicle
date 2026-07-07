@@ -104,7 +104,7 @@ export default async function TasksPage({
             Pantau pekerjaan di semua project
           </p>
         </div>
-        <TaskCreateDialog projectId={params.projectId} members={memberList} />
+        <TaskCreateDialog projectId={params.projectId} members={memberList} projects={projectList} />
       </div>
 
       {/* Filters */}

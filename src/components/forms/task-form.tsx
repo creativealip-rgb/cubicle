@@ -24,10 +24,11 @@ interface TaskFormProps {
     clientVisible?: boolean;
   };
   members?: Array<{ id: string; name: string | null; email: string | null }>;
+  projects?: Array<{ id: string; name: string }>;
   onSuccess?: () => void;
 }
 
-export function TaskForm({ mode, projectId, defaultValues, members = [], onSuccess }: TaskFormProps) {
+export function TaskForm({ mode, projectId, defaultValues, members = [], projects = [], onSuccess }: TaskFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -106,8 +107,15 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], onSucce
       </div>
       {!projectId && (
         <div className="space-y-2">
-          <Label htmlFor="projectId">Project *</Label>
-          <Input id="projectId" value={form.projectId} onChange={(e) => setForm((p) => ({ ...p, projectId: e.target.value }))} required placeholder="ID project" />
+          <Label>Project *</Label>
+          <Select value={form.projectId} onValueChange={(v) => setForm((p) => ({ ...p, projectId: v }))} required>
+            <SelectTrigger><SelectValue placeholder="Pilih project" /></SelectTrigger>
+            <SelectContent>
+              {projects.map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
       <div className="grid grid-cols-2 gap-4">
