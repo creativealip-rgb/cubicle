@@ -79,7 +79,7 @@ export default async function DashboardPage() {
   const todayStr = new Date().toISOString().split("T")[0]!;
   const attention = await db
     .select({
-      overdueInvoices: sql<number>`(SELECT count(*)::int FROM invoices WHERE workspace_id = ${workspaceId} AND status = 'overdue')`,
+      overdueInvoices: sql<number>`(SELECT count(*)::int FROM invoices WHERE workspace_id = ${workspaceId} AND status NOT IN ('paid','cancelled') AND due_date < current_date)`,
       tasksDueToday: sql<number>`(SELECT count(*)::int FROM tasks WHERE workspace_id = ${workspaceId} AND status != 'done' AND due_date <= ${todayStr})`,
       contractsAwaiting: sql<number>`(SELECT count(*)::int FROM contracts WHERE workspace_id = ${workspaceId} AND status IN ('draft','sent','viewed'))`,
       unreadNotifications: sql<number>`(SELECT count(*)::int FROM notifications WHERE workspace_id = ${workspaceId} AND user_id = ${session?.user?.id ?? ""} AND read_at IS NULL)`,
@@ -128,28 +128,39 @@ export default async function DashboardPage() {
     // ignore
   }
 
-  // Cash flow forecast — unpaid invoices bucketed by due date
+  // Cash flow forecast — unpaid invoices bucketed by due date, grouped by currency
   const cashflowResult = await db.execute(
     sql`SELECT
+      currency,
       coalesce(sum(total) FILTER (WHERE due_date >= current_date AND due_date <= current_date + interval '30 days'), 0)::decimal AS d30,
       coalesce(sum(total) FILTER (WHERE due_date > current_date + interval '30 days' AND due_date <= current_date + interval '60 days'), 0)::decimal AS d60,
       coalesce(sum(total) FILTER (WHERE due_date > current_date + interval '60 days' AND due_date <= current_date + interval '90 days'), 0)::decimal AS d90,
       coalesce(sum(total) FILTER (WHERE due_date < current_date), 0)::decimal AS overdue
     FROM invoices
     WHERE workspace_id = ${workspaceId}
-      AND status IN ('sent','overdue','viewed')`,
+      AND status NOT IN ('paid','cancelled')
+    GROUP BY currency`,
   );
-  const cashflow = cashflowResult.rows[0] as {
-    d30: string | number;
-    d60: string | number;
-    d90: string | number;
-    overdue: string | number;
-  };
-  const cf30 = Number(cashflow.d30) || 0;
-  const cf60 = Number(cashflow.d60) || 0;
-  const cf90 = Number(cashflow.d90) || 0;
-  const cfOverdue = Number(cashflow.overdue) || 0;
+  // Primary currency (workspace default) for main display
+  const cfByIDR: Record<string, number> = { d30: 0, d60: 0, d90: 0, overdue: 0 };
+  const cfByUSD: Record<string, number> = { d30: 0, d60: 0, d90: 0, overdue: 0 };
+  for (const row of cashflowResult.rows as Array<{ currency: string; d30: string; d60: string; d90: string; overdue: string }>) {
+    const target = row.currency === "USD" ? cfByUSD : cfByIDR;
+    target.d30 += Number(row.d30) || 0;
+    target.d60 += Number(row.d60) || 0;
+    target.d90 += Number(row.d90) || 0;
+    target.overdue += Number(row.overdue) || 0;
+  }
+  const cf30 = cfByIDR.d30;
+  const cf60 = cfByIDR.d60;
+  const cf90 = cfByIDR.d90;
+  const cfOverdue = cfByIDR.overdue;
+  const cf30usd = cfByUSD.d30;
+  const cf60usd = cfByUSD.d60;
+  const cf90usd = cfByUSD.d90;
+  const cfOverdueUsd = cfByUSD.overdue;
   const cfMax = Math.max(cf30, cf60, cf90, 1);
+  const hasUSD = cf30usd > 0 || cf60usd > 0 || cf90usd > 0 || cfOverdueUsd > 0;
 
   // Revenue sparkline — last 90 days, paid invoices per day (payments.paid_at)
   const sparklineResult = await db.execute(
@@ -825,16 +836,21 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             {[
-              { label: t("30 hari ke depan", "Next 30 days"), amt: cf30, color: "bg-blue-500" },
-              { label: t("31–60 hari", "31–60 days"), amt: cf60, color: "bg-blue-400" },
-              { label: t("61–90 hari", "61–90 days"), amt: cf90, color: "bg-blue-300" },
+              { label: t("30 hari ke depan", "Next 30 days"), amt: cf30, usd: cf30usd, color: "bg-blue-500" },
+              { label: t("31–60 hari", "31–60 days"), amt: cf60, usd: cf60usd, color: "bg-blue-400" },
+              { label: t("61–90 hari", "61–90 days"), amt: cf90, usd: cf90usd, color: "bg-blue-300" },
             ].map((bucket) => (
               <div key={bucket.label} className="space-y-1.5">
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium text-slate-700">{bucket.label}</span>
-                  <span className="font-semibold tabular-nums text-slate-950">
-                    {formatMoney(bucket.amt, workspaceCurrency)}
-                  </span>
+                  <div className="text-right">
+                    <span className="font-semibold tabular-nums text-slate-950">
+                      {formatMoney(bucket.amt, workspaceCurrency)}
+                    </span>
+                    {bucket.usd > 0 && (
+                      <span className="ml-2 text-xs text-muted-foreground">+ {formatMoney(bucket.usd, "USD")}</span>
+                    )}
+                  </div>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
                   <div
@@ -844,12 +860,17 @@ export default async function DashboardPage() {
                 </div>
               </div>
             ))}
-            {cfOverdue > 0 && (
+            {(cfOverdue > 0 || cfOverdueUsd > 0) && (
               <div className="mt-3 flex items-center justify-between rounded-lg border border-red-100 bg-red-50/50 px-3 py-2 text-sm">
                 <span className="font-medium text-red-700">{t("Sudah terlambat", "Overdue")}</span>
-                <span className="font-semibold tabular-nums text-red-700">
-                  {formatMoney(cfOverdue, workspaceCurrency)}
-                </span>
+                <div className="text-right">
+                  {cfOverdue > 0 && (
+                    <span className="font-semibold tabular-nums text-red-700">{formatMoney(cfOverdue, workspaceCurrency)}</span>
+                  )}
+                  {cfOverdueUsd > 0 && (
+                    <span className={`font-semibold tabular-nums text-red-700 ${cfOverdue > 0 ? "ml-2 text-xs" : ""}`}>{formatMoney(cfOverdueUsd, "USD")}</span>
+                  )}
+                </div>
               </div>
             )}
           </CardContent>
