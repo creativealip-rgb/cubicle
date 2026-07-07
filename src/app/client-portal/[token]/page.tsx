@@ -412,15 +412,21 @@ export default async function ClientPortalPage({
     }
   }
 
-  // Calculate financial totals
-  let totalInvoiced = 0;
-  let totalPaid = 0;
-  let totalOutstanding = 0;
+  // Financial summary — invoices for this client, grouped by currency
+  let totalPaidIDR = 0;
+  let totalPaidUSD = 0;
+  let totalOutstandingIDR = 0;
+  let totalOutstandingUSD = 0;
   for (const inv of clientInvoices) {
     const amt = Number(inv.total) || 0;
-    totalInvoiced += amt;
-    if (inv.status === "paid") totalPaid += amt;
-    else if (inv.status !== "cancelled") totalOutstanding += amt;
+    const isUSD = inv.currency === "USD";
+    if (inv.status === "paid") {
+      if (isUSD) totalPaidUSD += amt;
+      else totalPaidIDR += amt;
+    } else if (inv.status !== "cancelled") {
+      if (isUSD) totalOutstandingUSD += amt;
+      else totalOutstandingIDR += amt;
+    }
   }
 
   // Fetch time entry details for by-hours projects (individual entries)
@@ -533,43 +539,59 @@ export default async function ClientPortalPage({
 
         {/* Financial Summary */}
         {(() => {
-          // Calculate per billing type
-          let byProjectInvoiced = 0;
-          let byHoursInvoiced = 0;
+          // Calculate per billing type, grouped by currency
+          let byProjectIDR = 0;
+          let byProjectUSD = 0;
+          let byHoursIDR = 0;
+          let byHoursUSD = 0;
           for (const proj of clientProjects) {
             const projInvs = projectInvoicesMap.get(proj.id) || [];
-            const total = projInvs.reduce((s, inv) => s + (Number(inv.total) || 0), 0);
-            if (proj.billingType === "hours") byHoursInvoiced += total;
-            else byProjectInvoiced += total;
+            for (const inv of projInvs) {
+              const amt = Number(inv.total) || 0;
+              const isUSD = inv.currency === "USD";
+              if (proj.billingType === "hours") {
+                if (isUSD) byHoursUSD += amt;
+                else byHoursIDR += amt;
+              } else {
+                if (isUSD) byProjectUSD += amt;
+                else byProjectIDR += amt;
+              }
+            }
           }
-          const unlinkedTotal = unlinkedInvoices.reduce((s, inv) => s + (Number(inv.total) || 0), 0);
+
+          function fmtAmt(idr: number, usd: number) {
+            const parts: string[] = [];
+            if (idr > 0) parts.push(formatIDR(idr));
+            if (usd > 0) parts.push(`$${usd.toLocaleString("en-US", { minimumFractionDigits: 0 })}`);
+            return parts.join(" + ") || "—";
+          }
 
           return (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
                 <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-bold text-emerald-600">{formatIDR(totalPaid)}</p>
+                  <p className="text-2xl font-bold text-emerald-600">{fmtAmt(totalPaidIDR, totalPaidUSD)}</p>
                   <p className="text-xs text-muted-foreground">Total Paid</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-bold text-amber-600">{formatIDR(totalOutstanding)}</p>
+                  <p className="text-2xl font-bold text-amber-600">{fmtAmt(totalOutstandingIDR, totalOutstandingUSD)}</p>
                   <p className="text-xs text-muted-foreground">Outstanding</p>
                 </CardContent>
               </Card>
-              {byProjectInvoiced > 0 && (
+              {(byProjectIDR > 0 || byProjectUSD > 0) && (
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <p className="text-2xl font-bold text-blue-600">{formatIDR(byProjectInvoiced)}</p>
+                    <p className="text-2xl font-bold text-blue-600">{fmtAmt(byProjectIDR, byProjectUSD)}</p>
                     <p className="text-xs text-muted-foreground">By Project</p>
                   </CardContent>
                 </Card>
               )}
-              {byHoursInvoiced > 0 && (
+              {(byHoursIDR > 0 || byHoursUSD > 0) && (
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <p className="text-2xl font-bold text-purple-600">{formatIDR(byHoursInvoiced)}</p>
+                    <p className="text-2xl font-bold text-purple-600">{fmtAmt(byHoursIDR, byHoursUSD)}</p>
                     <p className="text-xs text-muted-foreground">By Hours</p>
                   </CardContent>
                 </Card>
