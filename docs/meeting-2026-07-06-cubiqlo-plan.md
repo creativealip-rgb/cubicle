@@ -28,7 +28,7 @@ Dokumen ini hanya fokus hasil meeting untuk Cubiqlo, bukan Whaledive.
 18. Jika public landing page tidak published / slug tidak ada: `404`.
 19. Notes personal hanya owner yang bisa akses.
 
-## Progress update — 2026-07-07
+## Progress update — 2026-07-08
 
 | Area | Status | Notes |
 | --- | --- | --- |
@@ -39,10 +39,16 @@ Dokumen ini hanya fokus hasil meeting untuk Cubiqlo, bukan Whaledive.
 | P0 Greeting spacing | DONE | Header spacing refined; greeting/date no longer too tight. |
 | P0 Greeting realtime | DONE | Greeting moved to client component and updates every 60 seconds using Jakarta time. |
 | P0 Select/modal bug | DONE | Global Dialog/Select patch prevents select portal click from closing modal and losing form state. |
-| Live deploy | DONE | Latest deployed commit: `2babd61 fix: close forms before refresh`. |
+| Live deploy | DONE | Latest deployed commit: `38d3b0f fix: portal financial summary currency separation`. |
 | Formulir di Calendar | DONE | Button "Buat formulir" added to Calendar page header. |
 | Billing/Support di avatar | DONE | Both links present in user avatar dropdown menu. |
 | PDF language | DONE | Client PDF and time report PDF both use `cubiqlo_lang` cookie for i18n labels. |
+| Multi-currency strategy | DONE | Project = 1 currency (required). Invoice auto-inherits. Dashboard/Reports/Portal group by currency, never mix. |
+| Dashboard YTD cards | DONE | Pendapatan/Pengeluaran/Bersih YTD show IDR + USD separately. |
+| Reports multi-currency | DONE | YTD cards, Laba Rugi bulanan, aging buckets, cash flow forecast all split IDR vs USD. |
+| Portal financial summary | DONE | Total Paid/Outstanding/By Project/By Hours show "Rp 7.2M + $1,750" format per currency. |
+| Project form currency | DONE | Required Mata Uang selector (IDR/USD/EUR/GBP/SGD), rate/budget fields with currency labels. |
+| Invoice auto-inherit | DONE | Select project → currency auto-ikuts project. Labels show "Project Name (By Project) — USD". |
 
 ## Priority overview
 
