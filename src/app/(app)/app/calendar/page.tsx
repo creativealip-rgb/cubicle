@@ -93,6 +93,11 @@ export default async function CalendarPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/app/questionnaires/new">
+              Buat formulir
+            </Link>
+          </Button>
           {ws.bookingSlug && (
             <Button variant="outline" size="sm" asChild>
               <Link href={`/booking/${ws.bookingSlug}`} target="_blank">
