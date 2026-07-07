@@ -38,6 +38,7 @@ import { authClient } from "@/lib/auth-client";
 import { useSidebar } from "@/components/app-shell";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { getUserWorkspaces, switchWorkspace, createWorkspace } from "@/lib/actions/workspace-switch";
+import { stopTimer } from "@/lib/actions/time";
 
 interface AppTopbarProps {
   user: {
@@ -192,6 +193,19 @@ export function AppTopbar({ user }: AppTopbarProps) {
 
   const activeWorkspace = wsData?.workspaces.find(w => w.isActive);
   const isFree = !wsData || wsData.plan === "free";
+
+  async function handleStopTimer() {
+    if (!activeTimer) {
+      router.push("/app/time");
+      return;
+    }
+    await stopTimer(activeTimer.id);
+    setActiveTimer(null);
+    setElapsed("00:00");
+    window.dispatchEvent(new Event("cubicle:timer-changed"));
+    router.refresh();
+  }
+
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl px-3 md:gap-4 md:px-4">
       {/* Mobile hamburger */}
@@ -247,22 +261,49 @@ export function AppTopbar({ user }: AppTopbarProps) {
 
         {/* Timer */}
         {canWrite && (
-        <Button
-          variant={activeTimer ? "destructive" : "outline"}
-          size="sm"
-          className="gap-1"
-          onClick={() => router.push("/app/time")}
-          title={
-            activeTimer
-              ? [activeTimer.clientName, activeTimer.projectName, activeTimer.taskTitle, activeTimer.description]
-                  .filter(Boolean)
-                  .join(" • ")
-              : "Tidak ada timer aktif"
-          }
-        >
-          <Timer className="h-4 w-4" />
-          <span className="hidden sm:inline">{elapsed}</span>
-        </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant={activeTimer ? "destructive" : "outline"}
+                size="sm"
+                className="gap-1"
+                title={
+                  activeTimer
+                    ? [activeTimer.clientName, activeTimer.projectName, activeTimer.taskTitle, activeTimer.description]
+                        .filter(Boolean)
+                        .join(" • ")
+                    : "Tidak ada timer aktif"
+                }
+              >
+                <Timer className="h-4 w-4" />
+                <span className="hidden sm:inline">{elapsed}</span>
+                <ChevronDown className="h-3 w-3 opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="text-xs text-muted-foreground">
+                {activeTimer ? "Timer aktif" : "Timer"}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {activeTimer ? (
+                <>
+                  <DropdownMenuItem onClick={handleStopTimer}>
+                    Pause timer
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleStopTimer} className="text-red-600 focus:text-red-600">
+                    Stop timer
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push("/app/time")}>
+                    Lihat detail timer
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <DropdownMenuItem onClick={() => router.push("/app/time")}>
+                  Mulai timer
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
 
         {/* AI assistant button */}
