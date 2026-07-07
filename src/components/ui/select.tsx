@@ -81,6 +81,7 @@ const SelectContent = React.forwardRef<
         className,
       )}
       position={position}
+      data-cubiqlo-select-content=""
       {...props}
     >
       <SelectScrollUpButton />

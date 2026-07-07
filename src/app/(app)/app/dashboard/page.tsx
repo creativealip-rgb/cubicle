@@ -122,34 +122,6 @@ export default async function DashboardPage() {
   const cfOverdue = Number(cashflow.overdue) || 0;
   const cfMax = Math.max(cf30, cf60, cf90, 1);
 
-  // Client health — active clients + last activity buckets
-  const clientHealthResult = await db.execute(
-    sql`SELECT
-      count(*) FILTER (WHERE c.status = 'active')::int AS active,
-      count(*) FILTER (WHERE c.status = 'active' AND EXISTS (
-        SELECT 1 FROM projects p
-        WHERE p.client_id = c.id
-          AND p.status = 'active'
-          AND p.updated_at > current_date - interval '14 days'
-      ))::int AS healthy,
-      count(*) FILTER (WHERE c.status = 'active' AND NOT EXISTS (
-        SELECT 1 FROM projects p
-        WHERE p.client_id = c.id
-          AND p.updated_at > current_date - interval '30 days'
-      ))::int AS at_risk
-    FROM clients c
-    WHERE c.workspace_id = ${workspaceId}`,
-  );
-  const clientHealth = clientHealthResult.rows[0] as {
-    active: number;
-    healthy: number;
-    at_risk: number;
-  };
-  const chActive = clientHealth.active || 0;
-  const chHealthy = clientHealth.healthy || 0;
-  const chAtRisk = clientHealth.at_risk || 0;
-  const chIdle = Math.max(chActive - chHealthy - chAtRisk, 0);
-
   // Revenue sparkline — last 14 days, paid invoices per day (payments.paid_at)
   const sparklineResult = await db.execute(
     sql`WITH days AS (
@@ -235,28 +207,6 @@ export default async function DashboardPage() {
       when 'low' then 4
       else 5
     end`)
-    .limit(5);
-
-  // Unpaid invoices list
-  const unpaidInvoices = await db
-    .select({
-      id: invoices.id,
-      invoiceNumber: invoices.invoiceNumber,
-      total: invoices.total,
-      currency: invoices.currency,
-      dueDate: invoices.dueDate,
-      status: invoices.status,
-      clientName: clients.name,
-    })
-    .from(invoices)
-    .leftJoin(clients, eq(clients.id, invoices.clientId))
-    .where(
-      and(
-        eq(invoices.workspaceId, workspaceId),
-        sql`${invoices.status} in ('sent', 'viewed', 'overdue')`,
-      ),
-    )
-    .orderBy(desc(invoices.dueDate))
     .limit(5);
 
   // Recent activity
@@ -358,15 +308,6 @@ export default async function DashboardPage() {
       accentBorder: "border-l-amber-500",
       href: "/app/tasks",
     },
-    {
-      label: t("Invoice Belum Dibayar", "Unpaid Invoices"),
-      value: formatMoneyCompact(unpaidAmount, workspaceCurrency),
-      change: `${unpaidCount} ${t("belum dibayar", "unpaid")}`,
-      icon: Receipt,
-      iconBg: "bg-red-100 text-red-600",
-      accentBorder: "border-l-red-500",
-      href: "/app/invoices",
-    },
   ];
 
   // Greeting + quick action chips
@@ -438,6 +379,8 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("Reminder", "Reminder")}</h2>
       {/* Attention Needed — only shown if any count > 0 */}
       {(att.overdueInvoices > 0 ||
         att.tasksDueToday > 0 ||
@@ -527,6 +470,10 @@ export default async function DashboardPage() {
           </div>
         </div>
       )}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("Kerja", "Work")}</h2>
 
       {/* Revenue sparkline — hero bar */}
       <Card className="bg-gradient-to-r from-slate-50 to-white">
@@ -605,68 +552,7 @@ export default async function DashboardPage() {
         })}
       </div>
 
-      {/* Client Health + Cash Flow Forecast */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Client health */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between text-base font-semibold">
-              <span>{t("Kesehatan klien", "Client health")}</span>
-              <Link
-                href="/app/clients"
-                className="text-xs font-normal text-muted-foreground hover:text-slate-950"
-              >
-                {t("Lihat semua →", "View all →")}
-              </Link>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex h-3 w-full overflow-hidden rounded-full bg-slate-100">
-              {chActive > 0 && chHealthy > 0 && (
-                <div
-                  className="bg-emerald-500 transition-all"
-                  style={{ width: `${(chHealthy / chActive) * 100}%` }}
-                  title={`${chHealthy} healthy`}
-                />
-              )}
-              {chActive > 0 && chIdle > 0 && (
-                <div
-                  className="bg-amber-400 transition-all"
-                  style={{ width: `${(chIdle / chActive) * 100}%` }}
-                  title={`${chIdle} idle`}
-                />
-              )}
-              {chActive > 0 && chAtRisk > 0 && (
-                <div
-                  className="bg-red-500 transition-all"
-                  style={{ width: `${(chAtRisk / chActive) * 100}%` }}
-                  title={`${chAtRisk} at risk`}
-                />
-              )}
-            </div>
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="rounded-lg border border-emerald-100 bg-emerald-50/50 p-3">
-                <p className="text-2xl font-bold text-emerald-700">{chHealthy}</p>
-                <p className="text-xs font-medium text-emerald-700/80">{t("Sehat", "Healthy")}</p>
-              </div>
-              <div className="rounded-lg border border-amber-100 bg-amber-50/50 p-3">
-                <p className="text-2xl font-bold text-amber-700">{chIdle}</p>
-                <p className="text-xs font-medium text-amber-700/80">{t("Diam", "Idle")}</p>
-              </div>
-              <div className="rounded-lg border border-red-100 bg-red-50/50 p-3">
-                <p className="text-2xl font-bold text-red-700">{chAtRisk}</p>
-                <p className="text-xs font-medium text-red-700/80">{t("Berisiko", "At risk")}</p>
-              </div>
-            </div>
-            {chAtRisk > 0 && (
-              <p className="text-xs text-muted-foreground">
-                {chAtRisk} {t("klien tidak ada aktivitas proyek 30+ hari terakhir.", "clients have no project activity in last 30+ days.")}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Cash flow forecast */}
+{/* Cash flow forecast */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between text-base font-semibold">
@@ -710,7 +596,7 @@ export default async function DashboardPage() {
             )}
           </CardContent>
         </Card>
-      </div>
+      </section>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Recent Activity */}
@@ -805,35 +691,6 @@ export default async function DashboardPage() {
                   </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-                <Receipt className="h-3.5 w-3.5 text-muted-foreground" />
-                Invoice Belum Dibayar
-              </CardTitle>
-              <Button variant="ghost" size="sm" className="h-6 gap-1 text-xs" asChild>
-                <Link href="/app/invoices">Lihat semua</Link>
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-2 pt-0">
-              {unpaidInvoices.length === 0 && (
-                <p className="py-3 text-center text-xs text-muted-foreground">{t("Tidak ada invoice belum dibayar", "No unpaid invoices")}</p>
-              )}
-              {unpaidInvoices.map((inv) => (
-                <div key={inv.id} className="flex items-center justify-between rounded-lg px-2 py-1.5 hover:bg-slate-50">
-                  <div className="min-w-0 space-y-0.5">
-                    <p className="truncate text-sm font-medium">{inv.invoiceNumber}</p>
-                    <p className="text-xs text-muted-foreground">{inv.clientName}</p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    {inv.status === "overdue" && <AlertCircle className="h-3 w-3 text-red-500" />}
-                    <span className="text-sm font-semibold tabular-nums">{formatMoney(inv.total, inv.currency || workspaceCurrency)}</span>
-                  </div>
-                </div>
-              ))}
             </CardContent>
           </Card>
 
