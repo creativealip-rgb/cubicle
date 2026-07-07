@@ -98,7 +98,7 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
   return entry;
 }
 
-export async function stopTimer(entryId: string) {
+async function finishTimer(entryId: string, action: "paused_timer" | "stopped_timer") {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -130,8 +130,16 @@ export async function stopTimer(entryId: string) {
     .where(eq(timeEntries.id, entryId))
     .returning();
 
-  await writeActivityLog(workspaceId, user.id, "stopped_timer", "time_entry", entryId);
+  await writeActivityLog(workspaceId, user.id, action, "time_entry", entryId);
   return updated;
+}
+
+export async function pauseTimer(entryId: string) {
+  return finishTimer(entryId, "paused_timer");
+}
+
+export async function stopTimer(entryId: string) {
+  return finishTimer(entryId, "stopped_timer");
 }
 
 export async function createManualEntry(input: z.infer<typeof createManualEntrySchema>) {

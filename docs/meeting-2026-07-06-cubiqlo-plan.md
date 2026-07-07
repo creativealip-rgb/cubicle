@@ -53,7 +53,7 @@ Dokumen ini hanya fokus hasil meeting untuk Cubiqlo, bukan Whaledive.
 | P1 | Sidebar/menu restructure | DONE | Billing/Profile, Support/Profile, Email hidden, Nodes removed, sidebar simplified. |
 | P2 | Personal Notes recurrence | TODO | Notes jadi personal reminder dengan notifikasi. |
 | P2 | Landing page v1 interactive | PARTIAL | Builder sudah ada; section manager/interactivity v2 belum. |
-| P2 | Timer dropdown | TODO | Pause/stop dari navbar. |
+| P2 | Timer dropdown | DONE | Navbar timer dropdown now supports separate pause/stop actions. |
 
 ---
 

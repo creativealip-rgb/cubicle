@@ -38,7 +38,7 @@ import { authClient } from "@/lib/auth-client";
 import { useSidebar } from "@/components/app-shell";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { getUserWorkspaces, switchWorkspace, createWorkspace } from "@/lib/actions/workspace-switch";
-import { stopTimer } from "@/lib/actions/time";
+import { pauseTimer, stopTimer } from "@/lib/actions/time";
 
 interface AppTopbarProps {
   user: {
@@ -194,12 +194,16 @@ export function AppTopbar({ user }: AppTopbarProps) {
   const activeWorkspace = wsData?.workspaces.find(w => w.isActive);
   const isFree = !wsData || wsData.plan === "free";
 
-  async function handleStopTimer() {
+  async function finishActiveTimer(action: "pause" | "stop") {
     if (!activeTimer) {
       router.push("/app/time");
       return;
     }
-    await stopTimer(activeTimer.id);
+    if (action === "pause") {
+      await pauseTimer(activeTimer.id);
+    } else {
+      await stopTimer(activeTimer.id);
+    }
     setActiveTimer(null);
     setElapsed("00:00");
     window.dispatchEvent(new Event("cubicle:timer-changed"));
@@ -287,10 +291,10 @@ export function AppTopbar({ user }: AppTopbarProps) {
               <DropdownMenuSeparator />
               {activeTimer ? (
                 <>
-                  <DropdownMenuItem onClick={handleStopTimer}>
+                  <DropdownMenuItem onClick={() => finishActiveTimer("pause")}>
                     Pause timer
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleStopTimer} className="text-red-600 focus:text-red-600">
+                  <DropdownMenuItem onClick={() => finishActiveTimer("stop")} className="text-red-600 focus:text-red-600">
                     Stop timer
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push("/app/time")}>
