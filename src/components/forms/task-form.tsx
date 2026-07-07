@@ -72,8 +72,20 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], onSucce
         toast.success("Task diperbarui");
       }
 
-      router.refresh();
       onSuccess?.();
+      if (mode === "create") {
+        setForm({
+          title: "",
+          description: "",
+          projectId: defaultValues?.projectId ?? projectId ?? "",
+          status: defaultValues?.status ?? "todo",
+          priority: defaultValues?.priority ?? "medium",
+          assigneeId: defaultValues?.assigneeId ?? "",
+          dueDate: defaultValues?.dueDate ?? "",
+          clientVisible: defaultValues?.clientVisible ?? false,
+        });
+      }
+      router.refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Terjadi kesalahan";
       toast.error(msg);

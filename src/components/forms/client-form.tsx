@@ -78,8 +78,8 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
         toast.success("Klien diperbarui");
       }
 
-      router.refresh();
       onSuccess?.();
+      router.refresh();
       if (redirectTo) router.push(redirectTo);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Terjadi kesalahan";

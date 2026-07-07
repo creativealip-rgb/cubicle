@@ -71,8 +71,8 @@ export function InvoiceForm({ mode, defaultValues, clients, onSuccess }: Invoice
         toast.success("Invoice diperbarui");
       }
 
-      router.refresh();
       onSuccess?.();
+      router.refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Terjadi kesalahan";
       toast.error(msg);

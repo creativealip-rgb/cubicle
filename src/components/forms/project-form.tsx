@@ -67,8 +67,8 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
         toast.success("Project diperbarui");
       }
 
-      router.refresh();
       onSuccess?.();
+      router.refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Terjadi kesalahan";
       toast.error(msg);
