@@ -9,6 +9,7 @@ import {
   activityLogs,
   timeEntries,
   users,
+  personalNotes,
 } from "@/db/schema";
 import { eq, and, desc, sql, gte, lte } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
@@ -29,6 +30,7 @@ import {
   Bell,
   FileSignature,
   ArrowRight,
+  NotebookPen,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -88,6 +90,30 @@ export default async function DashboardPage() {
     contractsAwaiting: 0,
     unreadNotifications: 0,
   };
+
+  // Personal note reminders — due within next 7 days, owner only
+  const now = new Date();
+  const in7d = new Date(now.getTime() + 7 * 24 * 3600 * 1000);
+  const upcomingReminders = await db
+    .select({
+      id: personalNotes.id,
+      title: personalNotes.title,
+      dueDate: personalNotes.dueDate,
+      recurrenceRule: personalNotes.recurrenceRule,
+    })
+    .from(personalNotes)
+    .where(
+      and(
+        eq(personalNotes.workspaceId, workspaceId),
+        eq(personalNotes.userId, session?.user?.id ?? ""),
+        eq(personalNotes.status, "open"),
+        sql`${personalNotes.dueDate} IS NOT NULL`,
+        sql`${personalNotes.dueDate} <= ${in7d.toISOString()}`,
+        sql`${personalNotes.dueDate} >= ${now.toISOString()}`,
+      ),
+    )
+    .orderBy(personalNotes.dueDate)
+    .limit(5);
 
   // Unpaid invoices total
   let unpaidAmount = 0;
@@ -463,6 +489,38 @@ export default async function DashboardPage() {
                 </Link>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Personal note reminders — upcoming 7 days */}
+      {upcomingReminders.length > 0 && (
+        <div className="rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <NotebookPen className="h-4 w-4 text-blue-600" />
+            <h3 className="text-sm font-semibold text-blue-900">
+              {t("Reminder Personal", "Personal Reminders")}
+            </h3>
+            <Badge variant="secondary" className="ml-auto text-xs">{upcomingReminders.length}</Badge>
+          </div>
+          <div className="space-y-2">
+            {upcomingReminders.map((r) => (
+              <Link
+                key={r.id}
+                href="/app/personal"
+                className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-2 text-sm hover:bg-white transition-colors"
+              >
+                <span className="truncate font-medium">{r.title}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  {r.recurrenceRule && r.recurrenceRule !== "none" && (
+                    <Badge variant="outline" className="text-[10px]">{r.recurrenceRule}</Badge>
+                  )}
+                  <span className="text-xs text-muted-foreground">
+                    {r.dueDate ? new Date(r.dueDate).toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" }) : ""}
+                  </span>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       )}
