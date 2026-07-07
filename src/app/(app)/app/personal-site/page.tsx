@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { SectionEditor, type SiteSection } from "@/components/site/section-editor";
 
 const KEY = "[site]";
 
@@ -18,7 +19,7 @@ type SiteData = {
   ctaUrl: string;
   background: string;
   accent: string;
-  sections: string;
+  sections: SiteSection[];
   links: string;
 };
 
@@ -33,13 +34,44 @@ const defaults: SiteData = {
   ctaUrl: "/app/calendar",
   background: "Indigo gradient",
   accent: "#7c3aed",
-  sections: "Services|Website, automation, design, and consulting.\nProcess|Discovery, build, review, launch.\nPricing|Project packages start from your custom offer.",
+  sections: [
+    { id: "1", type: "services", heading: "Services", content: "Website, automation, design, and consulting." },
+    { id: "2", type: "process", heading: "Process", content: "Discovery, build, review, launch." },
+    { id: "3", type: "pricing", heading: "Pricing", content: "Project packages start from your custom offer." },
+  ],
   links: "Portfolio=https://example.com\nEmail=mailto:hello@example.com",
 };
 
+const sectionTypes = [
+  { value: "services", label: "Services" },
+  { value: "process", label: "Process" },
+  { value: "pricing", label: "Pricing" },
+  { value: "portfolio", label: "Portfolio" },
+  { value: "testimonials", label: "Testimonials" },
+  { value: "faq", label: "FAQ" },
+  { value: "contact", label: "Contact" },
+  { value: "custom", label: "Custom" },
+];
+
 function parseSite(body?: string | null): SiteData {
   try {
-    return { ...defaults, ...JSON.parse(body || "{}") };
+    const parsed = JSON.parse(body || "{}");
+    // Migrate old string sections to new format
+    if (typeof parsed.sections === "string") {
+      parsed.sections = parsed.sections
+        .split("\n")
+        .filter(Boolean)
+        .map((line: string, i: number) => {
+          const [heading, ...contentParts] = line.split("|");
+          return {
+            id: String(i + 1),
+            type: "custom",
+            heading: heading?.trim() || "Untitled",
+            content: contentParts.join("|").trim(),
+          };
+        });
+    }
+    return { ...defaults, ...parsed };
   } catch {
     return defaults;
   }
@@ -81,6 +113,13 @@ export default async function PersonalSiteBuilderPage() {
 
   async function saveSite(formData: FormData) {
     "use server";
+    let sections: SiteSection[] = defaults.sections;
+    try {
+      sections = JSON.parse(String(formData.get("sections") || "[]"));
+    } catch {
+      // fallback to defaults
+    }
+
     const payload: SiteData = {
       slug: slugify(String(formData.get("slug") || defaults.slug)),
       published: formData.get("published") === "on",
@@ -92,7 +131,7 @@ export default async function PersonalSiteBuilderPage() {
       ctaUrl: String(formData.get("ctaUrl") || defaults.ctaUrl),
       background: String(formData.get("background") || defaults.background),
       accent: String(formData.get("accent") || defaults.accent),
-      sections: String(formData.get("sections") || defaults.sections),
+      sections,
       links: String(formData.get("links") || defaults.links),
     };
     const body = JSON.stringify(payload, null, 2);
@@ -105,7 +144,6 @@ export default async function PersonalSiteBuilderPage() {
     redirect("/app/personal-site");
   }
 
-  const parsedSections = parseRows(site.sections, "|");
   const parsedLinks = parseRows(site.links, "=").map((link) => ({ label: link.label, url: safeHref(link.body) }));
 
   return (
@@ -144,9 +182,7 @@ export default async function PersonalSiteBuilderPage() {
                 <div className="space-y-2"><label className="text-sm font-medium">Accent color</label><Input name="accent" defaultValue={site.accent} placeholder="#7c3aed" /></div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Sections</label>
-                <Textarea name="sections" rows={7} defaultValue={site.sections} placeholder="Heading|Section content" />
-                <p className="text-xs text-muted-foreground">Tambah section per baris: Heading|Content. Contoh: Services|Website dan automation.</p>
+                <SectionEditor sections={site.sections} onChange={() => {}} />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Links</label>
@@ -175,11 +211,11 @@ export default async function PersonalSiteBuilderPage() {
             <section>
               <h3 className="text-lg font-semibold">Sections</h3>
               <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {parsedSections.map((section, index) => (
-                  <div key={`${section.label}-${index}`} className="rounded-xl border bg-card p-4 shadow-sm">
+                {site.sections.map((section) => (
+                  <div key={section.id} className="rounded-xl border bg-card p-4 shadow-sm">
                     <div className="mb-3 h-1 w-10 rounded-full" style={{ backgroundColor: accent }} />
-                    <h4 className="font-semibold">{section.label}</h4>
-                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{section.body || "Add content in builder."}</p>
+                    <h4 className="font-semibold">{section.heading}</h4>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{section.content || "Add content in builder."}</p>
                   </div>
                 ))}
               </div>
