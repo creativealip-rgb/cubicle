@@ -475,53 +475,6 @@ export default async function DashboardPage() {
       <section className="space-y-3">
         <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("Kerja", "Work")}</h2>
 
-      {/* Revenue sparkline — hero bar */}
-      <Card className="bg-gradient-to-r from-slate-50 to-white">
-        <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">{t("Pendapatan (14 hari terakhir)", "Revenue (last 14 days)")}</p>
-            <p className="text-3xl font-bold tracking-tight">
-              {formatMoneyCompact(sparkTotal, workspaceCurrency)}
-            </p>
-            <p
-              className={`text-xs font-medium ${
-                sparkTrend >= 0 ? "text-emerald-600" : "text-red-600"
-              }`}
-            >
-              <TrendingUp
-                className={`mr-1 inline h-3 w-3 ${
-                  sparkTrend < 0 ? "rotate-180" : ""
-                }`}
-              />
-              {sparkTrend >= 0 ? "+" : ""}
-              {sparkTrend.toFixed(0)}% {t("vs 7 hari sebelumnya", "vs previous 7 days")}
-            </p>
-          </div>
-          <svg
-            viewBox={`0 0 ${sparkW} ${sparkH}`}
-            className="h-16 w-full max-w-xs sm:max-w-sm"
-            preserveAspectRatio="none"
-            aria-label="Revenue trend last 14 days"
-          >
-            <defs>
-              <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#2563eb" stopOpacity="0.25" />
-                <stop offset="100%" stopColor="#2563eb" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            <path d={sparkArea} fill="url(#sparkFill)" />
-            <path
-              d={sparkPath}
-              fill="none"
-              stroke="#2563eb"
-              strokeWidth="2"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-            />
-          </svg>
-        </CardContent>
-      </Card>
-
       {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {kpiCards.map((kpi) => {
@@ -552,51 +505,8 @@ export default async function DashboardPage() {
         })}
       </div>
 
-{/* Cash flow forecast */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between text-base font-semibold">
-              <span>{t("Proyeksi arus kas", "Cash flow forecast")}</span>
-              <Link
-                href="/app/reports"
-                className="text-xs font-normal text-muted-foreground hover:text-slate-950"
-              >
-                {t("Laporan →", "Reports →")}
-              </Link>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {[
-              { label: t("30 hari ke depan", "Next 30 days"), amt: cf30, color: "bg-blue-500" },
-              { label: t("31–60 hari", "31–60 days"), amt: cf60, color: "bg-blue-400" },
-              { label: t("61–90 hari", "61–90 days"), amt: cf90, color: "bg-blue-300" },
-            ].map((bucket) => (
-              <div key={bucket.label} className="space-y-1.5">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-slate-700">{bucket.label}</span>
-                  <span className="font-semibold tabular-nums text-slate-950">
-                    {formatMoney(bucket.amt, workspaceCurrency)}
-                  </span>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                  <div
-                    className={`h-full ${bucket.color} transition-all`}
-                    style={{ width: `${(bucket.amt / cfMax) * 100}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-            {cfOverdue > 0 && (
-              <div className="mt-3 flex items-center justify-between rounded-lg border border-red-100 bg-red-50/50 px-3 py-2 text-sm">
-                <span className="font-medium text-red-700">{t("Sudah terlambat", "Overdue")}</span>
-                <span className="font-semibold tabular-nums text-red-700">
-                  {formatMoney(cfOverdue, workspaceCurrency)}
-                </span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </section>
+
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Recent Activity */}
@@ -726,6 +636,102 @@ export default async function DashboardPage() {
           </Card>
         </div>
       </div>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("Keuangan", "Finance")}</h2>
+
+      {/* Revenue sparkline — hero bar */}
+      <Card className="bg-gradient-to-r from-slate-50 to-white">
+        <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">{t("Pendapatan (14 hari terakhir)", "Revenue (last 14 days)")}</p>
+            <p className="text-3xl font-bold tracking-tight">
+              {formatMoneyCompact(sparkTotal, workspaceCurrency)}
+            </p>
+            <p
+              className={`text-xs font-medium ${
+                sparkTrend >= 0 ? "text-emerald-600" : "text-red-600"
+              }`}
+            >
+              <TrendingUp
+                className={`mr-1 inline h-3 w-3 ${
+                  sparkTrend < 0 ? "rotate-180" : ""
+                }`}
+              />
+              {sparkTrend >= 0 ? "+" : ""}
+              {sparkTrend.toFixed(0)}% {t("vs 7 hari sebelumnya", "vs previous 7 days")}
+            </p>
+          </div>
+          <svg
+            viewBox={`0 0 ${sparkW} ${sparkH}`}
+            className="h-16 w-full max-w-xs sm:max-w-sm"
+            preserveAspectRatio="none"
+            aria-label="Revenue trend last 14 days"
+          >
+            <defs>
+              <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#2563eb" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#2563eb" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <path d={sparkArea} fill="url(#sparkFill)" />
+            <path
+              d={sparkPath}
+              fill="none"
+              stroke="#2563eb"
+              strokeWidth="2"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          </svg>
+        </CardContent>
+      </Card>
+
+{/* Cash flow forecast */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between text-base font-semibold">
+              <span>{t("Proyeksi arus kas", "Cash flow forecast")}</span>
+              <Link
+                href="/app/reports"
+                className="text-xs font-normal text-muted-foreground hover:text-slate-950"
+              >
+                {t("Laporan →", "Reports →")}
+              </Link>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {[
+              { label: t("30 hari ke depan", "Next 30 days"), amt: cf30, color: "bg-blue-500" },
+              { label: t("31–60 hari", "31–60 days"), amt: cf60, color: "bg-blue-400" },
+              { label: t("61–90 hari", "61–90 days"), amt: cf90, color: "bg-blue-300" },
+            ].map((bucket) => (
+              <div key={bucket.label} className="space-y-1.5">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-slate-700">{bucket.label}</span>
+                  <span className="font-semibold tabular-nums text-slate-950">
+                    {formatMoney(bucket.amt, workspaceCurrency)}
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className={`h-full ${bucket.color} transition-all`}
+                    style={{ width: `${(bucket.amt / cfMax) * 100}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+            {cfOverdue > 0 && (
+              <div className="mt-3 flex items-center justify-between rounded-lg border border-red-100 bg-red-50/50 px-3 py-2 text-sm">
+                <span className="font-medium text-red-700">{t("Sudah terlambat", "Overdue")}</span>
+                <span className="font-semibold tabular-nums text-red-700">
+                  {formatMoney(cfOverdue, workspaceCurrency)}
+                </span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 }
