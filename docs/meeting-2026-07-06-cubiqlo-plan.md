@@ -40,6 +40,9 @@ Dokumen ini hanya fokus hasil meeting untuk Cubiqlo, bukan Whaledive.
 | P0 Greeting realtime | DONE | Greeting moved to client component and updates every 60 seconds using Jakarta time. |
 | P0 Select/modal bug | DONE | Global Dialog/Select patch prevents select portal click from closing modal and losing form state. |
 | Live deploy | DONE | Latest deployed commit: `2babd61 fix: close forms before refresh`. |
+| Formulir di Calendar | DONE | Button "Buat formulir" added to Calendar page header. |
+| Billing/Support di avatar | DONE | Both links present in user avatar dropdown menu. |
+| PDF language | PARTIAL | Client PDF uses `cubiqlo_lang` cookie; time report PDF hardcoded English labels. |
 
 ## Priority overview
 
