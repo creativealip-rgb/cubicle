@@ -119,6 +119,17 @@ export function TimerWidget({
     }
   }, [selectedProjectId, allTasks]);
 
+  // Listen for timer changes from navbar (pause/stop from dropdown)
+  useEffect(() => {
+    function onTimerChanged() {
+      setActiveTimer(null);
+      setElapsed("00:00:00");
+      router.refresh();
+    }
+    window.addEventListener("cubicle:timer-changed", onTimerChanged);
+    return () => window.removeEventListener("cubicle:timer-changed", onTimerChanged);
+  }, [router]);
+
   // Tick every second for active timer
   useEffect(() => {
     if (!activeTimer) return;
