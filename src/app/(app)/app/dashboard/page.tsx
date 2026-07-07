@@ -308,6 +308,15 @@ export default async function DashboardPage() {
       accentBorder: "border-l-amber-500",
       href: "/app/tasks",
     },
+    {
+      label: t("Invoice Jatuh Tempo", "Due Invoices"),
+      value: String(unpaidCount),
+      change: `${att.overdueInvoices} ${t("terlambat", "overdue")}`,
+      icon: Receipt,
+      iconBg: "bg-rose-100 text-rose-600",
+      accentBorder: "border-l-rose-500",
+      href: "/app/invoices?status=overdue",
+    },
   ];
 
   // Greeting + quick action chips
@@ -526,14 +535,14 @@ export default async function DashboardPage() {
             {recentActivity.length === 0 && (
               <p className="text-sm text-muted-foreground py-4 text-center">{t("Belum ada aktivitas", "No activity yet")}</p>
             )}
-            {recentActivity.map((item, i) => (
+            {recentActivity.slice(0, 5).map((item, i) => (
               <div key={item.id}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 space-y-0.5">
-                    <p className="text-sm font-medium">
+                    <p className="truncate text-sm font-medium">
                       {formatAction(item.action)}
                     </p>
-                    <p className="text-sm text-muted-foreground truncate">
+                    <p className="truncate text-xs text-muted-foreground">
                       {formatEntity(item.entityType)}
                       {item.actorName && ` ${t("oleh", "by")} ${item.actorName}`}
                     </p>
@@ -542,9 +551,14 @@ export default async function DashboardPage() {
                     {formatRelative(item.createdAt)}
                   </span>
                 </div>
-                {i < recentActivity.length - 1 && <Separator className="mt-4" />}
+                {i < Math.min(recentActivity.length, 5) - 1 && <Separator className="mt-3" />}
               </div>
             ))}
+            {recentActivity.length > 5 && (
+              <p className="pt-1 text-center text-xs text-muted-foreground">
+                {t("Menampilkan 5 aktivitas terakhir", "Showing latest 5 activities")}
+              </p>
+            )}
           </CardContent>
         </Card>
 
