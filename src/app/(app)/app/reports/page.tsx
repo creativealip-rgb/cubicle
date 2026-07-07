@@ -77,12 +77,13 @@ export default async function ReportsPage() {
   const incomeRows = await db
     .select({
       month: sql<string>`to_char(${payments.paidAt}, 'YYYY-MM')`,
+      currency: invoices.currency,
       total: sql<string>`sum(${payments.amount})`,
     })
     .from(payments)
     .innerJoin(invoices, eq(invoices.id, payments.invoiceId))
     .where(eq(invoices.workspaceId, ws.id))
-    .groupBy(sql`to_char(${payments.paidAt}, 'YYYY-MM')`);
+    .groupBy(sql`to_char(${payments.paidAt}, 'YYYY-MM')`, invoices.currency);
 
   const expenseRows = await db
     .select({
@@ -100,8 +101,11 @@ export default async function ReportsPage() {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
   }
-  const incomeByMonth: Record<string, number> = {};
-  incomeRows.forEach((r) => { incomeByMonth[r.month] = parseFloat(r.total ?? "0"); });
+  const incomeByMonth: Record<string, Record<string, number>> = {};
+  incomeRows.forEach((r) => {
+    if (!incomeByMonth[r.month]) incomeByMonth[r.month] = {};
+    incomeByMonth[r.month][r.currency] = parseFloat(r.total ?? "0");
+  });
   const expensesByMonth: Record<string, Record<string, number>> = {};
   expenseRows.forEach((r) => {
     if (!expensesByMonth[r.month]) expensesByMonth[r.month] = {};
@@ -128,32 +132,32 @@ export default async function ReportsPage() {
     .orderBy(invoices.dueDate);
 
   const buckets = {
-    current: { count: 0, total: 0, currency: "IDR" },
-    days_0_30: { count: 0, total: 0, currency: "IDR" },
-    days_31_60: { count: 0, total: 0, currency: "IDR" },
-    days_61_90: { count: 0, total: 0, currency: "IDR" },
-    days_90_plus: { count: 0, total: 0, currency: "IDR" },
+    current: { count: 0, idr: 0, usd: 0 },
+    days_0_30: { count: 0, idr: 0, usd: 0 },
+    days_31_60: { count: 0, idr: 0, usd: 0 },
+    days_61_90: { count: 0, idr: 0, usd: 0 },
+    days_90_plus: { count: 0, idr: 0, usd: 0 },
   };
   const overdueItems: Array<{ invoiceNumber: string; client: string; total: string; currency: string; dueDate: string; daysOverdue: number; id: string }> = [];
   for (const r of agingRows) {
     const total = parseFloat(r.total);
     const od = r.daysOverdue ?? 0;
+    const isUSD = r.currency === "USD";
+    let bucket: { count: number; idr: number; usd: number };
     if (od === 0 || !r.dueDate) {
-      buckets.current.count += 1;
-      buckets.current.total += total;
+      bucket = buckets.current;
     } else if (od <= 30) {
-      buckets.days_0_30.count += 1;
-      buckets.days_0_30.total += total;
+      bucket = buckets.days_0_30;
     } else if (od <= 60) {
-      buckets.days_31_60.count += 1;
-      buckets.days_31_60.total += total;
+      bucket = buckets.days_31_60;
     } else if (od <= 90) {
-      buckets.days_61_90.count += 1;
-      buckets.days_61_90.total += total;
+      bucket = buckets.days_61_90;
     } else {
-      buckets.days_90_plus.count += 1;
-      buckets.days_90_plus.total += total;
+      bucket = buckets.days_90_plus;
     }
+    bucket.count += 1;
+    if (isUSD) bucket.usd += total;
+    else bucket.idr += total;
     if (od > 0) {
       overdueItems.push({
         invoiceNumber: r.invoiceNumber,
@@ -201,7 +205,8 @@ export default async function ReportsPage() {
     .limit(10);
 
   // YTD totals
-  const ytdIncome = months.reduce((s, m) => s + (incomeByMonth[m] ?? 0), 0);
+  const ytdIncomeIDR = months.reduce((s, m) => s + (incomeByMonth[m]?.IDR ?? 0), 0);
+  const ytdIncomeUSD = months.reduce((s, m) => s + (incomeByMonth[m]?.USD ?? 0), 0);
   const ytdExpenseIDR = months.reduce(
     (s, m) => s + (expensesByMonth[m]?.IDR ?? 0),
     0,
@@ -210,7 +215,8 @@ export default async function ReportsPage() {
     (s, m) => s + (expensesByMonth[m]?.USD ?? 0),
     0,
   );
-  const ytdNetIDR = ytdIncome - ytdExpenseIDR;
+  const ytdNetIDR = ytdIncomeIDR - ytdExpenseIDR;
+  const ytdNetUSD = ytdIncomeUSD - ytdExpenseUSD;
   const totalInvoicedYtd = clientRows.reduce((sum, row) => sum + parseFloat(row.totalInvoiced), 0);
   const totalPaidYtd = clientRows.reduce((sum, row) => sum + parseFloat(row.totalPaid), 0);
   const collectionRate = totalInvoicedYtd > 0 ? Math.round((totalPaidYtd / totalInvoicedYtd) * 100) : 0;
@@ -218,7 +224,7 @@ export default async function ReportsPage() {
   const overdueTotal = overdueItems.reduce((sum, row) => sum + parseFloat(row.total), 0);
   const overdueRate = outstandingTotal > 0 ? Math.round((overdueTotal / outstandingTotal) * 100) : 0;
   const pnlMax = Math.max(
-    ...months.flatMap((m) => [incomeByMonth[m] ?? 0, expensesByMonth[m]?.IDR ?? 0]),
+    ...months.flatMap((m) => [incomeByMonth[m]?.IDR ?? 0, incomeByMonth[m]?.USD ?? 0, expensesByMonth[m]?.IDR ?? 0, expensesByMonth[m]?.USD ?? 0]),
     1,
   );
 
@@ -231,6 +237,7 @@ export default async function ReportsPage() {
   const upcomingInvoices = await db
     .select({
       month: sql<string>`to_char(${invoices.dueDate}, 'YYYY-MM')`,
+      currency: invoices.currency,
       total: sql<string>`sum(${invoices.total})`,
       count: sql<number>`count(*)::int`,
     })
@@ -242,7 +249,7 @@ export default async function ReportsPage() {
       sql`${invoices.dueDate} >= ${todayFc}`,
       sql`${invoices.dueDate} <= ${fcLimitStr}`,
     ))
-    .groupBy(sql`to_char(${invoices.dueDate}, 'YYYY-MM')`);
+    .groupBy(sql`to_char(${invoices.dueDate}, 'YYYY-MM')`, invoices.currency);
 
   const recurringRows = await db
     .select()
@@ -255,8 +262,14 @@ export default async function ReportsPage() {
     const d = new Date(fcNow.getFullYear(), fcNow.getMonth() + i, 1);
     fcMonths.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
   }
-  const incomeFc: Record<string, { total: number; count: number }> = {};
-  upcomingInvoices.forEach((r) => { incomeFc[r.month] = { total: parseFloat(r.total ?? "0"), count: Number(r.count ?? 0) }; });
+  const incomeFc: Record<string, { idr: number; usd: number; count: number }> = {};
+  upcomingInvoices.forEach((r) => {
+    if (!incomeFc[r.month]) incomeFc[r.month] = { idr: 0, usd: 0, count: 0 };
+    const amt = parseFloat(r.total ?? "0");
+    if (r.currency === "USD") incomeFc[r.month].usd += amt;
+    else incomeFc[r.month].idr += amt;
+    incomeFc[r.month].count += Number(r.count ?? 0);
+  });
 
   const cashFlow = fcMonths.map((m) => {
     const recTotals: Record<string, number> = {};
@@ -275,7 +288,7 @@ export default async function ReportsPage() {
     }
     return {
       month: m,
-      expectedIncome: incomeFc[m] ?? { total: 0, count: 0 },
+      expectedIncome: incomeFc[m] ?? { idr: 0, usd: 0, count: 0 },
       recurringExpenses: recTotals,
     };
   });
@@ -313,7 +326,10 @@ export default async function ReportsPage() {
             <TrendingUp className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-semibold">{formatMoney(ytdIncome, "IDR")}</div>
+            <div className="text-2xl font-semibold">{formatMoney(ytdIncomeIDR, "IDR")}</div>
+            {ytdIncomeUSD > 0 && (
+              <div className="text-sm text-emerald-600 mt-1">{formatMoney(ytdIncomeUSD, "USD")}</div>
+            )}
             <p className="text-xs text-slate-500 mt-1">dari invoice terbayar (6 bln terakhir)</p>
           </CardContent>
         </Card>
@@ -339,8 +355,10 @@ export default async function ReportsPage() {
             <div className={`text-2xl font-semibold ${ytdNetIDR >= 0 ? "text-emerald-600" : "text-red-600"}`}>
               {formatMoney(ytdNetIDR, "IDR")}
             </div>
-            {ytdExpenseUSD > 0 && (
-              <div className="text-xs text-slate-500 mt-1">USD bersih tidak ditampilkan (invoice terbayar hanya IDR)</div>
+            {ytdIncomeUSD > 0 && (
+              <div className={`text-sm mt-1 ${ytdNetUSD >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                {formatMoney(ytdNetUSD, "USD")}
+              </div>
             )}
           </CardContent>
         </Card>
@@ -362,29 +380,51 @@ export default async function ReportsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Laba Rugi Bulanan (6 bulan terakhir)</CardTitle>
-          <CardDescription>Pendapatan (otomatis) vs pengeluaran (IDR)</CardDescription>
+          <CardDescription>Pendapatan (otomatis) vs pengeluaran — semua mata uang</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {months.map((m) => {
-              const inc = incomeByMonth[m] ?? 0;
-              const exp = expensesByMonth[m]?.IDR ?? 0;
+              const incIDR = incomeByMonth[m]?.IDR ?? 0;
+              const incUSD = incomeByMonth[m]?.USD ?? 0;
+              const expIDR = expensesByMonth[m]?.IDR ?? 0;
+              const expUSD = expensesByMonth[m]?.USD ?? 0;
               return (
                 <div key={m} className="flex items-center gap-3">
                   <span className="text-xs font-mono w-16 text-slate-500">{m}</span>
                   <div className="flex-1 space-y-1">
+                    {/* IDR income */}
                     <div className="flex items-center gap-2">
-                      <div className="h-3 bg-emerald-500 rounded" style={{ width: `${(inc / pnlMax) * 100}%` }} />
+                      <div className="h-3 bg-emerald-500 rounded" style={{ width: `${(incIDR / pnlMax) * 100}%` }} />
                       <span className="text-xs tabular-nums w-32 text-right text-emerald-700">
-                        +{formatMoney(inc, "IDR")}
+                        +{formatMoney(incIDR, "IDR")}
                       </span>
                     </div>
+                    {/* USD income */}
+                    {incUSD > 0 && (
+                      <div className="flex items-center gap-2">
+                        <div className="h-2.5 bg-emerald-400 rounded" style={{ width: `${(incUSD / pnlMax) * 100}%` }} />
+                        <span className="text-xs tabular-nums w-32 text-right text-emerald-600">
+                          +{formatMoney(incUSD, "USD")}
+                        </span>
+                      </div>
+                    )}
+                    {/* IDR expense */}
                     <div className="flex items-center gap-2">
-                      <div className="h-3 bg-red-400 rounded" style={{ width: `${(exp / pnlMax) * 100}%` }} />
+                      <div className="h-3 bg-red-400 rounded" style={{ width: `${(expIDR / pnlMax) * 100}%` }} />
                       <span className="text-xs tabular-nums w-32 text-right text-red-600">
-                        −{formatMoney(exp, "IDR")}
+                        −{formatMoney(expIDR, "IDR")}
                       </span>
                     </div>
+                    {/* USD expense */}
+                    {expUSD > 0 && (
+                      <div className="flex items-center gap-2">
+                        <div className="h-2.5 bg-red-300 rounded" style={{ width: `${(expUSD / pnlMax) * 100}%` }} />
+                        <span className="text-xs tabular-nums w-32 text-right text-red-500">
+                          −{formatMoney(expUSD, "USD")}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -492,7 +532,10 @@ export default async function ReportsPage() {
             }).map(([label, b]) => (
               <div key={label} className="border rounded-lg p-3">
                 <div className="text-xs text-slate-500">{label}</div>
-                <div className="text-lg font-semibold tabular-nums">{formatMoney(b.total, "IDR")}</div>
+                <div className="text-lg font-semibold tabular-nums">{formatMoney(b.idr, "IDR")}</div>
+                {b.usd > 0 && (
+                  <div className="text-sm tabular-nums text-slate-600">{formatMoney(b.usd, "USD")}</div>
+                )}
                 <div className="text-xs text-slate-500">{b.count} invoice{b.count === 1 ? "" : "s"}</div>
               </div>
             ))}
@@ -549,10 +592,12 @@ export default async function ReportsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {cashFlow.map((cf) => {
-              const inc = cf.expectedIncome.total;
+              const incIDR = cf.expectedIncome.idr;
+              const incUSD = cf.expectedIncome.usd;
               const expIDR = cf.recurringExpenses.IDR ?? 0;
               const expUSD = cf.recurringExpenses.USD ?? 0;
-              const net = inc - expIDR;
+              const netIDR = incIDR - expIDR;
+              const netUSD = incUSD - expUSD;
               return (
                 <div key={cf.month} className="border rounded-lg p-4 space-y-2">
                   <div className="flex items-center justify-between">
@@ -562,26 +607,42 @@ export default async function ReportsPage() {
                     )}
                   </div>
                   <div className="space-y-1 text-sm">
+                    {/* IDR */}
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Pendapatan</span>
-                      <span className="tabular-nums text-emerald-700">+{formatMoney(inc, "IDR")}</span>
+                      <span className="text-slate-500">IDR Masuk</span>
+                      <span className="tabular-nums text-emerald-700">+{formatMoney(incIDR, "IDR")}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Rutin</span>
+                      <span className="text-slate-500">IDR Rutin</span>
                       <span className="tabular-nums text-red-600">−{formatMoney(expIDR, "IDR")}</span>
                     </div>
+                    {/* USD */}
+                    {incUSD > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">USD Masuk</span>
+                        <span className="tabular-nums text-emerald-700">+{formatMoney(incUSD, "USD")}</span>
+                      </div>
+                    )}
                     {expUSD > 0 && (
-                      <div className="flex justify-between text-xs text-slate-500">
-                        <span>+ USD</span>
-                        <span>−{formatMoney(expUSD, "USD")}</span>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">USD Rutin</span>
+                        <span className="tabular-nums text-red-600">−{formatMoney(expUSD, "USD")}</span>
                       </div>
                     )}
                     <div className="flex justify-between border-t pt-1 font-semibold">
-                      <span>Net</span>
-                      <span className={`tabular-nums ${net >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-                        {formatMoney(net, "IDR")}
+                      <span>Net IDR</span>
+                      <span className={`tabular-nums ${netIDR >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                        {formatMoney(netIDR, "IDR")}
                       </span>
                     </div>
+                    {incUSD > 0 && (
+                      <div className="flex justify-between font-semibold">
+                        <span>Net USD</span>
+                        <span className={`tabular-nums ${netUSD >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                          {formatMoney(netUSD, "USD")}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               );

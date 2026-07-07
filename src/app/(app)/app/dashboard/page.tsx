@@ -179,24 +179,41 @@ export default async function DashboardPage() {
     amt: Number((r as { amt: string | number }).amt) || 0,
   }));
 
-  // Expense summary — current month total
+  // Expense summary — current month total, grouped by currency
   const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
   const expenseMonthResult = await db.execute(
-    sql`SELECT coalesce(sum(amount), 0)::decimal as total FROM expenses WHERE workspace_id = ${workspaceId} AND date >= ${monthStart}`,
+    sql`SELECT currency, coalesce(sum(amount), 0)::decimal as total FROM expenses WHERE workspace_id = ${workspaceId} AND date >= ${monthStart} GROUP BY currency`,
   );
-  const expenseMonth = Number((expenseMonthResult.rows[0] as { total: string })?.total ?? 0);
+  const expMonthByCurrency: Record<string, number> = {};
+  for (const row of expenseMonthResult.rows as Array<{ currency: string; total: string }>) {
+    expMonthByCurrency[row.currency] = Number(row.total) || 0;
+  }
+  const expenseMonth = expMonthByCurrency["IDR"] ?? 0;
+  const expenseMonthUSD = expMonthByCurrency["USD"] ?? 0;
 
-  // YTD totals — match reports page
+  // YTD totals — grouped by currency
   const ytdStart = `${now.getFullYear()}-01-01`;
   const ytdRevenueResult = await db.execute(
-    sql`SELECT coalesce(sum(p.amount), 0)::decimal as total FROM payments p JOIN invoices i ON i.id = p.invoice_id WHERE i.workspace_id = ${workspaceId} AND p.paid_at >= ${ytdStart}`,
+    sql`SELECT i.currency, coalesce(sum(p.amount), 0)::decimal as total FROM payments p JOIN invoices i ON i.id = p.invoice_id WHERE i.workspace_id = ${workspaceId} AND p.paid_at >= ${ytdStart} GROUP BY i.currency`,
   );
-  const ytdRevenue = Number((ytdRevenueResult.rows[0] as { total: string })?.total ?? 0);
+  const ytdRevByCurrency: Record<string, number> = {};
+  for (const row of ytdRevenueResult.rows as Array<{ currency: string; total: string }>) {
+    ytdRevByCurrency[row.currency] = Number(row.total) || 0;
+  }
+  const ytdRevenue = ytdRevByCurrency["IDR"] ?? 0;
+  const ytdRevenueUSD = ytdRevByCurrency["USD"] ?? 0;
+
   const ytdExpenseResult = await db.execute(
-    sql`SELECT coalesce(sum(amount), 0)::decimal as total FROM expenses WHERE workspace_id = ${workspaceId} AND date >= ${ytdStart}`,
+    sql`SELECT currency, coalesce(sum(amount), 0)::decimal as total FROM expenses WHERE workspace_id = ${workspaceId} AND date >= ${ytdStart} GROUP BY currency`,
   );
-  const ytdExpense = Number((ytdExpenseResult.rows[0] as { total: string })?.total ?? 0);
+  const ytdExpByCurrency: Record<string, number> = {};
+  for (const row of ytdExpenseResult.rows as Array<{ currency: string; total: string }>) {
+    ytdExpByCurrency[row.currency] = Number(row.total) || 0;
+  }
+  const ytdExpense = ytdExpByCurrency["IDR"] ?? 0;
+  const ytdExpenseUSD = ytdExpByCurrency["USD"] ?? 0;
   const ytdNet = ytdRevenue - ytdExpense;
+  const ytdNetUSD = ytdRevenueUSD - ytdExpenseUSD;
 
   // Active timer
   const [activeTimer] = await db
@@ -788,6 +805,9 @@ export default async function DashboardPage() {
                 <span className="text-xs font-medium text-muted-foreground">{t("Pendapatan YTD", "Revenue YTD")}</span>
               </div>
               <p className="text-xl font-bold text-emerald-700">{formatMoney(ytdRevenue, workspaceCurrency)}</p>
+              {ytdRevenueUSD > 0 && (
+                <p className="text-sm text-emerald-600 mt-0.5">{formatMoney(ytdRevenueUSD, "USD")}</p>
+              )}
             </CardContent>
           </Card>
         </Link>
@@ -799,6 +819,9 @@ export default async function DashboardPage() {
                 <span className="text-xs font-medium text-muted-foreground">{t("Pengeluaran bulan ini", "Expenses this month")}</span>
               </div>
               <p className="text-xl font-bold text-red-600">{formatMoney(expenseMonth, workspaceCurrency)}</p>
+              {expenseMonthUSD > 0 && (
+                <p className="text-sm text-red-500 mt-0.5">{formatMoney(expenseMonthUSD, "USD")}</p>
+              )}
             </CardContent>
           </Card>
         </Link>
@@ -816,6 +839,11 @@ export default async function DashboardPage() {
               <p className={`text-xl font-bold ${ytdNet >= 0 ? "text-emerald-700" : "text-red-600"}`}>
                 {formatMoney(ytdNet, workspaceCurrency)}
               </p>
+              {ytdRevenueUSD > 0 && (
+                <p className={`text-sm mt-0.5 ${ytdNetUSD >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                  {formatMoney(ytdNetUSD, "USD")}
+                </p>
+              )}
             </CardContent>
           </Card>
         </Link>
