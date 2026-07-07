@@ -11,6 +11,7 @@ import {
   Search,
   MoreHorizontal,
   Globe,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -119,21 +120,29 @@ export default async function ClientsPage({
             Kelola hubungan klienmu
           </p>
         </div>
-        {canWrite && (
-          isAtLimit ? (
-            <Button size="sm" className="gap-1" disabled>
-              <Plus className="h-4 w-4" />
-              Upgrade dulu
-            </Button>
-          ) : (
-            <Button size="sm" className="gap-1" asChild>
-              <Link href="/app/clients/new">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" variant="outline" className="gap-1" asChild>
+            <a href="/api/clients/export/pdf" target="_blank" rel="noreferrer">
+              <Download className="h-4 w-4" />
+              Download PDF
+            </a>
+          </Button>
+          {canWrite && (
+            isAtLimit ? (
+              <Button size="sm" className="gap-1" disabled>
                 <Plus className="h-4 w-4" />
-                Tambah Klien
-              </Link>
-            </Button>
-          )
-        )}
+                Upgrade dulu
+              </Button>
+            ) : (
+              <Button size="sm" className="gap-1" asChild>
+                <Link href="/app/clients/new">
+                  <Plus className="h-4 w-4" />
+                  Tambah Klien
+                </Link>
+              </Button>
+            )
+          )}
+        </div>
       </div>
 
       {isAtLimit && (
@@ -245,6 +254,9 @@ export default async function ClientsPage({
                       <DropdownMenuItem asChild>
                         <Link href={`/app/projects?clientId=${client.id}`}>Lihat Project</Link>
                       </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <a href={`/api/clients/${client.id}/export/pdf`} target="_blank" rel="noreferrer">Download PDF</a>
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -291,6 +303,9 @@ export default async function ClientsPage({
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
                           <Link href={`/app/clients/${client.id}`}>Lihat Detail</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <a href={`/api/clients/${client.id}/export/pdf`} target="_blank" rel="noreferrer">Download PDF</a>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
