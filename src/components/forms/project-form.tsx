@@ -19,6 +19,9 @@ interface ProjectFormProps {
     description?: string;
     clientId?: string;
     status?: string;
+    billingType?: string;
+    startDate?: string;
+    finishDate?: string;
     dueDate?: string;
     clientVisible?: boolean;
   };
@@ -33,6 +36,9 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
     description: defaultValues?.description ?? "",
     clientId: defaultValues?.clientId ?? clientId ?? "",
     status: defaultValues?.status ?? "active",
+    billingType: defaultValues?.billingType ?? "project",
+    startDate: defaultValues?.startDate ?? "",
+    finishDate: defaultValues?.finishDate ?? "",
     dueDate: defaultValues?.dueDate ?? "",
     clientVisible: defaultValues?.clientVisible ?? false,
   });
@@ -46,6 +52,9 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
         description: form.description || undefined,
         clientId: form.clientId,
         status: form.status as "draft" | "active" | "on_hold" | "completed" | "cancelled",
+        billingType: form.billingType as "project" | "hours",
+        startDate: form.startDate || undefined,
+        finishDate: form.finishDate || undefined,
         dueDate: form.dueDate || undefined,
         clientVisible: form.clientVisible,
       };
@@ -101,6 +110,18 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
       )}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
+          <Label>Jenis Project</Label>
+          <Select value={form.billingType} onValueChange={(v) => setForm((p) => ({ ...p, billingType: v }))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Jenis project" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="project">By Project</SelectItem>
+              <SelectItem value="hours">By Hours</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
           <Label>Status</Label>
           <Select value={form.status} onValueChange={(v) => setForm((p) => ({ ...p, status: v }))}>
             <SelectTrigger>
@@ -114,6 +135,16 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
               <SelectItem value="cancelled">Dibatalkan</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="startDate">Mulai</Label>
+          <Input id="startDate" type="date" value={form.startDate} onChange={(e) => setForm((p) => ({ ...p, startDate: e.target.value }))} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="finishDate">Selesai</Label>
+          <Input id="finishDate" type="date" value={form.finishDate} onChange={(e) => setForm((p) => ({ ...p, finishDate: e.target.value }))} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="dueDate">Jatuh Tempo</Label>
