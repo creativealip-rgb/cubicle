@@ -30,6 +30,7 @@ async function getWorkspaceId(): Promise<string> {
 
 const createInvoiceSchema = z.object({
   clientId: z.string().uuid(),
+  projectId: z.string().uuid().optional(),
   issueDate: z.string().min(1, "Issue date required"),
   dueDate: z.string().optional(),
   currency: z.string().default("USD"),
@@ -39,6 +40,7 @@ const createInvoiceSchema = z.object({
 
 const updateInvoiceSchema = z.object({
   clientId: z.string().uuid().optional(),
+  projectId: z.string().uuid().optional(),
   issueDate: z.string().optional(),
   dueDate: z.string().optional(),
   currency: z.string().optional(),
@@ -150,6 +152,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
       .values({
         workspaceId,
         clientId: parsed.clientId,
+        projectId: parsed.projectId || null,
         invoiceNumber,
         issueDate: parsed.issueDate,
         dueDate: parsed.dueDate || null,

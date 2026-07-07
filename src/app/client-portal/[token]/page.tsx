@@ -81,6 +81,9 @@ export default async function ClientPortalPage({
       status: projects.status,
       clientVisible: projects.clientVisible,
       billingType: projects.billingType,
+      rate: projects.rate,
+      budget: projects.budget,
+      currency: projects.currency,
       startDate: projects.startDate,
       finishDate: projects.finishDate,
     })
@@ -385,7 +388,7 @@ export default async function ClientPortalPage({
       status: invoices.status,
       dueDate: invoices.dueDate,
       issueDate: invoices.issueDate,
-      projectId: sql<string | null>`null`,
+      projectId: invoices.projectId,
     })
     .from(invoices)
     .where(
@@ -395,6 +398,19 @@ export default async function ClientPortalPage({
       ),
     )
     .limit(50);
+
+  // Group invoices by project
+  const projectInvoicesMap = new Map<string, typeof clientInvoices>();
+  const unlinkedInvoices: typeof clientInvoices = [];
+  for (const inv of clientInvoices) {
+    if (inv.projectId) {
+      const existing = projectInvoicesMap.get(inv.projectId) || [];
+      existing.push(inv);
+      projectInvoicesMap.set(inv.projectId, existing);
+    } else {
+      unlinkedInvoices.push(inv);
+    }
+  }
 
   // Calculate financial totals
   let totalInvoiced = 0;
@@ -516,26 +532,51 @@ export default async function ClientPortalPage({
         </div>
 
         {/* Financial Summary */}
-        <div className="grid grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold">{clientInvoices.length}</p>
-              <p className="text-xs text-muted-foreground">Total Invoices</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold text-emerald-600">{formatIDR(totalPaid)}</p>
-              <p className="text-xs text-muted-foreground">Paid</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold text-amber-600">{formatIDR(totalOutstanding)}</p>
-              <p className="text-xs text-muted-foreground">Outstanding</p>
-            </CardContent>
-          </Card>
-        </div>
+        {(() => {
+          // Calculate per billing type
+          let byProjectInvoiced = 0;
+          let byHoursInvoiced = 0;
+          for (const proj of clientProjects) {
+            const projInvs = projectInvoicesMap.get(proj.id) || [];
+            const total = projInvs.reduce((s, inv) => s + (Number(inv.total) || 0), 0);
+            if (proj.billingType === "hours") byHoursInvoiced += total;
+            else byProjectInvoiced += total;
+          }
+          const unlinkedTotal = unlinkedInvoices.reduce((s, inv) => s + (Number(inv.total) || 0), 0);
+
+          return (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <p className="text-2xl font-bold text-emerald-600">{formatIDR(totalPaid)}</p>
+                  <p className="text-xs text-muted-foreground">Total Paid</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <p className="text-2xl font-bold text-amber-600">{formatIDR(totalOutstanding)}</p>
+                  <p className="text-xs text-muted-foreground">Outstanding</p>
+                </CardContent>
+              </Card>
+              {byProjectInvoiced > 0 && (
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <p className="text-2xl font-bold text-blue-600">{formatIDR(byProjectInvoiced)}</p>
+                    <p className="text-xs text-muted-foreground">By Project</p>
+                  </CardContent>
+                </Card>
+              )}
+              {byHoursInvoiced > 0 && (
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <p className="text-2xl font-bold text-purple-600">{formatIDR(byHoursInvoiced)}</p>
+                    <p className="text-xs text-muted-foreground">By Hours</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          );
+        })()}
 
         <Card>
           <CardHeader>
@@ -592,6 +633,16 @@ export default async function ClientPortalPage({
                           {project.startDate && `Start: ${new Date(project.startDate).toLocaleDateString()}`}
                           {project.startDate && project.finishDate && " · "}
                           {project.finishDate && `Finish: ${new Date(project.finishDate).toLocaleDateString()}`}
+                        </p>
+                      )}
+                      {isByHours && project.rate && (
+                        <p className="text-xs text-muted-foreground">
+                          Rate: {new Intl.NumberFormat("en-US", { style: "currency", currency: project.currency || "IDR" }).format(Number(project.rate))}/hr
+                        </p>
+                      )}
+                      {!isByHours && project.budget && (
+                        <p className="text-xs text-muted-foreground">
+                          Budget: {new Intl.NumberFormat("en-US", { style: "currency", currency: project.currency || "IDR" }).format(Number(project.budget))}
                         </p>
                       )}
                     </CardHeader>
@@ -763,6 +814,35 @@ export default async function ClientPortalPage({
                       )}
 
                       <Separator />
+
+                      {/* Project Invoices */}
+                      {projectInvoicesMap.has(project.id) && (
+                        <div>
+                          <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                            <FileText className="h-4 w-4" /> Invoices
+                          </h4>
+                          <div className="rounded-lg border divide-y">
+                            {(projectInvoicesMap.get(project.id) || []).map((inv) => {
+                              const statusColor = inv.status === "paid" ? "text-emerald-600" : inv.status === "overdue" ? "text-red-600" : "text-slate-700";
+                              const statusBg = inv.status === "paid" ? "bg-emerald-50 text-emerald-700" : inv.status === "overdue" ? "bg-red-50 text-red-700" : "bg-slate-100 text-slate-600";
+                              return (
+                                <div key={inv.id} className="flex items-center justify-between p-3 text-sm">
+                                  <div>
+                                    <span className="font-mono font-medium">{inv.invoiceNumber}</span>
+                                    <span className="text-muted-foreground ml-2">{inv.issueDate ? new Date(inv.issueDate).toLocaleDateString() : "-"}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`font-mono font-medium ${statusColor}`}>
+                                      {new Intl.NumberFormat("en-US", { style: "currency", currency: inv.currency }).format(Number(inv.total))}
+                                    </span>
+                                    <Badge className={`text-[10px] ${statusBg}`} variant="outline">{inv.status}</Badge>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
 
                       {/* Comments */}
                       <div>

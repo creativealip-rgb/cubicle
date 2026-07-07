@@ -22,6 +22,13 @@ interface ClientOption {
   companyName: string | null;
 }
 
+interface ProjectOption {
+  id: string;
+  name: string;
+  clientId: string;
+  billingType: string;
+}
+
 interface TemplateOption {
   id: string;
   name: string;
@@ -36,6 +43,7 @@ interface InvoiceFormProps {
   defaultValues?: {
     id?: string;
     clientId?: string;
+    projectId?: string;
     issueDate?: string;
     dueDate?: string;
     currency?: string;
@@ -43,15 +51,17 @@ interface InvoiceFormProps {
     terms?: string;
   };
   clients: ClientOption[];
+  projects?: ProjectOption[];
   templates?: TemplateOption[];
   onSuccess?: () => void;
 }
 
-export function InvoiceForm({ mode, defaultValues, clients, templates, onSuccess }: InvoiceFormProps) {
+export function InvoiceForm({ mode, defaultValues, clients, projects, templates, onSuccess }: InvoiceFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     clientId: defaultValues?.clientId ?? "",
+    projectId: defaultValues?.projectId ?? "",
     issueDate: defaultValues?.issueDate ?? new Date().toISOString().split("T")[0],
     dueDate: defaultValues?.dueDate ?? "",
     currency: defaultValues?.currency ?? "IDR",
@@ -59,12 +69,16 @@ export function InvoiceForm({ mode, defaultValues, clients, templates, onSuccess
     terms: defaultValues?.terms ?? "",
   });
 
+  // Filter projects by selected client
+  const clientProjects = projects?.filter(p => p.clientId === form.clientId) ?? [];
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
       const data = {
         clientId: form.clientId,
+        projectId: form.projectId || undefined,
         issueDate: form.issueDate,
         dueDate: form.dueDate || undefined,
         currency: form.currency,
@@ -147,6 +161,28 @@ export function InvoiceForm({ mode, defaultValues, clients, templates, onSuccess
           </SelectContent>
         </Select>
       </div>
+
+      {clientProjects.length > 0 && (
+        <div className="space-y-2">
+          <Label htmlFor="projectId">Proyek (opsional)</Label>
+          <Select
+            value={form.projectId}
+            onValueChange={(v) => set("projectId", v === "_none" ? "" : v)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Tidak terikat proyek" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="_none">Tidak terikat proyek</SelectItem>
+              {clientProjects.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name} ({p.billingType === "hours" ? "By Hours" : "By Project"})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { clients, invoiceTemplates } from "@/db/schema";
+import { clients, invoiceTemplates, projects } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,17 @@ export default async function NewInvoicePage() {
     .where(eq(invoiceTemplates.workspaceId, workspaceId))
     .orderBy(asc(invoiceTemplates.name));
 
+  const projectOptions = await db
+    .select({
+      id: projects.id,
+      name: projects.name,
+      clientId: projects.clientId,
+      billingType: projects.billingType,
+    })
+    .from(projects)
+    .where(eq(projects.workspaceId, workspaceId))
+    .orderBy(asc(projects.name));
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-center gap-3">
@@ -75,7 +86,7 @@ export default async function NewInvoicePage() {
               </Link>
             </div>
           ) : (
-            <InvoiceForm mode="create" clients={clientOptions} templates={templateOptions} />
+            <InvoiceForm mode="create" clients={clientOptions} projects={projectOptions} templates={templateOptions} />
           )}
         </CardContent>
       </Card>
