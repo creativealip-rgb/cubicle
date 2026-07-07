@@ -58,9 +58,9 @@ export default async function DashboardPage() {
     sql`SELECT
       (SELECT count(*)::int FROM clients WHERE workspace_id = ${workspaceId} AND status = 'active') as active_clients,
       (SELECT count(*)::int FROM projects WHERE workspace_id = ${workspaceId} AND status = 'active') as active_projects,
-      (SELECT count(*)::int FROM tasks WHERE workspace_id = ${workspaceId} AND status != 'done') as due_tasks,
+      (SELECT count(*)::int FROM tasks WHERE workspace_id = ${workspaceId} AND status != 'done' AND due_date IS NOT NULL AND due_date <= current_date) as due_tasks,
       (SELECT count(*)::int FROM tasks WHERE workspace_id = ${workspaceId} AND status != 'done' AND due_date IS NOT NULL AND due_date < current_date) as overdue_tasks,
-      (SELECT count(*)::int FROM invoices WHERE workspace_id = ${workspaceId} AND status IN ('sent','viewed','overdue')) as unpaid_invoices
+      (SELECT count(*)::int FROM invoices WHERE workspace_id = ${workspaceId} AND status IN ('sent','viewed','overdue') AND due_date IS NOT NULL AND due_date <= current_date) as due_invoices
     `,
   );
   const counts = result.rows[0] as Record<string, number>;
@@ -68,14 +68,14 @@ export default async function DashboardPage() {
   const activeProjects = counts.active_projects || 0;
   const dueTasks = counts.due_tasks || 0;
   const overdueTasks = counts.overdue_tasks || 0;
-  const unpaidCount = counts.unpaid_invoices || 0;
+  const dueInvoices = counts.due_invoices || 0;
 
   // Attention Needed — counts surfaced as actionable summary
   const todayStr = new Date().toISOString().split("T")[0]!;
   const attention = await db
     .select({
       overdueInvoices: sql<number>`(SELECT count(*)::int FROM invoices WHERE workspace_id = ${workspaceId} AND status = 'overdue')`,
-      tasksDueToday: sql<number>`(SELECT count(*)::int FROM tasks WHERE workspace_id = ${workspaceId} AND status != 'done' AND due_date = ${todayStr})`,
+      tasksDueToday: sql<number>`(SELECT count(*)::int FROM tasks WHERE workspace_id = ${workspaceId} AND status != 'done' AND due_date <= ${todayStr})`,
       contractsAwaiting: sql<number>`(SELECT count(*)::int FROM contracts WHERE workspace_id = ${workspaceId} AND status IN ('draft','sent','viewed'))`,
       unreadNotifications: sql<number>`(SELECT count(*)::int FROM notifications WHERE workspace_id = ${workspaceId} AND user_id = ${session?.user?.id ?? ""} AND read_at IS NULL)`,
     })
@@ -310,7 +310,7 @@ export default async function DashboardPage() {
     },
     {
       label: t("Invoice Jatuh Tempo", "Due Invoices"),
-      value: String(unpaidCount),
+      value: String(dueInvoices),
       change: `${att.overdueInvoices} ${t("terlambat", "overdue")}`,
       icon: Receipt,
       iconBg: "bg-rose-100 text-rose-600",
