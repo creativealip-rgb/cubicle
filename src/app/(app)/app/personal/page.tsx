@@ -18,6 +18,12 @@ function formatDate(value: Date | string) {
   return new Date(value).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
 }
 
+function formatDateTimeLocal(value: Date | string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+
 export default async function PersonalPage({
   searchParams,
 }: {
@@ -31,6 +37,11 @@ export default async function PersonalPage({
     await createPersonalNote({
       title: String(formData.get("title") ?? ""),
       body: String(formData.get("body") ?? "") || undefined,
+      dueDate: String(formData.get("dueDate") ?? "") || undefined,
+      recurrenceRule: String(formData.get("recurrenceRule") ?? "none") || "none",
+      notify7d: formData.get("notify7d") === "on",
+      notify3d: formData.get("notify3d") === "on",
+      notify1d: formData.get("notify1d") === "on",
       pinned: formData.get("pinned") === "on",
     });
     redirect("/app/personal");
@@ -41,6 +52,11 @@ export default async function PersonalPage({
     await updatePersonalNote(String(formData.get("noteId") ?? ""), {
       title: String(formData.get("title") ?? ""),
       body: String(formData.get("body") ?? "") || undefined,
+      dueDate: String(formData.get("dueDate") ?? "") || undefined,
+      recurrenceRule: String(formData.get("recurrenceRule") ?? "none") || "none",
+      notify7d: formData.get("notify7d") === "on",
+      notify3d: formData.get("notify3d") === "on",
+      notify1d: formData.get("notify1d") === "on",
       pinned: formData.get("pinned") === "on",
     });
     redirect("/app/personal");
@@ -98,6 +114,19 @@ export default async function PersonalPage({
                 <label htmlFor="body" className="text-sm font-medium">Body</label>
                 <Textarea id="body" name="body" rows={7} placeholder="Catatan, ide, reminder personal..." />
               </div>
+              <div className="space-y-2">
+                <label htmlFor="dueDate" className="text-sm font-medium">Due date</label>
+                <Input id="dueDate" name="dueDate" type="datetime-local" />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="recurrenceRule" className="text-sm font-medium">Recurrence</label>
+                <Input id="recurrenceRule" name="recurrenceRule" defaultValue="none" placeholder="none, daily, weekly, monthly, yearly, custom rule" />
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <label className="flex items-center gap-1"><input type="checkbox" name="notify7d" /> 7d</label>
+                <label className="flex items-center gap-1"><input type="checkbox" name="notify3d" /> 3d</label>
+                <label className="flex items-center gap-1"><input type="checkbox" name="notify1d" /> 1d</label>
+              </div>
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" name="pinned" /> Pin note
               </label>
@@ -126,6 +155,16 @@ export default async function PersonalPage({
                       {note.status === "done" && <Badge>Done</Badge>}
                     </div>
                     <p className="text-xs text-muted-foreground">Updated {formatDate(note.updatedAt)}</p>
+                    {note.dueDate && (
+                      <p className="text-xs text-muted-foreground">
+                        Due {formatDate(note.dueDate)} · Repeat {note.recurrenceRule || "none"}
+                      </p>
+                    )}
+                    {(note.notify7d || note.notify3d || note.notify1d) && (
+                      <p className="text-xs text-muted-foreground">
+                        Notify {[note.notify7d && "7d", note.notify3d && "3d", note.notify1d && "1d"].filter(Boolean).join(" / ")} before
+                      </p>
+                    )}
                   </div>
                   <div className="flex flex-wrap justify-end gap-1">
                     <form action={togglePinned}>
@@ -156,6 +195,13 @@ export default async function PersonalPage({
                     <input type="hidden" name="noteId" value={note.id} />
                     <Input name="title" defaultValue={note.title} required />
                     <Textarea name="body" defaultValue={note.body ?? ""} rows={4} />
+                    <Input name="dueDate" type="datetime-local" defaultValue={formatDateTimeLocal(note.dueDate)} />
+                    <Input name="recurrenceRule" defaultValue={note.recurrenceRule || "none"} placeholder="none, daily, weekly, monthly, yearly, custom rule" />
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <label className="flex items-center gap-1"><input type="checkbox" name="notify7d" defaultChecked={note.notify7d} /> 7d</label>
+                      <label className="flex items-center gap-1"><input type="checkbox" name="notify3d" defaultChecked={note.notify3d} /> 3d</label>
+                      <label className="flex items-center gap-1"><input type="checkbox" name="notify1d" defaultChecked={note.notify1d} /> 1d</label>
+                    </div>
                     <label className="flex items-center gap-2 text-sm">
                       <input type="checkbox" name="pinned" defaultChecked={note.pinned} /> Pin note
                     </label>

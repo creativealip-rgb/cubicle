@@ -7,20 +7,32 @@ import { z } from "zod";
 import { db } from "@/db";
 import { personalNotes } from "@/db/schema";
 import { auth } from "@/lib/auth";
-import { assertWorkspaceMember, requireUser } from "@/lib/access";
+import { assertWorkspaceOwner, requireUser } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 
 const noteSchema = z.object({
   title: z.string().min(1).max(160),
   body: z.string().max(20000).optional(),
+  dueDate: z.string().optional(),
+  recurrenceRule: z.string().max(120).optional(),
+  notify7d: z.boolean().optional(),
+  notify3d: z.boolean().optional(),
+  notify1d: z.boolean().optional(),
   pinned: z.boolean().optional(),
 });
+
+function parseDueDate(value?: string) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) throw new Error("Invalid due date");
+  return date;
+}
 
 async function getContext() {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
-  await assertWorkspaceMember(db, user.id, workspaceId);
+  await assertWorkspaceOwner(db, user.id, workspaceId);
   return { user, workspaceId };
 }
 
@@ -48,6 +60,11 @@ export async function createPersonalNote(input: z.infer<typeof noteSchema>) {
       userId: user.id,
       title: parsed.title,
       body: parsed.body || null,
+      dueDate: parseDueDate(parsed.dueDate),
+      recurrenceRule: parsed.recurrenceRule || "none",
+      notify7d: parsed.notify7d ?? false,
+      notify3d: parsed.notify3d ?? false,
+      notify1d: parsed.notify1d ?? false,
       pinned: parsed.pinned ?? false,
     })
     .returning();
@@ -63,6 +80,11 @@ export async function updatePersonalNote(noteId: string, input: z.infer<typeof n
     .set({
       title: parsed.title,
       body: parsed.body || null,
+      dueDate: parseDueDate(parsed.dueDate),
+      recurrenceRule: parsed.recurrenceRule || "none",
+      notify7d: parsed.notify7d ?? false,
+      notify3d: parsed.notify3d ?? false,
+      notify1d: parsed.notify1d ?? false,
       pinned: parsed.pinned ?? false,
       updatedAt: new Date(),
     })
