@@ -20,6 +20,9 @@ const projectSchema = z.object({
   clientId: z.string().uuid("Valid client required"),
   status: z.enum(["draft", "active", "on_hold", "completed", "cancelled"]).default("active"),
   billingType: z.enum(["project", "hours"]).default("project"),
+  currency: z.string().default("IDR"),
+  rate: z.number().optional(),
+  budget: z.number().optional(),
   startDate: z.string().optional(),
   finishDate: z.string().optional(),
   dueDate: z.string().optional(),
@@ -49,6 +52,9 @@ export async function createProject(input: z.infer<typeof projectSchema>) {
     description: parsed.description || null,
     status: parsed.status,
     billingType: parsed.billingType,
+    currency: parsed.currency,
+    rate: parsed.rate ? String(parsed.rate) : null,
+    budget: parsed.budget ? String(parsed.budget) : null,
     startDate: parsed.startDate || null,
     finishDate: parsed.finishDate || null,
     dueDate: parsed.dueDate || null,
@@ -75,6 +81,9 @@ export async function updateProject(projectId: string, input: Partial<z.infer<ty
   if (parsed.clientId !== undefined) updateData.clientId = parsed.clientId;
   if (parsed.status !== undefined) updateData.status = parsed.status;
   if (parsed.billingType !== undefined) updateData.billingType = parsed.billingType;
+  if (parsed.currency !== undefined) updateData.currency = parsed.currency;
+  if (parsed.rate !== undefined) updateData.rate = parsed.rate ? String(parsed.rate) : null;
+  if (parsed.budget !== undefined) updateData.budget = parsed.budget ? String(parsed.budget) : null;
   if (parsed.startDate !== undefined) updateData.startDate = parsed.startDate || null;
   if (parsed.finishDate !== undefined) updateData.finishDate = parsed.finishDate || null;
   if (parsed.dueDate !== undefined) updateData.dueDate = parsed.dueDate;

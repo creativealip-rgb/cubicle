@@ -50,6 +50,7 @@ export default async function NewInvoicePage() {
       name: projects.name,
       clientId: projects.clientId,
       billingType: projects.billingType,
+      currency: projects.currency,
     })
     .from(projects)
     .where(eq(projects.workspaceId, workspaceId))

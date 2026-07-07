@@ -27,6 +27,7 @@ interface ProjectOption {
   name: string;
   clientId: string;
   billingType: string;
+  currency: string;
 }
 
 interface TemplateOption {
@@ -167,7 +168,16 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
           <Label htmlFor="projectId">Proyek (opsional)</Label>
           <Select
             value={form.projectId}
-            onValueChange={(v) => set("projectId", v === "_none" ? "" : v)}
+            onValueChange={(v) => {
+              const pid = v === "_none" ? "" : v;
+              const proj = projects?.find(p => p.id === pid);
+              setForm((prev) => ({
+                ...prev,
+                projectId: pid,
+                // Auto-inherit currency from project
+                ...(proj ? { currency: proj.currency } : {}),
+              }));
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Tidak terikat proyek" />
@@ -176,7 +186,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
               <SelectItem value="_none">Tidak terikat proyek</SelectItem>
               {clientProjects.map((p) => (
                 <SelectItem key={p.id} value={p.id}>
-                  {p.name} ({p.billingType === "hours" ? "By Hours" : "By Project"})
+                  {p.name} ({p.billingType === "hours" ? "By Hours" : "By Project"}) — {p.currency}
                 </SelectItem>
               ))}
             </SelectContent>

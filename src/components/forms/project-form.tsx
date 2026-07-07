@@ -20,6 +20,9 @@ interface ProjectFormProps {
     clientId?: string;
     status?: string;
     billingType?: string;
+    currency?: string;
+    rate?: string;
+    budget?: string;
     startDate?: string;
     finishDate?: string;
     dueDate?: string;
@@ -37,6 +40,9 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
     clientId: defaultValues?.clientId ?? clientId ?? "",
     status: defaultValues?.status ?? "active",
     billingType: defaultValues?.billingType ?? "project",
+    currency: defaultValues?.currency ?? "IDR",
+    rate: defaultValues?.rate ?? "",
+    budget: defaultValues?.budget ?? "",
     startDate: defaultValues?.startDate ?? "",
     finishDate: defaultValues?.finishDate ?? "",
     dueDate: defaultValues?.dueDate ?? "",
@@ -53,6 +59,9 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
         clientId: form.clientId,
         status: form.status as "draft" | "active" | "on_hold" | "completed" | "cancelled",
         billingType: form.billingType as "project" | "hours",
+        currency: form.currency,
+        rate: form.rate ? Number(form.rate) : undefined,
+        budget: form.budget ? Number(form.budget) : undefined,
         startDate: form.startDate || undefined,
         finishDate: form.finishDate || undefined,
         dueDate: form.dueDate || undefined,
@@ -118,6 +127,35 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
             <SelectContent>
               <SelectItem value="project">By Project</SelectItem>
               <SelectItem value="hours">By Hours</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      {form.billingType === "hours" && (
+        <div className="space-y-2">
+          <Label htmlFor="rate">Rate per Jam ({form.currency})</Label>
+          <Input id="rate" type="number" step="0.01" min="0" value={form.rate} onChange={(e) => setForm((p) => ({ ...p, rate: e.target.value }))} placeholder="13" />
+        </div>
+      )}
+      {form.billingType === "project" && (
+        <div className="space-y-2">
+          <Label htmlFor="budget">Budget ({form.currency})</Label>
+          <Input id="budget" type="number" step="0.01" min="0" value={form.budget} onChange={(e) => setForm((p) => ({ ...p, budget: e.target.value }))} placeholder="25000000" />
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Mata Uang *</Label>
+          <Select value={form.currency} onValueChange={(v) => setForm((p) => ({ ...p, currency: v }))} required>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="IDR">IDR - Rupiah</SelectItem>
+              <SelectItem value="USD">USD - Dollar</SelectItem>
+              <SelectItem value="EUR">EUR - Euro</SelectItem>
+              <SelectItem value="GBP">GBP - Pound</SelectItem>
+              <SelectItem value="SGD">SGD - Dollar SG</SelectItem>
             </SelectContent>
           </Select>
         </div>
