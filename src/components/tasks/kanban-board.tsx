@@ -160,6 +160,7 @@ function KanbanColumn({ id, children }: { id: string; children: ReactNode }) {
 export function KanbanBoard({ projectId, tasks: initialTasks, members = [] }: KanbanBoardProps) {
   const [taskMap, setTaskMap] = useState<Record<string, Task[]>>({});
   const [_activeId, setActiveId] = useState<string | null>(null);
+  const [openCreateColumn, setOpenCreateColumn] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -271,7 +272,7 @@ export function KanbanBoard({ projectId, tasks: initialTasks, members = [] }: Ka
                     {colTasks.length}
                   </Badge>
                 </div>
-                <Dialog>
+                <Dialog open={openCreateColumn === col.id} onOpenChange={(open) => setOpenCreateColumn(open ? col.id : null)}>
                   <DialogTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-6 w-6">
                       <Plus className="h-3 w-3" />
@@ -286,6 +287,7 @@ export function KanbanBoard({ projectId, tasks: initialTasks, members = [] }: Ka
                       projectId={projectId}
                       defaultValues={{ status: col.id }}
                       members={members}
+                      onSuccess={() => setOpenCreateColumn(null)}
                     />
                   </DialogContent>
                 </Dialog>

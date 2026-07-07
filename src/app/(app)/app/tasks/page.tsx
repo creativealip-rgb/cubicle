@@ -7,14 +7,12 @@ import { eq, and, desc, sql } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TaskForm } from "@/components/forms/task-form";
 import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
+import { TaskCreateDialog } from "@/components/tasks/task-create-dialog";
 import { EmptyState } from "@/components/empty-state";
 import {
-  Plus,
   Filter,
   Clock,
   AlertTriangle,
@@ -106,19 +104,7 @@ export default async function TasksPage({
             Pantau pekerjaan di semua project
           </p>
         </div>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button size="sm" className="gap-1">
-              <Plus className="h-4 w-4" /> Task Baru
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Task Baru</DialogTitle>
-            </DialogHeader>
-            <TaskForm mode="create" projectId={params.projectId} members={memberList} />
-          </DialogContent>
-        </Dialog>
+        <TaskCreateDialog projectId={params.projectId} members={memberList} />
       </div>
 
       {/* Filters */}
