@@ -74,13 +74,20 @@ export default async function InvoicesPage() {
             Buat dan kelola invoice untuk klienmu
           </p>
         </div>
-        {canWrite && (
-          <Link href="/app/invoices/new">
-            <Button className="gap-2 w-full sm:w-auto">
-              <Plus className="h-4 w-4" /> Invoice Baru
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Link href="/app/invoices/templates">
+            <Button variant="outline" className="gap-2">
+              <FileText className="h-4 w-4" /> Templates
             </Button>
           </Link>
-        )}
+          {canWrite && (
+            <Link href="/app/invoices/new">
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" /> Invoice Baru
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
 
       {invoiceList.length === 0 ? (

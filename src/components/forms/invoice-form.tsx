@@ -22,6 +22,15 @@ interface ClientOption {
   companyName: string | null;
 }
 
+interface TemplateOption {
+  id: string;
+  name: string;
+  defaultCurrency: string | null;
+  defaultTaxRate: string | null;
+  notes: string | null;
+  terms: string | null;
+}
+
 interface InvoiceFormProps {
   mode: "create" | "edit";
   defaultValues?: {
@@ -34,10 +43,11 @@ interface InvoiceFormProps {
     terms?: string;
   };
   clients: ClientOption[];
+  templates?: TemplateOption[];
   onSuccess?: () => void;
 }
 
-export function InvoiceForm({ mode, defaultValues, clients, onSuccess }: InvoiceFormProps) {
+export function InvoiceForm({ mode, defaultValues, clients, templates, onSuccess }: InvoiceFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -85,8 +95,38 @@ export function InvoiceForm({ mode, defaultValues, clients, onSuccess }: Invoice
     setForm((prev) => ({ ...prev, [k]: v }));
   }
 
+  function applyTemplate(templateId: string) {
+    const tpl = templates?.find((t) => t.id === templateId);
+    if (!tpl) return;
+    setForm((prev) => ({
+      ...prev,
+      currency: tpl.defaultCurrency || prev.currency,
+      notes: tpl.notes || prev.notes,
+      terms: tpl.terms || prev.terms,
+    }));
+    toast.success(`Template "${tpl.name}" diterapkan`);
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {templates && templates.length > 0 && mode === "create" && (
+        <div className="space-y-2">
+          <Label>Apply Template (opsional)</Label>
+          <Select onValueChange={applyTemplate}>
+            <SelectTrigger>
+              <SelectValue placeholder="Pilih template..." />
+            </SelectTrigger>
+            <SelectContent>
+              {templates.map((t) => (
+                <SelectItem key={t.id} value={t.id}>
+                  {t.name} ({t.defaultCurrency})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="clientId">Klien *</Label>
         <Select
