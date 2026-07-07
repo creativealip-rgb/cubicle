@@ -9,6 +9,8 @@ import { TimerWidget } from "@/components/time/timer-widget";
 import { Timesheet } from "@/components/time/timesheet";
 import { ManualEntryForm } from "@/components/time/manual-entry-form";
 import { CsvExportButton } from "@/components/time/csv-export-button";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -112,6 +114,12 @@ export default async function TimePage() {
             />
           )}
           <CsvExportButton workspaceId={workspaceId} />
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/api/time/export/pdf?dashboard=1&detailed=0" target="_blank">PDF Dashboard</Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/api/time/export/pdf?dashboard=1&detailed=1" target="_blank">PDF Full</Link>
+          </Button>
         </div>
       </div>
 
