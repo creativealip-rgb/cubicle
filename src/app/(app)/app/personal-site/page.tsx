@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { SectionEditor, type SiteSection } from "@/components/site/section-editor";
+import { SectionEditorForm } from "@/components/site/section-editor-form";
+import type { SiteSection } from "@/components/site/section-editor";
 
 const KEY = "[site]";
 
@@ -182,7 +183,7 @@ export default async function PersonalSiteBuilderPage() {
                 <div className="space-y-2"><label className="text-sm font-medium">Accent color</label><Input name="accent" defaultValue={site.accent} placeholder="#7c3aed" /></div>
               </div>
               <div className="space-y-2">
-                <SectionEditor sections={site.sections} onChange={() => {}} />
+                <SectionEditorForm initialSections={site.sections} />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Links</label>
