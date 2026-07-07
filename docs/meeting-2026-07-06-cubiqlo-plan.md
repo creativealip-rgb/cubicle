@@ -42,7 +42,7 @@ Dokumen ini hanya fokus hasil meeting untuk Cubiqlo, bukan Whaledive.
 | Live deploy | DONE | Latest deployed commit: `2babd61 fix: close forms before refresh`. |
 | Formulir di Calendar | DONE | Button "Buat formulir" added to Calendar page header. |
 | Billing/Support di avatar | DONE | Both links present in user avatar dropdown menu. |
-| PDF language | PARTIAL | Client PDF uses `cubiqlo_lang` cookie; time report PDF hardcoded English labels. |
+| PDF language | DONE | Client PDF and time report PDF both use `cubiqlo_lang` cookie for i18n labels. |
 
 ## Priority overview
 
