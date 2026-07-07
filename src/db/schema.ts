@@ -783,6 +783,20 @@ export const supportTickets = pgTable("support_tickets", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const invoiceTemplates = pgTable("invoice_templates", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  terms: text("terms"),
+  notes: text("notes"),
+  defaultCurrency: text("default_currency").notNull().default("IDR"),
+  defaultTaxRate: numeric("default_tax_rate", { precision: 5, scale: 2 }).default("0"),
+  lineItems: text("line_items"), // JSON array of {description, quantity, unitPrice}
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const portalVisits = pgTable("portal_visits", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),

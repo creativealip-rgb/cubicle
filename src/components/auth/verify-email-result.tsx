@@ -37,7 +37,7 @@ export function VerifyEmailSuccess() {
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1 text-center">
         <Image
-          src="/icon-192.png"
+          src="/logo-icon.png"
           alt="Cubiqlo"
           width={40}
           height={40}
@@ -68,7 +68,7 @@ export function VerifyEmailError() {
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1 text-center">
         <Image
-          src="/icon-192.png"
+          src="/logo-icon.png"
           alt="Cubiqlo"
           width={40}
           height={40}

@@ -203,13 +203,12 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
       >
         {!collapsed && (
           <Link href="/app/dashboard" className="flex items-center gap-2 font-semibold text-sidebar-foreground">
-            <Image src="/icon-192.png" alt="Cubiqlo" width={28} height={28} className="h-7 w-7 rounded-md object-cover" />
-            <span className="text-sm">Cubiqlo</span>
+            <Image src="/logo-full.png" alt="Cubiqlo" width={120} height={28} className="h-7 w-auto object-contain" />
           </Link>
         )}
         {collapsed && (
           <Link href="/app/dashboard" className="hidden md:flex">
-            <Image src="/icon-192.png" alt="Cubiqlo" width={28} height={28} className="h-7 w-7 rounded-md object-cover" />
+            <Image src="/logo-icon.png" alt="Cubiqlo" width={28} height={28} className="h-7 w-7 rounded-md object-cover" />
           </Link>
         )}
         {/* Mobile close button */}
