@@ -11,9 +11,22 @@ import {
   portalRequests,
   activityLogs,
   timeEntries,
+  users,
 } from "@/db/schema";
 import { eq, and, sql, desc, inArray } from "drizzle-orm";
 import { getClientPortalAccess, logPortalAccess } from "@/lib/actions/portal";
+
+function formatIDR(amount: number) {
+  if (amount >= 1_000_000) return `Rp ${(amount / 1_000_000).toFixed(1)}M`;
+  if (amount >= 1_000) return `Rp ${(amount / 1_000).toFixed(0)}K`;
+  return `Rp ${amount.toLocaleString("id-ID")}`;
+}
+
+function formatMinutes(mins: number) {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -362,6 +375,81 @@ export default async function ClientPortalPage({
     });
   }
 
+  // Financial summary — invoices for this client
+  const clientInvoices = await db
+    .select({
+      id: invoices.id,
+      invoiceNumber: invoices.invoiceNumber,
+      total: invoices.total,
+      currency: invoices.currency,
+      status: invoices.status,
+      dueDate: invoices.dueDate,
+      issueDate: invoices.issueDate,
+      projectId: sql<string | null>`null`,
+    })
+    .from(invoices)
+    .where(
+      and(
+        eq(invoices.workspaceId, client.workspaceId),
+        eq(invoices.clientId, client.id),
+      ),
+    )
+    .limit(50);
+
+  // Calculate financial totals
+  let totalInvoiced = 0;
+  let totalPaid = 0;
+  let totalOutstanding = 0;
+  for (const inv of clientInvoices) {
+    const amt = Number(inv.total) || 0;
+    totalInvoiced += amt;
+    if (inv.status === "paid") totalPaid += amt;
+    else if (inv.status !== "cancelled") totalOutstanding += amt;
+  }
+
+  // Fetch time entry details for by-hours projects (individual entries)
+  const byHoursEntriesMap = new Map<string, Array<{
+    id: string;
+    description: string | null;
+    durationMinutes: number;
+    startTime: Date | null;
+    endTime: Date | null;
+    billable: boolean;
+    tags: string | null;
+    userName: string | null;
+  }>>();
+
+  for (const projectId of byHoursProjectIds) {
+    const entries = await db
+      .select({
+        id: timeEntries.id,
+        description: timeEntries.description,
+        durationMinutes: timeEntries.durationMinutes,
+        manualMinutes: timeEntries.manualMinutes,
+        startTime: timeEntries.startTime,
+        endTime: timeEntries.endTime,
+        billable: timeEntries.billable,
+        tags: timeEntries.tags,
+        userName: users.name,
+      })
+      .from(timeEntries)
+      .leftJoin(users, eq(users.id, timeEntries.userId))
+      .where(eq(timeEntries.projectId, projectId))
+      .orderBy(desc(timeEntries.startTime))
+      .limit(20);
+
+    byHoursEntriesMap.set(projectId, entries.map(e => ({
+      id: e.id,
+      description: e.description,
+      durationMinutes: e.manualMinutes || e.durationMinutes || 0,
+      startTime: e.startTime,
+      endTime: e.endTime,
+      billable: e.billable ?? true,
+      tags: e.tags,
+      userName: e.userName,
+    })));
+  }
+
   const clientPortalRequests = await db
     .select({
       id: portalRequests.id,
@@ -425,6 +513,28 @@ export default async function ClientPortalPage({
           <p className="text-sm text-muted-foreground mt-1">
             Client Portal — Secured Access
           </p>
+        </div>
+
+        {/* Financial Summary */}
+        <div className="grid grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold">{clientInvoices.length}</p>
+              <p className="text-xs text-muted-foreground">Total Invoices</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-emerald-600">{formatIDR(totalPaid)}</p>
+              <p className="text-xs text-muted-foreground">Paid</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-amber-600">{formatIDR(totalOutstanding)}</p>
+              <p className="text-xs text-muted-foreground">Outstanding</p>
+            </CardContent>
+          </Card>
         </div>
 
         <Card>
@@ -495,17 +605,51 @@ export default async function ClientPortalPage({
                         }}
                       />
 
-                      {/* Hours summary for by-hours projects */}
+                      {/* By Project: progress bar + task summary */}
+                      {!isByHours && projectTasks.length > 0 && (
+                        <div className="rounded-lg border bg-muted/30 p-4">
+                          <h4 className="text-sm font-semibold mb-3">Progress</h4>
+                          {(() => {
+                            const done = projectTasks.filter(t => t.status === "done").length;
+                            const total = projectTasks.length;
+                            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                            return (
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between text-sm">
+                                  <span>{done} of {total} tasks completed</span>
+                                  <span className="font-semibold">{pct}%</span>
+                                </div>
+                                <div className="h-2.5 w-full rounded-full bg-slate-200">
+                                  <div
+                                    className="h-full rounded-full bg-emerald-500 transition-all"
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                                <div className="flex gap-3 text-xs text-muted-foreground mt-1">
+                                  {projectTasks.filter(t => t.status === "in_progress").length > 0 && (
+                                    <span>🔵 {projectTasks.filter(t => t.status === "in_progress").length} in progress</span>
+                                  )}
+                                  {projectTasks.filter(t => t.status === "todo").length > 0 && (
+                                    <span>⚪ {projectTasks.filter(t => t.status === "todo").length} pending</span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      )}
+
+                      {/* By Hours: enhanced summary + recent entries */}
                       {isByHours && hoursSummary && (
                         <div className="rounded-lg border bg-muted/30 p-4">
                           <h4 className="text-sm font-semibold mb-3">Hours Summary</h4>
                           <div className="grid grid-cols-3 gap-4 text-center">
                             <div>
-                              <p className="text-2xl font-bold">{Math.floor(hoursSummary.totalMinutes / 60)}h {hoursSummary.totalMinutes % 60}m</p>
+                              <p className="text-2xl font-bold">{formatMinutes(hoursSummary.totalMinutes)}</p>
                               <p className="text-xs text-muted-foreground">Total Tracked</p>
                             </div>
                             <div>
-                              <p className="text-2xl font-bold">{Math.floor(hoursSummary.billableMinutes / 60)}h {hoursSummary.billableMinutes % 60}m</p>
+                              <p className="text-2xl font-bold text-emerald-600">{formatMinutes(hoursSummary.billableMinutes)}</p>
                               <p className="text-xs text-muted-foreground">Billable</p>
                             </div>
                             <div>
@@ -520,6 +664,32 @@ export default async function ClientPortalPage({
                               ))}
                             </div>
                           )}
+                        </div>
+                      )}
+
+                      {/* By Hours: recent time entries */}
+                      {isByHours && byHoursEntriesMap.has(project.id) && (
+                        <div>
+                          <h4 className="text-sm font-semibold mb-2">Recent Time Entries</h4>
+                          <div className="rounded-lg border divide-y">
+                            {(byHoursEntriesMap.get(project.id) || []).slice(0, 8).map((entry) => (
+                              <div key={entry.id} className="flex items-center justify-between gap-3 p-3 text-sm">
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate font-medium">{entry.description || "Untitled"}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {entry.startTime ? new Date(entry.startTime).toLocaleDateString() : "—"}
+                                    {entry.userName && ` · ${entry.userName}`}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span className="font-mono text-sm font-medium">{formatMinutes(entry.durationMinutes)}</span>
+                                  {entry.tags && entry.tags.split(",").slice(0, 2).map(tag => (
+                                    <Badge key={tag.trim()} variant="outline" className="text-[9px]">{tag.trim()}</Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
 
@@ -636,43 +806,44 @@ export default async function ClientPortalPage({
         {/* Invoices Section */}
         <section>
           <h2 className="text-xl font-semibold mb-4">
-            Shared Invoices ({activeSharedInvoices.length})
+            Invoices ({clientInvoices.length})
           </h2>
-          {activeSharedInvoices.length === 0 ? (
+          {clientInvoices.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
                 <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                <p>No invoices have been shared with you yet.</p>
+                <p>No invoices yet.</p>
               </CardContent>
             </Card>
           ) : (
             <div className="border rounded-lg divide-y">
-              {activeSharedInvoices.map((inv) => (
-                <div
-                  key={inv.id}
-                  className="flex items-center justify-between p-4"
-                >
-                  <div>
-                    <span className="font-mono text-sm font-medium">
-                      {inv.invoiceNumber}
-                    </span>
-                    <span className="text-sm text-muted-foreground ml-3">
-                      {inv.issueDate
-                        ? new Date(inv.issueDate).toLocaleDateString()
-                        : "-"}
-                    </span>
+              {clientInvoices.map((inv) => {
+                const statusColor = inv.status === "paid" ? "text-emerald-600" : inv.status === "overdue" ? "text-red-600" : "text-slate-700";
+                const statusBg = inv.status === "paid" ? "bg-emerald-50 text-emerald-700" : inv.status === "overdue" ? "bg-red-50 text-red-700" : inv.status === "sent" || inv.status === "viewed" ? "bg-blue-50 text-blue-700" : "bg-slate-100 text-slate-600";
+                return (
+                  <div key={inv.id} className="flex items-center justify-between p-4">
+                    <div>
+                      <span className="font-mono text-sm font-medium">{inv.invoiceNumber}</span>
+                      <span className="text-sm text-muted-foreground ml-3">
+                        {inv.issueDate ? new Date(inv.issueDate).toLocaleDateString() : "-"}
+                      </span>
+                      {inv.dueDate && (
+                        <span className="text-xs text-muted-foreground ml-2">
+                          · Due {new Date(inv.dueDate).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`font-mono text-sm font-medium ${statusColor}`}>
+                        {new Intl.NumberFormat("en-US", { style: "currency", currency: inv.currency }).format(Number(inv.total))}
+                      </span>
+                      <Badge className={`text-[10px] ${statusBg}`} variant="outline">
+                        {inv.status}
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono text-sm">
-                      {new Intl.NumberFormat("en-US", {
-                        style: "currency",
-                        currency: inv.currency,
-                      }).format(Number(inv.total))}
-                    </span>
-                    <Badge variant="outline">{inv.status}</Badge>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>
