@@ -21,6 +21,7 @@ import {
 interface TimeEntry {
   id: string;
   description: string | null;
+  tags: string | null;
   durationMinutes: number | null;
   billable: boolean;
   hourlyRate: string | number | null;
@@ -58,6 +59,7 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
   const [clientFilter, setClientFilter] = useState<string>("all");
   const [projectFilter, setProjectFilter] = useState<string>("all");
   const [billableFilter, setBillableFilter] = useState<string>("all");
+  const [tagFilter, setTagFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
@@ -67,6 +69,7 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
       if (projectFilter !== "all" && e.projectName !== projectFilter) return false;
       if (billableFilter === "billable" && !e.billable) return false;
       if (billableFilter === "non-billable" && e.billable) return false;
+      if (tagFilter !== "all" && !String(e.tags || "").split(",").map((tag) => tag.trim()).includes(tagFilter)) return false;
       if (dateFrom) {
         const entryDate = e.startTime ? new Date(e.startTime).toISOString().split("T")[0] : "";
         if (entryDate < dateFrom) return false;
@@ -77,7 +80,7 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
       }
       return true;
     });
-  }, [entries, clientFilter, projectFilter, billableFilter, dateFrom, dateTo]);
+  }, [entries, clientFilter, projectFilter, billableFilter, tagFilter, dateFrom, dateTo]);
 
   const totalMinutes = useMemo(
     () => filteredEntries.reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0),
@@ -128,6 +131,18 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
     return Array.from(set) as string[];
   }, [entries]);
 
+  const uniqueTags = useMemo(() => {
+    const set = new Set<string>();
+    entries.forEach((entry) => {
+      String(entry.tags || "")
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+        .forEach((tag) => set.add(tag));
+    });
+    return Array.from(set);
+  }, [entries]);
+
   return (
     <div className="space-y-4">
       {/* Summary */}
@@ -159,7 +174,7 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
             <Filter className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-medium">Filters</span>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <div className="space-y-1">
               <Label className="text-[10px]">Client</Label>
               <Select value={clientFilter} onValueChange={setClientFilter}>
@@ -198,6 +213,20 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
                   <SelectItem value="all">All</SelectItem>
                   <SelectItem value="billable">Billable</SelectItem>
                   <SelectItem value="non-billable">Non-billable</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">Tag</Label>
+              <Select value={tagFilter} onValueChange={setTagFilter}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Tags</SelectItem>
+                  {uniqueTags.map((tag) => (
+                    <SelectItem key={tag} value={tag}>{tag}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -266,6 +295,13 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
                           : "—"}
                       </span>
                     </div>
+                    {entry.tags && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {entry.tags.split(",").map((tag) => tag.trim()).filter(Boolean).map((tag) => (
+                          <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">

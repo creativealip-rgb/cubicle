@@ -29,6 +29,7 @@ export default async function TimePage() {
       projectId: timeEntries.projectId,
       taskId: timeEntries.taskId,
       description: timeEntries.description,
+      tags: timeEntries.tags,
       startTime: timeEntries.startTime,
       clientName: clients.name,
       projectName: projects.name,
@@ -52,6 +53,7 @@ export default async function TimePage() {
     .select({
       id: timeEntries.id,
       description: timeEntries.description,
+      tags: timeEntries.tags,
       durationMinutes: timeEntries.durationMinutes,
       billable: timeEntries.billable,
       hourlyRate: timeEntries.hourlyRate,
@@ -144,6 +146,7 @@ export default async function TimePage() {
         entries={entries.map((e) => ({
           id: e.id,
           description: e.description,
+          tags: e.tags,
           durationMinutes: e.durationMinutes,
           billable: e.billable ?? false,
           hourlyRate: e.hourlyRate,

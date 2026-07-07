@@ -20,6 +20,7 @@ const startTimerSchema = z.object({
   projectId: z.string().uuid(),
   taskId: z.string().uuid().optional(),
   description: z.string().optional(),
+  tags: z.string().optional(),
   hourlyRate: z.number().nonnegative().optional(),
 });
 
@@ -29,6 +30,7 @@ const createManualEntrySchema = z.object({
   projectId: z.string().uuid(),
   taskId: z.string().uuid().optional(),
   description: z.string().optional(),
+  tags: z.string().optional(),
   date: z.string().min(1),
   durationMinutes: z.number().positive(),
   billable: z.boolean().default(true),
@@ -37,6 +39,7 @@ const createManualEntrySchema = z.object({
 
 const updateTimeEntrySchema = z.object({
   description: z.string().optional(),
+  tags: z.string().nullable().optional(),
   clientId: z.string().uuid().optional(),
   projectId: z.string().uuid().optional(),
   taskId: z.string().uuid().nullable().optional(),
@@ -82,6 +85,7 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
     taskId: parsed.taskId || null,
     userId: user.id,
     description: parsed.description || null,
+    tags: parsed.tags || null,
     startTime: new Date(),
     endTime: null,
     manualMinutes: null,
@@ -144,6 +148,7 @@ export async function createManualEntry(input: z.infer<typeof createManualEntryS
     taskId: parsed.taskId || null,
     userId: user.id,
     description: parsed.description || null,
+    tags: parsed.tags || null,
     startTime: new Date(parsed.date),
     endTime: null,
     manualMinutes: parsed.durationMinutes,
@@ -174,6 +179,7 @@ export async function updateTimeEntry(entryId: string, input: z.infer<typeof upd
   const updateData: Record<string, unknown> = { updatedAt: new Date() };
 
   if (parsed.description !== undefined) updateData.description = parsed.description;
+  if (parsed.tags !== undefined) updateData.tags = parsed.tags;
   if (parsed.clientId !== undefined) updateData.clientId = parsed.clientId;
   if (parsed.projectId !== undefined) updateData.projectId = parsed.projectId;
   if (parsed.taskId !== undefined) updateData.taskId = parsed.taskId;

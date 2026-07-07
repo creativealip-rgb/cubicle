@@ -256,6 +256,7 @@ export const timeEntries = pgTable("time_entries", {
   taskId: uuid("task_id").references(() => tasks.id, { onDelete: "set null" }),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   description: text("description"),
+  tags: text("tags"),
   startTime: timestamp("start_time", { withTimezone: true }),
   endTime: timestamp("end_time", { withTimezone: true }),
   manualMinutes: integer("manual_minutes"),

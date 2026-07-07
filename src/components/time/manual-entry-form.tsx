@@ -42,6 +42,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
   const [projectId, setProjectId] = useState("");
   const [taskId, setTaskId] = useState("");
   const [description, setDescription] = useState("");
+  const [tags, setTags] = useState("Research");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [hours, setHours] = useState("0");
   const [minutes, setMinutes] = useState("0");
@@ -67,6 +68,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
         projectId,
         taskId: taskId || undefined,
         description: description || undefined,
+        tags: tags || undefined,
         date,
         durationMinutes,
         billable,
@@ -78,6 +80,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
       setProjectId("");
       setTaskId("");
       setDescription("");
+      setTags("Research");
       setDate(new Date().toISOString().split("T")[0]);
       setHours("0");
       setMinutes("0");
@@ -134,7 +137,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
 
           <div className="space-y-2">
             <Label className="text-xs">Task (optional)</Label>
-            <Select value={taskId} onValueChange={setTaskId} disabled={!projectId}>
+            <Select value={taskId || "__none__"} onValueChange={(value) => setTaskId(value === "__none__" ? "" : value)} disabled={!projectId}>
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Select task" />
               </SelectTrigger>
@@ -155,6 +158,17 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
               placeholder="What did you work on?"
               className="h-9"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs">Tags</Label>
+            <Input
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="Research, Cold Calling, Follow Up"
+              className="h-9"
+            />
+            <p className="text-[11px] text-muted-foreground">Pisahkan tag dengan koma. Default: Research, Cold Calling, Follow Up - Phone Calling, Follow Up - Text Message, Task Reporting.</p>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
