@@ -29,7 +29,7 @@ Latest verified commit: `3101df9 feat: publish personal landing pages`
 | App shell sidebar/topbar | `/app/*` | DONE | Grouped sidebar, workspace dropdown, global search entry, create button, timer, notifications. |
 | Auth login/signup/reset | `/login`, `/signup`, `/forgot-password`, `/reset-password` | DONE | Basic auth flow live. |
 | Workspace context | `active_workspace_id` cookie + workspace helpers | DONE | Auto-bootstrap and membership checks exist. |
-| Dashboard | `/app/dashboard` | DONE | Metrics, bilingual helper foundation, clean auth redirect. |
+| Dashboard | `/app/dashboard` | DONE | P0 meeting layout done: Reminder → Kerja → Keuangan, due cards accurate, compact activity, Jakarta-time greeting updates every 60s. |
 | Notifications | `/api/notifications` | PARTIAL | In-app notifications exist; deeper WA/push automation pending. |
 
 ## Client operations

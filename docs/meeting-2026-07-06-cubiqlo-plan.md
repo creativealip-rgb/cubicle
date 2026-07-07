@@ -28,19 +28,32 @@ Dokumen ini hanya fokus hasil meeting untuk Cubiqlo, bukan Whaledive.
 18. Jika public landing page tidak published / slug tidak ada: `404`.
 19. Notes personal hanya owner yang bisa akses.
 
+## Progress update — 2026-07-07
+
+| Area | Status | Notes |
+| --- | --- | --- |
+| P0 Dashboard cleanup/reorder | DONE | Dashboard order now `REMINDER` → `KERJA` → `KEUANGAN`. |
+| P0 Dashboard card cleanup | DONE | `Kesehatan Klien` removed. Invoice card restored as `Invoice Jatuh Tempo` per follow-up request. |
+| P0 Due-card accuracy | DONE | `Tugas Jatuh Tempo` and `Invoice Jatuh Tempo` now count due items only, not all active/unpaid records. |
+| P0 Dashboard activity length | DONE | `Aktivitas Terbaru` limited to latest 5 items with compact rows. |
+| P0 Greeting spacing | DONE | Header spacing refined; greeting/date no longer too tight. |
+| P0 Greeting realtime | DONE | Greeting moved to client component and updates every 60 seconds using Jakarta time. |
+| P0 Select/modal bug | DONE | Global Dialog/Select patch prevents select portal click from closing modal and losing form state. |
+| Live deploy | DONE | Latest deployed commit: `1d29758 fix: use Jakarta time for dashboard greeting`. |
+
 ## Priority overview
 
-| Priority | Area | Goal |
-| --- | --- | --- |
-| P0 | Bug modal select | Stop data loss saat user pilih opsi default/sama. |
-| P0 | Dashboard cleanup/reorder | Sesuaikan struktur dashboard hasil meeting. |
-| P1 | Client PDF export | Detail client + bulk combined PDF. |
-| P1 | Project type + dates | Tambah `by project/by hours`, start date, finish date. |
-| P1 | Time tags + reports | Tracking lebih jelas sampai level tag + PDF report. |
-| P1 | Sidebar/menu restructure | Kalender/Formulir, Billing/Profile, Support/Profile, Email hidden, Nodes removed. |
-| P2 | Personal Notes recurrence | Notes jadi personal reminder dengan notifikasi. |
-| P2 | Landing page v1 interactive | Builder lebih hidup tanpa full complex site builder dulu. |
-| P2 | Timer dropdown | Pause/stop dari navbar. |
+| Priority | Area | Status | Goal |
+| --- | --- | --- | --- |
+| P0 | Bug modal select | DONE | Stop data loss saat user pilih opsi default/sama. |
+| P0 | Dashboard cleanup/reorder | DONE | Sesuaikan struktur dashboard hasil meeting. |
+| P1 | Client PDF export | TODO | Detail client + bulk combined PDF. |
+| P1 | Project type + dates | TODO | Tambah `by project/by hours`, start date, finish date. |
+| P1 | Time tags + reports | TODO | Tracking lebih jelas sampai level tag + PDF report. |
+| P1 | Sidebar/menu restructure | TODO | Kalender/Formulir, Billing/Profile, Support/Profile, Email hidden, Nodes removed. |
+| P2 | Personal Notes recurrence | TODO | Notes jadi personal reminder dengan notifikasi. |
+| P2 | Landing page v1 interactive | PARTIAL | Builder sudah ada; section manager/interactivity v2 belum. |
+| P2 | Timer dropdown | TODO | Pause/stop dari navbar. |
 
 ---
 
