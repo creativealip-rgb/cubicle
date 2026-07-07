@@ -27,7 +27,9 @@ import {
   Timer,
   FileText,
   TrendingUp,
+  TrendingDown,
   Bell,
+  Wallet,
   FileSignature,
   ArrowRight,
   NotebookPen,
@@ -149,10 +151,10 @@ export default async function DashboardPage() {
   const cfOverdue = Number(cashflow.overdue) || 0;
   const cfMax = Math.max(cf30, cf60, cf90, 1);
 
-  // Revenue sparkline — last 14 days, paid invoices per day (payments.paid_at)
+  // Revenue sparkline — last 90 days, paid invoices per day (payments.paid_at)
   const sparklineResult = await db.execute(
     sql`WITH days AS (
-      SELECT generate_series(current_date - interval '13 days', current_date, interval '1 day')::date AS day
+      SELECT generate_series(current_date - interval '89 days', current_date, interval '1 day')::date AS day
     )
     SELECT d.day, coalesce(sum(p.amount), 0)::decimal AS amt
     FROM days d
@@ -165,6 +167,25 @@ export default async function DashboardPage() {
     day: String((r as { day: string | Date }).day),
     amt: Number((r as { amt: string | number }).amt) || 0,
   }));
+
+  // Expense summary — current month total
+  const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+  const expenseMonthResult = await db.execute(
+    sql`SELECT coalesce(sum(amount), 0)::decimal as total FROM expenses WHERE workspace_id = ${workspaceId} AND date >= ${monthStart}`,
+  );
+  const expenseMonth = Number((expenseMonthResult.rows[0] as { total: string })?.total ?? 0);
+
+  // YTD totals — match reports page
+  const ytdStart = `${now.getFullYear()}-01-01`;
+  const ytdRevenueResult = await db.execute(
+    sql`SELECT coalesce(sum(p.amount), 0)::decimal as total FROM payments p JOIN invoices i ON i.id = p.invoice_id WHERE i.workspace_id = ${workspaceId} AND p.paid_at >= ${ytdStart}`,
+  );
+  const ytdRevenue = Number((ytdRevenueResult.rows[0] as { total: string })?.total ?? 0);
+  const ytdExpenseResult = await db.execute(
+    sql`SELECT coalesce(sum(amount), 0)::decimal as total FROM expenses WHERE workspace_id = ${workspaceId} AND date >= ${ytdStart}`,
+  );
+  const ytdExpense = Number((ytdExpenseResult.rows[0] as { total: string })?.total ?? 0);
+  const ytdNet = ytdRevenue - ytdExpense;
 
   // Active timer
   const [activeTimer] = await db
@@ -703,7 +724,7 @@ export default async function DashboardPage() {
       <Card className="bg-gradient-to-r from-slate-50 to-white">
         <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">{t("Pendapatan (14 hari terakhir)", "Revenue (last 14 days)")}</p>
+            <p className="text-sm text-muted-foreground">{t("Pendapatan (90 hari terakhir)", "Revenue (last 90 days)")}</p>
             <p className="text-3xl font-bold tracking-tight">
               {formatMoneyCompact(sparkTotal, workspaceCurrency)}
             </p>
@@ -745,6 +766,49 @@ export default async function DashboardPage() {
           </svg>
         </CardContent>
       </Card>
+
+      {/* YTD summary row — revenue, expense, net */}
+      <div className="grid grid-cols-3 gap-4">
+        <Link href="/app/invoices" className="group">
+          <Card className="transition-all hover:-translate-y-0.5 hover:shadow-md">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <TrendingUp className="h-4 w-4 text-emerald-500" />
+                <span className="text-xs font-medium text-muted-foreground">{t("Pendapatan YTD", "Revenue YTD")}</span>
+              </div>
+              <p className="text-xl font-bold text-emerald-700">{formatMoney(ytdRevenue, workspaceCurrency)}</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/app/expenses" className="group">
+          <Card className="transition-all hover:-translate-y-0.5 hover:shadow-md">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Wallet className="h-4 w-4 text-red-500" />
+                <span className="text-xs font-medium text-muted-foreground">{t("Pengeluaran bulan ini", "Expenses this month")}</span>
+              </div>
+              <p className="text-xl font-bold text-red-600">{formatMoney(expenseMonth, workspaceCurrency)}</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/app/reports" className="group">
+          <Card className="transition-all hover:-translate-y-0.5 hover:shadow-md">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-1">
+                {ytdNet >= 0 ? (
+                  <TrendingUp className="h-4 w-4 text-emerald-500" />
+                ) : (
+                  <TrendingDown className="h-4 w-4 text-red-500" />
+                )}
+                <span className="text-xs font-medium text-muted-foreground">{t("Bersih YTD", "Net YTD")}</span>
+              </div>
+              <p className={`text-xl font-bold ${ytdNet >= 0 ? "text-emerald-700" : "text-red-600"}`}>
+                {formatMoney(ytdNet, workspaceCurrency)}
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
 
 {/* Cash flow forecast */}
         <Card>
