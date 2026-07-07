@@ -38,6 +38,7 @@ import { formatMoney, formatMoneyCompact } from "@/lib/utils";
 import Link from "next/link";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { DashboardLanguageSwitch } from "@/components/dashboard-language-switch";
+import { DashboardGreeting } from "@/components/dashboard-greeting";
 
 async function getWorkspace() {
   return getWorkspaceFullForCurrentUser();
@@ -320,13 +321,6 @@ export default async function DashboardPage() {
   ];
 
   // Greeting + quick action chips
-  const hour = new Date().getHours();
-  const greeting = hour < 11 ? t("Selamat pagi", "Good morning") : hour < 18 ? t("Selamat siang", "Good afternoon") : t("Selamat malam", "Good evening");
-  const todayLong = new Date().toLocaleDateString(locale, {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
   const firstName = (session?.user?.name || "User").split(" ")[0];
 
   // Sparkline geometry
@@ -357,15 +351,8 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Greeting + quick actions */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {greeting}, {firstName}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {todayLong} · {activeProjects} {t("proyek aktif", "active projects")} · {dueTasks} {t("tugas jatuh tempo", "due tasks")}
-          </p>
-        </div>
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <DashboardGreeting firstName={firstName} lang={lang} activeProjects={activeProjects} dueTasks={dueTasks} />
         <div className="flex flex-wrap items-center gap-2">
           <DashboardLanguageSwitch lang={lang} />
           {quickActions.map((qa) => {
