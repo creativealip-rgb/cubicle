@@ -10,6 +10,7 @@ import {
   portalVisits,
   portalRequests,
   activityLogs,
+  timeEntries,
 } from "@/db/schema";
 import { eq, and, sql, desc, inArray } from "drizzle-orm";
 import { getClientPortalAccess, logPortalAccess } from "@/lib/actions/portal";
@@ -60,7 +61,16 @@ export default async function ClientPortalPage({
 
   // Fetch visible projects
   const clientProjects = await db
-    .select()
+    .select({
+      id: projects.id,
+      name: projects.name,
+      description: projects.description,
+      status: projects.status,
+      clientVisible: projects.clientVisible,
+      billingType: projects.billingType,
+      startDate: projects.startDate,
+      finishDate: projects.finishDate,
+    })
     .from(projects)
     .where(
       and(
@@ -297,6 +307,61 @@ export default async function ClientPortalPage({
     projectTimelineMap.set(project.id, timeline);
   }
 
+  // Fetch time entry summaries for "by hours" projects
+  const byHoursProjectIds = clientProjects
+    .filter((p) => p.billingType === "hours")
+    .map((p) => p.id);
+
+  const projectHoursMap = new Map<string, {
+    totalMinutes: number;
+    billableMinutes: number;
+    entryCount: number;
+    tags: string[];
+  }>();
+
+  for (const projectId of byHoursProjectIds) {
+    const entries = await db
+      .select({
+        durationMinutes: timeEntries.durationMinutes,
+        manualMinutes: timeEntries.manualMinutes,
+        startTime: timeEntries.startTime,
+        endTime: timeEntries.endTime,
+        billable: timeEntries.billable,
+        tags: timeEntries.tags,
+      })
+      .from(timeEntries)
+      .where(eq(timeEntries.projectId, projectId))
+      .limit(500);
+
+    let totalMinutes = 0;
+    let billableMinutes = 0;
+    const allTags = new Set<string>();
+
+    for (const entry of entries) {
+      let mins = 0;
+      if (entry.manualMinutes) {
+        mins = entry.manualMinutes;
+      } else if (entry.startTime && entry.endTime) {
+        mins = Math.round((new Date(entry.endTime).getTime() - new Date(entry.startTime).getTime()) / 60000);
+      }
+      totalMinutes += mins;
+      if (entry.billable) billableMinutes += mins;
+      if (entry.tags) {
+        for (const tag of String(entry.tags).split(",")) {
+          const t = tag.trim();
+          if (t) allTags.add(t);
+        }
+      }
+    }
+
+    projectHoursMap.set(projectId, {
+      totalMinutes,
+      billableMinutes,
+      entryCount: entries.length,
+      tags: [...allTags].slice(0, 10),
+    });
+  }
+
   const clientPortalRequests = await db
     .select({
       id: portalRequests.id,
@@ -392,17 +457,31 @@ export default async function ClientPortalPage({
                 const projectFiles = projectFilesMap.get(project.id) || [];
                 const projectComments = projectCommentsMap.get(project.id) || [];
                 const projectTimeline = projectTimelineMap.get(project.id) || [];
+                const hoursSummary = projectHoursMap.get(project.id);
+                const isByHours = project.billingType === "hours";
 
                 return (
                   <Card key={project.id}>
                     <CardHeader>
                       <CardTitle className="flex items-center justify-between">
                         <span>{project.name}</span>
-                        <Badge variant="outline">{project.status}</Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="text-[10px]">
+                            {isByHours ? "By Hours" : "By Project"}
+                          </Badge>
+                          <Badge variant="outline">{project.status}</Badge>
+                        </div>
                       </CardTitle>
                       {project.description && (
                         <p className="text-sm text-muted-foreground mt-1">
                           {project.description}
+                        </p>
+                      )}
+                      {(project.startDate || project.finishDate) && (
+                        <p className="text-xs text-muted-foreground">
+                          {project.startDate && `Start: ${new Date(project.startDate).toLocaleDateString()}`}
+                          {project.startDate && project.finishDate && " · "}
+                          {project.finishDate && `Finish: ${new Date(project.finishDate).toLocaleDateString()}`}
                         </p>
                       )}
                     </CardHeader>
@@ -416,7 +495,35 @@ export default async function ClientPortalPage({
                         }}
                       />
 
-                      {/* Tasks */}
+                      {/* Hours summary for by-hours projects */}
+                      {isByHours && hoursSummary && (
+                        <div className="rounded-lg border bg-muted/30 p-4">
+                          <h4 className="text-sm font-semibold mb-3">Hours Summary</h4>
+                          <div className="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                              <p className="text-2xl font-bold">{Math.floor(hoursSummary.totalMinutes / 60)}h {hoursSummary.totalMinutes % 60}m</p>
+                              <p className="text-xs text-muted-foreground">Total Tracked</p>
+                            </div>
+                            <div>
+                              <p className="text-2xl font-bold">{Math.floor(hoursSummary.billableMinutes / 60)}h {hoursSummary.billableMinutes % 60}m</p>
+                              <p className="text-xs text-muted-foreground">Billable</p>
+                            </div>
+                            <div>
+                              <p className="text-2xl font-bold">{hoursSummary.entryCount}</p>
+                              <p className="text-xs text-muted-foreground">Entries</p>
+                            </div>
+                          </div>
+                          {hoursSummary.tags.length > 0 && (
+                            <div className="mt-3 flex flex-wrap gap-1">
+                              {hoursSummary.tags.map((tag) => (
+                                <Badge key={tag} variant="outline" className="text-[10px]">{tag}</Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Tasks — for by-project show as milestones/deliverables */}
                       {projectTasks.length > 0 && (
                         <div>
                           <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">

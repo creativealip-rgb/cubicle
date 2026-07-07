@@ -18,7 +18,7 @@ type SiteData = {
   ctaUrl: string;
   background: string;
   accent: string;
-  sections: string;
+  sections: string | Array<{ id: string; type: string; heading: string; content: string }>;
   links: string;
 };
 
@@ -93,7 +93,12 @@ export default async function PublicPersonalSitePage({ params }: Props) {
   if (!site) notFound();
 
   const accent = site.accent || defaults.accent;
-  const parsedSections = parseRows(site.sections, "|");
+
+  // Handle both old string format and new JSON array format
+  const parsedSections: Array<{ label: string; body: string }> = Array.isArray(site.sections)
+    ? site.sections.map((s) => ({ label: s.heading, body: s.content }))
+    : parseRows(site.sections as string, "|");
+
   const parsedLinks = parseRows(site.links, "=").map((link) => ({ label: link.label, url: safeHref(link.body) }));
 
   return (
