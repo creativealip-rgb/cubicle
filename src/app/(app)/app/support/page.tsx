@@ -1,45 +1,57 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { HelpCircle, Mail, MessageSquare, BookOpen, Bug } from "lucide-react";
+import { redirect } from "next/navigation";
+import { createTicket, listTickets, getTicketCounts } from "@/lib/actions/support";
+import { db } from "@/db";
+import { clients, projects, users, workspaceMembers } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { getWorkspaceForCurrentUser } from "@/lib/workspace";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { requireUser } from "@/lib/access";
+import { SupportPageClient } from "./support-client";
 
-const items = [
-  { title: "Getting Started", icon: BookOpen, body: "Setup workspace, invite team, add clients, and create first project." },
-  { title: "Report a Bug", icon: Bug, body: "Track UI issues, broken flows, or data problems for follow-up." },
-  { title: "Contact Support", icon: Mail, body: "Send support request with workspace context and reply email." },
-  { title: "Client Portal Help", icon: MessageSquare, body: "Guide clients to upload files, comment, approve, and view invoice links." },
-];
+export default async function SupportPage() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
 
-export default function SupportPage() {
+  const [tickets, counts, clientList, projectList, memberList] = await Promise.all([
+    listTickets(),
+    getTicketCounts(),
+    db.select({ id: clients.id, name: clients.name }).from(clients).where(eq(clients.workspaceId, workspaceId)).orderBy(clients.name),
+    db.select({ id: projects.id, name: projects.name }).from(projects).where(eq(projects.workspaceId, workspaceId)).orderBy(projects.name),
+    db
+      .select({ userId: workspaceMembers.userId, name: users.name })
+      .from(workspaceMembers)
+      .leftJoin(users, eq(users.id, workspaceMembers.userId))
+      .where(eq(workspaceMembers.workspaceId, workspaceId)),
+  ]);
+
+  const countMap: Record<string, number> = { open: 0, in_progress: 0, resolved: 0, closed: 0 };
+  for (const c of counts) {
+    countMap[c.status] = Number(c.count);
+  }
+
+  async function createTicketAction(formData: FormData) {
+    "use server";
+    await createTicket({
+      title: String(formData.get("title") || ""),
+      description: String(formData.get("description") || "") || undefined,
+      priority: String(formData.get("priority") || "medium") as "low" | "medium" | "high" | "urgent",
+      assigneeId: String(formData.get("assigneeId") || "") || undefined,
+      clientId: String(formData.get("clientId") || "") || undefined,
+      projectId: String(formData.get("projectId") || "") || undefined,
+    });
+    redirect("/app/support");
+  }
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Support Center</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Bantuan cepat untuk workspace, client portal, invoice, dan workflow Cubiqlo.</p>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        {items.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Card key={item.title}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base"><Icon className="h-4 w-4" /> {item.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground">{item.body}</p>
-                <Button variant="outline" size="sm">Open</Button>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-      <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2 text-base"><HelpCircle className="h-4 w-4" /> Quick FAQ</CardTitle></CardHeader>
-        <CardContent className="space-y-3 text-sm text-muted-foreground">
-          <p><strong className="text-foreground">Client portal link:</strong> buka detail client, set portal slug, lalu copy short link.</p>
-          <p><strong className="text-foreground">Invoice email:</strong> buka invoice detail lalu klik Send invoice.</p>
-          <p><strong className="text-foreground">Timesheet export:</strong> buka Time Tracking lalu pilih Export CSV atau Export PDF.</p>
-        </CardContent>
-      </Card>
-    </div>
+    <SupportPageClient
+      tickets={tickets}
+      counts={countMap}
+      clients={clientList}
+      projects={projectList}
+      members={memberList.map((m) => ({ id: m.userId, name: m.name || "Unknown" }))}
+      createAction={createTicketAction}
+    />
   );
 }

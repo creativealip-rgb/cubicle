@@ -206,7 +206,7 @@ export const portalRequests = pgTable("portal_requests", {
 export const comments = pgTable("comments", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  entityType: text("entity_type", { enum: ["project", "task", "file", "invoice"] }).notNull(),
+  entityType: text("entity_type", { enum: ["project", "task", "file", "invoice", "support_ticket"] }).notNull(),
   entityId: uuid("entity_id").notNull(),
   body: text("body").notNull(),
   visibility: text("visibility", { enum: ["internal", "client"] }).notNull().default("internal"),
@@ -767,6 +767,21 @@ export const personalNotes = pgTable("personal_notes", {
 });
 
 // ─── Portal visit audit ───
+
+export const supportTickets = pgTable("support_tickets", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  status: text("status", { enum: ["open", "in_progress", "resolved", "closed"] }).notNull().default("open"),
+  priority: text("priority", { enum: ["low", "medium", "high", "urgent"] }).notNull().default("medium"),
+  assigneeId: text("assignee_id").references(() => users.id, { onDelete: "set null" }),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "set null" }),
+  projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 export const portalVisits = pgTable("portal_visits", {
   id: uuid("id").defaultRandom().primaryKey(),
