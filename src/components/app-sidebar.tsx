@@ -203,7 +203,7 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
       >
         {!collapsed && (
           <Link href="/app/dashboard" className="flex items-center gap-2 font-semibold text-sidebar-foreground">
-            <Image src="/logo-full.png" alt="Cubiqlo" width={120} height={28} className="h-7 w-auto object-contain" />
+            <Image src="/logo-name.png" alt="Cubiqlo" width={120} height={28} className="h-7 w-auto object-contain" />
           </Link>
         )}
         {collapsed && (
