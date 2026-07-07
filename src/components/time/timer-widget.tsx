@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { startTimer, stopTimer } from "@/lib/actions/time";
@@ -88,6 +88,7 @@ export function TimerWidget({
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(initialTimer);
   const [elapsed, setElapsed] = useState("00:00:00");
   const [loading, setLoading] = useState(false);
+  const selfDispatched = useRef(false);
 
   // New timer form state
   const [selectedClientId, setSelectedClientId] = useState<string>("");
@@ -122,6 +123,10 @@ export function TimerWidget({
   // Listen for timer changes from navbar (pause/stop from dropdown)
   useEffect(() => {
     function onTimerChanged() {
+      if (selfDispatched.current) {
+        selfDispatched.current = false;
+        return;
+      }
       setActiveTimer(null);
       setElapsed("00:00:00");
       router.refresh();
@@ -171,6 +176,7 @@ export function TimerWidget({
         projectName: project?.name ?? null,
         taskTitle: task?.title ?? null,
       });
+      selfDispatched.current = true;
       window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
 
       toast.success("Timer started");
@@ -189,6 +195,7 @@ export function TimerWidget({
       await stopTimer(activeTimer.id);
       setActiveTimer(null);
       setElapsed("00:00:00");
+      selfDispatched.current = true;
       window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
       toast.success("Timer stopped");
       router.refresh();
@@ -207,6 +214,7 @@ export function TimerWidget({
       await stopTimer(activeTimer.id);
       setActiveTimer(null);
       setElapsed("00:00:00");
+      selfDispatched.current = true;
       window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
       toast.success("Stale timer discarded");
       router.refresh();
