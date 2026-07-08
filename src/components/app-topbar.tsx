@@ -124,6 +124,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
       const result = await switchWorkspace(wsId);
       if (result.ok) {
         router.refresh();
+        await loadWorkspaces();
       }
     } finally {
       setSwitching(null);
@@ -165,11 +166,13 @@ export function AppTopbar({ user }: AppTopbarProps) {
     const poll = window.setInterval(loadActiveTimer, 15000);
     window.addEventListener("cubicle:timer-changed", loadActiveTimer);
     window.addEventListener("focus", loadActiveTimer);
+    window.addEventListener("focus", loadWorkspaces);
     return () => {
       alive = false;
       window.clearInterval(poll);
       window.removeEventListener("cubicle:timer-changed", loadActiveTimer);
       window.removeEventListener("focus", loadActiveTimer);
+      window.removeEventListener("focus", loadWorkspaces);
     };
   }, [loadWorkspaces]);
 
