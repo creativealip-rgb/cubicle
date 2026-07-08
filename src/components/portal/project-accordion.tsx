@@ -726,20 +726,20 @@ export function ProjectAccordion({
           <Card key={project.id} className="overflow-hidden">
             {/* Collapsed header — always visible */}
             <div
-              className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+              className="flex items-center justify-between p-5 cursor-pointer hover:bg-muted/30 transition-colors"
               onClick={() => toggleProject(project.id)}
             >
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-3 min-w-0">
                   {isExpanded ? (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <ChevronDown className="h-5 w-5 text-foreground shrink-0" />
                   ) : (
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <ChevronRight className="h-5 w-5 text-foreground shrink-0" />
                   )}
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold truncate">{project.name}</span>
-                      <Badge variant="secondary" className="text-[10px] shrink-0">
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <span className="font-semibold text-base truncate">{project.name}</span>
+                      <Badge variant="secondary" className="text-[11px] shrink-0">
                         {project.billingType === "hours"
                           ? "By Hours"
                           : project.billingType === "package"
@@ -759,7 +759,7 @@ export function ProjectAccordion({
                   </div>
                 </div>
               </div>
-              <Badge variant="outline" className="text-[10px] shrink-0">
+              <Badge variant="outline" className="text-[11px] shrink-0 capitalize">
                 {project.status}
               </Badge>
             </div>

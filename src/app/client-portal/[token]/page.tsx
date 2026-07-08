@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
 import {
@@ -83,6 +84,7 @@ export default async function ClientPortalPage({
     .select({
       name: workspaces.name,
       phone: workspaces.billingPhone,
+      logoUrl: workspaces.logoUrl,
     })
     .from(workspaces)
     .where(eq(workspaces.id, client.workspaceId))
@@ -738,12 +740,23 @@ export default async function ClientPortalPage({
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <div className="max-w-5xl mx-auto py-12 px-4 space-y-8">
+      <div className="max-w-5xl mx-auto py-12 px-4 space-y-10">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {client.companyName || client.name}
-          </h1>
+          <div className="flex items-center gap-3">
+            {workspaceContact?.logoUrl && (
+              <Image
+                src={workspaceContact.logoUrl}
+                alt={workspaceContact.name || "Workspace"}
+                width={40}
+                height={40}
+                className="rounded-lg"
+              />
+            )}
+            <h1 className="text-3xl font-bold tracking-tight">
+              {workspaceContact?.name || client.companyName || client.name}
+            </h1>
+          </div>
           <p className="text-sm text-muted-foreground mt-1">
             Client Portal — Secured Access
           </p>
@@ -803,15 +816,15 @@ export default async function ClientPortalPage({
 
         {/* ─── 2. Quick Actions Bar ─────────────────────────── */}
         <div className="flex flex-wrap gap-3">
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button variant="outline" className="h-10 px-5 rounded-lg gap-2">
             <Download className="h-4 w-4" />
             Download All Invoices
           </Button>
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button variant="outline" className="h-10 px-5 rounded-lg gap-2">
             <BarChart3 className="h-4 w-4" />
             Request Report
           </Button>
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button variant="outline" className="h-10 px-5 rounded-lg gap-2">
             <Calendar className="h-4 w-4" />
             Request Meeting
           </Button>
@@ -927,164 +940,82 @@ export default async function ClientPortalPage({
             </Card>
           ) : (
             <>
-              {/* IDR invoices */}
-              {clientInvoices.filter((i) => i.currency !== "USD").length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
-                    🇮🇩 IDR Invoices
-                  </h3>
-                  <div className="border rounded-lg overflow-hidden">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b bg-muted/50">
-                          <th className="text-left p-3 font-medium">Invoice #</th>
-                          <th className="text-left p-3 font-medium">Project</th>
-                          <th className="text-right p-3 font-medium">Amount</th>
-                          <th className="text-center p-3 font-medium">Status</th>
-                          <th className="text-left p-3 font-medium">Date</th>
-                          <th className="text-right p-3 font-medium">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y">
-                        {clientInvoices
-                          .filter((i) => i.currency !== "USD")
-                          .map((inv) => {
-                            const projectName = inv.projectId
-                              ? clientProjects.find((p) => p.id === inv.projectId)?.name || "—"
-                              : "—";
-                            const statusStyles: Record<string, string> = {
-                              paid: "bg-emerald-50 text-emerald-700",
-                              sent: "bg-blue-50 text-blue-700",
-                              viewed: "bg-yellow-50 text-yellow-700",
-                              overdue: "bg-red-50 text-red-700",
-                            };
-                            return (
-                              <tr key={inv.id} className="hover:bg-muted/30">
-                                <td className="p-3 font-mono font-medium">
-                                  {inv.invoiceNumber || "—"}
-                                </td>
-                                <td className="p-3 text-muted-foreground">
-                                  {projectName}
-                                </td>
-                                <td className="p-3 text-right font-mono font-medium">
-                                  {new Intl.NumberFormat("en-US", {
-                                    style: "currency",
-                                    currency: inv.currency,
-                                  }).format(Number(inv.total))}
-                                </td>
-                                <td className="p-3 text-center">
-                                  <Badge
-                                    className={`text-[10px] ${statusStyles[inv.status] || "bg-slate-100 text-slate-600"}`}
-                                    variant="outline"
-                                  >
-                                    {inv.status}
-                                  </Badge>
-                                </td>
-                                <td className="p-3 text-muted-foreground">
-                                  {inv.issueDate
-                                    ? new Date(inv.issueDate).toLocaleDateString()
-                                    : "—"}
-                                </td>
-                                <td className="p-3 text-right">
-                                  <Button variant="ghost" size="sm" className="h-7 px-2 gap-1">
-                                    <Download className="h-3 w-3" />
-                                    PDF
-                                  </Button>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="text-right text-sm font-semibold mt-2 text-muted-foreground">
-                    Total: {formatIDR(
-                      clientInvoices
-                        .filter((i) => i.currency !== "USD")
-                        .reduce((s, i) => s + Number(i.total), 0)
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* USD invoices */}
-              {clientInvoices.filter((i) => i.currency === "USD").length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
-                    🇺🇸 USD Invoices
-                  </h3>
-                  <div className="border rounded-lg overflow-hidden">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b bg-muted/50">
-                          <th className="text-left p-3 font-medium">Invoice #</th>
-                          <th className="text-left p-3 font-medium">Project</th>
-                          <th className="text-right p-3 font-medium">Amount</th>
-                          <th className="text-center p-3 font-medium">Status</th>
-                          <th className="text-left p-3 font-medium">Date</th>
-                          <th className="text-right p-3 font-medium">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y">
-                        {clientInvoices
-                          .filter((i) => i.currency === "USD")
-                          .map((inv) => {
-                            const projectName = inv.projectId
-                              ? clientProjects.find((p) => p.id === inv.projectId)?.name || "—"
-                              : "—";
-                            const statusStyles: Record<string, string> = {
-                              paid: "bg-emerald-50 text-emerald-700",
-                              sent: "bg-blue-50 text-blue-700",
-                              viewed: "bg-yellow-50 text-yellow-700",
-                              overdue: "bg-red-50 text-red-700",
-                            };
-                            return (
-                              <tr key={inv.id} className="hover:bg-muted/30">
-                                <td className="p-3 font-mono font-medium">
-                                  {inv.invoiceNumber || "—"}
-                                </td>
-                                <td className="p-3 text-muted-foreground">
-                                  {projectName}
-                                </td>
-                                <td className="p-3 text-right font-mono font-medium">
-                                  {new Intl.NumberFormat("en-US", {
-                                    style: "currency",
-                                    currency: inv.currency,
-                                  }).format(Number(inv.total))}
-                                </td>
-                                <td className="p-3 text-center">
-                                  <Badge
-                                    className={`text-[10px] ${statusStyles[inv.status] || "bg-slate-100 text-slate-600"}`}
-                                    variant="outline"
-                                  >
-                                    {inv.status}
-                                  </Badge>
-                                </td>
-                                <td className="p-3 text-muted-foreground">
-                                  {inv.issueDate
-                                    ? new Date(inv.issueDate).toLocaleDateString()
-                                    : "—"}
-                                </td>
-                                <td className="p-3 text-right">
-                                  <Button variant="ghost" size="sm" className="h-7 px-2 gap-1">
-                                    <Download className="h-3 w-3" />
-                                    PDF
-                                  </Button>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="text-right text-sm font-semibold mt-2 text-muted-foreground">
-                    Total: ${clientInvoices
-                      .filter((i) => i.currency === "USD")
-                      .reduce((s, i) => s + Number(i.total), 0)
-                      .toLocaleString("en-US", { minimumFractionDigits: 0 })}
-                  </div>
-                </div>
-              )}
+              <div className="border rounded-lg overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="text-left p-3 font-medium">Invoice #</th>
+                      <th className="text-left p-3 font-medium">Project</th>
+                      <th className="text-right p-3 font-medium">Amount</th>
+                      <th className="text-center p-3 font-medium">Currency</th>
+                      <th className="text-center p-3 font-medium">Status</th>
+                      <th className="text-left p-3 font-medium">Date</th>
+                      <th className="text-right p-3 font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {[...clientInvoices]
+                      .sort((a, b) => new Date(b.issueDate || b.dueDate || 0).getTime() - new Date(a.issueDate || a.dueDate || 0).getTime())
+                      .map((inv) => {
+                        const projectName = inv.projectId
+                          ? clientProjects.find((p) => p.id === inv.projectId)?.name || "—"
+                          : "—";
+                        const statusStyles: Record<string, string> = {
+                          paid: "bg-emerald-50 text-emerald-700",
+                          sent: "bg-blue-50 text-blue-700",
+                          viewed: "bg-yellow-50 text-yellow-700",
+                          overdue: "bg-red-50 text-red-700",
+                        };
+                        return (
+                          <tr key={inv.id} className="hover:bg-muted/30">
+                            <td className="p-3 font-mono font-medium">
+                              {inv.invoiceNumber || "—"}
+                            </td>
+                            <td className="p-3 text-muted-foreground">
+                              {projectName}
+                            </td>
+                            <td className="p-3 text-right font-mono font-medium">
+                              {new Intl.NumberFormat("en-US", {
+                                style: "currency",
+                                currency: inv.currency,
+                              }).format(Number(inv.total))}
+                            </td>
+                            <td className="p-3 text-center text-xs text-muted-foreground">
+                              {inv.currency}
+                            </td>
+                            <td className="p-3 text-center">
+                              <Badge
+                                className={`text-[10px] ${statusStyles[inv.status] || "bg-slate-100 text-slate-600"}`}
+                                variant="outline"
+                              >
+                                {inv.status}
+                              </Badge>
+                            </td>
+                            <td className="p-3 text-muted-foreground">
+                              {inv.issueDate
+                                ? new Date(inv.issueDate).toLocaleDateString()
+                                : "—"}
+                            </td>
+                            <td className="p-3 text-right">
+                              <Button variant="ghost" size="sm" className="h-7 px-2 gap-1">
+                                <Download className="h-3 w-3" />
+                                PDF
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              </div>
+              <div className="text-right text-sm font-semibold mt-2 text-muted-foreground">
+                Total: {[...new Set(clientInvoices.map(i => i.currency))].map((cur) => {
+                  const sum = clientInvoices.filter(i => i.currency === cur).reduce((s, i) => s + Number(i.total), 0);
+                  return cur === "USD"
+                    ? `$${sum.toLocaleString("en-US", { minimumFractionDigits: 0 })}`
+                    : formatIDR(sum);
+                }).join(" + ")}
+              </div>
             </>
           )}
         </section>
@@ -1094,7 +1025,7 @@ export default async function ClientPortalPage({
           <CardHeader>
             <CardTitle className="text-base">Message Your Team</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="max-w-lg">
             <PortalCommentForm
               entityType="project"
               entityId={clientProjects[0]?.id || client.id}
