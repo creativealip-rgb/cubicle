@@ -184,6 +184,10 @@ export const packages = pgTable("packages", {
   sortOrder: integer("sort_order").notNull().default(0),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  customPrice: numeric("custom_price", { precision: 12, scale: 2 }),
+  minHours: integer("min_hours"),
+  maxHours: integer("max_hours"),
+  allowCustom: boolean("allow_custom").notNull().default(false),
 });
 
 // ─── Tasks ───
@@ -220,6 +224,20 @@ export const portalRequests = pgTable("portal_requests", {
   createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─── Custom Package Requests (client portal) ───
+
+export const customPackageRequests = pgTable("custom_package_requests", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  clientPortalToken: text("client_portal_token").notNull(),
+  requestedHours: integer("requested_hours").notNull(),
+  estimatedPrice: numeric("estimated_price", { precision: 12, scale: 2 }),
+  message: text("message"),
+  status: text("status", { enum: ["pending", "approved", "rejected"] }).notNull().default("pending"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 // ─── Comments (polymorphic) ───

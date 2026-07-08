@@ -44,6 +44,8 @@ import { PortalTaskList } from "@/components/portal/portal-task-list";
 import { PortalFileList } from "@/components/portal/portal-file-list";
 import { PortalCommentForm } from "@/components/portal/portal-comment-form";
 import { PortalRequestList } from "@/components/portal/portal-request-list";
+import { CustomPackageRequestForm } from "@/components/portal/custom-package-request-form";
+import { getCustomPackageRequestsByToken } from "@/lib/actions/custom-package-requests";
 
 export default async function ClientPortalPage({
   params,
@@ -395,6 +397,10 @@ export default async function ClientPortalPage({
     features: string | null;
     badge: string | null;
     sortOrder: number;
+    customPrice: string | null;
+    minHours: number | null;
+    maxHours: number | null;
+    allowCustom: boolean;
   }>>();
 
   for (const projectId of byPackageProjectIds) {
@@ -409,12 +415,19 @@ export default async function ClientPortalPage({
         features: packages.features,
         badge: packages.badge,
         sortOrder: packages.sortOrder,
+        customPrice: packages.customPrice,
+        minHours: packages.minHours,
+        maxHours: packages.maxHours,
+        allowCustom: packages.allowCustom,
       })
       .from(packages)
       .where(and(eq(packages.projectId, projectId), eq(packages.active, true)))
       .orderBy(packages.sortOrder);
     projectPackagesMap.set(projectId, pkgs);
   }
+
+  // Fetch custom package requests by token
+  const customRequests = await getCustomPackageRequestsByToken(token);
 
   // Financial summary — invoices for this client
   const clientInvoices = await db
@@ -845,6 +858,28 @@ export default async function ClientPortalPage({
                             })}
                           </div>
                         </div>
+                      )}
+
+                      {/* Custom Package Request */}
+                      {isByPackage && projectPackagesMap.has(project.id) && (
+                        projectPackagesMap.get(project.id)!.some((p) => p.allowCustom) && (
+                          <CustomPackageRequestForm
+                            projectId={project.id}
+                            token={token}
+                            packages={projectPackagesMap.get(project.id)!.map((p) => ({
+                              id: p.id,
+                              name: p.name,
+                              hours: p.hours,
+                              price: p.price,
+                              customPrice: p.customPrice,
+                              minHours: p.minHours,
+                              maxHours: p.maxHours,
+                              currency: p.currency,
+                            }))}
+                            existingRequests={customRequests.filter((r) => r.projectId === project.id)}
+                            currency={project.currency ?? "IDR"}
+                          />
+                        )
                       )}
 
                       {/* Tasks — for by-project show as milestones/deliverables */}

@@ -144,6 +144,15 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
           <Input id="budget" type="number" step="0.01" min="0" value={form.budget} onChange={(e) => setForm((p) => ({ ...p, budget: e.target.value }))} placeholder="25000000" />
         </div>
       )}
+      {form.billingType === "package" && (
+        <div className="rounded-lg border p-4 space-y-3">
+          <p className="text-sm font-medium">Custom Package Pricing</p>
+          <p className="text-xs text-muted-foreground">
+            Configure per-package custom pricing, hour ranges, and custom request options
+            when managing packages for this project.
+          </p>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>Mata Uang *</Label>

@@ -23,6 +23,10 @@ const packageSchema = z.object({
   badge: z.string().optional(),
   sortOrder: z.number().int().default(0),
   active: z.boolean().default(true),
+  customPrice: z.number().positive().optional(),
+  minHours: z.number().int().positive().optional(),
+  maxHours: z.number().int().positive().optional(),
+  allowCustom: z.boolean().default(false),
 });
 
 export async function createPackage(projectId: string, data: z.infer<typeof packageSchema>) {
@@ -46,6 +50,10 @@ export async function createPackage(projectId: string, data: z.infer<typeof pack
       badge: parsed.badge ?? null,
       sortOrder: parsed.sortOrder,
       active: parsed.active,
+      customPrice: parsed.customPrice != null ? String(parsed.customPrice) : null,
+      minHours: parsed.minHours ?? null,
+      maxHours: parsed.maxHours ?? null,
+      allowCustom: parsed.allowCustom,
     })
     .returning();
 
@@ -69,6 +77,10 @@ export async function updatePackage(packageId: string, data: Partial<z.infer<typ
   if (parsed.badge !== undefined) updateData.badge = parsed.badge ?? null;
   if (parsed.sortOrder !== undefined) updateData.sortOrder = parsed.sortOrder;
   if (parsed.active !== undefined) updateData.active = parsed.active;
+  if (parsed.customPrice !== undefined) updateData.customPrice = parsed.customPrice != null ? String(parsed.customPrice) : null;
+  if (parsed.minHours !== undefined) updateData.minHours = parsed.minHours ?? null;
+  if (parsed.maxHours !== undefined) updateData.maxHours = parsed.maxHours ?? null;
+  if (parsed.allowCustom !== undefined) updateData.allowCustom = parsed.allowCustom;
 
   await db
     .update(packages)
