@@ -103,8 +103,8 @@ const pricing = [
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_12%_8%,rgba(37,99,235,0.16),transparent_28%),radial-gradient(circle_at_88%_18%,rgba(6,182,212,0.13),transparent_24%),linear-gradient(180deg,#fff_0%,#f8fafc_42%,#fff_100%)] text-slate-950">
-      <header className="sticky top-0 z-30 border-b border-slate-950/5 bg-white/75 backdrop-blur-2xl">
+    <>
+      <header className="fixed top-0 left-0 right-0 z-30 border-b border-slate-950/5 bg-white/75 backdrop-blur-2xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-3">
             <Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-11 w-auto object-contain" />
@@ -131,6 +131,7 @@ export default function HomePage() {
         </div>
       </header>
 
+      <main className="min-h-screen overflow-hidden pt-16 bg-[radial-gradient(circle_at_12%_8%,rgba(37,99,235,0.16),transparent_28%),radial-gradient(circle_at_88%_18%,rgba(6,182,212,0.13),transparent_24%),linear-gradient(180deg,#fff_0%,#f8fafc_42%,#fff_100%)] text-slate-950">
       <section className="relative px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-28">
         <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1fr_0.95fr]">
           <div className="relative">
@@ -685,6 +686,7 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
-    </main>
+      </main>
+    </>
   );
 }
