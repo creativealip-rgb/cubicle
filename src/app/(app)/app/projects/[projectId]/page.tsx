@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { getProjectProgress } from "@/lib/actions/projects";
 import { KanbanBoard } from "@/components/tasks/kanban-board";
 import { CommentList } from "@/components/comments/comment-list";
+import { ProjectForm } from "@/components/forms/project-form";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -51,11 +52,18 @@ export default async function ProjectDetailPage({
       name: projects.name,
       description: projects.description,
       status: projects.status,
+      billingType: projects.billingType,
+      currency: projects.currency,
+      rate: projects.rate,
+      budget: projects.budget,
+      startDate: projects.startDate,
+      finishDate: projects.finishDate,
       dueDate: projects.dueDate,
       clientVisible: projects.clientVisible,
       clientId: projects.clientId,
       clientName: clients.name,
       createdAt: projects.createdAt,
+      selectedPackageId: projects.selectedPackageId,
     })
     .from(projects)
     .leftJoin(clients, eq(clients.id, projects.clientId))
@@ -222,6 +230,26 @@ export default async function ProjectDetailPage({
               <DialogTitle>Edit Project</DialogTitle>
             </DialogHeader>
             {/* Edit form not imported for brevity — but ProjectForm would work */}
+            <ProjectForm
+              mode="edit"
+              clients={[]}
+              defaultValues={{
+                id: project.id,
+                name: project.name,
+                description: project.description ?? "",
+                clientId: project.clientId,
+                status: project.status,
+                billingType: project.billingType,
+                currency: project.currency,
+                rate: project.rate ?? "",
+                budget: project.budget ?? "",
+                startDate: project.startDate ?? "",
+                finishDate: project.finishDate ?? "",
+                dueDate: project.dueDate ?? "",
+                clientVisible: project.clientVisible,
+                selectedPackageId: project.selectedPackageId,
+              }}
+            />
           </DialogContent>
         </Dialog>
       </div>

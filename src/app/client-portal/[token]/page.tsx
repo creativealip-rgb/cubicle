@@ -92,6 +92,7 @@ export default async function ClientPortalPage({
       currency: projects.currency,
       startDate: projects.startDate,
       finishDate: projects.finishDate,
+      selectedPackageId: projects.selectedPackageId,
     })
     .from(projects)
     .where(
@@ -329,9 +330,9 @@ export default async function ClientPortalPage({
     projectTimelineMap.set(project.id, timeline);
   }
 
-  // Fetch time entry summaries for "by hours" projects
+  // Fetch time entry summaries for "by hours" and assigned-package projects
   const byHoursProjectIds = clientProjects
-    .filter((p) => p.billingType === "hours")
+    .filter((p) => p.billingType === "hours" || (p.billingType === "package" && p.selectedPackageId))
     .map((p) => p.id);
 
   const projectHoursMap = new Map<string, {
@@ -430,6 +431,36 @@ export default async function ClientPortalPage({
 
   // Fetch custom package requests by token
   const customRequests = await getCustomPackageRequestsByToken(token);
+
+  // Fetch selected package details for package projects with an assigned package
+  const selectedPackageMap = new Map<string, {
+    id: string;
+    name: string;
+    hours: number | null;
+    price: string;
+    currency: string;
+  }>();
+
+  const assignedPackageIds = clientProjects
+    .filter((p) => p.billingType === "package" && p.selectedPackageId)
+    .map((p) => p.selectedPackageId!);
+
+  if (assignedPackageIds.length > 0) {
+    const selectedPkgs = await db
+      .select({
+        id: packages.id,
+        name: packages.name,
+        hours: packages.hours,
+        price: packages.price,
+        currency: packages.currency,
+      })
+      .from(packages)
+      .where(inArray(packages.id, assignedPackageIds));
+
+    for (const pkg of selectedPkgs) {
+      selectedPackageMap.set(pkg.id, pkg);
+    }
+  }
 
   // Fetch package orders by token
   const packageOrdersList = await getPackageOrdersByToken(token);
@@ -719,7 +750,18 @@ export default async function ClientPortalPage({
                           Rate: {new Intl.NumberFormat("en-US", { style: "currency", currency: project.currency || "IDR" }).format(Number(project.rate))}/hr
                         </p>
                       )}
-                      {!isByHours && project.budget && (
+                      {isByPackage && project.selectedPackageId && selectedPackageMap.has(project.selectedPackageId) && (
+                        <div>
+                          <p className="text-lg font-semibold mt-1">
+                            {selectedPackageMap.get(project.selectedPackageId)!.name}
+                            {selectedPackageMap.get(project.selectedPackageId)!.hours && ` — ${selectedPackageMap.get(project.selectedPackageId)!.hours} HOURS`}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Rate: {new Intl.NumberFormat("en-US", { style: "currency", currency: selectedPackageMap.get(project.selectedPackageId)!.currency || project.currency || "IDR" }).format(Number(selectedPackageMap.get(project.selectedPackageId)!.price))}/month
+                          </p>
+                        </div>
+                      )}
+                      {!isByHours && !isByPackage && project.budget && (
                         <p className="text-xs text-muted-foreground">
                           Budget: {new Intl.NumberFormat("en-US", { style: "currency", currency: project.currency || "IDR" }).format(Number(project.budget))}
                         </p>
@@ -769,36 +811,84 @@ export default async function ClientPortalPage({
                         </div>
                       )}
 
-                      {/* By Hours: enhanced summary + recent entries */}
-                      {isByHours && hoursSummary && (
-                        <div className="rounded-lg border bg-muted/30 p-4">
-                          <h4 className="text-sm font-semibold mb-3">Hours Summary</h4>
-                          <div className="grid grid-cols-3 gap-4 text-center">
-                            <div>
-                              <p className="text-2xl font-bold">{formatMinutes(hoursSummary.totalMinutes)}</p>
-                              <p className="text-xs text-muted-foreground">Total Tracked</p>
-                            </div>
-                            <div>
-                              <p className="text-2xl font-bold text-emerald-600">{formatMinutes(hoursSummary.billableMinutes)}</p>
-                              <p className="text-xs text-muted-foreground">Billable</p>
-                            </div>
-                            <div>
-                              <p className="text-2xl font-bold">{hoursSummary.entryCount}</p>
-                              <p className="text-xs text-muted-foreground">Entries</p>
-                            </div>
-                          </div>
-                          {hoursSummary.tags.length > 0 && (
-                            <div className="mt-3 flex flex-wrap gap-1">
-                              {hoursSummary.tags.map((tag) => (
-                                <Badge key={tag} variant="outline" className="text-[10px]">{tag}</Badge>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      {/* By Hours / Assigned Package: enhanced summary + recent entries */}
+                      {(isByHours || (isByPackage && project.selectedPackageId)) && hoursSummary && (() => {
+                        const selectedPkg = isByPackage && project.selectedPackageId ? selectedPackageMap.get(project.selectedPackageId) : null;
+                        const packageTotalMinutes = selectedPkg?.hours ? selectedPkg.hours * 60 : null;
+                        const usedMinutes = hoursSummary.totalMinutes;
+                        const remainingMinutes = packageTotalMinutes != null ? Math.max(0, packageTotalMinutes - usedMinutes) : null;
+                        const usagePercent = packageTotalMinutes != null && packageTotalMinutes > 0 ? Math.round((usedMinutes / packageTotalMinutes) * 100) : null;
 
-                      {/* By Hours: recent time entries */}
-                      {isByHours && byHoursEntriesMap.has(project.id) && (
+                        return (
+                          <div className="rounded-lg border bg-muted/30 p-4">
+                            <h4 className="text-sm font-semibold mb-3">
+                              {isByPackage ? "Package Hours" : "Hours Summary"}
+                            </h4>
+                            <div className={`grid gap-4 text-center ${isByPackage && selectedPkg ? "grid-cols-4" : "grid-cols-3"}`}>
+                              {isByPackage && selectedPkg ? (
+                                <>
+                                  <div>
+                                    <p className="text-2xl font-bold">{formatMinutes(packageTotalMinutes!)}</p>
+                                    <p className="text-xs text-muted-foreground">Package Total</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-2xl font-bold text-amber-600">{formatMinutes(usedMinutes)}</p>
+                                    <p className="text-xs text-muted-foreground">Used</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-2xl font-bold text-emerald-600">{formatMinutes(remainingMinutes!)}</p>
+                                    <p className="text-xs text-muted-foreground">Remaining</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-2xl font-bold">{hoursSummary.entryCount}</p>
+                                    <p className="text-xs text-muted-foreground">Entries</p>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <div>
+                                    <p className="text-2xl font-bold">{formatMinutes(hoursSummary.totalMinutes)}</p>
+                                    <p className="text-xs text-muted-foreground">Total Tracked</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-2xl font-bold text-emerald-600">{formatMinutes(hoursSummary.billableMinutes)}</p>
+                                    <p className="text-xs text-muted-foreground">Billable</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-2xl font-bold">{hoursSummary.entryCount}</p>
+                                    <p className="text-xs text-muted-foreground">Entries</p>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                            {/* Progress bar for assigned packages */}
+                            {usagePercent != null && (
+                              <div className="mt-3 space-y-1">
+                                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                  <span>{usagePercent}% used</span>
+                                  <span>{formatMinutes(remainingMinutes!)} left</span>
+                                </div>
+                                <div className="h-2.5 w-full rounded-full bg-slate-200">
+                                  <div
+                                    className={`h-full rounded-full transition-all ${usagePercent > 90 ? "bg-red-500" : usagePercent > 70 ? "bg-amber-500" : "bg-emerald-500"}`}
+                                    style={{ width: `${Math.min(usagePercent, 100)}%` }}
+                                  />
+                                </div>
+                              </div>
+                            )}
+                            {hoursSummary.tags.length > 0 && (
+                              <div className="mt-3 flex flex-wrap gap-1">
+                                {hoursSummary.tags.map((tag) => (
+                                  <Badge key={tag} variant="outline" className="text-[10px]">{tag}</Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+
+                      {/* By Hours / Assigned Package: recent time entries */}
+                      {(isByHours || (isByPackage && project.selectedPackageId)) && byHoursEntriesMap.has(project.id) && (
                         <div>
                           <h4 className="text-sm font-semibold mb-2">Recent Time Entries</h4>
                           <div className="rounded-lg border divide-y">
@@ -823,8 +913,17 @@ export default async function ClientPortalPage({
                         </div>
                       )}
 
-                      {/* By Package: available packages */}
-                      {isByPackage && projectPackagesMap.has(project.id) && (
+                      {/* By Package: no package assigned yet */}
+                      {isByPackage && !project.selectedPackageId && (
+                        <div className="rounded-lg border bg-muted/30 p-6 text-center">
+                          <p className="text-sm text-muted-foreground">
+                            Package not assigned yet. Your admin will assign a package to this project.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* By Package: available packages — only show when no package is assigned */}
+                      {isByPackage && !project.selectedPackageId && projectPackagesMap.has(project.id) && (
                         <div>
                           <h4 className="text-sm font-semibold mb-3">Available Packages</h4>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -872,8 +971,8 @@ export default async function ClientPortalPage({
                         </div>
                       )}
 
-                      {/* Your Orders */}
-                      {isByPackage && packageOrdersList.filter((o) => o.projectId === project.id).length > 0 && (
+                      {/* Your Orders — only show when no package is assigned */}
+                      {isByPackage && !project.selectedPackageId && packageOrdersList.filter((o) => o.projectId === project.id).length > 0 && (
                         <div>
                           <h4 className="text-sm font-semibold mb-2">Your Orders</h4>
                           <div className="space-y-2">
@@ -906,8 +1005,8 @@ export default async function ClientPortalPage({
                         </div>
                       )}
 
-                      {/* Custom Package Request */}
-                      {isByPackage && projectPackagesMap.has(project.id) && (
+                      {/* Custom Package Request — only show when no package is assigned */}
+                      {isByPackage && !project.selectedPackageId && projectPackagesMap.has(project.id) && (
                         projectPackagesMap.get(project.id)!.some((p) => p.allowCustom) && (
                           <CustomPackageRequestForm
                             projectId={project.id}

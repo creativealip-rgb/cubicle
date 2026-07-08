@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createProject, updateProject } from "@/lib/actions/projects";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getPackagesByProject } from "@/lib/actions/packages";
 
 interface ProjectFormProps {
   mode: "create" | "edit";
@@ -27,6 +28,7 @@ interface ProjectFormProps {
     finishDate?: string;
     dueDate?: string;
     clientVisible?: boolean;
+    selectedPackageId?: string | null;
   };
   onSuccess?: () => void;
 }
@@ -34,6 +36,7 @@ interface ProjectFormProps {
 export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuccess }: ProjectFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [projectPackages, setProjectPackages] = useState<Array<{ id: string; name: string; hours: number | null; price: string; currency: string }>>([]);
   const [form, setForm] = useState({
     name: defaultValues?.name ?? "",
     description: defaultValues?.description ?? "",
@@ -47,7 +50,23 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
     finishDate: defaultValues?.finishDate ?? "",
     dueDate: defaultValues?.dueDate ?? "",
     clientVisible: defaultValues?.clientVisible ?? false,
+    selectedPackageId: defaultValues?.selectedPackageId ?? "",
   });
+
+  // Fetch packages when editing an existing project with package billing
+  useEffect(() => {
+    if (mode === "edit" && defaultValues?.id && form.billingType === "package") {
+      getPackagesByProject(defaultValues.id).then((pkgs) => {
+        setProjectPackages(pkgs.map((p) => ({
+          id: p.id,
+          name: p.name,
+          hours: p.hours,
+          price: p.price,
+          currency: p.currency,
+        })));
+      }).catch(() => {});
+    }
+  }, [mode, defaultValues?.id, form.billingType]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -66,6 +85,7 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
         finishDate: form.finishDate || undefined,
         dueDate: form.dueDate || undefined,
         clientVisible: form.clientVisible,
+        selectedPackageId: form.selectedPackageId || undefined,
       };
 
       if (mode === "create") {
@@ -145,12 +165,34 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
         </div>
       )}
       {form.billingType === "package" && (
-        <div className="rounded-lg border p-4 space-y-3">
-          <p className="text-sm font-medium">Custom Package Pricing</p>
-          <p className="text-xs text-muted-foreground">
-            Configure per-package custom pricing, hour ranges, and custom request options
-            when managing packages for this project.
-          </p>
+        <div className="space-y-2">
+          <Label>Assigned Package</Label>
+          {mode === "create" ? (
+            <p className="text-xs text-muted-foreground">
+              Save the project first, then add packages and select one.
+            </p>
+          ) : projectPackages.length > 0 ? (
+            <Select
+              value={form.selectedPackageId || "__none__"}
+              onValueChange={(v) => setForm((p) => ({ ...p, selectedPackageId: v === "__none__" ? "" : v }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a package to assign" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">No package assigned</SelectItem>
+                {projectPackages.map((pkg) => (
+                  <SelectItem key={pkg.id} value={pkg.id}>
+                    {pkg.name} — {pkg.hours ? `${pkg.hours}h` : "custom"} · {new Intl.NumberFormat("en-US", { style: "currency", currency: pkg.currency || "IDR" }).format(Number(pkg.price))}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              No packages found for this project. Add packages first, then select one here.
+            </p>
+          )}
         </div>
       )}
       <div className="grid grid-cols-2 gap-4">

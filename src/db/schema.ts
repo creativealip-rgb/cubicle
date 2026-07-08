@@ -156,6 +156,7 @@ export const projects = pgTable("projects", {
   finishDate: date("finish_date"),
   dueDate: date("due_date"),
   clientVisible: boolean("client_visible").notNull().default(false),
+  selectedPackageId: uuid("selected_package_id"),
   createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

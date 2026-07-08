@@ -27,6 +27,7 @@ const projectSchema = z.object({
   finishDate: z.string().optional(),
   dueDate: z.string().optional(),
   clientVisible: z.boolean().default(false),
+  selectedPackageId: z.string().uuid().optional(),
 });
 
 export async function createProject(input: z.infer<typeof projectSchema>) {
@@ -59,6 +60,7 @@ export async function createProject(input: z.infer<typeof projectSchema>) {
     finishDate: parsed.finishDate || null,
     dueDate: parsed.dueDate || null,
     clientVisible: parsed.clientVisible,
+    selectedPackageId: parsed.selectedPackageId || null,
     createdBy: user.id,
   }).returning();
 
@@ -88,6 +90,7 @@ export async function updateProject(projectId: string, input: Partial<z.infer<ty
   if (parsed.finishDate !== undefined) updateData.finishDate = parsed.finishDate || null;
   if (parsed.dueDate !== undefined) updateData.dueDate = parsed.dueDate;
   if (parsed.clientVisible !== undefined) updateData.clientVisible = parsed.clientVisible;
+  if (parsed.selectedPackageId !== undefined) updateData.selectedPackageId = parsed.selectedPackageId || null;
 
   const [project] = await db.update(projects)
     .set(updateData)
