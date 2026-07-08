@@ -14,6 +14,7 @@ import {
   MessageSquare,
   Clock,
   Package,
+  MessageCircle,
 } from "lucide-react";
 import { PortalTaskList } from "./portal-task-list";
 import { PortalFileList } from "./portal-file-list";
@@ -160,6 +161,8 @@ interface ProjectAccordionProps {
   clientVisibleActionLabels: Record<string, string>;
   token: string;
   workspaceId: string;
+  ownerWhatsAppPhone?: string | null;
+  ownerName?: string | null;
 }
 
 function formatIDR(amount: number) {
@@ -181,6 +184,15 @@ function formatCurrency(amount: string | number, currency: string) {
   }).format(Number(amount));
 }
 
+function getWhatsAppUrl(phone: string | null | undefined, message: string) {
+  if (!phone) return null;
+
+  const normalized = phone.replace(/\D/g, "").replace(/^0/, "62");
+  if (!normalized) return null;
+
+  return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
+}
+
 function ProjectExpandedContent({
   project,
   tasks,
@@ -197,6 +209,8 @@ function ProjectExpandedContent({
   actionLabels,
   token,
   workspaceId,
+  ownerWhatsAppPhone,
+  ownerName,
 }: {
   project: Project;
   tasks: Task[];
@@ -213,6 +227,8 @@ function ProjectExpandedContent({
   actionLabels: Record<string, string>;
   token: string;
   workspaceId: string;
+  ownerWhatsAppPhone?: string | null;
+  ownerName?: string | null;
 }) {
   const isByHours = project.billingType === "hours";
   const isByPackage = project.billingType === "package";
@@ -541,9 +557,28 @@ function ProjectExpandedContent({
       {/* Comments */}
       <Separator />
       <div>
-        <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-          <MessageSquare className="h-4 w-4" /> Comments
-        </h4>
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <h4 className="text-sm font-semibold flex items-center gap-2">
+            <MessageSquare className="h-4 w-4" /> Comments
+          </h4>
+          {getWhatsAppUrl(
+            ownerWhatsAppPhone,
+            `Halo ${ownerName || ""}, aku mau diskusi soal project ${project.name}.`,
+          ) && (
+            <Button asChild variant="outline" size="sm" className="h-8 gap-1 text-xs text-emerald-700 hover:text-emerald-800">
+              <a
+                href={getWhatsAppUrl(
+                  ownerWhatsAppPhone,
+                  `Halo ${ownerName || ""}, aku mau diskusi soal project ${project.name}.`,
+                ) ?? "#"}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+              </a>
+            </Button>
+          )}
+        </div>
         {comments.length > 0 && (
           <div className="space-y-3 mb-4">
             {comments.map((c) => (
@@ -663,6 +698,8 @@ export function ProjectAccordion({
   clientVisibleActionLabels,
   token,
   workspaceId,
+  ownerWhatsAppPhone,
+  ownerName,
 }: ProjectAccordionProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -745,6 +782,8 @@ export function ProjectAccordion({
                 actionLabels={clientVisibleActionLabels}
                 token={token}
                 workspaceId={workspaceId}
+                ownerWhatsAppPhone={ownerWhatsAppPhone}
+                ownerName={ownerName}
               />
             )}
           </Card>

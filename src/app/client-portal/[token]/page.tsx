@@ -13,6 +13,7 @@ import {
   timeEntries,
   users,
   packages,
+  workspaces,
 } from "@/db/schema";
 import { eq, and, sql, desc, inArray } from "drizzle-orm";
 import { getClientPortalAccess, logPortalAccess } from "@/lib/actions/portal";
@@ -77,6 +78,15 @@ export default async function ClientPortalPage({
   } catch {
     // Non-critical
   }
+
+  const [workspaceContact] = await db
+    .select({
+      name: workspaces.name,
+      phone: workspaces.billingPhone,
+    })
+    .from(workspaces)
+    .where(eq(workspaces.id, client.workspaceId))
+    .limit(1);
 
   // Fetch visible projects
   const clientProjects = await db
@@ -897,6 +907,8 @@ export default async function ClientPortalPage({
               clientVisibleActionLabels={clientVisibleActionLabels}
               token={token}
               workspaceId={client.workspaceId}
+              ownerWhatsAppPhone={workspaceContact?.phone}
+              ownerName={workspaceContact?.name}
             />
           )}
         </section>
