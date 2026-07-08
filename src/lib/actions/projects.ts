@@ -19,7 +19,7 @@ const projectSchema = z.object({
   description: z.string().optional(),
   clientId: z.string().uuid("Valid client required"),
   status: z.enum(["draft", "active", "on_hold", "completed", "cancelled"]).default("active"),
-  billingType: z.enum(["project", "hours"]).default("project"),
+  billingType: z.enum(["project", "hours", "package"]).default("project"),
   currency: z.string().default("IDR"),
   rate: z.number().optional(),
   budget: z.number().optional(),

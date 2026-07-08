@@ -12,6 +12,7 @@ import {
   activityLogs,
   timeEntries,
   users,
+  packages,
 } from "@/db/schema";
 import { eq, and, sql, desc, inArray } from "drizzle-orm";
 import { getClientPortalAccess, logPortalAccess } from "@/lib/actions/portal";
@@ -29,6 +30,7 @@ function formatMinutes(mins: number) {
 }
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   Folder,
@@ -378,6 +380,42 @@ export default async function ClientPortalPage({
     });
   }
 
+  // Fetch packages for "by_package" projects
+  const byPackageProjectIds = clientProjects
+    .filter((p) => p.billingType === "package")
+    .map((p) => p.id);
+
+  const projectPackagesMap = new Map<string, Array<{
+    id: string;
+    name: string;
+    hours: number | null;
+    price: string;
+    currency: string;
+    description: string | null;
+    features: string | null;
+    badge: string | null;
+    sortOrder: number;
+  }>>();
+
+  for (const projectId of byPackageProjectIds) {
+    const pkgs = await db
+      .select({
+        id: packages.id,
+        name: packages.name,
+        hours: packages.hours,
+        price: packages.price,
+        currency: packages.currency,
+        description: packages.description,
+        features: packages.features,
+        badge: packages.badge,
+        sortOrder: packages.sortOrder,
+      })
+      .from(packages)
+      .where(and(eq(packages.projectId, projectId), eq(packages.active, true)))
+      .orderBy(packages.sortOrder);
+    projectPackagesMap.set(projectId, pkgs);
+  }
+
   // Financial summary — invoices for this client
   const clientInvoices = await db
     .select({
@@ -632,6 +670,7 @@ export default async function ClientPortalPage({
                 const projectTimeline = projectTimelineMap.get(project.id) || [];
                 const hoursSummary = projectHoursMap.get(project.id);
                 const isByHours = project.billingType === "hours";
+                const isByPackage = project.billingType === "package";
 
                 return (
                   <Card key={project.id}>
@@ -640,7 +679,7 @@ export default async function ClientPortalPage({
                         <span>{project.name}</span>
                         <div className="flex items-center gap-2">
                           <Badge variant="secondary" className="text-[10px]">
-                            {isByHours ? "By Hours" : "By Project"}
+                            {isByHours ? "By Hours" : isByPackage ? "By Package" : "By Project"}
                           </Badge>
                           <Badge variant="outline">{project.status}</Badge>
                         </div>
@@ -762,6 +801,48 @@ export default async function ClientPortalPage({
                                 </div>
                               </div>
                             ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* By Package: available packages */}
+                      {isByPackage && projectPackagesMap.has(project.id) && (
+                        <div>
+                          <h4 className="text-sm font-semibold mb-3">Available Packages</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {(projectPackagesMap.get(project.id) || []).map((pkg) => {
+                              let features: string[] = [];
+                              try { features = pkg.features ? JSON.parse(pkg.features) : []; } catch { /* ignore */ }
+                              const isHighlighted = !!pkg.badge;
+                              return (
+                                <div
+                                  key={pkg.id}
+                                  className={`relative rounded-lg border p-5 text-center space-y-3 ${isHighlighted ? "border-primary bg-primary/5 shadow-md" : "bg-card"}`}
+                                >
+                                  {pkg.badge && (
+                                    <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px]">{pkg.badge}</Badge>
+                                  )}
+                                  <p className="text-lg font-bold">{pkg.name}</p>
+                                  {pkg.description && <p className="text-xs text-muted-foreground">{pkg.description}</p>}
+                                  <p className="text-2xl font-bold text-primary">
+                                    {new Intl.NumberFormat("en-US", { style: "currency", currency: pkg.currency || "IDR" }).format(Number(pkg.price))}
+                                  </p>
+                                  {features.length > 0 && (
+                                    <ul className="text-xs text-left space-y-1.5 pt-2">
+                                      {features.map((f, i) => (
+                                        <li key={i} className="flex items-start gap-1.5">
+                                          <span className="text-emerald-500 mt-0.5">✓</span>
+                                          <span>{f}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                  <Button variant={isHighlighted ? "default" : "outline"} size="sm" className="w-full mt-3">
+                                    Take This Package
+                                  </Button>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       )}

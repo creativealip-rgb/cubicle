@@ -148,7 +148,7 @@ export const projects = pgTable("projects", {
   name: text("name").notNull(),
   description: text("description"),
   status: text("status", { enum: ["draft", "active", "on_hold", "completed", "cancelled"] }).notNull().default("active"),
-  billingType: text("billing_type", { enum: ["project", "hours"] }).notNull().default("project"),
+  billingType: text("billing_type", { enum: ["project", "hours", "package"] }).notNull().default("project"),
   rate: numeric("rate", { precision: 12, scale: 2 }),
   budget: numeric("budget", { precision: 12, scale: 2 }),
   currency: text("currency").notNull().default("IDR"),
@@ -167,6 +167,24 @@ export const projectMembers = pgTable("project_members", {
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [unique().on(table.projectId, table.userId)]);
+
+// ─── Packages (for "by_package" billing) ───
+
+export const packages = pgTable("packages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  name: text("name").notNull(), // e.g. "40 HOURS", "60 HOURS"
+  hours: integer("hours"), // hours included per month
+  price: numeric("price", { precision: 12, scale: 2 }).notNull(),
+  currency: text("currency").notNull().default("IDR"),
+  description: text("description"), // subtitle
+  features: text("features"), // JSON array of feature strings
+  badge: text("badge"), // e.g. "BEST FOR A TEAM"
+  sortOrder: integer("sort_order").notNull().default(0),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 // ─── Tasks ───
 
