@@ -40,6 +40,7 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => ({}));
   const plan = String(body.plan || "").toLowerCase();
+  const targetWorkspaceId = body.workspaceId ? String(body.workspaceId) : null;
   if (!isPlan(plan)) {
     return NextResponse.json({ error: "Plan tidak valid. Pilih solo atau team." }, { status: 400 });
   }
@@ -47,11 +48,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Plan free tidak butuh pembayaran." }, { status: 400 });
   }
 
-  const [membership] = await db
-    .select({ workspaceId: workspaceMembers.workspaceId, role: workspaceMembers.role })
-    .from(workspaceMembers)
-    .where(eq(workspaceMembers.userId, session.user.id))
-    .limit(1);
+  // Get membership — either for specific workspace or first one
+  const membershipQuery = targetWorkspaceId
+    ? await db
+        .select({ workspaceId: workspaceMembers.workspaceId, role: workspaceMembers.role })
+        .from(workspaceMembers)
+        .where(and(eq(workspaceMembers.userId, session.user.id), eq(workspaceMembers.workspaceId, targetWorkspaceId)))
+        .limit(1)
+    : await db
+        .select({ workspaceId: workspaceMembers.workspaceId, role: workspaceMembers.role })
+        .from(workspaceMembers)
+        .where(eq(workspaceMembers.userId, session.user.id))
+        .limit(1);
+
+  const [membership] = membershipQuery;
 
   if (!membership?.workspaceId) {
     return NextResponse.json({ error: "Workspace tidak ditemukan" }, { status: 404 });

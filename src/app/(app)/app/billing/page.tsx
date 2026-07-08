@@ -103,7 +103,7 @@ export default async function BillingPage() {
                   {plan.features.map((feature) => <li key={feature}>✓ {feature}</li>)}
                 </ul>
                 {paid ? (
-                  <CheckoutButton plan={plan.key} disabled={current || workspace?.role !== "owner"}>
+                  <CheckoutButton plan={plan.key} workspaceId={workspace?.id} disabled={current || workspace?.role !== "owner"}>
                     {current ? "Plan aktif" : workspace?.role !== "owner" ? "Owner only" : plan.key === "solo" ? "Bayar Solo QRIS" : "Bayar Team QRIS"}
                   </CheckoutButton>
                 ) : (

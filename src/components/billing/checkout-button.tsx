@@ -7,10 +7,12 @@ type Plan = "solo" | "team";
 
 export function CheckoutButton({
   plan,
+  workspaceId,
   children,
   disabled = false,
 }: {
   plan: Plan;
+  workspaceId?: string;
   children: React.ReactNode;
   disabled?: boolean;
 }) {
@@ -24,7 +26,7 @@ export function CheckoutButton({
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, ...(workspaceId ? { workspaceId } : {}) }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Gagal membuat checkout");
