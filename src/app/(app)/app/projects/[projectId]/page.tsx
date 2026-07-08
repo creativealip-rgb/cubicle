@@ -62,6 +62,7 @@ export default async function ProjectDetailPage({
       clientVisible: projects.clientVisible,
       clientId: projects.clientId,
       clientName: clients.name,
+      clientPhone: clients.phone,
       createdAt: projects.createdAt,
       selectedPackageId: projects.selectedPackageId,
     })
@@ -359,6 +360,8 @@ export default async function ProjectDetailPage({
               source: c.source,
               createdAt: c.createdAt,
             }))}
+            clientPhone={project.clientPhone}
+            contextTitle={project.name}
           />
         </TabsContent>
 

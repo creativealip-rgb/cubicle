@@ -15,6 +15,7 @@ import {
   Trash2,
   Eye,
   Lock,
+  MessageCircle,
 } from "lucide-react";
 
 interface Comment {
@@ -31,9 +32,11 @@ interface CommentListProps {
   entityType: "project" | "task" | "file" | "invoice";
   entityId: string;
   initialComments: Comment[];
+  clientPhone?: string | null;
+  contextTitle?: string | null;
 }
 
-export function CommentList({ entityType, entityId, initialComments }: CommentListProps) {
+export function CommentList({ entityType, entityId, initialComments, clientPhone, contextTitle }: CommentListProps) {
   const router = useRouter();
   const [comments, setComments] = useState<Comment[]>(initialComments);
   const [body, setBody] = useState("");
@@ -77,6 +80,24 @@ export function CommentList({ entityType, entityId, initialComments }: CommentLi
     if (name) return name.slice(0, 2).toUpperCase();
     if (email) return email.slice(0, 2).toUpperCase();
     return "??";
+  }
+
+  function getWhatsAppReplyUrl(comment: Comment): string | null {
+    if (!clientPhone) return null;
+
+    const phone = clientPhone.replace(/\D/g, "").replace(/^0/, "62");
+    if (!phone) return null;
+
+    const text = [
+      `Halo ${comment.authorName || ""}`.trim() + ",",
+      "",
+      `Aku baca komentar kamu di ${contextTitle || entityType}:`,
+      `“${comment.body}”`,
+      "",
+      "Jawaban aku:",
+    ].join("\n");
+
+    return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
   }
 
   return (
@@ -128,7 +149,10 @@ export function CommentList({ entityType, entityId, initialComments }: CommentLi
       )}
 
       <div className="space-y-3">
-        {comments.map((comment) => (
+        {comments.map((comment) => {
+          const whatsappUrl = getWhatsAppReplyUrl(comment);
+
+          return (
           <div key={comment.id} className="flex gap-3 group">
             <Avatar className="h-8 w-8 flex-shrink-0">
               <AvatarFallback className="text-xs">
@@ -158,17 +182,27 @@ export function CommentList({ entityType, entityId, initialComments }: CommentLi
                 </span>
               </div>
               <p className="text-sm mt-1 whitespace-pre-wrap">{comment.body}</p>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity -ml-1 mt-1"
-                onClick={() => handleDelete(comment.id)}
-              >
-                <Trash2 className="h-3 w-3 text-muted-foreground" />
-              </Button>
+              <div className="mt-1 flex items-center gap-1">
+                {whatsappUrl && comment.source === "portal" && (
+                  <Button asChild variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs text-emerald-700 hover:text-emerald-800">
+                    <a href={whatsappUrl} target="_blank" rel="noreferrer">
+                      <MessageCircle className="h-3 w-3" /> WhatsApp
+                    </a>
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
+                  onClick={() => handleDelete(comment.id)}
+                >
+                  <Trash2 className="h-3 w-3 text-muted-foreground" />
+                </Button>
+              </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
