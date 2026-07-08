@@ -24,6 +24,8 @@ export const users = pgTable("users", {
   image: text("image"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  plan: text("plan").notNull().default("free"), // free | solo | team
+  planExpiresAt: timestamp("plan_expires_at", { withTimezone: true }),
 });
 
 export const sessions = pgTable("sessions", {
@@ -80,8 +82,6 @@ export const workspaces = pgTable("workspaces", {
   taxId: text("tax_id"),
   logoUrl: text("logo_url"),
   replyToEmail: text("reply_to_email"),
-  plan: text("plan").notNull().default("free"), // free | solo | team
-  planExpiresAt: timestamp("plan_expires_at", { withTimezone: true }),
   bookingSlug: text("booking_slug").unique(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

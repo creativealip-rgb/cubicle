@@ -1,8 +1,8 @@
 import { headers } from "next/headers";
-import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { workspaceMembers, workspaces } from "@/db/schema";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckoutButton } from "@/components/billing/checkout-button";
 import { getSubscriptionStatus } from "@/lib/subscription";
@@ -35,20 +35,19 @@ export default async function BillingPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   const userId = session?.user?.id;
 
-  const [workspace] = userId
+  const user = userId
     ? await db
         .select({
-          id: workspaces.id,
-          name: workspaces.name,
-          plan: workspaces.plan,
-          planExpiresAt: workspaces.planExpiresAt,
-          role: workspaceMembers.role,
+          plan: users.plan,
+          planExpiresAt: users.planExpiresAt,
         })
-        .from(workspaceMembers)
-        .innerJoin(workspaces, eq(workspaceMembers.workspaceId, workspaces.id))
-        .where(eq(workspaceMembers.userId, userId))
+        .from(users)
+        .where(eq(users.id, userId))
         .limit(1)
-    : [];
+        .then((rows) => rows[0] ?? null)
+    : null;
+
+  const currentPlan = user?.plan ?? "free";
 
   return (
     <div className="space-y-8">
@@ -65,35 +64,31 @@ export default async function BillingPage() {
           <CardTitle>Plan saat ini</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-slate-600">
-          <p><span className="font-medium text-slate-950">Workspace:</span> {workspace?.name ?? "-"}</p>
-          <p><span className="font-medium text-slate-950">Plan:</span> {(workspace?.plan ?? "free").toUpperCase()}</p>
-          {workspace?.planExpiresAt && (
-            <p><span className="font-medium text-slate-950">Berlaku hingga:</span> {workspace.planExpiresAt.toLocaleDateString("id-ID")}</p>
+          <p><span className="font-medium text-slate-950">Plan:</span> {currentPlan.toUpperCase()}</p>
+          {user?.planExpiresAt && (
+            <p><span className="font-medium text-slate-950">Berlaku hingga:</span> {user.planExpiresAt.toLocaleDateString("id-ID")}</p>
           )}
-          {workspace && (() => {
-            const sub = getSubscriptionStatus(workspace.planExpiresAt, workspace.plan ?? "free");
+          {user && (() => {
+            const sub = getSubscriptionStatus(user.planExpiresAt, currentPlan);
             const badgeClass = sub.status === "active" ? "bg-emerald-50 text-emerald-800" :
               sub.status === "expiring" ? "bg-amber-50 text-amber-800" :
               sub.status === "grace" ? "bg-orange-50 text-orange-800" :
               "bg-red-50 text-red-800";
             return <p className={`mt-2 rounded-lg px-3 py-2 text-sm ${badgeClass}`}>{sub.message}</p>;
           })()}
-          {workspace?.role !== "owner" && (
-            <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-amber-800">Hanya owner workspace yang bisa upgrade.</p>
-          )}
         </CardContent>
       </Card>
 
       <div className="grid gap-5 lg:grid-cols-3">
         {plans.map((plan) => {
-          const current = workspace?.plan === plan.key;
+          const isCurrent = currentPlan === plan.key;
           const paid = plan.key === "solo" || plan.key === "team";
           return (
             <Card key={plan.key} className={plan.key === "solo" ? "border-[#6647F0] shadow-lg" : ""}>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   {plan.name}
-                  {current && <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">Aktif</span>}
+                  {isCurrent && <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">Aktif</span>}
                 </CardTitle>
                 <p className="text-2xl font-semibold text-slate-950">{plan.price}</p>
                 <p className="text-sm text-slate-600">{plan.description}</p>
@@ -103,8 +98,8 @@ export default async function BillingPage() {
                   {plan.features.map((feature) => <li key={feature}>✓ {feature}</li>)}
                 </ul>
                 {paid ? (
-                  <CheckoutButton plan={plan.key} workspaceId={workspace?.id} disabled={current || workspace?.role !== "owner"}>
-                    {current ? "Plan aktif" : workspace?.role !== "owner" ? "Owner only" : plan.key === "solo" ? "Bayar Solo QRIS" : "Bayar Team QRIS"}
+                  <CheckoutButton plan={plan.key} disabled={isCurrent}>
+                    {isCurrent ? "Plan aktif" : plan.key === "solo" ? "Bayar Solo QRIS" : "Bayar Team QRIS"}
                   </CheckoutButton>
                 ) : (
                   <div className="rounded-lg bg-slate-100 px-4 py-2 text-center text-sm font-medium text-slate-600">Plan default</div>

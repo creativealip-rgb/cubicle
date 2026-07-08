@@ -5,7 +5,7 @@ import { headers, cookies } from "next/headers";
 import { eq, and } from "drizzle-orm";
 import { db } from "@/db";
 import { workspaceMembers, workspaces } from "@/db/schema";
-import { canCreateWorkspace, getPlanLimits } from "@/lib/plan";
+import { canCreateWorkspace, getPlanLimits, getUserPlan } from "@/lib/plan";
 
 const COOKIE_NAME = "active_workspace_id";
 
@@ -68,18 +68,17 @@ export async function getUserWorkspaces(): Promise<{
       name: workspaces.name,
       slug: workspaces.slug,
       role: workspaceMembers.role,
-      plan: workspaces.plan,
     })
     .from(workspaceMembers)
     .innerJoin(workspaces, eq(workspaceMembers.workspaceId, workspaces.id))
     .where(eq(workspaceMembers.userId, userId))
     .orderBy(workspaces.name);
 
+  const currentPlan = await getUserPlan(userId);
   const cookieStore = await cookies();
   const activeId = cookieStore.get(COOKIE_NAME)?.value;
   const validIds = new Set(rows.map(r => r.id));
   const activeWorkspaceId = activeId && validIds.has(activeId) ? activeId : rows[0]?.id;
-  const currentPlan = rows.find(r => r.id === activeWorkspaceId)?.plan ?? rows[0]?.plan ?? "free";
 
   const createCheck = await canCreateWorkspace(userId);
   const limits = getPlanLimits(currentPlan);
@@ -116,7 +115,6 @@ export async function createWorkspace(name: string): Promise<{ ok: boolean; erro
       slug,
       ownerId: userId,
       defaultCurrency: "IDR",
-      plan: "free",
     })
     .returning();
 

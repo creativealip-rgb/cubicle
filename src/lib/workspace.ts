@@ -116,7 +116,6 @@ async function createWorkspaceForUser(userId: string): Promise<WorkspaceRow> {
       slug,
       ownerId: userId,
       defaultCurrency: "IDR",
-      plan: "free",
     })
     .onConflictDoNothing({ target: workspaces.slug })
     .returning();

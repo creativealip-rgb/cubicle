@@ -1,67 +1,67 @@
 import { db } from "@/db";
-import { workspaces } from "@/db/schema";
+import { users } from "@/db/schema";
 import { eq, and, isNotNull, sql } from "drizzle-orm";
 
 const GRACE_PERIOD_DAYS = 3;
 const REMINDER_DAYS_BEFORE = [7, 3, 1];
 
 /**
- * Downgrade workspaces whose plan has expired (+ grace period).
- * Returns list of workspace IDs that were downgraded.
+ * Downgrade users whose plan has expired (+ grace period).
+ * Returns list of user IDs that were downgraded.
  */
 export async function expirePlans(): Promise<string[]> {
   const graceCutoff = new Date();
   graceCutoff.setDate(graceCutoff.getDate() - GRACE_PERIOD_DAYS);
 
   const expired = await db
-    .select({ id: workspaces.id, name: workspaces.name, plan: workspaces.plan, planExpiresAt: workspaces.planExpiresAt })
-    .from(workspaces)
+    .select({ id: users.id, name: users.name, plan: users.plan, planExpiresAt: users.planExpiresAt })
+    .from(users)
     .where(
       and(
-        sql`${workspaces.plan} != 'free'`,
-        isNotNull(workspaces.planExpiresAt),
-        sql`${workspaces.planExpiresAt} < ${graceCutoff.toISOString()}`,
+        sql`${users.plan} != 'free'`,
+        isNotNull(users.planExpiresAt),
+        sql`${users.planExpiresAt} < ${graceCutoff.toISOString()}`,
       ),
     );
 
   if (expired.length === 0) return [];
 
   const ids: string[] = [];
-  for (const ws of expired) {
+  for (const user of expired) {
     await db
-      .update(workspaces)
-      .set({ plan: "free", planExpiresAt: null, updatedAt: new Date() })
-      .where(eq(workspaces.id, ws.id));
-    ids.push(ws.id);
-    console.log(`[subscription] downgraded workspace "${ws.name}" (${ws.id}) from ${ws.plan} to free, expired ${ws.planExpiresAt?.toISOString()}`);
+      .update(users)
+      .set({ plan: "free", planExpiresAt: null })
+      .where(eq(users.id, user.id));
+    ids.push(user.id);
+    console.log(`[subscription] downgraded user "${user.name}" (${user.id}) from ${user.plan} to free, expired ${user.planExpiresAt?.toISOString()}`);
   }
 
   return ids;
 }
 
 /**
- * Find workspaces that need renewal reminders.
- * Returns workspaces with daysUntilExpiry for each.
+ * Find users that need renewal reminders.
+ * Returns users with daysUntilExpiry for each.
  */
-export async function getExpiringWorkspaces(): Promise<Array<{ id: string; name: string; plan: string; planExpiresAt: Date; daysUntilExpiry: number }>> {
+export async function getExpiringUsers(): Promise<Array<{ id: string; name: string | null; plan: string; planExpiresAt: Date; daysUntilExpiry: number }>> {
   const now = new Date();
   const lookAhead = new Date();
   lookAhead.setDate(lookAhead.getDate() + 8); // 8 days ahead
 
   const rows = await db
     .select({
-      id: workspaces.id,
-      name: workspaces.name,
-      plan: workspaces.plan,
-      planExpiresAt: workspaces.planExpiresAt,
+      id: users.id,
+      name: users.name,
+      plan: users.plan,
+      planExpiresAt: users.planExpiresAt,
     })
-    .from(workspaces)
+    .from(users)
     .where(
       and(
-        sql`${workspaces.plan} != 'free'`,
-        isNotNull(workspaces.planExpiresAt),
-        sql`${workspaces.planExpiresAt} > ${now.toISOString()}`,
-        sql`${workspaces.planExpiresAt} < ${lookAhead.toISOString()}`,
+        sql`${users.plan} != 'free'`,
+        isNotNull(users.planExpiresAt),
+        sql`${users.planExpiresAt} > ${now.toISOString()}`,
+        sql`${users.planExpiresAt} < ${lookAhead.toISOString()}`,
       ),
     );
 
@@ -75,7 +75,7 @@ export async function getExpiringWorkspaces(): Promise<Array<{ id: string; name:
 }
 
 /**
- * Get subscription status summary for a workspace.
+ * Get subscription status summary for a user.
  */
 export function getSubscriptionStatus(planExpiresAt: Date | null, plan: string): {
   status: "active" | "expiring" | "grace" | "expired";

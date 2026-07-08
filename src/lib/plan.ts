@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { workspaces, workspaceMembers } from "@/db/schema";
+import { users, workspaceMembers } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 
 export type PlanTier = "free" | "solo" | "team";
@@ -203,14 +203,13 @@ export async function canCreateWorkspace(userId: string): Promise<{ allowed: boo
     .from(workspaceMembers)
     .where(eq(workspaceMembers.userId, userId));
 
-  const [membership] = await db
-    .select({ plan: workspaces.plan })
-    .from(workspaceMembers)
-    .innerJoin(workspaces, eq(workspaceMembers.workspaceId, workspaces.id))
-    .where(eq(workspaceMembers.userId, userId))
+  const [user] = await db
+    .select({ plan: users.plan })
+    .from(users)
+    .where(eq(users.id, userId))
     .limit(1);
 
-  const plan = membership?.plan ?? "free";
+  const plan = user?.plan ?? "free";
   const limits = getPlanLimits(plan);
 
   if (limits.maxWorkspaces > 0 && count >= limits.maxWorkspaces) {
@@ -225,14 +224,14 @@ export async function canCreateWorkspace(userId: string): Promise<{ allowed: boo
   return { allowed: true };
 }
 
-export async function canInviteMember(workspaceId: string): Promise<{ allowed: boolean; reason?: string }> {
-  const [ws] = await db
-    .select({ plan: workspaces.plan })
-    .from(workspaces)
-    .where(eq(workspaces.id, workspaceId))
+export async function canInviteMember(userId: string): Promise<{ allowed: boolean; reason?: string }> {
+  const [user] = await db
+    .select({ plan: users.plan })
+    .from(users)
+    .where(eq(users.id, userId))
     .limit(1);
 
-  const plan = ws?.plan ?? "free";
+  const plan = user?.plan ?? "free";
   const limits = getPlanLimits(plan);
 
   if (!limits.canInviteMembers) {
@@ -244,28 +243,17 @@ export async function canInviteMember(workspaceId: string): Promise<{ allowed: b
     };
   }
 
-  if (limits.maxMembers > 0) {
-    const [{ count }] = await db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(workspaceMembers)
-      .where(eq(workspaceMembers.workspaceId, workspaceId));
-
-    if (count >= limits.maxMembers) {
-      return { allowed: false, reason: `Maksimal ${limits.maxMembers} anggota. Upgrade untuk lebih.` };
-    }
-  }
-
   return { allowed: true };
 }
 
 /**
- * Get workspace plan from workspace ID.
+ * Get user plan from user ID.
  */
-export async function getWorkspacePlan(workspaceId: string): Promise<string> {
-  const [ws] = await db
-    .select({ plan: workspaces.plan })
-    .from(workspaces)
-    .where(eq(workspaces.id, workspaceId))
+export async function getUserPlan(userId: string): Promise<string> {
+  const [user] = await db
+    .select({ plan: users.plan })
+    .from(users)
+    .where(eq(users.id, userId))
     .limit(1);
-  return ws?.plan ?? "free";
+  return user?.plan ?? "free";
 }

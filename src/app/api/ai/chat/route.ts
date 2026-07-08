@@ -135,9 +135,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Rate limit: AI requests per day based on plan
-  const { getWorkspacePlan, checkWorkspaceRateLimit, getPlanLimits } = await import("@/lib/plan");
-  const plan = await getWorkspacePlan(wsId);
+  // Rate limit: AI requests per day based on plan (plan is per-user)
+  const { getUserPlan, checkWorkspaceRateLimit, getPlanLimits } = await import("@/lib/plan");
+  const plan = await getUserPlan(session.user.id);
   const limits = getPlanLimits(plan);
 
   if (!limits.hasAiAssistant) {

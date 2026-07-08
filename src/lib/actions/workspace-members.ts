@@ -26,8 +26,8 @@ export async function inviteMember(email: string, role: "member" | "viewer" = "m
 
   const workspaceId = await getWorkspaceForCurrentUser();
 
-  // Check plan
-  const inviteCheck = await canInviteMember(workspaceId);
+  // Check plan (plan is per-user)
+  const inviteCheck = await canInviteMember(userId);
   if (!inviteCheck.allowed) return { ok: false, error: inviteCheck.reason };
 
   // Check inviter is owner or member

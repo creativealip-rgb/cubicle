@@ -1,9 +1,9 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { pakasirPayments, workspaceMembers, workspaces } from "@/db/schema";
+import { pakasirPayments, users, workspaceMembers } from "@/db/schema";
 import { createPakasirTransaction, isPakasirConfigured, pakasirPaymentUrl } from "@/lib/pakasir";
 
 const PLANS = {
@@ -40,7 +40,6 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => ({}));
   const plan = String(body.plan || "").toLowerCase();
-  const targetWorkspaceId = body.workspaceId ? String(body.workspaceId) : null;
   if (!isPlan(plan)) {
     return NextResponse.json({ error: "Plan tidak valid. Pilih solo atau team." }, { status: 400 });
   }
@@ -48,55 +47,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Plan free tidak butuh pembayaran." }, { status: 400 });
   }
 
-  // Get membership — either for specific workspace or first one
-  const membershipQuery = targetWorkspaceId
-    ? await db
-        .select({ workspaceId: workspaceMembers.workspaceId, role: workspaceMembers.role })
-        .from(workspaceMembers)
-        .where(and(eq(workspaceMembers.userId, session.user.id), eq(workspaceMembers.workspaceId, targetWorkspaceId)))
-        .limit(1)
-    : await db
-        .select({ workspaceId: workspaceMembers.workspaceId, role: workspaceMembers.role })
-        .from(workspaceMembers)
-        .where(eq(workspaceMembers.userId, session.user.id))
-        .limit(1);
-
-  const [membership] = membershipQuery;
-
-  if (!membership?.workspaceId) {
-    return NextResponse.json({ error: "Workspace tidak ditemukan" }, { status: 404 });
-  }
-  if (membership.role !== "owner") {
-    return NextResponse.json({ error: "Hanya owner workspace yang bisa upgrade" }, { status: 403 });
-  }
-
-  const [workspace] = await db
-    .select({
-      id: workspaces.id,
-      slug: workspaces.slug,
-      plan: workspaces.plan,
-      planExpiresAt: workspaces.planExpiresAt,
-    })
-    .from(workspaces)
-    .where(and(eq(workspaces.id, membership.workspaceId), eq(workspaces.ownerId, session.user.id)))
+  // Get user plan
+  const [user] = await db
+    .select({ plan: users.plan, planExpiresAt: users.planExpiresAt })
+    .from(users)
+    .where(eq(users.id, session.user.id))
     .limit(1);
 
-  if (!workspace) {
-    return NextResponse.json({ error: "Workspace owner mismatch" }, { status: 403 });
+  if (!user) {
+    return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
   }
 
-  const currentPlan = (workspace.plan ?? "free") as Plan;
+  const currentPlan = (user.plan ?? "free") as Plan;
   const now = new Date();
 
   if (currentPlan === plan) {
     return NextResponse.json(
-      { error: `Workspace sudah di plan ${PLANS[plan].label}` },
+      { error: `Kamu sudah di plan ${PLANS[plan].label}` },
       { status: 409 },
     );
   }
 
   if (!isUpgrade(currentPlan, plan)) {
-    if (currentPlan !== "free" && workspace.planExpiresAt && workspace.planExpiresAt > now) {
+    if (currentPlan !== "free" && user.planExpiresAt && user.planExpiresAt > now) {
       return NextResponse.json(
         { error: "Downgrade belum tersedia. Plan aktif masih berjalan." },
         { status: 409 },
@@ -109,8 +82,19 @@ export async function POST(request: Request) {
     );
   }
 
+  // Still need a workspace for orderId generation and payment record
+  const [membership] = await db
+    .select({ workspaceId: workspaceMembers.workspaceId, role: workspaceMembers.role })
+    .from(workspaceMembers)
+    .where(eq(workspaceMembers.userId, session.user.id))
+    .limit(1);
+
+  if (!membership?.workspaceId) {
+    return NextResponse.json({ error: "Workspace tidak ditemukan" }, { status: 404 });
+  }
+
   const amount = PLANS[plan].amount;
-  const shortWs = workspace.id.replace(/-/g, "").slice(0, 10).toUpperCase();
+  const shortWs = membership.workspaceId.replace(/-/g, "").slice(0, 10).toUpperCase();
   const orderId = `CUB-${shortWs}-${plan.toUpperCase()}-${Date.now()}`;
 
   try {
@@ -125,7 +109,7 @@ export async function POST(request: Request) {
     });
 
     await db.insert(pakasirPayments).values({
-      workspaceId: workspace.id,
+      workspaceId: membership.workspaceId,
       orderId,
       plan,
       amount: String(amount),

@@ -2,7 +2,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { clients, projects, workspaces, workspaceMembers } from "@/db/schema";
+import { clients, projects, users, workspaceMembers } from "@/db/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import Link from "next/link";
@@ -49,9 +49,9 @@ export default async function ClientsPage({
     .limit(1);
   const canWrite = member?.role === "owner" || member?.role === "member";
 
-  // Check plan for limit enforcement
-  const [workspace] = await db.select({ plan: workspaces.plan }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
-  const currentPlan = workspace?.plan ?? "free";
+  // Check plan for limit enforcement (plan is per-user)
+  const [userPlan] = await db.select({ plan: users.plan }).from(users).where(eq(users.id, user.id)).limit(1);
+  const currentPlan = userPlan?.plan ?? "free";
   const [{ clientCount }] = await db.select({ clientCount: sql<number>`count(*)::int` }).from(clients).where(eq(clients.workspaceId, workspaceId));
   const isAtLimit = currentPlan === "free" && clientCount >= 3;
 

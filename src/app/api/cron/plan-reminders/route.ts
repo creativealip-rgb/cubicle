@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getExpiringWorkspaces } from "@/lib/subscription";
+import { getExpiringUsers } from "@/lib/subscription";
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
@@ -14,16 +14,16 @@ export async function GET(request: Request) {
   }
 
   try {
-    const expiring = await getExpiringWorkspaces();
+    const expiring = await getExpiringUsers();
 
-    for (const ws of expiring) {
+    for (const user of expiring) {
       // TODO: send email via Resend when production-ready
       console.log(
-        `[cron/plan-reminders] workspace "${ws.name}" (${ws.id}) — plan ${ws.plan} expires in ${ws.daysUntilExpiry} day(s)`,
+        `[cron/plan-reminders] user "${user.name}" (${user.id}) — plan ${user.plan} expires in ${user.daysUntilExpiry} day(s)`,
       );
     }
 
-    return NextResponse.json({ ok: true, reminders: expiring.length, workspaces: expiring });
+    return NextResponse.json({ ok: true, reminders: expiring.length, users: expiring });
   } catch (err) {
     console.error("[cron/plan-reminders] error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

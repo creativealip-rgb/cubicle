@@ -42,9 +42,9 @@ const clientSchema = z.object({
 async function assertCanCreateClient(workspaceId: string, userId: string) {
   await assertWorkspaceWritable(db, userId, workspaceId);
 
-  // Check plan limits
-  const { getWorkspacePlan, checkEntityLimit } = await import("@/lib/plan");
-  const plan = await getWorkspacePlan(workspaceId);
+  // Check plan limits (plan is per-user, not per-workspace)
+  const { getUserPlan, checkEntityLimit } = await import("@/lib/plan");
+  const plan = await getUserPlan(userId);
   const clientLimit = await checkEntityLimit(workspaceId, "clients", plan);
   if (!clientLimit.allowed) {
     throw new Error(clientLimit.reason!);

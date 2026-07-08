@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { pakasirPayments, workspaces } from "@/db/schema";
+import { pakasirPayments, users, workspaces } from "@/db/schema";
 import { getPakasirTransactionDetail, pakasirProject, type PakasirWebhook } from "@/lib/pakasir";
 
 export async function POST(request: Request) {
@@ -47,11 +47,19 @@ export async function POST(request: Request) {
   const paidAt = body.completed_at ? new Date(body.completed_at) : new Date();
   const expiresAt = new Date(paidAt.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-  await db.update(workspaces).set({
-    plan: payment.plan,
-    planExpiresAt: expiresAt,
-    updatedAt: new Date(),
-  }).where(eq(workspaces.id, payment.workspaceId));
+  // Update the workspace OWNER's plan (user-level, not workspace-level)
+  const [workspace] = await db
+    .select({ ownerId: workspaces.ownerId })
+    .from(workspaces)
+    .where(eq(workspaces.id, payment.workspaceId))
+    .limit(1);
+
+  if (workspace?.ownerId) {
+    await db.update(users).set({
+      plan: payment.plan,
+      planExpiresAt: expiresAt,
+    }).where(eq(users.id, workspace.ownerId));
+  }
 
   await db.update(pakasirPayments).set({
     status: "completed",
