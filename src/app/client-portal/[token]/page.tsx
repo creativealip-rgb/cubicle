@@ -28,26 +28,26 @@ function formatMinutes(mins: number) {
   const m = mins % 60;
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
-  Folder,
+  FolderOpen,
+  DollarSign,
+  Clock,
+  AlertCircle,
+  Download,
+  BarChart3,
+  Calendar,
   FileText,
-  CheckCircle2,
-  MessageSquare,
   Activity,
 } from "lucide-react";
-import { PortalProjectCard } from "@/components/portal/portal-project-card";
-import { PortalTaskList } from "@/components/portal/portal-task-list";
-import { PortalFileList } from "@/components/portal/portal-file-list";
 import { PortalCommentForm } from "@/components/portal/portal-comment-form";
-import { PortalRequestList } from "@/components/portal/portal-request-list";
-import { CustomPackageRequestForm } from "@/components/portal/custom-package-request-form";
+import { ProjectAccordion } from "@/components/portal/project-accordion";
+import { ActivityFeed, type ActivityItem } from "@/components/portal/activity-feed";
 import { getCustomPackageRequestsByToken } from "@/lib/actions/custom-package-requests";
 import { getPackageOrdersByToken } from "@/lib/actions/package-orders";
-import { PackageOrderButton } from "@/components/portal/package-order-button";
 
 export default async function ClientPortalPage({
   params,
@@ -611,6 +611,121 @@ export default async function ClientPortalPage({
         : true),
   );
 
+  // ─── Activity Feed: aggregate recent events ───────────────────────────
+  const activityItems: ActivityItem[] = [];
+
+  // Invoice events
+  for (const inv of clientInvoices) {
+    const projectName = inv.projectId
+      ? clientProjects.find((p) => p.id === inv.projectId)?.name || "Unknown Project"
+      : "General";
+    if (inv.status === "paid") {
+      activityItems.push({
+        id: `inv-paid-${inv.id}`,
+        type: "invoice",
+        description: `${inv.invoiceNumber || "Invoice"} paid — ${new Intl.NumberFormat("en-US", { style: "currency", currency: inv.currency }).format(Number(inv.total))}`,
+        date: new Date(inv.issueDate || inv.dueDate || Date.now()),
+        icon: "invoice",
+      });
+    } else if (inv.status === "sent" || inv.status === "viewed") {
+      activityItems.push({
+        id: `inv-sent-${inv.id}`,
+        type: "invoice",
+        description: `${inv.invoiceNumber || "Invoice"} sent — ${new Intl.NumberFormat("en-US", { style: "currency", currency: inv.currency }).format(Number(inv.total))} (${projectName})`,
+        date: new Date(inv.issueDate || Date.now()),
+        icon: "invoice",
+      });
+    }
+  }
+
+  // Time entries
+  for (const [projectId, entries] of byHoursEntriesMap) {
+    const projectName = clientProjects.find((p) => p.id === projectId)?.name || "Project";
+    for (const entry of entries.slice(0, 5)) {
+      const entryDate = entry.startTime ? new Date(entry.startTime) : new Date();
+      activityItems.push({
+        id: `te-${entry.id}`,
+        type: "time_entry",
+        description: `${formatMinutes(entry.durationMinutes)} logged on ${projectName}`,
+        date: entryDate,
+        icon: "clock",
+      });
+    }
+  }
+
+  // Task status changes from timeline
+  for (const [projectId, timeline] of projectTimelineMap) {
+    const projectName = clientProjects.find((p) => p.id === projectId)?.name || "Project";
+    for (const event of timeline) {
+      if (event.action === "updated_task_status" || event.action === "created_task") {
+        activityItems.push({
+          id: `tl-${event.id}`,
+          type: "task",
+          description: `${clientVisibleActionLabels[event.action] ?? event.action.replace(/_/g, " ")} in ${projectName}`,
+          date: new Date(event.createdAt),
+          icon: event.action === "updated_task_status" ? "check" : "project",
+        });
+      }
+    }
+  }
+
+  // Project creation
+  for (const proj of clientProjects) {
+    activityItems.push({
+      id: `proj-${proj.id}`,
+      type: "project",
+      description: `Project "${proj.name}" created`,
+      date: new Date(proj.startDate || Date.now()),
+      icon: "project",
+    });
+  }
+
+  // Sort by date descending, take last 8
+  activityItems.sort((a, b) => b.date.getTime() - a.date.getTime());
+  const recentActivities = activityItems.slice(0, 8);
+
+  // ─── Hero helpers ────────────────────────────────────────────────────
+  function fmtAmt(idr: number, usd: number) {
+    const parts: string[] = [];
+    if (idr > 0) parts.push(formatIDR(idr));
+    if (usd > 0) parts.push(`$${usd.toLocaleString("en-US", { minimumFractionDigits: 0 })}`);
+    return parts.join(" + ") || "—";
+  }
+
+  const activeCount = clientProjects.filter((p) => p.status === "active").length;
+
+  // Package hours for hero
+  const packageProjects = clientProjects.filter((p) => p.billingType === "package" && p.selectedPackageId);
+  let heroPackageLabel: string | null = null;
+  let heroPackagePercent: number | null = null;
+  if (packageProjects.length > 0) {
+    const pkg = packageProjects[0];
+    const selectedPkg = selectedPackageMap.get(pkg.selectedPackageId!);
+    const hoursSummary = projectHoursMap.get(pkg.id);
+    if (selectedPkg?.hours && hoursSummary) {
+      const totalH = selectedPkg.hours;
+      const usedH = Math.round(hoursSummary.totalMinutes / 60);
+      heroPackageLabel = `${usedH}h / ${totalH}h`;
+      heroPackagePercent = totalH > 0 ? Math.round((hoursSummary.totalMinutes / (totalH * 60)) * 100) : 0;
+    }
+  }
+
+  // Fallback: show hours this month for by_hours projects
+  let heroHoursLabel: string | null = null;
+  if (!heroPackageLabel) {
+    const byHoursProjects = clientProjects.filter((p) => p.billingType === "hours");
+    if (byHoursProjects.length > 0) {
+      let totalHrs = 0;
+      for (const p of byHoursProjects) {
+        const hs = projectHoursMap.get(p.id);
+        if (hs) totalHrs += hs.totalMinutes;
+      }
+      if (totalHrs > 0) {
+        heroHoursLabel = formatMinutes(totalHrs);
+      }
+    }
+  }
+
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="max-w-5xl mx-auto py-12 px-4 space-y-8">
@@ -624,81 +739,87 @@ export default async function ClientPortalPage({
           </p>
         </div>
 
-        {/* Financial Summary */}
-        {(() => {
-          // Calculate per billing type, grouped by currency
-          let byProjectIDR = 0;
-          let byProjectUSD = 0;
-          let byHoursIDR = 0;
-          let byHoursUSD = 0;
-          for (const proj of clientProjects) {
-            const projInvs = projectInvoicesMap.get(proj.id) || [];
-            for (const inv of projInvs) {
-              const amt = Number(inv.total) || 0;
-              const isUSD = inv.currency === "USD";
-              if (proj.billingType === "hours") {
-                if (isUSD) byHoursUSD += amt;
-                else byHoursIDR += amt;
-              } else {
-                if (isUSD) byProjectUSD += amt;
-                else byProjectIDR += amt;
-              }
-            }
-          }
-
-          function fmtAmt(idr: number, usd: number) {
-            const parts: string[] = [];
-            if (idr > 0) parts.push(formatIDR(idr));
-            if (usd > 0) parts.push(`$${usd.toLocaleString("en-US", { minimumFractionDigits: 0 })}`);
-            return parts.join(" + ") || "—";
-          }
-
-          return (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-bold text-emerald-600">{fmtAmt(totalPaidIDR, totalPaidUSD)}</p>
-                  <p className="text-xs text-muted-foreground">Total Paid</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-bold text-amber-600">{fmtAmt(totalOutstandingIDR, totalOutstandingUSD)}</p>
-                  <p className="text-xs text-muted-foreground">Outstanding</p>
-                </CardContent>
-              </Card>
-              {(byProjectIDR > 0 || byProjectUSD > 0) && (
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <p className="text-2xl font-bold text-blue-600">{fmtAmt(byProjectIDR, byProjectUSD)}</p>
-                    <p className="text-xs text-muted-foreground">By Project</p>
-                  </CardContent>
-                </Card>
+        {/* ─── 1. Hero Summary ──────────────────────────────── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <FolderOpen className="h-4 w-4 text-blue-500" />
+                <span className="text-xs text-muted-foreground">Active Projects</span>
+              </div>
+              <p className="text-2xl font-bold text-blue-600">{activeCount}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <DollarSign className="h-4 w-4 text-emerald-500" />
+                <span className="text-xs text-muted-foreground">Total Spent (YTD)</span>
+              </div>
+              <p className="text-2xl font-bold text-emerald-600">{fmtAmt(totalPaidIDR, totalPaidUSD)}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <AlertCircle className="h-4 w-4 text-amber-500" />
+                <span className="text-xs text-muted-foreground">Outstanding</span>
+              </div>
+              <p className="text-2xl font-bold text-amber-600">{fmtAmt(totalOutstandingIDR, totalOutstandingUSD)}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Clock className="h-4 w-4 text-purple-500" />
+                <span className="text-xs text-muted-foreground">
+                  {heroPackageLabel ? "Package Hours" : "Hours This Month"}
+                </span>
+              </div>
+              <p className="text-2xl font-bold text-purple-600">
+                {heroPackageLabel || heroHoursLabel || "—"}
+              </p>
+              {heroPackagePercent != null && (
+                <div className="mt-2 h-1.5 w-full rounded-full bg-slate-200">
+                  <div
+                    className={`h-full rounded-full ${heroPackagePercent > 90 ? "bg-red-500" : heroPackagePercent > 70 ? "bg-amber-500" : "bg-emerald-500"}`}
+                    style={{ width: `${Math.min(heroPackagePercent, 100)}%` }}
+                  />
+                </div>
               )}
-              {(byHoursIDR > 0 || byHoursUSD > 0) && (
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <p className="text-2xl font-bold text-purple-600">{fmtAmt(byHoursIDR, byHoursUSD)}</p>
-                    <p className="text-xs text-muted-foreground">By Hours</p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          );
-        })()}
+            </CardContent>
+          </Card>
+        </div>
 
+        {/* ─── 2. Quick Actions Bar ─────────────────────────── */}
+        <div className="flex flex-wrap gap-3">
+          <Button variant="outline" size="sm" className="gap-2">
+            <Download className="h-4 w-4" />
+            Download All Invoices
+          </Button>
+          <Button variant="outline" size="sm" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Request Report
+          </Button>
+          <Button variant="outline" size="sm" className="gap-2">
+            <Calendar className="h-4 w-4" />
+            Request Meeting
+          </Button>
+        </div>
+
+        {/* ─── 3. Activity Feed (replaces "Requests & reminders") */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" /> Requests & reminders
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Activity className="h-5 w-5" /> Recent Activity
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <PortalRequestList requests={clientPortalRequests} token={token} />
+            <ActivityFeed items={recentActivities} />
           </CardContent>
         </Card>
 
-        {/* Projects Section */}
+        {/* ─── 4. Projects (compact accordion) ──────────────── */}
         <section>
           <h2 className="text-xl font-semibold mb-4">
             Projects ({clientProjects.length})
@@ -706,467 +827,81 @@ export default async function ClientPortalPage({
           {clientProjects.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
-                <Folder className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                <FolderOpen className="h-12 w-12 mx-auto mb-3 opacity-30" />
                 <p>No projects have been shared with you yet.</p>
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
-              {clientProjects.map((project) => {
-                const projectTasks = projectTasksMap.get(project.id) || [];
-                const projectFiles = projectFilesMap.get(project.id) || [];
-                const projectComments = projectCommentsMap.get(project.id) || [];
-                const projectTimeline = projectTimelineMap.get(project.id) || [];
-                const hoursSummary = projectHoursMap.get(project.id);
-                const isByHours = project.billingType === "hours";
-                const isByPackage = project.billingType === "package";
-
-                return (
-                  <Card key={project.id}>
-                    <CardHeader>
-                      <CardTitle className="flex items-center justify-between">
-                        <span>{project.name}</span>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary" className="text-[10px]">
-                            {isByHours ? "By Hours" : isByPackage ? "By Package" : "By Project"}
-                          </Badge>
-                          <Badge variant="outline">{project.status}</Badge>
-                        </div>
-                      </CardTitle>
-                      {project.description && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {project.description}
-                        </p>
-                      )}
-                      {(project.startDate || project.finishDate) && (
-                        <p className="text-xs text-muted-foreground">
-                          {project.startDate && `Start: ${new Date(project.startDate).toLocaleDateString()}`}
-                          {project.startDate && project.finishDate && " · "}
-                          {project.finishDate && `Finish: ${new Date(project.finishDate).toLocaleDateString()}`}
-                        </p>
-                      )}
-                      {isByHours && project.rate && (
-                        <p className="text-xs text-muted-foreground">
-                          Rate: {new Intl.NumberFormat("en-US", { style: "currency", currency: project.currency || "IDR" }).format(Number(project.rate))}/hr
-                        </p>
-                      )}
-                      {isByPackage && project.selectedPackageId && selectedPackageMap.has(project.selectedPackageId) && (
-                        <div>
-                          <p className="text-lg font-semibold mt-1">
-                            {selectedPackageMap.get(project.selectedPackageId)!.name}
-                            {selectedPackageMap.get(project.selectedPackageId)!.hours && ` — ${selectedPackageMap.get(project.selectedPackageId)!.hours} HOURS`}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Rate: {new Intl.NumberFormat("en-US", { style: "currency", currency: selectedPackageMap.get(project.selectedPackageId)!.currency || project.currency || "IDR" }).format(Number(selectedPackageMap.get(project.selectedPackageId)!.price))}/month
-                          </p>
-                        </div>
-                      )}
-                      {!isByHours && !isByPackage && project.budget && (
-                        <p className="text-xs text-muted-foreground">
-                          Budget: {new Intl.NumberFormat("en-US", { style: "currency", currency: project.currency || "IDR" }).format(Number(project.budget))}
-                        </p>
-                      )}
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <PortalProjectCard
-                        project={{
-                          id: project.id,
-                          name: project.name,
-                          status: project.status,
-                          description: project.description,
-                        }}
-                      />
-
-                      {/* By Project: progress bar + task summary */}
-                      {!isByHours && projectTasks.length > 0 && (
-                        <div className="rounded-lg border bg-muted/30 p-4">
-                          <h4 className="text-sm font-semibold mb-3">Progress</h4>
-                          {(() => {
-                            const done = projectTasks.filter(t => t.status === "done").length;
-                            const total = projectTasks.length;
-                            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-                            return (
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between text-sm">
-                                  <span>{done} of {total} tasks completed</span>
-                                  <span className="font-semibold">{pct}%</span>
-                                </div>
-                                <div className="h-2.5 w-full rounded-full bg-slate-200">
-                                  <div
-                                    className="h-full rounded-full bg-emerald-500 transition-all"
-                                    style={{ width: `${pct}%` }}
-                                  />
-                                </div>
-                                <div className="flex gap-3 text-xs text-muted-foreground mt-1">
-                                  {projectTasks.filter(t => t.status === "in_progress").length > 0 && (
-                                    <span>🔵 {projectTasks.filter(t => t.status === "in_progress").length} in progress</span>
-                                  )}
-                                  {projectTasks.filter(t => t.status === "todo").length > 0 && (
-                                    <span>⚪ {projectTasks.filter(t => t.status === "todo").length} pending</span>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      )}
-
-                      {/* By Hours / Assigned Package: enhanced summary + recent entries */}
-                      {(isByHours || (isByPackage && project.selectedPackageId)) && hoursSummary && (() => {
-                        const selectedPkg = isByPackage && project.selectedPackageId ? selectedPackageMap.get(project.selectedPackageId) : null;
-                        const packageTotalMinutes = selectedPkg?.hours ? selectedPkg.hours * 60 : null;
-                        const usedMinutes = hoursSummary.totalMinutes;
-                        const remainingMinutes = packageTotalMinutes != null ? Math.max(0, packageTotalMinutes - usedMinutes) : null;
-                        const usagePercent = packageTotalMinutes != null && packageTotalMinutes > 0 ? Math.round((usedMinutes / packageTotalMinutes) * 100) : null;
-
-                        return (
-                          <div className="rounded-lg border bg-muted/30 p-4">
-                            <h4 className="text-sm font-semibold mb-3">
-                              {isByPackage ? "Package Hours" : "Hours Summary"}
-                            </h4>
-                            <div className={`grid gap-4 text-center ${isByPackage && selectedPkg ? "grid-cols-4" : "grid-cols-3"}`}>
-                              {isByPackage && selectedPkg ? (
-                                <>
-                                  <div>
-                                    <p className="text-2xl font-bold">{formatMinutes(packageTotalMinutes!)}</p>
-                                    <p className="text-xs text-muted-foreground">Package Total</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-2xl font-bold text-amber-600">{formatMinutes(usedMinutes)}</p>
-                                    <p className="text-xs text-muted-foreground">Used</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-2xl font-bold text-emerald-600">{formatMinutes(remainingMinutes!)}</p>
-                                    <p className="text-xs text-muted-foreground">Remaining</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-2xl font-bold">{hoursSummary.entryCount}</p>
-                                    <p className="text-xs text-muted-foreground">Entries</p>
-                                  </div>
-                                </>
-                              ) : (
-                                <>
-                                  <div>
-                                    <p className="text-2xl font-bold">{formatMinutes(hoursSummary.totalMinutes)}</p>
-                                    <p className="text-xs text-muted-foreground">Total Tracked</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-2xl font-bold text-emerald-600">{formatMinutes(hoursSummary.billableMinutes)}</p>
-                                    <p className="text-xs text-muted-foreground">Billable</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-2xl font-bold">{hoursSummary.entryCount}</p>
-                                    <p className="text-xs text-muted-foreground">Entries</p>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                            {/* Progress bar for assigned packages */}
-                            {usagePercent != null && (
-                              <div className="mt-3 space-y-1">
-                                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                  <span>{usagePercent}% used</span>
-                                  <span>{formatMinutes(remainingMinutes!)} left</span>
-                                </div>
-                                <div className="h-2.5 w-full rounded-full bg-slate-200">
-                                  <div
-                                    className={`h-full rounded-full transition-all ${usagePercent > 90 ? "bg-red-500" : usagePercent > 70 ? "bg-amber-500" : "bg-emerald-500"}`}
-                                    style={{ width: `${Math.min(usagePercent, 100)}%` }}
-                                  />
-                                </div>
-                              </div>
-                            )}
-                            {hoursSummary.tags.length > 0 && (
-                              <div className="mt-3 flex flex-wrap gap-1">
-                                {hoursSummary.tags.map((tag) => (
-                                  <Badge key={tag} variant="outline" className="text-[10px]">{tag}</Badge>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })()}
-
-                      {/* By Hours / Assigned Package: recent time entries */}
-                      {(isByHours || (isByPackage && project.selectedPackageId)) && byHoursEntriesMap.has(project.id) && (
-                        <div>
-                          <h4 className="text-sm font-semibold mb-2">Recent Time Entries</h4>
-                          <div className="rounded-lg border divide-y">
-                            {(byHoursEntriesMap.get(project.id) || []).slice(0, 8).map((entry) => (
-                              <div key={entry.id} className="flex items-center justify-between gap-3 p-3 text-sm">
-                                <div className="min-w-0 flex-1">
-                                  <p className="truncate font-medium">{entry.description || "Untitled"}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {entry.startTime ? new Date(entry.startTime).toLocaleDateString() : "—"}
-                                    {entry.userName && ` · ${entry.userName}`}
-                                  </p>
-                                </div>
-                                <div className="flex items-center gap-2 shrink-0">
-                                  <span className="font-mono text-sm font-medium">{formatMinutes(entry.durationMinutes)}</span>
-                                  {entry.tags && entry.tags.split(",").slice(0, 2).map(tag => (
-                                    <Badge key={tag.trim()} variant="outline" className="text-[9px]">{tag.trim()}</Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* By Package: no package assigned yet */}
-                      {isByPackage && !project.selectedPackageId && (
-                        <div className="rounded-lg border bg-muted/30 p-6 text-center">
-                          <p className="text-sm text-muted-foreground">
-                            Package not assigned yet. Your admin will assign a package to this project.
-                          </p>
-                        </div>
-                      )}
-
-                      {/* By Package: available packages — only show when no package is assigned */}
-                      {isByPackage && !project.selectedPackageId && projectPackagesMap.has(project.id) && (
-                        <div>
-                          <h4 className="text-sm font-semibold mb-3">Available Packages</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {(projectPackagesMap.get(project.id) || []).map((pkg) => {
-                              let features: string[] = [];
-                              try { features = pkg.features ? JSON.parse(pkg.features) : []; } catch { /* ignore */ }
-                              const isHighlighted = !!pkg.badge;
-                              return (
-                                <div
-                                  key={pkg.id}
-                                  className={`relative rounded-lg border p-5 text-center space-y-3 ${isHighlighted ? "border-primary bg-primary/5 shadow-md" : "bg-card"}`}
-                                >
-                                  {pkg.badge && (
-                                    <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px]">{pkg.badge}</Badge>
-                                  )}
-                                  <p className="text-lg font-bold">{pkg.name}</p>
-                                  {pkg.description && <p className="text-xs text-muted-foreground">{pkg.description}</p>}
-                                  <p className="text-2xl font-bold text-primary">
-                                    {new Intl.NumberFormat("en-US", { style: "currency", currency: pkg.currency || "IDR" }).format(Number(pkg.price))}
-                                  </p>
-                                  {features.length > 0 && (
-                                    <ul className="text-xs text-left space-y-1.5 pt-2">
-                                      {features.map((f, i) => (
-                                        <li key={i} className="flex items-start gap-1.5">
-                                          <span className="text-emerald-500 mt-0.5">✓</span>
-                                          <span>{f}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  )}
-                                  <PackageOrderButton
-                                    token={token}
-                                    projectId={project.id}
-                                    packageId={pkg.id}
-                                    packageName={pkg.name}
-                                    hours={pkg.hours}
-                                    price={pkg.customPrice ?? pkg.price}
-                                    currency={pkg.currency}
-                                    isHighlighted={isHighlighted}
-                                  />
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Your Orders — only show when no package is assigned */}
-                      {isByPackage && !project.selectedPackageId && packageOrdersList.filter((o) => o.projectId === project.id).length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-semibold mb-2">Your Orders</h4>
-                          <div className="space-y-2">
-                            {packageOrdersList.filter((o) => o.projectId === project.id).map((order) => (
-                              <div key={order.id} className="flex items-center justify-between rounded-lg border p-3 text-sm">
-                                <div>
-                                  <span className="font-medium">{order.packageName}</span>
-                                  {order.hours && <span className="text-muted-foreground ml-1">({order.hours}h)</span>}
-                                  <span className="text-muted-foreground ml-2">
-                                    — {new Intl.NumberFormat("en-US", { style: "currency", currency: order.currency }).format(Number(order.price))}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  {order.status === "confirmed" ? (
-                                    <Badge className="bg-emerald-100 text-emerald-700 text-[10px]">Confirmed</Badge>
-                                  ) : order.status === "invoiced" ? (
-                                    <Badge className="bg-blue-100 text-blue-700 text-[10px]">Invoiced</Badge>
-                                  ) : order.status === "cancelled" ? (
-                                    <Badge className="bg-red-100 text-red-700 text-[10px]">Cancelled</Badge>
-                                  ) : (
-                                    <Badge className="bg-yellow-100 text-yellow-700 text-[10px]">Pending</Badge>
-                                  )}
-                                  <span className="text-xs text-muted-foreground">
-                                    {new Date(order.createdAt).toLocaleDateString()}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Custom Package Request — only show when no package is assigned */}
-                      {isByPackage && !project.selectedPackageId && projectPackagesMap.has(project.id) && (
-                        projectPackagesMap.get(project.id)!.some((p) => p.allowCustom) && (
-                          <CustomPackageRequestForm
-                            projectId={project.id}
-                            token={token}
-                            packages={projectPackagesMap.get(project.id)!.map((p) => ({
-                              id: p.id,
-                              name: p.name,
-                              hours: p.hours,
-                              price: p.price,
-                              customPrice: p.customPrice,
-                              minHours: p.minHours,
-                              maxHours: p.maxHours,
-                              currency: p.currency,
-                            }))}
-                            existingRequests={customRequests.filter((r) => r.projectId === project.id)}
-                            currency={project.currency ?? "IDR"}
-                          />
-                        )
-                      )}
-
-                      {/* Tasks — for by-project show as milestones/deliverables */}
-                      {projectTasks.length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4" /> Tasks
-                          </h4>
-                          <PortalTaskList
-                            tasks={projectTasks.map((t) => ({
-                              id: t.id,
-                              title: t.title,
-                              description: t.description,
-                              status: t.status,
-                              priority: t.priority,
-                              dueDate: t.dueDate
-                                ? String(t.dueDate)
-                                : null,
-                              updatedAt: String(t.updatedAt),
-                            }))}
-                          />
-                        </div>
-                      )}
-
-                      {/* Files */}
-                      {projectFiles.length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                            <FileText className="h-4 w-4" /> Files
-                          </h4>
-                          <PortalFileList
-                            files={projectFiles.map((f) => ({
-                              id: f.id,
-                              name: f.name,
-                              mimeType: f.mimeType,
-                              sizeBytes: f.sizeBytes ?? null,
-                              fileType: f.fileType,
-                              createdAt: String(f.createdAt),
-                            }))}
-                            token={token}
-                          />
-                        </div>
-                      )}
-
-                      {/* Timeline */}
-                      {projectTimeline.length > 0 && (
-                        <div>
-                          <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                            <Activity className="h-4 w-4" /> Timeline
-                          </h4>
-                          <div className="rounded-lg border divide-y">
-                            {projectTimeline.map((event) => (
-                              <div key={event.id} className="flex items-center justify-between gap-3 p-3 text-sm">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
-                                  <span className="truncate">
-                                    {clientVisibleActionLabels[event.action] ?? event.action.replace(/_/g, " ")}
-                                  </span>
-                                </div>
-                                <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                                  <Badge variant="outline" className="text-[10px] capitalize">
-                                    {event.entityType.replace(/_/g, " ")}
-                                  </Badge>
-                                  <span>{new Date(event.createdAt).toLocaleDateString()}</span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      <Separator />
-
-                      {/* Project Invoices */}
-                      {projectInvoicesMap.has(project.id) && (
-                        <div>
-                          <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                            <FileText className="h-4 w-4" /> Invoices
-                          </h4>
-                          <div className="rounded-lg border divide-y">
-                            {(projectInvoicesMap.get(project.id) || []).map((inv) => {
-                              const statusColor = inv.status === "paid" ? "text-emerald-600" : inv.status === "overdue" ? "text-red-600" : "text-slate-700";
-                              const statusBg = inv.status === "paid" ? "bg-emerald-50 text-emerald-700" : inv.status === "overdue" ? "bg-red-50 text-red-700" : "bg-slate-100 text-slate-600";
-                              return (
-                                <div key={inv.id} className="flex items-center justify-between p-3 text-sm">
-                                  <div>
-                                    <span className="font-mono font-medium">{inv.invoiceNumber}</span>
-                                    <span className="text-muted-foreground ml-2">{inv.issueDate ? new Date(inv.issueDate).toLocaleDateString() : "-"}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span className={`font-mono font-medium ${statusColor}`}>
-                                      {new Intl.NumberFormat("en-US", { style: "currency", currency: inv.currency }).format(Number(inv.total))}
-                                    </span>
-                                    <Badge className={`text-[10px] ${statusBg}`} variant="outline">{inv.status}</Badge>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Comments */}
-                      <div>
-                        <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                          <MessageSquare className="h-4 w-4" /> Comments
-                        </h4>
-                        {projectComments.length > 0 && (
-                          <div className="space-y-3 mb-4">
-                            {projectComments.map((c) => (
-                              <div
-                                key={c.id}
-                                className="bg-muted/50 rounded-lg p-3 text-sm"
-                              >
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="font-medium">
-                                    {c.authorName || c.authorEmail || "Anonymous"}
-                                  </span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {new Date(c.createdAt).toLocaleDateString()}
-                                  </span>
-                                </div>
-                                <p className="whitespace-pre-wrap">{c.body}</p>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        <PortalCommentForm
-                          entityType="project"
-                          entityId={project.id}
-                          workspaceId={client.workspaceId}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+            <ProjectAccordion
+              projects={clientProjects.map((p) => ({
+                ...p,
+                startDate: p.startDate ? String(p.startDate) : null,
+                finishDate: p.finishDate ? String(p.finishDate) : null,
+              }))}
+              projectTasksMap={new Map(
+                [...projectTasksMap.entries()].map(([k, v]) => [
+                  k,
+                  v.map((t) => ({
+                    ...t,
+                    dueDate: t.dueDate ? String(t.dueDate) : null,
+                    updatedAt: String(t.updatedAt),
+                  })),
+                ]),
+              )}
+              projectFilesMap={new Map(
+                [...projectFilesMap.entries()].map(([k, v]) => [
+                  k,
+                  v.map((f) => ({
+                    ...f,
+                    createdAt: String(f.createdAt),
+                  })),
+                ]),
+              )}
+              projectCommentsMap={new Map(
+                [...projectCommentsMap.entries()].map(([k, v]) => [
+                  k,
+                  v.map((c) => ({
+                    ...c,
+                    createdAt: String(c.createdAt),
+                  })),
+                ]),
+              )}
+              projectTimelineMap={new Map(
+                [...projectTimelineMap.entries()].map(([k, v]) => [
+                  k,
+                  v.map((e) => ({
+                    ...e,
+                    createdAt: String(e.createdAt),
+                  })),
+                ]),
+              )}
+              projectHoursMap={projectHoursMap}
+              byHoursEntriesMap={new Map(
+                [...byHoursEntriesMap.entries()].map(([k, v]) => [
+                  k,
+                  v.map((e) => ({
+                    ...e,
+                    startTime: e.startTime ? String(e.startTime) : null,
+                    endTime: e.endTime ? String(e.endTime) : null,
+                  })),
+                ]),
+              )}
+              projectInvoicesMap={projectInvoicesMap}
+              selectedPackageMap={selectedPackageMap}
+              projectPackagesMap={projectPackagesMap}
+              customRequests={customRequests}
+              packageOrdersList={packageOrdersList.map((o) => ({
+                ...o,
+                createdAt: String(o.createdAt),
+              }))}
+              clientVisibleActionLabels={clientVisibleActionLabels}
+              token={token}
+              workspaceId={client.workspaceId}
+            />
           )}
         </section>
 
-        {/* Invoices Section */}
+        {/* ─── 5. Invoices Section (single, improved) ───────── */}
         <section>
           <h2 className="text-xl font-semibold mb-4">
             Invoices ({clientInvoices.length})
@@ -1179,37 +914,182 @@ export default async function ClientPortalPage({
               </CardContent>
             </Card>
           ) : (
-            <div className="border rounded-lg divide-y">
-              {clientInvoices.map((inv) => {
-                const statusColor = inv.status === "paid" ? "text-emerald-600" : inv.status === "overdue" ? "text-red-600" : "text-slate-700";
-                const statusBg = inv.status === "paid" ? "bg-emerald-50 text-emerald-700" : inv.status === "overdue" ? "bg-red-50 text-red-700" : inv.status === "sent" || inv.status === "viewed" ? "bg-blue-50 text-blue-700" : "bg-slate-100 text-slate-600";
-                return (
-                  <div key={inv.id} className="flex items-center justify-between p-4">
-                    <div>
-                      <span className="font-mono text-sm font-medium">{inv.invoiceNumber}</span>
-                      <span className="text-sm text-muted-foreground ml-3">
-                        {inv.issueDate ? new Date(inv.issueDate).toLocaleDateString() : "-"}
-                      </span>
-                      {inv.dueDate && (
-                        <span className="text-xs text-muted-foreground ml-2">
-                          · Due {new Date(inv.dueDate).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`font-mono text-sm font-medium ${statusColor}`}>
-                        {new Intl.NumberFormat("en-US", { style: "currency", currency: inv.currency }).format(Number(inv.total))}
-                      </span>
-                      <Badge className={`text-[10px] ${statusBg}`} variant="outline">
-                        {inv.status}
-                      </Badge>
-                    </div>
+            <>
+              {/* IDR invoices */}
+              {clientInvoices.filter((i) => i.currency !== "USD").length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
+                    🇮🇩 IDR Invoices
+                  </h3>
+                  <div className="border rounded-lg overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b bg-muted/50">
+                          <th className="text-left p-3 font-medium">Invoice #</th>
+                          <th className="text-left p-3 font-medium">Project</th>
+                          <th className="text-right p-3 font-medium">Amount</th>
+                          <th className="text-center p-3 font-medium">Status</th>
+                          <th className="text-left p-3 font-medium">Date</th>
+                          <th className="text-right p-3 font-medium">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {clientInvoices
+                          .filter((i) => i.currency !== "USD")
+                          .map((inv) => {
+                            const projectName = inv.projectId
+                              ? clientProjects.find((p) => p.id === inv.projectId)?.name || "—"
+                              : "—";
+                            const statusStyles: Record<string, string> = {
+                              paid: "bg-emerald-50 text-emerald-700",
+                              sent: "bg-blue-50 text-blue-700",
+                              viewed: "bg-yellow-50 text-yellow-700",
+                              overdue: "bg-red-50 text-red-700",
+                            };
+                            return (
+                              <tr key={inv.id} className="hover:bg-muted/30">
+                                <td className="p-3 font-mono font-medium">
+                                  {inv.invoiceNumber || "—"}
+                                </td>
+                                <td className="p-3 text-muted-foreground">
+                                  {projectName}
+                                </td>
+                                <td className="p-3 text-right font-mono font-medium">
+                                  {new Intl.NumberFormat("en-US", {
+                                    style: "currency",
+                                    currency: inv.currency,
+                                  }).format(Number(inv.total))}
+                                </td>
+                                <td className="p-3 text-center">
+                                  <Badge
+                                    className={`text-[10px] ${statusStyles[inv.status] || "bg-slate-100 text-slate-600"}`}
+                                    variant="outline"
+                                  >
+                                    {inv.status}
+                                  </Badge>
+                                </td>
+                                <td className="p-3 text-muted-foreground">
+                                  {inv.issueDate
+                                    ? new Date(inv.issueDate).toLocaleDateString()
+                                    : "—"}
+                                </td>
+                                <td className="p-3 text-right">
+                                  <Button variant="ghost" size="sm" className="h-7 px-2 gap-1">
+                                    <Download className="h-3 w-3" />
+                                    PDF
+                                  </Button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="text-right text-sm font-semibold mt-2 text-muted-foreground">
+                    Total: {formatIDR(
+                      clientInvoices
+                        .filter((i) => i.currency !== "USD")
+                        .reduce((s, i) => s + Number(i.total), 0)
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* USD invoices */}
+              {clientInvoices.filter((i) => i.currency === "USD").length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
+                    🇺🇸 USD Invoices
+                  </h3>
+                  <div className="border rounded-lg overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b bg-muted/50">
+                          <th className="text-left p-3 font-medium">Invoice #</th>
+                          <th className="text-left p-3 font-medium">Project</th>
+                          <th className="text-right p-3 font-medium">Amount</th>
+                          <th className="text-center p-3 font-medium">Status</th>
+                          <th className="text-left p-3 font-medium">Date</th>
+                          <th className="text-right p-3 font-medium">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {clientInvoices
+                          .filter((i) => i.currency === "USD")
+                          .map((inv) => {
+                            const projectName = inv.projectId
+                              ? clientProjects.find((p) => p.id === inv.projectId)?.name || "—"
+                              : "—";
+                            const statusStyles: Record<string, string> = {
+                              paid: "bg-emerald-50 text-emerald-700",
+                              sent: "bg-blue-50 text-blue-700",
+                              viewed: "bg-yellow-50 text-yellow-700",
+                              overdue: "bg-red-50 text-red-700",
+                            };
+                            return (
+                              <tr key={inv.id} className="hover:bg-muted/30">
+                                <td className="p-3 font-mono font-medium">
+                                  {inv.invoiceNumber || "—"}
+                                </td>
+                                <td className="p-3 text-muted-foreground">
+                                  {projectName}
+                                </td>
+                                <td className="p-3 text-right font-mono font-medium">
+                                  {new Intl.NumberFormat("en-US", {
+                                    style: "currency",
+                                    currency: inv.currency,
+                                  }).format(Number(inv.total))}
+                                </td>
+                                <td className="p-3 text-center">
+                                  <Badge
+                                    className={`text-[10px] ${statusStyles[inv.status] || "bg-slate-100 text-slate-600"}`}
+                                    variant="outline"
+                                  >
+                                    {inv.status}
+                                  </Badge>
+                                </td>
+                                <td className="p-3 text-muted-foreground">
+                                  {inv.issueDate
+                                    ? new Date(inv.issueDate).toLocaleDateString()
+                                    : "—"}
+                                </td>
+                                <td className="p-3 text-right">
+                                  <Button variant="ghost" size="sm" className="h-7 px-2 gap-1">
+                                    <Download className="h-3 w-3" />
+                                    PDF
+                                  </Button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="text-right text-sm font-semibold mt-2 text-muted-foreground">
+                    Total: ${clientInvoices
+                      .filter((i) => i.currency === "USD")
+                      .reduce((s, i) => s + Number(i.total), 0)
+                      .toLocaleString("en-US", { minimumFractionDigits: 0 })}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </section>
+
+        {/* ─── 6. Single Contact Form ──────────────────────── */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Message Your Team</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PortalCommentForm
+              entityType="project"
+              entityId={clientProjects[0]?.id || client.id}
+              workspaceId={client.workspaceId}
+            />
+          </CardContent>
+        </Card>
 
         <p className="text-center text-xs text-muted-foreground pt-8">
           Powered by <span className="font-medium">Cubiqlo</span> — Client
