@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckoutButton } from "@/components/billing/checkout-button";
 import { getSubscriptionStatus } from "@/lib/subscription";
 
+export const dynamic = "force-dynamic";
+
 const plans = [
   {
     key: "free",

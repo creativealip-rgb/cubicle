@@ -1,5 +1,7 @@
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { pakasirPayments, users, workspaces } from "@/db/schema";
 import { getPakasirTransactionDetail, pakasirProject, type PakasirWebhook } from "@/lib/pakasir";
@@ -59,6 +61,7 @@ export async function POST(request: Request) {
       plan: payment.plan,
       planExpiresAt: expiresAt,
     }).where(eq(users.id, workspace.ownerId));
+    revalidatePath("/app/billing");
   }
 
   await db.update(pakasirPayments).set({
