@@ -123,7 +123,10 @@ export function AppTopbar({ user }: AppTopbarProps) {
     try {
       const result = await switchWorkspace(wsId);
       if (result.ok) {
+        // Flush server component cache first (reads new cookie)
         router.refresh();
+        // Small delay so server components re-render before dropdown updates
+        await new Promise(r => setTimeout(r, 300));
         await loadWorkspaces();
       }
     } finally {
