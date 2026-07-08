@@ -240,6 +240,23 @@ export const customPackageRequests = pgTable("custom_package_requests", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// ─── Package Orders (client portal) ───
+
+export const packageOrders = pgTable("package_orders", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  packageId: uuid("package_id").notNull().references(() => packages.id, { onDelete: "cascade" }),
+  clientPortalToken: text("client_portal_token").notNull(),
+  packageName: text("package_name").notNull(),
+  hours: integer("hours"),
+  price: numeric("price", { precision: 12, scale: 2 }).notNull(),
+  currency: text("currency").notNull().default("USD"),
+  message: text("message"),
+  status: text("status", { enum: ["pending", "confirmed", "invoiced", "cancelled"] }).notNull().default("pending"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 // ─── Comments (polymorphic) ───
 
 export const comments = pgTable("comments", {

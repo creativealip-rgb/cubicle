@@ -46,6 +46,8 @@ import { PortalCommentForm } from "@/components/portal/portal-comment-form";
 import { PortalRequestList } from "@/components/portal/portal-request-list";
 import { CustomPackageRequestForm } from "@/components/portal/custom-package-request-form";
 import { getCustomPackageRequestsByToken } from "@/lib/actions/custom-package-requests";
+import { getPackageOrdersByToken } from "@/lib/actions/package-orders";
+import { PackageOrderButton } from "@/components/portal/package-order-button";
 
 export default async function ClientPortalPage({
   params,
@@ -428,6 +430,9 @@ export default async function ClientPortalPage({
 
   // Fetch custom package requests by token
   const customRequests = await getCustomPackageRequestsByToken(token);
+
+  // Fetch package orders by token
+  const packageOrdersList = await getPackageOrdersByToken(token);
 
   // Financial summary — invoices for this client
   const clientInvoices = await db
@@ -850,12 +855,53 @@ export default async function ClientPortalPage({
                                       ))}
                                     </ul>
                                   )}
-                                  <Button variant={isHighlighted ? "default" : "outline"} size="sm" className="w-full mt-3">
-                                    Take This Package
-                                  </Button>
+                                  <PackageOrderButton
+                                    token={token}
+                                    projectId={project.id}
+                                    packageId={pkg.id}
+                                    packageName={pkg.name}
+                                    hours={pkg.hours}
+                                    price={pkg.customPrice ?? pkg.price}
+                                    currency={pkg.currency}
+                                    isHighlighted={isHighlighted}
+                                  />
                                 </div>
                               );
                             })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Your Orders */}
+                      {isByPackage && packageOrdersList.filter((o) => o.projectId === project.id).length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-semibold mb-2">Your Orders</h4>
+                          <div className="space-y-2">
+                            {packageOrdersList.filter((o) => o.projectId === project.id).map((order) => (
+                              <div key={order.id} className="flex items-center justify-between rounded-lg border p-3 text-sm">
+                                <div>
+                                  <span className="font-medium">{order.packageName}</span>
+                                  {order.hours && <span className="text-muted-foreground ml-1">({order.hours}h)</span>}
+                                  <span className="text-muted-foreground ml-2">
+                                    — {new Intl.NumberFormat("en-US", { style: "currency", currency: order.currency }).format(Number(order.price))}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {order.status === "confirmed" ? (
+                                    <Badge className="bg-emerald-100 text-emerald-700 text-[10px]">Confirmed</Badge>
+                                  ) : order.status === "invoiced" ? (
+                                    <Badge className="bg-blue-100 text-blue-700 text-[10px]">Invoiced</Badge>
+                                  ) : order.status === "cancelled" ? (
+                                    <Badge className="bg-red-100 text-red-700 text-[10px]">Cancelled</Badge>
+                                  ) : (
+                                    <Badge className="bg-yellow-100 text-yellow-700 text-[10px]">Pending</Badge>
+                                  )}
+                                  <span className="text-xs text-muted-foreground">
+                                    {new Date(order.createdAt).toLocaleDateString()}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       )}
