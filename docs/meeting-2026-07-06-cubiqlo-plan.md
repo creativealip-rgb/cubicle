@@ -49,6 +49,11 @@ Dokumen ini hanya fokus hasil meeting untuk Cubiqlo, bukan Whaledive.
 | Portal financial summary | DONE | Total Paid/Outstanding/By Project/By Hours show "Rp 7.2M + $1,750" format per currency. |
 | Project form currency | DONE | Required Mata Uang selector (IDR/USD/EUR/GBP/SGD), rate/budget fields with currency labels. |
 | Invoice auto-inherit | DONE | Select project → currency auto-ikuts project. Labels show "Project Name (By Project) — USD". |
+| Package billing type | DONE | New billing type "By Package" with packages table, admin creates packages per project. |
+| Custom package pricing | DONE | `custom_price`, `min_hours`, `max_hours`, `allow_custom` on packages. Client can request custom hours via portal. |
+| Package order flow | DONE | Client clicks "Take This Package" → confirm modal → order saved (package_orders table). |
+| Admin-assigned packages | DONE | Admin assigns package via project form. Portal shows "by hours" style with package total hours, progress bar, remaining. |
+| Portal redesign | DONE | Hero summary (4 cards), quick actions, activity feed, accordion projects, unified invoices split IDR/USD, single contact form. |
 
 ## Priority overview
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-07-08 — Package billing + portal redesign
+
+- Added "By Package" billing type: packages table, admin CRUD per project, custom pricing (custom_price, min/max hours, allow_custom).
+- Custom package request flow: client requests custom hours via portal slider, auto-estimates price, saves to custom_package_requests table.
+- Package order flow: "Take This Package" button with confirm modal, saves to package_orders table.
+- Admin-assigned packages: admin selects package in project form, portal shows "by hours" style with package total/used/remaining hours + progress bar.
+- Portal redesign: hero summary (4 cards with icons), quick actions bar, activity feed (8 recent events), accordion projects (one-at-a-time expand), unified invoices table split IDR/USD with PDF buttons, single "Message Your Team" contact form.
+- Migrations: 0023 (package_custom_pricing), 0024 (custom_package_requests), 0025 (package_orders), 0026 (project_selected_package).
+- Latest commit: `67aed7f feat: portal redesign — activity feed, compact accordion, unified invoices, quick actions`.
+
 ## 2026-07-07 — Cubiqlo meeting P1 execution
 
 - Added client PDF exports: single client and bulk combined PDF.
