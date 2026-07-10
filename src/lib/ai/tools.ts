@@ -33,7 +33,6 @@ import {
 import type { ToolDefinition } from "./client";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 
-const _workspaceIdCache: { id: string; slug: string; name: string } | null = null;
 async function getWorkspace() {
   return getWorkspaceFullForCurrentUser();
 }

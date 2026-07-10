@@ -2,9 +2,7 @@ import { requireAppSession } from "@/lib/app-auth";
 import { getCurrentLang, getLocale, createT } from "@/lib/i18n";
 import { db } from "@/db";
 import {
-  clients,
   tasks,
-  invoices,
   appointments,
   activityLogs,
   timeEntries,

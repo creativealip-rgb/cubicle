@@ -8,6 +8,27 @@ import { buildFileKey, R2_BUCKET, r2 } from "@/lib/r2";
 
 const MAX_SIZE = 25 * 1024 * 1024;
 
+// Whitelist of allowed file extensions for client uploads. Using an allow-list
+// (rather than a block-list) prevents executables/scripts and other dangerous
+// content from being stored and later served.
+const ALLOWED_EXTENSIONS = new Set([
+  // images
+  "jpg", "jpeg", "png", "gif", "webp", "heic", "avif", "bmp", "tiff",
+  // documents
+  "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "csv", "rtf", "md",
+  // design
+  "psd", "ai", "eps", "sketch", "fig", "xd",
+  // archives
+  "zip", "rar", "7z",
+  // media
+  "mp4", "mov", "webm", "mp3", "wav", "m4a",
+]);
+
+function getExtension(name: string): string {
+  const dot = name.lastIndexOf(".");
+  return dot >= 0 ? name.slice(dot + 1).toLowerCase() : "";
+}
+
 export async function POST(req: NextRequest) {
   try {
     const form = await req.formData();
@@ -23,6 +44,12 @@ export async function POST(req: NextRequest) {
     }
     if (upload.size <= 0 || upload.size > MAX_SIZE) {
       return NextResponse.json({ error: "File must be under 25MB" }, { status: 400 });
+    }
+    if (!ALLOWED_EXTENSIONS.has(getExtension(upload.name))) {
+      return NextResponse.json(
+        { error: "File type not allowed. Upload an image, document, archive, or media file." },
+        { status: 400 },
+      );
     }
 
     const client = await getClientPortalAccess(token);

@@ -636,7 +636,7 @@ export default async function ClientPortalPage({
         id: `inv-paid-${inv.id}`,
         type: "invoice",
         description: `${inv.invoiceNumber || "Invoice"} paid — ${new Intl.NumberFormat("en-US", { style: "currency", currency: inv.currency }).format(Number(inv.total))}`,
-        date: new Date(inv.issueDate || inv.dueDate || Date.now()),
+        date: inv.issueDate ? new Date(inv.issueDate) : inv.dueDate ? new Date(inv.dueDate) : new Date(),
         icon: "invoice",
       });
     } else if (inv.status === "sent" || inv.status === "viewed") {
@@ -644,7 +644,7 @@ export default async function ClientPortalPage({
         id: `inv-sent-${inv.id}`,
         type: "invoice",
         description: `${inv.invoiceNumber || "Invoice"} sent — ${new Intl.NumberFormat("en-US", { style: "currency", currency: inv.currency }).format(Number(inv.total))} (${projectName})`,
-        date: new Date(inv.issueDate || Date.now()),
+        date: inv.issueDate ? new Date(inv.issueDate) : new Date(),
         icon: "invoice",
       });
     }
@@ -687,7 +687,7 @@ export default async function ClientPortalPage({
       id: `proj-${proj.id}`,
       type: "project",
       description: `Project "${proj.name}" created`,
-      date: new Date(proj.startDate || Date.now()),
+      date: proj.startDate ? new Date(proj.startDate) : new Date(),
       icon: "project",
     });
   }

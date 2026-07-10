@@ -1,6 +1,6 @@
 import { db } from "@/db";
-import { users, workspaceMembers } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { users, workspaceMembers, clients, projects, invoices } from "@/db/schema";
+import { and, eq, sql } from "drizzle-orm";
 
 export type PlanTier = "free" | "solo" | "team";
 
@@ -149,23 +149,19 @@ export async function checkEntityLimit(
   const limits = getPlanLimits(plan);
 
   let maxCount: number;
-  let tableName: string;
   let label: string;
 
   switch (entity) {
     case "clients":
       maxCount = limits.maxClients;
-      tableName = "clients";
       label = "klien";
       break;
     case "projects":
       maxCount = limits.maxProjects;
-      tableName = "projects";
       label = "proyek";
       break;
     case "invoices":
       maxCount = limits.maxInvoicesPerMonth;
-      tableName = "invoices";
       label = "invoice/bulan";
       break;
   }
@@ -174,16 +170,34 @@ export async function checkEntityLimit(
     return { allowed: true, current: 0, limit: 0 };
   }
 
-  let countQuery: string;
-  if (entity === "invoices") {
-    // Count invoices this month
-    countQuery = `SELECT count(*)::int as cnt FROM ${tableName} WHERE workspace_id = '${workspaceId}' AND created_at >= date_trunc('month', current_date)`;
+  // Parameterized count query per entity (no string interpolation → no SQL injection).
+  const cnt = sql<number>`count(*)::int`;
+  let current: number;
+  if (entity === "clients") {
+    const rows = await db
+      .select({ cnt })
+      .from(clients)
+      .where(eq(clients.workspaceId, workspaceId));
+    current = rows[0]?.cnt ?? 0;
+  } else if (entity === "projects") {
+    const rows = await db
+      .select({ cnt })
+      .from(projects)
+      .where(eq(projects.workspaceId, workspaceId));
+    current = rows[0]?.cnt ?? 0;
   } else {
-    countQuery = `SELECT count(*)::int as cnt FROM ${tableName} WHERE workspace_id = '${workspaceId}'`;
+    // invoices: count this month only
+    const rows = await db
+      .select({ cnt })
+      .from(invoices)
+      .where(
+        and(
+          eq(invoices.workspaceId, workspaceId),
+          sql`${invoices.createdAt} >= date_trunc('month', current_date)`,
+        ),
+      );
+    current = rows[0]?.cnt ?? 0;
   }
-
-  const result = await db.execute(sql.raw(countQuery));
-  const current = (result.rows[0] as { cnt: number })?.cnt ?? 0;
 
   if (current >= maxCount) {
     const reason = plan === "free"

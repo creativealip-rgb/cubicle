@@ -1,23 +1,16 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { personalNotes, users, workspaceMembers } from "@/db/schema";
+import { personalNotes, users } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { sendNotification } from "@/lib/notifications";
+import { verifyCronRequest } from "@/lib/cron-auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret && process.env.NODE_ENV === "production") {
-    return NextResponse.json({ error: "Cron secret is not configured" }, { status: 503 });
-  }
-
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = verifyCronRequest(request);
+  if (unauthorized) return unauthorized;
 
   try {
     const now = new Date();

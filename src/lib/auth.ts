@@ -3,6 +3,26 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db";
 import { sendNotification } from "@/lib/notifications";
 
+/**
+ * Resolve the auth signing secret.
+ * A placeholder is only allowed during `next build` (pages compile without a
+ * real secret) or in non-production environments. A running production server
+ * MUST have BETTER_AUTH_SECRET set — otherwise sessions would be signed with a
+ * publicly-known value, so we fail fast instead.
+ */
+function resolveAuthSecret(): string {
+  const secret = process.env.BETTER_AUTH_SECRET;
+  if (secret && secret.length > 0) return secret;
+
+  const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
+  if (process.env.NODE_ENV === "production" && !isBuildPhase) {
+    throw new Error(
+      "BETTER_AUTH_SECRET is not set. Refusing to start in production with an insecure placeholder secret.",
+    );
+  }
+  return "dev-build-placeholder-secret-change-me";
+}
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -116,7 +136,7 @@ export const auth = betterAuth({
       });
     },
   },
-  secret: process.env.BETTER_AUTH_SECRET ?? "dev-build-placeholder-secret-change-me",
+  secret: resolveAuthSecret(),
   baseURL: process.env.BETTER_AUTH_URL,
   trustedOrigins: [
     process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
