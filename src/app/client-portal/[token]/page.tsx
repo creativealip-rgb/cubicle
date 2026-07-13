@@ -48,6 +48,7 @@ import {
 import { PortalCommentForm } from "@/components/portal/portal-comment-form";
 import { ProjectAccordion } from "@/components/portal/project-accordion";
 import { ActivityFeed, type ActivityItem } from "@/components/portal/activity-feed";
+import { PortalInvoices } from "@/components/portal/portal-invoices";
 import { getCustomPackageRequestsByToken } from "@/lib/actions/custom-package-requests";
 import { getPackageOrdersByToken } from "@/lib/actions/package-orders";
 
@@ -926,98 +927,25 @@ export default async function ClientPortalPage({
           )}
         </section>
 
-        {/* ─── 5. Invoices Section (single, improved) ───────── */}
+        {/* ─── 5. Invoices Section ──────────────────────────── */}
         <section>
           <h2 className="text-xl font-semibold mb-4">
             Invoices ({clientInvoices.length})
           </h2>
-          {clientInvoices.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center text-muted-foreground">
-                <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                <p>No invoices yet.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <div className="border rounded-lg overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="text-left p-3 font-medium">Invoice #</th>
-                      <th className="text-left p-3 font-medium">Project</th>
-                      <th className="text-right p-3 font-medium">Amount</th>
-                      <th className="text-center p-3 font-medium">Currency</th>
-                      <th className="text-center p-3 font-medium">Status</th>
-                      <th className="text-left p-3 font-medium">Date</th>
-                      <th className="text-right p-3 font-medium">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {[...clientInvoices]
-                      .sort((a, b) => new Date(b.issueDate || b.dueDate || 0).getTime() - new Date(a.issueDate || a.dueDate || 0).getTime())
-                      .map((inv) => {
-                        const projectName = inv.projectId
-                          ? clientProjects.find((p) => p.id === inv.projectId)?.name || "—"
-                          : "—";
-                        const statusStyles: Record<string, string> = {
-                          paid: "bg-emerald-50 text-emerald-700",
-                          sent: "bg-blue-50 text-blue-700",
-                          viewed: "bg-yellow-50 text-yellow-700",
-                          overdue: "bg-red-50 text-red-700",
-                        };
-                        return (
-                          <tr key={inv.id} className="hover:bg-muted/30">
-                            <td className="p-3 font-mono font-medium">
-                              {inv.invoiceNumber || "—"}
-                            </td>
-                            <td className="p-3 text-muted-foreground">
-                              {projectName}
-                            </td>
-                            <td className="p-3 text-right font-mono font-medium">
-                              {new Intl.NumberFormat("en-US", {
-                                style: "currency",
-                                currency: inv.currency,
-                              }).format(Number(inv.total))}
-                            </td>
-                            <td className="p-3 text-center text-xs text-muted-foreground">
-                              {inv.currency}
-                            </td>
-                            <td className="p-3 text-center">
-                              <Badge
-                                className={`text-[10px] ${statusStyles[inv.status] || "bg-slate-100 text-slate-600"}`}
-                                variant="outline"
-                              >
-                                {inv.status}
-                              </Badge>
-                            </td>
-                            <td className="p-3 text-muted-foreground">
-                              {inv.issueDate
-                                ? new Date(inv.issueDate).toLocaleDateString()
-                                : "—"}
-                            </td>
-                            <td className="p-3 text-right">
-                              <Button variant="ghost" size="sm" className="h-7 px-2 gap-1">
-                                <Download className="h-3 w-3" />
-                                PDF
-                              </Button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                  </tbody>
-                </table>
-              </div>
-              <div className="text-right text-sm font-semibold mt-2 text-muted-foreground">
-                Total: {[...new Set(clientInvoices.map(i => i.currency))].map((cur) => {
-                  const sum = clientInvoices.filter(i => i.currency === cur).reduce((s, i) => s + Number(i.total), 0);
-                  return cur === "USD"
-                    ? `$${sum.toLocaleString("en-US", { minimumFractionDigits: 0 })}`
-                    : formatIDR(sum);
-                }).join(" + ")}
-              </div>
-            </>
-          )}
+          <PortalInvoices
+            invoices={clientInvoices.map((inv) => ({
+              id: inv.id,
+              invoiceNumber: inv.invoiceNumber,
+              total: String(inv.total),
+              currency: inv.currency,
+              status: inv.status,
+              dueDate: inv.dueDate ? String(inv.dueDate) : null,
+              issueDate: inv.issueDate ? String(inv.issueDate) : null,
+              projectId: inv.projectId,
+            }))}
+            projects={clientProjects.map((p) => ({ id: p.id, name: p.name }))}
+            token={token}
+          />
         </section>
 
         {/* ─── 6. Single Contact Form ──────────────────────── */}
