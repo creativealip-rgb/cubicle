@@ -36,14 +36,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Amount mismatch" }, { status: 400 });
   }
 
+  // Fail-closed verification: only trust the status re-fetched from Pakasir,
+  // NEVER the raw webhook body. A forged webhook with status:"completed" must
+  // not be able to activate a plan when Pakasir itself has no such transaction.
   const detail = await getPakasirTransactionDetail({ orderId: payment.orderId, amount });
-  const status = detail.transaction?.status ?? body.status;
-  if (status !== "completed") {
+  const verifiedStatus = detail.transaction?.status;
+  if (!verifiedStatus) {
     await db
       .update(pakasirPayments)
       .set({ rawPayload: body, updatedAt: new Date() })
       .where(eq(pakasirPayments.id, payment.id));
-    return NextResponse.json({ ok: true, ignored: true, status });
+    return NextResponse.json(
+      { error: "Unverified transaction" },
+      { status: 402 },
+    );
+  }
+  if (verifiedStatus !== "completed") {
+    await db
+      .update(pakasirPayments)
+      .set({ rawPayload: body, updatedAt: new Date() })
+      .where(eq(pakasirPayments.id, payment.id));
+    return NextResponse.json({ ok: true, ignored: true, status: verifiedStatus });
   }
 
   const paidAt = body.completed_at ? new Date(body.completed_at) : new Date();
