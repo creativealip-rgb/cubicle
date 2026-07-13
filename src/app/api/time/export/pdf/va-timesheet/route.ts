@@ -153,6 +153,11 @@ export async function GET(request: Request) {
   const dateTo = url.searchParams.get("to");
   const clientId = url.searchParams.get("clientId");
 
+  // report=detailed | dashboard | full (default: full)
+  const reportParam = (url.searchParams.get("report") || "full").toLowerCase();
+  const showDetailed = reportParam === "detailed" || reportParam === "full";
+  const showDashboard = reportParam === "dashboard" || reportParam === "full";
+
   const conditions = [eq(timeEntries.workspaceId, workspaceId)];
   if (dateFrom) conditions.push(gte(timeEntries.startTime, new Date(dateFrom)));
   if (dateTo) conditions.push(lte(timeEntries.startTime, new Date(dateTo + "T23:59:59")));
@@ -297,11 +302,82 @@ export async function GET(request: Request) {
   const projectDonut = donutChart(L.projectHoursTitle, projectSummary);
   const taskDonut = donutChart(L.taskHoursTitle, taskSummary);
 
+  // Dynamic document title based on selected report(s)
+  const docTitle = showDetailed && showDashboard
+    ? (lang === "en" ? "TIMESHEET REPORT" : "LAPORAN TIMESHEET")
+    : showDetailed
+      ? L.detailedReport
+      : L.dashboardReport;
+
+  const detailedSection = `
+  <!-- DETAILED REPORT -->
+  <h1>${L.detailedReport}</h1>
+  <div class="meta">
+    <div class="meta-row"><span class="meta-label">${L.timeFrame}</span><span class="meta-value">${escapeHtml(timeFrame)}</span></div>
+    <div class="meta-row"><span class="meta-label">${L.totalBillableAmount} ${L.hrsOnly}</span><span class="meta-value">USD ${totalBillableAmount.toFixed(2)}</span></div>
+    <div class="meta-row"><span class="meta-label">${L.totalHours}</span><span class="meta-value">${formatHours(totalMinutes)}</span></div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>${L.day}</th>
+        <th>${L.userCol}</th>
+        <th>${L.project}</th>
+        <th>${L.task}</th>
+        <th>${L.billableAmount}</th>
+        <th>${L.startFinish}</th>
+        <th>${L.totalHoursCol}</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${detailedRows}
+      <tr class="total-row">
+        <td colspan="4" style="text-align:right;">${L.total}</td>
+        <td>USD ${totalBillableAmount.toFixed(2)}</td>
+        <td></td>
+        <td>${formatHours(totalMinutes)}</td>
+      </tr>
+    </tbody>
+  </table>`;
+
+  const dashboardSection = `
+  <!-- DASHBOARD REPORT -->
+  <h2 ${showDetailed ? 'style="page-break-before: always;"' : ""}>${L.dashboardReport}</h2>
+  <div class="meta">
+    <div class="meta-row"><span class="meta-label">${L.timeFrame}</span><span class="meta-value">${escapeHtml(timeFrame)}</span></div>
+    <div class="meta-row"><span class="meta-label">${L.totalHours}</span><span class="meta-value">${formatHours(totalMinutes)}</span></div>
+    <div class="meta-row"><span class="meta-label">${L.billableHours}</span><span class="meta-value">${formatHours(billableMinutes)}</span></div>
+  </div>
+
+  <div class="donuts">
+    ${projectDonut}
+    ${taskDonut}
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>${L.projectTask}</th>
+        <th>${L.totalHoursCol}</th>
+        <th>${L.billableHoursCol}</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${dashboardRows}
+      <tr class="total-row">
+        <td>${L.total}</td>
+        <td>${formatHours(totalMinutes)}</td>
+        <td>${formatHours(billableMinutes)}</td>
+      </tr>
+    </tbody>
+  </table>`;
+
   const html = `<!doctype html>
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>${L.detailedReport}</title>
+  <title>${docTitle}</title>
   <style>
     @page { size: A4 landscape; margin: 14mm; }
     body { font-family: Arial, Helvetica, sans-serif; color: #1f2937; font-size: 12px; }
@@ -343,67 +419,8 @@ export async function GET(request: Request) {
   </style>
 </head>
 <body>
-  <!-- DETAILED REPORT -->
-  <h1>${L.detailedReport}</h1>
-  <div class="meta">
-    <div class="meta-row"><span class="meta-label">${L.timeFrame}</span><span class="meta-value">${escapeHtml(timeFrame)}</span></div>
-    <div class="meta-row"><span class="meta-label">${L.totalBillableAmount} ${L.hrsOnly}</span><span class="meta-value">USD ${totalBillableAmount.toFixed(2)}</span></div>
-    <div class="meta-row"><span class="meta-label">${L.totalHours}</span><span class="meta-value">${formatHours(totalMinutes)}</span></div>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>${L.day}</th>
-        <th>${L.userCol}</th>
-        <th>${L.project}</th>
-        <th>${L.task}</th>
-        <th>${L.billableAmount}</th>
-        <th>${L.startFinish}</th>
-        <th>${L.totalHoursCol}</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${detailedRows}
-      <tr class="total-row">
-        <td colspan="4" style="text-align:right;">${L.total}</td>
-        <td>USD ${totalBillableAmount.toFixed(2)}</td>
-        <td></td>
-        <td>${formatHours(totalMinutes)}</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <!-- DASHBOARD REPORT -->
-  <h2>${L.dashboardReport}</h2>
-  <div class="meta">
-    <div class="meta-row"><span class="meta-label">${L.timeFrame}</span><span class="meta-value">${escapeHtml(timeFrame)}</span></div>
-    <div class="meta-row"><span class="meta-label">${L.totalHours}</span><span class="meta-value">${formatHours(totalMinutes)}</span></div>
-    <div class="meta-row"><span class="meta-label">${L.billableHours}</span><span class="meta-value">${formatHours(billableMinutes)}</span></div>
-  </div>
-
-  <div class="donuts">
-    ${projectDonut}
-    ${taskDonut}
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>${L.projectTask}</th>
-        <th>${L.totalHoursCol}</th>
-        <th>${L.billableHoursCol}</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${dashboardRows}
-      <tr class="total-row">
-        <td>${L.total}</td>
-        <td>${formatHours(totalMinutes)}</td>
-        <td>${formatHours(billableMinutes)}</td>
-      </tr>
-    </tbody>
-  </table>
+  ${showDetailed ? detailedSection : ""}
+  ${showDashboard ? dashboardSection : ""}
 
   <p class="muted" style="margin-top:24px;">${L.generated} ${escapeHtml(new Date().toLocaleString(locale))}</p>
   <script>window.print()</script>
