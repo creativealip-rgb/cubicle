@@ -193,6 +193,124 @@ function getWhatsAppUrl(phone: string | null | undefined, message: string) {
   return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
 }
 
+// ── Portal UX helpers (client-facing, Bahasa Indonesia) ──
+
+// Task progress: how many tasks are done out of total
+function taskProgress(tasks: Task[]) {
+  const total = tasks.length;
+  const done = tasks.filter((t) => t.status === "done").length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  return { total, done, pct };
+}
+
+// Whether any client-visible task is awaiting review (client action)
+function hasReviewTask(tasks: Task[]) {
+  return tasks.some((t) => t.status === "review");
+}
+
+type StatusMeta = {
+  label: string;
+  badgeClass: string;
+  borderClass: string;
+};
+
+// Human status in Bahasa Indonesia + color accent.
+// `needsReview` bumps an active project to the amber "needs your review" state.
+function getProjectStatusMeta(status: string, needsReview: boolean): StatusMeta {
+  if (needsReview && (status === "active" || status === "on_hold")) {
+    return {
+      label: "Menunggu review kamu",
+      badgeClass: "bg-amber-100 text-amber-700 border-amber-200",
+      borderClass: "border-l-amber-400",
+    };
+  }
+  switch (status) {
+    case "completed":
+      return {
+        label: "Selesai",
+        badgeClass: "bg-emerald-100 text-emerald-700 border-emerald-200",
+        borderClass: "border-l-emerald-400",
+      };
+    case "on_hold":
+      return {
+        label: "Ditunda",
+        badgeClass: "bg-amber-100 text-amber-700 border-amber-200",
+        borderClass: "border-l-amber-400",
+      };
+    case "cancelled":
+      return {
+        label: "Dibatalkan",
+        badgeClass: "bg-slate-100 text-slate-500 border-slate-200",
+        borderClass: "border-l-slate-300",
+      };
+    case "draft":
+      return {
+        label: "Draft",
+        badgeClass: "bg-slate-100 text-slate-500 border-slate-200",
+        borderClass: "border-l-slate-300",
+      };
+    case "active":
+    default:
+      return {
+        label: "Sedang dikerjakan",
+        badgeClass: "bg-blue-100 text-blue-700 border-blue-200",
+        borderClass: "border-l-blue-400",
+      };
+  }
+}
+
+// Deadline label with days-remaining and overdue detection
+function getDeadlineMeta(finishDate: string | null, projectStatus: string) {
+  if (!finishDate) return null;
+  const due = new Date(finishDate);
+  if (isNaN(due.getTime())) return null;
+
+  const dateStr = due.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
+  // Completed/cancelled projects don't need urgency framing
+  if (projectStatus === "completed" || projectStatus === "cancelled") {
+    return { text: `Target: ${dateStr}`, overdue: false };
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dueMid = new Date(due);
+  dueMid.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((dueMid.getTime() - today.getTime()) / 86_400_000);
+
+  if (diffDays < 0) {
+    return { text: `Target: ${dateStr} · telat ${Math.abs(diffDays)} hari`, overdue: true };
+  }
+  if (diffDays === 0) return { text: `Target: ${dateStr} · hari ini`, overdue: false };
+  if (diffDays === 1) return { text: `Target: ${dateStr} · besok`, overdue: false };
+  return { text: `Target: ${dateStr} · ${diffDays} hari lagi`, overdue: false };
+}
+
+// "Update terakhir" from most recent task update or timeline event
+function getLastActivity(tasks: Task[], timeline: TimelineEvent[]) {
+  const dates: number[] = [];
+  for (const t of tasks) {
+    const d = new Date(t.updatedAt).getTime();
+    if (!isNaN(d)) dates.push(d);
+  }
+  for (const e of timeline) {
+    const d = new Date(e.createdAt).getTime();
+    if (!isNaN(d)) dates.push(d);
+  }
+  if (dates.length === 0) return null;
+  const latest = Math.max(...dates);
+  const diffDays = Math.floor((Date.now() - latest) / 86_400_000);
+  if (diffDays <= 0) return "Update hari ini";
+  if (diffDays === 1) return "Update kemarin";
+  if (diffDays < 7) return `Update ${diffDays} hari lalu`;
+  if (diffDays < 30) return `Update ${Math.floor(diffDays / 7)} minggu lalu`;
+  return `Update ${new Date(latest).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}`;
+}
+
 function ProjectExpandedContent({
   project,
   tasks,
@@ -609,76 +727,93 @@ function ProjectExpandedContent({
 function ProjectSummary({
   project,
   tasks,
-  invoices,
+  timeline,
   selectedPkg,
   hoursSummary,
 }: {
   project: Project;
   tasks: Task[];
-  invoices: Invoice[];
+  timeline: TimelineEvent[];
   selectedPkg: SelectedPackage | undefined;
   hoursSummary: HoursSummary | undefined;
 }) {
   const isByHours = project.billingType === "hours";
   const isByPackage = project.billingType === "package";
 
-  if (isByPackage && selectedPkg && hoursSummary) {
-    const totalMins = selectedPkg.hours ? selectedPkg.hours * 60 : 0;
-    const usedMins = hoursSummary.totalMinutes;
-    const pct = totalMins > 0 ? Math.round((usedMins / totalMins) * 100) : 0;
-    return (
-      <div className="flex items-center gap-3">
-        <Package className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="text-xs text-muted-foreground">
-          {selectedPkg.name} · {formatMinutes(usedMins)} / {formatMinutes(totalMins)}
-        </span>
-        <div className="h-1.5 w-16 rounded-full bg-slate-200">
-          <div
-            className={`h-full rounded-full ${pct > 90 ? "bg-red-500" : pct > 70 ? "bg-amber-500" : "bg-emerald-500"}`}
-            style={{ width: `${Math.min(pct, 100)}%` }}
-          />
-        </div>
-        <span className="text-xs text-muted-foreground">{formatMinutes(totalMins - usedMins)} left</span>
-      </div>
-    );
-  }
+  const { total, done, pct } = taskProgress(tasks);
+  const deadline = getDeadlineMeta(project.finishDate, project.status);
+  const lastActivity = getLastActivity(tasks, timeline);
 
-  if (isByHours && hoursSummary) {
-    return (
-      <div className="flex items-center gap-3">
-        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="text-xs text-muted-foreground">
-          {formatMinutes(hoursSummary.totalMinutes)} tracked · {invoices.length} invoices
-        </span>
-      </div>
-    );
-  }
-
-  // By Project
-  if (project.budget) {
-    const budgetNum = Number(project.budget);
-    const invoicedTotal = invoices.reduce((sum, inv) => sum + Number(inv.total), 0);
-    const pct = budgetNum > 0 ? Math.round((invoicedTotal / budgetNum) * 100) : 0;
-    return (
-      <div className="flex items-center gap-3">
-        <span className="text-xs text-muted-foreground">
-          Budget: {formatCurrency(project.budget, project.currency || "IDR")} · {invoices.length} invoices
-        </span>
-        <div className="h-1.5 w-16 rounded-full bg-slate-200">
-          <div
-            className="h-full rounded-full bg-blue-500"
-            style={{ width: `${Math.min(pct, 100)}%` }}
-          />
+  // Primary progress line: task completion is what clients care about.
+  // Falls back to billing-specific progress when a project has no visible tasks.
+  const progressLine = (() => {
+    if (total > 0) {
+      return (
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-foreground">
+            {done}/{total} task selesai
+          </span>
+          <div className="h-1.5 w-24 rounded-full bg-slate-200">
+            <div
+              className={`h-full rounded-full transition-all ${pct >= 100 ? "bg-emerald-500" : "bg-blue-500"}`}
+              style={{ width: `${Math.min(pct, 100)}%` }}
+            />
+          </div>
+          <span className="text-xs text-muted-foreground">{pct}%</span>
         </div>
-        <span className="text-xs text-muted-foreground">{pct}% invoiced</span>
-      </div>
-    );
-  }
+      );
+    }
+
+    if (isByPackage && selectedPkg && hoursSummary) {
+      const totalMins = selectedPkg.hours ? selectedPkg.hours * 60 : 0;
+      const usedMins = hoursSummary.totalMinutes;
+      const upct = totalMins > 0 ? Math.round((usedMins / totalMins) * 100) : 0;
+      return (
+        <div className="flex items-center gap-2">
+          <Package className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">
+            {formatMinutes(usedMins)} / {formatMinutes(totalMins)}
+          </span>
+          <div className="h-1.5 w-20 rounded-full bg-slate-200">
+            <div
+              className={`h-full rounded-full ${upct > 90 ? "bg-red-500" : upct > 70 ? "bg-amber-500" : "bg-emerald-500"}`}
+              style={{ width: `${Math.min(upct, 100)}%` }}
+            />
+          </div>
+          <span className="text-xs text-muted-foreground">{formatMinutes(Math.max(0, totalMins - usedMins))} sisa</span>
+        </div>
+      );
+    }
+
+    if (isByHours && hoursSummary) {
+      return (
+        <div className="flex items-center gap-2">
+          <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">
+            {formatMinutes(hoursSummary.totalMinutes)} tercatat
+          </span>
+        </div>
+      );
+    }
+
+    return <span className="text-xs text-muted-foreground">Belum ada task</span>;
+  })();
 
   return (
-    <span className="text-xs text-muted-foreground">
-      {tasks.length} tasks · {invoices.length} invoices
-    </span>
+    <div className="space-y-1">
+      {progressLine}
+      {(deadline || lastActivity) && (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
+          {deadline && (
+            <span className={deadline.overdue ? "font-medium text-red-600" : undefined}>
+              {deadline.text}
+            </span>
+          )}
+          {deadline && lastActivity && <span className="text-muted-foreground/50">·</span>}
+          {lastActivity && <span>{lastActivity}</span>}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -702,93 +837,133 @@ export function ProjectAccordion({
   ownerName,
 }: ProjectAccordionProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   const toggleProject = useCallback((id: string) => {
     setExpandedId((prev) => (prev === id ? null : id));
   }, []);
 
+  // Split into active (in-progress) vs archived (completed/cancelled) so the
+  // client always sees live work first and finished work stays out of the way.
+  const isArchived = (status: string) => status === "completed" || status === "cancelled";
+  const activeProjects = projects.filter((p) => !isArchived(p.status));
+  const archivedProjects = projects.filter((p) => isArchived(p.status));
+
+  const renderCard = (project: Project) => {
+    const isExpanded = expandedId === project.id;
+    const tasks = projectTasksMap.get(project.id) || [];
+    const files = projectFilesMap.get(project.id) || [];
+    const comments = projectCommentsMap.get(project.id) || [];
+    const timeline = projectTimelineMap.get(project.id) || [];
+    const hoursSummary = projectHoursMap.get(project.id);
+    const entries = byHoursEntriesMap.get(project.id);
+    const invoices = projectInvoicesMap.get(project.id) || [];
+    const selectedPkg = project.selectedPackageId ? selectedPackageMap.get(project.selectedPackageId) : undefined;
+    const packages = projectPackagesMap.get(project.id) || [];
+    const orders = packageOrdersList.filter((o) => o.projectId === project.id);
+
+    const needsReview = hasReviewTask(tasks);
+    const statusMeta = getProjectStatusMeta(project.status, needsReview);
+
+    return (
+      <Card key={project.id} className={`overflow-hidden border-l-4 ${statusMeta.borderClass}`}>
+        {/* Collapsed header — always visible */}
+        <div
+          className="flex items-start justify-between gap-3 p-5 cursor-pointer hover:bg-muted/30 transition-colors"
+          onClick={() => toggleProject(project.id)}
+        >
+          <div className="flex items-start gap-3 min-w-0 flex-1">
+            {isExpanded ? (
+              <ChevronDown className="h-5 w-5 text-foreground shrink-0 mt-0.5" />
+            ) : (
+              <ChevronRight className="h-5 w-5 text-foreground shrink-0 mt-0.5" />
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="font-semibold text-base truncate">{project.name}</span>
+                <Badge variant="secondary" className="text-[11px] shrink-0">
+                  {project.billingType === "hours"
+                    ? "By Hours"
+                    : project.billingType === "package"
+                      ? "By Package"
+                      : "By Project"}
+                </Badge>
+              </div>
+              <div className="mt-1.5">
+                <ProjectSummary
+                  project={project}
+                  tasks={tasks}
+                  timeline={timeline}
+                  selectedPkg={selectedPkg}
+                  hoursSummary={hoursSummary}
+                />
+              </div>
+            </div>
+          </div>
+          <Badge variant="outline" className={`text-[11px] shrink-0 ${statusMeta.badgeClass}`}>
+            {statusMeta.label}
+          </Badge>
+        </div>
+
+        {/* Expanded content */}
+        {isExpanded && (
+          <ProjectExpandedContent
+            project={project}
+            tasks={tasks}
+            files={files}
+            comments={comments}
+            timeline={timeline}
+            hoursSummary={hoursSummary}
+            entries={entries}
+            invoices={invoices}
+            selectedPkg={selectedPkg}
+            packages={packages}
+            customReqs={customRequests}
+            orders={orders}
+            actionLabels={clientVisibleActionLabels}
+            token={token}
+            workspaceId={workspaceId}
+            ownerWhatsAppPhone={ownerWhatsAppPhone}
+            ownerName={ownerName}
+          />
+        )}
+      </Card>
+    );
+  };
+
   return (
     <div className="space-y-3">
-      {projects.map((project) => {
-        const isExpanded = expandedId === project.id;
-        const tasks = projectTasksMap.get(project.id) || [];
-        const files = projectFilesMap.get(project.id) || [];
-        const comments = projectCommentsMap.get(project.id) || [];
-        const timeline = projectTimelineMap.get(project.id) || [];
-        const hoursSummary = projectHoursMap.get(project.id);
-        const entries = byHoursEntriesMap.get(project.id);
-        const invoices = projectInvoicesMap.get(project.id) || [];
-        const selectedPkg = project.selectedPackageId ? selectedPackageMap.get(project.selectedPackageId) : undefined;
-        const packages = projectPackagesMap.get(project.id) || [];
-        const orders = packageOrdersList.filter((o) => o.projectId === project.id);
+      {activeProjects.map(renderCard)}
 
-        return (
-          <Card key={project.id} className="overflow-hidden">
-            {/* Collapsed header — always visible */}
-            <div
-              className="flex items-center justify-between p-5 cursor-pointer hover:bg-muted/30 transition-colors"
-              onClick={() => toggleProject(project.id)}
-            >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="flex items-center gap-3 min-w-0">
-                  {isExpanded ? (
-                    <ChevronDown className="h-5 w-5 text-foreground shrink-0" />
-                  ) : (
-                    <ChevronRight className="h-5 w-5 text-foreground shrink-0" />
-                  )}
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2.5 flex-wrap">
-                      <span className="font-semibold text-base truncate">{project.name}</span>
-                      <Badge variant="secondary" className="text-[11px] shrink-0">
-                        {project.billingType === "hours"
-                          ? "By Hours"
-                          : project.billingType === "package"
-                            ? "By Package"
-                            : "By Project"}
-                      </Badge>
-                    </div>
-                    <div className="mt-0.5">
-                      <ProjectSummary
-                        project={project}
-                        tasks={tasks}
-                        invoices={invoices}
-                        selectedPkg={selectedPkg}
-                        hoursSummary={hoursSummary}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <Badge variant="outline" className="text-[11px] shrink-0 capitalize">
-                {project.status}
-              </Badge>
-            </div>
+      {activeProjects.length === 0 && archivedProjects.length === 0 && (
+        <div className="rounded-lg border border-dashed p-8 text-center">
+          <p className="text-sm text-muted-foreground">Belum ada project yang dibagikan.</p>
+        </div>
+      )}
 
-            {/* Expanded content */}
-            {isExpanded && (
-              <ProjectExpandedContent
-                project={project}
-                tasks={tasks}
-                files={files}
-                comments={comments}
-                timeline={timeline}
-                hoursSummary={hoursSummary}
-                entries={entries}
-                invoices={invoices}
-                selectedPkg={selectedPkg}
-                packages={packages}
-                customReqs={customRequests}
-                orders={orders}
-                actionLabels={clientVisibleActionLabels}
-                token={token}
-                workspaceId={workspaceId}
-                ownerWhatsAppPhone={ownerWhatsAppPhone}
-                ownerName={ownerName}
-              />
+      {archivedProjects.length > 0 && (
+        <div className="pt-2">
+          <button
+            type="button"
+            onClick={() => setShowArchived((v) => !v)}
+            className="flex w-full items-center gap-2 rounded-lg border border-dashed p-3 text-sm text-muted-foreground transition-colors hover:bg-muted/30"
+          >
+            {showArchived ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
             )}
-          </Card>
-        );
-      })}
+            <span className="font-medium">
+              Project selesai ({archivedProjects.length})
+            </span>
+          </button>
+          {showArchived && (
+            <div className="mt-3 space-y-3">
+              {archivedProjects.map(renderCard)}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
