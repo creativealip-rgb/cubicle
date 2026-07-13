@@ -115,6 +115,17 @@ export const workspaceInvoiceCounters = pgTable("workspace_invoice_counters", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// ─── AI usage counter (DB-backed rate limit, persists across restarts) ───
+
+export const aiUsageDaily = pgTable("ai_usage_daily", {
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  usageDate: date("usage_date").notNull(),
+  count: integer("count").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique("ai_usage_daily_ws_date").on(t.workspaceId, t.usageDate),
+]);
+
 // ─── Clients ───
 
 export const clients = pgTable("clients", {

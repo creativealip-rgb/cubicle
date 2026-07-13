@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Rate limit: AI requests per day based on plan (plan is per-user)
-  const { getUserPlan, checkWorkspaceRateLimit, getPlanLimits } = await import("@/lib/plan");
+  const { getUserPlan, checkAiRateLimitDb, getPlanLimits } = await import("@/lib/plan");
   const plan = await getUserPlan(session.user.id);
   const limits = getPlanLimits(plan);
 
@@ -147,7 +147,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const aiRate = checkWorkspaceRateLimit(wsId, "ai", plan);
+  // DB-backed daily limit: persists across restarts + correct across instances.
+  const aiRate = await checkAiRateLimitDb(wsId, plan);
   if (!aiRate.allowed) {
     const resetDate = new Date(aiRate.resetAt).toISOString();
     return new Response(

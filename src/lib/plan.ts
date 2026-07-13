@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { users, workspaceMembers } from "@/db/schema";
+import { aiUsageDaily, users, workspaceMembers } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 
 export type PlanTier = "free" | "solo" | "team";
@@ -39,7 +39,7 @@ const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxMembers: 1,
     hasClientPortal: true,
     hasAiAssistant: true,
-    aiRequestsPerDay: 50,
+    aiRequestsPerDay: 15,      // was 50 — unit economics: gemini-flash ~$0.04/req
     apiRequestsPerMinute: 120,
     maxClients: 0, // unlimited
     maxProjects: 0,
@@ -52,7 +52,7 @@ const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxMembers: 0,
     hasClientPortal: true,
     hasAiAssistant: true,
-    aiRequestsPerDay: 0,       // unlimited
+    aiRequestsPerDay: 500,     // soft-cap (abuse guard) — was 0/unlimited
     apiRequestsPerMinute: 0,   // unlimited
     maxClients: 0,
     maxProjects: 0,
@@ -134,6 +134,59 @@ export function checkWorkspaceRateLimit(
 
   entry.count++;
   return { allowed: true, remaining: limit - entry.count, resetAt: entry.resetAt, limit };
+}
+
+// ─── AI daily rate limit (DB-backed, atomic, persists across restarts) ───
+
+/**
+ * Atomically increment today's AI usage for a workspace and check against the
+ * plan's daily cap. Unlike the in-memory limiter this survives restarts and is
+ * correct across multiple app instances (single row per workspace+date,
+ * incremented via UPSERT). Returns allowed=false WITHOUT incrementing when the
+ * cap is already reached.
+ *
+ * A limit of 0 means unlimited (no row written).
+ */
+export async function checkAiRateLimitDb(
+  workspaceId: string,
+  plan: string,
+): Promise<{ allowed: boolean; count: number; limit: number; resetAt: number }> {
+  const limit = getPlanLimits(plan).aiRequestsPerDay;
+
+  // Next UTC midnight = reset boundary (usage_date is a UTC date).
+  const now = new Date();
+  const reset = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+
+  if (limit === 0) {
+    return { allowed: true, count: -1, limit: 0, resetAt: reset };
+  }
+
+  // Atomic UPSERT: only increment when we're still under the cap. If the row is
+  // already at the cap, the WHERE clause on the update prevents a further bump.
+  const rows = await db
+    .insert(aiUsageDaily)
+    .values({ workspaceId, usageDate: sql`current_date`, count: 1 })
+    .onConflictDoUpdate({
+      target: [aiUsageDaily.workspaceId, aiUsageDaily.usageDate],
+      set: { count: sql`${aiUsageDaily.count} + 1`, updatedAt: new Date() },
+      setWhere: sql`${aiUsageDaily.count} < ${limit}`,
+    })
+    .returning({ count: aiUsageDaily.count });
+
+  if (rows.length > 0) {
+    return { allowed: true, count: rows[0].count, limit, resetAt: reset };
+  }
+
+  // No row returned = conflict hit but setWhere blocked the update = at cap.
+  const [current] = await db
+    .select({ count: aiUsageDaily.count })
+    .from(aiUsageDaily)
+    .where(
+      sql`${aiUsageDaily.workspaceId} = ${workspaceId} AND ${aiUsageDaily.usageDate} = current_date`,
+    )
+    .limit(1);
+
+  return { allowed: false, count: current?.count ?? limit, limit, resetAt: reset };
 }
 
 // ─── Entity count checks (DB-backed) ───
