@@ -6,7 +6,7 @@ import { clients, projects, tasks, timeEntries, users } from "@/db/schema";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { writeActivityLog } from "@/lib/actions/activity";
-import { and, desc, eq, gte, lte } from "drizzle-orm";
+import { and, asc, eq, gte, lte } from "drizzle-orm";
 
 function escapeHtml(value: unknown) {
   return String(value ?? "")
@@ -16,8 +16,9 @@ function escapeHtml(value: unknown) {
     .replace(/"/g, "&quot;");
 }
 
+// H:MM:00 (Clockify style)
 function formatHours(minutes: number | null): string {
-  const m = minutes ?? 0;
+  const m = Math.max(0, minutes ?? 0);
   const h = Math.floor(m / 60);
   const mins = m % 60;
   return `${h}:${String(mins).padStart(2, "0")}:00`;
@@ -36,6 +37,87 @@ function formatDateShort(d: Date | string, locale: string): string {
     month: "short",
     year: "numeric",
   });
+}
+
+// Clockify-ish palette: greens + cyan + fallbacks
+const DONUT_COLORS = [
+  "#8bc34a", // light green
+  "#33691e", // dark green
+  "#26c6da", // cyan
+  "#ffb74d", // orange
+  "#7e57c2", // purple
+  "#ef5350", // red
+  "#26a69a", // teal
+  "#ec407a", // pink
+  "#5c6bc0", // indigo
+  "#9ccc65", // lime
+];
+
+type Slice = { label: string; minutes: number };
+
+/**
+ * Build an inline SVG donut chart + legend from slices.
+ * Uses stroke-dasharray on stacked circles — no JS/canvas needed for print.
+ */
+function donutChart(title: string, slices: Slice[]): string {
+  const total = slices.reduce((s, x) => s + x.minutes, 0);
+  if (total === 0) {
+    return `<div class="donut-block"><div class="donut-title">${escapeHtml(title)}</div><div class="muted" style="padding:16px 0;">—</div></div>`;
+  }
+  const sorted = [...slices].sort((a, b) => b.minutes - a.minutes);
+
+  const size = 150;
+  const stroke = 26;
+  const radius = (size - stroke) / 2;
+  const cx = size / 2;
+  const cy = size / 2;
+  const circumference = 2 * Math.PI * radius;
+
+  let offsetAccum = 0;
+  const segments = sorted
+    .map((slice, i) => {
+      const frac = slice.minutes / total;
+      const dash = frac * circumference;
+      const gap = circumference - dash;
+      const color = DONUT_COLORS[i % DONUT_COLORS.length];
+      const seg = `<circle cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-dasharray="${dash} ${gap}" stroke-dashoffset="${-offsetAccum}" transform="rotate(-90 ${cx} ${cy})" />`;
+      offsetAccum += dash;
+      return seg;
+    })
+    .join("");
+
+  const legend = sorted
+    .map((slice, i) => {
+      const pct = Math.round((slice.minutes / total) * 100);
+      const color = DONUT_COLORS[i % DONUT_COLORS.length];
+      return `<div class="legend-row"><span class="legend-swatch" style="background:${color};"></span><span class="legend-label">${escapeHtml(slice.label)}</span><span class="legend-pct">${pct}%</span></div>`;
+    })
+    .join("");
+
+  return `<div class="donut-block">
+    <div class="donut-title">${escapeHtml(title)}</div>
+    <div class="donut-chart-wrap">
+      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+        <circle cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="#eef0f2" stroke-width="${stroke}" />
+        ${segments}
+      </svg>
+    </div>
+    <div class="legend">${legend}</div>
+  </div>`;
+}
+
+// Render description into a numbered "Duties" block, Clockify-style.
+function renderDuties(description: string | null, dutiesLabel: string): string {
+  if (!description || !description.trim()) return "";
+  const lines = description
+    .split(/\r?\n/)
+    .map((l) => l.replace(/^\s*\d+[.)]\s*/, "").replace(/^\s*[-*•]\s*/, "").trim())
+    .filter(Boolean);
+  if (lines.length === 0) return "";
+  const items = lines
+    .map((l, i) => `<div class="duty-item">${i + 1}. ${escapeHtml(l)}</div>`)
+    .join("");
+  return `<tr class="duties-row"><td colspan="7"><div class="duties"><span class="duties-label">${escapeHtml(dutiesLabel)}</span>${items}</div></td></tr>`;
 }
 
 type Entry = {
@@ -66,7 +148,6 @@ export async function GET(request: Request) {
   const lang = (cookieStore.get("cubiqlo_lang")?.value === "en" ? "en" : "id") as "id" | "en";
   const locale = lang === "en" ? "en-US" : "id-ID";
 
-  // Read date range from query params
   const url = new URL(request.url);
   const dateFrom = url.searchParams.get("from");
   const dateTo = url.searchParams.get("to");
@@ -77,7 +158,7 @@ export async function GET(request: Request) {
   if (dateTo) conditions.push(lte(timeEntries.startTime, new Date(dateTo + "T23:59:59")));
   if (clientId) conditions.push(eq(timeEntries.clientId, clientId));
 
-  const entries = await db
+  const entries: Entry[] = await db
     .select({
       date: timeEntries.startTime,
       client: clients.name,
@@ -98,8 +179,8 @@ export async function GET(request: Request) {
     .leftJoin(tasks, eq(tasks.id, timeEntries.taskId))
     .leftJoin(users, eq(users.id, timeEntries.userId))
     .where(and(...conditions))
-    .orderBy(desc(timeEntries.startTime))
-    .limit(500);
+    .orderBy(asc(timeEntries.startTime))
+    .limit(1000);
 
   // Totals
   const totalMinutes = entries.reduce((s, e) => s + Number(e.durationMinutes ?? 0), 0);
@@ -109,80 +190,9 @@ export async function GET(request: Request) {
     return s + (Number(e.durationMinutes ?? 0) / 60) * Number(e.hourlyRate ?? 0);
   }, 0);
 
-  // Time frame string
   const timeFrame = dateFrom && dateTo
     ? `${formatDateShort(dateFrom, locale)} - ${formatDateShort(dateTo, locale)}`
     : lang === "en" ? "All time" : "Semua waktu";
-
-  // Group entries by client → date
-  const clientGroups = new Map<string, Map<string, Entry[]>>();
-  for (const entry of entries) {
-    const clientName = entry.client || (lang === "en" ? "No client" : "Tanpa klien");
-    const dateKey = entry.date ? new Date(entry.date).toISOString().split("T")[0]! : "unknown";
-    if (!clientGroups.has(clientName)) clientGroups.set(clientName, new Map());
-    const dateMap = clientGroups.get(clientName)!;
-    if (!dateMap.has(dateKey)) dateMap.set(dateKey, []);
-    dateMap.get(dateKey)!.push(entry);
-  }
-
-  // Build detailed rows grouped by client
-  let detailedRows = "";
-  let grandTotalMinutes = 0;
-  let grandTotalAmount = 0;
-
-  for (const [clientName, dateMap] of clientGroups) {
-    detailedRows += `<tr><td colspan="7" style="background:#e0e7ff;font-weight:600;padding:8px;">Client: ${escapeHtml(clientName)}</td></tr>`;
-
-    for (const [, dayEntries] of dateMap) {
-      const firstEntry = dayEntries[0]!;
-      const dayDate = firstEntry.date ? formatDateShort(firstEntry.date, locale) : "—";
-      const dayUser = firstEntry.user || "—";
-
-      detailedRows += `<tr style="background:#f9fafb;"><td colspan="7" style="padding:6px 8px;"><strong>${escapeHtml(dayDate)}</strong> &nbsp; ${escapeHtml(dayUser)}</td></tr>`;
-
-      for (const entry of dayEntries) {
-        const minutes = Number(entry.durationMinutes ?? 0);
-        const rate = Number(entry.hourlyRate ?? 0);
-        const amount = entry.billable ? (minutes / 60) * rate : 0;
-        grandTotalMinutes += minutes;
-        grandTotalAmount += amount;
-
-        detailedRows += `<tr>
-          <td></td>
-          <td>${escapeHtml(entry.project)}</td>
-          <td>${escapeHtml(entry.task)}</td>
-          <td>${escapeHtml(entry.tags)}</td>
-          <td>USD ${amount.toFixed(2)}</td>
-          <td>${formatTime(entry.startTime)} - ${formatTime(entry.endTime)}</td>
-          <td>${formatHours(minutes)}</td>
-        </tr>`;
-      }
-    }
-  }
-
-  // Dashboard report — group by project → task
-  const projectTaskMap = new Map<string, Map<string, { total: number; billable: number }>>();
-  for (const entry of entries) {
-    const projName = entry.project || (lang === "en" ? "No project" : "Tanpa proyek");
-    const taskName = entry.task || (lang === "en" ? "No task" : "Tanpa tugas");
-    const minutes = Number(entry.durationMinutes ?? 0);
-    if (!projectTaskMap.has(projName)) projectTaskMap.set(projName, new Map());
-    const taskMap = projectTaskMap.get(projName)!;
-    if (!taskMap.has(taskName)) taskMap.set(taskName, { total: 0, billable: 0 });
-    const bucket = taskMap.get(taskName)!;
-    bucket.total += minutes;
-    if (entry.billable) bucket.billable += minutes;
-  }
-
-  let dashboardRows = "";
-  for (const [projName, taskMap] of projectTaskMap) {
-    const projTotal = Array.from(taskMap.values()).reduce((s, v) => s + v.total, 0);
-    const projBillable = Array.from(taskMap.values()).reduce((s, v) => s + v.billable, 0);
-    dashboardRows += `<tr style="background:#f3f4f6;"><td><strong>Project: ${escapeHtml(projName)}</strong></td><td>${formatHours(projTotal)}</td><td>${formatHours(projBillable)}</td></tr>`;
-    for (const [taskName, { total, billable }] of taskMap) {
-      dashboardRows += `<tr><td style="padding-left:24px;">${escapeHtml(taskName)}</td><td>${formatHours(total)}</td><td>${formatHours(billable)}</td></tr>`;
-    }
-  }
 
   // i18n labels
   const L = {
@@ -194,6 +204,7 @@ export async function GET(request: Request) {
     totalHours: lang === "en" ? "Total hours" : "Total jam",
     billableHours: lang === "en" ? "Billable hours" : "Jam tagihkan",
     day: lang === "en" ? "DAY" : "HARI",
+    userCol: lang === "en" ? "USER" : "USER",
     project: lang === "en" ? "PROJECT" : "PROYEK",
     task: lang === "en" ? "TASK" : "TUGAS",
     tags: lang === "en" ? "TAGS" : "TAG",
@@ -204,7 +215,87 @@ export async function GET(request: Request) {
     billableHoursCol: lang === "en" ? "BILLABLE HOURS" : "JAM TAGIHKAN",
     total: lang === "en" ? "TOTAL" : "TOTAL",
     generated: lang === "en" ? "Generated" : "Dibuat",
+    duties: lang === "en" ? "Duties:" : "Tugas:",
+    clientLabel: lang === "en" ? "Client:" : "Klien:",
+    projectHoursTitle: lang === "en" ? "Hours by project" : "Jam per proyek",
+    taskHoursTitle: lang === "en" ? "Hours by task" : "Jam per tugas",
   };
+
+  // ── DETAILED REPORT: group by client, then by entry (ascending) ──
+  const clientGroups = new Map<string, Entry[]>();
+  for (const entry of entries) {
+    const clientName = entry.client || (lang === "en" ? "No client" : "Tanpa klien");
+    if (!clientGroups.has(clientName)) clientGroups.set(clientName, []);
+    clientGroups.get(clientName)!.push(entry);
+  }
+
+  let detailedRows = "";
+  for (const [clientName, clientEntries] of clientGroups) {
+    const clientMinutes = clientEntries.reduce((s, e) => s + Number(e.durationMinutes ?? 0), 0);
+    const clientAmount = clientEntries.reduce((s, e) => {
+      if (!e.billable) return s;
+      return s + (Number(e.durationMinutes ?? 0) / 60) * Number(e.hourlyRate ?? 0);
+    }, 0);
+
+    detailedRows += `<tr class="client-row">
+      <td colspan="4">${escapeHtml(L.clientLabel)} ${escapeHtml(clientName)}</td>
+      <td>USD ${clientAmount.toFixed(2)}</td>
+      <td></td>
+      <td>${formatHours(clientMinutes)}</td>
+    </tr>`;
+
+    for (const entry of clientEntries) {
+      const minutes = Number(entry.durationMinutes ?? 0);
+      const rate = Number(entry.hourlyRate ?? 0);
+      const amount = entry.billable ? (minutes / 60) * rate : 0;
+
+      detailedRows += `<tr class="entry-row">
+        <td>${entry.date ? escapeHtml(formatDateShort(entry.date, locale)) : "—"}</td>
+        <td>${escapeHtml(entry.user)}</td>
+        <td>${escapeHtml(entry.project)}</td>
+        <td>${escapeHtml(entry.task)}</td>
+        <td>USD ${amount.toFixed(2)}</td>
+        <td>${formatTime(entry.startTime)} - ${formatTime(entry.endTime)}</td>
+        <td>${formatHours(minutes)}</td>
+      </tr>`;
+      detailedRows += `<tr class="tags-row"><td></td><td colspan="6" class="tags-cell">${escapeHtml(entry.tags)}</td></tr>`;
+      detailedRows += renderDuties(entry.description, L.duties);
+    }
+  }
+
+  // ── DASHBOARD REPORT: group project → task with subtotals ──
+  const projectTaskMap = new Map<string, Map<string, { total: number; billable: number }>>();
+  const projectSummary: Slice[] = [];
+  const taskSummaryMap = new Map<string, number>();
+
+  for (const entry of entries) {
+    const projName = entry.project || (lang === "en" ? "No project" : "Tanpa proyek");
+    const taskName = entry.task || (lang === "en" ? "No task" : "Tanpa tugas");
+    const minutes = Number(entry.durationMinutes ?? 0);
+    if (!projectTaskMap.has(projName)) projectTaskMap.set(projName, new Map());
+    const taskMap = projectTaskMap.get(projName)!;
+    if (!taskMap.has(taskName)) taskMap.set(taskName, { total: 0, billable: 0 });
+    const bucket = taskMap.get(taskName)!;
+    bucket.total += minutes;
+    if (entry.billable) bucket.billable += minutes;
+    taskSummaryMap.set(taskName, (taskSummaryMap.get(taskName) ?? 0) + minutes);
+  }
+
+  let dashboardRows = "";
+  for (const [projName, taskMap] of projectTaskMap) {
+    const projTotal = Array.from(taskMap.values()).reduce((s, v) => s + v.total, 0);
+    const projBillable = Array.from(taskMap.values()).reduce((s, v) => s + v.billable, 0);
+    projectSummary.push({ label: projName, minutes: projTotal });
+    dashboardRows += `<tr class="proj-row"><td><strong>Project: ${escapeHtml(projName)}</strong></td><td>${formatHours(projTotal)}</td><td>${formatHours(projBillable)}</td></tr>`;
+    for (const [taskName, { total, billable }] of taskMap) {
+      dashboardRows += `<tr><td style="padding-left:24px;">${escapeHtml(taskName)}</td><td>${formatHours(total)}</td><td>${formatHours(billable)}</td></tr>`;
+    }
+  }
+
+  const taskSummary: Slice[] = Array.from(taskSummaryMap.entries()).map(([label, minutes]) => ({ label, minutes }));
+
+  const projectDonut = donutChart(L.projectHoursTitle, projectSummary);
+  const taskDonut = donutChart(L.taskHoursTitle, taskSummary);
 
   const html = `<!doctype html>
 <html>
@@ -213,19 +304,41 @@ export async function GET(request: Request) {
   <title>${L.detailedReport}</title>
   <style>
     @page { size: A4 landscape; margin: 14mm; }
-    body { font-family: Arial, sans-serif; color: #111827; font-size: 12px; }
+    body { font-family: Arial, Helvetica, sans-serif; color: #1f2937; font-size: 12px; }
     h1 { margin: 0 0 4px; font-size: 20px; text-transform: uppercase; letter-spacing: 0.05em; }
-    h2 { margin: 24px 0 8px; font-size: 16px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #111; padding-bottom: 4px; }
+    h2 { margin: 28px 0 10px; font-size: 16px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #111; padding-bottom: 4px; }
     .muted { color: #6b7280; font-size: 11px; }
     .meta { margin: 8px 0 16px; }
-    .meta-row { display: flex; gap: 32px; margin: 4px 0; }
-    .meta-label { color: #6b7280; font-size: 11px; }
-    .meta-value { font-weight: 600; font-size: 13px; }
+    .meta-row { display: flex; gap: 12px; margin: 3px 0; align-items: baseline; }
+    .meta-label { color: #6b7280; font-size: 11px; min-width: 150px; }
+    .meta-value { font-weight: 700; font-size: 13px; }
+
     table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 8px; }
-    th { text-align: left; background: #111; color: #fff; padding: 6px 8px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
-    td { border: 1px solid #e5e7eb; padding: 4px 8px; vertical-align: top; }
-    tr:nth-child(even) { background: #fafafa; }
-    .total-row td { font-weight: 700; background: #f3f4f6; border-top: 2px solid #111; }
+    th { text-align: left; background: #111827; color: #fff; padding: 6px 8px; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.04em; }
+    td { border-bottom: 1px solid #e5e7eb; padding: 5px 8px; vertical-align: top; }
+
+    tr.client-row td { background: #e8eef9; font-weight: 700; border-top: 1px solid #c7d2fe; border-bottom: 1px solid #c7d2fe; }
+    tr.entry-row td { border-bottom: none; }
+    tr.tags-row .tags-cell { color: #6b7280; font-size: 10px; padding-top: 0; }
+    tr.duties-row td { border-bottom: 1px solid #eef0f2; padding-top: 0; padding-bottom: 8px; }
+    .duties { padding-left: 8px; }
+    .duties-label { display: block; font-weight: 600; font-size: 10px; color: #374151; margin-bottom: 2px; }
+    .duty-item { font-size: 10.5px; color: #4b5563; padding-left: 14px; }
+
+    .total-row td { font-weight: 700; background: #f3f4f6; border-top: 2px solid #111; border-bottom: 2px solid #111; }
+    tr.proj-row td { background: #f3f4f6; }
+
+    /* Donut dashboard */
+    .donuts { display: flex; gap: 48px; justify-content: center; margin: 16px 0 8px; }
+    .donut-block { text-align: center; }
+    .donut-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; color: #374151; }
+    .donut-chart-wrap { display: flex; justify-content: center; }
+    .legend { margin-top: 10px; text-align: left; display: inline-block; }
+    .legend-row { display: flex; align-items: center; gap: 6px; margin: 2px 0; font-size: 10.5px; }
+    .legend-swatch { width: 11px; height: 11px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+    .legend-label { flex: 1; }
+    .legend-pct { color: #6b7280; font-weight: 600; margin-left: 8px; }
+
     @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
   </style>
 </head>
@@ -234,7 +347,7 @@ export async function GET(request: Request) {
   <h1>${L.detailedReport}</h1>
   <div class="meta">
     <div class="meta-row"><span class="meta-label">${L.timeFrame}</span><span class="meta-value">${escapeHtml(timeFrame)}</span></div>
-    <div class="meta-row"><span class="meta-label">${L.totalBillableAmount}</span><span class="meta-value">USD ${totalBillableAmount.toFixed(2)} ${L.hrsOnly}</span></div>
+    <div class="meta-row"><span class="meta-label">${L.totalBillableAmount} ${L.hrsOnly}</span><span class="meta-value">USD ${totalBillableAmount.toFixed(2)}</span></div>
     <div class="meta-row"><span class="meta-label">${L.totalHours}</span><span class="meta-value">${formatHours(totalMinutes)}</span></div>
   </div>
 
@@ -242,9 +355,9 @@ export async function GET(request: Request) {
     <thead>
       <tr>
         <th>${L.day}</th>
+        <th>${L.userCol}</th>
         <th>${L.project}</th>
         <th>${L.task}</th>
-        <th>${L.tags}</th>
         <th>${L.billableAmount}</th>
         <th>${L.startFinish}</th>
         <th>${L.totalHoursCol}</th>
@@ -254,9 +367,9 @@ export async function GET(request: Request) {
       ${detailedRows}
       <tr class="total-row">
         <td colspan="4" style="text-align:right;">${L.total}</td>
-        <td>USD ${grandTotalAmount.toFixed(2)}</td>
+        <td>USD ${totalBillableAmount.toFixed(2)}</td>
         <td></td>
-        <td>${formatHours(grandTotalMinutes)}</td>
+        <td>${formatHours(totalMinutes)}</td>
       </tr>
     </tbody>
   </table>
@@ -267,6 +380,11 @@ export async function GET(request: Request) {
     <div class="meta-row"><span class="meta-label">${L.timeFrame}</span><span class="meta-value">${escapeHtml(timeFrame)}</span></div>
     <div class="meta-row"><span class="meta-label">${L.totalHours}</span><span class="meta-value">${formatHours(totalMinutes)}</span></div>
     <div class="meta-row"><span class="meta-label">${L.billableHours}</span><span class="meta-value">${formatHours(billableMinutes)}</span></div>
+  </div>
+
+  <div class="donuts">
+    ${projectDonut}
+    ${taskDonut}
   </div>
 
   <table>
@@ -287,7 +405,7 @@ export async function GET(request: Request) {
     </tbody>
   </table>
 
-  <p class="muted" style="margin-top:24px;">${L.generated} ${new Date().toLocaleString(locale)}</p>
+  <p class="muted" style="margin-top:24px;">${L.generated} ${escapeHtml(new Date().toLocaleString(locale))}</p>
   <script>window.print()</script>
 </body>
 </html>`;

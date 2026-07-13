@@ -120,6 +120,9 @@ export default async function TimePage() {
           <Button variant="outline" size="sm" asChild>
             <Link href="/api/time/export/pdf?dashboard=1&detailed=1" target="_blank">PDF Full</Link>
           </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/api/time/export/pdf/va-timesheet" target="_blank">PDF VA Timesheet</Link>
+          </Button>
         </div>
       </div>
 
