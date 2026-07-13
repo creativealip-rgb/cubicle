@@ -152,6 +152,7 @@ export async function GET(request: Request) {
   const dateFrom = url.searchParams.get("from");
   const dateTo = url.searchParams.get("to");
   const clientId = url.searchParams.get("clientId");
+  const projectId = url.searchParams.get("projectId");
 
   // report=detailed | dashboard | full (default: full)
   const reportParam = (url.searchParams.get("report") || "full").toLowerCase();
@@ -162,6 +163,7 @@ export async function GET(request: Request) {
   if (dateFrom) conditions.push(gte(timeEntries.startTime, new Date(dateFrom)));
   if (dateTo) conditions.push(lte(timeEntries.startTime, new Date(dateTo + "T23:59:59")));
   if (clientId) conditions.push(eq(timeEntries.clientId, clientId));
+  if (projectId) conditions.push(eq(timeEntries.projectId, projectId));
 
   const entries: Entry[] = await db
     .select({

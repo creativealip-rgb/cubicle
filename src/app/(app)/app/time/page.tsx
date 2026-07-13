@@ -83,7 +83,7 @@ export default async function TimePage() {
     .orderBy(clients.name);
 
   const projectList = await db
-    .select({ id: projects.id, name: projects.name })
+    .select({ id: projects.id, name: projects.name, clientId: projects.clientId })
     .from(projects)
     .where(eq(projects.workspaceId, workspaceId))
     .orderBy(projects.name);
@@ -111,7 +111,7 @@ export default async function TimePage() {
               tasks={taskList}
             />
           )}
-          <PdfExportButton />
+          <PdfExportButton clients={clientList} projects={projectList} />
         </div>
       </div>
 
