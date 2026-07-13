@@ -40,13 +40,13 @@ export function SignupForm() {
       });
 
       if (result.error) {
-        setError(result.error.message ?? "Could not create account");
+        setError(result.error.message ?? "Gagal membuat akun");
         return;
       }
 
       router.push(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("Terjadi kesalahan. Coba lagi.");
     } finally {
       setLoading(false);
     }
@@ -58,7 +58,7 @@ export function SignupForm() {
         <Image src="/logo-icon.png" alt="Cubiqlo" width={40} height={40} className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover" />
         <CardTitle className="text-2xl">Buat akun</CardTitle>
         <CardDescription>
-          Start your free Cubiqlo workspace
+          Mulai workspace Cubiqlo gratis
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -69,11 +69,11 @@ export function SignupForm() {
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="name">Full name</Label>
+            <Label htmlFor="name">Nama lengkap</Label>
             <Input
               id="name"
               type="text"
-              placeholder="Jane Smith"
+              placeholder="Budi Santoso"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -105,12 +105,12 @@ export function SignupForm() {
               autoComplete="new-password"
             />
             <p className="text-xs text-muted-foreground">
-              At least 8 characters
+              Minimal 8 karakter
             </p>
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Create account
+            Buat akun
           </Button>
         </CardContent>
       </form>

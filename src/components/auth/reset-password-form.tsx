@@ -31,7 +31,7 @@ export function ResetPasswordForm() {
 
   useEffect(() => {
     if (!token) {
-      setError("Missing or invalid reset link. Please request a new one.");
+      setError("Link reset tidak valid atau tidak ada. Silakan minta link baru.");
     }
   }, [token]);
 
@@ -40,15 +40,15 @@ export function ResetPasswordForm() {
     setError("");
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError("Password minimal 8 karakter.");
       return;
     }
     if (password !== confirm) {
-      setError("Passwords don't match.");
+      setError("Password tidak cocok.");
       return;
     }
     if (!token) {
-      setError("Missing reset token. Please request a new link.");
+      setError("Token reset tidak ada. Silakan minta link baru.");
       return;
     }
 
@@ -60,7 +60,7 @@ export function ResetPasswordForm() {
       });
 
       if (result.error) {
-        setError(result.error.message ?? "Could not reset password");
+        setError(result.error.message ?? "Gagal mereset password");
         return;
       }
 
@@ -68,7 +68,7 @@ export function ResetPasswordForm() {
       // Redirect to login after a short pause so the success state registers
       setTimeout(() => router.push("/login"), 1500);
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("Terjadi kesalahan. Coba lagi.");
     } finally {
       setLoading(false);
     }
@@ -79,9 +79,9 @@ export function ResetPasswordForm() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <CheckCircle className="mx-auto h-12 w-12 text-primary" />
-          <CardTitle className="text-2xl">Password reset</CardTitle>
+          <CardTitle className="text-2xl">Password direset</CardTitle>
           <CardDescription>
-            Your password has been updated. Redirecting you to sign in&hellip;
+            Password kamu sudah diperbarui. Mengarahkan ke halaman masuk&hellip;
           </CardDescription>
         </CardHeader>
         <CardFooter className="flex justify-center">
@@ -89,7 +89,7 @@ export function ResetPasswordForm() {
             href="/login"
             className="text-sm text-muted-foreground underline-offset-4 hover:underline"
           >
-            Back to sign in
+            Kembali ke halaman masuk
           </Link>
         </CardFooter>
       </Card>
@@ -100,9 +100,9 @@ export function ResetPasswordForm() {
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1 text-center">
         <Image src="/logo-icon.png" alt="Cubiqlo" width={40} height={40} className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover" />
-        <CardTitle className="text-2xl">Set a new password</CardTitle>
+        <CardTitle className="text-2xl">Buat password baru</CardTitle>
         <CardDescription>
-          Enter a new password for your Cubiqlo account.
+          Masukkan password baru untuk akun Cubiqlo kamu.
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -110,7 +110,7 @@ export function ResetPasswordForm() {
           {!token && (
             <div className="flex items-start gap-2 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>No reset token found. Please use the link from your email, or request a new one.</span>
+              <span>Token reset tidak ditemukan. Gunakan link dari email kamu, atau minta link baru.</span>
             </div>
           )}
           {error && token && (
@@ -119,11 +119,11 @@ export function ResetPasswordForm() {
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="password">New password</Label>
+            <Label htmlFor="password">Password baru</Label>
             <Input
               id="password"
               type="password"
-              placeholder="At least 8 characters"
+              placeholder="Minimal 8 karakter"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -133,11 +133,11 @@ export function ResetPasswordForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirm">Confirm new password</Label>
+            <Label htmlFor="confirm">Konfirmasi password baru</Label>
             <Input
               id="confirm"
               type="password"
-              placeholder="Type it again"
+              placeholder="Ketik ulang"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               required
@@ -148,7 +148,7 @@ export function ResetPasswordForm() {
           </div>
           <Button type="submit" className="w-full" disabled={loading || !token}>
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Update password
+            Perbarui password
           </Button>
         </CardContent>
       </form>
@@ -158,7 +158,7 @@ export function ResetPasswordForm() {
           className="flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:underline"
         >
           <ArrowLeft className="h-3 w-3" />
-          {token ? "Request a new link" : "Back to sign in"}
+          {token ? "Minta link baru" : "Kembali ke halaman masuk"}
         </Link>
       </CardFooter>
     </Card>

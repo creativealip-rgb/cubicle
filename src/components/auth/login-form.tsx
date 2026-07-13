@@ -46,7 +46,7 @@ export function LoginForm() {
       });
 
       if (result.error) {
-        const msg = result.error.message ?? "Invalid credentials";
+        const msg = result.error.message ?? "Email atau password salah";
         if (msg.toLowerCase().includes("not verified") || msg.toLowerCase().includes("email not verified")) {
           setUnverified(true);
           setUnverifiedEmail(email);
@@ -59,7 +59,7 @@ export function LoginForm() {
       router.push(redirect);
       router.refresh();
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("Terjadi kesalahan. Coba lagi.");
     } finally {
       setLoading(false);
     }
@@ -85,7 +85,7 @@ export function LoginForm() {
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1 text-center">
         <Image src="/logo-icon.png" alt="Cubiqlo" width={40} height={40} className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover" />
-        <CardTitle className="text-2xl">Welcome back</CardTitle>
+        <CardTitle className="text-2xl">Selamat datang kembali</CardTitle>
         <CardDescription>
           Masuk ke workspace Cubiqlo kamu
         </CardDescription>

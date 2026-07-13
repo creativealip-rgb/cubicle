@@ -34,13 +34,13 @@ export function ForgotPasswordForm() {
       });
 
       if (result.error) {
-        setError(result.error.message ?? "Could not process request");
+        setError(result.error.message ?? "Gagal memproses permintaan");
         return;
       }
 
       setSent(true);
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("Terjadi kesalahan. Coba lagi.");
     } finally {
       setLoading(false);
     }
@@ -51,9 +51,9 @@ export function ForgotPasswordForm() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <CheckCircle className="mx-auto h-12 w-12 text-primary" />
-          <CardTitle className="text-2xl">Check your email</CardTitle>
+          <CardTitle className="text-2xl">Cek email kamu</CardTitle>
           <CardDescription>
-            We&apos;ve sent a password reset link to{" "}
+            Kami sudah mengirim link reset password ke{" "}
             <span className="font-medium text-foreground">{email}</span>
           </CardDescription>
         </CardHeader>
@@ -62,7 +62,7 @@ export function ForgotPasswordForm() {
             href="/login"
             className="text-sm text-muted-foreground underline-offset-4 hover:underline"
           >
-            Back to sign in
+            Kembali ke halaman masuk
           </Link>
         </CardFooter>
       </Card>
@@ -75,7 +75,7 @@ export function ForgotPasswordForm() {
         <Image src="/logo-icon.png" alt="Cubiqlo" width={40} height={40} className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover" />
         <CardTitle className="text-2xl">Reset password</CardTitle>
         <CardDescription>
-          Enter your email and we&apos;ll send you a reset link
+          Masukkan email kamu dan kami kirim link reset-nya
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -90,7 +90,7 @@ export function ForgotPasswordForm() {
             <Input
               id="email"
               type="email"
-              placeholder="name@example.com"
+              placeholder="nama@contoh.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -99,7 +99,7 @@ export function ForgotPasswordForm() {
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Send reset link
+            Kirim link reset
           </Button>
         </CardContent>
       </form>
@@ -109,7 +109,7 @@ export function ForgotPasswordForm() {
           className="flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:underline"
         >
           <ArrowLeft className="h-3 w-3" />
-          Back to sign in
+          Kembali ke halaman masuk
         </Link>
       </CardFooter>
     </Card>

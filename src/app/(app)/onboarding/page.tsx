@@ -27,8 +27,8 @@ import { finishOnboarding } from "@/lib/actions/onboarding";
 
 const steps = [
   { id: 1, label: "Workspace", icon: Building2 },
-  { id: 2, label: "Team", icon: Users },
-  { id: 3, label: "Ready", icon: Rocket },
+  { id: 2, label: "Tim", icon: Users },
+  { id: 3, label: "Siap", icon: Rocket },
 ];
 
 export default function OnboardingPage() {
@@ -58,7 +58,7 @@ export default function OnboardingPage() {
 
   async function handleFinish() {
     if (!workspaceName.trim()) {
-      setError("Workspace name is required.");
+      setError("Nama workspace wajib diisi.");
       setStep(1);
       return;
     }
@@ -70,7 +70,7 @@ export default function OnboardingPage() {
       router.push("/app/dashboard");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to finish onboarding.");
+      setError(err instanceof Error ? err.message : "Gagal menyelesaikan onboarding.");
       setLoading(false);
     }
   }
@@ -125,17 +125,17 @@ export default function OnboardingPage() {
               <div className="text-center">
                 <Building2 className="mx-auto h-12 w-12 text-primary" />
                 <h3 className="mt-2 text-lg font-semibold">
-                  Create your workspace
+                  Buat workspace kamu
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  This is where you&apos;ll manage clients, projects, and invoices.
+                  Di sinilah kamu kelola klien, proyek, dan invoice.
                 </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="workspace">Workspace name</Label>
+                <Label htmlFor="workspace">Nama workspace</Label>
                 <Input
                   id="workspace"
-                  placeholder="My Agency"
+                  placeholder="Agensi Saya"
                   value={workspaceName}
                   onChange={(e) => setWorkspaceName(e.target.value)}
                 />
@@ -149,17 +149,17 @@ export default function OnboardingPage() {
               <div className="text-center">
                 <Users className="mx-auto h-12 w-12 text-primary" />
                 <h3 className="mt-2 text-lg font-semibold">
-                  Invite your team
+                  Undang tim kamu
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Add teammates to collaborate. You can always do this later.
+                  Tambah rekan untuk kolaborasi. Bisa dilakukan nanti juga.
                 </p>
               </div>
 
               <div className="flex gap-2">
                 <Input
                   type="email"
-                  placeholder="colleague@example.com"
+                  placeholder="rekan@contoh.com"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   onKeyDown={(e) => {
@@ -183,7 +183,7 @@ export default function OnboardingPage() {
               {invites.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground">
-                    {invites.length} invite{invites.length > 1 ? "s" : ""}
+                    {invites.length} undangan
                   </p>
                   {invites.map((email) => (
                     <div
@@ -210,20 +210,20 @@ export default function OnboardingPage() {
           {step === 3 && (
             <div className="space-y-4 text-center">
               <Rocket className="mx-auto h-16 w-16 text-primary" />
-              <h3 className="text-xl font-semibold">You&apos;re all set!</h3>
+              <h3 className="text-xl font-semibold">Semua siap!</h3>
               <p className="text-sm text-muted-foreground">
-                Your workspace <strong>{workspaceName || "My Workspace"}</strong>{" "}
-                is ready. Start managing your business.
+                Workspace <strong>{workspaceName || "Workspace Saya"}</strong>{" "}
+                sudah siap. Mulai kelola bisnis kamu.
               </p>
               <div className="flex flex-wrap justify-center gap-2">
                 <Badge variant="secondary">
                   <Check className="mr-1 h-3 w-3" />
-                  Workspace created
+                  Workspace dibuat
                 </Badge>
                 {invites.length > 0 && (
                   <Badge variant="secondary">
                     <Check className="mr-1 h-3 w-3" />
-                    {invites.length} invite{invites.length > 1 ? "s" : ""} prepared
+                    {invites.length} undangan disiapkan
                   </Badge>
                 )}
               </div>
@@ -239,7 +239,7 @@ export default function OnboardingPage() {
               disabled={loading}
             >
               <ArrowLeft className="h-4 w-4" />
-              Back
+              Kembali
             </Button>
           ) : (
             <div />
@@ -250,13 +250,13 @@ export default function OnboardingPage() {
               onClick={() => setStep(step + 1)}
               disabled={step === 2 ? false : !workspaceName.trim()}
             >
-              Continue
+              Lanjut
               <ArrowRight className="h-4 w-4" />
             </Button>
           ) : (
             <Button onClick={handleFinish} disabled={loading}>
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              Go to Dashboard
+              Ke Dashboard
             </Button>
           )}
         </CardFooter>
@@ -270,7 +270,7 @@ export default function OnboardingPage() {
               onClick={() => setStep(3)}
               className="text-muted-foreground"
             >
-              Skip for now
+              Lewati dulu
             </Button>
           </div>
         )}
