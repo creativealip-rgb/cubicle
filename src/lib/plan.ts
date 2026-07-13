@@ -174,15 +174,16 @@ export async function checkEntityLimit(
     return { allowed: true, current: 0, limit: 0 };
   }
 
-  let countQuery: string;
-  if (entity === "invoices") {
-    // Count invoices this month
-    countQuery = `SELECT count(*)::int as cnt FROM ${tableName} WHERE workspace_id = '${workspaceId}' AND created_at >= date_trunc('month', current_date)`;
-  } else {
-    countQuery = `SELECT count(*)::int as cnt FROM ${tableName} WHERE workspace_id = '${workspaceId}'`;
-  }
+  // Parameterized queries — workspaceId is bound, never string-interpolated.
+  // tableName is chosen from a fixed switch above (never user input), so it is
+  // safe to inject via sql.identifier for the table name only.
+  const table = sql.identifier(tableName);
+  const query =
+    entity === "invoices"
+      ? sql<{ cnt: number }>`SELECT count(*)::int as cnt FROM ${table} WHERE workspace_id = ${workspaceId} AND created_at >= date_trunc('month', current_date)`
+      : sql<{ cnt: number }>`SELECT count(*)::int as cnt FROM ${table} WHERE workspace_id = ${workspaceId}`;
 
-  const result = await db.execute(sql.raw(countQuery));
+  const result = await db.execute(query);
   const current = (result.rows[0] as { cnt: number })?.cnt ?? 0;
 
   if (current >= maxCount) {
