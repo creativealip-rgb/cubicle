@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { files, portalRequests } from "@/db/schema";
 import { getClientPortalAccess } from "@/lib/actions/portal";
 import { buildFileKey, R2_BUCKET, r2 } from "@/lib/r2";
+import { validateUploadedFile } from "@/lib/file-validation";
 
 const MAX_SIZE = 25 * 1024 * 1024;
 
@@ -42,10 +43,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Request not found" }, { status: 404 });
     }
 
+    const body = Buffer.from(await upload.arrayBuffer());
+
+    // Validate real content (extension allowlist + magic bytes). This endpoint
+    // is public/token-based, so the client MIME type and filename are untrusted.
+    const validation = validateUploadedFile(upload.name, body.subarray(0, 16));
+    if (!validation.ok) {
+      return NextResponse.json({ error: validation.reason ?? "File tidak valid" }, { status: 400 });
+    }
+
     const fileId = crypto.randomUUID();
     const safeName = upload.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const storageKey = buildFileKey(client.workspaceId, fileId, safeName);
-    const body = Buffer.from(await upload.arrayBuffer());
 
     await r2.send(
       new PutObjectCommand({
