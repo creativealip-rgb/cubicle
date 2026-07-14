@@ -4,6 +4,14 @@ Versi aplikasi mengikuti `package.json` (`version`) dan otomatis tampil di sideb
 lewat `NEXT_PUBLIC_APP_VERSION`. Naikkan versi di `package.json` setiap rilis,
 lalu tambahkan entri di sini.
 
+## v0.1.24 — 2026-07-14 — Fix bug mata uang timesheet + lokalisasi penuh Waktu + polish list Proyek & badge portal Klien
+
+- **Fix bug ikon mata uang ganda di timesheet** (`components/time/timesheet.tsx`): badge tarif dulu render `<DollarSign>` hardcode DI DEPAN hasil `formatRate` yang sudah punya simbol sendiri → USD tampil "$ $13.00", IDR tampil "$ Rp 25". Buang ikon hardcode; sekarang bersih "$13.00 / jam" & "Rp 25 / jam" sesuai currency proyek.
+- **Lokalisasi penuh timesheet:** durasi `h/m` → `j/mnt` (ikut bahasa), tanggal entri pakai `locale` (DD/MM/YYYY untuk ID, sebelumnya `toLocaleDateString()` tanpa arg → MM/DD/YYYY). Card summary (Total Waktu/Bisa Ditagih/Entri), semua label & item filter (Klien/Proyek/Bisa Ditagih/Tag/Dari/Sampai), empty state, "Tanpa judul"/"Tidak diketahui" — semua lewat `t()`.
+- **Polish visual list Proyek** (`app/projects/page.tsx`): badge status dulu polos abu-abu → tambah dot berwarna (`statusColors`: hijau=aktif, biru=selesai, dst) di badge desktop & mobile. Rebalance grid kolom (Jatuh Tempo 1→2, Aksi 2→1) supaya header "Jatuh Tempo" tidak pecah dua baris & alignment lurus.
+- **Badge portal Klien** (`app/clients/page.tsx`): teks badge kolom Portal "Aktif" → "Nyala"/"On" supaya tidak dobel-baca dengan badge kolom Status "Aktif".
+- Verified live di cubiqlo.com (tsc 0 error, container healthy v0.1.24, browser test: timesheet bersih tanpa dollar ganda + tanggal DD/MM + durasi j/mnt, list proyek badge berwarna + header satu baris). Commit `26b516d`.
+
 ## v0.1.23 — 2026-07-14 — Lokalisasi detail proyek + UX Tugas (auto-filter, board view, fix Kanban)
 
 - **Lokalisasi penuh halaman detail proyek** (`app/projects/[projectId]/page.tsx`): header (Kembali ke Proyek, Klien, Ubah), badge status pakai `projectStatusVariant` (variant + label ID), semua tab (Tugas/Berkas/Waktu/Komentar/Linimasa), `actionLabels` timeline, empty state (Tanpa judul/Tidak diketahui/Sistem). Tanggal & waktu pakai `locale`.
