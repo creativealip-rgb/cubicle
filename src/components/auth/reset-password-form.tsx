@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Loader2, ArrowLeft, CheckCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import {
   Card,
@@ -120,9 +121,8 @@ export function ResetPasswordForm() {
           )}
           <div className="space-y-2">
             <Label htmlFor="password">Password baru</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               placeholder="Minimal 8 karakter"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -134,9 +134,8 @@ export function ResetPasswordForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirm">Konfirmasi password baru</Label>
-            <Input
+            <PasswordInput
               id="confirm"
-              type="password"
               placeholder="Ketik ulang"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}

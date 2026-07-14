@@ -679,10 +679,12 @@ export default function HomePage() {
             <Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-9 w-auto object-contain" />
             <p className="text-xs text-slate-500">Manage client work from request to invoice.</p>
           </div>
-          <div className="flex gap-5 text-sm text-slate-500">
+          <div className="flex flex-wrap gap-5 text-sm text-slate-500">
             <Link href="/login" className="hover:text-slate-950">Masuk</Link>
             <Link href="/signup" className="hover:text-slate-950">Daftar</Link>
             <a href="#features" className="hover:text-slate-950">Fitur</a>
+            <Link href="/terms" className="hover:text-slate-950">Syarat</Link>
+            <Link href="/privacy" className="hover:text-slate-950">Privasi</Link>
           </div>
         </div>
       </footer>

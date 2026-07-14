@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -120,8 +120,15 @@ interface AppSidebarProps {
 
 export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { mobileOpen, setMobileOpen } = useSidebar();
   const [lang, setLang] = useState<"id" | "en">("id");
+
+  function changeLang(next: "id" | "en") {
+    document.cookie = `cubiqlo_lang=${next}; path=/; max-age=31536000; samesite=lax`;
+    setLang(next);
+    router.refresh();
+  }
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     Kerja: true,
     Keuangan: false,
@@ -339,7 +346,44 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-sidebar-border p-3">
+      <div className="space-y-2 border-t border-sidebar-border p-3">
+        {collapsed ? (
+          <button
+            type="button"
+            onClick={() => changeLang(lang === "id" ? "en" : "id")}
+            aria-label={t("Ganti ke Bahasa Inggris", "Switch to Indonesian")}
+            className="mx-auto flex h-7 w-full items-center justify-center rounded-md border bg-white text-xs font-semibold text-muted-foreground hover:text-foreground"
+          >
+            {lang === "id" ? "ID" : "EN"}
+          </button>
+        ) : (
+          <div className="flex items-center rounded-lg border bg-white p-1 text-xs">
+            <button
+              type="button"
+              onClick={() => changeLang("id")}
+              className={cn(
+                "h-7 flex-1 rounded-md font-medium transition-colors",
+                lang === "id"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Indonesia
+            </button>
+            <button
+              type="button"
+              onClick={() => changeLang("en")}
+              className={cn(
+                "h-7 flex-1 rounded-md font-medium transition-colors",
+                lang === "en"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              English
+            </button>
+          </div>
+        )}
         {!collapsed && (
           <p className="text-xs text-muted-foreground">
             Cubiqlo v0.1.21
