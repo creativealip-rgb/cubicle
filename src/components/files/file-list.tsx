@@ -1,11 +1,13 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { deleteFile } from "@/lib/actions/files";
 import { useT } from "@/lib/i18n-client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   FileText,
@@ -17,6 +19,7 @@ import {
   Trash2,
   Eye,
   Lock,
+  Search,
 } from "lucide-react";
 
 interface FileItem {
@@ -59,6 +62,18 @@ function formatBytes(bytes: number | null, unknownLabel: string): string {
 export function FileList({ files, workspaceId }: FileListProps) {
   const router = useRouter();
   const { t } = useT();
+  const [query, setQuery] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return files;
+    return files.filter(
+      (f) =>
+        f.name.toLowerCase().includes(q) ||
+        (f.mimeType?.toLowerCase().includes(q) ?? false) ||
+        (f.uploaderName?.toLowerCase().includes(q) ?? false),
+    );
+  }, [files, query]);
 
   async function handleDelete(fileId: string) {
     try {
@@ -74,18 +89,32 @@ export function FileList({ files, workspaceId }: FileListProps) {
     window.open(`/api/files/${fileId}/download`, "_blank");
   }
 
-  if (files.length === 0) {
-    return (
-      <div className="text-center py-12 text-sm text-muted-foreground">
-        <FileText className="h-10 w-10 mx-auto mb-3 opacity-30" />
-        {t("Belum ada file", "No files yet")}
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-2">
-      {files.map((file) => (
+    <div className="space-y-3">
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t("Cari file...", "Search files...")}
+          className="pl-9"
+        />
+      </div>
+
+      {files.length === 0 ? (
+        <div className="text-center py-12 text-sm text-muted-foreground">
+          <FileText className="h-10 w-10 mx-auto mb-3 opacity-30" />
+          {t("Belum ada file", "No files yet")}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-12 text-sm text-muted-foreground">
+          <Search className="h-10 w-10 mx-auto mb-3 opacity-30" />
+          {t("Tidak ada file yang cocok", "No matching files")}
+        </div>
+      ) : (
+        <div className="space-y-2">
+      {filtered.map((file) => (
         <Card key={file.id}>
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
@@ -136,6 +165,8 @@ export function FileList({ files, workspaceId }: FileListProps) {
           </CardContent>
         </Card>
       ))}
+        </div>
+      )}
     </div>
   );
 }

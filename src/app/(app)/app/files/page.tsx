@@ -6,6 +6,7 @@ import { files as filesTable, clients, projects, folders as foldersTable } from 
 import { eq, desc, and, isNull } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { FileList } from "@/components/files/file-list";
+import { FileDropZone } from "@/components/files/file-drop-zone";
 import { UploadButton } from "@/components/files/upload-button";
 import { NewFolderButton } from "@/components/files/folder-actions";
 import { FolderTree } from "@/components/files/folder-tree";
@@ -186,7 +187,12 @@ export default async function FilesPage({
             ))}
           </nav>
 
-          <FileList files={finalFiles} workspaceId={workspaceId} />
+          <FileDropZone
+            scope={{ workspaceId, clientId, projectId, folderId }}
+            canWrite={canWrite}
+          >
+            <FileList files={finalFiles} workspaceId={workspaceId} />
+          </FileDropZone>
         </div>
       </div>
     </div>

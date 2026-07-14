@@ -42,7 +42,17 @@ const DialogContent = React.forwardRef<
       )}
       onInteractOutside={(event) => {
         const target = event.target as HTMLElement | null;
-        if (target?.closest("[data-cubiqlo-select-content], [data-radix-popper-content-wrapper]")) {
+        // Keep the dialog open when the interaction comes from a portaled
+        // Radix popup (Select/Dropdown), OR when the target has already been
+        // detached from the DOM — which happens when you pick the *same*
+        // Select value and the item unmounts before this guard runs.
+        if (
+          !target ||
+          !document.contains(target) ||
+          target.closest(
+            "[data-cubiqlo-select-content], [data-radix-popper-content-wrapper], [role='listbox']",
+          )
+        ) {
           event.preventDefault();
           return;
         }

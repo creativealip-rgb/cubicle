@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { getSignedUploadUrl, completeUpload } from "@/lib/actions/files";
+import { uploadOneFile, MAX_UPLOAD_BYTES } from "@/lib/files-upload";
 import { useT } from "@/lib/i18n-client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -46,7 +46,7 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 25 * 1024 * 1024) {
+    if (file.size > MAX_UPLOAD_BYTES) {
       toast.error(t("Berkas harus di bawah 25MB", "File must be under 25MB"));
       return;
     }
@@ -55,48 +55,11 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
     setProgress(0);
 
     try {
-      const { uploadUrl, storageKey } = await getSignedUploadUrl({
-        fileName: file.name,
-        mime: file.type || "application/octet-stream",
-        size: file.size,
-        workspaceId,
-        clientId,
-        projectId,
-        folderId,
-        visibility,
-        fileType,
-      });
-
-      const xhr = new XMLHttpRequest();
-      xhr.upload.addEventListener("progress", (evt) => {
-        if (evt.lengthComputable) {
-          setProgress(Math.round((evt.loaded / evt.total) * 100));
-        }
-      });
-
-      await new Promise<void>((resolve, reject) => {
-        xhr.open("PUT", uploadUrl);
-        xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) resolve();
-          else reject(new Error(`Upload failed: ${xhr.status}`));
-        };
-        xhr.onerror = () => reject(new Error("Network error during upload"));
-        xhr.send(file);
-      });
-
-      await completeUpload({
-        name: file.name,
-        storageKey,
-        mimeType: file.type || "application/octet-stream",
-        sizeBytes: file.size,
-        workspaceId,
-        clientId,
-        projectId,
-        folderId,
-        visibility,
-        fileType,
-      });
+      await uploadOneFile(
+        file,
+        { workspaceId, clientId, projectId, folderId, visibility, fileType },
+        (pct) => setProgress(pct),
+      );
 
       toast.success(
         fileType === "deliverable"
@@ -106,7 +69,11 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
       setOpen(false);
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : t("Gagal mengunggah", "Upload failed"));
+      if (err instanceof Error && err.message === "MAX_SIZE") {
+        toast.error(t("Berkas harus di bawah 25MB", "File must be under 25MB"));
+      } else {
+        toast.error(err instanceof Error ? err.message : t("Gagal mengunggah", "Upload failed"));
+      }
     } finally {
       setUploading(false);
       setProgress(0);
