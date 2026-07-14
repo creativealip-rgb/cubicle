@@ -63,7 +63,7 @@ export function AcceptDeclineButtons({ proposalId, token }: AcceptDeclineButtons
         className="bg-emerald-600 hover:bg-emerald-700"
       >
         <Check className="h-4 w-4 mr-2" />
-        {loading === "accept" ? "Accepting..." : "Accept proposal"}
+        {loading === "accept" ? "Menyetujui..." : "Setujui proposal"}
       </Button>
       <Button
         size="lg"
@@ -72,28 +72,28 @@ export function AcceptDeclineButtons({ proposalId, token }: AcceptDeclineButtons
         disabled={loading !== null}
       >
         <X className="h-4 w-4 mr-2" />
-        Decline
+        Tolak
       </Button>
       <Dialog open={declineOpen} onOpenChange={setDeclineOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Decline proposal?</DialogTitle>
+            <DialogTitle>Tolak proposal?</DialogTitle>
             <DialogDescription>
-              Optionally let us know why so we can improve. This can&apos;t be undone.
+              Kalau berkenan, beri tahu alasannya supaya kami bisa memperbaiki. Tindakan ini tidak bisa dibatalkan.
             </DialogDescription>
           </DialogHeader>
           <Textarea
-            placeholder="Reason (optional)"
+            placeholder="Alasan (opsional)"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={3}
           />
           <DialogFooter>
             <Button variant="ghost" onClick={() => setDeclineOpen(false)} disabled={loading === "decline"}>
-              Cancel
+              Batal
             </Button>
             <Button onClick={handleDecline} disabled={loading === "decline"} variant="destructive">
-              {loading === "decline" ? "Declining..." : "Confirm decline"}
+              {loading === "decline" ? "Menolak..." : "Konfirmasi tolak"}
             </Button>
           </DialogFooter>
         </DialogContent>

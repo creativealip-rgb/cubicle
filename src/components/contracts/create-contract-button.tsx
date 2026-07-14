@@ -93,22 +93,22 @@ export function CreateContractButton({ clients, workspaceId }: { clients: { id: 
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-1" />
-          New contract
+          Kontrak Baru
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>New contract</DialogTitle>
+          <DialogTitle>Kontrak Baru</DialogTitle>
           <DialogDescription>
-            Start from a template. Edit the body. Send to a client for e-signature.
+            Mulai dari template, edit isinya, lalu kirim ke klien untuk tanda tangan elektronik.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <label className="text-sm font-medium block mb-1">Client</label>
+            <label className="text-sm font-medium block mb-1">Klien</label>
             <Select value={clientId} onValueChange={setClientId}>
               <SelectTrigger>
-                <SelectValue placeholder="Pick a client..." />
+                <SelectValue placeholder="Pilih klien..." />
               </SelectTrigger>
               <SelectContent>
                 {clients.map(c => (
@@ -118,15 +118,15 @@ export function CreateContractButton({ clients, workspaceId }: { clients: { id: 
             </Select>
           </div>
           <div>
-            <label className="text-sm font-medium block mb-1">Title</label>
+            <label className="text-sm font-medium block mb-1">Judul</label>
             <Input
-              placeholder="e.g. Service Agreement — Brand refresh"
+              placeholder="mis. Perjanjian Kerja Sama — Brand refresh"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
           </div>
           <div>
-            <label className="text-sm font-medium block mb-1">Valid until (optional)</label>
+            <label className="text-sm font-medium block mb-1">Berlaku sampai (opsional)</label>
             <Input
               type="date"
               value={validUntil}
@@ -150,11 +150,11 @@ export function CreateContractButton({ clients, workspaceId }: { clients: { id: 
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)} disabled={pending}>
-            Cancel
+            Batal
           </Button>
           <Button onClick={handleCreate} disabled={pending}>
             {pending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
-            Create draft
+            Buat draf
           </Button>
         </DialogFooter>
       </DialogContent>

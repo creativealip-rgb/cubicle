@@ -59,10 +59,10 @@ export function ProposalPublicView({ proposal, formatMoney }: ProposalPublicView
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Description</TableHead>
+            <TableHead>Deskripsi</TableHead>
             <TableHead className="text-right w-20">Qty</TableHead>
-            <TableHead className="text-right w-32">Unit price</TableHead>
-            <TableHead className="text-right w-32">Amount</TableHead>
+            <TableHead className="text-right w-32">Harga satuan</TableHead>
+            <TableHead className="text-right w-32">Jumlah</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -104,7 +104,7 @@ export function ProposalPublicView({ proposal, formatMoney }: ProposalPublicView
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
           <CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
           <div className="text-sm">
-            <p className="font-medium text-blue-900">Down payment to start</p>
+            <p className="font-medium text-blue-900">Uang muka untuk memulai</p>
             <p className="text-blue-700 mt-1">
               {proposal.downPaymentPercent}% ({formatMoney(
                 parseFloat(proposal.total) * (parseFloat(proposal.downPaymentPercent) / 100),
