@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { getProjectProgress } from "@/lib/actions/projects";
 import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 import { projectStatusVariant } from "@/lib/status-badge";
-import { KanbanBoard } from "@/components/tasks/kanban-board";
+import { ProjectTasksTab } from "@/components/tasks/project-tasks-tab";
 import { CommentList } from "@/components/comments/comment-list";
 import { ProjectForm } from "@/components/forms/project-form";
 import Link from "next/link";
@@ -307,7 +307,7 @@ export default async function ProjectDetailPage({
         </TabsList>
 
         <TabsContent value="tasks" className="pt-4">
-          <KanbanBoard projectId={projectId} tasks={projectTasks} members={projectMembers} />
+          <ProjectTasksTab projectId={projectId} tasks={projectTasks} members={projectMembers} />
         </TabsContent>
 
         <TabsContent value="files" className="pt-4 space-y-3">

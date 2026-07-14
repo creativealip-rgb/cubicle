@@ -10,6 +10,7 @@ lalu tambahkan entri di sini.
 - **Fix warna card Kanban bentrok** (`components/tasks/kanban-board.tsx`): buang `border-l-4` + `priorityColors` warna prioritas di kiri card yang tabrakan visual dengan dot status kolom. Card sekarang border netral (`border-border`), warna hanya di badge prioritas.
 - **Filter Tugas auto-apply** (`components/tasks/task-filters.tsx` baru): konversi form filter ke client component; pilih dropdown langsung `router.push` (buang tombol Filter manual). Label dropdown ke-4 diperjelas jadi "Semua Petugas / Ditugaskan ke".
 - **Toggle List/Board di halaman Tugas global** (`task-view-toggle.tsx` + `tasks-board-view.tsx` baru): mode Papan read-only grouped by status (4 kolom), card tampil judul/proyek/prioritas/assignee, klik buka detail sheet. State via `?view=board`.
+- **Toggle Papan/Daftar di tab Tugas detail proyek** (`project-tasks-tab.tsx` baru): wrapper client dengan state lokal — Papan pakai `KanbanBoard` (drag-and-drop tetap fungsional), Daftar pakai tampilan tabel (Judul/Ditugaskan/Jatuh Tempo/Prioritas/Status) dengan detail sheet on click.
 - **Progress bar proyek compact:** `p-4 h-3` → `p-3 h-2`, due date dipindah ke header inline (hemat ruang vertikal).
 - Verified live di cubiqlo.com (tsc 0 error, container healthy, HTTP 200, browser test login test user: lokalisasi + Kanban + auto-filter + toggle board dua arah). Commit `66ccfc2` + `87fd7e5`.
 
