@@ -43,6 +43,7 @@ import Link from "next/link";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { DashboardLanguageSwitch } from "@/components/dashboard-language-switch";
 import { DashboardGreeting } from "@/components/dashboard-greeting";
+import { DashboardOnboarding } from "@/components/dashboard-onboarding";
 
 async function getWorkspace() {
   return getWorkspaceFullForCurrentUser();
@@ -65,7 +66,11 @@ export default async function DashboardPage() {
       (SELECT count(*)::int FROM projects WHERE workspace_id = ${workspaceId} AND status = 'active') as active_projects,
       (SELECT count(*)::int FROM tasks WHERE workspace_id = ${workspaceId} AND status != 'done' AND due_date IS NOT NULL AND due_date <= current_date) as due_tasks,
       (SELECT count(*)::int FROM tasks WHERE workspace_id = ${workspaceId} AND status != 'done' AND due_date IS NOT NULL AND due_date < current_date) as overdue_tasks,
-      (SELECT count(*)::int FROM invoices WHERE workspace_id = ${workspaceId} AND status IN ('sent','viewed','overdue') AND due_date IS NOT NULL AND due_date <= current_date) as due_invoices
+      (SELECT count(*)::int FROM invoices WHERE workspace_id = ${workspaceId} AND status IN ('sent','viewed','overdue') AND due_date IS NOT NULL AND due_date <= current_date) as due_invoices,
+      (SELECT count(*)::int FROM clients WHERE workspace_id = ${workspaceId}) as total_clients,
+      (SELECT count(*)::int FROM projects WHERE workspace_id = ${workspaceId}) as total_projects,
+      (SELECT count(*)::int FROM invoices WHERE workspace_id = ${workspaceId}) as total_invoices,
+      (SELECT count(*)::int FROM time_entries WHERE workspace_id = ${workspaceId}) as total_time_entries
     `,
   );
   const counts = result.rows[0] as Record<string, number>;
@@ -74,6 +79,10 @@ export default async function DashboardPage() {
   const dueTasks = counts.due_tasks || 0;
   const overdueTasks = counts.overdue_tasks || 0;
   const dueInvoices = counts.due_invoices || 0;
+  const totalClients = counts.total_clients || 0;
+  const totalProjects = counts.total_projects || 0;
+  const totalInvoices = counts.total_invoices || 0;
+  const totalTimeEntries = counts.total_time_entries || 0;
 
   // Attention Needed — counts surfaced as actionable summary
   const todayStr = new Date().toISOString().split("T")[0]!;
@@ -449,6 +458,16 @@ export default async function DashboardPage() {
           })}
         </div>
       </div>
+
+      <DashboardOnboarding
+        lang={lang}
+        steps={[
+          { key: "client", done: totalClients > 0, href: "/app/clients" },
+          { key: "project", done: totalProjects > 0, href: "/app/projects" },
+          { key: "time", done: totalTimeEntries > 0, href: "/app/time" },
+          { key: "invoice", done: totalInvoices > 0, href: "/app/invoices" },
+        ]}
+      />
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("Reminder", "Reminder")}</h2>
