@@ -65,6 +65,7 @@ export default async function TimePage() {
       status: timeEntries.status,
       clientName: clients.name,
       projectName: projects.name,
+      projectCurrency: projects.currency,
       taskTitle: tasks.title,
       userName: users.name,
       createdAt: timeEntries.createdAt,
@@ -92,7 +93,7 @@ export default async function TimePage() {
     .orderBy(projects.name);
 
   const taskList = await db
-    .select({ id: tasks.id, title: tasks.title })
+    .select({ id: tasks.id, title: tasks.title, projectId: tasks.projectId })
     .from(tasks)
     .where(eq(tasks.workspaceId, workspaceId))
     .orderBy(tasks.title)
@@ -158,6 +159,7 @@ export default async function TimePage() {
           status: e.status,
           clientName: e.clientName,
           projectName: e.projectName,
+          projectCurrency: e.projectCurrency,
           taskTitle: e.taskTitle,
           userName: e.userName,
           createdAt: e.createdAt,

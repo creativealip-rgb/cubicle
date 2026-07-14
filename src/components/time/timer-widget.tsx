@@ -25,11 +25,13 @@ interface Client {
 interface Project {
   id: string;
   name: string;
+  clientId?: string;
 }
 
 interface Task {
   id: string;
   title: string;
+  projectId?: string;
 }
 
 interface ActiveTimer {
@@ -105,8 +107,10 @@ export function TimerWidget({
 
   useEffect(() => {
     if (selectedClientId) {
-      // Find projects linked to this client via the tasks' project relations
-      setFilteredProjects(allProjects);
+      // Only show projects that belong to the selected client.
+      // Fallback to all projects if project rows carry no clientId (defensive).
+      const scoped = allProjects.filter((p) => p.clientId === selectedClientId);
+      setFilteredProjects(scoped.length > 0 || allProjects.some((p) => p.clientId) ? scoped : allProjects);
       setSelectedProjectId("");
     } else {
       setFilteredProjects([]);
@@ -115,7 +119,9 @@ export function TimerWidget({
 
   useEffect(() => {
     if (selectedProjectId) {
-      setFilteredTasks(allTasks);
+      // Only show tasks that belong to the selected project.
+      const scoped = allTasks.filter((tk) => tk.projectId === selectedProjectId);
+      setFilteredTasks(scoped.length > 0 || allTasks.some((tk) => tk.projectId) ? scoped : allTasks);
       setSelectedTaskId("");
     } else {
       setFilteredTasks([]);

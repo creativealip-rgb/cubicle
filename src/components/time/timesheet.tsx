@@ -31,6 +31,7 @@ interface TimeEntry {
   status: string;
   clientName: string | null;
   projectName: string | null;
+  projectCurrency: string | null;
   taskTitle: string | null;
   userName: string | null;
   createdAt: Date | string;
@@ -102,14 +103,17 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
     return `${h}h ${m}m`;
   }
 
-  function formatRate(rate: string | number | null): string | null {
+  function formatRate(rate: string | number | null, currency: string | null): string | null {
     if (rate === null || rate === "") return null;
     const numericRate = Number(rate);
     if (!Number.isFinite(numericRate) || numericRate <= 0) return null;
-    return new Intl.NumberFormat("id-ID", {
+    const cur = (currency || "IDR").toUpperCase();
+    // IDR has no decimals; foreign currencies (USD/EUR/etc) keep 2 decimals.
+    const localeMap: Record<string, string> = { IDR: "id-ID", USD: "en-US", EUR: "de-DE" };
+    return new Intl.NumberFormat(localeMap[cur] || "en-US", {
       style: "currency",
-      currency: "IDR",
-      maximumFractionDigits: 0,
+      currency: cur,
+      maximumFractionDigits: cur === "IDR" ? 0 : 2,
     }).format(numericRate);
   }
 
@@ -310,7 +314,7 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
                   {entry.billable && (
                     <Badge variant="outline" className="text-[10px] gap-0.5">
                       <DollarSign className="h-2.5 w-2.5" />
-                      {formatRate(entry.hourlyRate) ? `${formatRate(entry.hourlyRate)} / jam` : "Billable"}
+                      {formatRate(entry.hourlyRate, entry.projectCurrency) ? `${formatRate(entry.hourlyRate, entry.projectCurrency)} / ${t("jam", "hr")}` : "Billable"}
                     </Badge>
                   )}
                   <Badge variant="secondary" className="text-[10px]">

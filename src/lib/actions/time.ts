@@ -78,6 +78,21 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
       ),
     );
 
+  // Resolve rate: explicit input wins; otherwise inherit the project's rate
+  // (only meaningful for hourly-billed projects) so billable entries carry a value.
+  let resolvedRate: string | null =
+    parsed.hourlyRate !== undefined ? String(parsed.hourlyRate) : null;
+  if (resolvedRate === null) {
+    const [proj] = await db
+      .select({ rate: projects.rate, billingType: projects.billingType })
+      .from(projects)
+      .where(eq(projects.id, parsed.projectId))
+      .limit(1);
+    if (proj?.billingType === "hours" && proj.rate) {
+      resolvedRate = String(proj.rate);
+    }
+  }
+
   const [entry] = await db.insert(timeEntries).values({
     workspaceId: parsed.workspaceId,
     clientId: parsed.clientId,
@@ -90,7 +105,7 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
     endTime: null,
     manualMinutes: null,
     billable: true,
-    hourlyRate: parsed.hourlyRate !== undefined ? String(parsed.hourlyRate) : null,
+    hourlyRate: resolvedRate,
     status: "draft",
   }).returning();
 
