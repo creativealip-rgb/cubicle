@@ -83,40 +83,40 @@ export default async function EmailPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Email Suite</h1>
-        <p className="text-sm text-muted-foreground mt-1">Tulis, simpan draft, dan kirim email client dari workspace.</p>
+        <h1 className="text-2xl font-bold tracking-tight">Email</h1>
+        <p className="text-sm text-muted-foreground mt-1">Tulis, simpan draf, dan kirim email ke klien langsung dari workspace.</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Mail className="h-4 w-4" /> Compose</CardTitle>
+          <CardTitle className="flex items-center gap-2"><Mail className="h-4 w-4" /> Tulis Email</CardTitle>
         </CardHeader>
         <CardContent>
           <form className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label htmlFor="toEmail" className="text-sm font-medium">To</label>
-                <Input id="toEmail" name="toEmail" type="email" placeholder="client@example.com" required />
+                <label htmlFor="toEmail" className="text-sm font-medium">Kepada</label>
+                <Input id="toEmail" name="toEmail" type="email" placeholder="klien@contoh.com" required />
               </div>
               <div className="space-y-2">
-                <label htmlFor="subject" className="text-sm font-medium">Subject</label>
-                <Input id="subject" name="subject" placeholder="Update project..." required />
+                <label htmlFor="subject" className="text-sm font-medium">Subjek</label>
+                <Input id="subject" name="subject" placeholder="Update proyek..." required />
               </div>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label htmlFor="clientId" className="text-sm font-medium">Client optional</label>
+                <label htmlFor="clientId" className="text-sm font-medium">Klien (opsional)</label>
                 <select id="clientId" name="clientId" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-                  <option value="">No client</option>
+                  <option value="">Tanpa klien</option>
                   {clientList.map((client) => (
                     <option key={client.id} value={client.id}>{client.name}{client.email ? ` — ${client.email}` : ""}</option>
                   ))}
                 </select>
               </div>
               <div className="space-y-2">
-                <label htmlFor="projectId" className="text-sm font-medium">Project optional</label>
+                <label htmlFor="projectId" className="text-sm font-medium">Proyek (opsional)</label>
                 <select id="projectId" name="projectId" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-                  <option value="">No project</option>
+                  <option value="">Tanpa proyek</option>
                   {projectList.map((project) => (
                     <option key={project.id} value={project.id}>{project.name}</option>
                   ))}
@@ -124,27 +124,27 @@ export default async function EmailPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <label htmlFor="body" className="text-sm font-medium">Body</label>
+              <label htmlFor="body" className="text-sm font-medium">Isi</label>
               <Textarea id="body" name="body" rows={8} placeholder="Tulis email..." required />
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button formAction={saveDraft} variant="outline" className="gap-2"><Save className="h-4 w-4" /> Save draft</Button>
-              <Button formAction={sendNow} className="gap-2"><Send className="h-4 w-4" /> Send now</Button>
+              <Button formAction={saveDraft} variant="outline" className="gap-2"><Save className="h-4 w-4" /> Simpan draf</Button>
+              <Button formAction={sendNow} className="gap-2"><Send className="h-4 w-4" /> Kirim sekarang</Button>
             </div>
           </form>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Email templates</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Template Email</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <form action={saveTemplate} className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <label htmlFor="name" className="text-sm font-medium">Template name</label>
-              <Input id="name" name="name" placeholder="Project update" required />
+              <label htmlFor="name" className="text-sm font-medium">Nama template</label>
+              <Input id="name" name="name" placeholder="Update proyek" required />
             </div>
             <div className="space-y-2">
-              <label htmlFor="category" className="text-sm font-medium">Category</label>
+              <label htmlFor="category" className="text-sm font-medium">Kategori</label>
               <Input id="category" name="category" placeholder="follow-up" defaultValue="general" />
             </div>
             <div className="space-y-2 md:col-span-2">
@@ -156,7 +156,7 @@ export default async function EmailPage() {
               <Textarea id="templateBody" name="templateBody" rows={5} placeholder="Hi {{client}}, ..." required />
             </div>
             <div className="md:col-span-2">
-              <Button type="submit" variant="outline" className="gap-2"><Save className="h-4 w-4" /> Save template</Button>
+              <Button type="submit" variant="outline" className="gap-2"><Save className="h-4 w-4" /> Simpan template</Button>
             </div>
           </form>
 
@@ -184,7 +184,7 @@ export default async function EmailPage() {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Recent emails</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Email Terkirim</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           {messages.length === 0 ? (
             <p className="text-sm text-muted-foreground">Belum ada email.</p>
@@ -193,8 +193,8 @@ export default async function EmailPage() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="font-medium">{message.subject}</div>
-                  <div className="text-sm text-muted-foreground">To: {message.toEmail}</div>
-                  <div className="text-xs text-muted-foreground">{message.clientName || "No client"}{message.projectName ? ` · ${message.projectName}` : ""} · {formatDate(message.sentAt || message.createdAt)}</div>
+                  <div className="text-sm text-muted-foreground">Kepada: {message.toEmail}</div>
+                  <div className="text-xs text-muted-foreground">{message.clientName || "Tanpa klien"}{message.projectName ? ` · ${message.projectName}` : ""} · {formatDate(message.sentAt || message.createdAt)}</div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={message.status === "sent" ? "default" : message.status === "failed" ? "destructive" : "secondary"}>{message.status}</Badge>

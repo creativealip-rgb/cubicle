@@ -75,7 +75,7 @@ export default async function QuestionnairesPage() {
       {rows.length === 0 ? (
         <div className="bg-white rounded-2xl border p-12 text-center">
           <ClipboardList className="h-10 w-10 mx-auto text-slate-300 mb-3" />
-          <p className="text-sm text-slate-500 mb-4">No questionnaires yet. Build one to gather client briefs.</p>
+          <p className="text-sm text-slate-500 mb-4">Belum ada kuesioner. Buat satu untuk mengumpulkan brief dari klien.</p>
           {canWrite && (
             <Button asChild>
               <Link href="/app/questionnaires/new">

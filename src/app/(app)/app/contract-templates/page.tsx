@@ -74,7 +74,7 @@ export default async function ContractTemplatesPage() {
       {rows.length === 0 ? (
         <div className="bg-white rounded-2xl border p-12 text-center">
           <FileText className="h-10 w-10 mx-auto text-slate-300 mb-3" />
-          <p className="text-sm text-slate-500 mb-4">No templates yet. Build one to reuse contract bodies for clients.</p>
+          <p className="text-sm text-slate-500 mb-4">Belum ada template. Buat satu agar isi kontrak bisa dipakai ulang untuk klien.</p>
           {canWrite && (
             <Button asChild>
               <Link href="/app/contract-templates/new">
@@ -89,10 +89,10 @@ export default async function ContractTemplatesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
+                <TableHead>Nama</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Used by</TableHead>
-                <TableHead>Updated</TableHead>
+                <TableHead>Dipakai oleh</TableHead>
+                <TableHead>Diperbarui</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

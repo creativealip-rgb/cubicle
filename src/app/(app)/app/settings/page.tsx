@@ -8,6 +8,7 @@ import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { Settings, Users, Receipt, Calendar, Sparkles, Mail } from "lucide-react";
 import { TeamManager } from "@/components/settings/team-manager";
 import { ReplyToEmailForm } from "@/components/settings/reply-to-email-form";
@@ -61,7 +62,7 @@ export default async function SettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" /> Team</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" /> Tim</CardTitle>
             <CardDescription>{canManageTeam ? "Tambah user, ubah role, atau hapus anggota." : "Lihat anggota tim workspace."}</CardDescription>
           </CardHeader>
           <CardContent>
@@ -97,14 +98,19 @@ export default async function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Pengaturan Modul</CardTitle>
-          <CardDescription>Placeholder MVP. Form edit belum disambung.</CardDescription>
+          <CardTitle>Akses Cepat</CardTitle>
+          <CardDescription>Pintasan ke pengaturan lain.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-4">
-          <Button variant="outline" className="justify-start gap-2"><Receipt className="h-4 w-4" /> Billing</Button>
-          <Button variant="outline" className="justify-start gap-2"><Calendar className="h-4 w-4" /> Booking</Button>
-          <Button variant="outline" className="justify-start gap-2"><Sparkles className="h-4 w-4" /> AI usage</Button>
-          <Button variant="outline" className="justify-start gap-2"><Users className="h-4 w-4" /> Roles</Button>
+        <CardContent className="grid gap-3 md:grid-cols-3">
+          <Button asChild variant="outline" className="justify-start gap-2">
+            <Link href="/app/billing"><Receipt className="h-4 w-4" /> Langganan &amp; Tagihan</Link>
+          </Button>
+          <Button asChild variant="outline" className="justify-start gap-2">
+            <Link href="/app/calendar"><Calendar className="h-4 w-4" /> Booking &amp; Kalender</Link>
+          </Button>
+          <Button asChild variant="outline" className="justify-start gap-2">
+            <Link href="/app/billing"><Sparkles className="h-4 w-4" /> Penggunaan AI</Link>
+          </Button>
         </CardContent>
       </Card>
     </div>

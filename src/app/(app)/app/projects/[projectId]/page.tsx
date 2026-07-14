@@ -305,7 +305,7 @@ export default async function ProjectDetailPage({
 
         <TabsContent value="files" className="pt-4 space-y-3">
           {projectFiles.length === 0 && (
-            <p className="text-sm text-muted-foreground py-8 text-center">No files yet</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">Belum ada berkas</p>
           )}
           {projectFiles.map((file: { id: string; name: string; mimeType: string | null; visibility: string }) => (
             <Card key={file.id}>
@@ -325,7 +325,7 @@ export default async function ProjectDetailPage({
 
         <TabsContent value="time" className="pt-4 space-y-3">
           {projectTimeEntries.length === 0 && (
-            <p className="text-sm text-muted-foreground py-8 text-center">No time entries</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">Belum ada catatan waktu</p>
           )}
           {projectTimeEntries.map((entry) => (
             <Card key={entry.id}>
@@ -369,7 +369,7 @@ export default async function ProjectDetailPage({
           <Card>
             <CardContent className="p-0">
               {projectTimeline.length === 0 && (
-                <p className="text-sm text-muted-foreground py-8 text-center">No timeline events yet</p>
+                <p className="text-sm text-muted-foreground py-8 text-center">Belum ada aktivitas</p>
               )}
               <div className="divide-y">
                 {projectTimeline.map((event) => (

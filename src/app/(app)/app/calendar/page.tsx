@@ -123,9 +123,9 @@ export default async function CalendarPage() {
             {rules.length === 0 && (
               <div className="py-6 text-center">
                 <Calendar className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
-                <p className="text-sm text-muted-foreground">No availability rules set</p>
+                <p className="text-sm text-muted-foreground">Belum ada aturan ketersediaan</p>
                 <p className="text-xs text-muted-foreground">
-                  Add rules to define when you&apos;re available for bookings
+                  Tambah aturan untuk menentukan kapan kamu tersedia menerima booking
                 </p>
               </div>
             )}
@@ -170,9 +170,9 @@ export default async function CalendarPage() {
             {upcoming.length === 0 && (
               <div className="py-8 text-center">
                 <Calendar className="mx-auto mb-2 h-10 w-10 text-muted-foreground/30" />
-                <p className="text-sm text-muted-foreground">No upcoming appointments</p>
+                <p className="text-sm text-muted-foreground">Belum ada jadwal mendatang</p>
                 <p className="text-xs text-muted-foreground">
-                  Share your booking link to let clients schedule time
+                  Bagikan link booking supaya klien bisa atur jadwal sendiri
                 </p>
               </div>
             )}

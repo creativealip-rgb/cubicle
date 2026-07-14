@@ -223,16 +223,16 @@ export default async function ExpensesPage() {
         </CardHeader>
         <CardContent>
           {expenseRows.length === 0 ? (
-            <p className="text-sm text-slate-500 py-8 text-center">No expenses yet. Add your first one above.</p>
+            <p className="text-sm text-slate-500 py-8 text-center">Belum ada pengeluaran. Tambah yang pertama lewat form di atas.</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-28">Date</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Project</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="w-28">Tanggal</TableHead>
+                  <TableHead>Deskripsi</TableHead>
+                  <TableHead>Kategori</TableHead>
+                  <TableHead>Proyek</TableHead>
+                  <TableHead className="text-right">Jumlah</TableHead>
                   {canWrite && <TableHead className="w-10"></TableHead>}
                 </TableRow>
               </TableHeader>

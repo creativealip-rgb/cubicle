@@ -71,6 +71,20 @@ const PRIORITY_COLORS: Record<string, string> = {
   urgent: "bg-red-50 text-red-700",
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  open: "Terbuka",
+  in_progress: "Dikerjakan",
+  resolved: "Selesai",
+  closed: "Ditutup",
+};
+
+const PRIORITY_LABELS: Record<string, string> = {
+  low: "Rendah",
+  medium: "Sedang",
+  high: "Tinggi",
+  urgent: "Mendesak",
+};
+
 export function SupportPageClient({ tickets, counts, clients, projects, members, createAction }: Props) {
   const router = useRouter();
   const [showCreate, setShowCreate] = useState(false);
@@ -86,21 +100,21 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
   const handleStatusChange = async (ticketId: string, status: string) => {
     try {
       await updateTicket(ticketId, { status: status as "open" | "in_progress" | "resolved" | "closed" });
-      toast.success("Status updated");
+      toast.success("Status diperbarui");
       router.refresh();
     } catch {
-      toast.error("Failed to update status");
+      toast.error("Gagal memperbarui status");
     }
   };
 
   const handleDelete = async (ticketId: string) => {
-    if (!confirm("Delete this ticket?")) return;
+    if (!confirm("Hapus tiket ini?")) return;
     try {
       await deleteTicket(ticketId);
-      toast.success("Ticket deleted");
+      toast.success("Tiket dihapus");
       router.refresh();
     } catch {
-      toast.error("Failed to delete ticket");
+      toast.error("Gagal menghapus tiket");
     }
   };
 
@@ -108,12 +122,12 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Support Center</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Manage support tickets and track issues.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Pusat Bantuan</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Kelola tiket bantuan dan pantau kendala.</p>
         </div>
         <Button onClick={() => setShowCreate(!showCreate)} className="gap-1.5">
           <Plus className="h-4 w-4" />
-          New Ticket
+          Tiket Baru
         </Button>
       </div>
 
@@ -129,7 +143,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
               {STATUS_ICONS[status]}
               <div>
                 <p className="text-2xl font-bold">{counts[status] || 0}</p>
-                <p className="text-xs text-muted-foreground capitalize">{status.replace("_", " ")}</p>
+                <p className="text-xs text-muted-foreground">{STATUS_LABELS[status]}</p>
               </div>
             </CardContent>
           </Card>
@@ -139,38 +153,38 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
       {/* Create form */}
       {showCreate && (
         <Card>
-          <CardHeader><CardTitle className="text-base">New Ticket</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">Tiket Baru</CardTitle></CardHeader>
           <CardContent>
             <form action={createAction} className="space-y-3">
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Title *</label>
-                  <Input name="title" placeholder="Brief description of the issue" required />
+                  <label className="text-sm font-medium">Judul *</label>
+                  <Input name="title" placeholder="Deskripsi singkat kendala" required />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Priority</label>
+                  <label className="text-sm font-medium">Prioritas</label>
                   <Select name="priority" defaultValue="medium">
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="urgent">Urgent</SelectItem>
+                      <SelectItem value="low">Rendah</SelectItem>
+                      <SelectItem value="medium">Sedang</SelectItem>
+                      <SelectItem value="high">Tinggi</SelectItem>
+                      <SelectItem value="urgent">Mendesak</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium">Description</label>
-                <Textarea name="description" rows={3} placeholder="Details, steps to reproduce, expected behavior..." />
+                <label className="text-sm font-medium">Deskripsi</label>
+                <Textarea name="description" rows={3} placeholder="Detail, langkah reproduksi, hasil yang diharapkan..." />
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Assign to</label>
+                  <label className="text-sm font-medium">Ditugaskan ke</label>
                   <Select name="assigneeId" defaultValue="">
-                    <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Belum ditugaskan" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Unassigned</SelectItem>
+                      <SelectItem value="">Belum ditugaskan</SelectItem>
                       {members.map((m) => (
                         <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
                       ))}
@@ -178,11 +192,11 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Client</label>
+                  <label className="text-sm font-medium">Klien</label>
                   <Select name="clientId" defaultValue="">
-                    <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Tidak ada" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="">Tidak ada</SelectItem>
                       {clients.map((c) => (
                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                       ))}
@@ -190,11 +204,11 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Project</label>
+                  <label className="text-sm font-medium">Proyek</label>
                   <Select name="projectId" defaultValue="">
-                    <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Tidak ada" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="">Tidak ada</SelectItem>
                       {projects.map((p) => (
                         <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                       ))}
@@ -203,8 +217,8 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button type="submit">Create Ticket</Button>
-                <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+                <Button type="submit">Buat Tiket</Button>
+                <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>Batal</Button>
               </div>
             </form>
           </CardContent>
@@ -215,26 +229,26 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
       <div className="flex items-center gap-3">
         <Filter className="h-4 w-4 text-muted-foreground" />
         <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue placeholder="Priority" /></SelectTrigger>
+          <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue placeholder="Prioritas" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All priorities</SelectItem>
-            <SelectItem value="low">Low</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="high">High</SelectItem>
-            <SelectItem value="urgent">Urgent</SelectItem>
+            <SelectItem value="all">Semua prioritas</SelectItem>
+            <SelectItem value="low">Rendah</SelectItem>
+            <SelectItem value="medium">Sedang</SelectItem>
+            <SelectItem value="high">Tinggi</SelectItem>
+            <SelectItem value="urgent">Mendesak</SelectItem>
           </SelectContent>
         </Select>
-        <span className="text-xs text-muted-foreground">{filtered.length} tickets</span>
+        <span className="text-xs text-muted-foreground">{filtered.length} tiket</span>
       </div>
 
       {/* Tickets list */}
       {filtered.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            <p>No tickets found.</p>
+            <p>Tidak ada tiket.</p>
             {tickets.length > 0 && (
               <Button variant="link" size="sm" onClick={() => { setStatusFilter("all"); setPriorityFilter("all"); }}>
-                Clear filters
+                Hapus filter
               </Button>
             )}
           </CardContent>
@@ -252,7 +266,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                     <span className="font-medium truncate">{ticket.title}</span>
                     <Badge className={`text-[10px] gap-0.5 ${PRIORITY_COLORS[ticket.priority]}`}>
                       {PRIORITY_ICONS[ticket.priority]}
-                      {ticket.priority}
+                      {PRIORITY_LABELS[ticket.priority] ?? ticket.priority}
                     </Badge>
                   </div>
                   {ticket.description && (
@@ -269,10 +283,10 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                   <Select value={ticket.status} onValueChange={(v) => handleStatusChange(ticket.id, v)}>
                     <SelectTrigger className="w-[120px] h-7 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="open">Open</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="resolved">Resolved</SelectItem>
-                      <SelectItem value="closed">Closed</SelectItem>
+                      <SelectItem value="open">Terbuka</SelectItem>
+                      <SelectItem value="in_progress">Dikerjakan</SelectItem>
+                      <SelectItem value="resolved">Selesai</SelectItem>
+                      <SelectItem value="closed">Ditutup</SelectItem>
                     </SelectContent>
                   </Select>
                   <Button

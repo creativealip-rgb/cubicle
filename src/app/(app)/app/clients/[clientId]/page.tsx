@@ -136,7 +136,7 @@ export default async function ClientDetailPage({
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
-                <DialogTitle>Edit Client</DialogTitle>
+                <DialogTitle>Ubah Klien</DialogTitle>
               </DialogHeader>
               <ClientForm
                 mode="edit"
@@ -163,13 +163,13 @@ export default async function ClientDetailPage({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Active Projects</p>
+            <p className="text-xs text-muted-foreground">Proyek Aktif</p>
             <p className="text-2xl font-bold">{activeProjects}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Unpaid Invoices</p>
+            <p className="text-xs text-muted-foreground">Invoice Belum Lunas</p>
             <p className="text-2xl font-bold">
               {clientInvoices.filter((i) => i.status !== "paid" && i.status !== "cancelled").length}
             </p>
@@ -177,7 +177,7 @@ export default async function ClientDetailPage({
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Files</p>
+            <p className="text-xs text-muted-foreground">Berkas</p>
             <p className="text-2xl font-bold">{clientFiles.length}</p>
           </CardContent>
         </Card>
@@ -187,10 +187,10 @@ export default async function ClientDetailPage({
             <p className="text-2xl font-bold">
               {client.portalEnabled ? (
                 <span className="flex items-center gap-1 text-green-600 text-base">
-                  <Globe className="h-4 w-4" /> Active
+                  <Globe className="h-4 w-4" /> Aktif
                 </span>
               ) : (
-                <span className="text-muted-foreground text-base">Off</span>
+                <span className="text-muted-foreground text-base">Nonaktif</span>
               )}
             </p>
           </CardContent>
@@ -209,7 +209,7 @@ export default async function ClientDetailPage({
             )}
             {client.phone && (
               <div>
-                <p className="text-xs text-muted-foreground">Phone</p>
+                <p className="text-xs text-muted-foreground">Telepon</p>
                 <p>{client.phone}</p>
               </div>
             )}
@@ -223,7 +223,7 @@ export default async function ClientDetailPage({
             )}
             {client.address && (
               <div>
-                <p className="text-xs text-muted-foreground">Address</p>
+                <p className="text-xs text-muted-foreground">Alamat</p>
                 <p className="truncate">{client.address}</p>
               </div>
             )}
@@ -239,7 +239,7 @@ export default async function ClientDetailPage({
           )}
           {client.internalNotes && (
             <div className="mt-3 pt-3 border-t">
-              <p className="text-xs text-muted-foreground">Internal Notes</p>
+              <p className="text-xs text-muted-foreground">Catatan Internal</p>
               <p className="text-sm mt-1">{client.internalNotes}</p>
             </div>
           )}
@@ -250,25 +250,25 @@ export default async function ClientDetailPage({
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview" className="gap-1">
-            <Users className="h-3 w-3" /> Overview
+            <Users className="h-3 w-3" /> Ringkasan
           </TabsTrigger>
           <TabsTrigger value="projects" className="gap-1">
-            <FileText className="h-3 w-3" /> Projects ({clientProjects.length})
+            <FileText className="h-3 w-3" /> Proyek ({clientProjects.length})
           </TabsTrigger>
           <TabsTrigger value="files" className="gap-1">
-            <FileText className="h-3 w-3" /> Files ({clientFiles.length})
+            <FileText className="h-3 w-3" /> Berkas ({clientFiles.length})
           </TabsTrigger>
           <TabsTrigger value="invoices" className="gap-1">
-            <Receipt className="h-3 w-3" /> Invoices ({clientInvoices.length})
+            <Receipt className="h-3 w-3" /> Invoice ({clientInvoices.length})
           </TabsTrigger>
           <TabsTrigger value="appointments" className="gap-1">
-            <Calendar className="h-3 w-3" /> Appointments
+            <Calendar className="h-3 w-3" /> Jadwal
           </TabsTrigger>
           <TabsTrigger value="portal" className="gap-1">
             <Globe className="h-3 w-3" /> Portal
           </TabsTrigger>
           <TabsTrigger value="notes" className="gap-1">
-            <MessageSquare className="h-3 w-3" /> Notes
+            <MessageSquare className="h-3 w-3" /> Catatan
           </TabsTrigger>
         </TabsList>
 
@@ -287,7 +287,7 @@ export default async function ClientDetailPage({
 
         <TabsContent value="projects" className="space-y-4 pt-4">
           {clientProjects.length === 0 && (
-            <p className="text-sm text-muted-foreground py-8 text-center">No projects yet</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">Belum ada proyek</p>
           )}
           {clientProjects.map((project) => (
             <Card key={project.id}>
@@ -298,8 +298,8 @@ export default async function ClientDetailPage({
                   </Link>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Badge variant="outline" className="text-[10px]">{project.status}</Badge>
-                    <span>{project.doneCount}/{project.taskCount} tasks done</span>
-                    {project.dueDate && <span>Due: {project.dueDate}</span>}
+                    <span>{project.doneCount}/{project.taskCount} tugas selesai</span>
+                    {project.dueDate && <span>Tenggat: {project.dueDate}</span>}
                   </div>
                 </div>
                 {project.taskCount > 0 && (
@@ -317,7 +317,7 @@ export default async function ClientDetailPage({
 
         <TabsContent value="files" className="space-y-4 pt-4">
           {clientFiles.length === 0 && (
-            <p className="text-sm text-muted-foreground py-8 text-center">No files uploaded yet</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">Belum ada berkas diunggah</p>
           )}
           {clientFiles.map((file) => (
             <Card key={file.id}>
@@ -327,7 +327,7 @@ export default async function ClientDetailPage({
                   <div>
                     <p className="text-sm font-medium">{file.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {file.mimeType} · {file.sizeBytes ? `${(file.sizeBytes / 1024).toFixed(1)} KB` : "Unknown size"}
+                      {file.mimeType} · {file.sizeBytes ? `${(file.sizeBytes / 1024).toFixed(1)} KB` : "Ukuran tidak diketahui"}
                     </p>
                   </div>
                 </div>
@@ -335,7 +335,7 @@ export default async function ClientDetailPage({
                   <Badge variant="outline" className="text-[10px]">{file.visibility}</Badge>
                   <Button asChild size="sm" variant="outline" className="gap-1">
                     <a href={`/api/files/${file.id}/download`} target="_blank" rel="noopener noreferrer">
-                      <Download className="h-3 w-3" /> Open
+                      <Download className="h-3 w-3" /> Buka
                     </a>
                   </Button>
                 </div>
@@ -346,7 +346,7 @@ export default async function ClientDetailPage({
 
         <TabsContent value="invoices" className="space-y-4 pt-4">
           {clientInvoices.length === 0 && (
-            <p className="text-sm text-muted-foreground py-8 text-center">No invoices yet</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">Belum ada invoice</p>
           )}
           {clientInvoices.map((inv) => (
             <Card key={inv.id}>
@@ -354,7 +354,7 @@ export default async function ClientDetailPage({
                 <div>
                   <p className="text-sm font-medium">{inv.invoiceNumber}</p>
                   <p className="text-xs text-muted-foreground">
-                    {inv.issueDate} · Due: {inv.dueDate ?? "—"}
+                    {inv.issueDate} · Tenggat: {inv.dueDate ?? "—"}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -373,7 +373,7 @@ export default async function ClientDetailPage({
 
         <TabsContent value="appointments" className="space-y-4 pt-4">
           {clientAppointments.length === 0 && (
-            <p className="text-sm text-muted-foreground py-8 text-center">No appointments</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">Belum ada jadwal</p>
           )}
           {clientAppointments.map((apt) => (
             <Card key={apt.id}>
@@ -398,9 +398,9 @@ export default async function ClientDetailPage({
         <TabsContent value="notes" className="space-y-4 pt-4">
           <div className="space-y-4">
             <div>
-              <h4 className="text-sm font-medium">Internal Notes</h4>
+              <h4 className="text-sm font-medium">Catatan Internal</h4>
               <p className="text-sm text-muted-foreground mt-1">
-                {client.internalNotes || "No internal notes."}
+                {client.internalNotes || "Belum ada catatan internal."}
               </p>
             </div>
           </div>
