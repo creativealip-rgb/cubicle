@@ -106,8 +106,8 @@ export default async function ProjectsPage({
           <div className="col-span-2">{t("Klien", "Client")}</div>
           <div className="col-span-2">{t("Status", "Status")}</div>
           <div className="col-span-2">{t("Progres", "Progress")}</div>
-          <div className="col-span-1">{t("Jatuh Tempo", "Due")}</div>
-          <div className="col-span-2 text-right">{t("Aksi", "Actions")}</div>
+          <div className="col-span-2">{t("Jatuh Tempo", "Due")}</div>
+          <div className="col-span-1 text-right">{t("Aksi", "Actions")}</div>
         </div>
 
         {projectsList.length === 0 && (
@@ -130,7 +130,8 @@ export default async function ProjectsPage({
                     {project.clientName || "—"}
                   </div>
                 </div>
-                <Badge variant="outline" className="text-xs shrink-0">
+                <Badge variant="outline" className="text-xs shrink-0 gap-1.5">
+                  <span className={`h-1.5 w-1.5 rounded-full ${statusColors[project.status] ?? "bg-slate-400"}`} />
                   {PROJECT_STATUS_LABELS[project.status] ?? project.status}
                 </Badge>
               </div>
@@ -186,7 +187,8 @@ export default async function ProjectsPage({
               {project.clientName || "—"}
             </div>
             <div className="col-span-2">
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs gap-1.5">
+                <span className={`h-1.5 w-1.5 rounded-full ${statusColors[project.status] ?? "bg-slate-400"}`} />
                 {PROJECT_STATUS_LABELS[project.status] ?? project.status}
               </Badge>
             </div>
@@ -205,7 +207,7 @@ export default async function ProjectsPage({
                 </span>
               </div>
             </div>
-            <div className="col-span-1 text-xs text-muted-foreground">
+            <div className="col-span-2 text-xs text-muted-foreground">
               {project.dueDate ? (
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
@@ -215,7 +217,7 @@ export default async function ProjectsPage({
                 "—"
               )}
             </div>
-            <div className="col-span-2 text-right">
+            <div className="col-span-1 text-right">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8">

@@ -14,7 +14,6 @@ import { EmptyState } from "@/components/empty-state";
 import {
   Clock,
   Trash2,
-  DollarSign,
   Filter,
 } from "lucide-react";
 import { useT } from "@/lib/i18n-client";
@@ -55,7 +54,7 @@ interface TimesheetProps {
 
   // eslint-disable-next-line unused-imports/no-unused-vars
 export function Timesheet({ entries, clients, projects }: TimesheetProps) {
-  const { t } = useT();
+  const { t, locale } = useT();
   const router = useRouter();
 
   // Filters
@@ -96,11 +95,13 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
   );
 
   function formatDuration(minutes: number | null): string {
-    if (!minutes) return "0m";
+    const hLabel = t("j", "h");
+    const mLabel = t("mnt", "m");
+    if (!minutes) return `0${mLabel}`;
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;
-    if (h === 0) return `${m}m`;
-    return `${h}h ${m}m`;
+    if (h === 0) return `${m}${mLabel}`;
+    return `${h}${hLabel} ${m}${mLabel}`;
   }
 
   function formatRate(rate: string | number | null, currency: string | null): string | null {
@@ -155,19 +156,19 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Total Waktu</p>
+            <p className="text-xs text-muted-foreground">{t("Total Waktu", "Total Time")}</p>
             <p className="text-xl font-bold">{formatDuration(totalMinutes)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Bisa Ditagih</p>
+            <p className="text-xs text-muted-foreground">{t("Bisa Ditagih", "Billable")}</p>
             <p className="text-xl font-bold">{formatDuration(billableMinutes)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Entri</p>
+            <p className="text-xs text-muted-foreground">{t("Entri", "Entries")}</p>
             <p className="text-xl font-bold">{filteredEntries.length}</p>
           </CardContent>
         </Card>
@@ -178,17 +179,17 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-3">
             <Filter className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Filter</span>
+            <span className="text-sm font-medium">{t("Filter", "Filter")}</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <div className="space-y-1">
-              <Label className="text-[10px]">Klien</Label>
+              <Label className="text-[10px]">{t("Klien", "Client")}</Label>
               <Select value={clientFilter} onValueChange={setClientFilter}>
                 <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder="All" />
+                  <SelectValue placeholder={t("Semua", "All")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Semua Klien</SelectItem>
+                  <SelectItem value="all">{t("Semua Klien", "All Clients")}</SelectItem>
                   {uniqueClients.map((c) => (
                     <SelectItem key={c} value={c}>{c}</SelectItem>
                   ))}
@@ -196,13 +197,13 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-[10px]">Proyek</Label>
+              <Label className="text-[10px]">{t("Proyek", "Project")}</Label>
               <Select value={projectFilter} onValueChange={setProjectFilter}>
                 <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder="All" />
+                  <SelectValue placeholder={t("Semua", "All")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Semua Proyek</SelectItem>
+                  <SelectItem value="all">{t("Semua Proyek", "All Projects")}</SelectItem>
                   {uniqueProjects.map((p) => (
                     <SelectItem key={p} value={p}>{p}</SelectItem>
                   ))}
@@ -210,15 +211,15 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-[10px]">Bisa Ditagih</Label>
+              <Label className="text-[10px]">{t("Bisa Ditagih", "Billable")}</Label>
               <Select value={billableFilter} onValueChange={setBillableFilter}>
                 <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder="All" />
+                  <SelectValue placeholder={t("Semua", "All")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Semua</SelectItem>
-                  <SelectItem value="billable">Bisa Ditagih</SelectItem>
-                  <SelectItem value="non-billable">Tidak Ditagih</SelectItem>
+                  <SelectItem value="all">{t("Semua", "All")}</SelectItem>
+                  <SelectItem value="billable">{t("Bisa Ditagih", "Billable")}</SelectItem>
+                  <SelectItem value="non-billable">{t("Tidak Ditagih", "Non-billable")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -226,10 +227,10 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
               <Label className="text-[10px]">Tag</Label>
               <Select value={tagFilter} onValueChange={setTagFilter}>
                 <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder="All" />
+                  <SelectValue placeholder={t("Semua", "All")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Semua Tag</SelectItem>
+                  <SelectItem value="all">{t("Semua Tag", "All Tags")}</SelectItem>
                   {uniqueTags.map((tag) => (
                     <SelectItem key={tag} value={tag}>{tag}</SelectItem>
                   ))}
@@ -238,7 +239,7 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
             </div>
             <div className="flex flex-col gap-2 sm:flex-row col-span-2 md:col-span-1">
               <div className="space-y-1 flex-1 min-w-0">
-                <Label className="text-[10px]">Dari</Label>
+                <Label className="text-[10px]">{t("Dari", "From")}</Label>
                 <Input
                   type="date"
                   value={dateFrom}
@@ -247,7 +248,7 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
                 />
               </div>
               <div className="space-y-1 flex-1 min-w-0">
-                <Label className="text-[10px]">Sampai</Label>
+                <Label className="text-[10px]">{t("Sampai", "To")}</Label>
                 <Input
                   type="date"
                   value={dateTo}
@@ -264,8 +265,8 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
       {filteredEntries.length === 0 ? (
         <EmptyState
           icon={Clock}
-          title="Belum ada catatan waktu"
-          description="Mulai timer di atas atau tambah entri manual untuk mulai melacak waktu kerjamu. Kalau sudah ada data, coba sesuaikan filter."
+          title={t("Belum ada catatan waktu", "No time entries yet")}
+          description={t("Mulai timer di atas atau tambah entri manual untuk mulai melacak waktu kerjamu. Kalau sudah ada data, coba sesuaikan filter.", "Start the timer above or add a manual entry to begin tracking your work time. If you already have data, try adjusting the filters.")}
         />
       ) : (
         <div className="space-y-2">
@@ -276,7 +277,7 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
                   <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate">
-                      {entry.description || "Untitled"}
+                      {entry.description || t("Tanpa judul", "Untitled")}
                     </p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
                       {entry.clientName && <span>{entry.clientName}</span>}
@@ -293,11 +294,11 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
                         </>
                       )}
                       <span>·</span>
-                      <span>{entry.userName || "Unknown"}</span>
+                      <span>{entry.userName || t("Tidak diketahui", "Unknown")}</span>
                       <span>·</span>
                       <span>
                         {entry.startTime
-                          ? new Date(entry.startTime).toLocaleDateString()
+                          ? new Date(entry.startTime).toLocaleDateString(locale)
                           : "—"}
                       </span>
                     </div>
@@ -312,9 +313,8 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {entry.billable && (
-                    <Badge variant="outline" className="text-[10px] gap-0.5">
-                      <DollarSign className="h-2.5 w-2.5" />
-                      {formatRate(entry.hourlyRate, entry.projectCurrency) ? `${formatRate(entry.hourlyRate, entry.projectCurrency)} / ${t("jam", "hr")}` : "Billable"}
+                    <Badge variant="outline" className="text-[10px]">
+                      {formatRate(entry.hourlyRate, entry.projectCurrency) ? `${formatRate(entry.hourlyRate, entry.projectCurrency)} / ${t("jam", "hr")}` : t("Bisa Ditagih", "Billable")}
                     </Badge>
                   )}
                   <Badge variant="secondary" className="text-[10px]">

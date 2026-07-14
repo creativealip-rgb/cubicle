@@ -257,7 +257,7 @@ export default async function ClientsPage({
                 <div>
                   {client.portalEnabled ? (
                     <Badge variant="outline" className="gap-1 text-xs border-green-200 text-green-700">
-                      <Globe className="h-3 w-3" /> {t("Aktif", "Active")}
+                      <Globe className="h-3 w-3" /> {t("Nyala", "On")}
                     </Badge>
                   ) : (
                     <span className="text-xs text-muted-foreground">—</span>
