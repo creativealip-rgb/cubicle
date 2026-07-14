@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useCallback, useState, useEffect } from "react";
+import { createContext, useContext, useCallback, useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 export type Lang = "id" | "en";
@@ -13,6 +13,8 @@ interface LangContextValue {
   setLang: (next: Lang) => void;
   /** BCP-47 locale string, e.g. "id-ID" / "en-US". */
   locale: string;
+  /** True while server components re-render after a language change. */
+  pending: boolean;
 }
 
 const LangContext = createContext<LangContextValue>({
@@ -20,6 +22,7 @@ const LangContext = createContext<LangContextValue>({
   t: (id) => id,
   setLang: () => {},
   locale: "id-ID",
+  pending: false,
 });
 
 /**
@@ -35,6 +38,7 @@ export function LangProvider({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   // Optimistic client state: flips instantly on click so all client
   // components re-render immediately, while the server catches up via refresh.
   const [lang, setLangState] = useState<Lang>(serverLang);
@@ -46,11 +50,17 @@ export function LangProvider({
 
   const setLang = useCallback(
     (next: Lang) => {
-      setLangState(next); // instant UI switch
+      if (next === lang) return; // no-op if unchanged
+      setLangState(next); // instant client UI switch
       document.cookie = `cubiqlo_lang=${next}; path=/; max-age=31536000; samesite=lax`;
-      router.refresh(); // update server components in background
+      // Wrap refresh in a transition so React coalesces rapid clicks into a
+      // single pending render — kills the stale-response race, and exposes
+      // `pending` so the toggle can lock itself until the server catches up.
+      startTransition(() => {
+        router.refresh();
+      });
     },
-    [router],
+    [router, lang],
   );
 
   const t = useCallback(
@@ -61,7 +71,7 @@ export function LangProvider({
   const locale = lang === "en" ? "en-US" : "id-ID";
 
   return (
-    <LangContext.Provider value={{ lang, t, setLang, locale }}>
+    <LangContext.Provider value={{ lang, t, setLang, locale, pending: isPending }}>
       {children}
     </LangContext.Provider>
   );

@@ -122,7 +122,7 @@ interface AppSidebarProps {
 export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps) {
   const pathname = usePathname();
   const { mobileOpen, setMobileOpen } = useSidebar();
-  const { lang, t, setLang } = useT();
+  const { lang, t, setLang, pending } = useT();
 
   function changeLang(next: "id" | "en") {
     setLang(next);
@@ -333,8 +333,9 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
           <button
             type="button"
             onClick={() => changeLang(lang === "id" ? "en" : "id")}
+            disabled={pending}
             aria-label={t("Ganti ke Bahasa Inggris", "Switch to Indonesian")}
-            className="mx-auto flex h-7 w-full items-center justify-center rounded-md border bg-white text-xs font-semibold text-muted-foreground hover:text-foreground"
+            className="mx-auto flex h-7 w-full items-center justify-center rounded-md border bg-white text-xs font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50"
           >
             {lang === "id" ? "ID" : "EN"}
           </button>
@@ -343,10 +344,11 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
             <p className="text-xs text-muted-foreground">
               Cubiqlo v{process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"}
             </p>
-            <div className="flex items-center rounded-md border bg-white p-0.5 text-[11px]">
+            <div className={cn("flex items-center rounded-md border bg-white p-0.5 text-[11px] transition-opacity", pending && "opacity-50")}>
               <button
                 type="button"
                 onClick={() => changeLang("id")}
+                disabled={pending}
                 aria-label={t("Bahasa Indonesia", "Indonesian")}
                 className={cn(
                   "h-5 rounded px-2 font-semibold transition-colors",
@@ -360,6 +362,7 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
               <button
                 type="button"
                 onClick={() => changeLang("en")}
+                disabled={pending}
                 aria-label={t("Bahasa Inggris", "English")}
                 className={cn(
                   "h-5 rounded px-2 font-semibold transition-colors",
