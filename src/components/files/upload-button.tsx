@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { getSignedUploadUrl, completeUpload } from "@/lib/actions/files";
+import { useT } from "@/lib/i18n-client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -33,6 +34,7 @@ interface UploadButtonProps {
 
 export function UploadButton({ workspaceId, clientId, projectId, folderId }: UploadButtonProps) {
   const router = useRouter();
+  const { t } = useT();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -45,7 +47,7 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
     if (!file) return;
 
     if (file.size > 25 * 1024 * 1024) {
-      toast.error("Berkas harus di bawah 25MB");
+      toast.error(t("Berkas harus di bawah 25MB", "File must be under 25MB"));
       return;
     }
 
@@ -96,11 +98,15 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
         fileType,
       });
 
-      toast.success(fileType === "deliverable" ? "Deliverable uploaded" : "File uploaded");
+      toast.success(
+        fileType === "deliverable"
+          ? t("Hasil kerja diunggah", "Deliverable uploaded")
+          : t("File diunggah", "File uploaded"),
+      );
       setOpen(false);
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Upload failed");
+      toast.error(err instanceof Error ? err.message : t("Gagal mengunggah", "Upload failed"));
     } finally {
       setUploading(false);
       setProgress(0);
@@ -122,44 +128,44 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
           {uploading ? (
             <>
               <Loader2 className="h-3 w-3 animate-spin" />
-              {progress > 0 ? `${progress}%` : "Uploading..."}
+              {progress > 0 ? `${progress}%` : t("Mengunggah...", "Uploading...")}
             </>
           ) : (
             <>
-              <Upload className="h-3 w-3" /> Upload
+              <Upload className="h-3 w-3" /> {t("Unggah", "Upload")}
             </>
           )}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Unggah berkas</DialogTitle>
+          <DialogTitle>{t("Unggah berkas", "Upload file")}</DialogTitle>
           <DialogDescription>
-            Choose if this is internal work or a client deliverable.
+            {t("Pilih apakah ini file kerja internal atau hasil kerja untuk klien.", "Choose if this is internal work or a client deliverable.")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Visibility</Label>
+            <Label>{t("Visibilitas", "Visibility")}</Label>
             <Select value={visibility} onValueChange={(v) => setVisibility(v as "internal" | "client")}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="internal">Internal only</SelectItem>
-                <SelectItem value="client">Client-visible</SelectItem>
+                <SelectItem value="internal">{t("Hanya internal", "Internal only")}</SelectItem>
+                <SelectItem value="client">{t("Terlihat klien", "Client-visible")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>File type</Label>
+            <Label>{t("Tipe file", "File type")}</Label>
             <Select value={fileType} onValueChange={(v) => setFileType(v as "working_file" | "deliverable")}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="working_file">Working file</SelectItem>
-                <SelectItem value="deliverable">Deliverable</SelectItem>
+                <SelectItem value="working_file">{t("File kerja", "Working file")}</SelectItem>
+                <SelectItem value="deliverable">{t("Hasil kerja", "Deliverable")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -167,7 +173,7 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
         <DialogFooter>
           <Button onClick={() => fileInputRef.current?.click()} disabled={uploading} className="gap-1">
             {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-            {uploading ? `${progress || 0}%` : "Choose file"}
+            {uploading ? `${progress || 0}%` : t("Pilih file", "Choose file")}
           </Button>
         </DialogFooter>
       </DialogContent>

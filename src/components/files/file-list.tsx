@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { deleteFile } from "@/lib/actions/files";
+import { useT } from "@/lib/i18n-client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -47,8 +48,8 @@ function getFileIcon(mimeType: string | null) {
   return <FileText className="h-5 w-5 text-muted-foreground" />;
 }
 
-function formatBytes(bytes: number | null): string {
-  if (!bytes) return "Unknown";
+function formatBytes(bytes: number | null, unknownLabel: string): string {
+  if (!bytes) return unknownLabel;
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -57,14 +58,15 @@ function formatBytes(bytes: number | null): string {
   // eslint-disable-next-line unused-imports/no-unused-vars
 export function FileList({ files, workspaceId }: FileListProps) {
   const router = useRouter();
+  const { t } = useT();
 
   async function handleDelete(fileId: string) {
     try {
       await deleteFile(fileId);
-      toast.success("Berkas dihapus");
+      toast.success(t("Berkas dihapus", "File deleted"));
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete file");
+      toast.error(err instanceof Error ? err.message : t("Gagal menghapus file", "Failed to delete file"));
     }
   }
 
@@ -76,7 +78,7 @@ export function FileList({ files, workspaceId }: FileListProps) {
     return (
       <div className="text-center py-12 text-sm text-muted-foreground">
         <FileText className="h-10 w-10 mx-auto mb-3 opacity-30" />
-        No files yet
+        {t("Belum ada file", "No files yet")}
       </div>
     );
   }
@@ -91,11 +93,11 @@ export function FileList({ files, workspaceId }: FileListProps) {
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate">{file.name}</p>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
-                  <span className="truncate max-w-[160px]">{file.mimeType || "Unknown"}</span>
+                  <span className="truncate max-w-[160px]">{file.mimeType || t("Tidak diketahui", "Unknown")}</span>
                   <span>·</span>
-                  <span>{formatBytes(file.sizeBytes)}</span>
+                  <span>{formatBytes(file.sizeBytes, t("Tidak diketahui", "Unknown"))}</span>
                   <span>·</span>
-                  <span className="truncate max-w-[100px]">{file.uploaderName || "Unknown"}</span>
+                  <span className="truncate max-w-[100px]">{file.uploaderName || t("Tidak diketahui", "Unknown")}</span>
                   <span>·</span>
                   <span>{new Date(file.createdAt).toLocaleDateString()}</span>
                 </div>
@@ -104,29 +106,29 @@ export function FileList({ files, workspaceId }: FileListProps) {
             <div className="flex items-center gap-2 flex-shrink-0">
               <Badge variant="outline" className="text-[10px] gap-0.5">
                 {file.visibility === "internal" ? (
-                  <><Lock className="h-2.5 w-2.5" /> Internal</>
+                  <><Lock className="h-2.5 w-2.5" /> {t("Internal", "Internal")}</>
                 ) : (
-                  <><Eye className="h-2.5 w-2.5" /> Client</>
+                  <><Eye className="h-2.5 w-2.5" /> {t("Klien", "Client")}</>
                 )}
               </Badge>
               {file.fileType === "deliverable" && (
-                <Badge className="text-[10px]">Deliverable</Badge>
+                <Badge className="text-[10px]">{t("Hasil Kerja", "Deliverable")}</Badge>
               )}
               <Button
                 variant="outline"
                 size="sm"
                 className="h-8 gap-1"
                 onClick={() => handleDownload(file.id)}
-                title="Open file"
+                title={t("Buka file", "Open file")}
               >
-                <Download className="h-3.5 w-3.5" /> Open
+                <Download className="h-3.5 w-3.5" /> {t("Buka", "Open")}
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7 text-destructive"
                 onClick={() => handleDelete(file.id)}
-                title="Delete"
+                title={t("Hapus", "Delete")}
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
