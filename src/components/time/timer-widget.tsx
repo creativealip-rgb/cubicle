@@ -26,6 +26,8 @@ interface Project {
   id: string;
   name: string;
   clientId?: string;
+  billingType?: string;
+  rate?: string | null;
 }
 
 interface Task {
@@ -104,6 +106,12 @@ export function TimerWidget({
   // Filtered projects based on selected client
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
+
+  // Rate is only relevant for hourly-billed projects. For project/package
+  // billing we hide the field entirely — the backend inherits the project
+  // rate when needed, so the manual input is just noise.
+  const selectedProject = allProjects.find((p) => p.id === selectedProjectId);
+  const isHourly = selectedProject?.billingType === "hours";
 
   useEffect(() => {
     if (selectedClientId) {
@@ -356,18 +364,26 @@ export function TimerWidget({
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs">{t("Tarif per jam", "Hourly rate")}</Label>
-              <Input
-                type="number"
-                min="0"
-                step="1000"
-                value={hourlyRate}
-                onChange={(e) => setHourlyRate(e.target.value)}
-                placeholder="e.g. 150000"
-                className="h-9"
-              />
-            </div>
+            {isHourly && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t("Tarif per jam", "Hourly rate")}</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="1000"
+                  value={hourlyRate}
+                  onChange={(e) => setHourlyRate(e.target.value)}
+                  placeholder={selectedProject?.rate ? String(selectedProject.rate) : "e.g. 150000"}
+                  className="h-9"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  {t(
+                    "Kosongkan untuk pakai tarif proyek.",
+                    "Leave empty to use the project rate."
+                  )}
+                </p>
+              </div>
+            )}
 
             <Button
               className="w-full gap-2"

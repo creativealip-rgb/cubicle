@@ -87,7 +87,13 @@ export default async function TimePage() {
     .orderBy(clients.name);
 
   const projectList = await db
-    .select({ id: projects.id, name: projects.name, clientId: projects.clientId })
+    .select({
+      id: projects.id,
+      name: projects.name,
+      clientId: projects.clientId,
+      billingType: projects.billingType,
+      rate: projects.rate,
+    })
     .from(projects)
     .where(eq(projects.workspaceId, workspaceId))
     .orderBy(projects.name);

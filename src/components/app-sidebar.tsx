@@ -32,6 +32,7 @@ import {
   BarChart3,
   FileText,
   Layers,
+  Package,
 
   ChevronDown,
   NotebookPen,
@@ -47,6 +48,7 @@ const navItems = [
   { label: "Kalender", href: "/app/calendar", icon: Calendar, group: "Kerja" },
   { label: "File", href: "/app/files", icon: FolderOpen, group: "Kerja" },
   { label: "Invoice", href: "/app/invoices", icon: FileText, group: "Keuangan", badgeKey: "unpaidInvoices" as const },
+  { label: "Paket", href: "/app/packages", icon: Package, group: "Keuangan" },
   { label: "Pengeluaran", href: "/app/expenses", icon: Wallet, group: "Keuangan" },
   { label: "Laporan", href: "/app/reports", icon: BarChart3, group: "Keuangan" },
   { label: "Catatan", href: "/app/personal", icon: NotebookPen, group: "Personal" },
@@ -78,6 +80,7 @@ const navLabels: Record<string, { id: string; en: string }> = {
   Kalender: { id: "Kalender", en: "Calendar" },
   File: { id: "File", en: "Files" },
   Invoice: { id: "Invoice", en: "Invoice" },
+  Paket: { id: "Paket", en: "Packages" },
   Pengeluaran: { id: "Pengeluaran", en: "Expenses" },
   Laporan: { id: "Laporan", en: "Reports" },
   Notes: { id: "Notes", en: "Notes" },

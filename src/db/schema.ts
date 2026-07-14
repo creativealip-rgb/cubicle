@@ -185,7 +185,9 @@ export const projectMembers = pgTable("project_members", {
 export const packages = pgTable("packages", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  // NULL projectId = workspace-level catalog template (reusable across projects).
+  // Non-NULL = legacy per-project package (kept for backward compatibility).
+  projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
   name: text("name").notNull(), // e.g. "40 HOURS", "60 HOURS"
   hours: integer("hours"), // hours included per month
   price: numeric("price", { precision: 12, scale: 2 }).notNull(),

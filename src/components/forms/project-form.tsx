@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getPackagesByProject } from "@/lib/actions/packages";
+import { getPackagesByProject, getWorkspacePackages } from "@/lib/actions/packages";
+import { formatMoney } from "@/lib/utils";
+import Link from "next/link";
 
 interface ProjectFormProps {
   mode: "create" | "edit";
@@ -53,19 +55,35 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
     selectedPackageId: defaultValues?.selectedPackageId ?? "",
   });
 
-  // Fetch packages when editing an existing project with package billing
+  // Fetch selectable packages when billing type is "package".
+  // Source = workspace catalog (reusable templates) + any legacy per-project
+  // packages (when editing) so existing assignments stay visible.
   useEffect(() => {
-    if (mode === "edit" && defaultValues?.id && form.billingType === "package") {
-      getPackagesByProject(defaultValues.id).then((pkgs) => {
-        setProjectPackages(pkgs.map((p) => ({
+    if (form.billingType !== "package") return;
+    async function load() {
+      try {
+        const catalog = await getWorkspacePackages();
+        const merged = catalog.map((p) => ({
           id: p.id,
           name: p.name,
           hours: p.hours,
           price: p.price,
           currency: p.currency,
-        })));
-      }).catch(() => {});
+        }));
+        if (mode === "edit" && defaultValues?.id) {
+          const legacy = await getPackagesByProject(defaultValues.id);
+          for (const p of legacy) {
+            if (!merged.some((m) => m.id === p.id)) {
+              merged.push({ id: p.id, name: p.name, hours: p.hours, price: p.price, currency: p.currency });
+            }
+          }
+        }
+        setProjectPackages(merged);
+      } catch {
+        /* ignore */
+      }
     }
+    load();
   }, [mode, defaultValues?.id, form.billingType]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -166,31 +184,40 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
       )}
       {form.billingType === "package" && (
         <div className="space-y-2">
-          <Label>Assigned Package</Label>
-          {mode === "create" ? (
-            <p className="text-xs text-muted-foreground">
-              Save the project first, then add packages and select one.
-            </p>
-          ) : projectPackages.length > 0 ? (
-            <Select
-              value={form.selectedPackageId || "__none__"}
-              onValueChange={(v) => setForm((p) => ({ ...p, selectedPackageId: v === "__none__" ? "" : v }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih paket untuk ditetapkan" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">No package assigned</SelectItem>
-                {projectPackages.map((pkg) => (
-                  <SelectItem key={pkg.id} value={pkg.id}>
-                    {pkg.name} — {pkg.hours ? `${pkg.hours}h` : "custom"} · {new Intl.NumberFormat("en-US", { style: "currency", currency: pkg.currency || "IDR" }).format(Number(pkg.price))}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <Label>Paket</Label>
+          {projectPackages.length > 0 ? (
+            <>
+              <Select
+                value={form.selectedPackageId || "__none__"}
+                onValueChange={(v) => setForm((p) => ({ ...p, selectedPackageId: v === "__none__" ? "" : v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih paket" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Belum ada paket dipilih</SelectItem>
+                  {projectPackages.map((pkg) => (
+                    <SelectItem key={pkg.id} value={pkg.id}>
+                      {pkg.name} — {pkg.hours ? `${pkg.hours} jam` : "custom"} · {formatMoney(pkg.price, pkg.currency || "IDR")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Kelola daftar paket di{" "}
+                <Link href="/app/packages" className="underline hover:text-foreground" target="_blank">
+                  menu Paket
+                </Link>
+                .
+              </p>
+            </>
           ) : (
             <p className="text-xs text-muted-foreground">
-              No packages found for this project. Add packages first, then select one here.
+              Belum ada paket di katalog. Buat dulu di{" "}
+              <Link href="/app/packages" className="underline hover:text-foreground" target="_blank">
+                menu Paket
+              </Link>
+              , lalu pilih di sini.
             </p>
           )}
         </div>

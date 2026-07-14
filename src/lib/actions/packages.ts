@@ -4,8 +4,8 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { packages } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { packages, projects } from "@/db/schema";
+import { eq, and, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 
@@ -104,4 +104,76 @@ export async function getPackagesByProject(projectId: string) {
     .from(packages)
     .where(and(eq(packages.projectId, projectId), eq(packages.active, true)))
     .orderBy(packages.sortOrder);
+}
+
+// ─── Workspace-level catalog (reusable templates, projectId = NULL) ───
+
+/**
+ * List catalog packages for the current workspace. These are reusable
+ * templates (e.g. 40/60/100 HOURS) not tied to a single project.
+ */
+export async function getWorkspacePackages() {
+  const workspaceId = await getWorkspaceId();
+  return db
+    .select()
+    .from(packages)
+    .where(and(eq(packages.workspaceId, workspaceId), isNull(packages.projectId)))
+    .orderBy(packages.sortOrder);
+}
+
+/** Create a reusable catalog package (not tied to any project). */
+export async function createWorkspacePackage(data: z.infer<typeof packageSchema>) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  const parsed = packageSchema.parse(data);
+
+  const [pkg] = await db
+    .insert(packages)
+    .values({
+      workspaceId,
+      projectId: null,
+      name: parsed.name,
+      hours: parsed.hours ?? null,
+      price: String(parsed.price),
+      currency: parsed.currency,
+      description: parsed.description ?? null,
+      features: parsed.features ? JSON.stringify(parsed.features) : null,
+      badge: parsed.badge ?? null,
+      sortOrder: parsed.sortOrder,
+      active: parsed.active,
+      customPrice: parsed.customPrice != null ? String(parsed.customPrice) : null,
+      minHours: parsed.minHours ?? null,
+      maxHours: parsed.maxHours ?? null,
+      allowCustom: parsed.allowCustom,
+    })
+    .returning();
+
+  return pkg;
+}
+
+/**
+ * Assign a catalog package to a project by setting the project's
+ * selectedPackageId. Also flips billingType to "package" for consistency.
+ */
+export async function assignPackageToProject(projectId: string, packageId: string | null) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  if (packageId) {
+    const [pkg] = await db
+      .select({ id: packages.id })
+      .from(packages)
+      .where(and(eq(packages.id, packageId), eq(packages.workspaceId, workspaceId)))
+      .limit(1);
+    if (!pkg) throw new Error("Paket tidak ditemukan");
+  }
+
+  await db
+    .update(projects)
+    .set({ selectedPackageId: packageId, billingType: "package", updatedAt: new Date() })
+    .where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId)));
 }

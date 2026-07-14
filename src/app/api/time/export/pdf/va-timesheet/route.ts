@@ -159,13 +159,14 @@ function formatMoney(amount: number, currency: string | null): string {
 }
 
 // Per-entry billable amount, billing-type aware.
-// - hours/package: (minutes/60) × effective rate (entry rate overrides project rate)
-// - project (flat fee): 0 per entry — the flat fee is shown once at project level
+// - hours: (minutes/60) × effective rate (entry rate overrides project rate)
+// - project (flat fee) & package (fixed price): 0 per entry — those are billed
+//   once at project level (flat fee / package price), shown separately.
 function entryAmount(e: Entry): number {
   if (!e.billable) return 0;
-  const minutes = Number(e.durationMinutes ?? 0);
   const bt = e.billingType ?? "hours";
-  if (bt === "project") return 0;
+  if (bt !== "hours") return 0;
+  const minutes = Number(e.durationMinutes ?? 0);
   const rate = Number(e.hourlyRate ?? e.projectRate ?? 0);
   return (minutes / 60) * rate;
 }
@@ -257,13 +258,16 @@ export async function GET(request: Request) {
   // Time-based billable amounts (hours/package), grouped by currency.
   const totalByCurrency = sumByCurrency(entries);
   // Flat-fee (billingType=project) amounts, one fee per distinct project, by currency.
+  // Fixed fees billed once per distinct project: flat fee (billingType=project)
+  // or package price (billingType=package). Accumulated per currency.
   const flatFeeSeen = new Set<string>();
   const flatFeeByCurrency = new Map<string, number>();
   for (const e of entries) {
-    if ((e.billingType ?? "hours") !== "project") continue;
+    const bt = e.billingType ?? "hours";
+    if (bt !== "project" && bt !== "package") continue;
     if (!e.projectId || flatFeeSeen.has(e.projectId)) continue;
     flatFeeSeen.add(e.projectId);
-    const fee = Number(e.projectRate ?? 0);
+    const fee = bt === "package" ? Number(e.packagePrice ?? 0) : Number(e.projectRate ?? 0);
     if (fee <= 0) continue;
     const cur = (e.projectCurrency || "IDR").toUpperCase();
     flatFeeByCurrency.set(cur, (flatFeeByCurrency.get(cur) ?? 0) + fee);
@@ -326,10 +330,11 @@ export async function GET(request: Request) {
     // Add flat fees for distinct project-billed projects in this client group.
     const clientFlatSeen = new Set<string>();
     for (const e of clientEntries) {
-      if ((e.billingType ?? "hours") !== "project") continue;
+      const bt = e.billingType ?? "hours";
+      if (bt !== "project" && bt !== "package") continue;
       if (!e.projectId || clientFlatSeen.has(e.projectId)) continue;
       clientFlatSeen.add(e.projectId);
-      const fee = Number(e.projectRate ?? 0);
+      const fee = bt === "package" ? Number(e.packagePrice ?? 0) : Number(e.projectRate ?? 0);
       if (fee <= 0) continue;
       const cur = (e.projectCurrency || "IDR").toUpperCase();
       clientMoney.set(cur, (clientMoney.get(cur) ?? 0) + fee);
@@ -351,6 +356,8 @@ export async function GET(request: Request) {
       let amountCell: string;
       if (bt === "project") {
         amountCell = `<span class="flat-tag">${escapeHtml(L.flatFee)}</span>`;
+      } else if (bt === "package") {
+        amountCell = `<span class="flat-tag">${escapeHtml(L.btPackage)}</span>`;
       } else {
         amountCell = escapeHtml(formatMoney(entryAmount(entry), cur));
       }
@@ -375,8 +382,9 @@ export async function GET(request: Request) {
     billingType: BillingType;
     currency: string | null;
     flatFee: number;
-    timeAmount: number; // hours/package computed amount
+    timeAmount: number; // hours-billed computed amount
     packageHours: number | null;
+    packagePrice: number;
   };
   const projectTaskMap = new Map<string, ProjMeta>();
   const projectSummary: Slice[] = [];
@@ -394,6 +402,7 @@ export async function GET(request: Request) {
         flatFee: (entry.billingType ?? "hours") === "project" ? Number(entry.projectRate ?? 0) : 0,
         timeAmount: 0,
         packageHours: entry.packageHours ?? null,
+        packagePrice: (entry.billingType ?? "hours") === "package" ? Number(entry.packagePrice ?? 0) : 0,
       });
     }
     const meta = projectTaskMap.get(projName)!;
@@ -412,8 +421,14 @@ export async function GET(request: Request) {
     const projBillable = Array.from(taskMap.values()).reduce((s, v) => s + v.billable, 0);
     projectSummary.push({ label: projName, minutes: projTotal });
 
-    // Project-level amount depends on billing type.
-    const projAmount = meta.billingType === "project" ? meta.flatFee : meta.timeAmount;
+    // Project-level amount depends on billing type:
+    // project → flat fee, package → package price, hours → computed time amount.
+    const projAmount =
+      meta.billingType === "project"
+        ? meta.flatFee
+        : meta.billingType === "package"
+          ? meta.packagePrice
+          : meta.timeAmount;
     const amountStr = projAmount > 0 ? formatMoney(projAmount, meta.currency) : "—";
 
     // Package quota note: used vs included hours.

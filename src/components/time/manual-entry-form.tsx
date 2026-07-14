@@ -20,11 +20,15 @@ interface Client {
 interface Project {
   id: string;
   name: string;
+  clientId?: string;
+  billingType?: string;
+  rate?: string | null;
 }
 
 interface Task {
   id: string;
   title: string;
+  projectId?: string;
 }
 
 interface ManualEntryFormProps {
@@ -50,6 +54,11 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
   const [minutes, setMinutes] = useState("0");
   const [billable, setBillable] = useState(true);
   const [hourlyRate, setHourlyRate] = useState("");
+
+  // Rate input only makes sense for hourly-billed projects; otherwise the
+  // backend inherits the project rate and the manual field is just noise.
+  const selectedProject = projects.find((p) => p.id === projectId);
+  const isHourly = selectedProject?.billingType === "hours";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -218,18 +227,21 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
               />
               <Label htmlFor="billable" className="text-sm">Bisa Ditagih</Label>
             </div>
-            {billable && (
+            {billable && isHourly && (
               <div className="space-y-2">
-                <Label className="text-xs">Tarif per jam</Label>
+                <Label className="text-xs">{t("Tarif per jam", "Hourly rate")}</Label>
                 <Input
                   type="number"
                   min="0"
                   step="1000"
                   value={hourlyRate}
                   onChange={(e) => setHourlyRate(e.target.value)}
-                  placeholder={t("mis. 150000", "e.g. 150000")}
+                  placeholder={selectedProject?.rate ? String(selectedProject.rate) : t("mis. 150000", "e.g. 150000")}
                   className="h-9"
                 />
+                <p className="text-[11px] text-muted-foreground">
+                  {t("Kosongkan untuk pakai tarif proyek.", "Leave empty to use the project rate.")}
+                </p>
               </div>
             )}
           </div>
