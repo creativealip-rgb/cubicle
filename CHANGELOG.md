@@ -4,6 +4,13 @@ Versi aplikasi mengikuti `package.json` (`version`) dan otomatis tampil di sideb
 lewat `NEXT_PUBLIC_APP_VERSION`. Naikkan versi di `package.json` setiap rilis,
 lalu tambahkan entri di sini.
 
+## v0.1.25 — 2026-07-14 — Katalog paket workspace reusable + input waktu & PDF sadar billing-type
+
+- **Katalog paket level workspace** (`app/packages/page.tsx` + `components/packages/package-catalog.tsx` baru): paket (mis. 40/60/100 jam) kini dibuat sekali sebagai template reusable, bukan diketik ulang per proyek. Skema `packages.projectId` diubah jadi nullable (migrasi `ALTER TABLE packages ALTER COLUMN project_id DROP NOT NULL`); `projectId = NULL` menandai paket katalog workspace. Action baru `getWorkspacePackages`, `createWorkspacePackage`, `assignPackageToProject` (assign paket ke proyek + set `billingType = "package"`). Menu "Paket" ditambah di grup Keuangan sidebar.
+- **Field tarif kondisional di input waktu** (`components/time/timer-widget.tsx` + `manual-entry-form.tsx`): input "Tarif per jam" hanya muncul kalau proyek terpilih bertipe by-hours (`billingType === "hours"`). Untuk proyek flat-fee/package, tarif diwarisi otomatis dari proyek — field disembunyikan supaya tidak membingungkan. Query `time/page.tsx` kini ikut load `billingType` + `rate` per proyek. Manual-entry dapat hint "Kosongkan untuk pakai tarif proyek".
+- **Fix perhitungan paket di ekspor PDF** (`/api/time/export/pdf/va-timesheet`): sebelumnya proyek tipe `package` salah dihitung `(menit/60) × rate` → hasil Rp 0 karena paket tidak punya hourly rate, dan harga paket tidak masuk total. Sekarang harga paket diperlakukan sebagai **fixed fee sekali per proyek** (seperti flat fee), konsisten di grand total, subtotal per-klien, sel per-entry (tag "paket"), dan amount level-proyek di dashboard report.
+- Verified: `tsc --noEmit` 0 error, build + deploy container `cubicle-cubicle-1` healthy (BUILD_ID `INuR-rYiSxEtAx3iWHzcd`), create paket workspace terverifikasi live di browser (paket "Paket Hemat" tampil di katalog). Commit `b47ca84`.
+
 ## v0.1.24 — 2026-07-14 — Fix bug mata uang timesheet + lokalisasi penuh Waktu + polish list Proyek & badge portal Klien
 
 - **Fix bug ikon mata uang ganda di timesheet** (`components/time/timesheet.tsx`): badge tarif dulu render `<DollarSign>` hardcode DI DEPAN hasil `formatRate` yang sudah punya simbol sendiri → USD tampil "$ $13.00", IDR tampil "$ Rp 25". Buang ikon hardcode; sekarang bersih "$13.00 / jam" & "Rp 25 / jam" sesuai currency proyek.
