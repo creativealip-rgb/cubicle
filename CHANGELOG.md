@@ -4,6 +4,17 @@ Versi aplikasi mengikuti `package.json` (`version`) dan otomatis tampil di sideb
 lewat `NEXT_PUBLIC_APP_VERSION`. Naikkan versi di `package.json` setiap rilis,
 lalu tambahkan entri di sini.
 
+## v0.1.22 — 2026-07-14 — Currency-aware timesheet + ekspor PDF sadar billing-type
+
+- **Fix currency timesheet:** `formatRate` di `timesheet.tsx` dulu hardcode `IDR`; sekarang pakai `currency` dari project (query `time/page.tsx` load field `currency`). Rate USD tampil `$13.00`, IDR tampil `Rp 25` sesuai project — sebelumnya semua dipaksa `Rp`.
+- **Timer widget:** dropdown proyek difilter per klien terpilih, task difilter per proyek terpilih (mencegah salah assign lintas klien). Rate otomatis diwarisi dari `project.rate` bila kolom tarif dikosongkan saat start timer.
+- **Ekspor PDF billing-type-aware** (`/api/time/export/pdf/va-timesheet`): query join `packages` + load `billing_type`, `rate`, `currency`, `hours`. Helper baru `formatMoney` (currency-aware, IDR tanpa desimal), `entryAmount`, `sumByCurrency`, `renderMoneyMap` (multi-currency `$X + RpY`).
+  - `hours`/`package`: amount = jam × rate efektif (entry rate override project rate).
+  - `project` (flat fee): entry tampil tag `biaya tetap`, fee dihitung sekali per project di level klien/total (bukan per entry).
+  - `package`: badge tipe + catatan kuota `(terpakai Xh / Yh)`.
+  - Dashboard report: tambah kolom `JUMLAH TAGIHAN` per project + badge billing-type.
+- Verified live di cubiqlo.com (tsc 0 error, container healthy, HTTP 200, browser test ketiga billing type). Commit `2f63d28`.
+
 ## v0.1.21 — 2026-07-14 — Lokalisasi ID + versioning otomatis
 
 - Lokalisasi UI app ke Bahasa Indonesia di 29 file: halaman Proyek, Tugas (board kanban + tabel), Waktu (timer, entri manual, timesheet, ekspor PDF/CSV), Workspace Pribadi, Kuesioner, plus komponen tersebar (expenses, proposals, files, comments, calendar, portal, prompts, invoice templates).
