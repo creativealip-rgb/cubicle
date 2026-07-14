@@ -148,11 +148,11 @@ export default async function EmailPage() {
               <Input id="category" name="category" placeholder="follow-up" defaultValue="general" />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <label htmlFor="templateSubject" className="text-sm font-medium">Subject</label>
+              <label htmlFor="templateSubject" className="text-sm font-medium">Subjek</label>
               <Input id="templateSubject" name="templateSubject" placeholder="Update: {{project}}" required />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <label htmlFor="templateBody" className="text-sm font-medium">Body</label>
+              <label htmlFor="templateBody" className="text-sm font-medium">Isi</label>
               <Textarea id="templateBody" name="templateBody" rows={5} placeholder="Hi {{client}}, ..." required />
             </div>
             <div className="md:col-span-2">

@@ -35,13 +35,13 @@ export function ReplyToEmailForm({
       <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
       <Input
         type="email"
-        placeholder="your-email@gmail.com"
+        placeholder="email-kamu@gmail.com"
         value={email}
         onChange={(e) => { setEmail(e.target.value); setSaved(false); }}
         className="max-w-xs"
       />
       <Button size="sm" onClick={handleSave} disabled={pending}>
-        {pending ? "Saving..." : saved ? "Saved ✓" : "Save"}
+        {pending ? "Menyimpan..." : saved ? "Tersimpan ✓" : "Simpan"}
       </Button>
     </div>
   );

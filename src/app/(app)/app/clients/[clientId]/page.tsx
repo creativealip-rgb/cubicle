@@ -115,12 +115,12 @@ export default async function ClientDetailPage({
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <Link href="/app/clients" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-3 w-3" /> Back to Clients
+            <ArrowLeft className="h-3 w-3" /> Kembali ke Klien
           </Link>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-semibold tracking-tight">{client.name}</h1>
             <Badge variant={client.status === "active" ? "default" : "secondary"}>
-              {client.status}
+              {client.status === "active" ? "Aktif" : client.status === "inactive" ? "Tidak aktif" : client.status === "archived" ? "Arsip" : client.status}
             </Badge>
           </div>
           {client.companyName && (

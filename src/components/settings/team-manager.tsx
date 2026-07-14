@@ -35,12 +35,12 @@ export function TeamManager({ members }: { members: Member[] }) {
     setLoading(true);
     try {
       await addWorkspaceMember({ email, role });
-      toast.success("Team member added");
+      toast.success("Anggota tim ditambahkan");
       setEmail("");
       setRole("member");
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed to add member");
+      toast.error(err instanceof Error ? err.message : "Gagal menambah anggota");
     } finally {
       setLoading(false);
     }
@@ -49,21 +49,21 @@ export function TeamManager({ members }: { members: Member[] }) {
   async function handleRoleChange(memberId: string, nextRole: "member" | "viewer") {
     try {
       await updateWorkspaceMemberRole({ memberId, role: nextRole });
-      toast.success("Role updated");
+      toast.success("Peran diperbarui");
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed to update role");
+      toast.error(err instanceof Error ? err.message : "Gagal memperbarui peran");
     }
   }
 
   async function handleRemove(memberId: string) {
-    if (!confirm("Remove this team member from workspace?")) return;
+    if (!confirm("Hapus anggota tim ini dari workspace?")) return;
     try {
       await removeWorkspaceMember(memberId);
-      toast.success("Member removed");
+      toast.success("Anggota dihapus");
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed to remove member");
+      toast.error(err instanceof Error ? err.message : "Gagal menghapus anggota");
     }
   }
 
@@ -72,7 +72,7 @@ export function TeamManager({ members }: { members: Member[] }) {
       <form onSubmit={handleAdd} className="rounded-lg border p-3 space-y-3">
         <div className="grid gap-3 md:grid-cols-[1fr_160px_auto] md:items-end">
           <div className="space-y-2">
-            <Label htmlFor="team-email">Add existing user by email</Label>
+            <Label htmlFor="team-email">Tambah user via email</Label>
             <Input
               id="team-email"
               type="email"
@@ -83,23 +83,23 @@ export function TeamManager({ members }: { members: Member[] }) {
             />
           </div>
           <div className="space-y-2">
-            <Label>Role</Label>
+            <Label>Peran</Label>
             <Select value={role} onValueChange={(v) => setRole(v as "member" | "viewer")}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="member">Member</SelectItem>
-                <SelectItem value="viewer">Viewer</SelectItem>
+                <SelectItem value="member">Anggota</SelectItem>
+                <SelectItem value="viewer">Pengamat</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <Button type="submit" disabled={loading} className="gap-2">
-            <UserPlus className="h-4 w-4" /> {loading ? "Adding..." : "Add"}
+            <UserPlus className="h-4 w-4" /> {loading ? "Menambah..." : "Tambah"}
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          MVP invite mode: user must signup first, then owner adds email here.
+          User harus daftar akun dulu, baru pemilik workspace bisa menambahkan emailnya di sini.
         </p>
       </form>
 
@@ -107,12 +107,12 @@ export function TeamManager({ members }: { members: Member[] }) {
         {members.map((member) => (
           <div key={member.id} className="flex items-center justify-between rounded-lg border p-3 gap-3">
             <div className="min-w-0">
-              <p className="font-medium truncate">{member.name || "Unnamed user"}</p>
+              <p className="font-medium truncate">{member.name || "Tanpa nama"}</p>
               <p className="text-xs text-muted-foreground truncate">{member.email}</p>
             </div>
             <div className="flex items-center gap-2">
               {member.role === "owner" ? (
-                <Badge>owner</Badge>
+                <Badge>Pemilik</Badge>
               ) : (
                 <Select
                   value={member.role}
@@ -122,8 +122,8 @@ export function TeamManager({ members }: { members: Member[] }) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="member">member</SelectItem>
-                    <SelectItem value="viewer">viewer</SelectItem>
+                    <SelectItem value="member">Anggota</SelectItem>
+                    <SelectItem value="viewer">Pengamat</SelectItem>
                   </SelectContent>
                 </Select>
               )}
