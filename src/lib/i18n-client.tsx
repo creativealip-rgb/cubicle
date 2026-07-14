@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useCallback } from "react";
+import { createContext, useContext, useCallback, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export type Lang = "id" | "en";
@@ -28,18 +28,27 @@ const LangContext = createContext<LangContextValue>({
  * down, so the first paint is already correct — no hydration flash.
  */
 export function LangProvider({
-  lang,
+  lang: serverLang,
   children,
 }: {
   lang: Lang;
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  // Optimistic client state: flips instantly on click so all client
+  // components re-render immediately, while the server catches up via refresh.
+  const [lang, setLangState] = useState<Lang>(serverLang);
+
+  // Keep in sync if the server resolves a different value (e.g. after refresh).
+  useEffect(() => {
+    setLangState(serverLang);
+  }, [serverLang]);
 
   const setLang = useCallback(
     (next: Lang) => {
+      setLangState(next); // instant UI switch
       document.cookie = `cubiqlo_lang=${next}; path=/; max-age=31536000; samesite=lax`;
-      router.refresh();
+      router.refresh(); // update server components in background
     },
     [router],
   );
