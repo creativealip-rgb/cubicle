@@ -4,6 +4,15 @@ Versi aplikasi mengikuti `package.json` (`version`) dan otomatis tampil di sideb
 lewat `NEXT_PUBLIC_APP_VERSION`. Naikkan versi di `package.json` setiap rilis,
 lalu tambahkan entri di sini.
 
+## v0.1.23 — 2026-07-14 — Lokalisasi detail proyek + UX Tugas (auto-filter, board view, fix Kanban)
+
+- **Lokalisasi penuh halaman detail proyek** (`app/projects/[projectId]/page.tsx`): header (Kembali ke Proyek, Klien, Ubah), badge status pakai `projectStatusVariant` (variant + label ID), semua tab (Tugas/Berkas/Waktu/Komentar/Linimasa), `actionLabels` timeline, empty state (Tanpa judul/Tidak diketahui/Sistem). Tanggal & waktu pakai `locale`.
+- **Fix warna card Kanban bentrok** (`components/tasks/kanban-board.tsx`): buang `border-l-4` + `priorityColors` warna prioritas di kiri card yang tabrakan visual dengan dot status kolom. Card sekarang border netral (`border-border`), warna hanya di badge prioritas.
+- **Filter Tugas auto-apply** (`components/tasks/task-filters.tsx` baru): konversi form filter ke client component; pilih dropdown langsung `router.push` (buang tombol Filter manual). Label dropdown ke-4 diperjelas jadi "Semua Petugas / Ditugaskan ke".
+- **Toggle List/Board di halaman Tugas global** (`task-view-toggle.tsx` + `tasks-board-view.tsx` baru): mode Papan read-only grouped by status (4 kolom), card tampil judul/proyek/prioritas/assignee, klik buka detail sheet. State via `?view=board`.
+- **Progress bar proyek compact:** `p-4 h-3` → `p-3 h-2`, due date dipindah ke header inline (hemat ruang vertikal).
+- Verified live di cubiqlo.com (tsc 0 error, container healthy, HTTP 200, browser test login test user: lokalisasi + Kanban + auto-filter + toggle board dua arah). Commit `66ccfc2` + `87fd7e5`.
+
 ## v0.1.22 — 2026-07-14 — Currency-aware timesheet + ekspor PDF sadar billing-type
 
 - **Fix currency timesheet:** `formatRate` di `timesheet.tsx` dulu hardcode `IDR`; sekarang pakai `currency` dari project (query `time/page.tsx` load field `currency`). Rate USD tampil `$13.00`, IDR tampil `Rp 25` sesuai project — sebelumnya semua dipaksa `Rp`.
