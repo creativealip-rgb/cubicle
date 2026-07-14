@@ -10,6 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
 import { TaskCreateDialog } from "@/components/tasks/task-create-dialog";
 import { TaskFilters } from "@/components/tasks/task-filters";
+import { TaskViewToggle } from "@/components/tasks/task-view-toggle";
+import { TasksBoardView } from "@/components/tasks/tasks-board-view";
 import { EmptyState } from "@/components/empty-state";
 import {
   Filter,
@@ -26,7 +28,7 @@ async function getWorkspaceId(): Promise<string> {
 export default async function TasksPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; priority?: string; projectId?: string; assignee?: string }>;
+  searchParams: Promise<{ status?: string; priority?: string; projectId?: string; assignee?: string; view?: string }>;
 }) {
   const lang = await getCurrentLang();
   const t = createT(lang);
@@ -36,6 +38,7 @@ export default async function TasksPage({
   const currentUserId = _user.id;
   const workspaceId = await getWorkspaceId();
   const params = await searchParams;
+  const view: "list" | "board" = params.view === "board" ? "board" : "list";
 
   const whereClauses = [eq(tasks.workspaceId, workspaceId)];
 
@@ -110,19 +113,26 @@ export default async function TasksPage({
         <TaskCreateDialog projectId={params.projectId} members={memberList} projects={projectList} />
       </div>
 
-      {/* Filters */}
-      <TaskFilters
-        projects={projectList}
-        members={memberList}
-        current={{
-          status: params.status,
-          priority: params.priority,
-          projectId: params.projectId,
-          assignee: params.assignee,
-        }}
-      />
+      {/* Filters + view toggle */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <TaskFilters
+          projects={projectList}
+          members={memberList}
+          current={{
+            status: params.status,
+            priority: params.priority,
+            projectId: params.projectId,
+            assignee: params.assignee,
+          }}
+        />
+        <TaskViewToggle current={view} />
+      </div>
+
+      {/* Board view */}
+      {view === "board" && <TasksBoardView tasks={taskList} members={memberList} />}
 
       {/* Task List */}
+      {view === "list" && (
       <div className="overflow-hidden rounded-lg border bg-card">
         {taskList.length > 0 && (
           <div className="hidden items-center gap-4 border-b bg-muted/40 px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:flex">
@@ -183,6 +193,7 @@ export default async function TasksPage({
           );
         })}
       </div>
+      )}
     </div>
   );
 }
