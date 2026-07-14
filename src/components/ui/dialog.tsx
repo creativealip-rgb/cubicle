@@ -31,7 +31,37 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 const DialogContent = React.forwardRef<
   React.ComponentRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, onInteractOutside, ...props }, ref) => (
+>(({ className, children, onInteractOutside, onPointerDownOutside, ...props }, ref) => {
+  const POPPER_SELECTOR =
+    "[data-cubiqlo-select-content], [data-radix-popper-content-wrapper], [data-radix-select-viewport], [role='listbox'], [role='option']";
+
+  // The real click target for interact/pointer-outside events lives on the
+  // originalEvent, NOT on event.target (which is the dialog content itself).
+  // We also walk composedPath() because picking the *same* Select value
+  // unmounts the item before the guard runs, detaching event.target.
+  const isFromPopper = (event: {
+    detail?: { originalEvent?: Event };
+    target?: EventTarget | null;
+  }): boolean => {
+    const original = event.detail?.originalEvent;
+    if (original && typeof original.composedPath === "function") {
+      for (const node of original.composedPath()) {
+        if (
+          node instanceof HTMLElement &&
+          typeof node.closest === "function" &&
+          node.closest(POPPER_SELECTOR)
+        ) {
+          return true;
+        }
+      }
+    }
+    const target = (original?.target ?? event.target) as HTMLElement | null;
+    // Detached node (same-value select unmount) — keep dialog open.
+    if (target && !document.contains(target)) return true;
+    return !!target?.closest?.(POPPER_SELECTOR);
+  };
+
+  return (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
@@ -40,19 +70,15 @@ const DialogContent = React.forwardRef<
         "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
         className,
       )}
+      onPointerDownOutside={(event) => {
+        if (isFromPopper(event)) {
+          event.preventDefault();
+          return;
+        }
+        onPointerDownOutside?.(event);
+      }}
       onInteractOutside={(event) => {
-        const target = event.target as HTMLElement | null;
-        // Keep the dialog open when the interaction comes from a portaled
-        // Radix popup (Select/Dropdown), OR when the target has already been
-        // detached from the DOM — which happens when you pick the *same*
-        // Select value and the item unmounts before this guard runs.
-        if (
-          !target ||
-          !document.contains(target) ||
-          target.closest(
-            "[data-cubiqlo-select-content], [data-radix-popper-content-wrapper], [role='listbox']",
-          )
-        ) {
+        if (isFromPopper(event)) {
           event.preventDefault();
           return;
         }
@@ -67,7 +93,8 @@ const DialogContent = React.forwardRef<
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
   </DialogPortal>
-))
+  );
+})
 DialogContent.displayName = DialogPrimitive.Content.displayName
 
 const DialogHeader = ({
