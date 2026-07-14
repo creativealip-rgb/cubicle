@@ -70,7 +70,7 @@ export default async function JournalPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Journal</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Jurnal</h1>
         <p className="mt-1 text-sm text-muted-foreground">Catatan harian — insight, blockers, keputusan, refleksi.</p>
       </div>
 

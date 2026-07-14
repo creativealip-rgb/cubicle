@@ -87,9 +87,9 @@ export default async function CalendarPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Calendar</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Kalender</h1>
           <p className="text-sm text-muted-foreground">
-            Manage appointments and availability
+            Kelola janji temu dan ketersediaan
           </p>
         </div>
         <div className="flex items-center gap-2">

@@ -65,9 +65,9 @@ export default async function NewInvoicePage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">New Invoice</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Invoice Baru</h1>
           <p className="text-sm text-muted-foreground">
-            Create draft invoice, then add line items after save.
+            Buat draft invoice, lalu tambah item setelah disimpan.
           </p>
         </div>
       </div>

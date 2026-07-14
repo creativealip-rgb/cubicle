@@ -48,9 +48,9 @@ const navItems = [
   { label: "Invoice", href: "/app/invoices", icon: FileText, group: "Keuangan", badgeKey: "unpaidInvoices" as const },
   { label: "Pengeluaran", href: "/app/expenses", icon: Wallet, group: "Keuangan" },
   { label: "Laporan", href: "/app/reports", icon: BarChart3, group: "Keuangan" },
-  { label: "Notes", href: "/app/personal", icon: NotebookPen, group: "Personal" },
+  { label: "Catatan", href: "/app/personal", icon: NotebookPen, group: "Personal" },
   { label: "Landing Page", href: "/app/personal-site", icon: FileText, group: "Personal" },
-  { label: "Journal", href: "/app/journal", icon: NotebookPen, group: "Personal" },
+  { label: "Jurnal", href: "/app/journal", icon: NotebookPen, group: "Personal" },
   { label: "Proposal", href: "/app/proposals", icon: FileText, group: "Penjualan", badgeKey: "draftProposals" as const },
   { label: "Kontrak", href: "/app/contracts", icon: FileSignature, group: "Penjualan", badgeKey: "draftContracts" as const },
 

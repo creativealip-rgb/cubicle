@@ -59,8 +59,8 @@ export default async function QuestionnairesPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Questionnaires</h1>
-          <p className="text-sm text-slate-500 mt-1">Intake forms for new clients. Responses become project briefs.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Kuesioner</h1>
+          <p className="text-sm text-slate-500 mt-1">Form intake untuk klien baru. Jawaban jadi brief proyek.</p>
         </div>
         {canWrite && (
           <Button asChild>

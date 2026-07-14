@@ -56,9 +56,9 @@ export default async function ContractTemplatesPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Contract templates</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Template Kontrak</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Reusable contract bodies with <code className="text-xs bg-slate-100 px-1 rounded">&#123;&#123;client.name&#125;&#125;</code> placeholders. Auto-filled at send time.
+            Isi kontrak siap pakai dengan placeholder <code className="text-xs bg-slate-100 px-1 rounded">&#123;&#123;client.name&#125;&#125;</code>. Otomatis terisi saat dikirim.
           </p>
         </div>
         {canWrite && (

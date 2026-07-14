@@ -57,8 +57,8 @@ export default async function ContractsPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Contracts</h1>
-          <p className="text-sm text-slate-500 mt-1">Send a contract to a client. They sign in the browser. You get an audit trail.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Kontrak</h1>
+          <p className="text-sm text-slate-500 mt-1">Kirim kontrak ke klien. Mereka tanda tangan di browser. Kamu dapat jejak audit.</p>
         </div>
         {canWrite && <CreateContractButton clients={clientsList} workspaceId={workspaceId} />}
       </div>

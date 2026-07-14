@@ -56,7 +56,7 @@ export default async function ProposalsPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Proposals</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Proposal</h1>
           <p className="text-sm text-slate-500 mt-1">Kirim scope + harga ke calon klien. Setelah diterima, kerja bisa dimulai.</p>
         </div>
         {canWrite && (

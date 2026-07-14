@@ -122,8 +122,8 @@ export default async function ExpensesPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Expenses</h1>
-          <p className="text-sm text-slate-500 mt-1">Track what you spend to see what you keep.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Pengeluaran</h1>
+          <p className="text-sm text-slate-500 mt-1">Catat pengeluaran biar tahu berapa yang tersisa.</p>
         </div>
       </div>
 

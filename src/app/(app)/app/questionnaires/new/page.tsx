@@ -29,8 +29,8 @@ export default async function NewQuestionnairePage() {
         </Button>
       </div>
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">New questionnaire</h1>
-        <p className="text-sm text-slate-500 mt-1">Build a form. Send to a client. Get back a structured brief.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">Kuesioner Baru</h1>
+        <p className="text-sm text-slate-500 mt-1">Buat form. Kirim ke klien. Dapatkan brief yang terstruktur.</p>
       </div>
       <QuestionnaireBuilder
         workspaceId={ws.id}
