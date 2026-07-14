@@ -12,6 +12,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { getProjectProgress } from "@/lib/actions/projects";
+import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
+import { projectStatusVariant } from "@/lib/status-badge";
 import { KanbanBoard } from "@/components/tasks/kanban-board";
 import { CommentList } from "@/components/comments/comment-list";
 import { ProjectForm } from "@/components/forms/project-form";
@@ -35,6 +37,9 @@ export default async function ProjectDetailPage({
 }: {
   params: Promise<{ projectId: string }>;
 }) {
+  const lang = await getCurrentLang();
+  const t = createT(lang);
+  const locale = getLocale(lang);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -171,24 +176,24 @@ export default async function ProjectDetailPage({
     .limit(50);
 
   const actionLabels: Record<string, string> = {
-    created_project: "Created project",
-    updated_project: "Updated project",
-    archived_project: "Archived project",
-    updated_project_visibility: "Updated project visibility",
-    added_project_member: "Added project member",
-    removed_project_member: "Removed project member",
-    created_task: "Created task",
-    updated_task: "Updated task",
-    updated_task_status: "Moved task",
-    reordered_task: "Reordered task",
-    deleted_task: "Deleted task",
-    uploaded_file: "Uploaded file",
-    deleted_file: "Deleted file",
-    created_comment: "Added comment",
-    started_timer: "Started timer",
-    stopped_timer: "Stopped timer",
-    created_time_entry: "Logged time",
-    updated_time_entry: "Updated time entry",
+    created_project: t("Membuat proyek", "Created project"),
+    updated_project: t("Memperbarui proyek", "Updated project"),
+    archived_project: t("Mengarsipkan proyek", "Archived project"),
+    updated_project_visibility: t("Memperbarui visibilitas proyek", "Updated project visibility"),
+    added_project_member: t("Menambah anggota proyek", "Added project member"),
+    removed_project_member: t("Menghapus anggota proyek", "Removed project member"),
+    created_task: t("Membuat tugas", "Created task"),
+    updated_task: t("Memperbarui tugas", "Updated task"),
+    updated_task_status: t("Memindahkan tugas", "Moved task"),
+    reordered_task: t("Mengurutkan ulang tugas", "Reordered task"),
+    deleted_task: t("Menghapus tugas", "Deleted task"),
+    uploaded_file: t("Mengunggah berkas", "Uploaded file"),
+    deleted_file: t("Menghapus berkas", "Deleted file"),
+    created_comment: t("Menambah komentar", "Added comment"),
+    started_timer: t("Memulai timer", "Started timer"),
+    stopped_timer: t("Menghentikan timer", "Stopped timer"),
+    created_time_entry: t("Mencatat waktu", "Logged time"),
+    updated_time_entry: t("Memperbarui catatan waktu", "Updated time entry"),
   };
 
   const statusColors: Record<string, string> = {
@@ -205,15 +210,15 @@ export default async function ProjectDetailPage({
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <Link href="/app/projects" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-3 w-3" /> Back to Projects
+            <ArrowLeft className="h-3 w-3" /> {t("Kembali ke Proyek", "Back to Projects")}
           </Link>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
-            <Badge variant="outline" className="capitalize">{project.status.replace("_", " ")}</Badge>
+            <Badge variant={projectStatusVariant(project.status, lang).variant}>{projectStatusVariant(project.status, lang).label}</Badge>
           </div>
           {project.clientName && (
             <p className="text-sm text-muted-foreground">
-              Client:{" "}
+              {t("Klien", "Client")}:{" "}
               <Link href={`/app/clients/${project.clientId}`} className="hover:underline">
                 {project.clientName}
               </Link>
@@ -223,12 +228,12 @@ export default async function ProjectDetailPage({
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm" className="gap-1">
-              <Pencil className="h-3 w-3" /> Edit
+              <Pencil className="h-3 w-3" /> {t("Ubah", "Edit")}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>Edit Project</DialogTitle>
+              <DialogTitle>{t("Ubah Proyek", "Edit Project")}</DialogTitle>
             </DialogHeader>
             {/* Edit form not imported for brevity — but ProjectForm would work */}
             <ProjectForm
@@ -257,25 +262,27 @@ export default async function ProjectDetailPage({
 
       {/* Progress bar */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Progress</span>
-            <span className="text-sm text-muted-foreground">
-              {progress.done}/{progress.total} tasks · {progress.percent}%
-            </span>
+        <CardContent className="p-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-sm font-medium">{t("Progres", "Progress")}</span>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span>
+                {progress.done}/{progress.total} {t("tugas", "tasks")} · {progress.percent}%
+              </span>
+              {project.dueDate && (
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {t("Jatuh tempo", "Due")}: {new Date(project.dueDate).toLocaleDateString(locale)}
+                </span>
+              )}
+            </div>
           </div>
-          <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${statusColors[project.status] ?? "bg-slate-400"}`}
               style={{ width: `${progress.percent}%` }}
             />
           </div>
-          {project.dueDate && (
-            <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              Due: {new Date(project.dueDate).toLocaleDateString()}
-            </p>
-          )}
         </CardContent>
       </Card>
 
@@ -283,19 +290,19 @@ export default async function ProjectDetailPage({
       <Tabs defaultValue="tasks">
         <TabsList>
           <TabsTrigger value="tasks" className="gap-1">
-            <CheckSquare className="h-3 w-3" /> Tasks ({projectTasks.length})
+            <CheckSquare className="h-3 w-3" /> {t("Tugas", "Tasks")} ({projectTasks.length})
           </TabsTrigger>
           <TabsTrigger value="files" className="gap-1">
-            <FileText className="h-3 w-3" /> Files ({projectFiles.length})
+            <FileText className="h-3 w-3" /> {t("Berkas", "Files")} ({projectFiles.length})
           </TabsTrigger>
           <TabsTrigger value="time" className="gap-1">
-            <Clock className="h-3 w-3" /> Time ({projectTimeEntries.length})
+            <Clock className="h-3 w-3" /> {t("Waktu", "Time")} ({projectTimeEntries.length})
           </TabsTrigger>
           <TabsTrigger value="comments" className="gap-1">
-            <MessageSquare className="h-3 w-3" /> Comments ({projectComments.length})
+            <MessageSquare className="h-3 w-3" /> {t("Komentar", "Comments")} ({projectComments.length})
           </TabsTrigger>
           <TabsTrigger value="timeline" className="gap-1">
-            <Activity className="h-3 w-3" /> Timeline ({projectTimeline.length})
+            <Activity className="h-3 w-3" /> {t("Linimasa", "Timeline")} ({projectTimeline.length})
           </TabsTrigger>
         </TabsList>
 
@@ -333,9 +340,9 @@ export default async function ProjectDetailPage({
                 <div className="flex items-center gap-3">
                   <Clock className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium">{entry.description || "Untitled"}</p>
+                    <p className="text-sm font-medium">{entry.description || t("Tanpa judul", "Untitled")}</p>
                     <p className="text-xs text-muted-foreground">
-                      {entry.userName || "Unknown"} · {entry.durationMinutes} min
+                      {entry.userName || t("Tidak diketahui", "Unknown")} · {entry.durationMinutes} {t("mnt", "min")}
                     </p>
                   </div>
                 </div>
@@ -387,7 +394,7 @@ export default async function ProjectDetailPage({
                         </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {event.actorName || event.actorEmail || "System"} · {new Date(event.createdAt).toLocaleString()}
+                        {event.actorName || event.actorEmail || t("Sistem", "System")} · {new Date(event.createdAt).toLocaleString(locale)}
                       </p>
                     </div>
                   </div>

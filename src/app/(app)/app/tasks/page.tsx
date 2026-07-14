@@ -7,10 +7,9 @@ import { eq, and, desc, sql } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
 import { TaskCreateDialog } from "@/components/tasks/task-create-dialog";
+import { TaskFilters } from "@/components/tasks/task-filters";
 import { EmptyState } from "@/components/empty-state";
 import {
   Filter,
@@ -112,67 +111,16 @@ export default async function TasksPage({
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-2">
-        <form className="flex flex-wrap items-center gap-2">
-          <Select name="status" defaultValue={params.status ?? "all"}>
-            <SelectTrigger className="w-[130px] h-8 text-xs">
-              <SelectValue placeholder={t("Status", "Status")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("Semua Status", "All Statuses")}</SelectItem>
-              <SelectItem value="todo">{t("Belum Mulai", "To Do")}</SelectItem>
-              <SelectItem value="in_progress">{t("Dikerjakan", "In Progress")}</SelectItem>
-              <SelectItem value="review">{t("Ditinjau", "Review")}</SelectItem>
-              <SelectItem value="done">{t("Selesai", "Done")}</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select name="priority" defaultValue={params.priority ?? "all"}>
-            <SelectTrigger className="w-[130px] h-8 text-xs">
-              <SelectValue placeholder={t("Prioritas", "Priority")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("Semua Prioritas", "All Priorities")}</SelectItem>
-              <SelectItem value="urgent">{t("Mendesak", "Urgent")}</SelectItem>
-              <SelectItem value="high">{t("Tinggi", "High")}</SelectItem>
-              <SelectItem value="medium">{t("Sedang", "Medium")}</SelectItem>
-              <SelectItem value="low">{t("Rendah", "Low")}</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select name="projectId" defaultValue={params.projectId ?? "all"}>
-            <SelectTrigger className="w-[150px] h-8 text-xs">
-              <SelectValue placeholder={t("Proyek", "Project")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("Semua Proyek", "All Projects")}</SelectItem>
-              {projectList.map((p) => (
-                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select name="assignee" defaultValue={params.assignee ?? "all"}>
-            <SelectTrigger className="w-[150px] h-8 text-xs">
-              <SelectValue placeholder={t("Ditugaskan", "Assignee")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("Semua", "All")}</SelectItem>
-              <SelectItem value="me">{t("Ditugaskan ke saya", "Assigned to me")}</SelectItem>
-              <SelectItem value="unassigned">{t("Belum ditugaskan", "Unassigned")}</SelectItem>
-              {memberList.map((m) => (
-                <SelectItem key={m.id} value={m.id}>
-                  {m.name || m.email || m.id.slice(0, 8)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Button type="submit" variant="outline" size="sm" className="h-8 gap-1">
-            <Filter className="h-3 w-3" /> {t("Filter", "Filter")}
-          </Button>
-        </form>
-      </div>
+      <TaskFilters
+        projects={projectList}
+        members={memberList}
+        current={{
+          status: params.status,
+          priority: params.priority,
+          projectId: params.projectId,
+          assignee: params.assignee,
+        }}
+      />
 
       {/* Task List */}
       <div className="overflow-hidden rounded-lg border bg-card">

@@ -65,22 +65,13 @@ function getColumns(t: (id: string, en: string) => string) {
 }
 
 
-const priorityColors: Record<string, string> = {
-  low: "border-slate-300",
-  medium: "border-blue-300",
-  high: "border-amber-300",
-  urgent: "border-red-300",
-};
-
 function KanbanCard({ task, members = [], isDragging, lang }: { task: Task; members?: Array<{ id: string; name: string | null; email: string | null }>; isDragging?: boolean; lang?: import("@/lib/i18n-client").Lang }) {
   return (
     <TaskDetailSheet task={task} members={members}>
       <Card
         className={cn(
-          "cursor-pointer hover:shadow-md transition-shadow",
+          "cursor-pointer border-border hover:shadow-md transition-shadow",
           isDragging && "opacity-50 shadow-lg",
-          priorityColors[task.priority],
-          "border-l-4",
         )}
       >
         <CardContent className="p-3 space-y-2">
