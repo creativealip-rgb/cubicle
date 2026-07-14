@@ -33,7 +33,7 @@ export function AvailabilityRuleForm() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (startTime >= endTime) {
-      toast.error("End time must be after start time");
+      toast.error("Waktu selesai harus setelah waktu mulai");
       return;
     }
 
@@ -45,7 +45,7 @@ export function AvailabilityRuleForm() {
         endTime,
         timezone,
       });
-      toast.success("Availability rule added");
+      toast.success("Aturan ketersediaan ditambahkan");
       setOpen(false);
       router.refresh();
     } catch (error) {
@@ -64,7 +64,7 @@ export function AvailabilityRuleForm() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[420px]">
         <DialogHeader>
-          <DialogTitle>Add availability rule</DialogTitle>
+          <DialogTitle>Tambah aturan ketersediaan</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div className="space-y-2">

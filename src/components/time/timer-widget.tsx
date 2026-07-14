@@ -15,6 +15,7 @@ import {
   Clock,
   Loader2,
 } from "lucide-react";
+import { useT } from "@/lib/i18n-client";
 
 interface Client {
   id: string;
@@ -85,6 +86,7 @@ export function TimerWidget({
   initialTimer,
 }: TimerWidgetProps) {
   const router = useRouter();
+  const { t } = useT();
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(initialTimer);
   const [elapsed, setElapsed] = useState("00:00:00");
   const [loading, setLoading] = useState(false);
@@ -147,7 +149,7 @@ export function TimerWidget({
 
   const handleStart = useCallback(async () => {
     if (!selectedClientId || !selectedProjectId) {
-      toast.error("Select a client and project");
+      toast.error(t("Pilih klien dan proyek", "Select a client and project"));
       return;
     }
     setLoading(true);
@@ -179,10 +181,10 @@ export function TimerWidget({
       selfDispatched.current = true;
       window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
 
-      toast.success("Timer started");
+      toast.success(t("Timer dimulai", "Timer started"));
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed to start timer");
+      toast.error(err instanceof Error ? err.message : t("Gagal memulai timer", "Failed to start timer"));
     } finally {
       setLoading(false);
     }
@@ -197,10 +199,10 @@ export function TimerWidget({
       setElapsed("00:00:00");
       selfDispatched.current = true;
       window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
-      toast.success("Timer stopped");
+      toast.success(t("Timer dihentikan", "Timer stopped"));
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed to stop timer");
+      toast.error(err instanceof Error ? err.message : t("Gagal menghentikan timer", "Failed to stop timer"));
     } finally {
       setLoading(false);
     }
@@ -216,10 +218,10 @@ export function TimerWidget({
       setElapsed("00:00:00");
       selfDispatched.current = true;
       window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
-      toast.success("Stale timer discarded");
+      toast.success(t("Timer basi dibuang", "Stale timer discarded"));
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed to discard timer");
+      toast.error(err instanceof Error ? err.message : t("Gagal membuang timer", "Failed to discard timer"));
     } finally {
       setLoading(false);
     }
@@ -235,21 +237,21 @@ export function TimerWidget({
               <div className="flex items-center gap-2">
                 <div className={`h-3 w-3 rounded-full ${isStaleTimer(activeTimer) ? "bg-amber-500" : "bg-red-500 animate-pulse"}`} />
                 <span className={`text-sm font-medium ${isStaleTimer(activeTimer) ? "text-amber-700" : "text-red-600"}`}>
-                  {isStaleTimer(activeTimer) ? "Stale (24h+)" : "Recording"}
+                  {isStaleTimer(activeTimer) ? t("Basi (24j+)", "Stale (24h+)") : t("Merekam", "Recording")}
                 </span>
               </div>
               <span className="text-3xl font-mono font-bold tabular-nums">{elapsed}</span>
             </div>
             {isStaleTimer(activeTimer) && (
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-                This timer has been running for over 24 hours. Stop and restart, or discard if it was left on by accident.
+                {t("Timer ini sudah jalan lebih dari 24 jam. Hentikan lalu mulai ulang, atau buang kalau nyala nggak sengaja.", "This timer has been running for over 24 hours. Stop and restart, or discard if it was left on by accident.")}
               </div>
             )}
             <div className="text-sm text-muted-foreground space-y-0.5">
-              {activeTimer.clientName && <p>Client: {activeTimer.clientName}</p>}
-              {activeTimer.projectName && <p>Project: {activeTimer.projectName}</p>}
-              {activeTimer.taskTitle && <p>Task: {activeTimer.taskTitle}</p>}
-              {activeTimer.description && <p>Note: {activeTimer.description}</p>}
+              {activeTimer.clientName && <p>{t("Klien", "Client")}: {activeTimer.clientName}</p>}
+              {activeTimer.projectName && <p>{t("Proyek", "Project")}: {activeTimer.projectName}</p>}
+              {activeTimer.taskTitle && <p>{t("Tugas", "Task")}: {activeTimer.taskTitle}</p>}
+              {activeTimer.description && <p>{t("Catatan", "Note")}: {activeTimer.description}</p>}
             </div>
             <div className="flex gap-2">
               <Button
@@ -264,7 +266,7 @@ export function TimerWidget({
                 ) : (
                   <Square className="h-4 w-4" />
                 )}
-                Stop Timer
+                {t("Hentikan Timer", "Stop Timer")}
               </Button>
               {isStaleTimer(activeTimer) && (
                 <Button
@@ -272,9 +274,9 @@ export function TimerWidget({
                   size="lg"
                   onClick={handleDiscard}
                   disabled={loading}
-                  title="Discard this stale timer without saving"
+                  title={t("Buang timer basi tanpa menyimpan", "Discard this stale timer without saving")}
                 >
-                  Discard
+                  {t("Buang", "Discard")}
                 </Button>
               )}
             </div>
@@ -284,15 +286,15 @@ export function TimerWidget({
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <Clock className="h-5 w-5 text-muted-foreground" />
-              <h3 className="text-sm font-semibold">Start Timer</h3>
+              <h3 className="text-sm font-semibold">{t("Mulai Timer", "Start Timer")}</h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs">Client *</Label>
+                <Label className="text-xs">{t("Klien", "Client")} *</Label>
                 <Select value={selectedClientId} onValueChange={setSelectedClientId}>
                   <SelectTrigger className="h-9 text-sm">
-                    <SelectValue placeholder="Select client" />
+                    <SelectValue placeholder={t("Pilih klien", "Select client")} />
                   </SelectTrigger>
                   <SelectContent>
                     {clients.map((c) => (
@@ -302,14 +304,14 @@ export function TimerWidget({
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Project *</Label>
+                <Label className="text-xs">{t("Proyek", "Project")} *</Label>
                 <Select
                   value={selectedProjectId}
                   onValueChange={setSelectedProjectId}
                   disabled={!selectedClientId}
                 >
                   <SelectTrigger className="h-9 text-sm">
-                    <SelectValue placeholder="Select project" />
+                    <SelectValue placeholder={t("Pilih proyek", "Select project")} />
                   </SelectTrigger>
                   <SelectContent>
                     {filteredProjects.map((p) => (
@@ -319,17 +321,17 @@ export function TimerWidget({
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Task (optional)</Label>
+                <Label className="text-xs">{t("Tugas (opsional)", "Task (optional)")}</Label>
                 <Select
                   value={selectedTaskId}
                   onValueChange={setSelectedTaskId}
                   disabled={!selectedProjectId}
                 >
                   <SelectTrigger className="h-9 text-sm">
-                    <SelectValue placeholder="Select task" />
+                    <SelectValue placeholder={t("Pilih tugas", "Select task")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__none__">None</SelectItem>
+                    <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
                     {filteredTasks.map((t) => (
                       <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
                     ))}
@@ -339,17 +341,17 @@ export function TimerWidget({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs">Description</Label>
+              <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
               <Input
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="What are you working on?"
+                placeholder={t("Lagi ngerjain apa?", "What are you working on?")}
                 className="h-9"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs">Hourly rate</Label>
+              <Label className="text-xs">{t("Tarif per jam", "Hourly rate")}</Label>
               <Input
                 type="number"
                 min="0"
@@ -371,7 +373,7 @@ export function TimerWidget({
               ) : (
                 <Play className="h-4 w-4" />
               )}
-              Start Timer
+              {t("Mulai Timer", "Start Timer")}
             </Button>
           </div>
         )}

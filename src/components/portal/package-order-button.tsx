@@ -73,7 +73,7 @@ export function PackageOrderButton({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Confirm Order</DialogTitle>
+            <DialogTitle>Konfirmasi Pesanan</DialogTitle>
             <DialogDescription>
               You&apos;re ordering <strong>{packageName}</strong>
               {hours && ` (${hours} hours)`} for <strong>{formattedPrice}</strong>/month.
@@ -92,9 +92,9 @@ export function PackageOrderButton({
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>Batal</Button>
             <Button onClick={handleConfirm} disabled={loading}>
-              {loading ? "Submitting..." : "Confirm Order"}
+              {loading ? "Mengirim..." : "Konfirmasi Pesanan"}
             </Button>
           </DialogFooter>
         </DialogContent>

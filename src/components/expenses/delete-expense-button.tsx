@@ -29,7 +29,7 @@ export function DeleteExpenseButton({ expenseId, description }: DeleteExpenseBut
     setLoading(true);
     try {
       await deleteExpense(expenseId);
-      toast.success("Expense deleted");
+      toast.success("Pengeluaran dihapus");
       setOpen(false);
       router.refresh();
     } catch (err: unknown) {
@@ -47,7 +47,7 @@ export function DeleteExpenseButton({ expenseId, description }: DeleteExpenseBut
       </Button>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete this expense?</DialogTitle>
+          <DialogTitle>Hapus pengeluaran ini?</DialogTitle>
           <DialogDescription>
             &quot;{description}&quot; will be permanently removed. This can&apos;t be undone.
           </DialogDescription>

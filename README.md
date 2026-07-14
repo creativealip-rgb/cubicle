@@ -252,6 +252,45 @@ docker compose -p cubicle build cubicle
 docker compose -p cubicle up -d cubicle
 ```
 
+### Versioning
+
+The app version shown in the sidebar footer (`Cubiqlo vX.Y.Z`) comes from a
+**single source of truth: the `version` field in `package.json`**.
+
+How it flows:
+
+1. `package.json` → `"version": "0.1.21"`
+2. `next.config.ts` reads it at build time and exposes it as a public env var:
+   ```ts
+   import { version } from "./package.json";
+   const nextConfig = { env: { NEXT_PUBLIC_APP_VERSION: version } };
+   ```
+3. `src/components/app-sidebar.tsx` renders it:
+   ```tsx
+   Cubiqlo v{process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"}
+   ```
+
+Because it's baked in at **build time**, the sidebar only updates after a rebuild
+(`docker compose build`). It does not change at runtime.
+
+**To cut a new release:**
+
+```bash
+# 1. Bump the version (choose one)
+npm version patch --no-git-tag-version   # 0.1.21 -> 0.1.22 (bug fixes)
+npm version minor --no-git-tag-version   # 0.1.21 -> 0.2.0  (new features)
+npm version major --no-git-tag-version   # 0.1.21 -> 1.0.0  (breaking changes)
+#   or edit package.json "version" by hand
+
+# 2. Add a matching entry at the top of CHANGELOG.md (format: ## vX.Y.Z — YYYY-MM-DD — summary)
+
+# 3. Rebuild + redeploy so the sidebar picks up the new version
+docker compose -p cubicle build cubicle
+docker compose -p cubicle up -d --force-recreate cubicle
+```
+
+Follow [semver](https://semver.org): `MAJOR.MINOR.PATCH`.
+
 ### Migrations
 
 Drizzle migrations live in `drizzle/*.sql`. To add a new one:

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useT } from "@/lib/i18n-client";
 
 interface TaskFormProps {
   mode: "create" | "edit";
@@ -29,6 +30,7 @@ interface TaskFormProps {
 }
 
 export function TaskForm({ mode, projectId, defaultValues, members = [], projects = [], onSuccess }: TaskFormProps) {
+  const { t } = useT();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -59,7 +61,7 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], project
 
       if (mode === "create") {
         await createTask(data);
-        toast.success("Task dibuat");
+        toast.success(t("Tugas dibuat", "Task created"));
       } else if (defaultValues?.id) {
         const updateData: Record<string, unknown> = {};
         if (data.title !== undefined) updateData.title = data.title;
@@ -70,7 +72,7 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], project
         if (data.dueDate !== undefined) updateData.dueDate = data.dueDate;
         if (data.clientVisible !== undefined) updateData.clientVisible = data.clientVisible;
         await updateTask(defaultValues.id, updateData);
-        toast.success("Task diperbarui");
+        toast.success(t("Tugas diperbarui", "Task updated"));
       }
 
       onSuccess?.();
@@ -98,18 +100,18 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], project
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="title">Judul *</Label>
-        <Input id="title" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} required placeholder="Judul task" />
+        <Label htmlFor="title">{t("Judul", "Title")} *</Label>
+        <Input id="title" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} required placeholder={t("Judul tugas", "Task title")} />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="description">Deskripsi</Label>
-        <Input id="description" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="Detail..." />
+        <Label htmlFor="description">{t("Deskripsi", "Description")}</Label>
+        <Input id="description" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder={t("Detail...", "Details...")} />
       </div>
       {!projectId && (
         <div className="space-y-2">
-          <Label>Project *</Label>
+          <Label>{t("Proyek", "Project")} *</Label>
           <Select value={form.projectId} onValueChange={(v) => setForm((p) => ({ ...p, projectId: v }))} required>
-            <SelectTrigger><SelectValue placeholder="Pilih project" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={t("Pilih proyek", "Select project")} /></SelectTrigger>
             <SelectContent>
               {projects.map((p) => (
                 <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
@@ -120,39 +122,39 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], project
       )}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label>Status</Label>
+          <Label>{t("Status", "Status")}</Label>
           <Select value={form.status} onValueChange={(v) => setForm((p) => ({ ...p, status: v }))}>
-            <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={t("Status", "Status")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="todo">Todo</SelectItem>
-              <SelectItem value="in_progress">Dalam Proses</SelectItem>
-              <SelectItem value="review">Review</SelectItem>
-              <SelectItem value="done">Selesai</SelectItem>
+              <SelectItem value="todo">{t("Belum Mulai", "To Do")}</SelectItem>
+              <SelectItem value="in_progress">{t("Dikerjakan", "In Progress")}</SelectItem>
+              <SelectItem value="review">{t("Ditinjau", "Review")}</SelectItem>
+              <SelectItem value="done">{t("Selesai", "Done")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
-          <Label>Prioritas</Label>
+          <Label>{t("Prioritas", "Priority")}</Label>
           <Select value={form.priority} onValueChange={(v) => setForm((p) => ({ ...p, priority: v }))}>
-            <SelectTrigger><SelectValue placeholder="Prioritas" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={t("Prioritas", "Priority")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="low">Rendah</SelectItem>
-              <SelectItem value="medium">Sedang</SelectItem>
-              <SelectItem value="high">Tinggi</SelectItem>
-              <SelectItem value="urgent">Urgent</SelectItem>
+              <SelectItem value="low">{t("Rendah", "Low")}</SelectItem>
+              <SelectItem value="medium">{t("Sedang", "Medium")}</SelectItem>
+              <SelectItem value="high">{t("Tinggi", "High")}</SelectItem>
+              <SelectItem value="urgent">{t("Mendesak", "Urgent")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
       <div className="space-y-2">
-        <Label>Penanggung Jawab</Label>
+        <Label>{t("Penanggung Jawab", "Assignee")}</Label>
         <Select
           value={form.assigneeId || "unassigned"}
           onValueChange={(v) => setForm((p) => ({ ...p, assigneeId: v === "unassigned" ? "" : v }))}
         >
-          <SelectTrigger><SelectValue placeholder="Belum ditugaskan" /></SelectTrigger>
+          <SelectTrigger><SelectValue placeholder={t("Belum ditugaskan", "Unassigned")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="unassigned">Belum ditugaskan</SelectItem>
+            <SelectItem value="unassigned">{t("Belum ditugaskan", "Unassigned")}</SelectItem>
             {members.map((m) => (
               <SelectItem key={m.id} value={m.id}>
                 {m.name || m.email || m.id.slice(0, 8)}
@@ -162,7 +164,7 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], project
         </Select>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="dueDate">Jatuh Tempo</Label>
+        <Label htmlFor="dueDate">{t("Jatuh Tempo", "Due Date")}</Label>
         <Input id="dueDate" type="date" value={form.dueDate} onChange={(e) => setForm((p) => ({ ...p, dueDate: e.target.value }))} />
       </div>
       <div className="flex items-center gap-2">
@@ -173,10 +175,10 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], project
           onChange={(e) => setForm((p) => ({ ...p, clientVisible: e.target.checked }))}
           className="h-4 w-4 rounded border-gray-300"
         />
-        <Label htmlFor="clientVisible">Terlihat oleh klien</Label>
+        <Label htmlFor="clientVisible">{t("Terlihat oleh klien", "Visible to client")}</Label>
       </div>
       <Button type="submit" disabled={loading} className="w-full">
-        {loading ? "Menyimpan..." : mode === "create" ? "Buat Task" : "Simpan Perubahan"}
+        {loading ? t("Menyimpan...", "Saving...") : mode === "create" ? t("Buat Tugas", "Create Task") : t("Simpan Perubahan", "Save Changes")}
       </Button>
     </form>
   );

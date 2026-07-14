@@ -20,6 +20,7 @@ import { Plus, FileText, Eye } from "lucide-react";
 import { formatDateID, formatMoney } from "@/lib/utils";
 import { invoiceStatusVariant } from "@/lib/status-badge";
 import { EmptyState } from "@/components/empty-state";
+import { getCurrentLang, createT } from "@/lib/i18n";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -36,6 +37,8 @@ function formatInvoiceId(num: string): string {
 }
 
 export default async function InvoicesPage() {
+  const lang = await getCurrentLang();
+  const t = createT(lang);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -69,21 +72,21 @@ export default async function InvoicesPage() {
     <div className="space-y-6 min-w-0">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Invoice</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t("Invoice", "Invoices")}</h1>
           <p className="text-sm text-muted-foreground">
-            Buat dan kelola invoice untuk klienmu
+            {t("Buat dan kelola invoice untuk klienmu", "Create and manage invoices for your clients")}
           </p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           <Link href="/app/invoices/templates">
             <Button variant="outline" className="gap-2">
-              <FileText className="h-4 w-4" /> Templates
+              <FileText className="h-4 w-4" /> {t("Template", "Templates")}
             </Button>
           </Link>
           {canWrite && (
             <Link href="/app/invoices/new">
               <Button className="gap-2">
-                <Plus className="h-4 w-4" /> Invoice Baru
+                <Plus className="h-4 w-4" /> {t("Invoice Baru", "New Invoice")}
               </Button>
             </Link>
           )}
@@ -93,9 +96,9 @@ export default async function InvoicesPage() {
       {invoiceList.length === 0 ? (
         <EmptyState
           icon={FileText}
-          title="Belum ada invoice"
-          description="Buat invoice pertama untuk mulai tagih klienmu."
-          action={canWrite ? { label: "Buat Invoice", href: "/app/invoices/new" } : undefined}
+          title={t("Belum ada invoice", "No invoices yet")}
+          description={t("Buat invoice pertama untuk mulai tagih klienmu.", "Create your first invoice to start billing clients.")}
+          action={canWrite ? { label: t("Buat Invoice", "Create Invoice"), href: "/app/invoices/new" } : undefined}
         />
       ) : (
         <>
@@ -103,18 +106,18 @@ export default async function InvoicesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>No.</TableHead>
-                <TableHead>Klien</TableHead>
-                <TableHead>Tanggal Terbit</TableHead>
-                <TableHead>Jatuh Tempo</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Aksi</TableHead>
+                <TableHead>{t("No.", "No.")}</TableHead>
+                <TableHead>{t("Klien", "Client")}</TableHead>
+                <TableHead>{t("Tanggal Terbit", "Issue Date")}</TableHead>
+                <TableHead>{t("Jatuh Tempo", "Due Date")}</TableHead>
+                <TableHead className="text-right">{t("Total", "Total")}</TableHead>
+                <TableHead>{t("Status", "Status")}</TableHead>
+                <TableHead className="text-right">{t("Aksi", "Actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {invoiceList.map((inv) => {
-                const status = invoiceStatusVariant(inv.status);
+                const status = invoiceStatusVariant(inv.status, lang);
                 return (
                 <TableRow key={inv.id}>
                   <TableCell className="font-mono text-sm font-medium">
@@ -152,7 +155,7 @@ export default async function InvoicesPage() {
         </div>
         <div className="md:hidden space-y-3">
           {invoiceList.map((inv) => {
-            const status = invoiceStatusVariant(inv.status);
+            const status = invoiceStatusVariant(inv.status, lang);
             return (
               <div key={inv.id} className="rounded-lg border bg-card p-4 space-y-3">
                 <div className="flex items-start justify-between gap-3">
@@ -169,11 +172,11 @@ export default async function InvoicesPage() {
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs text-muted-foreground">Total</span>
+                  <span className="text-xs text-muted-foreground">{t("Total", "Total")}</span>
                   <span className="tabular-nums font-medium">{formatMoney(inv.total, inv.currency)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs text-muted-foreground">Jatuh Tempo</span>
+                  <span className="text-xs text-muted-foreground">{t("Jatuh Tempo", "Due Date")}</span>
                   <span className="text-sm">
                     {formatDateID(inv.dueDate)}
                   </span>

@@ -128,7 +128,7 @@ export function QuestionnaireBuilder({
           <div>
             <label className="text-sm font-medium block mb-1">Name</label>
             <Input
-              placeholder="e.g. New client intake"
+              placeholder="mis. Intake klien baru"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -136,7 +136,7 @@ export function QuestionnaireBuilder({
           <div>
             <label className="text-sm font-medium block mb-1">Description (optional)</label>
             <Textarea
-              placeholder="What this questionnaire is for, what you do with the answers"
+              placeholder="Untuk apa kuesioner ini, dan apa yang kamu lakukan dengan jawabannya"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
@@ -261,7 +261,7 @@ export function QuestionnaireBuilder({
           {questionnaireId ? "Update questionnaire" : "Create questionnaire"}
         </Button>
         <Button variant="ghost" asChild>
-          <Link href="/app/questionnaires">Cancel</Link>
+          <Link href="/app/questionnaires">Batal</Link>
         </Button>
       </div>
     </div>

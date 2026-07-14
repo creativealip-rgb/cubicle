@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Loader2 } from "lucide-react";
+import { useT } from "@/lib/i18n-client";
 
 interface Client {
   id: string;
@@ -34,6 +35,7 @@ interface ManualEntryFormProps {
 }
 
 export function ManualEntryForm({ workspaceId, clients, projects, tasks }: ManualEntryFormProps) {
+  const { t } = useT();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -52,12 +54,12 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!clientId || !projectId) {
-      toast.error("Client and project required");
+      toast.error(t("Klien dan proyek wajib diisi", "Client and project required"));
       return;
     }
     const durationMinutes = parseInt(hours || "0") * 60 + parseInt(minutes || "0");
     if (durationMinutes <= 0) {
-      toast.error("Duration must be greater than 0");
+      toast.error(t("Durasi harus lebih dari 0", "Duration must be greater than 0"));
       return;
     }
     setLoading(true);
@@ -74,7 +76,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
         billable,
         hourlyRate: billable && hourlyRate ? Number(hourlyRate) : undefined,
       });
-      toast.success("Time entry added");
+      toast.success(t("Entri waktu ditambahkan", "Time entry added"));
       setOpen(false);
       setClientId("");
       setProjectId("");
@@ -88,7 +90,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
       setHourlyRate("");
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed to add entry");
+      toast.error(err instanceof Error ? err.message : t("Gagal menambah entri", "Failed to add entry"));
     } finally {
       setLoading(false);
     }
@@ -98,20 +100,20 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1">
-          <Plus className="h-3 w-3" /> Manual Entry
+          <Plus className="h-3 w-3" /> Entri Manual
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Add Manual Time Entry</DialogTitle>
+          <DialogTitle>Tambah Entri Waktu Manual</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-xs">Client *</Label>
+              <Label className="text-xs">Klien *</Label>
               <Select value={clientId} onValueChange={setClientId}>
                 <SelectTrigger className="h-9 text-sm">
-                  <SelectValue placeholder="Select client" />
+                  <SelectValue placeholder="Pilih klien" />
                 </SelectTrigger>
                 <SelectContent>
                   {clients.map((c) => (
@@ -121,10 +123,10 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">Project *</Label>
+              <Label className="text-xs">Proyek *</Label>
               <Select value={projectId} onValueChange={setProjectId} disabled={!clientId}>
                 <SelectTrigger className="h-9 text-sm">
-                  <SelectValue placeholder="Select project" />
+                  <SelectValue placeholder="Pilih proyek" />
                 </SelectTrigger>
                 <SelectContent>
                   {projects.map((p) => (
@@ -136,13 +138,13 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs">Task (optional)</Label>
+            <Label className="text-xs">Tugas (opsional)</Label>
             <Select value={taskId || "__none__"} onValueChange={(value) => setTaskId(value === "__none__" ? "" : value)} disabled={!projectId}>
               <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder="Select task" />
+                <SelectValue placeholder="Pilih tugas" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__none__">None</SelectItem>
+                <SelectItem value="__none__">Tidak ada</SelectItem>
                 {tasks.map((t) => (
                   <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
                 ))}
@@ -151,21 +153,21 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs">Description</Label>
+            <Label className="text-xs">Deskripsi</Label>
             <Input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="What did you work on?"
+              placeholder="Ngerjain apa aja?"
               className="h-9"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs">Tags</Label>
+            <Label className="text-xs">Tag</Label>
             <Input
               value={tags}
               onChange={(e) => setTags(e.target.value)}
-              placeholder="Research, Cold Calling, Follow Up"
+              placeholder={t("Riset, Cold Calling, Follow Up", "Research, Cold Calling, Follow Up")}
               className="h-9"
             />
             <p className="text-[11px] text-muted-foreground">Pisahkan tag dengan koma. Default: Research, Cold Calling, Follow Up - Phone Calling, Follow Up - Text Message, Task Reporting.</p>
@@ -173,7 +175,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
 
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label className="text-xs">Date *</Label>
+              <Label className="text-xs">Tanggal *</Label>
               <Input
                 type="date"
                 value={date}
@@ -183,7 +185,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">Hours</Label>
+              <Label className="text-xs">Jam</Label>
               <Input
                 type="number"
                 min="0"
@@ -193,7 +195,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">Minutes</Label>
+              <Label className="text-xs">Menit</Label>
               <Input
                 type="number"
                 min="0"
@@ -214,18 +216,18 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
                 onChange={(e) => setBillable(e.target.checked)}
                 className="h-4 w-4 rounded border-gray-300"
               />
-              <Label htmlFor="billable" className="text-sm">Billable</Label>
+              <Label htmlFor="billable" className="text-sm">Bisa Ditagih</Label>
             </div>
             {billable && (
               <div className="space-y-2">
-                <Label className="text-xs">Hourly rate</Label>
+                <Label className="text-xs">Tarif per jam</Label>
                 <Input
                   type="number"
                   min="0"
                   step="1000"
                   value={hourlyRate}
                   onChange={(e) => setHourlyRate(e.target.value)}
-                  placeholder="e.g. 150000"
+                  placeholder={t("mis. 150000", "e.g. 150000")}
                   className="h-9"
                 />
               </div>
@@ -234,7 +236,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
 
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-            Add Entry
+            Tambah Entri
           </Button>
         </form>
       </DialogContent>

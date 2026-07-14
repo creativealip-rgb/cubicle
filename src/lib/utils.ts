@@ -23,14 +23,21 @@ const LOCALE_FOR_CURRENCY: Record<string, string> = {
 
 const SYMBOL_PREFIX: Record<string, string> = {
   IDR: "Rp",
-  USD: "USD",
-  EUR: "EUR",
-  JPY: "JPY",
-  SGD: "SGD",
-  MYR: "MYR",
-  AUD: "AUD",
-  GBP: "GBP",
+  USD: "$",
+  EUR: "€",
+  JPY: "¥",
+  SGD: "S$",
+  MYR: "RM",
+  AUD: "A$",
+  GBP: "£",
 };
+
+// Glyph symbols sit tight against the number ($1,750). Alphabetic
+// codes/prefixes (Rp, RM, USD) always get a space (Rp 1.500.000).
+function joinSymbol(symbol: string, formatted: string): string {
+  const tight = /[^\p{L}]$/u.test(symbol); // ends in non-letter → glyph
+  return tight ? `${symbol}${formatted}` : `${symbol} ${formatted}`;
+}
 
 export function normalizeCurrency(currencyCode?: string | null): string {
   return (currencyCode || "IDR").toUpperCase();
@@ -86,10 +93,8 @@ export function formatMoney(
   }
 
   if (!showSymbol) return formatted;
-  const symbol = SYMBOL_PREFIX[code] ?? `${code} `;
-  // IDR style: symbol prefix with space. EUR/JPY: symbol prefix tight. USD: symbol prefix tight.
-  const tight = new Set(["USD", "EUR", "JPY", "GBP", "SGD", "AUD", "MYR"]);
-  return tight.has(code) ? `${symbol}${formatted}` : `${symbol} ${formatted}`;
+  const symbol = SYMBOL_PREFIX[code] ?? code;
+  return joinSymbol(symbol, formatted);
 }
 
 /** Compact money for KPI tiles: "Rp 1.5M" style. */
@@ -101,14 +106,12 @@ export function formatMoneyCompact(
   const num = typeof amount === "string" ? Number(amount) : amount;
   if (!isFinite(num)) return "—";
   const code = (currencyCode || "IDR").toUpperCase();
-  const symbol = SYMBOL_PREFIX[code] ?? `${code} `;
-  const tight = new Set(["USD", "EUR", "JPY", "GBP", "SGD", "AUD", "MYR"]);
-  const prefix = tight.has(code) ? symbol : `${symbol} `;
+  const symbol = SYMBOL_PREFIX[code] ?? code;
   const abs = Math.abs(num);
   let s: string;
   if (abs >= 1_000_000_000) s = (num / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "B";
   else if (abs >= 1_000_000) s = (num / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
   else if (abs >= 1_000) s = (num / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
   else s = String(num);
-  return `${prefix}${s}`;
+  return joinSymbol(symbol, s);
 }

@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n-client";
 
 interface NotificationItem {
   id: string;
@@ -46,7 +47,7 @@ function timeAgo(iso: string): string {
   const d = new Date(iso).getTime();
   const diff = Math.max(0, Date.now() - d);
   const m = Math.floor(diff / 60000);
-  if (m < 1) return "Baru saja";
+  if (m < 1) return "•";
   if (m < 60) return `${m}m`;
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h`;
@@ -56,6 +57,7 @@ function timeAgo(iso: string): string {
 }
 
 export function NotificationsBell() {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [unread, setUnread] = useState(0);
@@ -124,8 +126,8 @@ export function NotificationsBell() {
           variant="ghost"
           size="icon"
           className="relative h-9 w-9"
-          aria-label={`Notifikasi${unread > 0 ? ` (${unread} belum dibaca)` : ""}`}
-          title="Notifikasi"
+          aria-label={`${t("Notifikasi", "Notifications")}${unread > 0 ? ` (${unread} ${t("belum dibaca", "unread")})` : ""}`}
+          title={t("Notifikasi", "Notifications")}
         >
           <Bell className="h-5 w-5" />
           {unread > 0 && (
@@ -144,21 +146,21 @@ export function NotificationsBell() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80 p-0">
         <div className="flex items-center justify-between px-3 py-2 border-b">
-          <div className="text-sm font-semibold">Notifikasi</div>
+          <div className="text-sm font-semibold">{t("Notifikasi", "Notifications")}</div>
           {unread > 0 && (
             <button
               type="button"
               onClick={handleMarkAll}
               className="text-xs text-[#6647F0] hover:underline flex items-center gap-1"
             >
-              <Check className="h-3 w-3" /> Tandai semua dibaca
+              <Check className="h-3 w-3" /> {t("Tandai semua dibaca", "Mark all read")}
             </button>
           )}
         </div>
         <div className="max-h-96 overflow-y-auto">
           {items.length === 0 ? (
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-              Belum ada notifikasi.
+              {t("Belum ada notifikasi.", "No notifications yet.")}
             </div>
           ) : (
             <ul className="divide-y">
@@ -202,7 +204,7 @@ export function NotificationsBell() {
                           }}
                           className="text-[10px] text-[#6647F0] hover:underline mt-1"
                         >
-                          Tandai dibaca
+                          {t("Tandai dibaca", "Mark read")}
                         </button>
                       )}
                     </div>

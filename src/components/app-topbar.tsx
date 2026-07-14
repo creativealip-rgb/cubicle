@@ -39,6 +39,7 @@ import { useSidebar } from "@/components/app-shell";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { getUserWorkspaces, switchWorkspace, createWorkspace } from "@/lib/actions/workspace-switch";
 import { pauseTimer, stopTimer } from "@/lib/actions/time";
+import { useT } from "@/lib/i18n-client";
 
 interface AppTopbarProps {
   user: {
@@ -86,6 +87,7 @@ function formatElapsed(startTime?: string | null) {
 }
 
 export function AppTopbar({ user }: AppTopbarProps) {
+  const { t } = useT();
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
@@ -233,7 +235,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
         <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
         <Input
           type="search"
-          placeholder="Cari... (Ctrl+K)"
+          placeholder={t("Cari... (Ctrl+K)", "Search... (Ctrl+K)")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="h-9 pl-9 text-sm"
@@ -247,23 +249,23 @@ export function AppTopbar({ user }: AppTopbarProps) {
           <DropdownMenuTrigger asChild>
             <Button size="sm" className="gap-1">
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Baru</span>
+              <span className="hidden sm:inline">{t("Baru", "New")}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuLabel>Buat baru</DropdownMenuLabel>
+            <DropdownMenuLabel>{t("Buat baru", "Create new")}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/app/projects/new">Proyek</Link>
+              <Link href="/app/projects/new">{t("Proyek", "Project")}</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/app/tasks/new">Tugas</Link>
+              <Link href="/app/tasks/new">{t("Tugas", "Task")}</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/app/clients/new">Klien</Link>
+              <Link href="/app/clients/new">{t("Klien", "Client")}</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/app/invoices/new">Invoice</Link>
+              <Link href="/app/invoices/new">{t("Invoice", "Invoice")}</Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -282,7 +284,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
                     ? [activeTimer.clientName, activeTimer.projectName, activeTimer.taskTitle, activeTimer.description]
                         .filter(Boolean)
                         .join(" • ")
-                    : "Tidak ada timer aktif"
+                    : t("Tidak ada timer aktif", "No active timer")
                 }
               >
                 <Timer className="h-4 w-4" />
@@ -292,24 +294,24 @@ export function AppTopbar({ user }: AppTopbarProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="text-xs text-muted-foreground">
-                {activeTimer ? "Timer aktif" : "Timer"}
+                {activeTimer ? t("Timer aktif", "Active timer") : "Timer"}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {activeTimer ? (
                 <>
                   <DropdownMenuItem onClick={() => finishActiveTimer("pause")}>
-                    Pause timer
+                    {t("Jeda timer", "Pause timer")}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => finishActiveTimer("stop")} className="text-red-600 focus:text-red-600">
-                    Stop timer
+                    {t("Hentikan timer", "Stop timer")}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push("/app/time")}>
-                    Lihat detail timer
+                    {t("Lihat detail timer", "View timer details")}
                   </DropdownMenuItem>
                 </>
               ) : (
                 <DropdownMenuItem onClick={() => router.push("/app/time")}>
-                  Mulai timer
+                  {t("Mulai timer", "Start timer")}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -322,8 +324,8 @@ export function AppTopbar({ user }: AppTopbarProps) {
           size="icon"
           className="h-9 w-9 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
           onClick={() => window.dispatchEvent(new Event("cubicle:toggle-ai"))}
-          aria-label="Asisten AI"
-          title="Asisten AI"
+          aria-label={t("Asisten AI", "AI Assistant")}
+          title={t("Asisten AI", "AI Assistant")}
         >
           <Sparkles className="h-4 w-4" />
         </Button>
@@ -337,7 +339,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
             <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground max-w-[180px]">
               <Building2 className="h-3.5 w-3.5 shrink-0" />
               <span className="hidden sm:inline text-xs font-medium truncate">
-                {activeWorkspace?.name || "Workspace"}
+                {activeWorkspace?.name || t("Ruang Kerja", "Workspace")}
               </span>
               <ChevronDown className="h-3 w-3 shrink-0" />
             </Button>
@@ -345,7 +347,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
           <DropdownMenuContent align="end" className="w-72">
             {/* Current workspace */}
             <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
-              Workspace
+              {t("Ruang Kerja", "Workspace")}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
 
@@ -377,8 +379,8 @@ export function AppTopbar({ user }: AppTopbarProps) {
                 <Link href="/app/billing" className="flex items-center gap-2">
                   <Crown className="h-4 w-4 text-amber-500" />
                   <div className="flex-1">
-                    <p className="text-xs font-medium">Upgrade untuk multi workspace</p>
-                    <p className="text-[10px] text-muted-foreground">Solo · Rp 49rb/bulan</p>
+                    <p className="text-xs font-medium">{t("Upgrade untuk multi workspace", "Upgrade for multiple workspaces")}</p>
+                    <p className="text-[10px] text-muted-foreground">Solo · Rp 49rb/{t("bulan", "month")}</p>
                   </div>
                 </Link>
               </DropdownMenuItem>
@@ -390,7 +392,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
               >
                 {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
                 <span className="text-xs">
-                  {wsData?.canCreate ? "Buat workspace baru" : wsData?.canCreateReason || "Batas workspace tercapai"}
+                  {wsData?.canCreate ? t("Buat workspace baru", "Create new workspace") : wsData?.canCreateReason || t("Batas workspace tercapai", "Workspace limit reached")}
                 </span>
               </DropdownMenuItem>
             )}
@@ -401,8 +403,8 @@ export function AppTopbar({ user }: AppTopbarProps) {
                 <Link href="/app/billing" className="flex items-center gap-2">
                   <Crown className="h-4 w-4 text-amber-500" />
                   <div className="flex-1">
-                    <p className="text-xs font-medium">Upgrade untuk undang anggota</p>
-                    <p className="text-[10px] text-muted-foreground">Team · Rp 99rb/bulan</p>
+                    <p className="text-xs font-medium">{t("Upgrade untuk undang anggota", "Upgrade to invite members")}</p>
+                    <p className="text-[10px] text-muted-foreground">Team · Rp 99rb/{t("bulan", "month")}</p>
                   </div>
                 </Link>
               </DropdownMenuItem>
@@ -410,7 +412,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
               <DropdownMenuItem asChild className="cursor-pointer">
                 <Link href="/app/settings?tab=members" className="flex items-center gap-2">
                   <UserPlus className="h-4 w-4" />
-                  <span className="text-xs">Undang anggota</span>
+                  <span className="text-xs">{t("Undang anggota", "Invite member")}</span>
                 </Link>
               </DropdownMenuItem>
             ) : null}
@@ -420,7 +422,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
             <DropdownMenuItem asChild className="cursor-pointer">
               <Link href="/app/settings" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                <span className="text-xs">Kelola workspace</span>
+                <span className="text-xs">{t("Kelola workspace", "Manage workspace")}</span>
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -452,26 +454,26 @@ export function AppTopbar({ user }: AppTopbarProps) {
               <DropdownMenuItem asChild>
                 <Link href="/app/settings" className="cursor-pointer">
                   <Settings className="h-4 w-4" />
-                  Pengaturan
+                  {t("Pengaturan", "Settings")}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/app/billing" className="cursor-pointer">
                   <CreditCard className="h-4 w-4" />
-                  Tagihan
+                  {t("Tagihan", "Billing")}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/app/support" className="cursor-pointer">
                   <HelpCircle className="h-4 w-4" />
-                  Bantuan & Dukungan
+                  {t("Bantuan & Dukungan", "Help & Support")}
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
               <LogOut className="h-4 w-4" />
-              Keluar
+              {t("Keluar", "Sign out")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

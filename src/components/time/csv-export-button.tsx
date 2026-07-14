@@ -28,10 +28,10 @@ export function CsvExportButton({ workspaceId }: { workspaceId: string }) {
   return (
     <div className="flex gap-2">
       <Button variant="outline" size="sm" className="gap-1" onClick={handleExport}>
-        <Download className="h-3 w-3" /> Export CSV
+        <Download className="h-3 w-3" /> Ekspor CSV
       </Button>
       <Button variant="outline" size="sm" className="gap-1" onClick={handlePdfExport}>
-        <Download className="h-3 w-3" /> Export PDF
+        <Download className="h-3 w-3" /> Ekspor PDF
       </Button>
     </div>
   );

@@ -305,7 +305,7 @@ export function InvoiceTemplatesClient() {
       </div>
 
       {loading ? (
-        <div className="text-sm text-muted-foreground">Loading...</div>
+        <div className="text-sm text-muted-foreground">Memuat...</div>
       ) : templates.length === 0 ? (
         <div className="rounded-lg border border-dashed p-8 text-center">
           <FileText className="mx-auto h-10 w-10 text-muted-foreground/50" />

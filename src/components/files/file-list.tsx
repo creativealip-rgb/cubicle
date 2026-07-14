@@ -61,7 +61,7 @@ export function FileList({ files, workspaceId }: FileListProps) {
   async function handleDelete(fileId: string) {
     try {
       await deleteFile(fileId);
-      toast.success("File deleted");
+      toast.success("Berkas dihapus");
       router.refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to delete file");

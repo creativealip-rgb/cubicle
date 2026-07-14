@@ -17,6 +17,7 @@ import { ExpenseForm, type CategoryOption, type ProjectOption, type ClientOption
 import { DeleteExpenseButton } from "@/components/expenses/delete-expense-button";
 import { TrendingDown, TrendingUp, Wallet, Tag } from "lucide-react";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
+import { getCurrentLang, createT } from "@/lib/i18n";
 
 async function getWorkspace() {
   return getWorkspaceFullForCurrentUser();
@@ -35,6 +36,8 @@ function monthKey(dateStr: string) {
 }
 
 export default async function ExpensesPage() {
+  const lang = await getCurrentLang();
+  const t = createT(lang);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const ws = await getWorkspace();
@@ -113,7 +116,7 @@ export default async function ExpensesPage() {
   for (const e of monthRows) {
     if (e.currency !== "IDR") continue;
     const key = e.categoryId ?? "uncategorized";
-    if (!byCategory[key]) byCategory[key] = { name: e.categoryName ?? "Uncategorized", color: e.categoryColor ?? "#64748b", total: 0 };
+    if (!byCategory[key]) byCategory[key] = { name: e.categoryName ?? t("Tanpa Kategori", "Uncategorized"), color: e.categoryColor ?? "#64748b", total: 0 };
     byCategory[key].total += parseFloat(e.amount);
   }
   const categoryBreakdown = Object.values(byCategory).sort((a, b) => b.total - a.total);
@@ -122,8 +125,8 @@ export default async function ExpensesPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Pengeluaran</h1>
-          <p className="text-sm text-slate-500 mt-1">Catat pengeluaran biar tahu berapa yang tersisa.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("Pengeluaran", "Expenses")}</h1>
+          <p className="text-sm text-slate-500 mt-1">{t("Catat pengeluaran biar tahu berapa yang tersisa.", "Track expenses to know what's left.")}</p>
         </div>
       </div>
 
@@ -131,7 +134,7 @@ export default async function ExpensesPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">This month spent</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-600">{t("Pengeluaran bulan ini", "This month spent")}</CardTitle>
             <TrendingDown className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
@@ -143,24 +146,24 @@ export default async function ExpensesPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">This month income</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-600">{t("Pendapatan bulan ini", "This month income")}</CardTitle>
             <TrendingUp className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-semibold">{formatMoney(incomeIDR, "IDR")}</div>
-            <p className="text-xs text-slate-500 mt-1">from paid invoices</p>
+            <p className="text-xs text-slate-500 mt-1">{t("dari invoice lunas", "from paid invoices")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Net this month</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-600">{t("Bersih bulan ini", "Net this month")}</CardTitle>
             <Wallet className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-semibold ${incomeIDR - monthTotalIDR >= 0 ? "text-emerald-600" : "text-red-600"}`}>
               {formatMoney(incomeIDR - monthTotalIDR, "IDR")}
             </div>
-            <p className="text-xs text-slate-500 mt-1">income − expenses (IDR only)</p>
+            <p className="text-xs text-slate-500 mt-1">{t("pendapatan − pengeluaran (IDR saja)", "income − expenses (IDR only)")}</p>
           </CardContent>
         </Card>
       </div>
@@ -169,7 +172,7 @@ export default async function ExpensesPage() {
       {canWrite && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Quick add</CardTitle>
+            <CardTitle className="text-base">{t("Tambah Cepat", "Quick add")}</CardTitle>
           </CardHeader>
           <CardContent>
             <ExpenseForm
@@ -190,7 +193,7 @@ export default async function ExpensesPage() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Tag className="h-4 w-4" />
-              This month by category
+              {t("Bulan ini per kategori", "This month by category")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -219,20 +222,20 @@ export default async function ExpensesPage() {
       {/* Expense list */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Recent expenses</CardTitle>
+          <CardTitle className="text-base">{t("Pengeluaran terakhir", "Recent expenses")}</CardTitle>
         </CardHeader>
         <CardContent>
           {expenseRows.length === 0 ? (
-            <p className="text-sm text-slate-500 py-8 text-center">Belum ada pengeluaran. Tambah yang pertama lewat form di atas.</p>
+            <p className="text-sm text-slate-500 py-8 text-center">{t("Belum ada pengeluaran. Tambah yang pertama lewat form di atas.", "No expenses yet. Add the first one using the form above.")}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-28">Tanggal</TableHead>
-                  <TableHead>Deskripsi</TableHead>
-                  <TableHead>Kategori</TableHead>
-                  <TableHead>Proyek</TableHead>
-                  <TableHead className="text-right">Jumlah</TableHead>
+                  <TableHead className="w-28">{t("Tanggal", "Date")}</TableHead>
+                  <TableHead>{t("Deskripsi", "Description")}</TableHead>
+                  <TableHead>{t("Kategori", "Category")}</TableHead>
+                  <TableHead>{t("Proyek", "Project")}</TableHead>
+                  <TableHead className="text-right">{t("Jumlah", "Amount")}</TableHead>
                   {canWrite && <TableHead className="w-10"></TableHead>}
                 </TableRow>
               </TableHeader>

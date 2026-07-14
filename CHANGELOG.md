@@ -1,5 +1,16 @@
 # Changelog
 
+Versi aplikasi mengikuti `package.json` (`version`) dan otomatis tampil di sidebar
+lewat `NEXT_PUBLIC_APP_VERSION`. Naikkan versi di `package.json` setiap rilis,
+lalu tambahkan entri di sini.
+
+## v0.1.21 — 2026-07-14 — Lokalisasi ID + versioning otomatis
+
+- Lokalisasi UI app ke Bahasa Indonesia di 29 file: halaman Proyek, Tugas (board kanban + tabel), Waktu (timer, entri manual, timesheet, ekspor PDF/CSV), Workspace Pribadi, Kuesioner, plus komponen tersebar (expenses, proposals, files, comments, calendar, portal, prompts, invoice templates).
+- Terpusatkan label status/prioritas di `src/lib/status-badge.tsx` (task, project, invoice, priority) supaya konsisten lintas halaman.
+- Tanggal jatuh tempo proyek pakai locale `id-ID`.
+- Versioning: `package.json` jadi sumber versi tunggal, di-inject ke bundle lewat `next.config.ts` (`env.NEXT_PUBLIC_APP_VERSION`); sidebar baca env, bukan hardcode lagi. Sebelumnya sidebar hardcode `v0.1.21` sementara `package.json` masih `0.1.0` (tidak sinkron).
+
 ## 2026-07-08 — Package billing + portal redesign
 
 - Added "By Package" billing type: packages table, admin CRUD per project, custom pricing (custom_price, min/max hours, allow_custom).

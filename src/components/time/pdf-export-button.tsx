@@ -109,12 +109,12 @@ export function PdfExportButton({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1">
-          <Download className="h-3 w-3" /> Export PDF
+          <Download className="h-3 w-3" /> Ekspor PDF
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Export PDF Timesheet</DialogTitle>
+          <DialogTitle>Ekspor PDF Lembar Waktu</DialogTitle>
           <DialogDescription>
             Pilih jenis laporan, periode, dan filter klien/project.
           </DialogDescription>
@@ -210,7 +210,7 @@ export function PdfExportButton({
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Project</label>
+              <label className="text-xs font-medium text-muted-foreground">Proyek</label>
               <select
                 value={projectId}
                 onChange={(e) => setProjectId(e.target.value)}

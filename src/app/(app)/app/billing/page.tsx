@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckoutButton } from "@/components/billing/checkout-button";
 import { getSubscriptionStatus } from "@/lib/subscription";
+import { getCurrentLang, createT } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,8 @@ const plans = [
 ] as const;
 
 export default async function BillingPage() {
+  const lang = await getCurrentLang();
+  const t = createT(lang);
   const session = await auth.api.getSession({ headers: await headers() });
   const userId = session?.user?.id;
 
@@ -54,21 +57,21 @@ export default async function BillingPage() {
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-sm font-medium text-[#6647F0]">Billing</p>
-        <h1 className="text-3xl font-semibold text-slate-950">Langganan</h1>
+        <p className="text-sm font-medium text-[#6647F0]">{t("Billing", "Billing")}</p>
+        <h1 className="text-3xl font-semibold text-slate-950">{t("Langganan", "Subscription")}</h1>
         <p className="mt-2 text-slate-600">
-          Bayar via Pakasir QRIS. Plan aktif otomatis setelah webhook payment diterima.
+          {t("Bayar via Pakasir QRIS. Plan aktif otomatis setelah webhook payment diterima.", "Pay via Pakasir QRIS. Plan activates automatically after payment webhook is received.")}
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Plan saat ini</CardTitle>
+          <CardTitle>{t("Plan saat ini", "Current Plan")}</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-slate-600">
-          <p><span className="font-medium text-slate-950">Plan:</span> {currentPlan.toUpperCase()}</p>
+          <p><span className="font-medium text-slate-950">{t("Plan", "Plan")}:</span> {currentPlan.toUpperCase()}</p>
           {user?.planExpiresAt && (
-            <p><span className="font-medium text-slate-950">Berlaku hingga:</span> {user.planExpiresAt.toLocaleDateString("id-ID")}</p>
+            <p><span className="font-medium text-slate-950">{t("Berlaku hingga", "Valid until")}:</span> {user.planExpiresAt.toLocaleDateString(lang === "en" ? "en-US" : "id-ID")}</p>
           )}
           {user && (() => {
             const sub = getSubscriptionStatus(user.planExpiresAt, currentPlan);
@@ -90,7 +93,7 @@ export default async function BillingPage() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   {plan.name}
-                  {isCurrent && <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">Aktif</span>}
+                  {isCurrent && <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">{t("Aktif", "Active")}</span>}
                 </CardTitle>
                 <p className="text-2xl font-semibold text-slate-950">{plan.price}</p>
                 <p className="text-sm text-slate-600">{plan.description}</p>
@@ -101,10 +104,10 @@ export default async function BillingPage() {
                 </ul>
                 {paid ? (
                   <CheckoutButton plan={plan.key} disabled={isCurrent}>
-                    {isCurrent ? "Plan aktif" : plan.key === "solo" ? "Bayar Solo QRIS" : "Bayar Team QRIS"}
+                    {isCurrent ? t("Plan aktif", "Active plan") : plan.key === "solo" ? t("Bayar Solo QRIS", "Pay Solo QRIS") : t("Bayar Team QRIS", "Pay Team QRIS")}
                   </CheckoutButton>
                 ) : (
-                  <div className="rounded-lg bg-slate-100 px-4 py-2 text-center text-sm font-medium text-slate-600">Plan default</div>
+                  <div className="rounded-lg bg-slate-100 px-4 py-2 text-center text-sm font-medium text-slate-600">{t("Plan default", "Default plan")}</div>
                 )}
               </CardContent>
             </Card>

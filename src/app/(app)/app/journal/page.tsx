@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { JournalList, MoodPicker } from "@/components/journal/journal-list";
+import { getCurrentLang, createT } from "@/lib/i18n";
 
 /**
  * Body format (v2):
@@ -28,6 +29,8 @@ function parseJournalBody(body: string): { tags: string[]; mood: string; content
 }
 
 export default async function JournalPage() {
+  const lang = await getCurrentLang();
+  const t = createT(lang);
   const rawNotes = (await listPersonalNotes("[journal]")).filter((n) => n.title.startsWith("[journal]"));
 
   const entries = rawNotes.map((note) => {
@@ -70,30 +73,30 @@ export default async function JournalPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Jurnal</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Catatan harian — insight, blockers, keputusan, refleksi.</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("Jurnal", "Journal")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("Catatan harian — insight, blockers, keputusan, refleksi.", "Daily notes — insights, blockers, decisions, reflections.")}</p>
       </div>
 
       <Card>
-        <CardHeader><CardTitle>New journal entry</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{t("Entri jurnal baru", "New journal entry")}</CardTitle></CardHeader>
         <CardContent>
           <form action={createEntry} className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Judul</label>
-                <Input name="title" placeholder="Judul hari ini" />
+                <label className="text-sm font-medium">{t("Judul", "Title")}</label>
+                <Input name="title" placeholder={t("Judul hari ini", "Today's title")} />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Tags (comma separated)</label>
+                <label className="text-sm font-medium">{t("Tag (pisahkan koma)", "Tags (comma separated)")}</label>
                 <Input name="tags" placeholder="work, meeting, blocker" />
               </div>
             </div>
             <MoodPicker name="mood" />
             <div className="space-y-2">
-              <label className="text-sm font-medium">Isi</label>
-              <Textarea name="body" rows={8} placeholder="Tulis update, insight, blockers, keputusan..." required />
+              <label className="text-sm font-medium">{t("Isi", "Content")}</label>
+              <Textarea name="body" rows={8} placeholder={t("Tulis update, insight, blockers, keputusan...", "Write updates, insights, blockers, decisions...")} required />
             </div>
-            <Button type="submit">Save entry</Button>
+            <Button type="submit">{t("Simpan entri", "Save entry")}</Button>
           </form>
         </CardContent>
       </Card>

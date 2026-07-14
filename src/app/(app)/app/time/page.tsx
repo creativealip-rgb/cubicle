@@ -9,12 +9,15 @@ import { TimerWidget } from "@/components/time/timer-widget";
 import { Timesheet } from "@/components/time/timesheet";
 import { ManualEntryForm } from "@/components/time/manual-entry-form";
 import { PdfExportButton } from "@/components/time/pdf-export-button";
+import { getCurrentLang, createT } from "@/lib/i18n";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
 }
 
 export default async function TimePage() {
+  const lang = await getCurrentLang();
+  const t = createT(lang);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -99,8 +102,8 @@ export default async function TimePage() {
     <div className="space-y-6 min-w-0">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Pelacakan Waktu</h1>
-          <p className="text-sm text-muted-foreground mt-1">Pantau waktu di semua project</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("Pelacakan Waktu", "Time Tracking")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t("Pantau waktu di semua project", "Track time across all projects")}</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           {canWrite && (

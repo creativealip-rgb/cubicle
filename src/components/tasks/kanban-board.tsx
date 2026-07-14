@@ -26,6 +26,8 @@ import { Button } from "@/components/ui/button";
 import { TaskForm } from "@/components/forms/task-form";
 import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
 import { cn } from "@/lib/utils";
+import { taskPriorityLabel } from "@/lib/status-badge";
+import { useT } from "@/lib/i18n-client";
 import {
   Plus,
   AlertTriangle,
@@ -53,12 +55,15 @@ interface KanbanBoardProps {
   members?: Array<{ id: string; name: string | null; email: string | null }>;
 }
 
-const columns = [
-  { id: "todo", label: "Todo", color: "bg-slate-200" },
-  { id: "in_progress", label: "In Progress", color: "bg-blue-200" },
-  { id: "review", label: "Review", color: "bg-amber-200" },
-  { id: "done", label: "Done", color: "bg-emerald-200" },
-];
+function getColumns(t: (id: string, en: string) => string) {
+  return [
+    { id: "todo", label: t("Belum Mulai", "To Do"), color: "bg-slate-200" },
+    { id: "in_progress", label: t("Dikerjakan", "In Progress"), color: "bg-blue-200" },
+    { id: "review", label: t("Ditinjau", "Review"), color: "bg-amber-200" },
+    { id: "done", label: t("Selesai", "Done"), color: "bg-emerald-200" },
+  ];
+}
+
 
 const priorityColors: Record<string, string> = {
   low: "border-slate-300",
@@ -67,7 +72,7 @@ const priorityColors: Record<string, string> = {
   urgent: "border-red-300",
 };
 
-function KanbanCard({ task, members = [], isDragging }: { task: Task; members?: Array<{ id: string; name: string | null; email: string | null }>; isDragging?: boolean }) {
+function KanbanCard({ task, members = [], isDragging, lang }: { task: Task; members?: Array<{ id: string; name: string | null; email: string | null }>; isDragging?: boolean; lang?: import("@/lib/i18n-client").Lang }) {
   return (
     <TaskDetailSheet task={task} members={members}>
       <Card
@@ -91,7 +96,7 @@ function KanbanCard({ task, members = [], isDragging }: { task: Task; members?: 
               })}
             >
               {task.priority === "urgent" && <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />}
-              {task.priority}
+              {taskPriorityLabel(task.priority, lang)}
             </Badge>
             {task.assigneeName && (
               <span className="text-[10px] text-muted-foreground truncate max-w-[80px]">
@@ -102,7 +107,7 @@ function KanbanCard({ task, members = [], isDragging }: { task: Task; members?: 
           {task.dueDate && (
             <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
               <Clock className="h-3 w-3" />
-              {new Date(task.dueDate).toLocaleDateString()}
+              {new Date(task.dueDate).toLocaleDateString(lang === "en" ? "en-US" : "id-ID")}
             </div>
           )}
         </CardContent>
@@ -111,7 +116,7 @@ function KanbanCard({ task, members = [], isDragging }: { task: Task; members?: 
   );
 }
 
-function SortableCard({ task, members = [], isDragOverlay }: { task: Task; members?: Array<{ id: string; name: string | null; email: string | null }>; isDragOverlay?: boolean }) {
+function SortableCard({ task, members = [], isDragOverlay, lang }: { task: Task; members?: Array<{ id: string; name: string | null; email: string | null }>; isDragOverlay?: boolean; lang?: import("@/lib/i18n-client").Lang }) {
   const {
     attributes,
     listeners,
@@ -129,14 +134,14 @@ function SortableCard({ task, members = [], isDragOverlay }: { task: Task; membe
   if (isDragOverlay) {
     return (
       <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-        <KanbanCard task={task} members={members} isDragging />
+        <KanbanCard task={task} members={members} isDragging lang={lang} />
       </div>
     );
   }
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <KanbanCard task={task} members={members} isDragging={isDragging} />
+      <KanbanCard task={task} members={members} isDragging={isDragging} lang={lang} />
     </div>
   );
 }
@@ -158,6 +163,8 @@ function KanbanColumn({ id, children }: { id: string; children: ReactNode }) {
 }
 
 export function KanbanBoard({ projectId, tasks: initialTasks, members = [] }: KanbanBoardProps) {
+  const { t, lang } = useT();
+  const columns = getColumns(t);
   const [taskMap, setTaskMap] = useState<Record<string, Task[]>>({});
   const [_activeId, setActiveId] = useState<string | null>(null);
   const [openCreateColumn, setOpenCreateColumn] = useState<string | null>(null);
@@ -242,7 +249,7 @@ export function KanbanBoard({ projectId, tasks: initialTasks, members = [] }: Ka
     try {
       await reorderTask(activeId, targetIndex, activeCol !== overCol ? overCol : undefined);
     } catch (err: unknown) {
-      toast.error("Failed to move task");
+      toast.error(t("Gagal memindahkan tugas", "Failed to move task"));
       // Revert
       setTaskMap(taskMap);
     }
@@ -280,7 +287,7 @@ export function KanbanBoard({ projectId, tasks: initialTasks, members = [] }: Ka
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
-                      <DialogTitle>New Task - {col.label}</DialogTitle>
+                      <DialogTitle>{t("Tugas Baru", "New Task")} - {col.label}</DialogTitle>
                     </DialogHeader>
                     <TaskForm
                       mode="create"
@@ -299,11 +306,11 @@ export function KanbanBoard({ projectId, tasks: initialTasks, members = [] }: Ka
               >
                 <KanbanColumn id={col.id}>
                   {colTasks.map((task) => (
-                    <SortableCard key={task.id} task={task} members={members} />
+                    <SortableCard key={task.id} task={task} members={members} lang={lang} />
                   ))}
                   {colTasks.length === 0 && (
                     <div className="text-center py-6 text-xs text-muted-foreground border-2 border-dashed rounded-lg">
-                      Drop tasks here
+                      {t("Taruh tugas di sini", "Drop tasks here")}
                     </div>
                   )}
                 </KanbanColumn>

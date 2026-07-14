@@ -12,12 +12,15 @@ import Link from "next/link";
 import { Settings, Users, Receipt, Calendar, Sparkles, Mail } from "lucide-react";
 import { TeamManager } from "@/components/settings/team-manager";
 import { ReplyToEmailForm } from "@/components/settings/reply-to-email-form";
+import { getCurrentLang, createT } from "@/lib/i18n";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
 }
 
 export default async function SettingsPage() {
+  const lang = await getCurrentLang();
+  const t = createT(lang);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -41,21 +44,21 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Pengaturan</h1>
-        <p className="text-sm text-muted-foreground mt-1">Konfigurasi workspace dan akses tim.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("Pengaturan", "Settings")}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t("Konfigurasi workspace dan akses tim.", "Configure workspace and team access.")}</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Settings className="h-5 w-5" /> Workspace</CardTitle>
-            <CardDescription>Info workspace utama</CardDescription>
+            <CardDescription>{t("Info workspace utama", "Main workspace info")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Nama</span><span>{workspace.name}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{t("Nama", "Name")}</span><span>{workspace.name}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Slug</span><Badge variant="secondary">{workspace.slug}</Badge></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Mata Uang</span><span>{workspace.defaultCurrency}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Pajak</span><span>{workspace.defaultTaxRate}%</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{t("Mata Uang", "Currency")}</span><span>{workspace.defaultCurrency}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{t("Pajak", "Tax")}</span><span>{workspace.defaultTaxRate}%</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Booking slug</span><span>{workspace.bookingSlug}</span></div>
           </CardContent>
         </Card>
@@ -63,7 +66,7 @@ export default async function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" /> Tim</CardTitle>
-            <CardDescription>{canManageTeam ? "Tambah user, ubah role, atau hapus anggota." : "Lihat anggota tim workspace."}</CardDescription>
+            <CardDescription>{canManageTeam ? t("Tambah user, ubah role, atau hapus anggota.", "Add users, change roles, or remove members.") : t("Lihat anggota tim workspace.", "View workspace team members.")}</CardDescription>
           </CardHeader>
           <CardContent>
             {canManageTeam ? (
@@ -88,28 +91,28 @@ export default async function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Mail className="h-5 w-5" /> Email Reply-To</CardTitle>
-          <CardDescription>Atur alamat Reply-To agar balasan klien masuk ke inbox pribadimu.</CardDescription>
+          <CardDescription>{t("Atur alamat Reply-To agar balasan klien masuk ke inbox pribadimu.", "Set a Reply-To address so client replies go to your personal inbox.")}</CardDescription>
         </CardHeader>
         <CardContent>
           <ReplyToEmailForm workspaceId={workspace.id} currentValue={workspace.replyToEmail} />
-          <p className="text-xs text-muted-foreground mt-2">Kosongkan untuk gunakan pengirim default. Balasan akan dikirim ke alamat ini jika diatur.</p>
+          <p className="text-xs text-muted-foreground mt-2">{t("Kosongkan untuk gunakan pengirim default. Balasan akan dikirim ke alamat ini jika diatur.", "Leave empty to use default sender. Replies will be sent to this address if set.")}</p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Akses Cepat</CardTitle>
-          <CardDescription>Pintasan ke pengaturan lain.</CardDescription>
+          <CardTitle>{t("Akses Cepat", "Quick Access")}</CardTitle>
+          <CardDescription>{t("Pintasan ke pengaturan lain.", "Shortcuts to other settings.")}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-3">
           <Button asChild variant="outline" className="justify-start gap-2">
-            <Link href="/app/billing"><Receipt className="h-4 w-4" /> Langganan &amp; Tagihan</Link>
+            <Link href="/app/billing"><Receipt className="h-4 w-4" /> {t("Langganan & Tagihan", "Subscription & Billing")}</Link>
           </Button>
           <Button asChild variant="outline" className="justify-start gap-2">
-            <Link href="/app/calendar"><Calendar className="h-4 w-4" /> Booking &amp; Kalender</Link>
+            <Link href="/app/calendar"><Calendar className="h-4 w-4" /> {t("Booking & Kalender", "Booking & Calendar")}</Link>
           </Button>
           <Button asChild variant="outline" className="justify-start gap-2">
-            <Link href="/app/billing"><Sparkles className="h-4 w-4" /> Penggunaan AI</Link>
+            <Link href="/app/billing"><Sparkles className="h-4 w-4" /> {t("Penggunaan AI", "AI Usage")}</Link>
           </Button>
         </CardContent>
       </Card>

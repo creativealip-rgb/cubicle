@@ -70,7 +70,7 @@ export function ExpenseForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.amount || parseFloat(form.amount) <= 0) {
-      toast.error("Amount must be greater than 0");
+      toast.error("Jumlah harus lebih dari 0");
       return;
     }
     setLoading(true);
@@ -87,7 +87,7 @@ export function ExpenseForm({
         vendor: form.vendor || undefined,
         taxIncluded: false,
       });
-      toast.success("Expense added");
+      toast.success("Pengeluaran ditambahkan");
       setForm({
         date: new Date().toISOString().split("T")[0],
         amount: "",
@@ -176,7 +176,7 @@ export function ExpenseForm({
             id="description"
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
-            placeholder="What was this for?"
+            placeholder="Untuk apa pengeluaran ini?"
             required
             className="h-9"
           />

@@ -25,7 +25,7 @@ export function PortalRequestList({ requests, token }: { requests: PortalRequest
     try {
       await completePortalRequest({ token, requestId });
       setItems((prev) => prev.map((r) => r.id === requestId ? { ...r, status: "completed" } : r));
-      toast.success("Reminder marked done");
+      toast.success("Pengingat ditandai selesai");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");
     } finally {
@@ -45,7 +45,7 @@ export function PortalRequestList({ requests, token }: { requests: PortalRequest
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Upload failed");
       setItems((prev) => prev.map((r) => r.id === requestId ? { ...r, status: "completed" } : r));
-      toast.success("File uploaded");
+      toast.success("Berkas terunggah");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {

@@ -18,12 +18,15 @@ import {
 import { FileSignature } from "lucide-react";
 import { CreateContractButton } from "@/components/contracts/create-contract-button";
 import { projectStatusVariant } from "@/lib/status-badge";
+import { getCurrentLang, createT } from "@/lib/i18n";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
 }
 
 export default async function ContractsPage() {
+  const lang = await getCurrentLang();
+  const t = createT(lang);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -57,8 +60,8 @@ export default async function ContractsPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Kontrak</h1>
-          <p className="text-sm text-slate-500 mt-1">Kirim kontrak ke klien. Mereka tanda tangan di browser. Kamu dapat jejak audit.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("Kontrak", "Contracts")}</h1>
+          <p className="text-sm text-slate-500 mt-1">{t("Kirim kontrak ke klien. Mereka tanda tangan di browser. Kamu dapat jejak audit.", "Send contracts to clients. They sign in browser. You get an audit trail.")}</p>
         </div>
         {canWrite && <CreateContractButton clients={clientsList} workspaceId={workspaceId} />}
       </div>
@@ -66,7 +69,7 @@ export default async function ContractsPage() {
       {rows.length === 0 ? (
         <div className="bg-white rounded-2xl border p-12 text-center">
           <FileSignature className="h-10 w-10 mx-auto text-slate-300 mb-3" />
-          <p className="text-sm text-slate-500 mb-4">Belum ada kontrak. Buat kontrak pertama untuk mulai tanda tangan elektronik.</p>
+          <p className="text-sm text-slate-500 mb-4">{t("Belum ada kontrak. Buat kontrak pertama untuk mulai tanda tangan elektronik.", "No contracts yet. Create your first one to start electronic signing.")}</p>
           {canWrite && <CreateContractButton clients={clientsList} workspaceId={workspaceId} />}
         </div>
       ) : (
@@ -74,16 +77,16 @@ export default async function ContractsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Judul</TableHead>
-                <TableHead>Klien</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Diperbarui</TableHead>
+                <TableHead>{t("Judul", "Title")}</TableHead>
+                <TableHead>{t("Klien", "Client")}</TableHead>
+                <TableHead>{t("Status", "Status")}</TableHead>
+                <TableHead>{t("Diperbarui", "Updated")}</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((c) => {
-                const status = projectStatusVariant(c.status);
+                const status = projectStatusVariant(c.status, lang);
                 return (
                 <TableRow key={c.id}>
                   <TableCell>
@@ -100,15 +103,15 @@ export default async function ContractsPage() {
                     <Badge variant={status.variant}>{status.label}</Badge>
                   </TableCell>
                   <TableCell className="text-xs text-slate-500">
-                    {c.signedAt ? `Signed ${new Date(c.signedAt).toLocaleDateString()}` :
-                     c.declinedAt ? `Declined ${new Date(c.declinedAt).toLocaleDateString()}` :
-                     c.viewedAt ? `Viewed ${new Date(c.viewedAt).toLocaleDateString()}` :
-                     c.sentAt ? `Sent ${new Date(c.sentAt).toLocaleDateString()}` :
-                     `Draft ${new Date(c.createdAt).toLocaleDateString()}`}
+                    {c.signedAt ? `${t("Ditandatangani", "Signed")} ${new Date(c.signedAt).toLocaleDateString(lang === "en" ? "en-US" : "id-ID")}` :
+                     c.declinedAt ? `${t("Ditolak", "Declined")} ${new Date(c.declinedAt).toLocaleDateString(lang === "en" ? "en-US" : "id-ID")}` :
+                     c.viewedAt ? `${t("Dilihat", "Viewed")} ${new Date(c.viewedAt).toLocaleDateString(lang === "en" ? "en-US" : "id-ID")}` :
+                     c.sentAt ? `${t("Terkirim", "Sent")} ${new Date(c.sentAt).toLocaleDateString(lang === "en" ? "en-US" : "id-ID")}` :
+                     `${t("Draf", "Draft")} ${new Date(c.createdAt).toLocaleDateString(lang === "en" ? "en-US" : "id-ID")}`}
                   </TableCell>
                   <TableCell className="text-right">
                     <Link href={`/app/contracts/${c.id}`} className="text-sm text-indigo-600 hover:underline">
-                      Open
+                      {t("Buka", "Open")}
                     </Link>
                   </TableCell>
                 </TableRow>

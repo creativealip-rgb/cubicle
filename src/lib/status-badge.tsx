@@ -1,4 +1,5 @@
 import { type BadgeProps } from "@/components/ui/badge";
+import type { Lang } from "@/lib/i18n-client";
 
 export type StatusBadgeVariant = NonNullable<BadgeProps["variant"]>;
 
@@ -14,39 +15,59 @@ const titleize = (status: string) =>
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
 
-export function invoiceStatusVariant(status: string): StatusBadgeConfig {
+// Local translate helper — defaults to Indonesian so existing callers that
+// don't pass a lang keep working (id is the app default).
+const tr = (lang: Lang | undefined, id: string, en: string) =>
+  lang === "en" ? en : id;
+
+export function invoiceStatusVariant(status: string, lang?: Lang): StatusBadgeConfig {
   switch (status) {
     case "draft":
-      return { variant: "secondary", label: "Draft" };
+      return { variant: "secondary", label: tr(lang, "Draf", "Draft") };
     case "sent":
-      return { variant: "info", label: "Terkirim" };
+      return { variant: "info", label: tr(lang, "Terkirim", "Sent") };
     case "viewed":
-      return { variant: "info", label: "Dilihat" };
+      return { variant: "info", label: tr(lang, "Dilihat", "Viewed") };
     case "overdue":
-      return { variant: "destructive", label: "Terlambat" };
+      return { variant: "destructive", label: tr(lang, "Terlambat", "Overdue") };
     case "paid":
-      return { variant: "success", label: "Lunas" };
+      return { variant: "success", label: tr(lang, "Lunas", "Paid") };
     case "payment due":
-      return { variant: "destructive", label: "Perlu dibayar" };
+      return { variant: "destructive", label: tr(lang, "Perlu dibayar", "Payment due") };
     case "cancelled":
-      return { variant: "outline", label: "Dibatalkan" };
+      return { variant: "outline", label: tr(lang, "Dibatalkan", "Cancelled") };
     default:
-      return { variant: "outline", label: titleize(status) || "Tidak diketahui" };
+      return { variant: "outline", label: titleize(status) || tr(lang, "Tidak diketahui", "Unknown") };
   }
 }
 
-export function taskStatusVariant(status: string): StatusBadgeConfig {
+export function taskStatusVariant(status: string, lang?: Lang): StatusBadgeConfig {
   switch (status) {
     case "todo":
-      return { variant: "secondary", label: "Todo" };
+      return { variant: "secondary", label: tr(lang, "Belum Mulai", "To Do") };
     case "in_progress":
-      return { variant: "default", label: "In Progress" };
+      return { variant: "default", label: tr(lang, "Dikerjakan", "In Progress") };
     case "review":
-      return { variant: "warning", label: "Review" };
+      return { variant: "warning", label: tr(lang, "Ditinjau", "Review") };
     case "done":
-      return { variant: "success", label: "Done" };
+      return { variant: "success", label: tr(lang, "Selesai", "Done") };
     default:
-      return { variant: "outline", label: titleize(status) || "Unknown" };
+      return { variant: "outline", label: titleize(status) || tr(lang, "Tidak diketahui", "Unknown") };
+  }
+}
+
+export function taskPriorityLabel(priority: string, lang?: Lang): string {
+  switch (priority) {
+    case "low":
+      return tr(lang, "Rendah", "Low");
+    case "medium":
+      return tr(lang, "Sedang", "Medium");
+    case "high":
+      return tr(lang, "Tinggi", "High");
+    case "urgent":
+      return tr(lang, "Mendesak", "Urgent");
+    default:
+      return titleize(priority);
   }
 }
 
@@ -65,34 +86,40 @@ export function taskPriorityColor(priority: string): string {
   }
 }
 
-export function projectStatusVariant(status: string): StatusBadgeConfig {
+export function projectStatusVariant(status: string, lang?: Lang): StatusBadgeConfig {
   switch (status) {
     case "draft":
-      return { variant: "secondary", label: "Draft" };
+      return { variant: "secondary", label: tr(lang, "Draf", "Draft") };
     case "sent":
-      return { variant: "info", label: "Sent" };
+      return { variant: "info", label: tr(lang, "Terkirim", "Sent") };
     case "viewed":
-      return { variant: "info", label: "Viewed" };
+      return { variant: "info", label: tr(lang, "Dilihat", "Viewed") };
     case "overdue":
-      return { variant: "destructive", label: "Overdue" };
+      return { variant: "destructive", label: tr(lang, "Terlambat", "Overdue") };
     case "paid":
-      return { variant: "success", label: "Paid" };
+      return { variant: "success", label: tr(lang, "Lunas", "Paid") };
     case "cancelled":
-      return { variant: "outline", label: "Cancelled" };
+      return { variant: "outline", label: tr(lang, "Dibatalkan", "Cancelled") };
     case "active":
-      return { variant: "success", label: "Active" };
+      return { variant: "success", label: tr(lang, "Aktif", "Active") };
     case "completed":
     case "done":
+      return { variant: "success", label: tr(lang, "Selesai", "Completed") };
     case "signed":
+      return { variant: "success", label: tr(lang, "Ditandatangani", "Signed") };
     case "accepted":
-      return { variant: "success", label: titleize(status) };
+      return { variant: "success", label: tr(lang, "Diterima", "Accepted") };
     case "declined":
+      return { variant: "destructive", label: tr(lang, "Ditolak", "Declined") };
     case "expired":
+      return { variant: "destructive", label: tr(lang, "Kedaluwarsa", "Expired") };
     case "revoked":
-      return { variant: "destructive", label: titleize(status) };
+      return { variant: "destructive", label: tr(lang, "Dicabut", "Revoked") };
+    case "on_hold":
+      return { variant: "warning", label: tr(lang, "Ditunda", "On Hold") };
     case "archived":
-      return { variant: "outline", label: "Archived" };
+      return { variant: "outline", label: tr(lang, "Diarsipkan", "Archived") };
     default:
-      return { variant: "outline", label: titleize(status) || "Unknown" };
+      return { variant: "outline", label: titleize(status) || tr(lang, "Tidak diketahui", "Unknown") };
   }
 }

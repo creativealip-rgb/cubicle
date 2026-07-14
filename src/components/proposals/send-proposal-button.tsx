@@ -19,7 +19,7 @@ export function SendProposalButton({ proposalId }: { proposalId: string }) {
       const result = await sendProposal(proposalId);
       const url = `${window.location.origin}/proposal/${result.token}`;
       setLink(url);
-      toast.success("Proposal sent. Share the link with the client.");
+      toast.success("Proposal terkirim. Bagikan tautannya ke klien.");
       router.refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong";

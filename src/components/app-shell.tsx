@@ -6,9 +6,11 @@ import { cn } from "@/lib/utils";
 import { AppSidebar, type SidebarBadgeCounts } from "@/components/app-sidebar";
 import { AppTopbar } from "@/components/app-topbar";
 import { AIChatPanel } from "@/components/ai/chat-panel";
+import { LangProvider, type Lang } from "@/lib/i18n-client";
 
 interface AppShellProps {
   children: React.ReactNode;
+  lang: Lang;
   user: {
     name: string;
     email: string;
@@ -34,7 +36,7 @@ export function useSidebar() {
   return useContext(SidebarContext);
 }
 
-export function AppShell({ children, user, badgeCounts }: AppShellProps) {
+export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -64,6 +66,7 @@ export function AppShell({ children, user, badgeCounts }: AppShellProps) {
   }, [collapsed, hydrated]);
 
   return (
+    <LangProvider lang={lang}>
     <SidebarContext.Provider value={{ collapsed, setCollapsed, mobileOpen, setMobileOpen }}>
       <div className="flex min-h-screen">
         {/* Mobile overlay backdrop */}
@@ -95,5 +98,6 @@ export function AppShell({ children, user, badgeCounts }: AppShellProps) {
         {!onBrainPage && <AIChatPanel variant="floating" />}
       </div>
     </SidebarContext.Provider>
+    </LangProvider>
   );
 }

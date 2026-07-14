@@ -17,8 +17,12 @@ import { Calendar, Clock, MapPin, XCircle } from "lucide-react";
 import Link from "next/link";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { AvailabilityRuleForm } from "@/components/calendar/availability-rule-form";
+import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 
 export default async function CalendarPage() {
+  const lang = await getCurrentLang();
+  const t = createT(lang);
+  const locale = getLocale(lang);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const ws = await getWorkspaceFullForCurrentUser();
@@ -64,10 +68,12 @@ export default async function CalendarPage() {
     .where(eq(availabilityRules.workspaceId, workspaceId))
     .orderBy(availabilityRules.dayOfWeek);
 
-  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const dayNames = lang === "en"
+    ? ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+    : ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
   function formatDateTime(d: string | Date): string {
-    return new Date(d).toLocaleDateString("en-US", {
+    return new Date(d).toLocaleDateString(locale, {
       weekday: "short",
       month: "short",
       day: "numeric",
@@ -77,7 +83,7 @@ export default async function CalendarPage() {
   }
 
   function formatTime(d: string | Date): string {
-    return new Date(d).toLocaleTimeString("en-US", {
+    return new Date(d).toLocaleTimeString(locale, {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -87,22 +93,22 @@ export default async function CalendarPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Kalender</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("Kalender", "Calendar")}</h1>
           <p className="text-sm text-muted-foreground">
-            Kelola janji temu dan ketersediaan
+            {t("Kelola janji temu dan ketersediaan", "Manage appointments and availability")}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" asChild>
             <Link href="/app/questionnaires/new">
-              Buat formulir
+              {t("Buat formulir", "Create form")}
             </Link>
           </Button>
           {ws.bookingSlug && (
             <Button variant="outline" size="sm" asChild>
               <Link href={`/booking/${ws.bookingSlug}`} target="_blank">
                 <Calendar className="mr-2 h-4 w-4" />
-                Public Booking Page
+                {t("Halaman Booking Publik", "Public Booking Page")}
               </Link>
             </Button>
           )}
@@ -115,7 +121,7 @@ export default async function CalendarPage() {
           <CardHeader className="flex flex-row items-center justify-between gap-3">
             <CardTitle className="text-base font-semibold">
               <Clock className="mr-2 inline h-4 w-4" />
-              Availability Rules
+              {t("Aturan Ketersediaan", "Availability Rules")}
             </CardTitle>
             <AvailabilityRuleForm />
           </CardHeader>
@@ -123,9 +129,9 @@ export default async function CalendarPage() {
             {rules.length === 0 && (
               <div className="py-6 text-center">
                 <Calendar className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
-                <p className="text-sm text-muted-foreground">Belum ada aturan ketersediaan</p>
+                <p className="text-sm text-muted-foreground">{t("Belum ada aturan ketersediaan", "No availability rules yet")}</p>
                 <p className="text-xs text-muted-foreground">
-                  Tambah aturan untuk menentukan kapan kamu tersedia menerima booking
+                  {t("Tambah aturan untuk menentukan kapan kamu tersedia menerima booking", "Add rules to define when you're available for bookings")}
                 </p>
               </div>
             )}
@@ -160,19 +166,19 @@ export default async function CalendarPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base font-semibold">
               <Calendar className="mr-2 inline h-4 w-4" />
-              Upcoming Appointments
+              {t("Janji Temu Mendatang", "Upcoming Appointments")}
             </CardTitle>
             <Badge variant="secondary" className="text-xs">
-              {upcoming.length} scheduled
+              {upcoming.length} {t("terjadwal", "scheduled")}
             </Badge>
           </CardHeader>
           <CardContent className="space-y-3">
             {upcoming.length === 0 && (
               <div className="py-8 text-center">
                 <Calendar className="mx-auto mb-2 h-10 w-10 text-muted-foreground/30" />
-                <p className="text-sm text-muted-foreground">Belum ada jadwal mendatang</p>
+                <p className="text-sm text-muted-foreground">{t("Belum ada jadwal mendatang", "No upcoming appointments")}</p>
                 <p className="text-xs text-muted-foreground">
-                  Bagikan link booking supaya klien bisa atur jadwal sendiri
+                  {t("Bagikan link booking supaya klien bisa atur jadwal sendiri", "Share your booking link so clients can schedule themselves")}
                 </p>
               </div>
             )}
@@ -196,7 +202,7 @@ export default async function CalendarPage() {
                     )}
                     {apt.userName && (
                       <p className="text-xs text-muted-foreground">
-                        Assigned to: {apt.userName}
+                        {t("Ditugaskan ke", "Assigned to")}: {apt.userName}
                       </p>
                     )}
                   </div>
@@ -205,7 +211,7 @@ export default async function CalendarPage() {
                       variant={apt.status === "scheduled" ? "default" : "secondary"}
                       className="text-xs"
                     >
-                      {apt.status}
+                      {apt.status === "scheduled" ? t("terjadwal", "scheduled") : apt.status}
                     </Badge>
                     <Button variant="outline" size="sm" asChild>
                       <Link href={`/api/calendar/${apt.id}/ics`} target="_blank">.ics</Link>

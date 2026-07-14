@@ -88,7 +88,7 @@ export function PromptForm({
   const handleCopy = async () => {
     await navigator.clipboard.writeText(output);
     setCopied(true);
-    toast.success("Copied to clipboard");
+    toast.success("Disalin ke clipboard");
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -101,7 +101,7 @@ export function PromptForm({
         <Label>Template</Label>
         <Select value={selectedTemplateId} onValueChange={handleTemplateChange}>
           <SelectTrigger>
-            <SelectValue placeholder="Select a template..." />
+            <SelectValue placeholder="Pilih template..." />
           </SelectTrigger>
           <SelectContent>
             {templates.map((t) => (

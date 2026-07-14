@@ -20,12 +20,15 @@ import { Plus, FileText } from "lucide-react";
 import { SendProposalButton } from "@/components/proposals/send-proposal-button";
 import { formatMoney } from "@/lib/utils";
 import { projectStatusVariant } from "@/lib/status-badge";
+import { getCurrentLang, createT } from "@/lib/i18n";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
 }
 
 export default async function ProposalsPage() {
+  const lang = await getCurrentLang();
+  const t = createT(lang);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -56,8 +59,8 @@ export default async function ProposalsPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Proposal</h1>
-          <p className="text-sm text-slate-500 mt-1">Kirim scope + harga ke calon klien. Setelah diterima, kerja bisa dimulai.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("Proposal", "Proposals")}</h1>
+          <p className="text-sm text-slate-500 mt-1">{t("Kirim scope + harga ke calon klien. Setelah diterima, kerja bisa dimulai.", "Send scope + pricing to prospects. Once accepted, work can begin.")}</p>
         </div>
         {canWrite && (
           <Button asChild>
@@ -72,12 +75,12 @@ export default async function ProposalsPage() {
       {rows.length === 0 ? (
         <div className="bg-white rounded-2xl border p-12 text-center">
           <FileText className="h-10 w-10 mx-auto text-slate-300 mb-3" />
-          <p className="text-sm text-slate-500 mb-4">Belum ada proposal. Buat proposal untuk mulai kirim scope.</p>
+          <p className="text-sm text-slate-500 mb-4">{t("Belum ada proposal. Buat proposal untuk mulai kirim scope.", "No proposals yet. Create one to start sending scope.")}</p>
           {canWrite && (
             <Button asChild>
               <Link href="/app/proposals/new">
                 <Plus className="h-4 w-4 mr-1" />
-                Buat proposal pertama
+                {t("Buat proposal pertama", "Create first proposal")}
               </Link>
             </Button>
           )}
@@ -87,17 +90,17 @@ export default async function ProposalsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Judul</TableHead>
-                <TableHead>Klien</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead>Diperbarui</TableHead>
+                <TableHead>{t("Judul", "Title")}</TableHead>
+                <TableHead>{t("Klien", "Client")}</TableHead>
+                <TableHead>{t("Status", "Status")}</TableHead>
+                <TableHead className="text-right">{t("Total", "Total")}</TableHead>
+                <TableHead>{t("Diperbarui", "Updated")}</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((p) => {
-                const status = projectStatusVariant(p.status);
+                const status = projectStatusVariant(p.status, lang);
                 return (
                 <TableRow key={p.id}>
                   <TableCell>
@@ -117,10 +120,10 @@ export default async function ProposalsPage() {
                     {formatMoney(p.total, p.currency)}
                   </TableCell>
                   <TableCell className="text-xs text-slate-500">
-                    {p.acceptedAt ? `Diterima ${new Date(p.acceptedAt).toLocaleDateString("id-ID")}` :
-                     p.declinedAt ? `Ditolak ${new Date(p.declinedAt).toLocaleDateString("id-ID")}` :
-                     p.sentAt ? `Terkirim ${new Date(p.sentAt).toLocaleDateString("id-ID")}` :
-                     `Draft ${new Date(p.createdAt).toLocaleDateString("id-ID")}`}
+                    {p.acceptedAt ? `${t("Diterima", "Accepted")} ${new Date(p.acceptedAt).toLocaleDateString(lang === "en" ? "en-US" : "id-ID")}` :
+                     p.declinedAt ? `${t("Ditolak", "Declined")} ${new Date(p.declinedAt).toLocaleDateString(lang === "en" ? "en-US" : "id-ID")}` :
+                     p.sentAt ? `${t("Terkirim", "Sent")} ${new Date(p.sentAt).toLocaleDateString(lang === "en" ? "en-US" : "id-ID")}` :
+                     `${t("Draf", "Draft")} ${new Date(p.createdAt).toLocaleDateString(lang === "en" ? "en-US" : "id-ID")}`}
                   </TableCell>
                   <TableCell className="text-right">
                     {p.status === "draft" && canWrite && (

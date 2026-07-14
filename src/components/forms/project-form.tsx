@@ -177,7 +177,7 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
               onValueChange={(v) => setForm((p) => ({ ...p, selectedPackageId: v === "__none__" ? "" : v }))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select a package to assign" />
+                <SelectValue placeholder="Pilih paket untuk ditetapkan" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__none__">No package assigned</SelectItem>

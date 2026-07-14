@@ -56,7 +56,7 @@ export function CommentList({ entityType, entityId, initialComments, clientPhone
       });
       setComments((prev) => [comment as Comment, ...prev]);
       setBody("");
-      toast.success("Comment added");
+      toast.success("Komentar ditambahkan");
       router.refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to add comment");
@@ -69,7 +69,7 @@ export function CommentList({ entityType, entityId, initialComments, clientPhone
     try {
       await deleteComment(commentId);
       setComments((prev) => prev.filter((c) => c.id !== commentId));
-      toast.success("Comment deleted");
+      toast.success("Komentar dihapus");
       router.refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to delete comment");

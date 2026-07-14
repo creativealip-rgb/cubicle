@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/empty-state";
 import { ProjectCreateDialog } from "@/components/projects/project-create-dialog";
+import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -31,6 +32,16 @@ export default async function ProjectsPage({
 }: {
   searchParams: Promise<{ clientId?: string }>;
 }) {
+  const lang = await getCurrentLang();
+  const t = createT(lang);
+  const locale = getLocale(lang);
+  const PROJECT_STATUS_LABELS: Record<string, string> = {
+    draft: t("Draf", "Draft"),
+    active: t("Aktif", "Active"),
+    on_hold: t("Ditunda", "On Hold"),
+    completed: t("Selesai", "Completed"),
+    cancelled: t("Dibatalkan", "Cancelled"),
+  };
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -81,9 +92,9 @@ export default async function ProjectsPage({
     <div className="space-y-6 min-w-0">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Project</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("Proyek", "Projects")}</h1>
           <p className="text-sm text-muted-foreground">
-            Pantau pipeline project-mu
+            {t("Pantau pipeline proyekmu", "Track your project pipeline")}
           </p>
         </div>
         {canWrite && <ProjectCreateDialog clients={clientOptions} />}
@@ -91,19 +102,19 @@ export default async function ProjectsPage({
 
       <div className="rounded-lg border bg-card">
         <div className="hidden md:grid grid-cols-12 gap-4 p-3 text-xs font-medium text-muted-foreground border-b">
-          <div className="col-span-3">Project</div>
-          <div className="col-span-2">Klien</div>
-          <div className="col-span-2">Status</div>
-          <div className="col-span-2">Progress</div>
-          <div className="col-span-1">Jatuh Tempo</div>
-          <div className="col-span-2 text-right">Aksi</div>
+          <div className="col-span-3">{t("Proyek", "Project")}</div>
+          <div className="col-span-2">{t("Klien", "Client")}</div>
+          <div className="col-span-2">{t("Status", "Status")}</div>
+          <div className="col-span-2">{t("Progres", "Progress")}</div>
+          <div className="col-span-1">{t("Jatuh Tempo", "Due")}</div>
+          <div className="col-span-2 text-right">{t("Aksi", "Actions")}</div>
         </div>
 
         {projectsList.length === 0 && (
           <EmptyState
             icon={Plus}
-            title="Belum ada project"
-            description="Buat project pertama untuk mulai pantau pekerjaan."
+            title={t("Belum ada proyek", "No projects yet")}
+            description={t("Buat proyek pertama untuk mulai pantau pekerjaan.", "Create your first project to start tracking work.")}
           />
         )}
 
@@ -119,14 +130,14 @@ export default async function ProjectsPage({
                     {project.clientName || "—"}
                   </div>
                 </div>
-                <Badge variant="outline" className="text-xs capitalize shrink-0">
-                  {project.status.replace("_", " ")}
+                <Badge variant="outline" className="text-xs shrink-0">
+                  {PROJECT_STATUS_LABELS[project.status] ?? project.status}
                 </Badge>
               </div>
 
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Progress</span>
+                  <span>{t("Progres", "Progress")}</span>
                   <span>{project.doneTasks}/{project.totalTasks}</span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -144,14 +155,14 @@ export default async function ProjectsPage({
                   {project.dueDate ? (
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      {new Date(project.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      {new Date(project.dueDate).toLocaleDateString(locale, { month: "short", day: "numeric" })}
                     </span>
                   ) : (
                     "—"
                   )}
                 </span>
                 {project.clientVisible && (
-                  <Badge variant="outline" className="text-[10px]">Terlihat klien</Badge>
+                  <Badge variant="outline" className="text-[10px]">{t("Terlihat klien", "Client visible")}</Badge>
                 )}
               </div>
             </div>
@@ -168,15 +179,15 @@ export default async function ProjectsPage({
                 {project.name}
               </Link>
               {project.clientVisible && (
-                <Badge variant="outline" className="ml-2 text-[10px]">Terlihat klien</Badge>
+                <Badge variant="outline" className="ml-2 text-[10px]">{t("Terlihat klien", "Client visible")}</Badge>
               )}
             </div>
             <div className="col-span-2 text-sm text-muted-foreground truncate">
               {project.clientName || "—"}
             </div>
             <div className="col-span-2">
-              <Badge variant="outline" className="text-xs capitalize">
-                {project.status.replace("_", " ")}
+              <Badge variant="outline" className="text-xs">
+                {PROJECT_STATUS_LABELS[project.status] ?? project.status}
               </Badge>
             </div>
             <div className="col-span-2">
@@ -198,7 +209,7 @@ export default async function ProjectsPage({
               {project.dueDate ? (
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  {new Date(project.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  {new Date(project.dueDate).toLocaleDateString(locale, { month: "short", day: "numeric" })}
                 </span>
               ) : (
                 "—"
@@ -213,10 +224,10 @@ export default async function ProjectsPage({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
-                    <Link href={`/app/projects/${project.id}`}>Lihat Detail</Link>
+                    <Link href={`/app/projects/${project.id}`}>{t("Lihat Detail", "View Details")}</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href={`/app/tasks?projectId=${project.id}`}>Lihat Task</Link>
+                    <Link href={`/app/tasks?projectId=${project.id}`}>{t("Lihat Tugas", "View Tasks")}</Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

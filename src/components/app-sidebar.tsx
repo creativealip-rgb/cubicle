@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n-client";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -120,14 +121,11 @@ interface AppSidebarProps {
 
 export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const { mobileOpen, setMobileOpen } = useSidebar();
-  const [lang, setLang] = useState<"id" | "en">("id");
+  const { lang, t, setLang } = useT();
 
   function changeLang(next: "id" | "en") {
-    document.cookie = `cubiqlo_lang=${next}; path=/; max-age=31536000; samesite=lax`;
     setLang(next);
-    router.refresh();
   }
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     Kerja: true,
@@ -136,22 +134,6 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
     Penjualan: false,
     AI: false,
   });
-  const t = (id: string, en: string) => (lang === "en" ? en : id);
-
-  useEffect(() => {
-    function syncLang() {
-      const cookieLang = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("cubiqlo_lang="))
-        ?.split("=")[1];
-      setLang(cookieLang === "en" ? "en" : "id");
-    }
-
-    syncLang();
-
-    window.addEventListener("focus", syncLang);
-    return () => window.removeEventListener("focus", syncLang);
-  }, [pathname]);
 
   function toggleGroup(name: string) {
     setOpenGroups((prev) => {
@@ -357,37 +339,39 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
             {lang === "id" ? "ID" : "EN"}
           </button>
         ) : (
-          <div className="flex items-center rounded-lg border bg-white p-1 text-xs">
-            <button
-              type="button"
-              onClick={() => changeLang("id")}
-              className={cn(
-                "h-7 flex-1 rounded-md font-medium transition-colors",
-                lang === "id"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Indonesia
-            </button>
-            <button
-              type="button"
-              onClick={() => changeLang("en")}
-              className={cn(
-                "h-7 flex-1 rounded-md font-medium transition-colors",
-                lang === "en"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              English
-            </button>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">
+              Cubiqlo v{process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"}
+            </p>
+            <div className="flex items-center rounded-md border bg-white p-0.5 text-[11px]">
+              <button
+                type="button"
+                onClick={() => changeLang("id")}
+                aria-label={t("Bahasa Indonesia", "Indonesian")}
+                className={cn(
+                  "h-5 rounded px-2 font-semibold transition-colors",
+                  lang === "id"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                ID
+              </button>
+              <button
+                type="button"
+                onClick={() => changeLang("en")}
+                aria-label={t("Bahasa Inggris", "English")}
+                className={cn(
+                  "h-5 rounded px-2 font-semibold transition-colors",
+                  lang === "en"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                EN
+              </button>
+            </div>
           </div>
-        )}
-        {!collapsed && (
-          <p className="text-xs text-muted-foreground">
-            Cubiqlo v0.1.21
-          </p>
         )}
       </div>
     </aside>

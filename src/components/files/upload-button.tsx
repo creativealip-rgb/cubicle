@@ -45,7 +45,7 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
     if (!file) return;
 
     if (file.size > 25 * 1024 * 1024) {
-      toast.error("File must be under 25MB");
+      toast.error("Berkas harus di bawah 25MB");
       return;
     }
 
@@ -133,7 +133,7 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Upload file</DialogTitle>
+          <DialogTitle>Unggah berkas</DialogTitle>
           <DialogDescription>
             Choose if this is internal work or a client deliverable.
           </DialogDescription>

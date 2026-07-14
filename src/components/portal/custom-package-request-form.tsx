@@ -77,7 +77,7 @@ export function CustomPackageRequestForm({
     setLoading(true);
     try {
       await createCustomPackageRequest(token, projectId, hours, message || undefined);
-      toast.success("Request submitted!");
+      toast.success("Permintaan terkirim!");
       setMessage("");
       setExpanded(false);
     } catch (err: unknown) {

@@ -90,11 +90,11 @@ export default async function QuestionnairesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Fields</TableHead>
-                <TableHead>Submitted</TableHead>
-                <TableHead>Pending</TableHead>
-                <TableHead>Updated</TableHead>
+                <TableHead>Nama</TableHead>
+                <TableHead>Kolom</TableHead>
+                <TableHead>Terkirim</TableHead>
+                <TableHead>Menunggu</TableHead>
+                <TableHead>Diperbarui</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>

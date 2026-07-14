@@ -41,7 +41,7 @@ import { Separator } from "@/components/ui/separator";
 import { formatMoney, formatMoneyCompact } from "@/lib/utils";
 import Link from "next/link";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
-import { DashboardLanguageSwitch } from "@/components/dashboard-language-switch";
+import { taskPriorityLabel } from "@/lib/status-badge";
 import { DashboardGreeting } from "@/components/dashboard-greeting";
 import { DashboardOnboarding } from "@/components/dashboard-onboarding";
 
@@ -371,8 +371,8 @@ export default async function DashboardPage() {
       value: String(activeClients),
       change: `${activeClients} ${t("total", "total")}`,
       icon: Users,
-      iconBg: "bg-blue-100 text-blue-600",
-      accentBorder: "border-l-blue-500",
+      iconBg: "bg-slate-100 text-slate-600",
+      accentBorder: "border-l-slate-300",
       href: "/app/clients",
     },
     {
@@ -380,8 +380,8 @@ export default async function DashboardPage() {
       value: String(activeProjects),
       change: `${activeProjects} ${t("berjalan", "running")}`,
       icon: Briefcase,
-      iconBg: "bg-emerald-100 text-emerald-600",
-      accentBorder: "border-l-emerald-500",
+      iconBg: "bg-slate-100 text-slate-600",
+      accentBorder: "border-l-slate-300",
       href: "/app/projects",
     },
     {
@@ -438,7 +438,6 @@ export default async function DashboardPage() {
       <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <DashboardGreeting firstName={firstName} lang={lang} activeProjects={activeProjects} dueTasks={dueTasks} />
         <div className="flex flex-wrap items-center gap-2">
-          <DashboardLanguageSwitch lang={lang} />
           {quickActions.map((qa) => {
             const Icon = qa.icon;
             return (
@@ -697,7 +696,8 @@ export default async function DashboardPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-col items-center gap-2 py-1 text-center">
+                    <Clock className="h-6 w-6 text-slate-300" />
                     <p className="text-sm text-muted-foreground">{t("Tidak ada timer aktif", "No active timer")}</p>
                     <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" asChild>
                       <Link href="/app/time">{t("Mulai", "Start")}</Link>
@@ -713,7 +713,13 @@ export default async function DashboardPage() {
                   <span className="text-xs font-medium text-muted-foreground">{t("Jadwal Mendatang", "Upcoming Schedule")}</span>
                 </div>
                 {upcomingAppts.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">{t("Tidak ada jadwal", "No schedule")}</p>
+                  <div className="flex flex-col items-center gap-2 py-3 text-center">
+                    <Calendar className="h-6 w-6 text-slate-300" />
+                    <p className="text-sm text-muted-foreground">{t("Tidak ada jadwal", "No schedule")}</p>
+                    <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" asChild>
+                      <Link href="/app/calendar">{t("Buat jadwal", "Add schedule")}</Link>
+                    </Button>
+                  </div>
                 ) : (
                   <div className="space-y-2">
                     {upcomingAppts.slice(0, 3).map((apt) => (
@@ -738,12 +744,18 @@ export default async function DashboardPage() {
                 {t("Tugas Hari Ini", "Today Tasks")}
               </CardTitle>
               <Button variant="ghost" size="sm" className="h-6 gap-1 text-xs" asChild>
-                <Link href="/app/tasks">Lihat semua</Link>
+                <Link href="/app/tasks">{t("Lihat semua", "View all")}</Link>
               </Button>
             </CardHeader>
             <CardContent className="space-y-2 pt-0">
               {todayTasks.length === 0 && (
-                <p className="py-3 text-center text-xs text-muted-foreground">{t("Tidak ada tugas hari ini", "No tasks today")}</p>
+                <div className="flex flex-col items-center gap-2 py-3 text-center">
+                  <ListChecks className="h-6 w-6 text-slate-300" />
+                  <p className="text-xs text-muted-foreground">{t("Tidak ada tugas hari ini", "No tasks today")}</p>
+                  <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" asChild>
+                    <Link href="/app/tasks">{t("Buat tugas", "New task")}</Link>
+                  </Button>
+                </div>
               )}
               {todayTasks.map((task) => (
                 <div key={task.id} className="flex items-center justify-between rounded-lg px-2 py-1.5 hover:bg-slate-50">
@@ -755,7 +767,7 @@ export default async function DashboardPage() {
                     variant={task.priority === "urgent" ? "destructive" : task.priority === "high" ? "default" : "secondary"}
                     className="shrink-0 text-xs"
                   >
-                    {task.priority}
+                    {taskPriorityLabel(task.priority, lang)}
                   </Badge>
                 </div>
               ))}
@@ -915,7 +927,7 @@ export default async function DashboardPage() {
                     <span className="font-semibold tabular-nums text-red-700">{formatMoney(cfOverdue, workspaceCurrency)}</span>
                   )}
                   {cfOverdueUsd > 0 && (
-                    <span className={`font-semibold tabular-nums text-red-700 ${cfOverdue > 0 ? "ml-2 text-xs" : ""}`}>{formatMoney(cfOverdueUsd, "USD")}</span>
+                    <span className={`font-semibold tabular-nums text-red-700 ${cfOverdue > 0 ? "ml-2 border-l border-red-200 pl-2 text-xs" : ""}`}>{formatMoney(cfOverdueUsd, "USD")}</span>
                   )}
                 </div>
               </div>

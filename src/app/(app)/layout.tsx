@@ -1,4 +1,5 @@
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
+import { getCurrentLang } from "@/lib/i18n";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { and, eq, ne, count, sql } from "drizzle-orm";
@@ -26,6 +27,8 @@ export default async function AppLayout({
   if (!session?.user) {
     redirect("/login");
   }
+
+  const lang = await getCurrentLang();
 
   const [workspace] = await db
     .select({ id: workspaces.id })
@@ -97,6 +100,7 @@ export default async function AppLayout({
 
   return (
     <AppShell
+      lang={lang}
       user={{
         name: session.user.name ?? "User",
         email: session.user.email ?? "",

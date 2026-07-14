@@ -10,6 +10,7 @@ import { UploadButton } from "@/components/files/upload-button";
 import { FolderTree } from "@/components/files/folder-tree";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText } from "lucide-react";
+import { getCurrentLang, createT } from "@/lib/i18n";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -20,6 +21,8 @@ export default async function FilesPage({
 }: {
   searchParams: Promise<{ clientId?: string; projectId?: string; folderId?: string }>;
 }) {
+  const lang = await getCurrentLang();
+  const t = createT(lang);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -71,8 +74,8 @@ export default async function FilesPage({
     <div className="space-y-6 min-w-0">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">File</h1>
-          <p className="text-sm text-muted-foreground mt-1">Kelola file workspace-mu</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("Berkas", "Files")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t("Kelola file workspace-mu", "Manage your workspace files")}</p>
         </div>
         {canWrite && (
           <UploadButton
@@ -89,7 +92,7 @@ export default async function FilesPage({
         <Card className="lg:col-span-1 h-fit">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <FileText className="h-4 w-4" /> Jelajahi
+              <FileText className="h-4 w-4" /> {t("Jelajahi", "Browse")}
             </CardTitle>
           </CardHeader>
           <CardContent>

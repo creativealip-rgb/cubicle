@@ -28,6 +28,7 @@ import {
   EyeOff,
   AlertTriangle,
 } from "lucide-react";
+import { useT } from "@/lib/i18n-client";
 
 interface Task {
   id: string;
@@ -51,6 +52,7 @@ interface TaskDetailSheetProps {
 }
 
 export function TaskDetailSheet({ task, members = [], children }: TaskDetailSheetProps) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -59,10 +61,10 @@ export function TaskDetailSheet({ task, members = [], children }: TaskDetailShee
     setLoading(true);
     try {
       await updateTask(task.id, { status: status as any });
-      toast.success("Status updated");
+      toast.success(t("Status diperbarui", "Status updated"));
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed");
+      toast.error(err instanceof Error ? err.message : t("Gagal", "Failed"));
     } finally {
       setLoading(false);
     }
@@ -72,10 +74,10 @@ export function TaskDetailSheet({ task, members = [], children }: TaskDetailShee
     setLoading(true);
     try {
       await updateTask(task.id, { priority: priority as any });
-      toast.success("Priority updated");
+      toast.success(t("Prioritas diperbarui", "Priority updated"));
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed");
+      toast.error(err instanceof Error ? err.message : t("Gagal", "Failed"));
     } finally {
       setLoading(false);
     }
@@ -85,10 +87,10 @@ export function TaskDetailSheet({ task, members = [], children }: TaskDetailShee
     setLoading(true);
     try {
       await updateTask(task.id, { dueDate: dueDate || null });
-      toast.success("Due date updated");
+      toast.success(t("Tenggat diperbarui", "Due date updated"));
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed");
+      toast.error(err instanceof Error ? err.message : t("Gagal", "Failed"));
     } finally {
       setLoading(false);
     }
@@ -98,10 +100,10 @@ export function TaskDetailSheet({ task, members = [], children }: TaskDetailShee
     setLoading(true);
     try {
       await updateTask(task.id, { clientVisible: !task.clientVisible });
-      toast.success(task.clientVisible ? "Hidden from client" : "Visible to client");
+      toast.success(task.clientVisible ? t("Disembunyikan dari klien", "Hidden from client") : t("Terlihat oleh klien", "Visible to client"));
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed");
+      toast.error(err instanceof Error ? err.message : t("Gagal", "Failed"));
     } finally {
       setLoading(false);
     }
@@ -112,10 +114,10 @@ export function TaskDetailSheet({ task, members = [], children }: TaskDetailShee
     try {
       const next = assigneeId === "unassigned" ? null : assigneeId;
       await updateTask(task.id, { assigneeId: next });
-      toast.success(next ? "Assigned" : "Unassigned");
+      toast.success(next ? t("Ditugaskan", "Assigned") : t("Tidak ditugaskan", "Unassigned"));
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed");
+      toast.error(err instanceof Error ? err.message : t("Gagal", "Failed"));
     } finally {
       setLoading(false);
     }
@@ -143,32 +145,32 @@ export function TaskDetailSheet({ task, members = [], children }: TaskDetailShee
           {/* Status & Priority */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-xs">Status</Label>
+              <Label className="text-xs">{t("Status", "Status")}</Label>
               <Select value={task.status} onValueChange={handleStatusChange} disabled={loading}>
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todo">Todo</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="review">Review</SelectItem>
-                  <SelectItem value="done">Done</SelectItem>
+                  <SelectItem value="todo">{t("Belum Mulai", "To Do")}</SelectItem>
+                  <SelectItem value="in_progress">{t("Dikerjakan", "In Progress")}</SelectItem>
+                  <SelectItem value="review">{t("Ditinjau", "Review")}</SelectItem>
+                  <SelectItem value="done">{t("Selesai", "Done")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">Priority</Label>
+              <Label className="text-xs">{t("Prioritas", "Priority")}</Label>
               <Select value={task.priority} onValueChange={handlePriorityChange} disabled={loading}>
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="low">{t("Rendah", "Low")}</SelectItem>
+                  <SelectItem value="medium">{t("Sedang", "Medium")}</SelectItem>
+                  <SelectItem value="high">{t("Tinggi", "High")}</SelectItem>
                   <SelectItem value="urgent">
                     <span className="flex items-center gap-1">
-                      <AlertTriangle className="h-3 w-3 text-red-500" /> Urgent
+                      <AlertTriangle className="h-3 w-3 text-red-500" /> {t("Mendesak", "Urgent")}
                     </span>
                   </SelectItem>
                 </SelectContent>
@@ -178,9 +180,9 @@ export function TaskDetailSheet({ task, members = [], children }: TaskDetailShee
 
           {/* Description */}
           <div className="space-y-2">
-            <Label className="text-xs">Description</Label>
+            <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
             <p className="text-sm text-muted-foreground">
-              {task.description || "No description"}
+              {task.description || t("Tidak ada deskripsi", "No description")}
             </p>
           </div>
 
@@ -189,7 +191,7 @@ export function TaskDetailSheet({ task, members = [], children }: TaskDetailShee
           {/* Due Date */}
           <div className="space-y-2">
             <Label className="text-xs flex items-center gap-1">
-              <Clock className="h-3 w-3" /> Due Date
+              <Clock className="h-3 w-3" /> {t("Tenggat", "Due Date")}
             </Label>
             <Input
               type="date"
@@ -203,7 +205,7 @@ export function TaskDetailSheet({ task, members = [], children }: TaskDetailShee
           {/* Assignee */}
           <div className="space-y-2">
             <Label className="text-xs flex items-center gap-1">
-              <User className="h-3 w-3" /> Assignee
+              <User className="h-3 w-3" /> {t("Ditugaskan ke", "Assignee")}
             </Label>
             <Select
               value={task.assigneeId ?? "unassigned"}
@@ -211,10 +213,10 @@ export function TaskDetailSheet({ task, members = [], children }: TaskDetailShee
               disabled={loading}
             >
               <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder="Unassigned" />
+                <SelectValue placeholder={t("Belum ditugaskan", "Unassigned")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="unassigned">Unassigned</SelectItem>
+                <SelectItem value="unassigned">{t("Belum ditugaskan", "Unassigned")}</SelectItem>
                 {members.map((m) => (
                   <SelectItem key={m.id} value={m.id}>
                     {m.name || m.email || m.id.slice(0, 8)}
@@ -235,11 +237,11 @@ export function TaskDetailSheet({ task, members = [], children }: TaskDetailShee
             >
               {task.clientVisible ? (
                 <>
-                  <EyeOff className="h-3 w-3" /> Hide from client
+                  <EyeOff className="h-3 w-3" /> {t("Sembunyikan dari klien", "Hide from client")}
                 </>
               ) : (
                 <>
-                  <Eye className="h-3 w-3" /> Show to client
+                  <Eye className="h-3 w-3" /> {t("Tampilkan ke klien", "Show to client")}
                 </>
               )}
             </Button>
@@ -249,8 +251,8 @@ export function TaskDetailSheet({ task, members = [], children }: TaskDetailShee
 
           {/* Comments placeholder */}
           <div className="space-y-2">
-            <Label className="text-xs">Comments</Label>
-            <p className="text-xs text-muted-foreground">Comments coming soon...</p>
+            <Label className="text-xs">{t("Komentar", "Comments")}</Label>
+            <p className="text-xs text-muted-foreground">{t("Komentar segera hadir...", "Comments coming soon...")}</p>
           </div>
         </div>
       </SheetContent>

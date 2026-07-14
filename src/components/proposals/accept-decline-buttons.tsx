@@ -30,7 +30,7 @@ export function AcceptDeclineButtons({ proposalId, token }: AcceptDeclineButtons
     setLoading("accept");
     try {
       await acceptProposalPublic(proposalId, token);
-      toast.success("Proposal accepted! Project + down-payment invoice created.");
+      toast.success("Proposal diterima! Proyek + invoice DP dibuat.");
       // Reload to show accepted state
       window.location.reload();
     } catch (err: unknown) {
@@ -44,7 +44,7 @@ export function AcceptDeclineButtons({ proposalId, token }: AcceptDeclineButtons
     setLoading("decline");
     try {
       await declineProposalPublic(proposalId, token, reason || undefined);
-      toast.success("Proposal declined");
+      toast.success("Proposal ditolak");
       setDeclineOpen(false);
       window.location.reload();
     } catch (err: unknown) {

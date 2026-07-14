@@ -17,6 +17,7 @@ import {
   DollarSign,
   Filter,
 } from "lucide-react";
+import { useT } from "@/lib/i18n-client";
 
 interface TimeEntry {
   id: string;
@@ -53,6 +54,7 @@ interface TimesheetProps {
 
   // eslint-disable-next-line unused-imports/no-unused-vars
 export function Timesheet({ entries, clients, projects }: TimesheetProps) {
+  const { t } = useT();
   const router = useRouter();
 
   // Filters
@@ -114,10 +116,10 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
   async function handleDelete(entryId: string) {
     try {
       await deleteTimeEntry(entryId);
-      toast.success("Entry deleted");
+      toast.success(t("Entri dihapus", "Entry deleted"));
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete");
+      toast.error(err instanceof Error ? err.message : t("Gagal menghapus", "Failed to delete"));
     }
   }
 
@@ -149,19 +151,19 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Total Time</p>
+            <p className="text-xs text-muted-foreground">Total Waktu</p>
             <p className="text-xl font-bold">{formatDuration(totalMinutes)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Billable</p>
+            <p className="text-xs text-muted-foreground">Bisa Ditagih</p>
             <p className="text-xl font-bold">{formatDuration(billableMinutes)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Entries</p>
+            <p className="text-xs text-muted-foreground">Entri</p>
             <p className="text-xl font-bold">{filteredEntries.length}</p>
           </CardContent>
         </Card>
@@ -172,17 +174,17 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-3">
             <Filter className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Filters</span>
+            <span className="text-sm font-medium">Filter</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <div className="space-y-1">
-              <Label className="text-[10px]">Client</Label>
+              <Label className="text-[10px]">Klien</Label>
               <Select value={clientFilter} onValueChange={setClientFilter}>
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue placeholder="All" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Clients</SelectItem>
+                  <SelectItem value="all">Semua Klien</SelectItem>
                   {uniqueClients.map((c) => (
                     <SelectItem key={c} value={c}>{c}</SelectItem>
                   ))}
@@ -190,13 +192,13 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-[10px]">Project</Label>
+              <Label className="text-[10px]">Proyek</Label>
               <Select value={projectFilter} onValueChange={setProjectFilter}>
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue placeholder="All" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Projects</SelectItem>
+                  <SelectItem value="all">Semua Proyek</SelectItem>
                   {uniqueProjects.map((p) => (
                     <SelectItem key={p} value={p}>{p}</SelectItem>
                   ))}
@@ -204,15 +206,15 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-[10px]">Billable</Label>
+              <Label className="text-[10px]">Bisa Ditagih</Label>
               <Select value={billableFilter} onValueChange={setBillableFilter}>
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue placeholder="All" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="billable">Billable</SelectItem>
-                  <SelectItem value="non-billable">Non-billable</SelectItem>
+                  <SelectItem value="all">Semua</SelectItem>
+                  <SelectItem value="billable">Bisa Ditagih</SelectItem>
+                  <SelectItem value="non-billable">Tidak Ditagih</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -223,7 +225,7 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
                   <SelectValue placeholder="All" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Tags</SelectItem>
+                  <SelectItem value="all">Semua Tag</SelectItem>
                   {uniqueTags.map((tag) => (
                     <SelectItem key={tag} value={tag}>{tag}</SelectItem>
                   ))}
@@ -232,7 +234,7 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
             </div>
             <div className="flex flex-col gap-2 sm:flex-row col-span-2 md:col-span-1">
               <div className="space-y-1 flex-1 min-w-0">
-                <Label className="text-[10px]">From</Label>
+                <Label className="text-[10px]">Dari</Label>
                 <Input
                   type="date"
                   value={dateFrom}
@@ -241,7 +243,7 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
                 />
               </div>
               <div className="space-y-1 flex-1 min-w-0">
-                <Label className="text-[10px]">To</Label>
+                <Label className="text-[10px]">Sampai</Label>
                 <Input
                   type="date"
                   value={dateTo}

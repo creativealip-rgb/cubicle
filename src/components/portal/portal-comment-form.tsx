@@ -43,7 +43,7 @@ export function PortalCommentForm({
         authorEmail: form.authorEmail,
         body: form.body,
       });
-      toast.success("Comment submitted");
+      toast.success("Komentar terkirim");
       setForm({ authorName: "", authorEmail: "", body: "" });
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed");
