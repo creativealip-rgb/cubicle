@@ -86,6 +86,23 @@ export function taskPriorityColor(priority: string): string {
   }
 }
 
+export function timeEntryStatusVariant(status: string, lang?: Lang): StatusBadgeConfig {
+  switch (status) {
+    case "draft":
+      return { variant: "secondary", label: tr(lang, "Draf", "Draft") };
+    case "submitted":
+      return { variant: "info", label: tr(lang, "Diajukan", "Submitted") };
+    case "approved":
+      return { variant: "success", label: tr(lang, "Disetujui", "Approved") };
+    case "rejected":
+      return { variant: "destructive", label: tr(lang, "Ditolak", "Rejected") };
+    case "invoiced":
+      return { variant: "outline", label: tr(lang, "Ditagihkan", "Invoiced") };
+    default:
+      return { variant: "outline", label: titleize(status) || tr(lang, "Tidak diketahui", "Unknown") };
+  }
+}
+
 export function projectStatusVariant(status: string, lang?: Lang): StatusBadgeConfig {
   switch (status) {
     case "draft":

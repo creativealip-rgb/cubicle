@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import { importTimeEntries } from "@/lib/actions/invoices";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { formatMoney } from "@/lib/utils";
+import { timeEntryStatusVariant } from "@/lib/status-badge";
+import { useT } from "@/lib/i18n-client";
 
 interface TimeEntry {
   id: string;
@@ -19,11 +22,14 @@ interface TimeEntry {
 export function ImportTimeSection({
   invoiceId,
   timeEntries,
+  currency = "IDR",
 }: {
   invoiceId: string;
   timeEntries: TimeEntry[];
+  currency?: string;
 }) {
   const router = useRouter();
+  const { t, lang } = useT();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
 
@@ -46,7 +52,7 @@ export function ImportTimeSection({
 
   async function handleImport() {
     if (selected.size === 0) {
-      toast.error("Pilih minimal satu catatan waktu");
+      toast.error(t("Pilih minimal satu catatan waktu", "Select at least one time entry"));
       return;
     }
     setLoading(true);
@@ -55,11 +61,11 @@ export function ImportTimeSection({
         invoiceId,
         timeEntryIds: Array.from(selected),
       });
-      toast.success(`Berhasil import ${selected.size} catatan waktu`);
+      toast.success(t(`Berhasil import ${selected.size} catatan waktu`, `Imported ${selected.size} time entries`));
       setSelected(new Set());
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Gagal");
+      toast.error(err instanceof Error ? err.message : t("Gagal", "Failed"));
     } finally {
       setLoading(false);
     }
@@ -68,7 +74,7 @@ export function ImportTimeSection({
   if (timeEntries.length === 0) {
     return (
       <p className="text-sm text-muted-foreground py-4 text-center">
-        Tidak ada catatan waktu yang belum ditagihkan untuk klien ini.
+        {t("Tidak ada catatan waktu yang belum ditagihkan untuk klien ini.", "No unbilled time entries for this client.")}
       </p>
     );
   }
@@ -82,14 +88,14 @@ export function ImportTimeSection({
           className="text-xs"
           onClick={toggleAll}
         >
-          {selected.size === timeEntries.length ? "Batal Pilih Semua" : "Pilih Semua"}
+          {selected.size === timeEntries.length ? t("Batal Pilih Semua", "Deselect All") : t("Pilih Semua", "Select All")}
         </Button>
         <Button
           size="sm"
           onClick={handleImport}
           disabled={loading || selected.size === 0}
         >
-          {loading ? "Mengimpor..." : `Import ${selected.size} Dipilih`}
+          {loading ? t("Mengimpor...", "Importing...") : t(`Import ${selected.size} Dipilih`, `Import ${selected.size} Selected`)}
         </Button>
       </div>
       <div className="border rounded-lg divide-y max-h-64 overflow-y-auto">
@@ -119,11 +125,11 @@ export function ImportTimeSection({
                   {te.description || "Tanpa deskripsi"}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {hours}j @ {rate}/jam = {amount}
+                  {hours}{t("j", "h")} @ {formatMoney(rate, currency)}/{t("jam", "hr")} = {formatMoney(amount, currency)}
                 </p>
               </div>
-              <Badge variant="outline" className="text-[10px]">
-                {te.status}
+              <Badge variant={timeEntryStatusVariant(te.status, lang).variant} className="text-[10px]">
+                {timeEntryStatusVariant(te.status, lang).label}
               </Badge>
             </div>
           );

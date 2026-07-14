@@ -27,29 +27,10 @@ import { SendInvoiceButton } from "./send-invoice-button";
 import { SendReminderButton } from "./send-reminder-button";
 import { formatDateID, formatMoney } from "@/lib/utils";
 import { invoiceStatusVariant } from "@/lib/status-badge";
+import { getCurrentLang, createT } from "@/lib/i18n";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
-}
-
-function statusVariant(
-  status: string,
-): "default" | "secondary" | "destructive" | "outline" {
-  switch (status) {
-    case "paid":
-      return "default";
-    case "sent":
-      return "secondary";
-    case "viewed":
-      return "secondary";
-    case "overdue":
-    case "payment due":
-      return "destructive";
-    case "cancelled":
-      return "outline";
-    default:
-      return "outline";
-  }
 }
 
 export default async function InvoiceDetailPage({
@@ -58,6 +39,8 @@ export default async function InvoiceDetailPage({
   params: Promise<{ invoiceId: string }>;
 }) {
   const { invoiceId } = await params;
+  const lang = await getCurrentLang();
+  const t = createT(lang);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -136,7 +119,7 @@ export default async function InvoiceDetailPage({
               Invoice {inv.invoiceNumber}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {client ? client.companyName || client.name : "Unknown Client"}
+              {client ? client.companyName || client.name : t("Klien tidak diketahui", "Unknown Client")}
             </p>
           </div>
         </div>
@@ -144,7 +127,7 @@ export default async function InvoiceDetailPage({
           <Button size="sm" variant="outline" className="gap-2" asChild>
             <Link href={`/api/invoices/${invoiceId}/pdf`} target="_blank">
               <Download className="h-4 w-4" />
-              Download PDF
+              {t("Unduh PDF", "Download PDF")}
             </Link>
           </Button>
           <SendInvoiceButton invoiceId={invoiceId} disabled={!client?.email || items.length === 0} />
@@ -153,14 +136,14 @@ export default async function InvoiceDetailPage({
             disabled={!client?.email || items.length === 0 || ["draft", "paid", "cancelled"].includes(inv.status)}
           />
           <Badge
-            variant={statusVariant(displayStatus)}
+            variant={invoiceStatusVariant(displayStatus, lang).variant}
             className="text-sm px-3 py-1"
           >
-            {invoiceStatusVariant(displayStatus).label}
+            {invoiceStatusVariant(displayStatus, lang).label}
           </Badge>
           {isPaid && inv.status !== "paid" && (
-            <Badge variant="default" className="text-sm px-3 py-1">
-              Lunas
+            <Badge variant="success" className="text-sm px-3 py-1">
+              {t("Lunas", "Paid")}
             </Badge>
           )}
         </div>
@@ -171,7 +154,7 @@ export default async function InvoiceDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs uppercase text-muted-foreground">
-              Tanggal Terbit
+              {t("Tanggal Terbit", "Issue Date")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -183,7 +166,7 @@ export default async function InvoiceDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs uppercase text-muted-foreground">
-              Jatuh Tempo
+              {t("Jatuh Tempo", "Due Date")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -195,7 +178,7 @@ export default async function InvoiceDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs uppercase text-muted-foreground">
-              Mata Uang
+              {t("Mata Uang", "Currency")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -205,7 +188,7 @@ export default async function InvoiceDetailPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs uppercase text-muted-foreground">
-              Total
+              {t("Total", "Total")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -219,21 +202,21 @@ export default async function InvoiceDetailPage({
       {/* Items */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Rincian Item</CardTitle>
+          <CardTitle>{t("Rincian Item", "Line Items")}</CardTitle>
           <InvoiceItemManager invoiceId={invoiceId} />
         </CardHeader>
         <CardContent>
           {items.length === 0 ? (
             <p className="text-sm text-muted-foreground py-6 text-center">
-              Belum ada item. Tambahkan item ke invoice ini.
+              {t("Belum ada item. Tambahkan item ke invoice ini.", "No items yet. Add items to this invoice.")}
             </p>
           ) : (
             <div className="space-y-0">
               <div className="flex items-center gap-2 py-2 text-xs uppercase text-muted-foreground border-b sm:gap-4">
-                <div className="min-w-0 flex-1">Deskripsi</div>
-                <div className="w-14 text-right sm:w-20">Qty</div>
-                <div className="w-20 text-right sm:w-28">Tarif</div>
-                <div className="w-20 text-right sm:w-28">Jumlah</div>
+                <div className="min-w-0 flex-1">{t("Deskripsi", "Description")}</div>
+                <div className="w-14 text-right sm:w-20">{t("Qty", "Qty")}</div>
+                <div className="w-24 text-right sm:w-32">{t("Tarif", "Rate")}</div>
+                <div className="w-24 text-right sm:w-32">{t("Jumlah", "Amount")}</div>
                 <div className="w-6 sm:w-10" />
               </div>
               {items.map((item) => (
@@ -245,17 +228,17 @@ export default async function InvoiceDetailPage({
                     <p className="truncate">{item.description}</p>
                     {item.sourceType === "time_entry" && (
                       <span className="text-xs text-muted-foreground">
-                        (dari catatan waktu)
+                        {t("(dari catatan waktu)", "(from time entry)")}
                       </span>
                     )}
                   </div>
                   <div className="w-14 text-right sm:w-20">
                     {Number(item.quantity).toFixed(2)}
                   </div>
-                  <div className="w-20 text-right font-mono sm:w-28">
+                  <div className="w-24 text-right font-mono whitespace-nowrap sm:w-32">
                     {formatMoney(item.unitPrice, inv.currency)}
                   </div>
-                  <div className="w-20 text-right font-mono font-medium sm:w-28">
+                  <div className="w-24 text-right font-mono font-medium whitespace-nowrap sm:w-32">
                     {formatMoney(item.amount, inv.currency)}
                   </div>
                   <div className="w-6 text-right sm:w-10">
@@ -267,20 +250,20 @@ export default async function InvoiceDetailPage({
               <Separator className="my-2" />
               <div className="space-y-1 pt-2">
                 <div className="flex justify-end gap-8 text-sm">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span className="font-mono w-28 text-right">
+                  <span className="text-muted-foreground">{t("Subtotal", "Subtotal")}</span>
+                  <span className="font-mono w-32 text-right whitespace-nowrap">
                     {formatMoney(inv.subtotal, inv.currency)}
                   </span>
                 </div>
                 <div className="flex justify-end gap-8 text-sm">
-                  <span className="text-muted-foreground">Pajak</span>
-                  <span className="font-mono w-28 text-right">
+                  <span className="text-muted-foreground">{t("Pajak", "Tax")}</span>
+                  <span className="font-mono w-32 text-right whitespace-nowrap">
                     {formatMoney(inv.tax, inv.currency)}
                   </span>
                 </div>
                 <div className="flex justify-end gap-8 text-base font-bold pt-1">
-                  <span>Total</span>
-                  <span className="font-mono w-28 text-right">
+                  <span>{t("Total", "Total")}</span>
+                  <span className="font-mono w-32 text-right whitespace-nowrap">
                     {formatMoney(inv.total, inv.currency)}
                   </span>
                 </div>
@@ -294,18 +277,18 @@ export default async function InvoiceDetailPage({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Clock className="h-4 w-4" /> Import Catatan Waktu
+            <Clock className="h-4 w-4" /> {t("Import Catatan Waktu", "Import Time Entries")}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ImportTimeSection invoiceId={invoiceId} timeEntries={unbilled} />
+          <ImportTimeSection invoiceId={invoiceId} timeEntries={unbilled} currency={inv.currency} />
         </CardContent>
       </Card>
 
       {/* Pembayaran */}
       <Card>
         <CardHeader>
-          <CardTitle>Pembayaran</CardTitle>
+          <CardTitle>{t("Pembayaran", "Payments")}</CardTitle>
         </CardHeader>
         <CardContent>
           <PaymentSection
@@ -325,7 +308,7 @@ export default async function InvoiceDetailPage({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Share2 className="h-4 w-4" /> Link Berbagi Invoice
+            <Share2 className="h-4 w-4" /> {t("Link Berbagi Invoice", "Invoice Share Link")}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -342,7 +325,7 @@ export default async function InvoiceDetailPage({
         <CardContent className="py-4 space-y-4">
           {inv.notes && (
             <div>
-              <h4 className="text-sm font-medium mb-1">Catatan</h4>
+              <h4 className="text-sm font-medium mb-1">{t("Catatan", "Notes")}</h4>
               <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                 {inv.notes}
               </p>
@@ -350,7 +333,7 @@ export default async function InvoiceDetailPage({
           )}
           {inv.terms && (
             <div>
-              <h4 className="text-sm font-medium mb-1">Syarat</h4>
+              <h4 className="text-sm font-medium mb-1">{t("Syarat", "Terms")}</h4>
               <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                 {inv.terms}
               </p>
@@ -358,7 +341,7 @@ export default async function InvoiceDetailPage({
           )}
           {!inv.notes && !inv.terms && (
             <p className="text-sm text-muted-foreground">
-              Belum ada catatan atau syarat.
+              {t("Belum ada catatan atau syarat.", "No notes or terms yet.")}
             </p>
           )}
         </CardContent>
