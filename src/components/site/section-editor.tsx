@@ -166,7 +166,7 @@ export function SectionEditor({ sections, onChange }: SectionEditorProps) {
 
       {sections.length === 0 && (
         <p className="text-sm text-muted-foreground text-center py-4">
-          No sections yet. Click &quot;Add section&quot; to get started.
+          Belum ada section. Klik &quot;Add section&quot; untuk mulai.
         </p>
       )}
 

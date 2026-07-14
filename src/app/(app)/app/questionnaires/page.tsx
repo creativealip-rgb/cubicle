@@ -80,7 +80,7 @@ export default async function QuestionnairesPage() {
             <Button asChild>
               <Link href="/app/questionnaires/new">
                 <Plus className="h-4 w-4 mr-1" />
-                Create your first questionnaire
+                Buat kuesioner pertama
               </Link>
             </Button>
           )}

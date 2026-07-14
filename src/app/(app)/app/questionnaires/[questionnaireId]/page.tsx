@@ -136,7 +136,7 @@ export default async function QuestionnaireDetailPage({ params }: { params: Prom
         {responses.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-sm text-slate-500">
-              No responses yet. Send the questionnaire to a client to get started.
+              Belum ada jawaban. Kirim kuesioner ke klien untuk mulai.
             </CardContent>
           </Card>
         ) : (

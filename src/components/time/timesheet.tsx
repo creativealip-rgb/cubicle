@@ -258,8 +258,8 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
       {filteredEntries.length === 0 ? (
         <EmptyState
           icon={Clock}
-          title="No time entries found"
-          description="No time entries match your current filters. Try adjusting filters or track some time."
+          title="Belum ada catatan waktu"
+          description="Mulai timer di atas atau tambah entri manual untuk mulai melacak waktu kerjamu. Kalau sudah ada data, coba sesuaikan filter."
         />
       ) : (
         <div className="space-y-2">
