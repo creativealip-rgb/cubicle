@@ -196,8 +196,30 @@ export default async function ClientsPage({
               <div className="text-right">Aksi</div>
             </div>
             {filtered.length === 0 && (
-              <div className="p-8 text-center text-sm text-muted-foreground">
-                Tidak ada klien ditemukan
+              <div className="p-10 text-center">
+                {clientCount === 0 ? (
+                  <>
+                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                      <Plus className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <h3 className="font-medium">Belum ada klien</h3>
+                    <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+                      Tambah klien pertama untuk mulai kelola project, invoice, dan portal mereka.
+                    </p>
+                    {canWrite && !isAtLimit && (
+                      <Button asChild className="mt-4">
+                        <Link href="/app/clients/new">
+                          <Plus className="h-4 w-4 mr-1" />
+                          Tambah Klien
+                        </Link>
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Tidak ada klien yang cocok dengan pencarian atau filter.
+                  </p>
+                )}
               </div>
             )}
             {filtered.map((client) => (
@@ -267,8 +289,27 @@ export default async function ClientsPage({
           {/* Mobile Cards */}
           <div className="md:hidden space-y-3">
             {filtered.length === 0 && (
-              <div className="p-8 text-center text-sm text-muted-foreground">
-                Tidak ada klien ditemukan
+              <div className="rounded-lg border p-8 text-center">
+                {clientCount === 0 ? (
+                  <>
+                    <p className="font-medium">Belum ada klien</p>
+                    <p className="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">
+                      Tambah klien pertama untuk mulai kelola project & invoice.
+                    </p>
+                    {canWrite && !isAtLimit && (
+                      <Button asChild className="mt-4">
+                        <Link href="/app/clients/new">
+                          <Plus className="h-4 w-4 mr-1" />
+                          Tambah Klien
+                        </Link>
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Tidak ada klien yang cocok dengan pencarian atau filter.
+                  </p>
+                )}
               </div>
             )}
             {filtered.map((client) => (

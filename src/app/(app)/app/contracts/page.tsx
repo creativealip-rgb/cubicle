@@ -66,7 +66,7 @@ export default async function ContractsPage() {
       {rows.length === 0 ? (
         <div className="bg-white rounded-2xl border p-12 text-center">
           <FileSignature className="h-10 w-10 mx-auto text-slate-300 mb-3" />
-          <p className="text-sm text-slate-500 mb-4">No contracts yet. Create one to start e-signing.</p>
+          <p className="text-sm text-slate-500 mb-4">Belum ada kontrak. Buat kontrak pertama untuk mulai tanda tangan elektronik.</p>
           {canWrite && <CreateContractButton clients={clientsList} workspaceId={workspaceId} />}
         </div>
       ) : (
@@ -74,10 +74,10 @@ export default async function ContractsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Client</TableHead>
+                <TableHead>Judul</TableHead>
+                <TableHead>Klien</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Updated</TableHead>
+                <TableHead>Diperbarui</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
