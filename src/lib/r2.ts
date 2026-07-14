@@ -10,6 +10,12 @@ export const r2 = new S3Client({
     accessKeyId: requiredEnv("R2_ACCESS_KEY_ID"),
     secretAccessKey: requiredEnv("R2_SECRET_ACCESS_KEY"),
   },
+  // AWS SDK v3 (>=3.729) defaults to adding CRC32 checksum headers, which
+  // Cloudflare R2 rejects on presigned PUTs — the browser then surfaces the
+  // rejection as an opaque "Network error" (the error response carries no CORS
+  // header). Force checksums off unless explicitly required to keep R2 happy.
+  requestChecksumCalculation: "WHEN_REQUIRED",
+  responseChecksumValidation: "WHEN_REQUIRED",
 });
 
 export const R2_BUCKET = requiredEnv("R2_BUCKET_NAME");
