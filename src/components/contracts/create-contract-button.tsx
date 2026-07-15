@@ -22,38 +22,45 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { createContract } from "@/lib/actions/contracts";
 
-const DEFAULT_BODY = `# Service Agreement
+const DEFAULT_BODY = `# Perjanjian Jasa
 
-This agreement is between **{{workspace.name}}** ("Provider") and **{{client.name}}** ("Client").
+Perjanjian ini dibuat antara **{{workspace.name}}** ("Penyedia") dan **{{client.name}}** ("Klien").
 
-## 1. Scope of work
+## 1. Lingkup pekerjaan
 
-[Describe what you'll deliver.]
+[Jelaskan deliverable yang akan dikerjakan.]
 
-## 2. Timeline
+## 2. Jadwal
 
-Work to commence on {{today}}. Target completion: [date].
+Pekerjaan dimulai pada {{today}}. Target selesai: [tanggal].
 
-## 3. Payment
+## 3. Pembayaran
 
-Total project fee as agreed in the proposal. Payment terms: 50% upfront, 50% on delivery.
+Biaya proyek sesuai proposal yang disepakati. Syarat: 50% di muka, 50% saat serah terima.
 
-## 4. Confidentiality
+## 4. Kerahasiaan
 
-Both parties agree to keep all proprietary information confidential.
+Kedua pihak menjaga kerahasiaan informasi proprietary.
 
-## 5. Termination
+## 5. Pengakhiran
 
-Either party may terminate this agreement with 14 days written notice. Work completed to date will be billed proportionally.
+Masing-masing pihak dapat mengakhiri perjanjian dengan pemberitahuan tertulis 14 hari. Pekerjaan yang sudah selesai akan ditagihkan proporsional.
 
-## 6. Acceptance
+## 6. Penerimaan
 
-By signing below, both parties agree to the terms outlined above.
+Dengan menandatangani di bawah, kedua pihak menyetujui syarat di atas.
 `;
 
-export function CreateContractButton({ clients, workspaceId }: { clients: { id: string; name: string }[]; workspaceId: string }) {
+export function CreateContractButton({
+  clients,
+  workspaceId,
+}: {
+  clients: { id: string; name: string }[];
+  workspaceId: string;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [clientId, setClientId] = useState("");
@@ -64,11 +71,11 @@ export function CreateContractButton({ clients, workspaceId }: { clients: { id: 
 
   function handleCreate() {
     if (!clientId) {
-      alert("Pick a client first");
+      toast.error("Pilih klien dulu");
       return;
     }
     if (!title.trim()) {
-      alert("Please give the contract a title");
+      toast.error("Isi judul kontrak");
       return;
     }
     startTransition(async () => {
@@ -81,9 +88,12 @@ export function CreateContractButton({ clients, workspaceId }: { clients: { id: 
           validUntil: validUntil || undefined,
         });
         setOpen(false);
+        toast.success("Draf kontrak dibuat");
         router.push(`/app/contracts/${c.id}`);
-      } catch (err: any) {
-        alert(err?.message || "Create failed");
+        router.refresh();
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Gagal membuat kontrak";
+        toast.error(msg);
       }
     });
   }
@@ -93,12 +103,12 @@ export function CreateContractButton({ clients, workspaceId }: { clients: { id: 
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-1" />
-          Kontrak Baru
+          Kontrak baru
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Kontrak Baru</DialogTitle>
+          <DialogTitle>Kontrak baru</DialogTitle>
           <DialogDescription>
             Mulai dari template, edit isinya, lalu kirim ke klien untuk tanda tangan elektronik.
           </DialogDescription>
@@ -106,16 +116,24 @@ export function CreateContractButton({ clients, workspaceId }: { clients: { id: 
         <div className="space-y-3">
           <div>
             <label className="text-sm font-medium block mb-1">Klien</label>
-            <Select value={clientId} onValueChange={setClientId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih klien..." />
-              </SelectTrigger>
-              <SelectContent>
-                {clients.map(c => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {clients.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Belum ada klien. Buat klien dulu.
+              </p>
+            ) : (
+              <Select value={clientId} onValueChange={setClientId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih klien..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div>
             <label className="text-sm font-medium block mb-1">Judul</label>
@@ -126,7 +144,9 @@ export function CreateContractButton({ clients, workspaceId }: { clients: { id: 
             />
           </div>
           <div>
-            <label className="text-sm font-medium block mb-1">Berlaku sampai (opsional)</label>
+            <label className="text-sm font-medium block mb-1">
+              Berlaku sampai (opsional)
+            </label>
             <Input
               type="date"
               value={validUntil}
@@ -135,9 +155,10 @@ export function CreateContractButton({ clients, workspaceId }: { clients: { id: 
           </div>
           <div>
             <label className="text-sm font-medium block mb-1">
-              Body
-              <span className="text-xs text-slate-500 ml-2">
-                Use {`{{client.name}}`}, {`{{workspace.name}}`}, {`{{today}}`}, {`{{valid_until}}`}
+              Isi kontrak
+              <span className="text-xs text-slate-500 ml-2 font-normal">
+                Placeholder: {`{{client.name}}`}, {`{{workspace.name}}`},{" "}
+                {`{{today}}`}, {`{{valid_until}}`}
               </span>
             </label>
             <Textarea
@@ -152,7 +173,7 @@ export function CreateContractButton({ clients, workspaceId }: { clients: { id: 
           <Button variant="ghost" onClick={() => setOpen(false)} disabled={pending}>
             Batal
           </Button>
-          <Button onClick={handleCreate} disabled={pending}>
+          <Button onClick={handleCreate} disabled={pending || clients.length === 0}>
             {pending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
             Buat draf
           </Button>

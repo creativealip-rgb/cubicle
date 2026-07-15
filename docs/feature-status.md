@@ -84,7 +84,7 @@ Latest verified commit: `2babd61 fix: close forms before refresh`
 | --- | --- | --- | --- |
 | Proposals list/detail/new | `/app/proposals`, `/app/proposals/new`, `/app/proposals/[proposalId]` | DONE | v0.1.32: status tabs, activity date fix, detail i18n, DP/valid meta, send/resend+copy, delete guard. |
 | Public proposal | `/proposal/[token]` | DONE | Public token page exists. |
-| Contracts list/detail | `/app/contracts`, `/app/contracts/[contractId]` | DONE | Contract workflow exists. |
+| Contracts list/detail | `/app/contracts`, `/app/contracts/[contractId]` | DONE | v0.1.33: status tabs, activity date fix, detail i18n, send/resend+copy, revoke, delete guard. |
 | Public contract | `/contract/[token]` | DONE | Public token page exists. |
 | Contract templates | `/app/contract-templates` | DONE | Template routes exist. |
 | Questionnaires | `/app/questionnaires` | DONE | Questionnaire routes exist. |

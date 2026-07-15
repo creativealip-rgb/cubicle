@@ -12,6 +12,14 @@ Versi aplikasi mengikuti `package.json` (`version`) dan otomatis tampil di sideb
 lewat `NEXT_PUBLIC_APP_VERSION`. Naikkan versi di `package.json` setiap rilis,
 lalu tambahkan entri di sini.
 
+## v0.1.33 — 2026-07-15 — Kontrak polish: status tabs, activity date fix, detail i18n
+
+- **List**: status filter tabs + counts; activity follows real status (no false "Draf"); valid-until under title; resend for sent/viewed.
+- **Detail**: full i18n (status badge, Back→Semua kontrak, Download PDF→Unduh PDF, Signed/Declined/body labels); meta Status/Valid/Created; send/resend+copy; revoke; delete guard (block signed).
+- **Body**: normalize literal `\n`; create dialog default body ID + toast.
+- **Actions**: revalidatePath create/update/send/revoke/delete; delete scoped to workspace.
+- Verified live: tabs Semua 3 / Terkirim 1 / Ditandatangani 2; detail Mimi Amilia Terkirim + Kirim ulang/Cabut/Hapus; health 200 bundle `0.1.33`.
+
 ## v0.1.32 — 2026-07-15 — Proposal polish: status tabs, activity date fix, detail i18n
 
 - **List**: status filter tabs + counts; activity label follows real status (no more "Draf" on sent/accepted seed data); valid-until under title; resend action for sent/viewed.

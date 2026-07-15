@@ -8,6 +8,7 @@ import { contracts, contractTemplates, clients, projects, workspaces } from "@/d
 import { eq, and, desc } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
+import { revalidatePath } from "next/cache";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
@@ -146,6 +147,7 @@ export async function createContract(input: z.infer<typeof createContractSchema>
   await writeActivityLog(parsed.workspaceId, user.id, "created_contract", "contract", c.id, {
     title: c.title,
   });
+  revalidatePath("/app/contracts");
   return c;
 }
 
@@ -165,6 +167,8 @@ export async function updateContract(contractId: string, input: { title?: string
     .set({ ...input, updatedAt: new Date() })
     .where(eq(contracts.id, contractId))
     .returning();
+  revalidatePath("/app/contracts");
+  revalidatePath(`/app/contracts/${contractId}`);
   return updated;
 }
 
@@ -173,7 +177,18 @@ export async function deleteContract(contractId: string) {
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
-  await db.delete(contracts).where(eq(contracts.id, contractId));
+
+  const [existing] = await db.select().from(contracts)
+    .where(and(eq(contracts.id, contractId), eq(contracts.workspaceId, workspaceId)))
+    .limit(1);
+  if (!existing) throw new Error("Contract not found");
+  if (existing.status === "signed") {
+    throw new Error("Kontrak yang sudah ditandatangani tidak bisa dihapus");
+  }
+
+  await db.delete(contracts).where(and(eq(contracts.id, contractId), eq(contracts.workspaceId, workspaceId)));
+  await writeActivityLog(workspaceId, user.id, "deleted_contract", "contract", contractId);
+  revalidatePath("/app/contracts");
   return { success: true };
 }
 
@@ -235,6 +250,8 @@ export async function sendContract(input: {
     clientName: client?.name,
   });
 
+  revalidatePath("/app/contracts");
+  revalidatePath(`/app/contracts/${c.id}`);
   return { contract: updated, token };
 }
 
@@ -248,6 +265,8 @@ export async function revokeContract(contractId: string) {
     .set({ status: "revoked", sharedTokenRevokedAt: new Date(), updatedAt: new Date() })
     .where(and(eq(contracts.id, contractId), eq(contracts.workspaceId, workspaceId)))
     .returning();
+  revalidatePath("/app/contracts");
+  revalidatePath(`/app/contracts/${contractId}`);
   return updated;
 }
 
