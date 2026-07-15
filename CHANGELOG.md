@@ -4,6 +4,17 @@ Versi aplikasi mengikuti `package.json` (`version`) dan otomatis tampil di sideb
 lewat `NEXT_PUBLIC_APP_VERSION`. Naikkan versi di `package.json` setiap rilis,
 lalu tambahkan entri di sini.
 
+## v0.1.27 — 2026-07-15 — Harden halaman Reports: multi-currency integrity, AR, cashflow
+
+- **P0 multi-currency integrity** (`app/reports/page.tsx`): collection health / overdue / outstanding **tidak lagi sum lintas currency** (bug `Rp 3.886.200` = 3.885.000 IDR + 1.200 USD). Semua KPI money multi-line via shared `formatMoney` (`$` glyph, bukan `USD …`).
+- **AR aging**: exclude `draft`/`paid`/`cancelled` — hanya `sent`/`viewed`/`overdue`. Remaining = total − partial payments. Draft Rp 24.420.000 tidak lagi inflate Current.
+- **Project expenses**: group by project+currency; **tidak** hardcode IDR (fix Website Redesign `Rp 270.010` palsu → `Rp 270.000` + `$10.00`). Claim income palsu di description dihapus.
+- **Label jujur**: KPI window = **6 bulan** (bukan YTD dusta). Top clients / top expenses tetap calendar YTD.
+- **Cashflow**: bucket **Sudah terlambat** + 3 bulan ke depan; remaining partial-payment aware; hide empty month noise di P&L.
+- **Top clients unpaid**: partial-payment aware (sum payments per invoice).
+- **i18n**: string utama lewat `t()`; empty months disembunyikan.
+- Verified live: `tsc --noEmit` 0, docker build + deploy healthy, health 200, browser `/app/reports` collection `45% IDR · 52% USD`, overdue `Rp 3.885.000 · $1,200`, project expenses multi-line.
+
 ## v0.1.26 — 2026-07-15 — Overhaul halaman Expenses: multi-currency, edit, filter, kategori, rutin, struk, CSV
 
 - **P0 multi-currency KPI** (`app/expenses/page.tsx`): income & net dihitung per currency (join `payments` × `invoices.currency`). Tidak ada lagi sum USD+IDR jadi satu angka IDR palsu. Spent/income/net tampil multi-line (`formatMoney` per currency). Breakdown kategori bar-scale pilih currency dominan (prefer IDR).
