@@ -4,6 +4,19 @@ Versi aplikasi mengikuti `package.json` (`version`) dan otomatis tampil di sideb
 lewat `NEXT_PUBLIC_APP_VERSION`. Naikkan versi di `package.json` setiap rilis,
 lalu tambahkan entri di sini.
 
+## v0.1.26 — 2026-07-15 — Overhaul halaman Expenses: multi-currency, edit, filter, kategori, rutin, struk, CSV
+
+- **P0 multi-currency KPI** (`app/expenses/page.tsx`): income & net dihitung per currency (join `payments` × `invoices.currency`). Tidak ada lagi sum USD+IDR jadi satu angka IDR palsu. Spent/income/net tampil multi-line (`formatMoney` per currency). Breakdown kategori bar-scale pilih currency dominan (prefer IDR).
+- **List ops**: month picker, search deskripsi/vendor, filter kategori, pagination 25/page, kolom klien, amount `whitespace-nowrap` via `formatMoney`.
+- **Edit expense UI** (`edit-expense-button.tsx` + form mode edit) — pakai `updateExpense` yang sudah ada.
+- **i18n penuh** form + delete dialog + semua string baru lewat `useT()` / `createT()`.
+- **Quick-add compact**: amount + description + category default; advanced expand (vendor/project/client/currency/tax/receipt).
+- **Category manager** tab: create/edit/delete kategori (warna preset).
+- **Recurring manager** tab: CRUD rutin, pause/resume, generate-now (`createRecurring`/`updateRecurring`/`deleteRecurring`/`generateFromRecurring`).
+- **Receipt upload** R2 presigned PUT (`getExpenseReceiptUploadUrl` / `getExpenseReceiptDownloadUrl`); tax optional di form.
+- **Export CSV** (`exportExpensesCsv` + tombol client) filter-aware (month/category/q).
+- Verified: `tsc --noEmit` 0 error. Deploy + browser check menyusul.
+
 ## v0.1.25 — 2026-07-14 — Katalog paket workspace reusable + input waktu & PDF sadar billing-type
 
 - **Katalog paket level workspace** (`app/packages/page.tsx` + `components/packages/package-catalog.tsx` baru): paket (mis. 40/60/100 jam) kini dibuat sekali sebagai template reusable, bukan diketik ulang per proyek. Skema `packages.projectId` diubah jadi nullable (migrasi `ALTER TABLE packages ALTER COLUMN project_id DROP NOT NULL`); `projectId = NULL` menandai paket katalog workspace. Action baru `getWorkspacePackages`, `createWorkspacePackage`, `assignPackageToProject` (assign paket ke proyek + set `billingType = "package"`). Menu "Paket" ditambah di grup Keuangan sidebar.
