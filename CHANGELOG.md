@@ -15,7 +15,7 @@ lalu tambahkan entri di sini.
 - **Recurring manager** tab: CRUD rutin, pause/resume, generate-now (`createRecurring`/`updateRecurring`/`deleteRecurring`/`generateFromRecurring`).
 - **Receipt upload** R2 presigned PUT (`getExpenseReceiptUploadUrl` / `getExpenseReceiptDownloadUrl`); tax optional di form.
 - **Export CSV** (`exportExpensesCsv` + tombol client) filter-aware (month/category/q).
-- Verified: `tsc --noEmit` 0 error. Deploy + browser check menyusul.
+- Verified live: `tsc --noEmit` 0 error, docker build + deploy `cubicle-cubicle-1` healthy, health 200, browser test multi-currency KPI + tabs Rutin/Kategori. Commit `e84411a`.
 
 ## v0.1.25 — 2026-07-14 — Katalog paket workspace reusable + input waktu & PDF sadar billing-type
 

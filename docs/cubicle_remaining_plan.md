@@ -414,6 +414,7 @@ Sprint H P2.8.1 Expense CRUD ✅ (18 Jun — expenses, categories, project-tag)
 Sprint I P2.8.2 Reports ✅ (18 Jun — 4 new AI tools, /app/reports dashboard)
 Sprint J P2.7.1 Proposal ✅ (18 Jun — accept flow, auto-create project+invoice)
 Sprint K P2.8 Recurring + Cash flow ✅ (18 Jun — 2 new AI tools, forecast card)
+Sprint K.2 Expenses UI overhaul ✅ (15 Jul — multi-currency KPI, edit/filter/tabs, receipt, CSV; v0.1.26 `e84411a`)
 Sprint L P2.7.2 Questionnaire ✅ (19 Jun — form builder, public /intake, 8 field types)
 Sprint M P2.7.3 Contract + E-sig ✅ (19 Jun — signature pad, audit trail, AI tools)
 Sprint N Contract PDF + Q AI ✅ (19 Jun — downloadable signed PDF, 3 new AI tools)
@@ -1224,7 +1225,7 @@ Existing (no change):           New:
 ❌ Bank reconciliation                        — future
 ❌ Multi-currency conversion (auto FX)        — future
 ❌ Tax helpers (PPN 11%, PPh 23, e-Faktur)    — future (P2.9 candidate)
-❌ Recurring expense auto-create               — future
+❌ Recurring expense **cron** auto-create      — future (UI + generate-now shipped 15 Jul v0.1.26; scheduled job belum)
 ```
 
 **Phased plan:**
@@ -1280,6 +1281,18 @@ revision round; coach = session cost; translator = word count cost).
 - **P2.8.1 Expense CRUD + categories + per-project tag** (Sprint H) — `expenses` + `expense_categories` tables, /app/expenses list/create/edit/delete, 8 default categories seeded, project dropdown, per-project view
 - **P2.8.2 Auto reports (P&L, aging, top expenses)** (Sprint I) — /app/reports with YTD P&L + monthly bar chart + per-project + per-client + aging buckets + top categories. AI tools: `project_pl`, `client_revenue`, `invoice_aging`, `top_expense_categories`
 - **Sprint K extension: Recurring + Cash flow forecast** — `expense_recurring` table, `generateFromRecurring` action, cash flow card on Reports with 3-month outlook. AI tools: `cash_flow_forecast`, `list_recurring`
+
+**Status 2026-07-15: ✅ Sprint K.2 Expenses UI overhaul (v0.1.26, commit `e84411a`).**
+Closes UI gap di atas backend P2.8.1/K yang sudah ada sejak Juni. Live di cubiqlo.com/app/expenses.
+- **P0 multi-currency KPI** — income/net group BY `invoices.currency` (payments join). Multi-line totals. Tidak sum USD+IDR jadi angka IDR palsu.
+- **List ops** — month picker, search, category filter, pagination 25, kolom klien, `formatMoney` nowrap
+- **Edit UI** — `edit-expense-button.tsx` + form mode edit (pakai `updateExpense`)
+- **Tabs** — Daftar / Rutin (CRUD+pause+generate-now) / Kategori (CRUD warna)
+- **Quick-add compact** + advanced expand (vendor/project/client/tax/receipt)
+- **Receipt R2** presigned PUT/GET + tax optional
+- **Export CSV** filter-aware
+- **i18n penuh** form + dialogs via `useT()` / `createT()`
+- **Sisa open:** recurring **cron auto-create** (generate-now manual sudah ada; scheduled job belum). AI receipt OCR + bank CSV + FX conversion tetap out-of-scope.
 
 ---
 
@@ -1403,6 +1416,28 @@ Closes the last gaps in finance module: recurring expenses (rent, SaaS subs) and
 - Reports page shows Cash flow card with month-by-month breakdown
 
 **Score impact:** Production client-ready ~92% → ~93% (Recurring adds ops utility, Cash flow adds strategic insight, Proposal adds client-acquisition flow).
+
+### Sprint K.2 — Expenses UI overhaul ✅ DONE (15 Jul 2026, v0.1.26)
+
+Backend P2.8.1/K sudah siap sejak Juni; UI expenses masih thin (create + delete only, income KPI multi-currency salah). Sprint K.2 closes UI gap.
+
+**What shipped (commit `e84411a`):**
+- P0 multi-currency KPI: spent/income/net group by currency (`payments ⨝ invoices.currency`), multi-line `formatMoney`
+- Edit expense dialog + full i18n form/delete
+- Month/category/search filters + pagination 25 + client column
+- Tabs: Daftar / Rutin (CRUD, pause/resume, generate-now) / Kategori (CRUD warna)
+- Quick-add compact + advanced expand (vendor/project/client/tax/receipt)
+- Receipt R2 presigned upload/download + tax optional
+- Export CSV filter-aware
+- Components baru: `edit-expense-button`, `expense-filters`, `category-manager`, `recurring-manager`, `expense-csv-export`, `receipt-link-button`
+
+**Verified live (15 Jul):**
+- cubiqlo.com/app/expenses — spent `Rp 1.455.000` + `$10.00`, income `$1,800.00` (bukan `Rp 1.800`), net multi-line
+- Tabs Rutin/Kategori render; container healthy; health 200; tsc clean
+
+**Still open after K.2:**
+- ❌ Recurring **cron** auto-create (manual generate-now sudah ada)
+- ❌ AI receipt OCR / bank CSV import / FX conversion (out of scope, tetap)
 
 ### Sprint L — P2.7.2 Questionnaire ✅ DONE (19 Jun 2026)
 
@@ -1849,20 +1884,17 @@ Resolved (closed this session):
 
 Still open:
   1 accepted npm audit (postcss nested in next, moderate, build-time only)
-  ⏸️ HOLD per Alip 16 Jun: No real domain yet (P1.6) — revisit when Alip decides
   ⏸️ HOLD per Alip 16 Jun: External uptime + CPU/RAM alert (P2.5) — revisit when needed
   ⏸️ HOLD per Alip 16 Jun: RESEND_API_KEY prod + sender domain (P2.2) — needs API key + domain first
   ⏸️ HOLD per Alip 16 Jun: Payment gateway decision (Midtrans/Xendit/Stripe) — blocks pricing + onboarding + self-serve billing
   ⏸️ HOLD per Alip 16 Jun: ICP decision (A/B/C/D) — blocks P2.7 scope commitment
   Test with real logo URL from R2 upload (P2.3, not exercised yet)
+  ✅ P2.8 Finance core + Sprint K.2 Expenses UI overhaul (15 Jul v0.1.26 `e84411a`) — multi-currency KPI, edit/filter/tabs, receipt, CSV. Sisa: recurring cron auto-create.
   📋 NEXT SPRINT: P2.6 Reply-To email header (Sprint E) — Alip-approved 16 Jun,
-     blocked by P1.6 (same domain purchase unblocks both P1.6 and P2.6)
-  📋 PLANNED: P2.7 Pre-deal workflow (Proposal + Questionnaire + Contract) —
-     Alip-approved 16 Jun, gated on ICP decision, ~4-8 minggu depending on
-     e-sig path (in-house vs DocuSign/HelloSign embed)
-  📋 PLANNED: P2.8 Finance module (income from invoice + manual expense +
-     auto reports) — Alip-approved 16 Jun, Option B manual-only, skip tax
-     helpers for now. ~3 mgu core. Gated on ICP decision.
+     needs Resend sender domain (cubiqlo.com already live)
+  📋 NEXT: Recurring expense cron auto-create (generate-now manual sudah ada)
+  📋 PLANNED: P2.7 Pre-deal workflow polish / remaining gaps —
+     Proposal/Questionnaire/Contract already shipped Sprints J/L/M; remaining gated on email prod + ICP
   📋 FUTURE: P2.9 Tax helpers (PPN 11%, PPh 23, e-Faktur) — Indonesian depth
      direction, big scope (~6+ mgu + legal/compliance knowledge). Wait for
      🅐 direction commit or skip.

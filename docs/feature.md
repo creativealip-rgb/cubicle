@@ -3,8 +3,8 @@
 > **Purpose:** Future feature ideas, not committed to any sprint. Each item
 > includes problem, scope, effort, dependencies, and "when to ship" trigger.
 >
-> **Last updated:** 16 June 2026
-> **Status:** All items = 📋 BACKLOG (not planned for active sprint)
+> **Last updated:** 15 July 2026
+> **Status:** Backlog ideas + status notes. F-09 partially shipped (UI/generate-now); cron still open.
 >
 > **Promotion criteria** (item graduates from here to `cubicle_remaining_plan.md`):
 > 1. ICP decision made (A/B/C/D)
@@ -154,13 +154,15 @@ OR after P2.8 Finance ships (so reports can be AI-summarized).
 - **Effort:** 3-5 hari
 - **When to ship:** anytime. Low priority.
 
-### F-09 Recurring expense auto-create (P2.8.3)
+### F-09 Recurring expense auto-create (P2.8.3) — 🟡 PARTIAL (15 Jul 2026)
 
 - **Problem:** "hosting monthly Rp 150rb" — manual entry tiap bulan
 - **Scope:** `expense_recurring` table + cron job per workspace
-- **Effort:** 3-5 hari
-- **Dependencies:** P2.8.1 (expense CRUD)
-- **When to ship:** P2.8 phase 2
+- **Effort:** 3-5 hari (sisa cron ~1–2 jam)
+- **Dependencies:** P2.8.1 (expense CRUD) ✅
+- **Shipped 15 Jul (v0.1.26 `e84411a`):** table + actions (`createRecurring`/`updateRecurring`/`deleteRecurring`/`generateFromRecurring`) + **Recurring manager UI** di `/app/expenses?tab=recurring` (CRUD, pause/resume, generate-now). Cash flow forecast di Reports sudah pakai rules aktif.
+- **Still open:** scheduled **cron** auto-create per workspace (belum; user masih klik generate-now)
+- **When to ship remainder:** anytime — no blocker
 
 ---
 
