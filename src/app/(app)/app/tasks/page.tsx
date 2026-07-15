@@ -28,7 +28,14 @@ async function getWorkspaceId(): Promise<string> {
 export default async function TasksPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; priority?: string; projectId?: string; assignee?: string; view?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    priority?: string;
+    projectId?: string;
+    assignee?: string;
+    view?: string;
+    focus?: string;
+  }>;
 }) {
   const lang = await getCurrentLang();
   const t = createT(lang);
@@ -39,6 +46,7 @@ export default async function TasksPage({
   const workspaceId = await getWorkspaceId();
   const params = await searchParams;
   const view: "list" | "board" = params.view === "board" ? "board" : "list";
+  const focusId = params.focus || null;
 
   const whereClauses = [eq(tasks.workspaceId, workspaceId)];
 
@@ -75,6 +83,7 @@ export default async function TasksPage({
       projectName: projects.name,
       assigneeId: tasks.assigneeId,
       assigneeName: users.name,
+      sourceNoteId: tasks.sourceNoteId,
     })
     .from(tasks)
     .leftJoin(projects, eq(projects.id, tasks.projectId))
@@ -153,12 +162,26 @@ export default async function TasksPage({
         )}
         {taskList.map((task) => {
           const sb = taskStatusVariant(task.status, lang);
+          const isFocus = focusId === task.id;
           return (
-            <TaskDetailSheet key={task.id} task={task} members={memberList}>
-              <Card className="cursor-pointer rounded-none border-0 border-b shadow-none transition-colors last:border-b-0 hover:bg-muted/50">
+            <TaskDetailSheet
+              key={task.id}
+              task={task}
+              members={memberList}
+              defaultOpen={isFocus}
+            >
+              <Card
+                id={isFocus ? `task-${task.id}` : undefined}
+                className={`cursor-pointer rounded-none border-0 border-b shadow-none transition-colors last:border-b-0 hover:bg-muted/50 ${isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""}`}
+              >
                 <CardContent className="grid gap-3 p-4 md:flex md:items-center md:gap-4">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{task.title}</p>
+                    {task.sourceNoteId ? (
+                      <p className="mt-0.5 text-[10px] text-muted-foreground">
+                        {t("Dari catatan", "From note")}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="text-xs text-muted-foreground md:w-32 md:truncate">
                     {task.projectName ?? t("Tanpa proyek", "No project")}

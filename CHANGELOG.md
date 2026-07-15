@@ -4,6 +4,13 @@ Versi aplikasi mengikuti `package.json` (`version`) dan otomatis tampil di sideb
 lewat `NEXT_PUBLIC_APP_VERSION`. Naikkan versi di `package.json` setiap rilis,
 lalu tambahkan entri di sini.
 
+## v0.1.30 — 2026-07-15 — Catatan optional: priority convert, reverse link, infinite scroll
+
+- **Priority picker** on convert note→task (low/medium/high/urgent).
+- **Reverse link task↔note**: `tasks.source_note_id` + `personal_notes.converted_task_id`; note shows "Buka task terkait"; task list "Dari catatan" + sheet "Buka di Catatan"; `?focus=` opens task sheet.
+- **Infinite scroll / load-more**: client list loads 25, IntersectionObserver + "Muat lebih banyak", `loadMorePersonalNotes` server action.
+- Guard: note already converted cannot convert again.
+
 ## v0.1.29 — 2026-07-15 — Catatan: recurrence auto-roll, convert→task, pagination
 
 - **Recurrence auto-roll**: mark done on recurring note advances due (daily/weekly/monthly/yearly) and stays open; cron `/api/cron/personal-note-reminders` rolls past-due open recurring notes first (`rolled` in response).

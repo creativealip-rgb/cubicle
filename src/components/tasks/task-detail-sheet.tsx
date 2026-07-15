@@ -27,7 +27,9 @@ import {
   Eye,
   EyeOff,
   AlertTriangle,
+  StickyNote,
 } from "lucide-react";
+import Link from "next/link";
 import { useT } from "@/lib/i18n-client";
 
 interface Task {
@@ -43,17 +45,24 @@ interface Task {
   clientVisible: boolean;
   projectId?: string;
   projectName?: string | null;
+  sourceNoteId?: string | null;
 }
 
 interface TaskDetailSheetProps {
   task: Task;
   members?: Array<{ id: string; name: string | null; email: string | null }>;
   children: React.ReactNode;
+  defaultOpen?: boolean;
 }
 
-export function TaskDetailSheet({ task, members = [], children }: TaskDetailSheetProps) {
+export function TaskDetailSheet({
+  task,
+  members = [],
+  children,
+  defaultOpen = false,
+}: TaskDetailSheetProps) {
   const { t } = useT();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -246,6 +255,25 @@ export function TaskDetailSheet({ task, members = [], children }: TaskDetailShee
               )}
             </Button>
           </div>
+
+          {task.sourceNoteId ? (
+            <div className="space-y-2">
+              <Label className="text-xs flex items-center gap-1">
+                <StickyNote className="h-3 w-3" /> {t("Sumber catatan", "Source note")}
+              </Label>
+              <Button asChild variant="secondary" size="sm" className="gap-1 text-xs">
+                <Link href={`/app/personal?tab=all&q=${encodeURIComponent(task.title)}`}>
+                  {t("Buka di Catatan", "Open in Notes")}
+                </Link>
+              </Button>
+              <p className="text-[11px] text-muted-foreground">
+                {t(
+                  "Task ini dibuat dari catatan pribadi.",
+                  "This task was converted from a personal note.",
+                )}
+              </p>
+            </div>
+          ) : null}
 
           <Separator />
 

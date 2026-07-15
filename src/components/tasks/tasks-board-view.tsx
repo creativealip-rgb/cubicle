@@ -20,6 +20,7 @@ interface Task {
   projectName?: string | null;
   assigneeId: string | null;
   assigneeName: string | null;
+  sourceNoteId?: string | null;
 }
 
 interface TasksBoardViewProps {

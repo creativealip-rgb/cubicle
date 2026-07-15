@@ -362,18 +362,31 @@ export async function deletePersonalNote(noteId: string) {
   revalidatePath("/app");
 }
 
+const TASK_PRIORITIES = ["low", "medium", "high", "urgent"] as const;
+export type TaskPriority = (typeof TASK_PRIORITIES)[number];
+
+function normalizePriority(value?: string): TaskPriority {
+  const v = (value || "medium").toLowerCase().trim();
+  return (TASK_PRIORITIES as readonly string[]).includes(v)
+    ? (v as TaskPriority)
+    : "medium";
+}
+
 /**
  * Convert personal note → workspace task on a project.
- * Archives the note after successful task create.
+ * Archives the note after successful task create and stores reverse links.
  */
 export async function convertPersonalNoteToTask(
   noteId: string,
   projectId: string,
-  opts?: { priority?: "low" | "medium" | "high" | "urgent"; archiveNote?: boolean },
+  opts?: { priority?: TaskPriority | string; archiveNote?: boolean },
 ) {
   const { user, workspaceId, note } = await requireOwnedNote(noteId);
   if (!z.string().uuid().safeParse(projectId).success) {
     throw new Error("Valid project required");
+  }
+  if (note.convertedTaskId) {
+    throw new Error("Note already converted to a task");
   }
 
   const [project] = await db
@@ -386,6 +399,7 @@ export async function convertPersonalNoteToTask(
   const dueDateStr = note.dueDate
     ? note.dueDate.toISOString().slice(0, 10)
     : null;
+  const priority = normalizePriority(opts?.priority);
 
   const [maxPos] = await db
     .select({ max: sql<number>`coalesce(max(${tasks.position}), -1)::int` })
@@ -400,28 +414,63 @@ export async function convertPersonalNoteToTask(
       title: note.title,
       description: note.body || null,
       status: "todo",
-      priority: opts?.priority ?? "medium",
+      priority,
       assigneeId: user.id,
       dueDate: dueDateStr,
       clientVisible: false,
       position: (maxPos?.max ?? -1) + 1,
       createdBy: user.id,
+      sourceNoteId: note.id,
     })
     .returning();
 
   await writeActivityLog(workspaceId, user.id, "created_task", "task", task.id);
 
-  if (opts?.archiveNote !== false) {
-    await db
-      .update(personalNotes)
-      .set({ status: "archived", updatedAt: new Date() })
-      .where(eq(personalNotes.id, noteId));
-  }
+  await db
+    .update(personalNotes)
+    .set({
+      convertedTaskId: task.id,
+      status: opts?.archiveNote === false ? note.status : "archived",
+      updatedAt: new Date(),
+    })
+    .where(eq(personalNotes.id, noteId));
 
   revalidatePath("/app/personal");
   revalidatePath("/app/tasks");
   revalidatePath("/app");
   return task;
+}
+
+/** Page of notes for client load-more (serializable). */
+export async function loadMorePersonalNotes(input: {
+  query?: string;
+  status?: PersonalNoteStatus | "all" | "active";
+  offset: number;
+  limit?: number;
+}) {
+  const limit = Math.min(Math.max(input.limit ?? 25, 1), 100);
+  const offset = Math.max(input.offset ?? 0, 0);
+  const notes = await listPersonalNotes(input.query, {
+    status: input.status ?? "open",
+    includeSystem: false,
+    limit,
+    offset,
+  });
+  return notes.map((n) => ({
+    id: n.id,
+    title: n.title,
+    body: n.body,
+    dueDate: n.dueDate ? n.dueDate.toISOString() : null,
+    recurrenceRule: n.recurrenceRule,
+    notify7d: n.notify7d,
+    notify3d: n.notify3d,
+    notify1d: n.notify1d,
+    status: n.status,
+    pinned: n.pinned,
+    convertedTaskId: n.convertedTaskId,
+    createdAt: n.createdAt.toISOString(),
+    updatedAt: n.updatedAt.toISOString(),
+  }));
 }
 
 /**

@@ -218,6 +218,8 @@ export const tasks = pgTable("tasks", {
   dueDate: date("due_date"),
   position: integer("position").notNull().default(0),
   clientVisible: boolean("client_visible").notNull().default(false),
+  /** Personal note this task was converted from (optional reverse link). */
+  sourceNoteId: uuid("source_note_id"),
   createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -836,6 +838,8 @@ export const personalNotes = pgTable("personal_notes", {
   lastReminded1d: timestamp("last_reminded_1d", { withTimezone: true }),
   status: text("status", { enum: ["open", "done", "archived"] }).notNull().default("open"),
   pinned: boolean("pinned").notNull().default(false),
+  /** Task created from this note via convert (optional reverse link). */
+  convertedTaskId: uuid("converted_task_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
