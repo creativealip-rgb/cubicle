@@ -32,6 +32,12 @@ export async function GET(request: Request) {
   }
 
   try {
+    // First: roll open recurring notes whose due date already passed
+    const { rollOverdueRecurringNotes } = await import(
+      "@/lib/actions/personal-notes"
+    );
+    const rolled = await rollOverdueRecurringNotes(200);
+
     const now = new Date();
     const dedupeBefore = new Date(now.getTime() - DEDUPE_MS);
     const results: {
@@ -134,6 +140,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       ok: true,
+      rolled,
       sent: results.filter((r) => r.emailed).length,
       total: results.length,
       results,

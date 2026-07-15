@@ -4,6 +4,13 @@ Versi aplikasi mengikuti `package.json` (`version`) dan otomatis tampil di sideb
 lewat `NEXT_PUBLIC_APP_VERSION`. Naikkan versi di `package.json` setiap rilis,
 lalu tambahkan entri di sini.
 
+## v0.1.29 — 2026-07-15 — Catatan: recurrence auto-roll, convert→task, pagination
+
+- **Recurrence auto-roll**: mark done on recurring note advances due (daily/weekly/monthly/yearly) and stays open; cron `/api/cron/personal-note-reminders` rolls past-due open recurring notes first (`rolled` in response).
+- **Convert note → task**: pick project → creates todo task (assignee=self, due from note) + archives note; redirects `/app/tasks?focus=`.
+- **Pagination**: 25/page with prev/next + count ranges; status counts via SQL `GROUP BY`.
+- Verified live: cron rolled weekly due past→future; browser convert “QA convert note” → task on project Test; health 200 bundle `0.1.29`.
+
 ## v0.1.28 — 2026-07-15 — Harden Catatan/Jurnal: status, reminder cron, tabs, hide system notes
 
 - **P0 status normalize**: live `personal_notes.status='active'` (6 rows) → `open`. Schema + UI + cron + dashboard konsisten `open|done|archived`.

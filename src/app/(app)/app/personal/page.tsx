@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { and, eq } from "drizzle-orm";
 import {
+  convertPersonalNoteToTask,
+  countPersonalNotesByStatus,
   createPersonalNote,
   deletePersonalNote,
+  getNotesPageSize,
   listPersonalNotes,
   togglePersonalNotePinned,
   updatePersonalNote,
@@ -10,12 +14,21 @@ import {
   type PersonalNoteRecurrence,
   type PersonalNoteStatus,
 } from "@/lib/actions/personal-notes";
+import { db } from "@/db";
+import { projects } from "@/db/schema";
+import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Archive, CheckCircle2, Pin, RotateCcw } from "lucide-react";
+import {
+  Archive,
+  CheckCircle2,
+  ListTodo,
+  Pin,
+  RotateCcw,
+} from "lucide-react";
 import { getCurrentLang, createT, type Lang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { ConfirmDeleteNoteButton } from "@/components/notes/confirm-delete-note-button";
@@ -50,10 +63,7 @@ function isOverdue(due: Date | string | null, status: string) {
   return new Date(due).getTime() < Date.now();
 }
 
-function recurrenceLabel(
-  rule: string,
-  t: (id: string, en: string) => string,
-) {
+function recurrenceLabel(rule: string, t: (id: string, en: string) => string) {
   switch (rule) {
     case "daily":
       return t("Harian", "Daily");
@@ -68,10 +78,18 @@ function recurrenceLabel(
   }
 }
 
+function buildHref(tab: Tab, query: string, page?: number) {
+  const params = new URLSearchParams();
+  params.set("tab", tab);
+  if (query) params.set("q", query);
+  if (page && page > 1) params.set("page", String(page));
+  return `/app/personal?${params.toString()}`;
+}
+
 export default async function PersonalPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; tab?: string }>;
+  searchParams: Promise<{ q?: string; tab?: string; page?: string }>;
 }) {
   const lang = await getCurrentLang();
   const t = createT(lang);
@@ -80,21 +98,37 @@ export default async function PersonalPage({
   const tab = (["open", "done", "archived", "all"].includes(params.tab ?? "")
     ? params.tab
     : "open") as Tab;
+  const page = Math.max(1, Number.parseInt(params.page || "1", 10) || 1);
+  const pageSize = await getNotesPageSize();
+  const offset = (page - 1) * pageSize;
 
-  const allNotes = await listPersonalNotes(query, {
-    status: "all",
-    includeSystem: false,
-  });
+  const workspaceId = await getWorkspaceForCurrentUser();
+  const [counts, notes, projectList] = await Promise.all([
+    countPersonalNotesByStatus(query, { includeSystem: false }),
+    listPersonalNotes(query, {
+      status: tab === "all" ? "all" : tab,
+      includeSystem: false,
+      limit: pageSize,
+      offset,
+    }),
+    db
+      .select({ id: projects.id, name: projects.name })
+      .from(projects)
+      .where(and(eq(projects.workspaceId, workspaceId), eq(projects.status, "active")))
+      .orderBy(projects.name)
+      .limit(100),
+  ]);
 
-  const counts = {
-    open: allNotes.filter((n) => n.status === "open").length,
-    done: allNotes.filter((n) => n.status === "done").length,
-    archived: allNotes.filter((n) => n.status === "archived").length,
-    all: allNotes.length,
-  };
-
-  const notes =
-    tab === "all" ? allNotes : allNotes.filter((n) => n.status === tab);
+  const tabTotal =
+    tab === "all"
+      ? counts.all
+      : tab === "open"
+        ? counts.open
+        : tab === "done"
+          ? counts.done
+          : counts.archived;
+  const totalPages = Math.max(1, Math.ceil(tabTotal / pageSize));
+  const safePage = Math.min(page, totalPages);
 
   async function createNote(formData: FormData) {
     "use server";
@@ -126,7 +160,12 @@ export default async function PersonalPage({
       pinned: formData.get("pinned") === "on",
     });
     const back = String(formData.get("tab") ?? "open");
-    redirect(`/app/personal?tab=${back}`);
+    const q = String(formData.get("q") ?? "");
+    const p = String(formData.get("page") ?? "1");
+    const params = new URLSearchParams({ tab: back });
+    if (q) params.set("q", q);
+    if (p && p !== "1") params.set("page", p);
+    redirect(`/app/personal?${params.toString()}`);
   }
 
   async function setStatus(formData: FormData) {
@@ -136,7 +175,10 @@ export default async function PersonalPage({
       String(formData.get("status") ?? "open") as PersonalNoteStatus,
     );
     const back = String(formData.get("tab") ?? "open");
-    redirect(`/app/personal?tab=${back}`);
+    const q = String(formData.get("q") ?? "");
+    const params = new URLSearchParams({ tab: back });
+    if (q) params.set("q", q);
+    redirect(`/app/personal?${params.toString()}`);
   }
 
   async function togglePinned(formData: FormData) {
@@ -146,14 +188,31 @@ export default async function PersonalPage({
       String(formData.get("pinned") ?? "false") === "true",
     );
     const back = String(formData.get("tab") ?? "open");
-    redirect(`/app/personal?tab=${back}`);
+    const q = String(formData.get("q") ?? "");
+    const params = new URLSearchParams({ tab: back });
+    if (q) params.set("q", q);
+    redirect(`/app/personal?${params.toString()}`);
   }
 
   async function removeNote(formData: FormData) {
     "use server";
     await deletePersonalNote(String(formData.get("noteId") ?? ""));
     const back = String(formData.get("tab") ?? "open");
-    redirect(`/app/personal?tab=${back}`);
+    const q = String(formData.get("q") ?? "");
+    const params = new URLSearchParams({ tab: back });
+    if (q) params.set("q", q);
+    redirect(`/app/personal?${params.toString()}`);
+  }
+
+  async function convertToTask(formData: FormData) {
+    "use server";
+    const noteId = String(formData.get("noteId") ?? "");
+    const projectId = String(formData.get("projectId") ?? "");
+    const task = await convertPersonalNoteToTask(noteId, projectId, {
+      priority: "medium",
+      archiveNote: true,
+    });
+    redirect(`/app/tasks?focus=${task.id}`);
   }
 
   const tabs: { id: Tab; label: string; count: number }[] = [
@@ -190,7 +249,7 @@ export default async function PersonalPage({
         </Button>
         {query ? (
           <Button type="button" variant="ghost" asChild>
-            <Link href={`/app/personal?tab=${tab}`}>{t("Reset", "Clear")}</Link>
+            <Link href={buildHref(tab, "")}>{t("Reset", "Clear")}</Link>
           </Button>
         ) : null}
       </form>
@@ -203,9 +262,7 @@ export default async function PersonalPage({
             size="sm"
             variant={tab === item.id ? "default" : "outline"}
           >
-            <Link
-              href={`/app/personal?tab=${item.id}${query ? `&q=${encodeURIComponent(query)}` : ""}`}
-            >
+            <Link href={buildHref(item.id, query)}>
               {item.label}
               <span className="ml-1.5 tabular-nums opacity-80">{item.count}</span>
             </Link>
@@ -269,8 +326,8 @@ export default async function PersonalPage({
                 </select>
                 <p className="text-xs text-muted-foreground">
                   {t(
-                    "Label saja — auto-roll due date belum aktif.",
-                    "Label only — auto-roll due date not yet active.",
+                    "Saat selesai / lewat tenggat: due date auto-maju ke periode berikutnya.",
+                    "On done / past due: due date auto-advances to the next period.",
                   )}
                 </p>
               </div>
@@ -306,10 +363,15 @@ export default async function PersonalPage({
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between gap-2">
+            <CardTitle className="flex flex-wrap items-center justify-between gap-2">
               <span>{t("Daftar catatan", "Note list")}</span>
               <span className="text-sm font-normal text-muted-foreground">
-                {notes.length} {t("tampil", "shown")}
+                {tabTotal === 0
+                  ? t("0 tampil", "0 shown")
+                  : t(
+                      `${Math.min(offset + 1, tabTotal)}–${Math.min(offset + notes.length, tabTotal)} dari ${tabTotal}`,
+                      `${Math.min(offset + 1, tabTotal)}–${Math.min(offset + notes.length, tabTotal)} of ${tabTotal}`,
+                    )}
               </span>
             </CardTitle>
           </CardHeader>
@@ -325,6 +387,7 @@ export default async function PersonalPage({
             ) : (
               notes.map((note) => {
                 const overdue = isOverdue(note.dueDate, note.status);
+                const rule = note.recurrenceRule || "none";
                 return (
                   <div
                     key={note.id}
@@ -350,6 +413,9 @@ export default async function PersonalPage({
                           {overdue ? (
                             <Badge variant="destructive">{t("Terlambat", "Overdue")}</Badge>
                           ) : null}
+                          {rule !== "none" ? (
+                            <Badge variant="outline">{recurrenceLabel(rule, t)}</Badge>
+                          ) : null}
                         </div>
                         <p className="text-xs text-muted-foreground">
                           {t("Diperbarui", "Updated")} {formatDate(note.updatedAt, lang)}
@@ -358,12 +424,12 @@ export default async function PersonalPage({
                           <p
                             className={cn(
                               "text-xs",
-                              overdue ? "font-medium text-destructive" : "text-muted-foreground",
+                              overdue
+                                ? "font-medium text-destructive"
+                                : "text-muted-foreground",
                             )}
                           >
                             {t("Tenggat", "Due")} {formatDate(note.dueDate, lang)}
-                            {" · "}
-                            {recurrenceLabel(note.recurrenceRule || "none", t)}
                           </p>
                         ) : null}
                         {(note.notify7d || note.notify3d || note.notify1d) && (
@@ -384,6 +450,7 @@ export default async function PersonalPage({
                         <form action={togglePinned}>
                           <input type="hidden" name="noteId" value={note.id} />
                           <input type="hidden" name="tab" value={tab} />
+                          <input type="hidden" name="q" value={query} />
                           <input
                             type="hidden"
                             name="pinned"
@@ -402,12 +469,25 @@ export default async function PersonalPage({
                           <form action={setStatus}>
                             <input type="hidden" name="noteId" value={note.id} />
                             <input type="hidden" name="tab" value={tab} />
+                            <input type="hidden" name="q" value={query} />
                             <input type="hidden" name="status" value="done" />
                             <Button
                               type="submit"
                               size="sm"
                               variant="ghost"
-                              aria-label={t("Tandai selesai", "Mark done")}
+                              aria-label={
+                                rule !== "none"
+                                  ? t("Selesai & roll next", "Done & roll next")
+                                  : t("Tandai selesai", "Mark done")
+                              }
+                              title={
+                                rule !== "none"
+                                  ? t(
+                                      "Selesai + majukan tenggat berikutnya",
+                                      "Complete + advance next due",
+                                    )
+                                  : t("Tandai selesai", "Mark done")
+                              }
                             >
                               <CheckCircle2 className="h-4 w-4" />
                             </Button>
@@ -416,6 +496,7 @@ export default async function PersonalPage({
                           <form action={setStatus}>
                             <input type="hidden" name="noteId" value={note.id} />
                             <input type="hidden" name="tab" value={tab} />
+                            <input type="hidden" name="q" value={query} />
                             <input type="hidden" name="status" value="open" />
                             <Button type="submit" size="sm" variant="outline">
                               <RotateCcw className="mr-1 h-3.5 w-3.5" />
@@ -427,6 +508,7 @@ export default async function PersonalPage({
                           <form action={setStatus}>
                             <input type="hidden" name="noteId" value={note.id} />
                             <input type="hidden" name="tab" value={tab} />
+                            <input type="hidden" name="q" value={query} />
                             <input type="hidden" name="status" value="archived" />
                             <Button type="submit" size="sm" variant="outline">
                               <Archive className="mr-1 h-3.5 w-3.5" />
@@ -437,6 +519,7 @@ export default async function PersonalPage({
                           <form action={setStatus}>
                             <input type="hidden" name="noteId" value={note.id} />
                             <input type="hidden" name="tab" value={tab} />
+                            <input type="hidden" name="q" value={query} />
                             <input type="hidden" name="status" value="open" />
                             <Button type="submit" size="sm" variant="outline">
                               <RotateCcw className="mr-1 h-3.5 w-3.5" />
@@ -461,6 +544,46 @@ export default async function PersonalPage({
                         {note.body}
                       </p>
                     ) : null}
+
+                    {note.status !== "archived" && projectList.length > 0 ? (
+                      <form
+                        action={convertToTask}
+                        className="flex flex-wrap items-end gap-2 rounded-md border border-dashed p-3"
+                      >
+                        <input type="hidden" name="noteId" value={note.id} />
+                        <div className="min-w-[160px] flex-1 space-y-1">
+                          <label className="text-xs font-medium text-muted-foreground">
+                            {t("Jadikan task di project", "Convert to project task")}
+                          </label>
+                          <select
+                            name="projectId"
+                            required
+                            defaultValue=""
+                            className="flex h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                          >
+                            <option value="" disabled>
+                              {t("Pilih project…", "Select project…")}
+                            </option>
+                            {projectList.map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <Button type="submit" size="sm" variant="secondary">
+                          <ListTodo className="mr-1 h-3.5 w-3.5" />
+                          {t("Buat task", "Create task")}
+                        </Button>
+                        <p className="w-full text-[11px] text-muted-foreground">
+                          {t(
+                            "Membuat task todo + arsipkan catatan ini.",
+                            "Creates a todo task + archives this note.",
+                          )}
+                        </p>
+                      </form>
+                    ) : null}
+
                     <details className="rounded-md bg-muted/40 p-3">
                       <summary className="cursor-pointer text-sm font-medium">
                         {t("Ubah", "Edit")}
@@ -468,6 +591,8 @@ export default async function PersonalPage({
                       <form action={updateNote} className="mt-3 space-y-3">
                         <input type="hidden" name="noteId" value={note.id} />
                         <input type="hidden" name="tab" value={tab} />
+                        <input type="hidden" name="q" value={query} />
+                        <input type="hidden" name="page" value={String(safePage)} />
                         <Input name="title" defaultValue={note.title} required />
                         <Textarea
                           name="body"
@@ -539,6 +664,40 @@ export default async function PersonalPage({
                 );
               })
             )}
+
+            {totalPages > 1 ? (
+              <div className="flex items-center justify-between gap-2 border-t pt-3">
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  disabled={safePage <= 1}
+                  className={safePage <= 1 ? "pointer-events-none opacity-50" : ""}
+                >
+                  <Link href={buildHref(tab, query, Math.max(1, safePage - 1))}>
+                    {t("Sebelumnya", "Previous")}
+                  </Link>
+                </Button>
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {t("Hal", "Page")} {safePage}/{totalPages}
+                </span>
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  disabled={safePage >= totalPages}
+                  className={
+                    safePage >= totalPages ? "pointer-events-none opacity-50" : ""
+                  }
+                >
+                  <Link
+                    href={buildHref(tab, query, Math.min(totalPages, safePage + 1))}
+                  >
+                    {t("Berikutnya", "Next")}
+                  </Link>
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </div>
