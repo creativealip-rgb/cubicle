@@ -1,9 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function NotesPage() {
+/** Legacy alias — sidebar uses /app/personal as Catatan. */
+export default function NotesRedirectPage() {
   const router = useRouter();
   useEffect(() => {
     router.replace("/app/personal");

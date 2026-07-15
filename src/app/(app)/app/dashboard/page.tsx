@@ -121,6 +121,8 @@ export default async function DashboardPage() {
         sql`${personalNotes.dueDate} IS NOT NULL`,
         sql`${personalNotes.dueDate} <= ${in7d.toISOString()}`,
         sql`${personalNotes.dueDate} >= ${now.toISOString()}`,
+        sql`${personalNotes.title} NOT LIKE ${"[journal]%"}`,
+        sql`${personalNotes.title} NOT LIKE ${"[site]%"}`,
       ),
     )
     .orderBy(personalNotes.dueDate)

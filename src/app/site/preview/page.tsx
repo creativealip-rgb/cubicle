@@ -65,7 +65,9 @@ function parseRows(text: string, divider: string) {
 
 export default async function PersonalSitePreviewPage() {
   await requireAppSession("/site/preview");
-  const existing = (await listPersonalNotes(KEY)).find((note) => note.title === KEY);
+  const existing = (
+    await listPersonalNotes(KEY, { includeSystem: true, status: "all" })
+  ).find((note) => note.title === KEY);
   const site = parseSite(existing?.body);
   const accent = site.accent || defaults.accent;
   const parsedSections = Array.isArray(site.sections)

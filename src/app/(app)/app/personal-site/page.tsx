@@ -73,7 +73,9 @@ function slugify(value: string) {
 }
 
 export default async function PersonalSiteBuilderPage() {
-  const existing = (await listPersonalNotes(KEY)).find((note) => note.title === KEY);
+  const existing = (
+    await listPersonalNotes(KEY, { includeSystem: true, status: "all" })
+  ).find((note) => note.title === KEY);
   const site = parseSite(existing?.body);
   const publicUrl = `/site/${site.slug || defaults.slug}`;
 
@@ -101,11 +103,29 @@ export default async function PersonalSiteBuilderPage() {
       links: String(formData.get("links") || defaults.links),
     };
     const body = JSON.stringify(payload, null, 2);
-    const current = (await listPersonalNotes(KEY)).find((note) => note.title === KEY);
+    const current = (
+      await listPersonalNotes(KEY, { includeSystem: true, status: "all" })
+    ).find((note) => note.title === KEY);
     if (current) {
-      await updatePersonalNote(current.id, { title: KEY, body, pinned: true });
+      await updatePersonalNote(current.id, {
+        title: KEY,
+        body,
+        pinned: true,
+        recurrenceRule: "none",
+        notify7d: false,
+        notify3d: false,
+        notify1d: false,
+      });
     } else {
-      await createPersonalNote({ title: KEY, body, pinned: true });
+      await createPersonalNote({
+        title: KEY,
+        body,
+        pinned: true,
+        recurrenceRule: "none",
+        notify7d: false,
+        notify3d: false,
+        notify1d: false,
+      });
     }
     redirect("/app/personal-site");
   }

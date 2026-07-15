@@ -4,6 +4,17 @@ Versi aplikasi mengikuti `package.json` (`version`) dan otomatis tampil di sideb
 lewat `NEXT_PUBLIC_APP_VERSION`. Naikkan versi di `package.json` setiap rilis,
 lalu tambahkan entri di sini.
 
+## v0.1.28 — 2026-07-15 — Harden Catatan/Jurnal: status, reminder cron, tabs, hide system notes
+
+- **P0 status normalize**: live `personal_notes.status='active'` (6 rows) → `open`. Schema + UI + cron + dashboard konsisten `open|done|archived`.
+- **P0 reminder cron**: `/api/cron/personal-note-reminders` + columns `last_reminded_{7,3,1}d` (dedupe 20h). `scripts/cron-reminders.sh` load hanya `CRON_SECRET`/`CUBICLE_URL` (hindari parse `.env` rusak), hit generic reminders **dan** personal-note cron. Smoke: sent 1 then 0 (dedupe).
+- **P0 label**: remind = **hari** (7d/3d/1d), bukan “jam”.
+- **Catatan UI** (`/app/personal`): tabs Aktif/Selesai/Arsip/Semua, recurrence **select** (label-only, no fake free-text engine), overdue badge, restore arsip, confirm delete, i18n `t()`, hide system titles `[journal]`/`[site]`.
+- **Jurnal**: filter non-archived, archive button + confirm, empty state jujur, i18n search/export.
+- **Callers** personal-site/preview: `includeSystem: true` supaya `[site]` tetap kebaca.
+- **Dashboard** upcoming reminders: status `open` + hide system titles.
+- Verified live v0.1.28 healthy; browser Catatan tabs + Arsip restore; Journal 0/0 (archived Day 1 hidden).
+
 ## v0.1.27 — 2026-07-15 — Harden halaman Reports: multi-currency integrity, AR, cashflow
 
 - **P0 multi-currency integrity** (`app/reports/page.tsx`): collection health / overdue / outstanding **tidak lagi sum lintas currency** (bug `Rp 3.886.200` = 3.885.000 IDR + 1.200 USD). Semua KPI money multi-line via shared `formatMoney` (`$` glyph, bukan `USD …`).
