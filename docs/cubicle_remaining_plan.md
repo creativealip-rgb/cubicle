@@ -416,6 +416,7 @@ Sprint I.2 Reports multi-currency harden ✅ (15 Jul — v0.1.27 `3580332`; coll
 Sprint J P2.7.1 Proposal ✅ (18 Jun — accept flow, auto-create project+invoice)
 Sprint K P2.8 Recurring + Cash flow ✅ (18 Jun — 2 new AI tools, forecast card)
 Sprint K.2 Expenses UI overhaul ✅ (15 Jul — multi-currency KPI, edit/filter/tabs, receipt, CSV; v0.1.26 `e84411a`)
+Sprint K.3 Catatan/Jurnal harden + polish ✅ (15 Jul — v0.1.28–0.1.30 `1882855`/`98d9ea1`/`f49779e`; status open, cron dedupe, auto-roll, convert→task + priority, reverse link, infinite scroll)
 Sprint L P2.7.2 Questionnaire ✅ (19 Jun — form builder, public /intake, 8 field types)
 Sprint M P2.7.3 Contract + E-sig ✅ (19 Jun — signature pad, audit trail, AI tools)
 Sprint N Contract PDF + Q AI ✅ (19 Jun — downloadable signed PDF, 3 new AI tools)

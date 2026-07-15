@@ -131,8 +131,8 @@ Latest verified commit: `2babd61 fix: close forms before refresh`
 
 | Feature | Route | Status | Notes |
 | --- | --- | --- | --- |
-| Personal notes | `/app/personal` | DONE | User-scoped notes, pin, status, archive/delete, edit/search. |
-| Journal | `/app/journal` | PARTIAL | Dedicated journal page exists; tags/calendar/mood/export pending. |
+| Personal notes | `/app/personal` | DONE | v0.1.28–0.1.30: tabs open/done/archived/all, pin, overdue, recurrence select + auto-roll, cron 7d/3d/1d dedupe, convert→task (priority), reverse link, infinite load-more, hide `[journal]`/`[site]`. |
+| Journal | `/app/journal` | DONE | Dedicated journal; archived hidden by default; archive/restore; system prefix `[journal]`. Tags/calendar/mood/export still pending. |
 | Personal landing builder | `/app/personal-site` | PARTIAL | Builder controls, sections, links, theme/accent, dashboard preview. |
 | Standalone preview | `/site/preview` | DONE | Private full-page preview route exists. |
 | Public landing page | `/site/[slug]` | DONE | Public published route exists; default `/site/alip` verified `HTTP/2 200`. |
@@ -151,6 +151,14 @@ Latest verified commit: `2babd61 fix: close forms before refresh`
 | Env audit | `/api/health/env` | DONE | Guarded and secret-safe from earlier hardening. |
 | Smoke tests | `scripts/smoke.mjs` | DONE | Smoke script exists. |
 | Backups/monitoring | docs/ops + cron | DONE | Documented active ops jobs from prior phase. |
+
+## Current verified live checks — 2026-07-15 (notes polish v0.1.30)
+
+```text
+/api/health -> 200 healthy · app bundle 0.1.30
+/app/personal tabs open/done/archived/all · load-more · convert priority · reverse link
+/app/tasks?focus= opens sheet + Dari catatan label
+```
 
 ## Current verified live checks — 2026-07-05
 

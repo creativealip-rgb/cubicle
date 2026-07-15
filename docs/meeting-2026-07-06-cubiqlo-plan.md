@@ -65,7 +65,7 @@ Dokumen ini hanya fokus hasil meeting untuk Cubiqlo, bukan Whaledive.
 | P1 | Project type + dates | DONE | Added `by project/by hours`, start date, finish date. |
 | P1 | Time tags + reports | DONE | Time entry tags + expanded PDF dashboard/detailed report shipped. |
 | P1 | Sidebar/menu restructure | DONE | Billing/Profile, Support/Profile, Email hidden, Nodes removed, sidebar simplified. |
-| P2 | Personal Notes recurrence | DONE | Owner-only Notes + due date + recurrence rule + 7/3/1 reminder flags + dashboard integration + email scheduler cron job shipped. |
+| P2 | Personal Notes recurrence | DONE | Owner-only Notes + due/recurrence + 7/3/1 cron + auto-roll + convert→task (priority) + reverse link + infinite scroll (v0.1.28–0.1.30). |
 | P2 | Landing page v1 interactive | DONE | Section cards UI with types, add/delete/duplicate/move up/down, structured section editor shipped. |
 | P2 | Timer dropdown | DONE | Navbar timer dropdown now supports separate pause/stop actions. |
 
