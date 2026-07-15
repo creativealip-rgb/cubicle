@@ -58,7 +58,6 @@ const navItems = [
   { label: "Kontrak", href: "/app/contracts", icon: FileSignature, group: "Penjualan", badgeKey: "draftContracts" as const },
 
   { label: "Template", href: "/app/templates", icon: Layers, group: "Penjualan" },
-  { label: "Template Kontrak", href: "/app/contract-templates", icon: FileText, group: "Penjualan" },
   { label: "Brain", href: "/app/brain", icon: BrainIcon, group: "AI" },
   { label: "Prompt", href: "/app/prompts", icon: Sparkles, group: "AI" },
 ];
@@ -91,7 +90,6 @@ const navLabels: Record<string, { id: string; en: string }> = {
   Kontrak: { id: "Kontrak", en: "Contracts" },
 
   Template: { id: "Template", en: "Templates" },
-  "Template Kontrak": { id: "Template Kontrak", en: "Contract Templates" },
   Brain: { id: "Brain", en: "Brain" },
   Prompt: { id: "Prompt", en: "Prompts" },
 };

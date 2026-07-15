@@ -84,10 +84,10 @@ Latest verified commit: `2babd61 fix: close forms before refresh`
 | --- | --- | --- | --- |
 | Proposals list/detail/new | `/app/proposals`, `/app/proposals/new`, `/app/proposals/[proposalId]` | DONE | v0.1.32: status tabs, activity date fix, detail i18n, DP/valid meta, send/resend+copy, delete guard. |
 | Public proposal | `/proposal/[token]` | DONE | Public token page exists. |
-| Template Center / Contract templates | `/app/templates`, `/app/contract-templates` | DONE | v0.1.34: i18n, invoice currency+tax fields, correct contract placeholders, default flag, action hardening. |
+| Template Center | `/app/templates` (+ editor `/app/contract-templates/new|[id]`) | DONE | v0.1.35: sidebar only Template; list page redirected; full editor kept. |
 | Contracts list/detail | `/app/contracts`, `/app/contracts/[contractId]` | DONE | v0.1.33: status tabs, activity date fix, detail i18n, send/resend+copy, revoke, delete guard. |
 | Public contract | `/contract/[token]` | DONE | Public token page exists. |
-| Contract templates | `/app/contract-templates` | DONE | Template routes exist. |
+| Contract template editor | `/app/contract-templates/new|[id]` | DONE | List page removed (redirect to Template Center). Full editor kept. |
 | Questionnaires | `/app/questionnaires` | DONE | Questionnaire routes exist. |
 | Intake | `/intake/[token]` | DONE | Public intake route exists. |
 

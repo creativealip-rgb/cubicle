@@ -274,8 +274,8 @@ export function TemplateCenterClient({
             </Link>
           </Button>
           <Button asChild variant="outline" size="sm">
-            <Link href="/app/contract-templates">
-              Template kontrak penuh
+            <Link href="/app/contracts">
+              Lihat kontrak
               <ExternalLink className="ml-1 h-3.5 w-3.5" />
             </Link>
           </Button>

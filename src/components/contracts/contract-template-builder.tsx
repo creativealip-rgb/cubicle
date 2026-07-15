@@ -100,7 +100,7 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
         if (isEdit && template) {
           await updateContractTemplate(template.id, { name, body, isDefault });
           toast.success("Template diperbarui");
-          router.push("/app/contract-templates");
+          router.push("/app/templates?tab=contract");
         } else {
           const created = await createContractTemplate({
             workspaceId,
@@ -134,7 +134,7 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
       try {
         await deleteContractTemplate(template.id);
         toast.success("Template dihapus");
-        router.push("/app/contract-templates");
+        router.push("/app/templates?tab=contract");
         router.refresh();
       } catch (e) {
         const msg =
@@ -150,9 +150,9 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2">
-            <Link href="/app/contract-templates">
+            <Link href="/app/templates?tab=contract">
               <ArrowLeft className="h-3.5 w-3.5 mr-1" />
-              Semua template
+              Pusat Template
             </Link>
           </Button>
           <h1 className="text-2xl font-semibold tracking-tight">

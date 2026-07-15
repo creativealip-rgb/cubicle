@@ -12,6 +12,14 @@ Versi aplikasi mengikuti `package.json` (`version`) dan otomatis tampil di sideb
 lewat `NEXT_PUBLIC_APP_VERSION`. Naikkan versi di `package.json` setiap rilis,
 lalu tambahkan entri di sini.
 
+## v0.1.35 — 2026-07-15 — Hapus menu Template Kontrak (redundant)
+
+- Sidebar: buang **Template Kontrak** (dobel dengan **Template**/Pusat Template).
+- `/app/contract-templates` list → redirect ke `/app/templates?tab=contract`.
+- Keep editor: `/app/contract-templates/new` + `/app/contract-templates/[id]`.
+- Builder back/save/delete → Pusat Template tab kontrak.
+- Verified live: redirect OK, sidebar cuma Template, health 200 bundle `0.1.35`.
+
 ## v0.1.34 — 2026-07-15 — Template Center + Template Kontrak polish
 
 - **Pusat Template (`/app/templates`)**: title/tabs/actions ID; invoice form adds currency+PPN; contract form default body + correct `{{client.name}}` vars + default flag; links to invoice/contract tools.
