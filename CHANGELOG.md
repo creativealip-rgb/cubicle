@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.31 — 2026-07-15 — Jurnal polish: tabs arsip, edit, i18n mood
+
+- **Tabs Aktif / Arsip** on `/app/journal` (status filter via `listPersonalNotes`).
+- **Edit inline** entri (title/tags/mood/body) + **restore** dari arsip + **hapus permanen**.
+- **i18n mood/placeholder**: label Suasana ID (Senang/Biasa/…), placeholder tag & isi bilingual.
+- Empty state jelas per tab; export disabled saat kosong.
+- Verified live: create “QA Journal Day” 🔥 + tags; arsip list 2 entri + Pulihkan; bundle `0.1.31` health 200.
+
 Versi aplikasi mengikuti `package.json` (`version`) dan otomatis tampil di sidebar
 lewat `NEXT_PUBLIC_APP_VERSION`. Naikkan versi di `package.json` setiap rilis,
 lalu tambahkan entri di sini.
