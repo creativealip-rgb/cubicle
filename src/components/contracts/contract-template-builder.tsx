@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Save, Loader2, Trash2, Star } from "lucide-react";
+import { toast } from "sonner";
 import {
   createContractTemplate,
   updateContractTemplate,
@@ -27,53 +28,52 @@ type Props = {
 };
 
 const VARIABLES = [
-  { key: "client.name", desc: "Client's full name" },
-  { key: "client.email", desc: "Client's email" },
-  { key: "client.company", desc: "Client's company" },
-  { key: "project.name", desc: "Project name" },
-  { key: "workspace.name", desc: "Your workspace name" },
-  { key: "today", desc: "Today's date" },
-  { key: "valid_until", desc: "Contract expiration date" },
-  { key: "value", desc: "Total contract value" },
-  { key: "scope", desc: "Project scope summary" },
+  { key: "client.name", desc: "Nama klien" },
+  { key: "client.email", desc: "Email klien" },
+  { key: "project.name", desc: "Nama proyek" },
+  { key: "workspace.name", desc: "Nama workspace" },
+  { key: "today", desc: "Tanggal hari ini" },
+  { key: "valid_until", desc: "Berlaku sampai" },
+  { key: "value", desc: "Nilai kontrak" },
+  { key: "scope", desc: "Ringkasan lingkup" },
 ];
 
-const DEFAULT_BODY = `# Service Agreement
+const DEFAULT_BODY = `# Perjanjian Jasa
 
-This Service Agreement ("Agreement") is entered into on **{{today}}** between:
+Perjanjian ini dibuat pada **{{today}}** antara:
 
-**Provider:** {{workspace.name}}
-**Client:** {{client.name}} <{{client.email}}>
+**Penyedia:** {{workspace.name}}
+**Klien:** {{client.name}} <{{client.email}}>
 
 ---
 
-## 1. Scope of Work
+## 1. Lingkup pekerjaan
 
-Provider agrees to deliver the following services for **{{project.name}}**:
+Penyedia setuju mengerjakan layanan untuk **{{project.name}}**:
 
 {{scope}}
 
-## 2. Compensation
+## 2. Kompensasi
 
-Total contract value: **{{value}}**
+Nilai kontrak: **{{value}}**
 
-Payment terms: 50% upfront, 50% upon delivery.
+Syarat pembayaran: 50% di muka, 50% saat serah terima.
 
-## 3. Timeline
+## 3. Jadwal
 
-This Agreement is valid until **{{valid_until}}**.
+Perjanjian berlaku sampai **{{valid_until}}**.
 
-## 4. Confidentiality
+## 4. Kerahasiaan
 
-Both parties agree to keep confidential information private.
+Kedua pihak menjaga kerahasiaan informasi proprietary.
 
-## 5. Termination
+## 5. Pengakhiran
 
-Either party may terminate this Agreement with 14 days written notice.
+Masing-masing pihak dapat mengakhiri perjanjian dengan pemberitahuan tertulis 14 hari.
 
 ---
 
-By signing below, both parties agree to the terms outlined above.
+Dengan menandatangani di bawah, kedua pihak menyetujui syarat di atas.
 `;
 
 export function ContractTemplateBuilder({ workspaceId, template }: Props) {
@@ -86,7 +86,8 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const isEdit = !!template;
-  const canSave = name.trim().length > 0 && body.trim().length > 0 && !saving && !deleting;
+  const canSave =
+    name.trim().length > 0 && body.trim().length > 0 && !saving && !deleting;
 
   function insertVariable(varKey: string) {
     setBody((b) => b + `{{${varKey}}}`);
@@ -98,55 +99,71 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
       try {
         if (isEdit && template) {
           await updateContractTemplate(template.id, { name, body, isDefault });
+          toast.success("Template diperbarui");
           router.push("/app/contract-templates");
         } else {
-          const created = await createContractTemplate({ workspaceId, name, body, isDefault });
+          const created = await createContractTemplate({
+            workspaceId,
+            name,
+            body,
+            isDefault,
+          });
+          toast.success("Template dibuat");
           router.push(`/app/contract-templates/${created.id}`);
         }
         router.refresh();
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to save template");
+        const msg =
+          e instanceof Error ? e.message : "Gagal menyimpan template";
+        setError(msg);
+        toast.error(msg);
       }
     });
   }
 
   function onDelete() {
     if (!template) return;
-    if (!confirm(`Delete template "${template.name}"? Existing contracts won't be affected.`)) return;
+    if (
+      !confirm(
+        `Hapus template "${template.name}"? Kontrak yang sudah ada tidak terpengaruh.`,
+      )
+    )
+      return;
     setError(null);
     startDelete(async () => {
       try {
         await deleteContractTemplate(template.id);
+        toast.success("Template dihapus");
         router.push("/app/contract-templates");
         router.refresh();
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to delete template");
+        const msg =
+          e instanceof Error ? e.message : "Gagal menghapus template";
+        setError(msg);
+        toast.error(msg);
       }
     });
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div className="flex items-center gap-2 text-sm text-slate-500">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/app/contract-templates">
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back
-          </Link>
-        </Button>
-      </div>
-
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 max-w-4xl p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
+          <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2">
+            <Link href="/app/contract-templates">
+              <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+              Semua template
+            </Link>
+          </Button>
           <h1 className="text-2xl font-semibold tracking-tight">
-            {isEdit ? "Edit template" : "New contract template"}
+            {isEdit ? "Edit template" : "Template kontrak baru"}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Write once, reuse for every client. Placeholders auto-fill when sending.
+            Tulis sekali, pakai ulang untuk tiap klien. Placeholder terisi saat kirim.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {isEdit && (
+          {isEdit ? (
             <Button
               variant="ghost"
               size="sm"
@@ -154,40 +171,50 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
               disabled={deleting}
               className="text-red-600 hover:text-red-700 hover:bg-red-50"
             >
-              {deleting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Trash2 className="h-4 w-4 mr-1" />}
-              Delete
+              {deleting ? (
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-1" />
+              )}
+              Hapus
             </Button>
-          )}
+          ) : null}
           <Button onClick={onSave} disabled={!canSave}>
-            {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
-            {isEdit ? "Save changes" : "Create template"}
+            {saving ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4 mr-1" />
+            )}
+            {isEdit ? "Simpan" : "Buat template"}
           </Button>
         </div>
       </div>
 
-      {error && (
+      {error ? (
         <div className="bg-red-50 border border-red-200 text-red-800 text-sm rounded-lg p-3">
           {error}
         </div>
-      )}
+      ) : null}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="tpl-name">Template name</Label>
+            <Label htmlFor="tpl-name">Nama template</Label>
             <Input
               id="tpl-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Standard Service Agreement"
+              placeholder="mis. Perjanjian jasa standar"
               maxLength={200}
             />
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="tpl-body">Contract body</Label>
-              <span className="text-xs text-slate-500">{body.length.toLocaleString()} chars</span>
+              <Label htmlFor="tpl-body">Isi kontrak</Label>
+              <span className="text-xs text-slate-500">
+                {body.length.toLocaleString("id-ID")} karakter
+              </span>
             </div>
             <Textarea
               id="tpl-body"
@@ -207,9 +234,12 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
               onChange={(e) => setIsDefault(e.target.checked)}
               className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
             />
-            <Label htmlFor="tpl-default" className="cursor-pointer flex items-center gap-1.5">
+            <Label
+              htmlFor="tpl-default"
+              className="cursor-pointer flex items-center gap-1.5"
+            >
               <Star className="h-3.5 w-3.5 text-amber-500" />
-              Set as default template
+              Jadikan template default
             </Label>
           </div>
         </div>
@@ -217,11 +247,13 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
         <div className="space-y-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Available variables</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Variabel tersedia
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-1.5">
               <p className="text-xs text-slate-500 mb-2">
-                Click to insert. Filled at send time.
+                Klik untuk sisipkan. Terisi saat kontrak dikirim.
               </p>
               {VARIABLES.map((v) => (
                 <button
@@ -239,12 +271,12 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
             </CardContent>
           </Card>
 
-          {isDefault && (
+          {isDefault ? (
             <Badge variant="default" className="gap-1 w-fit">
               <Star className="h-3 w-3" />
-              Default template
+              Template default
             </Badge>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

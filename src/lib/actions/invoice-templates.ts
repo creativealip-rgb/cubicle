@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { db } from "@/db";
 import { invoiceTemplates } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { z } from "zod";
@@ -15,19 +16,28 @@ const templateSchema = z.object({
   notes: z.string().optional(),
   defaultCurrency: z.string().default("IDR"),
   defaultTaxRate: z.string().default("0"),
-  lineItems: z.string().optional(), // JSON string
+  lineItems: z.string().optional(),
 });
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
 }
 
-export async function createInvoiceTemplate(input: z.infer<typeof templateSchema>) {
+function revalidateTemplates() {
+  revalidatePath("/app/templates");
+  revalidatePath("/app/invoice-templates");
+  revalidatePath("/app/invoices/templates");
+  revalidatePath("/app/invoices/new");
+}
+
+export async function createInvoiceTemplate(
+  input: z.infer<typeof templateSchema>,
+) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   const member = await assertWorkspaceMember(db, user.id, workspaceId);
-  if (member.role === "viewer") throw new Error("Viewers cannot create templates");
+  if (member.role === "viewer") throw new Error("Viewer tidak bisa membuat template");
 
   const parsed = templateSchema.parse(input);
 
@@ -45,15 +55,19 @@ export async function createInvoiceTemplate(input: z.infer<typeof templateSchema
     })
     .returning();
 
+  revalidateTemplates();
   return template;
 }
 
-export async function updateInvoiceTemplate(templateId: string, input: z.infer<typeof templateSchema>) {
+export async function updateInvoiceTemplate(
+  templateId: string,
+  input: z.infer<typeof templateSchema>,
+) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   const member = await assertWorkspaceMember(db, user.id, workspaceId);
-  if (member.role === "viewer") throw new Error("Viewers cannot update templates");
+  if (member.role === "viewer") throw new Error("Viewer tidak bisa mengubah template");
 
   const parsed = templateSchema.parse(input);
 
@@ -68,9 +82,16 @@ export async function updateInvoiceTemplate(templateId: string, input: z.infer<t
       lineItems: parsed.lineItems || null,
       updatedAt: new Date(),
     })
-    .where(and(eq(invoiceTemplates.id, templateId), eq(invoiceTemplates.workspaceId, workspaceId)))
+    .where(
+      and(
+        eq(invoiceTemplates.id, templateId),
+        eq(invoiceTemplates.workspaceId, workspaceId),
+      ),
+    )
     .returning();
 
+  if (!template) throw new Error("Template tidak ditemukan");
+  revalidateTemplates();
   return template;
 }
 
@@ -78,14 +99,26 @@ export async function deleteInvoiceTemplate(templateId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
+  const member = await assertWorkspaceMember(db, user.id, workspaceId);
+  if (member.role === "viewer") throw new Error("Viewer tidak bisa menghapus template");
 
   await db
     .delete(invoiceTemplates)
-    .where(and(eq(invoiceTemplates.id, templateId), eq(invoiceTemplates.workspaceId, workspaceId)));
+    .where(
+      and(
+        eq(invoiceTemplates.id, templateId),
+        eq(invoiceTemplates.workspaceId, workspaceId),
+      ),
+    );
+
+  revalidateTemplates();
 }
 
 export async function listInvoiceTemplates() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
+  await assertWorkspaceMember(db, user.id, workspaceId);
 
   return db
     .select({

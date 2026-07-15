@@ -12,6 +12,15 @@ Versi aplikasi mengikuti `package.json` (`version`) dan otomatis tampil di sideb
 lewat `NEXT_PUBLIC_APP_VERSION`. Naikkan versi di `package.json` setiap rilis,
 lalu tambahkan entri di sini.
 
+## v0.1.34 — 2026-07-15 — Template Center + Template Kontrak polish
+
+- **Pusat Template (`/app/templates`)**: title/tabs/actions ID; invoice form adds currency+PPN; contract form default body + correct `{{client.name}}` vars + default flag; links to invoice/contract tools.
+- **Template Kontrak list**: full i18n (no "New template"/"contracts"), usage count query batched, link back to Template Center.
+- **Builder**: ID labels, default body ID, variable helper ID, toast, delete confirm ID.
+- **Actions**: auth list/create/update/delete; unique default template; workspace-scoped delete/update; revalidatePath.
+- **`/app/invoice-templates`**: redirect to `/app/templates?tab=invoice`.
+- Verified live: Pusat Template Invoice(1)/Kontrak(0); contract-templates empty state ID; health 200 bundle `0.1.34`.
+
 ## v0.1.33 — 2026-07-15 — Kontrak polish: status tabs, activity date fix, detail i18n
 
 - **List**: status filter tabs + counts; activity follows real status (no false "Draf"); valid-until under title; resend for sent/viewed.

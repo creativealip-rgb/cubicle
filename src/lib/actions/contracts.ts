@@ -67,6 +67,9 @@ export async function createContractTemplate(input: z.infer<typeof createTemplat
   await writeActivityLog(parsed.workspaceId, user.id, "created_contract_template", "contract_template", t.id, {
     name: t.name,
   });
+  revalidatePath("/app/templates");
+  revalidatePath("/app/contract-templates");
+  revalidatePath(`/app/contract-templates/${t.id}`);
   return t;
 }
 
@@ -89,8 +92,11 @@ export async function updateContractTemplate(templateId: string, input: { name?:
 
   const [updated] = await db.update(contractTemplates)
     .set({ ...input, updatedAt: new Date() })
-    .where(eq(contractTemplates.id, templateId))
+    .where(and(eq(contractTemplates.id, templateId), eq(contractTemplates.workspaceId, workspaceId)))
     .returning();
+  revalidatePath("/app/templates");
+  revalidatePath("/app/contract-templates");
+  revalidatePath(`/app/contract-templates/${templateId}`);
   return updated;
 }
 
@@ -99,7 +105,9 @@ export async function deleteContractTemplate(templateId: string) {
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
-  await db.delete(contractTemplates).where(eq(contractTemplates.id, templateId));
+  await db.delete(contractTemplates).where(and(eq(contractTemplates.id, templateId), eq(contractTemplates.workspaceId, workspaceId)));
+  revalidatePath("/app/templates");
+  revalidatePath("/app/contract-templates");
   return { success: true };
 }
 
