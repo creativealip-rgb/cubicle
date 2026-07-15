@@ -13,7 +13,7 @@ lalu tambahkan entri di sini.
 - **Cashflow**: bucket **Sudah terlambat** + 3 bulan ke depan; remaining partial-payment aware; hide empty month noise di P&L.
 - **Top clients unpaid**: partial-payment aware (sum payments per invoice).
 - **i18n**: string utama lewat `t()`; empty months disembunyikan.
-- Verified live: `tsc --noEmit` 0, docker build + deploy healthy, health 200, browser `/app/reports` collection `45% IDR · 52% USD`, overdue `Rp 3.885.000 · $1,200`, project expenses multi-line.
+- Verified live: `tsc --noEmit` 0, docker build + deploy healthy, health 200, browser `/app/reports` collection `45% IDR · 52% USD`, overdue `Rp 3.885.000 · $1,200`, project expenses multi-line. Commit `3580332`.
 
 ## v0.1.26 — 2026-07-15 — Overhaul halaman Expenses: multi-currency, edit, filter, kategori, rutin, struk, CSV
 

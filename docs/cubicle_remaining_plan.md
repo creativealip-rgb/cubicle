@@ -412,6 +412,7 @@ Production client-ready: ~99% (Phase 2C–2G + Phase 3A done; final security/env
 > Sprint F.3 AI v1.2 ✅ (17 Jun — search, prompt library, voice, export, 15 tools)
 Sprint H P2.8.1 Expense CRUD ✅ (18 Jun — expenses, categories, project-tag)
 Sprint I P2.8.2 Reports ✅ (18 Jun — 4 new AI tools, /app/reports dashboard)
+Sprint I.2 Reports multi-currency harden ✅ (15 Jul — v0.1.27 `3580332`; collection/AR/project no cross-currency sum; cashflow overdue)
 Sprint J P2.7.1 Proposal ✅ (18 Jun — accept flow, auto-create project+invoice)
 Sprint K P2.8 Recurring + Cash flow ✅ (18 Jun — 2 new AI tools, forecast card)
 Sprint K.2 Expenses UI overhaul ✅ (15 Jul — multi-currency KPI, edit/filter/tabs, receipt, CSV; v0.1.26 `e84411a`)
@@ -1294,6 +1295,14 @@ Closes UI gap di atas backend P2.8.1/K yang sudah ada sejak Juni. Live di cubiql
 - **i18n penuh** form + dialogs via `useT()` / `createT()`
 - **Sisa open:** recurring **cron auto-create** (generate-now manual sudah ada; scheduled job belum). AI receipt OCR + bank CSV + FX conversion tetap out-of-scope.
 
+**Status 2026-07-15: ✅ Sprint I.2 Reports multi-currency harden (v0.1.27, commit `3580332`).**
+Live di cubiqlo.com/app/reports. Rewrite `app/reports/page.tsx`.
+- **P0 collection health** — rate + overdue + outstanding **per currency** (bukan sum IDR+USD → `Rp 3.886.200` palsu). Live: `45% IDR · 52% USD`, overdue `Rp 3.885.000 · $1,200`.
+- **P0 AR aging** — statuses `sent`/`viewed`/`overdue` only (draft excluded). Remaining = total − sum(payments).
+- **P0 project expenses** — group project+currency; no hardcode IDR. Website Redesign: `Rp 270.000` + `$10.00` (bukan `Rp 270.010`).
+- **P1** — KPI label jujur **6 bln** (bukan fake YTD); shared `formatMoney`; cashflow bucket **Sudah terlambat**; top clients partial-pay aware; hide empty P&L months; i18n `t()`.
+- **Sisa open (reports):** custom date range / CSV export; true per-project P&L income (section expenses-only by design).
+
 ---
 
 ### Sprint F — AI Assistant v1.1 ✅ DONE (16 Jun)
@@ -1438,6 +1447,26 @@ Backend P2.8.1/K sudah siap sejak Juni; UI expenses masih thin (create + delete 
 **Still open after K.2:**
 - ❌ Recurring **cron** auto-create (manual generate-now sudah ada)
 - ❌ AI receipt OCR / bank CSV import / FX conversion (out of scope, tetap)
+
+### Sprint I.2 — Reports multi-currency harden ✅ DONE (15 Jul 2026, v0.1.27)
+
+Sprint I (Jun) ship reports skeleton; audit 15 Jul temukan P0 multi-currency + draft AR. Sprint I.2 rewrite harden.
+
+**What shipped (commit `3580332`):**
+- Collection health / overdue / outstanding multi-line per currency (no IDR+USD sum)
+- AR statuses `sent`/`viewed`/`overdue` only; remaining = total − payments
+- Project expenses group by project+currency; drop fake income claim
+- KPI window labeled **6 bln**; top clients/expenses stay calendar YTD
+- Cashflow: **Sudah terlambat** + 3 months; partial-pay aware
+- Shared `formatMoney`; hide empty P&L months; i18n main strings
+
+**Verified live (15 Jul):**
+- cubiqlo.com/app/reports — collection `45% IDR · 52% USD`; overdue `Rp 3.885.000 · $1,200`; Website Redesign `Rp 270.000` + `$10.00`; draft out of AR; health 200; bundle `0.1.27`
+
+**Still open after I.2:**
+- ❌ Reports custom date range / CSV export
+- ❌ True per-project P&L (income side) — section expenses-only by design
+- ❌ Recurring **cron** auto-create (same as K.2)
 
 ### Sprint L — P2.7.2 Questionnaire ✅ DONE (19 Jun 2026)
 
@@ -1890,6 +1919,7 @@ Still open:
   ⏸️ HOLD per Alip 16 Jun: ICP decision (A/B/C/D) — blocks P2.7 scope commitment
   Test with real logo URL from R2 upload (P2.3, not exercised yet)
   ✅ P2.8 Finance core + Sprint K.2 Expenses UI overhaul (15 Jul v0.1.26 `e84411a`) — multi-currency KPI, edit/filter/tabs, receipt, CSV. Sisa: recurring cron auto-create.
+  ✅ Sprint I.2 Reports multi-currency harden (15 Jul v0.1.27 `3580332`) — collection/AR/project no cross-currency sum; cashflow overdue; honest 6-mo KPI.
   📋 NEXT SPRINT: P2.6 Reply-To email header (Sprint E) — Alip-approved 16 Jun,
      needs Resend sender domain (cubiqlo.com already live)
   📋 NEXT: Recurring expense cron auto-create (generate-now manual sudah ada)
