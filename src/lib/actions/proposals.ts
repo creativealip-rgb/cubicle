@@ -8,6 +8,7 @@ import { proposals, projects, invoices, invoiceItems, workspaceInvoiceCounters }
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
+import { revalidatePath } from "next/cache";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 
@@ -86,6 +87,7 @@ export async function createProposal(input: z.infer<typeof createProposalSchema>
     title: proposal.title,
     total: proposal.total,
   });
+  revalidatePath("/app/proposals");
   return proposal;
 }
 
@@ -127,6 +129,8 @@ export async function updateProposal(proposalId: string, input: z.infer<typeof u
     .returning();
 
   await writeActivityLog(workspaceId, user.id, "updated_proposal", "proposal", proposalId);
+  revalidatePath("/app/proposals");
+  revalidatePath(`/app/proposals/${proposalId}`);
   return proposal;
 }
 
@@ -157,6 +161,8 @@ export async function sendProposal(proposalId: string) {
     .where(eq(proposals.id, proposalId));
 
   await writeActivityLog(workspaceId, user.id, "sent_proposal", "proposal", proposalId);
+  revalidatePath("/app/proposals");
+  revalidatePath(`/app/proposals/${proposalId}`);
   return { id: proposalId, token };
 }
 
@@ -166,11 +172,23 @@ export async function deleteProposal(proposalId: string) {
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
 
-  const [p] = await db.delete(proposals)
+  const [existing] = await db
+    .select()
+    .from(proposals)
+    .where(and(eq(proposals.id, proposalId), eq(proposals.workspaceId, workspaceId)))
+    .limit(1);
+  if (!existing) throw new Error("Proposal not found");
+  if (existing.status === "accepted") {
+    throw new Error("Proposal yang sudah diterima tidak bisa dihapus");
+  }
+
+  const [p] = await db
+    .delete(proposals)
     .where(and(eq(proposals.id, proposalId), eq(proposals.workspaceId, workspaceId)))
     .returning();
   if (!p) throw new Error("Proposal not found");
   await writeActivityLog(workspaceId, user.id, "deleted_proposal", "proposal", proposalId);
+  revalidatePath("/app/proposals");
   return { id: proposalId };
 }
 

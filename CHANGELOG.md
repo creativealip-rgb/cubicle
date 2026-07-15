@@ -12,6 +12,14 @@ Versi aplikasi mengikuti `package.json` (`version`) dan otomatis tampil di sideb
 lewat `NEXT_PUBLIC_APP_VERSION`. Naikkan versi di `package.json` setiap rilis,
 lalu tambahkan entri di sini.
 
+## v0.1.32 — 2026-07-15 — Proposal polish: status tabs, activity date fix, detail i18n
+
+- **List**: status filter tabs + counts; activity label follows real status (no more "Draf" on sent/accepted seed data); valid-until under title; resend action for sent/viewed.
+- **Detail**: full i18n (status badge, All proposals, Line items, Tax→Pajak, Scope→Cakupan); meta cards Total/DP/Valid until; send/resend + copy link; delete (blocked if accepted); scope `\n` normalize.
+- **Actions**: `revalidatePath` on create/update/send/delete; delete guard for accepted proposals.
+- New page: empty-client guard + back link.
+- Verified live: list tabs 3 total; detail Mobile App Terkirim + DP 25% + Kirim ulang/Hapus; health 200 bundle `0.1.32`.
+
 ## v0.1.30 — 2026-07-15 — Catatan optional: priority convert, reverse link, infinite scroll
 
 - **Priority picker** on convert note→task (low/medium/high/urgent).

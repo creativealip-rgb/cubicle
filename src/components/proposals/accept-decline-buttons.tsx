@@ -26,7 +26,7 @@ export function AcceptDeclineButtons({ proposalId, token }: AcceptDeclineButtons
   const [reason, setReason] = useState("");
 
   async function handleAccept() {
-    if (!confirm("Accept this proposal? A project will be created and a down-payment invoice sent.")) return;
+    if (!confirm("Setujui proposal ini? Proyek akan dibuat dan invoice DP disiapkan.")) return;
     setLoading("accept");
     try {
       await acceptProposalPublic(proposalId, token);
@@ -34,7 +34,7 @@ export function AcceptDeclineButtons({ proposalId, token }: AcceptDeclineButtons
       // Reload to show accepted state
       window.location.reload();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong";
+      const msg = err instanceof Error ? err.message : "Terjadi kesalahan";
       toast.error(msg);
       setLoading(null);
     }
@@ -48,7 +48,7 @@ export function AcceptDeclineButtons({ proposalId, token }: AcceptDeclineButtons
       setDeclineOpen(false);
       window.location.reload();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong";
+      const msg = err instanceof Error ? err.message : "Terjadi kesalahan";
       toast.error(msg);
       setLoading(null);
     }
