@@ -136,6 +136,31 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
     AI: false,
   });
 
+  function activeGroupForPath(path: string): string | null {
+    // Routes that live under Sales but aren't direct nav hrefs
+    if (
+      path.startsWith("/app/contract-templates") ||
+      path.startsWith("/app/invoice-templates") ||
+      path.startsWith("/app/invoices/templates")
+    ) {
+      return "Penjualan";
+    }
+
+    let match: { group: string | null; href: string } | null = null;
+    for (const item of navItems) {
+      if (!item.group) continue;
+      const hit =
+        path === item.href ||
+        (item.href !== "/app/dashboard" && path.startsWith(item.href + "/"));
+      if (!hit) continue;
+      // Prefer longest href match (e.g. nested routes)
+      if (!match || item.href.length > match.href.length) {
+        match = { group: item.group, href: item.href };
+      }
+    }
+    return match?.group ?? null;
+  }
+
   function toggleGroup(name: string) {
     setOpenGroups((prev) => {
       if (name === "Kerja") {
@@ -147,16 +172,42 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
           AI: prev.AI ?? false,
         };
       }
+      // Accordion: open clicked group, close other non-Kerja groups
+      const nextOpen = prev[name] === false;
       return {
         Kerja: true,
         Keuangan: false,
         Personal: false,
         Penjualan: false,
         AI: false,
-        [name]: prev[name] === false,
+        [name]: nextOpen,
       };
     });
   }
+
+  // Auto-open group that owns current route (so active item not hidden)
+  useEffect(() => {
+    const activeGroup = activeGroupForPath(pathname);
+    setOpenGroups((prev): Record<string, boolean> => {
+      if (!activeGroup || activeGroup === "Kerja") {
+        return {
+          Kerja: true,
+          Keuangan: Boolean(prev.Keuangan),
+          Personal: Boolean(prev.Personal),
+          Penjualan: Boolean(prev.Penjualan),
+          AI: Boolean(prev.AI),
+        };
+      }
+      // Keep Kerja open; expand active section; collapse other optional sections
+      return {
+        Kerja: true,
+        Keuangan: activeGroup === "Keuangan",
+        Personal: activeGroup === "Personal",
+        Penjualan: activeGroup === "Penjualan",
+        AI: activeGroup === "AI",
+      };
+    });
+  }, [pathname]);
 
   // Close mobile sidebar on route change
   useEffect(() => {

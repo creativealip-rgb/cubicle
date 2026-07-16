@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.38 — 2026-07-15 — Sidebar: auto-open group aktif (Sales/Template)
+
+- Group **Penjualan/Sales** auto expand saat route di dalamnya (`/app/templates`, proposal, kontrak, editor template).
+- Accordion tetap: buka section aktif, Kerja tetap terbuka.
+- Fix item active ke-hide karena default `Penjualan: false`.
+
 ## v0.1.37 — 2026-07-15 — Template Center: tab Proposal + tabs kiri
 
 - **Tab Proposal**: table `proposal_templates` + actions CRUD/duplikat/set-default; dialog scope + currency + PPN + DP.
