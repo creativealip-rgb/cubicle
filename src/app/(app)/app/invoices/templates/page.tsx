@@ -1,9 +1,5 @@
-import { InvoiceTemplatesClient } from "@/components/invoice-templates-client";
+import { redirect } from "next/navigation";
 
 export default function InvoiceTemplatesPage() {
-  return (
-    <div className="p-6">
-      <InvoiceTemplatesClient />
-    </div>
-  );
+  redirect("/app/templates?tab=invoice");
 }

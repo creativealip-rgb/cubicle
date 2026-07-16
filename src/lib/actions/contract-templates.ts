@@ -129,6 +129,79 @@ export async function deleteContractTemplate(templateId: string) {
   revalidateTemplates();
 }
 
+export async function setDefaultContractTemplate(templateId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  const member = await assertWorkspaceMember(db, user.id, workspaceId);
+  if (member.role === "viewer") throw new Error("Viewer tidak bisa mengubah template");
+
+  const [existing] = await db
+    .select({ id: contractTemplates.id })
+    .from(contractTemplates)
+    .where(
+      and(
+        eq(contractTemplates.id, templateId),
+        eq(contractTemplates.workspaceId, workspaceId),
+      ),
+    )
+    .limit(1);
+  if (!existing) throw new Error("Template tidak ditemukan");
+
+  await db
+    .update(contractTemplates)
+    .set({ isDefault: false, updatedAt: new Date() })
+    .where(eq(contractTemplates.workspaceId, workspaceId));
+
+  const [tpl] = await db
+    .update(contractTemplates)
+    .set({ isDefault: true, updatedAt: new Date() })
+    .where(
+      and(
+        eq(contractTemplates.id, templateId),
+        eq(contractTemplates.workspaceId, workspaceId),
+      ),
+    )
+    .returning();
+
+  revalidateTemplates(templateId);
+  return tpl;
+}
+
+export async function duplicateContractTemplate(templateId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  const member = await assertWorkspaceMember(db, user.id, workspaceId);
+  if (member.role === "viewer") throw new Error("Viewer tidak bisa membuat template");
+
+  const [existing] = await db
+    .select()
+    .from(contractTemplates)
+    .where(
+      and(
+        eq(contractTemplates.id, templateId),
+        eq(contractTemplates.workspaceId, workspaceId),
+      ),
+    )
+    .limit(1);
+  if (!existing) throw new Error("Template tidak ditemukan");
+
+  const [tpl] = await db
+    .insert(contractTemplates)
+    .values({
+      workspaceId,
+      name: `${existing.name} (salinan)`,
+      body: existing.body,
+      isDefault: false,
+      createdBy: user.id,
+    })
+    .returning();
+
+  revalidateTemplates(tpl.id);
+  return tpl;
+}
+
 export async function listContractTemplates() {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);

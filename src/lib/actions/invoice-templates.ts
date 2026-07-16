@@ -114,6 +114,43 @@ export async function deleteInvoiceTemplate(templateId: string) {
   revalidateTemplates();
 }
 
+export async function duplicateInvoiceTemplate(templateId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  const member = await assertWorkspaceMember(db, user.id, workspaceId);
+  if (member.role === "viewer") throw new Error("Viewer tidak bisa membuat template");
+
+  const [existing] = await db
+    .select()
+    .from(invoiceTemplates)
+    .where(
+      and(
+        eq(invoiceTemplates.id, templateId),
+        eq(invoiceTemplates.workspaceId, workspaceId),
+      ),
+    )
+    .limit(1);
+  if (!existing) throw new Error("Template tidak ditemukan");
+
+  const [template] = await db
+    .insert(invoiceTemplates)
+    .values({
+      workspaceId,
+      name: `${existing.name} (salinan)`,
+      terms: existing.terms,
+      notes: existing.notes,
+      defaultCurrency: existing.defaultCurrency,
+      defaultTaxRate: existing.defaultTaxRate,
+      lineItems: existing.lineItems,
+      createdBy: user.id,
+    })
+    .returning();
+
+  revalidateTemplates();
+  return template;
+}
+
 export async function listInvoiceTemplates() {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);

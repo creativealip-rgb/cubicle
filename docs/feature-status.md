@@ -84,7 +84,7 @@ Latest verified commit: `2babd61 fix: close forms before refresh`
 | --- | --- | --- | --- |
 | Proposals list/detail/new | `/app/proposals`, `/app/proposals/new`, `/app/proposals/[proposalId]` | DONE | v0.1.32: status tabs, activity date fix, detail i18n, DP/valid meta, send/resend+copy, delete guard. |
 | Public proposal | `/proposal/[token]` | DONE | Public token page exists. |
-| Template Center | `/app/templates` (+ editor `/app/contract-templates/new|[id]`) | DONE | v0.1.35: sidebar only Template; list page redirected; full editor kept. |
+| Template Center | `/app/templates` (+ editor `/app/contract-templates/new|[id]`) | DONE | v0.1.36: tab URL sync, duplicate, set-default, card actions; invoice entry redirect; full editor kept. |
 | Contracts list/detail | `/app/contracts`, `/app/contracts/[contractId]` | DONE | v0.1.33: status tabs, activity date fix, detail i18n, send/resend+copy, revoke, delete guard. |
 | Public contract | `/contract/[token]` | DONE | Public token page exists. |
 | Contract template editor | `/app/contract-templates/new|[id]` | DONE | List page removed (redirect to Template Center). Full editor kept. |
@@ -126,7 +126,7 @@ Latest verified commit: `2babd61 fix: close forms before refresh`
 | AI chat/action | `/api/ai/chat`, `/api/ai/action` | PARTIAL | AI endpoints and conversations exist; role guard hardened. |
 | Prompts | `/app/prompts` | DONE | Prompt center exists. |
 | Brain | `/app/brain` | PARTIAL | Route exists; knowledge/automation maturity pending. |
-| Unified Template Center | `/app/templates` | PARTIAL | Link hub/center exists; full reusable template CRUD by type pending. |
+| Unified Template Center | `/app/templates` | DONE | Invoice+contract CRUD hub; prompt tab soon; proposal templates still TODO. |
 
 ## Personal workspace + landing pages
 

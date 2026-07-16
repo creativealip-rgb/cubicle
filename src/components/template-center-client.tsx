@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,18 +30,23 @@ import {
   Sparkles,
   ExternalLink,
   Star,
+  Copy,
+  Maximize2,
 } from "lucide-react";
 import {
   listInvoiceTemplates,
   createInvoiceTemplate,
   updateInvoiceTemplate,
   deleteInvoiceTemplate,
+  duplicateInvoiceTemplate,
 } from "@/lib/actions/invoice-templates";
 import {
   listContractTemplates,
   createContractTemplate,
   updateContractTemplate,
   deleteContractTemplate,
+  setDefaultContractTemplate,
+  duplicateContractTemplate,
 } from "@/lib/actions/contract-templates";
 import { toast } from "sonner";
 
@@ -60,6 +66,8 @@ interface ContractTpl {
   body: string | null;
   isDefault: boolean;
 }
+
+type TabKey = "invoice" | "contract" | "prompt";
 
 const DEFAULT_CONTRACT_BODY = `# Perjanjian Jasa
 
@@ -95,14 +103,22 @@ Masing-masing pihak dapat mengakhiri dengan pemberitahuan tertulis 14 hari.
 Dengan menandatangani di bawah, kedua pihak menyetujui syarat di atas.
 `;
 
+function normalizeTab(tab?: string | null): TabKey {
+  if (tab === "contract" || tab === "prompt" || tab === "invoice") return tab;
+  return "invoice";
+}
+
 export function TemplateCenterClient({
   initialTab = "invoice",
 }: {
-  initialTab?: "invoice" | "contract" | "prompt";
+  initialTab?: TabKey;
 }) {
-  const startTab =
-    initialTab === "contract" || initialTab === "prompt" ? initialTab : "invoice";
-  const [activeTab, setActiveTab] = useState(startTab);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const urlTab = normalizeTab(searchParams.get("tab") ?? initialTab);
+
+  const [activeTab, setActiveTab] = useState<TabKey>(urlTab);
   const [invoiceTpls, setInvoiceTpls] = useState<InvoiceTpl[]>([]);
   const [contractTpls, setContractTpls] = useState<ContractTpl[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,6 +127,7 @@ export function TemplateCenterClient({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingType, setEditingType] = useState<"invoice" | "contract">("invoice");
   const [saving, setSaving] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const [formName, setFormName] = useState("");
   const [formBody, setFormBody] = useState("");
@@ -119,6 +136,23 @@ export function TemplateCenterClient({
   const [formCurrency, setFormCurrency] = useState("IDR");
   const [formTaxRate, setFormTaxRate] = useState("0");
   const [formIsDefault, setFormIsDefault] = useState(false);
+
+  useEffect(() => {
+    setActiveTab(urlTab);
+  }, [urlTab]);
+
+  const changeTab = useCallback(
+    (tab: string) => {
+      const next = normalizeTab(tab);
+      setActiveTab(next);
+      const params = new URLSearchParams(searchParams.toString());
+      if (next === "invoice") params.delete("tab");
+      else params.set("tab", next);
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
 
   useEffect(() => {
     loadAll();
@@ -238,6 +272,7 @@ export function TemplateCenterClient({
 
   async function handleDelete(type: "invoice" | "contract", id: string, name: string) {
     if (!confirm(`Hapus template "${name}"?`)) return;
+    setBusyId(id);
     try {
       if (type === "invoice") await deleteInvoiceTemplate(id);
       else await deleteContractTemplate(id);
@@ -246,6 +281,41 @@ export function TemplateCenterClient({
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Gagal menghapus template";
       toast.error(msg);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleDuplicate(type: "invoice" | "contract", id: string) {
+    setBusyId(id);
+    try {
+      if (type === "invoice") {
+        await duplicateInvoiceTemplate(id);
+        toast.success("Template invoice diduplikasi");
+      } else {
+        await duplicateContractTemplate(id);
+        toast.success("Template kontrak diduplikasi");
+      }
+      await loadAll();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Gagal menduplikasi template";
+      toast.error(msg);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleSetDefault(id: string) {
+    setBusyId(id);
+    try {
+      await setDefaultContractTemplate(id);
+      toast.success("Template default diperbarui");
+      await loadAll();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Gagal set default";
+      toast.error(msg);
+    } finally {
+      setBusyId(null);
     }
   }
 
@@ -263,7 +333,7 @@ export function TemplateCenterClient({
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Pusat Template</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Kelola template invoice, kontrak, dan prompt AI di satu tempat.
+            Simpan sekali, pakai ulang di invoice & kontrak.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -282,8 +352,8 @@ export function TemplateCenterClient({
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-        <TabsList>
+      <Tabs value={activeTab} onValueChange={changeTab}>
+        <TabsList className="w-full sm:w-auto flex flex-wrap h-auto gap-1">
           <TabsTrigger value="invoice" className="gap-1.5">
             <FileText className="h-4 w-4" /> Invoice ({invoiceTpls.length})
           </TabsTrigger>
@@ -291,12 +361,15 @@ export function TemplateCenterClient({
             <FileSignature className="h-4 w-4" /> Kontrak ({contractTpls.length})
           </TabsTrigger>
           <TabsTrigger value="prompt" className="gap-1.5" disabled>
-            <Sparkles className="h-4 w-4" /> Prompt AI (segera)
+            <Sparkles className="h-4 w-4" /> Prompt AI
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="invoice" className="mt-4 space-y-4">
-          <div className="flex justify-end">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              Notes, terms, mata uang, dan PPN default.
+            </p>
             <Button size="sm" onClick={() => openCreate("invoice")}>
               <Plus className="mr-1 h-3.5 w-3.5" /> Template invoice
             </Button>
@@ -322,7 +395,9 @@ export function TemplateCenterClient({
                   name={tpl.name}
                   subtitle={`${tpl.defaultCurrency} · PPN ${tpl.defaultTaxRate}%`}
                   preview={tpl.notes || tpl.terms}
+                  busy={busyId === tpl.id}
                   onEdit={() => openEdit("invoice", tpl)}
+                  onDuplicate={() => handleDuplicate("invoice", tpl.id)}
                   onDelete={() => handleDelete("invoice", tpl.id, tpl.name)}
                 />
               ))}
@@ -338,7 +413,10 @@ export function TemplateCenterClient({
             </p>
             <div className="flex gap-2">
               <Button asChild size="sm" variant="outline">
-                <Link href="/app/contract-templates/new">Editor penuh</Link>
+                <Link href="/app/contract-templates/new">
+                  <Maximize2 className="mr-1 h-3.5 w-3.5" />
+                  Editor penuh
+                </Link>
               </Button>
               <Button size="sm" onClick={() => openCreate("contract")}>
                 <Plus className="mr-1 h-3.5 w-3.5" /> Template kontrak
@@ -354,9 +432,14 @@ export function TemplateCenterClient({
               <p className="text-xs text-muted-foreground mt-1">
                 Tulis sekali, pakai ulang saat kirim kontrak ke klien.
               </p>
-              <Button size="sm" className="mt-4" onClick={() => openCreate("contract")}>
-                <Plus className="mr-1 h-3.5 w-3.5" /> Buat template pertama
-              </Button>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <Button size="sm" variant="outline" asChild>
+                  <Link href="/app/contract-templates/new">Editor penuh</Link>
+                </Button>
+                <Button size="sm" onClick={() => openCreate("contract")}>
+                  <Plus className="mr-1 h-3.5 w-3.5" /> Buat cepat
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -364,12 +447,18 @@ export function TemplateCenterClient({
                 <TemplateCard
                   key={tpl.id}
                   name={tpl.name}
-                  subtitle={tpl.isDefault ? "Default" : undefined}
+                  subtitle={tpl.isDefault ? "Default" : "Template kontrak"}
                   badge={tpl.isDefault}
-                  preview={tpl.body?.slice(0, 120)}
-                  onEdit={() => openEdit("contract", tpl)}
-                  onDelete={() => handleDelete("contract", tpl.id, tpl.name)}
+                  preview={tpl.body?.slice(0, 140)}
                   href={`/app/contract-templates/${tpl.id}`}
+                  busy={busyId === tpl.id}
+                  onEdit={() => openEdit("contract", tpl)}
+                  onOpenFull={`/app/contract-templates/${tpl.id}`}
+                  onDuplicate={() => handleDuplicate("contract", tpl.id)}
+                  onSetDefault={
+                    tpl.isDefault ? undefined : () => handleSetDefault(tpl.id)
+                  }
+                  onDelete={() => handleDelete("contract", tpl.id, tpl.name)}
                 />
               ))}
             </div>
@@ -380,9 +469,12 @@ export function TemplateCenterClient({
           <div className="rounded-2xl border border-dashed p-8 text-center">
             <Sparkles className="mx-auto h-8 w-8 text-muted-foreground/50" />
             <p className="mt-2 text-sm font-medium">Segera hadir</p>
-            <p className="text-xs text-muted-foreground">
-              Template prompt AI kustom untuk workspace.
+            <p className="text-xs text-muted-foreground mt-1">
+              Prompt AI workspace tetap di menu Prompt dulu.
             </p>
+            <Button asChild size="sm" variant="outline" className="mt-4">
+              <Link href="/app/prompts">Buka Prompt</Link>
+            </Button>
           </div>
         </TabsContent>
       </Tabs>
@@ -468,7 +560,24 @@ export function TemplateCenterClient({
             ) : (
               <>
                 <div className="space-y-1.5">
-                  <Label htmlFor="tpl-body">Isi kontrak *</Label>
+                  <div className="flex items-center justify-between gap-2">
+                    <Label htmlFor="tpl-body">Isi kontrak *</Label>
+                    {editingId ? (
+                      <Button asChild variant="ghost" size="sm" className="h-7 text-xs">
+                        <Link href={`/app/contract-templates/${editingId}`}>
+                          <Maximize2 className="mr-1 h-3 w-3" />
+                          Editor penuh
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button asChild variant="ghost" size="sm" className="h-7 text-xs">
+                        <Link href="/app/contract-templates/new">
+                          <Maximize2 className="mr-1 h-3 w-3" />
+                          Editor penuh
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
                   <Textarea
                     id="tpl-body"
                     value={formBody}
@@ -523,20 +632,32 @@ function TemplateCard({
   subtitle,
   preview,
   badge,
+  busy,
   onEdit,
   onDelete,
+  onDuplicate,
+  onSetDefault,
+  onOpenFull,
   href,
 }: {
   name: string;
   subtitle?: string;
   preview?: string | null;
   badge?: boolean;
+  busy?: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  onDuplicate?: () => void;
+  onSetDefault?: () => void;
+  onOpenFull?: string;
   href?: string;
 }) {
   return (
-    <div className="rounded-2xl border bg-card p-4 space-y-2">
+    <div
+      className={`rounded-2xl border bg-card p-4 space-y-3 transition-opacity ${
+        busy ? "opacity-60 pointer-events-none" : ""
+      }`}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           {href ? (
@@ -544,27 +665,81 @@ function TemplateCard({
               {name}
             </Link>
           ) : (
-            <h3 className="font-medium text-sm line-clamp-1">{name}</h3>
+            <button
+              type="button"
+              onClick={onEdit}
+              className="font-medium text-sm hover:underline line-clamp-1 text-left"
+            >
+              {name}
+            </button>
           )}
           {subtitle ? (
             <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-              {badge ? <Star className="h-3 w-3 text-amber-500" /> : null}
+              {badge ? <Star className="h-3 w-3 text-amber-500 fill-amber-500" /> : null}
               {subtitle}
             </p>
           ) : null}
         </div>
-        <div className="flex gap-1 shrink-0">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit}>
-            <Pencil className="h-3.5 w-3.5" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onDelete}>
-            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-          </Button>
-        </div>
+        {badge ? (
+          <span className="shrink-0 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 px-2 py-0.5 text-[10px] font-medium">
+            Default
+          </span>
+        ) : null}
       </div>
+
       {preview ? (
-        <p className="text-xs text-muted-foreground line-clamp-2">{preview}</p>
-      ) : null}
+        <p className="text-xs text-muted-foreground line-clamp-2 whitespace-pre-wrap">
+          {preview}
+        </p>
+      ) : (
+        <p className="text-xs text-muted-foreground/60 italic">Tanpa preview</p>
+      )}
+
+      <div className="flex flex-wrap gap-1 pt-1 border-t">
+        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={onEdit}>
+          <Pencil className="h-3.5 w-3.5 mr-1" />
+          Edit
+        </Button>
+        {onOpenFull ? (
+          <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-xs">
+            <Link href={onOpenFull}>
+              <Maximize2 className="h-3.5 w-3.5 mr-1" />
+              Penuh
+            </Link>
+          </Button>
+        ) : null}
+        {onDuplicate ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs"
+            onClick={onDuplicate}
+          >
+            <Copy className="h-3.5 w-3.5 mr-1" />
+            Duplikat
+          </Button>
+        ) : null}
+        {onSetDefault ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs"
+            onClick={onSetDefault}
+          >
+            <Star className="h-3.5 w-3.5 mr-1" />
+            Default
+          </Button>
+        ) : null}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+          onClick={onDelete}
+        >
+          <Trash2 className="h-3.5 w-3.5 mr-1" />
+          Hapus
+        </Button>
+      </div>
     </div>
   );
 }

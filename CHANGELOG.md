@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.36 — 2026-07-15 — Template Center UX: tab URL sync, duplikat, set default
+
+- **Tab ↔ URL**: ganti tab update `?tab=invoice|contract|prompt` (`router.replace`, no scroll jump); Suspense boundary untuk `useSearchParams`.
+- **Card actions**: Edit · Duplikat · Hapus; kontrak + **Penuh** (editor) + **Default** (set default 1-klik).
+- **Actions**: `duplicateInvoiceTemplate`, `duplicateContractTemplate`, `setDefaultContractTemplate`.
+- **Entry points**: Invoice list Template → `/app/templates?tab=invoice`; `/app/invoices/templates` redirect ke center.
+- Verified live: health 200, container healthy, bundle `0.1.36` (Duplikat / setDefaultContractTemplate di chunks). Login QA browser skip (credential 401).
+
 ## v0.1.31 — 2026-07-15 — Jurnal polish: tabs arsip, edit, i18n mood
 
 - **Tabs Aktif / Arsip** on `/app/journal` (status filter via `listPersonalNotes`).

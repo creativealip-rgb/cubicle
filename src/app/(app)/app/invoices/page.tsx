@@ -78,7 +78,7 @@ export default async function InvoicesPage() {
           </p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
-          <Link href="/app/invoices/templates">
+          <Link href="/app/templates?tab=invoice">
             <Button variant="outline" className="gap-2">
               <FileText className="h-4 w-4" /> {t("Template", "Templates")}
             </Button>
