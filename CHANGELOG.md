@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.37 — 2026-07-15 — Template Center: tab Proposal + tabs kiri
+
+- **Tab Proposal**: table `proposal_templates` + actions CRUD/duplikat/set-default; dialog scope + currency + PPN + DP.
+- **TabsList kiri**: `justify-start` + `w-auto` (bukan full-width center).
+- URL: `?tab=proposal` sync; header quick-link **Buat proposal**.
+- Migration: `drizzle/0027_proposal_templates.sql` (sudah push live).
+- Verified: health 200 · healthy · bundle `0.1.37` (`listProposalTemplates` / `setDefaultProposalTemplate` di chunks).
+
 ## v0.1.36 — 2026-07-15 — Template Center UX: tab URL sync, duplikat, set default
 
 - **Tab ↔ URL**: ganti tab update `?tab=invoice|contract|prompt` (`router.replace`, no scroll jump); Suspense boundary untuk `useSearchParams`.

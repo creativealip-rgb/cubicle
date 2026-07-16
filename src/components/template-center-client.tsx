@@ -32,6 +32,7 @@ import {
   Star,
   Copy,
   Maximize2,
+  ScrollText,
 } from "lucide-react";
 import {
   listInvoiceTemplates,
@@ -48,6 +49,14 @@ import {
   setDefaultContractTemplate,
   duplicateContractTemplate,
 } from "@/lib/actions/contract-templates";
+import {
+  listProposalTemplates,
+  createProposalTemplate,
+  updateProposalTemplate,
+  deleteProposalTemplate,
+  setDefaultProposalTemplate,
+  duplicateProposalTemplate,
+} from "@/lib/actions/proposal-templates";
 import { toast } from "sonner";
 
 interface InvoiceTpl {
@@ -67,7 +76,19 @@ interface ContractTpl {
   isDefault: boolean;
 }
 
-type TabKey = "invoice" | "contract" | "prompt";
+interface ProposalTpl {
+  id: string;
+  name: string;
+  body: string | null;
+  defaultCurrency: string;
+  defaultTaxRate: string;
+  defaultDownPaymentPercent: string;
+  lineItems: string | null;
+  isDefault: boolean;
+}
+
+type TabKey = "invoice" | "contract" | "proposal" | "prompt";
+type EditableType = "invoice" | "contract" | "proposal";
 
 const DEFAULT_CONTRACT_BODY = `# Perjanjian Jasa
 
@@ -103,8 +124,33 @@ Masing-masing pihak dapat mengakhiri dengan pemberitahuan tertulis 14 hari.
 Dengan menandatangani di bawah, kedua pihak menyetujui syarat di atas.
 `;
 
+const DEFAULT_PROPOSAL_BODY = `## Ringkasan
+
+Terima kasih atas kesempatan ini. Berikut proposal untuk **{{project.name}}**.
+
+## Lingkup pekerjaan
+
+- Item 1
+- Item 2
+- Item 3
+
+## Timeline
+
+Estimasi pengerjaan: 2–4 minggu sejak kickoff.
+
+## Investasi
+
+Lihat rincian item di bawah. DP **{{dp}}%** di muka, sisanya sesuai milestone.
+
+## Catatan
+
+Proposal berlaku sampai **{{valid_until}}**.
+`;
+
 function normalizeTab(tab?: string | null): TabKey {
-  if (tab === "contract" || tab === "prompt" || tab === "invoice") return tab;
+  if (tab === "contract" || tab === "proposal" || tab === "prompt" || tab === "invoice") {
+    return tab;
+  }
   return "invoice";
 }
 
@@ -121,11 +167,12 @@ export function TemplateCenterClient({
   const [activeTab, setActiveTab] = useState<TabKey>(urlTab);
   const [invoiceTpls, setInvoiceTpls] = useState<InvoiceTpl[]>([]);
   const [contractTpls, setContractTpls] = useState<ContractTpl[]>([]);
+  const [proposalTpls, setProposalTpls] = useState<ProposalTpl[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingType, setEditingType] = useState<"invoice" | "contract">("invoice");
+  const [editingType, setEditingType] = useState<EditableType>("invoice");
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -135,6 +182,7 @@ export function TemplateCenterClient({
   const [formTerms, setFormTerms] = useState("");
   const [formCurrency, setFormCurrency] = useState("IDR");
   const [formTaxRate, setFormTaxRate] = useState("0");
+  const [formDpPercent, setFormDpPercent] = useState("50");
   const [formIsDefault, setFormIsDefault] = useState(false);
 
   useEffect(() => {
@@ -160,12 +208,14 @@ export function TemplateCenterClient({
 
   async function loadAll() {
     try {
-      const [inv, con] = await Promise.all([
+      const [inv, con, prop] = await Promise.all([
         listInvoiceTemplates(),
         listContractTemplates(),
+        listProposalTemplates(),
       ]);
       setInvoiceTpls(inv as InvoiceTpl[]);
       setContractTpls(con as ContractTpl[]);
+      setProposalTpls(prop as ProposalTpl[]);
     } catch {
       toast.error("Gagal memuat template");
     } finally {
@@ -180,14 +230,21 @@ export function TemplateCenterClient({
     setFormTerms("");
     setFormCurrency("IDR");
     setFormTaxRate("0");
+    setFormDpPercent("50");
     setFormIsDefault(false);
     setEditingId(null);
   }
 
-  function openCreate(type: "invoice" | "contract") {
+  function openCreate(type: EditableType) {
     resetForm();
     setEditingType(type);
     if (type === "contract") setFormBody(DEFAULT_CONTRACT_BODY);
+    if (type === "proposal") {
+      setFormBody(DEFAULT_PROPOSAL_BODY);
+      setFormCurrency("IDR");
+      setFormTaxRate("0");
+      setFormDpPercent("50");
+    }
     if (type === "invoice") {
       setFormNotes("Terima kasih atas kepercayaannya.");
       setFormTerms("Pembayaran jatuh tempo dalam 14 hari.");
@@ -195,7 +252,7 @@ export function TemplateCenterClient({
     setDialogOpen(true);
   }
 
-  function openEdit(type: "invoice" | "contract", tpl: InvoiceTpl | ContractTpl) {
+  function openEdit(type: EditableType, tpl: InvoiceTpl | ContractTpl | ProposalTpl) {
     setEditingType(type);
     setEditingId(tpl.id);
     setFormName(tpl.name);
@@ -206,10 +263,21 @@ export function TemplateCenterClient({
       setFormCurrency(t.defaultCurrency || "IDR");
       setFormTaxRate(String(t.defaultTaxRate ?? "0"));
       setFormBody("");
+      setFormDpPercent("50");
       setFormIsDefault(false);
-    } else {
+    } else if (type === "contract") {
       const t = tpl as ContractTpl;
       setFormBody(t.body || "");
+      setFormIsDefault(!!t.isDefault);
+      setFormNotes("");
+      setFormTerms("");
+      setFormDpPercent("50");
+    } else {
+      const t = tpl as ProposalTpl;
+      setFormBody(t.body || "");
+      setFormCurrency(t.defaultCurrency || "IDR");
+      setFormTaxRate(String(t.defaultTaxRate ?? "0"));
+      setFormDpPercent(String(t.defaultDownPaymentPercent ?? "50"));
       setFormIsDefault(!!t.isDefault);
       setFormNotes("");
       setFormTerms("");
@@ -244,7 +312,7 @@ export function TemplateCenterClient({
           await createInvoiceTemplate(input);
           toast.success("Template invoice dibuat");
         }
-      } else {
+      } else if (editingType === "contract") {
         const input = {
           name: formName.trim(),
           body: formBody.trim(),
@@ -256,6 +324,22 @@ export function TemplateCenterClient({
         } else {
           await createContractTemplate(input);
           toast.success("Template kontrak dibuat");
+        }
+      } else {
+        const input = {
+          name: formName.trim(),
+          body: formBody.trim() || null,
+          defaultCurrency: formCurrency || "IDR",
+          defaultTaxRate: formTaxRate || "0",
+          defaultDownPaymentPercent: formDpPercent || "50",
+          isDefault: formIsDefault,
+        };
+        if (editingId) {
+          await updateProposalTemplate(editingId, input);
+          toast.success("Template proposal diperbarui");
+        } else {
+          await createProposalTemplate(input);
+          toast.success("Template proposal dibuat");
         }
       }
 
@@ -270,12 +354,13 @@ export function TemplateCenterClient({
     }
   }
 
-  async function handleDelete(type: "invoice" | "contract", id: string, name: string) {
+  async function handleDelete(type: EditableType, id: string, name: string) {
     if (!confirm(`Hapus template "${name}"?`)) return;
     setBusyId(id);
     try {
       if (type === "invoice") await deleteInvoiceTemplate(id);
-      else await deleteContractTemplate(id);
+      else if (type === "contract") await deleteContractTemplate(id);
+      else await deleteProposalTemplate(id);
       toast.success("Template dihapus");
       await loadAll();
     } catch (err: unknown) {
@@ -286,15 +371,18 @@ export function TemplateCenterClient({
     }
   }
 
-  async function handleDuplicate(type: "invoice" | "contract", id: string) {
+  async function handleDuplicate(type: EditableType, id: string) {
     setBusyId(id);
     try {
       if (type === "invoice") {
         await duplicateInvoiceTemplate(id);
         toast.success("Template invoice diduplikasi");
-      } else {
+      } else if (type === "contract") {
         await duplicateContractTemplate(id);
         toast.success("Template kontrak diduplikasi");
+      } else {
+        await duplicateProposalTemplate(id);
+        toast.success("Template proposal diduplikasi");
       }
       await loadAll();
     } catch (err: unknown) {
@@ -305,10 +393,11 @@ export function TemplateCenterClient({
     }
   }
 
-  async function handleSetDefault(id: string) {
+  async function handleSetDefault(type: "contract" | "proposal", id: string) {
     setBusyId(id);
     try {
-      await setDefaultContractTemplate(id);
+      if (type === "contract") await setDefaultContractTemplate(id);
+      else await setDefaultProposalTemplate(id);
       toast.success("Template default diperbarui");
       await loadAll();
     } catch (err: unknown) {
@@ -321,9 +410,15 @@ export function TemplateCenterClient({
 
   const invoiceEmpty = !loading && invoiceTpls.length === 0;
   const contractEmpty = !loading && contractTpls.length === 0;
+  const proposalEmpty = !loading && proposalTpls.length === 0;
 
   const dialogTitle = useMemo(() => {
-    const kind = editingType === "invoice" ? "invoice" : "kontrak";
+    const kind =
+      editingType === "invoice"
+        ? "invoice"
+        : editingType === "contract"
+          ? "kontrak"
+          : "proposal";
     return editingId ? `Edit template ${kind}` : `Buat template ${kind}`;
   }, [editingId, editingType]);
 
@@ -333,10 +428,16 @@ export function TemplateCenterClient({
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Pusat Template</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Simpan sekali, pakai ulang di invoice & kontrak.
+            Simpan sekali, pakai ulang di invoice, proposal & kontrak.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/app/proposals/new">
+              Buat proposal
+              <ExternalLink className="ml-1 h-3.5 w-3.5" />
+            </Link>
+          </Button>
           <Button asChild variant="outline" size="sm">
             <Link href="/app/invoices/new">
               Buat invoice
@@ -353,9 +454,12 @@ export function TemplateCenterClient({
       </div>
 
       <Tabs value={activeTab} onValueChange={changeTab}>
-        <TabsList className="w-full sm:w-auto flex flex-wrap h-auto gap-1">
+        <TabsList className="inline-flex h-auto w-auto max-w-full flex-wrap justify-start gap-1">
           <TabsTrigger value="invoice" className="gap-1.5">
             <FileText className="h-4 w-4" /> Invoice ({invoiceTpls.length})
+          </TabsTrigger>
+          <TabsTrigger value="proposal" className="gap-1.5">
+            <ScrollText className="h-4 w-4" /> Proposal ({proposalTpls.length})
           </TabsTrigger>
           <TabsTrigger value="contract" className="gap-1.5">
             <FileSignature className="h-4 w-4" /> Kontrak ({contractTpls.length})
@@ -399,6 +503,52 @@ export function TemplateCenterClient({
                   onEdit={() => openEdit("invoice", tpl)}
                   onDuplicate={() => handleDuplicate("invoice", tpl.id)}
                   onDelete={() => handleDelete("invoice", tpl.id, tpl.name)}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="proposal" className="mt-4 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              Scope body, mata uang, PPN, dan DP default.
+            </p>
+            <Button size="sm" onClick={() => openCreate("proposal")}>
+              <Plus className="mr-1 h-3.5 w-3.5" /> Template proposal
+            </Button>
+          </div>
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Memuat...</p>
+          ) : proposalEmpty ? (
+            <div className="rounded-2xl border border-dashed p-8 text-center">
+              <ScrollText className="mx-auto h-8 w-8 text-muted-foreground/50" />
+              <p className="mt-2 text-sm font-medium">Belum ada template proposal</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Simpan scope, currency, PPN, dan DP untuk proposal baru.
+              </p>
+              <Button size="sm" className="mt-4" onClick={() => openCreate("proposal")}>
+                <Plus className="mr-1 h-3.5 w-3.5" /> Buat template pertama
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {proposalTpls.map((tpl) => (
+                <TemplateCard
+                  key={tpl.id}
+                  name={tpl.name}
+                  subtitle={`${tpl.defaultCurrency} · PPN ${tpl.defaultTaxRate}% · DP ${tpl.defaultDownPaymentPercent}%${
+                    tpl.isDefault ? " · Default" : ""
+                  }`}
+                  badge={tpl.isDefault}
+                  preview={tpl.body?.slice(0, 140)}
+                  busy={busyId === tpl.id}
+                  onEdit={() => openEdit("proposal", tpl)}
+                  onDuplicate={() => handleDuplicate("proposal", tpl.id)}
+                  onSetDefault={
+                    tpl.isDefault ? undefined : () => handleSetDefault("proposal", tpl.id)
+                  }
+                  onDelete={() => handleDelete("proposal", tpl.id, tpl.name)}
                 />
               ))}
             </div>
@@ -456,7 +606,7 @@ export function TemplateCenterClient({
                   onOpenFull={`/app/contract-templates/${tpl.id}`}
                   onDuplicate={() => handleDuplicate("contract", tpl.id)}
                   onSetDefault={
-                    tpl.isDefault ? undefined : () => handleSetDefault(tpl.id)
+                    tpl.isDefault ? undefined : () => handleSetDefault("contract", tpl.id)
                   }
                   onDelete={() => handleDelete("contract", tpl.id, tpl.name)}
                 />
@@ -500,7 +650,9 @@ export function TemplateCenterClient({
                 placeholder={
                   editingType === "invoice"
                     ? "mis. Invoice retainer bulanan"
-                    : "mis. Perjanjian jasa standar"
+                    : editingType === "proposal"
+                      ? "mis. Proposal website standar"
+                      : "mis. Perjanjian jasa standar"
                 }
               />
             </div>
@@ -556,6 +708,71 @@ export function TemplateCenterClient({
                     rows={2}
                   />
                 </div>
+              </>
+            ) : editingType === "proposal" ? (
+              <>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Mata uang</Label>
+                    <Select value={formCurrency} onValueChange={setFormCurrency}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {["IDR", "USD", "SGD", "EUR", "AUD"].map((c) => (
+                          <SelectItem key={c} value={c}>
+                            {c}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="tpl-prop-tax">PPN (%)</Label>
+                    <Input
+                      id="tpl-prop-tax"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      value={formTaxRate}
+                      onChange={(e) => setFormTaxRate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="tpl-dp">DP (%)</Label>
+                    <Input
+                      id="tpl-dp"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      value={formDpPercent}
+                      onChange={(e) => setFormDpPercent(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="tpl-prop-body">Isi / scope</Label>
+                  <Textarea
+                    id="tpl-prop-body"
+                    value={formBody}
+                    onChange={(e) => setFormBody(e.target.value)}
+                    placeholder="Ringkasan lingkup pekerjaan..."
+                    rows={8}
+                    className="font-mono text-xs"
+                  />
+                </div>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formIsDefault}
+                    onChange={(e) => setFormIsDefault(e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300"
+                  />
+                  <Star className="h-3.5 w-3.5 text-amber-500" />
+                  Jadikan template default
+                </label>
               </>
             ) : (
               <>
