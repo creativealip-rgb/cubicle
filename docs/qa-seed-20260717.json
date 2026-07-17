@@ -1,0 +1,22 @@
+{
+  "base": "https://cubiqlo.com",
+  "login": {
+    "owner": {"email": "qa-owner-20260717@cubiqlo.test", "password": "QaCubiqlo!2026", "role": "owner", "plan": "solo"},
+    "member": {"email": "qa-member-20260717@cubiqlo.test", "password": "QaCubiqlo!2026", "role": "member"},
+    "viewer": {"email": "qa-viewer-20260717@cubiqlo.test", "password": "QaCubiqlo!2026", "role": "viewer"}
+  },
+  "workspace": {
+    "name": "QA Studio Manual Test",
+    "bookingSlug": "qa-studio-20260717",
+    "bookingUrl": "https://cubiqlo.com/booking/qa-studio-20260717"
+  },
+  "publicLinks": {
+    "portalKopiSenja": "https://cubiqlo.com/client-portal/d80c45ee79782f43b801545ce60ba6e6d2114f59ab78fabfafb1bcb3230d0331",
+    "portalKlinikHarmoni": "https://cubiqlo.com/client-portal/5713f2ababe1a4731980354f48e6027e72b713578019ec4b781151bcfee5856e",
+    "invoiceSent": "https://cubiqlo.com/invoice/0cc6423e57c2a7bd005f145c393f79c1246c14d72fc55b65a38b1e297232dced",
+    "invoiceDraftUsd": "https://cubiqlo.com/invoice/472d904a117b51cd1ecbac41ebb929e3427ef863081360739575ac863f37e544",
+    "proposal": "https://cubiqlo.com/proposal/-lpbKm-4z59mPHWCpOSW1mb24QHJo9jn-r6j1KmOFD4",
+    "contract": "https://cubiqlo.com/contract/tRCarpFTgzXG-wGUBbI79WeNqSOPeA2t3ZEdmogOHfI",
+    "intake": "https://cubiqlo.com/intake/5wJua6wnzzPa-AjgZxkRh-cGAfcTRTIKJYsKugEBeJ8"
+  }
+}

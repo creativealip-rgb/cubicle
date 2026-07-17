@@ -15,14 +15,6 @@ function hashToken(token: string) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
-function formatMoney(amount: string | number, currency: string) {
-  const n = typeof amount === "string" ? parseFloat(amount) : amount;
-  if (currency === "IDR") {
-    return `Rp ${n.toLocaleString("id-ID", { maximumFractionDigits: 0 })}`;
-  }
-  return `${currency} ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
 export default async function PublicProposalPage({ params }: ProposalPageProps) {
   const { token } = await params;
   const tokenHash = hashToken(token);
@@ -101,7 +93,7 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
             This proposal hasn&apos;t been sent yet.
           </div>
         )}
-        <ProposalPublicView proposal={proposal} formatMoney={formatMoney} />
+        <ProposalPublicView proposal={proposal} />
         {isActionable && (
           <div className="mt-8">
             <AcceptDeclineButtons proposalId={proposal.id} token={token} />

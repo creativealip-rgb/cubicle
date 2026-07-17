@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatMoney } from "@/lib/utils";
 
 interface LineItem {
   description: string;
@@ -33,10 +34,9 @@ interface ProposalPublicViewProps {
     validUntil: string | null;
     sentAt: Date | null;
   };
-  formatMoney: (amount: string | number, currency: string) => string;
 }
 
-export function ProposalPublicView({ proposal, formatMoney }: ProposalPublicViewProps) {
+export function ProposalPublicView({ proposal }: ProposalPublicViewProps) {
   const items = (proposal.lineItems as LineItem[]) ?? [];
   const subtotal = proposal.subtotal ?? items.reduce((s, li) => s + Number(li.amount ?? 0), 0);
   const tax = proposal.tax ?? 0;

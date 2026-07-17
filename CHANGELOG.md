@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.39 — 2026-07-17 — Fix public proposal 500 (formatMoney Client Component)
+
+- Root cause: server page pass function `formatMoney` ke client component `ProposalPublicView` → Next.js 500 (`Functions cannot be passed directly to Client Components`).
+- Fix: import `formatMoney` dari `@/lib/utils` di dalam client component; hapus prop function dari public page.
+- QA seed non-destructive: `scripts/seed-qa-manual.mjs` + docs `QA_TEST_READY.md` / `MANUAL_TEST_CHECKLIST.md`.
+
 ## v0.1.38 — 2026-07-15 — Sidebar: auto-open group aktif (Sales/Template)
 
 - Group **Penjualan/Sales** auto expand saat route di dalamnya (`/app/templates`, proposal, kontrak, editor template).
