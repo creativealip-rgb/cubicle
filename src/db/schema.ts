@@ -357,7 +357,7 @@ export const invoices = pgTable("invoices", {
   discount: numeric("discount", { precision: 12, scale: 2 }).notNull().default("0"),
   tax: numeric("tax", { precision: 12, scale: 2 }).notNull().default("0"),
   total: numeric("total", { precision: 12, scale: 2 }).notNull().default("0"),
-  status: text("status", { enum: ["draft", "sent", "viewed", "paid", "overdue", "cancelled"] }).notNull().default("draft"),
+  status: text("status", { enum: ["draft", "sent", "viewed", "paid", "overdue", "cancelled", "archived"] }).notNull().default("draft"),
   notes: text("notes"),
   terms: text("terms"),
   sharedTokenHash: text("shared_token_hash").unique(),

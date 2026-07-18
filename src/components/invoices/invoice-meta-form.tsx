@@ -16,8 +16,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useT } from "@/lib/i18n-client";
+import { invoiceStatusVariant } from "@/lib/status-badge";
 
-const STATUSES = ["draft", "sent", "viewed", "paid", "overdue", "cancelled"] as const;
+const STATUSES = ["draft", "sent", "viewed", "paid", "overdue", "cancelled", "archived"] as const;
 
 interface InvoiceMetaFormProps {
   invoiceId: string;
@@ -42,7 +43,7 @@ interface InvoiceMetaFormProps {
 }
 
 export function InvoiceMetaForm({ invoiceId, defaults, project }: InvoiceMetaFormProps) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -134,7 +135,7 @@ export function InvoiceMetaForm({ invoiceId, defaults, project }: InvoiceMetaFor
             <SelectContent>
               {STATUSES.map((s) => (
                 <SelectItem key={s} value={s}>
-                  {s}
+                  {invoiceStatusVariant(s, lang).label}
                 </SelectItem>
               ))}
             </SelectContent>

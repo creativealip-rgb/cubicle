@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.62 — 2026-07-18 — Invoice archive tab
+
+- Status baru `archived` (Arsip) di schema + Edit Invoice + badge.
+- Tab **Arsip** di list invoice; tab **Semua** exclude arsip biar list utama bersih.
+- Portal klien: arsip disembunyikan + gak masuk outstanding.
+
 ## v0.1.61 — 2026-07-18 — Invoice list: status tabs + pagination
 
 - Tab status: Semua / Draf / Terkirim / Dilihat / Terlambat / Lunas / Dibatalkan (count badge).

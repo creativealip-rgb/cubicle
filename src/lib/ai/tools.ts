@@ -1370,7 +1370,7 @@ export const TOOL_DEFS: ToolDefinition[] = [
         properties: {
           status: {
             type: "string",
-            description: "Comma-separated. Valid: draft,sent,viewed,paid,overdue,cancelled. Try 'sent,viewed,overdue' for unpaid.",
+            description: "Comma-separated. Valid: draft,sent,viewed,paid,overdue,cancelled,archived. Try 'sent,viewed,overdue' for unpaid.",
           },
           limit: { type: "number" },
         },

@@ -15,7 +15,7 @@ import {
   packages,
   workspaces,
 } from "@/db/schema";
-import { eq, and, sql, desc, inArray } from "drizzle-orm";
+import { eq, and, sql, desc, inArray, ne } from "drizzle-orm";
 import { getClientPortalAccess, logPortalAccess } from "@/lib/actions/portal";
 
 function formatIDR(amount: number) {
@@ -463,6 +463,7 @@ export default async function ClientPortalPage({
       and(
         eq(invoices.workspaceId, client.workspaceId),
         eq(invoices.clientId, client.id),
+        ne(invoices.status, "archived"),
       ),
     )
     .limit(50);
@@ -491,7 +492,7 @@ export default async function ClientPortalPage({
     if (inv.status === "paid") {
       if (isUSD) totalPaidUSD += amt;
       else totalPaidIDR += amt;
-    } else if (inv.status !== "cancelled") {
+    } else if (inv.status !== "cancelled" && inv.status !== "archived") {
       if (isUSD) totalOutstandingUSD += amt;
       else totalOutstandingIDR += amt;
     }
@@ -578,6 +579,7 @@ export default async function ClientPortalPage({
       and(
         eq(invoices.workspaceId, client.workspaceId),
         eq(invoices.clientId, client.id),
+        ne(invoices.status, "archived"),
       ),
     )
     .limit(50);

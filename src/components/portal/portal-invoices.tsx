@@ -38,6 +38,8 @@ function invoiceStatusMeta(status: string, isOverdue: boolean): StatusMeta {
       return { label: "Menunggu Pembayaran", className: "bg-blue-100 text-blue-700 border-blue-200" };
     case "cancelled":
       return { label: "Dibatalkan", className: "bg-slate-100 text-slate-500 border-slate-200" };
+    case "archived":
+      return { label: "Arsip", className: "bg-slate-100 text-slate-500 border-slate-200" };
     case "draft":
       return { label: "Draft", className: "bg-slate-100 text-slate-500 border-slate-200" };
     default:
@@ -110,7 +112,7 @@ function InvoiceRow({
 }) {
   const overdue = isInvoiceOverdue(inv);
   const meta = invoiceStatusMeta(inv.status, overdue);
-  const canDownload = inv.status !== "draft" && inv.status !== "cancelled";
+  const canDownload = inv.status !== "draft" && inv.status !== "cancelled" && inv.status !== "archived";
   const pdfUrl = `/api/client-portal/invoices/${inv.id}/pdf?token=${encodeURIComponent(token)}`;
 
   return (

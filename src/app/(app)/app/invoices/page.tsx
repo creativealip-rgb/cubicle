@@ -4,7 +4,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { clients, invoices, workspaceMembers } from "@/db/schema";
-import { eq, desc, and, count } from "drizzle-orm";
+import { eq, desc, and, count, ne } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,7 @@ const STATUS_TABS = [
   "overdue",
   "paid",
   "cancelled",
+  "archived",
 ] as const;
 
 type StatusTab = (typeof STATUS_TABS)[number];
@@ -110,9 +111,15 @@ export default async function InvoicesPage({
   const countsByStatus = Object.fromEntries(
     statusCountRows.map((row) => [row.status, Number(row.total) || 0]),
   ) as Record<string, number>;
-  const totalAll = Object.values(countsByStatus).reduce((sum, n) => sum + n, 0);
+  const archivedCount = countsByStatus.archived ?? 0;
+  // "Semua" = active list, exclude archived so archive stays out of main clutter
+  const totalActive = Object.entries(countsByStatus).reduce(
+    (sum, [status, n]) => (status === "archived" ? sum : sum + n),
+    0,
+  );
+  const totalAllIncludingArchived = totalActive + archivedCount;
   const tabCount = (tab: StatusTab) =>
-    tab === "all" ? totalAll : countsByStatus[tab] ?? 0;
+    tab === "all" ? totalActive : countsByStatus[tab] ?? 0;
 
   const filteredTotal = tabCount(statusTab);
   const totalPages = Math.max(1, Math.ceil(filteredTotal / PAGE_SIZE));
@@ -121,7 +128,7 @@ export default async function InvoicesPage({
 
   const whereClause =
     statusTab === "all"
-      ? eq(invoices.workspaceId, workspaceId)
+      ? and(eq(invoices.workspaceId, workspaceId), ne(invoices.status, "archived"))
       : and(eq(invoices.workspaceId, workspaceId), eq(invoices.status, statusTab));
 
   const invoiceList = await db
@@ -181,8 +188,16 @@ export default async function InvoicesPage({
           {STATUS_TABS.map((tab) => {
             const active = tab === statusTab;
             const countVal = tabCount(tab);
-            // Hide empty non-active tabs except core ones
-            if (!active && countVal === 0 && tab !== "all" && tab !== "draft" && tab !== "paid" && tab !== "sent") {
+            // Hide empty non-active tabs except core ones (keep Arsip visible)
+            if (
+              !active &&
+              countVal === 0 &&
+              tab !== "all" &&
+              tab !== "draft" &&
+              tab !== "paid" &&
+              tab !== "sent" &&
+              tab !== "archived"
+            ) {
               return null;
             }
             return (
@@ -211,7 +226,7 @@ export default async function InvoicesPage({
         </div>
       </div>
 
-      {totalAll === 0 ? (
+      {totalAllIncludingArchived === 0 ? (
         <EmptyState
           icon={FileText}
           title={t("Belum ada invoice", "No invoices yet")}
@@ -221,11 +236,22 @@ export default async function InvoicesPage({
       ) : filteredTotal === 0 ? (
         <EmptyState
           icon={FileText}
-          title={t("Tidak ada invoice di tab ini", "No invoices in this tab")}
-          description={t(
-            "Coba tab status lain, atau buat invoice baru.",
-            "Try another status tab, or create a new invoice.",
-          )}
+          title={
+            statusTab === "archived"
+              ? t("Belum ada invoice di arsip", "No archived invoices")
+              : t("Tidak ada invoice di tab ini", "No invoices in this tab")
+          }
+          description={
+            statusTab === "archived"
+              ? t(
+                  "Ubah status invoice ke \"archived\" lewat Edit Invoice untuk arsipkan.",
+                  'Set invoice status to "archived" in Edit Invoice to archive it.',
+                )
+              : t(
+                  "Coba tab status lain, atau buat invoice baru.",
+                  "Try another status tab, or create a new invoice.",
+                )
+          }
           action={canWrite ? { label: t("Buat Invoice", "Create Invoice"), href: "/app/invoices/new" } : undefined}
         />
       ) : (

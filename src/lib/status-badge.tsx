@@ -36,6 +36,8 @@ export function invoiceStatusVariant(status: string, lang?: Lang): StatusBadgeCo
       return { variant: "destructive", label: tr(lang, "Perlu dibayar", "Payment due") };
     case "cancelled":
       return { variant: "outline", label: tr(lang, "Dibatalkan", "Cancelled") };
+    case "archived":
+      return { variant: "outline", label: tr(lang, "Arsip", "Archived") };
     default:
       return { variant: "outline", label: titleize(status) || tr(lang, "Tidak diketahui", "Unknown") };
   }

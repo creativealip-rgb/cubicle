@@ -1,0 +1,2 @@
+-- Invoice archive status (soft-hide from main list)
+-- status is plain text (no DB enum constraint); app enum updated separately.
