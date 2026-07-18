@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createProject, updateProject } from "@/lib/actions/projects";
+import { isStaleServerActionError } from "@/lib/client-errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -107,7 +108,11 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
       };
 
       if (mode === "create") {
-        await createProject(data);
+        const result = await createProject(data);
+        if (result && typeof result === "object" && "ok" in result && result.ok === false) {
+          toast.error(result.error);
+          return;
+        }
         toast.success("Project dibuat");
       } else if (defaultValues?.id) {
         await updateProject(defaultValues.id, data);
@@ -117,8 +122,15 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
       onSuccess?.();
       router.refresh();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Terjadi kesalahan";
+      const msg = isStaleServerActionError(err)
+        ? "App baru di-deploy. Refresh halaman, lalu coba lagi."
+        : err instanceof Error
+          ? err.message
+          : "Terjadi kesalahan";
       toast.error(msg);
+      if (isStaleServerActionError(err)) {
+        setTimeout(() => window.location.reload(), 800);
+      }
     } finally {
       setLoading(false);
     }

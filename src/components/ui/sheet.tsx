@@ -4,6 +4,10 @@ import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import {
+  createPortaledPopperOutsideGuard,
+  isPortaledPopperNode,
+} from "@/lib/portaled-popper-guard"
 
 const Sheet = DialogPrimitive.Root
 
@@ -33,7 +37,7 @@ const SheetContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
     side?: "top" | "bottom" | "left" | "right"
   }
->(({ className, children, side = "right", ...props }, ref) => {
+>(({ className, children, side = "right", onInteractOutside, onPointerDownOutside, onFocusOutside, ...props }, ref) => {
   const sideStyles = {
     top: "inset-x-0 top-0 border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
     bottom:
@@ -42,6 +46,23 @@ const SheetContent = React.forwardRef<
     right:
       "inset-y-0 right-0 h-full w-3/4 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm",
   }
+
+  // Same Select-in-Dialog guard: task sidebar Select was auto-closing the Sheet.
+  const guardRef = React.useRef<ReturnType<typeof createPortaledPopperOutsideGuard> | null>(null)
+
+  React.useEffect(() => {
+    const guard = createPortaledPopperOutsideGuard()
+    guardRef.current = guard
+    return () => {
+      guard.cleanup()
+      guardRef.current = null
+    }
+  }, [])
+
+  const shouldKeepOpen = (event: {
+    detail?: { originalEvent?: Event }
+    target?: EventTarget | null
+  }) => guardRef.current?.shouldKeepOpen(event) ?? false
 
   return (
     <SheetPortal>
@@ -53,6 +74,27 @@ const SheetContent = React.forwardRef<
           sideStyles[side],
           className,
         )}
+        onPointerDownOutside={(event) => {
+          if (shouldKeepOpen(event)) {
+            event.preventDefault()
+            return
+          }
+          onPointerDownOutside?.(event)
+        }}
+        onInteractOutside={(event) => {
+          if (shouldKeepOpen(event)) {
+            event.preventDefault()
+            return
+          }
+          onInteractOutside?.(event)
+        }}
+        onFocusOutside={(event) => {
+          if (shouldKeepOpen(event) || isPortaledPopperNode(event.target)) {
+            event.preventDefault()
+            return
+          }
+          onFocusOutside?.(event)
+        }}
         {...props}
       >
         {children}

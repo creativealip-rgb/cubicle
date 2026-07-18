@@ -63,6 +63,7 @@ export function JournalList({
 }) {
   const [search, setSearch] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const isId = lang !== "en";
 
@@ -70,6 +71,14 @@ export function JournalList({
     const tagSet = new Set<string>();
     entries.forEach((e) => e.tags.forEach((t) => tagSet.add(t)));
     return [...tagSet].sort();
+  }, [entries]);
+
+  const usedMoods = useMemo(() => {
+    const set = new Set<string>();
+    entries.forEach((e) => {
+      if (e.mood) set.add(e.mood);
+    });
+    return MOODS.filter((m) => set.has(m.emoji));
   }, [entries]);
 
   const filtered = useMemo(() => {
@@ -80,9 +89,10 @@ export function JournalList({
         e.content.toLowerCase().includes(search.toLowerCase()) ||
         e.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()));
       const matchTag = !selectedTag || e.tags.includes(selectedTag);
-      return matchSearch && matchTag;
+      const matchMood = !selectedMood || e.mood === selectedMood;
+      return matchSearch && matchTag && matchMood;
     });
-  }, [entries, search, selectedTag]);
+  }, [entries, search, selectedTag, selectedMood]);
 
   const handleExport = () => {
     const text = filtered
@@ -155,10 +165,38 @@ export function JournalList({
         </div>
       )}
 
+      {usedMoods.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs text-muted-foreground">{isId ? "Mood:" : "Mood:"}</span>
+          <Button
+            variant={selectedMood === null ? "default" : "outline"}
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setSelectedMood(null)}
+          >
+            {isId ? "Semua" : "All"}
+          </Button>
+          {usedMoods.map((m) => (
+            <Button
+              key={m.emoji}
+              variant={selectedMood === m.emoji ? "default" : "outline"}
+              size="sm"
+              className="h-7 gap-1 text-xs"
+              onClick={() => setSelectedMood(selectedMood === m.emoji ? null : m.emoji)}
+              title={isId ? m.idLabel : m.en}
+            >
+              <span>{m.emoji}</span>
+              <span className="hidden sm:inline">{isId ? m.idLabel : m.en}</span>
+            </Button>
+          ))}
+        </div>
+      )}
+
       <p className="text-xs text-muted-foreground">
         {filtered.length} / {entries.length} {isId ? "entri" : "entries"}
         {search && ` · “${search}”`}
         {selectedTag && ` · #${selectedTag}`}
+        {selectedMood && ` · ${selectedMood}`}
       </p>
 
       {filtered.length === 0 ? (

@@ -7,7 +7,6 @@ import {
   tasks,
   files,
   invoices,
-  comments,
   portalVisits,
   portalRequests,
   activityLogs,
@@ -45,7 +44,7 @@ import {
   FileText,
   Activity,
 } from "lucide-react";
-import { PortalCommentForm } from "@/components/portal/portal-comment-form";
+import { PortalContactButtons } from "@/components/portal/portal-contact";
 import { ProjectAccordion } from "@/components/portal/project-accordion";
 import { ActivityFeed, type ActivityItem } from "@/components/portal/activity-feed";
 import { PortalInvoices } from "@/components/portal/portal-invoices";
@@ -85,6 +84,8 @@ export default async function ClientPortalPage({
     .select({
       name: workspaces.name,
       phone: workspaces.billingPhone,
+      email: workspaces.billingEmail,
+      replyToEmail: workspaces.replyToEmail,
       logoUrl: workspaces.logoUrl,
     })
     .from(workspaces)
@@ -256,37 +257,7 @@ export default async function ClientPortalPage({
     // non-critical analytics / notification
   }
 
-  // Fetch client-visible comments per project
-  const projectCommentsMap = new Map<string, Array<{
-    id: string;
-    body: string;
-    authorName: string | null;
-    authorEmail: string | null;
-    source: string;
-    createdAt: Date;
-  }>>();
-
-  for (const projectId of visibleProjectIds) {
-    const projectComments = await db
-      .select({
-        id: comments.id,
-        body: comments.body,
-        authorName: comments.authorName,
-        authorEmail: comments.authorEmail,
-        source: comments.source,
-        createdAt: comments.createdAt,
-      })
-      .from(comments)
-      .where(
-        and(
-          eq(comments.entityType, "project"),
-          eq(comments.entityId, projectId),
-          eq(comments.visibility, "client"),
-        ),
-      )
-      .limit(50);
-    projectCommentsMap.set(projectId, projectComments);
-  }
+  // Fetch client-visible comments removed — portal uses WA/email contact only.
 
   const clientVisibleActionLabels: Record<string, string> = {
     created_project: "Project created",
@@ -296,7 +267,6 @@ export default async function ClientPortalPage({
     updated_task: "Task updated",
     updated_task_status: "Task status updated",
     uploaded_file: "File shared",
-    created_comment: "Comment added",
   };
 
   const projectTimelineMap = new Map<string, Array<{
@@ -309,12 +279,10 @@ export default async function ClientPortalPage({
   for (const project of clientProjects) {
     const projectTasks = projectTasksMap.get(project.id) || [];
     const projectFiles = projectFilesMap.get(project.id) || [];
-    const projectComments = projectCommentsMap.get(project.id) || [];
     const visibleEntityIds = [
       project.id,
       ...projectTasks.map((task) => task.id),
       ...projectFiles.map((file) => file.id),
-      ...projectComments.map((comment) => comment.id),
     ];
 
     if (visibleEntityIds.length === 0) {
@@ -624,10 +592,11 @@ export default async function ClientPortalPage({
         : true),
   );
 
-  // ─── Activity Feed: aggregate recent events ───────────────────────────
+  // ─── Activity Feed: compact, high-signal only ─────────────────────────
+  // Cap noise: few time entries, group task spam per project+day, max 5 rows.
   const activityItems: ActivityItem[] = [];
 
-  // Invoice events
+  // Invoice events (high signal)
   for (const inv of clientInvoices) {
     const projectName = inv.projectId
       ? clientProjects.find((p) => p.id === inv.projectId)?.name || "Unknown Project"
@@ -651,51 +620,86 @@ export default async function ClientPortalPage({
     }
   }
 
-  // Time entries
+  // Time entries — max 1 newest per project (avoid 8 clock rows)
   for (const [projectId, entries] of byHoursEntriesMap) {
     const projectName = clientProjects.find((p) => p.id === projectId)?.name || "Project";
-    for (const entry of entries.slice(0, 5)) {
-      const entryDate = entry.startTime ? new Date(entry.startTime) : new Date();
-      activityItems.push({
-        id: `te-${entry.id}`,
-        type: "time_entry",
-        description: `${formatMinutes(entry.durationMinutes)} logged on ${projectName}`,
-        date: entryDate,
-        icon: "clock",
-      });
-    }
+    const latest = entries[0];
+    if (!latest) continue;
+    const entryDate = latest.startTime ? new Date(latest.startTime) : new Date();
+    activityItems.push({
+      id: `te-${latest.id}`,
+      type: "time_entry",
+      description: `${formatMinutes(latest.durationMinutes)} logged on ${projectName}`,
+      date: entryDate,
+      icon: "clock",
+    });
   }
 
-  // Task status changes from timeline
+  // Task events — group same action+project+day so "Task added" x6 collapses
+  const taskGroups = new Map<
+    string,
+    { count: number; latest: Date; action: string; projectName: string }
+  >();
   for (const [projectId, timeline] of projectTimelineMap) {
     const projectName = clientProjects.find((p) => p.id === projectId)?.name || "Project";
     for (const event of timeline) {
-      if (event.action === "updated_task_status" || event.action === "created_task") {
-        activityItems.push({
-          id: `tl-${event.id}`,
-          type: "task",
-          description: `${clientVisibleActionLabels[event.action] ?? event.action.replace(/_/g, " ")} in ${projectName}`,
-          date: new Date(event.createdAt),
-          icon: event.action === "updated_task_status" ? "check" : "project",
+      if (event.action !== "updated_task_status" && event.action !== "created_task") continue;
+      const d = new Date(event.createdAt);
+      const dayKey = d.toISOString().slice(0, 10);
+      const key = `${event.action}|${projectId}|${dayKey}`;
+      const prev = taskGroups.get(key);
+      if (!prev) {
+        taskGroups.set(key, {
+          count: 1,
+          latest: d,
+          action: event.action,
+          projectName,
         });
+      } else {
+        prev.count += 1;
+        if (d > prev.latest) prev.latest = d;
       }
     }
   }
+  for (const [key, g] of taskGroups) {
+    const label =
+      g.action === "updated_task_status"
+        ? g.count > 1
+          ? `${g.count} task status updates`
+          : "Task status updated"
+        : g.count > 1
+          ? `${g.count} tasks added`
+          : "Task added";
+    activityItems.push({
+      id: `tl-${key}`,
+      type: "task",
+      description: `${label} in ${g.projectName}`,
+      date: g.latest,
+      icon: g.action === "updated_task_status" ? "check" : "project",
+    });
+  }
 
-  // Project creation
+  // Project creation only if recently created (30 days) — old create spam skip
+  const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+  const nowMs = Date.now();
   for (const proj of clientProjects) {
+    const created = new Date(proj.startDate || Date.now());
+    if (nowMs - created.getTime() > thirtyDaysMs) continue;
     activityItems.push({
       id: `proj-${proj.id}`,
       type: "project",
       description: `Project "${proj.name}" created`,
-      date: new Date(proj.startDate || Date.now()),
+      date: created,
       icon: "project",
     });
   }
 
-  // Sort by date descending, take last 8
-  activityItems.sort((a, b) => b.date.getTime() - a.date.getTime());
-  const recentActivities = activityItems.slice(0, 8);
+  // Sort newest first; keep small pool for "show more" (UI shows 3 first)
+  activityItems.sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  );
+  const recentActivities = activityItems.slice(0, 5);
+
 
   // ─── Hero helpers ────────────────────────────────────────────────────
   function fmtAmt(idr: number, usd: number) {
@@ -831,15 +835,15 @@ export default async function ClientPortalPage({
           </Button>
         </div>
 
-        {/* ─── 3. Activity Feed (replaces "Requests & reminders") */}
+        {/* ─── 3. Activity Feed (compact: 3 default, expand to 5) */}
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <Activity className="h-5 w-5" /> Recent Activity
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ActivityFeed items={recentActivities} />
+            <ActivityFeed items={recentActivities} initialVisible={3} />
           </CardContent>
         </Card>
 
@@ -881,15 +885,6 @@ export default async function ClientPortalPage({
                   })),
                 ]),
               )}
-              projectCommentsMap={new Map(
-                [...projectCommentsMap.entries()].map(([k, v]) => [
-                  k,
-                  v.map((c) => ({
-                    ...c,
-                    createdAt: String(c.createdAt),
-                  })),
-                ]),
-              )}
               projectTimelineMap={new Map(
                 [...projectTimelineMap.entries()].map(([k, v]) => [
                   k,
@@ -922,6 +917,7 @@ export default async function ClientPortalPage({
               token={token}
               workspaceId={client.workspaceId}
               ownerWhatsAppPhone={workspaceContact?.phone}
+              ownerEmail={workspaceContact?.replyToEmail || workspaceContact?.email}
               ownerName={workspaceContact?.name}
             />
           )}
@@ -948,16 +944,17 @@ export default async function ClientPortalPage({
           />
         </section>
 
-        {/* ─── 6. Single Contact Form ──────────────────────── */}
+        {/* ─── 6. Contact team (WA / Email only) ───────────── */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Message Your Team</CardTitle>
+            <CardTitle className="text-base">Hubungi Tim</CardTitle>
           </CardHeader>
           <CardContent className="max-w-lg">
-            <PortalCommentForm
-              entityType="project"
-              entityId={clientProjects[0]?.id || client.id}
-              workspaceId={client.workspaceId}
+            <PortalContactButtons
+              phone={workspaceContact?.phone}
+              email={workspaceContact?.replyToEmail || workspaceContact?.email}
+              ownerName={workspaceContact?.name}
+              clientName={client.name}
             />
           </CardContent>
         </Card>

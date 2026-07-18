@@ -36,7 +36,7 @@ export function PromptHistory({
       await deleteGeneration(id);
       setGenerations((prev) => prev.filter((g) => g.id !== id));
       if (selectedId === id) setSelectedId(null);
-      toast.success("Generation deleted");
+      toast.success("Generation dihapus");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Delete failed");
     } finally {

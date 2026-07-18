@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { createExpense, updateExpense, getExpenseReceiptUploadUrl } from "@/lib/actions/expenses";
+import { createExpense, updateExpense } from "@/lib/actions/expenses";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -100,20 +100,20 @@ export function ExpenseForm({
     if (!file) return;
     setUploading(true);
     try {
-      const { uploadUrl, storageKey } = await getExpenseReceiptUploadUrl({
-        workspaceId,
-        expenseId: initial?.id,
-        fileName: file.name,
-        mime: file.type || "application/octet-stream",
-        size: file.size,
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("workspaceId", workspaceId);
+      if (initial?.id) formData.append("expenseId", initial.id);
+
+      const res = await fetch("/api/expenses/receipt", {
+        method: "POST",
+        body: formData,
       });
-      const res = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type || "application/octet-stream" },
-        body: file,
-      });
-      if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
-      setForm((f) => ({ ...f, receiptUrl: storageKey }));
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || `Upload failed: ${res.status}`);
+      }
+      setForm((f) => ({ ...f, receiptUrl: data.storageKey as string }));
       toast.success(t("Struk diunggah", "Receipt uploaded"));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t("Gagal unggah", "Upload failed");

@@ -132,25 +132,76 @@ export function PortalRequestAdmin({
       </form>
 
       <div className="space-y-2">
-        {requests.length === 0 && <p className="text-center text-sm text-muted-foreground">No portal requests yet</p>}
-        {requests.map((request) => (
-          <div key={request.id} className="flex items-start justify-between gap-3 rounded-lg border p-3">
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-medium">{request.title}</p>
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs capitalize">{request.type}</span>
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs capitalize">{request.status}</span>
+        {requests.length === 0 && (
+          <p className="text-center text-sm text-muted-foreground">No portal requests yet</p>
+        )}
+        {requests.map((request) => {
+          const decision = request.description?.includes("[Client APPROVED")
+            ? "approved"
+            : request.description?.includes("[Client REJECTED")
+              ? "rejected"
+              : null;
+          const cleanDesc = (request.description || "").replace(
+            /\n\n---\n\[Client (APPROVED|REJECTED)[\s\S]*$/,
+            "",
+          );
+          return (
+            <div key={request.id} className="flex items-start justify-between gap-3 rounded-lg border p-3">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-medium">{request.title}</p>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs capitalize">
+                    {request.type}
+                  </span>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs capitalize">
+                    {request.status}
+                  </span>
+                  {decision === "approved" && (
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                      Client approved
+                    </span>
+                  )}
+                  {decision === "rejected" && (
+                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                      Changes requested
+                    </span>
+                  )}
+                </div>
+                {cleanDesc && <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{cleanDesc}</p>}
+                {decision && request.description?.includes("Client note:") && (
+                  <p className="mt-1 text-xs text-amber-700">
+                    {request.description
+                      .split("Client note:")
+                      .slice(1)
+                      .join("Client note:")
+                      .trim()
+                      .split("\n")[0]}
+                  </p>
+                )}
+                {request.dueDate && (
+                  <p className="mt-1 text-xs text-muted-foreground">Due {request.dueDate}</p>
+                )}
               </div>
-              {request.description && <p className="mt-1 text-sm text-muted-foreground">{request.description}</p>}
-              {request.dueDate && <p className="mt-1 text-xs text-muted-foreground">Due {request.dueDate}</p>}
+              <div className="flex shrink-0 gap-2">
+                {request.status !== "completed" && (
+                  <Button size="sm" variant="outline" disabled={loading} onClick={() => updateStatus(request.id, "completed")}>
+                    Mark done
+                  </Button>
+                )}
+                {request.status !== "cancelled" && (
+                  <Button size="sm" variant="outline" disabled={loading} onClick={() => updateStatus(request.id, "cancelled")}>
+                    Cancel
+                  </Button>
+                )}
+                {request.status !== "pending" && (
+                  <Button size="sm" variant="ghost" disabled={loading} onClick={() => updateStatus(request.id, "pending")}>
+                    Reopen
+                  </Button>
+                )}
+              </div>
             </div>
-            <div className="flex shrink-0 gap-2">
-              {request.status !== "completed" && <Button size="sm" variant="outline" disabled={loading} onClick={() => updateStatus(request.id, "completed")}>Mark done</Button>}
-              {request.status !== "cancelled" && <Button size="sm" variant="outline" disabled={loading} onClick={() => updateStatus(request.id, "cancelled")}>Cancel</Button>}
-              {request.status !== "pending" && <Button size="sm" variant="ghost" disabled={loading} onClick={() => updateStatus(request.id, "pending")}>Reopen</Button>}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

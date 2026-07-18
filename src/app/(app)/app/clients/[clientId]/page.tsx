@@ -10,8 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ClientForm } from "@/components/forms/client-form";
 import Link from "next/link";
 import {
   Globe,
@@ -19,13 +17,13 @@ import {
   Calendar,
   MessageSquare,
   ArrowLeft,
-  Pencil,
   Receipt,
   Users,
   Download,
 } from "lucide-react";
 import { PortalTokenSection } from "./portal-section";
 import { PortalRequestAdmin } from "@/components/portal/portal-request-admin";
+import { ClientEditDialog } from "@/components/clients/client-edit-dialog";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -128,34 +126,21 @@ export default async function ClientDetailPage({
           )}
         </div>
         <div className="flex gap-2">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1">
-                <Pencil className="h-3 w-3" /> Edit
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Ubah Klien</DialogTitle>
-              </DialogHeader>
-              <ClientForm
-                mode="edit"
-                defaultValues={{
-                  id: client.id,
-                  name: client.name,
-                  companyName: client.companyName ?? "",
-                  email: client.email ?? "",
-                  phone: client.phone ?? "",
-                  website: client.website ?? "",
-                  address: client.address ?? "",
-                  tags: client.tags ?? [],
-                  internalNotes: client.internalNotes ?? "",
-                  portalSlug: client.portalSlug ?? "",
-                  portalSlugEnabled: client.portalSlugEnabled ?? true,
-                }}
-              />
-            </DialogContent>
-          </Dialog>
+          <ClientEditDialog
+            defaultValues={{
+              id: client.id,
+              name: client.name,
+              companyName: client.companyName ?? "",
+              email: client.email ?? "",
+              phone: client.phone ?? "",
+              website: client.website ?? "",
+              address: client.address ?? "",
+              tags: client.tags ?? [],
+              internalNotes: client.internalNotes ?? "",
+              portalSlug: client.portalSlug ?? "",
+              portalSlugEnabled: client.portalSlugEnabled ?? true,
+            }}
+          />
         </div>
       </div>
 

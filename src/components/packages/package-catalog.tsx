@@ -83,31 +83,39 @@ interface FormState {
   maxHours: string;
 }
 
-const EMPTY_FORM: FormState = {
-  name: "",
-  hours: "",
-  price: "",
-  currency: "IDR",
-  description: "",
-  features: "",
-  badge: "",
-  allowCustom: false,
-  minHours: "",
-  maxHours: "",
-};
+function emptyForm(defaultCurrency: string): FormState {
+  return {
+    name: "",
+    hours: "",
+    price: "",
+    currency: defaultCurrency || "IDR",
+    description: "",
+    features: "",
+    badge: "",
+    allowCustom: false,
+    minHours: "",
+    maxHours: "",
+  };
+}
 
-export function PackageCatalog({ packages }: { packages: CatalogPackage[] }) {
+export function PackageCatalog({
+  packages,
+  defaultCurrency = "IDR",
+}: {
+  packages: CatalogPackage[];
+  defaultCurrency?: string;
+}) {
   const router = useRouter();
   const { t } = useT();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CatalogPackage | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CatalogPackage | null>(null);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [form, setForm] = useState<FormState>(() => emptyForm(defaultCurrency));
 
   function openCreate() {
     setEditing(null);
-    setForm(EMPTY_FORM);
+    setForm(emptyForm(defaultCurrency));
     setOpen(true);
   }
 
@@ -117,7 +125,7 @@ export function PackageCatalog({ packages }: { packages: CatalogPackage[] }) {
       name: pkg.name,
       hours: pkg.hours != null ? String(pkg.hours) : "",
       price: pkg.price ?? "",
-      currency: pkg.currency ?? "IDR",
+      currency: pkg.currency || defaultCurrency || "IDR",
       description: pkg.description ?? "",
       features: parsePackageFeatures(pkg.features).join("\n"),
       badge: pkg.badge ?? "",

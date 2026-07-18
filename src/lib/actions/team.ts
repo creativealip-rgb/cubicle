@@ -4,18 +4,20 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { and, eq } from "drizzle-orm";
-import { z } from "zod";
 import { db } from "@/db";
-import { users, workspaceMembers } from "@/db/schema";
-import { assertWorkspaceOwner, requireUser } from "@/lib/access";
+import { workspaceMembers, users, workspaces } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
+import { z } from "zod";
+import { requireUser, assertWorkspaceOwner } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { canInviteMember } from "@/lib/plan";
+import { notifyWorkspaceInvite } from "@/lib/notifications";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
 }
 
-const roleSchema = z.enum(["member", "viewer"]);
+const roleSchema = z.enum(["owner", "member", "viewer"]);
 
 const addMemberSchema = z.object({
   email: z.string().email(),
@@ -28,15 +30,66 @@ export async function addWorkspaceMember(input: z.infer<typeof addMemberSchema>)
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceOwner(db, user.id, workspaceId);
 
+  const inviteCheck = await canInviteMember(user.id);
+  if (!inviteCheck.allowed) {
+    throw new Error(inviteCheck.reason || "Plan tidak mengizinkan undangan anggota.");
+  }
+
   const parsed = addMemberSchema.parse(input);
+  const email = parsed.email.toLowerCase().trim();
+
+  // SessionUser only guarantees id/email — fetch display name from DB
+  const [inviter] = await db
+    .select({ name: users.name, email: users.email })
+    .from(users)
+    .where(eq(users.id, user.id))
+    .limit(1);
+  const inviterName = inviter?.name || inviter?.email || user.email || "Workspace owner";
+
   const [targetUser] = await db
     .select()
     .from(users)
-    .where(eq(users.email, parsed.email.toLowerCase()))
+    .where(eq(users.email, email))
     .limit(1);
 
+  const [workspace] = await db
+    .select({ name: workspaces.name, replyToEmail: workspaces.replyToEmail })
+    .from(workspaces)
+    .where(eq(workspaces.id, workspaceId))
+    .limit(1);
+
+  const appUrl = (
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.BETTER_AUTH_URL ??
+    "https://cubiqlo.com"
+  ).replace(/\/$/, "");
+
   if (!targetUser) {
-    throw new Error("User belum ada. Suruh signup dulu, lalu add ke team.");
+    // Pending invite path: email signup CTA. No membership row until they exist.
+    const inviteUrl = `${appUrl}/signup?email=${encodeURIComponent(email)}&invite=1`;
+    try {
+      await notifyWorkspaceInvite({
+        email,
+        workspaceName: workspace?.name || "Cubiqlo",
+        inviterName,
+        inviteUrl,
+        replyTo: workspace?.replyToEmail || undefined,
+      });
+    } catch (err) {
+      console.error("[team] pending invite email failed", err);
+    }
+    await writeActivityLog(workspaceId, user.id, "invited_team_member_pending", "workspace", workspaceId, {
+      email,
+      role: parsed.role,
+      status: "pending_signup",
+    });
+    revalidatePath("/app/settings");
+    return {
+      status: "pending_signup" as const,
+      email,
+      message:
+        "User belum punya akun. Undangan email dikirim — minta mereka signup dulu, lalu tambahkan lagi.",
+    };
   }
 
   const [existing] = await db
@@ -54,13 +107,30 @@ export async function addWorkspaceMember(input: z.infer<typeof addMemberSchema>)
     .values({ workspaceId, userId: targetUser.id, role: parsed.role })
     .returning();
 
+  const inviteUrl = `${appUrl}/login?email=${encodeURIComponent(email)}`;
+  try {
+    await notifyWorkspaceInvite({
+      email: targetUser.email,
+      workspaceName: workspace?.name || "Cubiqlo",
+      inviterName,
+      inviteUrl,
+      replyTo: workspace?.replyToEmail || undefined,
+    });
+  } catch (err) {
+    console.error("[team] invite email failed", err);
+  }
+
   await writeActivityLog(workspaceId, user.id, "added_team_member", "workspace_member", member.id, {
     email: targetUser.email,
     role: parsed.role,
   });
 
   revalidatePath("/app/settings");
-  return member;
+  return {
+    status: "added" as const,
+    member,
+    message: "Anggota ditambahkan. Email undangan dikirim.",
+  };
 }
 
 const updateRoleSchema = z.object({

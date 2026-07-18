@@ -22,15 +22,6 @@ const createCommentSchema = z.object({
   visibility: z.enum(["internal", "client"]).default("internal"),
 });
 
-const createPortalCommentSchema = z.object({
-  token: z.string().min(1),
-  entityType: z.enum(["project", "task", "file", "invoice"]),
-  entityId: z.string().uuid(),
-  body: z.string().min(1, "Comment cannot be empty"),
-  authorName: z.string().min(1, "Name is required"),
-  authorEmail: z.string().email("Valid email required"),
-});
-
 export async function createComment(input: z.infer<typeof createCommentSchema>) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
@@ -98,107 +89,6 @@ export async function createComment(input: z.infer<typeof createCommentSchema>) 
         }
       }
     }
-  } catch {
-    // best-effort
-  }
-
-  return comment;
-}
-
-export async function createPortalComment(input: z.infer<typeof createPortalCommentSchema>) {
-  const parsed = createPortalCommentSchema.parse(input);
-
-  // Find workspace via entity
-  const _entityTable = parsed.entityType === "project" ? workspaces : null;
-  // For portal comments, resolve workspace from the entity
-  let wsId = "";
-  if (parsed.entityType === "project") {
-    const { projects } = await import("@/db/schema");
-    const [proj] = await db
-      .select({ workspaceId: projects.workspaceId })
-      .from(projects)
-      .where(eq(projects.id, parsed.entityId))
-      .limit(1);
-    wsId = proj?.workspaceId ?? "";
-  } else if (parsed.entityType === "task") {
-    const { tasks } = await import("@/db/schema");
-    const [task] = await db
-      .select({ workspaceId: tasks.workspaceId })
-      .from(tasks)
-      .where(eq(tasks.id, parsed.entityId))
-      .limit(1);
-    wsId = task?.workspaceId ?? "";
-  } else if (parsed.entityType === "file") {
-    const { files } = await import("@/db/schema");
-    const [file] = await db
-      .select({ workspaceId: files.workspaceId })
-      .from(files)
-      .where(eq(files.id, parsed.entityId))
-      .limit(1);
-    wsId = file?.workspaceId ?? "";
-  } else if (parsed.entityType === "invoice") {
-    const { invoices } = await import("@/db/schema");
-    const [inv] = await db
-      .select({ workspaceId: invoices.workspaceId })
-      .from(invoices)
-      .where(eq(invoices.id, parsed.entityId))
-      .limit(1);
-    wsId = inv?.workspaceId ?? "";
-  }
-
-  if (!wsId) throw new Error("Entity not found");
-
-  // Validate portal token
-  const { clients } = await import("@/db/schema");
-  const { createHash } = await import("crypto");
-  const tokenHash = createHash("sha256").update(parsed.token).digest("hex");
-
-  const [client] = await db
-    .select()
-    .from(clients)
-    .where(
-      and(
-        eq(clients.portalTokenHash, tokenHash),
-        eq(clients.workspaceId, wsId),
-      ),
-    )
-    .limit(1);
-
-  if (!client) throw new Error("Invalid portal token");
-  if (client.portalTokenRevokedAt) throw new Error("Portal token revoked");
-  if (client.portalTokenExpiresAt && new Date(client.portalTokenExpiresAt) < new Date()) throw new Error("Portal token expired");
-
-  const [comment] = await db.insert(comments).values({
-    workspaceId: wsId,
-    entityType: parsed.entityType,
-    entityId: parsed.entityId,
-    body: parsed.body,
-    visibility: "client",
-    authorId: null,
-    authorName: parsed.authorName,
-    authorEmail: parsed.authorEmail,
-    source: "portal",
-  }).returning();
-
-  // Notify workspace team about client portal comment (actor=null since client isn't a user)
-  try {
-    const { notifyWorkspaceMembers } = await import("@/lib/in-app-notifications");
-    const preview = parsed.body.length > 80 ? parsed.body.slice(0, 77) + "..." : parsed.body;
-    const link =
-      parsed.entityType === "project" ? `/app/projects/${parsed.entityId}` :
-      parsed.entityType === "task" ? `/app/tasks?focus=${parsed.entityId}` :
-      parsed.entityType === "file" ? `/app/files?focus=${parsed.entityId}` :
-      parsed.entityType === "invoice" ? `/app/invoices/${parsed.entityId}` :
-      `/app/clients`;
-    await notifyWorkspaceMembers(wsId, {
-      type: "client_comment",
-      title: `${parsed.authorName} commented on ${parsed.entityType}`,
-      body: preview,
-      link,
-      entityType: parsed.entityType,
-      entityId: parsed.entityId,
-      actorId: null,
-    });
   } catch {
     // best-effort
   }

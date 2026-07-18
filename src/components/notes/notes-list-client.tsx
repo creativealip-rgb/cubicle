@@ -122,13 +122,24 @@ export function NotesListClient({
   const [hasMore, setHasMore] = useState(initialNotes.length < total);
   const [loadingMore, setLoadingMore] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setNotes(initialNotes);
     setOffset(initialNotes.length);
     setHasMore(initialNotes.length < total);
+    setExpandedIds(new Set());
   }, [initialNotes, total, tab, query]);
+
+  function toggleExpanded(id: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
@@ -196,6 +207,11 @@ export function NotesListClient({
       {notes.map((note) => {
         const overdue = isOverdue(note.dueDate, note.status);
         const rule = note.recurrenceRule || "none";
+        const expanded = expandedIds.has(note.id);
+        const bodyPreview =
+          note.body && note.body.length > 160
+            ? `${note.body.slice(0, 160).trimEnd()}…`
+            : note.body;
         return (
           <div
             key={note.id}
@@ -267,6 +283,15 @@ export function NotesListClient({
                 ) : null}
               </div>
               <div className="flex flex-wrap justify-end gap-1">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => toggleExpanded(note.id)}
+                  aria-expanded={expanded}
+                >
+                  {expanded ? t("Tutup", "Collapse") : t("Buka", "Expand")}
+                </Button>
                 <form action={actions.togglePinned}>
                   <input type="hidden" name="noteId" value={note.id} />
                   <input type="hidden" name="tab" value={tab} />
@@ -349,113 +374,127 @@ export function NotesListClient({
             </div>
 
             {note.body ? (
-              <p className="whitespace-pre-wrap text-sm text-muted-foreground">{note.body}</p>
+              <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+                {expanded ? note.body : bodyPreview}
+              </p>
             ) : null}
 
-            {!note.convertedTaskId && note.status !== "archived" && projects.length > 0 ? (
-              <form
-                action={actions.convertToTask}
-                className="flex flex-wrap items-end gap-2 rounded-md border border-dashed p-3"
+            {expanded ? (
+              <>
+                {!note.convertedTaskId && note.status !== "archived" && projects.length > 0 ? (
+                  <form
+                    action={actions.convertToTask}
+                    className="flex flex-wrap items-end gap-2 rounded-md border border-dashed p-3"
+                  >
+                    <input type="hidden" name="noteId" value={note.id} />
+                    <div className="min-w-[140px] flex-1 space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">
+                        {t("Jadikan task di project", "Convert to project task")}
+                      </label>
+                      <select
+                        name="projectId"
+                        required
+                        defaultValue=""
+                        className="flex h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                      >
+                        <option value="" disabled>
+                          {t("Pilih project…", "Select project…")}
+                        </option>
+                        {projects.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="w-[130px] space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">
+                        {t("Prioritas", "Priority")}
+                      </label>
+                      <select
+                        name="priority"
+                        defaultValue="medium"
+                        className="flex h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                      >
+                        {PRIORITIES.map((p) => (
+                          <option key={p} value={p}>
+                            {priorityLabel(p, t)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <Button type="submit" size="sm" variant="secondary" disabled={pending}>
+                      <ListTodo className="mr-1 h-3.5 w-3.5" />
+                      {t("Buat task", "Create task")}
+                    </Button>
+                    <p className="w-full text-[11px] text-muted-foreground">
+                      {t(
+                        "Membuat task todo + arsipkan catatan + tautkan balik.",
+                        "Creates a todo task + archives note + reverse-links.",
+                      )}
+                    </p>
+                  </form>
+                ) : null}
+
+                <details className="rounded-md bg-muted/40 p-3" open>
+                  <summary className="cursor-pointer text-sm font-medium">{t("Ubah", "Edit")}</summary>
+                  <form action={actions.updateNote} className="mt-3 space-y-3">
+                    <input type="hidden" name="noteId" value={note.id} />
+                    <input type="hidden" name="tab" value={tab} />
+                    <input type="hidden" name="q" value={query} />
+                    <Input name="title" defaultValue={note.title} required />
+                    <Textarea name="body" defaultValue={note.body ?? ""} rows={4} />
+                    <Input
+                      name="dueDate"
+                      type="datetime-local"
+                      defaultValue={formatDateTimeLocal(note.dueDate)}
+                    />
+                    <select
+                      name="recurrenceRule"
+                      defaultValue={
+                        (RECURRENCE_OPTIONS as readonly string[]).includes(rule) ? rule : "none"
+                      }
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    >
+                      {RECURRENCE_OPTIONS.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {recurrenceLabel(opt, t)}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="grid grid-cols-3 gap-2 text-sm">
+                      <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
+                        <input type="checkbox" name="notify7d" defaultChecked={note.notify7d} />
+                        7d
+                      </label>
+                      <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
+                        <input type="checkbox" name="notify3d" defaultChecked={note.notify3d} />
+                        3d
+                      </label>
+                      <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
+                        <input type="checkbox" name="notify1d" defaultChecked={note.notify1d} />
+                        1d
+                      </label>
+                    </div>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" name="pinned" defaultChecked={note.pinned} />
+                      {t("Sematkan catatan", "Pin note")}
+                    </label>
+                    <Button type="submit" size="sm">
+                      {t("Simpan perubahan", "Save changes")}
+                    </Button>
+                  </form>
+                </details>
+              </>
+            ) : note.body && note.body.length > 160 ? (
+              <button
+                type="button"
+                className="text-xs font-medium text-primary hover:underline"
+                onClick={() => toggleExpanded(note.id)}
               >
-                <input type="hidden" name="noteId" value={note.id} />
-                <div className="min-w-[140px] flex-1 space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    {t("Jadikan task di project", "Convert to project task")}
-                  </label>
-                  <select
-                    name="projectId"
-                    required
-                    defaultValue=""
-                    className="flex h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-                  >
-                    <option value="" disabled>
-                      {t("Pilih project…", "Select project…")}
-                    </option>
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="w-[130px] space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    {t("Prioritas", "Priority")}
-                  </label>
-                  <select
-                    name="priority"
-                    defaultValue="medium"
-                    className="flex h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-                  >
-                    {PRIORITIES.map((p) => (
-                      <option key={p} value={p}>
-                        {priorityLabel(p, t)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <Button type="submit" size="sm" variant="secondary" disabled={pending}>
-                  <ListTodo className="mr-1 h-3.5 w-3.5" />
-                  {t("Buat task", "Create task")}
-                </Button>
-                <p className="w-full text-[11px] text-muted-foreground">
-                  {t(
-                    "Membuat task todo + arsipkan catatan + tautkan balik.",
-                    "Creates a todo task + archives note + reverse-links.",
-                  )}
-                </p>
-              </form>
+                {t("Baca selengkapnya", "Read more")}
+              </button>
             ) : null}
-
-            <details className="rounded-md bg-muted/40 p-3">
-              <summary className="cursor-pointer text-sm font-medium">{t("Ubah", "Edit")}</summary>
-              <form action={actions.updateNote} className="mt-3 space-y-3">
-                <input type="hidden" name="noteId" value={note.id} />
-                <input type="hidden" name="tab" value={tab} />
-                <input type="hidden" name="q" value={query} />
-                <Input name="title" defaultValue={note.title} required />
-                <Textarea name="body" defaultValue={note.body ?? ""} rows={4} />
-                <Input
-                  name="dueDate"
-                  type="datetime-local"
-                  defaultValue={formatDateTimeLocal(note.dueDate)}
-                />
-                <select
-                  name="recurrenceRule"
-                  defaultValue={
-                    (RECURRENCE_OPTIONS as readonly string[]).includes(rule) ? rule : "none"
-                  }
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  {RECURRENCE_OPTIONS.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {recurrenceLabel(opt, t)}
-                    </option>
-                  ))}
-                </select>
-                <div className="grid grid-cols-3 gap-2 text-sm">
-                  <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
-                    <input type="checkbox" name="notify7d" defaultChecked={note.notify7d} />
-                    7d
-                  </label>
-                  <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
-                    <input type="checkbox" name="notify3d" defaultChecked={note.notify3d} />
-                    3d
-                  </label>
-                  <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
-                    <input type="checkbox" name="notify1d" defaultChecked={note.notify1d} />
-                    1d
-                  </label>
-                </div>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" name="pinned" defaultChecked={note.pinned} />
-                  {t("Sematkan catatan", "Pin note")}
-                </label>
-                <Button type="submit" size="sm">
-                  {t("Simpan perubahan", "Save changes")}
-                </Button>
-              </form>
-            </details>
           </div>
         );
       })}

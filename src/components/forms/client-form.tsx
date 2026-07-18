@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient, updateClient } from "@/lib/actions/clients";
+import { isStaleServerActionError } from "@/lib/client-errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +23,7 @@ interface ClientFormProps {
     internalNotes?: string;
     portalSlug?: string;
     portalSlugEnabled?: boolean;
+    portalEnabled?: boolean;
   };
   onSuccess?: () => void;
   redirectTo?: string;
@@ -51,6 +53,8 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
     internalNotes: defaultValues?.internalNotes ?? "",
     portalSlug: defaultValues?.portalSlug ?? "",
     portalSlugEnabled: defaultValues?.portalSlugEnabled ?? true,
+    // Create default: activate portal when slug enabled (user can uncheck).
+    portalEnabled: defaultValues?.portalEnabled ?? (mode === "create"),
   });
 
   async function handleSave() {
@@ -68,10 +72,15 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
         internalNotes: form.internalNotes || undefined,
         portalSlug: form.portalSlug || undefined,
         portalSlugEnabled: form.portalSlugEnabled,
+        ...(mode === "create" ? { portalEnabled: form.portalEnabled } : {}),
       };
 
       if (mode === "create") {
-        await createClient(data);
+        const result = await createClient(data);
+        if (result && typeof result === "object" && "ok" in result && result.ok === false) {
+          toast.error(result.error || "Limit plan tercapai");
+          return;
+        }
         toast.success("Klien dibuat");
       } else if (defaultValues?.id) {
         await updateClient(defaultValues.id, data);
@@ -82,8 +91,16 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
       router.refresh();
       if (redirectTo) router.push(redirectTo);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Terjadi kesalahan";
+      const msg = isStaleServerActionError(err)
+        ? "App baru di-deploy. Refresh halaman, lalu coba lagi."
+        : err instanceof Error
+          ? err.message
+          : "Terjadi kesalahan";
       toast.error(msg);
+      if (isStaleServerActionError(err)) {
+        // Hard refresh so browser picks new Server Action IDs
+        setTimeout(() => window.location.reload(), 800);
+      }
     } finally {
       setLoading(false);
     }
@@ -160,10 +177,18 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
           <p className="text-xs text-muted-foreground">Short link: /client-portal/{form.portalSlug || "slug"}</p>
           <p className="text-xs text-muted-foreground">Use lowercase letters, numbers, and dashes. Must be unique.</p>
         </div>
-        <label className="flex items-center gap-2 pb-2 text-sm">
-          <input type="checkbox" checked={form.portalSlugEnabled} onChange={(e) => set("portalSlugEnabled", e.target.checked)} />
-          Aktif
-        </label>
+        <div className="flex flex-col gap-2 pb-2 text-sm">
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={form.portalSlugEnabled} onChange={(e) => set("portalSlugEnabled", e.target.checked)} />
+            Slug aktif
+          </label>
+          {mode === "create" && (
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={form.portalEnabled} onChange={(e) => set("portalEnabled", e.target.checked)} />
+              Aktifkan portal sekarang
+            </label>
+          )}
+        </div>
       </div>
       <Button type="submit" disabled={loading} className="w-full">
         {loading ? "Menyimpan..." : mode === "create" ? "Buat Klien" : "Simpan Perubahan"}

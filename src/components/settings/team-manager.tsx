@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { addWorkspaceMember, removeWorkspaceMember, updateWorkspaceMemberRole } from "@/lib/actions/team";
@@ -15,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Trash2, UserPlus } from "lucide-react";
+import { Trash2, UserPlus, Mail } from "lucide-react";
 
 type Member = {
   id: string;
@@ -24,7 +25,15 @@ type Member = {
   email: string | null;
 };
 
-export function TeamManager({ members }: { members: Member[] }) {
+export function TeamManager({
+  members,
+  canInvite = true,
+  inviteBlockedReason,
+}: {
+  members: Member[];
+  canInvite?: boolean;
+  inviteBlockedReason?: string;
+}) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"member" | "viewer">("member");
@@ -32,10 +41,18 @@ export function TeamManager({ members }: { members: Member[] }) {
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
+    if (!canInvite) {
+      toast.error(inviteBlockedReason || "Plan tidak mengizinkan undangan.");
+      return;
+    }
     setLoading(true);
     try {
-      await addWorkspaceMember({ email, role });
-      toast.success("Anggota tim ditambahkan");
+      const result = await addWorkspaceMember({ email, role });
+      if (result.status === "pending_signup") {
+        toast.success(result.message, { duration: 6000 });
+      } else {
+        toast.success(result.message || "Anggota tim ditambahkan");
+      }
       setEmail("");
       setRole("member");
       router.refresh();
@@ -69,10 +86,22 @@ export function TeamManager({ members }: { members: Member[] }) {
 
   return (
     <div className="space-y-4">
+      {!canInvite && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          <p className="font-medium">Undangan tim terkunci</p>
+          <p className="mt-1 text-xs text-amber-800/90">
+            {inviteBlockedReason || "Upgrade ke plan Team untuk kolaborasi."}
+          </p>
+          <Button asChild size="sm" variant="outline" className="mt-2 h-8">
+            <Link href="/app/billing">Upgrade plan</Link>
+          </Button>
+        </div>
+      )}
+
       <form onSubmit={handleAdd} className="rounded-lg border p-3 space-y-3">
         <div className="grid gap-3 md:grid-cols-[1fr_160px_auto] md:items-end">
           <div className="space-y-2">
-            <Label htmlFor="team-email">Tambah user via email</Label>
+            <Label htmlFor="team-email">Undang via email</Label>
             <Input
               id="team-email"
               type="email"
@@ -80,11 +109,16 @@ export function TeamManager({ members }: { members: Member[] }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={!canInvite}
             />
           </div>
           <div className="space-y-2">
             <Label>Peran</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as "member" | "viewer")}>
+            <Select
+              value={role}
+              onValueChange={(v) => setRole(v as "member" | "viewer")}
+              disabled={!canInvite}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -94,12 +128,16 @@ export function TeamManager({ members }: { members: Member[] }) {
               </SelectContent>
             </Select>
           </div>
-          <Button type="submit" disabled={loading} className="gap-2">
-            <UserPlus className="h-4 w-4" /> {loading ? "Menambah..." : "Tambah"}
+          <Button type="submit" disabled={loading || !canInvite} className="gap-2">
+            <UserPlus className="h-4 w-4" /> {loading ? "Mengirim..." : "Undang"}
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">
-          User harus daftar akun dulu, baru pemilik workspace bisa menambahkan emailnya di sini.
+        <p className="text-xs text-muted-foreground flex items-start gap-1.5">
+          <Mail className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+          <span>
+            Kalau email sudah punya akun Cubiqlo → langsung join workspace + email notif.
+            Belum daftar → email undangan signup dikirim; setelah signup, undang lagi biar masuk.
+          </span>
         </p>
       </form>
 
@@ -128,7 +166,12 @@ export function TeamManager({ members }: { members: Member[] }) {
                 </Select>
               )}
               {member.role !== "owner" && (
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleRemove(member.id)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive"
+                  onClick={() => handleRemove(member.id)}
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               )}

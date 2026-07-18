@@ -254,7 +254,13 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
       </div>
 
       <Button type="submit" disabled={loading} className="w-full">
-        {loading ? "Menyimpan..." : mode === "create" ? "Buat Invoice" : "Simpan Perubahan"}
+        {loading
+          ? mode === "create"
+            ? "Membuat invoice…"
+            : "Menyimpan…"
+          : mode === "create"
+            ? "Buat Invoice"
+            : "Simpan Perubahan"}
       </Button>
     </form>
   );

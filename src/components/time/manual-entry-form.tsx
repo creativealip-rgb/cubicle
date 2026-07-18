@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createManualEntry } from "@/lib/actions/time";
@@ -48,17 +48,42 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
   const [projectId, setProjectId] = useState("");
   const [taskId, setTaskId] = useState("");
   const [description, setDescription] = useState("");
-  const [tags, setTags] = useState("Research");
+  const [tags, setTags] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [hours, setHours] = useState("0");
   const [minutes, setMinutes] = useState("0");
   const [billable, setBillable] = useState(true);
   const [hourlyRate, setHourlyRate] = useState("");
 
+  // Cascade: client → projects belonging to that client; project → tasks of that project.
+  // No fallback to "all" — empty means pick parent first.
+  const filteredProjects = useMemo(() => {
+    if (!clientId) return [];
+    return projects.filter((p) => p.clientId === clientId);
+  }, [clientId, projects]);
+
+  const filteredTasks = useMemo(() => {
+    if (!projectId) return [];
+    return tasks.filter((tk) => tk.projectId === projectId);
+  }, [projectId, tasks]);
+
   // Rate input only makes sense for hourly-billed projects; otherwise the
   // backend inherits the project rate and the manual field is just noise.
   const selectedProject = projects.find((p) => p.id === projectId);
   const isHourly = selectedProject?.billingType === "hours";
+
+  function handleClientChange(value: string) {
+    setClientId(value);
+    setProjectId("");
+    setTaskId("");
+    setHourlyRate("");
+  }
+
+  function handleProjectChange(value: string) {
+    setProjectId(value);
+    setTaskId("");
+    setHourlyRate("");
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -91,7 +116,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
       setProjectId("");
       setTaskId("");
       setDescription("");
-      setTags("Research");
+      setTags("");
       setDate(new Date().toISOString().split("T")[0]);
       setHours("0");
       setMinutes("0");
@@ -120,7 +145,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-xs">Klien *</Label>
-              <Select value={clientId} onValueChange={setClientId}>
+              <Select value={clientId} onValueChange={handleClientChange}>
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue placeholder="Pilih klien" />
                 </SelectTrigger>
@@ -133,14 +158,20 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
             </div>
             <div className="space-y-2">
               <Label className="text-xs">Proyek *</Label>
-              <Select value={projectId} onValueChange={setProjectId} disabled={!clientId}>
+              <Select value={projectId} onValueChange={handleProjectChange} disabled={!clientId}>
                 <SelectTrigger className="h-9 text-sm">
-                  <SelectValue placeholder="Pilih proyek" />
+                  <SelectValue placeholder={clientId ? "Pilih proyek" : "Pilih klien dulu"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {projects.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
+                  {filteredProjects.length === 0 ? (
+                    <SelectItem value="__none__" disabled>
+                      {clientId ? "Tidak ada proyek" : "Pilih klien dulu"}
+                    </SelectItem>
+                  ) : (
+                    filteredProjects.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -148,14 +179,18 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
 
           <div className="space-y-2">
             <Label className="text-xs">Tugas (opsional)</Label>
-            <Select value={taskId || "__none__"} onValueChange={(value) => setTaskId(value === "__none__" ? "" : value)} disabled={!projectId}>
+            <Select
+              value={taskId || "__none__"}
+              onValueChange={(value) => setTaskId(value === "__none__" ? "" : value)}
+              disabled={!projectId}
+            >
               <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder="Pilih tugas" />
+                <SelectValue placeholder={projectId ? "Pilih tugas" : "Pilih proyek dulu"} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__none__">Tidak ada</SelectItem>
-                {tasks.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
+                {filteredTasks.map((tk) => (
+                  <SelectItem key={tk.id} value={tk.id}>{tk.title}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -172,14 +207,46 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs">Tag</Label>
+            <Label className="text-xs">
+              {t("Tag (opsional)", "Tags (optional)")}
+            </Label>
             <Input
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder={t("Riset, Cold Calling, Follow Up", "Research, Cold Calling, Follow Up")}
               className="h-9"
             />
-            <p className="text-[11px] text-muted-foreground">Pisahkan tag dengan koma. Default: Research, Cold Calling, Follow Up - Phone Calling, Follow Up - Text Message, Task Reporting.</p>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                "Research",
+                "Cold Calling",
+                "Follow Up - Phone",
+                "Follow Up - Text",
+                "Task Reporting",
+              ].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  className="rounded-full border bg-background px-2 py-0.5 text-[10px] text-muted-foreground hover:border-primary hover:text-foreground"
+                  onClick={() => {
+                    const parts = tags
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean);
+                    if (parts.includes(preset)) return;
+                    setTags([...parts, preset].join(", "));
+                  }}
+                >
+                  + {preset}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              {t(
+                "Opsional. Pisahkan dengan koma. Dipakai filter timesheet.",
+                "Optional. Comma-separated. Used in timesheet filters.",
+              )}
+            </p>
           </div>
 
           <div className="grid grid-cols-3 gap-4">

@@ -10,6 +10,13 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_APP_VERSION: version,
   },
 
+  // Allow larger multipart bodies for same-origin file/receipt uploads (proxy path).
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "30mb",
+    },
+  },
+
   async headers() {
     return [
       {
@@ -36,7 +43,10 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",
-              "connect-src 'self' https://cubiqlo.com wss://cubiqlo.com",
+              // R2 presigned PUT/GET lives on *.r2.cloudflarestorage.com.
+              // Without this, browser blocks the request and surfaces
+              // "Network error during upload" / "failed to fetch".
+              "connect-src 'self' https://cubiqlo.com wss://cubiqlo.com https://*.r2.cloudflarestorage.com",
               "frame-ancestors 'none'",
             ].join("; "),
           },

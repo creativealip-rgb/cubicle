@@ -12,6 +12,7 @@ import {
   timeEntries,
   workspaces,
   clients,
+  projects,
 } from "@/db/schema";
 import { eq, and, desc, sql, inArray, lt } from "drizzle-orm";
 import { z } from "zod";
@@ -390,7 +391,32 @@ export async function importTimeEntries(input: z.infer<typeof importTimeSchema>)
 
     const minutes = te.durationMinutes || 0;
     const hours = minutes / 60;
-    const rate = te.hourlyRate ? Number(te.hourlyRate) : 0;
+    let rate = te.hourlyRate ? Number(te.hourlyRate) : 0;
+
+    // Fallback chain: entry rate → project hourly rate → workspace default hourly rate
+    if (!rate || !Number.isFinite(rate) || rate <= 0) {
+      if (te.projectId) {
+        const [proj] = await db
+          .select({ rate: projects.rate, billingType: projects.billingType })
+          .from(projects)
+          .where(eq(projects.id, te.projectId))
+          .limit(1);
+        if (proj?.rate && proj.billingType === "hours") {
+          rate = Number(proj.rate) || 0;
+        }
+      }
+    }
+    if (!rate || !Number.isFinite(rate) || rate <= 0) {
+      const [wsRate] = await db
+        .select({ defaultHourlyRate: workspaces.defaultHourlyRate })
+        .from(workspaces)
+        .where(eq(workspaces.id, workspaceId))
+        .limit(1);
+      if (wsRate?.defaultHourlyRate) {
+        rate = Number(wsRate.defaultHourlyRate) || 0;
+      }
+    }
+
     const amount = hours * rate;
 
     // Check if already imported to this invoice (via sourceId)

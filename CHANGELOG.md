@@ -1,5 +1,78 @@
 # Changelog
 
+## v0.1.50 — 2026-07-18 — Portal task approve / revisi
+
+- Client portal: task status `review` + client-visible → tombol **Setujui** / **Minta revisi** + note opsional.
+- Approve → task `done`. Revisi → task `in_progress`, note append di description.
+- Notif workspace + activity log (`client_approved_task` / `client_requested_task_revision`).
+- Badge “Menunggu review kamu” sekarang punya aksi beneran.
+
+## v0.1.49 — 2026-07-18 — Portal contact copy clean
+
+- Hapus teks “Portal gak menerima komentar…”. Card “Hubungi Tim” cuma judul + tombol WA/Email.
+
+## v0.1.48 — 2026-07-18 — Portal Recent Activity compact
+
+- Default tampil **3** item, tombol “Lihat N lainnya” (max pool **5**).
+- Group spam task: `Task added` sejenis se-project se-hari → `3 tasks added in …`.
+- Time entry: **1** terbaru per project (bukan 5).
+- Project created: cuma kalau ≤ 30 hari.
+
+## v0.1.47 — 2026-07-18 — Portal: no comments, WA/email only
+
+- Hapus form + thread komentar di client portal (project accordion + bottom “Message Your Team”).
+- Ganti tombol **WhatsApp** + **Email** (`billingPhone`, `replyToEmail`/`billingEmail`).
+- Hapus server action `createPortalComment` + komponen portal comment form.
+- Comment internal app (team) tetap ada.
+
+## v0.1.46 — 2026-07-18 — P3 polish
+
+- **Stale Server Action**: `isStaleServerActionError` helper; auto-reload di client/project form + app `error.tsx` recovery UI.
+- **Error shape**: `createClient` soft-fail `{ok:false, PLAN_LIMIT}` (sama pola project); toast limit plan.
+- **Portal approval loop**: type `approval` → Approve / Request changes + note; admin lihat badge decision.
+- **Questionnaire mobile**: card list di mobile, table desktop; i18n via `cubiqlo_lang`.
+- **Dashboard money clarity**: label USD terpisah; note multi-currency tidak dijumlah.
+- **Journal**: filter mood + tag/search tetap; export ikut filter.
+
+## v0.1.45 — 2026-07-18 — P2 product polish
+
+- **PROD-004 task vs time**: helper banner di Tasks + Time Tracking (tugas = checklist, timer = jam billable).
+- **PROD-005 time tags**: tag opsional di timer + manual entry; chip preset; gak hardcode default "Research".
+- **PROD-006 files daily driver**: filter All/Internal/Client/Deliverable; toggle visibility + tipe per file; deliverable auto client-visible.
+- **PROD-007 team invite**: plan gate UX + link upgrade; email undangan via Resend; pending-signup path kalau user belum daftar.
+- **PROD-008 portal activation**: checklist cara pakai; full shareable link + open; copy token sekali.
+- **PROD-009 onboarding first-win**: step "Aktifkan portal klien" di dashboard checklist.
+
+## v0.1.44 — 2026-07-18 — Logo invoice: upload file (bukan cuma URL)
+
+- Settings → Branding: **Upload logo** (PNG/JPG/WebP/GIF/SVG, max 2MB) via same-origin `POST /api/workspace/logo` → R2.
+- Serve public: `GET /api/public/workspace-logo/[workspaceId]` (PDF + preview klien + cache bust `?v=`).
+- Hapus logo: `DELETE /api/workspace/logo`.
+- URL manual tetap ada (toggle “Atau pakai URL”) buat CDN eksternal.
+
+## v0.1.43 — 2026-07-18 — P1: client dialog, package currency, notes, invoice, branding
+
+- **BUG-013/014 client edit**: `ClientEditDialog` controlled + `max-h-[90vh] overflow-y-auto` + close on success.
+- **BUG-015 package currency**: form default dari workspace `defaultCurrency` (bukan hardcode IDR).
+- **BUG-016 expense tabs**: `Link` tab pakai `scroll={false}` + prefetch (kurang jump).
+- **BUG-017 notes collapse**: card default compact (body preview 160 chars); Expand buka edit/convert.
+- **BUG-018 notes tab**: revalidatePath sudah cover personal; list reset expand saat tab/query ganti.
+- **BUG-009/010 invoice**: loading skeleton `/invoices/new`; form create label “Membuat invoice…”; **Edit Invoice** card + tombol **Simpan invoice** (meta status/tax/notes/terms).
+- **BUG-011/012 branding**: Settings → **Branding & Invoice** (logo URL + billing fields); public `/invoice/[token]` render logo; PDF sudah pakai `logoUrl`.
+- **BUG-019 toast delete**: “Item dihapus” / “Generation dihapus” (bukan English generic).
+- **BUG-020 sidebar PERSONAL**: label `Catatan`/`Jurnal` map i18n benar.
+- **PROD-002 time→invoice rate**: fallback entry → project hours rate → workspace `defaultHourlyRate`.
+- **PROD-001 reports**: sudah group per currency (no cross-currency sum) — keep as-is.
+
+## v0.1.42 — 2026-07-18 — P0: plan limit, portal, timer, sheet, upload
+
+- **BUG-001/003 plan limit UX**: banner + upgrade link di `/app/projects` (mirror clients); tombol Upgrade clients → `/app/billing`; `createProject` soft-return `{ok:false, error}` + toast (bukan throw → Next digest).
+- **BUG-002 portal create**: form client punya checkbox **Aktifkan portal sekarang** (default ON create); insert set `portalEnabled` + generate token.
+- **BUG-006 timer loncat jam**: manual entry set `startTime`+`endTime` (bukan end null); active-timer query exclude `manual_minutes`; legacy open manual rows closed in DB.
+- **BUG-007 cascade time**: manual entry + timer widget filter client→project→task ketat (no fallback all).
+- **BUG-008 sheet auto-close**: shared `portaled-popper-guard` dipakai Dialog + Sheet (task sidebar Select aman).
+- **BUG-004/005 upload**: CSP `connect-src` allow `*.r2.cloudflarestorage.com`; same-origin proxy `/api/files/upload` + `/api/expenses/receipt` (hindari CORS/CSP block browser).
+
 ## v0.1.41 — 2026-07-18 — Fix: klik Currency trigger (bukan opsi) nutupin dialog
 
 - Bug real: saat dropdown Currency **sudah terbuka**, klik lagi pada **SelectTrigger** (kotak IDR) → dialog New Package nutup + form hilang. Klik opsi list (IDR/USD/…) aman.

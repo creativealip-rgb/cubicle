@@ -16,7 +16,7 @@ export function DeleteItemButton({ itemId }: { itemId: string }) {
     setLoading(true);
     try {
       await deleteInvoiceItem(itemId);
-      toast.success("Item deleted");
+      toast.success("Item dihapus");
       router.refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed");

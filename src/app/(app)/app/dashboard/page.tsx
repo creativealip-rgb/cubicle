@@ -70,7 +70,8 @@ export default async function DashboardPage() {
       (SELECT count(*)::int FROM clients WHERE workspace_id = ${workspaceId}) as total_clients,
       (SELECT count(*)::int FROM projects WHERE workspace_id = ${workspaceId}) as total_projects,
       (SELECT count(*)::int FROM invoices WHERE workspace_id = ${workspaceId}) as total_invoices,
-      (SELECT count(*)::int FROM time_entries WHERE workspace_id = ${workspaceId}) as total_time_entries
+      (SELECT count(*)::int FROM time_entries WHERE workspace_id = ${workspaceId}) as total_time_entries,
+      (SELECT count(*)::int FROM clients WHERE workspace_id = ${workspaceId} AND portal_enabled = true AND portal_token_hash IS NOT NULL AND portal_token_revoked_at IS NULL) as portal_active
     `,
   );
   const counts = result.rows[0] as Record<string, number>;
@@ -83,6 +84,7 @@ export default async function DashboardPage() {
   const totalProjects = counts.total_projects || 0;
   const totalInvoices = counts.total_invoices || 0;
   const totalTimeEntries = counts.total_time_entries || 0;
+  const portalActive = counts.portal_active || 0;
 
   // Attention Needed — counts surfaced as actionable summary
   const todayStr = new Date().toISOString().split("T")[0]!;
@@ -226,7 +228,7 @@ export default async function DashboardPage() {
   const ytdNet = ytdRevenue - ytdExpense;
   const ytdNetUSD = ytdRevenueUSD - ytdExpenseUSD;
 
-  // Active timer
+  // Active timer (running only — exclude closed manual entries)
   const [activeTimer] = await db
     .select({
       id: timeEntries.id,
@@ -239,7 +241,7 @@ export default async function DashboardPage() {
     .where(
       and(
         eq(timeEntries.workspaceId, workspaceId),
-        sql`${timeEntries.startTime} is not null and ${timeEntries.endTime} is null`,
+        sql`${timeEntries.startTime} is not null and ${timeEntries.endTime} is null and ${timeEntries.manualMinutes} is null`,
       ),
     )
     .limit(1);
@@ -467,6 +469,7 @@ export default async function DashboardPage() {
           { key: "project", done: totalProjects > 0, href: "/app/projects" },
           { key: "time", done: totalTimeEntries > 0, href: "/app/time" },
           { key: "invoice", done: totalInvoices > 0, href: "/app/invoices" },
+          { key: "portal", done: portalActive > 0, href: "/app/clients" },
         ]}
       />
 
@@ -828,18 +831,35 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* YTD summary row — revenue, expense, net */}
+      {/* YTD summary row — revenue, expense, net (currency never mixed) */}
+      {(ytdRevenueUSD > 0 || expenseMonthUSD > 0) && (
+        <p className="text-xs text-muted-foreground">
+          {t(
+            "Uang multi-currency ditampilkan terpisah — tidak dijumlah lintas mata uang.",
+            "Multi-currency amounts shown separately — never summed across currencies.",
+          )}
+        </p>
+      )}
       <div className="grid grid-cols-3 gap-4">
         <Link href="/app/invoices" className="group">
           <Card className="transition-all hover:-translate-y-0.5 hover:shadow-md">
             <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="mb-1 flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-emerald-500" />
-                <span className="text-xs font-medium text-muted-foreground">{t("Pendapatan YTD", "Revenue YTD")}</span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  {t("Pendapatan YTD", "Revenue YTD")}
+                </span>
               </div>
-              <p className="text-xl font-bold text-emerald-700">{formatMoney(ytdRevenue, workspaceCurrency)}</p>
+              <p className="text-xl font-bold text-emerald-700">
+                {formatMoney(ytdRevenue, workspaceCurrency)}
+              </p>
               {ytdRevenueUSD > 0 && (
-                <p className="text-sm text-emerald-600 mt-0.5">{formatMoney(ytdRevenueUSD, "USD")}</p>
+                <p className="mt-0.5 text-sm text-emerald-600">
+                  <span className="mr-1 text-[10px] font-medium uppercase tracking-wide text-emerald-500/80">
+                    USD
+                  </span>
+                  {formatMoney(ytdRevenueUSD, "USD")}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -847,13 +867,22 @@ export default async function DashboardPage() {
         <Link href="/app/expenses" className="group">
           <Card className="transition-all hover:-translate-y-0.5 hover:shadow-md">
             <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="mb-1 flex items-center gap-2">
                 <Wallet className="h-4 w-4 text-red-500" />
-                <span className="text-xs font-medium text-muted-foreground">{t("Pengeluaran bulan ini", "Expenses this month")}</span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  {t("Pengeluaran bulan ini", "Expenses this month")}
+                </span>
               </div>
-              <p className="text-xl font-bold text-red-600">{formatMoney(expenseMonth, workspaceCurrency)}</p>
+              <p className="text-xl font-bold text-red-600">
+                {formatMoney(expenseMonth, workspaceCurrency)}
+              </p>
               {expenseMonthUSD > 0 && (
-                <p className="text-sm text-red-500 mt-0.5">{formatMoney(expenseMonthUSD, "USD")}</p>
+                <p className="mt-0.5 text-sm text-red-500">
+                  <span className="mr-1 text-[10px] font-medium uppercase tracking-wide text-red-400/80">
+                    USD
+                  </span>
+                  {formatMoney(expenseMonthUSD, "USD")}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -861,19 +890,28 @@ export default async function DashboardPage() {
         <Link href="/app/reports" className="group">
           <Card className="transition-all hover:-translate-y-0.5 hover:shadow-md">
             <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="mb-1 flex items-center gap-2">
                 {ytdNet >= 0 ? (
                   <TrendingUp className="h-4 w-4 text-emerald-500" />
                 ) : (
                   <TrendingDown className="h-4 w-4 text-red-500" />
                 )}
-                <span className="text-xs font-medium text-muted-foreground">{t("Bersih YTD", "Net YTD")}</span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  {t("Bersih YTD", "Net YTD")}
+                </span>
               </div>
               <p className={`text-xl font-bold ${ytdNet >= 0 ? "text-emerald-700" : "text-red-600"}`}>
                 {formatMoney(ytdNet, workspaceCurrency)}
               </p>
               {ytdRevenueUSD > 0 && (
-                <p className={`text-sm mt-0.5 ${ytdNetUSD >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                <p className={`mt-0.5 text-sm ${ytdNetUSD >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                  <span
+                    className={`mr-1 text-[10px] font-medium uppercase tracking-wide ${
+                      ytdNetUSD >= 0 ? "text-emerald-500/80" : "text-red-400/80"
+                    }`}
+                  >
+                    USD
+                  </span>
                   {formatMoney(ytdNetUSD, "USD")}
                 </p>
               )}

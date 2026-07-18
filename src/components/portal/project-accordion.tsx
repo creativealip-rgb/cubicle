@@ -11,16 +11,14 @@ import {
   FileText,
   CheckCircle2,
   Activity,
-  MessageSquare,
   Clock,
   Package,
-  MessageCircle,
 } from "lucide-react";
 import { PortalTaskList } from "./portal-task-list";
 import { PortalFileList } from "./portal-file-list";
-import { PortalCommentForm } from "./portal-comment-form";
 import { CustomPackageRequestForm } from "./custom-package-request-form";
 import { PackageOrderButton } from "./package-order-button";
+import { PortalContactButtons } from "./portal-contact";
 
 interface Project {
   id: string;
@@ -53,15 +51,6 @@ interface FileItem {
   mimeType: string | null;
   sizeBytes: number | null;
   fileType: string;
-  createdAt: string;
-}
-
-interface Comment {
-  id: string;
-  body: string;
-  authorName: string | null;
-  authorEmail: string | null;
-  source: string;
   createdAt: string;
 }
 
@@ -149,7 +138,6 @@ interface ProjectAccordionProps {
   projects: Project[];
   projectTasksMap: Map<string, Task[]>;
   projectFilesMap: Map<string, FileItem[]>;
-  projectCommentsMap: Map<string, Comment[]>;
   projectTimelineMap: Map<string, TimelineEvent[]>;
   projectHoursMap: Map<string, HoursSummary>;
   byHoursEntriesMap: Map<string, TimeEntry[]>;
@@ -162,6 +150,7 @@ interface ProjectAccordionProps {
   token: string;
   workspaceId: string;
   ownerWhatsAppPhone?: string | null;
+  ownerEmail?: string | null;
   ownerName?: string | null;
 }
 
@@ -182,15 +171,6 @@ function formatCurrency(amount: string | number, currency: string) {
     style: "currency",
     currency: currency || "IDR",
   }).format(Number(amount));
-}
-
-function getWhatsAppUrl(phone: string | null | undefined, message: string) {
-  if (!phone) return null;
-
-  const normalized = phone.replace(/\D/g, "").replace(/^0/, "62");
-  if (!normalized) return null;
-
-  return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
 }
 
 // ── Portal UX helpers (client-facing, Bahasa Indonesia) ──
@@ -315,7 +295,6 @@ function ProjectExpandedContent({
   project,
   tasks,
   files,
-  comments,
   timeline,
   hoursSummary,
   entries,
@@ -328,12 +307,12 @@ function ProjectExpandedContent({
   token,
   workspaceId,
   ownerWhatsAppPhone,
+  ownerEmail,
   ownerName,
 }: {
   project: Project;
   tasks: Task[];
   files: FileItem[];
-  comments: Comment[];
   timeline: TimelineEvent[];
   hoursSummary: HoursSummary | undefined;
   entries: TimeEntry[] | undefined;
@@ -346,6 +325,7 @@ function ProjectExpandedContent({
   token: string;
   workspaceId: string;
   ownerWhatsAppPhone?: string | null;
+  ownerEmail?: string | null;
   ownerName?: string | null;
 }) {
   const isByHours = project.billingType === "hours";
@@ -608,10 +588,11 @@ function ProjectExpandedContent({
       {/* Tasks */}
       {tasks.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+          <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold">
             <CheckCircle2 className="h-4 w-4" /> Tasks
           </h4>
           <PortalTaskList
+            token={token}
             tasks={tasks.map((t) => ({
               id: t.id,
               title: t.title,
@@ -672,52 +653,16 @@ function ProjectExpandedContent({
         </div>
       )}
 
-      {/* Comments */}
+      {/* Contact team — WA / email only */}
       <Separator />
       <div>
-        <div className="mb-2 flex items-center justify-between gap-3">
-          <h4 className="text-sm font-semibold flex items-center gap-2">
-            <MessageSquare className="h-4 w-4" /> Comments
-          </h4>
-          {getWhatsAppUrl(
-            ownerWhatsAppPhone,
-            `Halo ${ownerName || ""}, aku mau diskusi soal project ${project.name}.`,
-          ) && (
-            <Button asChild variant="outline" size="sm" className="h-8 gap-1 text-xs text-emerald-700 hover:text-emerald-800">
-              <a
-                href={getWhatsAppUrl(
-                  ownerWhatsAppPhone,
-                  `Halo ${ownerName || ""}, aku mau diskusi soal project ${project.name}.`,
-                ) ?? "#"}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
-              </a>
-            </Button>
-          )}
-        </div>
-        {comments.length > 0 && (
-          <div className="space-y-3 mb-4">
-            {comments.map((c) => (
-              <div key={c.id} className="bg-muted/50 rounded-lg p-3 text-sm">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium">
-                    {c.authorName || c.authorEmail || "Anonymous"}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(c.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-                <p className="whitespace-pre-wrap">{c.body}</p>
-              </div>
-            ))}
-          </div>
-        )}
-        <PortalCommentForm
-          entityType="project"
-          entityId={project.id}
-          workspaceId={workspaceId}
+        <h4 className="mb-2 text-sm font-semibold">Hubungi tim</h4>
+        <PortalContactButtons
+          phone={ownerWhatsAppPhone}
+          email={ownerEmail}
+          ownerName={ownerName}
+          projectName={project.name}
+          compact
         />
       </div>
     </CardContent>
@@ -821,7 +766,6 @@ export function ProjectAccordion({
   projects,
   projectTasksMap,
   projectFilesMap,
-  projectCommentsMap,
   projectTimelineMap,
   projectHoursMap,
   byHoursEntriesMap,
@@ -834,6 +778,7 @@ export function ProjectAccordion({
   token,
   workspaceId,
   ownerWhatsAppPhone,
+  ownerEmail,
   ownerName,
 }: ProjectAccordionProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -853,7 +798,6 @@ export function ProjectAccordion({
     const isExpanded = expandedId === project.id;
     const tasks = projectTasksMap.get(project.id) || [];
     const files = projectFilesMap.get(project.id) || [];
-    const comments = projectCommentsMap.get(project.id) || [];
     const timeline = projectTimelineMap.get(project.id) || [];
     const hoursSummary = projectHoursMap.get(project.id);
     const entries = byHoursEntriesMap.get(project.id);
@@ -911,7 +855,6 @@ export function ProjectAccordion({
             project={project}
             tasks={tasks}
             files={files}
-            comments={comments}
             timeline={timeline}
             hoursSummary={hoursSummary}
             entries={entries}
@@ -924,6 +867,7 @@ export function ProjectAccordion({
             token={token}
             workspaceId={workspaceId}
             ownerWhatsAppPhone={ownerWhatsAppPhone}
+            ownerEmail={ownerEmail}
             ownerName={ownerName}
           />
         )}

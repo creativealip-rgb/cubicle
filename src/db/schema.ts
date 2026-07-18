@@ -761,6 +761,8 @@ export const notifications = pgTable("notifications", {
       "task_assigned",      // X assigned you to task Y
       "task_commented",     // X commented on your task
       "client_comment",     // client posted comment via portal
+      "client_task_approved", // client approved task via portal
+      "client_task_revision", // client requested task revision via portal
       "file_viewed",        // client viewed file via portal
       "invoice_paid",       // invoice marked paid
       "invoice_sent",       // invoice sent to client

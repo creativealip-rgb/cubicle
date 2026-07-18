@@ -24,6 +24,13 @@ const completePortalRequestSchema = z.object({
   requestId: z.string().uuid(),
 });
 
+const respondPortalRequestSchema = z.object({
+  token: z.string().min(1),
+  requestId: z.string().uuid(),
+  decision: z.enum(["approved", "rejected"]),
+  note: z.string().max(2000).optional().nullable(),
+});
+
 const completePortalRequestAdminSchema = z.object({
   requestId: z.string().uuid(),
 });
@@ -127,4 +134,58 @@ export async function completePortalRequest(input: z.infer<typeof completePortal
     .returning();
 
   return row;
+}
+
+/**
+ * Client portal: approve / reject an approval-type request.
+ * Stores decision in description trailer (no schema migration).
+ */
+export async function respondPortalRequest(input: z.infer<typeof respondPortalRequestSchema>) {
+  const parsed = respondPortalRequestSchema.parse(input);
+  const { getClientPortalAccess } = await import("@/lib/actions/portal");
+  const client = await getClientPortalAccess(parsed.token);
+
+  const [request] = await db
+    .select({
+      id: portalRequests.id,
+      type: portalRequests.type,
+      description: portalRequests.description,
+      status: portalRequests.status,
+    })
+    .from(portalRequests)
+    .where(
+      and(
+        eq(portalRequests.id, parsed.requestId),
+        eq(portalRequests.clientId, client.id),
+        eq(portalRequests.workspaceId, client.workspaceId),
+      ),
+    )
+    .limit(1);
+
+  if (!request) throw new Error("Request not found");
+  if (request.status === "completed" || request.status === "cancelled") {
+    throw new Error("Request already closed");
+  }
+  if (request.type !== "approval") {
+    throw new Error("Only approval requests can be approved/rejected");
+  }
+
+  const stamp = new Date().toISOString();
+  const decisionLabel = parsed.decision === "approved" ? "APPROVED" : "REJECTED";
+  const noteLine = parsed.note?.trim() ? `\nClient note: ${parsed.note.trim()}` : "";
+  const trailer = `\n\n---\n[Client ${decisionLabel} @ ${stamp}]${noteLine}`;
+  const nextDescription = `${request.description || ""}${trailer}`.slice(0, 8000);
+
+  const [row] = await db
+    .update(portalRequests)
+    .set({
+      status: "completed",
+      description: nextDescription,
+      completedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(portalRequests.id, parsed.requestId))
+    .returning();
+
+  return { ...row, decision: parsed.decision };
 }

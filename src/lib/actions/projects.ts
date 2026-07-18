@@ -41,7 +41,14 @@ export async function createProject(input: z.infer<typeof projectSchema>) {
   const plan = await getUserPlan(user.id);
   const projLimit = await checkEntityLimit(workspaceId, "projects", plan);
   if (!projLimit.allowed) {
-    throw new Error(projLimit.reason!);
+    // Soft-fail so production doesn't hide the message behind a Next digest.
+    return {
+      ok: false as const,
+      code: "PLAN_LIMIT" as const,
+      error: projLimit.reason ?? "Plan limit reached",
+      current: projLimit.current,
+      limit: projLimit.limit,
+    };
   }
 
   const parsed = projectSchema.parse(input);
@@ -65,7 +72,7 @@ export async function createProject(input: z.infer<typeof projectSchema>) {
   }).returning();
 
   await writeActivityLog(workspaceId, user.id, "created_project", "project", project.id);
-  return project;
+  return { ok: true as const, project };
 }
 
 export async function updateProject(projectId: string, input: Partial<z.infer<typeof projectSchema>>) {

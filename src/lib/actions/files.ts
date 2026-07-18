@@ -3,6 +3,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { files, users } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
@@ -46,6 +47,12 @@ const completeUploadReqSchema = z.object({
   fileType: z.enum(["working_file", "deliverable"]).default("working_file"),
 });
 
+const updateFileMetaSchema = z.object({
+  fileId: z.string().uuid(),
+  visibility: z.enum(["internal", "client"]).optional(),
+  fileType: z.enum(["working_file", "deliverable"]).optional(),
+});
+
 export async function getSignedUploadUrl(
   input: z.infer<typeof uploadUrlReqSchema>,
 ): Promise<{ uploadUrl: string; storageKey: string; tempFileId: string }> {
@@ -87,6 +94,12 @@ export async function completeUpload(input: z.infer<typeof completeUploadReqSche
     await assertProjectInWorkspace(db, user.id, parsed.workspaceId, parsed.projectId);
   }
 
+  // Deliverable shared to client should be client-visible by default.
+  const visibility =
+    parsed.fileType === "deliverable" && parsed.visibility === "internal"
+      ? "client"
+      : parsed.visibility;
+
   const [file] = await db.insert(files).values({
     workspaceId: parsed.workspaceId,
     clientId: parsed.clientId || null,
@@ -96,13 +109,56 @@ export async function completeUpload(input: z.infer<typeof completeUploadReqSche
     storageKey: parsed.storageKey,
     mimeType: parsed.mimeType || null,
     sizeBytes: parsed.sizeBytes || null,
-    visibility: parsed.visibility,
+    visibility,
     fileType: parsed.fileType,
     uploadedBy: user.id,
   }).returning();
 
   await writeActivityLog(parsed.workspaceId, user.id, "uploaded_file", "file", file.id);
+  revalidatePath("/app/files");
   return file;
+}
+
+export async function updateFileMeta(input: z.infer<typeof updateFileMetaSchema>) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const parsed = updateFileMetaSchema.parse(input);
+  if (parsed.visibility === undefined && parsed.fileType === undefined) {
+    throw new Error("Nothing to update");
+  }
+
+  const [file] = await db
+    .select()
+    .from(files)
+    .where(and(eq(files.id, parsed.fileId), eq(files.workspaceId, workspaceId)))
+    .limit(1);
+
+  if (!file) throw new Error("File not found");
+
+  const next: {
+    visibility?: "internal" | "client";
+    fileType?: "working_file" | "deliverable";
+  } = {};
+  if (parsed.visibility !== undefined) next.visibility = parsed.visibility;
+  if (parsed.fileType !== undefined) next.fileType = parsed.fileType;
+
+  // Switching to deliverable auto-opens to client unless explicitly kept internal.
+  if (next.fileType === "deliverable" && next.visibility === undefined && file.visibility === "internal") {
+    next.visibility = "client";
+  }
+
+  const [updated] = await db
+    .update(files)
+    .set(next)
+    .where(eq(files.id, parsed.fileId))
+    .returning();
+
+  await writeActivityLog(workspaceId, user.id, "updated_file_meta", "file", parsed.fileId, next);
+  revalidatePath("/app/files");
+  return updated;
 }
 
 export async function deleteFile(fileId: string) {
@@ -121,6 +177,7 @@ export async function deleteFile(fileId: string) {
 
   await db.delete(files).where(eq(files.id, fileId));
   await writeActivityLog(workspaceId, user.id, "deleted_file", "file", fileId);
+  revalidatePath("/app/files");
   return { success: true };
 }
 

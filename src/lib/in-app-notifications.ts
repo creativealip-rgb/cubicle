@@ -17,6 +17,8 @@ export type NotificationType =
   | "task_assigned"
   | "task_commented"
   | "client_comment"
+  | "client_task_approved"
+  | "client_task_revision"
   | "file_viewed"
   | "invoice_paid"
   | "invoice_sent"

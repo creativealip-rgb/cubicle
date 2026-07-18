@@ -67,6 +67,7 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
   const parsed = startTimerSchema.parse(input);
 
   // Auto-stop any existing active timer for this user in this workspace
+  // (running only — exclude closed manual entries that may still have endTime null from legacy data).
   await db
     .update(timeEntries)
     .set({ endTime: new Date() })
@@ -75,6 +76,7 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
         eq(timeEntries.workspaceId, parsed.workspaceId),
         eq(timeEntries.userId, user.id),
         isNull(timeEntries.endTime),
+        isNull(timeEntries.manualMinutes),
       ),
     );
 
@@ -164,6 +166,30 @@ export async function createManualEntry(input: z.infer<typeof createManualEntryS
 
   const parsed = createManualEntrySchema.parse(input);
 
+  // Manual entry is NOT a running timer. Set both start + end from the
+  // chosen date + duration so active-timer queries (endTime IS NULL) never
+  // pick it up. Previously endTime=null made seed/manual rows look like
+  // active timers and the navbar clock jumped by hours.
+  const start = new Date(`${parsed.date}T00:00:00.000Z`);
+  if (Number.isNaN(start.getTime())) {
+    throw new Error("Invalid date");
+  }
+  const end = new Date(start.getTime() + parsed.durationMinutes * 60 * 1000);
+
+  // Resolve rate: explicit input wins; otherwise inherit project rate for hourly projects.
+  let resolvedRate: string | null =
+    parsed.billable && parsed.hourlyRate !== undefined ? String(parsed.hourlyRate) : null;
+  if (resolvedRate === null && parsed.billable) {
+    const [proj] = await db
+      .select({ rate: projects.rate, billingType: projects.billingType })
+      .from(projects)
+      .where(eq(projects.id, parsed.projectId))
+      .limit(1);
+    if (proj?.billingType === "hours" && proj.rate) {
+      resolvedRate = String(proj.rate);
+    }
+  }
+
   const [entry] = await db.insert(timeEntries).values({
     workspaceId: parsed.workspaceId,
     clientId: parsed.clientId,
@@ -172,11 +198,11 @@ export async function createManualEntry(input: z.infer<typeof createManualEntryS
     userId: user.id,
     description: parsed.description || null,
     tags: parsed.tags || null,
-    startTime: new Date(parsed.date),
-    endTime: null,
+    startTime: start,
+    endTime: end,
     manualMinutes: parsed.durationMinutes,
     billable: parsed.billable,
-    hourlyRate: parsed.billable && parsed.hourlyRate !== undefined ? String(parsed.hourlyRate) : null,
+    hourlyRate: resolvedRate,
     status: "draft",
   }).returning();
 
@@ -320,6 +346,8 @@ export async function getActiveTimer(workspaceId: string, userId: string) {
         eq(timeEntries.workspaceId, workspaceId),
         eq(timeEntries.userId, userId),
         isNull(timeEntries.endTime),
+        // Running timers only — exclude closed manual entries (manual_minutes set).
+        isNull(timeEntries.manualMinutes),
         // Defensive: never return an active timer without a valid startTime
         // (corrupt seed data would otherwise display 56+ year elapsed values)
         isNotNull(timeEntries.startTime),

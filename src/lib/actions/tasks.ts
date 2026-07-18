@@ -4,13 +4,13 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { tasks, users, workspaceMembers } from "@/db/schema";
+import { tasks, users, workspaceMembers, projects } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceWritable, assertTaskInWorkspace } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyTaskAssigned } from "@/lib/notifications";
-import { createNotification } from "@/lib/in-app-notifications";
+import { createNotification, notifyWorkspaceMembers } from "@/lib/in-app-notifications";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -265,4 +265,111 @@ export async function deleteTask(taskId: string) {
   await db.delete(tasks).where(eq(tasks.id, taskId));
   await writeActivityLog(workspaceId, user.id, "deleted_task", "task", taskId);
   return { success: true };
+}
+
+const respondPortalTaskSchema = z.object({
+  token: z.string().min(1),
+  taskId: z.string().uuid(),
+  decision: z.enum(["approved", "rejected"]),
+  note: z.string().max(2000).optional().nullable(),
+});
+
+/**
+ * Client portal: approve / request changes on a client-visible task in `review`.
+ * Approved → done. Rejected (minta revisi) → in_progress + optional note.
+ */
+export async function respondPortalTask(input: z.infer<typeof respondPortalTaskSchema>) {
+  const parsed = respondPortalTaskSchema.parse(input);
+  const { getClientPortalAccess } = await import("@/lib/actions/portal");
+  const client = await getClientPortalAccess(parsed.token);
+
+  const [row] = await db
+    .select({
+      id: tasks.id,
+      title: tasks.title,
+      status: tasks.status,
+      description: tasks.description,
+      clientVisible: tasks.clientVisible,
+      projectId: tasks.projectId,
+      workspaceId: tasks.workspaceId,
+      assigneeId: tasks.assigneeId,
+      projectClientId: projects.clientId,
+    })
+    .from(tasks)
+    .innerJoin(projects, eq(projects.id, tasks.projectId))
+    .where(
+      and(
+        eq(tasks.id, parsed.taskId),
+        eq(tasks.workspaceId, client.workspaceId),
+      ),
+    )
+    .limit(1);
+
+  if (!row) throw new Error("Task not found");
+  if (row.projectClientId !== client.id) throw new Error("Task not in your portal");
+  if (!row.clientVisible) throw new Error("Task is not client-visible");
+  if (row.status !== "review") throw new Error("Task is not awaiting review");
+
+  const nextStatus = parsed.decision === "approved" ? "done" : "in_progress";
+  const stamp = new Date().toISOString();
+  const decisionLabel = parsed.decision === "approved" ? "APPROVED" : "REVISION_REQUESTED";
+  const noteLine = parsed.note?.trim() ? `\nClient note: ${parsed.note.trim()}` : "";
+  const trailer = `\n\n---\n[Client ${decisionLabel} @ ${stamp}]${noteLine}`;
+  const nextDescription = `${row.description || ""}${trailer}`.slice(0, 8000);
+
+  const [task] = await db
+    .update(tasks)
+    .set({
+      status: nextStatus,
+      description: nextDescription,
+      updatedAt: new Date(),
+    })
+    .where(eq(tasks.id, parsed.taskId))
+    .returning();
+
+  await writeActivityLog(
+    client.workspaceId,
+    null,
+    parsed.decision === "approved" ? "client_approved_task" : "client_requested_task_revision",
+    "task",
+    task.id,
+    {
+      decision: parsed.decision,
+      fromStatus: "review",
+      toStatus: nextStatus,
+      clientId: client.id,
+      clientName: client.name,
+      note: parsed.note?.trim() || null,
+    },
+  );
+
+  try {
+    const title =
+      parsed.decision === "approved"
+        ? `${client.name} menyetujui: ${task.title}`
+        : `${client.name} minta revisi: ${task.title}`;
+    const body =
+      parsed.note?.trim() ||
+      (parsed.decision === "approved"
+        ? "Task disetujui lewat client portal"
+        : "Client minta revisi lewat client portal");
+    await notifyWorkspaceMembers(client.workspaceId, {
+      type: parsed.decision === "approved" ? "client_task_approved" : "client_task_revision",
+      title,
+      body,
+      link: `/app/tasks?focus=${task.id}`,
+      entityType: "task",
+      entityId: task.id,
+      actorId: null,
+    });
+  } catch {
+    // best-effort
+  }
+
+  return {
+    id: task.id,
+    status: task.status,
+    description: task.description,
+    decision: parsed.decision,
+  };
 }

@@ -36,6 +36,16 @@ const COPY: Record<
     id: { title: "Terbitkan invoice", desc: "Ubah kerja jadi tagihan." },
     en: { title: "Send an invoice", desc: "Turn your work into a bill." },
   },
+  portal: {
+    id: {
+      title: "Aktifkan portal klien",
+      desc: "Generate token, share file hasil kerja, kirim link.",
+    },
+    en: {
+      title: "Activate client portal",
+      desc: "Generate token, share deliverables, send the link.",
+    },
+  },
 };
 
 export function DashboardOnboarding({ lang, steps }: DashboardOnboardingProps) {

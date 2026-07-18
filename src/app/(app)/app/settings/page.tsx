@@ -9,10 +9,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Settings, Users, Receipt, Calendar, Sparkles, Mail } from "lucide-react";
+import { Settings, Users, Receipt, Calendar, Sparkles, Mail, ImageIcon } from "lucide-react";
 import { TeamManager } from "@/components/settings/team-manager";
 import { ReplyToEmailForm } from "@/components/settings/reply-to-email-form";
+import { WorkspaceBrandingForm } from "@/components/settings/workspace-branding-form";
 import { getCurrentLang, createT } from "@/lib/i18n";
+import { canInviteMember } from "@/lib/plan";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -40,6 +42,8 @@ export default async function SettingsPage() {
     .leftJoin(users, eq(users.id, workspaceMembers.userId))
     .where(and(eq(workspaceMembers.workspaceId, workspaceId)))
     .orderBy(workspaceMembers.role);
+
+  const inviteGate = await canInviteMember(user.id);
 
   return (
     <div className="space-y-6">
@@ -70,7 +74,11 @@ export default async function SettingsPage() {
           </CardHeader>
           <CardContent>
             {canManageTeam ? (
-              <TeamManager members={members} />
+              <TeamManager
+                members={members}
+                canInvite={inviteGate.allowed}
+                inviteBlockedReason={inviteGate.reason}
+              />
             ) : (
               <div className="space-y-3">
                 {members.map((member) => (
@@ -87,6 +95,36 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ImageIcon className="h-5 w-5" /> {t("Branding & Invoice", "Branding & Invoice")}
+          </CardTitle>
+          <CardDescription>
+            {t(
+              "Logo, nama tagihan, mata uang, tarif default — dipakai di PDF + preview klien.",
+              "Logo, billing name, currency, default rate — used on PDF + client preview.",
+            )}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <WorkspaceBrandingForm
+            defaults={{
+              billingName: workspace.billingName,
+              billingEmail: workspace.billingEmail,
+              billingPhone: workspace.billingPhone,
+              billingAddress: workspace.billingAddress,
+              taxId: workspace.taxId,
+              logoUrl: workspace.logoUrl,
+              defaultCurrency: workspace.defaultCurrency,
+              defaultTaxRate: workspace.defaultTaxRate,
+              defaultHourlyRate: workspace.defaultHourlyRate,
+              defaultInvoiceTerms: workspace.defaultInvoiceTerms,
+            }}
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

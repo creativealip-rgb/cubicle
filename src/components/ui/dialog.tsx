@@ -4,6 +4,10 @@ import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import {
+  createPortaledPopperOutsideGuard,
+  isPortaledPopperNode,
+} from "@/lib/portaled-popper-guard"
 
 const Dialog = DialogPrimitive.Root
 
@@ -28,139 +32,25 @@ const DialogOverlay = React.forwardRef<
 ))
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
-// Portaled overlays (Select / Popover / Dropdown / Combobox) sit outside Dialog
-// DOM. Clicking them is "outside" for DismissableLayer. Same-value Select
-// reselect unmounts the item before deferred outside handlers run, so
-// event.composedPath() is often empty by then — track the interaction at
-// capture time while the node still exists.
-const PORTALED_POPPER_SELECTOR = [
-  "[data-cubiqlo-select-content]",
-  "[data-radix-popper-content-wrapper]",
-  "[data-radix-select-viewport]",
-  "[data-radix-select-content]",
-  "[data-radix-dropdown-menu-content]",
-  "[data-radix-popover-content]",
-  "[data-radix-combobox-content]",
-  "[role='listbox']",
-  "[role='option']",
-  "[role='menu']",
-  "[role='menuitem']",
-].join(", ")
-
-function isPortaledPopperNode(node: EventTarget | null | undefined): boolean {
-  if (!(node instanceof Element)) return false
-  if (typeof node.closest !== "function") return false
-  return !!node.closest(PORTALED_POPPER_SELECTOR)
-}
-
-function isOpenPortaledLayer(): boolean {
-  return !!document.querySelector(PORTALED_POPPER_SELECTOR)
-}
-
-function isSelectTriggerNode(node: EventTarget | null | undefined): boolean {
-  if (!(node instanceof Element)) return false
-  // Radix SelectTrigger is role=combobox; also catch any aria-expanded control
-  // that owns an open listbox (safe for nested Select in dialogs).
-  if (node.closest?.("[role='combobox']")) return true
-  if (node.getAttribute?.("aria-haspopup") === "listbox") return true
-  return false
-}
-
-function isFromPortaledPopper(event: {
-  detail?: { originalEvent?: Event }
-  target?: EventTarget | null
-}): boolean {
-  const original = event.detail?.originalEvent
-
-  // Prefer path captured during the original pointer event. After the event
-  // finishes (deferred pointer-outside → click), composedPath() is often [].
-  if (original && typeof original.composedPath === "function") {
-    try {
-      for (const node of original.composedPath()) {
-        if (isPortaledPopperNode(node) || isSelectTriggerNode(node)) return true
-      }
-    } catch {
-      // ignore
-    }
-  }
-
-  const target = (original?.target ?? event.target) as Node | null
-  if (isPortaledPopperNode(target) || isSelectTriggerNode(target)) return true
-
-  // Same-value Select reselect: option unmounts before guard runs.
-  if (target && target instanceof Node && !document.contains(target)) return true
-
-  // Nested Select open: body/overlay can receive the click because modal Select
-  // sets pointer-events:none on the document (trigger looks clickable but the
-  // hit-test lands on Dialog overlay). Keep dialog open while any portaled
-  // layer is mounted — true outside click still closes Select first, then
-  // dialog on the next interaction.
-  if (isOpenPortaledLayer()) return true
-
-  return false
-}
-
 const DialogContent = React.forwardRef<
   React.ComponentRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, onInteractOutside, onPointerDownOutside, onFocusOutside, ...props }, ref) => {
-  // Capture-phase flag: still true after Select unmounts for the deferred
-  // outside handlers that fire on the subsequent click tick.
-  const popperPointerRef = React.useRef(false)
-  const popperPointerTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const guardRef = React.useRef<ReturnType<typeof createPortaledPopperOutsideGuard> | null>(null)
 
   React.useEffect(() => {
-    const markIfPopper = (event: Event) => {
-      const path =
-        typeof event.composedPath === "function" ? event.composedPath() : []
-      // While a nested Select/Popover layer is open, ANY pointer event can
-      // land on the Dialog overlay (Select Content sets
-      // disableOutsidePointerEvents → body pointer-events:none; the
-      // still-visible SelectTrigger is not hit-testable). Capture that here
-      // before Select unmounts the layer on the same click tick.
-      const hit =
-        isOpenPortaledLayer() ||
-        path.some(
-          (n) => isPortaledPopperNode(n) || isSelectTriggerNode(n),
-        ) ||
-        isPortaledPopperNode(event.target) ||
-        isSelectTriggerNode(event.target)
-
-      if (!hit) return
-
-      popperPointerRef.current = true
-      if (popperPointerTimerRef.current) {
-        clearTimeout(popperPointerTimerRef.current)
-      }
-      // Keep flag long enough for deferred pointer-outside + interact-outside
-      // (Radix defers to click with setTimeout 0) even after Select unmounts.
-      popperPointerTimerRef.current = setTimeout(() => {
-        popperPointerRef.current = false
-        popperPointerTimerRef.current = null
-      }, 200)
-    }
-
-    // Capture phase so we see the target before Select unmounts it.
-    document.addEventListener("pointerdown", markIfPopper, true)
-    document.addEventListener("mousedown", markIfPopper, true)
-    document.addEventListener("touchstart", markIfPopper, true)
-    document.addEventListener("click", markIfPopper, true)
-
+    const guard = createPortaledPopperOutsideGuard()
+    guardRef.current = guard
     return () => {
-      document.removeEventListener("pointerdown", markIfPopper, true)
-      document.removeEventListener("mousedown", markIfPopper, true)
-      document.removeEventListener("touchstart", markIfPopper, true)
-      document.removeEventListener("click", markIfPopper, true)
-      if (popperPointerTimerRef.current) {
-        clearTimeout(popperPointerTimerRef.current)
-      }
+      guard.cleanup()
+      guardRef.current = null
     }
   }, [])
 
   const shouldKeepOpen = (event: {
     detail?: { originalEvent?: Event }
     target?: EventTarget | null
-  }) => popperPointerRef.current || isFromPortaledPopper(event)
+  }) => guardRef.current?.shouldKeepOpen(event) ?? false
 
   return (
     <DialogPortal>

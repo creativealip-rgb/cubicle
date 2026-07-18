@@ -122,6 +122,21 @@ export default async function TasksPage({
         <TaskCreateDialog projectId={params.projectId} members={memberList} projects={projectList} />
       </div>
 
+      <div className="rounded-lg border border-blue-200 bg-blue-50/60 px-4 py-3 text-sm text-blue-950">
+        <p className="font-medium">
+          {t("Tugas ≠ timer", "Tasks ≠ timer")}
+        </p>
+        <p className="mt-1 text-xs text-blue-900/80">
+          {t(
+            "Tugas = to-do / status kerja (todo → done). Waktu / timer = jam billable yang bisa di-import ke invoice. Link task ke timer opsional biar rapi.",
+            "Tasks = to-do / work status (todo → done). Time / timer = billable hours you can import to invoices. Linking a task to the timer is optional.",
+          )}{" "}
+          <a href="/app/time" className="font-medium underline underline-offset-2">
+            {t("Buka Time Tracking", "Open Time Tracking")}
+          </a>
+        </p>
+      </div>
+
       {/* Filters + view toggle */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <TaskFilters

@@ -35,6 +35,8 @@ const clientSchema = z.object({
   internalNotes: z.string().optional(),
   portalSlug: slugSchema.optional().or(z.literal("")),
   portalSlugEnabled: z.boolean().optional(),
+  /** When true on create: generate portal token + set portalEnabled */
+  portalEnabled: z.boolean().optional(),
 });
 
 // ─── CRUD Actions ───
@@ -47,12 +49,37 @@ async function assertCanCreateClient(workspaceId: string, userId: string) {
   const plan = await getUserPlan(userId);
   const clientLimit = await checkEntityLimit(workspaceId, "clients", plan);
   if (!clientLimit.allowed) {
-    throw new Error(clientLimit.reason!);
+    return {
+      ok: false as const,
+      code: "PLAN_LIMIT" as const,
+      error: clientLimit.reason ?? "Plan limit reached",
+      current: clientLimit.current,
+      limit: clientLimit.limit,
+    };
   }
+  return { ok: true as const };
 }
 
 async function insertClient(workspaceId: string, userId: string, input: z.infer<typeof clientSchema>) {
   const parsed = clientSchema.parse(input);
+
+  // Optionally activate portal on create (token + enabled flag).
+  let portalFields: {
+    portalEnabled?: boolean;
+    portalTokenHash?: string;
+    portalTokenExpiresAt?: Date;
+    portalTokenRevokedAt?: null;
+  } = {};
+  let rawPortalToken: string | null = null;
+  if (parsed.portalEnabled) {
+    rawPortalToken = randomBytes(32).toString("hex");
+    portalFields = {
+      portalEnabled: true,
+      portalTokenHash: createHash("sha256").update(rawPortalToken).digest("hex"),
+      portalTokenExpiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 90),
+      portalTokenRevokedAt: null,
+    };
+  }
 
   const [client] = await db.insert(clients).values({
     workspaceId,
@@ -67,9 +94,13 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
     portalSlug: parsed.portalSlug || null,
     portalSlugEnabled: parsed.portalSlugEnabled ?? true,
     status: "active",
+    ...portalFields,
   }).returning();
 
   await writeActivityLog(workspaceId, userId, "created_client", "client", client.id);
+  if (rawPortalToken) {
+    await writeActivityLog(workspaceId, userId, "generated_portal_token", "client", client.id);
+  }
   return client;
 }
 
@@ -77,15 +108,21 @@ export async function createClient(input: z.infer<typeof clientSchema>) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
-  await assertCanCreateClient(workspaceId, user.id);
-  return insertClient(workspaceId, user.id, input);
+  const gate = await assertCanCreateClient(workspaceId, user.id);
+  if (!gate.ok) return gate;
+  const client = await insertClient(workspaceId, user.id, input);
+  return { ok: true as const, client };
 }
 
 export async function createClientFromForm(formData: FormData) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
-  await assertCanCreateClient(workspaceId, user.id);
+  const gate = await assertCanCreateClient(workspaceId, user.id);
+  if (!gate.ok) {
+    // Form path still needs hard fail for redirect flow
+    throw new Error(gate.error);
+  }
 
   await insertClient(workspaceId, user.id, {
     name: String(formData.get("name") ?? ""),
@@ -101,6 +138,7 @@ export async function createClientFromForm(formData: FormData) {
     internalNotes: String(formData.get("internalNotes") ?? "") || undefined,
     portalSlug: String(formData.get("portalSlug") ?? "") || undefined,
     portalSlugEnabled: formData.get("portalSlugEnabled") === "on",
+    portalEnabled: formData.get("portalEnabled") === "on",
   });
 
   redirect("/app/clients");

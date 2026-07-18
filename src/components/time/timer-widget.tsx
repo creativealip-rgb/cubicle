@@ -101,6 +101,7 @@ export function TimerWidget({
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [selectedTaskId, setSelectedTaskId] = useState<string>("");
   const [description, setDescription] = useState("");
+  const [tags, setTags] = useState("");
   const [hourlyRate, setHourlyRate] = useState("");
 
   // Filtered projects based on selected client
@@ -113,26 +114,27 @@ export function TimerWidget({
   const selectedProject = allProjects.find((p) => p.id === selectedProjectId);
   const isHourly = selectedProject?.billingType === "hours";
 
+  // Cascading selects: only show projects for the selected client, tasks for the selected project.
+  // No fallback to "all" — empty means pick parent first.
   useEffect(() => {
     if (selectedClientId) {
-      // Only show projects that belong to the selected client.
-      // Fallback to all projects if project rows carry no clientId (defensive).
-      const scoped = allProjects.filter((p) => p.clientId === selectedClientId);
-      setFilteredProjects(scoped.length > 0 || allProjects.some((p) => p.clientId) ? scoped : allProjects);
+      setFilteredProjects(allProjects.filter((p) => p.clientId === selectedClientId));
       setSelectedProjectId("");
+      setSelectedTaskId("__none__");
     } else {
       setFilteredProjects([]);
+      setSelectedProjectId("");
+      setSelectedTaskId("__none__");
     }
   }, [selectedClientId, allProjects]);
 
   useEffect(() => {
     if (selectedProjectId) {
-      // Only show tasks that belong to the selected project.
-      const scoped = allTasks.filter((tk) => tk.projectId === selectedProjectId);
-      setFilteredTasks(scoped.length > 0 || allTasks.some((tk) => tk.projectId) ? scoped : allTasks);
-      setSelectedTaskId("");
+      setFilteredTasks(allTasks.filter((tk) => tk.projectId === selectedProjectId));
+      setSelectedTaskId("__none__");
     } else {
       setFilteredTasks([]);
+      setSelectedTaskId("__none__");
     }
   }, [selectedProjectId, allTasks]);
 
@@ -172,8 +174,9 @@ export function TimerWidget({
         workspaceId,
         clientId: selectedClientId,
         projectId: selectedProjectId,
-        taskId: selectedTaskId || undefined,
+        taskId: selectedTaskId && selectedTaskId !== "__none__" ? selectedTaskId : undefined,
         description: description || undefined,
+        tags: tags || undefined,
         hourlyRate: hourlyRate ? Number(hourlyRate) : undefined,
       });
 
@@ -185,7 +188,7 @@ export function TimerWidget({
         id: entry.id,
         clientId: selectedClientId,
         projectId: selectedProjectId,
-        taskId: selectedTaskId || null,
+        taskId: selectedTaskId && selectedTaskId !== "__none__" ? selectedTaskId : null,
         description: description || null,
         startTime: entry.startTime!,
         clientName: client?.name ?? null,
@@ -202,7 +205,7 @@ export function TimerWidget({
     } finally {
       setLoading(false);
     }
-  }, [selectedClientId, selectedProjectId, selectedTaskId, description, hourlyRate, workspaceId, clients, allProjects, allTasks, router]);
+  }, [selectedClientId, selectedProjectId, selectedTaskId, description, tags, hourlyRate, workspaceId, clients, allProjects, allTasks, router, t]);
 
   const handleStop = useCallback(async () => {
     if (!activeTimer) return;
@@ -362,6 +365,35 @@ export function TimerWidget({
                 placeholder={t("Lagi ngerjain apa?", "What are you working on?")}
                 className="h-9"
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">{t("Tag (opsional)", "Tags (optional)")}</Label>
+              <Input
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                placeholder={t("Riset, Follow Up", "Research, Follow Up")}
+                className="h-9"
+              />
+              <div className="flex flex-wrap gap-1.5">
+                {["Research", "Cold Calling", "Follow Up - Phone", "Task Reporting"].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    className="rounded-full border bg-background px-2 py-0.5 text-[10px] text-muted-foreground hover:border-primary hover:text-foreground"
+                    onClick={() => {
+                      const parts = tags
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter(Boolean);
+                      if (parts.includes(preset)) return;
+                      setTags([...parts, preset].join(", "));
+                    }}
+                  >
+                    + {preset}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {isHourly && (

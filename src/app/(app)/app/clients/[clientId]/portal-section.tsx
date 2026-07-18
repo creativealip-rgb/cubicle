@@ -6,7 +6,7 @@ import { generatePortalToken, revokePortalToken } from "@/lib/actions/clients";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Check, Globe, RefreshCw, X } from "lucide-react";
+import { Copy, Check, Globe, RefreshCw, X, ExternalLink } from "lucide-react";
 
 interface PortalTokenSectionProps {
   client: {
@@ -22,7 +22,9 @@ interface PortalTokenSectionProps {
 
 export function PortalTokenSection({ client }: PortalTokenSectionProps) {
   const [showToken, setShowToken] = useState<string | null>(null);
+  const [portalUrl, setPortalUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
   const [copiedShort, setCopiedShort] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -30,10 +32,13 @@ export function PortalTokenSection({ client }: PortalTokenSectionProps) {
     setLoading(true);
     try {
       const result = await generatePortalToken(client.id);
+      const origin = window.location.origin;
+      const url = `${origin}/client-portal/${result.token}`;
       setShowToken(result.token);
-      toast.success("Portal token generated");
+      setPortalUrl(url);
+      toast.success("Portal aktif. Salin link & bagikan ke klien.");
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed");
+      toast.error(err instanceof Error ? err.message : "Gagal");
     } finally {
       setLoading(false);
     }
@@ -44,19 +49,27 @@ export function PortalTokenSection({ client }: PortalTokenSectionProps) {
     try {
       await revokePortalToken(client.id);
       setShowToken(null);
-      toast.success("Portal token revoked");
+      setPortalUrl(null);
+      toast.success("Portal dicabut");
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleCopy() {
-    if (showToken) {
-      await navigator.clipboard.writeText(showToken);
-      setCopied(true);
-      toast.success("Copied to clipboard");
-      setTimeout(() => setCopied(false), 2000);
-    }
+  async function handleCopyToken() {
+    if (!showToken) return;
+    await navigator.clipboard.writeText(showToken);
+    setCopied(true);
+    toast.success("Token disalin");
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleCopyUrl() {
+    if (!portalUrl) return;
+    await navigator.clipboard.writeText(portalUrl);
+    setCopiedUrl(true);
+    toast.success("Link portal disalin");
+    setTimeout(() => setCopiedUrl(false), 2000);
   }
 
   async function handleCopyShortLink() {
@@ -64,7 +77,7 @@ export function PortalTokenSection({ client }: PortalTokenSectionProps) {
     const url = `${window.location.origin}/client-portal/${client.portalSlug}`;
     await navigator.clipboard.writeText(url);
     setCopiedShort(true);
-    toast.success("Short portal URL copied");
+    toast.success("Link singkat disalin");
     setTimeout(() => setCopiedShort(false), 2000);
   }
 
@@ -72,6 +85,7 @@ export function PortalTokenSection({ client }: PortalTokenSectionProps) {
     ? new Date(client.portalTokenExpiresAt) < new Date()
     : false;
   const isRevoked = !!client.portalTokenRevokedAt;
+  const isActive = client.portalEnabled && !isRevoked && !isExpired;
 
   return (
     <Card>
@@ -81,35 +95,96 @@ export function PortalTokenSection({ client }: PortalTokenSectionProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Badge variant={client.portalEnabled && !isRevoked ? "default" : "secondary"}>
-            {client.portalEnabled && !isRevoked ? "Aktif" : "Nonaktif"}
+        <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground space-y-1.5">
+          <p className="font-medium text-foreground">Cara aktifkan portal</p>
+          <ol className="list-decimal pl-4 space-y-1">
+            <li>Klik <strong>Buat / perbarui token</strong> → salin link penuh.</li>
+            <li>Upload file sebagai <strong>Hasil kerja</strong> atau set visibility <strong>Klien</strong>.</li>
+            <li>Share project/task yang klien boleh lihat.</li>
+            <li>Kirim link ke klien (WA/email). Klien bisa lihat file + komentar.</li>
+          </ol>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant={isActive ? "default" : "secondary"}>
+            {isActive ? "Aktif" : "Nonaktif"}
           </Badge>
           {client.portalTokenExpiresAt && !isRevoked && (
             <span className="text-xs text-muted-foreground">
               Kedaluwarsa: {new Date(client.portalTokenExpiresAt).toLocaleDateString()}
-              {isExpired && <Badge variant="destructive" className="ml-1 text-[10px]">Kedaluwarsa</Badge>}
+              {isExpired && (
+                <Badge variant="destructive" className="ml-1 text-[10px]">
+                  Kedaluwarsa
+                </Badge>
+              )}
             </span>
           )}
           {isRevoked && (
-            <Badge variant="destructive" className="text-[10px]">Dicabut</Badge>
+            <Badge variant="destructive" className="text-[10px]">
+              Dicabut
+            </Badge>
+          )}
+          {client.portalTokenHash && !showToken && isActive && (
+            <span className="text-xs text-muted-foreground">
+              Token sudah ada (rahasia). Generate ulang untuk link baru.
+            </span>
           )}
         </div>
 
-        {showToken && (
-          <div className="rounded-lg border bg-muted/50 p-3 space-y-2">
-            <p className="text-xs font-medium text-muted-foreground">Token Portal (hanya tampil sekali)</p>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 text-xs bg-background rounded px-2 py-1 break-all">
-                {showToken}
-              </code>
-              <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={handleCopy}>
-                {copied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
-              </Button>
+        {portalUrl && showToken && (
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 space-y-3">
+            <div>
+              <p className="text-xs font-medium text-emerald-900">Link portal (siap bagikan)</p>
+              <div className="mt-1 flex items-center gap-2">
+                <code className="flex-1 text-xs bg-background rounded px-2 py-1 break-all">
+                  {portalUrl}
+                </code>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 shrink-0"
+                  onClick={handleCopyUrl}
+                >
+                  {copiedUrl ? (
+                    <Check className="h-3 w-3 text-green-600" />
+                  ) : (
+                    <Copy className="h-3 w-3" />
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 shrink-0"
+                  asChild
+                >
+                  <a href={portalUrl} target="_blank" rel="noreferrer">
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </Button>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Salin token ini sekarang. Token tidak akan ditampilkan lagi.
-            </p>
+            <div>
+              <p className="text-xs font-medium text-muted-foreground">
+                Token mentah (hanya tampil sekali)
+              </p>
+              <div className="mt-1 flex items-center gap-2">
+                <code className="flex-1 text-xs bg-background rounded px-2 py-1 break-all">
+                  {showToken}
+                </code>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 shrink-0"
+                  onClick={handleCopyToken}
+                >
+                  {copied ? (
+                    <Check className="h-3 w-3 text-green-600" />
+                  ) : (
+                    <Copy className="h-3 w-3" />
+                  )}
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -118,10 +193,22 @@ export function PortalTokenSection({ client }: PortalTokenSectionProps) {
             <p className="text-xs font-medium text-muted-foreground">Link portal singkat</p>
             <div className="mt-1 flex items-center gap-2">
               <code className="block flex-1 break-all rounded bg-background px-2 py-1 text-xs">
-                /client-portal/{client.portalSlug}
+                {typeof window !== "undefined"
+                  ? `${window.location.origin}/client-portal/${client.portalSlug}`
+                  : `/client-portal/${client.portalSlug}`}
               </code>
-              <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={handleCopyShortLink}>
-                {copiedShort ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleCopyShortLink}
+              >
+                {copiedShort ? (
+                  <Check className="h-3 w-3 text-green-600" />
+                ) : (
+                  <Copy className="h-3 w-3" />
+                )}
               </Button>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -130,7 +217,7 @@ export function PortalTokenSection({ client }: PortalTokenSectionProps) {
           </div>
         )}
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button
             variant="outline"
             size="sm"
@@ -139,7 +226,7 @@ export function PortalTokenSection({ client }: PortalTokenSectionProps) {
             disabled={loading}
           >
             <RefreshCw className="h-3 w-3" />
-            {loading ? "Membuat..." : "Buat Token"}
+            {loading ? "Membuat..." : "Buat / perbarui token"}
           </Button>
           {client.portalEnabled && !isRevoked && (
             <Button

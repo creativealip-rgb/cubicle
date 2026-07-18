@@ -82,13 +82,13 @@ const navLabels: Record<string, { id: string; en: string }> = {
   Paket: { id: "Paket", en: "Packages" },
   Pengeluaran: { id: "Pengeluaran", en: "Expenses" },
   Laporan: { id: "Laporan", en: "Reports" },
-  Notes: { id: "Notes", en: "Notes" },
+  Catatan: { id: "Catatan", en: "Notes" },
+  Notes: { id: "Catatan", en: "Notes" },
   "Landing Page": { id: "Landing Page", en: "Landing Page" },
-  Journal: { id: "Journal", en: "Journal" },
-
+  Jurnal: { id: "Jurnal", en: "Journal" },
+  Journal: { id: "Jurnal", en: "Journal" },
   Proposal: { id: "Proposal", en: "Proposals" },
   Kontrak: { id: "Kontrak", en: "Contracts" },
-
   Template: { id: "Template", en: "Templates" },
   Brain: { id: "Brain", en: "Brain" },
   Prompt: { id: "Prompt", en: "Prompts" },

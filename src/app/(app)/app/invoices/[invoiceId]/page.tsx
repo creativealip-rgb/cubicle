@@ -25,6 +25,7 @@ import { PaymentSection } from "./payment-section";
 import { ShareTokenSection } from "./share-token-section";
 import { SendInvoiceButton } from "./send-invoice-button";
 import { SendReminderButton } from "./send-reminder-button";
+import { InvoiceMetaForm } from "@/components/invoices/invoice-meta-form";
 import { formatDateID, formatMoney } from "@/lib/utils";
 import { invoiceStatusVariant } from "@/lib/status-badge";
 import { getCurrentLang, createT } from "@/lib/i18n";
@@ -285,6 +286,28 @@ export default async function InvoiceDetailPage({
         </CardContent>
       </Card>
 
+      {/* Edit meta */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("Edit Invoice", "Edit Invoice")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <InvoiceMetaForm
+            invoiceId={invoiceId}
+            defaults={{
+              status: inv.status,
+              issueDate: String(inv.issueDate),
+              dueDate: inv.dueDate ? String(inv.dueDate) : null,
+              currency: inv.currency,
+              tax: inv.tax,
+              discount: inv.discount,
+              notes: inv.notes,
+              terms: inv.terms,
+            }}
+          />
+        </CardContent>
+      </Card>
+
       {/* Pembayaran */}
       <Card>
         <CardHeader>
@@ -317,33 +340,6 @@ export default async function InvoiceDetailPage({
             hasToken={!!hasShareToken}
             isExpired={shareExpired}
           />
-        </CardContent>
-      </Card>
-
-      {/* Catatan & Syarat */}
-      <Card>
-        <CardContent className="py-4 space-y-4">
-          {inv.notes && (
-            <div>
-              <h4 className="text-sm font-medium mb-1">{t("Catatan", "Notes")}</h4>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                {inv.notes}
-              </p>
-            </div>
-          )}
-          {inv.terms && (
-            <div>
-              <h4 className="text-sm font-medium mb-1">{t("Syarat", "Terms")}</h4>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                {inv.terms}
-              </p>
-            </div>
-          )}
-          {!inv.notes && !inv.terms && (
-            <p className="text-sm text-muted-foreground">
-              {t("Belum ada catatan atau syarat.", "No notes or terms yet.")}
-            </p>
-          )}
         </CardContent>
       </Card>
     </div>

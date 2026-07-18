@@ -448,17 +448,17 @@ export default async function ExpensesPage({
       <Card>
         <CardHeader className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
-            <Link href={tabHref("list")}>
+            <Link href={tabHref("list")} scroll={false} prefetch>
               <Button size="sm" variant={tab === "list" ? "default" : "outline"} className="h-8">
                 {t("Daftar", "List")}
               </Button>
             </Link>
-            <Link href={tabHref("recurring")}>
+            <Link href={tabHref("recurring")} scroll={false} prefetch>
               <Button size="sm" variant={tab === "recurring" ? "default" : "outline"} className="h-8">
                 {t("Rutin", "Recurring")}
               </Button>
             </Link>
-            <Link href={tabHref("categories")}>
+            <Link href={tabHref("categories")} scroll={false} prefetch>
               <Button size="sm" variant={tab === "categories" ? "default" : "outline"} className="h-8">
                 {t("Kategori", "Categories")}
               </Button>

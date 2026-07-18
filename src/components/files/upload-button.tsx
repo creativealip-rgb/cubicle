@@ -42,6 +42,12 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
   const [visibility, setVisibility] = useState<"internal" | "client">("internal");
   const [fileType, setFileType] = useState<"working_file" | "deliverable">("working_file");
 
+  function handleFileTypeChange(next: "working_file" | "deliverable") {
+    setFileType(next);
+    // Deliverable implies client-visible share.
+    if (next === "deliverable") setVisibility("client");
+  }
+
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -126,7 +132,10 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
           </div>
           <div className="space-y-2">
             <Label>{t("Tipe file", "File type")}</Label>
-            <Select value={fileType} onValueChange={(v) => setFileType(v as "working_file" | "deliverable")}>
+            <Select
+              value={fileType}
+              onValueChange={(v) => handleFileTypeChange(v as "working_file" | "deliverable")}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -135,6 +144,14 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
                 <SelectItem value="deliverable">{t("Hasil kerja", "Deliverable")}</SelectItem>
               </SelectContent>
             </Select>
+            {fileType === "deliverable" && (
+              <p className="text-[11px] text-muted-foreground">
+                {t(
+                  "Hasil kerja otomatis terlihat klien di portal.",
+                  "Deliverables are auto-visible on the client portal.",
+                )}
+              </p>
+            )}
           </div>
         </div>
         <DialogFooter>

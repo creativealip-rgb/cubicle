@@ -2,7 +2,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { projects, clients, tasks, workspaceMembers } from "@/db/schema";
+import { projects, clients, tasks, workspaceMembers, users } from "@/db/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import Link from "next/link";
@@ -53,6 +53,16 @@ export default async function ProjectsPage({
   const canWrite = member?.role === "owner" || member?.role === "member";
   const _params = await searchParams;
 
+  // Plan limit (per-user free plan: max 5 projects)
+  const [userPlan] = await db.select({ plan: users.plan }).from(users).where(eq(users.id, user.id)).limit(1);
+  const currentPlan = userPlan?.plan ?? "free";
+  const [{ projectCount }] = await db
+    .select({ projectCount: sql<number>`count(*)::int` })
+    .from(projects)
+    .where(eq(projects.workspaceId, workspaceId));
+  const projectLimit = 5;
+  const isAtLimit = currentPlan === "free" && projectCount >= projectLimit;
+
   const whereClauses = [eq(projects.workspaceId, workspaceId)];
 
   const projectsList = await db
@@ -97,8 +107,38 @@ export default async function ProjectsPage({
             {t("Pantau pipeline proyekmu", "Track your project pipeline")}
           </p>
         </div>
-        {canWrite && <ProjectCreateDialog clients={clientOptions} />}
+        {canWrite && (
+          <ProjectCreateDialog
+            clients={clientOptions}
+            isAtLimit={isAtLimit}
+            projectCount={projectCount}
+            projectLimit={projectLimit}
+          />
+        )}
       </div>
+
+      {isAtLimit && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-amber-900">
+                {t("Batas free plan tercapai", "Free plan limit reached")}
+              </p>
+              <p className="text-sm text-amber-700 mt-1">
+                {t(
+                  `Kamu punya ${projectCount}/${projectLimit} proyek. Upgrade ke Solo untuk unlimited proyek.`,
+                  `You have ${projectCount}/${projectLimit} projects. Upgrade to Solo for unlimited projects.`,
+                )}
+              </p>
+            </div>
+            <Button size="sm" className="bg-[#6647F0] hover:bg-[#5333DD] shrink-0" asChild>
+              <Link href="/app/billing">
+                {t("Upgrade ke Solo — Rp 49rb/bln", "Upgrade to Solo — Rp 49k/mo")}
+              </Link>
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="rounded-lg border bg-card">
         <div className="hidden md:grid grid-cols-12 gap-4 p-3 text-xs font-medium text-muted-foreground border-b">

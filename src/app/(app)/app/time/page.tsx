@@ -24,7 +24,7 @@ export default async function TimePage() {
   const member = await assertWorkspaceMember(db, user.id, workspaceId);
   const canWrite = member.role === "owner" || member.role === "member";
 
-  // Active timer
+  // Active timer (running only — exclude closed manual entries)
   const [activeTimer] = await db
     .select({
       id: timeEntries.id,
@@ -47,6 +47,7 @@ export default async function TimePage() {
         eq(timeEntries.workspaceId, workspaceId),
         eq(timeEntries.userId, user.id),
         isNull(timeEntries.endTime),
+        isNull(timeEntries.manualMinutes),
       ),
     )
     .limit(1);
@@ -123,6 +124,21 @@ export default async function TimePage() {
           )}
           <PdfExportButton clients={clientList} projects={projectList} />
         </div>
+      </div>
+
+      <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 px-4 py-3 text-sm text-emerald-950">
+        <p className="font-medium">
+          {t("Timer = jam billable", "Timer = billable hours")}
+        </p>
+        <p className="mt-1 text-xs text-emerald-900/80">
+          {t(
+            "Pakai timer / entri manual untuk jam kerja. Tugas di menu Tugas cuma checklist — tidak otomatis hitung jam. Tag opsional (Riset, Follow Up, dll) biar filter timesheet gampang.",
+            "Use the timer / manual entry for work hours. Tasks are just a checklist — they don't auto-track hours. Optional tags (Research, Follow Up, etc.) make timesheet filters easier.",
+          )}{" "}
+          <a href="/app/tasks" className="font-medium underline underline-offset-2">
+            {t("Kelola tugas", "Manage tasks")}
+          </a>
+        </p>
       </div>
 
       {/* Timer */}

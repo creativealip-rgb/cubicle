@@ -90,22 +90,37 @@ export default async function SharedInvoicePage({
     <div className="min-h-screen bg-muted/30">
       <div className="max-w-4xl mx-auto py-12 px-4">
         {/* Company Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            {workspace && (
-              <>
-                <h1 className="text-2xl font-bold">
-                  {workspace.billingName || "Company"}
-                </h1>
-                {workspace.billingAddress && (
-                  <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
-                    {workspace.billingAddress}
-                  </p>
-                )}
-              </>
-            )}
+        <div className="flex items-start justify-between mb-8 gap-4">
+          <div className="flex items-start gap-3 min-w-0">
+            {workspace?.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={workspace.logoUrl}
+                alt={workspace.billingName || "Logo"}
+                className="h-14 w-14 rounded-lg object-contain bg-white border"
+              />
+            ) : null}
+            <div className="min-w-0">
+              {workspace && (
+                <>
+                  <h1 className="text-2xl font-bold truncate">
+                    {workspace.billingName || "Company"}
+                  </h1>
+                  {workspace.billingAddress && (
+                    <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
+                      {workspace.billingAddress}
+                    </p>
+                  )}
+                  {(workspace.billingEmail || workspace.billingPhone) && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {[workspace.billingEmail, workspace.billingPhone].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
           </div>
-          <div className="text-right">
+          <div className="text-right shrink-0">
             <h2 className="text-3xl font-bold tracking-tight">INVOICE</h2>
             <p className="text-lg font-mono text-primary mt-1">
               {invoice.invoiceNumber}
