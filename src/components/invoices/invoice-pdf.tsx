@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Font,
   Image,
+  Link,
 } from "@react-pdf/renderer";
 
 Font.register({
@@ -247,6 +248,28 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   notes: { fontSize: 9, color: "#475569", lineHeight: 1.5 },
+  detailReportBox: {
+    marginTop: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: BORDER,
+    borderRadius: 10,
+    backgroundColor: "#ffffff",
+  },
+  detailReportLabel: {
+    fontSize: 8,
+    fontWeight: 700,
+    color: MUTED,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: 4,
+  },
+  detailReportLink: {
+    fontSize: 9,
+    color: ACCENT_DARK,
+    textDecoration: "underline",
+    lineHeight: 1.4,
+  },
   // Footer
   footer: {
     position: "absolute",
@@ -323,9 +346,16 @@ interface InvoicePDFProps {
     unitPrice: string;
     amount: string;
   }>;
+  timesheetReportUrl?: string | null;
 }
 
-export function InvoicePDF({ invoice, workspace, client, items }: InvoicePDFProps) {
+export function InvoicePDF({
+  invoice,
+  workspace,
+  client,
+  items,
+  timesheetReportUrl,
+}: InvoicePDFProps) {
   const companyName = workspace.billingName || "Cubiqlo";
   const initials = companyName.slice(0, 2).toUpperCase();
   const sub = Number(invoice.subtotal);
@@ -506,6 +536,16 @@ export function InvoicePDF({ invoice, workspace, client, items }: InvoicePDFProp
             )}
           </View>
         )}
+
+        {/* Detail report link (full timesheet export) */}
+        {timesheetReportUrl ? (
+          <View style={styles.detailReportBox}>
+            <Text style={styles.detailReportLabel}>Detail report</Text>
+            <Link src={timesheetReportUrl} style={styles.detailReportLink}>
+              {timesheetReportUrl}
+            </Link>
+          </View>
+        ) : null}
 
         {/* Footer */}
         <View style={styles.footer} fixed>

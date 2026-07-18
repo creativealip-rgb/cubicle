@@ -59,6 +59,19 @@ export async function GET(
     .from(invoiceItems)
     .where(eq(invoiceItems.invoiceId, invoiceId));
 
+  // Full timesheet report link (same export as /app/time) — auth-gated.
+  const appUrl = (
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.BETTER_AUTH_URL ??
+    "https://cubiqlo.com"
+  ).replace(/\/$/, "");
+  const timesheetParams = new URLSearchParams({
+    report: "full",
+    clientId: inv.clientId,
+  });
+  if (inv.projectId) timesheetParams.set("projectId", inv.projectId);
+  const timesheetReportUrl = `${appUrl}/api/time/export/pdf/va-timesheet?${timesheetParams.toString()}`;
+
   const data = {
     invoice: {
       invoiceNumber: inv.invoiceNumber,
@@ -94,6 +107,7 @@ export async function GET(
       unitPrice: String(it.unitPrice),
       amount: String(it.amount),
     })),
+    timesheetReportUrl,
   };
 
   const buf = await renderInvoicePdf(data);

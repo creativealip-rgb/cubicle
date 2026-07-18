@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.67 — 2026-07-18 — Invoice PDF: detail report link
+
+- PDF invoice (`/api/invoices/[id]/pdf`) tampil blok **Detail report** + URL full timesheet.
+- URL: `/api/time/export/pdf/va-timesheet?report=full&clientId=…(&projectId=…)`.
+- Portal client PDF tetap tanpa link (timesheet butuh login workspace).
+
 ## v0.1.66 — 2026-07-18 — Invoice: link ekspor timesheet full
 
 - Detail invoice: tombol **Ekspor Timesheet** → `/api/time/export/pdf/va-timesheet?report=full` (sama full export di menu Waktu).

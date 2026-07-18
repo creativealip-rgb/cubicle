@@ -36,6 +36,8 @@ interface InvoiceData {
     unitPrice: string;
     amount: string;
   }>;
+  /** Optional link to full VA timesheet report (auth-gated). */
+  timesheetReportUrl?: string | null;
 }
 
 export async function renderInvoicePdf(data: InvoiceData): Promise<Buffer> {
