@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.60 — 2026-07-18 — Import time: Select All lebih jelas
+
+- Tombol `Pilih Semua (N)` outline + master checkbox sticky di atas list.
+- Indeterminate state saat sebagian dipilih; clear selection; fix double-toggle checkbox.
+
 ## v0.1.59 — 2026-07-18 — Client projects: package progress by hours
 
 - Tab Proyek di client detail: progress bar package pakai % jam billable terpakai / kuota paket (bukan task done).
