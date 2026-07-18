@@ -1,5 +1,31 @@
 # Changelog
 
+## v0.1.55 — 2026-07-18 — Invoice create UX + time import restore
+
+- **Buat invoice**: tombol loading `Membuat invoice…`, hard redirect ke detail invoice baru (mobile gak stuck di form).
+- **Hapus item time**: restore time entry status `approved` (bisa di-import ulang, gak hilang).
+- **Import time rate 0**: fallback project rate (semua billing type) + workspace default; persist rate ke time entry.
+- Data repair Alip Testing: orphaned invoiced times restored, zero-rate line items + totals INV-0001/INV-0008, default hourly rate 250k.
+
+## v0.1.54 — 2026-07-18 — Fix invoice number collision
+
+- Create invoice gagal (`INV-0002 already exists`) karena counter stale setelah seed.
+- Generator nomor: selalu `max(counter, MAX(existing INV-####)+1)` di dalam transaction.
+- Sync counter workspace Alip Testing ke next `INV-0008`.
+- Error duplicate → pesan user-friendly (bukan opaque RSC digest).
+
+## v0.1.53 — 2026-07-18 — Contextual back client → project
+
+- Client tab Proyek → project pakai `?from=client`.
+- Project detail: back **Kembali ke [Client]** + buka client di `?tab=projects` (bukan always All Projects).
+- Dari list All Projects: back tetap **Kembali ke Proyek**.
+
+## v0.1.52 — 2026-07-18 — Templates Soon gate + project billing labels
+
+- **Templates**: badge **Soon** di sidebar. User non-preview cuma liat halaman Soon (gak buka center). `alipdevcom@gmail.com` tetap bisa buka full UI, badge Soon tetap ada.
+- **Project detail**: tampil jenis billing **Per Jam / Per Proyek / Per Paket** + hint + rate/budget.
+- **Client → tab Proyek**: badge billing type + ringkas rate/budget/paket.
+
 ## v0.1.51 — 2026-07-18 — Mobile/tablet nav + header polish
 
 - **Topbar compact**: phone max ~4 controls (menu, search icon, New, notif, avatar). Search expand full-width; timer idle hide on phone; AI + workspace switcher pindah ke avatar menu di mobile.

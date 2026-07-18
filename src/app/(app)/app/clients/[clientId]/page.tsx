@@ -20,10 +20,12 @@ import {
   Receipt,
   Users,
   Download,
+  Wallet,
 } from "lucide-react";
 import { PortalTokenSection } from "./portal-section";
 import { PortalRequestAdmin } from "@/components/portal/portal-request-admin";
 import { ClientEditDialog } from "@/components/clients/client-edit-dialog";
+import { billingTypeLabel } from "@/lib/feature-access";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -31,13 +33,26 @@ async function getWorkspaceId(): Promise<string> {
 
 export default async function ClientDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ clientId: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   const { clientId } = await params;
+  const { tab: tabParam } = await searchParams;
+  const allowedTabs = new Set([
+    "overview",
+    "projects",
+    "files",
+    "invoices",
+    "appointments",
+    "portal",
+    "notes",
+  ]);
+  const initialTab = tabParam && allowedTabs.has(tabParam) ? tabParam : "overview";
 
   try {
     await assertClientInWorkspace(db, user.id, workspaceId, clientId);
@@ -56,6 +71,11 @@ export default async function ClientDetailPage({
       status: projects.status,
       dueDate: projects.dueDate,
       clientVisible: projects.clientVisible,
+      billingType: projects.billingType,
+      currency: projects.currency,
+      rate: projects.rate,
+      budget: projects.budget,
+      selectedPackageId: projects.selectedPackageId,
       taskCount: sql<number>`count(${tasks.id})::int`,
       doneCount: sql<number>`count(case when ${tasks.status} = 'done' then 1 end)::int`,
     })
@@ -232,7 +252,7 @@ export default async function ClientDetailPage({
       </Card>
 
       {/* Tabs */}
-      <Tabs defaultValue="overview">
+      <Tabs defaultValue={initialTab}>
         <TabsList>
           <TabsTrigger value="overview" className="gap-1">
             <Users className="h-3 w-3" /> Ringkasan
@@ -276,21 +296,41 @@ export default async function ClientDetailPage({
           )}
           {clientProjects.map((project) => (
             <Card key={project.id}>
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="space-y-1">
-                  <Link href={`/app/projects/${project.id}`} className="font-medium hover:underline">
+              <CardContent className="flex items-center justify-between gap-3 p-4">
+                <div className="min-w-0 space-y-1">
+                  <Link
+                    href={`/app/projects/${project.id}?from=client`}
+                    className="font-medium hover:underline"
+                  >
                     {project.name}
                   </Link>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <Badge variant="outline" className="text-[10px]">{project.status}</Badge>
-                    <span>{project.doneCount}/{project.taskCount} tugas selesai</span>
+                    <Badge variant="secondary" className="gap-1 text-[10px] font-normal">
+                      <Wallet className="h-3 w-3" />
+                      {billingTypeLabel(project.billingType, "id")}
+                    </Badge>
+                    <span>
+                      {project.doneCount}/{project.taskCount} tugas selesai
+                    </span>
                     {project.dueDate && <span>Tenggat: {project.dueDate}</span>}
                   </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    {project.billingType === "hours" && project.rate
+                      ? `Rate ${project.currency} ${Number(project.rate).toLocaleString("id-ID")}/jam`
+                      : project.billingType === "project" && project.budget
+                        ? `Budget ${project.currency} ${Number(project.budget).toLocaleString("id-ID")}`
+                        : project.billingType === "package"
+                          ? project.selectedPackageId
+                            ? "Billing paket"
+                            : "Billing paket · paket belum dipilih"
+                          : "Billing per proyek"}
+                  </p>
                 </div>
                 {project.taskCount > 0 && (
-                  <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="h-2 w-24 shrink-0 overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-full bg-emerald-500 rounded-full"
+                      className="h-full rounded-full bg-emerald-500"
                       style={{ width: `${Math.round((project.doneCount / project.taskCount) * 100)}%` }}
                     />
                   </div>

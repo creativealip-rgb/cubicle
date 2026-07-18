@@ -114,9 +114,8 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
 
   const invoice = await db.transaction(async (tx) => {
     // Generate invoice number inside transaction.
-    // The counter is authoritative once it exists; first-ever insert seeds
-    // from the largest existing standard invoice number to avoid collisions
-    // when seed data already used INV-0001.
+    // Counter is authoritative, but always bump above MAX(existing INV-####)
+    // so seed data / manual inserts cannot collide with the unique constraint.
     const [counter] = await tx
       .select()
       .from(workspaceInvoiceCounters)
@@ -124,51 +123,64 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
       .for("update")
       .limit(1);
 
-    let invoiceNumber: string;
-    if (!counter) {
-      const [maxRow] = await tx
-        .select({
-          maxNum: sql<number>`COALESCE(MAX(CAST(SUBSTRING(${invoices.invoiceNumber} FROM 'INV-([0-9]+)$') AS INTEGER)), 0)`,
-        })
-        .from(invoices)
-        .where(eq(invoices.workspaceId, workspaceId));
+    const [maxRow] = await tx
+      .select({
+        maxNum: sql<number>`COALESCE(MAX(CAST(SUBSTRING(${invoices.invoiceNumber} FROM 'INV-([0-9]+)$') AS INTEGER)), 0)`,
+      })
+      .from(invoices)
+      .where(eq(invoices.workspaceId, workspaceId));
 
-      const nextNum = (maxRow?.maxNum ?? 0) + 1;
-      invoiceNumber = `INV-${String(nextNum).padStart(4, "0")}`;
+    const maxExisting = Number(maxRow?.maxNum ?? 0);
+    const counterNext = counter?.nextNumber ?? 1;
+    const nextNum = Math.max(counterNext, maxExisting + 1);
+    const invoiceNumber = `INV-${String(nextNum).padStart(4, "0")}`;
+
+    if (!counter) {
       await tx.insert(workspaceInvoiceCounters).values({
         workspaceId,
         nextNumber: nextNum + 1,
       });
     } else {
-      const num = counter.nextNumber;
-      invoiceNumber = `INV-${String(num).padStart(4, "0")}`;
       await tx
         .update(workspaceInvoiceCounters)
-        .set({ nextNumber: num + 1, updatedAt: new Date() })
+        .set({ nextNumber: nextNum + 1, updatedAt: new Date() })
         .where(eq(workspaceInvoiceCounters.workspaceId, workspaceId));
     }
 
-    const [inv] = await tx
-      .insert(invoices)
-      .values({
-        workspaceId,
-        clientId: parsed.clientId,
-        projectId: parsed.projectId || null,
-        invoiceNumber,
-        issueDate: parsed.issueDate,
-        dueDate: parsed.dueDate || null,
-        currency: parsed.currency || ws?.defaultCurrency || "USD",
-        subtotal: "0",
-        discount: "0",
-        tax: ws?.defaultTaxRate || "0",
-        total: "0",
-        status: "draft",
-        notes: parsed.notes || null,
-        terms: parsed.terms || ws?.defaultInvoiceTerms || null,
-      })
-      .returning();
+    try {
+      const [inv] = await tx
+        .insert(invoices)
+        .values({
+          workspaceId,
+          clientId: parsed.clientId,
+          projectId: parsed.projectId || null,
+          invoiceNumber,
+          issueDate: parsed.issueDate,
+          dueDate: parsed.dueDate || null,
+          currency: parsed.currency || ws?.defaultCurrency || "USD",
+          subtotal: "0",
+          discount: "0",
+          tax: ws?.defaultTaxRate || "0",
+          total: "0",
+          status: "draft",
+          notes: parsed.notes || null,
+          terms: parsed.terms || ws?.defaultInvoiceTerms || null,
+        })
+        .returning();
 
-    return inv;
+      return inv;
+    } catch (err: unknown) {
+      // Surface a clean message instead of opaque RSC production digest.
+      const cause = err as { cause?: { code?: string; constraint?: string }; code?: string; constraint?: string };
+      const code = cause?.cause?.code ?? cause?.code;
+      const constraint = cause?.cause?.constraint ?? cause?.constraint;
+      if (code === "23505" || constraint === "invoices_workspace_id_invoice_number_unique") {
+        throw new Error(
+          `Nomor invoice ${invoiceNumber} sudah dipakai. Coba simpan lagi — nomor berikutnya akan digenerate otomatis.`,
+        );
+      }
+      throw err;
+    }
   });
 
   await writeActivityLog(workspaceId, user.id, "created_invoice", "invoice", invoice.id);
@@ -363,7 +375,37 @@ export async function deleteInvoiceItem(itemId: string) {
 
   await assertInvoiceInWorkspace(item.invoiceId, workspaceId);
 
-  await db.delete(invoiceItems).where(eq(invoiceItems.id, itemId));
+  await db.transaction(async (tx) => {
+    await tx.delete(invoiceItems).where(eq(invoiceItems.id, itemId));
+
+    // Restore time entry so it can be re-imported (was stuck as "invoiced").
+    if (item.sourceType === "time_entry" && item.sourceId) {
+      const [stillLinked] = await tx
+        .select({ id: invoiceItems.id })
+        .from(invoiceItems)
+        .where(
+          and(
+            eq(invoiceItems.sourceType, "time_entry"),
+            eq(invoiceItems.sourceId, item.sourceId),
+          ),
+        )
+        .limit(1);
+
+      if (!stillLinked) {
+        await tx
+          .update(timeEntries)
+          .set({ status: "approved", updatedAt: new Date() })
+          .where(
+            and(
+              eq(timeEntries.id, item.sourceId),
+              eq(timeEntries.workspaceId, workspaceId),
+              eq(timeEntries.status, "invoiced"),
+            ),
+          );
+      }
+    }
+  });
+
   await recalculateInvoice(item.invoiceId);
   await writeActivityLog(workspaceId, user.id, "deleted_invoice_item", "invoice_item", itemId);
   return { success: true };
@@ -393,7 +435,7 @@ export async function importTimeEntries(input: z.infer<typeof importTimeSchema>)
     const hours = minutes / 60;
     let rate = te.hourlyRate ? Number(te.hourlyRate) : 0;
 
-    // Fallback chain: entry rate → project hourly rate → workspace default hourly rate
+    // Fallback chain: entry rate → project rate (any billing type) → workspace default
     if (!rate || !Number.isFinite(rate) || rate <= 0) {
       if (te.projectId) {
         const [proj] = await db
@@ -401,8 +443,11 @@ export async function importTimeEntries(input: z.infer<typeof importTimeSchema>)
           .from(projects)
           .where(eq(projects.id, te.projectId))
           .limit(1);
-        if (proj?.rate && proj.billingType === "hours") {
-          rate = Number(proj.rate) || 0;
+        if (proj?.rate) {
+          const projectRate = Number(proj.rate);
+          if (Number.isFinite(projectRate) && projectRate > 0) {
+            rate = projectRate;
+          }
         }
       }
     }
@@ -413,8 +458,19 @@ export async function importTimeEntries(input: z.infer<typeof importTimeSchema>)
         .where(eq(workspaces.id, workspaceId))
         .limit(1);
       if (wsRate?.defaultHourlyRate) {
-        rate = Number(wsRate.defaultHourlyRate) || 0;
+        const wsDefault = Number(wsRate.defaultHourlyRate);
+        if (Number.isFinite(wsDefault) && wsDefault > 0) {
+          rate = wsDefault;
+        }
       }
+    }
+
+    // Persist resolved rate on the time entry so UI + future imports stay consistent.
+    if (rate > 0 && (!te.hourlyRate || Number(te.hourlyRate) <= 0)) {
+      await db
+        .update(timeEntries)
+        .set({ hourlyRate: String(rate), updatedAt: new Date() })
+        .where(eq(timeEntries.id, teId));
     }
 
     const amount = hours * rate;

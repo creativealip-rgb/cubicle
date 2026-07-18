@@ -38,6 +38,7 @@ import {
   NotebookPen,
 } from "lucide-react";
 import { useSidebar } from "@/components/app-shell";
+import { canAccessTemplatesPreview } from "@/lib/feature-access";
 
 const navItems = [
   { label: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard, group: null },
@@ -118,12 +119,14 @@ interface AppSidebarProps {
   collapsed: boolean;
   onToggle: () => void;
   badgeCounts?: SidebarBadgeCounts;
+  userEmail?: string;
 }
 
-export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps) {
+export function AppSidebar({ collapsed, onToggle, badgeCounts, userEmail }: AppSidebarProps) {
   const pathname = usePathname();
   const { mobileOpen, setMobileOpen } = useSidebar();
   const { lang, t, setLang, pending } = useT();
+  const templatesPreview = canAccessTemplatesPreview(userEmail);
 
   function changeLang(next: "id" | "en") {
     setLang(next);
@@ -322,6 +325,7 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
                     const badgeLabel = item.badgeKey
                       ? t(badgeLabels[item.badgeKey].id, badgeLabels[item.badgeKey].en)
                       : "";
+                    const isTemplatesItem = item.href === "/app/templates";
 
                     return (
                       <li key={item.href}>
@@ -338,8 +342,29 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
                               )}
                             >
                               <Icon className="h-4 w-4 shrink-0" />
-                              {!collapsed && <span className="flex-1">{t(navLabels[item.label]?.id ?? item.label, navLabels[item.label]?.en ?? item.label)}</span>}
-                              {!collapsed && badge > 0 && (
+                              {!collapsed && (
+                                <span className="flex-1">
+                                  {t(navLabels[item.label]?.id ?? item.label, navLabels[item.label]?.en ?? item.label)}
+                                </span>
+                              )}
+                              {!collapsed && isTemplatesItem && (
+                                <span
+                                  className={cn(
+                                    "ml-auto inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                                    isActive
+                                      ? "bg-sidebar-primary-foreground/15 text-sidebar-primary-foreground"
+                                      : "bg-amber-100 text-amber-800",
+                                  )}
+                                  title={
+                                    templatesPreview
+                                      ? t("Preview internal (Soon)", "Internal preview (Soon)")
+                                      : t("Segera hadir", "Coming soon")
+                                  }
+                                >
+                                  Soon
+                                </span>
+                              )}
+                              {!collapsed && !isTemplatesItem && badge > 0 && (
                                 <span
                                   className={cn(
                                     "ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-semibold",
@@ -352,7 +377,13 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
                                   {badge > 99 ? "99+" : badge}
                                 </span>
                               )}
-                              {collapsed && badge > 0 && (
+                              {collapsed && isTemplatesItem && (
+                                <span
+                                  className="absolute right-1 top-1 inline-flex h-2 w-2 rounded-full bg-amber-500"
+                                  aria-label="Soon"
+                                />
+                              )}
+                              {collapsed && !isTemplatesItem && badge > 0 && (
                                 <span
                                   className="absolute right-1 top-1 inline-flex h-2 w-2 rounded-full bg-blue-500"
                                   aria-label={`${badge} ${badgeLabel}`}
@@ -363,7 +394,11 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
                           {collapsed && (
                             <TooltipContent side="right">
                               {t(navLabels[item.label]?.id ?? item.label, navLabels[item.label]?.en ?? item.label)}
-                              {badge > 0 ? ` (${badge})` : ""}
+                              {isTemplatesItem
+                                ? " · Soon"
+                                : badge > 0
+                                  ? ` (${badge})`
+                                  : ""}
                             </TooltipContent>
                           )}
                         </Tooltip>

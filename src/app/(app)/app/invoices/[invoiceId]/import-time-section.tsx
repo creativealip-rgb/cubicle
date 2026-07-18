@@ -101,10 +101,11 @@ export function ImportTimeSection({
       <div className="border rounded-lg divide-y max-h-64 overflow-y-auto">
         {timeEntries.map((te) => {
           const mins = te.durationMinutes || 0;
-          const hours = (mins / 60).toFixed(1);
+          const hours = mins / 60;
           const rate = te.hourlyRate ? Number(te.hourlyRate) : 0;
-          const amount = (Number(hours) * rate).toFixed(2);
+          const amount = hours * rate;
           const isSelected = selected.has(te.id);
+          const zeroRate = !rate || !Number.isFinite(rate) || rate <= 0;
 
           return (
             <div
@@ -125,7 +126,13 @@ export function ImportTimeSection({
                   {te.description || "Tanpa deskripsi"}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {hours}{t("j", "h")} @ {formatMoney(rate, currency)}/{t("jam", "hr")} = {formatMoney(amount, currency)}
+                  {hours.toFixed(1)}{t("j", "h")}
+                  {zeroRate
+                    ? t(
+                        " · tarif 0 (isi rate di time entry / project / default workspace)",
+                        " · rate 0 (set rate on time entry / project / workspace default)",
+                      )
+                    : ` @ ${formatMoney(rate, currency)}/${t("jam", "hr")} = ${formatMoney(amount, currency)}`}
                 </p>
               </div>
               <Badge variant={timeEntryStatusVariant(te.status, lang).variant} className="text-[10px]">

@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { getProjectProgress } from "@/lib/actions/projects";
 import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 import { projectStatusVariant } from "@/lib/status-badge";
+import { billingTypeHint, billingTypeLabel } from "@/lib/feature-access";
 import { ProjectTasksTab } from "@/components/tasks/project-tasks-tab";
 import { CommentList } from "@/components/comments/comment-list";
 import { ProjectForm } from "@/components/forms/project-form";
@@ -26,6 +27,7 @@ import {
   MessageSquare,
   CheckSquare,
   Activity,
+  Wallet,
 } from "lucide-react";
 
 async function getWorkspaceId(): Promise<string> {
@@ -34,8 +36,10 @@ async function getWorkspaceId(): Promise<string> {
 
 export default async function ProjectDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ projectId: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
   const lang = await getCurrentLang();
   const t = createT(lang);
@@ -44,6 +48,7 @@ export default async function ProjectDetailPage({
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   const { projectId } = await params;
+  const { from } = await searchParams;
 
   try {
     await assertProjectInWorkspace(db, user.id, workspaceId, projectId);
@@ -204,13 +209,27 @@ export default async function ProjectDetailPage({
     cancelled: "bg-red-400",
   };
 
+  const backFromClient = from === "client" && !!project.clientId;
+  const backHref = backFromClient
+    ? `/app/clients/${project.clientId}?tab=projects`
+    : "/app/projects";
+  const backLabel = backFromClient
+    ? t(
+        `Kembali ke ${project.clientName || "Klien"}`,
+        `Back to ${project.clientName || "Client"}`,
+      )
+    : t("Kembali ke Proyek", "Back to Projects");
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="space-y-2">
-          <Link href="/app/projects" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-3 w-3" /> {t("Kembali ke Proyek", "Back to Projects")}
+          <Link
+            href={backHref}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-3 w-3" /> {backLabel}
           </Link>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
@@ -224,6 +243,33 @@ export default async function ProjectDetailPage({
               </Link>
             </p>
           )}
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <Badge variant="outline" className="gap-1 font-normal">
+              <Wallet className="h-3 w-3" />
+              {billingTypeLabel(project.billingType, lang)}
+            </Badge>
+            {project.billingType === "hours" && project.rate && (
+              <span className="text-xs text-muted-foreground">
+                {t("Rate", "Rate")}: {project.currency} {Number(project.rate).toLocaleString(locale)}
+                /{t("jam", "hr")}
+              </span>
+            )}
+            {project.billingType === "project" && project.budget && (
+              <span className="text-xs text-muted-foreground">
+                {t("Budget", "Budget")}: {project.currency}{" "}
+                {Number(project.budget).toLocaleString(locale)}
+              </span>
+            )}
+            {project.billingType === "package" && (
+              <span className="text-xs text-muted-foreground">
+                {t("Billing paket", "Package billing")}
+                {project.selectedPackageId ? "" : ` · ${t("paket belum dipilih", "no package selected")}`}
+              </span>
+            )}
+          </div>
+          <p className="max-w-xl text-xs text-muted-foreground">
+            {billingTypeHint(project.billingType, lang)}
+          </p>
         </div>
         <Dialog>
           <DialogTrigger asChild>

@@ -75,6 +75,10 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!form.clientId) {
+      toast.error("Pilih klien dulu");
+      return;
+    }
     setLoading(true);
     try {
       const data = {
@@ -89,19 +93,32 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
 
       if (mode === "create") {
         const invoice = await createInvoice(data);
+        if (!invoice?.id) {
+          throw new Error("Invoice dibuat tapi ID tidak diterima. Coba refresh daftar invoice.");
+        }
         toast.success("Invoice dibuat");
-        router.push(`/app/invoices/${invoice.id}`);
-      } else if (defaultValues?.id) {
-        await updateInvoice(defaultValues.id, data);
-        toast.success("Invoice diperbarui");
+        // Hard navigate so mobile always leaves the form even if soft router stalls.
+        window.location.assign(`/app/invoices/${invoice.id}`);
+        return;
       }
 
-      onSuccess?.();
-      router.refresh();
+      if (defaultValues?.id) {
+        await updateInvoice(defaultValues.id, data);
+        toast.success("Invoice diperbarui");
+        onSuccess?.();
+        router.refresh();
+      }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Terjadi kesalahan";
-      toast.error(msg);
-    } finally {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : typeof err === "object" && err && "message" in err
+            ? String((err as { message: unknown }).message)
+            : "Terjadi kesalahan";
+      // Next.js often wraps server action failures; surface something readable.
+      toast.error(msg && msg !== "An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error."
+        ? msg
+        : "Gagal membuat invoice. Coba lagi.");
       setLoading(false);
     }
   }
