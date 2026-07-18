@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.40 — 2026-07-18 — Dialog tetap buka saat reselect opsi Select sama
+
+- Bug: di modal (contoh **New Package**), klik opsi Select yang sudah terpilih (IDR → IDR) menutup dialog + input hilang.
+- Root cause: Radix Select unmount item sebelum deferred `pointerDownOutside`/`interactOutside` Dialog; `composedPath()` sering kosong → guard lama miss.
+- Fix: `DialogContent` track interaksi portaled popper di capture phase (`pointerdown`/`click`) + guard `onFocusOutside`; selector cover Select/Dropdown/Popover/Combobox.
+- Scope global: semua dialog yang pakai Select ikut aman (project, expense, package, availability, dll).
+- Bonus: `/app/packages` crash `JSON.parse` features non-JSON (legacy plain text seed) → parse aman (JSON array ATAU multiline text).
+
 ## v0.1.39 — 2026-07-17 — Fix public proposal 500 (formatMoney Client Component)
 
 - Root cause: server page pass function `formatMoney` ke client component `ProposalPublicView` → Next.js 500 (`Functions cannot be passed directly to Client Components`).

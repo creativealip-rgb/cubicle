@@ -50,6 +50,26 @@ export interface CatalogPackage {
 
 const CURRENCIES = ["IDR", "USD", "EUR", "GBP", "SGD"];
 
+/** features column stores JSON array string OR legacy plain multiline text. */
+function parsePackageFeatures(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  const trimmed = raw.trim();
+  if (!trimmed) return [];
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    if (Array.isArray(parsed)) {
+      return parsed.map((f) => String(f).trim()).filter(Boolean);
+    }
+    if (typeof parsed === "string" && parsed.trim()) return [parsed.trim()];
+  } catch {
+    // fall through — legacy newline / bullet list
+  }
+  return trimmed
+    .split(/\r?\n/)
+    .map((f) => f.replace(/^[-*•]\s*/, "").trim())
+    .filter(Boolean);
+}
+
 interface FormState {
   name: string;
   hours: string;
@@ -99,7 +119,7 @@ export function PackageCatalog({ packages }: { packages: CatalogPackage[] }) {
       price: pkg.price ?? "",
       currency: pkg.currency ?? "IDR",
       description: pkg.description ?? "",
-      features: pkg.features ? (JSON.parse(pkg.features) as string[]).join("\n") : "",
+      features: parsePackageFeatures(pkg.features).join("\n"),
       badge: pkg.badge ?? "",
       allowCustom: pkg.allowCustom,
       minHours: pkg.minHours != null ? String(pkg.minHours) : "",
@@ -195,7 +215,7 @@ export function PackageCatalog({ packages }: { packages: CatalogPackage[] }) {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {packages.map((pkg) => {
-            const features = pkg.features ? (JSON.parse(pkg.features) as string[]) : [];
+            const features = parsePackageFeatures(pkg.features);
             return (
               <Card key={pkg.id} className="relative">
                 <CardContent className="p-4 space-y-3">
