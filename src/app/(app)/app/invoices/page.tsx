@@ -22,6 +22,7 @@ import { invoiceStatusVariant } from "@/lib/status-badge";
 import { EmptyState } from "@/components/empty-state";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { billingTypeLabel } from "@/lib/feature-access";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const PAGE_SIZE = 10;
 
@@ -296,107 +297,100 @@ export default async function InvoicesPage({
         </div>
       </div>
 
-      {/* Status tabs */}
-      <div className="-mx-1 overflow-x-auto px-1">
-        <div className="inline-flex min-w-full gap-1 rounded-lg border bg-muted/30 p-1 sm:min-w-0 sm:flex-wrap">
-          {STATUS_TABS.map((tab) => {
-            const active = tab === statusTab;
-            const countVal = tabCount(tab);
-            if (
-              !active &&
-              countVal === 0 &&
-              tab !== "all" &&
-              tab !== "draft" &&
-              tab !== "paid" &&
-              tab !== "sent" &&
-              tab !== "archived"
-            ) {
-              return null;
-            }
-            return (
-              <Link
-                key={tab}
-                href={buildInvoicesHref({ ...filtersForHref, status: tab, page: 1 })}
-                className={cn(
-                  "inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors sm:text-sm",
-                  active
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-background/70 hover:text-foreground",
-                )}
-              >
-                <span>{tabLabel(tab, lang)}</span>
-                <span
-                  className={cn(
-                    "rounded-full px-1.5 py-0.5 text-[10px] tabular-nums",
-                    active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
-                  )}
+      {/* Status tabs + filters (same row pattern as Clients page) */}
+      <Tabs defaultValue={statusTab} className="space-y-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <TabsList className="h-auto w-full justify-start overflow-x-auto p-1 lg:w-auto">
+            {STATUS_TABS.map((tab) => {
+              const active = tab === statusTab;
+              const countVal = tabCount(tab);
+              if (
+                !active &&
+                countVal === 0 &&
+                tab !== "all" &&
+                tab !== "draft" &&
+                tab !== "paid" &&
+                tab !== "sent" &&
+                tab !== "archived"
+              ) {
+                return null;
+              }
+              return (
+                <TabsTrigger
+                  key={tab}
+                  value={tab}
+                  asChild
+                  className="gap-1.5 data-[state=active]:shadow"
                 >
-                  {countVal}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
+                  <Link href={buildInvoicesHref({ ...filtersForHref, status: tab, page: 1 })}>
+                    <span>{tabLabel(tab, lang)}</span>
+                    <span
+                      className={cn(
+                        "rounded-full px-1.5 py-0.5 text-[10px] tabular-nums",
+                        active
+                          ? "bg-primary/10 text-primary"
+                          : "bg-background/80 text-muted-foreground",
+                      )}
+                    >
+                      {countVal}
+                    </span>
+                  </Link>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
 
-      {/* Client + billing filters */}
-      <form
-        method="get"
-        action="/app/invoices"
-        className="flex flex-col gap-2 rounded-lg border bg-card p-3 sm:flex-row sm:flex-wrap sm:items-end"
-      >
-        {statusTab !== "all" && <input type="hidden" name="status" value={statusTab} />}
-        <div className="min-w-0 flex-1 space-y-1">
-          <label htmlFor="invoice-filter-client" className="text-xs font-medium text-muted-foreground">
-            {t("Klien", "Client")}
-          </label>
-          <select
-            id="invoice-filter-client"
-            name="clientId"
-            defaultValue={clientId ?? ""}
-            className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+          <form
+            method="get"
+            action="/app/invoices"
+            className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto"
           >
-            <option value="">{t("Semua klien", "All clients")}</option>
-            {clientOptions.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.companyName || c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="min-w-0 flex-1 space-y-1">
-          <label htmlFor="invoice-filter-billing" className="text-xs font-medium text-muted-foreground">
-            {t("Jenis proyek", "Project type")}
-          </label>
-          <select
-            id="invoice-filter-billing"
-            name="billing"
-            defaultValue={billing === "all" ? "" : billing}
-            className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-          >
-            <option value="">{billingFilterLabel("all", lang)}</option>
-            <option value="hours">{billingFilterLabel("hours", lang)}</option>
-            <option value="package">{billingFilterLabel("package", lang)}</option>
-            <option value="project">{billingFilterLabel("project", lang)}</option>
-            <option value="none">{billingFilterLabel("none", lang)}</option>
-          </select>
-        </div>
-        <div className="flex gap-2">
-          <Button type="submit" size="sm" className="flex-1 sm:flex-none">
-            {t("Filter", "Filter")}
-          </Button>
-          {hasExtraFilters && (
-            <Link href={buildInvoicesHref({ status: statusTab, page: 1, billing: "all" })}>
-              <Button type="button" variant="outline" size="sm">
-                {t("Reset", "Reset")}
+            {statusTab !== "all" && <input type="hidden" name="status" value={statusTab} />}
+            <select
+              id="invoice-filter-client"
+              name="clientId"
+              defaultValue={clientId ?? ""}
+              aria-label={t("Klien", "Client")}
+              className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm sm:w-44"
+            >
+              <option value="">{t("Semua klien", "All clients")}</option>
+              {clientOptions.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.companyName || c.name}
+                </option>
+              ))}
+            </select>
+            <select
+              id="invoice-filter-billing"
+              name="billing"
+              defaultValue={billing === "all" ? "" : billing}
+              aria-label={t("Jenis proyek", "Project type")}
+              className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm sm:w-44"
+            >
+              <option value="">{billingFilterLabel("all", lang)}</option>
+              <option value="hours">{billingFilterLabel("hours", lang)}</option>
+              <option value="package">{billingFilterLabel("package", lang)}</option>
+              <option value="project">{billingFilterLabel("project", lang)}</option>
+              <option value="none">{billingFilterLabel("none", lang)}</option>
+            </select>
+            <div className="flex gap-2">
+              <Button type="submit" size="sm" variant="outline" className="flex-1 sm:flex-none">
+                {t("Filter", "Filter")}
               </Button>
-            </Link>
-          )}
+              {hasExtraFilters && (
+                <Link href={buildInvoicesHref({ status: statusTab, page: 1, billing: "all" })}>
+                  <Button type="button" variant="ghost" size="sm">
+                    {t("Reset", "Reset")}
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </form>
         </div>
-      </form>
+      </Tabs>
 
       {hasExtraFilters && (
-        <p className="text-xs text-muted-foreground">
+        <p className="-mt-2 text-xs text-muted-foreground">
           {t("Filter aktif:", "Active filters:")}{" "}
           {selectedClient
             ? selectedClient.companyName || selectedClient.name

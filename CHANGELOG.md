@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.64 — 2026-07-18 — Invoice list toolbar polish
+
+- Tab status pakai `TabsList`/`TabsTrigger` (sama styling Clients/Projects).
+- Filter klien + jenis proyek sejajar baris tab (kanan di desktop).
+
 ## v0.1.63 — 2026-07-18 — Invoice list: filter client + jenis proyek
 
 - Filter dropdown klien + jenis billing (Per Jam / Per Paket / Per Proyek / Tanpa proyek).
