@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.69 — 2026-07-18 — Invoice PDF: header full white
+
+- Hapus stripe ungu + hero box ungu soft di atas PDF invoice.
+- Border header netral abu; background header full putih seragam.
+
 ## v0.1.68 — 2026-07-18 — Invoice PDF: detail report under description
 
 - Pindah blok **Detail report** ke langsung di bawah tabel Description (sebelum totals).

@@ -47,32 +47,15 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: TEXT,
   },
-  // Top accent stripe
-  accentBar: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 8,
-    backgroundColor: ACCENT,
-  },
-  heroBox: {
-    position: "absolute",
-    top: 8,
-    left: 0,
-    right: 0,
-    height: 92,
-    backgroundColor: ACCENT_SOFT,
-  },
   // Header
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 28,
-    marginTop: 12,
+    marginTop: 0,
     paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: "#c7d2fe",
+    borderBottomColor: BORDER,
   },
   brandBlock: { flexDirection: "row", alignItems: "center", flex: 1 },
   logo: { width: 48, height: 48, marginRight: 12, borderRadius: 8 },
@@ -364,11 +347,7 @@ export function InvoicePDF({
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Top accent stripe */}
-        <View style={styles.accentBar} fixed />
-        <View style={styles.heroBox} fixed />
-
-        {/* Header */}
+        {/* Header — plain white, no accent band */}
         <View style={styles.header}>
           <View style={styles.brandBlock}>
             {workspace.logoUrl ? (
