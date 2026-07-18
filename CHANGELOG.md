@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.59 — 2026-07-18 — Client projects: package progress by hours
+
+- Tab Proyek di client detail: progress bar package pakai % jam billable terpakai / kuota paket (bukan task done).
+- Label: `X.Y/40 jam terpakai` + nama paket. Warna bar: hijau <80%, oranye ≥80%, amber ≥100%.
+- Hours billing: tampil jam tercatat (tanpa progress task). Project billing: tetap task progress.
+
 ## v0.1.58 — 2026-07-18 — Invoice detail: project + billing type
 
 - Header invoice: tampil nama proyek + label billing (Per Jam / Per Paket / Per Proyek).

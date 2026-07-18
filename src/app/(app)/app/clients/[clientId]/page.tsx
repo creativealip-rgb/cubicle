@@ -2,8 +2,18 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { clients, projects, tasks, files, invoices, appointments, portalRequests } from "@/db/schema";
-import { eq, desc, sql } from "drizzle-orm";
+import {
+  clients,
+  projects,
+  tasks,
+  files,
+  invoices,
+  appointments,
+  portalRequests,
+  packages,
+  timeEntries,
+} from "@/db/schema";
+import { eq, desc, sql, inArray, and } from "drizzle-orm";
 import { requireUser, assertClientInWorkspace } from "@/lib/access";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -64,7 +74,7 @@ export default async function ClientDetailPage({
   if (!client) notFound();
 
   // Projects
-  const clientProjects = await db
+  const clientProjectsRaw = await db
     .select({
       id: projects.id,
       name: projects.name,
@@ -84,6 +94,80 @@ export default async function ClientDetailPage({
     .where(eq(projects.clientId, clientId))
     .groupBy(projects.id)
     .orderBy(desc(projects.createdAt));
+
+  // Package catalog + billable time usage for package/hours progress
+  const packageIds = [
+    ...new Set(
+      clientProjectsRaw
+        .map((p) => p.selectedPackageId)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const packageById = new Map<
+    string,
+    { name: string; hours: number | null; price: string }
+  >();
+  if (packageIds.length > 0) {
+    const pkgs = await db
+      .select({
+        id: packages.id,
+        name: packages.name,
+        hours: packages.hours,
+        price: packages.price,
+      })
+      .from(packages)
+      .where(inArray(packages.id, packageIds));
+    for (const pkg of pkgs) {
+      packageById.set(pkg.id, {
+        name: pkg.name,
+        hours: pkg.hours,
+        price: String(pkg.price),
+      });
+    }
+  }
+
+  const projectIds = clientProjectsRaw.map((p) => p.id);
+  const usedMinutesByProject = new Map<string, number>();
+  if (projectIds.length > 0) {
+    const usageRows = await db
+      .select({
+        projectId: timeEntries.projectId,
+        usedMinutes: sql<number>`coalesce(sum(${timeEntries.durationMinutes}), 0)::int`,
+      })
+      .from(timeEntries)
+      .where(
+        and(
+          inArray(timeEntries.projectId, projectIds),
+          eq(timeEntries.billable, true),
+        ),
+      )
+      .groupBy(timeEntries.projectId);
+    for (const row of usageRows) {
+      usedMinutesByProject.set(row.projectId, Number(row.usedMinutes) || 0);
+    }
+  }
+
+  const clientProjects = clientProjectsRaw.map((project) => {
+    const pkg = project.selectedPackageId
+      ? packageById.get(project.selectedPackageId) ?? null
+      : null;
+    const usedMinutes = usedMinutesByProject.get(project.id) ?? 0;
+    const packageHours = pkg?.hours ?? null;
+    const packageMinutes =
+      packageHours != null && packageHours > 0 ? packageHours * 60 : null;
+    const packageUsedPercent =
+      packageMinutes != null && packageMinutes > 0
+        ? Math.min(100, Math.round((usedMinutes / packageMinutes) * 100))
+        : null;
+    return {
+      ...project,
+      packageName: pkg?.name ?? null,
+      packageHours,
+      packagePrice: pkg?.price ?? null,
+      usedMinutes,
+      packageUsedPercent,
+    };
+  });
 
   // Files
   const clientFiles = await db
@@ -294,50 +378,81 @@ export default async function ClientDetailPage({
           {clientProjects.length === 0 && (
             <p className="text-sm text-muted-foreground py-8 text-center">Belum ada proyek</p>
           )}
-          {clientProjects.map((project) => (
-            <Card key={project.id}>
-              <CardContent className="flex items-center justify-between gap-3 p-4">
-                <div className="min-w-0 space-y-1">
-                  <Link
-                    href={`/app/projects/${project.id}?from=client`}
-                    className="font-medium hover:underline"
-                  >
-                    {project.name}
-                  </Link>
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <Badge variant="outline" className="text-[10px]">{project.status}</Badge>
-                    <Badge variant="secondary" className="gap-1 text-[10px] font-normal">
-                      <Wallet className="h-3 w-3" />
-                      {billingTypeLabel(project.billingType, "id")}
-                    </Badge>
-                    <span>
-                      {project.doneCount}/{project.taskCount} tugas selesai
-                    </span>
-                    {project.dueDate && <span>Tenggat: {project.dueDate}</span>}
+          {clientProjects.map((project) => {
+            const usedHours = project.usedMinutes / 60;
+            const packageHours = project.packageHours;
+            const isPackage = project.billingType === "package";
+            const isHours = project.billingType === "hours";
+            const progressPercent = isPackage
+              ? project.packageUsedPercent
+              : project.taskCount > 0
+                ? Math.round((project.doneCount / project.taskCount) * 100)
+                : null;
+            const progressLabel = isPackage
+              ? packageHours != null
+                ? `${usedHours.toFixed(1)}/${packageHours} jam terpakai`
+                : project.selectedPackageId
+                  ? `${usedHours.toFixed(1)} jam terpakai`
+                  : "Paket belum dipilih"
+              : isHours
+                ? `${usedHours.toFixed(1)} jam tercatat`
+                : `${project.doneCount}/${project.taskCount} tugas selesai`;
+            const billingMeta = isHours && project.rate
+              ? `Rate ${project.currency} ${Number(project.rate).toLocaleString("id-ID")}/jam`
+              : project.billingType === "project" && project.budget
+                ? `Budget ${project.currency} ${Number(project.budget).toLocaleString("id-ID")}`
+                : isPackage
+                  ? project.packageName
+                    ? `${project.packageName}${
+                        packageHours != null ? ` · ${packageHours} jam` : ""
+                      }`
+                    : "Billing paket · paket belum dipilih"
+                  : "Billing per proyek";
+
+            return (
+              <Card key={project.id}>
+                <CardContent className="flex items-center justify-between gap-3 p-4">
+                  <div className="min-w-0 space-y-1">
+                    <Link
+                      href={`/app/projects/${project.id}?from=client`}
+                      className="font-medium hover:underline"
+                    >
+                      {project.name}
+                    </Link>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <Badge variant="outline" className="text-[10px]">{project.status}</Badge>
+                      <Badge variant="secondary" className="gap-1 text-[10px] font-normal">
+                        <Wallet className="h-3 w-3" />
+                        {billingTypeLabel(project.billingType, "id")}
+                      </Badge>
+                      <span>{progressLabel}</span>
+                      {project.dueDate && <span>Tenggat: {project.dueDate}</span>}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">{billingMeta}</p>
                   </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    {project.billingType === "hours" && project.rate
-                      ? `Rate ${project.currency} ${Number(project.rate).toLocaleString("id-ID")}/jam`
-                      : project.billingType === "project" && project.budget
-                        ? `Budget ${project.currency} ${Number(project.budget).toLocaleString("id-ID")}`
-                        : project.billingType === "package"
-                          ? project.selectedPackageId
-                            ? "Billing paket"
-                            : "Billing paket · paket belum dipilih"
-                          : "Billing per proyek"}
-                  </p>
-                </div>
-                {project.taskCount > 0 && (
-                  <div className="h-2 w-24 shrink-0 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-emerald-500"
-                      style={{ width: `${Math.round((project.doneCount / project.taskCount) * 100)}%` }}
-                    />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                  {progressPercent != null && (
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <span className="text-[10px] tabular-nums text-muted-foreground">
+                        {progressPercent}%
+                      </span>
+                      <div className="h-2 w-24 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className={`h-full rounded-full ${
+                            progressPercent >= 100
+                              ? "bg-amber-500"
+                              : progressPercent >= 80
+                                ? "bg-orange-500"
+                                : "bg-emerald-500"
+                          }`}
+                          style={{ width: `${progressPercent}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </TabsContent>
 
         <TabsContent value="files" className="space-y-4 pt-4">
