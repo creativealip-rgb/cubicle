@@ -53,6 +53,19 @@ function isPortaledPopperNode(node: EventTarget | null | undefined): boolean {
   return !!node.closest(PORTALED_POPPER_SELECTOR)
 }
 
+function isOpenPortaledLayer(): boolean {
+  return !!document.querySelector(PORTALED_POPPER_SELECTOR)
+}
+
+function isSelectTriggerNode(node: EventTarget | null | undefined): boolean {
+  if (!(node instanceof Element)) return false
+  // Radix SelectTrigger is role=combobox; also catch any aria-expanded control
+  // that owns an open listbox (safe for nested Select in dialogs).
+  if (node.closest?.("[role='combobox']")) return true
+  if (node.getAttribute?.("aria-haspopup") === "listbox") return true
+  return false
+}
+
 function isFromPortaledPopper(event: {
   detail?: { originalEvent?: Event }
   target?: EventTarget | null
@@ -64,7 +77,7 @@ function isFromPortaledPopper(event: {
   if (original && typeof original.composedPath === "function") {
     try {
       for (const node of original.composedPath()) {
-        if (isPortaledPopperNode(node)) return true
+        if (isPortaledPopperNode(node) || isSelectTriggerNode(node)) return true
       }
     } catch {
       // ignore
@@ -72,18 +85,17 @@ function isFromPortaledPopper(event: {
   }
 
   const target = (original?.target ?? event.target) as Node | null
-  if (isPortaledPopperNode(target)) return true
+  if (isPortaledPopperNode(target) || isSelectTriggerNode(target)) return true
 
   // Same-value Select reselect: option unmounts before guard runs.
   if (target && target instanceof Node && !document.contains(target)) return true
 
-  // Still-open portaled layer (pointerdown landed on it, content still mounted).
-  if (document.querySelector(PORTALED_POPPER_SELECTOR)) {
-    // Only suppress if the original event looks like it came from near a popper
-    // — if we always suppress while open, outside-dialog clicks wouldn't close
-    // either. Fall through unless we have no target info at all.
-    if (!target) return true
-  }
+  // Nested Select open: body/overlay can receive the click because modal Select
+  // sets pointer-events:none on the document (trigger looks clickable but the
+  // hit-test lands on Dialog overlay). Keep dialog open while any portaled
+  // layer is mounted — true outside click still closes Select first, then
+  // dialog on the next interaction.
+  if (isOpenPortaledLayer()) return true
 
   return false
 }
@@ -101,9 +113,18 @@ const DialogContent = React.forwardRef<
     const markIfPopper = (event: Event) => {
       const path =
         typeof event.composedPath === "function" ? event.composedPath() : []
+      // While a nested Select/Popover layer is open, ANY pointer event can
+      // land on the Dialog overlay (Select Content sets
+      // disableOutsidePointerEvents → body pointer-events:none; the
+      // still-visible SelectTrigger is not hit-testable). Capture that here
+      // before Select unmounts the layer on the same click tick.
       const hit =
-        path.some((n) => isPortaledPopperNode(n)) ||
-        isPortaledPopperNode(event.target)
+        isOpenPortaledLayer() ||
+        path.some(
+          (n) => isPortaledPopperNode(n) || isSelectTriggerNode(n),
+        ) ||
+        isPortaledPopperNode(event.target) ||
+        isSelectTriggerNode(event.target)
 
       if (!hit) return
 
@@ -112,11 +133,11 @@ const DialogContent = React.forwardRef<
         clearTimeout(popperPointerTimerRef.current)
       }
       // Keep flag long enough for deferred pointer-outside + interact-outside
-      // (Radix defers to click with setTimeout 0).
+      // (Radix defers to click with setTimeout 0) even after Select unmounts.
       popperPointerTimerRef.current = setTimeout(() => {
         popperPointerRef.current = false
         popperPointerTimerRef.current = null
-      }, 100)
+      }, 200)
     }
 
     // Capture phase so we see the target before Select unmounts it.

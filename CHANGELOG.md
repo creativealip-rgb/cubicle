@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.41 — 2026-07-18 — Fix: klik Currency trigger (bukan opsi) nutupin dialog
+
+- Bug real: saat dropdown Currency **sudah terbuka**, klik lagi pada **SelectTrigger** (kotak IDR) → dialog New Package nutup + form hilang. Klik opsi list (IDR/USD/…) aman.
+- Root cause: Select Content pakai `disableOutsidePointerEvents` → body `pointer-events:none`. Trigger kelihatan, hit-test jatuh ke **Dialog Overlay** → Dialog dismiss. Flag capture-phase v0.1.40 cuma nge-track klik di listbox/option, bukan klik overlay saat layer open.
+- Fix `DialogContent`: selama portaled Select/Popover open, **semua** pointer event di-capture sebagai "nested interaction" (flag 200ms) + treat `role=combobox` sebagai select. Select tutup dulu; dialog tetap buka. Klik luar kedua kali baru tutup dialog.
+- Select v2.3.0 **tidak** punya prop `modal` — jangan andalkan itu.
+
 ## v0.1.40 — 2026-07-18 — Dialog tetap buka saat reselect opsi Select sama
 
 - Bug: di modal (contoh **New Package**), klik opsi Select yang sudah terpilih (IDR → IDR) menutup dialog + input hilang.
