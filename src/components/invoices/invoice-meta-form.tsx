@@ -31,9 +31,17 @@ interface InvoiceMetaFormProps {
     notes?: string | null;
     terms?: string | null;
   };
+  /** Read-only project context (set at create; not editable here). */
+  project?: {
+    name: string;
+    billingType: string | null;
+    billingTypeLabel: string;
+    packageName?: string | null;
+    packageHours?: number | null;
+  } | null;
 }
 
-export function InvoiceMetaForm({ invoiceId, defaults }: InvoiceMetaFormProps) {
+export function InvoiceMetaForm({ invoiceId, defaults, project }: InvoiceMetaFormProps) {
   const { t } = useT();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -79,6 +87,40 @@ export function InvoiceMetaForm({ invoiceId, defaults }: InvoiceMetaFormProps) {
           "Line items auto-save on add/delete. Invoice meta (status, tax, notes) saves via the button below.",
         )}
       </div>
+      {project ? (
+        <div className="rounded-md border bg-muted/20 px-3 py-3 space-y-1.5">
+          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+            {t("Proyek invoice", "Invoice project")}
+          </p>
+          <p className="text-sm font-medium leading-snug">{project.name}</p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium">
+              {project.billingTypeLabel}
+            </span>
+            {project.billingType === "package" && project.packageName ? (
+              <span className="text-xs text-muted-foreground">
+                {project.packageName}
+                {project.packageHours != null
+                  ? ` · ${project.packageHours}${t(" jam", "h")}`
+                  : ""}
+              </span>
+            ) : null}
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            {t(
+              "Proyek dipilih saat buat invoice (baca saja di sini).",
+              "Project is set when the invoice is created (read-only here).",
+            )}
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
+          {t(
+            "Invoice ini tanpa proyek (import time = semua klien).",
+            "This invoice has no project (time import = whole client).",
+          )}
+        </div>
+      )}
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label>{t("Status", "Status")}</Label>

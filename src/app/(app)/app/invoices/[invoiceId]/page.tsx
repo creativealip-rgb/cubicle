@@ -12,6 +12,7 @@ import {
   timeEntries,
   projects,
   workspaces,
+  packages,
 } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
@@ -31,6 +32,7 @@ import { InvoiceMetaForm } from "@/components/invoices/invoice-meta-form";
 import { formatDateID, formatMoney } from "@/lib/utils";
 import { invoiceStatusVariant } from "@/lib/status-badge";
 import { getCurrentLang, createT } from "@/lib/i18n";
+import { billingTypeLabel } from "@/lib/feature-access";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -74,6 +76,46 @@ export default async function InvoiceDetailPage({
     .from(clients)
     .where(eq(clients.id, inv.clientId))
     .limit(1);
+
+  // Project + package context (invoice created with a project)
+  let invoiceProject: {
+    name: string;
+    billingType: string | null;
+    billingTypeLabel: string;
+    packageName?: string | null;
+    packageHours?: number | null;
+  } | null = null;
+  if (inv.projectId) {
+    const [proj] = await db
+      .select({
+        name: projects.name,
+        billingType: projects.billingType,
+        selectedPackageId: projects.selectedPackageId,
+      })
+      .from(projects)
+      .where(eq(projects.id, inv.projectId))
+      .limit(1);
+    if (proj) {
+      let packageName: string | null = null;
+      let packageHours: number | null = null;
+      if (proj.selectedPackageId) {
+        const [pkg] = await db
+          .select({ name: packages.name, hours: packages.hours })
+          .from(packages)
+          .where(eq(packages.id, proj.selectedPackageId))
+          .limit(1);
+        packageName = pkg?.name ?? null;
+        packageHours = pkg?.hours ?? null;
+      }
+      invoiceProject = {
+        name: proj.name,
+        billingType: proj.billingType,
+        billingTypeLabel: billingTypeLabel(proj.billingType, lang),
+        packageName,
+        packageHours,
+      };
+    }
+  }
 
   // Workspace default hourly rate — used when entry/project rate is empty
   // (package/project billing often has no project.rate).
@@ -164,6 +206,20 @@ export default async function InvoiceDetailPage({
             <p className="text-sm text-muted-foreground">
               {client ? client.companyName || client.name : t("Klien tidak diketahui", "Unknown Client")}
             </p>
+            {invoiceProject ? (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {invoiceProject.name}
+                {" · "}
+                {invoiceProject.billingTypeLabel}
+                {invoiceProject.billingType === "package" && invoiceProject.packageName
+                  ? ` · ${invoiceProject.packageName}${
+                      invoiceProject.packageHours != null
+                        ? ` (${invoiceProject.packageHours}${t(" jam", "h")})`
+                        : ""
+                    }`
+                  : ""}
+              </p>
+            ) : null}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -346,6 +402,7 @@ export default async function InvoiceDetailPage({
               notes: inv.notes,
               terms: inv.terms,
             }}
+            project={invoiceProject}
           />
         </CardContent>
       </Card>

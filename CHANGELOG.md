@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.58 — 2026-07-18 — Invoice detail: project + billing type
+
+- Header invoice: tampil nama proyek + label billing (Per Jam / Per Paket / Per Proyek).
+- Package: tampil nama paket + jam (mis. Starter 40 Jam (40 jam)).
+- Form Edit Invoice: blok read-only konteks proyek (bukan field editable).
+
 ## v0.1.57 — 2026-07-18 — Import time by project + line desc project name
 
 - Import time list: filter by `invoice.projectId` (bukan semua time klien). Invoice tanpa project tetap client-wide.
