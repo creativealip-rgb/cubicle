@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.70 — 2026-07-18 — Invoice PDF: full white background
+
+- Page background force `#ffffff`.
+- Box thank-you/payment netral putih (hapus soft ungu).
+
 ## v0.1.69 — 2026-07-18 — Invoice PDF: header full white
 
 - Hapus stripe ungu + hero box ungu soft di atas PDF invoice.

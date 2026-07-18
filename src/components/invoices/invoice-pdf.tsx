@@ -25,7 +25,6 @@ Font.register({
 
 const ACCENT = "#6366f1";
 const ACCENT_DARK = "#4f46e5";
-const ACCENT_SOFT = "#eef2ff";
 const TEXT = "#1e293b";
 const MUTED = "#64748b";
 const SUBTLE = "#94a3b8";
@@ -46,6 +45,7 @@ const styles = StyleSheet.create({
     fontFamily: "Inter",
     fontSize: 10,
     color: TEXT,
+    backgroundColor: "#ffffff",
   },
   // Header
   header: {
@@ -218,9 +218,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     padding: 12,
     borderWidth: 1,
-    borderColor: "#c7d2fe",
+    borderColor: BORDER,
     borderRadius: 10,
-    backgroundColor: ACCENT_SOFT,
+    backgroundColor: "#ffffff",
   },
   notesTitle: {
     fontSize: 8,
