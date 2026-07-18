@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.61 — 2026-07-18 — Invoice list: status tabs + pagination
+
+- Tab status: Semua / Draf / Terkirim / Dilihat / Terlambat / Lunas / Dibatalkan (count badge).
+- Pagination 10 invoice/halaman (`?status=&page=`), prev/next + "Menampilkan X–Y dari Z".
+- Tab kosong (non-core) disembunyikan biar gak ramai.
+
 ## v0.1.60 — 2026-07-18 — Import time: Select All lebih jelas
 
 - Tombol `Pilih Semua (N)` outline + master checkbox sticky di atas list.
