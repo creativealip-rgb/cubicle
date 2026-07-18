@@ -104,13 +104,24 @@ Sidebar grup:
 - **Penjualan** — Proposal, Kontrak, Template  
 - **AI** — Brain, Prompt  
 
-Top area (umum):
+### Topbar (`AppTopbar`) — detail
 
-- Workspace switcher / konteks workspace  
-- Timer global (kalau aktif)  
-- Notifikasi in-app  
-- Bahasa ID/EN  
-- Link Settings / Billing / Support (tergantung layout topbar)
+| Kontrol | Fungsi |
+|---|---|
+| **Search** | Input cari (desktop) / icon expand (mobile). Submit → `/app/search?q=...` **(route hasil search belum ada page — deep-link placeholder)** |
+| **+ Baru** | Quick create: Proyek, Tugas, Klien, Invoice (role writable) |
+| **Timer chip** | Timer aktif global: elapsed live, Pause / Stop / buka `/app/time`. Sembunyi di phone kalau idle |
+| **AI sparkles** | Toggle floating AI panel (`cubicle:toggle-ai`) — tablet/desktop |
+| **Notifikasi** | Bell unread + list in-app notifications |
+| **Workspace switcher** | List workspace user, switch aktif, create workspace (gated plan), invite/upgrade CTA |
+| **Avatar menu** | Profile, Settings, Billing, Support, Sign out |
+| **Hamburger** | Buka sidebar mobile/tablet |
+
+Lain:
+
+- Floating **AIChatPanel** di semua `/app/*` **kecuali** `/app/brain` (fullpage)  
+- Bahasa ID/EN toggle di **sidebar**  
+- Collapse sidebar desktop (persist localStorage)
 
 Badge sidebar:
 
@@ -118,6 +129,20 @@ Badge sidebar:
 - Invoice belum lunas  
 - Proposal draft  
 - Kontrak draft  
+
+### Modul di luar sidebar (akses deep-link / topbar)
+
+| Route | Cara buka | Catatan |
+|---|---|---|
+| `/app/email` | Deep link / bookmark | Email suite (compose + template) — **tidak di sidebar** |
+| `/app/support` | Avatar menu → Support | Ticket center |
+| `/app/questionnaires` | Kalender shortcut / deep link | Intake forms — **tidak di sidebar** |
+| `/app/settings` | Avatar menu | Workspace + team |
+| `/app/billing` | Avatar / workspace menu | Langganan Cubiqlo |
+| `/app/notes` | Legacy alias | Redirect → `/app/personal` |
+| `/app/invoice-templates` | Legacy | Redirect → `/app/templates?tab=invoice` |
+| `/app/invoices/templates` | Legacy | Redirect → `/app/templates?tab=invoice` |
+| `/app/contract-templates` | Legacy list | Redirect → `/app/templates?tab=contract` (editor `/new` & `/[id]` tetap hidup) |
 
 ---
 
@@ -191,6 +216,22 @@ Aksi penting:
 - Generate / regenerate portal access  
 - Kelola portal requests (approve/reject admin)
 
+#### Portal request (klien ↔ staff)
+
+Klien di portal bisa kirim request; staff kelola di tab Portal klien.
+
+| Field | Nilai |
+|---|---|
+| Type | `document` / `approval` / `info` / `other` |
+| Status | `pending` → `completed` / `cancelled` |
+| Opsional | project, due date, description |
+
+Admin: respond / complete request. Klien: upload/response via API portal.
+
+#### Field klien (schema)
+
+`name`, `companyName`, `email`, `phone`, `website`, `address`, `status`, `tags[]`, `internalNotes`, `portalEnabled`, token hash/expiry/revoke, `portalSlug` + `portalSlugEnabled`.
+
 ### 4.2 Proyek — `/app/projects`
 
 **Tujuan:** container kerja per klien.
@@ -210,6 +251,10 @@ Aksi penting:
   - `project` — Per Proyek (fixed)  
 - Tanggal mulai / selesai  
 - Budget / package hours (jika relevan)  
+- **clientVisible** — tampil di client portal  
+- **selectedPackageId** — link ke paket katalog  
+- **Project members** — assign anggota tim ke proyek  
+- Rate / budget / currency  
 
 #### Detail proyek — `/app/projects/[projectId]`
 
@@ -272,11 +317,14 @@ Aksi:
    - Mode: Detailed / Dashboard / Full  
    - Filter client/project/date range  
 
-#### Status entry (konsep operasional)
+#### Status entry
 
-- Running / stopped  
-- Approved / billed (saat diimport ke invoice)  
-- Tags untuk klasifikasi kerja  
+`draft` → `approved` → `invoiced`
+
+- `billable` true/false  
+- `hourlyRate` fallback: entry → project.rate → workspace default  
+- Tags preset umum: Research, Cold Calling, Follow Up, Task Reporting  
+- CSV export via action (selain PDF)  
 
 #### Integrasi
 
@@ -311,9 +359,10 @@ Aksi:
 - New folder  
 - List file dengan filter client/project  
 - Download / delete  
-- Visibility rules untuk portal (client-safe)
-
----
+- **Visibility:** `internal` | `client`  
+- **File type:** `working_file` | `deliverable`  
+- Folder nested (`parentId`)  
+- Rename folder / delete folder  
 
 ## 5. Keuangan
 
@@ -433,7 +482,10 @@ Kolom:
 - CRUD paket (nama, jam, harga, currency, deskripsi, features, badge)  
 - Active/inactive  
 - Custom package range (`minHours`–`maxHours`, `allowCustom`)  
-- Dipakai di portal klien / order package (alur package request)
+- Catalog level = `projectId` null (reusable) vs legacy per-project  
+- Assign package ke project (`selectedPackageId`)  
+- **Package order** (portal): klien order paket → status `pending / confirmed / invoiced / cancelled`  
+- **Custom package request** (portal): minta jam custom → `pending / approved / rejected`  
 
 ### 5.5 Pengeluaran — `/app/expenses`
 
@@ -627,19 +679,51 @@ Field schema support:
 
 ### 8.1 Brain — `/app/brain`
 
-Full-page AI chat (`AIChatPanel` variant fullpage).
+Full-page AI chat (`AIChatPanel` variant fullpage). Floating panel juga ada di shell (kecuali di Brain).
 
-#### Kemampuan v1.x
+#### Kemampuan
 
-- Chat multi-turn dengan persistence conversation  
-- Sidebar history + auto title  
-- Tool-calling ke data workspace (clients/projects/tasks/invoices/team, dsb.)  
-- Action tools dengan konfirmasi UI (contoh update task status, draft reminder)  
+- Chat multi-turn + persistence conversation + auto title  
+- Sidebar history  
+- Export conversations API  
+- Tool-calling ke data workspace  
+- Action tools butuh konfirmasi UI  
 - Voice UI terse + format IDR  
+
+#### AI tools (read)
+
+| Tool | Fungsi |
+|---|---|
+| `list_clients` / `get_client` | Daftar / detail klien |
+| `list_projects` / `get_project` | Daftar / detail proyek |
+| `list_tasks` / `get_task` | Daftar / detail tugas |
+| `list_invoices` / `get_invoice` | Daftar / detail invoice |
+| `get_workspace_summary` | Ringkas workspace |
+| `list_workspace_members` | Anggota tim |
+| `search_workspace` | Cari lintas entity |
+| `list_prompts` / `get_prompt` | Prompt templates |
+| `list_expenses` / `expense_summary` | Expense list + ringkas |
+| `monthly_pl` | P&L bulanan |
+| `project_pl` | P&L per proyek |
+| `client_revenue` | Revenue per klien |
+| `invoice_aging` | Aging piutang |
+| `top_expense_categories` | Top kategori expense |
+| `list_proposals` / `get_proposal` | Proposal |
+| `list_contracts` / `get_contract` | Kontrak |
+| `list_questionnaires` / responses | Kuesioner + jawaban |
+| `list_recurring` | Expense recurring |
+| `cash_flow_forecast` | Forecast cash flow |
+
+#### AI tools (action, confirm UI)
+
+| Tool | Fungsi |
+|---|---|
+| `update_task_status` | Ubah status task |
+| `draft_invoice_reminder` | Draft reminder invoice |
 
 #### Batas saat ini
 
-- Belum pure vector RAG embeddings (tergantung provider embeddings)  
+- Belum pure vector RAG embeddings  
 - AI usage di-track harian (`ai_usage_daily`)  
 
 ### 8.2 Prompt Studio — `/app/prompts`
@@ -786,11 +870,38 @@ Cabang: `overdue`, `cancelled`, `archived`
 
 ### Task
 
-Status board + priority (low/medium/high/urgent — mengikuti badge helper)
+- Status: `todo` / `in_progress` / `review` / `done`  
+- Priority: `low` / `medium` / `high` / `urgent`  
+- `clientVisible`, `sourceNoteId` (convert dari catatan)
+
+### Time entry
+
+`draft` / `approved` / `invoiced` + `billable` flag
 
 ### Client
 
-`active / inactive / archived`
+`active` / `inactive` / `archived`
+
+### Portal request
+
+`pending` / `completed` / `cancelled` · type `document|approval|info|other`
+
+### Package order / custom request
+
+- Order: `pending` / `confirmed` / `invoiced` / `cancelled`  
+- Custom request: `pending` / `approved` / `rejected`
+
+### Support ticket
+
+`open` / `in_progress` / `resolved` / `closed`
+
+### File
+
+Visibility `internal|client` · type `working_file|deliverable`
+
+### Comment
+
+Visibility `internal|client` · source `internal|portal` · entity `project|task|file|invoice|support_ticket`
 
 ---
 
@@ -806,21 +917,27 @@ Status board + priority (low/medium/high/urgent — mengikuti badge helper)
 - `/api/auth/[...all]` Better Auth handler  
 - Sign-out endpoint  
 
-### Domain API (contoh)
+### Domain API (lengkap route.ts)
 
-- Clients create/export/PDF  
-- Invoices PDF/share  
-- Time active + PDF export (`/api/time/export/pdf/...`)  
-- Files upload/download  
-- Calendar appointment + ICS  
-- Billing checkout + Pakasir webhook  
-- AI chat/action/conversations  
-- Notifications / reminders  
-- Cron:
-  - expire plans  
-  - invoice overdue  
-  - personal note reminders  
-  - plan reminders  
+| Area | Endpoint |
+|---|---|
+| Health | `GET /api/health`, `GET /api/health/env` |
+| Auth | `/api/auth/[...all]`, `/api/auth/sign-out` |
+| Clients | `POST /api/clients/create`, `GET .../export/pdf`, `GET .../[clientId]/export/pdf` |
+| Invoices | `GET /api/invoices/[id]/pdf`, share generate/get |
+| Time | `GET /api/time/active`, `.../export/pdf`, `.../export/pdf/va-timesheet` |
+| Files | upload, download `[fileId]` |
+| Expenses | receipt upload/download |
+| Calendar | `GET /api/calendar/[appointmentId]/ics` |
+| Contracts | `GET /api/contracts/[id]/pdf` |
+| Portal | invoice PDF, request upload |
+| Portal requests | `/api/portal-requests` |
+| Notifications | list + reminders |
+| Billing | checkout + `POST /api/webhooks/pakasir` |
+| AI | chat, action, conversations, export |
+| Settings | reply-to |
+| Workspace | logo upload + public logo |
+| Cron | expire-plans, invoice-overdue, personal-note-reminders, plan-reminders |
 
 ---
 
@@ -895,13 +1012,22 @@ Status board + priority (low/medium/high/urgent — mengikuti badge helper)
 /app/settings
 /app/billing
 /onboarding
+
+# redirects / legacy
+/app/notes → /app/personal
+/app/invoice-templates → /app/templates?tab=invoice
+/app/invoices/templates → /app/templates?tab=invoice
+/app/contract-templates → /app/templates?tab=contract
+
+# known missing page
+/app/search?q=…  (topbar submits here; page belum diimplement)
 ```
 
 ### Public
 
 ```
 /
-/login /signup /forgot-password /reset-password /verify-email
+/login /signup /forgot-password /reset-password /verify-email /verify-email/success
 /client-portal/[token]
 /invoice/[token]
 /proposal/[token]
@@ -915,7 +1041,29 @@ Status board + priority (low/medium/high/urgent — mengikuti badge helper)
 
 ---
 
-## 17. Dokumen terkait di repo
+## 17. Coverage audit (2026-07-18 re-check)
+
+| Area | Status docs | Catatan |
+|---|---|---|
+| Semua `page.tsx` internal + public | Covered / noted | 58 pages; legacy redirects dicatat |
+| Sidebar modules | Covered | |
+| Topbar controls | Covered (v2) | Search route gap dicatat |
+| Invoice list v0.1.64 | Covered | tabs + client/billing filter + archive + pagination |
+| Portal package order/request | Covered (v2) | |
+| AI tool list | Covered (v2) | 30+ tools |
+| Status enums schema | Covered (v2) | |
+| Full API route map | Covered (v2) | |
+| Field-level form screenshots / every input | Partial | schema + field utama ada; bukan copy UI pixel-perfect |
+| Permission matrix per aksi | Partial | role owner/member/viewer dijelaskan; matrix aksi×role belum penuh |
+| Cron schedule exact times | Partial | endpoint ada; jadwal server ops di docs ops |
+| WhatsApp / calendar sync | Explicit non-feature | TODO di feature-status |
+
+**Verdict:** cukup lengkap untuk **user guide operasional v0.1.64**.  
+Belum “100% engineering reference” (permission matrix penuh + field-by-field form + screenshot).
+
+---
+
+## 18. Dokumen terkait di repo
 
 | File | Isi |
 |---|---|
@@ -931,12 +1079,20 @@ Status board + priority (low/medium/high/urgent — mengikuti badge helper)
 
 ---
 
-## 18. Changelog docs ini
+## 19. Changelog docs ini
 
 - **2026-07-18** — initial full user guide (v0.1.64)
   - Cover all sidebar modules + public pages  
   - Invoice tabs/filters/archive/pagination terbaru  
   - Package progress, import time select-all, portal archive hide  
+- **2026-07-18 (audit v2)** — gap fill setelah re-scan codebase
+  - Topbar detail, floating AI, workspace switcher  
+  - Modul non-sidebar + legacy redirects  
+  - Portal request / package order / custom request  
+  - File visibility + type, time status enum, task status exact  
+  - AI tools table lengkap  
+  - API route inventory  
+  - Coverage audit section  
 
 ---
 
