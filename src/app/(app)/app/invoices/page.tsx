@@ -3,8 +3,8 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { clients, invoices, workspaceMembers } from "@/db/schema";
-import { eq, desc, and, count, ne } from "drizzle-orm";
+import { clients, invoices, projects, workspaceMembers } from "@/db/schema";
+import { eq, desc, and, count, ne, isNull, SQL } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,7 @@ import { formatDateID, formatMoney, cn } from "@/lib/utils";
 import { invoiceStatusVariant } from "@/lib/status-badge";
 import { EmptyState } from "@/components/empty-state";
 import { getCurrentLang, createT } from "@/lib/i18n";
+import { billingTypeLabel } from "@/lib/feature-access";
 
 const PAGE_SIZE = 10;
 
@@ -36,6 +37,9 @@ const STATUS_TABS = [
 ] as const;
 
 type StatusTab = (typeof STATUS_TABS)[number];
+
+const BILLING_FILTERS = ["all", "hours", "package", "project", "none"] as const;
+type BillingFilter = (typeof BILLING_FILTERS)[number];
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -58,10 +62,26 @@ function parseStatusTab(raw?: string): StatusTab {
   return "all";
 }
 
+function parseBillingFilter(raw?: string): BillingFilter {
+  if (raw && (BILLING_FILTERS as readonly string[]).includes(raw)) {
+    return raw as BillingFilter;
+  }
+  return "all";
+}
+
 function parsePage(raw?: string): number {
   const n = Number(raw);
   if (!Number.isFinite(n) || n < 1) return 1;
   return Math.floor(n);
+}
+
+function isUuid(value?: string): value is string {
+  return Boolean(
+    value &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        value,
+      ),
+  );
 }
 
 function tabLabel(tab: StatusTab, lang: "id" | "en"): string {
@@ -69,18 +89,65 @@ function tabLabel(tab: StatusTab, lang: "id" | "en"): string {
   return invoiceStatusVariant(tab, lang).label;
 }
 
-function buildInvoicesHref(status: StatusTab, page: number): string {
+function billingFilterLabel(filter: BillingFilter, lang: "id" | "en"): string {
+  if (filter === "all") return lang === "en" ? "All billing types" : "Semua jenis";
+  if (filter === "none") return lang === "en" ? "No project" : "Tanpa proyek";
+  return billingTypeLabel(filter, lang);
+}
+
+type InvoiceListFilters = {
+  status: StatusTab;
+  clientId?: string;
+  billing: BillingFilter;
+  page: number;
+};
+
+function buildInvoicesHref(filters: InvoiceListFilters): string {
   const params = new URLSearchParams();
-  if (status !== "all") params.set("status", status);
-  if (page > 1) params.set("page", String(page));
+  if (filters.status !== "all") params.set("status", filters.status);
+  if (filters.clientId) params.set("clientId", filters.clientId);
+  if (filters.billing !== "all") params.set("billing", filters.billing);
+  if (filters.page > 1) params.set("page", String(filters.page));
   const qs = params.toString();
   return qs ? `/app/invoices?${qs}` : "/app/invoices";
+}
+
+function buildFilterConditions(opts: {
+  workspaceId: string;
+  statusTab: StatusTab;
+  clientId?: string;
+  billing: BillingFilter;
+}): SQL[] {
+  const conditions: SQL[] = [eq(invoices.workspaceId, opts.workspaceId)];
+
+  if (opts.statusTab === "all") {
+    conditions.push(ne(invoices.status, "archived"));
+  } else {
+    conditions.push(eq(invoices.status, opts.statusTab));
+  }
+
+  if (opts.clientId) {
+    conditions.push(eq(invoices.clientId, opts.clientId));
+  }
+
+  if (opts.billing === "none") {
+    conditions.push(isNull(invoices.projectId));
+  } else if (opts.billing !== "all") {
+    conditions.push(eq(projects.billingType, opts.billing));
+  }
+
+  return conditions;
 }
 
 export default async function InvoicesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; page?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    page?: string;
+    clientId?: string;
+    billing?: string;
+  }>;
 }) {
   const lang = await getCurrentLang();
   const t = createT(lang);
@@ -90,6 +157,8 @@ export default async function InvoicesPage({
   const params = await searchParams;
   const statusTab = parseStatusTab(params.status);
   const page = parsePage(params.page);
+  const billing = parseBillingFilter(params.billing);
+  const clientId = isUuid(params.clientId) ? params.clientId : undefined;
 
   const [member] = await db
     .select({ role: workspaceMembers.role })
@@ -98,21 +167,48 @@ export default async function InvoicesPage({
     .limit(1);
   const canWrite = member?.role === "owner" || member?.role === "member";
 
-  // Counts per status (for tab badges)
-  const statusCountRows = await db
+  // Client options for filter dropdown
+  const clientOptions = await db
     .select({
-      status: invoices.status,
-      total: count(),
+      id: clients.id,
+      name: clients.name,
+      companyName: clients.companyName,
     })
-    .from(invoices)
-    .where(eq(invoices.workspaceId, workspaceId))
-    .groupBy(invoices.status);
+    .from(clients)
+    .where(eq(clients.workspaceId, workspaceId))
+    .orderBy(clients.name);
+
+  // Counts per status (respect client/billing filters; include archived for badge)
+  const statusCountWhere: SQL[] = [eq(invoices.workspaceId, workspaceId)];
+  if (clientId) statusCountWhere.push(eq(invoices.clientId, clientId));
+  if (billing === "none") statusCountWhere.push(isNull(invoices.projectId));
+  else if (billing !== "all") statusCountWhere.push(eq(projects.billingType, billing));
+
+  const needsProjectJoin = billing !== "all" && billing !== "none";
+
+  const statusCountRows = needsProjectJoin
+    ? await db
+        .select({
+          status: invoices.status,
+          total: count(),
+        })
+        .from(invoices)
+        .leftJoin(projects, eq(projects.id, invoices.projectId))
+        .where(and(...statusCountWhere))
+        .groupBy(invoices.status)
+    : await db
+        .select({
+          status: invoices.status,
+          total: count(),
+        })
+        .from(invoices)
+        .where(and(...statusCountWhere))
+        .groupBy(invoices.status);
 
   const countsByStatus = Object.fromEntries(
     statusCountRows.map((row) => [row.status, Number(row.total) || 0]),
   ) as Record<string, number>;
   const archivedCount = countsByStatus.archived ?? 0;
-  // "Semua" = active list, exclude archived so archive stays out of main clutter
   const totalActive = Object.entries(countsByStatus).reduce(
     (sum, [status, n]) => (status === "archived" ? sum : sum + n),
     0,
@@ -126,10 +222,12 @@ export default async function InvoicesPage({
   const currentPage = Math.min(page, totalPages);
   const offset = (currentPage - 1) * PAGE_SIZE;
 
-  const whereClause =
-    statusTab === "all"
-      ? and(eq(invoices.workspaceId, workspaceId), ne(invoices.status, "archived"))
-      : and(eq(invoices.workspaceId, workspaceId), eq(invoices.status, statusTab));
+  const listConditions = buildFilterConditions({
+    workspaceId,
+    statusTab,
+    clientId,
+    billing,
+  });
 
   const invoiceList = await db
     .select({
@@ -144,16 +242,32 @@ export default async function InvoicesPage({
       total: invoices.total,
       status: invoices.status,
       createdAt: invoices.createdAt,
+      projectId: invoices.projectId,
+      projectName: projects.name,
+      billingType: projects.billingType,
     })
     .from(invoices)
     .leftJoin(clients, eq(clients.id, invoices.clientId))
-    .where(whereClause)
+    .leftJoin(projects, eq(projects.id, invoices.projectId))
+    .where(and(...listConditions))
     .orderBy(desc(invoices.createdAt))
     .limit(PAGE_SIZE)
     .offset(offset);
 
   const fromItem = filteredTotal === 0 ? 0 : offset + 1;
   const toItem = Math.min(offset + invoiceList.length, filteredTotal);
+
+  const filtersForHref = {
+    status: statusTab,
+    clientId,
+    billing,
+    page: currentPage,
+  };
+
+  const hasExtraFilters = Boolean(clientId) || billing !== "all";
+  const selectedClient = clientId
+    ? clientOptions.find((c) => c.id === clientId)
+    : undefined;
 
   return (
     <div className="min-w-0 space-y-4 sm:space-y-6">
@@ -188,7 +302,6 @@ export default async function InvoicesPage({
           {STATUS_TABS.map((tab) => {
             const active = tab === statusTab;
             const countVal = tabCount(tab);
-            // Hide empty non-active tabs except core ones (keep Arsip visible)
             if (
               !active &&
               countVal === 0 &&
@@ -203,7 +316,7 @@ export default async function InvoicesPage({
             return (
               <Link
                 key={tab}
-                href={buildInvoicesHref(tab, 1)}
+                href={buildInvoicesHref({ ...filtersForHref, status: tab, page: 1 })}
                 className={cn(
                   "inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors sm:text-sm",
                   active
@@ -226,7 +339,74 @@ export default async function InvoicesPage({
         </div>
       </div>
 
-      {totalAllIncludingArchived === 0 ? (
+      {/* Client + billing filters */}
+      <form
+        method="get"
+        action="/app/invoices"
+        className="flex flex-col gap-2 rounded-lg border bg-card p-3 sm:flex-row sm:flex-wrap sm:items-end"
+      >
+        {statusTab !== "all" && <input type="hidden" name="status" value={statusTab} />}
+        <div className="min-w-0 flex-1 space-y-1">
+          <label htmlFor="invoice-filter-client" className="text-xs font-medium text-muted-foreground">
+            {t("Klien", "Client")}
+          </label>
+          <select
+            id="invoice-filter-client"
+            name="clientId"
+            defaultValue={clientId ?? ""}
+            className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+          >
+            <option value="">{t("Semua klien", "All clients")}</option>
+            {clientOptions.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.companyName || c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="min-w-0 flex-1 space-y-1">
+          <label htmlFor="invoice-filter-billing" className="text-xs font-medium text-muted-foreground">
+            {t("Jenis proyek", "Project type")}
+          </label>
+          <select
+            id="invoice-filter-billing"
+            name="billing"
+            defaultValue={billing === "all" ? "" : billing}
+            className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+          >
+            <option value="">{billingFilterLabel("all", lang)}</option>
+            <option value="hours">{billingFilterLabel("hours", lang)}</option>
+            <option value="package">{billingFilterLabel("package", lang)}</option>
+            <option value="project">{billingFilterLabel("project", lang)}</option>
+            <option value="none">{billingFilterLabel("none", lang)}</option>
+          </select>
+        </div>
+        <div className="flex gap-2">
+          <Button type="submit" size="sm" className="flex-1 sm:flex-none">
+            {t("Filter", "Filter")}
+          </Button>
+          {hasExtraFilters && (
+            <Link href={buildInvoicesHref({ status: statusTab, page: 1, billing: "all" })}>
+              <Button type="button" variant="outline" size="sm">
+                {t("Reset", "Reset")}
+              </Button>
+            </Link>
+          )}
+        </div>
+      </form>
+
+      {hasExtraFilters && (
+        <p className="text-xs text-muted-foreground">
+          {t("Filter aktif:", "Active filters:")}{" "}
+          {selectedClient
+            ? selectedClient.companyName || selectedClient.name
+            : t("Semua klien", "All clients")}
+          {" · "}
+          {billingFilterLabel(billing, lang)}
+        </p>
+      )}
+
+      {totalAllIncludingArchived === 0 && !hasExtraFilters ? (
         <EmptyState
           icon={FileText}
           title={t("Belum ada invoice", "No invoices yet")}
@@ -239,7 +419,9 @@ export default async function InvoicesPage({
           title={
             statusTab === "archived"
               ? t("Belum ada invoice di arsip", "No archived invoices")
-              : t("Tidak ada invoice di tab ini", "No invoices in this tab")
+              : hasExtraFilters
+                ? t("Tidak ada invoice cocok filter", "No invoices match filters")
+                : t("Tidak ada invoice di tab ini", "No invoices in this tab")
           }
           description={
             statusTab === "archived"
@@ -247,10 +429,15 @@ export default async function InvoicesPage({
                   "Ubah status invoice ke \"archived\" lewat Edit Invoice untuk arsipkan.",
                   'Set invoice status to "archived" in Edit Invoice to archive it.',
                 )
-              : t(
-                  "Coba tab status lain, atau buat invoice baru.",
-                  "Try another status tab, or create a new invoice.",
-                )
+              : hasExtraFilters
+                ? t(
+                    "Coba ganti klien / jenis proyek, atau reset filter.",
+                    "Try another client / project type, or reset filters.",
+                  )
+                : t(
+                    "Coba tab status lain, atau buat invoice baru.",
+                    "Try another status tab, or create a new invoice.",
+                  )
           }
           action={canWrite ? { label: t("Buat Invoice", "Create Invoice"), href: "/app/invoices/new" } : undefined}
         />
@@ -262,6 +449,8 @@ export default async function InvoicesPage({
                 <TableRow>
                   <TableHead>{t("No.", "No.")}</TableHead>
                   <TableHead>{t("Klien", "Client")}</TableHead>
+                  <TableHead>{t("Proyek", "Project")}</TableHead>
+                  <TableHead>{t("Jenis", "Type")}</TableHead>
                   <TableHead>{t("Tanggal Terbit", "Issue Date")}</TableHead>
                   <TableHead>{t("Jatuh Tempo", "Due Date")}</TableHead>
                   <TableHead className="text-right">{t("Total", "Total")}</TableHead>
@@ -278,6 +467,18 @@ export default async function InvoicesPage({
                         {formatInvoiceId(inv.invoiceNumber)}
                       </TableCell>
                       <TableCell>{inv.clientCompany || inv.clientName}</TableCell>
+                      <TableCell className="max-w-[12rem] truncate text-sm text-muted-foreground">
+                        {inv.projectName || "—"}
+                      </TableCell>
+                      <TableCell>
+                        {inv.billingType ? (
+                          <Badge variant="outline" className="font-normal">
+                            {billingTypeLabel(inv.billingType, lang)}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell>{formatDateID(inv.issueDate)}</TableCell>
                       <TableCell>{formatDateID(inv.dueDate)}</TableCell>
                       <TableCell className="text-right tabular-nums font-medium">
@@ -318,6 +519,12 @@ export default async function InvoicesPage({
                       <div className="text-sm text-muted-foreground truncate">
                         {inv.clientCompany || inv.clientName}
                       </div>
+                      {(inv.projectName || inv.billingType) && (
+                        <div className="mt-0.5 text-xs text-muted-foreground truncate">
+                          {inv.projectName || "—"}
+                          {inv.billingType ? ` · ${billingTypeLabel(inv.billingType, lang)}` : ""}
+                        </div>
+                      )}
                     </div>
                     <Badge variant={status.variant} className="shrink-0">
                       {status.label}
@@ -351,7 +558,7 @@ export default async function InvoicesPage({
             </p>
             <div className="flex items-center gap-2">
               {currentPage > 1 ? (
-                <Link href={buildInvoicesHref(statusTab, currentPage - 1)}>
+                <Link href={buildInvoicesHref({ ...filtersForHref, page: currentPage - 1 })}>
                   <Button variant="outline" size="sm" className="gap-1">
                     <ChevronLeft className="h-4 w-4" />
                     {t("Sebelumnya", "Previous")}
@@ -367,7 +574,7 @@ export default async function InvoicesPage({
                 {currentPage}/{totalPages}
               </span>
               {currentPage < totalPages ? (
-                <Link href={buildInvoicesHref(statusTab, currentPage + 1)}>
+                <Link href={buildInvoicesHref({ ...filtersForHref, page: currentPage + 1 })}>
                   <Button variant="outline" size="sm" className="gap-1">
                     {t("Berikutnya", "Next")}
                     <ChevronRight className="h-4 w-4" />

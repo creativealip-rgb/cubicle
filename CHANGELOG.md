@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.63 — 2026-07-18 — Invoice list: filter client + jenis proyek
+
+- Filter dropdown klien + jenis billing (Per Jam / Per Paket / Per Proyek / Tanpa proyek).
+- URL query `?clientId=&billing=` tetap hidup bareng tab status + pagination.
+- Kolom Proyek + Jenis di tabel list.
+
 ## v0.1.62 — 2026-07-18 — Invoice archive tab
 
 - Status baru `archived` (Arsip) di schema + Edit Invoice + badge.
