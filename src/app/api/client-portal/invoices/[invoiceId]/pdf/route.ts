@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { invoices, invoiceItems, clients, workspaces } from "@/db/schema";
+import { invoices, invoiceItems, clients, workspaces, payments } from "@/db/schema";
 import { renderInvoicePdf } from "@/lib/pdf/invoice-pdf";
 import { getClientPortalAccess, logPortalAccess } from "@/lib/actions/portal";
 
@@ -64,6 +64,11 @@ export async function GET(
     .select()
     .from(invoiceItems)
     .where(eq(invoiceItems.invoiceId, invoiceId));
+  const pays = await db
+    .select()
+    .from(payments)
+    .where(eq(payments.invoiceId, invoiceId));
+  const amountPaid = pays.reduce((sum, p) => sum + Number(p.amount), 0);
 
   // Audit the download (non-critical)
   try {
@@ -116,6 +121,7 @@ export async function GET(
       unitPrice: String(it.unitPrice),
       amount: String(it.amount),
     })),
+    amountPaid,
   };
 
   const buf = await renderInvoicePdf(data);

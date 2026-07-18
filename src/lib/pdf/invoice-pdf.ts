@@ -36,6 +36,8 @@ interface InvoiceData {
     unitPrice: string;
     amount: string;
   }>;
+  /** Sum of recorded payments for this invoice. */
+  amountPaid?: string | number | null;
   /** Optional link to full VA timesheet report (auth-gated). */
   timesheetReportUrl?: string | null;
 }

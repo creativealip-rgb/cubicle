@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.71 — 2026-07-18 — Invoice PDF: paid amount from payments
+
+- PDF ambil total dibayar dari **Catatan Pembayaran** (`payments`).
+- Header: **Paid** = sum payment; **Amount Due** = total − paid (bukan hardcode 0).
+- Blok totals: baris Paid + Amount Due.
+
 ## v0.1.70 — 2026-07-18 — Invoice PDF: full white background
 
 - Page background force `#ffffff`.

@@ -326,6 +326,8 @@ interface InvoicePDFProps {
     unitPrice: string;
     amount: string;
   }>;
+  /** Sum of recorded payments (Catatan Pembayaran). */
+  amountPaid?: string | number | null;
   timesheetReportUrl?: string | null;
 }
 
@@ -334,6 +336,7 @@ export function InvoicePDF({
   workspace,
   client,
   items,
+  amountPaid,
   timesheetReportUrl,
 }: InvoicePDFProps) {
   const companyName = workspace.billingName || "Cubiqlo";
@@ -342,6 +345,17 @@ export function InvoicePDF({
   const tax = Number(invoice.tax);
   const discount = Number(invoice.discount);
   const total = Number(invoice.total);
+  const paid = Number(amountPaid ?? 0);
+  const amountDue = Math.max(0, (Number.isFinite(total) ? total : 0) - (Number.isFinite(paid) ? paid : 0));
+  const isCancelled = invoice.status === "cancelled";
+  const isFullyPaid = !isCancelled && (invoice.status === "paid" || amountDue <= 0);
+  // Header amount: paid total from payment records; fallback to invoice total if status paid but no rows yet.
+  const headerAmount = isCancelled
+    ? 0
+    : isFullyPaid
+      ? (paid > 0 ? paid : total)
+      : amountDue;
+  const headerLabel = isCancelled ? "Cancelled" : isFullyPaid ? "Paid" : "Amount Due";
   const statusStyle = STATUS_STYLES[invoice.status] ?? STATUS_STYLES.draft;
 
   return (
@@ -401,13 +415,9 @@ export function InvoicePDF({
             <Text style={styles.infoValue}>{formatDate(invoice.dueDate)}</Text>
           </View>
           <View>
-            <Text style={styles.infoLabel}>
-              {invoice.status === "paid" ? "Paid" : invoice.status === "cancelled" ? "Cancelled" : "Amount Due"}
-            </Text>
+            <Text style={styles.infoLabel}>{headerLabel}</Text>
             <Text style={styles.infoValue}>
-              {invoice.status === "paid" || invoice.status === "cancelled"
-                ? formatCurrency(0, invoice.currency)
-                : formatCurrency(total, invoice.currency)}
+              {formatCurrency(headerAmount, invoice.currency)}
             </Text>
           </View>
         </View>
@@ -497,6 +507,21 @@ export function InvoicePDF({
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalValueBold}>{formatCurrency(total, invoice.currency)}</Text>
           </View>
+          {/* From Catatan Pembayaran */}
+          {(paid > 0 || isFullyPaid) && (
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Paid</Text>
+              <Text style={styles.totalValue}>
+                {formatCurrency(paid > 0 ? paid : total, invoice.currency)}
+              </Text>
+            </View>
+          )}
+          {!isCancelled && (
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Amount Due</Text>
+              <Text style={styles.totalValue}>{formatCurrency(amountDue, invoice.currency)}</Text>
+            </View>
+          )}
         </View>
 
         {/* Payment hint */}

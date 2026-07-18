@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { eq, and } from "drizzle-orm";
 import { db } from "@/db";
-import { invoices, invoiceItems, clients, workspaces, workspaceMembers } from "@/db/schema";
+import { invoices, invoiceItems, clients, workspaces, workspaceMembers, payments } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { renderInvoicePdf } from "@/lib/pdf/invoice-pdf";
 
@@ -58,6 +58,11 @@ export async function GET(
     .select()
     .from(invoiceItems)
     .where(eq(invoiceItems.invoiceId, invoiceId));
+  const pays = await db
+    .select()
+    .from(payments)
+    .where(eq(payments.invoiceId, invoiceId));
+  const amountPaid = pays.reduce((sum, p) => sum + Number(p.amount), 0);
 
   // Full timesheet report link (same export as /app/time) — auth-gated.
   const appUrl = (
@@ -107,6 +112,7 @@ export async function GET(
       unitPrice: String(it.unitPrice),
       amount: String(it.amount),
     })),
+    amountPaid,
     timesheetReportUrl,
   };
 
