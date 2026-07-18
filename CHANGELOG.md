@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.65 — 2026-07-18 — Global search + docs completeness
+
+- Halaman `/app/search` (topbar search sekarang land ke hasil nyata).
+- Search klien/proyek/tugas/invoice via ILIKE + filter kind.
+- USER_GUIDE: form field list (sec 20) + permission matrix role×aksi (sec 21).
+
 ## v0.1.64 — 2026-07-18 — Invoice list toolbar polish
 
 - Tab status pakai `TabsList`/`TabsTrigger` (sama styling Clients/Projects).

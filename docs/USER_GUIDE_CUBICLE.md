@@ -1,7 +1,7 @@
 # Cubiqlo / Cubicle — Panduan Lengkap Fitur & Halaman
 
 > **App live:** https://cubiqlo.com  
-> **Versi docs:** sinkron dengan app **v0.1.64** (18 Juli 2026)  
+> **Versi docs:** sinkron dengan app **v0.1.65** (18 Juli 2026)  
 > **Audience:** user / owner workspace / onboarding internal  
 > **Bahasa UI app:** Indonesia (default) + English toggle di sidebar
 
@@ -108,7 +108,7 @@ Sidebar grup:
 
 | Kontrol | Fungsi |
 |---|---|
-| **Search** | Input cari (desktop) / icon expand (mobile). Submit → `/app/search?q=...` **(route hasil search belum ada page — deep-link placeholder)** |
+| **Search** | Input cari (desktop) / icon expand (mobile). Submit → `/app/search?q=...` (global search klien/proyek/tugas/invoice) |
 | **+ Baru** | Quick create: Proyek, Tugas, Klien, Invoice (role writable) |
 | **Timer chip** | Timer aktif global: elapsed live, Pause / Stop / buka `/app/time`. Sembunyi di phone kalau idle |
 | **AI sparkles** | Toggle floating AI panel (`cubicle:toggle-ai`) — tablet/desktop |
@@ -1019,8 +1019,7 @@ Visibility `internal|client` · source `internal|portal` · entity `project|task
 /app/invoices/templates → /app/templates?tab=invoice
 /app/contract-templates → /app/templates?tab=contract
 
-# known missing page
-/app/search?q=…  (topbar submits here; page belum diimplement)
+/app/search?q=&kind=
 ```
 
 ### Public
@@ -1047,19 +1046,20 @@ Visibility `internal|client` · source `internal|portal` · entity `project|task
 |---|---|---|
 | Semua `page.tsx` internal + public | Covered / noted | 58 pages; legacy redirects dicatat |
 | Sidebar modules | Covered | |
-| Topbar controls | Covered (v2) | Search route gap dicatat |
+| Topbar controls | Covered (v2) | |
+| Global search `/app/search` | Covered (v3) | ILIKE multi-entity + filter kind |
 | Invoice list v0.1.64 | Covered | tabs + client/billing filter + archive + pagination |
 | Portal package order/request | Covered (v2) | |
 | AI tool list | Covered (v2) | 30+ tools |
 | Status enums schema | Covered (v2) | |
 | Full API route map | Covered (v2) | |
-| Field-level form screenshots / every input | Partial | schema + field utama ada; bukan copy UI pixel-perfect |
-| Permission matrix per aksi | Partial | role owner/member/viewer dijelaskan; matrix aksi×role belum penuh |
+| Form field list (schema) | Covered (v3) | section 20 |
+| Permission matrix per aksi | Covered (v3) | section 21 |
 | Cron schedule exact times | Partial | endpoint ada; jadwal server ops di docs ops |
 | WhatsApp / calendar sync | Explicit non-feature | TODO di feature-status |
+| Screenshot UI per page | Partial | opsional QA visual |
 
-**Verdict:** cukup lengkap untuk **user guide operasional v0.1.64**.  
-Belum “100% engineering reference” (permission matrix penuh + field-by-field form + screenshot).
+**Verdict:** user guide operasional **v0.1.65** lengkap (routes + fields + roles + search).
 
 ---
 
@@ -1093,6 +1093,154 @@ Belum “100% engineering reference” (permission matrix penuh + field-by-field
   - AI tools table lengkap  
   - API route inventory  
   - Coverage audit section  
+- **2026-07-18 (v3 / v0.1.65)**
+  - Implement `/app/search` global search  
+  - Form field list (section 20)  
+  - Permission matrix owner/member/viewer (section 21)  
+
+---
+
+## 20. Form fields (schema / input)
+
+Sumber: Zod schema di `src/lib/actions/*` + form components.
+
+### Client
+
+| Field | Required | Notes |
+|---|---|---|
+| `name` | yes | |
+| `companyName` | no | |
+| `email` | no | email valid / empty |
+| `phone` | no | |
+| `website` | no | |
+| `address` | no | |
+| `tags[]` | no | default `[]` |
+| `internalNotes` | no | |
+| `portalSlug` | no | slug 3–60, `a-z0-9-` |
+| `portalSlugEnabled` | no | default true |
+| `portalEnabled` | no | create: generate token 90 hari |
+
+### Project
+
+| Field | Required | Notes |
+|---|---|---|
+| `name` | yes | |
+| `description` | no | |
+| `clientId` | yes | uuid |
+| `status` | | `draft\|active\|on_hold\|completed\|cancelled` |
+| `billingType` | | `project\|hours\|package` |
+| `currency` | | default IDR |
+| `rate` / `budget` | no | number |
+| `startDate` / `finishDate` / `dueDate` | no | string date |
+| `clientVisible` | | default false |
+| `selectedPackageId` | no | uuid package |
+
+### Task
+
+| Field | Required | Notes |
+|---|---|---|
+| `title` | yes | |
+| `description` | no | |
+| `projectId` | yes | create |
+| `status` | | `todo\|in_progress\|review\|done` |
+| `priority` | | `low\|medium\|high\|urgent` |
+| `assigneeId` | no | |
+| `dueDate` | no | |
+| `clientVisible` | | default false |
+
+### Invoice create / update
+
+**Create:** `clientId*`, `projectId?`, `issueDate*`, `dueDate?`, `currency` (default USD di schema create), `notes?`, `terms?`  
+**Update:** + `status` (`draft|sent|viewed|paid|overdue|cancelled|archived`), `discount`, `tax`  
+**Item:** `description*`, `quantity`, `unitPrice`  
+**Import time:** `invoiceId*`, `timeEntryIds[]*`  
+**Payment:** `invoiceId*`, `amount*`, `paidAt*`, `method?`, `notes?`
+
+### Time
+
+**Start timer:** `workspaceId*`, `clientId*`, `projectId*`, `taskId?`, `description?`, `tags?`, `hourlyRate?`  
+**Manual:** + `date*`, `durationMinutes*`, `billable` (default true)  
+**Update:** description/tags/client/project/task/start/end/manualMinutes/billable/`status` (`draft|approved|invoiced`)
+
+### Expense
+
+`amount*`, `currency` (3 char, default IDR), `date*`, `description*` (max 500), `categoryId?`, `projectId?`, `clientId?`, `vendor?`, `taxIncluded`, `taxAmount?`, `receiptUrl?`  
+**Category:** `name*`, `color` (#hex), `icon?`
+
+### Package
+
+`name*`, `hours?`, `price*`, `currency`, `description?`, `features[]?`, `badge?`, `sortOrder`, `active`, `customPrice?`, `minHours?`, `maxHours?`, `allowCustom`
+
+### Personal note (owner-only)
+
+`title*` (max 200), `body?` (max 20k), `dueDate?`, `recurrenceRule` (`none|daily|weekly|monthly|yearly`), `notify7d/3d/1d`, `pinned`  
+Status note: `open|done|archived`
+
+### Workspace branding
+
+`billingName`, `billingEmail`, `billingPhone`, `billingAddress`, `taxId`, `logoUrl`, `defaultCurrency`, `defaultTaxRate` (0–100), `defaultHourlyRate`, `defaultInvoiceTerms`
+
+### Support ticket
+
+Create: title/body/priority (lihat form support)  
+Delete ticket: **owner only**
+
+### Proposal / Contract / Questionnaire / Email
+
+Lihat section 6 & 9 — field utama: title/body/client/validUntil/line items (proposal), body template (contract), fields[] (questionnaire), to/subject/body (email).
+
+---
+
+## 21. Permission matrix (role × aksi)
+
+Roles workspace: **owner** | **member** | **viewer**  
+Helper: `assertWorkspaceWritable` = owner+member; `assertWorkspaceOwner` = owner only.
+
+Legend: **Y** = allowed · **N** = blocked · **R** = read-only UI
+
+| Aksi | Owner | Member | Viewer |
+|---|---|---|---|
+| Lihat dashboard / list entity | Y | Y | Y |
+| Global search | Y | Y | Y |
+| Create/update client, project, task | Y | Y | N |
+| Archive client / project | Y | Y | N |
+| Timer start/stop + time entry write | Y | Y | N |
+| Invoice create/edit/item/import/payment/send/share | Y | Y | N (read list/detail ok) |
+| Expense create/update/delete | Y | Y | N |
+| Package CRUD + assign | Y | Y | N |
+| File/folder upload/rename/delete | Y | Y | R |
+| Comment create | Y | Y | N (umum writable) |
+| Proposal / contract write + send | Y | Y | N |
+| Questionnaire write + send | Y | Y | N |
+| Email suite draft/send | Y | Y | N |
+| Template create/update/delete (invoice/proposal/contract) | Y | Y | N |
+| Support ticket create/update | Y | Y | N |
+| Support ticket **delete** | Y | N | N |
+| **Personal notes** (CRUD) | Y | N | N |
+| Team: invite / change role / remove | Y | N | N |
+| Remove owner / change owner role | N (MVP lock) | N | N |
+| Workspace branding update | Y | Y | N |
+| Billing / plan upgrade | Y (owner akun) | via plan user | via plan user |
+| AI Brain read tools | plan gate | plan gate | plan gate |
+| AI action tools (confirm UI) | plan + writable | plan + writable | N write |
+
+### Plan gates (bukan role, per user plan)
+
+| Fitur | Free | Solo | Team |
+|---|---|---|---|
+| Max clients | 3 | unlimited | unlimited |
+| Max projects | 5 | unlimited | unlimited |
+| Invoices / bulan | 10 | unlimited | unlimited |
+| Workspaces | 1 | 3 | unlimited |
+| Invite members | N | N | Y |
+| Client portal | N | Y | Y |
+| AI assistant | N | Y (15/hari) | Y (500/hari soft) |
+| Max file size | 5 MB | 25 MB | 50 MB |
+
+### UI `canWrite`
+
+Topbar + banyak page: `role === "owner" || role === "member"`.  
+Viewer: hide tombol +Baru, timer write, create dialogs.
 
 ---
 
