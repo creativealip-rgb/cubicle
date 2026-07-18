@@ -72,7 +72,7 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
         {/* Mobile overlay backdrop */}
         {mobileOpen && (
           <div
-            className="fixed inset-0 z-40 bg-black/50 md:hidden"
+            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
             onClick={() => setMobileOpen(false)}
             aria-hidden="true"
           />
@@ -85,15 +85,14 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
         <div
           className={cn(
             "flex min-w-0 flex-1 flex-col transition-all duration-200",
-            // Desktop: shift for sidebar width
-            "md:ml-[260px]",
-            collapsed && "md:ml-[68px]",
-            // Mobile: no margin (sidebar overlays)
+            // Desktop (lg+): shift for sidebar width; tablet/mobile overlay
+            "lg:ml-[260px]",
+            collapsed && "lg:ml-[68px]",
             "ml-0"
           )}
         >
           <AppTopbar user={user} />
-          <main className="min-w-0 flex-1 p-4 pb-24 md:p-6 md:pb-28">{children}</main>
+          <main className="min-w-0 flex-1 p-3 pb-24 sm:p-4 md:p-6 md:pb-28">{children}</main>
         </div>
         {!onBrainPage && <AIChatPanel variant="floating" />}
       </div>

@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.51 — 2026-07-18 — Mobile/tablet nav + header polish
+
+- **Topbar compact**: phone max ~4 controls (menu, search icon, New, notif, avatar). Search expand full-width; timer idle hide on phone; AI + workspace switcher pindah ke avatar menu di mobile.
+- **Sidebar**: overlay sampai **lg** (tablet gak nge-squeeze content). Width `min(280px, 85vw)`.
+- **Page headers**: clients/calendar/tasks/projects/time/invoices stack di mobile, title `text-xl→2xl`, label tombol pendek.
+- Loading skeleton match breakpoint baru.
+
 ## v0.1.50 — 2026-07-18 — Portal task approve / revisi
 
 - Client portal: task status `review` + client-visible → tombol **Setujui** / **Minta revisi** + note opsional.

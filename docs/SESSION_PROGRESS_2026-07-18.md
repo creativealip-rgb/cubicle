@@ -1,7 +1,7 @@
 # Cubiqlo session progress — 2026-07-18
 
 Branch: `main`  
-Live: `cubicle-cubicle-1` healthy, version **0.1.50**  
+Live: `cubicle-cubicle-1` healthy, version **0.1.51**  
 Repo: `/root/projects/cubicle`
 
 ## Done this session (after v0.1.41 base)
@@ -34,15 +34,23 @@ Repo: `/root/projects/cubicle`
 - Shown in project accordion **Files** + download `?token=`
 - Deliverable type auto-forces client visibility on upload
 
+### Responsive nav + headers (v0.1.51)
+- Topbar mobile: menu + search icon (expand) + New + notif + avatar
+- Idle timer hidden on phone; AI + workspace switcher → avatar menu
+- Sidebar overlay until **lg** (tablet content full-width)
+- Page headers stack + shorter labels: clients, calendar, tasks, projects, time, invoices, dashboard
+- Loading skeleton match new breakpoints
+
 ## Changelog anchors
-- `CHANGELOG.md` entries **v0.1.42 … v0.1.50**
+- `CHANGELOG.md` entries **v0.1.42 … v0.1.51**
 - Backlog status: `docs/bugs-manual-qa.md`
 
 ## Still open / hold
 - PROD-003 Sales menu scope
-- Mobile form density beyond questionnaires
+- Deeper table/card polish (reports/expenses)
 - Soft-fail `{ok:false}` not yet universal
 - Kalender / Brain / Prompt deep QA
+- Commit + push v0.1.51 (belum, kecuali diminta)
 
 ## Verify live
 ```bash

@@ -21,6 +21,7 @@ import {
   UserPlus,
   Users,
   CreditCard,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,7 @@ import { NotificationsBell } from "@/components/notifications-bell";
 import { getUserWorkspaces, switchWorkspace, createWorkspace } from "@/lib/actions/workspace-switch";
 import { pauseTimer, stopTimer } from "@/lib/actions/time";
 import { useT } from "@/lib/i18n-client";
+import { cn } from "@/lib/utils";
 
 interface AppTopbarProps {
   user: {
@@ -90,6 +92,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
   const { t } = useT();
   const router = useRouter();
   const [search, setSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
   const [elapsed, setElapsed] = useState("00:00");
   const { setMobileOpen } = useSidebar();
@@ -101,6 +104,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
     e.preventDefault();
     if (search.trim()) {
       router.push(`/app/search?q=${encodeURIComponent(search.trim())}`);
+      setSearchOpen(false);
     }
   }
 
@@ -125,10 +129,8 @@ export function AppTopbar({ user }: AppTopbarProps) {
     try {
       const result = await switchWorkspace(wsId);
       if (result.ok) {
-        // Flush server component cache first (reads new cookie)
         router.refresh();
-        // Small delay so server components re-render before dropdown updates
-        await new Promise(r => setTimeout(r, 300));
+        await new Promise((r) => setTimeout(r, 300));
         await loadWorkspaces();
       }
     } finally {
@@ -199,7 +201,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
     .toUpperCase()
     .slice(0, 2);
 
-  const activeWorkspace = wsData?.workspaces.find(w => w.isActive);
+  const activeWorkspace = wsData?.workspaces.find((w) => w.isActive);
   const isFree = !wsData || wsData.plan === "free";
 
   async function finishActiveTimer(action: "pause" | "stop") {
@@ -218,266 +220,367 @@ export function AppTopbar({ user }: AppTopbarProps) {
     router.refresh();
   }
 
+  const timerTitle = activeTimer
+    ? [activeTimer.clientName, activeTimer.projectName, activeTimer.taskTitle, activeTimer.description]
+        .filter(Boolean)
+        .join(" • ")
+    : t("Tidak ada timer aktif", "No active timer");
+
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl px-3 md:gap-4 md:px-4">
-      {/* Mobile hamburger */}
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-1.5 border-b border-slate-200/80 bg-white/90 px-2 backdrop-blur-xl sm:gap-2 sm:px-3 lg:gap-3 lg:px-4">
+      {/* Mobile/tablet hamburger */}
       <Button
         variant="ghost"
         size="icon"
-        className="h-9 w-9 shrink-0 md:hidden"
+        className="h-9 w-9 shrink-0 lg:hidden"
         onClick={() => setMobileOpen(true)}
         aria-label="Buka menu"
       >
         <Menu className="h-5 w-5" />
       </Button>
-      {/* Search */}
-      <form onSubmit={handleSearch} className="relative min-w-0 flex-1 max-w-md">
-        <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-        <Input
-          type="search"
-          placeholder={t("Cari... (Ctrl+K)", "Search... (Ctrl+K)")}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="h-9 pl-9 text-sm"
-        />
-      </form>
 
-      <div className="flex items-center gap-2 ml-auto">
-        {/* New button */}
-        {canWrite && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="sm" className="gap-1">
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("Baru", "New")}</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuLabel>{t("Buat baru", "Create new")}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/app/projects/new">{t("Proyek", "Project")}</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/app/tasks/new">{t("Tugas", "Task")}</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/app/clients/new">{t("Klien", "Client")}</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/app/invoices/new">{t("Invoice", "Invoice")}</Link>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        )}
+      {/* Mobile search expand */}
+      {searchOpen ? (
+        <form onSubmit={handleSearch} className="relative flex min-w-0 flex-1 items-center gap-1 lg:hidden">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            autoFocus
+            type="search"
+            placeholder={t("Cari…", "Search…")}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-9 pl-9 pr-9 text-sm"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="absolute right-0.5 h-8 w-8"
+            onClick={() => {
+              setSearchOpen(false);
+              setSearch("");
+            }}
+            aria-label={t("Tutup pencarian", "Close search")}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </form>
+      ) : (
+        <>
+          {/* Desktop / tablet wide search */}
+          <form onSubmit={handleSearch} className="relative hidden min-w-0 flex-1 max-w-md sm:block">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder={t("Cari…", "Search…")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-9 pl-9 text-sm"
+            />
+          </form>
 
-        {/* Timer */}
-        {canWrite && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant={activeTimer ? "destructive" : "outline"}
-                size="sm"
-                className="gap-1"
-                title={
-                  activeTimer
-                    ? [activeTimer.clientName, activeTimer.projectName, activeTimer.taskTitle, activeTimer.description]
-                        .filter(Boolean)
-                        .join(" • ")
-                    : t("Tidak ada timer aktif", "No active timer")
-                }
-              >
-                <Timer className="h-4 w-4" />
-                <span className="hidden sm:inline">{elapsed}</span>
-                <ChevronDown className="h-3 w-3 opacity-60" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="text-xs text-muted-foreground">
-                {activeTimer ? t("Timer aktif", "Active timer") : "Timer"}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {activeTimer ? (
-                <>
-                  <DropdownMenuItem onClick={() => finishActiveTimer("pause")}>
-                    {t("Jeda timer", "Pause timer")}
+          {/* Phone: icon-only search */}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 shrink-0 sm:hidden"
+            onClick={() => setSearchOpen(true)}
+            aria-label={t("Cari", "Search")}
+          >
+            <Search className="h-4 w-4" />
+          </Button>
+
+          <div className="ml-auto flex items-center gap-1 sm:gap-1.5">
+            {/* New — always visible if can write */}
+            {canWrite && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" className="h-9 gap-1 px-2.5 sm:px-3">
+                    <Plus className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t("Baru", "New")}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>{t("Buat baru", "Create new")}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/app/projects/new">{t("Proyek", "Project")}</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => finishActiveTimer("stop")} className="text-red-600 focus:text-red-600">
-                    {t("Hentikan timer", "Stop timer")}
+                  <DropdownMenuItem asChild>
+                    <Link href="/app/tasks/new">{t("Tugas", "Task")}</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push("/app/time")}>
-                    {t("Lihat detail timer", "View timer details")}
+                  <DropdownMenuItem asChild>
+                    <Link href="/app/clients/new">{t("Klien", "Client")}</Link>
                   </DropdownMenuItem>
-                </>
-              ) : (
-                <DropdownMenuItem onClick={() => router.push("/app/time")}>
-                  {t("Mulai timer", "Start timer")}
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-
-        {/* AI assistant button */}
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-9 w-9 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-          onClick={() => window.dispatchEvent(new Event("cubicle:toggle-ai"))}
-          aria-label={t("Asisten AI", "AI Assistant")}
-          title={t("Asisten AI", "AI Assistant")}
-        >
-          <Sparkles className="h-4 w-4" />
-        </Button>
-
-        {/* Notifications */}
-        <NotificationsBell />
-
-        {/* Workspace switcher */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground max-w-[180px]">
-              <Building2 className="h-3.5 w-3.5 shrink-0" />
-              <span className="hidden sm:inline text-xs font-medium truncate">
-                {activeWorkspace?.name || t("Ruang Kerja", "Workspace")}
-              </span>
-              <ChevronDown className="h-3 w-3 shrink-0" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-72">
-            {/* Current workspace */}
-            <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
-              {t("Ruang Kerja", "Workspace")}
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-
-            {/* Workspace list */}
-            {wsData?.workspaces.map((ws) => (
-              <DropdownMenuItem
-                key={ws.id}
-                onClick={() => handleSwitchWorkspace(ws.id)}
-                className="flex items-center gap-2 cursor-pointer"
-                disabled={switching === ws.id}
-              >
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-sidebar-primary/10 text-sidebar-primary text-xs font-semibold">
-                  {ws.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{ws.name}</p>
-                  <p className="text-[10px] text-muted-foreground capitalize">{ws.role}</p>
-                </div>
-                {ws.isActive && <Check className="h-4 w-4 shrink-0 text-primary" />}
-                {switching === ws.id && <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />}
-              </DropdownMenuItem>
-            ))}
-
-            <DropdownMenuSeparator />
-
-            {/* Create workspace — gated */}
-            {isFree ? (
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href="/app/billing" className="flex items-center gap-2">
-                  <Crown className="h-4 w-4 text-amber-500" />
-                  <div className="flex-1">
-                    <p className="text-xs font-medium">{t("Upgrade untuk multi workspace", "Upgrade for multiple workspaces")}</p>
-                    <p className="text-[10px] text-muted-foreground">Solo · Rp 49rb/{t("bulan", "month")}</p>
-                  </div>
-                </Link>
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem
-                onClick={handleCreateWorkspace}
-                className="cursor-pointer"
-                disabled={creating || !wsData?.canCreate}
-              >
-                {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
-                <span className="text-xs">
-                  {wsData?.canCreate ? t("Buat workspace baru", "Create new workspace") : wsData?.canCreateReason || t("Batas workspace tercapai", "Workspace limit reached")}
-                </span>
-              </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/app/invoices/new">{t("Invoice", "Invoice")}</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
 
-            {/* Invite member — gated */}
-            {isFree ? (
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href="/app/billing" className="flex items-center gap-2">
-                  <Crown className="h-4 w-4 text-amber-500" />
-                  <div className="flex-1">
-                    <p className="text-xs font-medium">{t("Upgrade untuk undang anggota", "Upgrade to invite members")}</p>
-                    <p className="text-[10px] text-muted-foreground">Team · Rp 99rb/{t("bulan", "month")}</p>
-                  </div>
-                </Link>
-              </DropdownMenuItem>
-            ) : wsData?.canInvite ? (
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href="/app/settings?tab=members" className="flex items-center gap-2">
-                  <UserPlus className="h-4 w-4" />
-                  <span className="text-xs">{t("Undang anggota", "Invite member")}</span>
-                </Link>
-              </DropdownMenuItem>
-            ) : null}
+            {/* Timer: md+ always; phone only when running */}
+            {canWrite && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant={activeTimer ? "destructive" : "outline"}
+                    size="sm"
+                    className={cn(
+                      "h-9 gap-1 px-2 sm:px-2.5",
+                      !activeTimer && "hidden md:inline-flex",
+                    )}
+                    title={timerTitle}
+                  >
+                    <Timer className="h-4 w-4" />
+                    <span className="tabular-nums text-xs sm:text-sm">
+                      {activeTimer ? elapsed : <span className="hidden lg:inline">{elapsed}</span>}
+                    </span>
+                    <ChevronDown className="hidden h-3 w-3 opacity-60 sm:block" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="text-xs text-muted-foreground">
+                    {activeTimer ? t("Timer aktif", "Active timer") : "Timer"}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {activeTimer ? (
+                    <>
+                      <DropdownMenuItem onClick={() => finishActiveTimer("pause")}>
+                        {t("Jeda timer", "Pause timer")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => finishActiveTimer("stop")}
+                        className="text-red-600 focus:text-red-600"
+                      >
+                        {t("Hentikan timer", "Stop timer")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push("/app/time")}>
+                        {t("Lihat detail timer", "View timer details")}
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <DropdownMenuItem onClick={() => router.push("/app/time")}>
+                      {t("Mulai timer", "Start timer")}
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
-            {/* Manage workspace */}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild className="cursor-pointer">
-              <Link href="/app/settings" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                <span className="text-xs">{t("Kelola workspace", "Manage workspace")}</span>
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* User menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user.image ?? undefined} alt={user.name} />
-                <AvatarFallback className="text-xs bg-sidebar-primary text-sidebar-primary-foreground">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
+            {/* AI — tablet/desktop only */}
+            <Button
+              variant="outline"
+              size="icon"
+              className="hidden h-9 w-9 text-blue-600 hover:bg-blue-50 hover:text-blue-700 md:inline-flex"
+              onClick={() => window.dispatchEvent(new Event("cubicle:toggle-ai"))}
+              aria-label={t("Asisten AI", "AI Assistant")}
+              title={t("Asisten AI", "AI Assistant")}
+            >
+              <Sparkles className="h-4 w-4" />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{user.name}</p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  {user.email}
-                </p>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem asChild>
-                <Link href="/app/settings" className="cursor-pointer">
-                  <Settings className="h-4 w-4" />
-                  {t("Pengaturan", "Settings")}
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/app/billing" className="cursor-pointer">
-                  <CreditCard className="h-4 w-4" />
-                  {t("Tagihan", "Billing")}
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/app/support" className="cursor-pointer">
-                  <HelpCircle className="h-4 w-4" />
-                  {t("Bantuan & Dukungan", "Help & Support")}
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
-              <LogOut className="h-4 w-4" />
-              {t("Keluar", "Sign out")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+
+            <NotificationsBell />
+
+            {/* Workspace switcher — desktop only (mobile: inside avatar menu) */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="hidden max-w-[160px] gap-1.5 text-muted-foreground lg:inline-flex"
+                >
+                  <Building2 className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate text-xs font-medium">
+                    {activeWorkspace?.name || t("Ruang Kerja", "Workspace")}
+                  </span>
+                  <ChevronDown className="h-3 w-3 shrink-0" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-72">
+                <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                  {t("Ruang Kerja", "Workspace")}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {wsData?.workspaces.map((ws) => (
+                  <DropdownMenuItem
+                    key={ws.id}
+                    onClick={() => handleSwitchWorkspace(ws.id)}
+                    className="flex cursor-pointer items-center gap-2"
+                    disabled={switching === ws.id}
+                  >
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-sidebar-primary/10 text-xs font-semibold text-sidebar-primary">
+                      {ws.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{ws.name}</p>
+                      <p className="text-[10px] capitalize text-muted-foreground">{ws.role}</p>
+                    </div>
+                    {ws.isActive && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                    {switching === ws.id && (
+                      <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                {isFree ? (
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/app/billing" className="flex items-center gap-2">
+                      <Crown className="h-4 w-4 text-amber-500" />
+                      <div className="flex-1">
+                        <p className="text-xs font-medium">
+                          {t("Upgrade untuk multi workspace", "Upgrade for multiple workspaces")}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          Solo · Rp 49rb/{t("bulan", "month")}
+                        </p>
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem
+                    onClick={handleCreateWorkspace}
+                    className="cursor-pointer"
+                    disabled={creating || !wsData?.canCreate}
+                  >
+                    {creating ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <PlusCircle className="h-4 w-4" />
+                    )}
+                    <span className="text-xs">
+                      {wsData?.canCreate
+                        ? t("Buat workspace baru", "Create new workspace")
+                        : wsData?.canCreateReason || t("Batas workspace tercapai", "Workspace limit reached")}
+                    </span>
+                  </DropdownMenuItem>
+                )}
+                {isFree ? (
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/app/billing" className="flex items-center gap-2">
+                      <Crown className="h-4 w-4 text-amber-500" />
+                      <div className="flex-1">
+                        <p className="text-xs font-medium">
+                          {t("Upgrade untuk undang anggota", "Upgrade to invite members")}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          Team · Rp 99rb/{t("bulan", "month")}
+                        </p>
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+                ) : wsData?.canInvite ? (
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/app/settings?tab=members" className="flex items-center gap-2">
+                      <UserPlus className="h-4 w-4" />
+                      <span className="text-xs">{t("Undang anggota", "Invite member")}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                ) : null}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link href="/app/settings" className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    <span className="text-xs">{t("Kelola workspace", "Manage workspace")}</span>
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* User menu — also carries mobile-only shortcuts */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.image ?? undefined} alt={user.name} />
+                    <AvatarFallback className="bg-sidebar-primary text-xs text-sidebar-primary-foreground">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user.name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    {activeWorkspace && (
+                      <p className="pt-1 text-[11px] text-muted-foreground lg:hidden">
+                        <Building2 className="mr-1 inline h-3 w-3" />
+                        {activeWorkspace.name}
+                      </p>
+                    )}
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+
+                {/* Mobile shortcuts: workspace, AI, timer start */}
+                <DropdownMenuGroup className="lg:hidden">
+                  <DropdownMenuLabel className="text-[10px] font-normal uppercase tracking-wide text-muted-foreground">
+                    {t("Cepat", "Quick")}
+                  </DropdownMenuLabel>
+                  {wsData?.workspaces.map((ws) => (
+                    <DropdownMenuItem
+                      key={ws.id}
+                      onClick={() => handleSwitchWorkspace(ws.id)}
+                      className="cursor-pointer"
+                      disabled={switching === ws.id}
+                    >
+                      <Building2 className="h-4 w-4" />
+                      <span className="truncate">{ws.name}</span>
+                      {ws.isActive && <Check className="ml-auto h-3.5 w-3.5 text-primary" />}
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuItem
+                    className="cursor-pointer md:hidden"
+                    onClick={() => window.dispatchEvent(new Event("cubicle:toggle-ai"))}
+                  >
+                    <Sparkles className="h-4 w-4 text-blue-600" />
+                    {t("Asisten AI", "AI Assistant")}
+                  </DropdownMenuItem>
+                  {canWrite && !activeTimer && (
+                    <DropdownMenuItem
+                      className="cursor-pointer md:hidden"
+                      onClick={() => router.push("/app/time")}
+                    >
+                      <Timer className="h-4 w-4" />
+                      {t("Mulai timer", "Start timer")}
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                </DropdownMenuGroup>
+
+                <DropdownMenuGroup>
+                  <DropdownMenuItem asChild>
+                    <Link href="/app/settings" className="cursor-pointer">
+                      <Settings className="h-4 w-4" />
+                      {t("Pengaturan", "Settings")}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/app/billing" className="cursor-pointer">
+                      <CreditCard className="h-4 w-4" />
+                      {t("Tagihan", "Billing")}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/app/support" className="cursor-pointer">
+                      <HelpCircle className="h-4 w-4" />
+                      {t("Bantuan & Dukungan", "Help & Support")}
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+                  <LogOut className="h-4 w-4" />
+                  {t("Keluar", "Sign out")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </>
+      )}
     </header>
   );
 }

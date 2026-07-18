@@ -437,9 +437,9 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Greeting + quick actions */}
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-4 sm:gap-5 sm:flex-row sm:items-end sm:justify-between">
         <DashboardGreeting firstName={firstName} lang={lang} activeProjects={activeProjects} dueTasks={dueTasks} />
         <div className="flex flex-wrap items-center gap-2">
           {quickActions.map((qa) => {
@@ -454,7 +454,7 @@ export default async function DashboardPage() {
               >
                 <Link href={qa.href}>
                   <Icon className="h-3.5 w-3.5" />
-                  {qa.label}
+                  <span className="text-xs sm:text-sm">{qa.label}</span>
                 </Link>
               </Button>
             );

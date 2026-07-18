@@ -121,19 +121,20 @@ export default async function ClientsPage({
     : s;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("Klien", "Clients")}</h1>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{t("Klien", "Clients")}</h1>
           <p className="text-sm text-muted-foreground">
             {t("Kelola hubungan klienmu", "Manage your client relationships")}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Button size="sm" variant="outline" className="gap-1" asChild>
             <a href="/api/clients/export/pdf" target="_blank" rel="noreferrer">
               <Download className="h-4 w-4" />
-              {t("Unduh PDF", "Download PDF")}
+              <span className="hidden sm:inline">{t("Unduh PDF", "Download PDF")}</span>
+              <span className="sm:hidden">PDF</span>
             </a>
           </Button>
           {canWrite && (
@@ -146,7 +147,7 @@ export default async function ClientsPage({
               <Button size="sm" className="gap-1" asChild>
                 <Link href="/app/clients/new">
                   <Plus className="h-4 w-4" />
-                  {t("Tambah Klien", "Add Client")}
+                  <span className="sm:inline">{t("Tambah Klien", "Add Client")}</span>
                 </Link>
               </Button>
             )

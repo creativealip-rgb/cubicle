@@ -69,24 +69,26 @@ export default async function InvoicesPage() {
     .orderBy(desc(invoices.createdAt));
 
   return (
-    <div className="space-y-6 min-w-0">
+    <div className="min-w-0 space-y-4 sm:space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("Invoice", "Invoices")}</h1>
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{t("Invoice", "Invoices")}</h1>
           <p className="text-sm text-muted-foreground">
             {t("Buat dan kelola invoice untuk klienmu", "Create and manage invoices for your clients")}
           </p>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <Link href="/app/templates?tab=invoice">
-            <Button variant="outline" className="gap-2">
+        <div className="flex w-full gap-2 sm:w-auto">
+          <Link href="/app/templates?tab=invoice" className="min-w-0 flex-1 sm:flex-none">
+            <Button variant="outline" size="sm" className="w-full gap-2 sm:w-auto">
               <FileText className="h-4 w-4" /> {t("Template", "Templates")}
             </Button>
           </Link>
           {canWrite && (
-            <Link href="/app/invoices/new">
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" /> {t("Invoice Baru", "New Invoice")}
+            <Link href="/app/invoices/new" className="min-w-0 flex-1 sm:flex-none">
+              <Button size="sm" className="w-full gap-2 sm:w-auto">
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">{t("Invoice Baru", "New Invoice")}</span>
+                <span className="sm:hidden">{t("Baru", "New")}</span>
               </Button>
             </Link>
           )}

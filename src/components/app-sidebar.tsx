@@ -229,11 +229,11 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
     <aside
       className={cn(
         "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200/80 bg-sidebar-background transition-all duration-200",
-        // Desktop: always visible, normal collapse behavior
-        "md:translate-x-0",
-        collapsed ? "md:w-[68px]" : "md:w-[260px]",
-        // Mobile: off-canvas by default, slide in when open
-        "w-[260px] -translate-x-full",
+        // Desktop lg+: always visible, normal collapse behavior
+        "lg:translate-x-0",
+        collapsed ? "lg:w-[68px]" : "lg:w-[260px]",
+        // Mobile + tablet: off-canvas by default, slide in when open
+        "w-[min(280px,85vw)] -translate-x-full",
         mobileOpen && "translate-x-0"
       )}
     >
@@ -241,24 +241,24 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
       <div
         className={cn(
           "flex h-14 items-center border-b border-sidebar-border px-3",
-          collapsed ? "md:justify-center" : "md:justify-between justify-between"
+          collapsed ? "lg:justify-center" : "justify-between"
         )}
       >
         {!collapsed && (
-          <Link href="/app/dashboard" className="flex items-center gap-2 font-semibold text-sidebar-foreground">
-            <Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-9 w-auto object-contain" />
+          <Link href="/app/dashboard" className="flex min-w-0 items-center gap-2 font-semibold text-sidebar-foreground">
+            <Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-8 w-auto object-contain sm:h-9" />
           </Link>
         )}
         {collapsed && (
-          <Link href="/app/dashboard" className="hidden md:flex">
+          <Link href="/app/dashboard" className="hidden lg:flex">
             <Image src="/logo-icon.png" alt="Cubiqlo" width={36} height={36} className="h-9 w-9 rounded-md object-cover" />
           </Link>
         )}
-        {/* Mobile close button */}
+        {/* Mobile/tablet close button */}
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent md:hidden"
+          className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent lg:hidden"
           onClick={() => setMobileOpen(false)}
           aria-label="Close menu"
         >
@@ -268,7 +268,7 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
           <Button
             variant="ghost"
             size="icon"
-            className="hidden md:flex h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"
+            className="hidden h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent lg:flex"
             onClick={onToggle}
           >
             <PanelLeftClose className="h-4 w-4" />
@@ -278,7 +278,7 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts }: AppSidebarProps
           <Button
             variant="ghost"
             size="icon"
-            className="hidden md:flex h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent absolute -right-3 top-3 rounded-full border bg-background shadow-sm"
+            className="absolute -right-3 top-3 hidden h-8 w-8 rounded-full border bg-background text-sidebar-foreground shadow-sm hover:bg-sidebar-accent lg:flex"
             onClick={onToggle}
           >
             <PanelLeft className="h-3 w-3" />

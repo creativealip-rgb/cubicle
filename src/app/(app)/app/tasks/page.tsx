@@ -110,19 +110,19 @@ export default async function TasksPage({
     .orderBy(workspaceMembers.role);
 
   return (
-    <div className="space-y-6 min-w-0">
+    <div className="min-w-0 space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("Tugas", "Tasks")}</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{t("Tugas", "Tasks")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {t("Pantau pekerjaan di semua proyek", "Track work across all projects")}
           </p>
         </div>
         <TaskCreateDialog projectId={params.projectId} members={memberList} projects={projectList} />
       </div>
 
-      <div className="rounded-lg border border-blue-200 bg-blue-50/60 px-4 py-3 text-sm text-blue-950">
+      <div className="rounded-lg border border-blue-200 bg-blue-50/60 px-3 py-2.5 text-sm text-blue-950 sm:px-4 sm:py-3">
         <p className="font-medium">
           {t("Tugas ≠ timer", "Tasks ≠ timer")}
         </p>

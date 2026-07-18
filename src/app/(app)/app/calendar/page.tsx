@@ -90,15 +90,15 @@ export default async function CalendarPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("Kalender", "Calendar")}</h1>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{t("Kalender", "Calendar")}</h1>
           <p className="text-sm text-muted-foreground">
             {t("Kelola janji temu dan ketersediaan", "Manage appointments and availability")}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" asChild>
             <Link href="/app/questionnaires/new">
               {t("Buat formulir", "Create form")}
@@ -108,7 +108,8 @@ export default async function CalendarPage() {
             <Button variant="outline" size="sm" asChild>
               <Link href={`/booking/${ws.bookingSlug}`} target="_blank">
                 <Calendar className="mr-2 h-4 w-4" />
-                {t("Halaman Booking Publik", "Public Booking Page")}
+                <span className="hidden sm:inline">{t("Halaman Booking Publik", "Public Booking Page")}</span>
+                <span className="sm:hidden">{t("Booking publik", "Public booking")}</span>
               </Link>
             </Button>
           )}
