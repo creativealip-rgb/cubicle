@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.68 — 2026-07-18 — Invoice PDF: detail report under description
+
+- Pindah blok **Detail report** ke langsung di bawah tabel Description (sebelum totals).
+
 ## v0.1.67 — 2026-07-18 — Invoice PDF: detail report link
 
 - PDF invoice (`/api/invoices/[id]/pdf`) tampil blok **Detail report** + URL full timesheet.

@@ -248,13 +248,10 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   notes: { fontSize: 9, color: "#475569", lineHeight: 1.5 },
-  detailReportBox: {
-    marginTop: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: BORDER,
-    borderRadius: 10,
-    backgroundColor: "#ffffff",
+  detailReportUnderDesc: {
+    marginTop: 6,
+    marginBottom: 16,
+    paddingHorizontal: 8,
   },
   detailReportLabel: {
     fontSize: 8,
@@ -262,10 +259,10 @@ const styles = StyleSheet.create({
     color: MUTED,
     textTransform: "uppercase",
     letterSpacing: 0.6,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   detailReportLink: {
-    fontSize: 9,
+    fontSize: 8,
     color: ACCENT_DARK,
     textDecoration: "underline",
     lineHeight: 1.4,
@@ -489,6 +486,16 @@ export function InvoicePDF({
           ))}
         </View>
 
+        {/* Detail report — under description table */}
+        {timesheetReportUrl ? (
+          <View style={styles.detailReportUnderDesc}>
+            <Text style={styles.detailReportLabel}>Detail report</Text>
+            <Link src={timesheetReportUrl} style={styles.detailReportLink}>
+              {timesheetReportUrl}
+            </Link>
+          </View>
+        ) : null}
+
         {/* Totals */}
         <View style={styles.totalsSection}>
           <View style={styles.totalRow}>
@@ -536,16 +543,6 @@ export function InvoicePDF({
             )}
           </View>
         )}
-
-        {/* Detail report link (full timesheet export) */}
-        {timesheetReportUrl ? (
-          <View style={styles.detailReportBox}>
-            <Text style={styles.detailReportLabel}>Detail report</Text>
-            <Link src={timesheetReportUrl} style={styles.detailReportLink}>
-              {timesheetReportUrl}
-            </Link>
-          </View>
-        ) : null}
 
         {/* Footer */}
         <View style={styles.footer} fixed>
