@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.66 — 2026-07-18 — Invoice: link ekspor timesheet full
+
+- Detail invoice: tombol **Ekspor Timesheet** → `/api/time/export/pdf/va-timesheet?report=full` (sama full export di menu Waktu).
+- Prefill filter `clientId` (+ `projectId` kalau invoice punya proyek).
+
 ## v0.1.65 — 2026-07-18 — Global search + docs completeness
 
 - Halaman `/app/search` (topbar search sekarang land ke hasil nyata).

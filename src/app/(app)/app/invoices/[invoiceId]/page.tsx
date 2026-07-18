@@ -229,6 +229,22 @@ export default async function InvoiceDetailPage({
               {t("Unduh PDF", "Download PDF")}
             </Link>
           </Button>
+          {inv.clientId ? (
+            <Button size="sm" variant="outline" className="gap-2" asChild>
+              <Link
+                href={`/api/time/export/pdf/va-timesheet?${new URLSearchParams({
+                  report: "full",
+                  clientId: inv.clientId,
+                  ...(inv.projectId ? { projectId: inv.projectId } : {}),
+                }).toString()}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Clock className="h-4 w-4" />
+                {t("Ekspor Timesheet", "Export Timesheet")}
+              </Link>
+            </Button>
+          ) : null}
           <SendInvoiceButton invoiceId={invoiceId} disabled={!client?.email || items.length === 0} />
           <SendReminderButton
             invoiceId={invoiceId}
