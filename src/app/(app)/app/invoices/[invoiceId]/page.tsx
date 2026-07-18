@@ -10,6 +10,8 @@ import {
   payments,
   clients,
   timeEntries,
+  projects,
+  workspaces,
 } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
@@ -73,7 +75,18 @@ export default async function InvoiceDetailPage({
     .where(eq(clients.id, inv.clientId))
     .limit(1);
 
-  // Fetch unbilled time entries for this client
+  // Workspace default hourly rate — used when entry/project rate is empty
+  // (package/project billing often has no project.rate).
+  const [wsRateRow] = await db
+    .select({ defaultHourlyRate: workspaces.defaultHourlyRate })
+    .from(workspaces)
+    .where(eq(workspaces.id, workspaceId))
+    .limit(1);
+  const workspaceDefaultRate = wsRateRow?.defaultHourlyRate
+    ? Number(wsRateRow.defaultHourlyRate)
+    : 0;
+
+  // Fetch unbilled time entries for this client (+ project rate for preview)
   const unbilledTimeEntries = await db
     .select({
       id: timeEntries.id,
@@ -82,8 +95,10 @@ export default async function InvoiceDetailPage({
       hourlyRate: timeEntries.hourlyRate,
       startTime: timeEntries.startTime,
       status: timeEntries.status,
+      projectRate: projects.rate,
     })
     .from(timeEntries)
+    .leftJoin(projects, eq(projects.id, timeEntries.projectId))
     .where(
       and(
         eq(timeEntries.workspaceId, workspaceId),
@@ -93,7 +108,29 @@ export default async function InvoiceDetailPage({
     )
     .limit(200);
 
-  const unbilled = unbilledTimeEntries.filter((t) => t.status !== "invoiced");
+  const unbilled = unbilledTimeEntries
+    .filter((t) => t.status !== "invoiced")
+    .map((t) => {
+      const entryRate = t.hourlyRate ? Number(t.hourlyRate) : 0;
+      const projectRate = t.projectRate ? Number(t.projectRate) : 0;
+      const effectiveRate =
+        entryRate > 0
+          ? entryRate
+          : projectRate > 0
+            ? projectRate
+            : workspaceDefaultRate > 0
+              ? workspaceDefaultRate
+              : 0;
+      return {
+        id: t.id,
+        description: t.description,
+        durationMinutes: t.durationMinutes,
+        hourlyRate: t.hourlyRate,
+        startTime: t.startTime,
+        status: t.status,
+        effectiveRate,
+      };
+    });
 
   const totalPaid = pays.reduce((sum, p) => sum + Number(p.amount), 0);
 

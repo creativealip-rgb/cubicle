@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.56 — 2026-07-18 — Import time rate preview + create rate fallback
+
+- List import time: rate preview pakai entry → project → workspace default (project package gak kelihatan 0).
+- Create timer/manual entry: fallback rate sama (bukan cuma project hourly).
+- Repair unbilled time entries rate kosong di Alip Testing → 250k.
+
 ## v0.1.55 — 2026-07-18 — Invoice create UX + time import restore
 
 - **Buat invoice**: tombol loading `Membuat invoice…`, hard redirect ke detail invoice baru (mobile gak stuck di form).

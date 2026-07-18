@@ -17,6 +17,8 @@ interface TimeEntry {
   hourlyRate: string | null;
   startTime: Date | null;
   status: string;
+  /** Resolved rate for preview (entry → project → workspace default). */
+  effectiveRate?: number;
 }
 
 export function ImportTimeSection({
@@ -102,10 +104,17 @@ export function ImportTimeSection({
         {timeEntries.map((te) => {
           const mins = te.durationMinutes || 0;
           const hours = mins / 60;
-          const rate = te.hourlyRate ? Number(te.hourlyRate) : 0;
+          const storedRate = te.hourlyRate ? Number(te.hourlyRate) : 0;
+          const rate =
+            te.effectiveRate && te.effectiveRate > 0
+              ? te.effectiveRate
+              : storedRate > 0
+                ? storedRate
+                : 0;
           const amount = hours * rate;
           const isSelected = selected.has(te.id);
           const zeroRate = !rate || !Number.isFinite(rate) || rate <= 0;
+          const rateFromFallback = !zeroRate && storedRate <= 0;
 
           return (
             <div
@@ -132,7 +141,11 @@ export function ImportTimeSection({
                         " · tarif 0 (isi rate di time entry / project / default workspace)",
                         " · rate 0 (set rate on time entry / project / workspace default)",
                       )
-                    : ` @ ${formatMoney(rate, currency)}/${t("jam", "hr")} = ${formatMoney(amount, currency)}`}
+                    : ` @ ${formatMoney(rate, currency)}/${t("jam", "hr")} = ${formatMoney(amount, currency)}${
+                        rateFromFallback
+                          ? t(" · pakai default", " · using default")
+                          : ""
+                      }`}
                 </p>
               </div>
               <Badge variant={timeEntryStatusVariant(te.status, lang).variant} className="text-[10px]">

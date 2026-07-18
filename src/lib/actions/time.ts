@@ -4,7 +4,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { timeEntries, clients, projects, tasks, users } from "@/db/schema";
+import { timeEntries, clients, projects, tasks, users, workspaces } from "@/db/schema";
 import { eq, and, gte, lte, isNull, isNotNull, desc } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
@@ -12,6 +12,40 @@ import { writeActivityLog } from "@/lib/actions/activity";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
+}
+
+/** Resolve hourly rate: explicit → project rate (any billing) → workspace default. */
+async function resolveHourlyRate(opts: {
+  workspaceId: string;
+  projectId: string;
+  explicitRate?: number | null;
+}): Promise<string | null> {
+  if (opts.explicitRate !== undefined && opts.explicitRate !== null) {
+    const n = Number(opts.explicitRate);
+    if (Number.isFinite(n) && n >= 0) return String(n);
+  }
+
+  const [proj] = await db
+    .select({ rate: projects.rate })
+    .from(projects)
+    .where(eq(projects.id, opts.projectId))
+    .limit(1);
+  if (proj?.rate) {
+    const projectRate = Number(proj.rate);
+    if (Number.isFinite(projectRate) && projectRate > 0) return String(projectRate);
+  }
+
+  const [ws] = await db
+    .select({ defaultHourlyRate: workspaces.defaultHourlyRate })
+    .from(workspaces)
+    .where(eq(workspaces.id, opts.workspaceId))
+    .limit(1);
+  if (ws?.defaultHourlyRate) {
+    const wsDefault = Number(ws.defaultHourlyRate);
+    if (Number.isFinite(wsDefault) && wsDefault > 0) return String(wsDefault);
+  }
+
+  return null;
 }
 
 const startTimerSchema = z.object({
@@ -80,20 +114,12 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
       ),
     );
 
-  // Resolve rate: explicit input wins; otherwise inherit the project's rate
-  // (only meaningful for hourly-billed projects) so billable entries carry a value.
-  let resolvedRate: string | null =
-    parsed.hourlyRate !== undefined ? String(parsed.hourlyRate) : null;
-  if (resolvedRate === null) {
-    const [proj] = await db
-      .select({ rate: projects.rate, billingType: projects.billingType })
-      .from(projects)
-      .where(eq(projects.id, parsed.projectId))
-      .limit(1);
-    if (proj?.billingType === "hours" && proj.rate) {
-      resolvedRate = String(proj.rate);
-    }
-  }
+  // Resolve rate: explicit input → project rate → workspace default.
+  const resolvedRate = await resolveHourlyRate({
+    workspaceId: parsed.workspaceId,
+    projectId: parsed.projectId,
+    explicitRate: parsed.hourlyRate,
+  });
 
   const [entry] = await db.insert(timeEntries).values({
     workspaceId: parsed.workspaceId,
@@ -176,18 +202,15 @@ export async function createManualEntry(input: z.infer<typeof createManualEntryS
   }
   const end = new Date(start.getTime() + parsed.durationMinutes * 60 * 1000);
 
-  // Resolve rate: explicit input wins; otherwise inherit project rate for hourly projects.
-  let resolvedRate: string | null =
-    parsed.billable && parsed.hourlyRate !== undefined ? String(parsed.hourlyRate) : null;
-  if (resolvedRate === null && parsed.billable) {
-    const [proj] = await db
-      .select({ rate: projects.rate, billingType: projects.billingType })
-      .from(projects)
-      .where(eq(projects.id, parsed.projectId))
-      .limit(1);
-    if (proj?.billingType === "hours" && proj.rate) {
-      resolvedRate = String(proj.rate);
-    }
+  // Resolve rate: explicit input → project rate → workspace default.
+  // Only auto-fill when billable.
+  let resolvedRate: string | null = null;
+  if (parsed.billable) {
+    resolvedRate = await resolveHourlyRate({
+      workspaceId: parsed.workspaceId,
+      projectId: parsed.projectId,
+      explicitRate: parsed.hourlyRate,
+    });
   }
 
   const [entry] = await db.insert(timeEntries).values({
