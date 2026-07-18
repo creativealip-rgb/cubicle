@@ -19,6 +19,7 @@ interface TimeEntry {
   status: string;
   /** Resolved rate for preview (entry → project → workspace default). */
   effectiveRate?: number;
+  projectName?: string | null;
 }
 
 export function ImportTimeSection({
@@ -132,9 +133,10 @@ export function ImportTimeSection({
               />
               <div className="flex-1 min-w-0">
                 <p className="text-sm truncate">
-                  {te.description || "Tanpa deskripsi"}
+                  {te.description || t("Tanpa deskripsi", "No description")}
                 </p>
                 <p className="text-xs text-muted-foreground">
+                  {te.projectName ? `${te.projectName} · ` : ""}
                   {hours.toFixed(1)}{t("j", "h")}
                   {zeroRate
                     ? t(

@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.57 — 2026-07-18 — Import time by project + line desc project name
+
+- Import time list: filter by `invoice.projectId` (bukan semua time klien). Invoice tanpa project tetap client-wide.
+- Server `importTimeEntries`: reject time beda project/client dari invoice.
+- Line item desc import: `Project — deskripsi` (PDF/client-facing).
+- UI list import: tampil nama project di subtitle.
+- Backfill deskripsi item time_entry yang belum ada prefix project.
+
 ## v0.1.56 — 2026-07-18 — Import time rate preview + create rate fallback
 
 - List import time: rate preview pakai entry → project → workspace default (project package gak kelihatan 0).

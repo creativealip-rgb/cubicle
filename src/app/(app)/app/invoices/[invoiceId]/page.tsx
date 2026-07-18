@@ -86,7 +86,8 @@ export default async function InvoiceDetailPage({
     ? Number(wsRateRow.defaultHourlyRate)
     : 0;
 
-  // Fetch unbilled time entries for this client (+ project rate for preview)
+  // Fetch unbilled time entries for this invoice's project (fallback: client-wide
+  // only when invoice has no project_id). Preview rate: entry → project → workspace.
   const unbilledTimeEntries = await db
     .select({
       id: timeEntries.id,
@@ -96,6 +97,7 @@ export default async function InvoiceDetailPage({
       startTime: timeEntries.startTime,
       status: timeEntries.status,
       projectRate: projects.rate,
+      projectName: projects.name,
     })
     .from(timeEntries)
     .leftJoin(projects, eq(projects.id, timeEntries.projectId))
@@ -104,6 +106,8 @@ export default async function InvoiceDetailPage({
         eq(timeEntries.workspaceId, workspaceId),
         eq(timeEntries.clientId, inv.clientId),
         eq(timeEntries.billable, true),
+        // Invoice made with a project → only that project's unbilled time.
+        inv.projectId ? eq(timeEntries.projectId, inv.projectId) : undefined,
       ),
     )
     .limit(200);
@@ -129,6 +133,7 @@ export default async function InvoiceDetailPage({
         startTime: t.startTime,
         status: t.status,
         effectiveRate,
+        projectName: t.projectName,
       };
     });
 

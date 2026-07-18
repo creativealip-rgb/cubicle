@@ -420,7 +420,7 @@ export async function importTimeEntries(input: z.infer<typeof importTimeSchema>)
   await assertWorkspaceWritable(db, user.id, workspaceId);
 
   const parsed = importTimeSchema.parse(input);
-  const _inv = await assertInvoiceInWorkspace(parsed.invoiceId, workspaceId);
+  const inv = await assertInvoiceInWorkspace(parsed.invoiceId, workspaceId);
 
   for (const teId of parsed.timeEntryIds) {
     const [te] = await db
@@ -430,27 +430,33 @@ export async function importTimeEntries(input: z.infer<typeof importTimeSchema>)
       .limit(1);
     if (!te) continue;
     if (te.status === "invoiced") continue;
+    // Invoice bound to a project → reject time from other projects.
+    if (inv.projectId && te.projectId !== inv.projectId) continue;
+    // Always keep client match.
+    if (te.clientId !== inv.clientId) continue;
 
     const minutes = te.durationMinutes || 0;
     const hours = minutes / 60;
     let rate = te.hourlyRate ? Number(te.hourlyRate) : 0;
 
-    // Fallback chain: entry rate → project rate (any billing type) → workspace default
-    if (!rate || !Number.isFinite(rate) || rate <= 0) {
-      if (te.projectId) {
-        const [proj] = await db
-          .select({ rate: projects.rate, billingType: projects.billingType })
-          .from(projects)
-          .where(eq(projects.id, te.projectId))
-          .limit(1);
-        if (proj?.rate) {
-          const projectRate = Number(proj.rate);
-          if (Number.isFinite(projectRate) && projectRate > 0) {
-            rate = projectRate;
-          }
+    // Resolve project name + rate together (used for line description + billing).
+    let projectName: string | null = null;
+    if (te.projectId) {
+      const [proj] = await db
+        .select({ name: projects.name, rate: projects.rate })
+        .from(projects)
+        .where(eq(projects.id, te.projectId))
+        .limit(1);
+      if (proj?.name) projectName = proj.name;
+      if ((!rate || !Number.isFinite(rate) || rate <= 0) && proj?.rate) {
+        const projectRate = Number(proj.rate);
+        if (Number.isFinite(projectRate) && projectRate > 0) {
+          rate = projectRate;
         }
       }
     }
+
+    // Fallback chain: entry rate → project rate → workspace default
     if (!rate || !Number.isFinite(rate) || rate <= 0) {
       const [wsRate] = await db
         .select({ defaultHourlyRate: workspaces.defaultHourlyRate })
@@ -474,6 +480,9 @@ export async function importTimeEntries(input: z.infer<typeof importTimeSchema>)
     }
 
     const amount = hours * rate;
+    const workDesc = (te.description || "").trim() || "Time entry";
+    // Client-facing: "Project — work description" so PDF/line items show project context.
+    const lineDescription = projectName ? `${projectName} — ${workDesc}` : workDesc;
 
     // Check if already imported to this invoice (via sourceId)
     const [existing] = await db
@@ -491,7 +500,7 @@ export async function importTimeEntries(input: z.infer<typeof importTimeSchema>)
     if (!existing) {
       await db.insert(invoiceItems).values({
         invoiceId: parsed.invoiceId,
-        description: te.description || "Time entry",
+        description: lineDescription,
         quantity: String(hours),
         unitPrice: String(rate),
         amount: String(amount),
