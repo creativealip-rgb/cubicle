@@ -1,0 +1,943 @@
+# Cubiqlo / Cubicle — Panduan Lengkap Fitur & Halaman
+
+> **App live:** https://cubiqlo.com  
+> **Versi docs:** sinkron dengan app **v0.1.64** (18 Juli 2026)  
+> **Audience:** user / owner workspace / onboarding internal  
+> **Bahasa UI app:** Indonesia (default) + English toggle di sidebar
+
+---
+
+## 1. Ringkasan produk
+
+**Cubiqlo (repo: Cubicle)** = workspace operasi klien untuk freelancers, VA, studio kecil, dan agency.
+
+Satu app mengganti campuran spreadsheet + chat + folder drive:
+
+1. **Kerja** — klien, proyek, tugas, waktu, kalender, file  
+2. **Keuangan** — invoice, paket jam, pengeluaran, laporan  
+3. **Penjualan** — proposal, kontrak, template, kuesioner intake  
+4. **Personal** — catatan/reminder, jurnal, landing page  
+5. **AI** — Brain chat + Prompt Studio  
+6. **Portal publik** — klien lihat proyek/file/invoice tanpa login staff
+
+### Stack (teknis singkat)
+
+- Next.js 16 App Router + React 19 + TypeScript  
+- PostgreSQL + Drizzle ORM  
+- Better Auth (email/password)  
+- Cloudflare R2 (file)  
+- Resend (email)  
+- Pakasir QRIS (billing plan app)  
+- `@react-pdf/renderer` (PDF invoice / timesheet)  
+- Docker + reverse proxy (prod)
+
+### Model data inti
+
+Semua data di-scope **workspace**. User masuk lewat membership (`owner` / `member` / `viewer`).
+
+Entity utama:
+
+- Workspace, members  
+- Clients, projects, tasks, packages  
+- Time entries, invoices, invoice items, payments  
+- Expenses, expense categories, recurring expenses  
+- Proposals, contracts, templates  
+- Files, folders  
+- Appointments, availability rules  
+- Questionnaires + responses  
+- Personal notes (notes / journal / site)  
+- AI conversations, prompt templates  
+- Notifications, activity logs, portal visits  
+
+---
+
+## 2. Akses, auth, onboarding
+
+### 2.1 Halaman publik auth
+
+| Route | Fungsi |
+|---|---|
+| `/` | Landing marketing produk |
+| `/login` | Login email + password; redirect ke target terproteksi |
+| `/signup` | Daftar akun baru |
+| `/forgot-password` | Minta reset password |
+| `/reset-password` | Set password baru dari token email |
+| `/verify-email` | Verifikasi email |
+| `/verify-email/success` | Konfirmasi sukses |
+| `/privacy` | Kebijakan privasi |
+| `/terms` | Syarat layanan |
+
+**Alur tipikal**
+
+1. Signup → verifikasi email (jika diaktifkan)  
+2. Login  
+3. Kalau belum selesai setup → `/onboarding`  
+4. Masuk app di `/app/dashboard`
+
+### 2.2 Onboarding (`/onboarding`)
+
+Wizard 3 langkah:
+
+1. **Workspace** — nama workspace  
+2. **Tim** — undang email anggota (opsional)  
+3. **Siap** — selesai, masuk dashboard  
+
+Hasil: workspace aktif + membership owner.
+
+### 2.3 Proteksi route
+
+- Semua `/app/*` butuh session login  
+- Unauthenticated → redirect `/login?redirect=...`  
+- Role:
+  - **owner** — full manage (team, billing, delete kritis)
+  - **member** — create/edit operasional
+  - **viewer** — read-only (tombol tulis disembunyikan)
+
+### 2.4 Shell app (setiap halaman internal)
+
+Sidebar grup:
+
+- **Dashboard**
+- **Kerja** — Klien, Proyek, Tugas, Waktu, Kalender, File  
+- **Keuangan** — Invoice, Paket, Pengeluaran, Laporan  
+- **Personal** — Catatan, Landing Page, Jurnal  
+- **Penjualan** — Proposal, Kontrak, Template  
+- **AI** — Brain, Prompt  
+
+Top area (umum):
+
+- Workspace switcher / konteks workspace  
+- Timer global (kalau aktif)  
+- Notifikasi in-app  
+- Bahasa ID/EN  
+- Link Settings / Billing / Support (tergantung layout topbar)
+
+Badge sidebar:
+
+- Tugas terbuka milik user  
+- Invoice belum lunas  
+- Proposal draft  
+- Kontrak draft  
+
+---
+
+## 3. Dashboard — `/app/dashboard`
+
+**Tujuan:** “apa yang harus dikerjakan / ditagih hari ini”.
+
+### Yang ditampilkan
+
+1. **Greeting** berbasis waktu Jakarta (update periodik)  
+2. **Onboarding checklist** (workspace baru)  
+3. Blok **Reminder / due soon**
+   - Tugas jatuh tempo / overdue  
+   - Catatan personal dengan due date  
+   - Appointment mendatang  
+4. Blok **Kerja**
+   - Ringkas open tasks  
+   - Aktivitas terbaru  
+5. Blok **Keuangan**
+   - Outstanding invoice  
+   - Ringkas revenue / paid (multi-currency aware di format money)  
+6. Shortcut aksi cepat:
+   - Buat klien / task / invoice / start timer (link)
+
+### Cara pakai
+
+- Cek dulu card due / overdue  
+- Klik item → detail resource  
+- Selesai kerja harian → lanjut modul Kerja / Invoice  
+
+---
+
+## 4. Kerja
+
+### 4.1 Klien — `/app/clients`
+
+**Tujuan:** master data klien.
+
+#### List
+
+- Tab status: **Aktif / Tidak aktif / Arsip** + count  
+- Search nama/perusahaan  
+- Tabel desktop + card mobile  
+- Limit free plan: **3 klien** (banner upgrade muncul saat penuh)  
+- Aksi: buka detail, export PDF klien (bulk/single via API)
+
+#### Buat klien
+
+- `/app/clients/new` atau dialog create  
+- Field umum: nama, perusahaan, email, phone, alamat, status, notes  
+- Portal slug (auto-generate) untuk client portal  
+
+#### Detail klien — `/app/clients/[clientId]`
+
+Tab:
+
+| Tab | Isi |
+|---|---|
+| **Overview** | Ringkas kontak, status, stats |
+| **Projects** | Daftar proyek + progress (package = jam terpakai/kuota; project = task ratio; hours = akumulasi jam) |
+| **Files** | File terkait klien |
+| **Invoices** | Invoice klien |
+| **Appointments** | Janji temu klien |
+| **Portal** | Token portal, link share, request dari portal, audit akses |
+| **Notes** | Catatan terkait |
+
+Aksi penting:
+
+- Edit klien (dialog)  
+- Export PDF klien  
+- Generate / regenerate portal access  
+- Kelola portal requests (approve/reject admin)
+
+### 4.2 Proyek — `/app/projects`
+
+**Tujuan:** container kerja per klien.
+
+#### List
+
+- Status: Draft / Aktif / On Hold / Completed / Cancelled  
+- Info billing type, klien, progress  
+- Create dialog proyek baru  
+
+#### Field proyek penting
+
+- Nama, klien, status  
+- **Billing type:**
+  - `hours` — Per Jam  
+  - `package` — Per Paket (kuota jam)  
+  - `project` — Per Proyek (fixed)  
+- Tanggal mulai / selesai  
+- Budget / package hours (jika relevan)  
+
+#### Detail proyek — `/app/projects/[projectId]`
+
+Tab:
+
+| Tab | Fungsi |
+|---|---|
+| **Tasks** | Kanban/list task proyek |
+| **Files** | File proyek |
+| **Time** | Jam tercatat di proyek |
+| **Comments** | Diskusi internal + notifikasi email |
+| **Timeline** | Timeline aktivitas/status |
+
+Aksi:
+
+- Edit meta proyek  
+- Lihat progress otomatis (bergantung billing type)  
+- Navigasi cepat ke invoice / time  
+
+### 4.3 Tugas — `/app/tasks`
+
+**Tujuan:** eksekusi kerja harian.
+
+#### Fitur
+
+- View toggle: **Board (kanban)** / list  
+- Filter status/priority/assignee/project  
+- Create task dialog  
+- Detail sheet (slide-over)  
+- Priority badge + status badge  
+- Drag-and-drop status di board  
+- Deep-link `?focus=` buka sheet task (termasuk dari convert catatan)
+
+#### Field task umum
+
+- Judul, deskripsi  
+- Project, assignee  
+- Status, priority  
+- Due date  
+- Link balik ke personal note (jika convert dari catatan)
+
+### 4.4 Waktu — `/app/time`
+
+**Tujuan:** track jam billable/non-billable.
+
+#### Komponen
+
+1. **TimerWidget**
+   - Start/stop timer aktif  
+   - Pilih client / project / task  
+   - Deskripsi + tags  
+   - Rate fallback: entry → project → workspace default  
+2. **ManualEntryForm**
+   - Input jam manual (start/end atau duration)  
+3. **Timesheet**
+   - Riwayat entry  
+   - Edit/hapus (role writable)  
+4. **PdfExportButton**
+   - Export timesheet PDF (VA timesheet)
+   - Mode: Detailed / Dashboard / Full  
+   - Filter client/project/date range  
+
+#### Status entry (konsep operasional)
+
+- Running / stopped  
+- Approved / billed (saat diimport ke invoice)  
+- Tags untuk klasifikasi kerja  
+
+#### Integrasi
+
+- Import entry ke invoice (lihat Invoice detail)  
+- Progress package project memakai total menit entry  
+
+### 4.5 Kalender — `/app/calendar`
+
+**Tujuan:** janji temu + availability booking publik.
+
+#### Fitur internal
+
+- Daftar appointment mendatang  
+- Buat/hapus **availability rules** (hari/jam available)  
+- Cancel appointment  
+- Export ICS per appointment (`/api/calendar/[id]/ics`)  
+
+#### Booking publik
+
+- Workspace punya `bookingSlug`  
+- Publik buka `/booking/[slug]`  
+- Pilih tanggal → slot available → isi nama/email/notes → book  
+
+### 4.6 File — `/app/files`
+
+**Tujuan:** storage terorganisir (R2).
+
+#### Fitur
+
+- Folder tree  
+- Upload button + drag-drop zone  
+- New folder  
+- List file dengan filter client/project  
+- Download / delete  
+- Visibility rules untuk portal (client-safe)
+
+---
+
+## 5. Keuangan
+
+### 5.1 Invoice list — `/app/invoices` (v0.1.64)
+
+**Tujuan:** pusat penagihan.
+
+#### Toolbar
+
+**Kiri — tab status (style TabsList sama Clients):**
+
+- Semua (exclude `archived`)  
+- Draf  
+- Terkirim  
+- Dilihat  
+- Terlambat  
+- Lunas  
+- Dibatalkan  
+- Arsip  
+
+Setiap tab ada count badge. Count menyesuaikan filter aktif.
+
+**Kanan — filter sejajar tab:**
+
+- Dropdown **Klien**  
+- Dropdown **Jenis proyek** (`hours` / `package` / `project` / tanpa proyek)  
+- Tombol Filter / Reset  
+
+#### Tabel
+
+Kolom:
+
+- No. invoice (`INV-YYYY-XXXX`)  
+- Client  
+- Project  
+- Type (billing)  
+- Issue date  
+- Due date  
+- Total (multi-currency format)  
+- Status badge  
+- Actions (lihat detail)
+
+#### Pagination
+
+- **10 invoice / halaman**  
+- URL state: `?status=&clientId=&billing=&page=`  
+- Prev/Next + “Menampilkan X–Y dari Z”
+
+#### Aksi header
+
+- Templates → Template Center tab invoice  
+- + New Invoice  
+
+### 5.2 Buat invoice — `/app/invoices/new`
+
+- Pilih klien  
+- Opsional project + template invoice  
+- Currency, tax, dates, notes  
+- Line items awal  
+- Submit → detail invoice  
+
+### 5.3 Detail invoice — `/app/invoices/[invoiceId]`
+
+**Ini halaman operasional terpenting finance.**
+
+#### Header
+
+- Nomor, status badge  
+- Client + project + billing type  
+- Issue/due date, currency, total  
+- Aksi:
+  - Back to list  
+  - PDF invoice download  
+  - Share link publik  
+  - Send invoice email  
+  - Send reminder (overdue/unpaid)  
+
+#### Edit meta
+
+`InvoiceMetaForm`:
+
+- Status: `draft | sent | viewed | paid | overdue | cancelled | archived`  
+- Dates, tax, notes, currency, dsb.  
+- **Arsip** = status `archived` (hilang dari tab Semua, masuk tab Arsip)
+
+#### Line items
+
+- Tambah item manual  
+- Hapus item  
+- Deskripsi format rekomendasi: `[Nama Project] — [Deskripsi]`  
+
+#### Import Time Entries
+
+- Modal daftar time entry eligible (biasanya approved/unbilled, filter by project invoice jika ada)  
+- Checkbox per entry  
+- **Pilih Semua (N)** + master checkbox + Kosongkan  
+- Import → jadi line items + entry marked billed  
+
+#### Payments
+
+- Catat pembayaran partial/full  
+- Update sisa tagihan  
+- Riwayat payment  
+
+#### Share
+
+- Generate shared token  
+- Public URL `/invoice/[token]`  
+- View tracking (status bisa jadi `viewed`)
+
+### 5.4 Paket — `/app/packages`
+
+**Tujuan:** katalog paket jam/retainer.
+
+#### Fitur
+
+- CRUD paket (nama, jam, harga, currency, deskripsi, features, badge)  
+- Active/inactive  
+- Custom package range (`minHours`–`maxHours`, `allowCustom`)  
+- Dipakai di portal klien / order package (alur package request)
+
+### 5.5 Pengeluaran — `/app/expenses`
+
+**Tujuan:** expense tracking + P/L.
+
+#### Fitur
+
+- Form tambah expense  
+- Edit / delete  
+- Kategori (Category Manager)  
+- Recurring expenses (Recurring Manager)  
+- Filter tanggal/kategori/project/client  
+- Upload/link receipt  
+- CSV export  
+- Ringkas total + tren  
+- Pagination list  
+
+### 5.6 Laporan — `/app/reports`
+
+**Tujuan:** kesehatan keuangan workspace.
+
+#### Blok umum
+
+- Revenue / paid / outstanding (multi-currency map)  
+- Collection health (invoice aging-ish)  
+- Top clients  
+- Expense breakdown by category  
+- Profit-ish view (revenue vs expense)  
+- Link cepat ke invoice/expense terkait  
+
+---
+
+## 6. Penjualan
+
+### 6.1 Proposal — `/app/proposals`
+
+#### List
+
+Tab status:
+
+- All / Draft / Sent / Viewed / Accepted / Declined / Expired  
+
+Kolom: title, client, total, status, activity date.
+
+Aksi:
+
+- New proposal  
+- Send / resend  
+- Open detail  
+
+#### New — `/app/proposals/new`
+
+- Client, title, body markdown  
+- Line items, tax, DP percent  
+- Valid until  
+
+#### Detail — `/app/proposals/[proposalId]`
+
+- Preview markdown body  
+- Line items table  
+- Status + timestamps (sent/viewed/accepted/declined)  
+- Send/resend + copy public link  
+- Delete (guard status)  
+
+#### Publik — `/proposal/[token]`
+
+- Klien buka tanpa login  
+- Lihat proposal  
+- Accept / Decline  
+- Status & notifikasi ke workspace  
+
+### 6.2 Kontrak — `/app/contracts`
+
+#### List
+
+Tab:
+
+- All / Draft / Sent / Viewed / Signed / Declined / Expired / Revoked  
+
+Aksi: create from template, send, open detail.
+
+#### Detail — `/app/contracts/[contractId]`
+
+- Body markdown  
+- Client/project meta  
+- Send / resend / copy link  
+- Revoke  
+- Delete guard  
+- Signed metadata  
+
+#### Publik — `/contract/[token]`
+
+- Baca kontrak  
+- Signature pad digital  
+- State handling: not found / revoked / expired / already signed / declined / not sent  
+
+### 6.3 Template Center — `/app/templates`
+
+**Akses:** preview gate email tertentu (`canAccessTemplatesPreview`).
+
+Tab:
+
+- Invoice templates  
+- Proposal templates  
+- Contract templates  
+- Prompt (placeholder/soon)
+
+Fungsi:
+
+- CRUD template  
+- Editor kontrak di `/app/contract-templates/new` & `/[templateId]`  
+- Dipakai saat create dokumen penjualan/invoice  
+
+> Catatan: apply-template otomatis di semua create form masih bertahap; core hub sudah ada.
+
+### 6.4 Kuesioner / Intake
+
+#### Internal
+
+- `/app/questionnaires` — list form  
+- `/app/questionnaires/new` — builder schema field  
+- `/app/questionnaires/[id]` — detail + responses  
+
+Field schema support:
+
+- text, textarea, select, multiselect, number, date, email, url  
+- required/optional, options, placeholder  
+
+#### Publik
+
+- `/intake/[token]`  
+- Klien isi form  
+- State: not found / revoked / expired / already submitted  
+
+---
+
+## 7. Personal workspace
+
+### 7.1 Catatan — `/app/personal`
+
+**Tujuan:** personal notes + reminders (bukan project notes).
+
+#### Fitur
+
+- Tab: Open / Done / Archived / All  
+- Pin note  
+- Due date + overdue highlight  
+- Recurrence: daily / weekly / monthly / yearly / none  
+- Auto-roll recurrence setelah selesai (via cron/logic)  
+- Convert note → task (pilih priority + project)  
+- Reverse link task↔note  
+- Infinite load-more  
+- Sembunyikan prefix khusus `[journal]` / `[site]` dari list notes biasa  
+- Reminder cron (7d / 3d / 1d, dedupe)
+
+### 7.2 Jurnal — `/app/journal`
+
+**Tujuan:** daily journal terpisah dari task notes.
+
+- Tab Aktif / Arsip  
+- Create / edit / archive / restore / delete  
+- Mood picker + tags  
+- Search / filter / export  
+- Storage: personal notes dengan prefix `[journal]`
+
+### 7.3 Landing Page builder — `/app/personal-site`
+
+**Tujuan:** mini site publik personal/studio.
+
+#### Builder
+
+- Title, subtitle, hero, about  
+- CTA label/url  
+- Theme background + accent color  
+- Sections (services/process/pricing/portfolio/testimonials/faq/contact/custom)  
+- Links list  
+- Publish toggle + slug  
+- Preview  
+
+#### Routes terkait
+
+| Route | Akses | Fungsi |
+|---|---|---|
+| `/app/personal-site` | login | builder |
+| `/site/preview` | login | full preview private |
+| `/site/[slug]` | publik | published landing |
+
+---
+
+## 8. AI
+
+### 8.1 Brain — `/app/brain`
+
+Full-page AI chat (`AIChatPanel` variant fullpage).
+
+#### Kemampuan v1.x
+
+- Chat multi-turn dengan persistence conversation  
+- Sidebar history + auto title  
+- Tool-calling ke data workspace (clients/projects/tasks/invoices/team, dsb.)  
+- Action tools dengan konfirmasi UI (contoh update task status, draft reminder)  
+- Voice UI terse + format IDR  
+
+#### Batas saat ini
+
+- Belum pure vector RAG embeddings (tergantung provider embeddings)  
+- AI usage di-track harian (`ai_usage_daily`)  
+
+### 8.2 Prompt Studio — `/app/prompts`
+
+- Library prompt templates per workspace  
+- Generate dari template  
+- History generations  
+- Monthly usage stats  
+- AutoFeedsStudio (komposer prompt lanjutan)
+
+---
+
+## 9. Komunikasi & support
+
+### 9.1 Email suite — `/app/email`
+
+- Compose draft  
+- Save template  
+- Send via Resend  
+- Link opsional ke client/project  
+- List messages + status  
+- Delete draft/template  
+
+Settings terkait: **Reply-To email** di Settings.
+
+### 9.2 Support Center — `/app/support`
+
+- Ticket list + counts (`open`, `in_progress`, `resolved`, `closed`)  
+- Create ticket  
+- Link client/project/assignee  
+- UI client-side management  
+
+> Depth SLA/assignment email masih berkembang; fondasi ticket sudah ada.
+
+### 9.3 Settings — `/app/settings`
+
+Section:
+
+1. **Workspace info** — nama, currency default, tax  
+2. **Branding** — logo workspace  
+3. **Reply-To email**  
+4. **Team manager**
+   - Invite member  
+   - Ubah role  
+   - Remove member  
+   - Limit invite mengikuti plan (`canInviteMember`)  
+5. Link ke Billing  
+
+### 9.4 Billing plan app — `/app/billing`
+
+Bukan invoice klien — ini **langganan Cubiqlo**.
+
+| Plan | Harga | Ringkas |
+|---|---|---|
+| **Free** | Rp 0 | 1 user, 3 klien, core project/task/invoice/time |
+| **Solo** | Rp 49rb/bulan | unlimited clients, portal, AI, booking, proposal/kontrak |
+| **Team** | Rp 99rb/bulan | 5 users, shared workspace, roles, advanced reports |
+
+Bayar lewat **Pakasir QRIS**. Plan aktif setelah webhook payment sukses.
+
+---
+
+## 10. Halaman publik klien (token/slug)
+
+| Route | Siapa | Fungsi detail |
+|---|---|---|
+| `/client-portal/[token]` | Klien | Portal full: projects, tasks progress, files download, invoices (exclude archived), activity, package requests, contact buttons, time summary package |
+| `/invoice/[token]` | Klien | Lihat invoice shared, status badge, line items, mark viewed |
+| `/proposal/[token]` | Klien | Lihat + accept/decline proposal |
+| `/contract/[token]` | Klien | Lihat + tanda tangan digital |
+| `/intake/[token]` | Klien/lead | Isi kuesioner onboarding |
+| `/booking/[slug]` | Publik | Book slot dari availability workspace |
+| `/site/[slug]` | Publik | Landing page personal published |
+
+### Keamanan publik
+
+- Token di-hash (SHA-256) di DB  
+- Expiry / revoke / already-submitted checks  
+- Portal access logs + visit tracking  
+- File/invoice visibility difilter server-side  
+
+---
+
+## 11. Alur kerja end-to-end (rekomendasi)
+
+### A. Freelance retainer jam
+
+1. Buat **Klien**  
+2. Buat **Proyek** billing `hours` atau `package`  
+3. Track kerja di **Waktu** (timer/manual)  
+4. Buat **Invoice** → **Import Time** → review line items  
+5. Send invoice + share link  
+6. Catat payment → status `paid`  
+7. Optional: arsip invoice lama  
+
+### B. Project fixed fee
+
+1. Klien + proyek `project`  
+2. Breakdown **Tasks**  
+3. Kirim **Proposal** → accept  
+4. Kirim **Kontrak** → sign  
+5. Invoice milestone manual  
+6. Files & comments di project  
+
+### C. VA package 40 jam
+
+1. Paket di `/app/packages`  
+2. Proyek `package` + kuota jam  
+3. Timer entry men-consume kuota  
+4. Progress bar klien/proyek = jam terpakai / total  
+5. Invoice sisa/overage sesuai kesepakatan  
+
+### D. Lead → client
+
+1. Landing `/site/[slug]` atau booking  
+2. Intake questionnaire  
+3. Proposal  
+4. Contract  
+5. Convert jadi client ops penuh  
+
+---
+
+## 12. Status kamus (penting)
+
+### Invoice
+
+`draft → sent → viewed → paid`  
+Cabang: `overdue`, `cancelled`, `archived`
+
+- **Semua** di list = non-archived  
+- **Arsip** = soft-hide dari operasi harian  
+
+### Proposal
+
+`draft, sent, viewed, accepted, declined, expired`
+
+### Contract
+
+`draft, sent, viewed, signed, declined, expired, revoked`
+
+### Project
+
+`draft, active, on_hold, completed, cancelled` (label UI bilingual)
+
+### Task
+
+Status board + priority (low/medium/high/urgent — mengikuti badge helper)
+
+### Client
+
+`active / inactive / archived`
+
+---
+
+## 13. API & otomasi (untuk advanced user/ops)
+
+### Health
+
+- `GET /api/health` → status app + DB  
+- `GET /api/health/env` → audit env (guarded)
+
+### Auth
+
+- `/api/auth/[...all]` Better Auth handler  
+- Sign-out endpoint  
+
+### Domain API (contoh)
+
+- Clients create/export/PDF  
+- Invoices PDF/share  
+- Time active + PDF export (`/api/time/export/pdf/...`)  
+- Files upload/download  
+- Calendar appointment + ICS  
+- Billing checkout + Pakasir webhook  
+- AI chat/action/conversations  
+- Notifications / reminders  
+- Cron:
+  - expire plans  
+  - invoice overdue  
+  - personal note reminders  
+  - plan reminders  
+
+---
+
+## 14. Batas plan & feature gates
+
+1. Free: max 3 clients  
+2. Team seats terbatas (invite guard)  
+3. Template Center preview bisa di-gate email internal  
+4. AI usage tracked (quota/plan dependent)  
+5. Beberapa fitur “PARTIAL” (lihat `docs/feature-status.md`):
+   - deep WA automation  
+   - Google/Outlook calendar sync 2-way  
+   - support SLA advanced  
+   - landing builder v2 drag polish  
+
+---
+
+## 15. Tips UX harian
+
+1. Pakai **Dashboard** tiap pagi untuk due items  
+2. Timer start sebelum kerja, stop + isi deskripsi jelas  
+3. Import time ke invoice, jangan ketik ulang jam  
+4. Pakai status **Archived** daripada delete invoice historis  
+5. Filter invoice by client + billing type saat periode tutup buku  
+6. Portal token per klien — jangan share workspace login ke klien  
+7. Proposal/kontrak: selalu set `validUntil`  
+8. Package project: cek progress jam sebelum over-serve  
+9. Notes recurrence untuk reminder admin (pajak, perpanjang domain, dsb.)  
+10. Brain bagus untuk tanya “invoice outstanding klien X” — tetap verifikasi angka di Reports  
+
+---
+
+## 16. Peta route cepat
+
+### Internal
+
+```
+/app/dashboard
+/app/clients
+/app/clients/new
+/app/clients/[clientId]
+/app/projects
+/app/projects/[projectId]
+/app/tasks
+/app/time
+/app/calendar
+/app/files
+/app/invoices
+/app/invoices/new
+/app/invoices/[invoiceId]
+/app/packages
+/app/expenses
+/app/reports
+/app/personal
+/app/personal-site
+/app/journal
+/app/proposals
+/app/proposals/new
+/app/proposals/[proposalId]
+/app/contracts
+/app/contracts/[contractId]
+/app/templates
+/app/contract-templates/new
+/app/contract-templates/[templateId]
+/app/questionnaires
+/app/questionnaires/new
+/app/questionnaires/[questionnaireId]
+/app/brain
+/app/prompts
+/app/email
+/app/support
+/app/settings
+/app/billing
+/onboarding
+```
+
+### Public
+
+```
+/
+/login /signup /forgot-password /reset-password /verify-email
+/client-portal/[token]
+/invoice/[token]
+/proposal/[token]
+/contract/[token]
+/intake/[token]
+/booking/[slug]
+/site/[slug]
+/site/preview
+/privacy /terms
+```
+
+---
+
+## 17. Dokumen terkait di repo
+
+| File | Isi |
+|---|---|
+| `docs/feature-status.md` | Status DONE/PARTIAL/TODO per fitur |
+| `docs/feature.md` | Backlog ide fitur masa depan |
+| `docs/ai-assistant.md` | Detail Brain/AI tools |
+| `docs/cubicle_prd.md` | PRD awal |
+| `docs/cubicle_ops.md` | Operasional deploy |
+| `docs/cubicle_env.md` | Env vars |
+| `docs/MANUAL_TEST_CHECKLIST.md` | QA manual |
+| `CHANGELOG.md` | Riwayat rilis versi |
+| `README.md` | Intro repo dev |
+
+---
+
+## 18. Changelog docs ini
+
+- **2026-07-18** — initial full user guide (v0.1.64)
+  - Cover all sidebar modules + public pages  
+  - Invoice tabs/filters/archive/pagination terbaru  
+  - Package progress, import time select-all, portal archive hide  
+
+---
+
+**Maintainer note:** kalau ada fitur baru, update section route terkait + naikkan versi di header docs ini bersamaan bump `package.json`.

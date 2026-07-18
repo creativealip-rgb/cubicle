@@ -319,6 +319,18 @@ Highlights:
 - ⚠️ No rate limiting on auth endpoints (consider Cloudflare Turnstile or upstash/ratelimit)
 - ⚠️ No CSRF token beyond what Better-Auth provides (same-origin only)
 
+## Documentation
+
+| Doc | Isi |
+|---|---|
+| [`docs/USER_GUIDE_CUBICLE.md`](docs/USER_GUIDE_CUBICLE.md) | **Panduan lengkap user** — semua halaman, fitur, alur kerja, status, route map |
+| `docs/feature-status.md` | Status DONE / PARTIAL / TODO per fitur |
+| `docs/feature.md` | Backlog ide fitur (belum commit sprint) |
+| `docs/ai-assistant.md` | Detail Brain / AI tools |
+| `docs/cubicle_ops.md` | Operasional deploy |
+| `docs/cubicle_env.md` | Environment variables |
+| `docs/MANUAL_TEST_CHECKLIST.md` | QA manual |
+
 ## Roadmap
 
 See `docs/cubicle_remaining_plan.md` for the full P0/P1/P2 breakdown.
