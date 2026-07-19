@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.87 — 2026-07-19 — Restore clean homepage
+
+- Revert Google OAuth branding homepage patches
+- Landing page back to clean marketing copy (pre-branding attempt)
+
 ## v0.1.86 — 2026-07-19 — Stronger Google OAuth branding homepage
 
 - Header text **Cubiqlo** + Privacy/Terms links visible
