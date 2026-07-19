@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Share2, Download } from "lucide-react";
+import { ArrowLeft, Share2, Download, Clock } from "lucide-react";
 import { InvoiceItemManager } from "./add-item-button";
 import { DeleteItemButton } from "./delete-item-button";
 import { ImportTimeSection } from "./import-time-section";
