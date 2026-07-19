@@ -14,6 +14,7 @@ import { TeamManager } from "@/components/settings/team-manager";
 import { ReplyToEmailForm } from "@/components/settings/reply-to-email-form";
 import { WorkspaceBrandingForm } from "@/components/settings/workspace-branding-form";
 import { WorkspaceNameForm } from "@/components/settings/workspace-name-form";
+import { BookingSlugForm } from "@/components/settings/booking-slug-form";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { canInviteMember } from "@/lib/plan";
 
@@ -66,8 +67,8 @@ export default async function SettingsPage() {
               <div className="flex justify-between"><span className="text-muted-foreground">Slug</span><Badge variant="secondary">{workspace.slug}</Badge></div>
               <div className="flex justify-between"><span className="text-muted-foreground">{t("Mata Uang", "Currency")}</span><span>{workspace.defaultCurrency}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">{t("Pajak", "Tax")}</span><span>{workspace.defaultTaxRate}%</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Booking slug</span><span>{workspace.bookingSlug || "—"}</span></div>
             </div>
+            <BookingSlugForm defaultSlug={workspace.bookingSlug} canEdit={canEditWorkspace} />
           </CardContent>
         </Card>
 

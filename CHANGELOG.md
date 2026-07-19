@@ -1,3 +1,12 @@
+## 0.1.80 - 2026-07-19
+
+### Added
+- Settings UI to edit public booking slug + copy form link
+- Seed-ready booking form flow for public client meetings
+
+### Changed
+- Calendar shows enable-booking CTA when slug missing
+
 # Changelog
 
 ## v0.1.79 — 2026-07-19 — Sortable table headers

@@ -104,12 +104,20 @@ export default async function CalendarPage() {
               {t("Buat formulir", "Create form")}
             </Link>
           </Button>
-          {ws.bookingSlug && (
+          {ws.bookingSlug ? (
             <Button variant="outline" size="sm" asChild>
               <Link href={`/booking/${ws.bookingSlug}`} target="_blank">
                 <Calendar className="mr-2 h-4 w-4" />
                 <span className="hidden sm:inline">{t("Halaman Booking Publik", "Public Booking Page")}</span>
                 <span className="sm:hidden">{t("Booking publik", "Public booking")}</span>
+              </Link>
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/app/settings">
+                <Calendar className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">{t("Aktifkan booking publik", "Enable public booking")}</span>
+                <span className="sm:hidden">{t("Aktifkan booking", "Enable booking")}</span>
               </Link>
             </Button>
           )}

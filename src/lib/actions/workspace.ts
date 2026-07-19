@@ -93,3 +93,56 @@ export async function updateWorkspaceBranding(input: z.infer<typeof brandingSche
   revalidatePath("/app/packages");
   return { ok: true as const };
 }
+
+const bookingSlugSchema = z.object({
+  bookingSlug: z
+    .string()
+    .trim()
+    .max(64)
+    .transform((v) => v.toLowerCase())
+    .refine(
+      (v) => v === "" || /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(v),
+      "Slug hanya huruf kecil, angka, dan strip (contoh: alip-meeting)",
+    ),
+});
+
+export async function updateWorkspaceBookingSlug(input: z.infer<typeof bookingSlugSchema>) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceOwner(db, user.id, workspaceId);
+
+  const parsed = bookingSlugSchema.parse(input);
+  const nextSlug = parsed.bookingSlug || null;
+
+  if (nextSlug) {
+    const [taken] = await db
+      .select({ id: workspaces.id })
+      .from(workspaces)
+      .where(eq(workspaces.bookingSlug, nextSlug))
+      .limit(1);
+
+    if (taken && taken.id !== workspaceId) {
+      throw new Error("Booking slug sudah dipakai workspace lain");
+    }
+  }
+
+  await db
+    .update(workspaces)
+    .set({
+      bookingSlug: nextSlug,
+      updatedAt: new Date(),
+    })
+    .where(eq(workspaces.id, workspaceId));
+
+  await writeActivityLog(
+    workspaceId,
+    user.id,
+    nextSlug ? "updated_booking_slug" : "cleared_booking_slug",
+    "workspace",
+    workspaceId,
+  );
+  revalidatePath("/app/settings");
+  revalidatePath("/app/calendar");
+  return { ok: true as const, bookingSlug: nextSlug };
+}
