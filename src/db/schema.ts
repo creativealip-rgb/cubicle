@@ -419,7 +419,7 @@ export const appointments = pgTable("appointments", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-// ─── Google Calendar connections (per user) ───
+// ─── Google Calendar connections (per user / workspace owner) ───
 
 export const googleCalendarConnections = pgTable("google_calendar_connections", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -435,6 +435,33 @@ export const googleCalendarConnections = pgTable("google_calendar_connections", 
   lastError: text("last_error"),
   connectedAt: timestamp("connected_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─── Google Calendar connections (per client — separate from user calendar) ───
+
+export const clientGoogleCalendarConnections = pgTable("client_google_calendar_connections", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }).unique(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  connectedByUserId: text("connected_by_user_id").references(() => users.id, { onDelete: "set null" }),
+  googleAccountEmail: text("google_account_email"),
+  accessTokenEnc: text("access_token_enc"),
+  refreshTokenEnc: text("refresh_token_enc"),
+  scope: text("scope"),
+  tokenType: text("token_type"),
+  expiryDate: timestamp("expiry_date", { withTimezone: true }),
+  calendarId: text("calendar_id").notNull().default("primary"),
+  inviteTokenHash: text("invite_token_hash").unique(),
+  inviteTokenExpiresAt: timestamp("invite_token_expires_at", { withTimezone: true }),
+  status: text("status", {
+    enum: ["pending_invite", "connected", "error", "disconnected"],
+  })
+    .notNull()
+    .default("pending_invite"),
+  lastError: text("last_error"),
+  connectedAt: timestamp("connected_at", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 // ─── AI Prompts ───

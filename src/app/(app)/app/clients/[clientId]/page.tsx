@@ -35,7 +35,12 @@ import {
 import { PortalTokenSection } from "./portal-section";
 import { PortalRequestAdmin } from "@/components/portal/portal-request-admin";
 import { ClientEditDialog } from "@/components/clients/client-edit-dialog";
+import { ClientGoogleCalendarPanel } from "@/components/clients/client-google-calendar-panel";
 import { billingTypeLabel } from "@/lib/feature-access";
+import {
+  getClientGoogleConnectionStatus,
+  listClientGoogleEvents,
+} from "@/lib/client-google-calendar";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -59,6 +64,7 @@ export default async function ClientDetailPage({
     "files",
     "invoices",
     "appointments",
+    "calendar",
     "portal",
     "notes",
   ]);
@@ -72,6 +78,16 @@ export default async function ClientDetailPage({
 
   const [client] = await db.select().from(clients).where(eq(clients.id, clientId));
   if (!client) notFound();
+
+  // Google Calendar client (separate from user calendar)
+  const clientGcalStatus = await getClientGoogleConnectionStatus(clientId);
+  let clientGcalEvents: Awaited<ReturnType<typeof listClientGoogleEvents>>["events"] = [];
+  let clientGcalEventsError: string | null = null;
+  if (clientGcalStatus.connected) {
+    const listed = await listClientGoogleEvents(clientId);
+    clientGcalEvents = listed.events;
+    clientGcalEventsError = listed.error ?? null;
+  }
 
   // Projects
   const clientProjectsRaw = await db
@@ -353,6 +369,9 @@ export default async function ClientDetailPage({
           <TabsTrigger value="appointments" className="gap-1">
             <Calendar className="h-3 w-3" /> Jadwal
           </TabsTrigger>
+          <TabsTrigger value="calendar" className="gap-1">
+            <Calendar className="h-3 w-3" /> Calendar / Meetings
+          </TabsTrigger>
           <TabsTrigger value="portal" className="gap-1">
             <Globe className="h-3 w-3" /> Portal
           </TabsTrigger>
@@ -533,6 +552,30 @@ export default async function ClientDetailPage({
               </CardContent>
             </Card>
           ))}
+        </TabsContent>
+
+        <TabsContent value="calendar" className="space-y-4 pt-4">
+          <ClientGoogleCalendarPanel
+            clientId={client.id}
+            configured={clientGcalStatus.configured}
+            connected={clientGcalStatus.connected}
+            pendingInvite={clientGcalStatus.pendingInvite}
+            email={clientGcalStatus.connection?.googleAccountEmail ?? null}
+            status={clientGcalStatus.connection?.status ?? null}
+            lastError={clientGcalStatus.connection?.lastError ?? null}
+            connectedAt={clientGcalStatus.connection?.connectedAt?.toISOString() ?? null}
+            events={clientGcalEvents}
+            eventsError={clientGcalEventsError}
+            appointments={clientAppointments.map((apt) => ({
+              id: apt.id,
+              title: apt.title,
+              startTime: apt.startTime,
+              endTime: apt.endTime,
+              status: apt.status,
+              attendeeName: apt.attendeeName,
+              attendeeEmail: apt.attendeeEmail,
+            }))}
+          />
         </TabsContent>
 
         <TabsContent value="notes" className="space-y-4 pt-4">

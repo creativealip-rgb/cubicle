@@ -1,13 +1,12 @@
-## 0.1.80 - 2026-07-19
-
-### Added
-- Settings UI to edit public booking slug + copy form link
-- Seed-ready booking form flow for public client meetings
-
-### Changed
-- Calendar shows enable-booking CTA when slug missing
-
 # Changelog
+
+## v0.1.82 — 2026-07-19 — Client Google Calendar (per-client)
+
+- Clients → detail → tab **Calendar / Meetings**
+- Connect Google Calendar **klien** via invite link (tanpa login Cubiqlo)
+- Status connect/disconnect + list event Google klien (terpisah dari calendar user)
+- Tabel `client_google_calendar_connections`
+- Routes: `/api/integrations/google-calendar/client-invite/[token]`, result page `/client-gcal`
 
 ## v0.1.81 — 2026-07-19 — Google Calendar sync
 
