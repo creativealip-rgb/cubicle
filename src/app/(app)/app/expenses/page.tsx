@@ -14,22 +14,12 @@ import {
 import { eq, desc, and, gte, lte } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { ExpenseForm, type CategoryOption, type ProjectOption, type ClientOption } from "@/components/expenses/expense-form";
-import { DeleteExpenseButton } from "@/components/expenses/delete-expense-button";
-import { EditExpenseButton } from "@/components/expenses/edit-expense-button";
 import { CategoryManager } from "@/components/expenses/category-manager";
 import { RecurringManager } from "@/components/expenses/recurring-manager";
 import { ExpenseFilters } from "@/components/expenses/expense-filters";
 import { ExpenseCsvExportButton } from "@/components/expenses/expense-csv-export";
-import { ReceiptLinkButton } from "@/components/expenses/receipt-link-button";
+import { ExpensesListTable } from "@/components/expenses/expenses-list-table";
 import { TrendingDown, TrendingUp, Wallet, Tag, ChevronLeft, ChevronRight } from "lucide-react";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { getCurrentLang, createT } from "@/lib/i18n";
@@ -517,85 +507,15 @@ export default async function ExpensesPage({
                 </p>
               ) : (
                 <>
-                  <div className="overflow-x-auto -mx-1">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-28">{t("Tanggal", "Date")}</TableHead>
-                          <TableHead>{t("Deskripsi", "Description")}</TableHead>
-                          <TableHead>{t("Kategori", "Category")}</TableHead>
-                          <TableHead className="hidden md:table-cell">{t("Proyek", "Project")}</TableHead>
-                          <TableHead className="hidden lg:table-cell">{t("Klien", "Client")}</TableHead>
-                          <TableHead className="text-right whitespace-nowrap">{t("Jumlah", "Amount")}</TableHead>
-                          {canWrite && <TableHead className="w-24"></TableHead>}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {expenseRows.map((e) => (
-                          <TableRow key={e.id}>
-                            <TableCell className="text-xs text-slate-500 tabular-nums whitespace-nowrap">
-                              {e.date}
-                            </TableCell>
-                            <TableCell>
-                              <div className="font-medium text-sm">{e.description}</div>
-                              {e.vendor && <div className="text-xs text-slate-500">{e.vendor}</div>}
-                            </TableCell>
-                            <TableCell>
-                              {e.categoryName ? (
-                                <span className="inline-flex items-center gap-1.5 text-xs">
-                                  <span
-                                    className="h-2 w-2 rounded-full"
-                                    style={{ backgroundColor: e.categoryColor ?? "#64748b" }}
-                                  />
-                                  {e.categoryName}
-                                </span>
-                              ) : (
-                                <span className="text-xs text-slate-400">—</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-xs text-slate-600 hidden md:table-cell">
-                              {e.projectName ?? <span className="text-slate-400">—</span>}
-                            </TableCell>
-                            <TableCell className="text-xs text-slate-600 hidden lg:table-cell">
-                              {e.clientName ?? <span className="text-slate-400">—</span>}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums text-sm font-medium whitespace-nowrap">
-                              {formatMoney(e.amount, e.currency)}
-                            </TableCell>
-                            {canWrite && (
-                              <TableCell>
-                                <div className="flex items-center justify-end gap-0.5">
-                                  {e.receiptUrl && <ReceiptLinkButton expenseId={e.id} />}
-                                  <EditExpenseButton
-                                    expense={{
-                                      id: e.id,
-                                      date: e.date,
-                                      amount: e.amount,
-                                      currency: e.currency,
-                                      description: e.description,
-                                      categoryId: e.categoryId,
-                                      projectId: e.projectId,
-                                      clientId: e.clientId,
-                                      vendor: e.vendor,
-                                      taxIncluded: e.taxIncluded,
-                                      taxAmount: e.taxAmount,
-                                      receiptUrl: e.receiptUrl,
-                                    }}
-                                    workspaceId={ws.id}
-                                    defaultCurrency={ws.defaultCurrency}
-                                    categories={categories}
-                                    projects={projectOpts}
-                                    clients={clientOpts}
-                                  />
-                                  <DeleteExpenseButton expenseId={e.id} description={e.description} />
-                                </div>
-                              </TableCell>
-                            )}
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                  <ExpensesListTable
+                    rows={expenseRows}
+                    canWrite={canWrite}
+                    workspaceId={ws.id}
+                    defaultCurrency={ws.defaultCurrency}
+                    categories={categories}
+                    projects={projectOpts}
+                    clients={clientOpts}
+                  />
 
                   {totalPages > 1 && (
                     <div className="flex items-center justify-between mt-4 text-sm text-slate-500">

@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.79 — 2026-07-19 — Sortable table headers
+
+- Reusable `SortableHeader` + `useTableSort` (3-state: ASC → DESC → default).
+- Sortable columns on Tasks, Projects, Clients, Invoices, Proposals, Contracts, Expenses, Questionnaires.
+- Project tasks list view: same 3-state column sort.
+
 ## v0.1.78 — 2026-07-19 — Project status: archived
 
 - Project status enum + form + tabs: tambah **archived** / Diarsipkan.

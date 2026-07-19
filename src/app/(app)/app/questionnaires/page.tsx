@@ -9,14 +9,7 @@ import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { QuestionnairesListTable } from "@/components/questionnaires/questionnaires-list-table";
 import { Plus, ClipboardList, ChevronRight } from "lucide-react";
 
 async function getWorkspaceId(): Promise<string> {
@@ -138,64 +131,21 @@ export default async function QuestionnairesPage() {
             })}
           </div>
 
-          {/* Desktop table */}
-          <div className="hidden overflow-hidden rounded-2xl border bg-white md:block">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("Nama", "Name")}</TableHead>
-                  <TableHead>{t("Kolom", "Fields")}</TableHead>
-                  <TableHead>{t("Terkirim", "Submitted")}</TableHead>
-                  <TableHead>{t("Menunggu", "Pending")}</TableHead>
-                  <TableHead>{t("Diperbarui", "Updated")}</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((q) => {
-                  const fieldCount = Array.isArray(q.schema) ? (q.schema as unknown[]).length : 0;
-                  const c = counts[q.id] || { submitted: 0, pending: 0 };
-                  return (
-                    <TableRow key={q.id}>
-                      <TableCell>
-                        <Link
-                          href={`/app/questionnaires/${q.id}`}
-                          className="text-sm font-medium hover:underline"
-                        >
-                          {q.name}
-                        </Link>
-                        {q.description && (
-                          <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">{q.description}</p>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm text-slate-600">{fieldCount}</TableCell>
-                      <TableCell className="text-sm">
-                        <Badge variant="default">{c.submitted}</Badge>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {c.pending > 0 ? (
-                          <Badge variant="secondary">{c.pending}</Badge>
-                        ) : (
-                          <span className="text-slate-400">0</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-xs text-slate-500">
-                        {new Date(q.updatedAt).toLocaleDateString(lang === "en" ? "en-US" : "id-ID")}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Link
-                          href={`/app/questionnaires/${q.id}`}
-                          className="text-sm text-indigo-600 hover:underline"
-                        >
-                          {t("Buka", "Open")}
-                        </Link>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
+          <QuestionnairesListTable
+            rows={rows.map((q) => {
+              const fieldCount = Array.isArray(q.schema) ? (q.schema as unknown[]).length : 0;
+              const c = counts[q.id] || { submitted: 0, pending: 0 };
+              return {
+                id: q.id,
+                name: q.name,
+                description: q.description,
+                fieldCount,
+                submitted: c.submitted,
+                pending: c.pending,
+                updatedAt: q.updatedAt,
+              };
+            })}
+          />
         </>
       )}
     </div>

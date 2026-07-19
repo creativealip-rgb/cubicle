@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { KanbanBoard } from "@/components/tasks/kanban-board";
 import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { SortableHeader } from "@/components/ui/sortable-header";
+import { useTableSort } from "@/hooks/use-table-sort";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n-client";
 import { taskStatusVariant, taskPriorityColor, taskPriorityLabel } from "@/lib/status-badge";
@@ -31,9 +33,35 @@ interface ProjectTasksTabProps {
   members?: Array<{ id: string; name: string | null; email: string | null }>;
 }
 
+const PRIORITY_ORDER = ["urgent", "high", "medium", "low"] as const;
+const STATUS_ORDER = ["todo", "in_progress", "review", "done", "cancelled"] as const;
+
+type SortKey = "title" | "assignee" | "dueDate" | "priority" | "status";
+
 export function ProjectTasksTab({ projectId, tasks, members = [] }: ProjectTasksTabProps) {
   const { t, lang, locale } = useT();
   const [view, setView] = useState<"board" | "list">("board");
+
+  const getters = useMemo(
+    () => ({
+      title: (r: Task) => r.title,
+      assignee: (r: Task) => r.assigneeName ?? "",
+      dueDate: (r: Task) => r.dueDate,
+      priority: (r: Task) => r.priority,
+      status: (r: Task) => r.status,
+    }),
+    [],
+  );
+
+  const orders = useMemo(
+    () => ({
+      priority: PRIORITY_ORDER,
+      status: STATUS_ORDER,
+    }),
+    [],
+  );
+
+  const { sorted, toggle, dirFor } = useTableSort<Task, SortKey>(tasks, getters, orders);
 
   const base = "flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors";
 
@@ -64,11 +92,51 @@ export function ProjectTasksTab({ projectId, tasks, members = [] }: ProjectTasks
         <div className="overflow-hidden rounded-lg border bg-card">
           {tasks.length > 0 && (
             <div className="hidden items-center gap-4 border-b bg-muted/40 px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:flex">
-              <div className="min-w-0 flex-1">{t("Judul", "Title")}</div>
-              <div className="w-28">{t("Ditugaskan", "Assignee")}</div>
-              <div className="w-24">{t("Jatuh Tempo", "Due")}</div>
-              <div className="w-20">{t("Prioritas", "Priority")}</div>
-              <div className="w-24">{t("Status", "Status")}</div>
+              <div className="min-w-0 flex-1">
+                <SortableHeader
+                  as="div"
+                  label={t("Judul", "Title")}
+                  dir={dirFor("title")}
+                  onClick={() => toggle("title")}
+                  className="text-[11px] uppercase tracking-wide"
+                />
+              </div>
+              <div className="w-28">
+                <SortableHeader
+                  as="div"
+                  label={t("Ditugaskan", "Assignee")}
+                  dir={dirFor("assignee")}
+                  onClick={() => toggle("assignee")}
+                  className="text-[11px] uppercase tracking-wide"
+                />
+              </div>
+              <div className="w-24">
+                <SortableHeader
+                  as="div"
+                  label={t("Jatuh Tempo", "Due")}
+                  dir={dirFor("dueDate")}
+                  onClick={() => toggle("dueDate")}
+                  className="text-[11px] uppercase tracking-wide"
+                />
+              </div>
+              <div className="w-20">
+                <SortableHeader
+                  as="div"
+                  label={t("Prioritas", "Priority")}
+                  dir={dirFor("priority")}
+                  onClick={() => toggle("priority")}
+                  className="text-[11px] uppercase tracking-wide"
+                />
+              </div>
+              <div className="w-24">
+                <SortableHeader
+                  as="div"
+                  label={t("Status", "Status")}
+                  dir={dirFor("status")}
+                  onClick={() => toggle("status")}
+                  className="text-[11px] uppercase tracking-wide"
+                />
+              </div>
             </div>
           )}
           {tasks.length === 0 && (
@@ -76,7 +144,7 @@ export function ProjectTasksTab({ projectId, tasks, members = [] }: ProjectTasks
               {t("Belum ada tugas di proyek ini", "No tasks in this project yet")}
             </div>
           )}
-          {tasks.map((task) => {
+          {sorted.map((task) => {
             const sb = taskStatusVariant(task.status, lang);
             return (
               <TaskDetailSheet key={task.id} task={task} members={members}>
