@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.84 — 2026-07-19 — Time list pagination
+
+- Menu **Waktu**: list max **10 entri/halaman** + prev/next
+- Total/filter summary tetap hitung semua hasil filter
+
 ## v0.1.83 — 2026-07-19 — Client Google Calendar CRUD + pagination
 
 - Tab client Calendar: **buat / edit / hapus** event langsung ke Google Calendar klien

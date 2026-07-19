@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { deleteTimeEntry } from "@/lib/actions/time";
@@ -12,11 +12,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/empty-state";
 import {
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Trash2,
   Filter,
 } from "lucide-react";
 import { useT } from "@/lib/i18n-client";
+
+const PAGE_SIZE = 10;
 
 interface TimeEntry {
   id: string;
@@ -64,6 +68,7 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
   const [tagFilter, setTagFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [page, setPage] = useState(1);
 
   const filteredEntries = useMemo(() => {
     return entries.filter((e) => {
@@ -83,6 +88,17 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
       return true;
     });
   }, [entries, clientFilter, projectFilter, billableFilter, tagFilter, dateFrom, dateTo]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [clientFilter, projectFilter, billableFilter, tagFilter, dateFrom, dateTo, entries.length]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredEntries.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageEntries = useMemo(
+    () => filteredEntries.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [filteredEntries, safePage],
+  );
 
   const totalMinutes = useMemo(
     () => filteredEntries.reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0),
@@ -270,7 +286,23 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
         />
       ) : (
         <div className="space-y-2">
-          {filteredEntries.map((entry) => (
+          <div className="flex items-center justify-between gap-2 px-1">
+            <p className="text-xs text-muted-foreground">
+              {t(
+                `Menampilkan ${(safePage - 1) * PAGE_SIZE + 1}–${Math.min(safePage * PAGE_SIZE, filteredEntries.length)} dari ${filteredEntries.length}`,
+                `Showing ${(safePage - 1) * PAGE_SIZE + 1}–${Math.min(safePage * PAGE_SIZE, filteredEntries.length)} of ${filteredEntries.length}`,
+              )}
+              {" · "}
+              {t(`max ${PAGE_SIZE}/halaman`, `max ${PAGE_SIZE}/page`)}
+            </p>
+            {totalPages > 1 ? (
+              <p className="text-xs text-muted-foreground">
+                {t("Halaman", "Page")} {safePage}/{totalPages}
+              </p>
+            ) : null}
+          </div>
+
+          {pageEntries.map((entry) => (
             <Card key={entry.id}>
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
@@ -332,6 +364,34 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
               </CardContent>
             </Card>
           ))}
+
+          {totalPages > 1 ? (
+            <div className="flex items-center justify-between gap-2 border-t pt-3">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={safePage <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                <ChevronLeft className="mr-1 h-4 w-4" />
+                {t("Sebelumnya", "Previous")}
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {t("Halaman", "Page")} {safePage} / {totalPages}
+              </span>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={safePage >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                {t("Berikutnya", "Next")}
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
+          ) : null}
         </div>
       )}
     </div>
