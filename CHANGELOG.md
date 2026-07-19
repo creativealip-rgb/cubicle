@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.76 — 2026-07-19 — Prompt Studio regroup tabs
+
+- Prompt Studio: 2-level tabs — group by output type (Visual Iklan / Feed Series / Produk / Copy & Video), then mode di dalam group.
+- Ganti grouping lama Design/Feed/Produk/Konten yang gak cocok isi.
+
 ## v0.1.75 — 2026-07-19 — Workspace rename + Prompt Studio cleanup
 
 - Settings: owner-only **edit nama workspace**.

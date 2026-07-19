@@ -17,8 +17,12 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { generateVisualPrompt } from "@/lib/actions/visual-prompts";
 import {
   Check,
+  Clapperboard,
   Copy,
+  Image as ImageIcon,
+  LayoutGrid,
   Loader2,
+  Package,
   Sparkles,
   Video,
   Wand2,
@@ -26,75 +30,121 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+type ModeGroup = "visual-ads" | "feed-series" | "product-shot" | "copy-motion";
+
+const groups: {
+  id: ModeGroup;
+  name: string;
+  icon: typeof ImageIcon;
+  hint: string;
+}[] = [
+  {
+    id: "visual-ads",
+    name: "Visual Iklan",
+    icon: ImageIcon,
+    hint: "Banner, tipografi, logo, thumbnail",
+  },
+  {
+    id: "feed-series",
+    name: "Feed Series",
+    icon: LayoutGrid,
+    hint: "Multi-post & carousel konsisten",
+  },
+  {
+    id: "product-shot",
+    name: "Produk",
+    icon: Package,
+    hint: "Menu, try-on, review",
+  },
+  {
+    id: "copy-motion",
+    name: "Copy & Video",
+    icon: Clapperboard,
+    hint: "Copywriting, storyboard, face card",
+  },
+];
+
 const modes = [
   {
     id: "banner",
+    group: "visual-ads" as const,
     name: "Design Grafis",
     ratio: "1:1",
     desc: "Brief produk jadi banner komersial siap upload.",
   },
   {
     id: "typography",
+    group: "visual-ads" as const,
     name: "Typography Ads",
     ratio: "4:5",
     desc: "Iklan tipografi premium dengan copy conversion.",
   },
   {
     id: "logo-mockup",
+    group: "visual-ads" as const,
     name: "Logo Produk",
     ratio: "1:1",
     desc: "Logo + brand mockup affiliate-ready.",
   },
   {
+    id: "thumbnail",
+    group: "visual-ads" as const,
+    name: "YouTube Thumbnail",
+    ratio: "16:9",
+    desc: "Thumbnail clickable dengan subject, ekspresi, dan teks overlay.",
+  },
+  {
     id: "nine-feed",
+    group: "feed-series" as const,
     name: "9 Feed Konsisten",
     ratio: "4:5",
     desc: "Satu campaign jadi 9 feed: hero, fitur, harga, testimoni, CTA.",
   },
   {
     id: "carousel",
+    group: "feed-series" as const,
     name: "Carousel Feeds",
     ratio: "4:5",
     desc: "Alur hook → value → proof → CTA untuk 3–7 slide.",
   },
   {
-    id: "thumbnail",
-    name: "YouTube Thumbnail",
-    ratio: "16:9",
-    desc: "Thumbnail clickable dengan subject, ekspresi, dan teks overlay.",
-  },
-  {
     id: "menu-fnb",
+    group: "product-shot" as const,
     name: "Menu F&B",
     ratio: "4:5",
     desc: "Menu restoran/cafe premium dengan layout siap jual.",
   },
   {
     id: "try-on",
+    group: "product-shot" as const,
     name: "Try-On Produk",
     ratio: "4:5",
     desc: "Prompt model memakai produk untuk visual conversion.",
   },
   {
     id: "review",
+    group: "product-shot" as const,
     name: "Review Produk",
     ratio: "1:1",
     desc: "Banner review high-converting dengan badge dan proof.",
   },
   {
     id: "copy",
+    group: "copy-motion" as const,
     name: "Copy Writing",
     ratio: "Text",
     desc: "Hook, body, CTA, caption, dan variasi angle.",
   },
   {
     id: "storyboard",
+    group: "copy-motion" as const,
     name: "Video Storyboard",
     ratio: "16:9",
     desc: "Scene-by-scene storyboard dengan VO, overlay, dan visual.",
   },
   {
     id: "face-card",
+    group: "copy-motion" as const,
     name: "Face Card Analysis",
     ratio: "4:5",
     desc: "Prompt board analisa style, color, grooming, makeup, spectacles.",
@@ -126,6 +176,7 @@ function pickRatio(modeRatio: string) {
 
 export function AutoFeedsStudio() {
   const router = useRouter();
+  const [group, setGroup] = useState<ModeGroup>("visual-ads");
   const [mode, setMode] = useState(modes[0].id);
   const [brand, setBrand] = useState("GoldHeritage");
   const [product, setProduct] = useState("24K Pendant — Eid Edition");
@@ -144,6 +195,8 @@ export function AutoFeedsStudio() {
   const [copied, setCopied] = useState(false);
 
   const selected = modes.find((item) => item.id === mode) ?? modes[0];
+  const activeGroup = groups.find((item) => item.id === group) ?? groups[0];
+  const groupModes = modes.filter((item) => item.group === group);
 
   const output = useMemo(() => {
     const base = `ENGINE: ${selected.name}\nFORMAT: ${ratio}\nBRAND: ${brand}\nPRODUCT/OFFER: ${product}\nPROMO: ${offer}\nAUDIENCE: ${audience}\nSTYLE: ${style}\nCOLOR PALETTE: ${color}\nNOTES: ${notes}`;
@@ -180,8 +233,17 @@ export function AutoFeedsStudio() {
 
   const displayedOutput = aiOutput || output;
 
+  function selectGroup(nextGroup: ModeGroup) {
+    setGroup(nextGroup);
+    const first = modes.find((item) => item.group === nextGroup) ?? modes[0];
+    setMode(first.id);
+    setRatio(pickRatio(first.ratio));
+    setAiOutput("");
+  }
+
   function selectMode(modeId: string) {
     const next = modes.find((item) => item.id === modeId) ?? modes[0];
+    setGroup(next.group);
     setMode(next.id);
     setRatio(pickRatio(next.ratio));
     setAiOutput("");
@@ -224,33 +286,69 @@ export function AutoFeedsStudio() {
   return (
     <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
       <div className="space-y-5 p-5 sm:p-6">
-        <Tabs value={mode} onValueChange={selectMode} className="space-y-3">
-          <TabsList className="h-auto w-full flex-wrap justify-start gap-1 overflow-x-auto p-1">
-            {modes.map((item) => {
-              const active = mode === item.id;
-              return (
-                <TabsTrigger
-                  key={item.id}
-                  value={item.id}
-                  className="gap-1.5 data-[state=active]:shadow"
-                >
-                  <span>{item.name}</span>
-                  <span
-                    className={cn(
-                      "rounded-full px-1.5 py-0.5 text-[10px] tabular-nums",
-                      active
-                        ? "bg-primary/10 text-primary"
-                        : "bg-background/80 text-muted-foreground",
-                    )}
+        <div className="space-y-3">
+          <Tabs value={group} onValueChange={(v) => selectGroup(v as ModeGroup)}>
+            <TabsList className="h-auto w-full flex-wrap justify-start gap-1 overflow-x-auto p-1">
+              {groups.map((item) => {
+                const Icon = item.icon;
+                const active = group === item.id;
+                return (
+                  <TabsTrigger
+                    key={item.id}
+                    value={item.id}
+                    className="gap-1.5 data-[state=active]:shadow"
                   >
-                    {item.ratio}
-                  </span>
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
-          <p className="text-sm text-muted-foreground">{selected.desc}</p>
-        </Tabs>
+                    <Icon className="h-3.5 w-3.5" />
+                    <span>{item.name}</span>
+                    <span
+                      className={cn(
+                        "rounded-full px-1.5 py-0.5 text-[10px] tabular-nums",
+                        active
+                          ? "bg-primary/10 text-primary"
+                          : "bg-background/80 text-muted-foreground",
+                      )}
+                    >
+                      {modes.filter((m) => m.group === item.id).length}
+                    </span>
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+          </Tabs>
+
+          <Tabs value={mode} onValueChange={selectMode}>
+            <TabsList className="h-auto w-full flex-wrap justify-start gap-1 overflow-x-auto p-1">
+              {groupModes.map((item) => {
+                const active = mode === item.id;
+                return (
+                  <TabsTrigger
+                    key={item.id}
+                    value={item.id}
+                    className="gap-1.5 data-[state=active]:shadow"
+                  >
+                    <span>{item.name}</span>
+                    <span
+                      className={cn(
+                        "rounded-full px-1.5 py-0.5 text-[10px] tabular-nums",
+                        active
+                          ? "bg-primary/10 text-primary"
+                          : "bg-background/80 text-muted-foreground",
+                      )}
+                    >
+                      {item.ratio}
+                    </span>
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+          </Tabs>
+
+          <p className="text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">{activeGroup.name}</span>
+            {" · "}
+            {selected.desc}
+          </p>
+        </div>
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
           <div className="rounded-2xl border bg-slate-50/70 p-4 sm:p-5">
