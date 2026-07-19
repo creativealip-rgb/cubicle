@@ -1,16 +1,12 @@
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { db } from "@/db";
-import { promptTemplates } from "@/db/schema";
-import { eq } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { listGenerations, getMonthlyUsage } from "@/lib/actions/prompts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PromptForm } from "@/components/prompts/prompt-form";
 import { PromptHistory } from "@/components/prompts/prompt-history";
 import { AutoFeedsStudio } from "@/components/prompts/auto-feeds-studio";
-import { Sparkles, BarChart3, DollarSign, Zap } from "lucide-react";
+import { BarChart3, DollarSign, History, Zap } from "lucide-react";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -21,104 +17,73 @@ export default async function PromptsPage() {
   const _user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
 
-  const [templates, generations, usage] = await Promise.all([
-    db
-      .select()
-      .from(promptTemplates)
-      .where(eq(promptTemplates.workspaceId, workspaceId))
-      .orderBy(promptTemplates.category, promptTemplates.name),
+  const [generations, usage] = await Promise.all([
     listGenerations(workspaceId),
     getMonthlyUsage(workspaceId),
   ]);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Prompt Studio</h1>
-        <p className="text-sm text-muted-foreground">
-          Studio prompt visual ala Auto Feeds untuk banner, carousel, feed campaign, thumbnail, copy, dan storyboard.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Prompt Studio</h1>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Studio prompt visual untuk banner, feed, carousel, thumbnail, copy, dan storyboard.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 sm:min-w-[420px]">
+          <div className="rounded-xl border bg-white px-3 py-2.5 shadow-sm">
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+              <Zap className="h-3.5 w-3.5 text-blue-600" />
+              Tokens
+            </div>
+            <p className="mt-1 text-sm font-semibold tabular-nums">
+              {usage.totalInputTokens.toLocaleString()}
+              <span className="font-normal text-muted-foreground"> / </span>
+              {usage.totalOutputTokens.toLocaleString()}
+            </p>
+          </div>
+          <div className="rounded-xl border bg-white px-3 py-2.5 shadow-sm">
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+              <DollarSign className="h-3.5 w-3.5 text-emerald-600" />
+              Cost
+            </div>
+            <p className="mt-1 text-sm font-semibold tabular-nums">
+              ${usage.totalCost.toFixed(4)}
+              <span className="ml-1 text-[11px] font-normal text-muted-foreground">
+                / ${usage.monthlyCap}
+              </span>
+            </p>
+          </div>
+          <div className="rounded-xl border bg-white px-3 py-2.5 shadow-sm">
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+              <BarChart3 className="h-3.5 w-3.5 text-purple-600" />
+              Gen
+            </div>
+            <p className="mt-1 text-sm font-semibold tabular-nums">
+              {generations.length}
+              <span className="ml-1 text-[11px] font-normal text-muted-foreground">
+                bln ini
+              </span>
+            </p>
+          </div>
+        </div>
       </div>
 
       <AutoFeedsStudio />
 
-      {/* Usage Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
-                <Zap className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Tokens (In/Out)</p>
-                <p className="text-lg font-bold">
-                  {usage.totalInputTokens.toLocaleString()} / {usage.totalOutputTokens.toLocaleString()}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
-                <DollarSign className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Monthly Cost</p>
-                <p className="text-lg font-bold">
-                  ${usage.totalCost.toFixed(4)}
-                  <span className="text-xs text-muted-foreground font-normal">
-                    {" "}/ ${usage.monthlyCap} cap
-                  </span>
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-100 text-purple-600">
-                <BarChart3 className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Generations</p>
-                <p className="text-lg font-bold">{generations.length} this month</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        {/* Generator form */}
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <Sparkles className="h-4 w-4" />
-              Generate
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <PromptForm templates={templates} workspaceId={workspaceId} />
-          </CardContent>
-        </Card>
-
-        {/* History */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base font-semibold">
-              <BarChart3 className="mr-2 inline h-4 w-4" />
-              History
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <PromptHistory generations={generations} />
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="overflow-hidden shadow-sm">
+        <CardHeader className="border-b bg-slate-50/60 py-4">
+          <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            <History className="h-4 w-4" />
+            History
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-5">
+          <PromptHistory generations={generations} />
+        </CardContent>
+      </Card>
     </div>
   );
 }

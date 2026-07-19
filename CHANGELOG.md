@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.73 — 2026-07-19 — Prompt Studio cleanup + tabs
+
+- Hapus section **Generate** (template form) dari `/app/prompts`.
+- Redesign AutoFeedsStudio: group tab (Design/Feed/Produk/Konten) + pill mode.
+- Layout rapi: brief kiri, output kanan, history full-width, stats di header.
+- Hapus `prompt-form.tsx` unused.
+
 ## v0.1.72 — 2026-07-19 — Invoice PDF: no paid fallback
 
 - `Paid`/`Dibayar` hanya sum **Catatan Pembayaran** — no fallback ke total invoice.

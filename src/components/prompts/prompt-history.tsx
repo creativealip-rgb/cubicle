@@ -59,9 +59,9 @@ export function PromptHistory({
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
         <FileText className="mb-2 h-8 w-8 text-muted-foreground/50" />
-        <p className="text-sm text-muted-foreground">No generations yet</p>
+        <p className="text-sm text-muted-foreground">Belum ada generation</p>
         <p className="text-xs text-muted-foreground">
-          Select a template and generate your first prompt
+          Generate prompt dari studio di atas
         </p>
       </div>
     );
