@@ -7,10 +7,13 @@ import { requireUser, assertClientInWorkspace } from "@/lib/access";
 import { db } from "@/db";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import {
+  createClientGoogleEvent,
   createClientGoogleInviteLink,
+  deleteClientGoogleEvent,
   disconnectClientGoogleCalendar,
   getClientGoogleConnectionStatus,
   listClientGoogleEvents,
+  updateClientGoogleEvent,
 } from "@/lib/client-google-calendar";
 
 async function requireClientAccess(clientId: string) {
@@ -21,6 +24,10 @@ async function requireClientAccess(clientId: string) {
   return { user, workspaceId };
 }
 
+function revalidateClient(clientId: string) {
+  revalidatePath(`/app/clients/${clientId}`);
+}
+
 export async function generateClientGoogleCalendarInvite(clientId: string) {
   const { user, workspaceId } = await requireClientAccess(clientId);
   const result = await createClientGoogleInviteLink({
@@ -28,7 +35,7 @@ export async function generateClientGoogleCalendarInvite(clientId: string) {
     workspaceId,
     userId: user.id,
   });
-  revalidatePath(`/app/clients/${clientId}`);
+  revalidateClient(clientId);
   return {
     inviteUrl: result.inviteUrl,
     expiresAt: result.expiresAt.toISOString(),
@@ -38,7 +45,7 @@ export async function generateClientGoogleCalendarInvite(clientId: string) {
 export async function disconnectClientGoogleCalendarAction(clientId: string) {
   await requireClientAccess(clientId);
   await disconnectClientGoogleCalendar(clientId);
-  revalidatePath(`/app/clients/${clientId}`);
+  revalidateClient(clientId);
   return { ok: true as const };
 }
 
@@ -63,4 +70,49 @@ export async function getClientGoogleCalendarPanel(clientId: string) {
     events,
     eventsError: eventsError ?? null,
   };
+}
+
+export async function createClientGoogleEventAction(
+  clientId: string,
+  input: {
+    title: string;
+    description?: string;
+    location?: string;
+    start: string;
+    end: string;
+    timezone?: string;
+  },
+) {
+  await requireClientAccess(clientId);
+  const event = await createClientGoogleEvent(clientId, input);
+  revalidateClient(clientId);
+  return { ok: true as const, event };
+}
+
+export async function updateClientGoogleEventAction(
+  clientId: string,
+  eventId: string,
+  input: {
+    title: string;
+    description?: string;
+    location?: string;
+    start: string;
+    end: string;
+    timezone?: string;
+  },
+) {
+  await requireClientAccess(clientId);
+  const event = await updateClientGoogleEvent(clientId, eventId, input);
+  revalidateClient(clientId);
+  return { ok: true as const, event };
+}
+
+export async function deleteClientGoogleEventAction(
+  clientId: string,
+  eventId: string,
+) {
+  await requireClientAccess(clientId);
+  await deleteClientGoogleEvent(clientId, eventId);
+  revalidateClient(clientId);
+  return { ok: true as const };
 }

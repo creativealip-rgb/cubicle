@@ -422,6 +422,64 @@ export type ClientGoogleEvent = {
   location: string | null;
 };
 
+function mapGoogleEvent(item: {
+  id?: string;
+  summary?: string;
+  description?: string;
+  status?: string;
+  location?: string;
+  htmlLink?: string;
+  start?: { dateTime?: string; date?: string; timeZone?: string };
+  end?: { dateTime?: string; date?: string; timeZone?: string };
+}): ClientGoogleEvent | null {
+  if (!item.id) return null;
+  return {
+    id: item.id,
+    title: item.summary || "(Tanpa judul)",
+    description: item.description || null,
+    start: item.start?.dateTime || item.start?.date || null,
+    end: item.end?.dateTime || item.end?.date || null,
+    htmlLink: item.htmlLink || null,
+    status: item.status || null,
+    location: item.location || null,
+  };
+}
+
+function eventPayload(input: {
+  title: string;
+  description?: string | null;
+  location?: string | null;
+  start: string;
+  end: string;
+  timezone?: string;
+}) {
+  const timezone = input.timezone || "Asia/Jakarta";
+  return {
+    summary: input.title.trim(),
+    description: input.description?.trim() || undefined,
+    location: input.location?.trim() || undefined,
+    start: {
+      dateTime: new Date(input.start).toISOString(),
+      timeZone: timezone,
+    },
+    end: {
+      dateTime: new Date(input.end).toISOString(),
+      timeZone: timezone,
+    },
+  };
+}
+
+async function markClientGcalError(clientId: string, message: string) {
+  await db
+    .update(clientGoogleCalendarConnections)
+    .set({
+      status: "error",
+      lastError: message,
+      updatedAt: new Date(),
+    })
+    .where(eq(clientGoogleCalendarConnections.clientId, clientId));
+}
+
 export async function listClientGoogleEvents(
   clientId: string,
   opts?: { daysAhead?: number; daysBehind?: number; maxResults?: number },
@@ -433,7 +491,7 @@ export async function listClientGoogleEvents(
 
   const daysBehind = opts?.daysBehind ?? 7;
   const daysAhead = opts?.daysAhead ?? 60;
-  const maxResults = opts?.maxResults ?? 25;
+  const maxResults = opts?.maxResults ?? 100;
   const timeMin = new Date(Date.now() - daysBehind * 24 * 60 * 60 * 1000).toISOString();
   const timeMax = new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000).toISOString();
   const calendarId = encodeURIComponent(auth.calendarId || "primary");
@@ -471,32 +529,157 @@ export async function listClientGoogleEvents(
     };
 
     const events: ClientGoogleEvent[] = (data.items || [])
-      .filter((item) => item.id)
-      .map((item) => ({
-        id: item.id!,
-        title: item.summary || "(Tanpa judul)",
-        description: item.description || null,
-        start: item.start?.dateTime || item.start?.date || null,
-        end: item.end?.dateTime || item.end?.date || null,
-        htmlLink: item.htmlLink || null,
-        status: item.status || null,
-        location: item.location || null,
-      }));
+      .map((item) => mapGoogleEvent(item))
+      .filter((item): item is ClientGoogleEvent => Boolean(item));
 
     return { events };
   } catch (err) {
-    await db
-      .update(clientGoogleCalendarConnections)
-      .set({
-        status: "error",
-        lastError: err instanceof Error ? err.message : "List events failed",
-        updatedAt: new Date(),
-      })
-      .where(eq(clientGoogleCalendarConnections.clientId, clientId));
+    await markClientGcalError(
+      clientId,
+      err instanceof Error ? err.message : "List events failed",
+    );
     return {
       events: [],
       error: err instanceof Error ? err.message : "Gagal ambil event Google",
     };
+  }
+}
+
+export async function createClientGoogleEvent(
+  clientId: string,
+  input: {
+    title: string;
+    description?: string | null;
+    location?: string | null;
+    start: string;
+    end: string;
+    timezone?: string;
+  },
+): Promise<ClientGoogleEvent> {
+  if (!input.title?.trim()) throw new Error("Judul event wajib");
+  const start = new Date(input.start);
+  const end = new Date(input.end);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    throw new Error("Waktu mulai/selesai tidak valid");
+  }
+  if (end.getTime() <= start.getTime()) {
+    throw new Error("Waktu selesai harus setelah waktu mulai");
+  }
+
+  const auth = await getValidClientAccessToken(clientId);
+  if (!auth) throw new Error("Google Calendar client belum terhubung");
+
+  const calendarId = encodeURIComponent(auth.calendarId || "primary");
+  try {
+    const res = await fetch(
+      `${GOOGLE_EVENTS_URL}/${calendarId}/events?sendUpdates=none`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${auth.accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(eventPayload(input)),
+      },
+    );
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Google create event failed: ${res.status} ${errText}`);
+    }
+    const data = (await res.json()) as Parameters<typeof mapGoogleEvent>[0];
+    const mapped = mapGoogleEvent(data);
+    if (!mapped) throw new Error("Google tidak mengembalikan event");
+    return mapped;
+  } catch (err) {
+    await markClientGcalError(
+      clientId,
+      err instanceof Error ? err.message : "Create event failed",
+    );
+    throw err;
+  }
+}
+
+export async function updateClientGoogleEvent(
+  clientId: string,
+  eventId: string,
+  input: {
+    title: string;
+    description?: string | null;
+    location?: string | null;
+    start: string;
+    end: string;
+    timezone?: string;
+  },
+): Promise<ClientGoogleEvent> {
+  if (!eventId?.trim()) throw new Error("Event ID wajib");
+  if (!input.title?.trim()) throw new Error("Judul event wajib");
+  const start = new Date(input.start);
+  const end = new Date(input.end);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    throw new Error("Waktu mulai/selesai tidak valid");
+  }
+  if (end.getTime() <= start.getTime()) {
+    throw new Error("Waktu selesai harus setelah waktu mulai");
+  }
+
+  const auth = await getValidClientAccessToken(clientId);
+  if (!auth) throw new Error("Google Calendar client belum terhubung");
+
+  const calendarId = encodeURIComponent(auth.calendarId || "primary");
+  try {
+    const res = await fetch(
+      `${GOOGLE_EVENTS_URL}/${calendarId}/events/${encodeURIComponent(eventId)}?sendUpdates=none`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${auth.accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(eventPayload(input)),
+      },
+    );
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Google update event failed: ${res.status} ${errText}`);
+    }
+    const data = (await res.json()) as Parameters<typeof mapGoogleEvent>[0];
+    const mapped = mapGoogleEvent(data);
+    if (!mapped) throw new Error("Google tidak mengembalikan event");
+    return mapped;
+  } catch (err) {
+    await markClientGcalError(
+      clientId,
+      err instanceof Error ? err.message : "Update event failed",
+    );
+    throw err;
+  }
+}
+
+export async function deleteClientGoogleEvent(clientId: string, eventId: string) {
+  if (!eventId?.trim()) throw new Error("Event ID wajib");
+  const auth = await getValidClientAccessToken(clientId);
+  if (!auth) throw new Error("Google Calendar client belum terhubung");
+
+  const calendarId = encodeURIComponent(auth.calendarId || "primary");
+  try {
+    const res = await fetch(
+      `${GOOGLE_EVENTS_URL}/${calendarId}/events/${encodeURIComponent(eventId)}?sendUpdates=none`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${auth.accessToken}` },
+      },
+    );
+    if (!res.ok && res.status !== 404 && res.status !== 410) {
+      const errText = await res.text();
+      throw new Error(`Google delete event failed: ${res.status} ${errText}`);
+    }
+    return { ok: true as const };
+  } catch (err) {
+    await markClientGcalError(
+      clientId,
+      err instanceof Error ? err.message : "Delete event failed",
+    );
+    throw err;
   }
 }
 

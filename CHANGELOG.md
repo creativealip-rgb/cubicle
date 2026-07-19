@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.83 — 2026-07-19 — Client Google Calendar CRUD + pagination
+
+- Tab client Calendar: **buat / edit / hapus** event langsung ke Google Calendar klien
+- List event max **10 per halaman** (prev/next)
+- Form: judul, mulai–selesai, lokasi, catatan
+
 ## v0.1.82 — 2026-07-19 — Client Google Calendar (per-client)
 
 - Clients → detail → tab **Calendar / Meetings**
