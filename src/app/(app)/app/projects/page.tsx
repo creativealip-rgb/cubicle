@@ -2,7 +2,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { projects, clients, tasks, workspaceMembers, users } from "@/db/schema";
+import { projects, clients, tasks, workspaceMembers, users, packages } from "@/db/schema";
 import { eq, and, desc, sql, SQL } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import Link from "next/link";
@@ -61,12 +61,12 @@ function isUuid(value?: string): value is string {
 function buildProjectsHref(filters: {
   status: StatusTab;
   clientId?: string;
-  projectId?: string;
+  packageId?: string;
 }): string {
   const params = new URLSearchParams();
   if (filters.status !== "all") params.set("status", filters.status);
   if (filters.clientId) params.set("clientId", filters.clientId);
-  if (filters.projectId) params.set("projectId", filters.projectId);
+  if (filters.packageId) params.set("packageId", filters.packageId);
   const qs = params.toString();
   return qs ? `/app/projects?${qs}` : "/app/projects";
 }
@@ -76,7 +76,7 @@ export default async function ProjectsPage({
 }: {
   searchParams: Promise<{
     clientId?: string;
-    projectId?: string;
+    packageId?: string;
     status?: string;
   }>;
 }) {
@@ -107,7 +107,7 @@ export default async function ProjectsPage({
   const params = await searchParams;
   const statusTab = parseStatusTab(params.status);
   const clientId = isUuid(params.clientId) ? params.clientId : undefined;
-  const projectId = isUuid(params.projectId) ? params.projectId : undefined;
+  const packageId = isUuid(params.packageId) ? params.packageId : undefined;
 
   // Plan limit (per-user free plan: max 5 projects)
   const [userPlan] = await db.select({ plan: users.plan }).from(users).where(eq(users.id, user.id)).limit(1);
@@ -125,20 +125,32 @@ export default async function ProjectsPage({
     .where(eq(clients.workspaceId, workspaceId))
     .orderBy(clients.name);
 
-  const projectOptions = await db
+  // Workspace catalog packages + any package currently assigned to a project
+  const packageOptions = await db
     .select({
-      id: projects.id,
-      name: projects.name,
-      clientId: projects.clientId,
+      id: packages.id,
+      name: packages.name,
     })
-    .from(projects)
-    .where(eq(projects.workspaceId, workspaceId))
-    .orderBy(projects.name);
+    .from(packages)
+    .where(
+      and(
+        eq(packages.workspaceId, workspaceId),
+        sql`(
+          ${packages.projectId} IS NULL
+          OR ${packages.id} IN (
+            SELECT selected_package_id FROM projects
+            WHERE workspace_id = ${workspaceId}
+              AND selected_package_id IS NOT NULL
+          )
+        )`,
+      ),
+    )
+    .orderBy(packages.sortOrder, packages.name);
 
-  // Counts per status (respect client/project filters)
+  // Counts per status (respect client/package filters)
   const statusCountWhere: SQL[] = [eq(projects.workspaceId, workspaceId)];
   if (clientId) statusCountWhere.push(eq(projects.clientId, clientId));
-  if (projectId) statusCountWhere.push(eq(projects.id, projectId));
+  if (packageId) statusCountWhere.push(eq(projects.selectedPackageId, packageId));
 
   const statusCountRows = await db
     .select({
@@ -161,7 +173,7 @@ export default async function ProjectsPage({
     whereClauses.push(eq(projects.status, statusTab));
   }
   if (clientId) whereClauses.push(eq(projects.clientId, clientId));
-  if (projectId) whereClauses.push(eq(projects.id, projectId));
+  if (packageId) whereClauses.push(eq(projects.selectedPackageId, packageId));
 
   const projectsList = await db
     .select({
@@ -193,15 +205,15 @@ export default async function ProjectsPage({
   const filtersForHref = {
     status: statusTab,
     clientId,
-    projectId,
+    packageId,
   };
 
-  const hasExtraFilters = Boolean(clientId || projectId);
+  const hasExtraFilters = Boolean(clientId || packageId);
   const selectedClient = clientId
     ? clientOptions.find((c) => c.id === clientId)
     : undefined;
-  const selectedProject = projectId
-    ? projectOptions.find((p) => p.id === projectId)
+  const selectedPackage = packageId
+    ? packageOptions.find((p) => p.id === packageId)
     : undefined;
 
   return (
@@ -290,11 +302,11 @@ export default async function ProjectsPage({
           <Suspense fallback={null}>
             <ProjectFilters
               clients={clientOptions}
-              projects={projectOptions}
+              packages={packageOptions}
               current={{
                 status: statusTab,
                 clientId,
-                projectId,
+                packageId,
               }}
             />
           </Suspense>
@@ -306,7 +318,7 @@ export default async function ProjectsPage({
           {t("Filter aktif:", "Active filters:")}{" "}
           {selectedClient?.name ?? t("Semua klien", "All clients")}
           {" · "}
-          {selectedProject?.name ?? t("Semua proyek", "All projects")}
+          {selectedPackage?.name ?? t("Semua paket", "All packages")}
         </p>
       )}
 
@@ -327,8 +339,8 @@ export default async function ProjectsPage({
             description={
               hasExtraFilters || statusTab !== "all"
                 ? t(
-                    "Tidak ada proyek untuk filter ini. Coba ubah status, klien, atau proyek.",
-                    "No projects match these filters. Try another status, client, or project.",
+                    "Tidak ada proyek untuk filter ini. Coba ubah status, klien, atau paket.",
+                    "No projects match these filters. Try another status, client, or package.",
                   )
                 : t(
                     "Buat proyek pertama untuk mulai pantau pekerjaan.",

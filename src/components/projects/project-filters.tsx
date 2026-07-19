@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Select,
@@ -15,32 +15,32 @@ import { useT } from "@/lib/i18n-client";
 import Link from "next/link";
 
 type ClientOption = { id: string; name: string };
-type ProjectOption = { id: string; name: string; clientId: string };
+type PackageOption = { id: string; name: string };
 
 interface ProjectFiltersProps {
   clients: ClientOption[];
-  projects: ProjectOption[];
+  packages: PackageOption[];
   current: {
     status?: string;
     clientId?: string;
-    projectId?: string;
+    packageId?: string;
   };
 }
 
 function buildHref(opts: {
   status?: string;
   clientId?: string;
-  projectId?: string;
+  packageId?: string;
 }) {
   const params = new URLSearchParams();
   if (opts.status && opts.status !== "all") params.set("status", opts.status);
   if (opts.clientId) params.set("clientId", opts.clientId);
-  if (opts.projectId) params.set("projectId", opts.projectId);
+  if (opts.packageId) params.set("packageId", opts.packageId);
   const qs = params.toString();
   return qs ? `/app/projects?${qs}` : "/app/projects";
 }
 
-export function ProjectFilters({ clients, projects, current }: ProjectFiltersProps) {
+export function ProjectFilters({ clients, packages, current }: ProjectFiltersProps) {
   const { t } = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -48,17 +48,12 @@ export function ProjectFilters({ clients, projects, current }: ProjectFiltersPro
 
   const status = current.status && current.status !== "all" ? current.status : undefined;
   const clientId = current.clientId || undefined;
-  const projectId = current.projectId || undefined;
-
-  const projectOptions = useMemo(() => {
-    if (!clientId) return projects;
-    return projects.filter((p) => p.clientId === clientId);
-  }, [clientId, projects]);
+  const packageId = current.packageId || undefined;
 
   function apply(next: {
     status?: string | null;
     clientId?: string | null;
-    projectId?: string | null;
+    packageId?: string | null;
   }) {
     const params = new URLSearchParams(searchParams.toString());
 
@@ -69,19 +64,7 @@ export function ProjectFilters({ clients, projects, current }: ProjectFiltersPro
 
     if ("status" in next) setOrDelete("status", next.status);
     if ("clientId" in next) setOrDelete("clientId", next.clientId);
-    if ("projectId" in next) setOrDelete("projectId", next.projectId);
-
-    // If client changes, drop project if it no longer belongs to that client
-    if ("clientId" in next) {
-      const nextClientId = next.clientId && next.clientId !== "all" ? next.clientId : undefined;
-      const selectedProjectId = params.get("projectId");
-      if (selectedProjectId) {
-        const project = projects.find((p) => p.id === selectedProjectId);
-        if (!project || (nextClientId && project.clientId !== nextClientId)) {
-          params.delete("projectId");
-        }
-      }
-    }
+    if ("packageId" in next) setOrDelete("packageId", next.packageId);
 
     startTransition(() => {
       const qs = params.toString();
@@ -89,7 +72,7 @@ export function ProjectFilters({ clients, projects, current }: ProjectFiltersPro
     });
   }
 
-  const hasExtraFilters = Boolean(clientId || projectId);
+  const hasExtraFilters = Boolean(clientId || packageId);
 
   return (
     <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto">
@@ -111,20 +94,20 @@ export function ProjectFilters({ clients, projects, current }: ProjectFiltersPro
       </Select>
 
       <Select
-        value={projectId ?? "all"}
-        onValueChange={(v) => apply({ projectId: v })}
+        value={packageId ?? "all"}
+        onValueChange={(v) => apply({ packageId: v })}
       >
-        <SelectTrigger className="h-9 w-full text-sm sm:w-52" aria-label={t("Proyek", "Project")}>
-          <SelectValue placeholder={t("Semua proyek", "All projects")} />
+        <SelectTrigger className="h-9 w-full text-sm sm:w-52" aria-label={t("Paket", "Package")}>
+          <SelectValue placeholder={t("Semua paket", "All packages")} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">{t("Semua proyek", "All projects")}</SelectItem>
-          {projectOptions.length === 0 ? (
+          <SelectItem value="all">{t("Semua paket", "All packages")}</SelectItem>
+          {packages.length === 0 ? (
             <SelectItem value="__empty" disabled>
-              {t("Tidak ada proyek", "No projects")}
+              {t("Tidak ada paket", "No packages")}
             </SelectItem>
           ) : (
-            projectOptions.map((p) => (
+            packages.map((p) => (
               <SelectItem key={p.id} value={p.id}>
                 {p.name}
               </SelectItem>

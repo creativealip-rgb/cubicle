@@ -1,9 +1,9 @@
 # Changelog
 
-## v0.1.77 — 2026-07-19 — Projects status tabs + client/project filters
+## v0.1.77 — 2026-07-19 — Projects status tabs + client/package filters
 
 - Projects list: status tabs (All / Active / Draft / On Hold / Completed / Cancelled) with counts.
-- Filter by client and project (cascading: project options follow selected client).
+- Filter by client and package (`selected_package_id`).
 - Empty state adapts when filters return no rows.
 
 ## v0.1.76 — 2026-07-19 — Prompt Studio regroup tabs
