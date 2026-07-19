@@ -370,7 +370,7 @@ export default async function ClientDetailPage({
             <Calendar className="h-3 w-3" /> Jadwal
           </TabsTrigger>
           <TabsTrigger value="calendar" className="gap-1">
-            <Calendar className="h-3 w-3" /> Calendar / Meetings
+            <Calendar className="h-3 w-3" /> Calendar
           </TabsTrigger>
           <TabsTrigger value="portal" className="gap-1">
             <Globe className="h-3 w-3" /> Portal
