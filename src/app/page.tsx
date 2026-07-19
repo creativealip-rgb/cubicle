@@ -106,16 +106,19 @@ export default function HomePage() {
     <>
       <header className="fixed top-0 left-0 right-0 z-30 border-b border-slate-950/5 bg-white/75 backdrop-blur-2xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between">
-          <Link href="/" className="flex items-center gap-3" aria-label="Cubiqlo">
-            <Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-11 w-auto object-contain" />
-            <span className="sr-only">Cubiqlo</span>
+          <Link href="/" className="flex items-center gap-2.5" aria-label="Cubiqlo">
+            <Image src="/logo-icon.png" alt="Cubiqlo" width={36} height={36} className="h-9 w-9 object-contain" />
+            <span className="text-lg font-semibold tracking-tight text-[#292D34]">Cubiqlo</span>
           </Link>
 
           <nav className="hidden items-center gap-7 text-sm font-medium text-slate-600 md:flex">
+            <a href="#about" className="transition-colors duration-200 hover:text-[#6647F0]">About</a>
             <a href="#features" className="transition-colors duration-200 hover:text-[#6647F0]">Fitur</a>
             <a href="#workflow" className="transition-colors duration-200 hover:text-[#6647F0]">Alur</a>
             <a href="#portal" className="transition-colors duration-200 hover:text-[#6647F0]">Portal</a>
             <a href="#pricing" className="transition-colors duration-200 hover:text-[#6647F0]">Harga</a>
+            <Link href="/privacy" className="transition-colors duration-200 hover:text-[#6647F0]">Privacy</Link>
+            <Link href="/terms" className="transition-colors duration-200 hover:text-[#6647F0]">Terms</Link>
           </nav>
 
           <div className="flex items-center gap-2">
@@ -133,6 +136,38 @@ export default function HomePage() {
       </header>
 
       <main className="min-h-screen overflow-hidden pt-16 bg-[radial-gradient(circle_at_12%_8%,rgba(37,99,235,0.16),transparent_28%),radial-gradient(circle_at_88%_18%,rgba(6,182,212,0.13),transparent_24%),linear-gradient(180deg,#fff_0%,#f8fafc_42%,#fff_100%)] text-slate-950">
+      {/* Plain-text about block for Google OAuth branding crawlers */}
+      <section id="about" className="border-b border-slate-200/70 bg-white px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl space-y-4 text-sm leading-7 text-slate-700 sm:text-base sm:leading-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6647F0]">About this app</p>
+          <h2 className="text-2xl font-semibold tracking-tight text-[#292D34] sm:text-3xl">
+            Cubiqlo — Client Operations Hub
+          </h2>
+          <p>
+            <strong>Cubiqlo</strong> is a client operations hub for freelancers, agencies, and studios.
+            Cubiqlo helps users manage clients, projects, tasks, files, time tracking, invoices, booking,
+            client portals, and calendar scheduling in one workspace — from first client request to paid invoice.
+          </p>
+          <p>
+            <strong>Cubiqlo</strong> adalah platform operasional klien untuk freelancer, agency, dan studio.
+            Cubiqlo membantu mengatur klien, proyek, tugas, file, pelacakan waktu, invoice, booking,
+            portal klien, dan penjadwalan kalender dalam satu workspace — dari permintaan awal sampai invoice terbayar.
+          </p>
+          <p>
+            <strong>Why Cubiqlo uses Google:</strong> users may connect their own Google Calendar (or invite a client
+            to connect a client Google Calendar) so Cubiqlo can create, view, update, and delete calendar events that
+            belong to that connected account. Cubiqlo only accesses Google Calendar data after the user grants consent,
+            and only to power calendar scheduling features inside Cubiqlo.
+          </p>
+          <p>
+            App name on this website and on the Google OAuth consent screen: <strong>Cubiqlo</strong>.
+            Homepage: <a className="font-medium text-[#6647F0] underline-offset-4 hover:underline" href="https://cubiqlo.com">https://cubiqlo.com</a>.
+            Privacy Policy: <Link className="font-medium text-[#6647F0] underline-offset-4 hover:underline" href="/privacy">https://cubiqlo.com/privacy</Link>.
+            Terms: <Link className="font-medium text-[#6647F0] underline-offset-4 hover:underline" href="/terms">https://cubiqlo.com/terms</Link>.
+          </p>
+        </div>
+      </section>
+
       <section className="relative px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-28">
         <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1fr_0.95fr]">
           <div className="relative">
@@ -151,7 +186,7 @@ export default function HomePage() {
               Cubiqlo
             </h1>
             <p className="mt-3 max-w-2xl text-xl font-medium leading-8 text-[#292D34] sm:text-2xl">
-              Client Operations Hub for freelancers, agencies, and studios.
+              Cubiqlo Client Operations Hub for freelancers, agencies, and studios.
             </p>
             <div className="mt-6 max-w-2xl space-y-4 text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
               <p>
@@ -159,6 +194,9 @@ export default function HomePage() {
               </p>
               <p>
                 <strong className="font-semibold text-[#292D34]">Cubiqlo</strong> adalah platform operasional klien untuk freelancer, agency, dan studio: mengatur klien, proyek, tugas, file, pelacakan waktu, invoice, booking, portal klien, dan integrasi Google Calendar dalam satu workspace — dari permintaan awal sampai invoice terbayar.
+              </p>
+              <p>
+                Cubiqlo requests Google Calendar access only to create, view, update, and delete events in calendars the user (or invited client) chooses to connect.
               </p>
             </div>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">

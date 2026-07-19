@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.86 — 2026-07-19 — Stronger Google OAuth branding homepage
+
+- Header text **Cubiqlo** + Privacy/Terms links visible
+- About section: purpose EN/ID + why Google Calendar access
+- Explicit app name match statement for consent screen reviewers
+
 ## v0.1.85 — 2026-07-19 — Homepage branding for Google OAuth
 
 - Homepage H1 exact **Cubiqlo** (match OAuth consent app name)
