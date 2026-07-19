@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.85 — 2026-07-19 — Homepage branding for Google OAuth
+
+- Homepage H1 exact **Cubiqlo** (match OAuth consent app name)
+- Purpose block EN + ID above the fold for Google branding verification
+
 ## v0.1.84 — 2026-07-19 — Time list pagination
 
 - Menu **Waktu**: list max **10 entri/halaman** + prev/next

@@ -106,8 +106,9 @@ export default function HomePage() {
     <>
       <header className="fixed top-0 left-0 right-0 z-30 border-b border-slate-950/5 bg-white/75 backdrop-blur-2xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3" aria-label="Cubiqlo">
             <Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-11 w-auto object-contain" />
+            <span className="sr-only">Cubiqlo</span>
           </Link>
 
           <nav className="hidden items-center gap-7 text-sm font-medium text-slate-600 md:flex">
@@ -143,15 +144,23 @@ export default function HomePage() {
               />
               <Badge className="relative rounded-full border-0 bg-white/90 px-3 py-1.5 text-[#6647F0] shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)] hover:bg-white/90">
                 <span className="mr-2 inline-flex h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-                Versi beta · v0.1
+                Cubiqlo · Client Operations Hub
               </Badge>
             </div>
             <h1 className="max-w-4xl text-3xl font-semibold tracking-normal text-[#292D34] sm:text-5xl sm:tracking-normal md:text-6xl lg:text-7xl" style={{ fontWeight: 650 }}>
-              Kelola client work dari satu workspace.
+              Cubiqlo
             </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600 sm:text-xl">
-              Cubiqlo bantu freelancer, agency, dan studio mengatur client, project, task, file, time tracking, invoice, booking, dan client portal tanpa pindah-pindah tool.
+            <p className="mt-3 max-w-2xl text-xl font-medium leading-8 text-[#292D34] sm:text-2xl">
+              Client Operations Hub for freelancers, agencies, and studios.
             </p>
+            <div className="mt-6 max-w-2xl space-y-4 text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
+              <p>
+                <strong className="font-semibold text-[#292D34]">Cubiqlo</strong> is a client operations hub that helps freelancers and small service teams manage clients, projects, tasks, files, time tracking, invoices, booking, client portals, and Google Calendar integrations from one workspace — from first request to paid invoice.
+              </p>
+              <p>
+                <strong className="font-semibold text-[#292D34]">Cubiqlo</strong> adalah platform operasional klien untuk freelancer, agency, dan studio: mengatur klien, proyek, tugas, file, pelacakan waktu, invoice, booking, portal klien, dan integrasi Google Calendar dalam satu workspace — dari permintaan awal sampai invoice terbayar.
+              </p>
+            </div>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" className="h-12 rounded-xl bg-[#6647F0] px-6 text-white shadow-[0_4px_4px_rgba(13,21,48,0.04)] transition-all duration-200 hover:scale-[1.02] hover:bg-[#5333DD] hover:shadow-[0_8px_20px_rgba(102,71,240,0.25)] active:bg-[#4A2AD0] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-[#6647F0] focus-visible:ring-offset-2 tracking-[-0.01em] font-normal">
                 <Link href="/signup">
