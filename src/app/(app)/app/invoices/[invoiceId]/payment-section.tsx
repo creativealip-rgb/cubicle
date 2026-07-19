@@ -38,7 +38,7 @@ export function PaymentSection({
   invoiceId,
   payments,
   total,
-  currency: _currency,
+  currency,
 }: {
   invoiceId: string;
   payments: Payment[];
@@ -55,6 +55,7 @@ export function PaymentSection({
     notes: "",
   });
 
+  const currencyCode = currency || "IDR";
   const paidSoFar = payments.reduce((sum, p) => sum + Number(p.amount), 0);
   const remaining = Math.max(0, total - paidSoFar);
 
@@ -91,13 +92,13 @@ export function PaymentSection({
     <div className="space-y-4">
       <div className="flex items-center justify-between text-sm">
         <span>
-          Total: <strong>{formatMoney(total)}</strong>
+          Total: <strong>{formatMoney(total, currencyCode)}</strong>
         </span>
         <span>
-          Dibayar: <strong>{formatMoney(paidSoFar)}</strong>
+          Dibayar: <strong>{formatMoney(paidSoFar, currencyCode)}</strong>
         </span>
         <span>
-          Sisa: <strong>{formatMoney(remaining)}</strong>
+          Sisa: <strong>{formatMoney(remaining, currencyCode)}</strong>
         </span>
       </div>
 
@@ -107,7 +108,7 @@ export function PaymentSection({
             <div key={p.id} className="flex items-center justify-between p-3 text-sm">
               <div>
                 <span className="font-mono font-medium">
-                  {formatMoney(Number(p.amount))}
+                  {formatMoney(Number(p.amount), currencyCode)}
                 </span>
                 <span className="text-muted-foreground ml-2">
                   {formatDateID(p.paidAt)}

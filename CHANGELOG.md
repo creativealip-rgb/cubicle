@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.88 — 2026-07-19 — Invoice payment currency + timesheet range
+
+- Section **Pembayaran**: format uang pakai currency invoice (bukan hardcode Rp)
+- **Ekspor Timesheet** di edit invoice: dialog pilih range tanggal (bulan ini/lalu/custom)
+
 ## v0.1.87 — 2026-07-19 — Restore clean homepage
 
 - Revert Google OAuth branding homepage patches

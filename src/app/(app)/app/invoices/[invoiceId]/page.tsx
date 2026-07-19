@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Share2, Clock, Download } from "lucide-react";
+import { ArrowLeft, Share2, Download } from "lucide-react";
 import { InvoiceItemManager } from "./add-item-button";
 import { DeleteItemButton } from "./delete-item-button";
 import { ImportTimeSection } from "./import-time-section";
@@ -28,6 +28,7 @@ import { PaymentSection } from "./payment-section";
 import { ShareTokenSection } from "./share-token-section";
 import { SendInvoiceButton } from "./send-invoice-button";
 import { SendReminderButton } from "./send-reminder-button";
+import { ExportTimesheetButton } from "./export-timesheet-button";
 import { InvoiceMetaForm } from "@/components/invoices/invoice-meta-form";
 import { formatDateID, formatMoney } from "@/lib/utils";
 import { invoiceStatusVariant } from "@/lib/status-badge";
@@ -230,20 +231,11 @@ export default async function InvoiceDetailPage({
             </Link>
           </Button>
           {inv.clientId ? (
-            <Button size="sm" variant="outline" className="gap-2" asChild>
-              <Link
-                href={`/api/time/export/pdf/va-timesheet?${new URLSearchParams({
-                  report: "full",
-                  clientId: inv.clientId,
-                  ...(inv.projectId ? { projectId: inv.projectId } : {}),
-                }).toString()}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <Clock className="h-4 w-4" />
-                {t("Ekspor Timesheet", "Export Timesheet")}
-              </Link>
-            </Button>
+            <ExportTimesheetButton
+              clientId={inv.clientId}
+              projectId={inv.projectId}
+              label={t("Ekspor Timesheet", "Export Timesheet")}
+            />
           ) : null}
           <SendInvoiceButton invoiceId={invoiceId} disabled={!client?.email || items.length === 0} />
           <SendReminderButton
