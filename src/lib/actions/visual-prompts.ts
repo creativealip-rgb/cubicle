@@ -2,13 +2,17 @@
 
 import { readFileSync } from "fs";
 import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { and, eq, gte, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { promptGenerations } from "@/db/schema";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { writeActivityLog } from "@/lib/actions/activity";
+
+const MONTHLY_CAP_USD = 50;
 
 const visualPromptSchema = z.object({
   mode: z.string().min(1),
@@ -31,10 +35,29 @@ function getApiKey() {
   } catch {
     // ignore missing docker secret
   }
-  return process.env.AI_API_KEY || process.env.NINE_ROUTER_API_KEY || process.env.ROUTER_API_KEY || process.env.OPENAI_API_KEY || "";
+  return (
+    process.env.AI_API_KEY ||
+    process.env.NINE_ROUTER_API_KEY ||
+    process.env.ROUTER_API_KEY ||
+    process.env.OPENAI_API_KEY ||
+    ""
+  );
 }
 
-function extractContent(rawText: string) {
+function estimateCost(model: string, inputTokens: number, outputTokens: number): number {
+  const pricing: Record<string, { input: number; output: number }> = {
+    "gpt-4o": { input: 2.5, output: 10.0 },
+    "gpt-4o-mini": { input: 0.15, output: 0.6 },
+    "gpt-4": { input: 30.0, output: 60.0 },
+    "gpt-3.5-turbo": { input: 0.5, output: 1.5 },
+    "ag/gemini-pro-agent": { input: 0.15, output: 0.6 },
+    "ag/gemini-flash-agent": { input: 0.075, output: 0.3 },
+  };
+  const p = pricing[model] ?? { input: 0.15, output: 0.6 };
+  return (inputTokens / 1_000_000) * p.input + (outputTokens / 1_000_000) * p.output;
+}
+
+function parseAiResponse(rawText: string) {
   const text = rawText.trimEnd();
   const dataLines = text
     .split("\n")
@@ -43,22 +66,40 @@ function extractContent(rawText: string) {
     .map((line) => line.slice(5).trim())
     .filter((line) => line && line !== "[DONE]");
 
+  let content = "";
+  let promptTokens = 0;
+  let completionTokens = 0;
+
   if (dataLines.length) {
-    return dataLines
-      .map((chunk) => {
-        try {
-          const data = JSON.parse(chunk);
-          return data.choices?.[0]?.delta?.content ?? data.choices?.[0]?.message?.content ?? "";
-        } catch {
-          return "";
+    for (const chunk of dataLines) {
+      try {
+        const data = JSON.parse(chunk);
+        content +=
+          data.choices?.[0]?.delta?.content ??
+          data.choices?.[0]?.message?.content ??
+          "";
+        if (data.usage) {
+          promptTokens = Number(data.usage.prompt_tokens ?? promptTokens) || promptTokens;
+          completionTokens =
+            Number(data.usage.completion_tokens ?? completionTokens) || completionTokens;
         }
-      })
-      .join("")
-      .trim();
+      } catch {
+        // skip bad chunk
+      }
+    }
+    return {
+      content: content.trim(),
+      promptTokens,
+      completionTokens,
+    };
   }
 
   const data = JSON.parse(text);
-  return String(data.choices?.[0]?.message?.content ?? "").trim();
+  return {
+    content: String(data.choices?.[0]?.message?.content ?? "").trim(),
+    promptTokens: Number(data.usage?.prompt_tokens ?? 0) || 0,
+    completionTokens: Number(data.usage?.completion_tokens ?? 0) || 0,
+  };
 }
 
 function buildSystemPrompt() {
@@ -99,15 +140,41 @@ export async function generateVisualPrompt(rawInput: z.input<typeof visualPrompt
   const input = visualPromptSchema.parse(rawInput);
   const generatedPrompt = buildUserPrompt(input);
   const apiKey = getApiKey();
-  const apiBase = process.env.OPENAI_API_BASE || process.env.AI_BASE_URL || "http://9router:20128/v1";
+  const apiBase =
+    process.env.OPENAI_API_BASE || process.env.AI_BASE_URL || "http://9router:20128/v1";
+
+  // Monthly cap check from real stored cost
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const [usage] = await db
+    .select({
+      totalCost: sql<string>`coalesce(sum(${promptGenerations.costUsd}), '0')`,
+    })
+    .from(promptGenerations)
+    .where(
+      and(
+        eq(promptGenerations.workspaceId, workspaceId),
+        gte(promptGenerations.createdAt, monthStart),
+      ),
+    );
+  const currentCost = Number(usage?.totalCost ?? "0");
+  if (currentCost >= MONTHLY_CAP_USD) {
+    throw new Error(
+      `Monthly usage cap of $${MONTHLY_CAP_USD} reached. Current: $${currentCost.toFixed(4)}`,
+    );
+  }
 
   let generatedOutput = "";
-  let inputTokens = generatedPrompt.length;
+  let inputTokens = 0;
   let outputTokens = 0;
-  let costUsd = "0";
+  let costUsd = "0.0000";
 
   if (!apiKey) {
     generatedOutput = `[SIMULATED AI]\n\n${generatedPrompt}\n\nTambahkan API key agar output digenerate AI beneran.`;
+    inputTokens = Math.ceil(generatedPrompt.length / 4);
+    outputTokens = Math.ceil(generatedOutput.length / 4);
+    costUsd = estimateCost(input.model, inputTokens, outputTokens).toFixed(4);
   } else {
     const response = await fetch(`${apiBase}/chat/completions`, {
       method: "POST",
@@ -132,10 +199,12 @@ export async function generateVisualPrompt(rawInput: z.input<typeof visualPrompt
     }
 
     const rawText = await response.text();
-    generatedOutput = extractContent(rawText) || "AI returned empty output.";
-    inputTokens = Math.ceil(generatedPrompt.length / 4);
-    outputTokens = Math.ceil(generatedOutput.length / 4);
-    costUsd = "0.0000";
+    const parsed = parseAiResponse(rawText);
+    generatedOutput = parsed.content || "AI returned empty output.";
+    inputTokens =
+      parsed.promptTokens || Math.ceil((buildSystemPrompt().length + generatedPrompt.length) / 4);
+    outputTokens = parsed.completionTokens || Math.ceil(generatedOutput.length / 4);
+    costUsd = estimateCost(input.model, inputTokens, outputTokens).toFixed(4);
   }
 
   const [generation] = await db
@@ -153,7 +222,24 @@ export async function generateVisualPrompt(rawInput: z.input<typeof visualPrompt
     })
     .returning();
 
-  await writeActivityLog(workspaceId, user.id, "generated_visual_prompt", "prompt_generation", generation.id);
+  await writeActivityLog(
+    workspaceId,
+    user.id,
+    "generated_visual_prompt",
+    "prompt_generation",
+    generation.id,
+  );
 
-  return { generation };
+  revalidatePath("/app/prompts");
+
+  return {
+    generation,
+    usage: {
+      inputTokens,
+      outputTokens,
+      costUsd: Number(costUsd),
+      monthlyCost: currentCost + Number(costUsd),
+      monthlyCap: MONTHLY_CAP_USD,
+    },
+  };
 }

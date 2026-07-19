@@ -13,6 +13,7 @@ import { Settings, Users, Receipt, Calendar, Sparkles, Mail, ImageIcon } from "l
 import { TeamManager } from "@/components/settings/team-manager";
 import { ReplyToEmailForm } from "@/components/settings/reply-to-email-form";
 import { WorkspaceBrandingForm } from "@/components/settings/workspace-branding-form";
+import { WorkspaceNameForm } from "@/components/settings/workspace-name-form";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { canInviteMember } from "@/lib/plan";
 
@@ -28,6 +29,7 @@ export default async function SettingsPage() {
   const workspaceId = await getWorkspaceId();
   const currentMember = await assertWorkspaceMember(db, user.id, workspaceId);
   const canManageTeam = currentMember.role === "owner";
+  const canEditWorkspace = currentMember.role === "owner";
 
   const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
 
@@ -58,12 +60,14 @@ export default async function SettingsPage() {
             <CardTitle className="flex items-center gap-2"><Settings className="h-5 w-5" /> Workspace</CardTitle>
             <CardDescription>{t("Info workspace utama", "Main workspace info")}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">{t("Nama", "Name")}</span><span>{workspace.name}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Slug</span><Badge variant="secondary">{workspace.slug}</Badge></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">{t("Mata Uang", "Currency")}</span><span>{workspace.defaultCurrency}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">{t("Pajak", "Tax")}</span><span>{workspace.defaultTaxRate}%</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Booking slug</span><span>{workspace.bookingSlug}</span></div>
+          <CardContent className="space-y-4 text-sm">
+            <WorkspaceNameForm defaultName={workspace.name} canEdit={canEditWorkspace} />
+            <div className="space-y-3 border-t pt-3">
+              <div className="flex justify-between"><span className="text-muted-foreground">Slug</span><Badge variant="secondary">{workspace.slug}</Badge></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{t("Mata Uang", "Currency")}</span><span>{workspace.defaultCurrency}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{t("Pajak", "Tax")}</span><span>{workspace.defaultTaxRate}%</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Booking slug</span><span>{workspace.bookingSlug || "—"}</span></div>
+            </div>
           </CardContent>
         </Card>
 

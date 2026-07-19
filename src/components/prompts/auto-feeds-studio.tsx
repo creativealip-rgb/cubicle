@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,15 +13,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { generateVisualPrompt } from "@/lib/actions/visual-prompts";
 import {
   Check,
   Copy,
-  Image as ImageIcon,
-  LayoutGrid,
   Loader2,
-  MessageSquareText,
-  Package,
   Sparkles,
   Video,
   Wand2,
@@ -29,96 +26,75 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-type ModeGroup = "design" | "feed" | "product" | "content";
-
-const groups: { id: ModeGroup; name: string; icon: typeof ImageIcon }[] = [
-  { id: "design", name: "Design", icon: ImageIcon },
-  { id: "feed", name: "Feed", icon: LayoutGrid },
-  { id: "product", name: "Produk", icon: Package },
-  { id: "content", name: "Konten", icon: MessageSquareText },
-];
-
 const modes = [
   {
     id: "banner",
-    group: "design" as const,
     name: "Design Grafis",
     ratio: "1:1",
     desc: "Brief produk jadi banner komersial siap upload.",
   },
   {
     id: "typography",
-    group: "design" as const,
     name: "Typography Ads",
     ratio: "4:5",
     desc: "Iklan tipografi premium dengan copy conversion.",
   },
   {
     id: "logo-mockup",
-    group: "design" as const,
     name: "Logo Produk",
     ratio: "1:1",
     desc: "Logo + brand mockup affiliate-ready.",
   },
   {
     id: "nine-feed",
-    group: "feed" as const,
     name: "9 Feed Konsisten",
     ratio: "4:5",
     desc: "Satu campaign jadi 9 feed: hero, fitur, harga, testimoni, CTA.",
   },
   {
     id: "carousel",
-    group: "feed" as const,
     name: "Carousel Feeds",
     ratio: "4:5",
     desc: "Alur hook → value → proof → CTA untuk 3–7 slide.",
   },
   {
     id: "thumbnail",
-    group: "feed" as const,
     name: "YouTube Thumbnail",
     ratio: "16:9",
     desc: "Thumbnail clickable dengan subject, ekspresi, dan teks overlay.",
   },
   {
     id: "menu-fnb",
-    group: "product" as const,
     name: "Menu F&B",
     ratio: "4:5",
     desc: "Menu restoran/cafe premium dengan layout siap jual.",
   },
   {
     id: "try-on",
-    group: "product" as const,
     name: "Try-On Produk",
     ratio: "4:5",
     desc: "Prompt model memakai produk untuk visual conversion.",
   },
   {
     id: "review",
-    group: "product" as const,
     name: "Review Produk",
     ratio: "1:1",
     desc: "Banner review high-converting dengan badge dan proof.",
   },
   {
     id: "copy",
-    group: "content" as const,
     name: "Copy Writing",
     ratio: "Text",
     desc: "Hook, body, CTA, caption, dan variasi angle.",
   },
   {
     id: "storyboard",
-    group: "content" as const,
     name: "Video Storyboard",
     ratio: "16:9",
     desc: "Scene-by-scene storyboard dengan VO, overlay, dan visual.",
   },
   {
     id: "face-card",
-    group: "content" as const,
     name: "Face Card Analysis",
     ratio: "4:5",
     desc: "Prompt board analisa style, color, grooming, makeup, spectacles.",
@@ -149,26 +125,25 @@ function pickRatio(modeRatio: string) {
 }
 
 export function AutoFeedsStudio() {
-  const [group, setGroup] = useState<ModeGroup>("design");
+  const router = useRouter();
   const [mode, setMode] = useState(modes[0].id);
   const [brand, setBrand] = useState("GoldHeritage");
   const [product, setProduct] = useState("24K Pendant — Eid Edition");
   const [offer, setOffer] = useState("Diskon 20% sampai akhir minggu");
   const [audience, setAudience] = useState(
-    "wanita 25-40 yang suka perhiasan premium"
+    "wanita 25-40 yang suka perhiasan premium",
   );
   const [style, setStyle] = useState(styles[0]);
   const [ratio, setRatio] = useState(ratios[0]);
   const [color, setColor] = useState("gold, ivory, deep emerald");
   const [notes, setNotes] = useState(
-    "Produk harus terlihat premium, clean, dan siap dipakai untuk ads."
+    "Produk harus terlihat premium, clean, dan siap dipakai untuk ads.",
   );
   const [aiOutput, setAiOutput] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const selected = modes.find((item) => item.id === mode) ?? modes[0];
-  const groupModes = modes.filter((item) => item.group === group);
 
   const output = useMemo(() => {
     const base = `ENGINE: ${selected.name}\nFORMAT: ${ratio}\nBRAND: ${brand}\nPRODUCT/OFFER: ${product}\nPROMO: ${offer}\nAUDIENCE: ${audience}\nSTYLE: ${style}\nCOLOR PALETTE: ${color}\nNOTES: ${notes}`;
@@ -194,7 +169,6 @@ export function AutoFeedsStudio() {
     audience,
     brand,
     color,
-    mode,
     notes,
     offer,
     product,
@@ -205,14 +179,6 @@ export function AutoFeedsStudio() {
   ]);
 
   const displayedOutput = aiOutput || output;
-
-  function selectGroup(next: ModeGroup) {
-    setGroup(next);
-    const first = modes.find((item) => item.group === next) ?? modes[0];
-    setMode(first.id);
-    setRatio(pickRatio(first.ratio));
-    setAiOutput("");
-  }
 
   function selectMode(modeId: string) {
     const next = modes.find((item) => item.id === modeId) ?? modes[0];
@@ -237,7 +203,10 @@ export function AutoFeedsStudio() {
         draftPrompt: output,
       });
       setAiOutput(result.generation.generatedOutput || "");
-      toast.success("AI output generated");
+      toast.success(
+        `AI output generated · $${Number(result.usage?.costUsd ?? 0).toFixed(4)}`,
+      );
+      router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "AI generation failed");
     } finally {
@@ -254,93 +223,36 @@ export function AutoFeedsStudio() {
 
   return (
     <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
-      <div className="border-b bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 px-5 py-5 text-white sm:px-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white/10">
-                <Wand2 className="h-4 w-4" />
-              </span>
-              <Badge className="border-0 bg-white/10 text-white hover:bg-white/10">
-                Prompt Engine
-              </Badge>
-            </div>
-            <h2 className="mt-3 text-xl font-semibold tracking-tight sm:text-2xl">
-              Brief → prompt siap generate
-            </h2>
-            <p className="mt-1 max-w-xl text-sm text-slate-300">
-              Pilih jenis prompt, isi brief, generate atau copy draft.
-            </p>
-          </div>
-          <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-right">
-            <p className="text-[11px] uppercase tracking-wide text-slate-400">
-              Rata-rata
-            </p>
-            <p className="text-lg font-semibold">&lt; 30 dtk</p>
-          </div>
-        </div>
-      </div>
-
       <div className="space-y-5 p-5 sm:p-6">
-        {/* Group tabs */}
-        <div className="flex flex-wrap gap-2">
-          {groups.map((item) => {
-            const Icon = item.icon;
-            const active = group === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => selectGroup(item.id)}
-                className={cn(
-                  "inline-flex min-w-[96px] items-center justify-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition",
-                  active
-                    ? "border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm"
-                    : "border-border bg-background text-muted-foreground hover:border-indigo-300 hover:text-foreground"
-                )}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {item.name}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Mode pills */}
-        <div className="space-y-2">
-          <div className="flex flex-wrap gap-2">
-            {groupModes.map((item) => {
+        <Tabs value={mode} onValueChange={selectMode} className="space-y-3">
+          <TabsList className="h-auto w-full flex-wrap justify-start gap-1 overflow-x-auto p-1">
+            {modes.map((item) => {
               const active = mode === item.id;
               return (
-                <button
+                <TabsTrigger
                   key={item.id}
-                  type="button"
-                  onClick={() => selectMode(item.id)}
-                  className={cn(
-                    "inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm transition",
-                    active
-                      ? "bg-slate-900 text-white shadow-sm"
-                      : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
+                  value={item.id}
+                  className="gap-1.5 data-[state=active]:shadow"
                 >
-                  {item.name}
+                  <span>{item.name}</span>
                   <span
                     className={cn(
-                      "rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-                      active ? "bg-white/15 text-white" : "bg-background/80"
+                      "rounded-full px-1.5 py-0.5 text-[10px] tabular-nums",
+                      active
+                        ? "bg-primary/10 text-primary"
+                        : "bg-background/80 text-muted-foreground",
                     )}
                   >
                     {item.ratio}
                   </span>
-                </button>
+                </TabsTrigger>
               );
             })}
-          </div>
+          </TabsList>
           <p className="text-sm text-muted-foreground">{selected.desc}</p>
-        </div>
+        </Tabs>
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
-          {/* Brief form */}
           <div className="rounded-2xl border bg-slate-50/70 p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
@@ -448,7 +360,6 @@ export function AutoFeedsStudio() {
             </div>
           </div>
 
-          {/* Output */}
           <div className="flex min-h-[420px] flex-col rounded-2xl border p-4 sm:p-5">
             <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
               <div>

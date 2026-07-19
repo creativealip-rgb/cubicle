@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.75 — 2026-07-19 — Workspace rename + Prompt Studio cleanup
+
+- Settings: owner-only **edit nama workspace**.
+- Prompt Studio: hapus banner "Brief → prompt", flat tabs (Design Grafis, Typography Ads, dll) styling seperti invoice tabs.
+- Cost/token visual prompt: hitung dari usage API + estimateCost (bukan hardcode $0.0000), revalidate setelah generate.
+
 ## v0.1.74 — 2026-07-19 — Hide PERSONAL for invited members
 
 - Sidebar **PERSONAL** (Catatan / Landing Page / Jurnal) hanya tampil untuk **owner** workspace.
