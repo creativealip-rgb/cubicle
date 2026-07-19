@@ -9,6 +9,14 @@
 
 # Changelog
 
+## v0.1.81 — 2026-07-19 — Google Calendar sync
+
+- Settings → **Google Calendar**: connect/disconnect OAuth.
+- Token disimpan terenkripsi AES-256-GCM di `google_calendar_connections`.
+- Public booking auto-create Google event; cancel appointment hapus event (best-effort).
+- Env: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, optional `GOOGLE_REDIRECT_URI` / `GOOGLE_TOKEN_ENCRYPTION_KEY`.
+- Redirect URI default: `https://cubiqlo.com/api/integrations/google-calendar/callback`.
+
 ## v0.1.79 — 2026-07-19 — Sortable table headers
 
 - Reusable `SortableHeader` + `useTableSort` (3-state: ASC → DESC → default).

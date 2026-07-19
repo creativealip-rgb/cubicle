@@ -15,6 +15,10 @@ import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/l
 import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyAppointmentBooked, notifyAppointmentCancelled } from "@/lib/notifications";
 import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
+import {
+  cancelAppointmentOnGoogleCalendar,
+  syncAppointmentToGoogleCalendar,
+} from "@/lib/google-calendar";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -181,6 +185,17 @@ export async function cancelAppointment(appointmentId: string) {
 
   await writeActivityLog(workspaceId, user.id, "cancelled_appointment", "appointment", appointmentId);
 
+  try {
+    await cancelAppointmentOnGoogleCalendar({
+      appointmentId,
+      userId: apt.userId,
+      googleEventId: apt.googleEventId,
+      googleCalendarId: apt.googleCalendarId,
+    });
+  } catch {
+    // best-effort Google cancel
+  }
+
   if (apt.attendeeEmail) {
     const [ws] = await db
       .select({ replyToEmail: workspaces.replyToEmail })
@@ -305,6 +320,28 @@ export async function createPublicAppointment(
     });
   } catch {
     // best-effort
+  }
+
+  try {
+    const [rule] = await db
+      .select({ timezone: availabilityRules.timezone })
+      .from(availabilityRules)
+      .where(eq(availabilityRules.workspaceId, parsed.workspaceId))
+      .limit(1);
+
+    await syncAppointmentToGoogleCalendar({
+      appointmentId: appointment.id,
+      userId: owner.userId,
+      title: parsed.title,
+      notes: parsed.notes || null,
+      attendeeName: parsed.attendeeName,
+      attendeeEmail: parsed.attendeeEmail,
+      startTime,
+      endTime,
+      timezone: rule?.timezone || "Asia/Jakarta",
+    });
+  } catch {
+    // best-effort Google sync
   }
 
   return appointment;

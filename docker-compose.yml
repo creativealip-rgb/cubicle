@@ -81,6 +81,10 @@ services:
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://cubiqlo.com}
       CRON_SECRET: ${CRON_SECRET:-}
       CUBICLE_URL: ${CUBICLE_URL:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-https://cubiqlo.com/api/integrations/google-calendar/callback}
+      GOOGLE_TOKEN_ENCRYPTION_KEY: ${GOOGLE_TOKEN_ENCRYPTION_KEY:-}
     volumes:
       - /root/9router-public-api-key.txt:/run/secrets/9router_api_key:ro
     labels:

@@ -414,7 +414,27 @@ export const appointments = pgTable("appointments", {
   startTime: timestamp("start_time", { withTimezone: true }).notNull(),
   endTime: timestamp("end_time", { withTimezone: true }).notNull(),
   status: text("status", { enum: ["scheduled", "cancelled", "completed"] }).notNull().default("scheduled"),
+  googleEventId: text("google_event_id"),
+  googleCalendarId: text("google_calendar_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ─── Google Calendar connections (per user) ───
+
+export const googleCalendarConnections = pgTable("google_calendar_connections", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  googleAccountEmail: text("google_account_email"),
+  accessTokenEnc: text("access_token_enc").notNull(),
+  refreshTokenEnc: text("refresh_token_enc").notNull(),
+  scope: text("scope"),
+  tokenType: text("token_type"),
+  expiryDate: timestamp("expiry_date", { withTimezone: true }),
+  calendarId: text("calendar_id").notNull().default("primary"),
+  status: text("status", { enum: ["connected", "error", "disconnected"] }).notNull().default("connected"),
+  lastError: text("last_error"),
+  connectedAt: timestamp("connected_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 // ─── AI Prompts ───

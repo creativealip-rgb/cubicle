@@ -23,6 +23,10 @@ const envSpec: Array<Omit<EnvCheck, "configured">> = [
   { name: "AI_BASE_URL", requiredInProduction: false, note: "AI Assistant OpenAI-compatible endpoint" },
   { name: "AI_MODEL", requiredInProduction: false, note: "AI Assistant model" },
   { name: "AI_MONTHLY_CAP_USD", requiredInProduction: false, note: "AI spend guardrail" },
+  { name: "GOOGLE_CLIENT_ID", requiredInProduction: false, note: "Google OAuth web client ID for Calendar" },
+  { name: "GOOGLE_CLIENT_SECRET", requiredInProduction: false, note: "Google OAuth web client secret for Calendar" },
+  { name: "GOOGLE_REDIRECT_URI", requiredInProduction: false, note: "Optional override OAuth redirect URI" },
+  { name: "GOOGLE_TOKEN_ENCRYPTION_KEY", requiredInProduction: false, note: "Optional token encryption key; falls back to BETTER_AUTH_SECRET" },
 ];
 
 function hasValue(name: string): boolean {

@@ -15,8 +15,14 @@ import { ReplyToEmailForm } from "@/components/settings/reply-to-email-form";
 import { WorkspaceBrandingForm } from "@/components/settings/workspace-branding-form";
 import { WorkspaceNameForm } from "@/components/settings/workspace-name-form";
 import { BookingSlugForm } from "@/components/settings/booking-slug-form";
+import { GoogleCalendarConnect } from "@/components/settings/google-calendar-connect";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { canInviteMember } from "@/lib/plan";
+import {
+  getGoogleConnectionStatus,
+  getGoogleRedirectUri,
+} from "@/lib/google-calendar";
+import { Suspense } from "react";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -47,6 +53,7 @@ export default async function SettingsPage() {
     .orderBy(workspaceMembers.role);
 
   const inviteGate = await canInviteMember(user.id);
+  const googleStatus = await getGoogleConnectionStatus(user.id);
 
   return (
     <div className="space-y-6">
@@ -139,6 +146,32 @@ export default async function SettingsPage() {
         <CardContent>
           <ReplyToEmailForm workspaceId={workspace.id} currentValue={workspace.replyToEmail} />
           <p className="text-xs text-muted-foreground mt-2">{t("Kosongkan untuk gunakan pengirim default. Balasan akan dikirim ke alamat ini jika diatur.", "Leave empty to use default sender. Replies will be sent to this address if set.")}</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" /> Google Calendar
+          </CardTitle>
+          <CardDescription>
+            {t(
+              "Hubungkan Google Calendar biar booking otomatis masuk event.",
+              "Connect Google Calendar so bookings auto-create events.",
+            )}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+            <GoogleCalendarConnect
+              configured={googleStatus.configured}
+              connected={googleStatus.connected}
+              email={googleStatus.connection?.googleAccountEmail ?? null}
+              status={googleStatus.connection?.status ?? null}
+              lastError={googleStatus.connection?.lastError ?? null}
+              redirectUri={getGoogleRedirectUri()}
+            />
+          </Suspense>
         </CardContent>
       </Card>
 
