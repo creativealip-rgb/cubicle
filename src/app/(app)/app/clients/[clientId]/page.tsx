@@ -63,12 +63,17 @@ export default async function ClientDetailPage({
     "projects",
     "files",
     "invoices",
-    "appointments",
     "calendar",
     "portal",
     "notes",
   ]);
-  const initialTab = tabParam && allowedTabs.has(tabParam) ? tabParam : "overview";
+  // Legacy deep-link ?tab=appointments → Calendar
+  const initialTab =
+    tabParam === "appointments"
+      ? "calendar"
+      : tabParam && allowedTabs.has(tabParam)
+        ? tabParam
+        : "overview";
 
   try {
     await assertClientInWorkspace(db, user.id, workspaceId, clientId);
@@ -366,9 +371,6 @@ export default async function ClientDetailPage({
           <TabsTrigger value="invoices" className="gap-1">
             <Receipt className="h-3 w-3" /> Invoice ({clientInvoices.length})
           </TabsTrigger>
-          <TabsTrigger value="appointments" className="gap-1">
-            <Calendar className="h-3 w-3" /> Jadwal
-          </TabsTrigger>
           <TabsTrigger value="calendar" className="gap-1">
             <Calendar className="h-3 w-3" /> Calendar
           </TabsTrigger>
@@ -525,30 +527,6 @@ export default async function ClientDetailPage({
                   </Badge>
                   <span className="text-sm font-semibold">{inv.currency} {inv.total}</span>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="appointments" className="space-y-4 pt-4">
-          {clientAppointments.length === 0 && (
-            <p className="text-sm text-muted-foreground py-8 text-center">Belum ada jadwal</p>
-          )}
-          {clientAppointments.map((apt) => (
-            <Card key={apt.id}>
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">{apt.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {apt.attendeeName && `${apt.attendeeName} · `}
-                      {new Date(apt.startTime).toLocaleDateString()}{" "}
-                      {new Date(apt.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </p>
-                  </div>
-                </div>
-                <Badge variant="outline" className="text-[10px]">{apt.status}</Badge>
               </CardContent>
             </Card>
           ))}

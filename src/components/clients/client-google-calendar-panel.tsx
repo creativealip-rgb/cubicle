@@ -641,7 +641,7 @@ export function ClientGoogleCalendarPanel({
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Jadwal Cubiqlo (client)</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Appointment di Cubiqlo untuk klien ini (bukan campur calendar utama kamu).
+            Meeting / appointment Cubiqlo untuk klien ini (booking form). Bukan campur event Google di atas.
           </p>
         </CardHeader>
         <CardContent className="space-y-3">
