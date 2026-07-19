@@ -790,7 +790,8 @@ export function ProjectAccordion({
 
   // Split into active (in-progress) vs archived (completed/cancelled) so the
   // client always sees live work first and finished work stays out of the way.
-  const isArchived = (status: string) => status === "completed" || status === "cancelled";
+  const isArchived = (status: string) =>
+    status === "completed" || status === "cancelled" || status === "archived";
   const activeProjects = projects.filter((p) => !isArchived(p.status));
   const archivedProjects = projects.filter((p) => isArchived(p.status));
 

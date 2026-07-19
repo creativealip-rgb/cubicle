@@ -34,6 +34,7 @@ const STATUS_TABS = [
   "on_hold",
   "completed",
   "cancelled",
+  "archived",
 ] as const;
 
 type StatusTab = (typeof STATUS_TABS)[number];
@@ -89,6 +90,7 @@ export default async function ProjectsPage({
     on_hold: t("Ditunda", "On Hold"),
     completed: t("Selesai", "Completed"),
     cancelled: t("Dibatalkan", "Cancelled"),
+    archived: t("Diarsipkan", "Archived"),
   };
   const tabLabel = (tab: StatusTab) => {
     if (tab === "all") return t("Semua", "All");
@@ -200,6 +202,7 @@ export default async function ProjectsPage({
     on_hold: "bg-amber-500",
     completed: "bg-blue-500",
     cancelled: "bg-red-400",
+    archived: "bg-slate-500",
   };
 
   const filtersForHref = {

@@ -207,6 +207,7 @@ export default async function ProjectDetailPage({
     on_hold: "bg-amber-500",
     completed: "bg-blue-500",
     cancelled: "bg-red-400",
+    archived: "bg-slate-500",
   };
 
   const backFromClient = from === "client" && !!project.clientId;

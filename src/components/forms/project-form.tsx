@@ -95,7 +95,7 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
         name: form.name,
         description: form.description || undefined,
         clientId: form.clientId,
-        status: form.status as "draft" | "active" | "on_hold" | "completed" | "cancelled",
+        status: form.status as "draft" | "active" | "on_hold" | "completed" | "cancelled" | "archived",
         billingType: form.billingType as "project" | "hours" | "package",
         currency: form.currency,
         rate: form.rate ? Number(form.rate) : undefined,
@@ -262,6 +262,7 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
               <SelectItem value="on_hold">Ditahan</SelectItem>
               <SelectItem value="completed">Selesai</SelectItem>
               <SelectItem value="cancelled">Dibatalkan</SelectItem>
+              <SelectItem value="archived">Diarsipkan</SelectItem>
             </SelectContent>
           </Select>
         </div>

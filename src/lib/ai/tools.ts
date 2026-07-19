@@ -1332,7 +1332,7 @@ export const TOOL_DEFS: ToolDefinition[] = [
         properties: {
           status: {
             type: "string",
-            enum: ["draft", "active", "on_hold", "completed", "cancelled"],
+            enum: ["draft", "active", "on_hold", "completed", "cancelled", "archived"],
           },
           clientId: { type: "string" },
           limit: { type: "number" },

@@ -158,7 +158,7 @@ export const projects = pgTable("projects", {
   clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   description: text("description"),
-  status: text("status", { enum: ["draft", "active", "on_hold", "completed", "cancelled"] }).notNull().default("active"),
+  status: text("status", { enum: ["draft", "active", "on_hold", "completed", "cancelled", "archived"] }).notNull().default("active"),
   billingType: text("billing_type", { enum: ["project", "hours", "package"] }).notNull().default("project"),
   rate: numeric("rate", { precision: 12, scale: 2 }),
   budget: numeric("budget", { precision: 12, scale: 2 }),

@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.78 — 2026-07-19 — Project status: archived
+
+- Project status enum + form + tabs: tambah **archived** / Diarsipkan.
+- `archiveProject` sekarang set `status=archived` (bukan `cancelled`).
+- Portal: project archived ikut bucket arsip (bersama completed/cancelled).
+- Badge/status color untuk archived sudah ready.
+
 ## v0.1.77 — 2026-07-19 — Projects status tabs + client/package filters
 
 - Projects list: status tabs (All / Active / Draft / On Hold / Completed / Cancelled) with counts.

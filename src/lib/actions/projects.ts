@@ -18,7 +18,7 @@ const projectSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   clientId: z.string().uuid("Valid client required"),
-  status: z.enum(["draft", "active", "on_hold", "completed", "cancelled"]).default("active"),
+  status: z.enum(["draft", "active", "on_hold", "completed", "cancelled", "archived"]).default("active"),
   billingType: z.enum(["project", "hours", "package"]).default("project"),
   currency: z.string().default("IDR"),
   rate: z.number().optional(),
@@ -116,7 +116,7 @@ export async function archiveProject(projectId: string) {
   await assertProjectInWorkspace(db, user.id, workspaceId, projectId);
 
   const [project] = await db.update(projects)
-    .set({ status: "cancelled", updatedAt: new Date() })
+    .set({ status: "archived", updatedAt: new Date() })
     .where(eq(projects.id, projectId))
     .returning();
 
