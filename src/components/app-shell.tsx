@@ -82,6 +82,7 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
           onToggle={() => setCollapsed(!collapsed)}
           badgeCounts={badgeCounts}
           userEmail={user.email}
+          workspaceRole={user.role}
         />
         <div
           className={cn(

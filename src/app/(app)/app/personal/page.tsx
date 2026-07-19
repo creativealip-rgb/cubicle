@@ -17,6 +17,7 @@ import {
 import { db } from "@/db";
 import { projects } from "@/db/schema";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
+import { requireWorkspaceOwnerOrRedirect } from "@/lib/require-workspace-owner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,6 +97,7 @@ export default async function PersonalPage({
 }: {
   searchParams: Promise<{ q?: string; tab?: string }>;
 }) {
+  await requireWorkspaceOwnerOrRedirect();
   const lang = await getCurrentLang();
   const t = createT(lang);
   const params = await searchParams;

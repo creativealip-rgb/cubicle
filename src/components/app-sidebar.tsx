@@ -120,13 +120,22 @@ interface AppSidebarProps {
   onToggle: () => void;
   badgeCounts?: SidebarBadgeCounts;
   userEmail?: string;
+  /** PERSONAL (notes/landing/journal) = owner workspace only */
+  workspaceRole?: "owner" | "member" | "viewer";
 }
 
-export function AppSidebar({ collapsed, onToggle, badgeCounts, userEmail }: AppSidebarProps) {
+export function AppSidebar({
+  collapsed,
+  onToggle,
+  badgeCounts,
+  userEmail,
+  workspaceRole,
+}: AppSidebarProps) {
   const pathname = usePathname();
   const { mobileOpen, setMobileOpen } = useSidebar();
   const { lang, t, setLang, pending } = useT();
   const templatesPreview = canAccessTemplatesPreview(userEmail);
+  const canSeePersonal = workspaceRole === "owner";
 
   function changeLang(next: "id" | "en") {
     setLang(next);
@@ -218,8 +227,12 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts, userEmail }: AppS
   }, [pathname, setMobileOpen]);
 
   // Group nav items by section for visual grouping
+  // PERSONAL = owner-only (workspace personal tools, not shared team data)
+  const visibleNavItems = navItems.filter(
+    (item) => item.group !== "Personal" || canSeePersonal,
+  );
   const groupedItems: Array<{ name: string | null; items: typeof navItems }> = [];
-  for (const item of navItems) {
+  for (const item of visibleNavItems) {
     const last = groupedItems[groupedItems.length - 1];
     if (!last || last.name !== item.group) {
       groupedItems.push({ name: item.group, items: [item] });

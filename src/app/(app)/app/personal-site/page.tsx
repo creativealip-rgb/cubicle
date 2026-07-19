@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createPersonalNote, listPersonalNotes, updatePersonalNote } from "@/lib/actions/personal-notes";
+import { requireWorkspaceOwnerOrRedirect } from "@/lib/require-workspace-owner";
 import { BuilderClient } from "@/components/site/builder-client";
 import type { SiteSection } from "@/components/site/section-editor";
 
@@ -73,6 +74,7 @@ function slugify(value: string) {
 }
 
 export default async function PersonalSiteBuilderPage() {
+  await requireWorkspaceOwnerOrRedirect();
   const existing = (
     await listPersonalNotes(KEY, { includeSystem: true, status: "all" })
   ).find((note) => note.title === KEY);

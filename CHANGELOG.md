@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.74 — 2026-07-19 — Hide PERSONAL for invited members
+
+- Sidebar **PERSONAL** (Catatan / Landing Page / Jurnal) hanya tampil untuk **owner** workspace.
+- Direct URL non-owner → redirect `/app/dashboard` (no error card).
+- Access rule tetap owner-only di `personal-notes` actions.
+
 ## v0.1.73 — 2026-07-19 — Prompt Studio cleanup + tabs
 
 - Hapus section **Generate** (template form) dari `/app/prompts`.
