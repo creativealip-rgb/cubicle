@@ -25,6 +25,7 @@ import { ProjectFilters } from "@/components/projects/project-filters";
 import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { Suspense } from "react";
 
 const STATUS_TABS = [
   "all",
@@ -286,15 +287,17 @@ export default async function ProjectsPage({
             })}
           </TabsList>
 
-          <ProjectFilters
-            clients={clientOptions}
-            projects={projectOptions}
-            current={{
-              status: statusTab,
-              clientId,
-              projectId,
-            }}
-          />
+          <Suspense fallback={null}>
+            <ProjectFilters
+              clients={clientOptions}
+              projects={projectOptions}
+              current={{
+                status: statusTab,
+                clientId,
+                projectId,
+              }}
+            />
+          </Suspense>
         </div>
       </Tabs>
 
