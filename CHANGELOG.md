@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.72 — 2026-07-19 — Invoice PDF: no paid fallback
+
+- `Paid`/`Dibayar` hanya sum **Catatan Pembayaran** — no fallback ke total invoice.
+- Belum ada payment row → `Paid = 0` (sama seperti section Pembayaran di edit invoice).
+- Header **Paid** hanya jika sum payment >= total; status `paid` saja tidak cukup.
+
 ## v0.1.71 — 2026-07-18 — Invoice PDF: paid amount from payments
 
 - PDF ambil total dibayar dari **Catatan Pembayaran** (`payments`).

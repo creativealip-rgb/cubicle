@@ -345,16 +345,14 @@ export function InvoicePDF({
   const tax = Number(invoice.tax);
   const discount = Number(invoice.discount);
   const total = Number(invoice.total);
-  const paid = Number(amountPaid ?? 0);
-  const amountDue = Math.max(0, (Number.isFinite(total) ? total : 0) - (Number.isFinite(paid) ? paid : 0));
+  // Same source as edit invoice PaymentSection "Dibayar" — sum Catatan Pembayaran only, no fallback.
+  const paidRaw = Number(amountPaid ?? 0);
+  const paid = Number.isFinite(paidRaw) ? paidRaw : 0;
+  const amountDue = Math.max(0, (Number.isFinite(total) ? total : 0) - paid);
   const isCancelled = invoice.status === "cancelled";
-  const isFullyPaid = !isCancelled && (invoice.status === "paid" || amountDue <= 0);
-  // Header amount: paid total from payment records; fallback to invoice total if status paid but no rows yet.
-  const headerAmount = isCancelled
-    ? 0
-    : isFullyPaid
-      ? (paid > 0 ? paid : total)
-      : amountDue;
+  // Fully paid only when payment records cover total (status alone is not enough).
+  const isFullyPaid = !isCancelled && total > 0 && paid >= total;
+  const headerAmount = isCancelled ? 0 : isFullyPaid ? paid : amountDue;
   const headerLabel = isCancelled ? "Cancelled" : isFullyPaid ? "Paid" : "Amount Due";
   const statusStyle = STATUS_STYLES[invoice.status] ?? STATUS_STYLES.draft;
 
@@ -507,13 +505,11 @@ export function InvoicePDF({
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalValueBold}>{formatCurrency(total, invoice.currency)}</Text>
           </View>
-          {/* From Catatan Pembayaran */}
-          {(paid > 0 || isFullyPaid) && (
+          {/* From Catatan Pembayaran — same as PaymentSection "Dibayar" (0 if no rows) */}
+          {!isCancelled && (
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Paid</Text>
-              <Text style={styles.totalValue}>
-                {formatCurrency(paid > 0 ? paid : total, invoice.currency)}
-              </Text>
+              <Text style={styles.totalValue}>{formatCurrency(paid, invoice.currency)}</Text>
             </View>
           )}
           {!isCancelled && (
