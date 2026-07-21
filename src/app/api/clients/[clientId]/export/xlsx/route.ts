@@ -28,10 +28,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ cli
     {
       Nama: client.name,
       "Custom ID": client.clientNumber ?? "",
-      "Contact Person": client.companyName ?? client.name,
-      "Contact Detail": client.email ?? "",
-      Status: client.status,
+      "Contact Person": client.name,
+      Perusahaan: client.companyName ?? "",
+      Email: client.email ?? "",
       "Nomor Telepon": client.phone ?? "",
+      Alamat: client.address ?? "",
+      Website: client.website ?? "",
+      Status: client.status,
     },
   ];
 

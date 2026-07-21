@@ -89,10 +89,11 @@ const updateTimeEntrySchema = z.object({
 
 const stopTimerSchema = z.object({
   entryId: z.string().uuid(),
-  clientId: z.string().uuid(),
-  projectId: z.string().uuid(),
-  taskId: z.string().uuid({ message: "Task wajib diisi" }),
-  description: z.string().trim().min(1, "Deskripsi wajib diisi"),
+  // Optional: quick-stop may leave blank; fill later via timesheet edit.
+  clientId: z.string().uuid().optional().nullable(),
+  projectId: z.string().uuid().optional().nullable(),
+  taskId: z.string().uuid().optional().nullable(),
+  description: z.string().trim().optional().nullable(),
   tags: z.string().optional().nullable(),
   hourlyRate: z.number().nonnegative().optional(),
 });
@@ -264,21 +265,20 @@ export async function resumeTimer(entryId: string) {
 }
 
 /**
- * Stop requires client / project / task / description filled on the same entry.
+ * Stop timer. Client/project/task/description optional — fill later via timesheet edit.
  * If currently paused, endTime = pausedAt (exclude residual pause).
+ * Back-compat: string entryId alone still works (quick stop without form fields).
  */
 export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string) {
-  // Back-compat: old callers passed entryId only — reject with clear message.
-  if (typeof input === "string") {
-    throw new Error("Stop timer wajib isi client, project, task, dan deskripsi");
-  }
-
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
 
-  const parsed = stopTimerSchema.parse(input);
+  const parsed =
+    typeof input === "string"
+      ? stopTimerSchema.parse({ entryId: input })
+      : stopTimerSchema.parse(input);
 
   const [entry] = await db
     .select()
@@ -298,20 +298,29 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
   const endCandidate = entry.pausedAt ?? new Date();
   const finalEnd = cappedEnd(entry.startTime, endCandidate);
 
+  const nextClientId = parsed.clientId ?? entry.clientId ?? null;
+  const nextProjectId = parsed.projectId ?? entry.projectId ?? null;
+  const nextTaskId = parsed.taskId ?? entry.taskId ?? null;
+  const nextDescription =
+    parsed.description !== undefined && parsed.description !== null
+      ? parsed.description
+      : entry.description;
+  const nextTags = parsed.tags !== undefined ? parsed.tags : entry.tags;
+
   const resolvedRate = await resolveHourlyRate({
     workspaceId,
-    projectId: parsed.projectId,
+    projectId: nextProjectId,
     explicitRate: parsed.hourlyRate,
   });
 
   const [updated] = await db
     .update(timeEntries)
     .set({
-      clientId: parsed.clientId,
-      projectId: parsed.projectId,
-      taskId: parsed.taskId,
-      description: parsed.description,
-      tags: parsed.tags ?? entry.tags,
+      clientId: nextClientId,
+      projectId: nextProjectId,
+      taskId: nextTaskId,
+      description: nextDescription,
+      tags: nextTags,
       hourlyRate: resolvedRate ?? entry.hourlyRate,
       endTime: finalEnd,
       pausedAt: null,

@@ -107,23 +107,14 @@ export function StopTimerDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!prefill?.entryId) return;
-    if (!clientId || !projectId || !taskId || !description.trim()) {
-      toast.error(
-        t(
-          "Client, project, task, dan deskripsi wajib diisi",
-          "Client, project, task, and description are required",
-        ),
-      );
-      return;
-    }
     setLoading(true);
     try {
       await stopTimer({
         entryId: prefill.entryId,
-        clientId,
-        projectId,
-        taskId,
-        description: description.trim(),
+        clientId: clientId || null,
+        projectId: projectId || null,
+        taskId: taskId || null,
+        description: description.trim() || null,
         tags: tags || null,
         hourlyRate: isHourly && hourlyRate ? Number(hourlyRate) : undefined,
       });
@@ -150,10 +141,10 @@ export function StopTimerDialog({
         <form onSubmit={handleSubmit} className="mt-2 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-xs">{t("Klien", "Client")} *</Label>
+              <Label className="text-xs">{t("Klien", "Client")}</Label>
               <Select value={clientId} onValueChange={handleClientChange}>
                 <SelectTrigger className="h-9 text-sm">
-                  <SelectValue placeholder={t("Pilih klien", "Select client")} />
+                  <SelectValue placeholder={t("Opsional", "Optional")} />
                 </SelectTrigger>
                 <SelectContent>
                   {clients.map((c) => (
@@ -165,13 +156,13 @@ export function StopTimerDialog({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">{t("Proyek", "Project")} *</Label>
+              <Label className="text-xs">{t("Proyek", "Project")}</Label>
               <Select value={projectId} onValueChange={handleProjectChange} disabled={!clientId}>
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue
                     placeholder={
                       clientId
-                        ? t("Pilih proyek", "Select project")
+                        ? t("Opsional", "Optional")
                         : t("Pilih klien dulu", "Select client first")
                     }
                   />
@@ -196,13 +187,13 @@ export function StopTimerDialog({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs">{t("Tugas", "Task")} *</Label>
+            <Label className="text-xs">{t("Tugas", "Task")}</Label>
             <Select value={taskId} onValueChange={setTaskId} disabled={!projectId}>
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue
                   placeholder={
                     projectId
-                      ? t("Pilih tugas", "Select task")
+                      ? t("Opsional", "Optional")
                       : t("Pilih proyek dulu", "Select project first")
                   }
                 />
@@ -226,13 +217,12 @@ export function StopTimerDialog({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs">{t("Deskripsi", "Description")} *</Label>
+            <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
             <Input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder={t("Lagi ngerjain apa?", "What are you working on?")}
+              placeholder={t("Opsional — isi nanti di timesheet", "Optional — fill later in timesheet")}
               className="h-9"
-              required
             />
           </div>
 
@@ -265,7 +255,7 @@ export function StopTimerDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
               {t("Batal", "Cancel")}
             </Button>
-            <Button type="submit" disabled={loading || !clientId || !projectId || !taskId || !description.trim()}>
+            <Button type="submit" disabled={loading}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("Simpan & Hentikan", "Save & Stop")}
             </Button>
           </DialogFooter>

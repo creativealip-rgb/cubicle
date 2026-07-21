@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.90 — 2026-07-21 — Stop timer optional + client export/DB fix
+
+- **Stop form optional**: client/project/task/deskripsi boleh kosong; batal dialog = timer tetap jalan; lengkapi nanti di timesheet
+- **DB live**: apply `clients.client_number` + backfill `CLI-######` + trigger assign
+- **Export client xlsx** (single + bulk): Nama, Custom ID, Contact Person, Perusahaan, Email, Nomor Telepon, Alamat, Website, Status
+- Docker build: `NODE_OPTIONS=--max-old-space-size=2048` anti OOM thrash
+
 ## v0.1.89 — 2026-07-21 — Weekly product revision: timer, dashboard, portal, invoice
 
 - **Navbar timer quick-start**: klik mulai langsung (tanpa redirect ke /app/time); deskripsi + klien/proyek diisi saat stop

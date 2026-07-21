@@ -325,7 +325,7 @@ export const files = pgTable("files", {
 export const timeEntries = pgTable("time_entries", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  // Nullable so quick-timer can start empty; required at stop for completed entries.
+  // Nullable so quick-timer can start/stop empty; fill later via timesheet edit.
   clientId: uuid("client_id").references(() => clients.id, { onDelete: "cascade" }),
   projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
   taskId: uuid("task_id").references(() => tasks.id, { onDelete: "set null" }),

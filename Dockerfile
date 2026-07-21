@@ -46,6 +46,8 @@ ENV AI_BASE_URL=$AI_BASE_URL
 ENV AI_MODEL=$AI_MODEL
 ENV MAX_UPLOAD_MB=$MAX_UPLOAD_MB
 ENV SIGNED_URL_TTL_SECONDS=$SIGNED_URL_TTL_SECONDS
+# Cap Node heap so next build does not thrash swap on 8GB VPS
+ENV NODE_OPTIONS="--max-old-space-size=2048"
 RUN npm run build
 
 FROM base AS runner
