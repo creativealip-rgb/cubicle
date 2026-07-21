@@ -6,6 +6,7 @@ import {
   projects,
   tasks,
   files,
+  folders,
   invoices,
   portalVisits,
   portalRequests,
@@ -15,9 +16,10 @@ import {
   packages,
   workspaces,
 } from "@/db/schema";
-import { eq, and, sql, desc, inArray, ne } from "drizzle-orm";
+import { eq, and, sql, desc, inArray, ne, or, isNull } from "drizzle-orm";
 import { getClientPortalAccess, logPortalAccess } from "@/lib/actions/portal";
 import { pickReplyTo } from "@/lib/workspace-reply-to";
+import { Suspense } from "react";
 
 function formatIDR(amount: number) {
   if (amount >= 1_000_000) return `Rp ${(amount / 1_000_000).toFixed(1)}M`;
@@ -45,15 +47,26 @@ import { ProjectAccordion } from "@/components/portal/project-accordion";
 import { PortalInvoices } from "@/components/portal/portal-invoices";
 import { PortalActionButtons } from "@/components/portal/portal-action-buttons";
 import { PortalRequestList } from "@/components/portal/portal-request-list";
+import { PortalTabs } from "@/components/portal/portal-tabs";
+import { PortalFileManager } from "@/components/portal/portal-file-manager";
 import { getCustomPackageRequestsByToken } from "@/lib/actions/custom-package-requests";
 import { getPackageOrdersByToken } from "@/lib/actions/package-orders";
 
 export default async function ClientPortalPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { token } = await params;
+  const sp = searchParams ? await searchParams : undefined;
+  const rawTab = sp?.tab;
+  const initialTab = Array.isArray(rawTab) ? rawTab[0] : rawTab;
+  const rawProjectId = sp?.projectId;
+  const initialProjectId = Array.isArray(rawProjectId) ? rawProjectId[0] : rawProjectId;
+  const rawFolderId = sp?.folderId;
+  const initialFolderId = Array.isArray(rawFolderId) ? rawFolderId[0] : rawFolderId;
 
   let client;
   try {
@@ -193,7 +206,7 @@ export default async function ClientPortalPage({
     }
   }
 
-  // Fetch client-visible files per project
+  // Fetch client-visible files per project (+ folder metadata for file manager)
   const projectFilesMap = new Map<string, Array<{
     id: string;
     name: string;
@@ -201,6 +214,8 @@ export default async function ClientPortalPage({
     sizeBytes: number | null;
     fileType: string;
     createdAt: Date;
+    projectId: string | null;
+    folderId: string | null;
   }>>();
 
   for (const projectId of visibleProjectIds) {
@@ -212,6 +227,8 @@ export default async function ClientPortalPage({
         sizeBytes: files.sizeBytes,
         fileType: files.fileType,
         createdAt: files.createdAt,
+        projectId: files.projectId,
+        folderId: files.folderId,
       })
       .from(files)
       .where(
@@ -224,6 +241,60 @@ export default async function ClientPortalPage({
     projectFilesMap.set(projectId, projectFiles);
   }
 
+  // Client-level shared files (no project) for root of file manager
+  const clientLevelFiles = await db
+    .select({
+      id: files.id,
+      name: files.name,
+      mimeType: files.mimeType,
+      sizeBytes: files.sizeBytes,
+      fileType: files.fileType,
+      createdAt: files.createdAt,
+      projectId: files.projectId,
+      folderId: files.folderId,
+    })
+    .from(files)
+    .where(
+      and(
+        eq(files.workspaceId, client.workspaceId),
+        eq(files.clientId, client.id),
+        eq(files.visibility, "client"),
+        isNull(files.projectId),
+      ),
+    )
+    .limit(200);
+
+  // Folders scoped to this client (project folders + client root folders)
+  const clientFolders = await db
+    .select({
+      id: folders.id,
+      name: folders.name,
+      parentId: folders.parentId,
+      projectId: folders.projectId,
+      clientId: folders.clientId,
+    })
+    .from(folders)
+    .where(
+      and(
+        eq(folders.workspaceId, client.workspaceId),
+        or(
+          eq(folders.clientId, client.id),
+          visibleProjectIds.length > 0
+            ? inArray(folders.projectId, visibleProjectIds)
+            : sql`false`,
+        ),
+      ),
+    )
+    .orderBy(folders.name);
+
+  const allPortalFiles = [
+    ...[...projectFilesMap.values()].flat(),
+    ...clientLevelFiles,
+  ];
+  // Dedupe by id (project + client queries can theoretically overlap)
+  const portalFilesById = new Map(allPortalFiles.map((f) => [f.id, f]));
+  const portalFilesList = [...portalFilesById.values()];
+
   // Track file visibility on portal open: mark files last viewed, audit visits,
   // and notify workspace on first ever portal view per file.
   try {
@@ -231,38 +302,36 @@ export default async function ClientPortalPage({
     const ipAddress = headersList.get("x-forwarded-for") || undefined;
     const userAgent = headersList.get("user-agent") || undefined;
     const { notifyWorkspaceMembers } = await import("@/lib/in-app-notifications");
-    for (const projectFiles of projectFilesMap.values()) {
-      for (const file of projectFiles) {
-        const [{ seen = 0 } = {}] = await db
-          .select({ seen: sql<number>`count(*)::int` })
-          .from(portalVisits)
-          .where(and(eq(portalVisits.resourceType, "file"), eq(portalVisits.resourceId, file.id)));
+    for (const file of portalFilesList) {
+      const [{ seen = 0 } = {}] = await db
+        .select({ seen: sql<number>`count(*)::int` })
+        .from(portalVisits)
+        .where(and(eq(portalVisits.resourceType, "file"), eq(portalVisits.resourceId, file.id)));
 
-        await db.insert(portalVisits).values({
-          workspaceId: client.workspaceId,
-          clientId: client.id,
-          resourceType: "file",
-          resourceId: file.id,
-          ipAddress,
-          userAgent,
+      await db.insert(portalVisits).values({
+        workspaceId: client.workspaceId,
+        clientId: client.id,
+        resourceType: "file",
+        resourceId: file.id,
+        ipAddress,
+        userAgent,
+      });
+
+      await db
+        .update(files)
+        .set({ lastViewedAt: new Date() })
+        .where(eq(files.id, file.id));
+
+      if (seen === 0) {
+        await notifyWorkspaceMembers(client.workspaceId, {
+          type: "file_viewed",
+          title: `${client.name} viewed ${file.name}`,
+          body: "First portal view",
+          link: `/app/files?focus=${file.id}`,
+          entityType: "file",
+          entityId: file.id,
+          actorId: null,
         });
-
-        await db
-          .update(files)
-          .set({ lastViewedAt: new Date() })
-          .where(eq(files.id, file.id));
-
-        if (seen === 0) {
-          await notifyWorkspaceMembers(client.workspaceId, {
-            type: "file_viewed",
-            title: `${client.name} viewed ${file.name}`,
-            body: "First portal view",
-            link: `/app/files?focus=${file.id}`,
-            entityType: "file",
-            entityId: file.id,
-            actorId: null,
-          });
-        }
       }
     }
   } catch {
@@ -681,13 +750,7 @@ export default async function ClientPortalPage({
 
         {/* ─── 1. Top summary + actions ─────────────────────── */}
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            <Card className="shadow-none">
-              <CardContent className="p-3">
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Active</p>
-                <p className="mt-1 text-xl font-semibold">{activeCount}</p>
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <Card className="shadow-none">
               <CardContent className="p-3">
                 <p className="text-[11px] uppercase tracking-wide text-muted-foreground">By project</p>
@@ -735,140 +798,190 @@ export default async function ClientPortalPage({
           </div>
         </div>
 
-        {/* ─── 2. Open requests / reminders ─────────────── */}
-        {(pendingClientRequests.length > 0 || clientPortalRequests.length > 0) && (
-          <section>
-            <h2 className="mb-4 text-xl font-semibold">
-              Requests & Reminders ({pendingClientRequests.length} open)
-            </h2>
-            <PortalRequestList
-              requests={clientPortalRequests.map((r) => ({
-                id: r.id,
-                title: r.title,
-                description: r.description,
-                type: r.type,
-                status: r.status,
-                dueDate: r.dueDate ? String(r.dueDate) : null,
-              }))}
-              token={token}
-            />
-          </section>
-        )}
-
-        {/* ─── 4. Projects (compact accordion) ──────────────── */}
-        <section>
-          <h2 className="text-xl font-semibold mb-4">
-            Projects ({clientProjects.length})
-          </h2>
-          {clientProjects.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center text-muted-foreground">
-                <FolderOpen className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                <p>No projects have been shared with you yet.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <ProjectAccordion
-              projects={clientProjects.map((p) => ({
-                ...p,
-                startDate: p.startDate ? String(p.startDate) : null,
-                finishDate: p.finishDate ? String(p.finishDate) : null,
-              }))}
-              projectTasksMap={new Map(
-                [...projectTasksMap.entries()].map(([k, v]) => [
-                  k,
-                  v.map((t) => ({
-                    ...t,
-                    dueDate: t.dueDate ? String(t.dueDate) : null,
-                    updatedAt: String(t.updatedAt),
-                  })),
-                ]),
-              )}
-              projectFilesMap={new Map(
-                [...projectFilesMap.entries()].map(([k, v]) => [
-                  k,
-                  v.map((f) => ({
-                    ...f,
-                    createdAt: String(f.createdAt),
-                  })),
-                ]),
-              )}
-              projectTimelineMap={new Map(
-                [...projectTimelineMap.entries()].map(([k, v]) => [
-                  k,
-                  v.map((e) => ({
-                    ...e,
-                    createdAt: String(e.createdAt),
-                  })),
-                ]),
-              )}
-              projectHoursMap={projectHoursMap}
-              taskHoursMap={taskHoursMap}
-              byHoursEntriesMap={new Map(
-                [...byHoursEntriesMap.entries()].map(([k, v]) => [
-                  k,
-                  v.map((e) => ({
-                    ...e,
-                    startTime: e.startTime ? String(e.startTime) : null,
-                    endTime: e.endTime ? String(e.endTime) : null,
-                  })),
-                ]),
-              )}
-              projectInvoicesMap={projectInvoicesMap}
-              selectedPackageMap={selectedPackageMap}
-              projectPackagesMap={projectPackagesMap}
-              customRequests={customRequests}
-              packageOrdersList={packageOrdersList.map((o) => ({
-                ...o,
-                createdAt: String(o.createdAt),
-              }))}
-              clientVisibleActionLabels={clientVisibleActionLabels}
-              token={token}
-              workspaceId={client.workspaceId}
-              ownerWhatsAppPhone={workspaceContact?.phone}
-              ownerEmail={portalContactEmail}
-              ownerName={workspaceContact?.name}
-            />
-          )}
-        </section>
-
-        {/* ─── 5. Invoices Section ──────────────────────────── */}
-        <section>
-          <h2 className="text-xl font-semibold mb-4">
-            Invoices ({clientInvoices.length})
-          </h2>
-          <PortalInvoices
-            invoices={clientInvoices.map((inv) => ({
-              id: inv.id,
-              invoiceNumber: inv.invoiceNumber,
-              total: String(inv.total),
-              currency: inv.currency,
-              status: inv.status,
-              dueDate: inv.dueDate ? String(inv.dueDate) : null,
-              issueDate: inv.issueDate ? String(inv.issueDate) : null,
-              projectId: inv.projectId,
-              clientFirstViewedAt: inv.clientFirstViewedAt ? String(inv.clientFirstViewedAt) : null,
-              isNew: !inv.clientFirstViewedAt && ["sent", "viewed", "overdue"].includes(inv.status),
-            }))}
-            projects={clientProjects.map((p) => ({ id: p.id, name: p.name }))}
-            token={token}
+        <Suspense fallback={<p className="text-sm text-muted-foreground">Loading portal…</p>}>
+          <PortalTabs
+            initialTab={initialTab}
+            counts={{
+              projects: clientProjects.length,
+              files: portalFilesList.length,
+              invoices: clientInvoices.length,
+            }}
+            overview={
+              <>
+                {(pendingClientRequests.length > 0 || clientPortalRequests.length > 0) && (
+                  <section>
+                    <h2 className="mb-4 text-xl font-semibold">
+                      Requests & Reminders ({pendingClientRequests.length} open)
+                    </h2>
+                    <PortalRequestList
+                      requests={clientPortalRequests.map((r) => ({
+                        id: r.id,
+                        title: r.title,
+                        description: r.description,
+                        type: r.type,
+                        status: r.status,
+                        dueDate: r.dueDate ? String(r.dueDate) : null,
+                      }))}
+                      token={token}
+                    />
+                  </section>
+                )}
+                {pendingClientRequests.length === 0 && clientPortalRequests.length === 0 && (
+                  <Card className="shadow-none">
+                    <CardContent className="py-8 text-center text-muted-foreground">
+                      <p className="text-sm">No open requests or reminders.</p>
+                      <p className="mt-1 text-xs">
+                        Use Request Report / Request Meeting above when you need something.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            }
+            projects={
+              <section>
+                <h2 className="mb-4 text-xl font-semibold">
+                  Projects ({clientProjects.length})
+                </h2>
+                {clientProjects.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-8 text-center text-muted-foreground">
+                      <FolderOpen className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                      <p>No projects have been shared with you yet.</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <ProjectAccordion
+                    projects={clientProjects.map((p) => ({
+                      ...p,
+                      startDate: p.startDate ? String(p.startDate) : null,
+                      finishDate: p.finishDate ? String(p.finishDate) : null,
+                    }))}
+                    projectTasksMap={new Map(
+                      [...projectTasksMap.entries()].map(([k, v]) => [
+                        k,
+                        v.map((t) => ({
+                          ...t,
+                          dueDate: t.dueDate ? String(t.dueDate) : null,
+                          updatedAt: String(t.updatedAt),
+                        })),
+                      ]),
+                    )}
+                    projectFilesMap={new Map(
+                      [...projectFilesMap.entries()].map(([k, v]) => [
+                        k,
+                        v.map((f) => ({
+                          ...f,
+                          createdAt: String(f.createdAt),
+                        })),
+                      ]),
+                    )}
+                    projectTimelineMap={new Map(
+                      [...projectTimelineMap.entries()].map(([k, v]) => [
+                        k,
+                        v.map((e) => ({
+                          ...e,
+                          createdAt: String(e.createdAt),
+                        })),
+                      ]),
+                    )}
+                    projectHoursMap={projectHoursMap}
+                    taskHoursMap={taskHoursMap}
+                    byHoursEntriesMap={new Map(
+                      [...byHoursEntriesMap.entries()].map(([k, v]) => [
+                        k,
+                        v.map((e) => ({
+                          ...e,
+                          startTime: e.startTime ? String(e.startTime) : null,
+                          endTime: e.endTime ? String(e.endTime) : null,
+                        })),
+                      ]),
+                    )}
+                    projectInvoicesMap={projectInvoicesMap}
+                    selectedPackageMap={selectedPackageMap}
+                    projectPackagesMap={projectPackagesMap}
+                    customRequests={customRequests}
+                    packageOrdersList={packageOrdersList.map((o) => ({
+                      ...o,
+                      createdAt: String(o.createdAt),
+                    }))}
+                    clientVisibleActionLabels={clientVisibleActionLabels}
+                    token={token}
+                    workspaceId={client.workspaceId}
+                    ownerWhatsAppPhone={workspaceContact?.phone}
+                    ownerEmail={portalContactEmail}
+                    ownerName={workspaceContact?.name}
+                  />
+                )}
+              </section>
+            }
+            files={
+              <PortalFileManager
+                token={token}
+                projects={clientProjects.map((p) => ({
+                  id: p.id,
+                  name: p.name,
+                  status: p.status,
+                }))}
+                folders={clientFolders}
+                files={portalFilesList.map((f) => ({
+                  id: f.id,
+                  name: f.name,
+                  mimeType: f.mimeType,
+                  sizeBytes: f.sizeBytes,
+                  fileType: f.fileType,
+                  createdAt: String(f.createdAt),
+                  projectId: f.projectId,
+                  folderId: f.folderId,
+                }))}
+                initialProjectId={initialProjectId}
+                initialFolderId={initialFolderId}
+              />
+            }
+            invoices={
+              <section>
+                <h2 className="mb-4 text-xl font-semibold">
+                  Invoices ({clientInvoices.length})
+                </h2>
+                <PortalInvoices
+                  invoices={clientInvoices.map((inv) => ({
+                    id: inv.id,
+                    invoiceNumber: inv.invoiceNumber,
+                    total: String(inv.total),
+                    currency: inv.currency,
+                    status: inv.status,
+                    dueDate: inv.dueDate ? String(inv.dueDate) : null,
+                    issueDate: inv.issueDate ? String(inv.issueDate) : null,
+                    projectId: inv.projectId,
+                    clientFirstViewedAt: inv.clientFirstViewedAt
+                      ? String(inv.clientFirstViewedAt)
+                      : null,
+                    isNew:
+                      !inv.clientFirstViewedAt &&
+                      ["sent", "viewed", "overdue"].includes(inv.status),
+                  }))}
+                  projects={clientProjects.map((p) => ({ id: p.id, name: p.name }))}
+                  token={token}
+                />
+              </section>
+            }
+            contact={
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Hubungi Tim</CardTitle>
+                </CardHeader>
+                <CardContent className="max-w-lg">
+                  <PortalContactButtons
+                    phone={workspaceContact?.phone}
+                    email={portalContactEmail}
+                    ownerName={workspaceContact?.name}
+                    clientName={client.name}
+                  />
+                </CardContent>
+              </Card>
+            }
           />
-        </section>
-
-        {/* ─── 6. Contact team (WA / Email only) ───────────── */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Hubungi Tim</CardTitle>
-          </CardHeader>
-          <CardContent className="max-w-lg">
-            <PortalContactButtons
-              phone={workspaceContact?.phone}
-              email={portalContactEmail}
-              ownerName={workspaceContact?.name}
-              clientName={client.name}
-            />
-          </CardContent>
-        </Card>
+        </Suspense>
 
         <p className="text-center text-xs text-muted-foreground pt-8">
           Powered by <span className="font-medium">Cubiqlo</span> — Client

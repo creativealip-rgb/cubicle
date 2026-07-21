@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.96 — 2026-07-21 — Portal tabs + file manager
+
+- Hapus card **Active** di portal (chip active projects tetap)
+- Portal dipecah tab: Overview / Projects / Folders / Invoices / Contact
+- Deep-link `?tab=projects|files|invoices|contact`
+- Tab **Folders**: file manager (project → folder → file, breadcrumb, download)
+- Folders/files scoped visibility client; `?projectId=&folderId=`
+
 ## v0.1.95 — 2026-07-21 — Branding Reply-To + owner fallback
 
 - Reply-To pindah ke tab **Branding & Invoice** (bukan Integrasi)
