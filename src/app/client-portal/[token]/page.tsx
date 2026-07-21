@@ -17,6 +17,7 @@ import {
 } from "@/db/schema";
 import { eq, and, sql, desc, inArray, ne } from "drizzle-orm";
 import { getClientPortalAccess, logPortalAccess } from "@/lib/actions/portal";
+import { pickReplyTo } from "@/lib/workspace-reply-to";
 
 function formatIDR(amount: number) {
   if (amount >= 1_000_000) return `Rp ${(amount / 1_000_000).toFixed(1)}M`;
@@ -83,10 +84,25 @@ export default async function ClientPortalPage({
       email: workspaces.billingEmail,
       replyToEmail: workspaces.replyToEmail,
       logoUrl: workspaces.logoUrl,
+      ownerId: workspaces.ownerId,
     })
     .from(workspaces)
     .where(eq(workspaces.id, client.workspaceId))
     .limit(1);
+
+  const [portalOwner] = workspaceContact?.ownerId
+    ? await db
+        .select({ email: users.email })
+        .from(users)
+        .where(eq(users.id, workspaceContact.ownerId))
+        .limit(1)
+    : [null];
+
+  const portalContactEmail = pickReplyTo({
+    replyToEmail: workspaceContact?.replyToEmail,
+    billingEmail: workspaceContact?.email,
+    ownerEmail: portalOwner?.email,
+  });
 
   // Fetch visible projects
   const clientProjects = await db
@@ -810,7 +826,7 @@ export default async function ClientPortalPage({
               token={token}
               workspaceId={client.workspaceId}
               ownerWhatsAppPhone={workspaceContact?.phone}
-              ownerEmail={workspaceContact?.replyToEmail || workspaceContact?.email}
+              ownerEmail={portalContactEmail}
               ownerName={workspaceContact?.name}
             />
           )}
@@ -847,7 +863,7 @@ export default async function ClientPortalPage({
           <CardContent className="max-w-lg">
             <PortalContactButtons
               phone={workspaceContact?.phone}
-              email={workspaceContact?.replyToEmail || workspaceContact?.email}
+              email={portalContactEmail}
               ownerName={workspaceContact?.name}
               clientName={client.name}
             />

@@ -16,6 +16,7 @@ import {
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { sendNotification } from "@/lib/notifications";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { resolveWorkspaceReplyTo } from "@/lib/workspace-reply-to";
 
 const emailSchema = z.object({
   toEmail: z.string().email(),
@@ -153,17 +154,18 @@ export async function sendEmailMessage(input: z.infer<typeof emailSchema>) {
   const parsed = emailSchema.parse(input);
   await assertEmailRelations(user.id, workspaceId, parsed);
   const [workspace] = await db
-    .select({ name: workspaces.name, replyToEmail: workspaces.replyToEmail })
+    .select({ name: workspaces.name })
     .from(workspaces)
     .where(eq(workspaces.id, workspaceId))
     .limit(1);
 
+  const replyTo = await resolveWorkspaceReplyTo(workspaceId);
   const sendResult = await sendNotification({
     to: parsed.toEmail,
     subject: parsed.subject,
     text: parsed.body,
     type: "email_suite",
-    replyTo: workspace?.replyToEmail ?? undefined,
+    replyTo,
   });
 
   const [message] = await db

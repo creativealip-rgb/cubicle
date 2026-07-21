@@ -33,6 +33,7 @@ const brandingSchema = z.object({
   defaultHourlyRate: z.number().nonnegative().optional().nullable(),
   defaultInvoiceTerms: z.string().max(5000).optional().or(z.literal("")),
   invoiceEmailBody: z.string().max(10000).optional().or(z.literal("")),
+  replyToEmail: z.string().email().optional().or(z.literal("")),
 });
 
 export async function updateWorkspaceName(input: z.infer<typeof renameSchema>) {
@@ -85,6 +86,7 @@ export async function updateWorkspaceBranding(input: z.infer<typeof brandingSche
             : String(parsed.defaultHourlyRate),
       defaultInvoiceTerms: parsed.defaultInvoiceTerms || null,
       invoiceEmailBody: parsed.invoiceEmailBody || null,
+      replyToEmail: parsed.replyToEmail || null,
       updatedAt: new Date(),
     })
     .where(eq(workspaces.id, workspaceId));

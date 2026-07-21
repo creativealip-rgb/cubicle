@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.95 — 2026-07-21 — Branding Reply-To + owner fallback
+
+- Reply-To pindah ke tab **Branding & Invoice** (bukan Integrasi)
+- Helper `resolveWorkspaceReplyTo`: `replyToEmail` → `billingEmail` → email owner
+- Outbound email (invoice, booking, team invite, email suite) pakai helper
+- Portal contact email ikut fallback yang sama
+- From tetap `noreply@cubiqlo.com` (SPF/DKIM aman); balasan klien lewat Reply-To
+
 ## v0.1.94 — 2026-07-21 — Settings tab groups
 
 - Settings page dipecah ke tab: Workspace / Tim / Branding & Invoice / Integrasi / Lainnya

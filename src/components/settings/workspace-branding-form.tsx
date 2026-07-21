@@ -24,10 +24,16 @@ interface WorkspaceBrandingFormProps {
     defaultHourlyRate?: string | number | null;
     defaultInvoiceTerms?: string | null;
     invoiceEmailBody?: string | null;
+    replyToEmail?: string | null;
   };
+  /** Shown as hint when replyToEmail empty — auto fallback target. */
+  ownerEmailHint?: string | null;
 }
 
-export function WorkspaceBrandingForm({ defaults }: WorkspaceBrandingFormProps) {
+export function WorkspaceBrandingForm({
+  defaults,
+  ownerEmailHint,
+}: WorkspaceBrandingFormProps) {
   const { t } = useT();
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -47,6 +53,7 @@ export function WorkspaceBrandingForm({ defaults }: WorkspaceBrandingFormProps) 
       defaults.defaultHourlyRate != null ? String(defaults.defaultHourlyRate) : "",
     defaultInvoiceTerms: defaults.defaultInvoiceTerms ?? "",
     invoiceEmailBody: defaults.invoiceEmailBody ?? "",
+    replyToEmail: defaults.replyToEmail ?? "",
   });
 
   async function onSubmit(e: React.FormEvent) {
@@ -65,6 +72,7 @@ export function WorkspaceBrandingForm({ defaults }: WorkspaceBrandingFormProps) 
         defaultHourlyRate: form.defaultHourlyRate ? Number(form.defaultHourlyRate) : null,
         defaultInvoiceTerms: form.defaultInvoiceTerms,
         invoiceEmailBody: form.invoiceEmailBody,
+        replyToEmail: form.replyToEmail,
       });
       toast.success(t("Branding disimpan", "Branding saved"));
       router.refresh();
@@ -232,13 +240,33 @@ export function WorkspaceBrandingForm({ defaults }: WorkspaceBrandingFormProps) 
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="billingEmail">Email</Label>
+          <Label htmlFor="billingEmail">{t("Email tagihan", "Billing email")}</Label>
           <Input
             id="billingEmail"
             type="email"
             value={form.billingEmail}
             onChange={(e) => setForm((p) => ({ ...p, billingEmail: e.target.value }))}
           />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="replyToEmail">{t("Email balasan klien", "Client reply-to email")}</Label>
+          <Input
+            id="replyToEmail"
+            type="email"
+            value={form.replyToEmail}
+            onChange={(e) => setForm((p) => ({ ...p, replyToEmail: e.target.value }))}
+            placeholder={
+              form.billingEmail ||
+              ownerEmailHint ||
+              "email-kamu@gmail.com"
+            }
+          />
+          <p className="text-xs text-muted-foreground">
+            {t(
+              "Balasan klien ke invoice/booking masuk sini. Kosong = email tagihan, lalu email owner.",
+              "Client replies to invoices/bookings go here. Empty = billing email, then owner email.",
+            )}
+          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="billingPhone">{t("Telepon", "Phone")}</Label>

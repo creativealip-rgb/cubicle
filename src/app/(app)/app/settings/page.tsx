@@ -9,9 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Settings, Users, Receipt, Calendar, Sparkles, Mail, ImageIcon, Plug } from "lucide-react";
+import { Settings, Users, Receipt, Calendar, Sparkles, ImageIcon, Plug } from "lucide-react";
 import { TeamManager } from "@/components/settings/team-manager";
-import { ReplyToEmailForm } from "@/components/settings/reply-to-email-form";
 import { WorkspaceBrandingForm } from "@/components/settings/workspace-branding-form";
 import { WorkspaceNameForm } from "@/components/settings/workspace-name-form";
 import { BookingSlugForm } from "@/components/settings/booking-slug-form";
@@ -59,6 +58,14 @@ export default async function SettingsPage({
 
   const inviteGate = await canInviteMember(user.id);
   const googleStatus = await getGoogleConnectionStatus(user.id);
+
+  const [ownerUser] = workspace?.ownerId
+    ? await db
+        .select({ email: users.email })
+        .from(users)
+        .where(eq(users.id, workspace.ownerId))
+        .limit(1)
+    : [null];
 
   const sp = searchParams ? await searchParams : undefined;
   const rawTab = sp?.tab;
@@ -183,63 +190,37 @@ export default async function SettingsPage({
                     defaultHourlyRate: workspace.defaultHourlyRate,
                     defaultInvoiceTerms: workspace.defaultInvoiceTerms,
                     invoiceEmailBody: workspace.invoiceEmailBody,
+                    replyToEmail: workspace.replyToEmail,
                   }}
+                  ownerEmailHint={ownerUser?.email ?? null}
                 />
               </CardContent>
             </Card>
           }
           integrations={
-            <div className="grid gap-4 lg:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Mail className="h-5 w-5" /> Email Reply-To
-                  </CardTitle>
-                  <CardDescription>
-                    {t(
-                      "Atur alamat Reply-To agar balasan klien masuk ke inbox pribadimu.",
-                      "Set a Reply-To address so client replies go to your personal inbox.",
-                    )}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ReplyToEmailForm
-                    workspaceId={workspace.id}
-                    currentValue={workspace.replyToEmail}
-                  />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {t(
-                      "Kosongkan untuk gunakan pengirim default. Balasan akan dikirim ke alamat ini jika diatur.",
-                      "Leave empty to use default sender. Replies will be sent to this address if set.",
-                    )}
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" /> Google Calendar
-                  </CardTitle>
-                  <CardDescription>
-                    {t(
-                      "Hubungkan Google Calendar biar booking otomatis masuk event.",
-                      "Connect Google Calendar so bookings auto-create events.",
-                    )}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <GoogleCalendarConnect
-                    configured={googleStatus.configured}
-                    connected={googleStatus.connected}
-                    email={googleStatus.connection?.googleAccountEmail ?? null}
-                    status={googleStatus.connection?.status ?? null}
-                    lastError={googleStatus.connection?.lastError ?? null}
-                    redirectUri={getGoogleRedirectUri()}
-                  />
-                </CardContent>
-              </Card>
-            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" /> Google Calendar
+                </CardTitle>
+                <CardDescription>
+                  {t(
+                    "Hubungkan Google Calendar biar booking otomatis masuk event.",
+                    "Connect Google Calendar so bookings auto-create events.",
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <GoogleCalendarConnect
+                  configured={googleStatus.configured}
+                  connected={googleStatus.connected}
+                  email={googleStatus.connection?.googleAccountEmail ?? null}
+                  status={googleStatus.connection?.status ?? null}
+                  lastError={googleStatus.connection?.lastError ?? null}
+                  redirectUri={getGoogleRedirectUri()}
+                />
+              </CardContent>
+            </Card>
           }
           more={
             <Card>

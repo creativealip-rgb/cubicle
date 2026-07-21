@@ -19,6 +19,7 @@ import {
   cancelAppointmentOnGoogleCalendar,
   syncAppointmentToGoogleCalendar,
 } from "@/lib/google-calendar";
+import { resolveWorkspaceReplyTo } from "@/lib/workspace-reply-to";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -197,17 +198,13 @@ export async function cancelAppointment(appointmentId: string) {
   }
 
   if (apt.attendeeEmail) {
-    const [ws] = await db
-      .select({ replyToEmail: workspaces.replyToEmail })
-      .from(workspaces)
-      .where(eq(workspaces.id, workspaceId))
-      .limit(1);
+    const replyTo = await resolveWorkspaceReplyTo(workspaceId);
     await notifyAppointmentCancelled({
       attendeeEmail: apt.attendeeEmail,
       attendeeName: apt.attendeeName,
       appointmentTitle: apt.title,
       dateTime: apt.startTime.toISOString(),
-      replyTo: ws?.replyToEmail ?? undefined,
+      replyTo,
     });
   }
 
@@ -243,7 +240,7 @@ export async function createPublicAppointment(
 
   // Check workspace exists and has booking enabled
   const [ws] = await db
-    .select({ id: workspaces.id, bookingSlug: workspaces.bookingSlug, name: workspaces.name, replyToEmail: workspaces.replyToEmail })
+    .select({ id: workspaces.id, bookingSlug: workspaces.bookingSlug, name: workspaces.name })
     .from(workspaces)
     .where(eq(workspaces.id, parsed.workspaceId))
     .limit(1);
@@ -298,6 +295,7 @@ export async function createPublicAppointment(
 
   await writeActivityLog(parsed.workspaceId, null, "booked_appointment_public", "appointment", appointment.id);
 
+  const replyTo = await resolveWorkspaceReplyTo(parsed.workspaceId);
   // Notify attendee + workspace owner
   await notifyAppointmentBooked({
     attendeeEmail: parsed.attendeeEmail,
@@ -305,7 +303,7 @@ export async function createPublicAppointment(
     appointmentTitle: parsed.title,
     dateTime: startTime.toISOString(),
     workspaceName: ws.name,
-    replyTo: ws.replyToEmail ?? undefined,
+    replyTo,
   });
 
   try {

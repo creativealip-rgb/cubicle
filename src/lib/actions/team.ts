@@ -12,6 +12,7 @@ import { requireUser, assertWorkspaceOwner } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { canInviteMember } from "@/lib/plan";
 import { notifyWorkspaceInvite } from "@/lib/notifications";
+import { resolveWorkspaceReplyTo } from "@/lib/workspace-reply-to";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -53,10 +54,12 @@ export async function addWorkspaceMember(input: z.infer<typeof addMemberSchema>)
     .limit(1);
 
   const [workspace] = await db
-    .select({ name: workspaces.name, replyToEmail: workspaces.replyToEmail })
+    .select({ name: workspaces.name })
     .from(workspaces)
     .where(eq(workspaces.id, workspaceId))
     .limit(1);
+
+  const replyTo = await resolveWorkspaceReplyTo(workspaceId);
 
   const appUrl = (
     process.env.NEXT_PUBLIC_APP_URL ??
@@ -73,7 +76,7 @@ export async function addWorkspaceMember(input: z.infer<typeof addMemberSchema>)
         workspaceName: workspace?.name || "Cubiqlo",
         inviterName,
         inviteUrl,
-        replyTo: workspace?.replyToEmail || undefined,
+        replyTo,
       });
     } catch (err) {
       console.error("[team] pending invite email failed", err);
@@ -114,7 +117,7 @@ export async function addWorkspaceMember(input: z.infer<typeof addMemberSchema>)
       workspaceName: workspace?.name || "Cubiqlo",
       inviterName,
       inviteUrl,
-      replyTo: workspace?.replyToEmail || undefined,
+      replyTo,
     });
   } catch (err) {
     console.error("[team] invite email failed", err);

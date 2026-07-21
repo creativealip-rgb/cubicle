@@ -22,6 +22,7 @@ import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyInvoicePaymentReminder, notifyInvoiceSent } from "@/lib/notifications";
 import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
 import { formatMoney } from "@/lib/utils";
+import { resolveWorkspaceReplyTo } from "@/lib/workspace-reply-to";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -238,7 +239,6 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
       const [ws] = await db
         .select({
           name: workspaces.name,
-          replyToEmail: workspaces.replyToEmail,
           invoiceEmailBody: workspaces.invoiceEmailBody,
         })
         .from(workspaces)
@@ -255,6 +255,7 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
             .limit(1);
           projectName = proj?.name;
         }
+        const replyTo = await resolveWorkspaceReplyTo(workspaceId);
         await notifyInvoiceSent({
           clientEmail: client.email,
           clientName: client.name ?? "there",
@@ -262,7 +263,7 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
           amount: `${inv.currency} ${inv.total}`,
           portalUrl,
           workspaceName: ws?.name,
-          replyTo: ws?.replyToEmail ?? undefined,
+          replyTo,
           projectName,
           dueDate: inv.dueDate ? String(inv.dueDate).slice(0, 10) : null,
           customBody: ws?.invoiceEmailBody,
@@ -618,7 +619,6 @@ async function sendInvoiceEmailForInvoice(invoiceId: string, actorId: string, wo
   const [ws] = await db
     .select({
       name: workspaces.name,
-      replyToEmail: workspaces.replyToEmail,
       invoiceEmailBody: workspaces.invoiceEmailBody,
     })
     .from(workspaces)
@@ -639,6 +639,7 @@ async function sendInvoiceEmailForInvoice(invoiceId: string, actorId: string, wo
   const generated = await generateInvoiceShareToken(invoiceId);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.BETTER_AUTH_URL ?? "https://cubiqlo.com";
   const portalUrl = `${appUrl}/invoice/${generated.token}`;
+  const replyTo = await resolveWorkspaceReplyTo(workspaceId);
   await notifyInvoiceSent({
     clientEmail: client.email,
     clientName: client.name ?? "there",
@@ -646,7 +647,7 @@ async function sendInvoiceEmailForInvoice(invoiceId: string, actorId: string, wo
     amount: formatMoney(inv.total, inv.currency || "IDR"),
     portalUrl,
     workspaceName: ws?.name,
-    replyTo: ws?.replyToEmail ?? undefined,
+    replyTo,
     projectName,
     dueDate: inv.dueDate ? String(inv.dueDate).slice(0, 10) : null,
     customBody: ws?.invoiceEmailBody,
@@ -783,7 +784,7 @@ export async function sendInvoicePaymentReminder(invoiceId: string) {
   if (!client?.email) throw new Error("Client email is missing");
 
   const [ws] = await db
-    .select({ name: workspaces.name, replyToEmail: workspaces.replyToEmail })
+    .select({ name: workspaces.name })
     .from(workspaces)
     .where(eq(workspaces.id, workspaceId))
     .limit(1);
@@ -791,6 +792,7 @@ export async function sendInvoicePaymentReminder(invoiceId: string) {
   const generated = await generateInvoiceShareToken(invoiceId);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.BETTER_AUTH_URL ?? "https://cubiqlo.com";
   const portalUrl = `${appUrl}/invoice/${generated.token}`;
+  const replyTo = await resolveWorkspaceReplyTo(workspaceId);
 
   await notifyInvoicePaymentReminder({
     clientEmail: client.email,
@@ -800,7 +802,7 @@ export async function sendInvoicePaymentReminder(invoiceId: string) {
     dueDate: inv.dueDate ? String(inv.dueDate) : null,
     portalUrl,
     workspaceName: ws?.name,
-    replyTo: ws?.replyToEmail ?? undefined,
+    replyTo,
   });
 
   await db
