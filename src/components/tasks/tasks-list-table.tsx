@@ -26,6 +26,7 @@ export type TasksListItem = {
   clientVisible: boolean;
   projectId: string | null;
   projectName: string | null;
+  clientName: string | null;
   assigneeId: string | null;
   assigneeName: string | null;
   sourceNoteId?: string | null;
@@ -39,6 +40,7 @@ const STATUS_ORDER = ["todo", "in_progress", "review", "done", "cancelled"] as c
 type SortKey =
   | "title"
   | "project"
+  | "client"
   | "assignee"
   | "dueDate"
   | "priority"
@@ -59,6 +61,7 @@ export function TasksListTable({
     () => ({
       title: (r: TasksListItem) => r.title,
       project: (r: TasksListItem) => r.projectName ?? "",
+      client: (r: TasksListItem) => r.clientName ?? "",
       assignee: (r: TasksListItem) => r.assigneeName ?? "",
       dueDate: (r: TasksListItem) => r.dueDate,
       priority: (r: TasksListItem) => r.priority,
@@ -116,6 +119,9 @@ export function TasksListTable({
             onClick={() => toggle("project")}
             className="text-[11px] uppercase tracking-wide"
           />
+        </div>
+        <div className="w-28">
+          <SortableHeader as="div" label={t("Klien", "Client")} dir={dirFor("client")} onClick={() => toggle("client")} className="text-[11px] uppercase tracking-wide" />
         </div>
         <div className="w-28">
           <SortableHeader
@@ -183,6 +189,9 @@ export function TasksListTable({
                 </div>
                 <div className="text-xs text-muted-foreground md:w-32 md:truncate">
                   {task.projectName ?? t("Tanpa proyek", "No project")}
+                </div>
+                <div className="text-xs text-muted-foreground md:w-28 md:truncate">
+                  {task.clientName ?? "—"}
                 </div>
                 <div className="text-xs text-muted-foreground md:w-28 md:truncate">
                   {task.assigneeName ?? t("Belum ditugaskan", "Unassigned")}

@@ -6,7 +6,6 @@ import {
   clients,
   projects,
   tasks,
-  files,
   invoices,
   appointments,
   portalRequests,
@@ -61,7 +60,6 @@ export default async function ClientDetailPage({
   const allowedTabs = new Set([
     "overview",
     "projects",
-    "files",
     "invoices",
     "calendar",
     "portal",
@@ -164,6 +162,7 @@ export default async function ClientDetailPage({
       )
       .groupBy(timeEntries.projectId);
     for (const row of usageRows) {
+      if (!row.projectId) continue;
       usedMinutesByProject.set(row.projectId, Number(row.usedMinutes) || 0);
     }
   }
@@ -189,14 +188,6 @@ export default async function ClientDetailPage({
       packageUsedPercent,
     };
   });
-
-  // Files
-  const clientFiles = await db
-    .select()
-    .from(files)
-    .where(eq(files.clientId, clientId))
-    .orderBy(desc(files.createdAt))
-    .limit(20);
 
   // Invoices
   const clientInvoices = await db
@@ -235,11 +226,14 @@ export default async function ClientDetailPage({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-3">
         <div className="space-y-2">
           <Link href="/app/clients" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-3 w-3" /> Kembali ke Klien
           </Link>
+          {client.clientNumber && (
+            <p className="text-xs font-mono text-muted-foreground">{client.clientNumber}</p>
+          )}
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-semibold tracking-tight">{client.name}</h1>
             <Badge variant={client.status === "active" ? "default" : "secondary"}>
@@ -249,11 +243,37 @@ export default async function ClientDetailPage({
           {client.companyName && (
             <p className="text-sm text-muted-foreground">{client.companyName}</p>
           )}
+          {(client.email || client.phone) && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+              {client.email && (
+                <a href={`mailto:${client.email}`} className="hover:text-foreground hover:underline">
+                  {client.email}
+                </a>
+              )}
+              {client.email && client.phone && <span>·</span>}
+              {client.phone && (
+                <a href={`tel:${client.phone}`} className="hover:text-foreground hover:underline">
+                  {client.phone}
+                </a>
+              )}
+            </div>
+          )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 justify-end">
+          <Button size="sm" variant="outline" className="gap-1" asChild>
+            <a href={`/api/clients/${client.id}/export/pdf`} target="_blank" rel="noreferrer">
+              <Download className="h-3 w-3" /> PDF
+            </a>
+          </Button>
+          <Button size="sm" variant="outline" className="gap-1" asChild>
+            <a href={`/api/clients/${client.id}/export/xlsx`} rel="noreferrer">
+              <Download className="h-3 w-3" /> Excel
+            </a>
+          </Button>
           <ClientEditDialog
             defaultValues={{
               id: client.id,
+              clientNumber: client.clientNumber,
               name: client.name,
               companyName: client.companyName ?? "",
               email: client.email ?? "",
@@ -270,7 +290,7 @@ export default async function ClientDetailPage({
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">Proyek Aktif</p>
@@ -283,12 +303,6 @@ export default async function ClientDetailPage({
             <p className="text-2xl font-bold">
               {clientInvoices.filter((i) => i.status !== "paid" && i.status !== "cancelled").length}
             </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Berkas</p>
-            <p className="text-2xl font-bold">{clientFiles.length}</p>
           </CardContent>
         </Card>
         <Card>
@@ -310,19 +324,7 @@ export default async function ClientDetailPage({
       {/* Contact Info Row */}
       <Card>
         <CardContent className="p-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            {client.email && (
-              <div>
-                <p className="text-xs text-muted-foreground">Email</p>
-                <p>{client.email}</p>
-              </div>
-            )}
-            {client.phone && (
-              <div>
-                <p className="text-xs text-muted-foreground">Telepon</p>
-                <p>{client.phone}</p>
-              </div>
-            )}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
             {client.website && (
               <div>
                 <p className="text-xs text-muted-foreground">Website</p>
@@ -364,9 +366,6 @@ export default async function ClientDetailPage({
           </TabsTrigger>
           <TabsTrigger value="projects" className="gap-1">
             <FileText className="h-3 w-3" /> Proyek ({clientProjects.length})
-          </TabsTrigger>
-          <TabsTrigger value="files" className="gap-1">
-            <FileText className="h-3 w-3" /> Berkas ({clientFiles.length})
           </TabsTrigger>
           <TabsTrigger value="invoices" className="gap-1">
             <Receipt className="h-3 w-3" /> Invoice ({clientInvoices.length})
@@ -474,35 +473,6 @@ export default async function ClientDetailPage({
               </Card>
             );
           })}
-        </TabsContent>
-
-        <TabsContent value="files" className="space-y-4 pt-4">
-          {clientFiles.length === 0 && (
-            <p className="text-sm text-muted-foreground py-8 text-center">Belum ada berkas diunggah</p>
-          )}
-          {clientFiles.map((file) => (
-            <Card key={file.id}>
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <FileText className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">{file.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {file.mimeType} · {file.sizeBytes ? `${(file.sizeBytes / 1024).toFixed(1)} KB` : "Ukuran tidak diketahui"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-[10px]">{file.visibility}</Badge>
-                  <Button asChild size="sm" variant="outline" className="gap-1">
-                    <a href={`/api/files/${file.id}/download`} target="_blank" rel="noopener noreferrer">
-                      <Download className="h-3 w-3" /> Buka
-                    </a>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
         </TabsContent>
 
         <TabsContent value="invoices" className="space-y-4 pt-4">

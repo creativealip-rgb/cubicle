@@ -15,6 +15,8 @@ export type PortalInvoice = {
   dueDate: string | null;
   issueDate: string | null;
   projectId: string | null;
+  clientFirstViewedAt?: string | null;
+  isNew?: boolean;
 };
 
 type ProjectRef = { id: string; name: string };
@@ -120,22 +122,29 @@ function InvoiceRow({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="font-mono text-sm font-medium truncate">{inv.invoiceNumber || "—"}</span>
-          <Badge variant="outline" className={`text-[10px] shrink-0 ${meta.className}`}>
-            {meta.label}
-          </Badge>
+          {inv.isNew && (
+            <Badge className="bg-blue-600 text-white text-[10px] shrink-0 hover:bg-blue-600">
+              NEW
+            </Badge>
+          )}
         </div>
         <div className="mt-0.5 text-xs text-muted-foreground truncate">
           {projectName} · {fmtDate(inv.issueDate)}
         </div>
       </div>
-      <div className="text-right shrink-0">
-        <div className="font-mono text-sm font-semibold">{fmtMoney(Number(inv.total), inv.currency)}</div>
+      <div className="flex items-center gap-3 shrink-0">
+        <div className="text-right">
+          <div className="font-mono text-sm font-semibold">{fmtMoney(Number(inv.total), inv.currency)}</div>
+          <Badge variant="outline" className={`mt-0.5 text-[10px] ${meta.className}`}>
+            {meta.label}
+          </Badge>
+        </div>
         {canDownload && (
           <a
             href={pdfUrl}
             target="_blank"
             rel="noreferrer"
-            className="mt-0.5 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+            className="inline-flex items-center gap-1 rounded-md border px-2 py-1.5 text-xs text-primary hover:bg-muted"
           >
             <Download className="h-3 w-3" /> PDF
           </a>

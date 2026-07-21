@@ -24,6 +24,7 @@ interface Task {
   priority: string;
   dueDate: string | null;
   updatedAt: string;
+  hoursMinutes?: number;
 }
 
 function cleanDescription(description: string | null): string | null {
@@ -156,6 +157,17 @@ export function PortalTaskList({
                   <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
                     <Clock className="h-3 w-3" />
                     {new Date(task.dueDate).toLocaleDateString("id-ID")}
+                  </span>
+                )}
+                {(task.hoursMinutes ?? 0) > 0 && (
+                  <span className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
+                    <Clock className="h-3 w-3" />
+                    {(() => {
+                      const mins = task.hoursMinutes ?? 0;
+                      const h = Math.floor(mins / 60);
+                      const m = mins % 60;
+                      return h > 0 ? `${h}h ${m}m` : `${m}m`;
+                    })()}
                   </span>
                 )}
               </div>

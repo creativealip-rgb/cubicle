@@ -236,12 +236,25 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
         .where(eq(clients.id, inv.clientId))
         .limit(1);
       const [ws] = await db
-        .select({ name: workspaces.name, replyToEmail: workspaces.replyToEmail })
+        .select({
+          name: workspaces.name,
+          replyToEmail: workspaces.replyToEmail,
+          invoiceEmailBody: workspaces.invoiceEmailBody,
+        })
         .from(workspaces)
         .where(eq(workspaces.id, workspaceId))
         .limit(1);
       if (client?.email) {
         const portalUrl = `${appUrl}/invoice/${inv.id}`;
+        let projectName: string | undefined;
+        if (inv.projectId) {
+          const [proj] = await db
+            .select({ name: projects.name })
+            .from(projects)
+            .where(eq(projects.id, inv.projectId))
+            .limit(1);
+          projectName = proj?.name;
+        }
         await notifyInvoiceSent({
           clientEmail: client.email,
           clientName: client.name ?? "there",
@@ -250,6 +263,9 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
           portalUrl,
           workspaceName: ws?.name,
           replyTo: ws?.replyToEmail ?? undefined,
+          projectName,
+          dueDate: inv.dueDate ? String(inv.dueDate).slice(0, 10) : null,
+          customBody: ws?.invoiceEmailBody,
         });
       }
     } catch (err) {
@@ -600,10 +616,24 @@ async function sendInvoiceEmailForInvoice(invoiceId: string, actorId: string, wo
   if (!client?.email) throw new Error("Client email is missing");
 
   const [ws] = await db
-    .select({ name: workspaces.name, replyToEmail: workspaces.replyToEmail })
+    .select({
+      name: workspaces.name,
+      replyToEmail: workspaces.replyToEmail,
+      invoiceEmailBody: workspaces.invoiceEmailBody,
+    })
     .from(workspaces)
     .where(eq(workspaces.id, workspaceId))
     .limit(1);
+
+  let projectName: string | undefined;
+  if (inv.projectId) {
+    const [proj] = await db
+      .select({ name: projects.name })
+      .from(projects)
+      .where(eq(projects.id, inv.projectId))
+      .limit(1);
+    projectName = proj?.name;
+  }
 
   // Raw share tokens are shown only once, so sending always rotates a fresh link.
   const generated = await generateInvoiceShareToken(invoiceId);
@@ -617,6 +647,9 @@ async function sendInvoiceEmailForInvoice(invoiceId: string, actorId: string, wo
     portalUrl,
     workspaceName: ws?.name,
     replyTo: ws?.replyToEmail ?? undefined,
+    projectName,
+    dueDate: inv.dueDate ? String(inv.dueDate).slice(0, 10) : null,
+    customBody: ws?.invoiceEmailBody,
   });
 
   await db

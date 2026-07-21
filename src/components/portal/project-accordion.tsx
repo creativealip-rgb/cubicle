@@ -140,6 +140,7 @@ interface ProjectAccordionProps {
   projectFilesMap: Map<string, FileItem[]>;
   projectTimelineMap: Map<string, TimelineEvent[]>;
   projectHoursMap: Map<string, HoursSummary>;
+  taskHoursMap?: Map<string, number>;
   byHoursEntriesMap: Map<string, TimeEntry[]>;
   projectInvoicesMap: Map<string, Invoice[]>;
   selectedPackageMap: Map<string, SelectedPackage>;
@@ -177,11 +178,40 @@ function formatCurrency(amount: string | number, currency: string) {
 
 // Task progress: how many tasks are done out of total
 function taskProgress(tasks: Task[]) {
-  const total = tasks.length;
-  const done = tasks.filter((t) => t.status === "done").length;
+  // Equal weight per task; cancelled ignored
+  const active = tasks.filter((t) => t.status !== "cancelled");
+  const total = active.length;
+  const done = active.filter((t) => t.status === "done").length;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
   return { total, done, pct };
 }
+
+function progressPie(pct: number, size = 44) {
+  const r = 16;
+  const c = 2 * Math.PI * r;
+  const offset = c * (1 - Math.min(Math.max(pct, 0), 100) / 100);
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" className="shrink-0">
+      <circle cx="20" cy="20" r={r} fill="none" stroke="#e2e8f0" strokeWidth="5" />
+      <circle
+        cx="20"
+        cy="20"
+        r={r}
+        fill="none"
+        stroke={pct >= 100 ? "#10b981" : "#2563eb"}
+        strokeWidth="5"
+        strokeLinecap="round"
+        strokeDasharray={c}
+        strokeDashoffset={offset}
+        transform="rotate(-90 20 20)"
+      />
+      <text x="20" y="21" textAnchor="middle" dominantBaseline="middle" className="fill-slate-700" style={{ fontSize: 9, fontWeight: 600 }}>
+        {pct}%
+      </text>
+    </svg>
+  );
+}
+
 
 // Whether any client-visible task is awaiting review (client action)
 function hasReviewTask(tasks: Task[]) {
@@ -297,6 +327,7 @@ function ProjectExpandedContent({
   files,
   timeline,
   hoursSummary,
+  taskHoursMap,
   entries,
   invoices,
   selectedPkg,
@@ -315,6 +346,7 @@ function ProjectExpandedContent({
   files: FileItem[];
   timeline: TimelineEvent[];
   hoursSummary: HoursSummary | undefined;
+  taskHoursMap?: Map<string, number>;
   entries: TimeEntry[] | undefined;
   invoices: Invoice[] | undefined;
   selectedPkg: SelectedPackage | undefined;
@@ -601,6 +633,7 @@ function ProjectExpandedContent({
               priority: t.priority,
               dueDate: t.dueDate ? String(t.dueDate) : null,
               updatedAt: String(t.updatedAt),
+              hoursMinutes: taskHoursMap?.get(t.id) ?? 0,
             }))}
           />
         </div>
@@ -626,32 +659,6 @@ function ProjectExpandedContent({
         </div>
       )}
 
-      {/* Timeline (last 3) */}
-      {timeline.length > 0 && (
-        <div>
-          <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-            <Activity className="h-4 w-4" /> Timeline
-          </h4>
-          <div className="rounded-lg border divide-y">
-            {timeline.slice(0, 3).map((event) => (
-              <div key={event.id} className="flex items-center justify-between gap-3 p-3 text-sm">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
-                  <span className="truncate">
-                    {actionLabels[event.action] ?? event.action.replace(/_/g, " ")}
-                  </span>
-                </div>
-                <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                  <Badge variant="outline" className="text-[10px] capitalize">
-                    {event.entityType.replace(/_/g, " ")}
-                  </Badge>
-                  <span>{new Date(event.createdAt).toLocaleDateString()}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Contact team — WA / email only */}
       <Separator />
@@ -695,16 +702,10 @@ function ProjectSummary({
     if (total > 0) {
       return (
         <div className="flex items-center gap-2">
+          {progressPie(pct)}
           <span className="text-xs font-medium text-foreground">
             {done}/{total} task selesai
           </span>
-          <div className="h-1.5 w-24 rounded-full bg-slate-200">
-            <div
-              className={`h-full rounded-full transition-all ${pct >= 100 ? "bg-emerald-500" : "bg-blue-500"}`}
-              style={{ width: `${Math.min(pct, 100)}%` }}
-            />
-          </div>
-          <span className="text-xs text-muted-foreground">{pct}%</span>
         </div>
       );
     }
@@ -768,6 +769,7 @@ export function ProjectAccordion({
   projectFilesMap,
   projectTimelineMap,
   projectHoursMap,
+  taskHoursMap,
   byHoursEntriesMap,
   projectInvoicesMap,
   selectedPackageMap,
@@ -858,6 +860,7 @@ export function ProjectAccordion({
             files={files}
             timeline={timeline}
             hoursSummary={hoursSummary}
+            taskHoursMap={taskHoursMap}
             entries={entries}
             invoices={invoices}
             selectedPkg={selectedPkg}

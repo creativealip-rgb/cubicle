@@ -23,6 +23,7 @@ interface WorkspaceBrandingFormProps {
     defaultTaxRate?: string | number | null;
     defaultHourlyRate?: string | number | null;
     defaultInvoiceTerms?: string | null;
+    invoiceEmailBody?: string | null;
   };
 }
 
@@ -45,6 +46,7 @@ export function WorkspaceBrandingForm({ defaults }: WorkspaceBrandingFormProps) 
     defaultHourlyRate:
       defaults.defaultHourlyRate != null ? String(defaults.defaultHourlyRate) : "",
     defaultInvoiceTerms: defaults.defaultInvoiceTerms ?? "",
+    invoiceEmailBody: defaults.invoiceEmailBody ?? "",
   });
 
   async function onSubmit(e: React.FormEvent) {
@@ -62,6 +64,7 @@ export function WorkspaceBrandingForm({ defaults }: WorkspaceBrandingFormProps) 
         defaultTaxRate: Number(form.defaultTaxRate || 0),
         defaultHourlyRate: form.defaultHourlyRate ? Number(form.defaultHourlyRate) : null,
         defaultInvoiceTerms: form.defaultInvoiceTerms,
+        invoiceEmailBody: form.invoiceEmailBody,
       });
       toast.success(t("Branding disimpan", "Branding saved"));
       router.refresh();
@@ -319,6 +322,26 @@ export function WorkspaceBrandingForm({ defaults }: WorkspaceBrandingFormProps) 
             value={form.defaultInvoiceTerms}
             onChange={(e) => setForm((p) => ({ ...p, defaultInvoiceTerms: e.target.value }))}
           />
+        </div>
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="invoiceEmailBody">
+            {t("Template email invoice", "Invoice email template")}
+          </Label>
+          <Textarea
+            id="invoiceEmailBody"
+            rows={6}
+            value={form.invoiceEmailBody}
+            onChange={(e) => setForm((p) => ({ ...p, invoiceEmailBody: e.target.value }))}
+            placeholder={
+              "Hi {{client_name}},\n\nInvoice {{invoice_number}} untuk {{project_name}} sebesar {{amount}} sudah siap.\nJatuh tempo: {{due_date}}\n\nLihat invoice: {{invoice_link}}"
+            }
+          />
+          <p className="text-xs text-muted-foreground">
+            {t(
+              "Variabel: {{client_name}}, {{invoice_number}}, {{project_name}}, {{amount}}, {{due_date}}, {{invoice_link}}. Kosong = template default.",
+              "Variables: {{client_name}}, {{invoice_number}}, {{project_name}}, {{amount}}, {{due_date}}, {{invoice_link}}. Empty = default template.",
+            )}
+          </p>
         </div>
       </div>
 

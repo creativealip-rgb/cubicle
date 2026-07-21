@@ -24,7 +24,7 @@ export default async function TimePage() {
   const member = await assertWorkspaceMember(db, user.id, workspaceId);
   const canWrite = member.role === "owner" || member.role === "member";
 
-  // Active timer (running only — exclude closed manual entries)
+  // Active timer (running/paused — exclude closed manual entries)
   const [activeTimer] = await db
     .select({
       id: timeEntries.id,
@@ -34,6 +34,7 @@ export default async function TimePage() {
       description: timeEntries.description,
       tags: timeEntries.tags,
       startTime: timeEntries.startTime,
+      pausedAt: timeEntries.pausedAt,
       clientName: clients.name,
       projectName: projects.name,
       taskTitle: tasks.title,
@@ -59,11 +60,15 @@ export default async function TimePage() {
       description: timeEntries.description,
       tags: timeEntries.tags,
       durationMinutes: timeEntries.durationMinutes,
+      manualMinutes: timeEntries.manualMinutes,
       billable: timeEntries.billable,
       hourlyRate: timeEntries.hourlyRate,
       startTime: timeEntries.startTime,
       endTime: timeEntries.endTime,
       status: timeEntries.status,
+      clientId: timeEntries.clientId,
+      projectId: timeEntries.projectId,
+      taskId: timeEntries.taskId,
       clientName: clients.name,
       projectName: projects.name,
       projectCurrency: projects.currency,
@@ -157,7 +162,9 @@ export default async function TimePage() {
                 projectId: activeTimer.projectId,
                 taskId: activeTimer.taskId,
                 description: activeTimer.description,
+                tags: activeTimer.tags,
                 startTime: activeTimer.startTime!,
+                pausedAt: activeTimer.pausedAt,
                 clientName: activeTimer.clientName,
                 projectName: activeTimer.projectName,
                 taskTitle: activeTimer.taskTitle,
@@ -174,11 +181,15 @@ export default async function TimePage() {
           description: e.description,
           tags: e.tags,
           durationMinutes: e.durationMinutes,
+          manualMinutes: e.manualMinutes,
           billable: e.billable ?? false,
           hourlyRate: e.hourlyRate,
           startTime: e.startTime,
           endTime: e.endTime,
           status: e.status,
+          clientId: e.clientId,
+          projectId: e.projectId,
+          taskId: e.taskId,
           clientName: e.clientName,
           projectName: e.projectName,
           projectCurrency: e.projectCurrency,
@@ -188,6 +199,7 @@ export default async function TimePage() {
         }))}
         clients={clientList}
         projects={projectList}
+        tasks={taskList}
       />
     </div>
   );

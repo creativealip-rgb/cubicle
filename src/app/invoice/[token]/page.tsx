@@ -73,9 +73,22 @@ export default async function SharedInvoicePage({
     try {
       await db
         .update(invoices)
-        .set({ status: "viewed", updatedAt: new Date() })
+        .set({
+          status: "viewed",
+          clientFirstViewedAt: invoice.clientFirstViewedAt ?? new Date(),
+          updatedAt: new Date(),
+        })
         .where(eq(invoices.id, invoice.id));
       invoice.status = "viewed";
+    } catch {
+      // Non-critical
+    }
+  } else if (!invoice.clientFirstViewedAt) {
+    try {
+      await db
+        .update(invoices)
+        .set({ clientFirstViewedAt: new Date(), updatedAt: new Date() })
+        .where(eq(invoices.id, invoice.id));
     } catch {
       // Non-critical
     }

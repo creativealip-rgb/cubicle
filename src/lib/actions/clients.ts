@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { clients } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceWritable, assertClientInWorkspace } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
@@ -14,6 +14,23 @@ import { createHash, randomBytes } from "crypto";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
+}
+
+/** Next workspace client number: CLI-000001 */
+async function nextClientNumber(workspaceId: string): Promise<string> {
+  const result = await db.execute(sql`
+    SELECT COALESCE(MAX(
+      CASE
+        WHEN client_number ~ '^CLI-[0-9]+$'
+        THEN CAST(substring(client_number from 5) AS integer)
+        ELSE 0
+      END
+    ), 0)::int AS max_num
+    FROM clients
+    WHERE workspace_id = ${workspaceId}
+  `);
+  const maxNum = Number((result.rows[0] as { max_num?: number } | undefined)?.max_num ?? 0);
+  return `CLI-${String(maxNum + 1).padStart(6, "0")}`;
 }
 
 const slugSchema = z
@@ -81,6 +98,8 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
     };
   }
 
+  const clientNumber = await nextClientNumber(workspaceId);
+
   const [client] = await db.insert(clients).values({
     workspaceId,
     name: parsed.name,
@@ -93,6 +112,7 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
     internalNotes: parsed.internalNotes || null,
     portalSlug: parsed.portalSlug || null,
     portalSlugEnabled: parsed.portalSlugEnabled ?? true,
+    clientNumber,
     status: "active",
     ...portalFields,
   }).returning();

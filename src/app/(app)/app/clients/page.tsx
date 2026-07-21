@@ -67,6 +67,7 @@ export default async function ClientsPage({
   const clientsList = await db
     .select({
       id: clients.id,
+      clientNumber: clients.clientNumber,
       name: clients.name,
       companyName: clients.companyName,
       email: clients.email,
@@ -89,7 +90,8 @@ export default async function ClientsPage({
         (c) =>
           c.name.toLowerCase().includes(search.toLowerCase()) ||
           (c.companyName?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
-          (c.email?.toLowerCase().includes(search.toLowerCase()) ?? false)
+          (c.email?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
+          (c.clientNumber?.toLowerCase().includes(search.toLowerCase()) ?? false)
       )
     : clientsList;
 
@@ -120,6 +122,13 @@ export default async function ClientsPage({
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline">{t("Unduh PDF", "Download PDF")}</span>
               <span className="sm:hidden">PDF</span>
+            </a>
+          </Button>
+          <Button size="sm" variant="outline" className="gap-1" asChild>
+            <a href="/api/clients/export/xlsx" rel="noreferrer">
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">{t("Unduh Excel", "Download Excel")}</span>
+              <span className="sm:hidden">XLSX</span>
             </a>
           </Button>
           {canWrite && (

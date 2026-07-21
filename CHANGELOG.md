@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.1.89 — 2026-07-21 — Weekly product revision: timer, dashboard, portal, invoice
+
+- **Navbar timer quick-start**: klik mulai langsung (tanpa redirect ke /app/time); deskripsi + klien/proyek diisi saat stop
+- Timer running: opsi **Stop** + **Pause/Resume**; batal dialog stop tidak matikan timer
+- **Dashboard**: buang quick-action redundant (timer/invoice/klien); gabung reminder; finance 30-hari di sidebar kanan; ringkas active projects + overdue tasks di greeting
+- **Client**: export Excel (satuan + bulk) kolom nama/custom ID/contact/status/telepon; email+phone di bawah header; auto `CLI-000001`
+- **Task**: kolom nama assignee
+- **Client portal**: by project + pie progress; hours per task; badge **NEW** invoice (belum dilihat klien); status invoice di kanan dekat download PDF
+- **Mail invoicing**: workspace template body custom + placeholder `{{client_name}}` `{{invoice_number}}` `{{project_name}}` `{{amount}}` `{{due_date}}` `{{invoice_link}}`
+- DB: `invoices.client_first_viewed_at`, `workspaces.invoice_email_body`
+
 ## v0.1.88 — 2026-07-19 — Invoice payment currency + timesheet range
 
 - Section **Pembayaran**: format uang pakai currency invoice (bukan hardcode Rp)

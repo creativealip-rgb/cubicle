@@ -42,11 +42,9 @@ import {
   BarChart3,
   Calendar,
   FileText,
-  Activity,
 } from "lucide-react";
 import { PortalContactButtons } from "@/components/portal/portal-contact";
 import { ProjectAccordion } from "@/components/portal/project-accordion";
-import { ActivityFeed, type ActivityItem } from "@/components/portal/activity-feed";
 import { PortalInvoices } from "@/components/portal/portal-invoices";
 import { getCustomPackageRequestsByToken } from "@/lib/actions/custom-package-requests";
 import { getPackageOrdersByToken } from "@/lib/actions/package-orders";
@@ -457,6 +455,7 @@ export default async function ClientPortalPage({
       dueDate: invoices.dueDate,
       issueDate: invoices.issueDate,
       projectId: invoices.projectId,
+      clientFirstViewedAt: invoices.clientFirstViewedAt,
     })
     .from(invoices)
     .where(
@@ -594,154 +593,43 @@ export default async function ClientPortalPage({
         : true),
   );
 
-  // ─── Activity Feed: compact, high-signal only ─────────────────────────
-  // Cap noise: few time entries, group task spam per project+day, max 5 rows.
-  const activityItems: ActivityItem[] = [];
-
-  // Invoice events (high signal)
-  for (const inv of clientInvoices) {
-    const projectName = inv.projectId
-      ? clientProjects.find((p) => p.id === inv.projectId)?.name || "Unknown Project"
-      : "General";
-    if (inv.status === "paid") {
-      activityItems.push({
-        id: `inv-paid-${inv.id}`,
-        type: "invoice",
-        description: `${inv.invoiceNumber || "Invoice"} paid — ${new Intl.NumberFormat("en-US", { style: "currency", currency: inv.currency }).format(Number(inv.total))}`,
-        date: new Date(inv.issueDate || inv.dueDate || Date.now()),
-        icon: "invoice",
-      });
-    } else if (inv.status === "sent" || inv.status === "viewed") {
-      activityItems.push({
-        id: `inv-sent-${inv.id}`,
-        type: "invoice",
-        description: `${inv.invoiceNumber || "Invoice"} sent — ${new Intl.NumberFormat("en-US", { style: "currency", currency: inv.currency }).format(Number(inv.total))} (${projectName})`,
-        date: new Date(inv.issueDate || Date.now()),
-        icon: "invoice",
-      });
-    }
-  }
-
-  // Time entries — max 1 newest per project (avoid 8 clock rows)
-  for (const [projectId, entries] of byHoursEntriesMap) {
-    const projectName = clientProjects.find((p) => p.id === projectId)?.name || "Project";
-    const latest = entries[0];
-    if (!latest) continue;
-    const entryDate = latest.startTime ? new Date(latest.startTime) : new Date();
-    activityItems.push({
-      id: `te-${latest.id}`,
-      type: "time_entry",
-      description: `${formatMinutes(latest.durationMinutes)} logged on ${projectName}`,
-      date: entryDate,
-      icon: "clock",
-    });
-  }
-
-  // Task events — group same action+project+day so "Task added" x6 collapses
-  const taskGroups = new Map<
-    string,
-    { count: number; latest: Date; action: string; projectName: string }
-  >();
-  for (const [projectId, timeline] of projectTimelineMap) {
-    const projectName = clientProjects.find((p) => p.id === projectId)?.name || "Project";
-    for (const event of timeline) {
-      if (event.action !== "updated_task_status" && event.action !== "created_task") continue;
-      const d = new Date(event.createdAt);
-      const dayKey = d.toISOString().slice(0, 10);
-      const key = `${event.action}|${projectId}|${dayKey}`;
-      const prev = taskGroups.get(key);
-      if (!prev) {
-        taskGroups.set(key, {
-          count: 1,
-          latest: d,
-          action: event.action,
-          projectName,
-        });
-      } else {
-        prev.count += 1;
-        if (d > prev.latest) prev.latest = d;
-      }
-    }
-  }
-  for (const [key, g] of taskGroups) {
-    const label =
-      g.action === "updated_task_status"
-        ? g.count > 1
-          ? `${g.count} task status updates`
-          : "Task status updated"
-        : g.count > 1
-          ? `${g.count} tasks added`
-          : "Task added";
-    activityItems.push({
-      id: `tl-${key}`,
-      type: "task",
-      description: `${label} in ${g.projectName}`,
-      date: g.latest,
-      icon: g.action === "updated_task_status" ? "check" : "project",
-    });
-  }
-
-  // Project creation only if recently created (30 days) — old create spam skip
-  const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
-  const nowMs = Date.now();
-  for (const proj of clientProjects) {
-    const created = new Date(proj.startDate || Date.now());
-    if (nowMs - created.getTime() > thirtyDaysMs) continue;
-    activityItems.push({
-      id: `proj-${proj.id}`,
-      type: "project",
-      description: `Project "${proj.name}" created`,
-      date: created,
-      icon: "project",
-    });
-  }
-
-  // Sort newest first; keep small pool for "show more" (UI shows 3 first)
-  activityItems.sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-  );
-  const recentActivities = activityItems.slice(0, 5);
-
-
-  // ─── Hero helpers ────────────────────────────────────────────────────
-  function fmtAmt(idr: number, usd: number) {
-    const parts: string[] = [];
-    if (idr > 0) parts.push(formatIDR(idr));
-    if (usd > 0) parts.push(`$${usd.toLocaleString("en-US", { minimumFractionDigits: 0 })}`);
-    return parts.join(" + ") || "—";
-  }
-
   const activeCount = clientProjects.filter((p) => p.status === "active").length;
 
-  // Package hours for hero
-  const packageProjects = clientProjects.filter((p) => p.billingType === "package" && p.selectedPackageId);
-  let heroPackageLabel: string | null = null;
-  let heroPackagePercent: number | null = null;
-  if (packageProjects.length > 0) {
-    const pkg = packageProjects[0];
-    const selectedPkg = selectedPackageMap.get(pkg.selectedPackageId!);
-    const hoursSummary = projectHoursMap.get(pkg.id);
-    if (selectedPkg?.hours && hoursSummary) {
-      const totalH = selectedPkg.hours;
-      const usedH = Math.round(hoursSummary.totalMinutes / 60);
-      heroPackageLabel = `${usedH}h / ${totalH}h`;
-      heroPackagePercent = totalH > 0 ? Math.round((hoursSummary.totalMinutes / (totalH * 60)) * 100) : 0;
+  // Mark first-viewed invoices when client opens portal
+  try {
+    const unseen = clientInvoices
+      .filter((inv) => !inv.clientFirstViewedAt && ["sent", "viewed", "overdue"].includes(inv.status))
+      .map((inv) => inv.id);
+    if (unseen.length > 0) {
+      await db
+        .update(invoices)
+        .set({ clientFirstViewedAt: new Date(), updatedAt: new Date() })
+        .where(inArray(invoices.id, unseen));
+      // Keep current render as NEW; next visit clears label
     }
+  } catch {
+    // non-critical
   }
 
-  // Fallback: show hours this month for by_hours projects
-  let heroHoursLabel: string | null = null;
-  if (!heroPackageLabel) {
-    const byHoursProjects = clientProjects.filter((p) => p.billingType === "hours");
-    if (byHoursProjects.length > 0) {
-      let totalHrs = 0;
-      for (const p of byHoursProjects) {
-        const hs = projectHoursMap.get(p.id);
-        if (hs) totalHrs += hs.totalMinutes;
-      }
-      if (totalHrs > 0) {
-        heroHoursLabel = formatMinutes(totalHrs);
-      }
+  // Minutes per task (for portal hours display)
+  const taskHoursMap = new Map<string, number>();
+  if (visibleProjectIds.length > 0) {
+    const taskTimeRows = await db
+      .select({
+        taskId: timeEntries.taskId,
+        totalMinutes: sql<number>`coalesce(sum(coalesce(${timeEntries.manualMinutes}, ${timeEntries.durationMinutes}, 0)), 0)::int`,
+      })
+      .from(timeEntries)
+      .where(
+        and(
+          eq(timeEntries.workspaceId, client.workspaceId),
+          sql`${timeEntries.taskId} is not null`,
+          inArray(timeEntries.projectId, visibleProjectIds),
+        ),
+      )
+      .groupBy(timeEntries.taskId);
+    for (const row of taskTimeRows) {
+      if (row.taskId) taskHoursMap.set(row.taskId, Number(row.totalMinutes) || 0);
     }
   }
 
@@ -769,85 +657,26 @@ export default async function ClientPortalPage({
           </p>
         </div>
 
-        {/* ─── 1. Hero Summary ──────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <FolderOpen className="h-4 w-4 text-blue-500" />
-                <span className="text-xs text-muted-foreground">Active Projects</span>
-              </div>
-              <p className="text-2xl font-bold text-blue-600">{activeCount}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <DollarSign className="h-4 w-4 text-emerald-500" />
-                <span className="text-xs text-muted-foreground">Total Spent (YTD)</span>
-              </div>
-              <p className="text-2xl font-bold text-emerald-600">{fmtAmt(totalPaidIDR, totalPaidUSD)}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <AlertCircle className="h-4 w-4 text-amber-500" />
-                <span className="text-xs text-muted-foreground">Outstanding</span>
-              </div>
-              <p className="text-2xl font-bold text-amber-600">{fmtAmt(totalOutstandingIDR, totalOutstandingUSD)}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Clock className="h-4 w-4 text-purple-500" />
-                <span className="text-xs text-muted-foreground">
-                  {heroPackageLabel ? "Package Hours" : "Hours This Month"}
-                </span>
-              </div>
-              <p className="text-2xl font-bold text-purple-600">
-                {heroPackageLabel || heroHoursLabel || "—"}
-              </p>
-              {heroPackagePercent != null && (
-                <div className="mt-2 h-1.5 w-full rounded-full bg-slate-200">
-                  <div
-                    className={`h-full rounded-full ${heroPackagePercent > 90 ? "bg-red-500" : heroPackagePercent > 70 ? "bg-amber-500" : "bg-emerald-500"}`}
-                    style={{ width: `${Math.min(heroPackagePercent, 100)}%` }}
-                  />
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        {/* ─── 1. Top actions ──────────────────────────────── */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <FolderOpen className="h-4 w-4 text-blue-500" />
+            <span>
+              <span className="font-semibold text-foreground">{activeCount}</span> active project
+              {activeCount === 1 ? "" : "s"}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Button variant="outline" className="h-10 px-5 rounded-lg gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Request Report
+            </Button>
+            <Button variant="outline" className="h-10 px-5 rounded-lg gap-2">
+              <Calendar className="h-4 w-4" />
+              Request Meeting
+            </Button>
+          </div>
         </div>
-
-        {/* ─── 2. Quick Actions Bar ─────────────────────────── */}
-        <div className="flex flex-wrap gap-3">
-          <Button variant="outline" className="h-10 px-5 rounded-lg gap-2">
-            <Download className="h-4 w-4" />
-            Download All Invoices
-          </Button>
-          <Button variant="outline" className="h-10 px-5 rounded-lg gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Request Report
-          </Button>
-          <Button variant="outline" className="h-10 px-5 rounded-lg gap-2">
-            <Calendar className="h-4 w-4" />
-            Request Meeting
-          </Button>
-        </div>
-
-        {/* ─── 3. Activity Feed (compact: 3 default, expand to 5) */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Activity className="h-5 w-5" /> Recent Activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ActivityFeed items={recentActivities} initialVisible={3} />
-          </CardContent>
-        </Card>
 
         {/* ─── 4. Projects (compact accordion) ──────────────── */}
         <section>
@@ -897,6 +726,7 @@ export default async function ClientPortalPage({
                 ]),
               )}
               projectHoursMap={projectHoursMap}
+              taskHoursMap={taskHoursMap}
               byHoursEntriesMap={new Map(
                 [...byHoursEntriesMap.entries()].map(([k, v]) => [
                   k,
@@ -940,6 +770,8 @@ export default async function ClientPortalPage({
               dueDate: inv.dueDate ? String(inv.dueDate) : null,
               issueDate: inv.issueDate ? String(inv.issueDate) : null,
               projectId: inv.projectId,
+              clientFirstViewedAt: inv.clientFirstViewedAt ? String(inv.clientFirstViewedAt) : null,
+              isNew: !inv.clientFirstViewedAt && ["sent", "viewed", "overdue"].includes(inv.status),
             }))}
             projects={clientProjects.map((p) => ({ id: p.id, name: p.name }))}
             token={token}

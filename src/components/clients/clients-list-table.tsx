@@ -18,6 +18,7 @@ import { useT } from "@/lib/i18n-client";
 
 export type ClientListItem = {
   id: string;
+  clientNumber: string | null;
   name: string;
   companyName: string | null;
   status: string;
@@ -27,7 +28,7 @@ export type ClientListItem = {
 };
 
 const STATUS_ORDER = ["active", "inactive", "archived"] as const;
-type SortKey = "name" | "company" | "projects" | "portal" | "status";
+type SortKey = "number" | "name" | "company" | "projects" | "portal" | "status";
 
 export function ClientsListTable({
   clients,
@@ -51,6 +52,7 @@ export function ClientsListTable({
 
   const getters = useMemo(
     () => ({
+      number: (r: ClientListItem) => r.clientNumber ?? "",
       name: (r: ClientListItem) => r.name,
       company: (r: ClientListItem) => r.companyName ?? "",
       projects: (r: ClientListItem) => r.projectCount,
@@ -104,7 +106,16 @@ export function ClientsListTable({
   return (
     <>
       <div className="hidden md:block rounded-lg border bg-card">
-        <div className="grid grid-cols-7 gap-4 p-3 text-xs font-medium text-muted-foreground border-b">
+        <div className="grid grid-cols-8 gap-4 p-3 text-xs font-medium text-muted-foreground border-b">
+          <div>
+            <SortableHeader
+              as="div"
+              label={t("No.", "No.")}
+              dir={dirFor("number")}
+              onClick={() => toggle("number")}
+              className="text-xs"
+            />
+          </div>
           <div className="col-span-2">
             <SortableHeader
               as="div"
@@ -156,8 +167,11 @@ export function ClientsListTable({
         {sorted.map((client) => (
           <div
             key={client.id}
-            className="grid grid-cols-7 gap-4 p-3 items-center border-b last:border-0 hover:bg-muted/50 transition-colors"
+            className="grid grid-cols-8 gap-4 p-3 items-center border-b last:border-0 hover:bg-muted/50 transition-colors"
           >
+            <div className="text-xs font-mono text-muted-foreground">
+              {client.clientNumber || "—"}
+            </div>
             <div className="col-span-2">
               <Link
                 href={`/app/clients/${client.id}`}
@@ -230,6 +244,11 @@ export function ClientsListTable({
                       {t("Unduh PDF", "Download PDF")}
                     </a>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href={`/api/clients/${client.id}/export/xlsx`} rel="noreferrer">
+                      {t("Unduh Excel", "Download Excel")}
+                    </a>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -273,6 +292,11 @@ export function ClientsListTable({
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
+                  {client.clientNumber && (
+                    <p className="text-[11px] font-mono text-muted-foreground">
+                      {client.clientNumber}
+                    </p>
+                  )}
                   <Link
                     href={`/app/clients/${client.id}`}
                     className="font-medium hover:underline"
@@ -317,6 +341,11 @@ export function ClientsListTable({
                         rel="noreferrer"
                       >
                         {t("Unduh PDF", "Download PDF")}
+                      </a>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <a href={`/api/clients/${client.id}/export/xlsx`} rel="noreferrer">
+                        {t("Unduh Excel", "Download Excel")}
                       </a>
                     </DropdownMenuItem>
                   </DropdownMenuContent>

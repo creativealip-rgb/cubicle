@@ -124,6 +124,15 @@ export async function notifyAppointmentCancelled(opts: {
   });
 }
 
+function applyInvoiceEmailTemplate(
+  template: string,
+  vars: Record<string, string>,
+) {
+  return template.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key: string) => {
+    return vars[key] ?? "";
+  });
+}
+
 export async function notifyInvoiceSent(opts: {
   clientEmail: string;
   clientName: string;
@@ -132,15 +141,34 @@ export async function notifyInvoiceSent(opts: {
   portalUrl: string;
   workspaceName?: string;
   replyTo?: string;
+  projectName?: string;
+  dueDate?: string | null;
+  customBody?: string | null;
 }) {
+  const vars = {
+    client_name: opts.clientName,
+    invoice_number: opts.invoiceNumber,
+    project_name: opts.projectName ?? "",
+    amount: opts.amount,
+    due_date: opts.dueDate ?? "",
+    invoice_link: opts.portalUrl,
+    workspace_name: opts.workspaceName ?? "Cubiqlo",
+  };
+
+  const defaultText =
+    `Hi ${opts.clientName},\n\n` +
+    `A new invoice ${opts.invoiceNumber} for ${opts.amount} is ready.\n\n` +
+    `View and pay online: ${opts.portalUrl}\n\n` +
+    `Thank you for your business.`;
+
+  const text = opts.customBody?.trim()
+    ? applyInvoiceEmailTemplate(opts.customBody, vars)
+    : defaultText;
+
   return sendNotification({
     to: opts.clientEmail,
     subject: `Invoice ${opts.invoiceNumber} from ${opts.workspaceName ?? "Cubiqlo"}`,
-    text:
-      `Hi ${opts.clientName},\n\n` +
-      `A new invoice ${opts.invoiceNumber} for ${opts.amount} is ready.\n\n` +
-      `View and pay online: ${opts.portalUrl}\n\n` +
-      `Thank you for your business.`,
+    text,
     type: "invoice_sent",
     replyTo: opts.replyTo,
   });

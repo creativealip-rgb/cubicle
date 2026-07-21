@@ -15,6 +15,7 @@ import { ClientForm } from "@/components/forms/client-form";
 interface ClientEditDialogProps {
   defaultValues: {
     id: string;
+    clientNumber?: string | null;
     name?: string;
     companyName?: string;
     email?: string;

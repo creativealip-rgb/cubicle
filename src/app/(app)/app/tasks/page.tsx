@@ -2,7 +2,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { tasks, projects, users, workspaceMembers } from "@/db/schema";
+import { tasks, projects, clients, users, workspaceMembers } from "@/db/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { TaskCreateDialog } from "@/components/tasks/task-create-dialog";
@@ -71,12 +71,14 @@ export default async function TasksPage({
       clientVisible: tasks.clientVisible,
       projectId: tasks.projectId,
       projectName: projects.name,
+      clientName: clients.name,
       assigneeId: tasks.assigneeId,
       assigneeName: users.name,
       sourceNoteId: tasks.sourceNoteId,
     })
     .from(tasks)
     .leftJoin(projects, eq(projects.id, tasks.projectId))
+    .leftJoin(clients, eq(clients.id, projects.clientId))
     .leftJoin(users, eq(users.id, tasks.assigneeId))
     .where(and(...whereClauses))
     .orderBy(desc(tasks.createdAt));

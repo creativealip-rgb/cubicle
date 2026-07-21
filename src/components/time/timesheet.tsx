@@ -1,15 +1,22 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { deleteTimeEntry } from "@/lib/actions/time";
+import { deleteTimeEntry, updateTimeEntry } from "@/lib/actions/time";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { EmptyState } from "@/components/empty-state";
 import {
   ChevronLeft,
@@ -17,6 +24,8 @@ import {
   Clock,
   Trash2,
   Filter,
+  Pencil,
+  Loader2,
 } from "lucide-react";
 import { useT } from "@/lib/i18n-client";
 
@@ -27,11 +36,15 @@ interface TimeEntry {
   description: string | null;
   tags: string | null;
   durationMinutes: number | null;
+  manualMinutes?: number | null;
   billable: boolean;
   hourlyRate: string | number | null;
   startTime: Date | string | null;
   endTime: Date | string | null;
   status: string;
+  clientId?: string | null;
+  projectId?: string | null;
+  taskId?: string | null;
   clientName: string | null;
   projectName: string | null;
   projectCurrency: string | null;
@@ -48,20 +61,33 @@ interface Client {
 interface Project {
   id: string;
   name: string;
+  clientId?: string | null;
+}
+
+interface Task {
+  id: string;
+  title: string;
+  projectId?: string | null;
 }
 
 interface TimesheetProps {
   entries: TimeEntry[];
   clients: Client[];
   projects: Project[];
+  tasks?: Task[];
 }
 
-  // eslint-disable-next-line unused-imports/no-unused-vars
-export function Timesheet({ entries, clients, projects }: TimesheetProps) {
+function toDateInputValue(value: Date | string | null | undefined): string {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+}
+
+export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetProps) {
   const { t, locale } = useT();
   const router = useRouter();
 
-  // Filters
   const [clientFilter, setClientFilter] = useState<string>("all");
   const [projectFilter, setProjectFilter] = useState<string>("all");
   const [billableFilter, setBillableFilter] = useState<string>("all");
@@ -70,13 +96,33 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
 
+  const [editOpen, setEditOpen] = useState(false);
+  const [editEntry, setEditEntry] = useState<TimeEntry | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editDescription, setEditDescription] = useState("");
+  const [editTags, setEditTags] = useState("");
+  const [editClientId, setEditClientId] = useState("");
+  const [editProjectId, setEditProjectId] = useState("");
+  const [editTaskId, setEditTaskId] = useState("__none__");
+  const [editDate, setEditDate] = useState("");
+  const [editMinutes, setEditMinutes] = useState("");
+  const [editBillable, setEditBillable] = useState(true);
+  const [editStatus, setEditStatus] = useState<"draft" | "approved">("draft");
+
   const filteredEntries = useMemo(() => {
     return entries.filter((e) => {
       if (clientFilter !== "all" && e.clientName !== clientFilter) return false;
       if (projectFilter !== "all" && e.projectName !== projectFilter) return false;
       if (billableFilter === "billable" && !e.billable) return false;
       if (billableFilter === "non-billable" && e.billable) return false;
-      if (tagFilter !== "all" && !String(e.tags || "").split(",").map((tag) => tag.trim()).includes(tagFilter)) return false;
+      if (
+        tagFilter !== "all" &&
+        !String(e.tags || "")
+          .split(",")
+          .map((tag) => tag.trim())
+          .includes(tagFilter)
+      )
+        return false;
       if (dateFrom) {
         const entryDate = e.startTime ? new Date(e.startTime).toISOString().split("T")[0] : "";
         if (entryDate < dateFrom) return false;
@@ -106,9 +152,22 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
   );
 
   const billableMinutes = useMemo(
-    () => filteredEntries.filter((e) => e.billable).reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0),
+    () =>
+      filteredEntries
+        .filter((e) => e.billable)
+        .reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0),
     [filteredEntries],
   );
+
+  const editProjects = useMemo(() => {
+    if (!editClientId) return projects;
+    return projects.filter((p) => p.clientId === editClientId);
+  }, [editClientId, projects]);
+
+  const editTasks = useMemo(() => {
+    if (!editProjectId) return [];
+    return tasks.filter((tk) => tk.projectId === editProjectId);
+  }, [editProjectId, tasks]);
 
   function formatDuration(minutes: number | null): string {
     const hLabel = t("j", "h");
@@ -125,7 +184,6 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
     const numericRate = Number(rate);
     if (!Number.isFinite(numericRate) || numericRate <= 0) return null;
     const cur = (currency || "IDR").toUpperCase();
-    // IDR has no decimals; foreign currencies (USD/EUR/etc) keep 2 decimals.
     const localeMap: Record<string, string> = { IDR: "id-ID", USD: "en-US", EUR: "de-DE" };
     return new Intl.NumberFormat(localeMap[cur] || "en-US", {
       style: "currency",
@@ -141,6 +199,69 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
       router.refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal menghapus", "Failed to delete"));
+    }
+  }
+
+  function openEdit(entry: TimeEntry) {
+    if (entry.status === "invoiced") {
+      toast.error(t("Entri sudah di-invoice", "Entry already invoiced"));
+      return;
+    }
+    setEditEntry(entry);
+    setEditDescription(entry.description || "");
+    setEditTags(entry.tags || "");
+    setEditClientId(entry.clientId || "");
+    setEditProjectId(entry.projectId || "");
+    setEditTaskId(entry.taskId || "__none__");
+    setEditDate(toDateInputValue(entry.startTime));
+    setEditMinutes(String(entry.durationMinutes ?? entry.manualMinutes ?? 0));
+    setEditBillable(entry.billable);
+    setEditStatus(entry.status === "approved" ? "approved" : "draft");
+    setEditOpen(true);
+  }
+
+  async function handleSaveEdit() {
+    if (!editEntry) return;
+    if (!editClientId || !editProjectId) {
+      toast.error(t("Klien dan proyek wajib", "Client and project required"));
+      return;
+    }
+    const minutes = Number(editMinutes);
+    if (!Number.isFinite(minutes) || minutes <= 0) {
+      toast.error(t("Durasi menit harus > 0", "Duration minutes must be > 0"));
+      return;
+    }
+
+    setEditLoading(true);
+    try {
+      const startIso = editDate
+        ? new Date(`${editDate}T00:00:00.000Z`).toISOString()
+        : editEntry.startTime
+          ? new Date(editEntry.startTime).toISOString()
+          : new Date().toISOString();
+      const endIso = new Date(new Date(startIso).getTime() + minutes * 60 * 1000).toISOString();
+
+      await updateTimeEntry(editEntry.id, {
+        description: editDescription || undefined,
+        tags: editTags || null,
+        clientId: editClientId,
+        projectId: editProjectId,
+        taskId: editTaskId && editTaskId !== "__none__" ? editTaskId : null,
+        startTime: startIso,
+        endTime: endIso,
+        manualMinutes: editEntry.manualMinutes != null ? minutes : null,
+        billable: editBillable,
+        status: editStatus,
+      });
+
+      toast.success(t("Entri diperbarui", "Entry updated"));
+      setEditOpen(false);
+      setEditEntry(null);
+      router.refresh();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("Gagal update", "Failed to update"));
+    } finally {
+      setEditLoading(false);
     }
   }
 
@@ -168,7 +289,6 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
 
   return (
     <div className="space-y-4">
-      {/* Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Card>
           <CardContent className="p-4">
@@ -190,7 +310,6 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
         </Card>
       </div>
 
-      {/* Filters */}
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-3">
@@ -207,7 +326,9 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
                 <SelectContent>
                   <SelectItem value="all">{t("Semua Klien", "All Clients")}</SelectItem>
                   {uniqueClients.map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -221,7 +342,9 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
                 <SelectContent>
                   <SelectItem value="all">{t("Semua Proyek", "All Projects")}</SelectItem>
                   {uniqueProjects.map((p) => (
-                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                    <SelectItem key={p} value={p}>
+                      {p}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -248,7 +371,9 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
                 <SelectContent>
                   <SelectItem value="all">{t("Semua Tag", "All Tags")}</SelectItem>
                   {uniqueTags.map((tag) => (
-                    <SelectItem key={tag} value={tag}>{tag}</SelectItem>
+                    <SelectItem key={tag} value={tag}>
+                      {tag}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -277,12 +402,14 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
         </CardContent>
       </Card>
 
-      {/* Entries table */}
       {filteredEntries.length === 0 ? (
         <EmptyState
           icon={Clock}
           title={t("Belum ada catatan waktu", "No time entries yet")}
-          description={t("Mulai timer di atas atau tambah entri manual untuk mulai melacak waktu kerjamu. Kalau sudah ada data, coba sesuaikan filter.", "Start the timer above or add a manual entry to begin tracking your work time. If you already have data, try adjusting the filters.")}
+          description={t(
+            "Mulai timer di atas atau tambah entri manual untuk mulai melacak waktu kerjamu. Kalau sudah ada data, coba sesuaikan filter.",
+            "Start the timer above or add a manual entry to begin tracking your work time. If you already have data, try adjusting the filters.",
+          )}
         />
       ) : (
         <div className="space-y-2">
@@ -304,7 +431,7 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
 
           {pageEntries.map((entry) => (
             <Card key={entry.id}>
-              <CardContent className="p-4 flex items-center justify-between">
+              <CardContent className="p-4 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-3 min-w-0">
                   <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   <div className="min-w-0">
@@ -336,27 +463,51 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
                     </div>
                     {entry.tags && (
                       <div className="mt-2 flex flex-wrap gap-1">
-                        {entry.tags.split(",").map((tag) => tag.trim()).filter(Boolean).map((tag) => (
-                          <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>
-                        ))}
+                        {entry.tags
+                          .split(",")
+                          .map((tag) => tag.trim())
+                          .filter(Boolean)
+                          .map((tag) => (
+                            <Badge key={tag} variant="secondary" className="text-[10px]">
+                              {tag}
+                            </Badge>
+                          ))}
                       </div>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-1 flex-shrink-0">
                   {entry.billable && (
                     <Badge variant="outline" className="text-[10px]">
-                      {formatRate(entry.hourlyRate, entry.projectCurrency) ? `${formatRate(entry.hourlyRate, entry.projectCurrency)} / ${t("jam", "hr")}` : t("Bisa Ditagih", "Billable")}
+                      {formatRate(entry.hourlyRate, entry.projectCurrency)
+                        ? `${formatRate(entry.hourlyRate, entry.projectCurrency)} / ${t("jam", "hr")}`
+                        : t("Bisa Ditagih", "Billable")}
                     </Badge>
                   )}
                   <Badge variant="secondary" className="text-[10px]">
                     {formatDuration(entry.durationMinutes)}
                   </Badge>
+                  {entry.status === "invoiced" ? (
+                    <Badge variant="outline" className="text-[10px]">
+                      Invoice
+                    </Badge>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => openEdit(entry)}
+                      title={t("Edit entri", "Edit entry")}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-destructive"
                     onClick={() => handleDelete(entry.id)}
+                    disabled={entry.status === "invoiced"}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -394,6 +545,160 @@ export function Timesheet({ entries, clients, projects }: TimesheetProps) {
           ) : null}
         </div>
       )}
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("Edit entri waktu", "Edit time entry")}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
+              <Input
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                className="h-9"
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t("Klien", "Client")}</Label>
+                <Select
+                  value={editClientId}
+                  onValueChange={(v) => {
+                    setEditClientId(v);
+                    setEditProjectId("");
+                    setEditTaskId("__none__");
+                  }}
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder={t("Pilih klien", "Select client")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t("Proyek", "Project")}</Label>
+                <Select
+                  value={editProjectId}
+                  onValueChange={(v) => {
+                    setEditProjectId(v);
+                    setEditTaskId("__none__");
+                  }}
+                  disabled={!editClientId}
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder={t("Pilih proyek", "Select project")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {editProjects.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">{t("Tugas", "Task")}</Label>
+              <Select
+                value={editTaskId}
+                onValueChange={setEditTaskId}
+                disabled={!editProjectId}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder={t("Opsional", "Optional")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
+                  {editTasks.map((tk) => (
+                    <SelectItem key={tk.id} value={tk.id}>
+                      {tk.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t("Tanggal", "Date")}</Label>
+                <Input
+                  type="date"
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t("Durasi (menit)", "Duration (minutes)")}</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={editMinutes}
+                  onChange={(e) => setEditMinutes(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">{t("Tag", "Tags")}</Label>
+              <Input
+                value={editTags}
+                onChange={(e) => setEditTags(e.target.value)}
+                placeholder="Research, Follow Up"
+                className="h-9"
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t("Bisa ditagih", "Billable")}</Label>
+                <Select
+                  value={editBillable ? "yes" : "no"}
+                  onValueChange={(v) => setEditBillable(v === "yes")}
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="yes">{t("Ya", "Yes")}</SelectItem>
+                    <SelectItem value="no">{t("Tidak", "No")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Status</Label>
+                <Select
+                  value={editStatus}
+                  onValueChange={(v) => setEditStatus(v as "draft" | "approved")}
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)} disabled={editLoading}>
+              {t("Batal", "Cancel")}
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={editLoading}>
+              {editLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("Simpan", "Save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

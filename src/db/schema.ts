@@ -82,6 +82,7 @@ export const workspaces = pgTable("workspaces", {
   taxId: text("tax_id"),
   logoUrl: text("logo_url"),
   replyToEmail: text("reply_to_email"),
+  invoiceEmailBody: text("invoice_email_body"),
   bookingSlug: text("booking_slug").unique(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -131,6 +132,7 @@ export const aiUsageDaily = pgTable("ai_usage_daily", {
 export const clients = pgTable("clients", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  clientNumber: text("client_number"),
   name: text("name").notNull(),
   companyName: text("company_name"),
   email: text("email"),
@@ -323,14 +325,17 @@ export const files = pgTable("files", {
 export const timeEntries = pgTable("time_entries", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
-  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  // Nullable so quick-timer can start empty; required at stop for completed entries.
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
   taskId: uuid("task_id").references(() => tasks.id, { onDelete: "set null" }),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   description: text("description"),
   tags: text("tags"),
   startTime: timestamp("start_time", { withTimezone: true }),
   endTime: timestamp("end_time", { withTimezone: true }),
+  // When set, timer is paused on the same open entry (endTime still null).
+  pausedAt: timestamp("paused_at", { withTimezone: true }),
   manualMinutes: integer("manual_minutes"),
   durationMinutes: integer("duration_minutes").generatedAlwaysAs(
     sql`case when start_time is not null and end_time is not null then greatest(0, floor(extract(epoch from (end_time - start_time)) / 60)::integer) else coalesce(manual_minutes, 0) end`,
@@ -363,6 +368,7 @@ export const invoices = pgTable("invoices", {
   sharedTokenHash: text("shared_token_hash").unique(),
   sharedTokenExpiresAt: timestamp("shared_token_expires_at", { withTimezone: true }),
   sharedTokenRevokedAt: timestamp("shared_token_revoked_at", { withTimezone: true }),
+  clientFirstViewedAt: timestamp("client_first_viewed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [unique().on(table.workspaceId, table.invoiceNumber)]);

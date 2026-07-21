@@ -133,6 +133,7 @@ export default async function SettingsPage() {
               defaultTaxRate: workspace.defaultTaxRate,
               defaultHourlyRate: workspace.defaultHourlyRate,
               defaultInvoiceTerms: workspace.defaultInvoiceTerms,
+              invoiceEmailBody: workspace.invoiceEmailBody,
             }}
           />
         </CardContent>

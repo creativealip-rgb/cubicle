@@ -23,6 +23,7 @@ import {
   CreditCard,
   X,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -39,7 +40,13 @@ import { authClient } from "@/lib/auth-client";
 import { useSidebar } from "@/components/app-shell";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { getUserWorkspaces, switchWorkspace, createWorkspace } from "@/lib/actions/workspace-switch";
-import { pauseTimer, stopTimer } from "@/lib/actions/time";
+import { pauseTimer, resumeTimer, startTimer } from "@/lib/actions/time";
+import {
+  StopTimerDialog,
+  type TimerFormClient,
+  type TimerFormProject,
+  type TimerFormTask,
+} from "@/components/time/stop-timer-dialog";
 import { useT } from "@/lib/i18n-client";
 import { cn } from "@/lib/utils";
 
@@ -55,10 +62,20 @@ interface AppTopbarProps {
 type ActiveTimer = {
   id: string;
   startTime: string;
+  pausedAt?: string | null;
+  clientId?: string | null;
+  projectId?: string | null;
+  taskId?: string | null;
   clientName?: string | null;
   projectName?: string | null;
   taskTitle?: string | null;
   description?: string | null;
+};
+
+type TimerOptions = {
+  clients: TimerFormClient[];
+  projects: TimerFormProject[];
+  tasks: TimerFormTask[];
 };
 
 type WorkspaceItem = {
@@ -77,9 +94,10 @@ type WorkspaceData = {
   canInvite: boolean;
 };
 
-function formatElapsed(startTime?: string | null) {
+function formatElapsed(startTime?: string | null, pausedAt?: string | null) {
   if (!startTime) return "00:00";
-  const seconds = Math.max(0, Math.floor((Date.now() - new Date(startTime).getTime()) / 1000));
+  const endMs = pausedAt ? new Date(pausedAt).getTime() : Date.now();
+  const seconds = Math.max(0, Math.floor((endMs - new Date(startTime).getTime()) / 1000));
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
@@ -95,6 +113,14 @@ export function AppTopbar({ user }: AppTopbarProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
   const [elapsed, setElapsed] = useState("00:00");
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
+  const [timerOptions, setTimerOptions] = useState<TimerOptions>({
+    clients: [],
+    projects: [],
+    tasks: [],
+  });
+  const [stopOpen, setStopOpen] = useState(false);
+  const [timerBusy, setTimerBusy] = useState(false);
   const { setMobileOpen } = useSidebar();
   const [wsData, setWsData] = useState<WorkspaceData | null>(null);
   const [switching, setSwitching] = useState<string | null>(null);
@@ -154,20 +180,30 @@ export function AppTopbar({ user }: AppTopbarProps) {
     }
   }
 
-  useEffect(() => {
-    let alive = true;
-
-    async function loadActiveTimer() {
-      try {
-        const res = await fetch("/api/time/active", { cache: "no-store" });
-        if (!res.ok) return;
-        const data = (await res.json()) as { activeTimer: ActiveTimer | null };
-        if (alive) setActiveTimer(data.activeTimer);
-      } catch {
-        // silent
+  const loadActiveTimer = useCallback(async () => {
+    try {
+      const res = await fetch("/api/time/active", { cache: "no-store" });
+      if (!res.ok) return;
+      const data = (await res.json()) as {
+        workspaceId?: string | null;
+        activeTimer: ActiveTimer | null;
+        options?: TimerOptions;
+      };
+      setActiveTimer(data.activeTimer);
+      if (data.workspaceId) setWorkspaceId(data.workspaceId);
+      if (data.options) {
+        setTimerOptions({
+          clients: data.options.clients ?? [],
+          projects: data.options.projects ?? [],
+          tasks: data.options.tasks ?? [],
+        });
       }
+    } catch {
+      // silent
     }
+  }, []);
 
+  useEffect(() => {
     loadActiveTimer();
     loadWorkspaces();
     const poll = window.setInterval(loadActiveTimer, 15000);
@@ -175,24 +211,24 @@ export function AppTopbar({ user }: AppTopbarProps) {
     window.addEventListener("focus", loadActiveTimer);
     window.addEventListener("focus", loadWorkspaces);
     return () => {
-      alive = false;
       window.clearInterval(poll);
       window.removeEventListener("cubicle:timer-changed", loadActiveTimer);
       window.removeEventListener("focus", loadActiveTimer);
       window.removeEventListener("focus", loadWorkspaces);
     };
-  }, [loadWorkspaces]);
+  }, [loadActiveTimer, loadWorkspaces]);
 
   useEffect(() => {
-    setElapsed(formatElapsed(activeTimer?.startTime));
-    if (!activeTimer?.startTime) return;
+    setElapsed(formatElapsed(activeTimer?.startTime, activeTimer?.pausedAt));
+    if (!activeTimer?.startTime || activeTimer.pausedAt) return;
     const tick = window.setInterval(() => {
-      setElapsed(formatElapsed(activeTimer.startTime));
+      setElapsed(formatElapsed(activeTimer.startTime, activeTimer.pausedAt));
     }, 1000);
     return () => window.clearInterval(tick);
   }, [activeTimer]);
 
   const canWrite = user.role === "owner" || user.role === "member";
+  const isPaused = Boolean(activeTimer?.pausedAt);
 
   const initials = user.name
     .split(" ")
@@ -204,26 +240,79 @@ export function AppTopbar({ user }: AppTopbarProps) {
   const activeWorkspace = wsData?.workspaces.find((w) => w.isActive);
   const isFree = !wsData || wsData.plan === "free";
 
-  async function finishActiveTimer(action: "pause" | "stop") {
-    if (!activeTimer) {
-      router.push("/app/time");
+  async function handleStartTimer() {
+    if (!canWrite || timerBusy) return;
+    if (!workspaceId) {
+      toast.error(t("Workspace tidak ditemukan", "Workspace not found"));
       return;
     }
-    if (action === "pause") {
-      await pauseTimer(activeTimer.id);
-    } else {
-      await stopTimer(activeTimer.id);
+    setTimerBusy(true);
+    try {
+      await startTimer({ workspaceId });
+      toast.success(t("Timer dimulai", "Timer started"));
+      await loadActiveTimer();
+      window.dispatchEvent(new Event("cubicle:timer-changed"));
+      router.refresh();
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t("Gagal mulai timer", "Failed to start timer"),
+      );
+    } finally {
+      setTimerBusy(false);
     }
-    setActiveTimer(null);
-    setElapsed("00:00");
-    window.dispatchEvent(new Event("cubicle:timer-changed"));
-    router.refresh();
+  }
+
+  async function handlePauseTimer() {
+    if (!activeTimer || timerBusy) return;
+    setTimerBusy(true);
+    try {
+      await pauseTimer(activeTimer.id);
+      toast.success(t("Timer dijeda", "Timer paused"));
+      await loadActiveTimer();
+      window.dispatchEvent(new Event("cubicle:timer-changed"));
+      router.refresh();
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t("Gagal jeda timer", "Failed to pause timer"),
+      );
+    } finally {
+      setTimerBusy(false);
+    }
+  }
+
+  async function handleResumeTimer() {
+    if (!activeTimer || timerBusy) return;
+    setTimerBusy(true);
+    try {
+      await resumeTimer(activeTimer.id);
+      toast.success(t("Timer dilanjutkan", "Timer resumed"));
+      await loadActiveTimer();
+      window.dispatchEvent(new Event("cubicle:timer-changed"));
+      router.refresh();
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t("Gagal lanjut timer", "Failed to resume timer"),
+      );
+    } finally {
+      setTimerBusy(false);
+    }
+  }
+
+  function handleOpenStopDialog() {
+    if (!activeTimer) return;
+    setStopOpen(true);
   }
 
   const timerTitle = activeTimer
     ? [activeTimer.clientName, activeTimer.projectName, activeTimer.taskTitle, activeTimer.description]
         .filter(Boolean)
-        .join(" • ")
+        .join(" • ") || t("Timer kosong", "Empty timer")
     : t("Tidak ada timer aktif", "No active timer");
 
   return (
@@ -320,38 +409,71 @@ export function AppTopbar({ user }: AppTopbarProps) {
               </DropdownMenu>
             )}
 
-            {/* Timer: md+ always; phone only when running */}
+            {/* Timer: md+ always; phone only when running/paused */}
             {canWrite && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    variant={activeTimer ? "destructive" : "outline"}
+                    variant={activeTimer ? (isPaused ? "secondary" : "destructive") : "outline"}
                     size="sm"
                     className={cn(
                       "h-9 gap-1 px-2 sm:px-2.5",
                       !activeTimer && "hidden md:inline-flex",
                     )}
                     title={timerTitle}
+                    disabled={timerBusy}
                   >
-                    <Timer className="h-4 w-4" />
+                    {timerBusy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Timer className="h-4 w-4" />
+                    )}
                     <span className="tabular-nums text-xs sm:text-sm">
-                      {activeTimer ? elapsed : <span className="hidden lg:inline">{elapsed}</span>}
+                      {activeTimer ? (
+                        <>
+                          {elapsed}
+                          {isPaused ? (
+                            <span className="ml-1 text-[10px] font-medium uppercase opacity-80">
+                              {t("Jeda", "Paused")}
+                            </span>
+                          ) : null}
+                        </>
+                      ) : (
+                        <span className="hidden lg:inline">{elapsed}</span>
+                      )}
                     </span>
                     <ChevronDown className="hidden h-3 w-3 opacity-60 sm:block" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel className="text-xs text-muted-foreground">
-                    {activeTimer ? t("Timer aktif", "Active timer") : "Timer"}
+                    {activeTimer
+                      ? isPaused
+                        ? t("Timer dijeda", "Timer paused")
+                        : t("Timer aktif", "Active timer")
+                      : "Timer"}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {activeTimer ? (
                     <>
-                      <DropdownMenuItem onClick={() => finishActiveTimer("pause")}>
-                        {t("Jeda timer", "Pause timer")}
-                      </DropdownMenuItem>
+                      {isPaused ? (
+                        <DropdownMenuItem
+                          onClick={() => void handleResumeTimer()}
+                          disabled={timerBusy}
+                        >
+                          {t("Lanjut timer", "Resume timer")}
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem
+                          onClick={() => void handlePauseTimer()}
+                          disabled={timerBusy}
+                        >
+                          {t("Jeda timer", "Pause timer")}
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem
-                        onClick={() => finishActiveTimer("stop")}
+                        onClick={handleOpenStopDialog}
+                        disabled={timerBusy}
                         className="text-red-600 focus:text-red-600"
                       >
                         {t("Hentikan timer", "Stop timer")}
@@ -361,9 +483,17 @@ export function AppTopbar({ user }: AppTopbarProps) {
                       </DropdownMenuItem>
                     </>
                   ) : (
-                    <DropdownMenuItem onClick={() => router.push("/app/time")}>
-                      {t("Mulai timer", "Start timer")}
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem
+                        onClick={() => void handleStartTimer()}
+                        disabled={timerBusy || !workspaceId}
+                      >
+                        {t("Mulai timer kosong", "Start empty timer")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push("/app/time")}>
+                        {t("Buka halaman timer", "Open timer page")}
+                      </DropdownMenuItem>
+                    </>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -581,6 +711,31 @@ export function AppTopbar({ user }: AppTopbarProps) {
           </div>
         </>
       )}
+
+      <StopTimerDialog
+        open={stopOpen}
+        onOpenChange={setStopOpen}
+        prefill={
+          activeTimer
+            ? {
+                entryId: activeTimer.id,
+                clientId: activeTimer.clientId,
+                projectId: activeTimer.projectId,
+                taskId: activeTimer.taskId,
+                description: activeTimer.description,
+              }
+            : null
+        }
+        clients={timerOptions.clients}
+        projects={timerOptions.projects}
+        tasks={timerOptions.tasks}
+        onStopped={async () => {
+          setStopOpen(false);
+          await loadActiveTimer();
+          window.dispatchEvent(new Event("cubicle:timer-changed"));
+          router.refresh();
+        }}
+      />
     </header>
   );
 }

@@ -13,6 +13,7 @@ interface ClientFormProps {
   mode: "create" | "edit";
   defaultValues?: {
     id?: string;
+    clientNumber?: string | null;
     name?: string;
     companyName?: string;
     email?: string;
@@ -133,6 +134,18 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {mode === "edit" && (
+        <div className="space-y-2">
+          <Label htmlFor="clientNumber">Nomor Klien</Label>
+          <Input
+            id="clientNumber"
+            value={defaultValues?.clientNumber || "—"}
+            readOnly
+            disabled
+            className="font-mono bg-muted"
+          />
+        </div>
+      )}
       <div className="space-y-2">
         <Label htmlFor="name">Nama *</Label>
         <Input id="name" value={form.name} onChange={(e) => set("name", e.target.value)} required placeholder="Nama kontak klien" />
