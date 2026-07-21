@@ -40,13 +40,7 @@ import { authClient } from "@/lib/auth-client";
 import { useSidebar } from "@/components/app-shell";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { getUserWorkspaces, switchWorkspace, createWorkspace } from "@/lib/actions/workspace-switch";
-import { pauseTimer, resumeTimer, startTimer } from "@/lib/actions/time";
-import {
-  StopTimerDialog,
-  type TimerFormClient,
-  type TimerFormProject,
-  type TimerFormTask,
-} from "@/components/time/stop-timer-dialog";
+import { pauseTimer, resumeTimer, startTimer, stopTimer } from "@/lib/actions/time";
 import { useT } from "@/lib/i18n-client";
 import { cn } from "@/lib/utils";
 
@@ -70,12 +64,6 @@ type ActiveTimer = {
   projectName?: string | null;
   taskTitle?: string | null;
   description?: string | null;
-};
-
-type TimerOptions = {
-  clients: TimerFormClient[];
-  projects: TimerFormProject[];
-  tasks: TimerFormTask[];
 };
 
 type WorkspaceItem = {
@@ -114,12 +102,6 @@ export function AppTopbar({ user }: AppTopbarProps) {
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
   const [elapsed, setElapsed] = useState("00:00");
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
-  const [timerOptions, setTimerOptions] = useState<TimerOptions>({
-    clients: [],
-    projects: [],
-    tasks: [],
-  });
-  const [stopOpen, setStopOpen] = useState(false);
   const [timerBusy, setTimerBusy] = useState(false);
   const { setMobileOpen } = useSidebar();
   const [wsData, setWsData] = useState<WorkspaceData | null>(null);
@@ -187,17 +169,9 @@ export function AppTopbar({ user }: AppTopbarProps) {
       const data = (await res.json()) as {
         workspaceId?: string | null;
         activeTimer: ActiveTimer | null;
-        options?: TimerOptions;
       };
       setActiveTimer(data.activeTimer);
       if (data.workspaceId) setWorkspaceId(data.workspaceId);
-      if (data.options) {
-        setTimerOptions({
-          clients: data.options.clients ?? [],
-          projects: data.options.projects ?? [],
-          tasks: data.options.tasks ?? [],
-        });
-      }
     } catch {
       // silent
     }
@@ -304,9 +278,24 @@ export function AppTopbar({ user }: AppTopbarProps) {
     }
   }
 
-  function handleOpenStopDialog() {
-    if (!activeTimer) return;
-    setStopOpen(true);
+  async function handleStopTimer() {
+    if (!activeTimer || timerBusy) return;
+    setTimerBusy(true);
+    try {
+      await stopTimer(activeTimer.id);
+      toast.success(t("Timer dihentikan", "Timer stopped"));
+      await loadActiveTimer();
+      window.dispatchEvent(new Event("cubicle:timer-changed"));
+      router.refresh();
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t("Gagal hentikan timer", "Failed to stop timer"),
+      );
+    } finally {
+      setTimerBusy(false);
+    }
   }
 
   const timerTitle = activeTimer
@@ -472,7 +461,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuItem
-                        onClick={handleOpenStopDialog}
+                        onClick={() => void handleStopTimer()}
                         disabled={timerBusy}
                         className="text-red-600 focus:text-red-600"
                       >
@@ -711,31 +700,6 @@ export function AppTopbar({ user }: AppTopbarProps) {
           </div>
         </>
       )}
-
-      <StopTimerDialog
-        open={stopOpen}
-        onOpenChange={setStopOpen}
-        prefill={
-          activeTimer
-            ? {
-                entryId: activeTimer.id,
-                clientId: activeTimer.clientId,
-                projectId: activeTimer.projectId,
-                taskId: activeTimer.taskId,
-                description: activeTimer.description,
-              }
-            : null
-        }
-        clients={timerOptions.clients}
-        projects={timerOptions.projects}
-        tasks={timerOptions.tasks}
-        onStopped={async () => {
-          setStopOpen(false);
-          await loadActiveTimer();
-          window.dispatchEvent(new Event("cubicle:timer-changed"));
-          router.refresh();
-        }}
-      />
     </header>
   );
 }

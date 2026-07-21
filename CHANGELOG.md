@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.91 — 2026-07-21 — Stop timer no dialog
+
+- Klik stop = hentikan langsung, tanpa form/dialog
+- Navbar + halaman timer sama: simpan entri apa adanya, lengkapi nanti di timesheet
+
 ## v0.1.90 — 2026-07-21 — Stop timer optional + client export/DB fix
 
 - **Stop form optional**: client/project/task/deskripsi boleh kosong; batal dialog = timer tetap jalan; lengkapi nanti di timesheet

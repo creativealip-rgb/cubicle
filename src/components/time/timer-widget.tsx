@@ -3,11 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { startTimer, pauseTimer, resumeTimer, discardTimer } from "@/lib/actions/time";
-import {
-  StopTimerDialog,
-  type StopTimerPrefill,
-} from "@/components/time/stop-timer-dialog";
+import { startTimer, pauseTimer, resumeTimer, discardTimer, stopTimer } from "@/lib/actions/time";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -105,7 +101,6 @@ export function TimerWidget({
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(initialTimer);
   const [elapsed, setElapsed] = useState("00:00:00");
   const [loading, setLoading] = useState(false);
-  const [stopOpen, setStopOpen] = useState(false);
   const selfDispatched = useRef(false);
 
   const [selectedClientId, setSelectedClientId] = useState<string>("");
@@ -347,16 +342,23 @@ export function TimerWidget({
     }
   }, [activeTimer, router, t]);
 
-  const stopPrefill: StopTimerPrefill | null = activeTimer
-    ? {
-        entryId: activeTimer.id,
-        clientId: activeTimer.clientId,
-        projectId: activeTimer.projectId,
-        taskId: activeTimer.taskId,
-        description: activeTimer.description,
-        tags: activeTimer.tags,
-      }
-    : null;
+  const handleStop = useCallback(async () => {
+    if (!activeTimer || loading) return;
+    setLoading(true);
+    try {
+      await stopTimer(activeTimer.id);
+      setActiveTimer(null);
+      setElapsed("00:00:00");
+      selfDispatched.current = true;
+      window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
+      toast.success(t("Timer dihentikan", "Timer stopped"));
+      router.refresh();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("Gagal hentikan timer", "Failed to stop timer"));
+    } finally {
+      setLoading(false);
+    }
+  }, [activeTimer, loading, router, t]);
 
   return (
     <>
@@ -468,10 +470,10 @@ export function TimerWidget({
                   variant="destructive"
                   size="lg"
                   className="flex-1 gap-2 min-w-[140px]"
-                  onClick={() => setStopOpen(true)}
+                  onClick={() => void handleStop()}
                   disabled={loading}
                 >
-                  <Square className="h-4 w-4" />
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
                   {t("Hentikan", "Stop")}
                 </Button>
                 {(isStaleTimer(activeTimer) || isEmptyTimer) && (
@@ -629,31 +631,14 @@ export function TimerWidget({
               </div>
               <p className="text-[11px] text-muted-foreground">
                 {t(
-                  "Mulai kosong = isi client/project/task/deskripsi saat stop. Batal form stop = timer tetap jalan.",
-                  "Start empty = fill client/project/task/description on stop. Cancel stop form keeps timer running.",
+                  "Mulai kosong = stop langsung. Lengkapi client/project/deskripsi nanti di timesheet.",
+                  "Start empty = stop instantly. Fill client/project/description later in timesheet.",
                 )}
               </p>
             </div>
           )}
         </CardContent>
       </Card>
-
-      <StopTimerDialog
-        open={stopOpen}
-        onOpenChange={setStopOpen}
-        prefill={stopPrefill}
-        clients={clients}
-        projects={allProjects}
-        tasks={allTasks}
-        onStopped={() => {
-          setActiveTimer(null);
-          setElapsed("00:00:00");
-          setStopOpen(false);
-          selfDispatched.current = true;
-          window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
-          router.refresh();
-        }}
-      />
     </>
   );
 }
