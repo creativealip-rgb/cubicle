@@ -422,9 +422,19 @@ export default async function DashboardPage() {
       />
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          {t("Reminder", "Reminder")}
-        </h2>
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              {t("Reminder", "Reminder")}
+            </h2>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              {t(
+                "Active to-do: tetap tampil sampai beres. Bukan bell (inbox event).",
+                "Active to-do: stays until resolved. Not the bell (event inbox).",
+              )}
+            </p>
+          </div>
+        </div>
         <Card>
           <CardContent className="p-4 space-y-2">
             {reminderItems.length === 0 ? (

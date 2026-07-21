@@ -150,7 +150,12 @@ export function NotificationsBell() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80 p-0">
         <div className="flex items-center justify-between px-3 py-2 border-b">
-          <div className="text-sm font-semibold">{t("Notifikasi", "Notifications")}</div>
+          <div>
+            <div className="text-sm font-semibold">{t("Notifikasi", "Notifications")}</div>
+            <div className="text-[10px] text-muted-foreground font-normal">
+              {t("Inbox event · beda dari Reminder dashboard", "Event inbox · not dashboard Reminder")}
+            </div>
+          </div>
           {unread > 0 && (
             <button
               type="button"

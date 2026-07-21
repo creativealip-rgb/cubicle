@@ -150,6 +150,17 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
       .where(eq(timeEntries.id, open.id));
   }
 
+  // Optional: auto-map description from task title when blank.
+  let description = parsed.description || null;
+  if ((!description || !description.trim()) && parsed.taskId) {
+    const [task] = await db
+      .select({ title: tasks.title })
+      .from(tasks)
+      .where(and(eq(tasks.id, parsed.taskId), eq(tasks.workspaceId, parsed.workspaceId)))
+      .limit(1);
+    if (task?.title) description = task.title;
+  }
+
   const resolvedRate = parsed.projectId
     ? await resolveHourlyRate({
         workspaceId: parsed.workspaceId,
@@ -170,7 +181,7 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
     projectId: parsed.projectId || null,
     taskId: parsed.taskId || null,
     userId: user.id,
-    description: parsed.description || null,
+    description,
     tags: parsed.tags || null,
     startTime: new Date(),
     endTime: null,
@@ -183,6 +194,43 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
 
   await writeActivityLog(parsed.workspaceId, user.id, "started_timer", "time_entry", entry.id);
   return entry;
+}
+
+/**
+ * Start timer from a task card/sheet.
+ * Resolves client+project from task, maps description from task title.
+ * Stop remains instant — no form required.
+ */
+export async function startTimerFromTask(taskId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const [row] = await db
+    .select({
+      taskId: tasks.id,
+      title: tasks.title,
+      projectId: tasks.projectId,
+      clientId: projects.clientId,
+      projectName: projects.name,
+    })
+    .from(tasks)
+    .leftJoin(projects, eq(projects.id, tasks.projectId))
+    .where(and(eq(tasks.id, taskId), eq(tasks.workspaceId, workspaceId)))
+    .limit(1);
+
+  if (!row) throw new Error("Task not found");
+  if (!row.projectId) throw new Error("Task belum terhubung ke proyek");
+  if (!row.clientId) throw new Error("Proyek task belum punya klien");
+
+  return startTimer({
+    workspaceId,
+    clientId: row.clientId,
+    projectId: row.projectId,
+    taskId: row.taskId,
+    description: row.title,
+  });
 }
 
 /** Pause keeps the same open entry (endTime stays null). */

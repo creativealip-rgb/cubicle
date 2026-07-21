@@ -3,6 +3,9 @@
 // Email delivery is a separate concern (see notifications.ts Resend).
 //
 // Design:
+// - Bell inbox = event log (assign, paid, portal request, due-soon ping). Mark-read hides urgency.
+// - Dashboard Reminder = live action state (overdue invoice, tasks due today, contracts waiting).
+//   Remains until underlying state is fixed — NOT the same as bell.
 // - One notification per (recipient, event) — dedup by entityType+entityId if you like
 // - Per-recipient (user_id) — owner/members each get their own copy
 // - Link is relative app path so the topbar can deep-link

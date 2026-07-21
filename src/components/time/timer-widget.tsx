@@ -109,6 +109,8 @@ export function TimerWidget({
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [hourlyRate, setHourlyRate] = useState("");
+  // Track whether description was auto-filled from task (so we can refresh when task changes).
+  const descriptionFromTaskRef = useRef(false);
 
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
@@ -140,6 +142,23 @@ export function TimerWidget({
       setSelectedTaskId("__none__");
     }
   }, [selectedProjectId, allTasks]);
+
+  // Auto-map timer description from selected task title when blank / previously auto-filled.
+  useEffect(() => {
+    if (!selectedTaskId || selectedTaskId === "__none__") {
+      if (descriptionFromTaskRef.current) {
+        setDescription("");
+        descriptionFromTaskRef.current = false;
+      }
+      return;
+    }
+    const task = allTasks.find((tk) => tk.id === selectedTaskId);
+    if (!task?.title) return;
+    if (!description.trim() || descriptionFromTaskRef.current) {
+      setDescription(task.title);
+      descriptionFromTaskRef.current = true;
+    }
+  }, [selectedTaskId, allTasks]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadActiveFromApi = useCallback(async () => {
     try {
@@ -557,10 +576,19 @@ export function TimerWidget({
                 <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
                 <Input
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) => {
+                    descriptionFromTaskRef.current = false;
+                    setDescription(e.target.value);
+                  }}
                   placeholder={t("Lagi ngerjain apa?", "What are you working on?")}
                   className="h-9"
                 />
+                <p className="text-[11px] text-muted-foreground">
+                  {t(
+                    "Pilih task → deskripsi auto-map dari judul task (bisa diedit).",
+                    "Pick a task → description auto-maps from task title (editable).",
+                  )}
+                </p>
               </div>
 
               <div className="space-y-1.5">

@@ -48,6 +48,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
   const [projectId, setProjectId] = useState("");
   const [taskId, setTaskId] = useState("");
   const [description, setDescription] = useState("");
+  const [descriptionFromTask, setDescriptionFromTask] = useState(false);
   const [tags, setTags] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [hours, setHours] = useState("0");
@@ -77,12 +78,38 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
     setProjectId("");
     setTaskId("");
     setHourlyRate("");
+    if (descriptionFromTask) {
+      setDescription("");
+      setDescriptionFromTask(false);
+    }
   }
 
   function handleProjectChange(value: string) {
     setProjectId(value);
     setTaskId("");
     setHourlyRate("");
+    if (descriptionFromTask) {
+      setDescription("");
+      setDescriptionFromTask(false);
+    }
+  }
+
+  function handleTaskChange(value: string) {
+    const next = value === "__none__" ? "" : value;
+    setTaskId(next);
+    if (!next) {
+      if (descriptionFromTask) {
+        setDescription("");
+        setDescriptionFromTask(false);
+      }
+      return;
+    }
+    const task = tasks.find((tk) => tk.id === next);
+    if (!task?.title) return;
+    if (!description.trim() || descriptionFromTask) {
+      setDescription(task.title);
+      setDescriptionFromTask(true);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -116,6 +143,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
       setProjectId("");
       setTaskId("");
       setDescription("");
+      setDescriptionFromTask(false);
       setTags("");
       setDate(new Date().toISOString().split("T")[0]);
       setHours("0");
@@ -181,7 +209,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
             <Label className="text-xs">Tugas (opsional)</Label>
             <Select
               value={taskId || "__none__"}
-              onValueChange={(value) => setTaskId(value === "__none__" ? "" : value)}
+              onValueChange={handleTaskChange}
               disabled={!projectId}
             >
               <SelectTrigger className="h-9 text-sm">
@@ -200,10 +228,19 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
             <Label className="text-xs">Deskripsi</Label>
             <Input
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => {
+                setDescriptionFromTask(false);
+                setDescription(e.target.value);
+              }}
               placeholder="Ngerjain apa aja?"
               className="h-9"
             />
+            <p className="text-[11px] text-muted-foreground">
+              {t(
+                "Pilih task → deskripsi auto-map dari judul (bisa diedit).",
+                "Pick a task → description auto-maps from title (editable).",
+              )}
+            </p>
           </div>
 
           <div className="space-y-2">

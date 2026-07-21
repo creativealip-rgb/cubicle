@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.93 — 2026-07-21 — Timer ↔ task link + bell/reminder separation
+
+- **Start timer dari task**: tombol di task detail sheet → auto-link client/project/task + deskripsi = judul task
+- **Auto-map deskripsi**: pilih task di timer widget / timesheet edit / manual entry → deskripsi isi judul (bisa diedit)
+- **Bell ≠ Reminder**: copy UI bedakan inbox event (bell) vs active to-do dashboard (reminder)
+- Project tasks query: ikut `projectId` + `projectName` biar start timer dari project tab aman
+
 ## v0.1.92 — 2026-07-21 — Portal request report/meeting + top summary
 
 - **Request Report / Request Meeting** di client portal: dialog form + simpan ke `portal_requests` + notifikasi in-app ke workspace members

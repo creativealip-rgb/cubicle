@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { updateTask } from "@/lib/actions/tasks";
+import { startTimerFromTask } from "@/lib/actions/time";
 import {
   Sheet,
   SheetContent,
@@ -28,6 +29,8 @@ import {
   EyeOff,
   AlertTriangle,
   StickyNote,
+  Play,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { useT } from "@/lib/i18n-client";
@@ -118,6 +121,25 @@ export function TaskDetailSheet({
     }
   }
 
+  async function handleStartTimer() {
+    if (!task.projectId) {
+      toast.error(t("Task belum punya proyek", "Task has no project"));
+      return;
+    }
+    setLoading(true);
+    try {
+      await startTimerFromTask(task.id);
+      window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
+      toast.success(t("Timer task dimulai", "Task timer started"));
+      setOpen(false);
+      router.refresh();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("Gagal mulai timer", "Failed to start timer"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleAssigneeChange(assigneeId: string) {
     setLoading(true);
     try {
@@ -192,6 +214,25 @@ export function TaskDetailSheet({
             <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
             <p className="text-sm text-muted-foreground">
               {task.description || t("Tidak ada deskripsi", "No description")}
+            </p>
+          </div>
+
+          {/* Start timer from task */}
+          <div className="space-y-2">
+            <Button
+              type="button"
+              className="w-full gap-2"
+              onClick={handleStartTimer}
+              disabled={loading || !task.projectId}
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              {t("Mulai timer dari task", "Start timer from task")}
+            </Button>
+            <p className="text-[11px] text-muted-foreground">
+              {t(
+                "Link client/project/task otomatis. Deskripsi timer = judul task. Stop langsung, tanpa form.",
+                "Auto-links client/project/task. Timer description = task title. Stop is instant, no form.",
+              )}
             </p>
           </div>
 

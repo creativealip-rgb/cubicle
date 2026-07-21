@@ -120,8 +120,8 @@ export default async function TasksPage({
         </p>
         <p className="mt-1 text-xs text-blue-900/80">
           {t(
-            "Tugas = to-do / status kerja (todo → done). Waktu / timer = jam billable yang bisa di-import ke invoice. Link task ke timer opsional biar rapi.",
-            "Tasks = to-do / work status (todo → done). Time / timer = billable hours you can import to invoices. Linking a task to the timer is optional.",
+            "Tugas = to-do / status kerja. Timer = jam billable. Buka task → Mulai timer: auto-link client/project/task + deskripsi = judul. Stop instan, tanpa form.",
+            "Tasks = to-do / work status. Timer = billable hours. Open a task → Start timer: auto-links client/project/task + description = title. Instant stop, no form.",
           )}{" "}
           <a href="/app/time" className="font-medium underline underline-offset-2">
             {t("Buka Time Tracking", "Open Time Tracking")}

@@ -108,6 +108,8 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
   const [editMinutes, setEditMinutes] = useState("");
   const [editBillable, setEditBillable] = useState(true);
   const [editStatus, setEditStatus] = useState<"draft" | "approved">("draft");
+  // True when description was auto-filled from task title in this edit session.
+  const [descriptionFromTask, setDescriptionFromTask] = useState(false);
 
   const filteredEntries = useMemo(() => {
     return entries.filter((e) => {
@@ -217,7 +219,26 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
     setEditMinutes(String(entry.durationMinutes ?? entry.manualMinutes ?? 0));
     setEditBillable(entry.billable);
     setEditStatus(entry.status === "approved" ? "approved" : "draft");
+    setDescriptionFromTask(false);
     setEditOpen(true);
+  }
+
+  function handleEditTaskChange(nextTaskId: string) {
+    setEditTaskId(nextTaskId);
+    if (!nextTaskId || nextTaskId === "__none__") {
+      if (descriptionFromTask) {
+        setEditDescription("");
+        setDescriptionFromTask(false);
+      }
+      return;
+    }
+    const task = tasks.find((tk) => tk.id === nextTaskId);
+    if (!task?.title) return;
+    // Auto-map when blank or previously auto-filled from another task.
+    if (!editDescription.trim() || descriptionFromTask) {
+      setEditDescription(task.title);
+      setDescriptionFromTask(true);
+    }
   }
 
   async function handleSaveEdit() {
@@ -556,9 +577,18 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
               <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
               <Input
                 value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
+                onChange={(e) => {
+                  setDescriptionFromTask(false);
+                  setEditDescription(e.target.value);
+                }}
                 className="h-9"
               />
+              <p className="text-[11px] text-muted-foreground">
+                {t(
+                  "Pilih task → deskripsi auto-map dari judul (bisa diedit).",
+                  "Pick a task → description auto-maps from title (editable).",
+                )}
+              </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
@@ -610,7 +640,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
               <Label className="text-xs">{t("Tugas", "Task")}</Label>
               <Select
                 value={editTaskId}
-                onValueChange={setEditTaskId}
+                onValueChange={handleEditTaskChange}
                 disabled={!editProjectId}
               >
                 <SelectTrigger className="h-9 text-sm">

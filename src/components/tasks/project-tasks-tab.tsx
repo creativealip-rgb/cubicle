@@ -24,7 +24,7 @@ interface Task {
   position: number;
   clientVisible: boolean;
   projectId?: string;
-  projectName?: string;
+  projectName?: string | null;
 }
 
 interface ProjectTasksTabProps {

@@ -109,9 +109,12 @@ export default async function ProjectDetailPage({
       dueDate: tasks.dueDate,
       position: tasks.position,
       clientVisible: tasks.clientVisible,
+      projectId: tasks.projectId,
+      projectName: projects.name,
     })
     .from(tasks)
     .leftJoin(users, eq(users.id, tasks.assigneeId))
+    .leftJoin(projects, eq(projects.id, tasks.projectId))
     .where(eq(tasks.projectId, projectId))
     .orderBy(tasks.position);
 
