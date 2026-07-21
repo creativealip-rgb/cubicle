@@ -29,6 +29,8 @@ const TYPE_ICON: Record<string, string> = {
   task_assigned: "📋",
   task_commented: "💬",
   client_comment: "💬",
+  client_task_approved: "✅",
+  client_task_revision: "🔁",
   file_viewed: "👁",
   invoice_paid: "✅",
   invoice_sent: "📨",
@@ -41,6 +43,8 @@ const TYPE_ICON: Record<string, string> = {
   task_due_soon: "⏰",
   invoice_overdue: "⚠️",
   mention: "@",
+  portal_report_request: "📊",
+  portal_meeting_request: "📅",
 };
 
 function timeAgo(iso: string): string {

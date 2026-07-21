@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.92 — 2026-07-21 — Portal request report/meeting + top summary
+
+- **Request Report / Request Meeting** di client portal: dialog form + simpan ke `portal_requests` + notifikasi in-app ke workspace members
+- Admin client tab Portal: badge **From client** untuk request dari portal
+- Portal top summary: Active / By project / By hours / By package / Due invoice / Reminder
+- List Requests & Reminders tampil di portal (approve/upload/mark done)
+
 ## v0.1.91 — 2026-07-21 — Stop timer no dialog
 
 - Klik stop = hentikan langsung, tanpa form/dialog

@@ -30,7 +30,9 @@ export type NotificationType =
   | "task_status_changed"
   | "task_due_soon"
   | "invoice_overdue"
-  | "mention";
+  | "mention"
+  | "portal_report_request"
+  | "portal_meeting_request";
 
 export interface CreateNotificationInput {
   workspaceId: string;

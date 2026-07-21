@@ -74,6 +74,95 @@ export async function createPortalRequest(input: z.infer<typeof createPortalRequ
   return row;
 }
 
+const createClientPortalRequestSchema = z.object({
+  token: z.string().min(1),
+  kind: z.enum(["report", "meeting"]),
+  message: z.string().max(2000).optional().nullable(),
+  projectId: z.string().uuid().optional().nullable(),
+  preferredDate: z.string().optional().nullable(), // YYYY-MM-DD for meeting
+  reportPeriod: z.string().max(120).optional().nullable(), // e.g. "Last 30 days"
+});
+
+/**
+ * Client portal: client-initiated Request Report / Request Meeting.
+ * Stored as portal_requests (type info/other) so admin sees them on client detail.
+ */
+export async function createClientPortalRequest(
+  input: z.infer<typeof createClientPortalRequestSchema>,
+) {
+  const parsed = createClientPortalRequestSchema.parse(input);
+  const { getClientPortalAccess } = await import("@/lib/actions/portal");
+  const client = await getClientPortalAccess(parsed.token);
+
+  if (parsed.projectId) {
+    const [project] = await db
+      .select({ id: projects.id })
+      .from(projects)
+      .where(
+        and(
+          eq(projects.id, parsed.projectId),
+          eq(projects.workspaceId, client.workspaceId),
+          eq(projects.clientId, client.id),
+        ),
+      )
+      .limit(1);
+    if (!project) throw new Error("Project not found");
+  }
+
+  const isReport = parsed.kind === "report";
+  const title = isReport ? "Request Report" : "Request Meeting";
+  const type = isReport ? ("info" as const) : ("other" as const);
+
+  const lines: string[] = [];
+  lines.push(`[CLIENT_ORIGIN ${parsed.kind}]`);
+  if (isReport && parsed.reportPeriod?.trim()) {
+    lines.push(`Period: ${parsed.reportPeriod.trim()}`);
+  }
+  if (!isReport && parsed.preferredDate?.trim()) {
+    lines.push(`Preferred date: ${parsed.preferredDate.trim()}`);
+  }
+  if (parsed.message?.trim()) {
+    lines.push(parsed.message.trim());
+  }
+  const description = lines.join("\n").slice(0, 8000);
+
+  const [row] = await db
+    .insert(portalRequests)
+    .values({
+      workspaceId: client.workspaceId,
+      clientId: client.id,
+      projectId: parsed.projectId || null,
+      title,
+      description,
+      type,
+      dueDate: !isReport && parsed.preferredDate?.trim() ? parsed.preferredDate.trim() : null,
+      createdBy: null,
+    })
+    .returning();
+
+  try {
+    const { notifyWorkspaceMembers } = await import("@/lib/in-app-notifications");
+    const clientLabel = client.companyName || client.name || "Client";
+    await notifyWorkspaceMembers(client.workspaceId, {
+      type: isReport ? "portal_report_request" : "portal_meeting_request",
+      title: isReport
+        ? `${clientLabel} minta report`
+        : `${clientLabel} minta meeting`,
+      body: parsed.message?.trim() || (isReport ? "Request report dari portal" : "Request meeting dari portal"),
+      link: `/app/clients/${client.id}?tab=portal`,
+      entityType: "portal_request",
+      entityId: row.id,
+      actorId: null,
+    });
+  } catch {
+    // non-critical
+  }
+
+  revalidatePath(`/client-portal/${parsed.token}`);
+  revalidatePath(`/app/clients/${client.id}`);
+  return row;
+}
+
 export async function updatePortalRequestAdmin(input: z.infer<typeof updatePortalRequestAdminSchema>) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);

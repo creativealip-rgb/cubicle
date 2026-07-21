@@ -828,6 +828,8 @@ export const notifications = pgTable("notifications", {
       "task_due_soon",      // due date reminder
       "invoice_overdue",    // invoice overdue reminder
       "mention",            // @mentioned in comment
+      "portal_report_request",  // client requested report via portal
+      "portal_meeting_request", // client requested meeting via portal
     ],
   }).notNull(),
   title: text("title").notNull(),

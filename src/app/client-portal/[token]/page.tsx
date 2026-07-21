@@ -32,20 +32,18 @@ function formatMinutes(mins: number) {
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   FolderOpen,
   DollarSign,
   Clock,
   AlertCircle,
-  Download,
-  BarChart3,
-  Calendar,
   FileText,
 } from "lucide-react";
 import { PortalContactButtons } from "@/components/portal/portal-contact";
 import { ProjectAccordion } from "@/components/portal/project-accordion";
 import { PortalInvoices } from "@/components/portal/portal-invoices";
+import { PortalActionButtons } from "@/components/portal/portal-action-buttons";
+import { PortalRequestList } from "@/components/portal/portal-request-list";
 import { getCustomPackageRequestsByToken } from "@/lib/actions/custom-package-requests";
 import { getPackageOrdersByToken } from "@/lib/actions/package-orders";
 
@@ -594,6 +592,14 @@ export default async function ClientPortalPage({
   );
 
   const activeCount = clientProjects.filter((p) => p.status === "active").length;
+  const byProjectCount = clientProjects.filter((p) => p.billingType === "project").length;
+  const byHoursCount = clientProjects.filter((p) => p.billingType === "hours").length;
+  const byPackageCount = clientProjects.filter((p) => p.billingType === "package").length;
+  const dueInvoiceCount = clientInvoices.filter((inv) =>
+    ["sent", "viewed", "overdue", "partial"].includes(inv.status),
+  ).length;
+  const pendingClientRequests = clientPortalRequests.filter((r) => r.status === "pending");
+  const pendingReminderCount = pendingClientRequests.length;
 
   // Mark first-viewed invoices when client opens portal
   try {
@@ -657,26 +663,81 @@ export default async function ClientPortalPage({
           </p>
         </div>
 
-        {/* ─── 1. Top actions ──────────────────────────────── */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <FolderOpen className="h-4 w-4 text-blue-500" />
-            <span>
-              <span className="font-semibold text-foreground">{activeCount}</span> active project
-              {activeCount === 1 ? "" : "s"}
-            </span>
+        {/* ─── 1. Top summary + actions ─────────────────────── */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <Card className="shadow-none">
+              <CardContent className="p-3">
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Active</p>
+                <p className="mt-1 text-xl font-semibold">{activeCount}</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-none">
+              <CardContent className="p-3">
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">By project</p>
+                <p className="mt-1 text-xl font-semibold">{byProjectCount}</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-none">
+              <CardContent className="p-3">
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">By hours</p>
+                <p className="mt-1 text-xl font-semibold">{byHoursCount}</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-none">
+              <CardContent className="p-3">
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">By package</p>
+                <p className="mt-1 text-xl font-semibold">{byPackageCount}</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-none">
+              <CardContent className="p-3">
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Due invoice</p>
+                <p className="mt-1 text-xl font-semibold">{dueInvoiceCount}</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-none">
+              <CardContent className="p-3">
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Reminder</p>
+                <p className="mt-1 text-xl font-semibold">{pendingReminderCount}</p>
+              </CardContent>
+            </Card>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Button variant="outline" className="h-10 px-5 rounded-lg gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Request Report
-            </Button>
-            <Button variant="outline" className="h-10 px-5 rounded-lg gap-2">
-              <Calendar className="h-4 w-4" />
-              Request Meeting
-            </Button>
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <FolderOpen className="h-4 w-4 text-blue-500" />
+              <span>
+                <span className="font-semibold text-foreground">{activeCount}</span> active project
+                {activeCount === 1 ? "" : "s"}
+              </span>
+            </div>
+            <PortalActionButtons
+              token={token}
+              projects={clientProjects.map((p) => ({ id: p.id, name: p.name }))}
+            />
           </div>
         </div>
+
+        {/* ─── 2. Open requests / reminders ─────────────── */}
+        {(pendingClientRequests.length > 0 || clientPortalRequests.length > 0) && (
+          <section>
+            <h2 className="mb-4 text-xl font-semibold">
+              Requests & Reminders ({pendingClientRequests.length} open)
+            </h2>
+            <PortalRequestList
+              requests={clientPortalRequests.map((r) => ({
+                id: r.id,
+                title: r.title,
+                description: r.description,
+                type: r.type,
+                status: r.status,
+                dueDate: r.dueDate ? String(r.dueDate) : null,
+              }))}
+              token={token}
+            />
+          </section>
+        )}
 
         {/* ─── 4. Projects (compact accordion) ──────────────── */}
         <section>

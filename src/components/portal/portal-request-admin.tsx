@@ -141,10 +141,12 @@ export function PortalRequestAdmin({
             : request.description?.includes("[Client REJECTED")
               ? "rejected"
               : null;
-          const cleanDesc = (request.description || "").replace(
-            /\n\n---\n\[Client (APPROVED|REJECTED)[\s\S]*$/,
-            "",
-          );
+          const fromClient =
+            request.description?.includes("[CLIENT_ORIGIN report]") ||
+            request.description?.includes("[CLIENT_ORIGIN meeting]");
+          const cleanDesc = (request.description || "")
+            .replace(/\n\n---\n\[Client (APPROVED|REJECTED)[\s\S]*$/, "")
+            .replace(/^\[CLIENT_ORIGIN (report|meeting)\]\n?/, "");
           return (
             <div key={request.id} className="flex items-start justify-between gap-3 rounded-lg border p-3">
               <div className="min-w-0">
@@ -156,6 +158,11 @@ export function PortalRequestAdmin({
                   <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs capitalize">
                     {request.status}
                   </span>
+                  {fromClient && (
+                    <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                      From client
+                    </span>
+                  )}
                   {decision === "approved" && (
                     <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
                       Client approved
