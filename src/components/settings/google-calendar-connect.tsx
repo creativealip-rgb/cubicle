@@ -50,7 +50,8 @@ export function GoogleCalendarConnect({
           t("Gagal hubungkan Google Calendar", "Failed to connect Google Calendar"),
       );
     }
-    router.replace("/app/settings");
+    // Keep user on Integrations tab after OAuth toast.
+    router.replace("/app/settings?tab=integrations");
   }, [searchParams, router, t]);
 
   async function disconnect() {

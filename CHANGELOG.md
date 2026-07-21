@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.94 — 2026-07-21 — Settings tab groups
+
+- Settings page dipecah ke tab: Workspace / Tim / Branding & Invoice / Integrasi / Lainnya
+- Deep-link `?tab=team|branding|integrations|more`
+- Google Calendar OAuth return land di tab Integrasi
+
 ## v0.1.93 — 2026-07-21 — Timer ↔ task link + bell/reminder separation
 
 - **Start timer dari task**: tombol di task detail sheet → auto-link client/project/task + deskripsi = judul task
