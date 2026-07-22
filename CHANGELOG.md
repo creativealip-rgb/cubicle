@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.102 — 2026-07-22 — Invoice list FX secondary + KPI base
+
+- List invoice: total asli + secondary `≈ base` (kurs manual) bila currency beda
+- KPI atas list: Outstanding / Dibayar / Ditagihkan setara base currency (ikut filter status/klien)
+- Draft/cancelled/archived tidak masuk KPI; missing rate di-skip + warning Settings
+- Detail invoice + PDF tetap currency asli
+
 ## v0.1.101 — 2026-07-22 — Reports + expenses ke base currency
 
 - Halaman **Laporan** convert aggregate (P&L, aging, top client/expense, cashflow, project expense) ke base currency via kurs manual

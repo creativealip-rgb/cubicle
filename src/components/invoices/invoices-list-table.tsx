@@ -31,6 +31,8 @@ export type InvoiceListItem = {
   dueDate: string | null;
   currency: string;
   total: number | string | null;
+  /** Converted total in workspace base currency (null if rate missing). */
+  totalBase?: number | null;
   status: string;
 };
 
@@ -64,8 +66,16 @@ function formatInvoiceId(num: string): string {
   return `INV-${year}-${match[1].padStart(4, "0")}`;
 }
 
-export function InvoicesListTable({ invoices }: { invoices: InvoiceListItem[] }) {
+export function InvoicesListTable({
+  invoices,
+  baseCurrency,
+}: {
+  invoices: InvoiceListItem[];
+  /** Workspace base currency for secondary ≈ line. */
+  baseCurrency?: string;
+}) {
   const { t, lang } = useT();
+  const base = (baseCurrency || "IDR").toUpperCase();
 
   const getters = useMemo(
     () => ({
@@ -185,7 +195,13 @@ export function InvoicesListTable({ invoices }: { invoices: InvoiceListItem[] })
                   <TableCell>{formatDateID(inv.issueDate)}</TableCell>
                   <TableCell>{formatDateID(inv.dueDate)}</TableCell>
                   <TableCell className="text-right tabular-nums font-medium">
-                    {formatMoney(inv.total, inv.currency)}
+                    <div>{formatMoney(inv.total, inv.currency)}</div>
+                    {inv.totalBase != null &&
+                      inv.currency?.toUpperCase() !== base && (
+                        <div className="text-xs font-normal text-muted-foreground">
+                          ≈ {formatMoney(inv.totalBase, base)}
+                        </div>
+                      )}
                   </TableCell>
                   <TableCell>
                     <Badge variant={status.variant}>{status.label}</Badge>
@@ -239,9 +255,17 @@ export function InvoicesListTable({ invoices }: { invoices: InvoiceListItem[] })
                 <span className="text-xs text-muted-foreground">
                   {t("Total", "Total")}
                 </span>
-                <span className="tabular-nums font-medium">
-                  {formatMoney(inv.total, inv.currency)}
-                </span>
+                <div className="text-right">
+                  <div className="tabular-nums font-medium">
+                    {formatMoney(inv.total, inv.currency)}
+                  </div>
+                  {inv.totalBase != null &&
+                    inv.currency?.toUpperCase() !== base && (
+                      <div className="text-xs text-muted-foreground">
+                        ≈ {formatMoney(inv.totalBase, base)}
+                      </div>
+                    )}
+                </div>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <span className="text-xs text-muted-foreground">

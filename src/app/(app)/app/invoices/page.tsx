@@ -1,20 +1,33 @@
-import { getWorkspaceForCurrentUser } from "@/lib/workspace";
+import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { clients, invoices, projects, workspaceMembers } from "@/db/schema";
-import { eq, desc, and, count, ne, isNull, SQL } from "drizzle-orm";
+import {
+  clients,
+  invoices,
+  payments,
+  projects,
+  workspaceCurrencyRates,
+  workspaceMembers,
+} from "@/db/schema";
+import { eq, desc, and, count, ne, isNull, SQL, sql, inArray } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { Button } from "@/components/ui/button";
-import { Plus, FileText, ChevronLeft, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, FileText, ChevronLeft, ChevronRight, Wallet, AlertCircle, CheckCircle2 } from "lucide-react";
+import { cn, formatMoney } from "@/lib/utils";
 import { invoiceStatusVariant } from "@/lib/status-badge";
 import { EmptyState } from "@/components/empty-state";
 import { InvoicesListTable } from "@/components/invoices/invoices-list-table";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { billingTypeLabel } from "@/lib/feature-access";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  buildRateMap,
+  convertToBase,
+  normalizeCurrency,
+} from "@/lib/currency-base";
 
 const PAGE_SIZE = 10;
 
@@ -33,10 +46,6 @@ type StatusTab = (typeof STATUS_TABS)[number];
 
 const BILLING_FILTERS = ["all", "hours", "package", "project", "none"] as const;
 type BillingFilter = (typeof BILLING_FILTERS)[number];
-
-async function getWorkspaceId(): Promise<string> {
-  return getWorkspaceForCurrentUser();
-}
 
 function parseStatusTab(raw?: string): StatusTab {
   if (raw && (STATUS_TABS as readonly string[]).includes(raw)) {
@@ -136,7 +145,9 @@ export default async function InvoicesPage({
   const t = createT(lang);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
-  const workspaceId = await getWorkspaceId();
+  const ws = await getWorkspaceFullForCurrentUser();
+  const workspaceId = ws.id;
+  const baseCurrency = normalizeCurrency(ws.defaultCurrency || "IDR");
   const params = await searchParams;
   const statusTab = parseStatusTab(params.status);
   const page = parsePage(params.page);
@@ -149,6 +160,15 @@ export default async function InvoicesPage({
     .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, user.id)))
     .limit(1);
   const canWrite = member?.role === "owner" || member?.role === "member";
+
+  const rateRows = await db
+    .select({
+      fromCurrency: workspaceCurrencyRates.fromCurrency,
+      rate: workspaceCurrencyRates.rate,
+    })
+    .from(workspaceCurrencyRates)
+    .where(eq(workspaceCurrencyRates.workspaceId, workspaceId));
+  const rateMap = buildRateMap(rateRows);
 
   // Client options for filter dropdown
   const clientOptions = await db
@@ -237,6 +257,91 @@ export default async function InvoicesPage({
     .limit(PAGE_SIZE)
     .offset(offset);
 
+  const invoiceListWithBase = invoiceList.map((inv) => {
+    const totalBase = convertToBase(
+      Number(inv.total) || 0,
+      inv.currency,
+      baseCurrency,
+      rateMap,
+    );
+    return { ...inv, totalBase };
+  });
+
+  // KPI summary for current filters (all matching invoices, not just page)
+  const kpiInvoiceRows = await db
+    .select({
+      id: invoices.id,
+      total: invoices.total,
+      currency: invoices.currency,
+      status: invoices.status,
+    })
+    .from(invoices)
+    .leftJoin(projects, eq(projects.id, invoices.projectId))
+    .where(and(...listConditions));
+
+  const kpiIds = kpiInvoiceRows.map((r) => r.id);
+  const paidByInvoice = new Map<string, number>();
+  if (kpiIds.length > 0) {
+    const paidRows = await db
+      .select({
+        invoiceId: payments.invoiceId,
+        paid: sql<string>`coalesce(sum(${payments.amount}), 0)`,
+      })
+      .from(payments)
+      .where(inArray(payments.invoiceId, kpiIds))
+      .groupBy(payments.invoiceId);
+    for (const row of paidRows) {
+      paidByInvoice.set(row.invoiceId, Number(row.paid) || 0);
+    }
+  }
+
+  const missingFx = new Set<string>();
+  let outstandingBase = 0;
+  let paidBase = 0;
+  let billedBase = 0;
+  let outstandingCount = 0;
+  let paidCount = 0;
+
+  for (const inv of kpiInvoiceRows) {
+    if (inv.status === "cancelled" || inv.status === "draft" || inv.status === "archived") {
+      continue;
+    }
+    const total = Number(inv.total) || 0;
+    const paid = Math.min(paidByInvoice.get(inv.id) ?? 0, total);
+    const remaining = Math.max(0, total - paid);
+
+    const totalConv = convertToBase(total, inv.currency, baseCurrency, rateMap);
+    const paidConv = convertToBase(paid, inv.currency, baseCurrency, rateMap);
+    const remConv = convertToBase(remaining, inv.currency, baseCurrency, rateMap);
+
+    if (totalConv === null || paidConv === null || remConv === null) {
+      const cur = normalizeCurrency(inv.currency);
+      if (cur !== baseCurrency) missingFx.add(cur);
+      continue;
+    }
+
+    billedBase += totalConv;
+    paidBase += paidConv;
+    if (remaining > 0.000001) {
+      outstandingBase += remConv;
+      outstandingCount += 1;
+    }
+    if (paid > 0.000001) {
+      paidCount += 1;
+    }
+  }
+
+  // Also track missing FX from list page rows for warning completeness
+  for (const inv of invoiceListWithBase) {
+    if (
+      inv.totalBase == null &&
+      normalizeCurrency(inv.currency) !== baseCurrency
+    ) {
+      missingFx.add(normalizeCurrency(inv.currency));
+    }
+  }
+  const missingFxList = Array.from(missingFx).sort();
+
   const fromItem = filteredTotal === 0 ? 0 : offset + 1;
   const toItem = Math.min(offset + invoiceList.length, filteredTotal);
 
@@ -258,7 +363,10 @@ export default async function InvoicesPage({
         <div className="min-w-0">
           <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{t("Invoice", "Invoices")}</h1>
           <p className="text-sm text-muted-foreground">
-            {t("Buat dan kelola invoice untuk klienmu", "Create and manage invoices for your clients")}
+            {t(
+              `Baris total tetap currency invoice. Ringkasan setara ${baseCurrency}.`,
+              `Row totals keep invoice currency. Summaries in ${baseCurrency}.`,
+            )}
           </p>
         </div>
         <div className="flex w-full gap-2 sm:w-auto">
@@ -278,6 +386,80 @@ export default async function InvoicesPage({
           )}
         </div>
       </div>
+
+      {/* KPI summary — base currency */}
+      {totalAllIncludingArchived > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {t("Outstanding", "Outstanding")}
+              </CardTitle>
+              <AlertCircle className="h-4 w-4 text-amber-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-semibold tabular-nums">
+                {formatMoney(outstandingBase, baseCurrency)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {outstandingCount}{" "}
+                {outstandingCount === 1
+                  ? t("invoice sisa", "invoice open")
+                  : t("invoice sisa", "invoices open")}
+                {` · ${baseCurrency}`}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {t("Dibayar", "Paid")}
+              </CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-semibold tabular-nums text-emerald-700">
+                {formatMoney(paidBase, baseCurrency)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {paidCount}{" "}
+                {paidCount === 1
+                  ? t("invoice ada bayar", "invoice with payment")
+                  : t("invoice ada bayar", "invoices with payment")}
+                {` · ${baseCurrency}`}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {t("Ditagihkan", "Billed")}
+              </CardTitle>
+              <Wallet className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-semibold tabular-nums">
+                {formatMoney(billedBase, baseCurrency)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t("sent/viewed/overdue/paid (filter aktif)", "sent/viewed/overdue/paid (active filters)")}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {missingFxList.length > 0 && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {t(
+            `Kurs belum di-set: ${missingFxList.join(", ")}. Angka currency itu di-skip di ringkasan. `,
+            `Missing FX rates: ${missingFxList.join(", ")}. Those currencies are skipped in summaries. `,
+          )}
+          <Link href="/app/settings?tab=workspace" className="underline underline-offset-2 font-medium">
+            {t("Atur di Settings", "Set in Settings")}
+          </Link>
+        </div>
+      )}
 
       {/* Status tabs + filters (same row pattern as Clients page) */}
       <Tabs defaultValue={statusTab} className="space-y-4">
@@ -419,7 +601,7 @@ export default async function InvoicesPage({
         />
       ) : (
         <>
-          <InvoicesListTable invoices={invoiceList} />
+          <InvoicesListTable invoices={invoiceListWithBase} baseCurrency={baseCurrency} />
 
           {/* Pagination */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
