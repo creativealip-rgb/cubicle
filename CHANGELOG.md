@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.111 — 2026-07-22 — Cubiqlo full webmail + business mailboxes
+
+- `mail.cubiqlo.com` cutover to full Stalwart + SnappyMail webmail on VPS
+- Root MX `cubiqlo.com` points to `mail.cubiqlo.com`; SPF allows VPS MX + Resend/Amazon SES
+- Stalwart outbound delivery routes external mail through Resend relay on port `2587` (VPS blocks `587`/`465` outbound)
+- Verified fresh outbound smoke test from `admin@cubiqlo.com` to Gmail with Resend `delivered`
+- Added business mailboxes: `marketing@`, `cs@`, `sales@`, `billing@`, `finance@cubiqlo.com`
+- Credential summary stored outside repo at `/root/.secrets/cubiqlo-mailbox-credentials.txt`
+
 ## v0.1.110 — 2026-07-22 — Invoice email: link PDF + template UX
 
 - Email kirim invoice / reminder pakai link **PDF share** (`/api/invoices/share/:token/pdf`) — tampilan sama Unduh PDF

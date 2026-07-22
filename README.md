@@ -30,7 +30,7 @@ Built for freelancers, agencies, and small service teams who want to stop juggli
 | Database | PostgreSQL 16 + Drizzle ORM |
 | Auth | Better-Auth (email/password, sessions) |
 | File storage | Cloudflare R2 (S3-compatible) |
-| Email | Resend |
+| Email | Resend + Cubiqlo Stalwart/SnappyMail ops (`docs/cubiqlo-mail-ops.md`) |
 | PDF | @react-pdf/renderer |
 | Container | Docker + Dokploy + Traefik (HTTPS) |
 
