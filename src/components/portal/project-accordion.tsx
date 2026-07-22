@@ -155,22 +155,22 @@ interface ProjectAccordionProps {
   ownerName?: string | null;
 }
 
-function formatIDR(amount: number) {
-  if (amount >= 1_000_000) return `Rp ${(amount / 1_000_000).toFixed(1)}M`;
-  if (amount >= 1_000) return `Rp ${(amount / 1_000).toFixed(0)}K`;
-  return `Rp ${amount.toLocaleString("id-ID")}`;
-}
-
 function formatMinutes(mins: number) {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
+/** Client-facing money: invoice/package currency as-is (no workspace base). */
 function formatCurrency(amount: string | number, currency: string) {
+  const code = (currency || "IDR").toUpperCase();
+  if (code === "IDR") {
+    return `Rp${Number(amount).toLocaleString("id-ID", { maximumFractionDigits: 0 })}`;
+  }
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: currency || "IDR",
+    currency: code,
+    minimumFractionDigits: Number(amount) % 1 === 0 ? 0 : 2,
   }).format(Number(amount));
 }
 

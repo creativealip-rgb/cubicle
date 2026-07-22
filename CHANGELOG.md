@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.104 — 2026-07-22 — Client portal: multi-currency asli, no ≈ base
+
+- Portal client **tidak** pakai `≈ base` / kurs workspace (client bayar currency invoice)
+- Hapus dead summary hardcode IDR/USD di portal page
+- Invoice tab: stack per-currency + outstanding include `partial`
+- Hide draft dari daftar portal; package/project money tetap currency asli
+
 ## v0.1.103 — 2026-07-22 — ≈ base toggle + expense/package list FX
 
 - Settings Workspace → **Kurs finance**: toggle **Tampilkan ≈ base di list** (default ON)

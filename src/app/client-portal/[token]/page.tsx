@@ -19,28 +19,8 @@ import { eq, and, sql, desc, inArray, ne, or, isNull } from "drizzle-orm";
 import { getClientPortalAccess, logPortalAccess } from "@/lib/actions/portal";
 import { pickReplyTo } from "@/lib/workspace-reply-to";
 import { Suspense } from "react";
-
-function formatIDR(amount: number) {
-  if (amount >= 1_000_000) return `Rp ${(amount / 1_000_000).toFixed(1)}M`;
-  if (amount >= 1_000) return `Rp ${(amount / 1_000).toFixed(0)}K`;
-  return `Rp ${amount.toLocaleString("id-ID")}`;
-}
-
-function formatMinutes(mins: number) {
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
-}
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  FolderOpen,
-  DollarSign,
-  Clock,
-  AlertCircle,
-  FileText,
-} from "lucide-react";
+import { FolderOpen } from "lucide-react";
 import { PortalContactButtons } from "@/components/portal/portal-contact";
 import { ProjectAccordion } from "@/components/portal/project-accordion";
 import { PortalInvoices } from "@/components/portal/portal-invoices";
@@ -546,7 +526,9 @@ export default async function ClientPortalPage({
       and(
         eq(invoices.workspaceId, client.workspaceId),
         eq(invoices.clientId, client.id),
+        // Client never sees draft/archived; cancelled may appear as history
         ne(invoices.status, "archived"),
+        ne(invoices.status, "draft"),
       ),
     )
     .limit(50);
@@ -564,22 +546,8 @@ export default async function ClientPortalPage({
     }
   }
 
-  // Financial summary — invoices for this client, grouped by currency
-  let totalPaidIDR = 0;
-  let totalPaidUSD = 0;
-  let totalOutstandingIDR = 0;
-  let totalOutstandingUSD = 0;
-  for (const inv of clientInvoices) {
-    const amt = Number(inv.total) || 0;
-    const isUSD = inv.currency === "USD";
-    if (inv.status === "paid") {
-      if (isUSD) totalPaidUSD += amt;
-      else totalPaidIDR += amt;
-    } else if (inv.status !== "cancelled" && inv.status !== "archived") {
-      if (isUSD) totalOutstandingUSD += amt;
-      else totalOutstandingIDR += amt;
-    }
-  }
+  // Client-facing money summary lives in PortalInvoices (stack per currency asli).
+  // No workspace base conversion / ≈ base — client pays invoice currency.
 
   // Fetch time entry details for by-hours projects (individual entries)
   const byHoursEntriesMap = new Map<string, Array<{

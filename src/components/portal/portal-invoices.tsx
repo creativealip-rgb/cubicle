@@ -22,7 +22,8 @@ export type PortalInvoice = {
 type ProjectRef = { id: string; name: string };
 
 // Status buckets: what the client actually cares about is "do I owe money?"
-const OUTSTANDING = new Set(["sent", "viewed", "overdue"]);
+// Keep amounts in invoice currency only — never convert to workspace base.
+const OUTSTANDING = new Set(["sent", "viewed", "overdue", "partial"]);
 const PAID = new Set(["paid"]);
 
 type StatusMeta = { label: string; className: string };
@@ -34,6 +35,8 @@ function invoiceStatusMeta(status: string, isOverdue: boolean): StatusMeta {
   switch (status) {
     case "paid":
       return { label: "Lunas", className: "bg-emerald-100 text-emerald-700 border-emerald-200" };
+    case "partial":
+      return { label: "Sebagian Lunas", className: "bg-amber-100 text-amber-700 border-amber-200" };
     case "sent":
       return { label: "Menunggu Pembayaran", className: "bg-blue-100 text-blue-700 border-blue-200" };
     case "viewed":
@@ -83,9 +86,17 @@ function isInvoiceOverdue(inv: PortalInvoice) {
 function sumByCurrency(list: PortalInvoice[]) {
   const map = new Map<string, number>();
   for (const inv of list) {
-    map.set(inv.currency, (map.get(inv.currency) || 0) + Number(inv.total));
+    const currency = (inv.currency || "IDR").toUpperCase();
+    map.set(currency, (map.get(currency) || 0) + (Number(inv.total) || 0));
   }
-  return [...map.entries()].map(([currency, amount]) => ({ currency, amount }));
+  // Stable-ish order: IDR first, then alpha — still one line per currency
+  return [...map.entries()]
+    .sort(([a], [b]) => {
+      if (a === "IDR") return -1;
+      if (b === "IDR") return 1;
+      return a.localeCompare(b);
+    })
+    .map(([currency, amount]) => ({ currency, amount }));
 }
 
 function MoneyStack({ entries, className }: { entries: { currency: string; amount: number }[]; className?: string }) {
