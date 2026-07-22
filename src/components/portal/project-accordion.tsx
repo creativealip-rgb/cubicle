@@ -65,17 +65,13 @@ interface HoursSummary {
   totalMinutes: number;
   billableMinutes: number;
   entryCount: number;
-  tags: string[];
 }
 
-interface TimeEntry {
+interface TaskTimeEntry {
   id: string;
   description: string | null;
   durationMinutes: number;
   startTime: string | null;
-  endTime: string | null;
-  billable: boolean;
-  tags: string | null;
   userName: string | null;
 }
 
@@ -141,7 +137,8 @@ interface ProjectAccordionProps {
   projectTimelineMap: Map<string, TimelineEvent[]>;
   projectHoursMap: Map<string, HoursSummary>;
   taskHoursMap?: Map<string, number>;
-  byHoursEntriesMap: Map<string, TimeEntry[]>;
+  /** Time entries grouped by taskId — shown under each task (no project-level recent list). */
+  taskEntriesMap?: Map<string, TaskTimeEntry[]>;
   projectInvoicesMap: Map<string, Invoice[]>;
   selectedPackageMap: Map<string, SelectedPackage>;
   projectPackagesMap: Map<string, PackageItem[]>;
@@ -328,7 +325,7 @@ function ProjectExpandedContent({
   timeline,
   hoursSummary,
   taskHoursMap,
-  entries,
+  taskEntriesMap,
   invoices,
   selectedPkg,
   packages,
@@ -347,7 +344,7 @@ function ProjectExpandedContent({
   timeline: TimelineEvent[];
   hoursSummary: HoursSummary | undefined;
   taskHoursMap?: Map<string, number>;
-  entries: TimeEntry[] | undefined;
+  taskEntriesMap?: Map<string, TaskTimeEntry[]>;
   invoices: Invoice[] | undefined;
   selectedPkg: SelectedPackage | undefined;
   packages: PackageItem[];
@@ -471,39 +468,9 @@ function ProjectExpandedContent({
                 </div>
               </div>
             )}
-            {hoursSummary.tags.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1">
-                {hoursSummary.tags.map((tag) => (
-                  <Badge key={tag} variant="outline" className="text-[10px]">{tag}</Badge>
-                ))}
-              </div>
-            )}
           </div>
         );
       })()}
-
-      {/* Recent Time Entries */}
-      {(isByHours || (isByPackage && project.selectedPackageId)) && entries && entries.length > 0 && (
-        <div>
-          <h4 className="text-sm font-semibold mb-2">Recent Time Entries</h4>
-          <div className="rounded-lg border divide-y">
-            {entries.slice(0, 3).map((entry) => (
-              <div key={entry.id} className="flex items-center justify-between gap-3 p-3 text-sm">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{entry.description || "Untitled"}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {entry.startTime ? new Date(entry.startTime).toLocaleDateString() : "—"}
-                    {entry.userName && ` · ${entry.userName}`}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="font-mono text-sm font-medium">{formatMinutes(entry.durationMinutes)}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* By Package: no package assigned yet */}
       {isByPackage && !project.selectedPackageId && (
@@ -634,6 +601,7 @@ function ProjectExpandedContent({
               dueDate: t.dueDate ? String(t.dueDate) : null,
               updatedAt: String(t.updatedAt),
               hoursMinutes: taskHoursMap?.get(t.id) ?? 0,
+              timeEntries: taskEntriesMap?.get(t.id) ?? [],
             }))}
           />
         </div>
@@ -770,7 +738,7 @@ export function ProjectAccordion({
   projectTimelineMap,
   projectHoursMap,
   taskHoursMap,
-  byHoursEntriesMap,
+  taskEntriesMap,
   projectInvoicesMap,
   selectedPackageMap,
   projectPackagesMap,
@@ -809,7 +777,6 @@ export function ProjectAccordion({
     const files = projectFilesMap.get(project.id) || [];
     const timeline = projectTimelineMap.get(project.id) || [];
     const hoursSummary = projectHoursMap.get(project.id);
-    const entries = byHoursEntriesMap.get(project.id);
     const invoices = projectInvoicesMap.get(project.id) || [];
     const selectedPkg = project.selectedPackageId ? selectedPackageMap.get(project.selectedPackageId) : undefined;
     const packages = projectPackagesMap.get(project.id) || [];
@@ -867,7 +834,7 @@ export function ProjectAccordion({
             timeline={timeline}
             hoursSummary={hoursSummary}
             taskHoursMap={taskHoursMap}
-            entries={entries}
+            taskEntriesMap={taskEntriesMap}
             invoices={invoices}
             selectedPkg={selectedPkg}
             packages={packages}

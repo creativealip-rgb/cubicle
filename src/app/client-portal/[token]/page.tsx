@@ -382,7 +382,6 @@ export default async function ClientPortalPage({
     totalMinutes: number;
     billableMinutes: number;
     entryCount: number;
-    tags: string[];
   }>();
 
   for (const projectId of byHoursProjectIds) {
@@ -393,7 +392,6 @@ export default async function ClientPortalPage({
         startTime: timeEntries.startTime,
         endTime: timeEntries.endTime,
         billable: timeEntries.billable,
-        tags: timeEntries.tags,
       })
       .from(timeEntries)
       .where(eq(timeEntries.projectId, projectId))
@@ -401,7 +399,6 @@ export default async function ClientPortalPage({
 
     let totalMinutes = 0;
     let billableMinutes = 0;
-    const allTags = new Set<string>();
 
     for (const entry of entries) {
       let mins = 0;
@@ -409,22 +406,17 @@ export default async function ClientPortalPage({
         mins = entry.manualMinutes;
       } else if (entry.startTime && entry.endTime) {
         mins = Math.round((new Date(entry.endTime).getTime() - new Date(entry.startTime).getTime()) / 60000);
+      } else if (entry.durationMinutes) {
+        mins = entry.durationMinutes;
       }
       totalMinutes += mins;
       if (entry.billable) billableMinutes += mins;
-      if (entry.tags) {
-        for (const tag of String(entry.tags).split(",")) {
-          const t = tag.trim();
-          if (t) allTags.add(t);
-        }
-      }
     }
 
     projectHoursMap.set(projectId, {
       totalMinutes,
       billableMinutes,
       entryCount: entries.length,
-      tags: [...allTags].slice(0, 10),
     });
   }
 
@@ -549,47 +541,53 @@ export default async function ClientPortalPage({
   // Client-facing money summary lives in PortalInvoices (stack per currency asli).
   // No workspace base conversion / ≈ base — client pays invoice currency.
 
-  // Fetch time entry details for by-hours projects (individual entries)
-  const byHoursEntriesMap = new Map<string, Array<{
-    id: string;
-    description: string | null;
-    durationMinutes: number;
-    startTime: Date | null;
-    endTime: Date | null;
-    billable: boolean;
-    tags: string | null;
-    userName: string | null;
-  }>>();
+  // Time entries for portal: group by taskId (shown under each task, not project-level list)
+  const taskEntriesMap = new Map<
+    string,
+    Array<{
+      id: string;
+      description: string | null;
+      durationMinutes: number;
+      startTime: Date | null;
+      userName: string | null;
+    }>
+  >();
 
-  for (const projectId of byHoursProjectIds) {
-    const entries = await db
+  if (visibleProjectIds.length > 0) {
+    const taskLinkedEntries = await db
       .select({
         id: timeEntries.id,
+        taskId: timeEntries.taskId,
         description: timeEntries.description,
         durationMinutes: timeEntries.durationMinutes,
         manualMinutes: timeEntries.manualMinutes,
         startTime: timeEntries.startTime,
-        endTime: timeEntries.endTime,
-        billable: timeEntries.billable,
-        tags: timeEntries.tags,
         userName: users.name,
       })
       .from(timeEntries)
       .leftJoin(users, eq(users.id, timeEntries.userId))
-      .where(eq(timeEntries.projectId, projectId))
+      .where(
+        and(
+          eq(timeEntries.workspaceId, client.workspaceId),
+          sql`${timeEntries.taskId} is not null`,
+          inArray(timeEntries.projectId, visibleProjectIds),
+        ),
+      )
       .orderBy(desc(timeEntries.startTime))
-      .limit(20);
+      .limit(1000);
 
-    byHoursEntriesMap.set(projectId, entries.map(e => ({
-      id: e.id,
-      description: e.description,
-      durationMinutes: e.manualMinutes || e.durationMinutes || 0,
-      startTime: e.startTime,
-      endTime: e.endTime,
-      billable: e.billable ?? true,
-      tags: e.tags,
-      userName: e.userName,
-    })));
+    for (const e of taskLinkedEntries) {
+      if (!e.taskId) continue;
+      const list = taskEntriesMap.get(e.taskId) || [];
+      list.push({
+        id: e.id,
+        description: e.description,
+        durationMinutes: e.manualMinutes || e.durationMinutes || 0,
+        startTime: e.startTime,
+        userName: e.userName,
+      });
+      taskEntriesMap.set(e.taskId, list);
+    }
   }
 
   const clientPortalRequests = await db
@@ -901,16 +899,17 @@ export default async function ClientPortalPage({
                     )}
                     projectHoursMap={projectHoursMap}
                     taskHoursMap={taskHoursMap}
-                    byHoursEntriesMap={new Map(
-                      [...byHoursEntriesMap.entries()].map(([k, v]) => [
-                        k,
-                        v.map((e) => ({
-                          ...e,
-                          startTime: e.startTime ? String(e.startTime) : null,
-                          endTime: e.endTime ? String(e.endTime) : null,
-                        })),
-                      ]),
-                    )}
+                    taskEntriesMap={
+                      new Map(
+                        [...taskEntriesMap.entries()].map(([k, v]) => [
+                          k,
+                          v.map((e) => ({
+                            ...e,
+                            startTime: e.startTime ? String(e.startTime) : null,
+                          })),
+                        ]),
+                      )
+                    }
                     projectInvoicesMap={projectInvoicesMap}
                     selectedPackageMap={selectedPackageMap}
                     projectPackagesMap={projectPackagesMap}

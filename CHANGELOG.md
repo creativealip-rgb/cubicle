@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.107 — 2026-07-22 — Portal: time entries under tasks, no tags
+
+- Hapus tag time-entry di detail project (Package Hours / Hours Summary)
+- Hapus block **Recent Time Entries** level project
+- Time entry dikelompokkan per task: total jam di kanan + expand list entry
+
 ## v0.1.106 — 2026-07-22 — Portal: stable tab height + multi-expand projects
 
 - Tab switch soft URL (`history.replaceState`) — no full remount / height jump
