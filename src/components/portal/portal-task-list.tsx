@@ -258,7 +258,7 @@ export function PortalTaskList({
                 )}
 
                 {open && hasEntries && (
-                  <div className="mt-2.5 divide-y rounded-md border bg-background">
+                  <div className="portal-expand-in mt-2.5 divide-y rounded-md border bg-background">
                     {entries.map((entry) => (
                       <div
                         key={entry.id}

@@ -19,6 +19,7 @@ import { eq, and, sql, desc, inArray, ne, or, isNull } from "drizzle-orm";
 import { getClientPortalAccess, logPortalAccess } from "@/lib/actions/portal";
 import { pickReplyTo } from "@/lib/workspace-reply-to";
 import { Suspense } from "react";
+import { PortalTabsFallback } from "@/components/portal/portal-loading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FolderOpen } from "lucide-react";
 import { PortalContactButtons } from "@/components/portal/portal-contact";
@@ -810,7 +811,7 @@ export default async function ClientPortalPage({
           </div>
         </div>
 
-        <Suspense fallback={<p className="text-sm text-muted-foreground">Loading portal…</p>}>
+        <Suspense fallback={<PortalTabsFallback />}>
           <PortalTabs
             initialTab={initialTab}
             counts={{

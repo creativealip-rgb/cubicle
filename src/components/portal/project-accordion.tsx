@@ -786,22 +786,27 @@ export function ProjectAccordion({
     const statusMeta = getProjectStatusMeta(project.status, needsReview);
 
     return (
-      <Card key={project.id} className={`overflow-hidden border-l-4 ${statusMeta.borderClass}`}>
+      <Card
+        key={project.id}
+        className={`overflow-hidden border-l-4 transition-shadow duration-200 ${statusMeta.borderClass} ${
+          isExpanded ? "shadow-sm" : ""
+        }`}
+      >
         {/* Collapsed header — always visible */}
         <div
-          className="flex items-start justify-between gap-3 p-5 cursor-pointer hover:bg-muted/30 transition-colors"
+          className="flex cursor-pointer items-start justify-between gap-3 p-5 transition-colors hover:bg-muted/30"
           onClick={() => toggleProject(project.id)}
         >
-          <div className="flex items-start gap-3 min-w-0 flex-1">
-            {isExpanded ? (
-              <ChevronDown className="h-5 w-5 text-foreground shrink-0 mt-0.5" />
-            ) : (
-              <ChevronRight className="h-5 w-5 text-foreground shrink-0 mt-0.5" />
-            )}
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <ChevronRight
+              className={`mt-0.5 h-5 w-5 shrink-0 text-foreground portal-chevron ${
+                isExpanded ? "portal-chevron-open" : ""
+              }`}
+            />
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <span className="font-semibold text-base truncate">{project.name}</span>
-                <Badge variant="secondary" className="text-[11px] shrink-0">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="truncate text-base font-semibold">{project.name}</span>
+                <Badge variant="secondary" className="shrink-0 text-[11px]">
                   {project.billingType === "hours"
                     ? "By Hours"
                     : project.billingType === "package"
@@ -820,33 +825,35 @@ export function ProjectAccordion({
               </div>
             </div>
           </div>
-          <Badge variant="outline" className={`text-[11px] shrink-0 ${statusMeta.badgeClass}`}>
+          <Badge variant="outline" className={`shrink-0 text-[11px] ${statusMeta.badgeClass}`}>
             {statusMeta.label}
           </Badge>
         </div>
 
         {/* Expanded content */}
         {isExpanded && (
-          <ProjectExpandedContent
-            project={project}
-            tasks={tasks}
-            files={files}
-            timeline={timeline}
-            hoursSummary={hoursSummary}
-            taskHoursMap={taskHoursMap}
-            taskEntriesMap={taskEntriesMap}
-            invoices={invoices}
-            selectedPkg={selectedPkg}
-            packages={packages}
-            customReqs={customRequests}
-            orders={orders}
-            actionLabels={clientVisibleActionLabels}
-            token={token}
-            workspaceId={workspaceId}
-            ownerWhatsAppPhone={ownerWhatsAppPhone}
-            ownerEmail={ownerEmail}
-            ownerName={ownerName}
-          />
+          <div className="portal-expand-in">
+            <ProjectExpandedContent
+              project={project}
+              tasks={tasks}
+              files={files}
+              timeline={timeline}
+              hoursSummary={hoursSummary}
+              taskHoursMap={taskHoursMap}
+              taskEntriesMap={taskEntriesMap}
+              invoices={invoices}
+              selectedPkg={selectedPkg}
+              packages={packages}
+              customReqs={customRequests}
+              orders={orders}
+              actionLabels={clientVisibleActionLabels}
+              token={token}
+              workspaceId={workspaceId}
+              ownerWhatsAppPhone={ownerWhatsAppPhone}
+              ownerEmail={ownerEmail}
+              ownerName={ownerName}
+            />
+          </div>
         )}
       </Card>
     );

@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.108 — 2026-07-22 — Portal: loading skeleton + micro-animations
+
+- `loading.tsx` skeleton full portal page
+- Suspense tabs pakai skeleton card (bukan teks “Loading…”)
+- Fade-in ganti tab, expand project/task entry, chevron rotate
+
 ## v0.1.107 — 2026-07-22 — Portal: time entries under tasks, no tags
 
 - Hapus tag time-entry di detail project (Package Hours / Hours Summary)

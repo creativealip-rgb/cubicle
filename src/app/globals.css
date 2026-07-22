@@ -145,3 +145,42 @@
     font-family: var(--font-sans);
   }
 }
+
+/* Portal micro-interactions (no extra lib) */
+@keyframes portal-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes portal-expand-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.portal-fade-in {
+  animation: portal-fade-in 0.22s ease-out both;
+}
+
+.portal-expand-in {
+  animation: portal-expand-in 0.2s ease-out both;
+}
+
+.portal-chevron {
+  transition: transform 0.2s ease;
+}
+
+.portal-chevron-open {
+  transform: rotate(90deg);
+}

@@ -130,7 +130,7 @@ export function PortalTabs({
   ];
 
   const panelClass =
-    "mt-0 min-h-[min(70vh,640px)] space-y-6 focus-visible:outline-none data-[state=inactive]:hidden";
+    "mt-0 min-h-[min(70vh,640px)] space-y-6 focus-visible:outline-none data-[state=inactive]:hidden data-[state=active]:portal-fade-in";
 
   return (
     <Tabs value={activeTab} onValueChange={changeTab} className="space-y-5">
@@ -139,7 +139,7 @@ export function PortalTabs({
           <TabsTrigger
             key={tab.key}
             value={tab.key}
-            className="gap-1.5 px-3 py-2 text-xs sm:text-sm"
+            className="gap-1.5 px-3 py-2 text-xs transition-all sm:text-sm data-[state=active]:shadow-sm"
           >
             {tab.icon}
             <span>{tab.label}</span>
