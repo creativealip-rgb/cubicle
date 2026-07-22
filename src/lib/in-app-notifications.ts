@@ -23,6 +23,7 @@ export type NotificationType =
   | "client_task_approved"
   | "client_task_revision"
   | "file_viewed"
+  | "client_file_uploaded"
   | "invoice_paid"
   | "invoice_sent"
   | "proposal_viewed"

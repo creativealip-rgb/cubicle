@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.97 — 2026-07-21 — Portal branding + client folder upload
+
+- Header portal: logo workspace (fallback monogram), billing name/address/kontak
+- Tab Folders: **Upload file** + drag-drop (max 25MB, validate extension/magic bytes)
+- Endpoint `POST /api/client-portal/files/upload` (token auth, visibility=client)
+- Download portal dukung file client-level (tanpa project)
+- Notif in-app `client_file_uploaded` ke workspace members
+
 ## v0.1.96 — 2026-07-21 — Portal tabs + file manager
 
 - Hapus card **Active** di portal (chip active projects tetap)

@@ -1,5 +1,4 @@
 import { headers } from "next/headers";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
 import {
@@ -97,6 +96,8 @@ export default async function ClientPortalPage({
       email: workspaces.billingEmail,
       replyToEmail: workspaces.replyToEmail,
       logoUrl: workspaces.logoUrl,
+      billingName: workspaces.billingName,
+      billingAddress: workspaces.billingAddress,
       ownerId: workspaces.ownerId,
     })
     .from(workspaces)
@@ -727,25 +728,70 @@ export default async function ClientPortalPage({
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="max-w-5xl mx-auto py-12 px-4 space-y-10">
-        {/* Header */}
-        <div>
-          <div className="flex items-center gap-3">
-            {workspaceContact?.logoUrl && (
-              <Image
+        {/* Header — workspace branding */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3 min-w-0">
+            {workspaceContact?.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- remote branding URL, same pattern as invoice share
+              <img
                 src={workspaceContact.logoUrl}
-                alt={workspaceContact.name || "Workspace"}
-                width={40}
-                height={40}
-                className="rounded-lg"
+                alt={
+                  workspaceContact.billingName ||
+                  workspaceContact.name ||
+                  "Workspace logo"
+                }
+                className="h-14 w-14 shrink-0 rounded-xl border bg-white object-contain p-1 shadow-sm"
               />
+            ) : (
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border bg-primary/10 text-lg font-bold text-primary">
+                {(
+                  workspaceContact?.billingName ||
+                  workspaceContact?.name ||
+                  client.companyName ||
+                  client.name ||
+                  "C"
+                )
+                  .trim()
+                  .charAt(0)
+                  .toUpperCase()}
+              </div>
             )}
-            <h1 className="text-3xl font-bold tracking-tight">
-              {workspaceContact?.name || client.companyName || client.name}
-            </h1>
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                {workspaceContact?.billingName ||
+                  workspaceContact?.name ||
+                  client.companyName ||
+                  client.name}
+              </h1>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Client Portal for{" "}
+                <span className="font-medium text-foreground">
+                  {client.companyName || client.name}
+                </span>
+              </p>
+              {(workspaceContact?.billingAddress ||
+                workspaceContact?.email ||
+                workspaceContact?.phone) && (
+                <div className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+                  {workspaceContact.billingAddress && (
+                    <p className="whitespace-pre-wrap">
+                      {workspaceContact.billingAddress}
+                    </p>
+                  )}
+                  {(workspaceContact.email || workspaceContact.phone) && (
+                    <p>
+                      {[workspaceContact.email, workspaceContact.phone]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Client Portal — Secured Access
-          </p>
+          <div className="shrink-0 rounded-full border bg-background px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Secured Access
+          </div>
         </div>
 
         {/* ─── 1. Top summary + actions ─────────────────────── */}

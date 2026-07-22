@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronRight,
@@ -11,6 +11,8 @@ import {
   FolderOpen,
   Home,
   Image as ImageIcon,
+  Loader2,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -70,13 +72,23 @@ export function PortalFileManager({
   token,
   projects,
   folders,
-  files,
+  files: initialFiles,
   initialProjectId,
   initialFolderId,
 }: PortalFileManagerProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const [files, setFiles] = useState<PortalFmFile[]>(initialFiles);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  useEffect(() => {
+    setFiles(initialFiles);
+  }, [initialFiles]);
 
   const projectId = searchParams.get("projectId") ?? initialProjectId ?? null;
   const folderId = searchParams.get("folderId") ?? initialFolderId ?? null;
@@ -114,33 +126,21 @@ export function PortalFileManager({
     return chain;
   }, [folderId, folders]);
 
-  // Root: project "folders" + client-level folders without project.
   const rootProjectCards = useMemo(() => {
     return projects.map((project) => {
-      const projectFolders = folders.filter(
-        (f) => f.projectId === project.id && !f.parentId,
-      );
-      const projectFiles = files.filter(
-        (f) => f.projectId === project.id && !f.folderId,
-      );
       const nestedFiles = files.filter((f) => f.projectId === project.id);
       const nestedFolders = folders.filter((f) => f.projectId === project.id);
       return {
         project,
         folderCount: nestedFolders.length,
         fileCount: nestedFiles.length,
-        rootFolderCount: projectFolders.length,
-        rootFileCount: projectFiles.length,
       };
     });
   }, [projects, folders, files]);
 
   const clientRootFolders = useMemo(
-    () =>
-      folders.filter(
-        (f) => !f.projectId && !f.parentId && (!projectId || f.clientId),
-      ),
-    [folders, projectId],
+    () => folders.filter((f) => !f.projectId && !f.parentId),
+    [folders],
   );
 
   const clientRootFiles = useMemo(
@@ -152,7 +152,6 @@ export function PortalFileManager({
     if (!projectId && !folderId) return clientRootFolders;
     return folders.filter((f) => {
       if (folderId) return f.parentId === folderId;
-      // Project root folders
       return f.projectId === projectId && !f.parentId;
     });
   }, [clientRootFolders, folderId, folders, projectId]);
@@ -167,10 +166,58 @@ export function PortalFileManager({
 
   const totalFiles = files.length;
   const showRootProjects = !projectId && !folderId;
+  // Upload allowed at root (client-level), project root, or inside folder.
+  const canUpload = true;
+
+  async function uploadOne(file: File) {
+    const form = new FormData();
+    form.append("token", token);
+    form.append("file", file);
+    if (projectId) form.append("projectId", projectId);
+    if (folderId) form.append("folderId", folderId);
+
+    const res = await fetch("/api/client-portal/files/upload", {
+      method: "POST",
+      body: form,
+    });
+    const data = (await res.json().catch(() => ({}))) as {
+      ok?: boolean;
+      error?: string;
+      file?: PortalFmFile;
+    };
+    if (!res.ok || !data.file) {
+      throw new Error(data.error || "Upload gagal");
+    }
+    return data.file;
+  }
+
+  async function handleFiles(fileList: FileList | File[]) {
+    const list = Array.from(fileList);
+    if (list.length === 0) return;
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const uploaded: PortalFmFile[] = [];
+      for (const file of list) {
+        uploaded.push(await uploadOne(file));
+      }
+      setFiles((prev) => {
+        const map = new Map(prev.map((f) => [f.id, f]));
+        for (const f of uploaded) map.set(f.id, f);
+        return [...map.values()];
+      });
+      router.refresh();
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Upload gagal");
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-xl font-semibold">Folders</h2>
           <p className="text-sm text-muted-foreground">
@@ -178,6 +225,36 @@ export function PortalFileManager({
             {totalFiles === 1 ? "" : "s"} total.
           </p>
         </div>
+        {canUpload && (
+          <div className="flex flex-col items-stretch gap-1 sm:items-end">
+            <input
+              ref={inputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files) void handleFiles(e.target.files);
+              }}
+            />
+            <Button
+              type="button"
+              size="sm"
+              disabled={uploading}
+              onClick={() => inputRef.current?.click()}
+              className="gap-1.5"
+            >
+              {uploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Upload className="h-4 w-4" />
+              )}
+              {uploading ? "Uploading…" : "Upload file"}
+            </Button>
+            <p className="text-[11px] text-muted-foreground">
+              Max 25MB · docs, images, zip, media
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Breadcrumb */}
@@ -232,8 +309,44 @@ export function PortalFileManager({
         ))}
       </nav>
 
-      <Card className="shadow-none">
+      {uploadError && (
+        <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+          {uploadError}
+        </p>
+      )}
+
+      <Card
+        className={cn(
+          "shadow-none transition-colors",
+          dragOver && "border-primary ring-2 ring-primary/20",
+        )}
+        onDragEnter={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          if (e.currentTarget === e.target) setDragOver(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          if (e.dataTransfer.files?.length) {
+            void handleFiles(e.dataTransfer.files);
+          }
+        }}
+      >
         <CardContent className="p-0">
+          {dragOver && (
+            <div className="border-b border-dashed border-primary/40 bg-primary/5 px-4 py-6 text-center text-sm text-primary">
+              Drop files to upload here
+            </div>
+          )}
+
           {/* Root project grid */}
           {showRootProjects && (
             <div className="divide-y">
@@ -243,40 +356,44 @@ export function PortalFileManager({
                   <div className="px-4 py-12 text-center text-muted-foreground">
                     <FolderOpen className="mx-auto mb-3 h-12 w-12 opacity-30" />
                     <p>No shared folders or files yet.</p>
+                    <p className="mt-1 text-xs">
+                      Upload files here or open a project folder.
+                    </p>
                   </div>
                 )}
 
-              {rootProjectCards.map(
-                ({ project, folderCount, fileCount }) => (
-                  <button
-                    key={project.id}
-                    type="button"
-                    onClick={() =>
-                      navigate({ projectId: project.id, folderId: null })
-                    }
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
-                  >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/40">
-                      <Folder className="h-5 w-5 fill-blue-100 dark:fill-blue-900" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="truncate text-sm font-medium">
-                          {project.name}
-                        </p>
-                        <Badge variant="secondary" className="text-[10px] capitalize">
-                          {project.status}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {folderCount} folder{folderCount === 1 ? "" : "s"} ·{" "}
-                        {fileCount} file{fileCount === 1 ? "" : "s"}
+              {rootProjectCards.map(({ project, folderCount, fileCount }) => (
+                <button
+                  key={project.id}
+                  type="button"
+                  onClick={() =>
+                    navigate({ projectId: project.id, folderId: null })
+                  }
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/40">
+                    <Folder className="h-5 w-5 fill-blue-100 dark:fill-blue-900" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-sm font-medium">
+                        {project.name}
                       </p>
+                      <Badge
+                        variant="secondary"
+                        className="text-[10px] capitalize"
+                      >
+                        {project.status}
+                      </Badge>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                ),
-              )}
+                    <p className="text-xs text-muted-foreground">
+                      {folderCount} folder{folderCount === 1 ? "" : "s"} ·{" "}
+                      {fileCount} file{fileCount === 1 ? "" : "s"}
+                    </p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </button>
+              ))}
 
               {clientRootFolders.map((folder) => (
                 <button
@@ -311,6 +428,7 @@ export function PortalFileManager({
                 <div className="px-4 py-12 text-center text-muted-foreground">
                   <FolderOpen className="mx-auto mb-3 h-12 w-12 opacity-30" />
                   <p>This folder is empty.</p>
+                  <p className="mt-1 text-xs">Drop or upload files to share.</p>
                 </div>
               )}
 

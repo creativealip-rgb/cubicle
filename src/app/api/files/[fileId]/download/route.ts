@@ -27,28 +27,53 @@ async function canAccessFile(file: typeof files.$inferSelect, token: string | nu
     if (memberFile) return true;
   }
 
-  if (!token || file.visibility !== "client" || !file.projectId) return false;
+  if (!token || file.visibility !== "client") return false;
 
   const tokenHash = createHash("sha256").update(token).digest("hex");
-  const [portalFile] = await db
-    .select({ id: files.id })
-    .from(files)
-    .innerJoin(projects, eq(projects.id, files.projectId))
-    .innerJoin(clients, eq(clients.id, projects.clientId))
-    .where(
-      and(
-        eq(files.id, file.id),
-        eq(files.visibility, "client"),
-        eq(projects.clientVisible, true),
-        eq(clients.portalEnabled, true),
-        eq(clients.portalTokenHash, tokenHash),
-        isNull(clients.portalTokenRevokedAt),
-        or(isNull(clients.portalTokenExpiresAt), gt(clients.portalTokenExpiresAt, new Date())),
-      ),
-    )
-    .limit(1);
 
-  return Boolean(portalFile);
+  // Project-scoped client-visible file
+  if (file.projectId) {
+    const [portalFile] = await db
+      .select({ id: files.id })
+      .from(files)
+      .innerJoin(projects, eq(projects.id, files.projectId))
+      .innerJoin(clients, eq(clients.id, projects.clientId))
+      .where(
+        and(
+          eq(files.id, file.id),
+          eq(files.visibility, "client"),
+          eq(projects.clientVisible, true),
+          eq(clients.portalEnabled, true),
+          eq(clients.portalTokenHash, tokenHash),
+          isNull(clients.portalTokenRevokedAt),
+          or(isNull(clients.portalTokenExpiresAt), gt(clients.portalTokenExpiresAt, new Date())),
+        ),
+      )
+      .limit(1);
+    if (portalFile) return true;
+  }
+
+  // Client-level file (no project) shared via portal
+  if (file.clientId) {
+    const [clientFile] = await db
+      .select({ id: files.id })
+      .from(files)
+      .innerJoin(clients, eq(clients.id, files.clientId))
+      .where(
+        and(
+          eq(files.id, file.id),
+          eq(files.visibility, "client"),
+          eq(clients.portalEnabled, true),
+          eq(clients.portalTokenHash, tokenHash),
+          isNull(clients.portalTokenRevokedAt),
+          or(isNull(clients.portalTokenExpiresAt), gt(clients.portalTokenExpiresAt, new Date())),
+        ),
+      )
+      .limit(1);
+    if (clientFile) return true;
+  }
+
+  return false;
 }
 
 export async function GET(
