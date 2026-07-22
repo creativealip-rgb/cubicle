@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   LayoutDashboard,
   FolderKanban,
@@ -47,6 +47,12 @@ type PortalTabsProps = {
   };
 };
 
+/**
+ * Client portal tabs.
+ * - Soft URL update (history.replaceState) so page shell tidak remount / loncat tinggi.
+ * - forceMount + hide inactive: state per tab (expand project) tetap hidup.
+ * - min-h panel: tinggi area konten lebih stabil antar tab.
+ */
 export function PortalTabs({
   initialTab,
   overview,
@@ -56,7 +62,6 @@ export function PortalTabs({
   contact,
   counts,
 }: PortalTabsProps) {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const urlTab = normalizeTab(searchParams.get("tab") ?? initialTab);
@@ -70,6 +75,7 @@ export function PortalTabs({
     (tab: string) => {
       const next = normalizeTab(tab);
       setActiveTab(next);
+
       const params = new URLSearchParams(searchParams.toString());
       // Keep file-manager params only on files tab.
       if (next !== "files") {
@@ -78,10 +84,13 @@ export function PortalTabs({
       }
       if (next === "overview") params.delete("tab");
       else params.set("tab", next);
+
       const qs = params.toString();
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      const url = qs ? `${pathname}?${qs}` : pathname;
+      // Soft URL — no Next.js navigation / RSC remount / height flash.
+      window.history.replaceState(window.history.state, "", url);
     },
-    [pathname, router, searchParams],
+    [pathname, searchParams],
   );
 
   const tabs: Array<{
@@ -120,6 +129,9 @@ export function PortalTabs({
     },
   ];
 
+  const panelClass =
+    "mt-0 min-h-[min(70vh,640px)] space-y-6 focus-visible:outline-none data-[state=inactive]:hidden";
+
   return (
     <Tabs value={activeTab} onValueChange={changeTab} className="space-y-5">
       <TabsList className="h-auto w-full flex-wrap justify-start gap-1 bg-muted/60 p-1">
@@ -140,19 +152,19 @@ export function PortalTabs({
         ))}
       </TabsList>
 
-      <TabsContent value="overview" className="mt-0 space-y-6 focus-visible:outline-none">
+      <TabsContent value="overview" forceMount className={panelClass}>
         {overview}
       </TabsContent>
-      <TabsContent value="projects" className="mt-0 space-y-6 focus-visible:outline-none">
+      <TabsContent value="projects" forceMount className={panelClass}>
         {projects}
       </TabsContent>
-      <TabsContent value="files" className="mt-0 space-y-6 focus-visible:outline-none">
+      <TabsContent value="files" forceMount className={panelClass}>
         {files}
       </TabsContent>
-      <TabsContent value="invoices" className="mt-0 space-y-6 focus-visible:outline-none">
+      <TabsContent value="invoices" forceMount className={panelClass}>
         {invoices}
       </TabsContent>
-      <TabsContent value="contact" className="mt-0 space-y-6 focus-visible:outline-none">
+      <TabsContent value="contact" forceMount className={panelClass}>
         {contact}
       </TabsContent>
     </Tabs>

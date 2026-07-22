@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.106 — 2026-07-22 — Portal: stable tab height + multi-expand projects
+
+- Tab switch soft URL (`history.replaceState`) — no full remount / height jump
+- Tabs `forceMount` + min-height panel biar layout antar tab lebih stabil
+- Project accordion multi-expand (buka banyak project bersamaan)
+- Portal file manager: folder nav soft + local state
+
 ## v0.1.105 — 2026-07-22 — Files: soft folder nav, no full-page flash
 
 - Folder tree + header di **layout** (tetap mounted saat ganti query)

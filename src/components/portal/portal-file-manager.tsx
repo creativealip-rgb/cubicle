@@ -86,25 +86,49 @@ export function PortalFileManager({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
+  // Local scope so folder switches don't hard-remount the portal page.
+  const [projectId, setProjectId] = useState<string | null>(
+    () => searchParams.get("projectId") ?? initialProjectId ?? null,
+  );
+  const [folderId, setFolderId] = useState<string | null>(
+    () => searchParams.get("folderId") ?? initialFolderId ?? null,
+  );
+
   useEffect(() => {
     setFiles(initialFiles);
   }, [initialFiles]);
 
-  const projectId = searchParams.get("projectId") ?? initialProjectId ?? null;
-  const folderId = searchParams.get("folderId") ?? initialFolderId ?? null;
+  // Sync if parent URL changes via real Next navigation (rare).
+  useEffect(() => {
+    const nextProject = searchParams.get("projectId") ?? initialProjectId ?? null;
+    const nextFolder = searchParams.get("folderId") ?? initialFolderId ?? null;
+    setProjectId(nextProject);
+    setFolderId(nextFolder);
+  }, [searchParams, initialProjectId, initialFolderId]);
 
   const navigate = useCallback(
     (next: { projectId?: string | null; folderId?: string | null }) => {
+      const nextProject =
+        next.projectId === undefined ? projectId : next.projectId;
+      const nextFolder = next.folderId === undefined ? folderId : next.folderId;
+      setProjectId(nextProject);
+      setFolderId(nextFolder);
+
       const params = new URLSearchParams(searchParams.toString());
       params.set("tab", "files");
-      if (next.projectId) params.set("projectId", next.projectId);
+      if (nextProject) params.set("projectId", nextProject);
       else params.delete("projectId");
-      if (next.folderId) params.set("folderId", next.folderId);
+      if (nextFolder) params.set("folderId", nextFolder);
       else params.delete("folderId");
       const qs = params.toString();
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      // Soft URL — keep portal shell mounted.
+      window.history.replaceState(
+        window.history.state,
+        "",
+        qs ? `${pathname}?${qs}` : pathname,
+      );
     },
-    [pathname, router, searchParams],
+    [folderId, pathname, projectId, searchParams],
   );
 
   const activeProject = projectId

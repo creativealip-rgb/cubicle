@@ -783,11 +783,17 @@ export function ProjectAccordion({
   ownerEmail,
   ownerName,
 }: ProjectAccordionProps) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  // Multi-expand: client can open several projects at once.
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
   const [showArchived, setShowArchived] = useState(false);
 
   const toggleProject = useCallback((id: string) => {
-    setExpandedId((prev) => (prev === id ? null : id));
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }, []);
 
   // Split into active (in-progress) vs archived (completed/cancelled) so the
@@ -798,7 +804,7 @@ export function ProjectAccordion({
   const archivedProjects = projects.filter((p) => isArchived(p.status));
 
   const renderCard = (project: Project) => {
-    const isExpanded = expandedId === project.id;
+    const isExpanded = expandedIds.has(project.id);
     const tasks = projectTasksMap.get(project.id) || [];
     const files = projectFilesMap.get(project.id) || [];
     const timeline = projectTimelineMap.get(project.id) || [];
