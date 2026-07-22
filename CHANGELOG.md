@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.99 — 2026-07-22 — Dashboard base currency (manual FX)
+
+- Table `workspace_currency_rates` + Settings **Kurs dashboard** (tab Branding)
+- Rate manual: `1 USD = X IDR` (base = `defaultCurrency` workspace)
+- Dashboard finance (revenue 30d, sparkline, pie) convert ke base currency
+- Currency tanpa rate **di-skip**, warning + link Settings (tidak tebak kurs)
+- Amount asli invoice/payment **tidak** diubah di DB
+
 ## v0.1.98 — 2026-07-22 — Dashboard declutter
 
 - Greeting: cuma tanggal, hapus “X proyek aktif · Y tugas jatuh tempo”

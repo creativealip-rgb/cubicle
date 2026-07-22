@@ -93,6 +93,7 @@ export async function updateWorkspaceBranding(input: z.infer<typeof brandingSche
 
   await writeActivityLog(workspaceId, user.id, "updated_workspace_branding", "workspace", workspaceId);
   revalidatePath("/app/settings");
+  revalidatePath("/app/dashboard");
   revalidatePath("/app/invoices");
   revalidatePath("/app/packages");
   return { ok: true as const };

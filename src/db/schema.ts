@@ -395,6 +395,22 @@ export const payments = pgTable("payments", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Manual FX rates: 1 from_currency = rate × workspace.default_currency
+export const workspaceCurrencyRates = pgTable(
+  "workspace_currency_rates",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    fromCurrency: text("from_currency").notNull(),
+    rate: numeric("rate", { precision: 18, scale: 8 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [unique().on(table.workspaceId, table.fromCurrency)],
+);
+
 // ─── Appointments ───
 
 export const availabilityRules = pgTable("availability_rules", {

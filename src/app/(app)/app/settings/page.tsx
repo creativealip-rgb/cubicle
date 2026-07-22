@@ -2,19 +2,20 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { workspaces, workspaceMembers, users } from "@/db/schema";
+import { workspaces, workspaceMembers, users, workspaceCurrencyRates } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Settings, Users, Receipt, Calendar, Sparkles, ImageIcon, Plug } from "lucide-react";
+import { Settings, Users, Receipt, Calendar, Sparkles, ImageIcon, Plug, Coins } from "lucide-react";
 import { TeamManager } from "@/components/settings/team-manager";
 import { WorkspaceBrandingForm } from "@/components/settings/workspace-branding-form";
 import { WorkspaceNameForm } from "@/components/settings/workspace-name-form";
 import { BookingSlugForm } from "@/components/settings/booking-slug-form";
 import { GoogleCalendarConnect } from "@/components/settings/google-calendar-connect";
+import { CurrencyRatesForm } from "@/components/settings/currency-rates-form";
 import { SettingsTabs } from "@/components/settings/settings-tabs";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { canInviteMember } from "@/lib/plan";
@@ -58,6 +59,16 @@ export default async function SettingsPage({
 
   const inviteGate = await canInviteMember(user.id);
   const googleStatus = await getGoogleConnectionStatus(user.id);
+
+  const currencyRateRows = await db
+    .select({
+      id: workspaceCurrencyRates.id,
+      fromCurrency: workspaceCurrencyRates.fromCurrency,
+      rate: workspaceCurrencyRates.rate,
+    })
+    .from(workspaceCurrencyRates)
+    .where(eq(workspaceCurrencyRates.workspaceId, workspaceId))
+    .orderBy(workspaceCurrencyRates.fromCurrency);
 
   const [ownerUser] = workspace?.ownerId
     ? await db
@@ -164,38 +175,64 @@ export default async function SettingsPage({
             </Card>
           }
           branding={
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ImageIcon className="h-5 w-5" /> {t("Branding & Invoice", "Branding & Invoice")}
-                </CardTitle>
-                <CardDescription>
-                  {t(
-                    "Logo, nama tagihan, mata uang, tarif default — dipakai di PDF + preview klien.",
-                    "Logo, billing name, currency, default rate — used on PDF + client preview.",
-                  )}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <WorkspaceBrandingForm
-                  defaults={{
-                    billingName: workspace.billingName,
-                    billingEmail: workspace.billingEmail,
-                    billingPhone: workspace.billingPhone,
-                    billingAddress: workspace.billingAddress,
-                    taxId: workspace.taxId,
-                    logoUrl: workspace.logoUrl,
-                    defaultCurrency: workspace.defaultCurrency,
-                    defaultTaxRate: workspace.defaultTaxRate,
-                    defaultHourlyRate: workspace.defaultHourlyRate,
-                    defaultInvoiceTerms: workspace.defaultInvoiceTerms,
-                    invoiceEmailBody: workspace.invoiceEmailBody,
-                    replyToEmail: workspace.replyToEmail,
-                  }}
-                  ownerEmailHint={ownerUser?.email ?? null}
-                />
-              </CardContent>
-            </Card>
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ImageIcon className="h-5 w-5" /> {t("Branding & Invoice", "Branding & Invoice")}
+                  </CardTitle>
+                  <CardDescription>
+                    {t(
+                      "Logo, nama tagihan, mata uang, tarif default — dipakai di PDF + preview klien.",
+                      "Logo, billing name, currency, default rate — used on PDF + client preview.",
+                    )}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <WorkspaceBrandingForm
+                    defaults={{
+                      billingName: workspace.billingName,
+                      billingEmail: workspace.billingEmail,
+                      billingPhone: workspace.billingPhone,
+                      billingAddress: workspace.billingAddress,
+                      taxId: workspace.taxId,
+                      logoUrl: workspace.logoUrl,
+                      defaultCurrency: workspace.defaultCurrency,
+                      defaultTaxRate: workspace.defaultTaxRate,
+                      defaultHourlyRate: workspace.defaultHourlyRate,
+                      defaultInvoiceTerms: workspace.defaultInvoiceTerms,
+                      invoiceEmailBody: workspace.invoiceEmailBody,
+                      replyToEmail: workspace.replyToEmail,
+                    }}
+                    ownerEmailHint={ownerUser?.email ?? null}
+                  />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Coins className="h-5 w-5" /> {t("Kurs dashboard", "Dashboard FX rates")}
+                  </CardTitle>
+                  <CardDescription>
+                    {t(
+                      "Konversi multi-currency ke base currency untuk ringkasan dashboard (manual rate).",
+                      "Convert multi-currency totals into base currency for dashboard summaries (manual rates).",
+                    )}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <CurrencyRatesForm
+                    baseCurrency={workspace.defaultCurrency || "IDR"}
+                    rates={currencyRateRows.map((r) => ({
+                      id: r.id,
+                      fromCurrency: r.fromCurrency,
+                      rate: Number(r.rate),
+                    }))}
+                    canEdit={canEditWorkspace}
+                  />
+                </CardContent>
+              </Card>
+            </>
           }
           integrations={
             <Card>

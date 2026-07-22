@@ -4,6 +4,7 @@ import { db } from "@/db";
 import {
   appointments,
   personalNotes,
+  workspaceCurrencyRates,
 } from "@/db/schema";
 import { eq, and, sql, gte } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
@@ -25,6 +26,12 @@ import Link from "next/link";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { DashboardGreeting } from "@/components/dashboard-greeting";
 import { DashboardOnboarding } from "@/components/dashboard-onboarding";
+import {
+  aggregateToBase,
+  buildRateMap,
+  convertToBase,
+  groupSumToBase,
+} from "@/lib/currency-base";
 
 async function getWorkspace() {
   return getWorkspaceFullForCurrentUser();
@@ -120,7 +127,16 @@ export default async function DashboardPage() {
     .orderBy(appointments.startTime)
     .limit(5);
 
-  // Revenue last 30 days only (payments)
+  // Revenue last 30 days only (payments) — convert to base currency
+  const rateRows = await db
+    .select({
+      fromCurrency: workspaceCurrencyRates.fromCurrency,
+      rate: workspaceCurrencyRates.rate,
+    })
+    .from(workspaceCurrencyRates)
+    .where(eq(workspaceCurrencyRates.workspaceId, workspaceId));
+  const rateMap = buildRateMap(rateRows);
+
   const rev30Result = await db.execute(
     sql`SELECT i.currency, coalesce(sum(p.amount), 0)::decimal AS total
     FROM payments p
@@ -129,31 +145,50 @@ export default async function DashboardPage() {
       AND p.paid_at >= current_date - interval '30 days'
     GROUP BY i.currency`,
   );
-  const rev30ByCurrency: Record<string, number> = {};
-  for (const row of rev30Result.rows as Array<{ currency: string; total: string }>) {
-    rev30ByCurrency[row.currency] = Number(row.total) || 0;
-  }
-  const rev30 = rev30ByCurrency[workspaceCurrency] ?? rev30ByCurrency["IDR"] ?? 0;
-  const rev30usd = rev30ByCurrency["USD"] ?? 0;
-
-  // Sparkline 30 days
-  const sparklineResult = await db.execute(
-    sql`WITH days AS (
-      SELECT generate_series(current_date - interval '29 days', current_date, interval '1 day')::date AS day
-    )
-    SELECT d.day, coalesce(sum(p.amount), 0)::decimal AS amt
-    FROM days d
-    LEFT JOIN payments p ON p.paid_at = d.day
-      AND p.invoice_id IN (SELECT id FROM invoices WHERE workspace_id = ${workspaceId})
-    GROUP BY d.day
-    ORDER BY d.day ASC`,
+  const rev30Agg = aggregateToBase(
+    (rev30Result.rows as Array<{ currency: string; total: string }>).map((row) => ({
+      currency: row.currency,
+      amount: Number(row.total) || 0,
+    })),
+    workspaceCurrency,
+    rateMap,
   );
-  const sparkline: { day: string; amt: number }[] = sparklineResult.rows.map((r) => ({
-    day: String((r as { day: string | Date }).day),
-    amt: Number((r as { amt: string | number }).amt) || 0,
-  }));
+  const rev30 = rev30Agg.total;
+  const missingFx = rev30Agg.missingCurrencies;
 
-  // Client revenue pie (paid last 30d, top 5)
+  // Sparkline 30 days — convert each payment day×currency to base
+  const sparkRawResult = await db.execute(
+    sql`SELECT p.paid_at::date AS day, i.currency, coalesce(sum(p.amount), 0)::decimal AS amt
+    FROM payments p
+    JOIN invoices i ON i.id = p.invoice_id
+    WHERE i.workspace_id = ${workspaceId}
+      AND p.paid_at >= current_date - interval '29 days'
+    GROUP BY p.paid_at::date, i.currency
+    ORDER BY day ASC`,
+  );
+  const dayTotals = new Map<string, number>();
+  for (const row of sparkRawResult.rows as Array<{
+    day: string | Date;
+    currency: string;
+    amt: string | number;
+  }>) {
+    const day = String(row.day).slice(0, 10);
+    const converted = convertToBase(Number(row.amt) || 0, row.currency, workspaceCurrency, rateMap);
+    if (converted === null) continue;
+    dayTotals.set(day, (dayTotals.get(day) || 0) + converted);
+  }
+  // Fill full 30-day series
+  const sparkline: { day: string; amt: number }[] = [];
+  const today = new Date();
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(today);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    sparkline.push({ day: key, amt: dayTotals.get(key) || 0 });
+  }
+
+  // Client revenue pie (paid last 30d, top 5) — base currency
   const clientPieResult = await db.execute(
     sql`SELECT c.name AS client_name, i.currency, coalesce(sum(p.amount), 0)::decimal AS total
     FROM payments p
@@ -161,16 +196,28 @@ export default async function DashboardPage() {
     JOIN clients c ON c.id = i.client_id
     WHERE i.workspace_id = ${workspaceId}
       AND p.paid_at >= current_date - interval '30 days'
-      AND i.currency = ${workspaceCurrency}
     GROUP BY c.name, i.currency
-    ORDER BY total DESC
-    LIMIT 5`,
+    ORDER BY total DESC`,
   );
-  const clientPie = (clientPieResult.rows as Array<{ client_name: string; total: string }>).map((r) => ({
-    name: r.client_name,
-    total: Number(r.total) || 0,
+  const clientPieGrouped = groupSumToBase(
+    (clientPieResult.rows as Array<{ client_name: string; currency: string; total: string }>).map(
+      (r) => ({
+        key: r.client_name,
+        currency: r.currency,
+        amount: Number(r.total) || 0,
+      }),
+    ),
+    workspaceCurrency,
+    rateMap,
+  );
+  const clientPie = clientPieGrouped.groups.slice(0, 5).map((g) => ({
+    name: g.key,
+    total: g.total,
   }));
   const pieTotal = Math.max(clientPie.reduce((s, c) => s + c.total, 0), 1);
+  const missingFxAll = Array.from(
+    new Set([...missingFx, ...clientPieGrouped.missingCurrencies]),
+  ).sort();
 
   // Recent activity slim
   const recentActivity = await db.execute(
@@ -504,14 +551,23 @@ export default async function DashboardPage() {
             <CardContent className="space-y-4">
               <div>
                 <p className="text-xs text-muted-foreground">
-                  {t("Pendapatan 30 hari terakhir", "Revenue last 30 days")}
+                  {t(
+                    `Pendapatan 30 hari (setara ${workspaceCurrency})`,
+                    `Revenue last 30 days (equiv. ${workspaceCurrency})`,
+                  )}
                 </p>
                 <p className="text-2xl font-bold tracking-tight">
                   {formatMoneyCompact(sparkTotal || rev30, workspaceCurrency)}
                 </p>
-                {rev30usd > 0 && (
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    + {formatMoneyCompact(rev30usd, "USD")}
+                {missingFxAll.length > 0 && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    {t(
+                      `Kurs belum di-set: ${missingFxAll.join(", ")}. `,
+                      `Missing FX rates: ${missingFxAll.join(", ")}. `,
+                    )}
+                    <Link href="/app/settings?tab=branding" className="underline underline-offset-2">
+                      {t("Atur di Settings", "Set in Settings")}
+                    </Link>
                   </p>
                 )}
               </div>
