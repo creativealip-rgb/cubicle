@@ -816,14 +816,16 @@ export async function sendInvoicePaymentReminder(invoiceId: string) {
   });
 
   try {
+    // One-shot event (user clicked send reminder) — not a recurring overdue ping.
     await notifyWorkspaceMembers(workspaceId, {
-      type: "invoice_overdue",
+      type: "invoice_sent",
       title: `Reminder sent for ${inv.invoiceNumber}`,
       body: `${client.name} · ${formatMoney(inv.total, inv.currency || "IDR")}`,
       link: `/app/invoices/${invoiceId}`,
       entityType: "invoice",
       entityId: invoiceId,
       actorId: user.id,
+      dedupe: false,
     });
   } catch {
     // best-effort

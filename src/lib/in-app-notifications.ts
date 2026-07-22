@@ -6,7 +6,8 @@
 // - Bell inbox = event log (assign, paid, portal request, due-soon ping). Mark-read hides urgency.
 // - Dashboard Reminder = live action state (overdue invoice, tasks due today, contracts waiting).
 //   Remains until underlying state is fixed — NOT the same as bell.
-// - One notification per (recipient, event) — dedup by entityType+entityId if you like
+// - Recurring/state reminders (invoice_overdue, task_due_soon) are deduped:
+//   skip insert if same user+type+entity still unread, or created within cooldown.
 // - Per-recipient (user_id) — owner/members each get their own copy
 // - Link is relative app path so the topbar can deep-link
 // - read_at is nullable: null = unread
@@ -14,7 +15,7 @@
 
 import { db } from "@/db";
 import { notifications, workspaceMembers } from "@/db/schema";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, gte, isNull, sql } from "drizzle-orm";
 
 export type NotificationType =
   | "task_assigned"
@@ -48,10 +49,65 @@ export interface CreateNotificationInput {
   entityType?: string;
   entityId?: string;
   actorId?: string | null;
+  /** Skip insert if same user/type/entity unread or within cooldown. Default true for recurring types. */
+  dedupe?: boolean;
+  /** Hours to suppress re-notify after last insert of same user/type/entity. Default 24. */
+  dedupeHours?: number;
 }
 
-/** Insert one notification. */
+/** Types that re-fire from cron/state checks and must not spam the bell. */
+const RECURRING_TYPES = new Set<NotificationType>(["invoice_overdue", "task_due_soon"]);
+
+async function shouldSkipDuplicate(
+  userId: string,
+  type: NotificationType,
+  entityId: string | null | undefined,
+  dedupeHours: number,
+): Promise<boolean> {
+  if (!entityId) return false;
+
+  const since = new Date(Date.now() - Math.max(1, dedupeHours) * 60 * 60 * 1000);
+
+  // Unread of same entity still sits in inbox → never re-insert.
+  const [unread] = await db
+    .select({ id: notifications.id })
+    .from(notifications)
+    .where(
+      and(
+        eq(notifications.userId, userId),
+        eq(notifications.type, type),
+        eq(notifications.entityId, entityId),
+        isNull(notifications.readAt),
+      ),
+    )
+    .limit(1);
+  if (unread) return true;
+
+  // Recent insert (even if already read) → wait for cooldown before resurfacing.
+  const [recent] = await db
+    .select({ id: notifications.id })
+    .from(notifications)
+    .where(
+      and(
+        eq(notifications.userId, userId),
+        eq(notifications.type, type),
+        eq(notifications.entityId, entityId),
+        gte(notifications.createdAt, since),
+      ),
+    )
+    .limit(1);
+  return Boolean(recent);
+}
+
+/** Insert one notification (with optional dedupe for recurring types). */
 export async function createNotification(input: CreateNotificationInput) {
+  const dedupe = input.dedupe ?? RECURRING_TYPES.has(input.type);
+  const dedupeHours = input.dedupeHours ?? 24;
+
+  if (dedupe && (await shouldSkipDuplicate(input.userId, input.type, input.entityId, dedupeHours))) {
+    return null;
+  }
+
   const [row] = await db
     .insert(notifications)
     .values({
@@ -75,7 +131,7 @@ export async function createNotification(input: CreateNotificationInput) {
  */
 export async function notifyWorkspaceMembers(
   workspaceId: string,
-  payload: Omit<CreateNotificationInput, "workspaceId" | "userId">
+  payload: Omit<CreateNotificationInput, "workspaceId" | "userId">,
 ) {
   const members = await db
     .select({ userId: workspaceMembers.userId })
@@ -84,9 +140,22 @@ export async function notifyWorkspaceMembers(
 
   if (members.length === 0) return [];
 
-  const rows = members.map((m) => ({
+  const dedupe = payload.dedupe ?? RECURRING_TYPES.has(payload.type);
+  const dedupeHours = payload.dedupeHours ?? 24;
+  const recipients: string[] = [];
+
+  for (const m of members) {
+    if (dedupe && (await shouldSkipDuplicate(m.userId, payload.type, payload.entityId, dedupeHours))) {
+      continue;
+    }
+    recipients.push(m.userId);
+  }
+
+  if (recipients.length === 0) return [];
+
+  const rows = recipients.map((userId) => ({
     workspaceId,
-    userId: m.userId,
+    userId,
     type: payload.type,
     title: payload.title,
     body: payload.body ?? null,
@@ -106,16 +175,26 @@ export async function notifyWorkspaceMembers(
 export async function notifyWorkspaceMembersExceptActor(
   workspaceId: string,
   actorId: string | null | undefined,
-  payload: Omit<CreateNotificationInput, "workspaceId" | "userId">
+  payload: Omit<CreateNotificationInput, "workspaceId" | "userId">,
 ) {
   const members = await db
     .select({ userId: workspaceMembers.userId })
     .from(workspaceMembers)
     .where(eq(workspaceMembers.workspaceId, workspaceId));
 
-  const recipients = members
-    .map((m) => m.userId)
-    .filter((uid) => uid !== actorId);
+  const candidates = members.map((m) => m.userId).filter((uid) => uid !== actorId);
+  if (candidates.length === 0) return [];
+
+  const dedupe = payload.dedupe ?? RECURRING_TYPES.has(payload.type);
+  const dedupeHours = payload.dedupeHours ?? 24;
+  const recipients: string[] = [];
+
+  for (const userId of candidates) {
+    if (dedupe && (await shouldSkipDuplicate(userId, payload.type, payload.entityId, dedupeHours))) {
+      continue;
+    }
+    recipients.push(userId);
+  }
 
   if (recipients.length === 0) return [];
 

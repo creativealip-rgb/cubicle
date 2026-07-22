@@ -1,8 +1,15 @@
 # Changelog
 
+## v0.1.100 — 2026-07-22 — Notif dedupe + kurs ke tab Workspace
+
+- Bell spam fix: `invoice_overdue` / `task_due_soon` dedupe (skip jika unread sama, cooldown 24h)
+- Cron `cron-reminders.sh` tidak double-hit probe+POST lagi
+- Cleanup notif duplikat lama di DB
+- Kurs dashboard pindah Settings **tab Workspace** (bukan Branding)
+
 ## v0.1.99 — 2026-07-22 — Dashboard base currency (manual FX)
 
-- Table `workspace_currency_rates` + Settings **Kurs dashboard** (tab Branding)
+- Table `workspace_currency_rates` + Settings **Kurs dashboard** (tab Workspace)
 - Rate manual: `1 USD = X IDR` (base = `defaultCurrency` workspace)
 - Dashboard finance (revenue 30d, sparkline, pie) convert ke base currency
 - Currency tanpa rate **di-skip**, warning + link Settings (tidak tebak kurs)

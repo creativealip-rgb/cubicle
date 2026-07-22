@@ -53,11 +53,16 @@ hit_post() {
   echo
 }
 
-# Generic reminders (invoice/task)
-if curl -fsS -o /dev/null -w '' -X POST -H "$(auth_hdr)" "$CUBICLE_URL/api/cron/reminders" 2>/dev/null; then
-  hit_post "/api/cron/reminders"
-elif curl -fsS -o /dev/null -w '' -X POST -H "$(auth_hdr)" "$CUBICLE_URL/api/notifications/reminders" 2>/dev/null; then
-  hit_post "/api/notifications/reminders"
+# Generic reminders (invoice/task) — single POST only (no probe double-hit).
+# Prefer /api/cron/reminders if present; else legacy /api/notifications/reminders.
+if curl -fsS -o /tmp/cubicle-reminders.json -w '' -X POST -H "$(auth_hdr)" -H "Content-Type: application/json" "$CUBICLE_URL/api/cron/reminders" 2>/dev/null; then
+  echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] POST $CUBICLE_URL/api/cron/reminders"
+  cat /tmp/cubicle-reminders.json
+  echo
+elif curl -fsS -o /tmp/cubicle-reminders.json -w '' -X POST -H "$(auth_hdr)" -H "Content-Type: application/json" "$CUBICLE_URL/api/notifications/reminders" 2>/dev/null; then
+  echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] POST $CUBICLE_URL/api/notifications/reminders"
+  cat /tmp/cubicle-reminders.json
+  echo
 else
   echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] WARN: generic reminders endpoint not reachable"
 fi

@@ -98,40 +98,66 @@ export default async function SettingsPage({
         <SettingsTabs
           initialTab={initialTab}
           workspace={
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" /> Workspace
-                </CardTitle>
-                <CardDescription>
-                  {t("Info workspace utama", "Main workspace info")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 text-sm">
-                <WorkspaceNameForm defaultName={workspace.name} canEdit={canEditWorkspace} />
-                <div className="space-y-3 border-t pt-3">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Slug</span>
-                    <Badge variant="secondary">{workspace.slug}</Badge>
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="h-5 w-5" /> Workspace
+                  </CardTitle>
+                  <CardDescription>
+                    {t("Info workspace utama", "Main workspace info")}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                  <WorkspaceNameForm defaultName={workspace.name} canEdit={canEditWorkspace} />
+                  <div className="space-y-3 border-t pt-3">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Slug</span>
+                      <Badge variant="secondary">{workspace.slug}</Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">{t("Mata Uang", "Currency")}</span>
+                      <span>{workspace.defaultCurrency}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">{t("Pajak", "Tax")}</span>
+                      <span>{workspace.defaultTaxRate}%</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      {t(
+                        "Ubah mata uang / pajak default di tab Branding & Invoice.",
+                        "Change default currency / tax in Branding & Invoice tab.",
+                      )}
+                    </p>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">{t("Mata Uang", "Currency")}</span>
-                    <span>{workspace.defaultCurrency}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">{t("Pajak", "Tax")}</span>
-                    <span>{workspace.defaultTaxRate}%</span>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">
+                  <BookingSlugForm defaultSlug={workspace.bookingSlug} canEdit={canEditWorkspace} />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Coins className="h-5 w-5" /> {t("Kurs dashboard", "Dashboard FX rates")}
+                  </CardTitle>
+                  <CardDescription>
                     {t(
-                      "Ubah mata uang / pajak default di tab Branding & Invoice.",
-                      "Change default currency / tax in Branding & Invoice tab.",
+                      "Konversi multi-currency ke base currency untuk ringkasan dashboard (manual rate).",
+                      "Convert multi-currency totals into base currency for dashboard summaries (manual rates).",
                     )}
-                  </p>
-                </div>
-                <BookingSlugForm defaultSlug={workspace.bookingSlug} canEdit={canEditWorkspace} />
-              </CardContent>
-            </Card>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <CurrencyRatesForm
+                    baseCurrency={workspace.defaultCurrency || "IDR"}
+                    rates={currencyRateRows.map((r) => ({
+                      id: r.id,
+                      fromCurrency: r.fromCurrency,
+                      rate: Number(r.rate),
+                    }))}
+                    canEdit={canEditWorkspace}
+                  />
+                </CardContent>
+              </Card>
+            </>
           }
           team={
             <Card>
@@ -175,64 +201,38 @@ export default async function SettingsPage({
             </Card>
           }
           branding={
-            <>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <ImageIcon className="h-5 w-5" /> {t("Branding & Invoice", "Branding & Invoice")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t(
-                      "Logo, nama tagihan, mata uang, tarif default — dipakai di PDF + preview klien.",
-                      "Logo, billing name, currency, default rate — used on PDF + client preview.",
-                    )}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <WorkspaceBrandingForm
-                    defaults={{
-                      billingName: workspace.billingName,
-                      billingEmail: workspace.billingEmail,
-                      billingPhone: workspace.billingPhone,
-                      billingAddress: workspace.billingAddress,
-                      taxId: workspace.taxId,
-                      logoUrl: workspace.logoUrl,
-                      defaultCurrency: workspace.defaultCurrency,
-                      defaultTaxRate: workspace.defaultTaxRate,
-                      defaultHourlyRate: workspace.defaultHourlyRate,
-                      defaultInvoiceTerms: workspace.defaultInvoiceTerms,
-                      invoiceEmailBody: workspace.invoiceEmailBody,
-                      replyToEmail: workspace.replyToEmail,
-                    }}
-                    ownerEmailHint={ownerUser?.email ?? null}
-                  />
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Coins className="h-5 w-5" /> {t("Kurs dashboard", "Dashboard FX rates")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t(
-                      "Konversi multi-currency ke base currency untuk ringkasan dashboard (manual rate).",
-                      "Convert multi-currency totals into base currency for dashboard summaries (manual rates).",
-                    )}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <CurrencyRatesForm
-                    baseCurrency={workspace.defaultCurrency || "IDR"}
-                    rates={currencyRateRows.map((r) => ({
-                      id: r.id,
-                      fromCurrency: r.fromCurrency,
-                      rate: Number(r.rate),
-                    }))}
-                    canEdit={canEditWorkspace}
-                  />
-                </CardContent>
-              </Card>
-            </>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ImageIcon className="h-5 w-5" /> {t("Branding & Invoice", "Branding & Invoice")}
+                </CardTitle>
+                <CardDescription>
+                  {t(
+                    "Logo, nama tagihan, mata uang, tarif default — dipakai di PDF + preview klien.",
+                    "Logo, billing name, currency, default rate — used on PDF + client preview.",
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <WorkspaceBrandingForm
+                  defaults={{
+                    billingName: workspace.billingName,
+                    billingEmail: workspace.billingEmail,
+                    billingPhone: workspace.billingPhone,
+                    billingAddress: workspace.billingAddress,
+                    taxId: workspace.taxId,
+                    logoUrl: workspace.logoUrl,
+                    defaultCurrency: workspace.defaultCurrency,
+                    defaultTaxRate: workspace.defaultTaxRate,
+                    defaultHourlyRate: workspace.defaultHourlyRate,
+                    defaultInvoiceTerms: workspace.defaultInvoiceTerms,
+                    invoiceEmailBody: workspace.invoiceEmailBody,
+                    replyToEmail: workspace.replyToEmail,
+                  }}
+                  ownerEmailHint={ownerUser?.email ?? null}
+                />
+              </CardContent>
+            </Card>
           }
           integrations={
             <Card>

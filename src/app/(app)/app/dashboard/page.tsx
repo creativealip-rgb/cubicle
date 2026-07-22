@@ -565,7 +565,7 @@ export default async function DashboardPage() {
                       `Kurs belum di-set: ${missingFxAll.join(", ")}. `,
                       `Missing FX rates: ${missingFxAll.join(", ")}. `,
                     )}
-                    <Link href="/app/settings?tab=branding" className="underline underline-offset-2">
+                    <Link href="/app/settings?tab=workspace" className="underline underline-offset-2">
                       {t("Atur di Settings", "Set in Settings")}
                     </Link>
                   </p>
