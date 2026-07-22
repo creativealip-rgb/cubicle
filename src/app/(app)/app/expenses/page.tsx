@@ -251,7 +251,15 @@ export default async function ExpensesPage({
   const totalCount = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
-  const expenseRows = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const showApprox = ws.showBaseCurrencyApprox !== false;
+  const expenseRows = filtered
+    .slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+    .map((e) => {
+      const amountBase = showApprox
+        ? convertToBase(Number(e.amount) || 0, e.currency, baseCurrency, rateMap)
+        : null;
+      return { ...e, amountBase };
+    });
 
   // Recurring
   const recurringRaw = await db
@@ -277,6 +285,17 @@ export default async function ExpensesPage({
     .leftJoin(projects, eq(projects.id, expenseRecurring.projectId))
     .where(eq(expenseRecurring.workspaceId, ws.id))
     .orderBy(desc(expenseRecurring.isActive), expenseRecurring.name);
+
+  const recurringRows = recurringRaw.map((r) => {
+    const amountBase = showApprox
+      ? convertToBase(Number(r.amount) || 0, r.currency, baseCurrency, rateMap)
+      : null;
+    return {
+      ...r,
+      frequency: r.frequency as "monthly" | "quarterly" | "yearly",
+      amountBase,
+    };
+  });
 
   function pageHref(p: number) {
     const sp = new URLSearchParams();
@@ -486,14 +505,12 @@ export default async function ExpensesPage({
           {tab === "recurring" && (
             <RecurringManager
               workspaceId={ws.id}
-              rows={recurringRaw.map((r) => ({
-                ...r,
-                frequency: r.frequency as "monthly" | "quarterly" | "yearly",
-              }))}
+              rows={recurringRows}
               categories={categories}
               projects={projectOpts}
               canWrite={canWrite}
               defaultCurrency={ws.defaultCurrency}
+              baseCurrency={baseCurrency}
             />
           )}
 
@@ -515,6 +532,7 @@ export default async function ExpensesPage({
                     canWrite={canWrite}
                     workspaceId={ws.id}
                     defaultCurrency={ws.defaultCurrency}
+                    baseCurrency={baseCurrency}
                     categories={categories}
                     projects={projectOpts}
                     clients={clientOpts}

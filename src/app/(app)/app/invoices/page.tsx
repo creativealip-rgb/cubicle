@@ -258,12 +258,10 @@ export default async function InvoicesPage({
     .offset(offset);
 
   const invoiceListWithBase = invoiceList.map((inv) => {
-    const totalBase = convertToBase(
-      Number(inv.total) || 0,
-      inv.currency,
-      baseCurrency,
-      rateMap,
-    );
+    const totalBase =
+      ws.showBaseCurrencyApprox !== false
+        ? convertToBase(Number(inv.total) || 0, inv.currency, baseCurrency, rateMap)
+        : null;
     return { ...inv, totalBase };
   });
 

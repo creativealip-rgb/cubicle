@@ -72,6 +72,8 @@ export const workspaces = pgTable("workspaces", {
   slug: text("slug").notNull().unique(),
   ownerId: text("owner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   defaultCurrency: text("default_currency").notNull().default("IDR"),
+  /** Show secondary ≈ base-currency amount under multi-currency list rows. */
+  showBaseCurrencyApprox: boolean("show_base_currency_approx").notNull().default(true),
   defaultHourlyRate: numeric("default_hourly_rate", { precision: 12, scale: 2 }),
   defaultInvoiceTerms: text("default_invoice_terms"),
   defaultTaxRate: numeric("default_tax_rate", { precision: 5, scale: 2 }).notNull().default("0"),

@@ -154,6 +154,7 @@ export default async function SettingsPage({
                       rate: Number(r.rate),
                     }))}
                     canEdit={canEditWorkspace}
+                    showBaseCurrencyApprox={workspace.showBaseCurrencyApprox !== false}
                   />
                 </CardContent>
               </Card>

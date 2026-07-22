@@ -127,6 +127,9 @@ export async function upsertWorkspaceCurrencyRate(input: z.infer<typeof rateSche
   revalidatePath("/app/settings");
   revalidatePath("/app/dashboard");
   revalidatePath("/app/reports");
+  revalidatePath("/app/expenses");
+  revalidatePath("/app/invoices");
+  revalidatePath("/app/packages");
   return { ok: true as const, fromCurrency, rate: parsed.rate, baseCurrency: base };
 }
 
@@ -158,5 +161,46 @@ export async function deleteWorkspaceCurrencyRate(input: z.infer<typeof deleteSc
   revalidatePath("/app/settings");
   revalidatePath("/app/dashboard");
   revalidatePath("/app/reports");
+  revalidatePath("/app/expenses");
+  revalidatePath("/app/invoices");
+  revalidatePath("/app/packages");
   return { ok: true as const };
+}
+
+const approxToggleSchema = z.object({
+  enabled: z.boolean(),
+});
+
+/** Toggle secondary ≈ base-currency display under list rows (invoice/expense/package). */
+export async function updateShowBaseCurrencyApprox(
+  input: z.infer<typeof approxToggleSchema>,
+) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const parsed = approxToggleSchema.parse(input);
+  await db
+    .update(workspaces)
+    .set({
+      showBaseCurrencyApprox: parsed.enabled,
+      updatedAt: new Date(),
+    })
+    .where(eq(workspaces.id, workspaceId));
+
+  await writeActivityLog(
+    workspaceId,
+    user.id,
+    "updated_show_base_currency_approx",
+    "workspace",
+    workspaceId,
+  );
+  revalidatePath("/app/settings");
+  revalidatePath("/app/dashboard");
+  revalidatePath("/app/reports");
+  revalidatePath("/app/expenses");
+  revalidatePath("/app/invoices");
+  revalidatePath("/app/packages");
+  return { ok: true as const, enabled: parsed.enabled };
 }

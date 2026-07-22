@@ -46,6 +46,8 @@ export interface RecurringRow {
   name: string;
   amount: string;
   currency: string;
+  /** Converted amount in workspace base currency (null if rate missing / toggle off). */
+  amountBase?: number | null;
   categoryId: string | null;
   categoryName: string | null;
   categoryColor: string | null;
@@ -69,6 +71,8 @@ interface RecurringManagerProps {
   projects: ProjectOption[];
   canWrite: boolean;
   defaultCurrency: string;
+  /** Workspace base currency for secondary ≈ line. */
+  baseCurrency?: string;
 }
 
 interface FormState {
@@ -102,9 +106,11 @@ export function RecurringManager({
   projects,
   canWrite,
   defaultCurrency,
+  baseCurrency,
 }: RecurringManagerProps) {
   const router = useRouter();
   const { t } = useT();
+  const base = (baseCurrency || defaultCurrency || "IDR").toUpperCase();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<RecurringRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<RecurringRow | null>(null);
@@ -270,6 +276,12 @@ export function RecurringManager({
                 <div className="text-xs text-slate-500 flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
                   <span className="tabular-nums font-medium text-slate-700">
                     {formatMoney(r.amount, r.currency)}
+                    {r.amountBase != null &&
+                      r.currency?.toUpperCase() !== base && (
+                        <span className="ml-1 font-normal text-muted-foreground">
+                          ≈ {formatMoney(r.amountBase, base)}
+                        </span>
+                      )}
                   </span>
                   <span>· {freqLabel(r.frequency)}</span>
                   {r.categoryName && (

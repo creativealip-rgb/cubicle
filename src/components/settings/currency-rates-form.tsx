@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
 import {
   deleteWorkspaceCurrencyRate,
+  updateShowBaseCurrencyApprox,
   upsertWorkspaceCurrencyRate,
 } from "@/lib/actions/currency-rates";
 import { Button } from "@/components/ui/button";
@@ -25,20 +26,50 @@ type Props = {
   baseCurrency: string;
   rates: CurrencyRateRow[];
   canEdit: boolean;
+  /** Secondary ≈ base line under multi-currency list rows. */
+  showBaseCurrencyApprox: boolean;
 };
 
-export function CurrencyRatesForm({ baseCurrency, rates, canEdit }: Props) {
+export function CurrencyRatesForm({
+  baseCurrency,
+  rates,
+  canEdit,
+  showBaseCurrencyApprox,
+}: Props) {
   const { t } = useT();
   const router = useRouter();
   const [fromCurrency, setFromCurrency] = useState("USD");
   const [rate, setRate] = useState("");
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [approxOn, setApproxOn] = useState(showBaseCurrencyApprox);
+  const [approxBusy, setApproxBusy] = useState(false);
 
   const options = useMemo(
     () => COMMON.filter((c) => c !== baseCurrency),
     [baseCurrency],
   );
+
+  async function onToggleApprox(next: boolean) {
+    if (!canEdit) return;
+    const prev = approxOn;
+    setApproxOn(next);
+    setApproxBusy(true);
+    try {
+      await updateShowBaseCurrencyApprox({ enabled: next });
+      toast.success(
+        next
+          ? t("Tampilkan ≈ base: ON", "Show ≈ base: ON")
+          : t("Tampilkan ≈ base: OFF", "Show ≈ base: OFF"),
+      );
+      router.refresh();
+    } catch (err) {
+      setApproxOn(prev);
+      toast.error(err instanceof Error ? err.message : t("Gagal simpan", "Save failed"));
+    } finally {
+      setApproxBusy(false);
+    }
+  }
 
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
@@ -102,6 +133,31 @@ export function CurrencyRatesForm({ baseCurrency, rates, canEdit }: Props) {
           )}
         </p>
       </div>
+
+      <label
+        className={`flex items-start gap-3 rounded-lg border px-3 py-3 ${
+          canEdit ? "cursor-pointer" : "opacity-70"
+        }`}
+      >
+        <input
+          type="checkbox"
+          className="mt-1 h-4 w-4 rounded border-input"
+          checked={approxOn}
+          disabled={!canEdit || approxBusy}
+          onChange={(e) => onToggleApprox(e.target.checked)}
+        />
+        <span className="min-w-0 space-y-0.5">
+          <span className="block text-sm font-medium text-foreground">
+            {t("Tampilkan ≈ base di list", "Show ≈ base on lists")}
+          </span>
+          <span className="block text-xs text-muted-foreground">
+            {t(
+              "Invoice, pengeluaran, recurring, paket: baris multi-currency dapat baris sekunder ≈ base. KPI ringkasan tetap base.",
+              "Invoices, expenses, recurring, packages: multi-currency rows can show a secondary ≈ base line. Summary KPIs stay base.",
+            )}
+          </span>
+        </span>
+      </label>
 
       {rates.length === 0 ? (
         <p className="text-sm text-muted-foreground">

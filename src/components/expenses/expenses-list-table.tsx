@@ -27,6 +27,8 @@ export type ExpenseListItem = {
   date: string;
   amount: number | string;
   currency: string;
+  /** Converted amount in workspace base currency (null if rate missing / toggle off). */
+  amountBase?: number | null;
   description: string;
   vendor: string | null;
   categoryId: string | null;
@@ -54,6 +56,7 @@ export function ExpensesListTable({
   canWrite,
   workspaceId,
   defaultCurrency,
+  baseCurrency,
   categories,
   projects,
   clients,
@@ -62,11 +65,14 @@ export function ExpensesListTable({
   canWrite: boolean;
   workspaceId: string;
   defaultCurrency: string;
+  /** Workspace base currency for secondary ≈ line. */
+  baseCurrency?: string;
   categories: CategoryOption[];
   projects: ProjectOption[];
   clients: ClientOption[];
 }) {
   const { t } = useT();
+  const base = (baseCurrency || defaultCurrency || "IDR").toUpperCase();
 
   const getters = useMemo(
     () => ({
@@ -168,7 +174,13 @@ export function ExpensesListTable({
                 {e.clientName ?? <span className="text-slate-400">—</span>}
               </TableCell>
               <TableCell className="text-right tabular-nums text-sm font-medium whitespace-nowrap">
-                {formatMoney(e.amount, e.currency)}
+                <div>{formatMoney(e.amount, e.currency)}</div>
+                {e.amountBase != null &&
+                  e.currency?.toUpperCase() !== base && (
+                    <div className="text-xs font-normal text-muted-foreground">
+                      ≈ {formatMoney(e.amountBase, base)}
+                    </div>
+                  )}
               </TableCell>
               {canWrite && (
                 <TableCell>

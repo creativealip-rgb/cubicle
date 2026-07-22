@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.103 — 2026-07-22 — ≈ base toggle + expense/package list FX
+
+- Settings Workspace → **Kurs finance**: toggle **Tampilkan ≈ base di list** (default ON)
+- Expense list + recurring: amount asli + secondary `≈ base` (ikut toggle + kurs)
+- Package catalog: harga asli + secondary `≈ base` (ikut toggle)
+- Invoice list secondary `≈` ikut toggle (KPI base tetap)
+- Migration `0037_workspace_show_base_currency_approx`
+
 ## v0.1.102 — 2026-07-22 — Invoice list FX secondary + KPI base
 
 - List invoice: total asli + secondary `≈ base` (kurs manual) bila currency beda

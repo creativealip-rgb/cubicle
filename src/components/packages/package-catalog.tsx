@@ -38,6 +38,8 @@ export interface CatalogPackage {
   hours: number | null;
   price: string;
   currency: string;
+  /** Converted price in workspace base currency (null if rate missing / toggle off). */
+  priceBase?: number | null;
   description: string | null;
   features: string | null;
   badge: string | null;
@@ -101,12 +103,16 @@ function emptyForm(defaultCurrency: string): FormState {
 export function PackageCatalog({
   packages,
   defaultCurrency = "IDR",
+  baseCurrency,
 }: {
   packages: CatalogPackage[];
   defaultCurrency?: string;
+  /** Workspace base currency for secondary ≈ line. */
+  baseCurrency?: string;
 }) {
   const router = useRouter();
   const { t } = useT();
+  const base = (baseCurrency || defaultCurrency || "IDR").toUpperCase();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CatalogPackage | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CatalogPackage | null>(null);
@@ -262,8 +268,14 @@ export function PackageCatalog({
                       </Button>
                     </div>
                   </div>
-                  <div className="flex items-baseline gap-2">
+                  <div className="flex items-baseline gap-2 flex-wrap">
                     <span className="text-lg font-bold">{formatMoney(pkg.price, pkg.currency)}</span>
+                    {pkg.priceBase != null &&
+                      pkg.currency?.toUpperCase() !== base && (
+                        <span className="text-xs font-normal text-muted-foreground">
+                          ≈ {formatMoney(pkg.priceBase, base)}
+                        </span>
+                      )}
                     {pkg.hours != null && (
                       <span className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Clock className="h-3 w-3" />
