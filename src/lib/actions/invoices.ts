@@ -313,7 +313,11 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
   // Fire client email on first transition to "sent"
   if (priorStatus === "draft" && inv.status === "sent") {
     try {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.BETTER_AUTH_URL ?? "https://cubiqlo.com";
+      const appUrl = (
+        process.env.NEXT_PUBLIC_APP_URL ??
+        process.env.BETTER_AUTH_URL ??
+        "https://cubiqlo.com"
+      ).replace(/\/$/, "");
       const [client] = await db
         .select({ name: clients.name, email: clients.email })
         .from(clients)
@@ -328,7 +332,8 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
         .where(eq(workspaces.id, workspaceId))
         .limit(1);
       if (client?.email) {
-        const portalUrl = `${appUrl}/invoice/${inv.id}`;
+        const generated = await generateInvoiceShareToken(invoiceId);
+        const portalUrl = `${appUrl}/api/invoices/share/${generated.token}/pdf`;
         let projectName: string | undefined;
         if (inv.projectId) {
           const [proj] = await db
@@ -343,7 +348,7 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
           clientEmail: client.email,
           clientName: client.name ?? "there",
           invoiceNumber: inv.invoiceNumber ?? invoiceId.slice(0, 8),
-          amount: `${inv.currency} ${inv.total}`,
+          amount: formatMoney(inv.total, inv.currency || "IDR"),
           portalUrl,
           workspaceName: ws?.name,
           replyTo,
@@ -718,10 +723,23 @@ async function sendInvoiceEmailForInvoice(invoiceId: string, actorId: string, wo
     projectName = proj?.name;
   }
 
-  // Raw share tokens are shown only once, so sending always rotates a fresh link.
+  // Raw share tokens shown once — rotate fresh link each send.
   const generated = await generateInvoiceShareToken(invoiceId);
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.BETTER_AUTH_URL ?? "https://cubiqlo.com";
-  const portalUrl = `${appUrl}/invoice/${generated.token}`;
+  // Mark sent before email so public PDF link works immediately.
+  if (inv.status !== "paid") {
+    await db
+      .update(invoices)
+      .set({ status: "sent", updatedAt: new Date() })
+      .where(eq(invoices.id, invoiceId));
+  }
+
+  const appUrl = (
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.BETTER_AUTH_URL ??
+    "https://cubiqlo.com"
+  ).replace(/\/$/, "");
+  // Same PDF layout as /api/invoices/:id/pdf (Unduh PDF) — public via share token.
+  const portalUrl = `${appUrl}/api/invoices/share/${generated.token}/pdf`;
   const replyTo = await resolveWorkspaceReplyTo(workspaceId);
   await notifyInvoiceSent({
     clientEmail: client.email,
@@ -735,11 +753,6 @@ async function sendInvoiceEmailForInvoice(invoiceId: string, actorId: string, wo
     dueDate: inv.dueDate ? String(inv.dueDate).slice(0, 10) : null,
     customBody: ws?.invoiceEmailBody,
   });
-
-  await db
-    .update(invoices)
-    .set({ status: inv.status === "paid" ? inv.status : "sent", updatedAt: new Date() })
-    .where(eq(invoices.id, invoiceId));
 
   await writeActivityLog(workspaceId, actorId, "sent_invoice_email", "invoice", invoiceId, {
     clientEmail: client.email,
@@ -873,8 +886,12 @@ export async function sendInvoicePaymentReminder(invoiceId: string) {
     .limit(1);
 
   const generated = await generateInvoiceShareToken(invoiceId);
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.BETTER_AUTH_URL ?? "https://cubiqlo.com";
-  const portalUrl = `${appUrl}/invoice/${generated.token}`;
+  const appUrl = (
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.BETTER_AUTH_URL ??
+    "https://cubiqlo.com"
+  ).replace(/\/$/, "");
+  const portalUrl = `${appUrl}/api/invoices/share/${generated.token}/pdf`;
   const replyTo = await resolveWorkspaceReplyTo(workspaceId);
 
   await notifyInvoicePaymentReminder({

@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.110 — 2026-07-22 — Invoice email: link PDF + template UX
+
+- Email kirim invoice / reminder pakai link **PDF share** (`/api/invoices/share/:token/pdf`) — tampilan sama Unduh PDF
+- Endpoint public PDF via share token
+- Share link UI di detail invoice → PDF, bukan halaman HTML
+- Template email branding: penjelasan awam, chip placeholder, pratinjau live
+
 ## v0.1.109 — 2026-07-22 — Invoice: auto line item dari project
 
 - Buat invoice + pilih project → rincian item auto: **nama project** + **nominal**

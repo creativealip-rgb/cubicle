@@ -157,8 +157,8 @@ export async function notifyInvoiceSent(opts: {
 
   const defaultText =
     `Hi ${opts.clientName},\n\n` +
-    `A new invoice ${opts.invoiceNumber} for ${opts.amount} is ready.\n\n` +
-    `View and pay online: ${opts.portalUrl}\n\n` +
+    `Invoice ${opts.invoiceNumber} for ${opts.amount} is ready.\n\n` +
+    `Download / view PDF invoice:\n${opts.portalUrl}\n\n` +
     `Thank you for your business.`;
 
   const text = opts.customBody?.trim()
@@ -192,7 +192,7 @@ export async function notifyInvoicePaymentReminder(opts: {
       `Hi ${opts.clientName},\n\n` +
       `Friendly reminder that invoice ${opts.invoiceNumber} for ${opts.amount} is still unpaid.\n\n` +
       dueLine +
-      `View invoice: ${opts.portalUrl}\n\n` +
+      `Download / view PDF invoice:\n${opts.portalUrl}\n\n` +
       `If you've already paid, please ignore this email.`,
     type: "invoice_payment_reminder",
     replyTo: opts.replyTo,
