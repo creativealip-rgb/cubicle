@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.98 — 2026-07-22 — Dashboard declutter
+
+- Greeting: cuma tanggal, hapus “X proyek aktif · Y tugas jatuh tempo”
+- Kerja: hapus card **Tugas Jatuh Tempo** + **Invoice Jatuh Tempo** (sudah di Reminder)
+- Hapus card **Timer Aktif** di dashboard (sudah di navbar)
+
 ## v0.1.97 — 2026-07-21 — Portal branding + client folder upload
 
 - Header portal: logo workspace (fallback monogram), billing name/address/kontak

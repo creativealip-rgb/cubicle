@@ -4,27 +4,17 @@ import { db } from "@/db";
 import {
   appointments,
   personalNotes,
-  timeEntries,
-  users,
 } from "@/db/schema";
-import { eq, and, desc, sql, gte } from "drizzle-orm";
+import { eq, and, sql, gte } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import {
   Users,
   Briefcase,
-  CheckSquare,
-  Receipt,
   ArrowUpRight,
-  Clock,
-  Calendar,
   AlertCircle,
-  Plus,
-  FileText,
   TrendingUp,
   Bell,
-  FileSignature,
   ArrowRight,
-  NotebookPen,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -54,9 +44,6 @@ export default async function DashboardPage() {
     sql`SELECT
       (SELECT count(*)::int FROM clients WHERE workspace_id = ${workspaceId} AND status = 'active') as active_clients,
       (SELECT count(*)::int FROM projects WHERE workspace_id = ${workspaceId} AND status = 'active') as active_projects,
-      (SELECT count(*)::int FROM tasks WHERE workspace_id = ${workspaceId} AND status != 'done' AND due_date IS NOT NULL AND due_date <= current_date) as due_tasks,
-      (SELECT count(*)::int FROM tasks WHERE workspace_id = ${workspaceId} AND status != 'done' AND due_date IS NOT NULL AND due_date < current_date) as overdue_tasks,
-      (SELECT count(*)::int FROM invoices WHERE workspace_id = ${workspaceId} AND status IN ('sent','viewed','overdue') AND due_date IS NOT NULL AND due_date <= current_date) as due_invoices,
       (SELECT count(*)::int FROM clients WHERE workspace_id = ${workspaceId}) as total_clients,
       (SELECT count(*)::int FROM projects WHERE workspace_id = ${workspaceId}) as total_projects,
       (SELECT count(*)::int FROM invoices WHERE workspace_id = ${workspaceId}) as total_invoices,
@@ -67,9 +54,6 @@ export default async function DashboardPage() {
   const counts = result.rows[0] as Record<string, number>;
   const activeClients = counts.active_clients || 0;
   const activeProjects = counts.active_projects || 0;
-  const dueTasks = counts.due_tasks || 0;
-  const overdueTasks = counts.overdue_tasks || 0;
-  const dueInvoices = counts.due_invoices || 0;
   const totalClients = counts.total_clients || 0;
   const totalProjects = counts.total_projects || 0;
   const totalInvoices = counts.total_invoices || 0;
@@ -188,24 +172,6 @@ export default async function DashboardPage() {
   }));
   const pieTotal = Math.max(clientPie.reduce((s, c) => s + c.total, 0), 1);
 
-  const [activeTimer] = await db
-    .select({
-      id: timeEntries.id,
-      description: timeEntries.description,
-      startTime: timeEntries.startTime,
-      pausedAt: timeEntries.pausedAt,
-      userName: users.name,
-    })
-    .from(timeEntries)
-    .leftJoin(users, eq(users.id, timeEntries.userId))
-    .where(
-      and(
-        eq(timeEntries.workspaceId, workspaceId),
-        sql`${timeEntries.startTime} is not null and ${timeEntries.endTime} is null and ${timeEntries.manualMinutes} is null`,
-      ),
-    )
-    .limit(1);
-
   // Recent activity slim
   const recentActivity = await db.execute(
     sql`SELECT al.id, al.action, al.entity_type as "entityType", al.created_at as "createdAt", u.name as "actorName"
@@ -256,24 +222,6 @@ export default async function DashboardPage() {
       iconBg: "bg-slate-100 text-slate-600",
       accentBorder: "border-l-slate-300",
       href: "/app/projects",
-    },
-    {
-      label: t("Tugas Jatuh Tempo", "Due Tasks"),
-      value: String(dueTasks),
-      change: `${overdueTasks} ${t("terlambat", "overdue")}`,
-      icon: CheckSquare,
-      iconBg: "bg-amber-100 text-amber-600",
-      accentBorder: "border-l-amber-500",
-      href: "/app/tasks",
-    },
-    {
-      label: t("Invoice Jatuh Tempo", "Due Invoices"),
-      value: String(dueInvoices),
-      change: `${att.overdueInvoices} ${t("terlambat", "overdue")}`,
-      icon: Receipt,
-      iconBg: "bg-rose-100 text-rose-600",
-      accentBorder: "border-l-rose-500",
-      href: "/app/invoices?status=overdue",
     },
   ];
 
@@ -402,12 +350,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col gap-4 sm:gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <DashboardGreeting
-          firstName={firstName}
-          lang={lang}
-          activeProjects={activeProjects}
-          dueTasks={dueTasks}
-        />
+        <DashboardGreeting firstName={firstName} lang={lang} />
       </div>
 
       <DashboardOnboarding
@@ -475,7 +418,7 @@ export default async function DashboardPage() {
         <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           {t("Kerja", "Work")}
         </h2>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4">
           {kpiCards.map((kpi) => {
             const Icon = kpi.icon;
             return (
@@ -545,44 +488,6 @@ export default async function DashboardPage() {
         </Card>
 
         <div className="space-y-4">
-          {/* Active timer only */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="mb-2 flex items-center gap-2">
-                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground">
-                  {t("Timer Aktif", "Active Timer")}
-                </span>
-              </div>
-              {activeTimer ? (
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
-                      {activeTimer.description || t("Tanpa judul", "Untitled")}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {activeTimer.userName}
-                      {activeTimer.pausedAt ? ` · ${t("Dijeda", "Paused")}` : ""}
-                    </p>
-                  </div>
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100">
-                    <Clock className="h-4 w-4 text-emerald-600 animate-pulse" />
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-2 py-1 text-center">
-                  <Clock className="h-6 w-6 text-slate-300" />
-                  <p className="text-sm text-muted-foreground">
-                    {t("Tidak ada timer aktif", "No active timer")}
-                  </p>
-                  <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" asChild>
-                    <Link href="/app/time">{t("Mulai", "Start")}</Link>
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
           {/* Finance sidebar: 30d revenue only */}
           <Card className="bg-gradient-to-b from-slate-50 to-white">
             <CardHeader className="pb-2">

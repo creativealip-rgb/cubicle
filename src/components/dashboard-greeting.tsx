@@ -5,8 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 type DashboardGreetingProps = {
   firstName: string;
   lang: "id" | "en";
-  activeProjects: number;
-  dueTasks: number;
 };
 
 const TIME_ZONE = "Asia/Jakarta";
@@ -36,7 +34,7 @@ function getGreeting(date: Date, lang: "id" | "en") {
   return "Good evening";
 }
 
-export function DashboardGreeting({ firstName, lang, activeProjects, dueTasks }: DashboardGreetingProps) {
+export function DashboardGreeting({ firstName, lang }: DashboardGreetingProps) {
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -56,9 +54,7 @@ export function DashboardGreeting({ firstName, lang, activeProjects, dueTasks }:
       <h1 className="text-2xl font-semibold leading-tight tracking-tight text-slate-950">
         {greeting}, {firstName}
       </h1>
-      <p className="text-sm leading-6 text-muted-foreground">
-        {todayLong} · {activeProjects} {lang === "id" ? "proyek aktif" : "active projects"} · {dueTasks} {lang === "id" ? "tugas jatuh tempo" : "due tasks"}
-      </p>
+      <p className="text-sm leading-6 text-muted-foreground">{todayLong}</p>
     </div>
   );
 }
