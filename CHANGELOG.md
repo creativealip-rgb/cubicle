@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.105 — 2026-07-22 — Files: soft folder nav, no full-page flash
+
+- Folder tree + header di **layout** (tetap mounted saat ganti query)
+- Link tree/breadcrumb pakai `next/link` + `scroll={false}` (bukan hard `<a>`)
+- `loading.tsx` cuma skeleton panel list kanan
+
 ## v0.1.104 — 2026-07-22 — Client portal: multi-currency asli, no ≈ base
 
 - Portal client **tidak** pakai `≈ base` / kurs workspace (client bayar currency invoice)

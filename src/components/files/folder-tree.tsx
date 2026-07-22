@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Folder, FolderOpen, ChevronRight, Files } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,9 +17,6 @@ interface FolderItem {
 }
 
 interface FolderTreeProps {
-  currentClientId?: string;
-  currentProjectId?: string;
-  currentFolderId?: string;
   clients: { id: string; name: string }[];
   projects: { id: string; name: string; clientId: string | null }[];
   folders: FolderItem[];
@@ -39,15 +38,16 @@ function scopeHref(params: {
 }
 
 export function FolderTree({
-  currentClientId,
-  currentProjectId,
-  currentFolderId,
   clients,
   projects,
   folders,
   canWrite = false,
 }: FolderTreeProps) {
   const { t } = useT();
+  const sp = useSearchParams();
+  const currentClientId = sp.get("clientId") || undefined;
+  const currentProjectId = sp.get("projectId") || undefined;
+  const currentFolderId = sp.get("folderId") || undefined;
 
   // Folders in the currently active scope (client/project), rendered as a nested tree.
   const scopedFolders = folders.filter(
@@ -74,12 +74,14 @@ export function FolderTree({
             style={{ paddingLeft: `${depth * 12 + 12}px` }}
             asChild
           >
-            <a
+            <Link
               href={scopeHref({
                 clientId: currentClientId,
                 projectId: currentProjectId,
                 folderId: folder.id,
               })}
+              prefetch
+              scroll={false}
             >
               {currentFolderId === folder.id ? (
                 <FolderOpen className="h-3.5 w-3.5 flex-shrink-0 text-primary" />
@@ -87,7 +89,7 @@ export function FolderTree({
                 <Folder className="h-3.5 w-3.5 flex-shrink-0 opacity-60" />
               )}
               <span className="truncate">{folder.name}</span>
-            </a>
+            </Link>
           </Button>
           {canWrite && <FolderRowActions folderId={folder.id} currentName={folder.name} />}
         </div>
@@ -102,7 +104,6 @@ export function FolderTree({
         {t("Folder", "Folders")}
       </p>
 
-      {/* All Files */}
       <Button
         variant="ghost"
         size="sm"
@@ -112,15 +113,13 @@ export function FolderTree({
         )}
         asChild
       >
-        <a href="/app/files">
+        <Link href="/app/files" prefetch scroll={false}>
           <Files className="h-3.5 w-3.5" /> {t("Semua File", "All Files")}
-        </a>
+        </Link>
       </Button>
 
-      {/* Root-level folders (workspace-wide, no client/project) */}
       {!currentClientId && !currentProjectId && renderFolderNodes(null, 0)}
 
-      {/* Clients */}
       {clients.map((client) => (
         <div key={client.id} className="space-y-0.5">
           <Button
@@ -132,18 +131,16 @@ export function FolderTree({
             )}
             asChild
           >
-            <a href={scopeHref({ clientId: client.id })}>
+            <Link href={scopeHref({ clientId: client.id })} prefetch scroll={false}>
               <ChevronRight className="h-3 w-3 opacity-50" />
               <span className="truncate">{client.name}</span>
-            </a>
+            </Link>
           </Button>
 
           {currentClientId === client.id && (
             <>
-              {/* Client-scoped folders */}
               {!currentProjectId && renderFolderNodes(null, 1)}
 
-              {/* Projects under this client */}
               {projects
                 .filter((p) => p.clientId === client.id)
                 .map((project) => (
@@ -157,12 +154,15 @@ export function FolderTree({
                       )}
                       asChild
                     >
-                      <a href={scopeHref({ clientId: client.id, projectId: project.id })}>
+                      <Link
+                        href={scopeHref({ clientId: client.id, projectId: project.id })}
+                        prefetch
+                        scroll={false}
+                      >
                         <Folder className="h-3 w-3 opacity-50" />
                         <span className="truncate">{project.name}</span>
-                      </a>
+                      </Link>
                     </Button>
-                    {/* Project-scoped folders */}
                     {currentProjectId === project.id && renderFolderNodes(null, 3)}
                   </div>
                 ))}

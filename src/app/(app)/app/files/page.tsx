@@ -7,17 +7,11 @@ import { eq, desc, and, isNull } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { FileList } from "@/components/files/file-list";
 import { FileDropZone } from "@/components/files/file-drop-zone";
-import { UploadButton } from "@/components/files/upload-button";
-import { NewFolderButton } from "@/components/files/folder-actions";
-import { FolderTree } from "@/components/files/folder-tree";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import Link from "next/link";
 import { getCurrentLang, createT } from "@/lib/i18n";
 
-async function getWorkspaceId(): Promise<string> {
-  return getWorkspaceForCurrentUser();
-}
-
+/** File list + breadcrumb only — tree lives in layout (no full-page flash). */
 export default async function FilesPage({
   searchParams,
 }: {
@@ -27,7 +21,7 @@ export default async function FilesPage({
   const t = createT(lang);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
-  const workspaceId = await getWorkspaceId();
+  const workspaceId = await getWorkspaceForCurrentUser();
   const member = await assertWorkspaceMember(db, user.id, workspaceId);
   const canWrite = member.role === "owner" || member.role === "member";
 
@@ -36,13 +30,10 @@ export default async function FilesPage({
   const projectId = sp.projectId;
   const folderId = sp.folderId;
 
-  // Fetch files with filters
   const { users } = await import("@/db/schema");
   const conditions = [eq(filesTable.workspaceId, workspaceId)];
   if (clientId) conditions.push(eq(filesTable.clientId, clientId));
   if (projectId) conditions.push(eq(filesTable.projectId, projectId));
-  // Scope files to the active folder: inside a folder show its files,
-  // otherwise show only root-level files (not nested in any folder).
   if (folderId) conditions.push(eq(filesTable.folderId, folderId));
   else conditions.push(isNull(filesTable.folderId));
 
@@ -63,37 +54,36 @@ export default async function FilesPage({
     .where(and(...conditions))
     .orderBy(desc(filesTable.createdAt));
 
-  // Fetch clients, projects, and folders for folder tree
-  const clientList = await db
-    .select({ id: clients.id, name: clients.name })
-    .from(clients)
-    .where(eq(clients.workspaceId, workspaceId))
-    .orderBy(clients.name);
+  const clientList = clientId
+    ? await db
+        .select({ id: clients.id, name: clients.name })
+        .from(clients)
+        .where(and(eq(clients.workspaceId, workspaceId), eq(clients.id, clientId)))
+        .limit(1)
+    : [];
 
-  const projectList = await db
-    .select({ id: projects.id, name: projects.name, clientId: projects.clientId })
-    .from(projects)
-    .where(eq(projects.workspaceId, workspaceId))
-    .orderBy(projects.name);
+  const projectList = projectId
+    ? await db
+        .select({ id: projects.id, name: projects.name, clientId: projects.clientId })
+        .from(projects)
+        .where(and(eq(projects.workspaceId, workspaceId), eq(projects.id, projectId)))
+        .limit(1)
+    : [];
 
   const folderList = await db
     .select({
       id: foldersTable.id,
       name: foldersTable.name,
       parentId: foldersTable.parentId,
-      clientId: foldersTable.clientId,
-      projectId: foldersTable.projectId,
     })
     .from(foldersTable)
-    .where(eq(foldersTable.workspaceId, workspaceId))
-    .orderBy(foldersTable.name);
+    .where(eq(foldersTable.workspaceId, workspaceId));
 
-  // Build breadcrumb path for the active scope
   const crumbs: { label: string; href: string }[] = [
     { label: t("Semua File", "All Files"), href: "/app/files" },
   ];
-  const activeClient = clientId ? clientList.find((c) => c.id === clientId) : undefined;
-  const activeProject = projectId ? projectList.find((p) => p.id === projectId) : undefined;
+  const activeClient = clientList[0];
+  const activeProject = projectList[0];
   if (activeClient) {
     crumbs.push({ label: activeClient.name, href: `/app/files?clientId=${activeClient.id}` });
   }
@@ -103,7 +93,6 @@ export default async function FilesPage({
       href: `/app/files?clientId=${activeClient?.id ?? ""}&projectId=${activeProject.id}`,
     });
   }
-  // Folder ancestry chain
   if (folderId) {
     const chain: { id: string; name: string }[] = [];
     let cursor = folderList.find((f) => f.id === folderId);
@@ -124,77 +113,28 @@ export default async function FilesPage({
   }
 
   return (
-    <div className="space-y-6 min-w-0">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("Berkas", "Files")}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{t("Kelola file workspace-mu", "Manage your workspace files")}</p>
-        </div>
-        {canWrite && (
-          <div className="flex items-center gap-2">
-            <NewFolderButton
-              workspaceId={workspaceId}
-              clientId={clientId}
-              projectId={projectId}
-              parentId={folderId}
-            />
-            <UploadButton
-              workspaceId={workspaceId}
-              clientId={clientId}
-              projectId={projectId}
-              folderId={folderId}
-            />
-          </div>
-        )}
-      </div>
+    <>
+      <nav className="flex items-center gap-1 text-sm text-muted-foreground flex-wrap">
+        {crumbs.map((crumb, i) => (
+          <span key={`${crumb.href}-${i}`} className="flex items-center gap-1">
+            {i > 0 && <ChevronRight className="h-3.5 w-3.5 opacity-50" />}
+            {i === crumbs.length - 1 ? (
+              <span className="font-medium text-foreground">{crumb.label}</span>
+            ) : (
+              <Link href={crumb.href} scroll={false} className="hover:text-foreground hover:underline">
+                {crumb.label}
+              </Link>
+            )}
+          </span>
+        ))}
+      </nav>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Sidebar */}
-        <Card className="lg:col-span-1 h-fit">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <FileText className="h-4 w-4" /> {t("Jelajahi", "Browse")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FolderTree
-              currentClientId={clientId}
-              currentProjectId={projectId}
-              currentFolderId={folderId}
-              clients={clientList}
-              projects={projectList}
-              folders={folderList}
-              canWrite={canWrite}
-            />
-          </CardContent>
-        </Card>
-
-        {/* File list */}
-        <div className="lg:col-span-3 space-y-4 min-w-0">
-          {/* Breadcrumb */}
-          <nav className="flex items-center gap-1 text-sm text-muted-foreground flex-wrap">
-            {crumbs.map((crumb, i) => (
-              <span key={crumb.href} className="flex items-center gap-1">
-                {i > 0 && <ChevronRight className="h-3.5 w-3.5 opacity-50" />}
-                {i === crumbs.length - 1 ? (
-                  <span className="font-medium text-foreground">{crumb.label}</span>
-                ) : (
-                  <a href={crumb.href} className="hover:text-foreground hover:underline">
-                    {crumb.label}
-                  </a>
-                )}
-              </span>
-            ))}
-          </nav>
-
-          <FileDropZone
-            scope={{ workspaceId, clientId, projectId, folderId }}
-            canWrite={canWrite}
-          >
-            <FileList files={finalFiles} workspaceId={workspaceId} />
-          </FileDropZone>
-        </div>
-      </div>
-    </div>
+      <FileDropZone
+        scope={{ workspaceId, clientId, projectId, folderId }}
+        canWrite={canWrite}
+      >
+        <FileList files={finalFiles} workspaceId={workspaceId} />
+      </FileDropZone>
+    </>
   );
 }
