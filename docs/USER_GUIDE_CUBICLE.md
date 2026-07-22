@@ -152,25 +152,27 @@ Badge sidebar:
 
 ### Yang ditampilkan
 
-1. **Greeting** berbasis waktu Jakarta (update periodik)  
+1. **Greeting** berbasis waktu Jakarta (update periodik) + tanggal saja  
+   - Tidak lagi menampilkan “X proyek aktif · Y tugas jatuh tempo” di subtitle  
 2. **Onboarding checklist** (workspace baru)  
-3. Blok **Reminder / due soon**
-   - Tugas jatuh tempo / overdue  
-   - Catatan personal dengan due date  
+3. Blok **Reminder** (active to-do, bukan bell inbox)
+   - Invoice jatuh tempo  
+   - Tugas perlu dikerjakan  
+   - Approval task client  
+   - Kontrak menunggu  
    - Appointment mendatang  
-4. Blok **Kerja**
-   - Ringkas open tasks  
-   - Aktivitas terbaru  
-5. Blok **Keuangan**
-   - Outstanding invoice  
-   - Ringkas revenue / paid (multi-currency aware di format money)  
-6. Shortcut aksi cepat:
-   - Buat klien / task / invoice / start timer (link)
+   - Catatan personal dengan due date  
+4. Blok **Kerja** (KPI ringkas)
+   - **Klien Aktif**  
+   - **Proyek Aktif**  
+   - Card due task/invoice & timer aktif **tidak** di sini (due di Reminder; timer di topbar)  
+5. **Aktivitas terbaru** + sidebar **Keuangan** (revenue 30 hari + pie per klien)
 
 ### Cara pakai
 
-- Cek dulu card due / overdue  
+- Cek dulu list **Reminder**  
 - Klik item → detail resource  
+- Timer: pakai chip di topbar, bukan card dashboard  
 - Selesai kerja harian → lanjut modul Kerja / Invoice  
 
 ---
@@ -747,7 +749,9 @@ Full-page AI chat (`AIChatPanel` variant fullpage). Floating panel juga ada di s
 - List messages + status  
 - Delete draft/template  
 
-Settings terkait: **Reply-To email** di Settings.
+Settings terkait: **Reply-To email** di tab **Branding & Invoice** (`/app/settings?tab=branding`).
+
+Fallback outbound Reply-To: `replyToEmail` → `billingEmail` → email owner. Header **From** tetap `noreply@cubiqlo.com`.
 
 ### 9.2 Support Center — `/app/support`
 
@@ -760,17 +764,21 @@ Settings terkait: **Reply-To email** di Settings.
 
 ### 9.3 Settings — `/app/settings`
 
-Section:
+Layout **tab** (deep-link `?tab=`):
 
-1. **Workspace info** — nama, currency default, tax  
-2. **Branding** — logo workspace  
-3. **Reply-To email**  
-4. **Team manager**
-   - Invite member  
-   - Ubah role  
-   - Remove member  
-   - Limit invite mengikuti plan (`canInviteMember`)  
-5. Link ke Billing  
+| Tab | `?tab=` | Isi |
+|---|---|---|
+| **Workspace** | (default) | Nama workspace, currency default, tax |
+| **Tim** | `team` | Invite member, ubah role, remove member (limit plan) |
+| **Branding & Invoice** | `branding` | Logo, billing name/address/phone/email, **Reply-To email** |
+| **Integrasi** | `integrations` | Google Calendar OAuth (return ke tab ini) |
+| **Lainnya** | `more` | Link Billing + opsi tambahan |
+
+Team manager:
+- Invite member  
+- Ubah role  
+- Remove member  
+- Limit invite mengikuti plan (`canInviteMember`)
 
 ### 9.4 Billing plan app — `/app/billing`
 
@@ -790,7 +798,7 @@ Bayar lewat **Pakasir QRIS**. Plan aktif setelah webhook payment sukses.
 
 | Route | Siapa | Fungsi detail |
 |---|---|---|
-| `/client-portal/[token]` | Klien | Portal full: projects, tasks progress, files download, invoices (exclude archived), activity, package requests, contact buttons, time summary package |
+| `/client-portal/[token]` | Klien | Portal branded + tabbed: **Overview / Projects / Folders / Invoices / Contact**. Header logo/billing workspace. Folders = file manager + **upload klien** (max 25MB). Deep-link `?tab=projects\|files\|invoices\|contact` + `projectId`/`folderId`. Download file client-visible (project-level & client-level). Invoice exclude archived. Contact pakai Reply-To fallback. |
 | `/invoice/[token]` | Klien | Lihat invoice shared, status badge, line items, mark viewed |
 | `/proposal/[token]` | Klien | Lihat + accept/decline proposal |
 | `/contract/[token]` | Klien | Lihat + tanda tangan digital |

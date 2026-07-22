@@ -13,7 +13,7 @@ Built for freelancers, agencies, and small service teams who want to stop juggli
 - **Invoices** — generate from billable time, send public payment link, mark paid
 - **Invoice reminders** — overdue cron, manual reminders, fresh share links, notifications, activity logs
 - **Booking page** — public scheduling, clients pick a slot, double-booking prevented
-- **Client portal** — share selected projects, timeline events, deliverables/files/invoices with each client via secure token or slug
+- **Client portal** — branded workspace header (logo/billing), tabbed portal (Overview / Projects / Folders / Invoices / Contact), client file upload in Folders, invoices + secure token/slug access
 - **Project timeline** — internal and client-visible activity feed for project/task/file/comment updates
 - **Calendar** — see appointments + tasks due
 - **Reports & billing** — AR aging, P&L, cash-flow forecast, Pakasir QRIS Solo/Team checkout
@@ -164,7 +164,7 @@ src/
 │   ├── (app)/onboarding/         # First-time workspace setup
 │   ├── api/                      # Route handlers (webhooks, file upload, etc.)
 │   ├── booking/[slug]/           # Public booking page (no auth)
-│   ├── client-portal/[token]/    # Public client portal (token-based)
+│   ├── client-portal/[token]/    # Public client portal (token tabs + folder upload)
 │   ├── invoice/[token]/          # Public invoice payment (token-based)
 │   ├── login, signup, forgot-password
 │   ├── page.tsx                  # Public landing

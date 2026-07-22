@@ -29,7 +29,7 @@ Latest verified commit: `2babd61 fix: close forms before refresh`
 | App shell sidebar/topbar | `/app/*` | DONE | Grouped sidebar, workspace dropdown, global search entry, create button, timer, notifications. |
 | Auth login/signup/reset | `/login`, `/signup`, `/forgot-password`, `/reset-password` | DONE | Basic auth flow live. |
 | Workspace context | `active_workspace_id` cookie + workspace helpers | DONE | Auto-bootstrap and membership checks exist. |
-| Dashboard | `/app/dashboard` | DONE | P0 meeting layout done: Reminder → Kerja → Keuangan, due cards accurate, compact activity, Jakarta-time greeting updates every 60s. |
+| Dashboard | `/app/dashboard` | DONE | Reminder → Kerja (Klien/Proyek only) → activity + Keuangan. Greeting date-only. Due/timer not duplicated (Reminder + topbar). |
 | Notifications | `/api/notifications` | PARTIAL | In-app notifications exist; deeper WA/push automation pending. |
 
 ## Client operations
@@ -40,7 +40,7 @@ Latest verified commit: `2babd61 fix: close forms before refresh`
 | Client create | `/app/clients/new`, `/api/clients/create` | DONE | Dedicated non-modal fallback created. |
 | Client detail | `/app/clients/[clientId]` | DONE | Client profile/detail route exists. |
 | Client PDF export | `/api/clients/[clientId]/export/pdf`, `/api/clients/export/pdf` | DONE | Single client PDF and bulk combined PDF shipped. |
-| Client portal token route | `/client-portal/[token]` | DONE | Public client-facing portal route exists. |
+| Client portal token route | `/client-portal/[token]` | DONE | Tabs Overview/Projects/Folders/Invoices/Contact; workspace branding header; Folders upload via `POST /api/client-portal/files/upload`. |
 | Short client portal slug UX | Client form / portal fields | DONE | Auto slug generation and cleanup in client form. |
 | Portal access audit | `portal_visits` | PARTIAL | Schema exists; deeper analytics/reporting pending. |
 
@@ -146,12 +146,22 @@ Latest verified commit: `2babd61 fix: close forms before refresh`
 
 | Feature | Route/Doc | Status | Notes |
 | --- | --- | --- | --- |
-| Settings | `/app/settings` | DONE | Workspace/user settings route exists. |
-| Team settings | `/app/settings/team` | PARTIAL | Mentioned in docs; verify current UI depth before marking done. |
-| Workspace settings | `/app/settings/workspace` | PARTIAL | Mentioned in docs; verify current UI depth before marking done. |
+| Settings | `/app/settings` | DONE | Tabbed: Workspace / Tim / Branding & Invoice / Integrasi / Lainnya (`?tab=`). |
+| Team settings | `/app/settings?tab=team` | DONE | Invite, role, remove member inside settings Tim tab. |
+| Workspace settings | `/app/settings` | DONE | Workspace info on default tab; branding + Reply-To on Branding tab. |
+| Reply-To branding | `resolveWorkspaceReplyTo` | DONE | replyTo → billingEmail → owner; used by outbound mail + portal contact. |
 | Env audit | `/api/health/env` | DONE | Guarded and secret-safe from earlier hardening. |
 | Smoke tests | `scripts/smoke.mjs` | DONE | Smoke script exists. |
 | Backups/monitoring | docs/ops + cron | DONE | Documented active ops jobs from prior phase. |
+
+## Current verified live checks — 2026-07-22 (v0.1.98)
+
+```text
+Live cubiqlo.com healthy · app v0.1.98
+Dashboard: greeting date-only · Kerja = Klien/Proyek · no due KPI cards · no timer card
+Settings tabs: ?tab=team|branding|integrations|more · Reply-To on branding
+Client portal: branding header · tabs · Folders upload POST /api/client-portal/files/upload
+```
 
 ## Current verified live checks — 2026-07-15 (notes polish v0.1.30)
 
