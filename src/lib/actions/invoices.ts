@@ -13,6 +13,7 @@ import {
   workspaces,
   clients,
   projects,
+  packages,
 } from "@/db/schema";
 import { eq, and, desc, sql, inArray, lt } from "drizzle-orm";
 import { z } from "zod";
@@ -168,6 +169,88 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
           terms: parsed.terms || ws?.defaultInvoiceTerms || null,
         })
         .returning();
+
+      // Auto line item: project name + nominal dari project yang dipilih.
+      if (parsed.projectId && inv) {
+        const [proj] = await tx
+          .select({
+            id: projects.id,
+            name: projects.name,
+            clientId: projects.clientId,
+            workspaceId: projects.workspaceId,
+            billingType: projects.billingType,
+            budget: projects.budget,
+            rate: projects.rate,
+            currency: projects.currency,
+            selectedPackageId: projects.selectedPackageId,
+          })
+          .from(projects)
+          .where(
+            and(
+              eq(projects.id, parsed.projectId),
+              eq(projects.workspaceId, workspaceId),
+              eq(projects.clientId, parsed.clientId),
+            ),
+          )
+          .limit(1);
+
+        if (proj) {
+          let unitPrice = 0;
+          if (proj.billingType === "project") {
+            unitPrice = Number(proj.budget ?? 0) || 0;
+          } else if (proj.billingType === "package" && proj.selectedPackageId) {
+            const [pkg] = await tx
+              .select({
+                price: packages.price,
+                customPrice: packages.customPrice,
+              })
+              .from(packages)
+              .where(eq(packages.id, proj.selectedPackageId))
+              .limit(1);
+            if (pkg) {
+              unitPrice = Number(pkg.customPrice ?? pkg.price) || 0;
+            }
+          } else if (proj.billingType === "hours") {
+            // Hours: seed project name only; amount 0 — isi via import timesheet / edit manual.
+            unitPrice = 0;
+          } else if (proj.budget != null) {
+            unitPrice = Number(proj.budget) || 0;
+          }
+
+          // Always seed one line when project selected (name + amount)
+          const amount = String(unitPrice);
+          await tx.insert(invoiceItems).values({
+            invoiceId: inv.id,
+            description: proj.name,
+            quantity: "1",
+            unitPrice: amount,
+            amount,
+            sourceType: "manual",
+          });
+
+          // inv.tax on insert holds default tax RATE % (same as recalculateInvoice)
+          const taxRate = Number(ws?.defaultTaxRate ?? inv.tax ?? 0) || 0;
+          const taxAmount = (unitPrice * taxRate) / 100;
+          const total = unitPrice + taxAmount;
+          await tx
+            .update(invoices)
+            .set({
+              subtotal: amount,
+              tax: String(taxAmount),
+              total: String(total),
+              currency: parsed.currency || proj.currency || inv.currency,
+              updatedAt: new Date(),
+            })
+            .where(eq(invoices.id, inv.id));
+
+          const [refreshed] = await tx
+            .select()
+            .from(invoices)
+            .where(eq(invoices.id, inv.id))
+            .limit(1);
+          return refreshed ?? inv;
+        }
+      }
 
       return inv;
     } catch (err: unknown) {

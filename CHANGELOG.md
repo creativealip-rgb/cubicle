@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.109 — 2026-07-22 — Invoice: auto line item dari project
+
+- Buat invoice + pilih project → rincian item auto: **nama project** + **nominal**
+  - Per proyek: `budget`
+  - Package: harga package terpilih
+  - Hours: nama project, nominal 0 (isi timesheet/manual)
+- Total invoice dihitung ulang setelah seed
+
 ## v0.1.108 — 2026-07-22 — Portal: loading skeleton + micro-animations
 
 - `loading.tsx` skeleton full portal page
