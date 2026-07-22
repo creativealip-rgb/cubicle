@@ -136,12 +136,12 @@ export default async function SettingsPage({
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Coins className="h-5 w-5" /> {t("Kurs dashboard", "Dashboard FX rates")}
+                    <Coins className="h-5 w-5" /> {t("Kurs finance", "Finance FX rates")}
                   </CardTitle>
                   <CardDescription>
                     {t(
-                      "Konversi multi-currency ke base currency untuk ringkasan dashboard (manual rate).",
-                      "Convert multi-currency totals into base currency for dashboard summaries (manual rates).",
+                      "Konversi multi-currency ke base currency untuk ringkasan dashboard, laporan, dan KPI pengeluaran (manual rate).",
+                      "Convert multi-currency totals into base currency for dashboard, reports, and expense KPIs (manual rates).",
                     )}
                   </CardDescription>
                 </CardHeader>

@@ -10,6 +10,7 @@ import {
   clients,
   payments,
   invoices,
+  workspaceCurrencyRates,
 } from "@/db/schema";
 import { eq, desc, and, gte, lte } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
@@ -26,6 +27,12 @@ import { getCurrentLang, createT } from "@/lib/i18n";
 import { formatMoney } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Suspense } from "react";
+import {
+  aggregateToBase,
+  buildRateMap,
+  convertToBase,
+  normalizeCurrency,
+} from "@/lib/currency-base";
 
 const PAGE_SIZE = 25;
 
@@ -40,17 +47,6 @@ function monthBounds(month: string) {
   const lastDay = new Date(y, m, 0).getDate();
   const end = `${month}-${String(lastDay).padStart(2, "0")}`;
   return { start, end };
-}
-
-function formatMultiCurrency(totals: Record<string, number>) {
-  const entries = Object.entries(totals).filter(([, v]) => v !== 0);
-  if (entries.length === 0) return formatMoney(0, "IDR");
-  // Primary = largest abs, rest as secondary lines
-  entries.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
-  return {
-    primary: formatMoney(entries[0][1], entries[0][0]),
-    secondary: entries.slice(1).map(([c, v]) => formatMoney(v, c)),
-  };
 }
 
 export default async function ExpensesPage({
@@ -110,7 +106,17 @@ export default async function ExpensesPage({
     .orderBy(clients.name);
   const clientOpts: ClientOption[] = clientRows;
 
-  // Month expenses (for KPI + breakdown) — all currencies, no search filter
+  // Month expenses (for KPI + breakdown) — convert to base currency
+  const baseCurrency = normalizeCurrency(ws.defaultCurrency || "IDR");
+  const rateRows = await db
+    .select({
+      fromCurrency: workspaceCurrencyRates.fromCurrency,
+      rate: workspaceCurrencyRates.rate,
+    })
+    .from(workspaceCurrencyRates)
+    .where(eq(workspaceCurrencyRates.workspaceId, ws.id));
+  const rateMap = buildRateMap(rateRows);
+
   const monthExpenseRows = await db
     .select({
       amount: expenses.amount,
@@ -129,13 +135,18 @@ export default async function ExpensesPage({
       ),
     );
 
-  const spentByCurrency: Record<string, number> = {};
-  for (const e of monthExpenseRows) {
-    spentByCurrency[e.currency] = (spentByCurrency[e.currency] ?? 0) + parseFloat(e.amount);
-  }
-  const spentFmt = formatMultiCurrency(spentByCurrency);
+  const spentAgg = aggregateToBase(
+    monthExpenseRows.map((e) => ({
+      amount: parseFloat(e.amount),
+      currency: e.currency,
+    })),
+    baseCurrency,
+    rateMap,
+  );
+  const spentTotal = spentAgg.total;
+  const missingFx = new Set(spentAgg.missingCurrencies);
 
-  // Income this month — group by invoice currency (payments inherit invoice currency)
+  // Income this month — convert payments to base
   const incomeRows = await db
     .select({ amount: payments.amount, currency: invoices.currency })
     .from(payments)
@@ -147,51 +158,49 @@ export default async function ExpensesPage({
         lte(payments.paidAt, monthEnd),
       ),
     );
-  const incomeByCurrency: Record<string, number> = {};
-  for (const p of incomeRows) {
-    incomeByCurrency[p.currency] = (incomeByCurrency[p.currency] ?? 0) + parseFloat(p.amount);
-  }
-  const incomeFmt = formatMultiCurrency(incomeByCurrency);
+  const incomeAgg = aggregateToBase(
+    incomeRows.map((p) => ({
+      amount: parseFloat(p.amount),
+      currency: p.currency,
+    })),
+    baseCurrency,
+    rateMap,
+  );
+  const incomeTotal = incomeAgg.total;
+  for (const c of incomeAgg.missingCurrencies) missingFx.add(c);
 
-  // Net only for currencies present in either side
-  const netByCurrency: Record<string, number> = {};
-  for (const c of new Set([...Object.keys(incomeByCurrency), ...Object.keys(spentByCurrency)])) {
-    netByCurrency[c] = (incomeByCurrency[c] ?? 0) - (spentByCurrency[c] ?? 0);
-  }
-  const netFmt = formatMultiCurrency(netByCurrency);
-  const netPrimaryCurrency = Object.entries(netByCurrency).sort(
-    (a, b) => Math.abs(b[1]) - Math.abs(a[1]),
-  )[0];
-  const netPositive = !netPrimaryCurrency || netPrimaryCurrency[1] >= 0;
+  const netTotal = incomeTotal - spentTotal;
+  const netPositive = netTotal >= 0;
+  const missingFxList = Array.from(missingFx).sort();
 
-  // Category breakdown — per currency bucket, show dominant currency bars
-  const byCategory: Record<string, { name: string; color: string; totals: Record<string, number> }> = {};
+  // Category breakdown in base currency
+  const byCategory: Record<string, { name: string; color: string; total: number }> = {};
   for (const e of monthExpenseRows) {
+    const converted = convertToBase(
+      parseFloat(e.amount),
+      e.currency,
+      baseCurrency,
+      rateMap,
+    );
+    if (converted === null) continue;
     const key = e.categoryId ?? "uncategorized";
     if (!byCategory[key]) {
       byCategory[key] = {
         name: e.categoryName ?? t("Tanpa Kategori", "Uncategorized"),
         color: e.categoryColor ?? "#64748b",
-        totals: {},
+        total: 0,
       };
     }
-    byCategory[key].totals[e.currency] =
-      (byCategory[key].totals[e.currency] ?? 0) + parseFloat(e.amount);
+    byCategory[key].total += converted;
   }
-  // Prefer IDR for bar scale, else largest currency total overall
-  const barCurrency =
-    spentByCurrency.IDR != null
-      ? "IDR"
-      : Object.entries(spentByCurrency).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "IDR";
-  const barTotal = spentByCurrency[barCurrency] ?? 0;
+  const barTotal = spentTotal;
   const categoryBreakdown = Object.values(byCategory)
     .map((c) => ({
       name: c.name,
       color: c.color,
-      primary: c.totals[barCurrency] ?? 0,
-      all: c.totals,
+      primary: c.total,
     }))
-    .sort((a, b) => b.primary - a.primary || Object.values(b.all).reduce((s, n) => s + n, 0) - Object.values(a.all).reduce((s, n) => s + n, 0));
+    .sort((a, b) => b.primary - a.primary);
 
   // List filters
   const listConditions = [eq(expenses.workspaceId, ws.id)];
@@ -294,11 +303,26 @@ export default async function ExpensesPage({
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{t("Pengeluaran", "Expenses")}</h1>
           <p className="text-sm text-slate-500 mt-1">
-            {t("Catat pengeluaran biar tahu berapa yang tersisa.", "Track expenses to know what's left.")}
+            {t(
+              `KPI setara ${baseCurrency} (kurs manual workspace). Daftar item tetap currency asli.`,
+              `KPI in ${baseCurrency} (workspace manual FX). List items keep original currency.`,
+            )}
           </p>
         </div>
         <ExpenseCsvExportButton month={month} categoryId={categoryId || undefined} q={q || undefined} />
       </div>
+
+      {missingFxList.length > 0 && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {t(
+            `Kurs belum di-set: ${missingFxList.join(", ")}. Angka currency itu di-skip di ringkasan. `,
+            `Missing FX rates: ${missingFxList.join(", ")}. Those currencies are skipped in summaries. `,
+          )}
+          <Link href="/app/settings?tab=workspace" className="underline underline-offset-2 font-medium">
+            {t("Atur di Settings", "Set in Settings")}
+          </Link>
+        </div>
+      )}
 
       {/* Stats row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -311,14 +335,11 @@ export default async function ExpensesPage({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-semibold tabular-nums whitespace-nowrap">
-              {typeof spentFmt === "string" ? spentFmt : spentFmt.primary}
+              {formatMoney(spentTotal, baseCurrency)}
             </div>
-            {typeof spentFmt !== "string" &&
-              spentFmt.secondary.map((s) => (
-                <p key={s} className="text-xs text-slate-500 mt-1 tabular-nums">
-                  {s}
-                </p>
-              ))}
+            <p className="text-xs text-slate-500 mt-1">
+              {t(`setara ${baseCurrency}`, `equiv. ${baseCurrency}`)}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -330,14 +351,8 @@ export default async function ExpensesPage({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-semibold tabular-nums whitespace-nowrap">
-              {typeof incomeFmt === "string" ? incomeFmt : incomeFmt.primary}
+              {formatMoney(incomeTotal, baseCurrency)}
             </div>
-            {typeof incomeFmt !== "string" &&
-              incomeFmt.secondary.map((s) => (
-                <p key={s} className="text-xs text-slate-500 mt-1 tabular-nums">
-                  {s}
-                </p>
-              ))}
             <p className="text-xs text-slate-500 mt-1">{t("dari invoice lunas", "from paid invoices")}</p>
           </CardContent>
         </Card>
@@ -354,16 +369,10 @@ export default async function ExpensesPage({
                 netPositive ? "text-emerald-600" : "text-red-600"
               }`}
             >
-              {typeof netFmt === "string" ? netFmt : netFmt.primary}
+              {formatMoney(netTotal, baseCurrency)}
             </div>
-            {typeof netFmt !== "string" &&
-              netFmt.secondary.map((s) => (
-                <p key={s} className="text-xs text-slate-500 mt-1 tabular-nums">
-                  {s}
-                </p>
-              ))}
             <p className="text-xs text-slate-500 mt-1">
-              {t("per mata uang (tanpa konversi)", "per currency (no conversion)")}
+              {t(`setara ${baseCurrency} (kurs manual)`, `equiv. ${baseCurrency} (manual FX)`)}
             </p>
           </CardContent>
         </Card>
@@ -395,14 +404,13 @@ export default async function ExpensesPage({
             <CardTitle className="text-base flex items-center gap-2">
               <Tag className="h-4 w-4" />
               {t("Bulan ini per kategori", "This month by category")}
-              <span className="text-xs font-normal text-slate-500">({barCurrency})</span>
+              <span className="text-xs font-normal text-slate-500">({baseCurrency})</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               {categoryBreakdown.map((c) => {
                 const pct = barTotal > 0 ? (c.primary / barTotal) * 100 : 0;
-                const otherCurrencies = Object.entries(c.all).filter(([cur]) => cur !== barCurrency);
                 return (
                   <div key={c.name} className="flex items-center gap-3">
                     <div className="flex items-center gap-2 w-40 shrink-0">
@@ -416,12 +424,7 @@ export default async function ExpensesPage({
                       />
                     </div>
                     <span className="text-sm tabular-nums w-32 text-right whitespace-nowrap shrink-0">
-                      {formatMoney(c.primary, barCurrency)}
-                      {otherCurrencies.length > 0 && (
-                        <span className="block text-[10px] text-slate-400">
-                          {otherCurrencies.map(([cur, v]) => formatMoney(v, cur)).join(" · ")}
-                        </span>
-                      )}
+                      {formatMoney(c.primary, baseCurrency)}
                     </span>
                     <span className="text-xs text-slate-500 w-10 text-right shrink-0">
                       {pct.toFixed(0)}%

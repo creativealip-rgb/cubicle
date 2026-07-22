@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.101 — 2026-07-22 — Reports + expenses ke base currency
+
+- Halaman **Laporan** convert aggregate (P&L, aging, top client/expense, cashflow, project expense) ke base currency via kurs manual
+- Halaman **Pengeluaran** KPI + breakdown kategori convert ke base currency
+- Detail baris invoice/expense tetap currency asli; missing rate di-skip + warning Settings
+- Copy Settings **Kurs dashboard** update cakup reports/expenses
+
 ## v0.1.100 — 2026-07-22 — Notif dedupe + kurs ke tab Workspace
 
 - Bell spam fix: `invoice_overdue` / `task_due_soon` dedupe (skip jika unread sama, cooldown 24h)

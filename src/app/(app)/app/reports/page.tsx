@@ -10,6 +10,7 @@ import {
   payments,
   projects,
   expenseRecurring,
+  workspaceCurrencyRates,
 } from "@/db/schema";
 import { eq, and, sql, desc, gte, inArray } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
@@ -34,6 +35,12 @@ import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { formatMoney } from "@/lib/utils";
 import {
+  buildRateMap,
+  convertToBase,
+  normalizeCurrency,
+  type RateMap,
+} from "@/lib/currency-base";
+import {
   TrendingUp,
   TrendingDown,
   AlertCircle,
@@ -43,67 +50,55 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-type MoneyMap = Record<string, number>;
-
-function addMoney(map: MoneyMap, currency: string, amount: number) {
-  const code = (currency || "IDR").toUpperCase();
-  map[code] = (map[code] ?? 0) + amount;
-}
-
-function moneyEntries(map: MoneyMap): Array<[string, number]> {
-  return Object.entries(map)
-    .filter(([, v]) => Math.abs(v) > 0.000001)
-    .sort(([a], [b]) => {
-      if (a === "IDR") return -1;
-      if (b === "IDR") return 1;
-      return a.localeCompare(b);
-    });
-}
-
-function renderMoneyLines(
-  map: MoneyMap,
+function renderBaseMoney(
+  amount: number,
+  baseCurrency: string,
   opts: {
     className?: string;
     zero?: string;
     signed?: boolean;
-    secondaryClassName?: string;
   } = {},
 ) {
-  const entries = moneyEntries(map);
-  if (entries.length === 0) {
+  if (!Number.isFinite(amount) || Math.abs(amount) < 0.000001) {
     return (
       <span className={opts.className ?? "text-2xl font-semibold text-slate-400"}>
-        {opts.zero ?? "—"}
+        {opts.zero ?? formatMoney(0, baseCurrency)}
       </span>
     );
   }
+  const signed =
+    opts.signed && amount !== 0
+      ? amount > 0
+        ? `+${formatMoney(amount, baseCurrency)}`
+        : `−${formatMoney(Math.abs(amount), baseCurrency)}`
+      : formatMoney(amount, baseCurrency);
+  const tone =
+    opts.signed && amount !== 0
+      ? amount > 0
+        ? "text-emerald-600"
+        : "text-red-600"
+      : "";
   return (
-    <div className="space-y-0.5">
-      {entries.map(([currency, amount], idx) => {
-        const signed =
-          opts.signed && amount !== 0
-            ? amount > 0
-              ? `+${formatMoney(amount, currency)}`
-              : `−${formatMoney(Math.abs(amount), currency)}`
-            : formatMoney(amount, currency);
-        const tone =
-          opts.signed && amount !== 0
-            ? amount > 0
-              ? "text-emerald-600"
-              : "text-red-600"
-            : "";
-        const size =
-          idx === 0
-            ? opts.className ?? "text-2xl font-semibold"
-            : opts.secondaryClassName ?? "text-sm text-slate-600";
-        return (
-          <div key={currency} className={`${size} tabular-nums ${tone}`.trim()}>
-            {signed}
-          </div>
-        );
-      })}
+    <div className={`${opts.className ?? "text-2xl font-semibold"} tabular-nums ${tone}`.trim()}>
+      {signed}
     </div>
   );
+}
+
+function trackMissing(
+  missing: Set<string>,
+  currency: string,
+  amount: number,
+  baseCurrency: string,
+  rates: RateMap,
+): number | null {
+  const converted = convertToBase(amount, currency, baseCurrency, rates);
+  if (converted === null) {
+    const from = normalizeCurrency(currency);
+    if (from !== normalizeCurrency(baseCurrency)) missing.add(from);
+    return null;
+  }
+  return converted;
 }
 
 function monthKeyFromDate(d: Date) {
@@ -126,6 +121,16 @@ export default async function ReportsPage() {
   const user = requireUser(session?.user);
   const ws = await getWorkspaceFullForCurrentUser();
   await assertWorkspaceMember(db, user.id, ws.id);
+  const baseCurrency = normalizeCurrency(ws.defaultCurrency || "IDR");
+  const rateRows = await db
+    .select({
+      fromCurrency: workspaceCurrencyRates.fromCurrency,
+      rate: workspaceCurrencyRates.rate,
+    })
+    .from(workspaceCurrencyRates)
+    .where(eq(workspaceCurrencyRates.workspaceId, ws.id));
+  const rateMap = buildRateMap(rateRows);
+  const missingFx = new Set<string>();
 
   const today = new Date().toISOString().slice(0, 10);
   const yearStart = `${new Date().getFullYear()}-01-01`;
@@ -178,7 +183,6 @@ export default async function ReportsPage() {
   type ClientAgg = {
     clientId: string;
     clientName: string;
-    currency: string;
     invoiced: number;
     paid: number;
     unpaid: number;
@@ -186,45 +190,45 @@ export default async function ReportsPage() {
   };
   const clientAgg = new Map<string, ClientAgg>();
   for (const row of clientInvoiceRows) {
-    const key = `${row.clientId}::${row.currency}`;
-    const inv = parseFloat(row.total ?? "0");
-    const paid =
+    const invRaw = parseFloat(row.total ?? "0");
+    const paidRaw =
       row.status === "paid"
-        ? inv
-        : Math.min(inv, paidByInvoice.get(row.invoiceId) ?? 0);
-    const unpaid = Math.max(0, inv - paid);
-    const cur = clientAgg.get(key) ?? {
+        ? invRaw
+        : Math.min(invRaw, paidByInvoice.get(row.invoiceId) ?? 0);
+    const unpaidRaw = Math.max(0, invRaw - paidRaw);
+    const inv = trackMissing(missingFx, row.currency, invRaw, baseCurrency, rateMap);
+    const paid = trackMissing(missingFx, row.currency, paidRaw, baseCurrency, rateMap);
+    const unpaid = trackMissing(missingFx, row.currency, unpaidRaw, baseCurrency, rateMap);
+    if (inv === null && paid === null && unpaid === null) continue;
+    const cur = clientAgg.get(row.clientId) ?? {
       clientId: row.clientId,
       clientName: row.clientName,
-      currency: row.currency,
       invoiced: 0,
       paid: 0,
       unpaid: 0,
       invoiceCount: 0,
     };
-    cur.invoiced += inv;
-    cur.paid += paid;
-    cur.unpaid += unpaid;
+    cur.invoiced += inv ?? 0;
+    cur.paid += paid ?? 0;
+    cur.unpaid += unpaid ?? 0;
     cur.invoiceCount += 1;
-    clientAgg.set(key, cur);
+    clientAgg.set(row.clientId, cur);
   }
   const clientRows = Array.from(clientAgg.values()).sort(
     (a, b) => b.invoiced - a.invoiced,
   );
 
-  // Collection health per currency (YTD, non-cancelled)
-  const collectionByCurrency: Record<
-    string,
-    { invoiced: number; paid: number }
-  > = {};
+  // Collection health in base currency (YTD, non-cancelled)
+  let collectionInvoiced = 0;
+  let collectionPaid = 0;
   for (const c of clientRows) {
-    const cur = collectionByCurrency[c.currency] ?? { invoiced: 0, paid: 0 };
-    cur.invoiced += c.invoiced;
-    cur.paid += c.paid;
-    collectionByCurrency[c.currency] = cur;
+    collectionInvoiced += c.invoiced;
+    collectionPaid += c.paid;
   }
+  const collectionRate =
+    collectionInvoiced > 0 ? Math.round((collectionPaid / collectionInvoiced) * 100) : null;
 
-  // ─── Monthly P&L (last 6 months) ───
+  // ─── Monthly P&L (last 6 months) — convert to base ───
   const incomeRows = await db
     .select({
       month: sql<string>`to_char(${payments.paidAt}, 'YYYY-MM')`,
@@ -256,47 +260,46 @@ export default async function ReportsPage() {
     )
     .groupBy(sql`to_char(${expenses.date}, 'YYYY-MM')`, expenses.currency);
 
-  const incomeByMonth: Record<string, MoneyMap> = {};
+  const incomeByMonth: Record<string, number> = {};
   incomeRows.forEach((r) => {
-    if (!incomeByMonth[r.month]) incomeByMonth[r.month] = {};
-    addMoney(incomeByMonth[r.month], r.currency, parseFloat(r.total ?? "0"));
+    const converted = trackMissing(
+      missingFx,
+      r.currency,
+      parseFloat(r.total ?? "0"),
+      baseCurrency,
+      rateMap,
+    );
+    if (converted === null) return;
+    incomeByMonth[r.month] = (incomeByMonth[r.month] ?? 0) + converted;
   });
-  const expensesByMonth: Record<string, MoneyMap> = {};
+  const expensesByMonth: Record<string, number> = {};
   expenseRows.forEach((r) => {
-    if (!expensesByMonth[r.month]) expensesByMonth[r.month] = {};
-    addMoney(expensesByMonth[r.month], r.currency, parseFloat(r.total ?? "0"));
+    const converted = trackMissing(
+      missingFx,
+      r.currency,
+      parseFloat(r.total ?? "0"),
+      baseCurrency,
+      rateMap,
+    );
+    if (converted === null) return;
+    expensesByMonth[r.month] = (expensesByMonth[r.month] ?? 0) + converted;
   });
 
-  // Window totals (6 months) — label honestly, not "YTD"
-  const windowIncome: MoneyMap = {};
-  const windowExpense: MoneyMap = {};
+  // Window totals (6 months) in base
+  let windowIncome = 0;
+  let windowExpense = 0;
   for (const m of months) {
-    for (const [cur, amt] of Object.entries(incomeByMonth[m] ?? {})) {
-      addMoney(windowIncome, cur, amt);
-    }
-    for (const [cur, amt] of Object.entries(expensesByMonth[m] ?? {})) {
-      addMoney(windowExpense, cur, amt);
-    }
+    windowIncome += incomeByMonth[m] ?? 0;
+    windowExpense += expensesByMonth[m] ?? 0;
   }
-  const windowNet: MoneyMap = {};
-  for (const cur of new Set([
-    ...Object.keys(windowIncome),
-    ...Object.keys(windowExpense),
-  ])) {
-    windowNet[cur] = (windowIncome[cur] ?? 0) - (windowExpense[cur] ?? 0);
-  }
+  const windowNet = windowIncome - windowExpense;
 
   const activeMonths = months.filter((m) => {
-    const inc = moneyEntries(incomeByMonth[m] ?? {}).length > 0;
-    const exp = moneyEntries(expensesByMonth[m] ?? {}).length > 0;
-    return inc || exp;
+    return (incomeByMonth[m] ?? 0) > 0 || (expensesByMonth[m] ?? 0) > 0;
   });
   const pnlMonths = activeMonths.length > 0 ? activeMonths : months.slice(-1);
   const pnlMax = Math.max(
-    ...pnlMonths.flatMap((m) => [
-      ...Object.values(incomeByMonth[m] ?? {}),
-      ...Object.values(expensesByMonth[m] ?? {}),
-    ]),
+    ...pnlMonths.flatMap((m) => [incomeByMonth[m] ?? 0, expensesByMonth[m] ?? 0]),
     1,
   );
 
@@ -331,8 +334,8 @@ export default async function ReportsPage() {
     )
     .orderBy(invoices.dueDate);
 
-  type Bucket = { count: number; amounts: MoneyMap };
-  const emptyBucket = (): Bucket => ({ count: 0, amounts: {} });
+  type Bucket = { count: number; amount: number };
+  const emptyBucket = (): Bucket => ({ count: 0, amount: 0 });
   const buckets = {
     current: emptyBucket(),
     days_0_30: emptyBucket(),
@@ -346,18 +349,27 @@ export default async function ReportsPage() {
     invoiceNumber: string;
     client: string;
     remaining: number;
+    remainingBase: number | null;
     currency: string;
     dueDate: string;
     daysOverdue: number;
   }> = [];
-  const outstanding: MoneyMap = {};
-  const overdueTotals: MoneyMap = {};
+  let outstanding = 0;
+  let overdueTotals = 0;
 
   for (const r of agingRows) {
     const total = parseFloat(r.total ?? "0");
     const paid = parseFloat(r.paid ?? "0");
     const remaining = Math.max(0, total - paid);
     if (remaining <= 0.000001) continue;
+
+    const remainingBase = trackMissing(
+      missingFx,
+      r.currency,
+      remaining,
+      baseCurrency,
+      rateMap,
+    );
 
     const od = r.daysOverdue ?? 0;
     let bucket: Bucket;
@@ -368,16 +380,19 @@ export default async function ReportsPage() {
     else bucket = buckets.days_90_plus;
 
     bucket.count += 1;
-    addMoney(bucket.amounts, r.currency, remaining);
-    addMoney(outstanding, r.currency, remaining);
+    if (remainingBase !== null) {
+      bucket.amount += remainingBase;
+      outstanding += remainingBase;
+    }
 
     if (od > 0) {
-      addMoney(overdueTotals, r.currency, remaining);
+      if (remainingBase !== null) overdueTotals += remainingBase;
       overdueItems.push({
         id: r.id,
         invoiceNumber: r.invoiceNumber,
         client: r.clientName,
         remaining,
+        remainingBase,
         currency: r.currency,
         dueDate: r.dueDate ?? "",
         daysOverdue: od,
@@ -385,24 +400,8 @@ export default async function ReportsPage() {
     }
   }
 
-  // Collection rate: prefer IDR if present, else first currency; show multi-line rates
-  const collectionRates = Object.entries(collectionByCurrency)
-    .filter(([, v]) => v.invoiced > 0)
-    .sort(([a], [b]) => {
-      if (a === "IDR") return -1;
-      if (b === "IDR") return 1;
-      return a.localeCompare(b);
-    })
-    .map(([currency, v]) => ({
-      currency,
-      rate: Math.round((v.paid / v.invoiced) * 100),
-      invoiced: v.invoiced,
-      paid: v.paid,
-    }));
-  const primaryCollection = collectionRates[0];
-
-  // ─── Top expense categories (calendar YTD) ───
-  const topCats = await db
+  // ─── Top expense categories (calendar YTD) — base currency ───
+  const topCatRows = await db
     .select({
       name: expenseCategories.name,
       color: expenseCategories.color,
@@ -419,10 +418,36 @@ export default async function ReportsPage() {
       and(eq(expenses.workspaceId, ws.id), gte(expenses.date, yearStart)),
     )
     .groupBy(expenseCategories.name, expenseCategories.color, expenses.currency)
-    .orderBy(desc(sql`sum(${expenses.amount})`))
-    .limit(10);
+    .orderBy(desc(sql`sum(${expenses.amount})`));
 
-  // ─── Per-project expenses (by currency, no cross-sum) ───
+  type CatAgg = { name: string; color: string | null; total: number; count: number };
+  const catAgg = new Map<string, CatAgg>();
+  for (const c of topCatRows) {
+    const converted = trackMissing(
+      missingFx,
+      c.currency,
+      parseFloat(c.total ?? "0"),
+      baseCurrency,
+      rateMap,
+    );
+    if (converted === null) continue;
+    const key = c.name ?? "__uncat__";
+    const cur = catAgg.get(key) ?? {
+      name: c.name ?? t("Tanpa kategori", "Uncategorized"),
+      color: c.color,
+      total: 0,
+      count: 0,
+    };
+    cur.total += converted;
+    cur.count += Number(c.count ?? 0);
+    if (!cur.color && c.color) cur.color = c.color;
+    catAgg.set(key, cur);
+  }
+  const topCats = Array.from(catAgg.values())
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 10);
+
+  // ─── Per-project expenses (base currency) ───
   const projectExpenseRows = await db
     .select({
       id: projects.id,
@@ -443,29 +468,33 @@ export default async function ReportsPage() {
     id: string;
     name: string;
     clientName: string | null;
-    amounts: MoneyMap;
+    amount: number;
     count: number;
   };
   const projectAgg = new Map<string, ProjectAgg>();
   for (const r of projectExpenseRows) {
+    const converted = trackMissing(
+      missingFx,
+      r.currency ?? "IDR",
+      parseFloat(r.expenseTotal ?? "0"),
+      baseCurrency,
+      rateMap,
+    );
+    if (converted === null) continue;
     const cur = projectAgg.get(r.id) ?? {
       id: r.id,
       name: r.name,
       clientName: r.clientName,
-      amounts: {},
+      amount: 0,
       count: 0,
     };
-    addMoney(cur.amounts, r.currency ?? "IDR", parseFloat(r.expenseTotal ?? "0"));
+    cur.amount += converted;
     cur.count += Number(r.expenseCount ?? 0);
     projectAgg.set(r.id, cur);
   }
-  const projectRows = Array.from(projectAgg.values()).sort((a, b) => {
-    const aSum = Object.values(a.amounts).reduce((s, n) => s + n, 0);
-    const bSum = Object.values(b.amounts).reduce((s, n) => s + n, 0);
-    return bSum - aSum;
-  });
+  const projectRows = Array.from(projectAgg.values()).sort((a, b) => b.amount - a.amount);
 
-  // ─── Cash flow forecast (overdue + next 3 months) ───
+  // ─── Cash flow forecast (overdue + next 3 months) — base currency ───
   const fcLimit = new Date();
   fcLimit.setMonth(fcLimit.getMonth() + 3);
   const fcLimitStr = fcLimit.toISOString().slice(0, 10);
@@ -501,9 +530,9 @@ export default async function ReportsPage() {
       ),
     );
 
-  const overdueIncome: MoneyMap = {};
+  let overdueIncome = 0;
   let overdueCount = 0;
-  const incomeFc: Record<string, { amounts: MoneyMap; count: number }> = {};
+  const incomeFc: Record<string, { amount: number; count: number }> = {};
 
   for (const r of openInvoiceRows) {
     const remaining = Math.max(
@@ -511,13 +540,21 @@ export default async function ReportsPage() {
       parseFloat(r.total ?? "0") - parseFloat(r.paid ?? "0"),
     );
     if (remaining <= 0.000001 || !r.dueDate) continue;
+    const remainingBase = trackMissing(
+      missingFx,
+      r.currency,
+      remaining,
+      baseCurrency,
+      rateMap,
+    );
+    if (remainingBase === null) continue;
     if (r.dueDate < today) {
-      addMoney(overdueIncome, r.currency, remaining);
+      overdueIncome += remainingBase;
       overdueCount += 1;
     } else {
       const m = r.dueDate.slice(0, 7);
-      if (!incomeFc[m]) incomeFc[m] = { amounts: {}, count: 0 };
-      addMoney(incomeFc[m].amounts, r.currency, remaining);
+      if (!incomeFc[m]) incomeFc[m] = { amount: 0, count: 0 };
+      incomeFc[m].amount += remainingBase;
       incomeFc[m].count += 1;
     }
   }
@@ -528,8 +565,8 @@ export default async function ReportsPage() {
     fcMonths.push(monthKeyFromDate(d));
   }
 
-  function recurringForMonth(m: string): MoneyMap {
-    const recTotals: MoneyMap = {};
+  function recurringForMonth(m: string): number {
+    let recTotal = 0;
     for (const r of recurringRows) {
       const startMonth = r.startDate.slice(0, 7);
       const endMonth = r.endDate ? r.endDate.slice(0, 7) : null;
@@ -549,31 +586,33 @@ export default async function ReportsPage() {
         (r.frequency === "yearly" &&
           monthsDiff >= 0 &&
           monthsDiff % 12 === 0);
-      if (applies) addMoney(recTotals, r.currency, parseFloat(r.amount));
+      if (!applies) continue;
+      const converted = trackMissing(
+        missingFx,
+        r.currency,
+        parseFloat(r.amount),
+        baseCurrency,
+        rateMap,
+      );
+      if (converted !== null) recTotal += converted;
     }
-    return recTotals;
+    return recTotal;
   }
 
   const cashFlow = fcMonths.map((m) => {
-    const expected = incomeFc[m] ?? { amounts: {}, count: 0 };
+    const expected = incomeFc[m] ?? { amount: 0, count: 0 };
     const recurring = recurringForMonth(m);
-    const net: MoneyMap = {};
-    for (const cur of new Set([
-      ...Object.keys(expected.amounts),
-      ...Object.keys(recurring),
-    ])) {
-      net[cur] = (expected.amounts[cur] ?? 0) - (recurring[cur] ?? 0);
-    }
     return {
       month: m,
-      expectedIncome: expected.amounts,
+      expectedIncome: expected.amount,
       expectedCount: expected.count,
       recurringExpenses: recurring,
-      net,
+      net: expected.amount - recurring,
     };
   });
 
-  const overdueNet: MoneyMap = { ...overdueIncome }; // no recurring on overdue bucket
+  const overdueNet = overdueIncome; // no recurring on overdue bucket
+  const missingFxList = Array.from(missingFx).sort();
 
   const bucketDefs: Array<{ key: keyof typeof buckets; label: string }> = [
     { key: "current", label: t("Berjalan", "Current") },
@@ -592,8 +631,8 @@ export default async function ReportsPage() {
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             {t(
-              "Pendapatan, aging invoice, pengeluaran, dan proyeksi kas.",
-              "Income, invoice aging, expenses, and cash projections.",
+              `Ringkasan finance setara ${baseCurrency} (kurs manual workspace).`,
+              `Finance summaries in ${baseCurrency} (workspace manual FX rates).`,
             )}
           </p>
         </div>
@@ -613,6 +652,18 @@ export default async function ReportsPage() {
         </div>
       </div>
 
+      {missingFxList.length > 0 && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {t(
+            `Kurs belum di-set: ${missingFxList.join(", ")}. Angka currency itu di-skip di ringkasan. `,
+            `Missing FX rates: ${missingFxList.join(", ")}. Those currencies are skipped in summaries. `,
+          )}
+          <Link href="/app/settings?tab=workspace" className="underline underline-offset-2 font-medium">
+            {t("Atur di Settings", "Set in Settings")}
+          </Link>
+        </div>
+      )}
+
       {/* Window summary (last 6 months) */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <Card>
@@ -623,15 +674,14 @@ export default async function ReportsPage() {
             <TrendingUp className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            {renderMoneyLines(windowIncome, {
+            {renderBaseMoney(windowIncome, baseCurrency, {
               className: "text-2xl font-semibold text-emerald-700",
-              secondaryClassName: "text-sm text-emerald-600",
-              zero: formatMoney(0, "IDR"),
+              zero: formatMoney(0, baseCurrency),
             })}
             <p className="text-xs text-slate-500 mt-1">
               {t(
-                "Dari pembayaran invoice (6 bulan terakhir)",
-                "From invoice payments (last 6 months)",
+                `Dari pembayaran invoice · setara ${baseCurrency}`,
+                `From invoice payments · equiv. ${baseCurrency}`,
               )}
             </p>
           </CardContent>
@@ -645,15 +695,14 @@ export default async function ReportsPage() {
             <TrendingDown className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            {renderMoneyLines(windowExpense, {
+            {renderBaseMoney(windowExpense, baseCurrency, {
               className: "text-2xl font-semibold",
-              secondaryClassName: "text-sm text-slate-600",
-              zero: formatMoney(0, "IDR"),
+              zero: formatMoney(0, baseCurrency),
             })}
             <p className="text-xs text-slate-500 mt-1">
               {t(
-                "Semua mata uang ditampilkan terpisah",
-                "All currencies shown separately",
+                `Semua currency dikonversi ke ${baseCurrency}`,
+                `All currencies converted to ${baseCurrency}`,
               )}
             </p>
           </CardContent>
@@ -667,11 +716,9 @@ export default async function ReportsPage() {
             <BarChart3 className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            {renderMoneyLines(windowNet, {
-              className: "text-2xl font-semibold",
-              secondaryClassName: "text-sm",
-              signed: false,
-              zero: formatMoney(0, "IDR"),
+            {renderBaseMoney(windowNet, baseCurrency, {
+              className: `text-2xl font-semibold ${windowNet >= 0 ? "text-emerald-600" : "text-red-600"}`,
+              zero: formatMoney(0, baseCurrency),
             })}
           </CardContent>
         </Card>
@@ -683,50 +730,33 @@ export default async function ReportsPage() {
             </CardTitle>
             <AlertCircle
               className={`h-4 w-4 ${
-                (primaryCollection?.rate ?? 100) < 70
-                  ? "text-red-500"
-                  : "text-emerald-500"
+                (collectionRate ?? 100) < 70 ? "text-red-500" : "text-emerald-500"
               }`}
             />
           </CardHeader>
           <CardContent>
-            {collectionRates.length === 0 ? (
+            {collectionRate === null ? (
               <div className="text-2xl font-semibold text-slate-400">—</div>
             ) : (
-              <div className="space-y-1">
-                {collectionRates.map((c, idx) => (
-                  <div
-                    key={c.currency}
-                    className={
-                      idx === 0
-                        ? "text-2xl font-semibold tabular-nums"
-                        : "text-sm text-slate-600 tabular-nums"
-                    }
-                  >
-                    {c.rate}%{" "}
-                    <span className="text-xs font-normal text-slate-500">
-                      {c.currency}
-                    </span>
-                  </div>
-                ))}
+              <div className="text-2xl font-semibold tabular-nums">
+                {collectionRate}%
+                <span className="text-xs font-normal text-slate-500 ml-1">
+                  {baseCurrency}
+                </span>
               </div>
             )}
             <div className="text-xs text-slate-500 mt-1 space-y-0.5">
               <div>
                 {t("Terlambat", "Overdue")}:{" "}
-                {moneyEntries(overdueTotals).length === 0
-                  ? "—"
-                  : moneyEntries(overdueTotals)
-                      .map(([c, a]) => formatMoney(a, c))
-                      .join(" · ")}
+                {overdueTotals > 0.000001
+                  ? formatMoney(overdueTotals, baseCurrency)
+                  : "—"}
               </div>
               <div>
                 {t("Outstanding AR", "Outstanding AR")}:{" "}
-                {moneyEntries(outstanding).length === 0
-                  ? "—"
-                  : moneyEntries(outstanding)
-                      .map(([c, a]) => formatMoney(a, c))
-                      .join(" · ")}
+                {outstanding > 0.000001
+                  ? formatMoney(outstanding, baseCurrency)
+                  : "—"}
               </div>
             </div>
           </CardContent>
@@ -742,16 +772,14 @@ export default async function ReportsPage() {
           </CardTitle>
           <CardDescription>
             {t(
-              "Pembayaran masuk vs pengeluaran — per mata uang, bulan kosong disembunyikan",
-              "Incoming payments vs expenses — per currency, empty months hidden",
+              `Pembayaran masuk vs pengeluaran — setara ${baseCurrency}, bulan kosong disembunyikan`,
+              `Incoming payments vs expenses — equiv. ${baseCurrency}, empty months hidden`,
             )}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {pnlMonths.every(
-            (m) =>
-              moneyEntries(incomeByMonth[m] ?? {}).length === 0 &&
-              moneyEntries(expensesByMonth[m] ?? {}).length === 0,
+            (m) => (incomeByMonth[m] ?? 0) === 0 && (expensesByMonth[m] ?? 0) === 0,
           ) ? (
             <p className="text-sm text-slate-500 py-4 text-center">
               {t(
@@ -762,54 +790,41 @@ export default async function ReportsPage() {
           ) : (
             <div className="space-y-4">
               {pnlMonths.map((m) => {
-                const inc = incomeByMonth[m] ?? {};
-                const exp = expensesByMonth[m] ?? {};
-                const currencies = Array.from(
-                  new Set([...Object.keys(inc), ...Object.keys(exp)]),
-                ).sort((a, b) => {
-                  if (a === "IDR") return -1;
-                  if (b === "IDR") return 1;
-                  return a.localeCompare(b);
-                });
+                const i = incomeByMonth[m] ?? 0;
+                const e = expensesByMonth[m] ?? 0;
                 return (
                   <div key={m} className="space-y-1.5">
                     <div className="text-xs font-medium text-slate-500">
                       {monthLabel(m, lang)}
                     </div>
-                    {currencies.map((cur) => {
-                      const i = inc[cur] ?? 0;
-                      const e = exp[cur] ?? 0;
-                      return (
-                        <div key={`${m}-${cur}`} className="space-y-1 pl-1">
-                          {i > 0 && (
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="h-3 bg-emerald-500 rounded min-w-[2px]"
-                                style={{
-                                  width: `${Math.max((i / pnlMax) * 100, 0.5)}%`,
-                                }}
-                              />
-                              <span className="text-xs tabular-nums w-36 text-right text-emerald-700 whitespace-nowrap">
-                                +{formatMoney(i, cur)}
-                              </span>
-                            </div>
-                          )}
-                          {e > 0 && (
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="h-3 bg-red-400 rounded min-w-[2px]"
-                                style={{
-                                  width: `${Math.max((e / pnlMax) * 100, 0.5)}%`,
-                                }}
-                              />
-                              <span className="text-xs tabular-nums w-36 text-right text-red-600 whitespace-nowrap">
-                                −{formatMoney(e, cur)}
-                              </span>
-                            </div>
-                          )}
+                    <div className="space-y-1 pl-1">
+                      {i > 0 && (
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="h-3 bg-emerald-500 rounded min-w-[2px]"
+                            style={{
+                              width: `${Math.max((i / pnlMax) * 100, 0.5)}%`,
+                            }}
+                          />
+                          <span className="text-xs tabular-nums w-36 text-right text-emerald-700 whitespace-nowrap">
+                            +{formatMoney(i, baseCurrency)}
+                          </span>
                         </div>
-                      );
-                    })}
+                      )}
+                      {e > 0 && (
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="h-3 bg-red-400 rounded min-w-[2px]"
+                            style={{
+                              width: `${Math.max((e / pnlMax) * 100, 0.5)}%`,
+                            }}
+                          />
+                          <span className="text-xs tabular-nums w-36 text-right text-red-600 whitespace-nowrap">
+                            −{formatMoney(e, baseCurrency)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -828,8 +843,8 @@ export default async function ReportsPage() {
             </CardTitle>
             <CardDescription>
               {t(
-                "Ditagihkan vs sisa piutang (partial payment-aware)",
-                "Invoiced vs remaining AR (partial-payment aware)",
+                `Ditagihkan vs sisa piutang setara ${baseCurrency} (partial payment-aware)`,
+                `Invoiced vs remaining AR in ${baseCurrency} (partial-payment aware)`,
               )}
             </CardDescription>
           </CardHeader>
@@ -854,7 +869,7 @@ export default async function ReportsPage() {
                   </TableHeader>
                   <TableBody>
                     {clientRows.slice(0, 10).map((c) => (
-                      <TableRow key={`${c.clientId}-${c.currency}`}>
+                      <TableRow key={c.clientId}>
                         <TableCell>
                           <Link
                             href={`/app/clients/${c.clientId}`}
@@ -867,16 +882,16 @@ export default async function ReportsPage() {
                             {c.invoiceCount === 1
                               ? t("invoice", "invoice")
                               : t("invoice", "invoices")}{" "}
-                            · {c.currency}
+                            · {baseCurrency}
                           </div>
                         </TableCell>
                         <TableCell className="text-right tabular-nums text-sm whitespace-nowrap">
-                          {formatMoney(c.invoiced, c.currency)}
+                          {formatMoney(c.invoiced, baseCurrency)}
                         </TableCell>
                         <TableCell className="text-right tabular-nums text-sm whitespace-nowrap">
                           {c.unpaid > 0.000001 ? (
                             <span className="text-red-600">
-                              {formatMoney(c.unpaid, c.currency)}
+                              {formatMoney(c.unpaid, baseCurrency)}
                             </span>
                           ) : (
                             <span className="text-slate-400">—</span>
@@ -907,7 +922,7 @@ export default async function ReportsPage() {
               <div className="space-y-2">
                 {topCats.map((c) => (
                   <div
-                    key={`${c.name}-${c.currency}`}
+                    key={c.name}
                     className="flex items-center gap-3"
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -916,17 +931,17 @@ export default async function ReportsPage() {
                         style={{ backgroundColor: c.color ?? "#64748b" }}
                       />
                       <span className="text-sm truncate">
-                        {c.name ?? t("Tanpa kategori", "Uncategorized")}
+                        {c.name}
                       </span>
                       <span className="text-xs text-slate-400 shrink-0">
-                        {c.currency}
+                        {baseCurrency}
                       </span>
                     </div>
                     <span className="text-xs text-slate-500 w-10 text-right shrink-0">
                       {c.count}x
                     </span>
                     <span className="text-sm tabular-nums whitespace-nowrap text-right w-32 shrink-0">
-                      {formatMoney(c.total, c.currency)}
+                      {formatMoney(c.total, baseCurrency)}
                     </span>
                   </div>
                 ))}
@@ -945,8 +960,8 @@ export default async function ReportsPage() {
           </CardTitle>
           <CardDescription>
             {t(
-              "Invoice terkirim/dilihat/terlambat. Draft tidak dihitung. Sisa = total − pembayaran parsial.",
-              "Sent/viewed/overdue invoices only. Drafts excluded. Remaining = total − partial payments.",
+              `Invoice terkirim/dilihat/terlambat. Draft tidak dihitung. Ringkasan bucket setara ${baseCurrency}. Baris detail tetap currency asli.`,
+              `Sent/viewed/overdue invoices only. Drafts excluded. Bucket summaries in ${baseCurrency}. Detail rows keep original currency.`,
             )}
           </CardDescription>
         </CardHeader>
@@ -957,23 +972,14 @@ export default async function ReportsPage() {
               return (
                 <div key={key} className="border rounded-lg p-3">
                   <div className="text-xs text-slate-500">{label}</div>
-                  {moneyEntries(b.amounts).length === 0 ? (
+                  {b.amount > 0.000001 ? (
+                    <div className="text-lg font-semibold tabular-nums whitespace-nowrap">
+                      {formatMoney(b.amount, baseCurrency)}
+                    </div>
+                  ) : (
                     <div className="text-lg font-semibold tabular-nums text-slate-400">
                       —
                     </div>
-                  ) : (
-                    moneyEntries(b.amounts).map(([cur, amt], idx) => (
-                      <div
-                        key={cur}
-                        className={
-                          idx === 0
-                            ? "text-lg font-semibold tabular-nums whitespace-nowrap"
-                            : "text-sm tabular-nums text-slate-600 whitespace-nowrap"
-                        }
-                      >
-                        {formatMoney(amt, cur)}
-                      </div>
-                    ))
                   )}
                   <div className="text-xs text-slate-500">
                     {b.count}{" "}
@@ -1031,7 +1037,13 @@ export default async function ReportsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-sm font-medium whitespace-nowrap">
-                        {formatMoney(i.remaining, i.currency)}
+                        <div>{formatMoney(i.remaining, i.currency)}</div>
+                        {i.remainingBase !== null &&
+                          normalizeCurrency(i.currency) !== baseCurrency && (
+                            <div className="text-xs font-normal text-slate-500">
+                              ≈ {formatMoney(i.remainingBase, baseCurrency)}
+                            </div>
+                          )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -1050,8 +1062,8 @@ export default async function ReportsPage() {
           </CardTitle>
           <CardDescription>
             {t(
-              "Piutang terlambat + invoice jatuh tempo 3 bulan ke depan + pengeluaran rutin. Sisa piutang partial-payment aware.",
-              "Overdue AR + invoices due in next 3 months + recurring expenses. Remaining AR is partial-payment aware.",
+              `Piutang terlambat + invoice jatuh tempo 3 bulan ke depan + pengeluaran rutin, setara ${baseCurrency}.`,
+              `Overdue AR + invoices due in next 3 months + recurring expenses, equiv. ${baseCurrency}.`,
             )}
           </CardDescription>
         </CardHeader>
@@ -1070,28 +1082,24 @@ export default async function ReportsPage() {
                 )}
               </div>
               <div className="space-y-1 text-sm">
-                {moneyEntries(overdueIncome).length === 0 ? (
-                  <div className="text-slate-400">—</div>
+                {overdueIncome > 0.000001 ? (
+                  <div className="flex justify-between gap-2">
+                    <span className="text-slate-500">
+                      {t("Masuk", "In")}
+                    </span>
+                    <span className="tabular-nums text-emerald-700 whitespace-nowrap">
+                      +{formatMoney(overdueIncome, baseCurrency)}
+                    </span>
+                  </div>
                 ) : (
-                  moneyEntries(overdueIncome).map(([cur, amt]) => (
-                    <div key={cur} className="flex justify-between gap-2">
-                      <span className="text-slate-500">
-                        {t("Masuk", "In")} {cur}
-                      </span>
-                      <span className="tabular-nums text-emerald-700 whitespace-nowrap">
-                        +{formatMoney(amt, cur)}
-                      </span>
-                    </div>
-                  ))
+                  <div className="text-slate-400">—</div>
                 )}
                 <div className="flex justify-between border-t pt-1 font-semibold gap-2">
                   <span>{t("Net", "Net")}</span>
                   <span className="tabular-nums text-right">
-                    {moneyEntries(overdueNet).length === 0
-                      ? "—"
-                      : moneyEntries(overdueNet)
-                          .map(([c, a]) => formatMoney(a, c))
-                          .join(" · ")}
+                    {overdueNet > 0.000001
+                      ? formatMoney(overdueNet, baseCurrency)
+                      : "—"}
                   </span>
                 </div>
               </div>
@@ -1110,47 +1118,42 @@ export default async function ReportsPage() {
                   )}
                 </div>
                 <div className="space-y-1 text-sm">
-                  {moneyEntries(cf.expectedIncome).length === 0 &&
-                  moneyEntries(cf.recurringExpenses).length === 0 ? (
+                  {cf.expectedIncome <= 0.000001 &&
+                  cf.recurringExpenses <= 0.000001 ? (
                     <div className="text-slate-400 text-xs">
                       {t("Tidak ada proyeksi", "No projection")}
                     </div>
                   ) : null}
-                  {moneyEntries(cf.expectedIncome).map(([cur, amt]) => (
-                    <div key={`in-${cur}`} className="flex justify-between gap-2">
+                  {cf.expectedIncome > 0.000001 && (
+                    <div className="flex justify-between gap-2">
                       <span className="text-slate-500">
-                        {t("Masuk", "In")} {cur}
+                        {t("Masuk", "In")}
                       </span>
                       <span className="tabular-nums text-emerald-700 whitespace-nowrap">
-                        +{formatMoney(amt, cur)}
+                        +{formatMoney(cf.expectedIncome, baseCurrency)}
                       </span>
                     </div>
-                  ))}
-                  {moneyEntries(cf.recurringExpenses).map(([cur, amt]) => (
-                    <div key={`out-${cur}`} className="flex justify-between gap-2">
+                  )}
+                  {cf.recurringExpenses > 0.000001 && (
+                    <div className="flex justify-between gap-2">
                       <span className="text-slate-500">
-                        {t("Rutin", "Recurring")} {cur}
+                        {t("Rutin", "Recurring")}
                       </span>
                       <span className="tabular-nums text-red-600 whitespace-nowrap">
-                        −{formatMoney(amt, cur)}
+                        −{formatMoney(cf.recurringExpenses, baseCurrency)}
                       </span>
                     </div>
-                  ))}
+                  )}
                   <div className="flex justify-between border-t pt-1 font-semibold gap-2">
                     <span>{t("Net", "Net")}</span>
-                    <span className="tabular-nums text-right">
-                      {moneyEntries(cf.net).length === 0
-                        ? "—"
-                        : moneyEntries(cf.net).map(([c, a]) => (
-                            <div
-                              key={c}
-                              className={
-                                a >= 0 ? "text-emerald-600" : "text-red-600"
-                              }
-                            >
-                              {formatMoney(a, c)}
-                            </div>
-                          ))}
+                    <span
+                      className={`tabular-nums text-right ${
+                        cf.net >= 0 ? "text-emerald-600" : "text-red-600"
+                      }`}
+                    >
+                      {Math.abs(cf.net) > 0.000001
+                        ? formatMoney(cf.net, baseCurrency)
+                        : "—"}
                     </span>
                   </div>
                 </div>
@@ -1176,8 +1179,8 @@ export default async function ReportsPage() {
           </CardTitle>
           <CardDescription>
             {t(
-              "Hanya pengeluaran yang ditandai ke proyek. Mata uang ditampilkan terpisah (tidak digabung).",
-              "Only expenses tagged to a project. Currencies shown separately (never mixed).",
+              `Hanya pengeluaran yang ditandai ke proyek. Total setara ${baseCurrency}.`,
+              `Only expenses tagged to a project. Totals in ${baseCurrency}.`,
             )}
           </CardDescription>
         </CardHeader>
@@ -1219,17 +1222,8 @@ export default async function ReportsPage() {
                       <TableCell className="text-sm text-slate-600">
                         {p.clientName ?? "—"}
                       </TableCell>
-                      <TableCell className="text-right text-sm">
-                        <div className="space-y-0.5">
-                          {moneyEntries(p.amounts).map(([cur, amt]) => (
-                            <div
-                              key={cur}
-                              className="tabular-nums whitespace-nowrap"
-                            >
-                              {formatMoney(amt, cur)}
-                            </div>
-                          ))}
-                        </div>
+                      <TableCell className="text-right text-sm tabular-nums whitespace-nowrap">
+                        {formatMoney(p.amount, baseCurrency)}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button

@@ -85,8 +85,8 @@ export function CurrencyRatesForm({ baseCurrency, rates, canEdit }: Props) {
       <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
         <p>
           {t(
-            `Base currency workspace: ${baseCurrency}. Dashboard finance dihitung setara base ini.`,
-            `Workspace base currency: ${baseCurrency}. Dashboard finance is shown in this base.`,
+            `Base currency workspace: ${baseCurrency}. Ringkasan finance (dashboard, laporan, pengeluaran KPI) dihitung setara base ini.`,
+            `Workspace base currency: ${baseCurrency}. Finance summaries (dashboard, reports, expense KPIs) use this base.`,
           )}
         </p>
         <p>
@@ -97,8 +97,8 @@ export function CurrencyRatesForm({ baseCurrency, rates, canEdit }: Props) {
         </p>
         <p>
           {t(
-            "Ubah base currency di tab Branding & Invoice.",
-            "Change base currency in Branding & Invoice tab.",
+            "Ubah base currency di tab Branding & Invoice. Invoice/expense item tetap currency asli.",
+            "Change base currency in Branding & Invoice tab. Invoice/expense line items keep original currency.",
           )}
         </p>
       </div>

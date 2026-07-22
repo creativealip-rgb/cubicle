@@ -116,3 +116,43 @@ export function groupSumToBase<T extends CurrencyAmount & { key: string }>(
 
   return { groups, missingCurrencies: Array.from(missing).sort() };
 }
+
+/**
+ * Convert multi-currency map → single base total.
+ * Missing rates skipped (not guessed).
+ */
+export function moneyMapToBase(
+  map: Record<string, number>,
+  baseCurrency: string,
+  rates: RateMap,
+): { total: number; missingCurrencies: string[] } {
+  const agg = aggregateToBase(
+    Object.entries(map).map(([currency, amount]) => ({ currency, amount })),
+    baseCurrency,
+    rates,
+  );
+  return { total: agg.total, missingCurrencies: agg.missingCurrencies };
+}
+
+/**
+ * Add converted amount into map keyed by base currency.
+ * Returns false when rate missing (amount skipped).
+ */
+export function addConvertedMoney(
+  map: Record<string, number>,
+  currency: string,
+  amount: number,
+  baseCurrency: string,
+  rates: RateMap,
+  missing?: Set<string>,
+): boolean {
+  const base = normalizeCurrency(baseCurrency);
+  const converted = convertToBase(amount, currency, base, rates);
+  if (converted === null) {
+    const from = normalizeCurrency(currency);
+    if (from !== base) missing?.add(from);
+    return false;
+  }
+  map[base] = (map[base] ?? 0) + converted;
+  return true;
+}
