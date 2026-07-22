@@ -15,6 +15,8 @@ type SendOpts = {
 
 const apiKey = process.env.RESEND_API_KEY;
 const fromAddress = process.env.EMAIL_FROM ?? "Cubiqlo <onboarding@resend.dev>";
+const appUrl = process.env.APP_URL ?? process.env.BETTER_AUTH_URL ?? "https://cubiqlo.com";
+const brandLogoUrl = `${appUrl.replace(/\/$/, "")}/logo-icon.png`;
 
 const resend = apiKey ? new Resend(apiKey) : null;
 
@@ -35,7 +37,17 @@ function wrapTemplate(opts: { title: string; bodyHtml: string }): string {
   <tr><td align="center">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;border:1px solid #e5e7eb;">
       <tr><td style="padding:24px 32px;border-bottom:1px solid #e5e7eb;">
-        <div style="font-size:14px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#6b7280;">Cubiqlo</div>
+        <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;">
+          <tr>
+            <td style="width:48px;vertical-align:middle;">
+              <img src="${brandLogoUrl}" width="40" height="40" alt="Cubiqlo" style="display:block;border-radius:10px;object-fit:cover;">
+            </td>
+            <td style="vertical-align:middle;">
+              <div style="font-size:14px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#111827;">Cubiqlo</div>
+              <div style="font-size:12px;color:#6b7280;margin-top:2px;">Client operations hub</div>
+            </td>
+          </tr>
+        </table>
       </td></tr>
       <tr><td style="padding:32px;font-size:15px;line-height:1.6;color:#1a1d24;">${opts.bodyHtml}</td></tr>
       <tr><td style="padding:16px 32px;border-top:1px solid #e5e7eb;font-size:12px;color:#6b7280;text-align:center;">

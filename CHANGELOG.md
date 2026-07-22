@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.112 — 2026-07-22 — Branded noreply email logo
+
+- Added Cubiqlo icon to default transactional email wrapper so client/user emails from `noreply@cubiqlo.com` show branded header inside the email body
+- Added public BIMI-style SVG asset at `/bimi.svg` for future inbox-avatar DNS setup
+- Created `noreply@cubiqlo.com` mailbox in Stalwart and added credentials to `/root/.secrets/cubiqlo-mailbox-credentials.txt`
+- Verified smoke email from `Cubiqlo <noreply@cubiqlo.com>` to Gmail through Resend with `delivered`
+
 ## v0.1.111 — 2026-07-22 — Cubiqlo full webmail + business mailboxes
 
 - `mail.cubiqlo.com` cutover to full Stalwart + SnappyMail webmail on VPS

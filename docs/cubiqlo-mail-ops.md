@@ -34,6 +34,7 @@ Why `2587`: the VPS times out on Resend `587` and `465`, while `2587` and `2465`
 ## Business mailboxes
 
 - `admin@cubiqlo.com` — primary admin
+- `noreply@cubiqlo.com` — transactional app sender / no-reply identity
 - `marketing@cubiqlo.com` — campaigns, promo, brand requests
 - `cs@cubiqlo.com` — customer support
 - `sales@cubiqlo.com` — leads, proposals, closing
@@ -48,7 +49,27 @@ Login uses the full email address as username.
 - Webmail reachable at `https://mail.cubiqlo.com`
 - `admin@cubiqlo.com` can send via local SMTPS submission (`127.0.0.1:465`)
 - Fresh outbound smoke test to Gmail appears in Resend API with `last_event: delivered`
+- `noreply@cubiqlo.com` app sender verified with Resend `delivered` smoke test
+- Transactional email wrapper includes `https://cubiqlo.com/logo-icon.png` as branded header image
 - All business mailboxes pass local IMAP login check on `127.0.0.1:993`
+
+## Sender logo behavior
+
+Cubiqlo app emails from `noreply@cubiqlo.com` include the Cubiqlo icon inside the email body header.
+
+Inbox avatar/logo next to the sender name is controlled by mail providers, not by Stalwart mailbox creation. Gmail and other large providers usually require BIMI + strict DMARC and, for Gmail broad support, a valid VMC certificate. A public BIMI-style SVG is available at:
+
+```text
+https://cubiqlo.com/bimi.svg
+```
+
+Cloudflare DNS still needs this TXT when API auth is available:
+
+```text
+default._bimi.cubiqlo.com TXT "v=BIMI1; l=https://cubiqlo.com/bimi.svg; a="
+```
+
+Current DMARC is `p=none`; BIMI visibility generally needs stricter policy (`quarantine` or `reject`) after mail alignment is proven stable.
 
 ## Common operations
 
