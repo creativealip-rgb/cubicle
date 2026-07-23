@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Download, ChevronDown, ChevronRight, FileText } from "lucide-react";
 
 export type PortalInvoice = {

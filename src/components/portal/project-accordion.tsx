@@ -1,16 +1,14 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   ChevronDown,
   ChevronRight,
   FileText,
   CheckCircle2,
-  Activity,
   Clock,
   Package,
 } from "lucide-react";
@@ -322,18 +320,18 @@ function ProjectExpandedContent({
   project,
   tasks,
   files,
-  timeline,
+  timeline: _timeline,
   hoursSummary,
   taskHoursMap,
   taskEntriesMap,
-  invoices,
+  invoices: _invoices,
   selectedPkg,
   packages,
   customReqs,
   orders,
-  actionLabels,
+  actionLabels: _actionLabels,
   token,
-  workspaceId,
+  workspaceId: _workspaceId,
   ownerWhatsAppPhone,
   ownerEmail,
   ownerName,

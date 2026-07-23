@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { requireUser, assertWorkspaceWritable, assertClientInWorkspace, assertProjectInWorkspace } from "@/lib/access";
 import { r2, R2_BUCKET, buildFileKey } from "@/lib/r2";
 import { completeUpload } from "@/lib/actions/files";
+import { validateUploadedFile } from "@/lib/file-validation";
 import { randomUUID } from "crypto";
 
 export const runtime = "nodejs";
@@ -50,6 +51,13 @@ export async function POST(req: NextRequest) {
     const storageKey = buildFileKey(workspaceId, tempFileId, safeFilename);
     const mime = file.type || "application/octet-stream";
     const body = Buffer.from(await file.arrayBuffer());
+    const validation = validateUploadedFile(file.name, body.subarray(0, 16));
+    if (!validation.ok) {
+      return NextResponse.json(
+        { error: validation.reason ?? "File tidak valid" },
+        { status: 400 },
+      );
+    }
 
     await r2.send(
       new PutObjectCommand({

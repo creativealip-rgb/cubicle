@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     const visibleProjectIds = visibleProjects.map((p) => p.id);
 
     let projectId: string | null = projectIdRaw;
-    let folderId: string | null = folderIdRaw;
+    const folderId: string | null = folderIdRaw;
 
     if (projectId) {
       if (!visibleProjectIds.includes(projectId)) {

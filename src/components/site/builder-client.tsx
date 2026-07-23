@@ -8,7 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { SectionEditor, type SiteSection } from "./section-editor";
 import { PresetPicker, PreviewToggle, type SitePreset } from "./site-presets";
 import { checkSlugUnique } from "@/lib/actions/personal-site";
-import { Monitor, Smartphone } from "lucide-react";
 
 type SiteData = {
   slug: string;

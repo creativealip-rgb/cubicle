@@ -12,13 +12,9 @@ import {
   Users,
   Briefcase,
   ArrowUpRight,
-  AlertCircle,
   TrendingUp,
   Bell,
   ArrowRight,
-  CalendarClock,
-  Clock3,
-  FileCheck2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -217,7 +213,6 @@ export default async function DashboardPage() {
     name: g.key,
     total: g.total,
   }));
-  const pieTotal = Math.max(clientPie.reduce((s, c) => s + c.total, 0), 1);
   const missingFxAll = Array.from(
     new Set([...missingFx, ...clientPieGrouped.missingCurrencies]),
   ).sort();
@@ -280,11 +275,11 @@ export default async function DashboardPage() {
   const firstName = (session?.user?.name || "User").split(" ")[0];
 
   const sparkW = 240;
-  const sparkH = 56;
+  const sparkH = 48;
   const maxAmt = Math.max(...sparkline.map((d) => d.amt), 1);
   const sparkPoints = sparkline.map((d, i) => {
     const x = (i / Math.max(sparkline.length - 1, 1)) * sparkW;
-    const y = sparkH - (d.amt / maxAmt) * (sparkH - 6) - 3;
+    const y = sparkH - (d.amt / maxAmt) * (sparkH - 12) - 6;
     return `${x},${y}`;
   });
   const sparkPath = sparkPoints.length > 0 ? `M ${sparkPoints.join(" L ")}` : "";
@@ -294,25 +289,7 @@ export default async function DashboardPage() {
       : "";
   const sparkTotal = sparkline.reduce((s, d) => s + d.amt, 0);
 
-  // Simple pie slices for SVG
   const pieColors = ["#2563eb", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444"];
-  const pieSlices = clientPie.reduce<
-    Array<{ d: string; color: string; name: string; total: number; end: number }>
-  >((slices, c, i) => {
-    const start = slices.at(-1)?.end ?? 0;
-    const frac = c.total / pieTotal;
-    const end = start + frac;
-    const a0 = start * Math.PI * 2 - Math.PI / 2;
-    const a1 = end * Math.PI * 2 - Math.PI / 2;
-    const r = 40;
-    const x0 = 50 + r * Math.cos(a0);
-    const y0 = 50 + r * Math.sin(a0);
-    const x1 = 50 + r * Math.cos(a1);
-    const y1 = 50 + r * Math.sin(a1);
-    const large = frac > 0.5 ? 1 : 0;
-    const d = `M 50 50 L ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} Z`;
-    return [...slices, { d, color: pieColors[i % pieColors.length]!, name: c.name, total: c.total, end }];
-  }, []);
 
   type ReminderTone = "rose" | "amber" | "blue" | "purple" | "slate";
   type ReminderGroupKey = "urgent" | "action" | "scheduled";
@@ -400,41 +377,6 @@ export default async function DashboardPage() {
     });
   }
 
-  const reminderGroupDefs = [
-    {
-      key: "urgent",
-      label: t("Urgent", "Urgent"),
-      icon: AlertCircle,
-      items: reminderItems.filter((item) => item.group === "urgent"),
-    },
-    {
-      key: "action",
-      label: t("Menunggu aksi", "Needs action"),
-      icon: FileCheck2,
-      items: reminderItems.filter((item) => item.group === "action"),
-    },
-    {
-      key: "scheduled",
-      label: t("Terjadwal", "Scheduled"),
-      icon: CalendarClock,
-      items: reminderItems.filter((item) => item.group === "scheduled"),
-    },
-  ] satisfies Array<{
-    key: ReminderGroupKey;
-    label: string;
-    icon: typeof AlertCircle;
-    items: ReminderItem[];
-  }>;
-  const reminderGroups = reminderGroupDefs.filter((group) => group.items.length > 0);
-
-  const toneClass: Record<ReminderTone, string> = {
-    rose: "border-rose-200 bg-rose-50 text-rose-800 hover:border-rose-300",
-    amber: "border-amber-200 bg-amber-50 text-amber-800 hover:border-amber-300",
-    blue: "border-blue-200 bg-blue-50 text-blue-800 hover:border-blue-300",
-    purple: "border-purple-200 bg-purple-50 text-purple-800 hover:border-purple-300",
-    slate: "border-slate-200 bg-slate-50 text-slate-800 hover:border-slate-300",
-  };
-
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col gap-4 sm:gap-5 sm:flex-row sm:items-end sm:justify-between">
@@ -452,145 +394,151 @@ export default async function DashboardPage() {
         ]}
       />
 
-      <section className="space-y-3">
-        <div className="flex items-end justify-between gap-3">
-          <div>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
+        <div className="space-y-6">
+          <section className="space-y-3">
             <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              {t("Perlu ditangani", "Needs attention")}
+              {t("Kerja", "Work")}
             </h2>
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              {t("Prioritas aktif yang belum selesai", "Active priorities that still need work")}
-            </p>
-          </div>
-        </div>
-        <Card>
-          <CardContent className="p-4">
-            {reminderItems.length === 0 ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
-                <Bell className="h-4 w-4" />
-                {t("Tidak ada prioritas aktif", "No active priorities")}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {reminderGroups.map((group) => {
-                  const GroupIcon = group.icon;
-                  return (
-                    <div key={group.key} className="space-y-2">
-                      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                        <GroupIcon className="h-3.5 w-3.5" />
-                        <span>{group.label}</span>
-                      </div>
-                      <div className="space-y-2">
-                        {group.items.map((item) => (
-                          <Link
-                            key={item.key}
-                            href={item.href}
-                            className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm transition-all hover:-translate-y-0.5 hover:shadow-sm ${toneClass[item.tone]}`}
+            <div className="grid grid-cols-2 gap-4">
+              {kpiCards.map((kpi) => {
+                const Icon = kpi.icon;
+                return (
+                  <Link key={kpi.label} href={kpi.href} className="group">
+                    <Card
+                      className={`relative cursor-pointer border-l-4 ${kpi.accentBorder} transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg`}
+                    >
+                      <CardContent className="p-5">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1.5">
+                            <p className="text-sm text-muted-foreground">{kpi.label}</p>
+                            <p className="text-2xl font-bold tracking-tight">{kpi.value}</p>
+                            <p className="text-xs text-muted-foreground">{kpi.change}</p>
+                          </div>
+                          <div
+                            className={`flex h-9 w-9 items-center justify-center rounded-lg transition-transform group-hover:scale-110 ${kpi.iconBg}`}
                           >
-                            <div className="min-w-0 flex items-center gap-2">
-                              <Clock3 className="h-3.5 w-3.5 shrink-0" />
-                              <span className="truncate font-medium">{item.label}</span>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              {item.count != null && (
-                                <Badge variant="secondary" className="text-[10px]">
-                                  {item.count}
-                                </Badge>
-                              )}
-                              {item.meta && (
-                                <span className="text-[11px] opacity-80">{item.meta}</span>
-                              )}
-                              <ArrowRight className="h-3.5 w-3.5 opacity-60" />
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </section>
+                            <Icon className="h-4 w-4" />
+                          </div>
+                        </div>
+                        <ArrowUpRight className="absolute right-3 top-3 h-3.5 w-3.5 text-slate-300 opacity-0 transition-opacity group-hover:opacity-100" />
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          {t("Kerja", "Work")}
-        </h2>
-        <div className="grid grid-cols-2 gap-4">
-          {kpiCards.map((kpi) => {
-            const Icon = kpi.icon;
-            return (
-              <Link key={kpi.label} href={kpi.href} className="group">
-                <Card
-                  className={`relative cursor-pointer border-l-4 ${kpi.accentBorder} transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg`}
-                >
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1.5">
-                        <p className="text-sm text-muted-foreground">{kpi.label}</p>
-                        <p className="text-2xl font-bold tracking-tight">{kpi.value}</p>
-                        <p className="text-xs text-muted-foreground">{kpi.change}</p>
-                      </div>
-                      <div
-                        className={`flex h-9 w-9 items-center justify-center rounded-lg transition-transform group-hover:scale-110 ${kpi.iconBg}`}
-                      >
-                        <Icon className="h-4 w-4" />
-                      </div>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-base font-semibold">
+                {t("Aktivitas Terbaru", "Recent Activity")}
+              </CardTitle>
+              <Button variant="ghost" size="sm" className="gap-1 text-xs" asChild>
+                <Link href="/app/tasks">
+                  {t("Lihat tugas", "View tasks")}
+                  <ArrowUpRight className="h-3 w-3" />
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {activityRows.length === 0 && (
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  {t("Belum ada aktivitas", "No activity yet")}
+                </p>
+              )}
+              {activityRows.slice(0, 5).map((item, i) => (
+                <div key={item.id}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 space-y-0.5">
+                      <p className="truncate text-sm font-medium">{formatAction(item.action)}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {item.entityType}
+                        {item.actorName && ` ${t("oleh", "by")} ${item.actorName}`}
+                      </p>
                     </div>
-                    <ArrowUpRight className="absolute right-3 top-3 h-3.5 w-3.5 text-slate-300 opacity-0 transition-opacity group-hover:opacity-100" />
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base font-semibold">
-              {t("Aktivitas Terbaru", "Recent Activity")}
-            </CardTitle>
-            <Button variant="ghost" size="sm" className="gap-1 text-xs" asChild>
-              <Link href="/app/tasks">
-                {t("Lihat tugas", "View tasks")}
-                <ArrowUpRight className="h-3 w-3" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {activityRows.length === 0 && (
-              <p className="text-sm text-muted-foreground py-4 text-center">
-                {t("Belum ada aktivitas", "No activity yet")}
-              </p>
-            )}
-            {activityRows.slice(0, 5).map((item, i) => (
-              <div key={item.id}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 space-y-0.5">
-                    <p className="truncate text-sm font-medium">{formatAction(item.action)}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {item.entityType}
-                      {item.actorName && ` ${t("oleh", "by")} ${item.actorName}`}
-                    </p>
+                    <span className="shrink-0 text-xs text-muted-foreground whitespace-nowrap">
+                      {formatRelative(item.createdAt)}
+                    </span>
                   </div>
-                  <span className="shrink-0 text-xs text-muted-foreground whitespace-nowrap">
-                    {formatRelative(item.createdAt)}
-                  </span>
+                  {i < Math.min(activityRows.length, 5) - 1 && <Separator className="mt-3" />}
                 </div>
-                {i < Math.min(activityRows.length, 5) - 1 && <Separator className="mt-3" />}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 xl:sticky xl:top-20 xl:self-start xl:pt-[30px]">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-start justify-between gap-3 text-sm font-semibold">
+                <span>
+                  {t("Perlu ditangani", "Needs attention")}
+                  <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                    {reminderItems.length}
+                  </span>
+                </span>
+                <Bell className="mt-0.5 h-4 w-4 text-slate-400" />
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                {t("Prioritas aktif yang belum selesai", "Active priorities that still need work")}
+              </p>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {reminderItems.length === 0 ? (
+                <div className="flex items-center gap-2 rounded-lg border border-dashed border-slate-200 px-3 py-3 text-sm text-muted-foreground">
+                  <Bell className="h-4 w-4" />
+                  {t("Tidak ada prioritas aktif", "No active priorities")}
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {reminderItems.slice(0, 5).map((item) => {
+                    const itemToneClass: Record<ReminderTone, string> = {
+                      rose: "bg-rose-500 text-rose-700",
+                      amber: "bg-amber-500 text-amber-700",
+                      blue: "bg-blue-500 text-blue-700",
+                      purple: "bg-purple-500 text-purple-700",
+                      slate: "bg-slate-400 text-slate-700",
+                    };
+                    return (
+                      <Link
+                        key={item.key}
+                        href={item.href}
+                        className="group -mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 text-sm transition-colors hover:bg-slate-50/80"
+                      >
+                        <div className="min-w-0 flex items-center gap-2.5">
+                          <span className={`h-2 w-2 shrink-0 rounded-full ${itemToneClass[item.tone].split(" ")[0]}`} />
+                          <span className="truncate font-medium text-slate-900">{item.label}</span>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2">
+                          {item.count != null && (
+                            <Badge variant="secondary" className="h-5 rounded-full px-1.5 text-[10px]">
+                              {item.count}
+                            </Badge>
+                          )}
+                          {item.meta && (
+                            <span className="whitespace-nowrap text-[11px] text-muted-foreground">
+                              {item.meta}
+                            </span>
+                          )}
+                          <ArrowRight className="h-3.5 w-3.5 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-500" />
+                        </div>
+                      </Link>
+                    );
+                  })}
+                  {reminderItems.length > 5 && (
+                    <Link href="/app/tasks" className="block pt-2 text-xs font-medium text-blue-600 hover:text-blue-700">
+                      {t(`+${reminderItems.length - 5} lainnya`, `+${reminderItems.length - 5} more`)}
+                    </Link>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
           {/* Finance sidebar: 30d revenue only */}
           <Card className="bg-gradient-to-b from-slate-50 to-white">
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-1">
               <CardTitle className="flex items-center justify-between text-sm font-semibold">
                 <span className="flex items-center gap-2">
                   <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
@@ -601,7 +549,7 @@ export default async function DashboardPage() {
                 </Link>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-2.5">
               <div>
                 <p className="text-xs text-muted-foreground">
                   {t(
@@ -609,7 +557,7 @@ export default async function DashboardPage() {
                     `Revenue last 30 days (equiv. ${workspaceCurrency})`,
                   )}
                 </p>
-                <p className="text-2xl font-bold tracking-tight">
+                <p className="text-xl font-bold tracking-tight">
                   {formatMoneyCompact(sparkTotal || rev30, workspaceCurrency)}
                 </p>
                 {missingFxAll.length > 0 && (
@@ -626,7 +574,7 @@ export default async function DashboardPage() {
               </div>
               <svg
                 viewBox={`0 0 ${sparkW} ${sparkH}`}
-                className="h-14 w-full"
+                className="h-9 w-full"
                 preserveAspectRatio="none"
                 aria-label="Revenue trend last 30 days"
               >
@@ -648,7 +596,7 @@ export default async function DashboardPage() {
               </svg>
 
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-2">
+                <p className="mb-1 text-[11px] font-medium text-muted-foreground">
                   {t("Pendapatan per klien", "Revenue by client")}
                 </p>
                 {clientPie.length === 0 ? (
@@ -656,24 +604,21 @@ export default async function DashboardPage() {
                     {t("Belum ada pembayaran 30 hari", "No payments in 30 days")}
                   </p>
                 ) : (
-                  <div className="flex items-center gap-3">
-                    <svg viewBox="0 0 100 100" className="h-20 w-20 shrink-0">
-                      {pieSlices.map((s) => (
-                        <path key={s.name} d={s.d} fill={s.color} />
-                      ))}
-                      <circle cx="50" cy="50" r="18" fill="white" />
-                    </svg>
-                    <div className="min-w-0 space-y-1">
-                      {clientPie.map((c, i) => (
-                        <div key={c.name} className="flex items-center gap-2 text-[11px]">
+                  <div className="space-y-1">
+                    {clientPie.slice(0, 2).map((c, i) => (
+                      <div key={c.name} className="flex items-center justify-between gap-3 text-[11px]">
+                        <span className="min-w-0 flex items-center gap-2">
                           <span
-                            className="h-2 w-2 rounded-full shrink-0"
+                            className="h-2 w-2 shrink-0 rounded-full"
                             style={{ background: pieColors[i % pieColors.length] }}
                           />
                           <span className="truncate">{c.name}</span>
-                        </div>
-                      ))}
-                    </div>
+                        </span>
+                        <span className="shrink-0 font-medium text-slate-700">
+                          {formatMoneyCompact(c.total, workspaceCurrency)}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

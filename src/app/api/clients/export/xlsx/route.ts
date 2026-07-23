@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers, cookies } from "next/headers";
 import { and, eq, desc } from "drizzle-orm";
-import * as XLSX from "xlsx";
+import * as ExcelJS from "exceljs";
 import { db } from "@/db";
 import { clients, workspaceMembers } from "@/db/schema";
 import { auth } from "@/lib/auth";
@@ -43,10 +43,21 @@ export async function GET(_req: NextRequest) {
     };
   });
 
-  const worksheet = XLSX.utils.json_to_sheet(rows);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Klien");
-  const buf = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" }) as Buffer;
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Klien");
+  worksheet.columns = Object.keys(rows[0] ?? {
+    Nama: "",
+    "Custom ID": "",
+    "Contact Person": "",
+    Perusahaan: "",
+    Email: "",
+    "Nomor Telepon": "",
+    Alamat: "",
+    Website: "",
+    Status: "",
+  }).map((key) => ({ header: key, key, width: Math.max(key.length + 2, 14) }));
+  worksheet.addRows(rows);
+  const buf = Buffer.from(await workbook.xlsx.writeBuffer());
 
   return new NextResponse(new Uint8Array(buf), {
     status: 200,

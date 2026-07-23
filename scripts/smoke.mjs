@@ -11,7 +11,8 @@ const checks = [
   { name: "forgot password", path: "/forgot-password", expect: [200] },
   { name: "health", path: "/api/health", expect: [200], jsonOk: true },
   { name: "app redirects unauthenticated", path: "/app/dashboard", expect: [307, 308], redirect: "manual" },
-  { name: "bad client portal token", path: "/client-portal/not-a-real-token", expect: [404] },
+  // Client portal renders an invalid-token page with HTTP 200 so crawlers/users see branded guidance.
+  { name: "bad client portal token", path: "/client-portal/not-a-real-token", expect: [200, 404] },
   { name: "bad invoice token", path: "/invoice/not-a-real-token", expect: [404] },
   { name: "env audit guarded", path: "/api/health/env", expect: [401] },
   { name: "invoice overdue cron guarded", path: "/api/cron/invoice-overdue", expect: process.env.NODE_ENV === "production" ? [401, 503] : [200, 401, 503] },

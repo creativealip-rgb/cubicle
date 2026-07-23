@@ -610,40 +610,6 @@ export default async function ClientPortalPage({
     )
     .limit(100);
 
-  // Fetch shared invoices
-  const sharedInvoices = await db
-    .select({
-      id: invoices.id,
-      invoiceNumber: invoices.invoiceNumber,
-      issueDate: invoices.issueDate,
-      dueDate: invoices.dueDate,
-      total: invoices.total,
-      status: invoices.status,
-      currency: invoices.currency,
-      sharedTokenHash: invoices.sharedTokenHash,
-      sharedTokenRevokedAt: invoices.sharedTokenRevokedAt,
-      sharedTokenExpiresAt: invoices.sharedTokenExpiresAt,
-    })
-    .from(invoices)
-    .where(
-      and(
-        eq(invoices.workspaceId, client.workspaceId),
-        eq(invoices.clientId, client.id),
-        ne(invoices.status, "archived"),
-      ),
-    )
-    .limit(50);
-
-  // Filter to only those with active shared tokens
-  const activeSharedInvoices = sharedInvoices.filter(
-    (inv) =>
-      inv.sharedTokenHash &&
-      !inv.sharedTokenRevokedAt &&
-      (inv.sharedTokenExpiresAt
-        ? new Date(inv.sharedTokenExpiresAt) > new Date()
-        : true),
-  );
-
   const activeCount = clientProjects.filter((p) => p.status === "active").length;
   const byProjectCount = clientProjects.filter((p) => p.billingType === "project").length;
   const byHoursCount = clientProjects.filter((p) => p.billingType === "hours").length;

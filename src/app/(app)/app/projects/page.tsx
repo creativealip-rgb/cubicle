@@ -6,7 +6,6 @@ import { projects, clients, tasks, workspaceMembers, users, packages } from "@/d
 import { eq, and, desc, sql, SQL } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import Link from "next/link";
-import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectCreateDialog } from "@/components/projects/project-create-dialog";
 import { ProjectFilters } from "@/components/projects/project-filters";
