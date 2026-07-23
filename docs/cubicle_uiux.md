@@ -125,6 +125,12 @@ Workspace switcher
 User menu
 ```
 
+Notification/reminder split:
+- Topbar notification bell is an event inbox for fresh client/team updates: approvals, file views, invoice payments, portal requests, signed/viewed docs, assignments.
+- Dashboard `Perlu ditangani` is the active action queue for stateful work that remains until resolved: overdue invoices, due tasks, pending approvals, waiting contracts, upcoming appointments, personal reminders.
+- Recurring computed urgency such as `invoice_overdue` and `task_due_soon` must not appear in bell unread counts. It belongs on the dashboard action queue only.
+- Use product copy, not implementation copy: `Update terbaru dari client dan tim` for bell; `Prioritas aktif yang belum selesai` for dashboard.
+
 `+ New` dropdown:
 
 ```text
@@ -181,8 +187,11 @@ Header:
 Good morning, {user}
 [New] [Start timer]
 
-KPI cards:
-Active Clients | Active Projects | Due Tasks | Unpaid Invoices
+Action queue:
+Perlu ditangani grouped as Urgent | Menunggu aksi | Terjadwal
+
+Work cards:
+Active Clients | Active Projects
 
 Main grid:
 Left 2/3:
@@ -190,9 +199,9 @@ Left 2/3:
 - Recent activity
 
 Right 1/3:
-- Active timer
-- Upcoming appointments
-- Unpaid invoices
+- Revenue / cash collection
+- Client breakdown
+- Recent activity
 ```
 
 Dashboard widgets are fixed in MVP. No builder.

@@ -3,11 +3,11 @@
 // Email delivery is a separate concern (see notifications.ts Resend).
 //
 // Design:
-// - Bell inbox = event log (assign, paid, portal request, due-soon ping). Mark-read hides urgency.
+// - Bell inbox = event log (assign, paid, portal request, approvals, signed/paid/viewed events).
 // - Dashboard Reminder = live action state (overdue invoice, tasks due today, contracts waiting).
 //   Remains until underlying state is fixed — NOT the same as bell.
-// - Recurring/state reminders (invoice_overdue, task_due_soon) are deduped:
-//   skip insert if same user+type+entity still unread, or created within cooldown.
+// - Recurring/state reminders (invoice_overdue, task_due_soon) are dashboard-only.
+//   Keep them out of bell list/unread counts to avoid duplicate urgency surfaces.
 // - Per-recipient (user_id) — owner/members each get their own copy
 // - Link is relative app path so the topbar can deep-link
 // - read_at is nullable: null = unread
@@ -15,7 +15,7 @@
 
 import { db } from "@/db";
 import { notifications, workspaceMembers } from "@/db/schema";
-import { and, eq, gte, isNull, sql } from "drizzle-orm";
+import { and, eq, gte, isNull, notInArray, sql } from "drizzle-orm";
 
 export type NotificationType =
   | "task_assigned"
@@ -57,6 +57,7 @@ export interface CreateNotificationInput {
 
 /** Types that re-fire from cron/state checks and must not spam the bell. */
 const RECURRING_TYPES = new Set<NotificationType>(["invoice_overdue", "task_due_soon"]);
+const DASHBOARD_ONLY_TYPES: NotificationType[] = ["invoice_overdue", "task_due_soon"];
 
 async function shouldSkipDuplicate(
   userId: string,
@@ -218,7 +219,13 @@ export async function getUnreadCount(userId: string): Promise<number> {
   const [row] = await db
     .select({ c: sql<number>`count(*)::int` })
     .from(notifications)
-    .where(and(eq(notifications.userId, userId), isNull(notifications.readAt)));
+    .where(
+      and(
+        eq(notifications.userId, userId),
+        isNull(notifications.readAt),
+        notInArray(notifications.type, DASHBOARD_ONLY_TYPES),
+      ),
+    );
   return row?.c ?? 0;
 }
 
@@ -238,7 +245,7 @@ export async function listNotifications(userId: string, limit = 30) {
       createdAt: notifications.createdAt,
     })
     .from(notifications)
-    .where(eq(notifications.userId, userId))
+    .where(and(eq(notifications.userId, userId), notInArray(notifications.type, DASHBOARD_ONLY_TYPES)))
     .orderBy(sql`${notifications.createdAt} desc`)
     .limit(limit);
 }

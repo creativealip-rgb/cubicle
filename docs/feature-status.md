@@ -1,8 +1,8 @@
 # Cubiqlo Full Feature Status
 
-Last updated: 2026-07-05
+Last updated: 2026-07-23
 Live app: https://cubiqlo.com
-Latest verified commit: `2babd61 fix: close forms before refresh`
+Latest verified branch: `fix/navbar-notification-dashboard-reminders`
 
 ## Status legend
 
@@ -29,8 +29,8 @@ Latest verified commit: `2babd61 fix: close forms before refresh`
 | App shell sidebar/topbar | `/app/*` | DONE | Grouped sidebar, workspace dropdown, global search entry, create button, timer, notifications. |
 | Auth login/signup/reset | `/login`, `/signup`, `/forgot-password`, `/reset-password` | DONE | Basic auth flow live. |
 | Workspace context | `active_workspace_id` cookie + workspace helpers | DONE | Auto-bootstrap and membership checks exist. |
-| Dashboard | `/app/dashboard` | DONE | Reminder → Kerja (Klien/Proyek only) → activity + Keuangan. Greeting date-only. Due/timer not duplicated (Reminder + topbar). |
-| Notifications | `/api/notifications` | PARTIAL | In-app notifications exist; deeper WA/push automation pending. |
+| Dashboard | `/app/dashboard` | DONE | `Perlu ditangani` action queue groups urgent, waiting-action, and scheduled reminders. Greeting date-only. Due/timer not duplicated (dashboard + topbar). |
+| Notifications | `/api/notifications` | PARTIAL | Bell is event inbox only. Dashboard-only recurring urgency (`invoice_overdue`, `task_due_soon`) is excluded from bell list/unread counts; deeper WA/push automation pending. |
 
 ## Client operations
 

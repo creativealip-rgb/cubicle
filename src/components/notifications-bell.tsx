@@ -153,7 +153,7 @@ export function NotificationsBell() {
           <div>
             <div className="text-sm font-semibold">{t("Notifikasi", "Notifications")}</div>
             <div className="text-[10px] text-muted-foreground font-normal">
-              {t("Inbox event · beda dari Reminder dashboard", "Event inbox · not dashboard Reminder")}
+              {t("Update terbaru dari client dan tim", "Latest updates from clients and team")}
             </div>
           </div>
           {unread > 0 && (

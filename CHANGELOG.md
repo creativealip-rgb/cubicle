@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.113 — 2026-07-23 — Dashboard action queue + event-only notifications
+
+- Renamed dashboard **Reminder** section to **Perlu ditangani** with cleaner product copy
+- Grouped dashboard action queue into **Urgent**, **Menunggu aksi**, and **Terjadwal** so due items, approvals, contracts, appointments, and personal reminders do not feel mixed
+- Clarified notification bell as an event inbox for recent client/team updates
+- Kept recurring/state urgency (`invoice_overdue`, `task_due_soon`) out of notification bell list and unread counts; those now belong to dashboard action queue only
+- Verified live with `testing@cubiqlo.com`: dashboard shows grouped action queue, notification API returns no dashboard-only reminders in bell
+
 ## v0.1.112 — 2026-07-22 — Branded noreply email logo
 
 - Added Cubiqlo icon to default transactional email wrapper so client/user emails from `noreply@cubiqlo.com` show branded header inside the email body

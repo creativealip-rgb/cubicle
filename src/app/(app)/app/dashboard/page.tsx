@@ -16,6 +16,9 @@ import {
   TrendingUp,
   Bell,
   ArrowRight,
+  CalendarClock,
+  Clock3,
+  FileCheck2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -236,8 +239,10 @@ export default async function DashboardPage() {
     actorName: string | null;
   }>;
 
+  const renderNowMs = now.getTime();
+
   function formatRelative(date: Date | string): string {
-    const diffMs = Date.now() - new Date(date).getTime();
+    const diffMs = renderNowMs - new Date(date).getTime();
     const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
     if (diffHrs < 1) return t("Baru saja", "Just now");
     if (diffHrs < 24) return lang === "en" ? `${diffHrs}h ago` : `${diffHrs}j lalu`;
@@ -291,12 +296,12 @@ export default async function DashboardPage() {
 
   // Simple pie slices for SVG
   const pieColors = ["#2563eb", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444"];
-  let pieCursor = 0;
-  const pieSlices = clientPie.map((c, i) => {
+  const pieSlices = clientPie.reduce<
+    Array<{ d: string; color: string; name: string; total: number; end: number }>
+  >((slices, c, i) => {
+    const start = slices.at(-1)?.end ?? 0;
     const frac = c.total / pieTotal;
-    const start = pieCursor;
-    const end = pieCursor + frac;
-    pieCursor = end;
+    const end = start + frac;
     const a0 = start * Math.PI * 2 - Math.PI / 2;
     const a1 = end * Math.PI * 2 - Math.PI / 2;
     const r = 40;
@@ -306,25 +311,29 @@ export default async function DashboardPage() {
     const y1 = 50 + r * Math.sin(a1);
     const large = frac > 0.5 ? 1 : 0;
     const d = `M 50 50 L ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} Z`;
-    return { d, color: pieColors[i % pieColors.length], name: c.name, total: c.total };
-  });
+    return [...slices, { d, color: pieColors[i % pieColors.length]!, name: c.name, total: c.total, end }];
+  }, []);
 
-  // Reminder items unified
+  type ReminderTone = "rose" | "amber" | "blue" | "purple" | "slate";
+  type ReminderGroupKey = "urgent" | "action" | "scheduled";
   type ReminderItem = {
     key: string;
     label: string;
     href: string;
-    tone: "rose" | "amber" | "blue" | "purple" | "slate";
+    tone: ReminderTone;
+    group: ReminderGroupKey;
     count?: number;
     meta?: string;
   };
+
   const reminderItems: ReminderItem[] = [];
   if (att.overdueInvoices > 0) {
     reminderItems.push({
       key: "inv-overdue",
-      label: t("Invoice jatuh tempo", "Invoice due"),
+      label: t("Invoice jatuh tempo", "Overdue invoices"),
       href: "/app/invoices?status=overdue",
       tone: "rose",
+      group: "urgent",
       count: att.overdueInvoices,
     });
   }
@@ -334,6 +343,7 @@ export default async function DashboardPage() {
       label: t("Tugas perlu dikerjakan", "Tasks due"),
       href: "/app/tasks?filter=today",
       tone: "amber",
+      group: "urgent",
       count: att.tasksDueToday,
     });
   }
@@ -343,6 +353,7 @@ export default async function DashboardPage() {
       label: t("Approval task client", "Client task approval"),
       href: "/app/tasks?status=review",
       tone: "purple",
+      group: "action",
       count: att.clientApprovals,
     });
   }
@@ -352,6 +363,7 @@ export default async function DashboardPage() {
       label: t("Kontrak menunggu", "Awaiting contracts"),
       href: "/app/contracts",
       tone: "blue",
+      group: "action",
       count: att.contractsAwaiting,
     });
   }
@@ -361,6 +373,7 @@ export default async function DashboardPage() {
       label: apt.title,
       href: "/app/calendar",
       tone: "slate",
+      group: "scheduled",
       meta: new Date(apt.startTime).toLocaleString(locale, {
         weekday: "short",
         day: "numeric",
@@ -376,6 +389,7 @@ export default async function DashboardPage() {
       label: r.title,
       href: "/app/personal",
       tone: "blue",
+      group: "scheduled",
       meta: r.dueDate
         ? new Date(r.dueDate).toLocaleDateString(locale, {
             weekday: "short",
@@ -386,12 +400,39 @@ export default async function DashboardPage() {
     });
   }
 
-  const toneClass: Record<ReminderItem["tone"], string> = {
-    rose: "border-rose-200 bg-rose-50 text-rose-800",
-    amber: "border-amber-200 bg-amber-50 text-amber-800",
-    blue: "border-blue-200 bg-blue-50 text-blue-800",
-    purple: "border-purple-200 bg-purple-50 text-purple-800",
-    slate: "border-slate-200 bg-slate-50 text-slate-800",
+  const reminderGroupDefs = [
+    {
+      key: "urgent",
+      label: t("Urgent", "Urgent"),
+      icon: AlertCircle,
+      items: reminderItems.filter((item) => item.group === "urgent"),
+    },
+    {
+      key: "action",
+      label: t("Menunggu aksi", "Needs action"),
+      icon: FileCheck2,
+      items: reminderItems.filter((item) => item.group === "action"),
+    },
+    {
+      key: "scheduled",
+      label: t("Terjadwal", "Scheduled"),
+      icon: CalendarClock,
+      items: reminderItems.filter((item) => item.group === "scheduled"),
+    },
+  ] satisfies Array<{
+    key: ReminderGroupKey;
+    label: string;
+    icon: typeof AlertCircle;
+    items: ReminderItem[];
+  }>;
+  const reminderGroups = reminderGroupDefs.filter((group) => group.items.length > 0);
+
+  const toneClass: Record<ReminderTone, string> = {
+    rose: "border-rose-200 bg-rose-50 text-rose-800 hover:border-rose-300",
+    amber: "border-amber-200 bg-amber-50 text-amber-800 hover:border-amber-300",
+    blue: "border-blue-200 bg-blue-50 text-blue-800 hover:border-blue-300",
+    purple: "border-purple-200 bg-purple-50 text-purple-800 hover:border-purple-300",
+    slate: "border-slate-200 bg-slate-50 text-slate-800 hover:border-slate-300",
   };
 
   return (
@@ -415,47 +456,59 @@ export default async function DashboardPage() {
         <div className="flex items-end justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              {t("Reminder", "Reminder")}
+              {t("Perlu ditangani", "Needs attention")}
             </h2>
             <p className="mt-1 text-[11px] text-muted-foreground">
-              {t(
-                "Active to-do: tetap tampil sampai beres. Bukan bell (inbox event).",
-                "Active to-do: stays until resolved. Not the bell (event inbox).",
-              )}
+              {t("Prioritas aktif yang belum selesai", "Active priorities that still need work")}
             </p>
           </div>
         </div>
         <Card>
-          <CardContent className="p-4 space-y-2">
+          <CardContent className="p-4">
             {reminderItems.length === 0 ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
                 <Bell className="h-4 w-4" />
-                {t("Tidak ada reminder", "No reminders")}
+                {t("Tidak ada prioritas aktif", "No active priorities")}
               </div>
             ) : (
-              reminderItems.map((item) => (
-                <Link
-                  key={item.key}
-                  href={item.href}
-                  className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm transition-all hover:-translate-y-0.5 hover:shadow-sm ${toneClass[item.tone]}`}
-                >
-                  <div className="min-w-0 flex items-center gap-2">
-                    <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate font-medium">{item.label}</span>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {item.count != null && (
-                      <Badge variant="secondary" className="text-[10px]">
-                        {item.count}
-                      </Badge>
-                    )}
-                    {item.meta && (
-                      <span className="text-[11px] opacity-80">{item.meta}</span>
-                    )}
-                    <ArrowRight className="h-3.5 w-3.5 opacity-60" />
-                  </div>
-                </Link>
-              ))
+              <div className="space-y-4">
+                {reminderGroups.map((group) => {
+                  const GroupIcon = group.icon;
+                  return (
+                    <div key={group.key} className="space-y-2">
+                      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        <GroupIcon className="h-3.5 w-3.5" />
+                        <span>{group.label}</span>
+                      </div>
+                      <div className="space-y-2">
+                        {group.items.map((item) => (
+                          <Link
+                            key={item.key}
+                            href={item.href}
+                            className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm transition-all hover:-translate-y-0.5 hover:shadow-sm ${toneClass[item.tone]}`}
+                          >
+                            <div className="min-w-0 flex items-center gap-2">
+                              <Clock3 className="h-3.5 w-3.5 shrink-0" />
+                              <span className="truncate font-medium">{item.label}</span>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {item.count != null && (
+                                <Badge variant="secondary" className="text-[10px]">
+                                  {item.count}
+                                </Badge>
+                              )}
+                              {item.meta && (
+                                <span className="text-[11px] opacity-80">{item.meta}</span>
+                              )}
+                              <ArrowRight className="h-3.5 w-3.5 opacity-60" />
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </CardContent>
         </Card>
