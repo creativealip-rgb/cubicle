@@ -38,6 +38,13 @@ interface ManualEntryFormProps {
   tasks: Task[];
 }
 
+function localDateValue(date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export function ManualEntryForm({ workspaceId, clients, projects, tasks }: ManualEntryFormProps) {
   const { t } = useT();
   const router = useRouter();
@@ -50,7 +57,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
   const [description, setDescription] = useState("");
   const [descriptionFromTask, setDescriptionFromTask] = useState(false);
   const [tags, setTags] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(localDateValue);
   const [hours, setHours] = useState("0");
   const [minutes, setMinutes] = useState("0");
   const [billable, setBillable] = useState(true);
@@ -145,7 +152,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
       setDescription("");
       setDescriptionFromTask(false);
       setTags("");
-      setDate(new Date().toISOString().split("T")[0]);
+      setDate(localDateValue());
       setHours("0");
       setMinutes("0");
       setBillable(true);
@@ -165,11 +172,11 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
           <Plus className="h-3 w-3" /> Entri Manual
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[min(90dvh,720px)] overflow-y-auto sm:max-w-[560px]">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[min(90dvh,720px)] flex-col overflow-hidden p-0 sm:max-w-[560px]">
+        <DialogHeader className="shrink-0 border-b px-5 py-4 pr-12">
           <DialogTitle>Tambah Entri Waktu Manual</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+        <form onSubmit={handleSubmit} className="min-h-0 space-y-4 overflow-y-auto px-5 py-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <Label className="text-xs">Klien *</Label>

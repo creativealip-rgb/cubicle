@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { timeEntries, clients, projects, tasks, users } from "@/db/schema";
-import { eq, and, isNull, desc } from "drizzle-orm";
+import { eq, and, isNull, isNotNull, desc } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { TimerWidget } from "@/components/time/timer-widget";
 import { Timesheet } from "@/components/time/timesheet";
@@ -81,7 +81,7 @@ export default async function TimePage() {
     .leftJoin(projects, eq(projects.id, timeEntries.projectId))
     .leftJoin(tasks, eq(tasks.id, timeEntries.taskId))
     .leftJoin(users, eq(users.id, timeEntries.userId))
-    .where(eq(timeEntries.workspaceId, workspaceId))
+    .where(and(eq(timeEntries.workspaceId, workspaceId), isNotNull(timeEntries.endTime)))
     .orderBy(desc(timeEntries.createdAt))
     .limit(200);
 
