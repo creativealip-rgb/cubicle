@@ -52,6 +52,14 @@ export async function proxy(request: NextRequest) {
   }
 
   const sessionCookie = getSessionCookie(request)
+  const isApexAppRoute = host === "cubiqlo.com" && (pathname.startsWith("/app") || pathname.startsWith("/onboarding"))
+
+  // App routes live on app.cubiqlo.com. Old/bookmarked apex app URLs move to app host.
+  if (isApexAppRoute) {
+    const url = new URL(`https://app.cubiqlo.com${pathname}`)
+    url.search = request.nextUrl.search
+    return NextResponse.redirect(url, 308)
+  }
 
   // Protected routes: no session → redirect to login
   const isProtected = protectedPrefixes.some((p) => pathname.startsWith(p))
@@ -59,6 +67,11 @@ export async function proxy(request: NextRequest) {
     const loginUrl = new URL("/login", request.url)
     loginUrl.searchParams.set("redirect", pathname)
     return NextResponse.redirect(loginUrl)
+  }
+
+  // Landing page: already logged in → go straight to app dashboard.
+  if (pathname === "/" && sessionCookie) {
+    return NextResponse.redirect(new URL("https://app.cubiqlo.com/app/dashboard"))
   }
 
   // Auth pages: already logged in → redirect to app

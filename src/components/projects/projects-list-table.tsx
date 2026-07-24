@@ -2,19 +2,13 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { MoreHorizontal, Clock, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Clock, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/empty-state";
 import { SortableHeader } from "@/components/ui/sortable-header";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
+import { cn } from "@/lib/utils";
 
 export type ProjectListItem = {
   id: string;
@@ -29,6 +23,7 @@ export type ProjectListItem = {
 
 const STATUS_ORDER = [
   "active",
+  "review",
   "draft",
   "on_hold",
   "completed",
@@ -41,11 +36,51 @@ type SortKey = "name" | "client" | "status" | "progress" | "dueDate";
 const statusColors: Record<string, string> = {
   draft: "bg-slate-400",
   active: "bg-emerald-500",
+  review: "bg-violet-500",
   on_hold: "bg-amber-500",
-  completed: "bg-blue-500",
+  completed: "bg-green-600",
   cancelled: "bg-red-400",
   archived: "bg-slate-500",
 };
+
+function progressPct(project: ProjectListItem) {
+  if (project.totalTasks <= 0) return 0;
+  return Math.min(100, Math.max(0, Math.round((project.doneTasks / project.totalTasks) * 100)));
+}
+
+function dueDays(dueDate: string | null) {
+  if (!dueDate) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate);
+  due.setHours(0, 0, 0, 0);
+  return Math.ceil((due.getTime() - today.getTime()) / 86_400_000);
+}
+
+function dueTone(dueDate: string | null, status: string) {
+  if (!dueDate || status === "archived" || status === "cancelled") {
+    return "text-muted-foreground";
+  }
+  const days = dueDays(dueDate) ?? 0;
+  if (days < 0) return status === "completed" ? "text-green-700 font-medium" : "text-red-600 font-semibold";
+  if (days <= 14) return "text-amber-700 font-semibold";
+  return "text-muted-foreground";
+}
+
+function ProgressBar({ project }: { project: ProjectListItem }) {
+  const pct = progressPct(project);
+  return (
+    <div className="relative h-5 w-full overflow-hidden rounded-full bg-muted shadow-inner">
+      <div
+        className={cn("h-full rounded-full transition-all", statusColors[project.status] ?? "bg-slate-400")}
+        style={{ width: `${pct}%` }}
+      />
+      <div className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold leading-none text-slate-700 mix-blend-multiply">
+        {pct}%
+      </div>
+    </div>
+  );
+}
 
 export function ProjectsListTable({
   projects,
@@ -61,6 +96,7 @@ export function ProjectsListTable({
   const statusLabels: Record<string, string> = {
     draft: t("Draf", "Draft"),
     active: t("Aktif", "Active"),
+    review: t("Review", "Review"),
     on_hold: t("Ditunda", "On Hold"),
     completed: t("Selesai", "Completed"),
     cancelled: t("Dibatalkan", "Cancelled"),
@@ -72,8 +108,7 @@ export function ProjectsListTable({
       name: (r: ProjectListItem) => r.name,
       client: (r: ProjectListItem) => r.clientName ?? "",
       status: (r: ProjectListItem) => r.status,
-      progress: (r: ProjectListItem) =>
-        r.totalTasks > 0 ? r.doneTasks / r.totalTasks : 0,
+      progress: (r: ProjectListItem) => progressPct(r),
       dueDate: (r: ProjectListItem) => r.dueDate,
     }),
     [],
@@ -86,10 +121,29 @@ export function ProjectsListTable({
     orders,
   );
 
+  function formatDue(project: ProjectListItem) {
+    if (!project.dueDate) return "—";
+    const base = new Date(project.dueDate).toLocaleDateString(locale, {
+      month: "short",
+      day: "numeric",
+    });
+    if (project.status === "archived" || project.status === "cancelled") return base;
+    const days = dueDays(project.dueDate);
+    if (days === null) return base;
+    if (days < 0) {
+      return project.status === "completed"
+        ? `${base} · ${t("selesai", "done")}`
+        : `${base} · ${t("lewat", "overdue")}`;
+    }
+    if (days === 0) return `${base} · ${t("hari ini", "today")}`;
+    if (days <= 14) return `${base} · ${days} ${t("hari", "days")}`;
+    return base;
+  }
+
   return (
     <div className="rounded-lg border bg-card">
       <div className="hidden md:grid grid-cols-12 gap-4 p-3 text-xs font-medium text-muted-foreground border-b">
-        <div className="col-span-3">
+        <div className="col-span-4">
           <SortableHeader
             as="div"
             label={t("Proyek", "Project")}
@@ -134,7 +188,6 @@ export function ProjectsListTable({
             className="text-xs"
           />
         </div>
-        <div className="col-span-1 text-right">{t("Aksi", "Actions")}</div>
       </div>
 
       {projects.length === 0 && (
@@ -144,8 +197,8 @@ export function ProjectsListTable({
           description={
             hasExtraFilters || statusTab !== "all"
               ? t(
-                  "Tidak ada proyek untuk filter ini. Coba ubah status, klien, atau paket.",
-                  "No projects match these filters. Try another status, client, or package.",
+                  "Tidak ada proyek untuk filter ini. Coba ubah status atau klien.",
+                  "No projects match these filters. Try another status or client.",
                 )
               : t(
                   "Buat proyek pertama untuk mulai pantau pekerjaan.",
@@ -178,64 +231,33 @@ export function ProjectsListTable({
               </Badge>
             </div>
 
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>{t("Progres", "Progress")}</span>
-                <span>
-                  {project.doneTasks}/{project.totalTasks}
-                </span>
+            <div className="space-y-1.5">
+              <div className="text-xs text-muted-foreground">
+                {t("Progres", "Progress")}
               </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${statusColors[project.status] ?? "bg-slate-400"}`}
-                  style={{
-                    width: `${project.totalTasks > 0 ? Math.round((project.doneTasks / project.totalTasks) * 100) : 0}%`,
-                  }}
-                />
-              </div>
+              <ProgressBar project={project} />
             </div>
 
-            <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-              <span>
-                {project.dueDate ? (
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {new Date(project.dueDate).toLocaleDateString(locale, {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </span>
-                ) : (
-                  "—"
-                )}
-              </span>
-              {project.clientVisible && (
-                <Badge variant="outline" className="text-[10px]">
-                  {t("Terlihat klien", "Client visible")}
-                </Badge>
-              )}
+            <div className={cn("flex items-center gap-1 text-xs", dueTone(project.dueDate, project.status))}>
+              <Clock className="h-3 w-3" />
+              {formatDue(project)}
             </div>
           </div>
         ))}
       </div>
 
-      {sorted.map((project) => (
+      {sorted.map((project, index) => (
         <div
           key={project.id}
-          className="hidden md:grid grid-cols-12 gap-4 p-3 items-center border-b last:border-0 hover:bg-muted/50 transition-colors"
+          className={`hidden md:grid grid-cols-12 gap-4 p-3 items-center border-b border-slate-200 last:border-0 hover:bg-slate-100/70 transition-colors ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"}`}
         >
-          <div className="col-span-3">
+          <div className="col-span-4">
             <Link
               href={`/app/projects/${project.id}`}
               className="font-medium hover:underline"
             >
               {project.name}
             </Link>
-            {project.clientVisible && (
-              <Badge variant="outline" className="ml-2 text-[10px]">
-                {t("Terlihat klien", "Client visible")}
-              </Badge>
-            )}
           </div>
           <div className="col-span-2 text-sm text-muted-foreground truncate">
             {project.clientName || "—"}
@@ -249,53 +271,13 @@ export function ProjectsListTable({
             </Badge>
           </div>
           <div className="col-span-2">
-            <div className="flex items-center gap-2">
-              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${statusColors[project.status] ?? "bg-slate-400"}`}
-                  style={{
-                    width: `${project.totalTasks > 0 ? Math.round((project.doneTasks / project.totalTasks) * 100) : 0}%`,
-                  }}
-                />
-              </div>
-              <span className="text-xs text-muted-foreground w-12 text-right">
-                {project.doneTasks}/{project.totalTasks}
-              </span>
-            </div>
+            <ProgressBar project={project} />
           </div>
-          <div className="col-span-2 text-xs text-muted-foreground">
-            {project.dueDate ? (
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {new Date(project.dueDate).toLocaleDateString(locale, {
-                  month: "short",
-                  day: "numeric",
-                })}
-              </span>
-            ) : (
-              "—"
-            )}
-          </div>
-          <div className="col-span-1 text-right">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href={`/app/projects/${project.id}`}>
-                    {t("Lihat Detail", "View Details")}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href={`/app/tasks?projectId=${project.id}`}>
-                    {t("Lihat Tugas", "View Tasks")}
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <div className={cn("col-span-2 text-xs", dueTone(project.dueDate, project.status))}>
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {formatDue(project)}
+            </span>
           </div>
         </div>
       ))}

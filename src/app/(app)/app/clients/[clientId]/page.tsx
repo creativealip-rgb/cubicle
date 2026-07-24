@@ -24,10 +24,9 @@ import {
   Globe,
   FileText,
   Calendar,
-  MessageSquare,
   ArrowLeft,
   Receipt,
-  Users,
+  MessageSquare,
   Download,
   Wallet,
 } from "lucide-react";
@@ -58,7 +57,6 @@ export default async function ClientDetailPage({
   const { clientId } = await params;
   const { tab: tabParam } = await searchParams;
   const allowedTabs = new Set([
-    "overview",
     "projects",
     "invoices",
     "calendar",
@@ -66,12 +64,15 @@ export default async function ClientDetailPage({
     "notes",
   ]);
   // Legacy deep-link ?tab=appointments → Calendar
+  // Ringkasan (overview) di-hide; deep-link lama fallback ke projects
   const initialTab =
     tabParam === "appointments"
       ? "calendar"
-      : tabParam && allowedTabs.has(tabParam)
-        ? tabParam
-        : "overview";
+      : tabParam === "overview"
+        ? "projects"
+        : tabParam && allowedTabs.has(tabParam)
+          ? tabParam
+          : "projects";
 
   try {
     await assertClientInWorkspace(db, user.id, workspaceId, clientId);
@@ -231,9 +232,6 @@ export default async function ClientDetailPage({
           <Link href="/app/clients" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-3 w-3" /> Kembali ke Klien
           </Link>
-          {client.clientNumber && (
-            <p className="text-xs font-mono text-muted-foreground">{client.clientNumber}</p>
-          )}
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-semibold tracking-tight">{client.name}</h1>
             <Badge variant={client.status === "active" ? "default" : "secondary"}>
@@ -261,12 +259,7 @@ export default async function ClientDetailPage({
         </div>
         <div className="flex flex-wrap gap-2 justify-end">
           <Button size="sm" variant="outline" className="gap-1" asChild>
-            <a href={`/api/clients/${client.id}/export/pdf`} target="_blank" rel="noreferrer">
-              <Download className="h-3 w-3" /> PDF
-            </a>
-          </Button>
-          <Button size="sm" variant="outline" className="gap-1" asChild>
-            <a href={`/api/clients/${client.id}/export/xlsx`} rel="noreferrer">
+            <a href={`/api/clients/${client.id}/export/xlsx`} download>
               <Download className="h-3 w-3" /> Excel
             </a>
           </Button>
@@ -358,32 +351,27 @@ export default async function ClientDetailPage({
         </CardContent>
       </Card>
 
-      {/* Tabs */}
+      {/* Tabs — Ringkasan di-hide, Portal tetap; wrap di mobile */}
       <Tabs defaultValue={initialTab}>
-        <TabsList>
-          <TabsTrigger value="overview" className="gap-1">
-            <Users className="h-3 w-3" /> Ringkasan
-          </TabsTrigger>
-          <TabsTrigger value="projects" className="gap-1">
-            <FileText className="h-3 w-3" /> Proyek ({clientProjects.length})
-          </TabsTrigger>
-          <TabsTrigger value="invoices" className="gap-1">
-            <Receipt className="h-3 w-3" /> Invoice ({clientInvoices.length})
-          </TabsTrigger>
-          <TabsTrigger value="calendar" className="gap-1">
-            <Calendar className="h-3 w-3" /> Calendar
-          </TabsTrigger>
-          <TabsTrigger value="portal" className="gap-1">
-            <Globe className="h-3 w-3" /> Portal
-          </TabsTrigger>
-          <TabsTrigger value="notes" className="gap-1">
-            <MessageSquare className="h-3 w-3" /> Catatan
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-4 pt-4">
-          <PortalTokenSection client={client} />
-        </TabsContent>
+        <div className="overflow-x-auto -mx-1 px-1">
+          <TabsList className="h-auto min-h-9 w-full flex-wrap justify-start gap-1 p-1">
+            <TabsTrigger value="projects" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
+              <FileText className="h-3 w-3 shrink-0" /> Proyek ({clientProjects.length})
+            </TabsTrigger>
+            <TabsTrigger value="invoices" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
+              <Receipt className="h-3 w-3 shrink-0" /> Invoice ({clientInvoices.length})
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
+              <Calendar className="h-3 w-3 shrink-0" /> Calendar
+            </TabsTrigger>
+            <TabsTrigger value="portal" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
+              <Globe className="h-3 w-3 shrink-0" /> Portal
+            </TabsTrigger>
+            <TabsTrigger value="notes" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
+              <MessageSquare className="h-3 w-3 shrink-0" /> Catatan
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="portal" className="space-y-4 pt-4">
           <PortalTokenSection client={client} />
@@ -481,9 +469,13 @@ export default async function ClientDetailPage({
           )}
           {clientInvoices.map((inv) => (
             <Card key={inv.id}>
-              <CardContent className="p-4 flex items-center justify-between">
+              <CardContent className="p-0">
+                <Link
+                  href={`/app/invoices/${inv.id}`}
+                  className="flex items-center justify-between p-4 transition-colors hover:bg-muted/50"
+                >
                 <div>
-                  <p className="text-sm font-medium">{inv.invoiceNumber}</p>
+                  <p className="text-sm font-medium hover:underline">{inv.invoiceNumber}</p>
                   <p className="text-xs text-muted-foreground">
                     {inv.issueDate} · Tenggat: {inv.dueDate ?? "—"}
                   </p>
@@ -497,6 +489,7 @@ export default async function ClientDetailPage({
                   </Badge>
                   <span className="text-sm font-semibold">{inv.currency} {inv.total}</span>
                 </div>
+                </Link>
               </CardContent>
             </Card>
           ))}

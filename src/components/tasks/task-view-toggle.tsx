@@ -30,7 +30,7 @@ export function TaskViewToggle({ current }: { current: "list" | "board" }) {
       <button
         type="button"
         onClick={() => setView("list")}
-        className={cn(base, current === "list" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground")}
+        className={cn(base, current === "list" ? "border border-primary/20 bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground")}
       >
         <List className="h-3.5 w-3.5" /> {t("Daftar", "List")}
       </button>

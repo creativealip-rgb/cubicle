@@ -26,19 +26,16 @@ import {
   Brain as BrainIcon,
   PanelLeftClose,
   PanelLeft,
-  FileSignature,
   X,
   Wallet,
   BarChart3,
   FileText,
-  Layers,
   Package,
 
   ChevronDown,
   NotebookPen,
 } from "lucide-react";
 import { useSidebar } from "@/components/app-shell";
-import { canAccessTemplatesPreview } from "@/lib/feature-access";
 
 const navItems = [
   { label: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard, group: null },
@@ -49,16 +46,17 @@ const navItems = [
   { label: "Kalender", href: "/app/calendar", icon: Calendar, group: "Kerja" },
   { label: "File", href: "/app/files", icon: FolderOpen, group: "Kerja" },
   { label: "Invoice", href: "/app/invoices", icon: FileText, group: "Keuangan", badgeKey: "unpaidInvoices" as const },
-  { label: "Paket", href: "/app/packages", icon: Package, group: "Keuangan" },
+  { label: "Service", href: "/app/packages", icon: Package, group: "Keuangan" },
   { label: "Pengeluaran", href: "/app/expenses", icon: Wallet, group: "Keuangan" },
   { label: "Laporan", href: "/app/reports", icon: BarChart3, group: "Keuangan" },
+  // Personal order: Catatan, Jurnal, Landing Page
   { label: "Catatan", href: "/app/personal", icon: NotebookPen, group: "Personal" },
-  { label: "Landing Page", href: "/app/personal-site", icon: FileText, group: "Personal" },
   { label: "Jurnal", href: "/app/journal", icon: NotebookPen, group: "Personal" },
-  { label: "Proposal", href: "/app/proposals", icon: FileText, group: "Penjualan", badgeKey: "draftProposals" as const },
-  { label: "Kontrak", href: "/app/contracts", icon: FileSignature, group: "Penjualan", badgeKey: "draftContracts" as const },
-
-  { label: "Template", href: "/app/templates", icon: Layers, group: "Penjualan" },
+  { label: "Landing Page", href: "/app/personal-site", icon: FileText, group: "Personal" },
+  // Sales hidden from sidebar for now (routes still exist)
+  // { label: "Proposal", href: "/app/proposals", icon: FileText, group: "Penjualan", badgeKey: "draftProposals" as const },
+  // { label: "Kontrak", href: "/app/contracts", icon: FileSignature, group: "Penjualan", badgeKey: "draftContracts" as const },
+  // { label: "Template", href: "/app/templates", icon: Layers, group: "Penjualan" },
   { label: "Brain", href: "/app/brain", icon: BrainIcon, group: "AI" },
   { label: "Prompt", href: "/app/prompts", icon: Sparkles, group: "AI" },
 ];
@@ -67,7 +65,7 @@ const groupLabels = {
   Kerja: { id: "Kerja", en: "Work" },
   Keuangan: { id: "Keuangan", en: "Finance" },
   Personal: { id: "Personal", en: "Personal" },
-  Penjualan: { id: "Penjualan", en: "Sales" },
+  // Penjualan: { id: "Penjualan", en: "Sales" },
   AI: { id: "AI", en: "AI" },
 } as const;
 
@@ -80,7 +78,8 @@ const navLabels: Record<string, { id: string; en: string }> = {
   Kalender: { id: "Kalender", en: "Calendar" },
   File: { id: "File", en: "Files" },
   Invoice: { id: "Invoice", en: "Invoice" },
-  Paket: { id: "Paket", en: "Packages" },
+  Service: { id: "Service", en: "Services" },
+  Paket: { id: "Service", en: "Services" },
   Pengeluaran: { id: "Pengeluaran", en: "Expenses" },
   Laporan: { id: "Laporan", en: "Reports" },
   Catatan: { id: "Catatan", en: "Notes" },
@@ -134,7 +133,6 @@ export function AppSidebar({
   const pathname = usePathname();
   const { mobileOpen, setMobileOpen } = useSidebar();
   const { lang, t, setLang, pending } = useT();
-  const templatesPreview = canAccessTemplatesPreview(userEmail);
   const canSeePersonal = workspaceRole === "owner";
 
   function changeLang(next: "id" | "en") {
@@ -144,18 +142,21 @@ export function AppSidebar({
     Kerja: true,
     Keuangan: false,
     Personal: false,
-    Penjualan: false,
     AI: false,
   });
 
   function activeGroupForPath(path: string): string | null {
-    // Routes that live under Sales but aren't direct nav hrefs
+    // Sales routes hidden from nav — no group expand for them
     if (
+      path.startsWith("/app/proposals") ||
+      path.startsWith("/app/contracts") ||
+      path.startsWith("/app/templates") ||
       path.startsWith("/app/contract-templates") ||
       path.startsWith("/app/invoice-templates") ||
-      path.startsWith("/app/invoices/templates")
+      path.startsWith("/app/invoices/templates") ||
+      path.startsWith("/app/questionnaires")
     ) {
-      return "Penjualan";
+      return null;
     }
 
     let match: { group: string | null; href: string } | null = null;
@@ -180,7 +181,6 @@ export function AppSidebar({
           Kerja: true,
           Keuangan: prev.Keuangan ?? false,
           Personal: prev.Personal ?? false,
-          Penjualan: prev.Penjualan ?? false,
           AI: prev.AI ?? false,
         };
       }
@@ -190,7 +190,6 @@ export function AppSidebar({
         Kerja: true,
         Keuangan: false,
         Personal: false,
-        Penjualan: false,
         AI: false,
         [name]: nextOpen,
       };
@@ -206,7 +205,6 @@ export function AppSidebar({
           Kerja: true,
           Keuangan: Boolean(prev.Keuangan),
           Personal: Boolean(prev.Personal),
-          Penjualan: Boolean(prev.Penjualan),
           AI: Boolean(prev.AI),
         };
       }
@@ -215,7 +213,6 @@ export function AppSidebar({
         Kerja: true,
         Keuangan: activeGroup === "Keuangan",
         Personal: activeGroup === "Personal",
-        Penjualan: activeGroup === "Penjualan",
         AI: activeGroup === "AI",
       };
     });
@@ -338,7 +335,6 @@ export function AppSidebar({
                     const badgeLabel = item.badgeKey
                       ? t(badgeLabels[item.badgeKey].id, badgeLabels[item.badgeKey].en)
                       : "";
-                    const isTemplatesItem = item.href === "/app/templates";
 
                     return (
                       <li key={item.href}>
@@ -360,24 +356,7 @@ export function AppSidebar({
                                   {t(navLabels[item.label]?.id ?? item.label, navLabels[item.label]?.en ?? item.label)}
                                 </span>
                               )}
-                              {!collapsed && isTemplatesItem && (
-                                <span
-                                  className={cn(
-                                    "ml-auto inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                                    isActive
-                                      ? "bg-sidebar-primary-foreground/15 text-sidebar-primary-foreground"
-                                      : "bg-amber-100 text-amber-800",
-                                  )}
-                                  title={
-                                    templatesPreview
-                                      ? t("Preview internal (Soon)", "Internal preview (Soon)")
-                                      : t("Segera hadir", "Coming soon")
-                                  }
-                                >
-                                  Soon
-                                </span>
-                              )}
-                              {!collapsed && !isTemplatesItem && badge > 0 && (
+                              {!collapsed && badge > 0 && (
                                 <span
                                   className={cn(
                                     "ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-semibold",
@@ -390,15 +369,9 @@ export function AppSidebar({
                                   {badge > 99 ? "99+" : badge}
                                 </span>
                               )}
-                              {collapsed && isTemplatesItem && (
+                              {collapsed && badge > 0 && (
                                 <span
-                                  className="absolute right-1 top-1 inline-flex h-2 w-2 rounded-full bg-amber-500"
-                                  aria-label="Soon"
-                                />
-                              )}
-                              {collapsed && !isTemplatesItem && badge > 0 && (
-                                <span
-                                  className="absolute right-1 top-1 inline-flex h-2 w-2 rounded-full bg-blue-500"
+                                  className="absolute right-1 top-1 inline-flex h-2 w-2 rounded-full bg-blue-600"
                                   aria-label={`${badge} ${badgeLabel}`}
                                 />
                               )}
@@ -407,11 +380,7 @@ export function AppSidebar({
                           {collapsed && (
                             <TooltipContent side="right">
                               {t(navLabels[item.label]?.id ?? item.label, navLabels[item.label]?.en ?? item.label)}
-                              {isTemplatesItem
-                                ? " · Soon"
-                                : badge > 0
-                                  ? ` (${badge})`
-                                  : ""}
+                              {badge > 0 ? ` (${badge})` : ""}
                             </TooltipContent>
                           )}
                         </Tooltip>

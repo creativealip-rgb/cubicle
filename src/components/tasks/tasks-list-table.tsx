@@ -37,10 +37,26 @@ type Member = { id: string; name: string | null; email: string | null };
 const PRIORITY_ORDER = ["urgent", "high", "medium", "low"] as const;
 const STATUS_ORDER = ["todo", "in_progress", "review", "done", "cancelled"] as const;
 
+function dueDays(dueDate: string | null) {
+  if (!dueDate) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate);
+  due.setHours(0, 0, 0, 0);
+  return Math.ceil((due.getTime() - today.getTime()) / 86_400_000);
+}
+
+function dueTone(task: TasksListItem) {
+  const days = dueDays(task.dueDate);
+  if (days === null) return "text-muted-foreground";
+  if (days < 0) return task.status === "done" ? "text-green-700 font-medium" : "text-red-600 font-semibold";
+  if (days <= 7) return "text-amber-700 font-semibold";
+  return "text-muted-foreground";
+}
+
 type SortKey =
   | "title"
   | "project"
-  | "client"
   | "assignee"
   | "dueDate"
   | "priority"
@@ -61,7 +77,6 @@ export function TasksListTable({
     () => ({
       title: (r: TasksListItem) => r.title,
       project: (r: TasksListItem) => r.projectName ?? "",
-      client: (r: TasksListItem) => r.clientName ?? "",
       assignee: (r: TasksListItem) => r.assigneeName ?? "",
       dueDate: (r: TasksListItem) => r.dueDate,
       priority: (r: TasksListItem) => r.priority,
@@ -83,6 +98,17 @@ export function TasksListTable({
     getters,
     orders,
   );
+
+  function formatDue(task: TasksListItem) {
+    if (!task.dueDate) return t("Tanpa tenggat", "No due date");
+    const base = new Date(task.dueDate).toLocaleDateString(locale, { month: "short", day: "numeric" });
+    const days = dueDays(task.dueDate);
+    if (days === null) return base;
+    if (days < 0) return task.status === "done" ? `${base} · ${t("selesai", "done")}` : `${base} · ${t("lewat", "overdue")}`;
+    if (days === 0) return `${base} · ${t("hari ini", "today")}`;
+    if (days <= 7) return `${base} · ${days} ${t("hari", "days")}`;
+    return base;
+  }
 
   if (tasks.length === 0) {
     return (
@@ -111,7 +137,7 @@ export function TasksListTable({
             className="text-[11px] uppercase tracking-wide"
           />
         </div>
-        <div className="w-32">
+        <div className="w-44">
           <SortableHeader
             as="div"
             label={t("Proyek", "Project")}
@@ -119,9 +145,6 @@ export function TasksListTable({
             onClick={() => toggle("project")}
             className="text-[11px] uppercase tracking-wide"
           />
-        </div>
-        <div className="w-28">
-          <SortableHeader as="div" label={t("Klien", "Client")} dir={dirFor("client")} onClick={() => toggle("client")} className="text-[11px] uppercase tracking-wide" />
         </div>
         <div className="w-28">
           <SortableHeader
@@ -135,7 +158,7 @@ export function TasksListTable({
         <div className="w-24">
           <SortableHeader
             as="div"
-            label={t("Jatuh Tempo", "Due")}
+            label={t("Tenggat", "Due")}
             dir={dirFor("dueDate")}
             onClick={() => toggle("dueDate")}
             className="text-[11px] uppercase tracking-wide"
@@ -161,7 +184,7 @@ export function TasksListTable({
         </div>
       </div>
 
-      {sorted.map((task) => {
+      {sorted.map((task, index) => {
         const sb = taskStatusVariant(task.status, lang);
         const isFocus = focusId === task.id;
         return (
@@ -176,9 +199,9 @@ export function TasksListTable({
           >
             <Card
               id={isFocus ? `task-${task.id}` : undefined}
-              className={`cursor-pointer rounded-none border-0 border-b shadow-none transition-colors last:border-b-0 hover:bg-muted/50 ${isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""}`}
+              className={`cursor-pointer rounded-none border-0 !border-b border-slate-200 shadow-none transition-colors last:border-b-0 hover:bg-slate-100/70 ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"} ${isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""}`}
             >
-              <CardContent className="grid gap-3 p-4 md:flex md:items-center md:gap-4">
+              <CardContent className="grid gap-3 p-3 md:flex md:items-center md:gap-4">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{task.title}</p>
                   {task.sourceNoteId ? (
@@ -187,24 +210,16 @@ export function TasksListTable({
                     </p>
                   ) : null}
                 </div>
-                <div className="text-xs text-muted-foreground md:w-32 md:truncate">
-                  {task.projectName ?? t("Tanpa proyek", "No project")}
-                </div>
-                <div className="text-xs text-muted-foreground md:w-28 md:truncate">
-                  {task.clientName ?? "—"}
+                <div className="text-xs text-muted-foreground md:w-44">
+                  <p className="truncate">{task.projectName ?? t("Tanpa proyek", "No project")}</p>
+                  {task.clientName ? <p className="truncate text-[10px] opacity-80">{task.clientName}</p> : null}
                 </div>
                 <div className="text-xs text-muted-foreground md:w-28 md:truncate">
                   {task.assigneeName ?? t("Belum ditugaskan", "Unassigned")}
                 </div>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground md:w-24">
-                  {task.dueDate ? (
-                    <>
-                      <Clock className="h-3 w-3" />
-                      {new Date(task.dueDate).toLocaleDateString(locale)}
-                    </>
-                  ) : (
-                    t("Tanpa tenggat", "No due date")
-                  )}
+                <div className={`flex items-center gap-1 text-xs md:w-24 ${dueTone(task)}`}>
+                  <Clock className="h-3 w-3" />
+                  {formatDue(task)}
                 </div>
                 <div className="md:w-20">
                   <Badge
@@ -218,7 +233,10 @@ export function TasksListTable({
                   </Badge>
                 </div>
                 <div className="md:w-24">
-                  <Badge variant={sb.variant} className="text-[10px]">
+                  <Badge
+                    variant={sb.variant}
+                    className={`text-[10px] ${task.status === "review" ? "border-violet-300 bg-violet-50 text-violet-700" : ""}`}
+                  >
                     {sb.label}
                   </Badge>
                 </div>

@@ -46,7 +46,7 @@ const nextConfig: NextConfig = {
               // R2 presigned PUT/GET lives on *.r2.cloudflarestorage.com.
               // Without this, browser blocks the request and surfaces
               // "Network error during upload" / "failed to fetch".
-              "connect-src 'self' https://cubiqlo.com wss://cubiqlo.com https://*.r2.cloudflarestorage.com",
+              "connect-src 'self' https://cubiqlo.com wss://cubiqlo.com https://app.cubiqlo.com wss://app.cubiqlo.com https://*.r2.cloudflarestorage.com",
               "frame-ancestors 'none'",
             ].join("; "),
           },

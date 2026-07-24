@@ -16,13 +16,13 @@ import { requireUser } from "@/lib/access";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, FileText, ChevronLeft, ChevronRight, Wallet, AlertCircle, CheckCircle2 } from "lucide-react";
-import { cn, formatMoney } from "@/lib/utils";
+import { formatMoney } from "@/lib/utils";
 import { invoiceStatusVariant } from "@/lib/status-badge";
 import { EmptyState } from "@/components/empty-state";
 import { InvoicesListTable } from "@/components/invoices/invoices-list-table";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { billingTypeLabel } from "@/lib/feature-access";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import {
   buildRateMap,
   convertToBase,
@@ -460,47 +460,23 @@ export default async function InvoicesPage({
       )}
 
       {/* Status tabs + filters (same row pattern as Clients page) */}
-      <Tabs defaultValue={statusTab} className="space-y-4">
+      <div className="space-y-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <TabsList className="h-auto w-full justify-start overflow-x-auto p-1 lg:w-auto">
-            {STATUS_TABS.map((tab) => {
-              const active = tab === statusTab;
-              const countVal = tabCount(tab);
-              if (
-                !active &&
-                countVal === 0 &&
-                tab !== "all" &&
-                tab !== "draft" &&
-                tab !== "paid" &&
-                tab !== "sent" &&
-                tab !== "archived"
-              ) {
-                return null;
-              }
-              return (
-                <TabsTrigger
-                  key={tab}
-                  value={tab}
-                  asChild
-                  className="gap-1.5 data-[state=active]:shadow"
-                >
-                  <Link href={buildInvoicesHref({ ...filtersForHref, status: tab, page: 1 })}>
-                    <span>{tabLabel(tab, lang)}</span>
-                    <span
-                      className={cn(
-                        "rounded-full px-1.5 py-0.5 text-[10px] tabular-nums",
-                        active
-                          ? "bg-primary/10 text-primary"
-                          : "bg-background/80 text-muted-foreground",
-                      )}
-                    >
-                      {countVal}
-                    </span>
-                  </Link>
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
+          <StatusFilterTabs
+            activeValue={statusTab}
+            tabs={STATUS_TABS.map((tab) => ({
+              value: tab,
+              label: tabLabel(tab, lang),
+              href: buildInvoicesHref({ ...filtersForHref, status: tab, page: 1 }),
+              count: tabCount(tab),
+              alwaysShow:
+                tab === "all" ||
+                tab === "draft" ||
+                tab === "paid" ||
+                tab === "sent" ||
+                tab === "archived",
+            }))}
+          />
 
           <form
             method="get"
@@ -549,7 +525,7 @@ export default async function InvoicesPage({
             </div>
           </form>
         </div>
-      </Tabs>
+      </div>
 
       {hasExtraFilters && (
         <p className="-mt-2 text-xs text-muted-foreground">

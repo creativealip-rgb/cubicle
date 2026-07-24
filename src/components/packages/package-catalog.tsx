@@ -170,10 +170,10 @@ export function PackageCatalog({
       };
       if (editing) {
         await updatePackage(editing.id, payload);
-        toast.success(t("Paket diperbarui", "Package updated"));
+        toast.success(t("Service diperbarui", "Service updated"));
       } else {
         await createWorkspacePackage(payload);
-        toast.success(t("Paket dibuat", "Package created"));
+        toast.success(t("Service dibuat", "Service created"));
       }
       setOpen(false);
       router.refresh();
@@ -189,7 +189,7 @@ export function PackageCatalog({
     setLoading(true);
     try {
       await deletePackage(deleteTarget.id);
-      toast.success(t("Paket dihapus", "Package deleted"));
+      toast.success(t("Service dihapus", "Service deleted"));
       setDeleteTarget(null);
       router.refresh();
     } catch (err: unknown) {
@@ -203,27 +203,27 @@ export function PackageCatalog({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">{t("Paket", "Packages")}</h1>
+          <h1 className="text-xl font-semibold">{t("Service", "Services")}</h1>
           <p className="text-sm text-muted-foreground">
             {t(
-              "Katalog paket jam yang bisa dipakai ulang di banyak proyek.",
-              "Reusable hour packages you can assign across projects."
+              "Katalog service jam yang bisa dipakai ulang di banyak proyek.",
+              "Reusable hour services you can assign across projects."
             )}
           </p>
         </div>
         <Button size="sm" className="gap-1" onClick={openCreate}>
           <Plus className="h-4 w-4" />
-          {t("Paket Baru", "New Package")}
+          {t("Service Baru", "New Service")}
         </Button>
       </div>
 
       {packages.length === 0 ? (
         <EmptyState
           icon={Package}
-          title={t("Belum ada paket", "No packages yet")}
+          title={t("Belum ada service", "No services yet")}
           description={t(
-            "Buat paket seperti 40/60/100 jam sekali, lalu tetapkan ke proyek mana pun tanpa mengetik ulang.",
-            "Create packages like 40/60/100 hours once, then assign them to any project without retyping."
+            "Buat service seperti 40/60/100 jam sekali, lalu tetapkan ke proyek mana pun tanpa mengetik ulang.",
+            "Create services like 40/60/100 hours once, then assign them to any project without retyping."
           )}
         />
       ) : (
@@ -310,12 +310,12 @@ export function PackageCatalog({
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editing ? t("Ubah Paket", "Edit Package") : t("Paket Baru", "New Package")}
+              {editing ? t("Ubah Service", "Edit Service") : t("Service Baru", "New Service")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="pkg-name">{t("Nama Paket", "Package Name")} *</Label>
+              <Label htmlFor="pkg-name">{t("Nama Service", "Service Name")} *</Label>
               <Input
                 id="pkg-name"
                 value={form.name}
@@ -435,7 +435,7 @@ export function PackageCatalog({
             <DialogFooter>
               <Button type="submit" disabled={loading} className="w-full">
                 {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                {editing ? t("Simpan Perubahan", "Save Changes") : t("Buat Paket", "Create Package")}
+                {editing ? t("Simpan Perubahan", "Save Changes") : t("Buat Service", "Create Service")}
               </Button>
             </DialogFooter>
           </form>
@@ -446,12 +446,12 @@ export function PackageCatalog({
       <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle>{t("Hapus Paket", "Delete Package")}</DialogTitle>
+            <DialogTitle>{t("Hapus Service", "Delete Service")}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             {t(
-              `Yakin mau hapus paket "${deleteTarget?.name}"? Proyek yang sudah pakai paket ini tidak terpengaruh.`,
-              `Delete package "${deleteTarget?.name}"? Projects already using it won't be affected.`
+              `Yakin mau hapus service "${deleteTarget?.name}"? Proyek yang sudah pakai service ini tidak terpengaruh.`,
+              `Delete service "${deleteTarget?.name}"? Projects already using it won't be affected.`
             )}
           </p>
           <DialogFooter className="gap-2 sm:gap-0">

@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import {
   NotesListClient,
@@ -256,21 +257,17 @@ export default async function PersonalPage({
         ) : null}
       </form>
 
-      <div className="flex flex-wrap gap-2">
-        {tabs.map((item) => (
-          <Button
-            key={item.id}
-            asChild
-            size="sm"
-            variant={tab === item.id ? "default" : "outline"}
-          >
-            <Link href={buildHref(item.id, query)}>
-              {item.label}
-              <span className="ml-1.5 tabular-nums opacity-80">{item.count}</span>
-            </Link>
-          </Button>
-        ))}
-      </div>
+      <StatusFilterTabs
+        activeValue={tab}
+        hideEmpty={false}
+        tabs={tabs.map((item) => ({
+          value: item.id,
+          label: item.label,
+          href: buildHref(item.id, query),
+          count: item.count,
+          alwaysShow: true,
+        }))}
+      />
 
       <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
         <Card className="h-fit">

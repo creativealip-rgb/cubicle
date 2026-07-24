@@ -6,10 +6,10 @@ import { db } from "@/db";
 import { contracts, clients } from "@/db/schema";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
-import { Button } from "@/components/ui/button";
 import { FileSignature } from "lucide-react";
 import { CreateContractButton } from "@/components/contracts/create-contract-button";
 import { ContractsListTable } from "@/components/contracts/contracts-list-table";
+import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { getCurrentLang, createT } from "@/lib/i18n";
 
 const STATUS_TABS = [
@@ -119,20 +119,17 @@ export default async function ContractsPage({
         )}
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {STATUS_TABS.map((s) => {
-          const active = statusFilter === s;
-          const count = counts[s] ?? 0;
-          return (
-            <Button key={s} asChild size="sm" variant={active ? "default" : "outline"}>
-              <Link href={s === "all" ? "/app/contracts" : `/app/contracts?status=${s}`}>
-                {tabLabel[s]}
-                <span className="ml-1.5 text-[11px] opacity-80">{count}</span>
-              </Link>
-            </Button>
-          );
-        })}
-      </div>
+      <StatusFilterTabs
+        activeValue={statusFilter}
+        hideEmpty={false}
+        tabs={STATUS_TABS.map((s) => ({
+          value: s,
+          label: tabLabel[s],
+          href: s === "all" ? "/app/contracts" : `/app/contracts?status=${s}`,
+          count: counts[s] ?? 0,
+          alwaysShow: s === "all" || s === "draft" || s === "sent" || s === "signed",
+        }))}
+      />
 
       {rows.length === 0 ? (
         <div className="bg-white rounded-2xl border p-12 text-center">

@@ -107,8 +107,8 @@ export function InvoicesListTable({
 
   return (
     <>
-      <div className="hidden md:block border rounded-lg overflow-x-auto min-w-0 max-w-full">
-        <Table>
+      <div className="hidden overflow-hidden rounded-lg border bg-card md:block">
+        <Table className="[&_td]:p-3 [&_th]:px-3">
           <TableHeader>
             <TableRow>
               <TableHead>
@@ -172,10 +172,13 @@ export function InvoicesListTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sorted.map((inv) => {
+            {sorted.map((inv, index) => {
               const status = invoiceStatusVariant(inv.status, lang);
               return (
-                <TableRow key={inv.id}>
+                <TableRow
+                  key={inv.id}
+                  className={`border-b border-slate-200 hover:bg-slate-100/70 ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"}`}
+                >
                   <TableCell className="font-mono text-sm font-medium">
                     {formatInvoiceId(inv.invoiceNumber)}
                   </TableCell>

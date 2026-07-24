@@ -13,7 +13,7 @@ import {
   Briefcase,
   ArrowUpRight,
   TrendingUp,
-  Bell,
+  ListChecks,
   ArrowRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +45,15 @@ export default async function DashboardPage() {
   const workspace = await getWorkspace();
   const workspaceId = workspace.id;
   const workspaceCurrency = workspace.defaultCurrency || "IDR";
+  const workspaceProfileDone = Boolean(
+    workspace.billingName &&
+      workspace.billingEmail &&
+      (workspace.billingAddress || workspace.logoUrl || workspace.billingPhone),
+  );
+  const invoiceSettingsDone = Boolean(
+    workspace.defaultCurrency &&
+      (workspace.defaultInvoiceTerms || workspace.defaultHourlyRate || workspace.invoiceEmailBody),
+  );
 
   const result = await db.execute(
     sql`SELECT
@@ -334,16 +343,17 @@ export default async function DashboardPage() {
       count: att.clientApprovals,
     });
   }
-  if (att.contractsAwaiting > 0) {
-    reminderItems.push({
-      key: "contract",
-      label: t("Kontrak menunggu", "Awaiting contracts"),
-      href: "/app/contracts",
-      tone: "blue",
-      group: "action",
-      count: att.contractsAwaiting,
-    });
-  }
+  // Contract reminder hidden while Sales nav is off.
+  // if (att.contractsAwaiting > 0) {
+  //   reminderItems.push({
+  //     key: "contract",
+  //     label: t("Kontrak menunggu", "Awaiting contracts"),
+  //     href: "/app/contracts",
+  //     tone: "blue",
+  //     group: "action",
+  //     count: att.contractsAwaiting,
+  //   });
+  // }
   for (const apt of upcomingAppts.slice(0, 3)) {
     reminderItems.push({
       key: `apt-${apt.id}`,
@@ -386,6 +396,8 @@ export default async function DashboardPage() {
       <DashboardOnboarding
         lang={lang}
         steps={[
+          { key: "workspace", done: workspaceProfileDone, href: "/app/settings" },
+          { key: "invoiceSettings", done: invoiceSettingsDone, href: "/app/settings?tab=branding" },
           { key: "client", done: totalClients > 0, href: "/app/clients" },
           { key: "project", done: totalProjects > 0, href: "/app/projects" },
           { key: "time", done: totalTimeEntries > 0, href: "/app/time" },
@@ -479,7 +491,7 @@ export default async function DashboardPage() {
                     {reminderItems.length}
                   </span>
                 </span>
-                <Bell className="mt-0.5 h-4 w-4 text-slate-400" />
+                <ListChecks className="mt-0.5 h-4 w-4 text-slate-400" />
               </CardTitle>
               <p className="text-xs text-muted-foreground">
                 {t("Prioritas aktif yang belum selesai", "Active priorities that still need work")}
@@ -488,7 +500,7 @@ export default async function DashboardPage() {
             <CardContent className="pt-0">
               {reminderItems.length === 0 ? (
                 <div className="flex items-center gap-2 rounded-lg border border-dashed border-slate-200 px-3 py-3 text-sm text-muted-foreground">
-                  <Bell className="h-4 w-4" />
+                  <ListChecks className="h-4 w-4" />
                   {t("Tidak ada prioritas aktif", "No active priorities")}
                 </div>
               ) : (

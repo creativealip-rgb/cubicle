@@ -26,6 +26,7 @@ import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { formatMoney } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { Suspense } from "react";
 import {
   aggregateToBase,
@@ -459,23 +460,30 @@ export default async function ExpensesPage({
       {/* Tabs: list / recurring / categories */}
       <Card>
         <CardHeader className="space-y-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <Link href={tabHref("list")} scroll={false} prefetch>
-              <Button size="sm" variant={tab === "list" ? "default" : "outline"} className="h-8">
-                {t("Daftar", "List")}
-              </Button>
-            </Link>
-            <Link href={tabHref("recurring")} scroll={false} prefetch>
-              <Button size="sm" variant={tab === "recurring" ? "default" : "outline"} className="h-8">
-                {t("Rutin", "Recurring")}
-              </Button>
-            </Link>
-            <Link href={tabHref("categories")} scroll={false} prefetch>
-              <Button size="sm" variant={tab === "categories" ? "default" : "outline"} className="h-8">
-                {t("Kategori", "Categories")}
-              </Button>
-            </Link>
-          </div>
+          <StatusFilterTabs
+            activeValue={tab}
+            hideEmpty={false}
+            tabs={[
+              {
+                value: "list",
+                label: t("Daftar", "List"),
+                href: tabHref("list"),
+                alwaysShow: true,
+              },
+              {
+                value: "recurring",
+                label: t("Rutin", "Recurring"),
+                href: tabHref("recurring"),
+                alwaysShow: true,
+              },
+              {
+                value: "categories",
+                label: t("Kategori", "Categories"),
+                href: tabHref("categories"),
+                alwaysShow: true,
+              },
+            ]}
+          />
           {tab === "list" && (
             <Suspense fallback={null}>
               <ExpenseFilters

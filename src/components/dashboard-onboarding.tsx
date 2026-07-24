@@ -20,6 +20,14 @@ const COPY: Record<
   string,
   { id: { title: string; desc: string }; en: { title: string; desc: string } }
 > = {
+  workspace: {
+    id: { title: "Lengkapi profil workspace", desc: "Nama bisnis, email, alamat, dan logo." },
+    en: { title: "Complete workspace profile", desc: "Business name, email, address, and logo." },
+  },
+  invoiceSettings: {
+    id: { title: "Atur invoice & pembayaran", desc: "Mata uang, pajak, terms, dan email invoice." },
+    en: { title: "Set invoice & payment defaults", desc: "Currency, tax, terms, and invoice email." },
+  },
   client: {
     id: { title: "Tambah klien pertama", desc: "Simpan kontak & data klien." },
     en: { title: "Add your first client", desc: "Save a contact and client details." },

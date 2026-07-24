@@ -381,8 +381,8 @@ export function TimerWidget({
 
   return (
     <>
-      <Card>
-        <CardContent className="p-6">
+      <Card className="rounded-lg border bg-card">
+        <CardContent className="p-4">
           {activeTimer ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">

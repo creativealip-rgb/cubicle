@@ -120,6 +120,8 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
   trustedOrigins: [
     process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
+    "https://app.cubiqlo.com",
+    "http://app.cubiqlo.com",
     "https://cubiqlo.com",
     "http://cubiqlo.com",
     "https://www.cubiqlo.com",
@@ -129,4 +131,10 @@ export const auth = betterAuth({
     "https://127.0.0.1:3000",
     "http://127.0.0.1:3000",
   ].map((s) => s.replace(/\/$/, "")),
+  advanced: {
+    crossSubDomainCookies: {
+      enabled: true,
+      domain: ".cubiqlo.com",
+    },
+  },
 });

@@ -218,6 +218,18 @@ export function PortalTokenSection({ client }: PortalTokenSectionProps) {
         )}
 
         <div className="flex gap-2 flex-wrap">
+          {client.portalSlug && client.portalSlugEnabled && (
+            <Button size="sm" className="gap-1" asChild>
+              <a
+                href={`/client-portal/${client.portalSlug}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Buka portal klien
+              </a>
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"

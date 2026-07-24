@@ -94,7 +94,7 @@ const pricing = [
     price: "Rp 99rb",
     priceSub: "/bulan",
     description: "Untuk team kecil yang handle banyak client bareng.",
-    items: ["5 users", "Shared workspace", "Team roles", "File handoff", "Advanced report", "Priority support"],
+    items: ["5 users", "Unlimited clients", "Shared workspace", "Team roles", "File handoff", "Advanced report", "Priority support"],
     cta: "Mulai Team",
     href: "/signup",
     featured: false,
@@ -106,7 +106,7 @@ export default function HomePage() {
     <>
       <header className="fixed top-0 left-0 right-0 z-30 border-b border-slate-950/5 bg-white/75 backdrop-blur-2xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
+          <Link href="/" aria-label="Cubiqlo home" className="flex items-center gap-3">
             <Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-11 w-auto object-contain" />
           </Link>
 
@@ -147,10 +147,10 @@ export default function HomePage() {
               </Badge>
             </div>
             <h1 className="max-w-4xl text-3xl font-semibold tracking-normal text-[#292D34] sm:text-5xl sm:tracking-normal md:text-6xl lg:text-7xl" style={{ fontWeight: 650 }}>
-              Kelola client work dari satu workspace.
+              Kelola kerja klien dari satu workspace.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600 sm:text-xl">
-              Cubiqlo bantu freelancer, agency, dan studio mengatur client, project, task, file, time tracking, invoice, booking, dan client portal tanpa pindah-pindah tool.
+              Cubiqlo bantu freelancer, agency, dan studio mengatur klien, proyek, tugas, file, waktu kerja, invoice, booking, dan portal klien tanpa pindah-pindah tool.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" className="h-12 rounded-xl bg-[#6647F0] px-6 text-white shadow-[0_4px_4px_rgba(13,21,48,0.04)] transition-all duration-200 hover:scale-[1.02] hover:bg-[#5333DD] hover:shadow-[0_8px_20px_rgba(102,71,240,0.25)] active:bg-[#4A2AD0] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-[#6647F0] focus-visible:ring-offset-2 tracking-[-0.01em] font-normal">
@@ -165,9 +165,9 @@ export default function HomePage() {
             </div>
             <div className="mt-8 flex flex-wrap gap-3 text-sm text-slate-600">
               {[
-                "Client portal tersedia",
-                "Dari time tracking ke invoice",
-                "Semua kerja client dalam satu workspace",
+                "Portal klien tersedia",
+                "Dari waktu kerja ke invoice",
+                "Gratis mulai · tanpa kartu kredit",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-[#6647F0]" />
@@ -294,9 +294,9 @@ export default function HomePage() {
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6647F0]">Client Operations Hub</p>
               </div>
               <h2 className="mt-5 text-3xl font-semibold leading-[1.15] tracking-[-0.01em] text-[#292D34] sm:text-5xl">
-                Semua yang dibutuhkan untuk deliver ke client.{' '}
+                Semua yang dibutuhkan untuk kirim hasil ke klien.{' '}
                 <span className="relative inline-block">
-                  <span className="relative z-10">Connected.</span>
+                  <span className="relative z-10">Terhubung.</span>
                   <span
                     aria-hidden="true"
                     className="absolute inset-x-0 bottom-1 -z-0 h-3 bg-[#6647F0]/15"
@@ -311,8 +311,8 @@ export default function HomePage() {
             <div className="grid grid-cols-3 gap-3 lg:justify-self-end">
               {[
                 { label: 'Pillars', value: '8' },
-                { label: 'Loop stages', value: '10' },
-                { label: 'Tools replaced', value: '7+' },
+                { label: 'Tahapan kerja', value: '10' },
+                { label: 'Tool terganti', value: '7+' },
               ].map((m) => (
                 <div
                   key={m.label}
@@ -482,7 +482,7 @@ export default function HomePage() {
               Kurangi tool. Kurangi biaya operasional.
             </h2>
             <p className="mt-4 text-lg leading-8 text-slate-600">
-              Tool client ops lain mulai dari $20/seat per bulan, sering masih perlu add-on untuk portal atau booking. Cubiqlo kasih free workspace untuk mulai kerja rapi.
+              Tool client ops global sering mulai dari sekitar $17–$19 per bulan dan masih butuh add-on untuk workflow tertentu. Cubiqlo kasih free workspace, portal klien, dan billing IDR sejak awal.
             </p>
           </div>
           <div className="mt-12 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_4px_16px_rgba(13,21,48,0.04),0_16px_48px_rgba(13,21,48,0.08)]">
@@ -498,9 +498,9 @@ export default function HomePage() {
               <tbody className="divide-y divide-slate-100">
                 {[
                   { label: "Harga mulai", h: "$19/mo", b: "$17/mo", c: "Gratis" },
-                  { label: "Client portal", h: "Ada", b: "Add-on", c: "Ada" },
-                  { label: "Booking page", h: "Ada", b: "Add-on", c: "Ada" },
-                  { label: "Billing IDR", h: "—", b: "—", c: "Ada" },
+                  { label: "Client portal included", h: "Ada", b: "Add-on", c: "Ada" },
+                  { label: "Booking page included", h: "Ada", b: "Add-on", c: "Ada" },
+                  { label: "Native IDR billing", h: "Integrasi", b: "Integrasi", c: "Ada" },
                   { label: "Waktu setup", h: "1–2 jam", b: "1–2 jam", c: "5 menit" },
                   { label: "AI assistant", h: "—", b: "—", c: "Sudah termasuk" },
                   { label: "Calendar view", h: "—", b: "Add-on", c: "Ada" },
@@ -558,11 +558,11 @@ export default function HomePage() {
             ))}
           </div>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-            <span>Beta-tested by 12 service teams</span>
+            <span>Diuji 12 tim jasa</span>
             <span aria-hidden="true">·</span>
-            <span>Solo freelancers + small studios</span>
+            <span>Freelancer + studio kecil</span>
             <span aria-hidden="true">·</span>
-            <span>IDR + USD billing</span>
+            <span>Billing IDR + USD</span>
           </div>
         </div>
       </section>
@@ -640,6 +640,32 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="bg-white px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl">
+          <div className="mx-auto max-w-3xl text-center">
+            <Badge variant="outline" className="mb-4 bg-white">FAQ</Badge>
+            <h2 className="text-3xl font-semibold tracking-[0.03em] text-[#292D34] sm:text-4xl">Pertanyaan sebelum mulai</h2>
+          </div>
+          <div className="mt-10 grid gap-4 md:grid-cols-2">
+            {[
+              ["Apakah Free benar gratis?", "Ya. Free bisa dipakai untuk mulai rapi tanpa kartu kredit."],
+              ["Bisa pakai Rupiah?", "Bisa. Cubiqlo disiapkan untuk invoice dan operasional bisnis jasa Indonesia."],
+              ["Client bisa lihat semua data?", "Tidak. Portal hanya menampilkan item yang kamu pilih. Data internal tetap aman."],
+              ["Cocok untuk freelancer?", "Cocok. Solo plan fokus untuk freelancer yang handle banyak klien sendiri."],
+              ["Cocok untuk team kecil?", "Cocok. Team plan punya shared workspace, role, file handoff, dan report."],
+              ["Bisa upgrade nanti?", "Bisa. Mulai Free dulu, upgrade saat jumlah klien atau team sudah butuh."],
+            ].map(([q, a]) => (
+              <Card key={q} className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_6px_16px_rgba(0,0,0,0.06)]">
+                <CardContent className="p-6">
+                  <h3 className="text-base font-semibold text-slate-950">{q}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{a}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Final CTA with subtle background pattern */}
       <section className="relative overflow-hidden px-4 py-20 sm:px-6 lg:px-8">
         <div
@@ -673,18 +699,30 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="border-t bg-white px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
+      <footer className="border-t bg-white px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-8 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
+          <div>
             <Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-9 w-auto object-contain" />
-            <p className="text-xs text-slate-500">Manage client work from request to invoice.</p>
+            <p className="mt-3 max-w-sm text-sm leading-6 text-slate-500">Workspace untuk kelola kerja klien dari request pertama sampai invoice.</p>
+            <p className="mt-3 text-sm text-slate-500">support@cubiqlo.com</p>
           </div>
-          <div className="flex flex-wrap gap-5 text-sm text-slate-500">
-            <Link href="/login" className="hover:text-slate-950">Masuk</Link>
-            <Link href="/signup" className="hover:text-slate-950">Daftar</Link>
-            <a href="#features" className="hover:text-slate-950">Fitur</a>
-            <Link href="/terms" className="hover:text-slate-950">Syarat</Link>
-            <Link href="/privacy" className="hover:text-slate-950">Privasi</Link>
+          <div>
+            <p className="text-sm font-semibold text-slate-950">Produk</p>
+            <div className="mt-4 flex flex-col gap-3 text-sm text-slate-500">
+              <a href="#features" className="hover:text-[#6647F0]">Fitur</a>
+              <a href="#workflow" className="hover:text-[#6647F0]">Alur kerja</a>
+              <a href="#pricing" className="hover:text-[#6647F0]">Harga</a>
+              <Link href="/signup" className="hover:text-[#6647F0]">Daftar</Link>
+            </div>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-950">Legal</p>
+            <div className="mt-4 flex flex-col gap-3 text-sm text-slate-500">
+              <Link href="/login" className="hover:text-[#6647F0]">Masuk</Link>
+              <Link href="/terms" className="hover:text-[#6647F0]">Syarat</Link>
+              <Link href="/privacy" className="hover:text-[#6647F0]">Privasi</Link>
+              <span>© 2026 Cubiqlo</span>
+            </div>
           </div>
         </div>
       </footer>

@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { invoiceStatusVariant, taskStatusVariant } from "@/lib/status-badge";
 
 interface SearchParams {
@@ -121,26 +122,20 @@ export default async function SearchPage({
             </Button>
           </form>
 
-          <div className="mt-3 flex flex-wrap gap-2">
-            {filters.map((f) => {
-              const active = kindFilter === f.key;
-              const href = q
-                ? `/app/search?q=${encodeURIComponent(q)}${f.key === "all" ? "" : `&kind=${f.key}`}`
-                : `/app/search${f.key === "all" ? "" : `?kind=${f.key}`}`;
-              return (
-                <Link
-                  key={f.key}
-                  href={href}
-                  className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                    active
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-slate-200 bg-white text-muted-foreground hover:bg-slate-50"
-                  }`}
-                >
-                  {f.label}
-                </Link>
-              );
-            })}
+          <div className="mt-3">
+            <StatusFilterTabs
+              activeValue={kindFilter}
+              hideEmpty={false}
+              listClassName="w-full"
+              tabs={filters.map((f) => ({
+                value: f.key,
+                label: f.label,
+                href: q
+                  ? `/app/search?q=${encodeURIComponent(q)}${f.key === "all" ? "" : `&kind=${f.key}`}`
+                  : `/app/search${f.key === "all" ? "" : `?kind=${f.key}`}`,
+                alwaysShow: true,
+              }))}
+            />
           </div>
         </CardContent>
       </Card>

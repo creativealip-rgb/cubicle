@@ -331,8 +331,8 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
         </Card>
       </div>
 
-      <Card>
-        <CardContent className="p-4">
+      <Card className="rounded-lg border bg-card">
+        <CardContent className="p-3">
           <div className="flex items-center gap-2 mb-3">
             <Filter className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-medium">{t("Filter", "Filter")}</span>
@@ -433,8 +433,8 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
           )}
         />
       ) : (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2 px-1">
+        <div className="overflow-hidden rounded-lg border bg-card">
+          <div className="flex items-center justify-between gap-2 border-b bg-muted/40 px-3 py-2">
             <p className="text-xs text-muted-foreground">
               {t(
                 `Menampilkan ${(safePage - 1) * PAGE_SIZE + 1}–${Math.min(safePage * PAGE_SIZE, filteredEntries.length)} dari ${filteredEntries.length}`,
@@ -450,9 +450,13 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
             ) : null}
           </div>
 
-          {pageEntries.map((entry) => (
-            <Card key={entry.id}>
-              <CardContent className="p-4 flex items-center justify-between gap-2">
+          {pageEntries.map((entry, index) => (
+            <Card key={entry.id} className="rounded-none border-0 shadow-none">
+              <CardContent
+                className={`flex items-center justify-between gap-2 !border-b border-slate-200 p-3 hover:!bg-slate-100/70 ${
+                  index % 2 === 0 ? "!bg-white" : "!bg-slate-50"
+                }`}
+              >
                 <div className="flex items-center gap-3 min-w-0">
                   <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   <div className="min-w-0">
@@ -538,7 +542,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
           ))}
 
           {totalPages > 1 ? (
-            <div className="flex items-center justify-between gap-2 border-t pt-3">
+            <div className="flex items-center justify-between gap-2 border-t px-3 py-3">
               <Button
                 type="button"
                 size="sm"

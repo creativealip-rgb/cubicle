@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { ClientsListTable } from "@/components/clients/clients-list-table";
 import { getCurrentLang, createT } from "@/lib/i18n";
 
@@ -75,6 +75,8 @@ export default async function ClientsPage({
       status: clients.status,
       tags: clients.tags,
       portalEnabled: clients.portalEnabled,
+      portalSlug: clients.portalSlug,
+      portalSlugEnabled: clients.portalSlugEnabled,
       createdAt: clients.createdAt,
       projectCount: sql<number>`count(${projects.id})::int`,
     })
@@ -118,14 +120,7 @@ export default async function ClientsPage({
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Button size="sm" variant="outline" className="gap-1" asChild>
-            <a href="/api/clients/export/pdf" target="_blank" rel="noreferrer">
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("Unduh PDF", "Download PDF")}</span>
-              <span className="sm:hidden">PDF</span>
-            </a>
-          </Button>
-          <Button size="sm" variant="outline" className="gap-1" asChild>
-            <a href="/api/clients/export/xlsx" rel="noreferrer">
+            <a href="/api/clients/export/xlsx" download>
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline">{t("Unduh Excel", "Download Excel")}</span>
               <span className="sm:hidden">XLSX</span>
@@ -165,19 +160,39 @@ export default async function ClientsPage({
         </div>
       )}
 
-      <Tabs defaultValue={statusFilter} className="space-y-4">
+      <div className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <TabsList className="w-full sm:w-auto overflow-x-auto">
-            <TabsTrigger value="active" asChild>
-              <Link href="?status=active">{t("Aktif", "Active")} ({tabCounts.active})</Link>
-            </TabsTrigger>
-            <TabsTrigger value="inactive" asChild>
-              <Link href="?status=inactive">{t("Tidak aktif", "Inactive")} ({tabCounts.inactive})</Link>
-            </TabsTrigger>
-            <TabsTrigger value="archived" asChild>
-              <Link href="?status=archived">{t("Arsip", "Archived")} ({tabCounts.archived})</Link>
-            </TabsTrigger>
-          </TabsList>
+          <StatusFilterTabs
+            activeValue={statusFilter}
+            hideEmpty={false}
+            tabs={[
+              {
+                value: "active",
+                label: t("Aktif", "Active"),
+                href: search ? `?status=active&search=${encodeURIComponent(search)}` : "?status=active",
+                count: tabCounts.active,
+                alwaysShow: true,
+              },
+              {
+                value: "inactive",
+                label: t("Tidak aktif", "Inactive"),
+                href: search
+                  ? `?status=inactive&search=${encodeURIComponent(search)}`
+                  : "?status=inactive",
+                count: tabCounts.inactive,
+                alwaysShow: true,
+              },
+              {
+                value: "archived",
+                label: t("Arsip", "Archived"),
+                href: search
+                  ? `?status=archived&search=${encodeURIComponent(search)}`
+                  : "?status=archived",
+                count: tabCounts.archived,
+                alwaysShow: true,
+              },
+            ]}
+          />
 
           <form className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -187,18 +202,19 @@ export default async function ClientsPage({
               placeholder={t("Cari klien...", "Search clients...")}
               className="pl-8"
             />
+            {statusFilter !== "active" && (
+              <input type="hidden" name="status" value={statusFilter} />
+            )}
           </form>
         </div>
 
-        <TabsContent value={statusFilter} className="space-y-4">
-          <ClientsListTable
-            clients={filtered}
-            clientCount={clientCount}
-            canWrite={canWrite}
-            isAtLimit={isAtLimit}
-          />
-        </TabsContent>
-      </Tabs>
+        <ClientsListTable
+          clients={filtered}
+          clientCount={clientCount}
+          canWrite={canWrite}
+          isAtLimit={isAtLimit}
+        />
+      </div>
     </div>
   );
 }

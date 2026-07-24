@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Search,
@@ -97,6 +97,7 @@ function formatElapsed(startTime?: string | null, pausedAt?: string | null) {
 export function AppTopbar({ user }: AppTopbarProps) {
   const { t } = useT();
   const router = useRouter();
+  const pathname = usePathname();
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
@@ -376,7 +377,9 @@ export function AppTopbar({ user }: AppTopbarProps) {
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" className="h-9 gap-1 px-2.5 sm:px-3">
                     <Plus className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t("Baru", "New")}</span>
+                    <span className={cn("hidden sm:inline", pathname === "/app/projects" && "lg:hidden")}>
+                      {t("Baru", "New")}
+                    </span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">

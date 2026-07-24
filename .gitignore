@@ -45,3 +45,8 @@ cubicle.db
 scripts/monitor.log
 test-results/
 playwright-report/
+
+# local agent scratch
+.hermes/
+public/screenshots/*.backup-*.png
+public/screenshots/*.generated-mock-backup.png

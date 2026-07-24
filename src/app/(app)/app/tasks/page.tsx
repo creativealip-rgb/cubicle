@@ -12,6 +12,22 @@ import { TasksBoardView } from "@/components/tasks/tasks-board-view";
 import { TasksListTable } from "@/components/tasks/tasks-list-table";
 import { getCurrentLang, createT } from "@/lib/i18n";
 
+function buildTasksHref(filters: {
+  status?: string;
+  priority?: string;
+  projectId?: string;
+  assignee?: string;
+  view?: string;
+}) {
+  const params = new URLSearchParams();
+  if (filters.status && filters.status !== "all") params.set("status", filters.status);
+  if (filters.priority && filters.priority !== "all") params.set("priority", filters.priority);
+  if (filters.projectId) params.set("projectId", filters.projectId);
+  if (filters.assignee && filters.assignee !== "all") params.set("assignee", filters.assignee);
+  if (filters.view && filters.view !== "list") params.set("view", filters.view);
+  return `/app/tasks${params.toString() ? `?${params.toString()}` : ""}`;
+}
+
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
 }
@@ -116,12 +132,12 @@ export default async function TasksPage({
 
       <div className="rounded-lg border border-blue-200 bg-blue-50/60 px-3 py-2.5 text-sm text-blue-950 sm:px-4 sm:py-3">
         <p className="font-medium">
-          {t("Tugas ≠ timer", "Tasks ≠ timer")}
+          {t("Tugas dan Timer terpisah", "Tasks and Timer are separate")}
         </p>
         <p className="mt-1 text-xs text-blue-900/80">
           {t(
-            "Tugas = to-do / status kerja. Timer = jam billable. Buka task → Mulai timer: auto-link client/project/task + deskripsi = judul. Stop instan, tanpa form.",
-            "Tasks = to-do / work status. Timer = billable hours. Open a task → Start timer: auto-links client/project/task + description = title. Instant stop, no form.",
+            "Tugas buat status kerja. Timer buat jam billable. Buka tugas lalu mulai timer kalau mau catat waktu.",
+            "Tasks track work status. Timer tracks billable hours. Open a task, then start timer when you want to log time.",
           )}{" "}
           <a href="/app/time" className="font-medium underline underline-offset-2">
             {t("Buka Time Tracking", "Open Time Tracking")}
@@ -130,17 +146,20 @@ export default async function TasksPage({
       </div>
 
       {/* Filters + view toggle */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <TaskFilters
-          projects={projectList}
-          members={memberList}
-          current={{
-            status: params.status,
-            priority: params.priority,
-            projectId: params.projectId,
-            assignee: params.assignee,
-          }}
-        />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <TaskFilters
+            projects={projectList}
+            members={memberList}
+            currentUserId={currentUserId}
+            current={{
+              status: params.status,
+              priority: params.priority,
+              projectId: params.projectId,
+              assignee: params.assignee === currentUserId ? "me" : params.assignee,
+            }}
+          />
+        </div>
         <TaskViewToggle current={view} />
       </div>
 

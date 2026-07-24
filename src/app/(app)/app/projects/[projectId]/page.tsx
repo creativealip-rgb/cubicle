@@ -2,8 +2,8 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { projects, clients, tasks, comments, files, timeEntries, activityLogs, workspaceMembers, users } from "@/db/schema";
-import { eq, and, desc, inArray, or } from "drizzle-orm";
+import { projects, clients, tasks, files, timeEntries, workspaceMembers, users } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { requireUser, assertProjectInWorkspace } from "@/lib/access";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,6 @@ import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { billingTypeHint, billingTypeLabel } from "@/lib/feature-access";
 import { ProjectTasksTab } from "@/components/tasks/project-tasks-tab";
-import { CommentList } from "@/components/comments/comment-list";
 import { ProjectForm } from "@/components/forms/project-form";
 import Link from "next/link";
 import {
@@ -24,9 +23,7 @@ import {
   Pencil,
   Clock,
   FileText,
-  MessageSquare,
   CheckSquare,
-  Activity,
   Wallet,
 } from "lucide-react";
 
@@ -118,13 +115,7 @@ export default async function ProjectDetailPage({
     .where(eq(tasks.projectId, projectId))
     .orderBy(tasks.position);
 
-  // Comments
-  const projectComments = await db
-    .select()
-    .from(comments)
-    .where(and(eq(comments.entityType, "project" as const), eq(comments.entityId, projectId)))
-    .orderBy(desc(comments.createdAt))
-    .limit(20);
+
 
   // Files
   const projectFiles = await db
@@ -150,59 +141,6 @@ export default async function ProjectDetailPage({
     .where(eq(timeEntries.projectId, projectId))
     .orderBy(desc(timeEntries.createdAt))
     .limit(20);
-
-  const timelineEntityIds = [
-    projectId,
-    ...projectTasks.map((task) => task.id),
-    ...projectFiles.map((file) => file.id),
-    ...projectComments.map((comment) => comment.id),
-    ...projectTimeEntries.map((entry) => entry.id),
-  ];
-
-  const projectTimeline = await db
-    .select({
-      id: activityLogs.id,
-      action: activityLogs.action,
-      entityType: activityLogs.entityType,
-      entityId: activityLogs.entityId,
-      metadata: activityLogs.metadata,
-      createdAt: activityLogs.createdAt,
-      actorName: users.name,
-      actorEmail: users.email,
-    })
-    .from(activityLogs)
-    .leftJoin(users, eq(users.id, activityLogs.actorId))
-    .where(
-      and(
-        eq(activityLogs.workspaceId, workspaceId),
-        or(
-          inArray(activityLogs.entityId, timelineEntityIds),
-        ),
-      ),
-    )
-    .orderBy(desc(activityLogs.createdAt))
-    .limit(50);
-
-  const actionLabels: Record<string, string> = {
-    created_project: t("Membuat proyek", "Created project"),
-    updated_project: t("Memperbarui proyek", "Updated project"),
-    archived_project: t("Mengarsipkan proyek", "Archived project"),
-    updated_project_visibility: t("Memperbarui visibilitas proyek", "Updated project visibility"),
-    added_project_member: t("Menambah anggota proyek", "Added project member"),
-    removed_project_member: t("Menghapus anggota proyek", "Removed project member"),
-    created_task: t("Membuat tugas", "Created task"),
-    updated_task: t("Memperbarui tugas", "Updated task"),
-    updated_task_status: t("Memindahkan tugas", "Moved task"),
-    reordered_task: t("Mengurutkan ulang tugas", "Reordered task"),
-    deleted_task: t("Menghapus tugas", "Deleted task"),
-    uploaded_file: t("Mengunggah berkas", "Uploaded file"),
-    deleted_file: t("Menghapus berkas", "Deleted file"),
-    created_comment: t("Menambah komentar", "Added comment"),
-    started_timer: t("Memulai timer", "Started timer"),
-    stopped_timer: t("Menghentikan timer", "Stopped timer"),
-    created_time_entry: t("Mencatat waktu", "Logged time"),
-    updated_time_entry: t("Memperbarui catatan waktu", "Updated time entry"),
-  };
 
   const statusColors: Record<string, string> = {
     active: "bg-emerald-500",
@@ -348,12 +286,6 @@ export default async function ProjectDetailPage({
           <TabsTrigger value="time" className="gap-1">
             <Clock className="h-3 w-3" /> {t("Waktu", "Time")} ({projectTimeEntries.length})
           </TabsTrigger>
-          <TabsTrigger value="comments" className="gap-1">
-            <MessageSquare className="h-3 w-3" /> {t("Komentar", "Comments")} ({projectComments.length})
-          </TabsTrigger>
-          <TabsTrigger value="timeline" className="gap-1">
-            <Activity className="h-3 w-3" /> {t("Linimasa", "Timeline")} ({projectTimeline.length})
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="tasks" className="pt-4">
@@ -404,55 +336,6 @@ export default async function ProjectDetailPage({
           ))}
         </TabsContent>
 
-        <TabsContent value="comments" className="pt-4">
-          <CommentList
-            entityType="project"
-            entityId={projectId}
-            initialComments={projectComments.map((c) => ({
-              id: c.id,
-              body: c.body,
-              visibility: c.visibility,
-              authorName: c.authorName,
-              authorEmail: c.authorEmail,
-              source: c.source,
-              createdAt: c.createdAt,
-            }))}
-            clientPhone={project.clientPhone}
-            contextTitle={project.name}
-          />
-        </TabsContent>
-
-        <TabsContent value="timeline" className="pt-4">
-          <Card>
-            <CardContent className="p-0">
-              {projectTimeline.length === 0 && (
-                <p className="text-sm text-muted-foreground py-8 text-center">Belum ada aktivitas</p>
-              )}
-              <div className="divide-y">
-                {projectTimeline.map((event) => (
-                  <div key={event.id} className="flex gap-3 p-4">
-                    <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
-                      <Activity className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-medium">
-                          {actionLabels[event.action] ?? event.action.replace(/_/g, " ")}
-                        </p>
-                        <Badge variant="outline" className="text-[10px] capitalize">
-                          {event.entityType.replace(/_/g, " ")}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {event.actorName || event.actorEmail || t("Sistem", "System")} · {new Date(event.createdAt).toLocaleString(locale)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   );

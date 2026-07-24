@@ -165,12 +165,12 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
           <Plus className="h-3 w-3" /> Entri Manual
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-h-[min(90dvh,720px)] overflow-y-auto sm:max-w-[560px]">
         <DialogHeader>
           <DialogTitle>Tambah Entri Waktu Manual</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <Label className="text-xs">Klien *</Label>
               <Select value={clientId} onValueChange={handleClientChange}>
@@ -286,7 +286,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="space-y-2">
               <Label className="text-xs">Tanggal *</Label>
               <Input

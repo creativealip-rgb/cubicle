@@ -196,7 +196,7 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
       )}
       {form.billingType === "package" && (
         <div className="space-y-2">
-          <Label>Paket</Label>
+          <Label>Service</Label>
           {projectPackages.length > 0 ? (
             <>
               <Select
@@ -204,10 +204,10 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
                 onValueChange={(v) => setForm((p) => ({ ...p, selectedPackageId: v === "__none__" ? "" : v }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Pilih paket" />
+                  <SelectValue placeholder="Pilih service" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">Belum ada paket dipilih</SelectItem>
+                  <SelectItem value="__none__">Belum ada service dipilih</SelectItem>
                   {projectPackages.map((pkg) => (
                     <SelectItem key={pkg.id} value={pkg.id}>
                       {pkg.name} — {pkg.hours ? `${pkg.hours} jam` : "custom"} · {formatMoney(pkg.price, pkg.currency || "IDR")}
@@ -216,18 +216,18 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Kelola daftar paket di{" "}
+                Kelola daftar service di{" "}
                 <Link href="/app/packages" className="underline hover:text-foreground" target="_blank">
-                  menu Paket
+                  menu Service
                 </Link>
                 .
               </p>
             </>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Belum ada paket di katalog. Buat dulu di{" "}
+              Belum ada service di katalog. Buat dulu di{" "}
               <Link href="/app/packages" className="underline hover:text-foreground" target="_blank">
-                menu Paket
+                menu Service
               </Link>
               , lalu pilih di sini.
             </p>

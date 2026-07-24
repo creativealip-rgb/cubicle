@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { JournalList, MoodPicker } from "@/components/journal/journal-list";
+import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { getCurrentLang, createT } from "@/lib/i18n";
 
 /**
@@ -173,18 +174,24 @@ export default async function JournalPage({
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <Button asChild size="sm" variant={tab === "active" ? "default" : "outline"}>
-          <Link href="/app/journal?tab=active">{t("Aktif", "Active")}</Link>
-        </Button>
-        <Button
-          asChild
-          size="sm"
-          variant={tab === "archived" ? "default" : "outline"}
-        >
-          <Link href="/app/journal?tab=archived">{t("Arsip", "Archived")}</Link>
-        </Button>
-      </div>
+      <StatusFilterTabs
+        activeValue={tab}
+        hideEmpty={false}
+        tabs={[
+          {
+            value: "active",
+            label: t("Aktif", "Active"),
+            href: "/app/journal?tab=active",
+            alwaysShow: true,
+          },
+          {
+            value: "archived",
+            label: t("Arsip", "Archived"),
+            href: "/app/journal?tab=archived",
+            alwaysShow: true,
+          },
+        ]}
+      />
 
       {tab === "active" ? (
         <Card>

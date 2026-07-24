@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Settings,
   Users,
+  User,
   ImageIcon,
   Plug,
   LayoutGrid,
@@ -14,6 +15,7 @@ import { useT } from "@/lib/i18n-client";
 
 export type SettingsTabKey =
   | "workspace"
+  | "account"
   | "team"
   | "branding"
   | "integrations"
@@ -21,6 +23,7 @@ export type SettingsTabKey =
 
 const TAB_KEYS: SettingsTabKey[] = [
   "workspace",
+  "account",
   "team",
   "branding",
   "integrations",
@@ -37,6 +40,7 @@ function normalizeTab(tab?: string | null): SettingsTabKey {
 type SettingsTabsProps = {
   initialTab?: string | null;
   workspace: ReactNode;
+  account: ReactNode;
   team: ReactNode;
   branding: ReactNode;
   integrations: ReactNode;
@@ -46,6 +50,7 @@ type SettingsTabsProps = {
 export function SettingsTabs({
   initialTab,
   workspace,
+  account,
   team,
   branding,
   integrations,
@@ -95,6 +100,11 @@ export function SettingsTabs({
       icon: <Settings className="h-3.5 w-3.5" />,
     },
     {
+      key: "account",
+      label: t("Akun", "Account"),
+      icon: <User className="h-3.5 w-3.5" />,
+    },
+    {
       key: "team",
       label: t("Tim", "Team"),
       icon: <Users className="h-3.5 w-3.5" />,
@@ -135,6 +145,9 @@ export function SettingsTabs({
 
       <TabsContent value="workspace" className="mt-0 space-y-4 focus-visible:ring-0">
         {workspace}
+      </TabsContent>
+      <TabsContent value="account" className="mt-0 space-y-4 focus-visible:ring-0">
+        {account}
       </TabsContent>
       <TabsContent value="team" className="mt-0 space-y-4 focus-visible:ring-0">
         {team}

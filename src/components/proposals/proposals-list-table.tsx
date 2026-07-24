@@ -122,8 +122,8 @@ export function ProposalsListTable({
   );
 
   return (
-    <div className="bg-white rounded-2xl border overflow-x-auto">
-      <Table>
+    <div className="overflow-hidden rounded-lg border bg-card">
+      <Table className="[&_td]:p-3 [&_th]:px-3">
         <TableHeader>
           <TableRow>
             <TableHead>
@@ -166,10 +166,13 @@ export function ProposalsListTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sorted.map((p) => {
+          {sorted.map((p, index) => {
             const status = projectStatusVariant(p.status, lang);
             return (
-              <TableRow key={p.id}>
+              <TableRow
+                key={p.id}
+                className={`border-b border-slate-200 hover:bg-slate-100/70 ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"}`}
+              >
                 <TableCell>
                   <Link
                     href={`/app/proposals/${p.id}`}

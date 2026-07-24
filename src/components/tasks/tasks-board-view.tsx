@@ -28,13 +28,30 @@ interface TasksBoardViewProps {
   members: Array<{ id: string; name: string | null; email: string | null }>;
 }
 
+function dueDays(dueDate: string | null) {
+  if (!dueDate) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate);
+  due.setHours(0, 0, 0, 0);
+  return Math.ceil((due.getTime() - today.getTime()) / 86_400_000);
+}
+
+function dueTone(task: Task) {
+  const days = dueDays(task.dueDate);
+  if (days === null) return "text-muted-foreground";
+  if (days < 0) return task.status === "done" ? "text-green-700 font-medium" : "text-red-600 font-semibold";
+  if (days <= 7) return "text-amber-700 font-semibold";
+  return "text-muted-foreground";
+}
+
 export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
   const { t, lang, locale } = useT();
 
   const columns = [
     { id: "todo", label: t("Belum Mulai", "To Do"), color: "bg-slate-300" },
     { id: "in_progress", label: t("Dikerjakan", "In Progress"), color: "bg-blue-400" },
-    { id: "review", label: t("Ditinjau", "Review"), color: "bg-amber-400" },
+    { id: "review", label: t("Review", "Review"), color: "bg-violet-500" },
     { id: "done", label: t("Selesai", "Done"), color: "bg-emerald-400" },
   ];
 
@@ -42,6 +59,17 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
   for (const task of tasks) {
     const col = task.status in grouped ? task.status : "todo";
     grouped[col].push(task);
+  }
+
+  function formatDue(task: Task) {
+    if (!task.dueDate) return "";
+    const base = new Date(task.dueDate).toLocaleDateString(locale, { month: "short", day: "numeric" });
+    const days = dueDays(task.dueDate);
+    if (days === null) return base;
+    if (days < 0) return task.status === "done" ? `${base} · ${t("selesai", "done")}` : `${base} · ${t("lewat", "overdue")}`;
+    if (days === 0) return `${base} · ${t("hari ini", "today")}`;
+    if (days <= 7) return `${base} · ${days} ${t("hari", "days")}`;
+    return base;
   }
 
   return (
@@ -78,9 +106,9 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
                         )}
                       </div>
                       {task.dueDate && (
-                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                        <div className={`flex items-center gap-1 text-[10px] ${dueTone(task)}`}>
                           <Clock className="h-3 w-3" />
-                          {new Date(task.dueDate).toLocaleDateString(locale)}
+                          {formatDue(task)}
                         </div>
                       )}
                     </CardContent>

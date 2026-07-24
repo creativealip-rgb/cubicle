@@ -92,8 +92,8 @@ export function ExpensesListTable({
   );
 
   return (
-    <div className="overflow-x-auto -mx-1">
-      <Table>
+    <div className="overflow-hidden rounded-lg border bg-card">
+      <Table className="[&_td]:p-3 [&_th]:px-3">
         <TableHeader>
           <TableRow>
             <TableHead className="w-28">
@@ -143,8 +143,11 @@ export function ExpensesListTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sorted.map((e) => (
-            <TableRow key={e.id}>
+          {sorted.map((e, index) => (
+            <TableRow
+              key={e.id}
+              className={`border-b border-slate-200 hover:bg-slate-100/70 ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"}`}
+            >
               <TableCell className="text-xs text-slate-500 tabular-nums whitespace-nowrap">
                 {e.date}
               </TableCell>

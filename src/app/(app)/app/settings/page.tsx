@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Settings, Users, Receipt, Calendar, Sparkles, ImageIcon, Plug, Coins } from "lucide-react";
+import { Settings, Users, Receipt, Calendar, Sparkles, ImageIcon, Plug, Coins, CheckCircle2, Circle } from "lucide-react";
 import { TeamManager } from "@/components/settings/team-manager";
 import { WorkspaceBrandingForm } from "@/components/settings/workspace-branding-form";
 import { WorkspaceNameForm } from "@/components/settings/workspace-name-form";
@@ -17,6 +17,7 @@ import { BookingSlugForm } from "@/components/settings/booking-slug-form";
 import { GoogleCalendarConnect } from "@/components/settings/google-calendar-connect";
 import { CurrencyRatesForm } from "@/components/settings/currency-rates-form";
 import { SettingsTabs } from "@/components/settings/settings-tabs";
+import { AccountSettingsForm } from "@/components/settings/account-settings-form";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { canInviteMember } from "@/lib/plan";
 import {
@@ -44,6 +45,11 @@ export default async function SettingsPage({
   const canEditWorkspace = currentMember.role === "owner";
 
   const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  const [currentUser] = await db
+    .select({ name: users.name, email: users.email, emailVerified: users.emailVerified })
+    .from(users)
+    .where(eq(users.id, user.id))
+    .limit(1);
 
   const members = await db
     .select({
@@ -78,6 +84,45 @@ export default async function SettingsPage({
         .limit(1)
     : [null];
 
+  const workspaceSetupItems = [
+    {
+      label: t("Nama bisnis / workspace", "Business / workspace name"),
+      done: Boolean(workspace.billingName || workspace.name),
+    },
+    {
+      label: t("Email bisnis untuk invoice", "Business email for invoices"),
+      done: Boolean(workspace.billingEmail || workspace.replyToEmail),
+    },
+    {
+      label: t("Alamat atau telepon bisnis", "Business address or phone"),
+      done: Boolean(workspace.billingAddress || workspace.billingPhone),
+    },
+    {
+      label: t("Booking slug / link booking", "Booking slug / booking link"),
+      done: Boolean(workspace.bookingSlug),
+    },
+  ];
+  const invoiceSetupItems = [
+    {
+      label: t("Mata uang default", "Default currency"),
+      done: Boolean(workspace.defaultCurrency),
+    },
+    {
+      label: t("Pajak atau rate default", "Tax or default rate"),
+      done: Boolean(Number(workspace.defaultTaxRate) > 0 || workspace.defaultHourlyRate),
+    },
+    {
+      label: t("Terms pembayaran", "Payment terms"),
+      done: Boolean(workspace.defaultInvoiceTerms),
+    },
+    {
+      label: t("Email reply-to / body invoice", "Reply-to / invoice email body"),
+      done: Boolean(workspace.replyToEmail || workspace.invoiceEmailBody),
+    },
+  ];
+  const workspaceSetupDone = workspaceSetupItems.filter((item) => item.done).length;
+  const invoiceSetupDone = invoiceSetupItems.filter((item) => item.done).length;
+
   const sp = searchParams ? await searchParams : undefined;
   const rawTab = sp?.tab;
   const initialTab = Array.isArray(rawTab) ? rawTab[0] : rawTab;
@@ -99,6 +144,26 @@ export default async function SettingsPage({
           initialTab={initialTab}
           workspace={
             <>
+              {workspaceSetupDone < workspaceSetupItems.length && (
+                <Card className="border-blue-200 bg-blue-50/70">
+                  <CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-blue-950">
+                        {t("Lengkapi profil workspace", "Complete workspace profile")}
+                      </p>
+                      <p className="mt-1 text-sm text-blue-900/70">
+                        {t(
+                          "Data ini dipakai di invoice, portal client, booking, dan email agar terlihat profesional.",
+                          "This data is used on invoices, client portal, booking, and emails so everything looks professional.",
+                        )}
+                      </p>
+                    </div>
+                    <Badge className="w-fit bg-blue-600 text-white hover:bg-blue-600">
+                      {workspaceSetupDone}/{workspaceSetupItems.length} {t("selesai", "done")}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              )}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -131,6 +196,17 @@ export default async function SettingsPage({
                     </p>
                   </div>
                   <BookingSlugForm defaultSlug={workspace.bookingSlug} canEdit={canEditWorkspace} />
+                  <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-2">
+                    {workspaceSetupItems.map((item) => {
+                      const Icon = item.done ? CheckCircle2 : Circle;
+                      return (
+                        <div key={item.label} className="flex items-center gap-2 text-xs">
+                          <Icon className={item.done ? "h-4 w-4 text-emerald-600" : "h-4 w-4 text-muted-foreground"} />
+                          <span className={item.done ? "text-slate-700" : "text-muted-foreground"}>{item.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </CardContent>
               </Card>
               <Card>
@@ -159,6 +235,26 @@ export default async function SettingsPage({
                 </CardContent>
               </Card>
             </>
+          }
+          account={
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("Akun", "Account")}</CardTitle>
+                <CardDescription>
+                  {t(
+                    "Ubah nama tampilan dan password akun. Email login tampil sebagai referensi.",
+                    "Update display name and account password. Login email is shown for reference.",
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AccountSettingsForm
+                  name={currentUser?.name ?? ""}
+                  email={currentUser?.email ?? user.email ?? ""}
+                  emailVerified={Boolean(currentUser?.emailVerified)}
+                />
+              </CardContent>
+            </Card>
           }
           team={
             <Card>
@@ -202,38 +298,71 @@ export default async function SettingsPage({
             </Card>
           }
           branding={
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ImageIcon className="h-5 w-5" /> {t("Branding & Invoice", "Branding & Invoice")}
-                </CardTitle>
-                <CardDescription>
-                  {t(
-                    "Logo, nama tagihan, mata uang, tarif default — dipakai di PDF + preview klien.",
-                    "Logo, billing name, currency, default rate — used on PDF + client preview.",
-                  )}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <WorkspaceBrandingForm
-                  defaults={{
-                    billingName: workspace.billingName,
-                    billingEmail: workspace.billingEmail,
-                    billingPhone: workspace.billingPhone,
-                    billingAddress: workspace.billingAddress,
-                    taxId: workspace.taxId,
-                    logoUrl: workspace.logoUrl,
-                    defaultCurrency: workspace.defaultCurrency,
-                    defaultTaxRate: workspace.defaultTaxRate,
-                    defaultHourlyRate: workspace.defaultHourlyRate,
-                    defaultInvoiceTerms: workspace.defaultInvoiceTerms,
-                    invoiceEmailBody: workspace.invoiceEmailBody,
-                    replyToEmail: workspace.replyToEmail,
-                  }}
-                  ownerEmailHint={ownerUser?.email ?? null}
-                />
-              </CardContent>
-            </Card>
+            <>
+              {invoiceSetupDone < invoiceSetupItems.length && (
+                <Card className="border-amber-200 bg-amber-50/70">
+                  <CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-amber-950">
+                        {t("Atur invoice sebelum kirim ke client", "Set invoice defaults before sending to clients")}
+                      </p>
+                      <p className="mt-1 text-sm text-amber-900/70">
+                        {t(
+                          "Mata uang, terms pembayaran, pajak/rate, dan email invoice bikin tagihan lebih siap pakai.",
+                          "Currency, payment terms, tax/rate, and invoice email make billing ready to use.",
+                        )}
+                      </p>
+                    </div>
+                    <Badge className="w-fit bg-amber-600 text-white hover:bg-amber-600">
+                      {invoiceSetupDone}/{invoiceSetupItems.length} {t("selesai", "done")}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              )}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ImageIcon className="h-5 w-5" /> {t("Branding & Invoice", "Branding & Invoice")}
+                  </CardTitle>
+                  <CardDescription>
+                    {t(
+                      "Logo, nama tagihan, mata uang, tarif default — dipakai di PDF + preview klien.",
+                      "Logo, billing name, currency, default rate — used on PDF + client preview.",
+                    )}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-2">
+                    {invoiceSetupItems.map((item) => {
+                      const Icon = item.done ? CheckCircle2 : Circle;
+                      return (
+                        <div key={item.label} className="flex items-center gap-2 text-xs">
+                          <Icon className={item.done ? "h-4 w-4 text-emerald-600" : "h-4 w-4 text-muted-foreground"} />
+                          <span className={item.done ? "text-slate-700" : "text-muted-foreground"}>{item.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <WorkspaceBrandingForm
+                    defaults={{
+                      billingName: workspace.billingName,
+                      billingEmail: workspace.billingEmail,
+                      billingPhone: workspace.billingPhone,
+                      billingAddress: workspace.billingAddress,
+                      taxId: workspace.taxId,
+                      logoUrl: workspace.logoUrl,
+                      defaultCurrency: workspace.defaultCurrency,
+                      defaultTaxRate: workspace.defaultTaxRate,
+                      defaultHourlyRate: workspace.defaultHourlyRate,
+                      defaultInvoiceTerms: workspace.defaultInvoiceTerms,
+                      invoiceEmailBody: workspace.invoiceEmailBody,
+                      replyToEmail: workspace.replyToEmail,
+                    }}
+                    ownerEmailHint={ownerUser?.email ?? null}
+                  />
+                </CardContent>
+              </Card>
+            </>
           }
           integrations={
             <Card>

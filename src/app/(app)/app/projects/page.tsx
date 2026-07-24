@@ -2,7 +2,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { projects, clients, tasks, workspaceMembers, users, packages } from "@/db/schema";
+import { projects, clients, tasks, workspaceMembers, users } from "@/db/schema";
 import { eq, and, desc, sql, SQL } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import Link from "next/link";
@@ -11,8 +11,7 @@ import { ProjectCreateDialog } from "@/components/projects/project-create-dialog
 import { ProjectFilters } from "@/components/projects/project-filters";
 import { ProjectsListTable } from "@/components/projects/projects-list-table";
 import { getCurrentLang, createT } from "@/lib/i18n";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { Suspense } from "react";
 
 const STATUS_TABS = [
@@ -50,12 +49,10 @@ function isUuid(value?: string): value is string {
 function buildProjectsHref(filters: {
   status: StatusTab;
   clientId?: string;
-  packageId?: string;
 }): string {
   const params = new URLSearchParams();
   if (filters.status !== "all") params.set("status", filters.status);
   if (filters.clientId) params.set("clientId", filters.clientId);
-  if (filters.packageId) params.set("packageId", filters.packageId);
   const qs = params.toString();
   return qs ? `/app/projects?${qs}` : "/app/projects";
 }
@@ -65,7 +62,6 @@ export default async function ProjectsPage({
 }: {
   searchParams: Promise<{
     clientId?: string;
-    packageId?: string;
     status?: string;
   }>;
 }) {
@@ -96,7 +92,6 @@ export default async function ProjectsPage({
   const params = await searchParams;
   const statusTab = parseStatusTab(params.status);
   const clientId = isUuid(params.clientId) ? params.clientId : undefined;
-  const packageId = isUuid(params.packageId) ? params.packageId : undefined;
 
   // Plan limit (per-user free plan: max 5 projects)
   const [userPlan] = await db.select({ plan: users.plan }).from(users).where(eq(users.id, user.id)).limit(1);
@@ -114,32 +109,9 @@ export default async function ProjectsPage({
     .where(eq(clients.workspaceId, workspaceId))
     .orderBy(clients.name);
 
-  // Workspace catalog packages + any package currently assigned to a project
-  const packageOptions = await db
-    .select({
-      id: packages.id,
-      name: packages.name,
-    })
-    .from(packages)
-    .where(
-      and(
-        eq(packages.workspaceId, workspaceId),
-        sql`(
-          ${packages.projectId} IS NULL
-          OR ${packages.id} IN (
-            SELECT selected_package_id FROM projects
-            WHERE workspace_id = ${workspaceId}
-              AND selected_package_id IS NOT NULL
-          )
-        )`,
-      ),
-    )
-    .orderBy(packages.sortOrder, packages.name);
-
-  // Counts per status (respect client/package filters)
+  // Counts per status (respect client filter)
   const statusCountWhere: SQL[] = [eq(projects.workspaceId, workspaceId)];
   if (clientId) statusCountWhere.push(eq(projects.clientId, clientId));
-  if (packageId) statusCountWhere.push(eq(projects.selectedPackageId, packageId));
 
   const statusCountRows = await db
     .select({
@@ -162,7 +134,6 @@ export default async function ProjectsPage({
     whereClauses.push(eq(projects.status, statusTab));
   }
   if (clientId) whereClauses.push(eq(projects.clientId, clientId));
-  if (packageId) whereClauses.push(eq(projects.selectedPackageId, packageId));
 
   const projectsList = await db
     .select({
@@ -186,15 +157,11 @@ export default async function ProjectsPage({
   const filtersForHref = {
     status: statusTab,
     clientId,
-    packageId,
   };
 
-  const hasExtraFilters = Boolean(clientId || packageId);
+  const hasExtraFilters = Boolean(clientId);
   const selectedClient = clientId
     ? clientOptions.find((c) => c.id === clientId)
-    : undefined;
-  const selectedPackage = packageId
-    ? packageOptions.find((p) => p.id === packageId)
     : undefined;
 
   return (
@@ -239,67 +206,35 @@ export default async function ProjectsPage({
         </div>
       )}
 
-      <Tabs defaultValue={statusTab} className="space-y-4">
+      <div className="space-y-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <TabsList className="h-auto w-full justify-start overflow-x-auto p-1 lg:w-auto">
-            {STATUS_TABS.map((tab) => {
-              const active = tab === statusTab;
-              const countVal = tabCount(tab);
-              // Always show core tabs; hide empty niche ones only when not active
-              if (
-                !active &&
-                countVal === 0 &&
-                tab !== "all" &&
-                tab !== "active" &&
-                tab !== "draft"
-              ) {
-                return null;
-              }
-              return (
-                <TabsTrigger
-                  key={tab}
-                  value={tab}
-                  asChild
-                  className="gap-1.5 data-[state=active]:shadow"
-                >
-                  <Link href={buildProjectsHref({ ...filtersForHref, status: tab })}>
-                    <span>{tabLabel(tab)}</span>
-                    <span
-                      className={cn(
-                        "rounded-full px-1.5 py-0.5 text-[10px] tabular-nums",
-                        active
-                          ? "bg-primary/10 text-primary"
-                          : "bg-background/80 text-muted-foreground",
-                      )}
-                    >
-                      {countVal}
-                    </span>
-                  </Link>
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
+          <StatusFilterTabs
+            activeValue={statusTab}
+            tabs={STATUS_TABS.map((tab) => ({
+              value: tab,
+              label: tabLabel(tab),
+              href: buildProjectsHref({ ...filtersForHref, status: tab }),
+              count: tabCount(tab),
+              alwaysShow: tab === "all" || tab === "active" || tab === "draft",
+            }))}
+          />
 
           <Suspense fallback={null}>
             <ProjectFilters
               clients={clientOptions}
-              packages={packageOptions}
               current={{
                 status: statusTab,
                 clientId,
-                packageId,
               }}
             />
           </Suspense>
         </div>
-      </Tabs>
+        </div>
 
       {hasExtraFilters && (
         <p className="-mt-2 text-xs text-muted-foreground">
           {t("Filter aktif:", "Active filters:")}{" "}
           {selectedClient?.name ?? t("Semua klien", "All clients")}
-          {" · "}
-          {selectedPackage?.name ?? t("Semua paket", "All packages")}
         </p>
       )}
 

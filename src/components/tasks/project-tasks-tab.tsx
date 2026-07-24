@@ -66,8 +66,8 @@ export function ProjectTasksTab({ projectId, tasks, members = [] }: ProjectTasks
   const base = "flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors";
 
   return (
-    <div className="space-y-3">
-      <div className="flex justify-end">
+    <div className="relative space-y-3">
+      <div className="flex justify-start sm:absolute sm:-top-[52px] sm:right-0 sm:justify-end">
         <div className="inline-flex items-center gap-1 rounded-lg border bg-muted/40 p-0.5">
           <button
             type="button"
@@ -144,12 +144,12 @@ export function ProjectTasksTab({ projectId, tasks, members = [] }: ProjectTasks
               {t("Belum ada tugas di proyek ini", "No tasks in this project yet")}
             </div>
           )}
-          {sorted.map((task) => {
+          {sorted.map((task, index) => {
             const sb = taskStatusVariant(task.status, lang);
             return (
               <TaskDetailSheet key={task.id} task={task} members={members}>
-                <Card className="cursor-pointer rounded-none border-0 border-b shadow-none transition-colors last:border-b-0 hover:bg-muted/50">
-                  <CardContent className="grid gap-3 p-4 md:flex md:items-center md:gap-4">
+                <Card className={`cursor-pointer rounded-none border-0 !border-b border-slate-200 shadow-none transition-colors last:border-b-0 hover:bg-slate-100/70 ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"}`}>
+                  <CardContent className="grid gap-3 p-3 md:flex md:items-center md:gap-4">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{task.title}</p>
                     </div>
