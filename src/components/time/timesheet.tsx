@@ -182,6 +182,12 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
     return projects.filter((project) => project.clientId === clientFilter);
   }, [clientFilter, projects]);
 
+  const editMinutesNumber = Number(editMinutes);
+  const editClientError = editOpen && !editClientId;
+  const editProjectError = editOpen && !editProjectId;
+  const editMinutesError = editOpen && (!Number.isFinite(editMinutesNumber) || editMinutesNumber <= 0);
+  const editValid = !editClientError && !editProjectError && !editMinutesError;
+
   function formatDuration(minutes: number | null): string {
     const hLabel = t("j", "h");
     const mLabel = t("mnt", "m");
@@ -343,7 +349,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
             <Filter className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-medium">{t("Filter", "Filter")}</span>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-6">
             <div className="space-y-1">
               <Label className="text-[10px]">{t("Klien", "Client")}</Label>
               <Select value={clientFilter} onValueChange={(value) => {
@@ -408,7 +414,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row col-span-2 md:col-span-1">
+            <div className="col-span-2 flex flex-col gap-2 sm:flex-row">
               <div className="space-y-1 flex-1 min-w-0">
                 <Label className="text-[10px]">{t("Dari", "From")}</Label>
                 <Input
@@ -510,7 +516,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                     )}
                   </div>
                 </div>
-                <div className="flex w-full flex-wrap items-center gap-1 pl-8 sm:w-auto sm:flex-shrink-0 sm:justify-end sm:pl-0">
+                <div className="flex w-full flex-wrap items-center gap-1.5 pl-8 sm:w-auto sm:flex-shrink-0 sm:justify-end sm:pl-0">
                   {(() => {
                     const status = timeEntryStatusVariant(entry.status, locale.startsWith("en") ? ("en" as const) : undefined);
                     return (
@@ -537,7 +543,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-9 w-9 sm:h-7 sm:w-7"
+                      className="h-11 w-11 rounded-lg border border-transparent hover:border-border hover:bg-background sm:h-9 sm:w-9"
                       onClick={() => openEdit(entry)}
                       aria-label={t("Edit entri", "Edit entry")}
                       title={t("Edit entri", "Edit entry")}
@@ -548,7 +554,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 text-destructive sm:h-7 sm:w-7"
+                    className="h-11 w-11 rounded-lg border border-transparent text-destructive hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive sm:h-9 sm:w-9"
                     onClick={() => setDeleteEntry(entry)}
                     disabled={entry.status === "invoiced"}
                     aria-label={t("Hapus entri", "Delete entry")}
@@ -592,7 +598,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
       )}
 
       <Dialog open={Boolean(deleteEntry)} onOpenChange={(open) => !open && setDeleteEntry(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-w-[calc(100%-2rem)] gap-4 sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>{t("Hapus entri waktu?", "Delete time entry?")}</DialogTitle>
           </DialogHeader>
@@ -602,11 +608,11 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
               `The entry “${deleteEntry?.description || "Untitled"}” will be permanently deleted.`,
             )}
           </p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteEntry(null)} disabled={deleteLoading}>
+          <DialogFooter className="gap-2 sm:gap-3">
+            <Button className="min-h-11 flex-1" variant="outline" onClick={() => setDeleteEntry(null)} disabled={deleteLoading}>
               {t("Batal", "Cancel")}
             </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleteLoading}>
+            <Button className="min-h-11 flex-1" variant="destructive" onClick={handleDelete} disabled={deleteLoading}>
               {deleteLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
               {t("Hapus", "Delete")}
             </Button>
@@ -615,11 +621,11 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
       </Dialog>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="flex max-h-[min(90dvh,720px)] flex-col overflow-hidden p-0 sm:max-w-lg">
+        <DialogContent className="flex max-h-[min(90dvh,760px)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-xl">
           <DialogHeader className="shrink-0 border-b px-5 py-4 pr-12">
             <DialogTitle>{t("Edit entri waktu", "Edit time entry")}</DialogTitle>
           </DialogHeader>
-          <div className="grid min-h-0 gap-3 overflow-y-auto px-5 py-4">
+          <div className="grid min-h-0 gap-4 overflow-y-auto px-5 py-5">
             <div className="space-y-1.5">
               <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
               <Input
@@ -648,7 +654,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                     setEditTaskId("__none__");
                   }}
                 >
-                  <SelectTrigger className="h-9 text-sm">
+                  <SelectTrigger className={`h-10 text-sm ${editClientError ? "border-destructive" : ""}`}>
                     <SelectValue placeholder={t("Pilih klien", "Select client")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -659,6 +665,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                     ))}
                   </SelectContent>
                 </Select>
+                {editClientError ? <p className="text-xs text-destructive">{t("Klien wajib dipilih", "Client is required")}</p> : null}
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">{t("Proyek", "Project")}</Label>
@@ -670,7 +677,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                   }}
                   disabled={!editClientId}
                 >
-                  <SelectTrigger className="h-9 text-sm">
+                  <SelectTrigger className={`h-10 text-sm ${editProjectError ? "border-destructive" : ""}`}>
                     <SelectValue placeholder={t("Pilih proyek", "Select project")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -681,6 +688,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                     ))}
                   </SelectContent>
                 </Select>
+                {editProjectError ? <p className="text-xs text-destructive">{t("Proyek wajib dipilih", "Project is required")}</p> : null}
               </div>
             </div>
             <div className="space-y-1.5">
@@ -720,8 +728,10 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                   min="1"
                   value={editMinutes}
                   onChange={(e) => setEditMinutes(e.target.value)}
-                  className="h-9"
+                  className={`h-10 ${editMinutesError ? "border-destructive" : ""}`}
+                  aria-invalid={editMinutesError}
                 />
+                {editMinutesError ? <p className="text-xs text-destructive">{t("Minimal 1 menit", "Minimum 1 minute")}</p> : null}
               </div>
             </div>
             <div className="space-y-1.5">
@@ -766,11 +776,11 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
               </div>
             </div>
           </div>
-          <DialogFooter className="shrink-0 border-t px-5 py-4">
-            <Button variant="outline" onClick={() => setEditOpen(false)} disabled={editLoading}>
+          <DialogFooter className="shrink-0 gap-2 border-t bg-background px-5 py-4 sm:gap-3">
+            <Button className="min-h-11 sm:min-w-28" variant="outline" onClick={() => setEditOpen(false)} disabled={editLoading}>
               {t("Batal", "Cancel")}
             </Button>
-            <Button onClick={handleSaveEdit} disabled={editLoading}>
+            <Button className="min-h-11 sm:min-w-28" onClick={handleSaveEdit} disabled={editLoading || !editValid}>
               {editLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("Simpan", "Save")}
             </Button>
           </DialogFooter>
