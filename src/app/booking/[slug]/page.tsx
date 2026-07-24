@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { workspaces } from "@/db/schema";
+import { availabilityRules, workspaces } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { createPublicAppointment, getAvailableSlots } from "@/lib/actions/appointments";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar as CalendarIcon, Clock, User, Mail, FileText, CheckCircle2 } from "lucide-react";
+import { createT, getCurrentLang } from "@/lib/i18n";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -16,6 +17,8 @@ interface Props {
 }
 
 export default async function PublicBookingPage({ params, searchParams }: Props) {
+  const lang = await getCurrentLang();
+  const t = createT(lang);
   const { slug } = await params;
   const sp = await searchParams;
 
@@ -31,6 +34,13 @@ export default async function PublicBookingPage({ params, searchParams }: Props)
     .limit(1);
 
   if (!ws) notFound();
+
+  const [firstRule] = await db
+    .select({ timezone: availabilityRules.timezone })
+    .from(availabilityRules)
+    .where(eq(availabilityRules.workspaceId, ws.id))
+    .limit(1);
+  const timezone = firstRule?.timezone || "Asia/Jakarta";
 
   const selectedDate = sp.date || new Date().toISOString().split("T")[0];
 
@@ -63,7 +73,7 @@ export default async function PublicBookingPage({ params, searchParams }: Props)
             </div>
           )}
           <h1 className="text-2xl font-semibold">{ws.name}</h1>
-          <p className="text-sm text-muted-foreground">Book a time with us</p>
+          <p className="text-sm text-foreground/70">{t("Pesan waktu bersama kami", "Book a time with us")}</p>
         </div>
 
         {success ? (
@@ -84,7 +94,7 @@ export default async function PublicBookingPage({ params, searchParams }: Props)
             <CardHeader>
               <CardTitle className="text-lg">
                 <CalendarIcon className="mr-2 inline h-5 w-5" />
-                Schedule Appointment
+                {t("Jadwalkan Janji Temu", "Schedule Appointment")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -121,23 +131,23 @@ export default async function PublicBookingPage({ params, searchParams }: Props)
                 <div className="space-y-2">
                   <Label htmlFor="title">
                     <FileText className="mr-1 inline h-4 w-4" />
-                    Title
+                    {t("Judul", "Title")}
                   </Label>
-                  <Input id="title" name="title" placeholder="e.g. Project Consultation" required />
+                  <Input id="title" name="title" placeholder={t("Contoh: Konsultasi proyek", "e.g. Project Consultation")} required />
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="attendeeName">
                       <User className="mr-1 inline h-4 w-4" />
-                      Your Name
+                      {t("Nama Kamu", "Your Name")}
                     </Label>
-                    <Input id="attendeeName" name="attendeeName" placeholder="Your full name" required />
+                    <Input id="attendeeName" name="attendeeName" placeholder={t("Nama lengkap", "Your full name")} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="attendeeEmail">
                       <Mail className="mr-1 inline h-4 w-4" />
-                      Your Email
+                      {t("Email Kamu", "Your Email")}
                     </Label>
                     <Input
                       id="attendeeEmail"
@@ -153,18 +163,18 @@ export default async function PublicBookingPage({ params, searchParams }: Props)
                 <div className="space-y-2">
                   <Label>
                     <CalendarIcon className="mr-1 inline h-4 w-4" />
-                    Date
+                    {t("Tanggal", "Date")}
                   </Label>
-                  <div className="flex gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
                     <Input
                       type="date"
                       name="date"
                       defaultValue={selectedDate}
-                      className="flex-1"
+                      className="min-h-11 w-full min-w-0"
                       form="dateForm"
                     />
-                    <Button type="submit" variant="outline" size="sm" form="dateForm">
-                      Change
+                    <Button type="submit" variant="outline" className="min-h-11" form="dateForm">
+                      {t("Terapkan tanggal", "Apply date")}
                     </Button>
                   </div>
                 </div>
@@ -172,18 +182,19 @@ export default async function PublicBookingPage({ params, searchParams }: Props)
                 <div className="space-y-2">
                   <Label>
                     <Clock className="mr-1 inline h-4 w-4" />
-                    Available Times
+                    {t("Waktu Tersedia", "Available Times")}
                   </Label>
+                  <p className="text-xs text-foreground/70">{t(`Zona waktu: ${timezone}`, `Timezone: ${timezone}`)}</p>
                   {slotsError ? (
                     <p className="text-sm text-destructive">{slotsError}</p>
                   ) : slots.length === 0 ? (
                     <div className="rounded-lg border border-dashed p-6 text-center">
                       <CalendarIcon className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
-                      <p className="text-sm text-muted-foreground">No available slots for this date</p>
-                      <p className="text-xs text-muted-foreground">Try selecting a different date</p>
+                      <p className="text-sm text-foreground/70">{t("Tidak ada slot tersedia pada tanggal ini", "No available slots for this date")}</p>
+                      <p className="text-xs text-foreground/70">{t("Coba pilih tanggal lain", "Try selecting a different date")}</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                       {slots.map((slot, i) => (
                         <label
                           key={i}
@@ -197,9 +208,10 @@ export default async function PublicBookingPage({ params, searchParams }: Props)
                             required
                           />
                           <span className="text-sm font-medium">
-                            {new Date(slot.start).toLocaleTimeString("en-US", {
+                            {new Date(slot.start).toLocaleTimeString(lang === "en" ? "en-US" : "id-ID", {
                               hour: "2-digit",
                               minute: "2-digit",
+                              timeZone: timezone,
                             })}
                           </span>
                           <span className="text-[10px] text-muted-foreground">30 min</span>
@@ -212,14 +224,14 @@ export default async function PublicBookingPage({ params, searchParams }: Props)
                 <div className="space-y-2">
                   <Label htmlFor="notes">
                     <FileText className="mr-1 inline h-4 w-4" />
-                    Notes (optional)
+                    {t("Catatan (opsional)", "Notes (optional)")}
                   </Label>
-                  <Textarea id="notes" name="notes" placeholder="Any additional information..." rows={3} />
+                  <Textarea id="notes" name="notes" placeholder={t("Informasi tambahan...", "Any additional information...")} rows={3} />
                 </div>
 
                 <Button type="submit" className="w-full">
                   <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Book Appointment
+                  {t("Pesan Janji Temu", "Book Appointment")}
                 </Button>
               </form>
             </CardContent>
