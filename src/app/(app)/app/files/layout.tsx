@@ -75,8 +75,8 @@ export default async function FilesLayout({
         />
       </Suspense>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <Card className="lg:col-span-1 h-fit sticky top-4">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
+        <Card className="lg:col-span-1 h-fit lg:sticky lg:top-4">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <FileText className="h-4 w-4" /> {t("Jelajahi", "Browse")}

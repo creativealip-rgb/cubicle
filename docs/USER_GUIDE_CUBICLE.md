@@ -1,7 +1,7 @@
 # Cubiqlo / Cubicle — Panduan Lengkap Fitur & Halaman
 
 > **App live:** https://cubiqlo.com  
-> **Versi docs:** sinkron dengan app **v0.1.115** (24 Juli 2026)
+> **Versi docs:** sinkron dengan app **v0.1.116** (24 Juli 2026)
 > **Audience:** user / owner workspace / onboarding internal  
 > **Bahasa UI app:** Indonesia (default) + English toggle di sidebar
 
@@ -360,15 +360,17 @@ Aksi:
 
 #### Fitur
 
-- Folder tree  
-- Upload button + drag-drop zone  
-- New folder  
-- List file dengan filter client/project  
-- Download / delete  
-- **Visibility:** `internal` | `client`  
-- **File type:** `working_file` | `deliverable`  
-- Folder nested (`parentId`)  
-- Rename folder / delete folder  
+- Folder tree
+- Upload button + drag-drop zone; batas maksimal **25 MB per file**
+- New folder
+- List file dengan filter client/project
+- Download / delete; penghapusan wajib dikonfirmasi dan membersihkan object Cloudflare R2
+- **Visibility:** `internal` | `client`
+- **File type:** `working_file` | `deliverable`
+- Folder nested (`parentId`); scope klien/proyek subfolder wajib sama dengan folder induk
+- Rename folder / delete folder
+- Owner/member dapat mengelola berkas; viewer hanya dapat melihat dan membuka berkas
+- Tampilan mobile memakai tombol sentuh lebih besar, aksi folder selalu terlihat, dan dialog tetap bisa di-scroll
 
 ## 5. Keuangan
 

@@ -27,7 +27,7 @@ export function FilesPageHeader({
         <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
       </div>
       {canWrite && (
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
           <NewFolderButton
             workspaceId={workspaceId}
             clientId={clientId}

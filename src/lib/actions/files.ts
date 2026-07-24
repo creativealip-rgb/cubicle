@@ -16,7 +16,7 @@ import {
   assertProjectInWorkspace,
 } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
-import { getSignedUploadUrl as getR2UploadUrl, buildFileKey } from "@/lib/r2";
+import { getSignedUploadUrl as getR2UploadUrl, buildFileKey, deleteStoredFile } from "@/lib/r2";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -175,6 +175,7 @@ export async function deleteFile(fileId: string) {
 
   if (!file) throw new Error("File not found");
 
+  await deleteStoredFile(file.storageKey);
   await db.delete(files).where(eq(files.id, fileId));
   await writeActivityLog(workspaceId, user.id, "deleted_file", "file", fileId);
   revalidatePath("/app/files");

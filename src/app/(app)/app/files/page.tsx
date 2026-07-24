@@ -133,7 +133,7 @@ export default async function FilesPage({
         scope={{ workspaceId, clientId, projectId, folderId }}
         canWrite={canWrite}
       >
-        <FileList files={finalFiles} workspaceId={workspaceId} />
+        <FileList files={finalFiles} canWrite={canWrite} lang={lang} />
       </FileDropZone>
     </>
   );

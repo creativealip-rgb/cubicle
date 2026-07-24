@@ -97,7 +97,7 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
         accept="*/*"
       />
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1" disabled={uploading}>
+        <Button variant="outline" size="sm" className="h-10 gap-1 sm:h-9" disabled={uploading}>
           {uploading ? (
             <>
               <Loader2 className="h-3 w-3 animate-spin" />
@@ -118,6 +118,9 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
+          <p className="text-xs text-foreground/70">
+            {t("Maksimal 25 MB per file. Semua format didukung.", "Maximum 25 MB per file. All formats supported.")}
+          </p>
           <div className="space-y-2">
             <Label>{t("Visibilitas", "Visibility")}</Label>
             <Select value={visibility} onValueChange={(v) => setVisibility(v as "internal" | "client")}>

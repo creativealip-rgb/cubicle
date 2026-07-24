@@ -14,6 +14,7 @@ import {
   assertProjectInWorkspace,
 } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { assertFolderScopeMatches } from "@/lib/file-manager-rules";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -50,7 +51,11 @@ export async function createFolder(input: z.infer<typeof createFolderSchema>) {
     await assertProjectInWorkspace(db, user.id, parsed.workspaceId, parsed.projectId);
   }
   if (parsed.parentId) {
-    await assertFolderInWorkspace(parsed.workspaceId, parsed.parentId);
+    const parent = await assertFolderInWorkspace(parsed.workspaceId, parsed.parentId);
+    assertFolderScopeMatches(
+      { clientId: parent.clientId, projectId: parent.projectId },
+      { clientId: parsed.clientId || null, projectId: parsed.projectId || null },
+    );
   }
 
   const [folder] = await db

@@ -88,7 +88,7 @@ export function FolderTree({
               ) : (
                 <Folder className="h-3.5 w-3.5 flex-shrink-0 opacity-60" />
               )}
-              <span className="truncate">{folder.name}</span>
+              <span className="truncate" title={folder.name}>{folder.name}</span>
             </Link>
           </Button>
           {canWrite && <FolderRowActions folderId={folder.id} currentName={folder.name} />}
@@ -133,7 +133,7 @@ export function FolderTree({
           >
             <Link href={scopeHref({ clientId: client.id })} prefetch scroll={false}>
               <ChevronRight className="h-3 w-3 opacity-50" />
-              <span className="truncate">{client.name}</span>
+              <span className="truncate" title={client.name}>{client.name}</span>
             </Link>
           </Button>
 
@@ -160,7 +160,7 @@ export function FolderTree({
                         scroll={false}
                       >
                         <Folder className="h-3 w-3 opacity-50" />
-                        <span className="truncate">{project.name}</span>
+                        <span className="truncate" title={project.name}>{project.name}</span>
                       </Link>
                     </Button>
                     {currentProjectId === project.id && renderFolderNodes(null, 3)}

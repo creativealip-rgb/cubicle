@@ -1,6 +1,6 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { requiredEnv } from "@/lib/env";
 
 export const r2 = new S3Client({
@@ -34,4 +34,8 @@ export async function getSignedUploadUrl(storageKey: string, contentType: string
     new PutObjectCommand({ Bucket: R2_BUCKET, Key: storageKey, ContentType: contentType }),
     { expiresIn },
   );
+}
+
+export async function deleteStoredFile(storageKey: string) {
+  await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: storageKey }));
 }

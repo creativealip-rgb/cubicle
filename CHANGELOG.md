@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.116 — 2026-07-24 — File manager safety and responsive UX
+
+- File deletion: require explicit confirmation and delete the matching Cloudflare R2 object before removing its database record
+- Folder integrity: reject nested folders whose client/project scope differs from the parent folder
+- File manager UX: use denser rows and separators, improve empty-state guidance, hide irrelevant search/filter controls when empty, and keep folder actions visible
+- Mobile/accessibility: improve responsive header/dialog layouts, enlarge touch targets, add folder-action labels, tooltips for truncated names, localized dates, and clearer Indonesian file-type labels
+- Upload flow: show the 25 MB limit and clarify drag-and-drop guidance
+- Verified: 4/4 file-manager rule tests, `npx tsc --noEmit`, `git diff --check`, Docker build/deploy, container healthy, `/api/health` OK, browser QA with no resource errors or horizontal overflow
+
 ## v0.1.115 — 2026-07-24 — Calendar and public booking hardening
 
 - Calendar: add confirmation dialogs before deleting availability rules or cancelling appointments
