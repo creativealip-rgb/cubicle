@@ -1,6 +1,6 @@
 # Cubiqlo — Bugs + Kekurangan (Manual QA Backlog)
 
-Status: **P0–P3 mostly fixed through v0.1.50** (2026-07-18)  
+Status: **P0–P3 mostly fixed; calendar/booking QA fixed through v0.1.115** (2026-07-24)
 Live: Docker `cubicle-cubicle-1` healthy  
 Sumber: manual QA Alip + Coder  
 Workspace acuan: **Alip Testing** (`alipdevcom@gmail.com`)
@@ -155,7 +155,7 @@ Step portal klien di dashboard checklist.
 
 | Area | Risiko |
 |---|---|
-| Kalender | availability seed ada; booking UX unknown |
+| Kalender | **checked/fixed v0.1.115** — confirmation guards, localized form, visible timezone, responsive booking UI, timezone-correct slots, valid ICS download |
 | Brain | AI quality/cost unknown |
 | Prompt | template/gen flow unknown |
 | Menu Penjualan | HOLD (PROD-003) |

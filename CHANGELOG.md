@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.115 — 2026-07-24 — Calendar and public booking hardening
+
+- Calendar: add confirmation dialogs before deleting availability rules or cancelling appointments
+- Calendar actions: enlarge touch targets and replace ambiguous `.ics` action with **Unduh .ics**
+- Availability form: localize copy, improve mobile layout, and validate end time after start time
+- Public booking: localize Indonesian copy, show booking timezone, improve date controls, and use responsive 2/3-column slot grid
+- Slot engine: convert availability windows from each rule's IANA timezone to UTC before conflict checks and persistence
+- Verified: `npx tsc --noEmit`, `git diff --check`, Docker build/deploy, container healthy, `/api/health` OK, booking route HTTP 200, browser QA with no resource errors or horizontal overflow
+
 ## v0.1.114 — 2026-07-24 — App UX polish, shared list density, timer page
 
 - Client detail: keep Portal flow, remove redundant Ringkasan surface, default detail tab to Proyek, add compact portal action where useful

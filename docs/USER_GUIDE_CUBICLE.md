@@ -1,7 +1,7 @@
 # Cubiqlo / Cubicle — Panduan Lengkap Fitur & Halaman
 
 > **App live:** https://cubiqlo.com  
-> **Versi docs:** sinkron dengan app **v0.1.65** (18 Juli 2026)  
+> **Versi docs:** sinkron dengan app **v0.1.115** (24 Juli 2026)
 > **Audience:** user / owner workspace / onboarding internal  
 > **Bahasa UI app:** Indonesia (default) + English toggle di sidebar
 
@@ -340,15 +340,19 @@ Aksi:
 #### Fitur internal
 
 - Daftar appointment mendatang  
-- Buat/hapus **availability rules** (hari/jam available)  
-- Cancel appointment  
-- Export ICS per appointment (`/api/calendar/[id]/ics`)  
+- Buat/hapus **aturan ketersediaan** berdasarkan hari, jam, dan zona waktu IANA
+- Waktu selesai wajib setelah waktu mulai
+- Hapus aturan dan batalkan janji memakai dialog konfirmasi agar tidak terpencet langsung
+- Unduh file kalender lewat tombol **Unduh .ics** (`/api/calendar/[id]/ics`)
 
 #### Booking publik
 
 - Workspace punya `bookingSlug`  
 - Publik buka `/booking/[slug]`  
-- Pilih tanggal → slot available → isi nama/email/notes → book  
+- Pilih tanggal → pilih slot → isi nama/email/catatan → pesan janji
+- Zona waktu aturan (contoh `Asia/Jakarta`) tampil di atas pilihan slot
+- Slot dihitung dan ditampilkan sesuai zona waktu aturan, bukan zona waktu server
+- Grid slot responsif: 2 kolom di HP, 3 kolom mulai layar kecil
 
 ### 4.6 File — `/app/files`
 

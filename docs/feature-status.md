@@ -20,7 +20,7 @@ Latest verified branch: `fix/navbar-notification-dashboard-reminders`
 | Database | DONE | Postgres container healthy. |
 | Health endpoint | DONE | `/api/health` returns `{"status":"ok","db":"ok"}`. |
 | Protected app routing | DONE | `/app/*` redirects unauthenticated users to `/login?redirect=...`. |
-| Git checkpoint | DONE | Latest pushed: `8c79e15 feat: polish cubiqlo app UX and timer lists` on `fix/navbar-notification-dashboard-reminders`. |
+| Git checkpoint | DONE | Latest calendar implementation pushed: `7194c74 fix: harden calendar booking experience` on `fix/navbar-notification-dashboard-reminders`. |
 
 ## Core app shell
 
@@ -106,9 +106,10 @@ Latest verified branch: `fix/navbar-notification-dashboard-reminders`
 
 | Feature | Route/API | Status | Notes |
 | --- | --- | --- | --- |
-| Calendar | `/app/calendar` | DONE | Calendar page exists. |
-| Public booking | `/booking/[slug]` | DONE | Public booking route exists. |
-| ICS invite | `/api/calendar/[appointmentId]/ics` | DONE | `.ics` calendar invite route added. |
+| Calendar | `/app/calendar` | DONE | v0.1.115: localized availability form, end-time validation, destructive-action confirmations, larger touch targets, and explicit **Unduh .ics** action. |
+| Public booking | `/booking/[slug]` | DONE | v0.1.115: Indonesian copy, visible IANA timezone, timezone-correct slot display, responsive date controls, and 2/3-column slot grid. |
+| Booking slot computation | `getAvailableSlots` | DONE | Availability rule local time is converted from its IANA timezone to UTC before overlap checks; booked-range query uses true rule window. |
+| ICS invite | `/api/calendar/[appointmentId]/ics` | DONE | `.ics` calendar invite route works; live download returned valid VCALENDAR content during QA. |
 | Google/Outlook sync | n/a | TODO | Real provider sync pending. |
 
 ## Files + storage
