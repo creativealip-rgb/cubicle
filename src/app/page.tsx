@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Sparkles,
   Users,
+  Menu,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -110,7 +111,7 @@ export default function HomePage() {
             <Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-11 w-auto object-contain" />
           </Link>
 
-          <nav className="hidden items-center gap-7 text-sm font-medium text-slate-600 md:flex">
+          <nav aria-label="Navigasi utama" className="hidden items-center gap-7 text-sm font-medium text-slate-600 md:flex">
             <a href="#features" className="transition-colors duration-200 hover:text-[#6647F0]">Fitur</a>
             <a href="#workflow" className="transition-colors duration-200 hover:text-[#6647F0]">Alur</a>
             <a href="#portal" className="transition-colors duration-200 hover:text-[#6647F0]">Portal</a>
@@ -118,6 +119,10 @@ export default function HomePage() {
           </nav>
 
           <div className="flex items-center gap-2">
+            <details className="relative md:hidden">
+              <summary aria-label="Buka menu" className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-lg border border-slate-200 bg-white [&::-webkit-details-marker]:hidden"><Menu className="h-5 w-5" /></summary>
+              <nav className="absolute right-0 top-12 w-48 rounded-xl border border-slate-200 bg-white p-2 text-sm shadow-xl"><a href="#features" className="block rounded-lg px-3 py-2 hover:bg-violet-50">Fitur</a><a href="#workflow" className="block rounded-lg px-3 py-2 hover:bg-violet-50">Alur</a><a href="#pricing" className="block rounded-lg px-3 py-2 hover:bg-violet-50">Harga</a><Link href="/login" className="block rounded-lg px-3 py-2 hover:bg-violet-50">Masuk</Link></nav>
+            </details>
             <Button asChild variant="ghost" className="hidden sm:inline-flex">
               <Link href="/login">Masuk</Link>
             </Button>
@@ -397,7 +402,6 @@ export default function HomePage() {
                     alt="Cubiqlo tasks with filters and priorities"
                     width={1440}
                     height={900}
-                    priority
                     className="block w-full"
                     style={{ objectFit: 'cover', objectPosition: 'top' }}
                   />
@@ -485,8 +489,8 @@ export default function HomePage() {
               Tool client ops global sering mulai dari sekitar $17–$19 per bulan dan masih butuh add-on untuk workflow tertentu. Cubiqlo kasih free workspace, portal klien, dan billing IDR sejak awal.
             </p>
           </div>
-          <div className="mt-12 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_4px_16px_rgba(13,21,48,0.04),0_16px_48px_rgba(13,21,48,0.08)]">
-            <table className="w-full text-left text-sm">
+          <div className="mt-12 overflow-x-auto rounded-2xl border border-slate-100 bg-white shadow-[0_4px_16px_rgba(13,21,48,0.04),0_16px_48px_rgba(13,21,48,0.08)]">
+            <table className="min-w-[700px] w-full text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-[0.12em] text-slate-500">
                 <tr>
                   <th className="px-6 py-4 font-medium"></th>
@@ -515,54 +519,44 @@ export default function HomePage() {
               </tbody>
             </table>
           </div>
+          <p className="mt-4 text-center text-xs leading-5 text-slate-500">Perbandingan berdasarkan halaman harga dan fitur publik masing-masing produk, diperiksa 24 Juli 2026. Harga dan paket dapat berubah; verifikasi sebelum membeli.</p>
         </div>
       </section>
 
-      <section className="bg-slate-50 px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-8 lg:grid-cols-3">
-            {[
-              {
-                quote: "Cubiqlo nyambungin kerjaan client sampai invoice. Biasanya gue buang 3 jam seminggu cuma buat pindah-pindah konteks.",
-                author: "Rina W.",
-                role: "Freelance brand designer",
-              },
-              {
-                quote: "Client portal-nya aja sudah ganti dua tool di workflow kami. Client sekarang cek progress sendiri, bukan nanya terus di WhatsApp.",
-                author: "Andika P.",
-                role: "Studio owner, team 4 orang",
-              },
-              {
-                quote: "Time tracking yang langsung nyambung ke invoice ternyata fitur yang kami butuhkan. Closing bulanan turun dari 2 hari jadi 4 jam.",
-                author: "Maya S.",
-                role: "Marketing consultant",
-              },
-            ].map((t) => (
-              <Card key={t.author} className="group rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_6px_16px_rgba(0,0,0,0.06)] transition-all duration-300 ease-out hover:-translate-y-2 hover:border-[#6647F0]/20 hover:shadow-[0_8px_24px_rgba(102,71,240,0.10),0_20px_40px_rgba(0,0,0,0.08)]">
-                <CardContent className="p-6">
-                  <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-lg bg-[#F4F0FF]">
-                    <span className="text-lg font-bold text-[#6647F0]">&ldquo;</span>
-                  </div>
-                  <p className="text-sm leading-7 text-slate-700">&ldquo;{t.quote}&rdquo;</p>
-                  <div className="mt-4 flex items-center gap-3 border-t border-slate-100 pt-4">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#6647F0] to-[#0091FF] text-xs font-semibold text-white">
-                      {t.author.split(' ').map(n => n[0]).join('')}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-950">{t.author}</p>
-                      <p className="text-xs text-slate-500">{t.role}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+      <section className="overflow-hidden bg-[linear-gradient(135deg,#111827_0%,#1e1b4b_55%,#172554_100%)] px-4 py-20 text-white sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <Badge className="border border-white/15 bg-white/10 text-white hover:bg-white/10">Bukti produk, bukan janji</Badge>
+            <h2 className="mt-5 text-3xl font-semibold leading-tight tracking-[-0.02em] sm:text-5xl">
+              Satu alur kerja yang benar-benar tersambung.
+            </h2>
+            <p className="mt-5 max-w-xl text-base leading-8 text-slate-300 sm:text-lg">
+              Data yang kamu masukkan di awal terus dipakai sampai pekerjaan selesai. Tidak perlu menyalin ulang progres, jam kerja, atau detail invoice.
+            </p>
+            <Link href="/signup" className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 shadow-[0_12px_30px_rgba(0,0,0,0.24)] transition-all hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(0,0,0,0.30)] motion-reduce:transform-none motion-reduce:transition-none">
+              Coba alurnya gratis <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-            <span>Diuji 12 tim jasa</span>
-            <span aria-hidden="true">·</span>
-            <span>Freelancer + studio kecil</span>
-            <span aria-hidden="true">·</span>
-            <span>Billing IDR + USD</span>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            {[
+              { icon: BriefcaseBusiness, label: "Mulai", title: "Klien & proyek", text: "Brief, scope, PIC, dan status kerja berada dalam konteks yang sama." },
+              { icon: Clock3, label: "Kerjakan", title: "Tugas & waktu", text: "Aktivitas tim dan jam billable langsung terhubung ke proyek." },
+              { icon: FileText, label: "Selesaikan", title: "Portal & invoice", text: "Bagikan hasil, update progres, lalu ubah pekerjaan menjadi tagihan." },
+            ].map((item, index) => (
+              <div key={item.title} className="group relative rounded-2xl border border-white/15 bg-white/[0.08] p-5 shadow-[0_16px_50px_rgba(0,0,0,0.16)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-2 hover:border-white/30 hover:bg-white/[0.12] motion-reduce:transform-none motion-reduce:transition-none">
+                <div className="mb-8 flex items-center justify-between">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-[#6647F0] shadow-lg">
+                    <item.icon className="h-5 w-5" />
+                  </div>
+                  <span className="text-xs font-semibold tracking-[0.18em] text-slate-400">0{index + 1}</span>
+                </div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-300">{item.label}</p>
+                <h3 className="mt-2 text-lg font-semibold text-white">{item.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-300">{item.text}</p>
+                {index < 2 && <ArrowRight aria-hidden="true" className="absolute -right-7 top-1/2 z-10 hidden h-5 w-5 text-violet-300 lg:block" />}
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -655,12 +649,10 @@ export default function HomePage() {
               ["Cocok untuk team kecil?", "Cocok. Team plan punya shared workspace, role, file handoff, dan report."],
               ["Bisa upgrade nanti?", "Bisa. Mulai Free dulu, upgrade saat jumlah klien atau team sudah butuh."],
             ].map(([q, a]) => (
-              <Card key={q} className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_6px_16px_rgba(0,0,0,0.06)]">
-                <CardContent className="p-6">
-                  <h3 className="text-base font-semibold text-slate-950">{q}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{a}</p>
-                </CardContent>
-              </Card>
+              <details key={q} className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+                <summary className="cursor-pointer font-semibold text-slate-950 marker:text-[#6647F0]">{q}</summary>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{a}</p>
+              </details>
             ))}
           </div>
         </div>

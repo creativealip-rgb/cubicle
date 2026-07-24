@@ -1,9 +1,12 @@
 import { SignupForm } from "@/components/auth/signup-form";
+import { AuthShell } from "@/components/auth/auth-shell";
+import type { Metadata } from "next";
+export const metadata: Metadata = { title: "Daftar | Cubiqlo", description: "Buat workspace Cubiqlo gratis untuk mengelola kerja klien." };
 
 export default function SignupPage() {
   return (
-    <div className="flex min-h-screen w-full items-center justify-center px-4">
+    <AuthShell>
       <SignupForm />
-    </div>
+    </AuthShell>
   );
 }

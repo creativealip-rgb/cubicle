@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,7 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
+
 } from "@/components/ui/card";
 import { authClient } from "@/lib/auth-client";
 
@@ -54,18 +54,17 @@ export function SignupForm() {
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full border-slate-200 bg-white shadow-xl shadow-slate-200/50">
       <CardHeader className="space-y-1 text-center">
-        <Image src="/logo-icon.png" alt="Cubiqlo" width={40} height={40} className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover" />
-        <CardTitle className="text-2xl">Buat akun</CardTitle>
+        <h1 className="text-2xl font-semibold tracking-tight">Buat akun</h1>
         <CardDescription>
           Mulai workspace Cubiqlo gratis
         </CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} aria-busy={loading}>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <div role="alert" aria-live="polite" className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {error}
             </div>
           )}
@@ -110,7 +109,7 @@ export function SignupForm() {
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Buat akun
+            {loading ? "Sedang membuat akun…" : "Buat akun"}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
             Dengan membuat akun, kamu menyetujui{" "}
