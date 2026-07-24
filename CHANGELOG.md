@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.1.114 — 2026-07-24 — App UX polish, shared list density, timer page
+
+- Client detail: keep Portal flow, remove redundant Ringkasan surface, default detail tab to Proyek, add compact portal action where useful
+- Clients: Excel export endpoints hardened with workspace resolve; edit dialog made compact/scrollable with grouped fields
+- Shared list UI: normalize Clients, Projects, Tasks, Invoices, Proposals, Contracts, Expenses, Questionnaires, and Time entries with compact `p-3` rows, visible separators, and zebra backgrounds
+- Projects/Tasks: add Review status styling, clearer deadline/tenggat context, compact task filters, project/client links, and cleaner progress display
+- Navigation/content: hide Penjualan, rename Paket to Service, keep topbar create less noisy on dense pages
+- Settings/Auth: add account settings form for profile name/password and route/domain handling for `app.cubiqlo.com`
+- Time page: clarify Tasks vs Timer split, compact timer card, improve manual-entry dialog on mobile, and make timesheet list match other dense lists
+- Verified: `npx tsc --noEmit`, Docker build, deploy, `/api/health` 200, container healthy
+
 ## v0.1.113 — 2026-07-23 — Dashboard action queue + event-only notifications
 
 - Renamed dashboard **Reminder** section to **Perlu ditangani** with cleaner product copy

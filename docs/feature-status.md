@@ -1,7 +1,7 @@
 # Cubiqlo Full Feature Status
 
-Last updated: 2026-07-23
-Live app: https://cubiqlo.com
+Last updated: 2026-07-24
+Live app: https://app.cubiqlo.com
 Latest verified branch: `fix/navbar-notification-dashboard-reminders`
 
 ## Status legend
@@ -15,18 +15,18 @@ Latest verified branch: `fix/navbar-notification-dashboard-reminders`
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| Production domain | DONE | `https://cubiqlo.com` live over HTTPS. |
+| Production domain | DONE | `https://app.cubiqlo.com` live over HTTPS; apex keeps public/redirect behavior. |
 | Docker deploy | DONE | `cubicle-cubicle-1` rebuild/recreate flow works. |
 | Database | DONE | Postgres container healthy. |
 | Health endpoint | DONE | `/api/health` returns `{"status":"ok","db":"ok"}`. |
 | Protected app routing | DONE | `/app/*` redirects unauthenticated users to `/login?redirect=...`. |
-| Git checkpoint | DONE | Latest pushed: `3101df9 feat: publish personal landing pages`. |
+| Git checkpoint | DONE | Latest pushed: `8c79e15 feat: polish cubiqlo app UX and timer lists` on `fix/navbar-notification-dashboard-reminders`. |
 
 ## Core app shell
 
 | Feature | Route/File | Status | Notes |
 | --- | --- | --- | --- |
-| App shell sidebar/topbar | `/app/*` | DONE | Grouped sidebar, workspace dropdown, global search entry, create button, timer, notifications. |
+| App shell sidebar/topbar | `/app/*` | DONE | Grouped sidebar, workspace dropdown, global search entry, compact create button on dense pages, timer, notifications. Penjualan hidden; Paket labeled Service. |
 | Auth login/signup/reset | `/login`, `/signup`, `/forgot-password`, `/reset-password` | DONE | Basic auth flow live. |
 | Workspace context | `active_workspace_id` cookie + workspace helpers | DONE | Auto-bootstrap and membership checks exist. |
 | Dashboard | `/app/dashboard` | DONE | `Perlu ditangani` action queue groups urgent, waiting-action, and scheduled reminders. Greeting date-only. Due/timer not duplicated (dashboard + topbar). |
@@ -36,10 +36,10 @@ Latest verified branch: `fix/navbar-notification-dashboard-reminders`
 
 | Feature | Route | Status | Notes |
 | --- | --- | --- | --- |
-| Clients list | `/app/clients` | DONE | Client management page exists. |
+| Clients list | `/app/clients` | DONE | v0.1.114: compact zebra list, portal status/action, no redundant row actions, Excel export. |
 | Client create | `/app/clients/new`, `/api/clients/create` | DONE | Dedicated non-modal fallback created. |
-| Client detail | `/app/clients/[clientId]` | DONE | Client profile/detail route exists. |
-| Client PDF export | `/api/clients/[clientId]/export/pdf`, `/api/clients/export/pdf` | DONE | Single client PDF and bulk combined PDF shipped. |
+| Client detail | `/app/clients/[clientId]` | DONE | v0.1.114: Ringkasan removed, Portal kept, default tab Proyek, invoice/project cards actionable. |
+| Client Excel export | `/api/clients/[clientId]/export/xlsx`, `/api/clients/export/xlsx` | DONE | v0.1.114: workspace resolve hardened; list/detail export XLSX. PDF buttons hidden from client UI. |
 | Client portal token route | `/client-portal/[token]` | DONE | Tabs Overview/Projects/Folders/Invoices/Contact; workspace branding header; Folders upload via `POST /api/client-portal/files/upload`. |
 | Short client portal slug UX | Client form / portal fields | DONE | Auto slug generation and cleanup in client form. |
 | Portal access audit | `portal_visits` | PARTIAL | Schema exists; deeper analytics/reporting pending. |
@@ -48,10 +48,10 @@ Latest verified branch: `fix/navbar-notification-dashboard-reminders`
 
 | Feature | Route | Status | Notes |
 | --- | --- | --- | --- |
-| Projects list | `/app/projects` | DONE | Workspace project page exists. |
+| Projects list | `/app/projects` | DONE | v0.1.114: compact zebra list, Review status, due-date context, client link, simplified client-only filter, progress % inside bar. |
 | Project billing type + dates | project form/schema | DONE | Supports `by project` / `by hours`, start date, finish date. |
 | Project detail | `/app/projects/[projectId]` | DONE | Detail page with related data. |
-| Tasks | `/app/tasks` | DONE | Task board/list exists. |
+| Tasks | `/app/tasks` | DONE | v0.1.114: compact list, Review status, tenggat context, status as dropdown, assignee filter uses Saya, list/board toggle retained. |
 | Project timeline | Project detail + portal | DONE | Internal timeline and client-safe visibility shipped earlier. |
 | Nodes/reminder center | `/app/nodes` | REMOVED | Removed from sidebar and route because meeting clarified this should be Notes/reminders. |
 
@@ -59,7 +59,7 @@ Latest verified branch: `fix/navbar-notification-dashboard-reminders`
 
 | Feature | Route/API | Status | Notes |
 | --- | --- | --- | --- |
-| Time tracking | `/app/time` | DONE | Time page and active timer endpoint exist. |
+| Time tracking | `/app/time` | DONE | v0.1.114: clarified Tasks vs Timer split, compact timer card, mobile-safe manual-entry dialog, timesheet list matches shared density/zebra pattern. |
 | Time tags | time entry forms/table | DONE | Project > Task > Tag detail added with default/custom tag support. |
 | Time CSV export | Existing time export | DONE | Existing export supported. |
 | Time PDF export | `/api/time/export/pdf` | DONE | PDF dashboard/detailed report options added; unauthenticated returns `401` instead of `500`. |
@@ -69,7 +69,7 @@ Latest verified branch: `fix/navbar-notification-dashboard-reminders`
 
 | Feature | Route/API | Status | Notes |
 | --- | --- | --- | --- |
-| Invoices list | `/app/invoices` | DONE | Invoice management page exists. |
+| Invoices list | `/app/invoices` | DONE | v0.1.114: compact shared list density with visible separators/zebra. |
 | Invoice create | `/app/invoices/new` | DONE | New invoice route exists. |
 | Invoice detail | `/app/invoices/[invoiceId]` | DONE | Detail route exists. |
 | Public invoice link | `/invoice/[token]` | DONE | Public invoice page and view marking exists. |
@@ -82,13 +82,13 @@ Latest verified branch: `fix/navbar-notification-dashboard-reminders`
 
 | Feature | Route | Status | Notes |
 | --- | --- | --- | --- |
-| Proposals list/detail/new | `/app/proposals`, `/app/proposals/new`, `/app/proposals/[proposalId]` | DONE | v0.1.32: status tabs, activity date fix, detail i18n, DP/valid meta, send/resend+copy, delete guard. |
+| Proposals list/detail/new | `/app/proposals`, `/app/proposals/new`, `/app/proposals/[proposalId]` | DONE | v0.1.114: compact list density; earlier v0.1.32 status tabs, activity date fix, detail i18n, DP/valid meta, send/resend+copy, delete guard. |
 | Public proposal | `/proposal/[token]` | DONE | Public token page exists. |
 | Template Center | `/app/templates` (+ editor `/app/contract-templates/new|[id]`) | DONE | v0.1.37: tab Proposal + tabs kiri; invoice/proposal/contract CRUD; prompt tab soon. |
-| Contracts list/detail | `/app/contracts`, `/app/contracts/[contractId]` | DONE | v0.1.33: status tabs, activity date fix, detail i18n, send/resend+copy, revoke, delete guard. |
+| Contracts list/detail | `/app/contracts`, `/app/contracts/[contractId]` | DONE | v0.1.114: compact list density; earlier v0.1.33 status tabs, activity date fix, detail i18n, send/resend+copy, revoke, delete guard. |
 | Public contract | `/contract/[token]` | DONE | Public token page exists. |
 | Contract template editor | `/app/contract-templates/new|[id]` | DONE | List page removed (redirect to Template Center). Full editor kept. |
-| Questionnaires | `/app/questionnaires` | DONE | Questionnaire routes exist. |
+| Questionnaires | `/app/questionnaires` | DONE | v0.1.114: compact shared list density; questionnaire routes exist. |
 | Intake | `/intake/[token]` | DONE | Public intake route exists. |
 
 ## Communication
