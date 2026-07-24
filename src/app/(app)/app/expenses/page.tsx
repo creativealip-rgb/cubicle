@@ -321,7 +321,7 @@ export default async function ExpensesPage({
     <div className="space-y-6 p-6">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("Pengeluaran", "Expenses")}</h1>
+          <h1 className="app-page-title">{t("Pengeluaran", "Expenses")}</h1>
           <p className="text-sm text-slate-500 mt-1">
             {t(
               `KPI setara ${baseCurrency} (kurs manual workspace). Daftar item tetap currency asli.`,

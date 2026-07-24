@@ -228,7 +228,7 @@ export default async function PersonalPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
+        <h1 className="app-page-title">
           {t("Catatan", "Notes")}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">

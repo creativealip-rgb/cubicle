@@ -68,7 +68,7 @@ export default async function ContractDetailPage({
             </Link>
           </Button>
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight break-words">
+            <h1 className="app-page-title">
               {c.title}
             </h1>
             <Badge variant={status.variant}>{status.label}</Badge>

@@ -2,8 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Eye } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -22,6 +21,7 @@ import { billingTypeLabel } from "@/lib/feature-access";
 
 export type InvoiceListItem = {
   id: string;
+  clientId: string | null;
   invoiceNumber: string;
   clientName: string | null;
   clientCompany: string | null;
@@ -113,7 +113,7 @@ export function InvoicesListTable({
             <TableRow>
               <TableHead>
                 <SortableHeader
-                  label={t("No.", "No.")}
+                  label={t("No. Invoice", "Invoice No.")}
                   dir={dirFor("number")}
                   onClick={() => toggle("number")}
                 />
@@ -168,7 +168,7 @@ export function InvoicesListTable({
                   onClick={() => toggle("status")}
                 />
               </TableHead>
-              <TableHead className="text-right">{t("Aksi", "Actions")}</TableHead>
+
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -180,9 +180,17 @@ export function InvoicesListTable({
                   className={`border-b border-slate-200 hover:bg-slate-100/70 ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"}`}
                 >
                   <TableCell className="font-mono text-sm font-medium">
-                    {formatInvoiceId(inv.invoiceNumber)}
+                    <Link href={`/app/invoices/${inv.id}`} className="hover:underline">
+                      {formatInvoiceId(inv.invoiceNumber)}
+                    </Link>
                   </TableCell>
-                  <TableCell>{inv.clientCompany || inv.clientName}</TableCell>
+                  <TableCell>
+                    {inv.clientId ? (
+                      <Link href={`/app/clients/${inv.clientId}`} className="hover:underline">
+                        {inv.clientCompany || inv.clientName}
+                      </Link>
+                    ) : inv.clientCompany || inv.clientName}
+                  </TableCell>
                   <TableCell className="max-w-[12rem] truncate text-sm text-muted-foreground">
                     {inv.projectName || "—"}
                   </TableCell>
@@ -209,15 +217,7 @@ export function InvoicesListTable({
                   <TableCell>
                     <Badge variant={status.variant}>{status.label}</Badge>
                   </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Link href={`/app/invoices/${inv.id}`}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </TableCell>
+
                 </TableRow>
               );
             })}

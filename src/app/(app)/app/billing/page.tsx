@@ -58,7 +58,7 @@ export default async function BillingPage() {
     <div className="space-y-8">
       <div>
         <p className="text-sm font-medium text-[#6647F0]">{t("Billing", "Billing")}</p>
-        <h1 className="text-3xl font-semibold text-slate-950">{t("Langganan", "Subscription")}</h1>
+        <h1 className="app-page-title">{t("Langganan", "Subscription")}</h1>
         <p className="mt-2 text-slate-600">
           {t("Bayar via Pakasir QRIS. Plan aktif otomatis setelah webhook payment diterima.", "Pay via Pakasir QRIS. Plan activates automatically after payment webhook is received.")}
         </p>

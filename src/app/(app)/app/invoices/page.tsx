@@ -359,7 +359,7 @@ export default async function InvoicesPage({
     <div className="min-w-0 space-y-4 sm:space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{t("Invoice", "Invoices")}</h1>
+          <h1 className="app-page-title">{t("Invoice", "Invoices")}</h1>
           <p className="text-sm text-muted-foreground">
             {t(
               `Baris total tetap currency invoice. Ringkasan setara ${baseCurrency}.`,
@@ -391,7 +391,7 @@ export default async function InvoicesPage({
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                {t("Outstanding", "Outstanding")}
+                {t("Belum Dibayar", "Outstanding")}
               </CardTitle>
               <AlertCircle className="h-4 w-4 text-amber-500" />
             </CardHeader>
@@ -440,7 +440,7 @@ export default async function InvoicesPage({
                 {formatMoney(billedBase, baseCurrency)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {t("sent/viewed/overdue/paid (filter aktif)", "sent/viewed/overdue/paid (active filters)")}
+                {t("Invoice terkirim, dilihat, terlambat, dan lunas", "Sent, viewed, overdue, and paid invoices")}
               </p>
             </CardContent>
           </Card>

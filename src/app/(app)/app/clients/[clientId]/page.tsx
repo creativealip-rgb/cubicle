@@ -233,7 +233,7 @@ export default async function ClientDetailPage({
             <ArrowLeft className="h-3 w-3" /> Kembali ke Klien
           </Link>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight">{client.name}</h1>
+            <h1 className="app-page-title">{client.name}</h1>
             <Badge variant={client.status === "active" ? "default" : "secondary"}>
               {client.status === "active" ? "Aktif" : client.status === "inactive" ? "Tidak aktif" : client.status === "archived" ? "Arsip" : client.status}
             </Badge>

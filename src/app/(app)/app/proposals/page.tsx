@@ -90,7 +90,7 @@ export default async function ProposalsPage({
     <div className="space-y-6 p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="app-page-title">
             {t("Proposal", "Proposals")}
           </h1>
           <p className="text-sm text-slate-500 mt-1">

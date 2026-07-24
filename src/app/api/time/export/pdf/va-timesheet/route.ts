@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers, cookies } from "next/headers";
 import { db } from "@/db";
-import { clients, projects, packages, tasks, timeEntries, users } from "@/db/schema";
+import { clients, invoices, projects, packages, tasks, timeEntries, users } from "@/db/schema";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { and, asc, eq, gte, lte } from "drizzle-orm";
+import { createHash } from "crypto";
+import { normalizeInvoiceReportRange, verifyInvoiceReportRangeSignature } from "@/lib/invoice-report-options";
 
 function escapeHtml(value: unknown) {
   return String(value ?? "")
@@ -192,23 +194,44 @@ function renderMoneyMap(m: Map<string, number>): string {
 }
 
 export async function GET(request: Request) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const url = new URL(request.url);
+  const invoiceToken = url.searchParams.get("invoiceToken");
+  const dateFrom = url.searchParams.get("from");
+  const dateTo = url.searchParams.get("to");
+  let workspaceId: string;
+  let actorId: string | null = null;
+  let tokenInvoice: typeof invoices.$inferSelect | null = null;
+
+  if (invoiceToken) {
+    if (!dateFrom || !dateTo) return NextResponse.json({ error: "Rentang tanggal wajib diisi" }, { status: 400 });
+    const range = normalizeInvoiceReportRange(dateFrom, dateTo);
+    const signature = url.searchParams.get("signature") ?? "";
+    const secret = process.env.BETTER_AUTH_SECRET;
+    if (!secret || !verifyInvoiceReportRangeSignature(invoiceToken, range, signature, secret)) {
+      return NextResponse.json({ error: "Invalid report link" }, { status: 403 });
+    }
+    const tokenHash = createHash("sha256").update(invoiceToken).digest("hex");
+    const [inv] = await db.select().from(invoices).where(eq(invoices.sharedTokenHash, tokenHash)).limit(1);
+    if (!inv || inv.sharedTokenRevokedAt || (inv.sharedTokenExpiresAt && new Date(inv.sharedTokenExpiresAt) < new Date())) {
+      return NextResponse.json({ error: "Invalid or expired report link" }, { status: 410 });
+    }
+    tokenInvoice = inv;
+    workspaceId = inv.workspaceId;
+  } else {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const user = requireUser(session.user);
+    actorId = user.id;
+    workspaceId = await getWorkspaceForCurrentUser();
+    await assertWorkspaceMember(db, user.id, workspaceId);
   }
-  const user = requireUser(session.user);
-  const workspaceId = await getWorkspaceForCurrentUser();
-  await assertWorkspaceMember(db, user.id, workspaceId);
 
   const cookieStore = await cookies();
   const lang = (cookieStore.get("cubiqlo_lang")?.value === "en" ? "en" : "id") as "id" | "en";
   const locale = lang === "en" ? "en-US" : "id-ID";
 
-  const url = new URL(request.url);
-  const dateFrom = url.searchParams.get("from");
-  const dateTo = url.searchParams.get("to");
-  const clientId = url.searchParams.get("clientId");
-  const projectId = url.searchParams.get("projectId");
+  const clientId = tokenInvoice?.clientId ?? url.searchParams.get("clientId");
+  const projectId = tokenInvoice?.projectId ?? url.searchParams.get("projectId");
 
   // report=detailed | dashboard | full (default: full)
   const reportParam = (url.searchParams.get("report") || "full").toLowerCase();
@@ -583,7 +606,9 @@ export async function GET(request: Request) {
 </body>
 </html>`;
 
-  await writeActivityLog(workspaceId, user.id, "exported_va_timesheet", "time_entry");
+  if (actorId) {
+    await writeActivityLog(workspaceId, actorId, "exported_va_timesheet", "time_entry");
+  }
   return new NextResponse(html, {
     headers: {
       "content-type": "text/html; charset=utf-8",

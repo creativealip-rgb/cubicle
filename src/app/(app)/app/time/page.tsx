@@ -115,7 +115,7 @@ export default async function TimePage() {
     <div className="min-w-0 space-y-4 sm:space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{t("Pelacakan Waktu", "Time Tracking")}</h1>
+          <h1 className="app-page-title">{t("Pelacakan Waktu", "Time Tracking")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("Pantau waktu di semua project", "Track time across all projects")}</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">

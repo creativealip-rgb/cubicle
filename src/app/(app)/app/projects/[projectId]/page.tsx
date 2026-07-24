@@ -174,7 +174,7 @@ export default async function ProjectDetailPage({
             <ArrowLeft className="h-3 w-3" /> {backLabel}
           </Link>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
+            <h1 className="app-page-title">{project.name}</h1>
             <Badge variant={projectStatusVariant(project.status, lang).variant}>{projectStatusVariant(project.status, lang).label}</Badge>
           </div>
           {project.clientName && (

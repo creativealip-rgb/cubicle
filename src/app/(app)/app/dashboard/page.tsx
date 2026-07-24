@@ -52,7 +52,7 @@ export default async function DashboardPage() {
   );
   const invoiceSettingsDone = Boolean(
     workspace.defaultCurrency &&
-      (workspace.defaultInvoiceTerms || workspace.defaultHourlyRate || workspace.invoiceEmailBody),
+      (workspace.defaultInvoiceTerms || workspace.defaultHourlyRate),
   );
 
   const result = await db.execute(

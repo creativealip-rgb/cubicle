@@ -23,7 +23,7 @@ interface WorkspaceBrandingFormProps {
     defaultTaxRate?: string | number | null;
     defaultHourlyRate?: string | number | null;
     defaultInvoiceTerms?: string | null;
-    invoiceEmailBody?: string | null;
+
     replyToEmail?: string | null;
   };
   /** Shown as hint when replyToEmail empty — auto fallback target. */
@@ -52,7 +52,7 @@ export function WorkspaceBrandingForm({
     defaultHourlyRate:
       defaults.defaultHourlyRate != null ? String(defaults.defaultHourlyRate) : "",
     defaultInvoiceTerms: defaults.defaultInvoiceTerms ?? "",
-    invoiceEmailBody: defaults.invoiceEmailBody ?? "",
+
     replyToEmail: defaults.replyToEmail ?? "",
   });
 
@@ -71,7 +71,7 @@ export function WorkspaceBrandingForm({
         defaultTaxRate: Number(form.defaultTaxRate || 0),
         defaultHourlyRate: form.defaultHourlyRate ? Number(form.defaultHourlyRate) : null,
         defaultInvoiceTerms: form.defaultInvoiceTerms,
-        invoiceEmailBody: form.invoiceEmailBody,
+
         replyToEmail: form.replyToEmail,
       });
       toast.success(t("Branding disimpan", "Branding saved"));
@@ -351,84 +351,7 @@ export function WorkspaceBrandingForm({
             onChange={(e) => setForm((p) => ({ ...p, defaultInvoiceTerms: e.target.value }))}
           />
         </div>
-        <div className="space-y-3 md:col-span-2 rounded-lg border bg-muted/20 p-4">
-          <div className="space-y-1">
-            <Label htmlFor="invoiceEmailBody">
-              {t("Template email invoice", "Invoice email template")}
-            </Label>
-            <p className="text-xs text-muted-foreground">
-              {t(
-                "Isi ini = teks email ke klien saat klik Kirim Invoice. Kosongkan = pakai template bawaan. Placeholder di bawah diganti otomatis data invoice nyata.",
-                "This becomes the email body when you click Send Invoice. Leave empty for the default template. Placeholders below are replaced with real invoice data.",
-              )}
-            </p>
-          </div>
-          <Textarea
-            id="invoiceEmailBody"
-            rows={7}
-            value={form.invoiceEmailBody}
-            onChange={(e) => setForm((p) => ({ ...p, invoiceEmailBody: e.target.value }))}
-            placeholder={
-              "Hi {{client_name}},\n\nInvoice {{invoice_number}} untuk {{project_name}} sebesar {{amount}} sudah siap.\nJatuh tempo: {{due_date}}\n\nUnduh PDF invoice: {{invoice_link}}"
-            }
-            className="font-mono text-sm"
-          />
-          <div className="flex flex-wrap gap-1.5">
-            {(
-              [
-                ["{{client_name}}", "Nama klien"],
-                ["{{invoice_number}}", "No. invoice"],
-                ["{{project_name}}", "Nama project"],
-                ["{{amount}}", "Total tagihan"],
-                ["{{due_date}}", "Jatuh tempo"],
-                ["{{invoice_link}}", "Link PDF invoice"],
-                ["{{workspace_name}}", "Nama workspace"],
-              ] as const
-            ).map(([token, label]) => (
-              <button
-                key={token}
-                type="button"
-                className="rounded-full border bg-background px-2.5 py-0.5 text-[11px] text-muted-foreground hover:border-primary hover:text-foreground transition-colors"
-                title={label}
-                onClick={() => {
-                  setForm((p) => ({
-                    ...p,
-                    invoiceEmailBody: p.invoiceEmailBody
-                      ? `${p.invoiceEmailBody}${p.invoiceEmailBody.endsWith(" ") ? "" : " "}${token}`
-                      : token,
-                  }));
-                }}
-              >
-                {token}
-              </button>
-            ))}
-          </div>
-          <div className="rounded-md border bg-background p-3 space-y-1.5">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              {t("Pratinjau (contoh)", "Preview (sample)")}
-            </p>
-            <pre className="whitespace-pre-wrap text-xs leading-relaxed text-foreground/90 font-sans">
-              {(form.invoiceEmailBody.trim() ||
-                "Hi {{client_name}},\n\nInvoice {{invoice_number}} untuk {{project_name}} sebesar {{amount}} sudah siap.\nJatuh tempo: {{due_date}}\n\nUnduh PDF invoice: {{invoice_link}}")
-                .replace(/\{\{\s*client_name\s*\}\}/g, "PT Surya Digital")
-                .replace(/\{\{\s*invoice_number\s*\}\}/g, "INV-0012")
-                .replace(/\{\{\s*project_name\s*\}\}/g, "Website Company Profile")
-                .replace(/\{\{\s*amount\s*\}\}/g, "Rp 8.000.000")
-                .replace(/\{\{\s*due_date\s*\}\}/g, "30/07/2026")
-                .replace(
-                  /\{\{\s*invoice_link\s*\}\}/g,
-                  "https://cubiqlo.com/api/invoices/share/…/pdf",
-                )
-                .replace(/\{\{\s*workspace_name\s*\}\}/g, "Cubiqlo Workspace")}
-            </pre>
-            <p className="text-[11px] text-muted-foreground">
-              {t(
-                "{{invoice_link}} = file PDF (sama tampilan Unduh PDF), bukan halaman web biasa.",
-                "{{invoice_link}} = PDF file (same look as Download PDF), not a plain web page.",
-              )}
-            </p>
-          </div>
-        </div>
+
       </div>
 
       <Button type="submit" disabled={loading || uploading}>

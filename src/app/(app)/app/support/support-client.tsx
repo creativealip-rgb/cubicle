@@ -122,7 +122,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Pusat Bantuan</h1>
+          <h1 className="app-page-title">Pusat Bantuan</h1>
           <p className="mt-1 text-sm text-muted-foreground">Kelola tiket bantuan dan pantau kendala.</p>
         </div>
         <Button onClick={() => setShowCreate(!showCreate)} className="gap-1.5">

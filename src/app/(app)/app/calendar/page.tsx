@@ -93,7 +93,7 @@ export default async function CalendarPage() {
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{t("Kalender", "Calendar")}</h1>
+          <h1 className="app-page-title">{t("Kalender", "Calendar")}</h1>
           <p className="text-sm text-muted-foreground">
             {t("Kelola janji temu dan ketersediaan", "Manage appointments and availability")}
           </p>

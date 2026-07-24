@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.1.117 — 2026-07-24 — Multi-project invoice, file directory, and shared headers
+
+- Invoice creation: support multiple project line items, snapshot project values/currencies, automatic FX conversion, report-detail URLs, and safer payment/status calculations
+- Invoice communication: improve send/reminder message defaults, report options, invoice metadata, list presentation, PDF timesheet output, and item deletion behavior
+- File manager: separate **Semua Berkas**, **Folder Workspace**, and **Klien**; add independent multi-expand navigation for clients, projects, and nested folders with consistent animated chevrons
+- Folder safety: return readable deletion blockers for non-empty folders instead of masked Next.js Server Action errors; keep custom-folder rename/delete controls scoped to workspace, client, and project folders
+- App consistency: normalize 29 internal page titles through shared `app-page-title` styling and add reusable `PageHeader` primitives for responsive title, subtitle, and action layout
+- Documentation: add multi-project invoice design/implementation plans and update release notes
+- Verified: 18/18 focused file-manager tests, `npx tsc --noEmit`, `git diff --check`, Docker production build/deploy, container healthy, `/api/health` database OK, and public proxy ownership unchanged (`dokploy-traefik` only on ports 80/443)
+
 ## v0.1.116 — 2026-07-24 — File manager safety and responsive UX
 
 - File deletion: require explicit confirmation and delete the matching Cloudflare R2 object before removing its database record

@@ -7,9 +7,8 @@ describe("formatMoney", () => {
     expect(formatMoney(1500000)).toContain("Rp")
   })
 
-  it("formats USD amounts", () => {
-    expect(formatMoney(1234.5, "USD")).toContain("1,234.50")
-    expect(formatMoney(1234.5, "USD")).toContain("USD")
+  it("formats USD amounts with its local symbol", () => {
+    expect(formatMoney(1234.5, "USD")).toBe("$1,234.50")
   })
 
   it("handles null/undefined", () => {

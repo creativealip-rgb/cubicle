@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { assertFolderScopeMatches, formatFileDate } from "@/lib/file-manager-rules";
+import {
+  addExpandedClient,
+  assertFolderScopeMatches,
+  formatFileDate,
+  getFolderDeleteBlocker,
+  toggleExpandedClient,
+} from "@/lib/file-manager-rules";
 
 describe("assertFolderScopeMatches", () => {
   it("accepts parent with same client and project scope", () => {
@@ -18,6 +24,38 @@ describe("assertFolderScopeMatches", () => {
         { clientId: "client-2", projectId: null },
       ),
     ).toThrow("Folder induk harus berada dalam lingkup klien dan proyek yang sama");
+  });
+});
+
+describe("expanded clients", () => {
+  it("adds active client without closing clients already expanded", () => {
+    expect(addExpandedClient(new Set(["client-1"]), "client-2")).toEqual(
+      new Set(["client-1", "client-2"]),
+    );
+  });
+
+  it("toggles only selected client", () => {
+    expect(toggleExpandedClient(new Set(["client-1", "client-2"]), "client-1")).toEqual(
+      new Set(["client-2"]),
+    );
+  });
+});
+
+describe("getFolderDeleteBlocker", () => {
+  it("returns subfolder message before file message", () => {
+    expect(getFolderDeleteBlocker({ hasChildFolder: true, hasChildFile: true })).toBe(
+      "Folder masih punya sub-folder. Kosongkan dulu.",
+    );
+  });
+
+  it("returns file message when folder contains a file", () => {
+    expect(getFolderDeleteBlocker({ hasChildFolder: false, hasChildFile: true })).toBe(
+      "Folder masih berisi file. Pindahkan atau hapus dulu.",
+    );
+  });
+
+  it("returns null for an empty folder", () => {
+    expect(getFolderDeleteBlocker({ hasChildFolder: false, hasChildFile: false })).toBeNull();
   });
 });
 

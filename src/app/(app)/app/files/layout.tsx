@@ -7,8 +7,7 @@ import { eq } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { FolderTree } from "@/components/files/folder-tree";
 import { FilesPageHeader } from "@/components/files/files-page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -71,18 +70,13 @@ export default async function FilesLayout({
           workspaceId={workspaceId}
           canWrite={canWrite}
           title={t("Berkas", "Files")}
-          subtitle={t("Kelola file workspace-mu", "Manage your workspace files")}
+          subtitle={t("Kelola berkas workspace-mu", "Manage your workspace files")}
         />
       </Suspense>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
         <Card className="lg:col-span-1 h-fit lg:sticky lg:top-4">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <FileText className="h-4 w-4" /> {t("Jelajahi", "Browse")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-5">
             <Suspense
               fallback={
                 <div className="space-y-2">

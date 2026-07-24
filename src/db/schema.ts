@@ -382,8 +382,11 @@ export const invoiceItems = pgTable("invoice_items", {
   quantity: numeric("quantity", { precision: 12, scale: 2 }).notNull().default("1"),
   unitPrice: numeric("unit_price", { precision: 12, scale: 2 }).notNull().default("0"),
   amount: numeric("amount", { precision: 12, scale: 2 }).notNull().default("0"),
-  sourceType: text("source_type", { enum: ["manual", "time_entry"] }),
+  sourceType: text("source_type", { enum: ["manual", "time_entry", "project"] }),
   sourceId: uuid("source_id"),
+  originalCurrency: text("original_currency"),
+  originalAmount: numeric("original_amount", { precision: 12, scale: 2 }),
+  conversionRate: numeric("conversion_rate", { precision: 18, scale: 8 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

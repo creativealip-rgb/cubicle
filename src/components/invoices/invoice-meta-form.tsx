@@ -84,7 +84,7 @@ export function InvoiceMetaForm({ invoiceId, defaults, project }: InvoiceMetaFor
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="rounded-md border border-dashed bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
         {t(
-          "Item auto-save saat ditambah/dihapus. Meta invoice (status, pajak, catatan) simpan lewat tombol di bawah.",
+          "Item tersimpan otomatis saat ditambah/dihapus. Detail invoice (status, pajak, catatan) disimpan lewat tombol di bawah.",
           "Line items auto-save on add/delete. Invoice meta (status, tax, notes) saves via the button below.",
         )}
       </div>
@@ -172,7 +172,7 @@ export function InvoiceMetaForm({ invoiceId, defaults, project }: InvoiceMetaFor
           />
         </div>
         <div className="space-y-2">
-          <Label>{t("Pajak (amount)", "Tax (amount)")}</Label>
+          <Label>{t("Pajak (nominal)", "Tax amount")}</Label>
           <Input
             type="number"
             min="0"
@@ -182,7 +182,7 @@ export function InvoiceMetaForm({ invoiceId, defaults, project }: InvoiceMetaFor
           />
         </div>
         <div className="space-y-2">
-          <Label>{t("Diskon (amount)", "Discount (amount)")}</Label>
+          <Label>{t("Diskon (nominal)", "Discount amount")}</Label>
           <Input
             type="number"
             min="0"

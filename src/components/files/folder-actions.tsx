@@ -135,7 +135,11 @@ export function FolderRowActions({
   async function handleDelete() {
     setBusy(true);
     try {
-      await deleteFolder(folderId);
+      const result = await deleteFolder(folderId);
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
       toast.success(t("Folder dihapus", "Folder deleted"));
       setDeleteOpen(false);
       router.refresh();

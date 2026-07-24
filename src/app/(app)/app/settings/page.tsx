@@ -116,8 +116,8 @@ export default async function SettingsPage({
       done: Boolean(workspace.defaultInvoiceTerms),
     },
     {
-      label: t("Email reply-to / body invoice", "Reply-to / invoice email body"),
-      done: Boolean(workspace.replyToEmail || workspace.invoiceEmailBody),
+      label: t("Email balasan invoice", "Invoice reply-to email"),
+      done: Boolean(workspace.replyToEmail),
     },
   ];
   const workspaceSetupDone = workspaceSetupItems.filter((item) => item.done).length;
@@ -130,7 +130,7 @@ export default async function SettingsPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("Pengaturan", "Settings")}</h1>
+        <h1 className="app-page-title">{t("Pengaturan", "Settings")}</h1>
         <p className="text-sm text-muted-foreground mt-1">
           {t(
             "Kelompokkan konfigurasi workspace per tab biar gampang dicari.",
@@ -355,7 +355,7 @@ export default async function SettingsPage({
                       defaultTaxRate: workspace.defaultTaxRate,
                       defaultHourlyRate: workspace.defaultHourlyRate,
                       defaultInvoiceTerms: workspace.defaultInvoiceTerms,
-                      invoiceEmailBody: workspace.invoiceEmailBody,
+
                       replyToEmail: workspace.replyToEmail,
                     }}
                     ownerEmailHint={ownerUser?.email ?? null}

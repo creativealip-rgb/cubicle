@@ -9,6 +9,28 @@ export function assertFolderScopeMatches(parent: FolderScope, child: FolderScope
   }
 }
 
+export function getFolderDeleteBlocker(input: {
+  hasChildFolder: boolean;
+  hasChildFile: boolean;
+}): string | null {
+  if (input.hasChildFolder) return "Folder masih punya sub-folder. Kosongkan dulu.";
+  if (input.hasChildFile) return "Folder masih berisi file. Pindahkan atau hapus dulu.";
+  return null;
+}
+
+export function addExpandedClient(expanded: ReadonlySet<string>, clientId?: string): Set<string> {
+  const next = new Set(expanded);
+  if (clientId) next.add(clientId);
+  return next;
+}
+
+export function toggleExpandedClient(expanded: ReadonlySet<string>, clientId: string): Set<string> {
+  const next = new Set(expanded);
+  if (next.has(clientId)) next.delete(clientId);
+  else next.add(clientId);
+  return next;
+}
+
 export function formatFileDate(
   value: Date | string,
   lang: "id" | "en",

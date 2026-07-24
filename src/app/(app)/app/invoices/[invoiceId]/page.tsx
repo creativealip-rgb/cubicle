@@ -28,12 +28,13 @@ import { PaymentSection } from "./payment-section";
 import { ShareTokenSection } from "./share-token-section";
 import { SendInvoiceButton } from "./send-invoice-button";
 import { SendReminderButton } from "./send-reminder-button";
-import { ExportTimesheetButton } from "./export-timesheet-button";
+
 import { InvoiceMetaForm } from "@/components/invoices/invoice-meta-form";
 import { formatDateID, formatMoney } from "@/lib/utils";
 import { invoiceStatusVariant } from "@/lib/status-badge";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { billingTypeLabel } from "@/lib/feature-access";
+import { buildDefaultInvoiceMessage } from "@/lib/invoice-message";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -188,7 +189,17 @@ export default async function InvoiceDetailPage({
     : false;
 
   const isPaid = Number(inv.total) > 0 && totalPaid >= Number(inv.total);
-  const displayStatus = inv.status === "paid" && !isPaid ? "payment due" : inv.status;
+  const displayStatus = isPaid
+    ? "paid"
+    : inv.status === "paid"
+      ? "payment due"
+      : inv.status;
+  const defaultInvoiceMessage = buildDefaultInvoiceMessage({
+    clientName: client?.companyName || client?.name || t("Klien", "Client"),
+    invoiceNumber: inv.invoiceNumber,
+    amount: formatMoney(inv.total, inv.currency || "IDR"),
+    dueDate: inv.dueDate ? formatDateID(inv.dueDate) : null,
+  });
 
   return (
     <div className="space-y-6 min-w-0">
@@ -201,7 +212,7 @@ export default async function InvoiceDetailPage({
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
+            <h1 className="app-page-title">
               Invoice {inv.invoiceNumber}
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -227,17 +238,17 @@ export default async function InvoiceDetailPage({
           <Button size="sm" variant="outline" className="gap-2" asChild>
             <Link href={`/api/invoices/${invoiceId}/pdf`} target="_blank">
               <Download className="h-4 w-4" />
-              {t("Unduh PDF", "Download PDF")}
+              {t("Unduh Invoice", "Download Invoice")}
             </Link>
           </Button>
-          {inv.clientId ? (
-            <ExportTimesheetButton
-              clientId={inv.clientId}
-              projectId={inv.projectId}
-              label={t("Ekspor Timesheet", "Export Timesheet")}
-            />
-          ) : null}
-          <SendInvoiceButton invoiceId={invoiceId} disabled={!client?.email || items.length === 0} />
+          <SendInvoiceButton
+            invoiceId={invoiceId}
+            defaultMessage={defaultInvoiceMessage}
+            clientEmail={client?.email}
+            defaultFrom={`${String(inv.issueDate).slice(0, 7)}-01`}
+            defaultTo={String(inv.issueDate).slice(0, 10)}
+            disabled={!client?.email || items.length === 0}
+          />
           <SendReminderButton
             invoiceId={invoiceId}
             disabled={!client?.email || items.length === 0 || ["draft", "paid", "cancelled"].includes(inv.status)}
@@ -248,11 +259,7 @@ export default async function InvoiceDetailPage({
           >
             {invoiceStatusVariant(displayStatus, lang).label}
           </Badge>
-          {isPaid && inv.status !== "paid" && (
-            <Badge variant="success" className="text-sm px-3 py-1">
-              {t("Lunas", "Paid")}
-            </Badge>
-          )}
+
         </div>
       </div>
 

@@ -122,7 +122,7 @@ export default async function TasksPage({
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{t("Tugas", "Tasks")}</h1>
+          <h1 className="app-page-title">{t("Tugas", "Tasks")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {t("Pantau pekerjaan di semua proyek", "Track work across all projects")}
           </p>

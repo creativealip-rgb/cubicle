@@ -168,7 +168,7 @@ export default async function ProjectsPage({
     <div className="min-w-0 space-y-4 sm:space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{t("Proyek", "Projects")}</h1>
+          <h1 className="app-page-title">{t("Proyek", "Projects")}</h1>
           <p className="text-sm text-muted-foreground">
             {t("Pantau pipeline proyekmu", "Track your project pipeline")}
           </p>

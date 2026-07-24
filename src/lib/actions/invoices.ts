@@ -14,6 +14,7 @@ import {
   clients,
   projects,
   packages,
+  workspaceCurrencyRates,
 } from "@/db/schema";
 import { eq, and, desc, sql, inArray, lt } from "drizzle-orm";
 import { z } from "zod";
@@ -23,7 +24,16 @@ import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyInvoicePaymentReminder, notifyInvoiceSent } from "@/lib/notifications";
 import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
 import { formatMoney } from "@/lib/utils";
+import { assertPaymentWithinRemaining } from "@/lib/invoice-payment-rules";
+import {
+  assertInvoiceFinancialsMutable,
+  calculateInvoiceTotals,
+} from "@/lib/invoice-finance-rules";
+import { validateInvoiceMessage } from "@/lib/invoice-message";
+import { buildInvoiceReportUrl, normalizeInvoiceReportRange, signInvoiceReportRange } from "@/lib/invoice-report-options";
 import { resolveWorkspaceReplyTo } from "@/lib/workspace-reply-to";
+import { buildRateMap } from "@/lib/currency-base";
+import { convertCurrency, resolveProjectAmount } from "@/lib/invoice-project-items";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -34,11 +44,18 @@ async function getWorkspaceId(): Promise<string> {
 const createInvoiceSchema = z.object({
   clientId: z.string().uuid(),
   projectId: z.string().uuid().optional(),
+  projectIds: z.array(z.string().uuid()).optional(),
   issueDate: z.string().min(1, "Issue date required"),
   dueDate: z.string().optional(),
   currency: z.string().default("USD"),
   notes: z.string().optional(),
   terms: z.string().optional(),
+  items: z.array(z.object({
+    description: z.string().min(1),
+    quantity: z.number().positive(),
+    unitPrice: z.number().min(0),
+    sourceId: z.string().uuid().optional(),
+  })).optional(),
 });
 
 const updateInvoiceSchema = z.object({
@@ -108,11 +125,41 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
 
   const parsed = createInvoiceSchema.parse(input);
 
+  const [validClient] = await db.select({ id: clients.id }).from(clients).where(and(
+    eq(clients.id, parsed.clientId),
+    eq(clients.workspaceId, workspaceId),
+  )).limit(1);
+  if (!validClient) throw new Error("Klien tidak ditemukan");
+
+  if (parsed.projectId) {
+    const [validProject] = await db.select({ id: projects.id }).from(projects).where(and(
+      eq(projects.id, parsed.projectId),
+      eq(projects.workspaceId, workspaceId),
+      eq(projects.clientId, parsed.clientId),
+    )).limit(1);
+    if (!validProject) throw new Error("Proyek tidak sesuai dengan klien");
+  }
+
   const [ws] = await db
     .select({ defaultCurrency: workspaces.defaultCurrency, defaultTaxRate: workspaces.defaultTaxRate, defaultInvoiceTerms: workspaces.defaultInvoiceTerms })
     .from(workspaces)
     .where(eq(workspaces.id, workspaceId))
     .limit(1);
+
+  const projectIds = Array.from(new Set(parsed.projectIds ?? (parsed.projectId ? [parsed.projectId] : [])));
+  if ((parsed.projectIds?.length ?? 0) !== projectIds.length) throw new Error("Proyek duplikat tidak diizinkan");
+  const rateRows = await db.select({ fromCurrency: workspaceCurrencyRates.fromCurrency, rate: workspaceCurrencyRates.rate }).from(workspaceCurrencyRates).where(eq(workspaceCurrencyRates.workspaceId, workspaceId));
+  const rateMap = buildRateMap(rateRows);
+  const projectItemValues: Array<{ description: string; quantity: number; unitPrice: number; sourceId: string; originalCurrency: string; originalAmount: number; conversionRate: number }> = [];
+  for (const projectId of projectIds) {
+    const [project] = await db.select({ id: projects.id, name: projects.name, billingType: projects.billingType, budget: projects.budget, rate: projects.rate, currency: projects.currency, packagePrice: packages.price, packageCustomPrice: packages.customPrice }).from(projects).leftJoin(packages, eq(projects.selectedPackageId, packages.id)).where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId), eq(projects.clientId, parsed.clientId))).limit(1);
+    if (!project) throw new Error("Ada proyek yang tidak sesuai dengan klien");
+    const originalAmount = resolveProjectAmount({ billingType: project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packageCustomPrice ?? project.packagePrice ?? 0) || null });
+    if (project.billingType === "hours") continue;
+    const converted = convertCurrency(originalAmount, project.currency, parsed.currency || ws?.defaultCurrency || "IDR", ws?.defaultCurrency || "IDR", rateMap);
+    if (!converted) throw new Error(`Kurs ${project.currency} ke ${parsed.currency} belum tersedia`);
+    projectItemValues.push({ description: project.name, quantity: 1, unitPrice: converted.amount, sourceId: project.id, originalCurrency: project.currency, originalAmount, conversionRate: converted.rate });
+  }
 
   const invoice = await db.transaction(async (tx) => {
     // Generate invoice number inside transaction.
@@ -162,13 +209,53 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
           currency: parsed.currency || ws?.defaultCurrency || "USD",
           subtotal: "0",
           discount: "0",
-          tax: ws?.defaultTaxRate || "0",
+          tax: "0",
           total: "0",
           status: "draft",
           notes: parsed.notes || null,
           terms: parsed.terms || ws?.defaultInvoiceTerms || null,
         })
         .returning();
+
+      if ((parsed.items?.length || projectItemValues.length) && inv) {
+        const sourceIds = parsed.items?.flatMap((item) => item.sourceId ? [item.sourceId] : []) ?? [];
+        if (sourceIds.length) {
+          const eligible = await tx.select({ id: timeEntries.id }).from(timeEntries).where(and(
+            inArray(timeEntries.id, sourceIds), eq(timeEntries.workspaceId, workspaceId),
+            eq(timeEntries.clientId, parsed.clientId), eq(timeEntries.billable, true),
+            sql`${timeEntries.status} <> 'invoiced'`,
+            projectIds.length ? inArray(timeEntries.projectId, projectIds) : sql`true`,
+          ));
+          if (eligible.length !== new Set(sourceIds).size) throw new Error("Ada timesheet yang tidak valid atau sudah ditagihkan");
+        }
+        const values = [
+          ...projectItemValues.map((item) => ({ invoiceId: inv.id, description: item.description, quantity: "1", unitPrice: String(item.unitPrice), amount: String(item.unitPrice), sourceType: "project" as const, sourceId: item.sourceId, originalCurrency: item.originalCurrency, originalAmount: String(item.originalAmount), conversionRate: String(item.conversionRate) })),
+          ...(parsed.items ?? []).map((item) => ({
+          invoiceId: inv.id,
+          description: item.description,
+          quantity: String(item.quantity),
+          unitPrice: String(item.unitPrice),
+          amount: String(item.quantity * item.unitPrice),
+          sourceType: item.sourceId ? "time_entry" as const : "manual" as const,
+          sourceId: item.sourceId ?? null,
+          originalCurrency: null,
+          originalAmount: null,
+          conversionRate: null,
+        })),
+        ];
+        await tx.insert(invoiceItems).values(values);
+        if (sourceIds.length) await tx.update(timeEntries).set({ status: "invoiced", updatedAt: new Date() }).where(inArray(timeEntries.id, sourceIds));
+        const subtotal = values.reduce((sum, item) => sum + Number(item.amount), 0);
+        const taxRate = Number(ws?.defaultTaxRate ?? 0) || 0;
+        const tax = (subtotal * taxRate) / 100;
+        const [refreshed] = await tx.update(invoices).set({
+          subtotal: String(subtotal),
+          tax: String(tax),
+          total: String(subtotal + tax),
+          updatedAt: new Date(),
+        }).where(eq(invoices.id, inv.id)).returning();
+        return refreshed ?? inv;
+      }
 
       // Auto line item: project name + nominal dari project yang dipilih.
       if (parsed.projectId && inv) {
@@ -279,16 +366,13 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
   await assertInvoiceInWorkspace(invoiceId, workspaceId);
 
   const parsed = updateInvoiceSchema.parse(input);
-
-  // Detect draft -> sent transition so we can email the client.
-  let priorStatus: string | null = null;
-  if (parsed.status !== undefined && parsed.status === "sent") {
-    const [prev] = await db
-      .select({ status: invoices.status })
-      .from(invoices)
-      .where(eq(invoices.id, invoiceId))
-      .limit(1);
-    priorStatus = prev?.status ?? null;
+  const currentInvoice = await assertInvoiceInWorkspace(invoiceId, workspaceId);
+  const changesFinancials =
+    (parsed.currency !== undefined && parsed.currency !== currentInvoice.currency) ||
+    (parsed.tax !== undefined && parsed.tax !== Number(currentInvoice.tax)) ||
+    (parsed.discount !== undefined && parsed.discount !== Number(currentInvoice.discount));
+  if (changesFinancials) {
+    assertInvoiceFinancialsMutable(currentInvoice.status);
   }
 
   const updateData: Record<string, unknown> = { updatedAt: new Date() };
@@ -309,58 +393,6 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
     .returning();
 
   await writeActivityLog(workspaceId, user.id, "updated_invoice", "invoice", invoiceId);
-
-  // Fire client email on first transition to "sent"
-  if (priorStatus === "draft" && inv.status === "sent") {
-    try {
-      const appUrl = (
-        process.env.NEXT_PUBLIC_APP_URL ??
-        process.env.BETTER_AUTH_URL ??
-        "https://cubiqlo.com"
-      ).replace(/\/$/, "");
-      const [client] = await db
-        .select({ name: clients.name, email: clients.email })
-        .from(clients)
-        .where(eq(clients.id, inv.clientId))
-        .limit(1);
-      const [ws] = await db
-        .select({
-          name: workspaces.name,
-          invoiceEmailBody: workspaces.invoiceEmailBody,
-        })
-        .from(workspaces)
-        .where(eq(workspaces.id, workspaceId))
-        .limit(1);
-      if (client?.email) {
-        const generated = await generateInvoiceShareToken(invoiceId);
-        const portalUrl = `${appUrl}/api/invoices/share/${generated.token}/pdf`;
-        let projectName: string | undefined;
-        if (inv.projectId) {
-          const [proj] = await db
-            .select({ name: projects.name })
-            .from(projects)
-            .where(eq(projects.id, inv.projectId))
-            .limit(1);
-          projectName = proj?.name;
-        }
-        const replyTo = await resolveWorkspaceReplyTo(workspaceId);
-        await notifyInvoiceSent({
-          clientEmail: client.email,
-          clientName: client.name ?? "there",
-          invoiceNumber: inv.invoiceNumber ?? invoiceId.slice(0, 8),
-          amount: formatMoney(inv.total, inv.currency || "IDR"),
-          portalUrl,
-          workspaceName: ws?.name,
-          replyTo,
-          projectName,
-          dueDate: inv.dueDate ? String(inv.dueDate).slice(0, 10) : null,
-          customBody: ws?.invoiceEmailBody,
-        });
-      }
-    } catch (err) {
-      console.error("[invoice-send-notify-fail]", err);
-    }
-  }
 
   return inv;
 }
@@ -384,16 +416,21 @@ export async function recalculateInvoice(invoiceId: string) {
   const subtotal = result?.sum || "0";
 
   const [inv] = await db.select().from(invoices).where(eq(invoices.id, invoiceId)).limit(1);
-  const taxRate = inv ? Number(inv.tax) : 0;
-  const taxAmount = (Number(subtotal) * taxRate) / 100;
-  const total = Number(subtotal) + taxAmount;
+  if (!inv) throw new Error("Invoice not found");
+
+  const totals = calculateInvoiceTotals(
+    Number(subtotal),
+    Number(inv.discount),
+    Number(inv.tax),
+  );
 
   const [updated] = await db
     .update(invoices)
     .set({
-      subtotal: String(subtotal),
-      tax: String(taxAmount),
-      total: String(total),
+      subtotal: String(totals.subtotal),
+      discount: String(totals.discount),
+      tax: String(totals.tax),
+      total: String(totals.total),
       updatedAt: new Date(),
     })
     .where(eq(invoices.id, invoiceId))
@@ -407,7 +444,8 @@ export async function addInvoiceItem(input: z.infer<typeof addItemSchema>) {
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
-  await assertInvoiceInWorkspace(input.invoiceId, workspaceId);
+  const invoice = await assertInvoiceInWorkspace(input.invoiceId, workspaceId);
+  assertInvoiceFinancialsMutable(invoice.status);
 
   const parsed = addItemSchema.parse(input);
   const amount = String(parsed.quantity * parsed.unitPrice);
@@ -443,7 +481,8 @@ export async function updateInvoiceItem(itemId: string, input: z.infer<typeof up
     .limit(1);
   if (!item) throw new Error("Invoice item not found");
 
-  await assertInvoiceInWorkspace(item.invoiceId, workspaceId);
+  const invoice = await assertInvoiceInWorkspace(item.invoiceId, workspaceId);
+  assertInvoiceFinancialsMutable(invoice.status);
 
   const qty = parsed.quantity !== undefined ? parsed.quantity : Number(item.quantity);
   const price = parsed.unitPrice !== undefined ? parsed.unitPrice : Number(item.unitPrice);
@@ -478,7 +517,8 @@ export async function deleteInvoiceItem(itemId: string) {
     .limit(1);
   if (!item) throw new Error("Invoice item not found");
 
-  await assertInvoiceInWorkspace(item.invoiceId, workspaceId);
+  const invoice = await assertInvoiceInWorkspace(item.invoiceId, workspaceId);
+  assertInvoiceFinancialsMutable(invoice.status);
 
   await db.transaction(async (tx) => {
     await tx.delete(invoiceItems).where(eq(invoiceItems.id, itemId));
@@ -526,6 +566,7 @@ export async function importTimeEntries(input: z.infer<typeof importTimeSchema>)
 
   const parsed = importTimeSchema.parse(input);
   const inv = await assertInvoiceInWorkspace(parsed.invoiceId, workspaceId);
+  assertInvoiceFinancialsMutable(inv.status);
 
   for (const teId of parsed.timeEntryIds) {
     const [te] = await db
@@ -636,6 +677,26 @@ export async function recordPayment(input: z.infer<typeof recordPaymentSchema>) 
 
   const parsed = recordPaymentSchema.parse(input);
 
+  const [inv] = await db
+    .select()
+    .from(invoices)
+    .where(eq(invoices.id, parsed.invoiceId))
+    .limit(1);
+  if (!inv) throw new Error("Invoice not found");
+
+  const [paidResult] = await db
+    .select({
+      total: sql<string>`coalesce(sum(${payments.amount}), '0')`,
+    })
+    .from(payments)
+    .where(eq(payments.invoiceId, parsed.invoiceId));
+
+  assertPaymentWithinRemaining(
+    parsed.amount,
+    Number(inv.total),
+    Number(paidResult?.total ?? 0),
+  );
+
   const [payment] = await db
     .insert(payments)
     .values({
@@ -647,49 +708,19 @@ export async function recordPayment(input: z.infer<typeof recordPaymentSchema>) 
     })
     .returning();
 
-  // Check if invoice fully paid
-  const [totalResult] = await db
-    .select({
-      total: sql<string>`coalesce(sum(${payments.amount}), '0')`,
-    })
-    .from(payments)
-    .where(eq(payments.invoiceId, parsed.invoiceId));
-
-  const [inv] = await db
-    .select()
-    .from(invoices)
-    .where(eq(invoices.id, parsed.invoiceId))
-    .limit(1);
-
-  if (inv && Number(totalResult.total) >= Number(inv.total)) {
-    await db
-      .update(invoices)
-      .set({ status: "paid", updatedAt: new Date() })
-      .where(eq(invoices.id, parsed.invoiceId));
-
-    // In-app notify whole workspace about payment received
-    try {
-      await notifyWorkspaceMembers(workspaceId, {
-        type: "invoice_paid",
-        title: `Invoice ${inv.invoiceNumber} marked paid`,
-        body: formatMoney(inv.total, inv.currency || "IDR"),
-        link: `/app/invoices/${parsed.invoiceId}`,
-        entityType: "invoice",
-        entityId: parsed.invoiceId,
-        actorId: user.id,
-      });
-    } catch {
-      // best-effort
-    }
-  }
-
   await writeActivityLog(workspaceId, user.id, "recorded_payment", "payment", payment.id);
   return payment;
 }
 
 // ─── Send / Shared Token ───
 
-async function sendInvoiceEmailForInvoice(invoiceId: string, actorId: string, workspaceId: string) {
+async function sendInvoiceEmailForInvoice(
+  invoiceId: string,
+  actorId: string,
+  workspaceId: string,
+  message?: string,
+  reportRange?: { from: string; to: string },
+) {
   const [inv] = await db
     .select()
     .from(invoices)
@@ -705,10 +736,7 @@ async function sendInvoiceEmailForInvoice(invoiceId: string, actorId: string, wo
   if (!client?.email) throw new Error("Client email is missing");
 
   const [ws] = await db
-    .select({
-      name: workspaces.name,
-      invoiceEmailBody: workspaces.invoiceEmailBody,
-    })
+    .select({ name: workspaces.name })
     .from(workspaces)
     .where(eq(workspaces.id, workspaceId))
     .limit(1);
@@ -740,6 +768,18 @@ async function sendInvoiceEmailForInvoice(invoiceId: string, actorId: string, wo
   ).replace(/\/$/, "");
   // Same PDF layout as /api/invoices/:id/pdf (Unduh PDF) — public via share token.
   const portalUrl = `${appUrl}/api/invoices/share/${generated.token}/pdf`;
+  let detailReportUrl: string | null = null;
+  if (reportRange) {
+    const range = normalizeInvoiceReportRange(reportRange.from, reportRange.to);
+    const secret = process.env.BETTER_AUTH_SECRET;
+    if (!secret) throw new Error("Server secret belum dikonfigurasi");
+    detailReportUrl = buildInvoiceReportUrl(
+      appUrl,
+      generated.token,
+      range,
+      signInvoiceReportRange(generated.token, range, secret),
+    );
+  }
   const replyTo = await resolveWorkspaceReplyTo(workspaceId);
   await notifyInvoiceSent({
     clientEmail: client.email,
@@ -751,7 +791,8 @@ async function sendInvoiceEmailForInvoice(invoiceId: string, actorId: string, wo
     replyTo,
     projectName,
     dueDate: inv.dueDate ? String(inv.dueDate).slice(0, 10) : null,
-    customBody: ws?.invoiceEmailBody,
+    customBody: message ? validateInvoiceMessage(message) : null,
+    detailReportUrl,
   });
 
   await writeActivityLog(workspaceId, actorId, "sent_invoice_email", "invoice", invoiceId, {
@@ -776,13 +817,23 @@ async function sendInvoiceEmailForInvoice(invoiceId: string, actorId: string, wo
   return { success: true, portalUrl };
 }
 
-export async function sendInvoiceEmail(invoiceId: string) {
+export async function sendInvoiceEmail(
+  invoiceId: string,
+  message: string,
+  reportRange?: { from: string; to: string },
+) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   await assertInvoiceInWorkspace(invoiceId, workspaceId);
-  return sendInvoiceEmailForInvoice(invoiceId, user.id, workspaceId);
+  return sendInvoiceEmailForInvoice(
+    invoiceId,
+    user.id,
+    workspaceId,
+    validateInvoiceMessage(message),
+    reportRange,
+  );
 }
 
 export async function generateInvoiceShareToken(invoiceId: string, expiresAt?: string) {

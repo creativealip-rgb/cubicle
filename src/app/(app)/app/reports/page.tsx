@@ -626,7 +626,7 @@ export default async function ReportsPage() {
     <div className="space-y-6 p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="app-page-title">
             {t("Laporan", "Reports")}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
