@@ -330,6 +330,8 @@ Kandidat:
 
 ## 4.2 Payment webhook atomicity
 
+**Status:** Completed 25 Juli 2026. Pakasir provider re-verification tetap fail-closed di luar transaction; setelah verified, payment row dikunci `FOR UPDATE`, state/amount/order diperiksa ulang, entitlement dan conditional `pending → completed` dijalankan dalam satu transaction. `paidAt` menjadi provider completion/processed timestamp yang tersedia pada schema saat ini. Disposable production clone membuktikan concurrent delivery menghasilkan tepat satu activation, replay idempotent, mismatch no-op, dan forced completion failure me-roll back entitlement serta payment state. Regression: `src/lib/pakasir-webhook-atomicity.test.ts` dan `scripts/test-pakasir-webhook-atomicity.ts`.
+
 **File utama:**
 - `src/app/api/webhooks/pakasir/route.ts`
 
