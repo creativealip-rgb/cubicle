@@ -66,15 +66,16 @@ Latest manual proof, 25 July 2026:
 - Active DB connections during sample: 1.
 - Waiting locks during sample: 0.
 - `max_connections`: 100.
-- `shared_buffers`: 128 MiB.
-- `effective_cache_size`: 4 GiB; exceeds container limit and must be reviewed before tuning.
+- `shared_buffers`: 256 MiB.
+- `effective_cache_size`: 768 MiB, aligned with the 1 GiB container limit.
 - `work_mem`: 4 MiB.
 - `maintenance_work_mem`: 64 MiB.
 - Autovacuum: enabled.
-- `track_io_timing`: disabled.
-- `pg_stat_statements`: not loaded.
+- `track_io_timing`: enabled.
+- `pg_stat_statements`: preloaded and extension installed; statement collection verified.
+- Slow-query logging: `log_min_duration_statement=500` ms.
 
-Do not tune from assumptions. Capture workload first. Enabling `pg_stat_statements` and `track_io_timing` needs config/restart planning and a controlled PostgreSQL restart. Review memory budget and perform health + app smoke test in a maintenance window. PgBouncer is not justified at current connection count.
+Maintenance completed after a fresh dump. PostgreSQL was recreated once, the application reconnected without recreation, and `/api/health` returned HTTP 200. Review collected workload before changing indexes or memory again. PgBouncer is not justified at current connection count.
 
 ## Monthly review
 
@@ -86,11 +87,11 @@ Record:
 - Dead tuples and last vacuum/analyze timestamps.
 - Largest tables and indexes.
 - Backup age, local checksum, off-host round-trip result, and restore-test result.
-- Top total-time/mean-time queries after `pg_stat_statements` is enabled.
+- Top total-time/mean-time queries from `pg_stat_statements`.
 
 ## Known operational risks
 
-- VPS root filesystem was 87% used during Phase 6 audit. Database backups are small, but host disk needs separate cleanup/monitoring.
+- VPS root filesystem reached 87% during Phase 6 audit. Safe Docker build-cache pruning reclaimed 10.08 GB and reduced usage to 81%; a 6-hour external watchdog now alerts at 85%.
 - General `/root/scripts/backup-all-dbs.sh` also dumps Cubiqlo, creating a duplicate local lane without checksum. Keep temporarily as defense-in-depth; remove Cubiqlo from that generic job only after dedicated lane alerting proves reliable.
 - Existing `gdrive:` rclone token is expired (`invalid_grant`) and is not part of Cubiqlo backup flow.
-- Failure alert delivery still needs controlled testing; cron log alone is not an external alert.
+- Backup watchdog failure and recovery paths were controlled-tested: stale state emitted an alert and exit 1; healthy state was silent with exit 0.

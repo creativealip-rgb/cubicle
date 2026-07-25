@@ -492,7 +492,7 @@ Tetapkan target awal:
 
 ## 6.3 PostgreSQL observability dan tuning
 
-**Status:** Baseline captured 25 Juli 2026; restart-dependent changes pending. DB 16 MB, 1 koneksi aktif, 0 waiting lock, container 1 GiB/1 CPU. `effective_cache_size=4GB` tidak sesuai limit container; `pg_stat_statements` belum loaded dan `track_io_timing` off. Tidak ada tuning asumtif; enable/config/restart menunggu maintenance window dan workload capture.
+**Status:** Baseline implemented 25 Juli 2026. PostgreSQL sekarang preload `pg_stat_statements`, track I/O timing, log query minimal 500 ms, dan memakai memory estimate sesuai limit 1 GiB (`shared_buffers=256MB`, `effective_cache_size=768MB`). Fresh backup, restart tunggal, app reconnect, statement collection, dan health production sudah terverifikasi.
 
 **Aksi:**
 1. Aktifkan `pg_stat_statements` setelah review.

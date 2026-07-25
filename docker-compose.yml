@@ -3,6 +3,22 @@ services:
     image: postgres:16
     container_name: cubicle-pg
     restart: unless-stopped
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - effective_cache_size=768MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - track_io_timing=on
+      - -c
+      - log_min_duration_statement=500
     environment:
       POSTGRES_DB: cubicle
       POSTGRES_USER: postgres
