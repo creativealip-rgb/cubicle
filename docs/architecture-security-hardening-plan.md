@@ -462,6 +462,8 @@ Kandidat:
 
 ## 6.1 Off-host encrypted backup
 
+**Status:** Implemented 25 Juli 2026; alert acceptance masih pending. Local checksum backup tetap aktif. Encrypted R2 copy memakai client-side `rclone crypt`, daily/weekly/monthly retention, dan upload-download byte verification. Restore proof terbaru memuat 51 tabel. Runbook: `docs/operations/backup-recovery-observability.md`. Residual risk: backup masih memakai app R2 account/bucket dengan encrypted prefix, bukan backup-only credential/bucket; external failure alert belum diuji.
+
 **Aksi:**
 1. Pertahankan backup lokal cepat.
 2. Upload salinan terenkripsi ke R2/S3/object storage terpisah.
@@ -472,6 +474,8 @@ Kandidat:
 **Acceptance:** kehilangan VPS tidak menghilangkan seluruh backup.
 
 ## 6.2 Recovery objectives
+
+**Status:** Partial 25 Juli 2026. RPO 24 jam dan RTO 2 jam ditetapkan; DB restore drill terpisah lulus. Full clean-host disaster drill termasuk app/env/domain/storage linkage dan lima flow bisnis belum dijalankan.
 
 Tetapkan target awal:
 
@@ -487,6 +491,8 @@ Tetapkan target awal:
 **Acceptance:** recovery drill selesai dalam target RTO dan menghasilkan bukti.
 
 ## 6.3 PostgreSQL observability dan tuning
+
+**Status:** Baseline captured 25 Juli 2026; restart-dependent changes pending. DB 16 MB, 1 koneksi aktif, 0 waiting lock, container 1 GiB/1 CPU. `effective_cache_size=4GB` tidak sesuai limit container; `pg_stat_statements` belum loaded dan `track_io_timing` off. Tidak ada tuning asumtif; enable/config/restart menunggu maintenance window dan workload capture.
 
 **Aksi:**
 1. Aktifkan `pg_stat_statements` setelah review.
