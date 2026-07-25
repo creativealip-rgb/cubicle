@@ -168,6 +168,16 @@ Status: **fixed + deployed + live verified**.
 
 Verifikasi: `101/101` tests pass, touched-file ESLint pass, TypeScript/build pass, live health pass. Full lint masih punya 13 error lama di luar Settings.
 
+## Host routing — 2026-07-25
+
+Status: **fixed + deployed + live verified**.
+
+- Guest `cubiqlo.com/` tetap melihat landing page.
+- User dengan session yang membuka `cubiqlo.com/` otomatis pindah ke `app.cubiqlo.com/app/dashboard`.
+- Auth dan app routes di apex pindah ke `app.cubiqlo.com` dengan path/query tetap utuh.
+- `www.cubiqlo.com/*` canonical ke `cubiqlo.com/*`.
+- Regression test host routing: `6/6` pass; full suite `107/107` pass.
+
 ## Belum dicek / hold
 
 | Area | Risiko |
