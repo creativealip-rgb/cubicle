@@ -101,7 +101,7 @@ export default async function ContractsPage({
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="app-page-header">
         <div>
           <h1 className="app-page-title">

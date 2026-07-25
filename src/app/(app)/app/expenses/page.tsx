@@ -323,7 +323,7 @@ export default async function ExpensesPage({
   const rangeEnd = Math.min(safePage * PAGE_SIZE, totalCount);
 
   return (
-    <div className="space-y-4 p-4 sm:space-y-6 sm:p-6">
+    <div className="space-y-4 sm:space-y-6">
       <PageHeader
         actions={
           <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">

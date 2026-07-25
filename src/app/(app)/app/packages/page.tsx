@@ -54,7 +54,7 @@ export default async function PackagesPage() {
   });
 
   return (
-    <div className="mx-auto max-w-6xl p-4 md:p-6">
+    <div className="mx-auto max-w-6xl">
       <PackageCatalog
         packages={packages}
         defaultCurrency={ws.defaultCurrency || "IDR"}
