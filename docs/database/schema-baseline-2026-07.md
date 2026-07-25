@@ -185,6 +185,8 @@ Evidence berisi schema metadata, bukan row data atau secret.
 - Production duplicate FK cleanup: completed 25 Juli 2026.
 - Authoritative production ledger: created as `public.cubiqlo_migrations`.
 - Production result: duplicate groups `35 → 0`, foreign keys `161 → 126`, invalid foreign keys `0`.
+- FK leading-index audit completed 25 Juli 2026: uncovered FK `7 → 0`, invalid/unready index `0` melalui `0042_add_fk_indexes.sql`.
+- Disposable restore proof mempertahankan exact row-count map hash; production runner rerun menjadi controlled no-op.
 - Runner second execution: controlled no-op.
 - Pre-change backup: `/root/backups/databases/cubiqlo-manual/cubicle-pre-fk-cleanup-20260725T124656Z.dump` with SHA256 sidecar.
 - Restore proof: 51 tables, 1,992 exact rows, and identical per-table row-map SHA256.

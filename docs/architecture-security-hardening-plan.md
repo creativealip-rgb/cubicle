@@ -1,7 +1,7 @@
 # Cubiqlo — Architecture, Security, Database & Operations Hardening Plan
 
 **Tanggal:** 25 Juli 2026  
-**Status:** In progress; Phase 0–2, Phase 3.1–3.2 selesai; Phase 3.3 RLS pilot diputuskan HOLD berdasarkan clone proof
+**Status:** In progress; Phase 0–5 dan Phase 6.3 selesai; Phase 3.3 RLS production diputuskan HOLD berdasarkan clone proof; Phase 6.1–6.2 dan Phase 7 masih berjalan
 **Canonical environment flow:** `docs/dev-production-workflow-plan.md`  
 **Tujuan:** Membawa Cubiqlo dari operational MVP menjadi production-disciplined SaaS tanpa rewrite.
 
@@ -235,6 +235,8 @@ Ikuti `docs/dev-production-workflow-plan.md`:
 **Acceptance:** duplicate FK relation count 0; FK valid; CRUD utama tetap lolos.
 
 ## 2.4 FK index coverage
+
+**Status:** Completed 25 Juli 2026. Read-only production audit menemukan 7 dari 126 FK tanpa valid leading-column index. Migration `0042_add_fk_indexes.sql` menambahkan seluruh index yang hilang; disposable restore clone dan production membuktikan gap `7 → 0`, invalid/unready index `0`, row-count hash tidak berubah, dan runner kedua menjadi controlled no-op. Tabel terbesar hanya 1.5 MiB, sehingga transactional `CREATE INDEX` dengan `lock_timeout=5s` dipilih untuk menjaga atomicity dengan migration ledger.
 
 **Aksi:**
 1. Review FK tanpa leading index.
