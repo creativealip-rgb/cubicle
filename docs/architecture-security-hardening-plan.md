@@ -545,17 +545,17 @@ WAL/PITR belum wajib untuk DB 15 MB dan user awal. Aktifkan saat salah satu trig
 
 **Acceptance:** dua build commit sama menghasilkan dependency graph sama; warm build lebih cepat.
 
-## 7.2 CI artifact build
+## 7.2 Immutable VPS artifact build
 
-**Status:** Blocked 25 Juli 2026. Workflow `.github/workflows/ci-image.yml` sudah dibuat dan lolos `actionlint` serta local parity gate. GitHub Actions run `30169718345` tidak memulai runner karena annotation GitHub: `The job was not started because your account is locked due to a billing issue.` Akibatnya immutable GHCR image belum terbit dan acceptance phase belum terpenuhi. Setelah billing GitHub pulih, rerun workflow dan verifikasi tag `ghcr.io/creativealip-rgb/cubicle:sha-<40-char-commit>` beserta digest, provenance, dan SBOM.
+**Status:** Implemented 25 Juli 2026 sebagai VPS-local release pipeline karena GitHub Actions tidak digunakan. Script `scripts/operations/cubiqlo_build_release.sh` menolak dirty tree, detached HEAD, dan source yang belum sinkron dengan remote; menjalankan locked install, lint, typecheck, test, production build, serta critical dependency audit sebelum membuat image `cubicle:sha-<40-char-commit>`. Image membawa OCI source/build labels dan release manifest immutable disimpan di `/root/releases/cubiqlo/`. Registry eksternal dapat ditambahkan nanti tanpa mengubah release contract.
 
 **Aksi:**
-1. GitHub Actions menjalankan lint, typecheck, test, build, dependency/security scan.
-2. Push image ke GHCR dengan tag Git SHA.
-3. Jangan deploy `latest` tanpa SHA record.
+1. VPS release pipeline menjalankan lint, typecheck, test, build, dependency/security scan.
+2. Tag image lokal dengan full Git SHA dan rekam immutable image ID pada release manifest.
+3. Jangan deploy `latest` tanpa SHA/image ID record.
 4. Build failure tidak menyentuh production.
 
-**Acceptance:** production menarik image yang sudah lulus CI.
+**Acceptance:** production memakai image SHA yang sudah lulus release gate dan cocok dengan manifest.
 
 ## 7.3 Health-gated deployment dan rollback
 
