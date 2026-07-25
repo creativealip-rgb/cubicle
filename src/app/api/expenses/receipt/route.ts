@@ -3,7 +3,8 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { requireUser, assertWorkspaceWritable } from "@/lib/access";
+import { requireUser, assertWorkspaceWritable, assertExpenseInWorkspace } from "@/lib/access";
+import { validateExpenseReceipt } from "@/lib/file-validation";
 import { r2, R2_BUCKET } from "@/lib/r2";
 import { randomUUID } from "crypto";
 
@@ -52,11 +53,19 @@ export async function POST(req: NextRequest) {
     }
 
     await assertWorkspaceWritable(db, user.id, workspaceId);
+    if (expenseId) await assertExpenseInWorkspace(db, user.id, workspaceId, expenseId);
 
     const id = expenseId || randomUUID();
     const safeFilename = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const storageKey = `workspaces/${workspaceId}/expenses/${id}/${safeFilename}`;
     const body = Buffer.from(await file.arrayBuffer());
+    const validation = validateExpenseReceipt(file.name, mime, body.subarray(0, 16));
+    if (!validation.ok) {
+      return NextResponse.json(
+        { error: validation.reason ?? "Receipt tidak valid" },
+        { status: 400 },
+      );
+    }
 
     await r2.send(
       new PutObjectCommand({

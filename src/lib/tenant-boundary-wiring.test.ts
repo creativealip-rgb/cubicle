@@ -56,6 +56,16 @@ describe("tenant boundary wiring", () => {
     const fileBody = functionBody("files.ts", "completeUpload");
     expect(fileBody).toContain("assertClientInWorkspace");
     expect(fileBody).toContain("assertProjectInWorkspace");
+    expect(fileBody).toContain("assertFolderInWorkspace");
     expect(fileBody).toContain("storageKey.startsWith(`workspaces/${parsed.workspaceId}/`)");
+  });
+
+  it("validates upload route references and receipt content", () => {
+    const apiDir = join(process.cwd(), "src/app/api");
+    const uploadRoute = readFileSync(join(apiDir, "files/upload/route.ts"), "utf8");
+    const receiptRoute = readFileSync(join(apiDir, "expenses/receipt/route.ts"), "utf8");
+    expect(uploadRoute).toContain("assertFolderInWorkspace");
+    expect(receiptRoute).toContain("validateExpenseReceipt");
+    expect(receiptRoute).toContain("assertExpenseInWorkspace");
   });
 });

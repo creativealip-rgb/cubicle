@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { validateUploadedFile } from "./file-validation";
+import { validateExpenseReceipt, validateUploadedFile } from "./file-validation";
 
 const bytes = (arr: number[]) => new Uint8Array(arr);
 
@@ -47,5 +47,16 @@ describe("validateUploadedFile", () => {
 
   it("accepts text-like csv without strict signature", () => {
     expect(validateUploadedFile("data.csv", bytes([0x61, 0x2c, 0x62])).ok).toBe(true);
+  });
+
+  it("accepts a real receipt whose extension, MIME, and bytes agree", () => {
+    const pdf = bytes([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31]);
+    expect(validateExpenseReceipt("receipt.pdf", "application/pdf", pdf).ok).toBe(true);
+  });
+
+  it("rejects receipt MIME spoofing and non-receipt extensions", () => {
+    const png = bytes([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    expect(validateExpenseReceipt("receipt.png", "application/pdf", png).ok).toBe(false);
+    expect(validateExpenseReceipt("receipt.csv", "text/csv", bytes([0x61, 0x2c, 0x62])).ok).toBe(false);
   });
 });

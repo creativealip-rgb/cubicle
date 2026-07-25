@@ -3,7 +3,7 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { requireUser, assertWorkspaceWritable, assertClientInWorkspace, assertProjectInWorkspace } from "@/lib/access";
+import { requireUser, assertWorkspaceWritable, assertClientInWorkspace, assertProjectInWorkspace, assertFolderInWorkspace } from "@/lib/access";
 import { r2, R2_BUCKET, buildFileKey } from "@/lib/r2";
 import { completeUpload } from "@/lib/actions/files";
 import { validateUploadedFile } from "@/lib/file-validation";
@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
     await assertWorkspaceWritable(db, user.id, workspaceId);
     if (clientId) await assertClientInWorkspace(db, user.id, workspaceId, clientId);
     if (projectId) await assertProjectInWorkspace(db, user.id, workspaceId, projectId);
+    if (folderId) await assertFolderInWorkspace(db, user.id, workspaceId, folderId);
 
     const tempFileId = randomUUID();
     const safeFilename = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");

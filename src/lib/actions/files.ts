@@ -14,6 +14,7 @@ import {
   assertWorkspaceWritable,
   assertClientInWorkspace,
   assertProjectInWorkspace,
+  assertFolderInWorkspace,
 } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { getSignedUploadUrl as getR2UploadUrl, buildFileKey, deleteStoredFile } from "@/lib/r2";
@@ -92,6 +93,9 @@ export async function completeUpload(input: z.infer<typeof completeUploadReqSche
   }
   if (parsed.projectId) {
     await assertProjectInWorkspace(db, user.id, parsed.workspaceId, parsed.projectId);
+  }
+  if (parsed.folderId) {
+    await assertFolderInWorkspace(db, user.id, parsed.workspaceId, parsed.folderId);
   }
 
   // Deliverable shared to client should be client-visible by default.
