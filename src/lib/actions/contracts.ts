@@ -14,6 +14,7 @@ import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
 import { assertPublicTokenLifecycle, PublicTokenError } from "@/lib/public-token-policy";
 import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
+import { validateSignatureDataUrl } from "@/lib/upload-safety";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -398,9 +399,8 @@ export async function signContract(input: {
   if (!input.signedEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.signedEmail)) {
     throw new Error("Valid email is required");
   }
-  if (!input.signatureDataUrl || !input.signatureDataUrl.startsWith("data:image/")) {
-    throw new Error("Signature is required");
-  }
+  const signatureValidation = validateSignatureDataUrl(input.signatureDataUrl);
+  if (!signatureValidation.ok) throw new Error(signatureValidation.reason);
 
   const tokenHash = hashToken(input.token);
   await enforceServerActionRateLimit("contract:sign", tokenHash, { limit: 10, windowSec: 300 });

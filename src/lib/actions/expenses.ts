@@ -15,7 +15,7 @@ import {
   assertProjectInWorkspace,
 } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
-import { getSignedUploadUrl as getR2UploadUrl, getSignedDownloadUrl, R2_BUCKET } from "@/lib/r2";
+import { getSignedDownloadUrl, R2_BUCKET } from "@/lib/r2";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -236,36 +236,6 @@ export async function deleteCategory(categoryId: string) {
     .returning();
   if (!cat) throw new Error("Category not found");
   return { id: categoryId };
-}
-
-const receiptUploadSchema = z.object({
-  workspaceId: z.string().uuid(),
-  expenseId: z.string().uuid().optional(),
-  fileName: z.string().min(1).max(200),
-  mime: z.string().min(1).max(100),
-  size: z.number().positive().max(10 * 1024 * 1024, "Receipt must be under 10MB"),
-});
-
-/** Presigned PUT for expense receipt. Stores key under workspaces/{ws}/expenses/... */
-export async function getExpenseReceiptUploadUrl(
-  input: z.infer<typeof receiptUploadSchema>,
-): Promise<{ uploadUrl: string; storageKey: string }> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const user = requireUser(session?.user);
-  await assertWorkspaceWritable(db, user.id, input.workspaceId);
-  const parsed = receiptUploadSchema.parse(input);
-
-  const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"];
-  if (!allowed.includes(parsed.mime)) {
-    throw new Error("Receipt must be image (jpg/png/webp/gif) or PDF");
-  }
-
-  const crypto = await import("crypto");
-  const id = parsed.expenseId || crypto.randomUUID();
-  const safeFilename = parsed.fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const storageKey = `workspaces/${parsed.workspaceId}/expenses/${id}/${safeFilename}`;
-  const uploadUrl = await getR2UploadUrl(storageKey, parsed.mime, 300);
-  return { uploadUrl, storageKey };
 }
 
 export async function getExpenseReceiptDownloadUrl(expenseId: string): Promise<string | null> {

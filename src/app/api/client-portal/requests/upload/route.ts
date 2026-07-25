@@ -4,13 +4,16 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { files, portalRequests } from "@/db/schema";
 import { getClientPortalAccess } from "@/lib/actions/portal";
-import { buildFileKey, R2_BUCKET, r2 } from "@/lib/r2";
+import { buildFileKey, R2_BUCKET, r2, deleteStoredFile } from "@/lib/r2";
 import { validateUploadedFile } from "@/lib/file-validation";
 import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
+import { assertUploadQuota, getUploadQuotaLimits, safeUploadErrorResponse, validateContentLength } from "@/lib/upload-safety";
 
-const MAX_SIZE = 25 * 1024 * 1024;
+const MAX_SIZE = getUploadQuotaLimits("team").maxFileBytes;
 
 export async function POST(req: NextRequest) {
+  let uploadedObject: string | null = null;
+  if (!validateContentLength(req.headers.get("content-length"), MAX_SIZE)) return NextResponse.json({ error: "Upload too large" }, { status: 413 });
   const limited = await enforceRateLimitResponse(req, "portal:request-upload", { limit: 10, windowSec: 300 });
   if (limited) return limited;
   try {
@@ -46,6 +49,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Request not found" }, { status: 404 });
     }
 
+    await assertUploadQuota(client.workspaceId, upload.size, client.id);
     const body = Buffer.from(await upload.arrayBuffer());
 
     // Validate real content (extension allowlist + magic bytes). This endpoint
@@ -68,32 +72,36 @@ export async function POST(req: NextRequest) {
       }),
     );
 
-    const [fileRow] = await db
-      .insert(files)
-      .values({
-        workspaceId: client.workspaceId,
-        clientId: client.id,
-        projectId: requestRow.projectId,
-        name: upload.name,
-        storageKey,
-        mimeType: upload.type || null,
-        sizeBytes: upload.size,
-        visibility: "client",
-        fileType: "deliverable",
-        uploadedBy: null,
-      })
-      .returning();
+    uploadedObject = storageKey;
+    const fileRow = await db.transaction(async (tx) => {
+      const [createdFile] = await tx
+        .insert(files)
+        .values({
+          workspaceId: client.workspaceId,
+          clientId: client.id,
+          projectId: requestRow.projectId,
+          name: upload.name,
+          storageKey,
+          mimeType: upload.type || null,
+          sizeBytes: upload.size,
+          visibility: "client",
+          fileType: "deliverable",
+          uploadedBy: null,
+        })
+        .returning();
 
-    await db
-      .update(portalRequests)
-      .set({ status: "completed", completedAt: new Date(), updatedAt: new Date() })
-      .where(eq(portalRequests.id, requestId));
+      await tx
+        .update(portalRequests)
+        .set({ status: "completed", completedAt: new Date(), updatedAt: new Date() })
+        .where(eq(portalRequests.id, requestId));
+
+      return createdFile;
+    });
 
     return NextResponse.json({ file: fileRow });
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Upload failed" },
-      { status: 400 },
-    );
+    if (uploadedObject) await deleteStoredFile(uploadedObject).catch(() => undefined);
+    const safe = safeUploadErrorResponse(err);
+    return NextResponse.json({ error: safe.error }, { status: safe.status });
   }
 }

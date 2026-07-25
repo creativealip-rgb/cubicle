@@ -7,6 +7,7 @@ import { requireUser, assertWorkspaceWritable, assertExpenseInWorkspace } from "
 import { validateExpenseReceipt } from "@/lib/file-validation";
 import { r2, R2_BUCKET } from "@/lib/r2";
 import { randomUUID } from "crypto";
+import { safeUploadErrorResponse, validateContentLength } from "@/lib/upload-safety";
 
 export const runtime = "nodejs";
 
@@ -26,6 +27,7 @@ const ALLOWED = new Set([
  */
 export async function POST(req: NextRequest) {
   try {
+    if (!validateContentLength(req.headers.get("content-length"), MAX_BYTES)) return NextResponse.json({ error: "Upload too large" }, { status: 413 });
     const session = await auth.api.getSession({ headers: await headers() });
     const user = requireUser(session?.user);
 
@@ -79,8 +81,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, storageKey });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Upload failed";
-    const status = /not found|forbidden|unauthorized|access/i.test(message) ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    const safe = safeUploadErrorResponse(err);
+    return NextResponse.json({ error: safe.error }, { status: safe.status });
   }
 }

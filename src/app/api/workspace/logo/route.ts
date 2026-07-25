@@ -10,6 +10,7 @@ import { detectImageMime } from "@/lib/settings-validation";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { r2, R2_BUCKET } from "@/lib/r2";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { safeUploadErrorResponse, validateContentLength } from "@/lib/upload-safety";
 
 export const runtime = "nodejs";
 
@@ -41,6 +42,7 @@ function publicLogoUrl(workspaceId: string) {
  */
 export async function POST(req: NextRequest) {
   try {
+    if (!validateContentLength(req.headers.get("content-length"), MAX_BYTES)) return NextResponse.json({ error: "Upload too large" }, { status: 413 });
     const session = await auth.api.getSession({ headers: await headers() });
     const user = requireUser(session?.user);
     const workspaceId = await getWorkspaceForCurrentUser();
@@ -90,9 +92,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, logoUrl });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Upload failed";
-    const status = /not found|forbidden|unauthorized|access/i.test(message) ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    const safe = safeUploadErrorResponse(err);
+    return NextResponse.json({ error: safe.error }, { status: safe.status });
   }
 }
 

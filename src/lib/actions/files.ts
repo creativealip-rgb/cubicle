@@ -17,23 +17,11 @@ import {
   assertFolderInWorkspace,
 } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
-import { getSignedUploadUrl as getR2UploadUrl, buildFileKey, deleteStoredFile } from "@/lib/r2";
+import { deleteStoredFile } from "@/lib/r2";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
 }
-
-const uploadUrlReqSchema = z.object({
-  fileName: z.string().min(1),
-  mime: z.string().min(1),
-  size: z.number().positive().max(25 * 1024 * 1024, "File must be under 25MB"),
-  workspaceId: z.string().uuid(),
-  clientId: z.string().uuid().optional(),
-  projectId: z.string().uuid().optional(),
-  folderId: z.string().uuid().optional(),
-  visibility: z.enum(["internal", "client"]).default("internal"),
-  fileType: z.enum(["working_file", "deliverable"]).default("working_file"),
-});
 
 const completeUploadReqSchema = z.object({
   name: z.string().min(1),
@@ -53,31 +41,6 @@ const updateFileMetaSchema = z.object({
   visibility: z.enum(["internal", "client"]).optional(),
   fileType: z.enum(["working_file", "deliverable"]).optional(),
 });
-
-export async function getSignedUploadUrl(
-  input: z.infer<typeof uploadUrlReqSchema>,
-): Promise<{ uploadUrl: string; storageKey: string; tempFileId: string }> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const user = requireUser(session?.user);
-  await assertWorkspaceWritable(db, user.id, input.workspaceId);
-
-  const parsed = uploadUrlReqSchema.parse(input);
-  if (parsed.clientId) {
-    await assertClientInWorkspace(db, user.id, parsed.workspaceId, parsed.clientId);
-  }
-  if (parsed.projectId) {
-    await assertProjectInWorkspace(db, user.id, parsed.workspaceId, parsed.projectId);
-  }
-
-  const crypto = await import("crypto");
-  const tempFileId = crypto.randomUUID();
-  const safeFilename = parsed.fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const storageKey = buildFileKey(parsed.workspaceId, tempFileId, safeFilename);
-
-  const url = await getR2UploadUrl(storageKey, parsed.mime, 300);
-
-  return { uploadUrl: url, storageKey, tempFileId };
-}
 
 export async function completeUpload(input: z.infer<typeof completeUploadReqSchema>) {
   const session = await auth.api.getSession({ headers: await headers() });

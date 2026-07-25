@@ -396,6 +396,18 @@ Kandidat:
 
 ## 5.2 Upload quotas dan safe storage lifecycle
 
+**Status:** Completed 25 Juli 2026.
+
+**Implementasi:**
+- Kuota bytes dan file count per workspace, plus subkuota client untuk Solo/Team.
+- `Content-Length` ditolak sebelum multipart parsing; ukuran aktual tetap divalidasi setelah parsing.
+- Upload utama dan dua portal flow menghapus object R2 bila persistence DB gagal.
+- Portal request menyimpan file dan status request dalam satu transaction.
+- Error internal disanitasi; contract signature membatasi PNG/JPEG/WebP, magic bytes, dan decoded payload 512 KB.
+- Legacy presigned upload issuance dihapus agar browser melewati upload proxy terkontrol.
+
+**Bukti:** `src/lib/upload-safety.test.ts`, `src/lib/upload-safety-wiring.test.ts`; full suite 196 test, lint, dan production build.
+
 **Aksi:**
 1. Kuota bytes/file count per workspace/client.
 2. Rate limit upload.
