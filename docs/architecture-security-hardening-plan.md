@@ -525,9 +525,15 @@ WAL/PITR belum wajib untuk DB 15 MB dan user awal. Aktifkan saat salah satu trig
 
 ## 7.1 Deterministic Docker build
 
+**Status:** Completed 25 Juli 2026. Docker build memakai canonical npm lockfile (`package-lock.json`) dan `packageManager: npm@10.9.7`, `npm ci`, BuildKit cache mount untuk npm dan `.next/cache`, pinned `node:22-alpine` digest, serta OCI labels `org.opencontainers.image.revision` dan `org.opencontainers.image.created`. Secret runtime tidak lagi menjadi build args; Next.js build-time route evaluation memakai placeholder build-only untuk auth/R2 yang ditolak saat runtime production. Dua build dari commit sama dengan metadata tetap menghasilkan dependency graph hash dan app artifact hash identik; warm build turun dari 135s ke 4s.
+
 **File:**
 - `Dockerfile`
 - `docker-compose.yml`
+- `package.json`
+- `.dockerignore`
+- `src/lib/auth-secret.ts`
+- `src/lib/r2.ts`
 
 **Aksi:**
 1. Gunakan satu lockfile/package manager canonical.
