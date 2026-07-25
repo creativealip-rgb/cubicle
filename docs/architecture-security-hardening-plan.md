@@ -1,7 +1,7 @@
 # Cubiqlo — Architecture, Security, Database & Operations Hardening Plan
 
 **Tanggal:** 25 Juli 2026  
-**Status:** In progress; Phase 0–5 dan Phase 6.3 selesai; Phase 3.3 RLS production diputuskan HOLD berdasarkan clone proof; Phase 6.1–6.2 dan Phase 7 masih berjalan
+**Status:** Launch hardening baseline complete; Phase 6.2 full clean-host recovery dan Phase 7.4 true off-host monitoring masih partial; Phase 3.3 RLS production, PITR, dan Phase 8 activation HOLD berdasarkan trigger/approval. Phase 8.1 staging contract dan fail-closed preflight siap tanpa environment aktif.
 **Canonical environment flow:** `docs/dev-production-workflow-plan.md`  
 **Tujuan:** Membawa Cubiqlo dari operational MVP menjadi production-disciplined SaaS tanpa rewrite.
 
@@ -590,7 +590,7 @@ WAL/PITR belum wajib untuk DB 15 MB dan user awal. Aktifkan saat salah satu trig
 
 **Prioritas:** P2  
 **Estimasi:** 2–5 hari  
-**Status:** desain siap, aktivasi perlu approval Alip
+**Status:** Contract dan fail-closed preflight completed 25 Juli 2026; aktivasi tetap perlu approval Alip. `.env.staging.example`, `scripts/operations/cubiqlo_staging_preflight.sh`, dan regression test menolak collision dengan domain, DB, R2, payment, serta email production. Tidak ada DNS, route, DB, storage, atau container staging yang dibuat.
 
 ## 8.1 Staging
 
