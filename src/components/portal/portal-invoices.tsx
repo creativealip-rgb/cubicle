@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Download, ChevronDown, ChevronRight, FileText } from "lucide-react";
+import { useT } from "@/lib/i18n-client";
+import { portalLocale, portalStatusLabel } from "@/lib/portal-i18n";
 
 export type PortalInvoice = {
   id: string;
@@ -27,47 +29,51 @@ const PAID = new Set(["paid"]);
 
 type StatusMeta = { label: string; className: string };
 
-function invoiceStatusMeta(status: string, isOverdue: boolean): StatusMeta {
+function invoiceStatusMeta(
+  status: string,
+  isOverdue: boolean,
+  lang: "id" | "en",
+): StatusMeta {
   if (isOverdue || status === "overdue") {
     return {
-      label: "Jatuh Tempo",
+      label: lang === "en" ? "Overdue" : "Jatuh Tempo",
       className: "bg-red-100 text-red-700 border-red-200",
     };
   }
   switch (status) {
     case "paid":
       return {
-        label: "Lunas",
+        label: portalStatusLabel("paid", lang),
         className: "bg-emerald-100 text-emerald-700 border-emerald-200",
       };
     case "partial":
       return {
-        label: "Sebagian Lunas",
+        label: lang === "en" ? "Partially Paid" : "Sebagian Lunas",
         className: "bg-amber-100 text-amber-700 border-amber-200",
       };
     case "sent":
       return {
-        label: "Menunggu Pembayaran",
+        label: lang === "en" ? "Awaiting Payment" : "Menunggu Pembayaran",
         className: "bg-blue-100 text-blue-700 border-blue-200",
       };
     case "viewed":
       return {
-        label: "Menunggu Pembayaran",
+        label: lang === "en" ? "Awaiting Payment" : "Menunggu Pembayaran",
         className: "bg-blue-100 text-blue-700 border-blue-200",
       };
     case "cancelled":
       return {
-        label: "Dibatalkan",
+        label: portalStatusLabel("cancelled", lang),
         className: "bg-slate-100 text-slate-500 border-slate-200",
       };
     case "archived":
       return {
-        label: "Arsip",
+        label: lang === "en" ? "Archived" : "Arsip",
         className: "bg-slate-100 text-slate-500 border-slate-200",
       };
     case "draft":
       return {
-        label: "Draft",
+        label: portalStatusLabel("draft", lang),
         className: "bg-slate-100 text-slate-500 border-slate-200",
       };
     default:
@@ -89,11 +95,11 @@ function fmtMoney(amount: number, currency: string) {
   }).format(amount);
 }
 
-function fmtDate(d: string | null) {
+function fmtDate(d: string | null, locale: string) {
   if (!d) return "—";
   const dt = new Date(d);
   if (isNaN(dt.getTime())) return "—";
-  return dt.toLocaleDateString("id-ID", {
+  return dt.toLocaleDateString(locale, {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -159,8 +165,9 @@ function InvoiceRow({
   projectName: string;
   token: string;
 }) {
+  const { lang, t } = useT();
   const overdue = isInvoiceOverdue(inv);
-  const meta = invoiceStatusMeta(inv.status, overdue);
+  const meta = invoiceStatusMeta(inv.status, overdue, lang);
   const canDownload =
     inv.status !== "draft" &&
     inv.status !== "cancelled" &&
@@ -176,12 +183,12 @@ function InvoiceRow({
           </span>
           {inv.isNew && (
             <Badge className="bg-blue-600 text-white text-[10px] shrink-0 hover:bg-blue-600">
-              BARU
+              {t("BARU", "NEW")}
             </Badge>
           )}
         </div>
         <div className="mt-0.5 break-words text-xs text-muted-foreground">
-          {projectName} · {fmtDate(inv.issueDate)}
+          {projectName} · {fmtDate(inv.issueDate, portalLocale(lang))}
         </div>
       </div>
       <div className="flex items-end justify-between gap-3 sm:shrink-0 sm:items-center sm:justify-end">
@@ -220,12 +227,14 @@ export function PortalInvoices({
   projects: ProjectRef[];
   token: string;
 }) {
+  const { t } = useT();
   const [showPaid, setShowPaid] = useState(false);
 
   const projectName = (id: string | null) =>
     id
-      ? projects.find((p) => p.id === id)?.name || "Tanpa project"
-      : "Tanpa project";
+      ? projects.find((p) => p.id === id)?.name ||
+        t("Tanpa proyek", "No project")
+      : t("Tanpa proyek", "No project");
 
   const { outstanding, paid, other, outstandingSum, paidSum } = useMemo(() => {
     const sorter = (a: PortalInvoice, b: PortalInvoice) =>
@@ -254,7 +263,7 @@ export function PortalInvoices({
       <Card>
         <CardContent className="py-8 text-center text-muted-foreground">
           <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
-          <p>Belum ada invoice.</p>
+          <p>{t("Belum ada invoice.", "No invoices yet.")}</p>
         </CardContent>
       </Card>
     );
@@ -269,7 +278,7 @@ export function PortalInvoices({
         <Card className={hasOutstanding ? "border-l-4 border-l-amber-400" : ""}>
           <CardContent className="p-4">
             <p className="text-xs font-medium text-muted-foreground">
-              Belum Dibayar
+              {t("Belum Dibayar", "Outstanding")}
             </p>
             <div className="mt-1">
               <MoneyStack
@@ -285,7 +294,7 @@ export function PortalInvoices({
         <Card>
           <CardContent className="p-4">
             <p className="text-xs font-medium text-muted-foreground">
-              Sudah Lunas
+              {t("Sudah Lunas", "Paid")}
             </p>
             <div className="mt-1">
               <MoneyStack
@@ -304,7 +313,7 @@ export function PortalInvoices({
       {outstanding.length > 0 && (
         <div>
           <h3 className="mb-2 text-sm font-semibold text-foreground">
-            Perlu Dibayar ({outstanding.length})
+            {t("Perlu Dibayar", "Payment Required")} ({outstanding.length})
           </h3>
           <Card className="overflow-hidden">
             <div className="divide-y">

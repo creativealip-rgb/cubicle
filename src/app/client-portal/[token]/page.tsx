@@ -29,6 +29,9 @@ import { PortalActionButtons } from "@/components/portal/portal-action-buttons";
 import { PortalRequestList } from "@/components/portal/portal-request-list";
 import { PortalTabs } from "@/components/portal/portal-tabs";
 import { PortalFileManager } from "@/components/portal/portal-file-manager";
+import { PortalLanguageSwitch } from "@/components/portal/portal-language-switch";
+import { LangProvider } from "@/lib/i18n-client";
+import { createT, getCurrentLang } from "@/lib/i18n";
 import { getCustomPackageRequestsByToken } from "@/lib/actions/custom-package-requests";
 import { getPackageOrdersByToken } from "@/lib/actions/package-orders";
 import {
@@ -45,6 +48,8 @@ export default async function ClientPortalPage({
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { token } = await params;
+  const lang = await getCurrentLang();
+  const t = createT(lang);
   const sp = searchParams ? await searchParams : undefined;
   const rawTab = sp?.tab;
   const initialTab = Array.isArray(rawTab) ? rawTab[0] : rawTab;
@@ -632,338 +637,369 @@ export default async function ClientPortalPage({
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:space-y-8 sm:py-10">
-        {/* Header — workspace branding */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-start gap-3 min-w-0">
-            {workspaceContact?.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element -- remote branding URL, same pattern as invoice share
-              <img
-                src={workspaceContact.logoUrl}
-                alt={
-                  workspaceContact.billingName ||
-                  workspaceContact.name ||
-                  "Workspace logo"
-                }
-                className="h-14 w-14 shrink-0 rounded-xl border bg-white object-contain p-1 shadow-sm"
-              />
-            ) : (
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border bg-primary/10 text-lg font-bold text-primary">
-                {(
-                  workspaceContact?.billingName ||
-                  workspaceContact?.name ||
-                  client.companyName ||
-                  client.name ||
-                  "C"
-                )
-                  .trim()
-                  .charAt(0)
-                  .toUpperCase()}
-              </div>
-            )}
-            <div className="min-w-0">
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                {workspaceContact?.billingName ||
-                  workspaceContact?.name ||
-                  client.companyName ||
-                  client.name}
-              </h1>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                Portal klien untuk{" "}
-                <span className="font-medium text-foreground">
-                  {client.companyName || client.name}
-                </span>
-              </p>
-              {(workspaceContact?.billingAddress ||
-                workspaceContact?.email ||
-                workspaceContact?.phone) && (
-                <div className="mt-2 hidden space-y-0.5 text-xs text-muted-foreground sm:block">
-                  {workspaceContact.billingAddress && (
-                    <p className="whitespace-pre-wrap">
-                      {workspaceContact.billingAddress}
-                    </p>
-                  )}
-                  {(workspaceContact.email || workspaceContact.phone) && (
-                    <p>
-                      {[workspaceContact.email, workspaceContact.phone]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </p>
-                  )}
+    <LangProvider lang={lang}>
+      <div className="min-h-screen bg-muted/30">
+        <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:space-y-8 sm:py-10">
+          {/* Header — workspace branding */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-start gap-3 min-w-0">
+              {workspaceContact?.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- remote branding URL, same pattern as invoice share
+                <img
+                  src={workspaceContact.logoUrl}
+                  alt={
+                    workspaceContact.billingName ||
+                    workspaceContact.name ||
+                    "Workspace logo"
+                  }
+                  className="h-14 w-14 shrink-0 rounded-xl border bg-white object-contain p-1 shadow-sm"
+                />
+              ) : (
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border bg-primary/10 text-lg font-bold text-primary">
+                  {(
+                    workspaceContact?.billingName ||
+                    workspaceContact?.name ||
+                    client.companyName ||
+                    client.name ||
+                    "C"
+                  )
+                    .trim()
+                    .charAt(0)
+                    .toUpperCase()}
                 </div>
               )}
+              <div className="min-w-0">
+                <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                  {workspaceContact?.billingName ||
+                    workspaceContact?.name ||
+                    client.companyName ||
+                    client.name}
+                </h1>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  {t("Portal klien untuk", "Client portal for")}{" "}
+                  <span className="font-medium text-foreground">
+                    {client.companyName || client.name}
+                  </span>
+                </p>
+                {(workspaceContact?.billingAddress ||
+                  workspaceContact?.email ||
+                  workspaceContact?.phone) && (
+                  <div className="mt-2 hidden space-y-0.5 text-xs text-muted-foreground sm:block">
+                    {workspaceContact.billingAddress && (
+                      <p className="whitespace-pre-wrap">
+                        {workspaceContact.billingAddress}
+                      </p>
+                    )}
+                    {(workspaceContact.email || workspaceContact.phone) && (
+                      <p>
+                        {[workspaceContact.email, workspaceContact.phone]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-2 self-start">
+              <PortalLanguageSwitch />
+              <div className="hidden rounded-full border bg-background px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:block">
+                {t("Akses aman", "Secure access")}
+              </div>
             </div>
           </div>
-          <div className="shrink-0 rounded-full border bg-background px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            Akses aman
-          </div>
-        </div>
 
-        {/* ─── 1. Top summary + actions ─────────────────────── */}
-        <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3">
-            <Card className="shadow-none">
-              <CardContent className="p-3">
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                  Per proyek
-                </p>
-                <p className="mt-1 text-xl font-semibold">{byProjectCount}</p>
-              </CardContent>
-            </Card>
-            <Card className="shadow-none">
-              <CardContent className="p-3">
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                  Per jam
-                </p>
-                <p className="mt-1 text-xl font-semibold">{byHoursCount}</p>
-              </CardContent>
-            </Card>
-            <Card className="shadow-none">
-              <CardContent className="p-3">
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                  Per paket
-                </p>
-                <p className="mt-1 text-xl font-semibold">{byPackageCount}</p>
-              </CardContent>
-            </Card>
-            <Card className="shadow-none">
-              <CardContent className="p-3">
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                  Jatuh tempo
-                </p>
-                <p className="mt-1 text-xl font-semibold">{dueInvoiceCount}</p>
-              </CardContent>
-            </Card>
-            <Card className="shadow-none">
-              <CardContent className="p-3">
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                  Pengingat
-                </p>
-                <p className="mt-1 text-xl font-semibold">
-                  {pendingReminderCount}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <FolderOpen className="h-4 w-4 text-blue-500" />
-              <span>
-                <span className="font-semibold text-foreground">
-                  {activeCount}
-                </span>{" "}
-                proyek aktif
-              </span>
+          {/* ─── 1. Top summary + actions ─────────────────────── */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3">
+              <Card className="shadow-none">
+                <CardContent className="p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                    {t("Per proyek", "Per project")}
+                  </p>
+                  <p className="mt-1 text-xl font-semibold">{byProjectCount}</p>
+                </CardContent>
+              </Card>
+              <Card className="shadow-none">
+                <CardContent className="p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                    {t("Per jam", "Hourly")}
+                  </p>
+                  <p className="mt-1 text-xl font-semibold">{byHoursCount}</p>
+                </CardContent>
+              </Card>
+              <Card className="shadow-none">
+                <CardContent className="p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                    {t("Per paket", "Package")}
+                  </p>
+                  <p className="mt-1 text-xl font-semibold">{byPackageCount}</p>
+                </CardContent>
+              </Card>
+              <Card className="shadow-none">
+                <CardContent className="p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                    {t("Jatuh tempo", "Due")}
+                  </p>
+                  <p className="mt-1 text-xl font-semibold">
+                    {dueInvoiceCount}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="shadow-none">
+                <CardContent className="p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                    {t("Pengingat", "Reminders")}
+                  </p>
+                  <p className="mt-1 text-xl font-semibold">
+                    {pendingReminderCount}
+                  </p>
+                </CardContent>
+              </Card>
             </div>
-            <PortalActionButtons
-              token={token}
-              projects={clientProjects.map((p) => ({ id: p.id, name: p.name }))}
-            />
-          </div>
-        </div>
 
-        <Suspense fallback={<PortalTabsFallback />}>
-          <PortalTabs
-            initialTab={initialTab}
-            counts={{
-              projects: clientProjects.length,
-              files: portalFilesList.length,
-              invoices: clientInvoices.length,
-            }}
-            overview={
-              <>
-                {(pendingClientRequests.length > 0 ||
-                  clientPortalRequests.length > 0) && (
-                  <section>
-                    <h2 className="mb-4 text-xl font-semibold">
-                      Request & Pengingat ({pendingClientRequests.length} aktif)
-                    </h2>
-                    <PortalRequestList
-                      requests={clientPortalRequests.map((r) => ({
-                        id: r.id,
-                        title: r.title,
-                        description: r.description,
-                        type: r.type,
-                        status: r.status,
-                        dueDate: r.dueDate ? String(r.dueDate) : null,
-                      }))}
-                      token={token}
-                    />
-                  </section>
-                )}
-                {pendingClientRequests.length === 0 &&
-                  clientPortalRequests.length === 0 && (
-                    <Card className="shadow-none">
-                      <CardContent className="py-8 text-center text-muted-foreground">
-                        <p className="text-sm">
-                          Tidak ada request atau pengingat aktif.
-                        </p>
-                        <p className="mt-1 text-xs">
-                          Gunakan Minta Laporan atau Ajukan Pertemuan bila
-                          diperlukan.
-                        </p>
-                      </CardContent>
-                    </Card>
-                  )}
-              </>
-            }
-            projects={
-              <section>
-                <h2 className="mb-4 text-xl font-semibold">Proyek</h2>
-                {clientProjects.length === 0 ? (
-                  <Card>
-                    <CardContent className="py-8 text-center text-muted-foreground">
-                      <FolderOpen className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                      <p>Belum ada proyek yang dibagikan.</p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <ProjectAccordion
-                    projects={clientProjects.map((p) => ({
-                      ...p,
-                      startDate: p.startDate ? String(p.startDate) : null,
-                      finishDate: p.finishDate ? String(p.finishDate) : null,
-                    }))}
-                    projectTasksMap={
-                      new Map(
-                        [...projectTasksMap.entries()].map(([k, v]) => [
-                          k,
-                          v.map((t) => ({
-                            ...t,
-                            dueDate: t.dueDate ? String(t.dueDate) : null,
-                            updatedAt: String(t.updatedAt),
-                          })),
-                        ]),
-                      )
-                    }
-                    projectFilesMap={
-                      new Map(
-                        [...projectFilesMap.entries()].map(([k, v]) => [
-                          k,
-                          v.map((f) => ({
-                            ...f,
-                            createdAt: String(f.createdAt),
-                          })),
-                        ]),
-                      )
-                    }
-                    projectTimelineMap={
-                      new Map(
-                        [...projectTimelineMap.entries()].map(([k, v]) => [
-                          k,
-                          v.map((e) => ({
-                            ...e,
-                            createdAt: String(e.createdAt),
-                          })),
-                        ]),
-                      )
-                    }
-                    projectHoursMap={projectHoursMap}
-                    taskHoursMap={taskHoursMap}
-                    taskEntriesMap={
-                      new Map(
-                        [...taskEntriesMap.entries()].map(([k, v]) => [
-                          k,
-                          v.map((e) => ({
-                            ...e,
-                            startTime: e.startTime ? String(e.startTime) : null,
-                          })),
-                        ]),
-                      )
-                    }
-                    projectInvoicesMap={projectInvoicesMap}
-                    selectedPackageMap={selectedPackageMap}
-                    projectPackagesMap={projectPackagesMap}
-                    customRequests={customRequests}
-                    packageOrdersList={packageOrdersList.map((o) => ({
-                      ...o,
-                      createdAt: String(o.createdAt),
-                    }))}
-                    clientVisibleActionLabels={clientVisibleActionLabels}
-                    token={token}
-                    workspaceId={client.workspaceId}
-                    ownerWhatsAppPhone={workspaceContact?.phone}
-                    ownerEmail={portalContactEmail}
-                    ownerName={workspaceContact?.name}
-                  />
-                )}
-              </section>
-            }
-            files={
-              <PortalFileManager
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <FolderOpen className="h-4 w-4 text-blue-500" />
+                <span>
+                  <span className="font-semibold text-foreground">
+                    {activeCount}
+                  </span>{" "}
+                  {t("proyek aktif", "active projects")}
+                </span>
+              </div>
+              <PortalActionButtons
                 token={token}
                 projects={clientProjects.map((p) => ({
                   id: p.id,
                   name: p.name,
-                  status: p.status,
                 }))}
-                folders={clientFolders}
-                files={portalFilesList.map((f) => ({
-                  id: f.id,
-                  name: f.name,
-                  mimeType: f.mimeType,
-                  sizeBytes: f.sizeBytes,
-                  fileType: f.fileType,
-                  createdAt: String(f.createdAt),
-                  projectId: f.projectId,
-                  folderId: f.folderId,
-                }))}
-                initialProjectId={initialProjectId}
-                initialFolderId={initialFolderId}
               />
-            }
-            invoices={
-              <section>
-                <h2 className="mb-4 text-xl font-semibold">Invoice</h2>
-                <PortalInvoices
-                  invoices={clientInvoices.map((inv) => ({
-                    id: inv.id,
-                    invoiceNumber: inv.invoiceNumber,
-                    total: String(inv.total),
-                    currency: inv.currency,
-                    status: inv.status,
-                    dueDate: inv.dueDate ? String(inv.dueDate) : null,
-                    issueDate: inv.issueDate ? String(inv.issueDate) : null,
-                    projectId: inv.projectId,
-                    clientFirstViewedAt: inv.clientFirstViewedAt
-                      ? String(inv.clientFirstViewedAt)
-                      : null,
-                    isNew:
-                      !inv.clientFirstViewedAt &&
-                      ["sent", "viewed", "overdue"].includes(inv.status),
-                  }))}
+            </div>
+          </div>
+
+          <Suspense fallback={<PortalTabsFallback />}>
+            <PortalTabs
+              initialTab={initialTab}
+              counts={{
+                projects: clientProjects.length,
+                files: portalFilesList.length,
+                invoices: clientInvoices.length,
+              }}
+              overview={
+                <>
+                  {(pendingClientRequests.length > 0 ||
+                    clientPortalRequests.length > 0) && (
+                    <section>
+                      <h2 className="mb-4 text-xl font-semibold">
+                        {t("Permintaan & Pengingat", "Requests & Reminders")} (
+                        {pendingClientRequests.length} {t("aktif", "active")})
+                      </h2>
+                      <PortalRequestList
+                        requests={clientPortalRequests.map((r) => ({
+                          id: r.id,
+                          title: r.title,
+                          description: r.description,
+                          type: r.type,
+                          status: r.status,
+                          dueDate: r.dueDate ? String(r.dueDate) : null,
+                        }))}
+                        token={token}
+                      />
+                    </section>
+                  )}
+                  {pendingClientRequests.length === 0 &&
+                    clientPortalRequests.length === 0 && (
+                      <Card className="shadow-none">
+                        <CardContent className="py-8 text-center text-muted-foreground">
+                          <p className="text-sm">
+                            {t(
+                              "Tidak ada request atau pengingat aktif.",
+                              "No active requests or reminders.",
+                            )}
+                          </p>
+                          <p className="mt-1 text-xs">
+                            {t(
+                              "Gunakan Minta Laporan atau Ajukan Pertemuan bila diperlukan.",
+                              "Use Request Report or Schedule Meeting when needed.",
+                            )}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+                </>
+              }
+              projects={
+                <section>
+                  <h2 className="mb-4 text-xl font-semibold">
+                    {t("Proyek", "Projects")}
+                  </h2>
+                  {clientProjects.length === 0 ? (
+                    <Card>
+                      <CardContent className="py-8 text-center text-muted-foreground">
+                        <FolderOpen className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                        <p>
+                          {t(
+                            "Belum ada proyek yang dibagikan.",
+                            "No projects have been shared yet.",
+                          )}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <ProjectAccordion
+                      projects={clientProjects.map((p) => ({
+                        ...p,
+                        startDate: p.startDate ? String(p.startDate) : null,
+                        finishDate: p.finishDate ? String(p.finishDate) : null,
+                      }))}
+                      projectTasksMap={
+                        new Map(
+                          [...projectTasksMap.entries()].map(([k, v]) => [
+                            k,
+                            v.map((t) => ({
+                              ...t,
+                              dueDate: t.dueDate ? String(t.dueDate) : null,
+                              updatedAt: String(t.updatedAt),
+                            })),
+                          ]),
+                        )
+                      }
+                      projectFilesMap={
+                        new Map(
+                          [...projectFilesMap.entries()].map(([k, v]) => [
+                            k,
+                            v.map((f) => ({
+                              ...f,
+                              createdAt: String(f.createdAt),
+                            })),
+                          ]),
+                        )
+                      }
+                      projectTimelineMap={
+                        new Map(
+                          [...projectTimelineMap.entries()].map(([k, v]) => [
+                            k,
+                            v.map((e) => ({
+                              ...e,
+                              createdAt: String(e.createdAt),
+                            })),
+                          ]),
+                        )
+                      }
+                      projectHoursMap={projectHoursMap}
+                      taskHoursMap={taskHoursMap}
+                      taskEntriesMap={
+                        new Map(
+                          [...taskEntriesMap.entries()].map(([k, v]) => [
+                            k,
+                            v.map((e) => ({
+                              ...e,
+                              startTime: e.startTime
+                                ? String(e.startTime)
+                                : null,
+                            })),
+                          ]),
+                        )
+                      }
+                      projectInvoicesMap={projectInvoicesMap}
+                      selectedPackageMap={selectedPackageMap}
+                      projectPackagesMap={projectPackagesMap}
+                      customRequests={customRequests}
+                      packageOrdersList={packageOrdersList.map((o) => ({
+                        ...o,
+                        createdAt: String(o.createdAt),
+                      }))}
+                      clientVisibleActionLabels={clientVisibleActionLabels}
+                      token={token}
+                      workspaceId={client.workspaceId}
+                      ownerWhatsAppPhone={workspaceContact?.phone}
+                      ownerEmail={portalContactEmail}
+                      ownerName={workspaceContact?.name}
+                    />
+                  )}
+                </section>
+              }
+              files={
+                <PortalFileManager
+                  token={token}
                   projects={clientProjects.map((p) => ({
                     id: p.id,
                     name: p.name,
+                    status: p.status,
                   }))}
-                  token={token}
+                  folders={clientFolders}
+                  files={portalFilesList.map((f) => ({
+                    id: f.id,
+                    name: f.name,
+                    mimeType: f.mimeType,
+                    sizeBytes: f.sizeBytes,
+                    fileType: f.fileType,
+                    createdAt: String(f.createdAt),
+                    projectId: f.projectId,
+                    folderId: f.folderId,
+                  }))}
+                  initialProjectId={initialProjectId}
+                  initialFolderId={initialFolderId}
                 />
-              </section>
-            }
-            contact={
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Hubungi Tim</CardTitle>
-                </CardHeader>
-                <CardContent className="max-w-lg">
-                  <PortalContactButtons
-                    phone={workspaceContact?.phone}
-                    email={portalContactEmail}
-                    ownerName={workspaceContact?.name}
-                    clientName={client.companyName || client.name}
+              }
+              invoices={
+                <section>
+                  <h2 className="mb-4 text-xl font-semibold">
+                    {t("Invoice", "Invoices")}
+                  </h2>
+                  <PortalInvoices
+                    invoices={clientInvoices.map((inv) => ({
+                      id: inv.id,
+                      invoiceNumber: inv.invoiceNumber,
+                      total: String(inv.total),
+                      currency: inv.currency,
+                      status: inv.status,
+                      dueDate: inv.dueDate ? String(inv.dueDate) : null,
+                      issueDate: inv.issueDate ? String(inv.issueDate) : null,
+                      projectId: inv.projectId,
+                      clientFirstViewedAt: inv.clientFirstViewedAt
+                        ? String(inv.clientFirstViewedAt)
+                        : null,
+                      isNew:
+                        !inv.clientFirstViewedAt &&
+                        ["sent", "viewed", "overdue"].includes(inv.status),
+                    }))}
+                    projects={clientProjects.map((p) => ({
+                      id: p.id,
+                      name: p.name,
+                    }))}
+                    token={token}
                   />
-                </CardContent>
-              </Card>
-            }
-          />
-        </Suspense>
+                </section>
+              }
+              contact={
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">
+                      {t("Hubungi Tim", "Contact the Team")}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="max-w-lg">
+                    <PortalContactButtons
+                      phone={workspaceContact?.phone}
+                      email={portalContactEmail}
+                      ownerName={workspaceContact?.name}
+                      clientName={client.companyName || client.name}
+                    />
+                  </CardContent>
+                </Card>
+              }
+            />
+          </Suspense>
 
-        <p className="text-center text-xs text-muted-foreground pt-8">
-          Didukung <span className="font-medium">Cubiqlo</span> — Portal Klien
-        </p>
+          <p className="text-center text-xs text-muted-foreground pt-8">
+            {t("Didukung", "Powered by")}{" "}
+            <span className="font-medium">Cubiqlo</span> —{" "}
+            {t("Portal Klien", "Client Portal")}
+          </p>
+        </div>
       </div>
-    </div>
+    </LangProvider>
   );
 }

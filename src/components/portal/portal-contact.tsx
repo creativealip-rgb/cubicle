@@ -1,4 +1,7 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n-client";
 import { Clock3, Mail, MessageCircle, ShieldCheck } from "lucide-react";
 
 function getWhatsAppUrl(phone: string | null | undefined, message: string) {
@@ -32,19 +35,26 @@ export function PortalContactButtons({
   projectName?: string | null;
   compact?: boolean;
 }) {
-  const who = ownerName?.trim() || "tim";
+  const { lang, t } = useT();
+  const who = ownerName?.trim() || t("tim", "team");
   const about = projectName
-    ? `project ${projectName}`
+    ? `${t("proyek", "project")} ${projectName}`
     : clientName
       ? `${clientName}`
-      : "project saya";
-  const waText = `Halo ${who}, saya ingin diskusi soal ${about}.`;
+      : t("proyek saya", "my project");
+  const waText =
+    lang === "en"
+      ? `Hello ${who}, I would like to discuss ${about}.`
+      : `Halo ${who}, saya ingin diskusi soal ${about}.`;
   const mailSubject = projectName
-    ? `Diskusi project: ${projectName}`
+    ? `${t("Diskusi proyek", "Project discussion")}: ${projectName}`
     : clientName
-      ? `Diskusi: ${clientName}`
-      : "Diskusi project";
-  const mailBody = `Halo ${who},\n\nSaya ingin diskusi soal ${about}.\n\nTerima kasih.`;
+      ? `${t("Diskusi", "Discussion")}: ${clientName}`
+      : t("Diskusi proyek", "Project discussion");
+  const mailBody =
+    lang === "en"
+      ? `Hello ${who},\n\nI would like to discuss ${about}.\n\nThank you.`
+      : `Halo ${who},\n\nSaya ingin diskusi soal ${about}.\n\nTerima kasih.`;
 
   const waUrl = getWhatsAppUrl(phone, waText);
   const mailUrl = getMailUrl(email, mailSubject, mailBody);
@@ -52,8 +62,10 @@ export function PortalContactButtons({
   if (!waUrl && !mailUrl) {
     return (
       <p className="text-sm text-muted-foreground">
-        Kontak resmi belum tersedia. Hubungi pengelola workspace untuk
-        memperbarui email atau nomor telepon.
+        {t(
+          "Kontak resmi belum tersedia. Hubungi pengelola workspace untuk memperbarui email atau nomor telepon.",
+          "Official contact details are not available yet. Ask the workspace manager to update the email or phone number.",
+        )}
       </p>
     );
   }
@@ -65,20 +77,29 @@ export function PortalContactButtons({
           <div className="flex gap-3">
             <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             <div>
-              <p className="font-medium">Hubungi tim terkait proyek</p>
+              <p className="font-medium">
+                {t("Hubungi tim terkait proyek", "Contact the project team")}
+              </p>
               <p className="text-muted-foreground">
-                Sertakan nama proyek dan detail kebutuhan agar tindak lanjut
-                lebih cepat.
+                {t(
+                  "Sertakan nama proyek dan detail kebutuhan agar tindak lanjut lebih cepat.",
+                  "Include the project name and request details for a faster response.",
+                )}
               </p>
             </div>
           </div>
           <div className="flex gap-3">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             <div>
-              <p className="font-medium">Gunakan kanal resmi</p>
+              <p className="font-medium">
+                {t("Gunakan kanal resmi", "Use official channels")}
+              </p>
               <p className="text-muted-foreground">
-                Percakapan dibuka langsung melalui kontak resmi{" "}
-                {ownerName?.trim() || "tim"}.
+                {t(
+                  "Percakapan dibuka langsung melalui kontak resmi",
+                  "The conversation opens directly with the official contact",
+                )}{" "}
+                {ownerName?.trim() || t("tim", "team")}.
               </p>
             </div>
           </div>

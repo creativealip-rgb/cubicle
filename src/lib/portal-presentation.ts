@@ -1,5 +1,6 @@
 export function cleanPortalRequestDescription(
   description: string | null | undefined,
+  lang: "id" | "en" = "id",
 ) {
   if (!description) return null;
   const lines = description.split("\n");
@@ -9,11 +10,12 @@ export function cleanPortalRequestDescription(
     if (preferred) {
       const date = new Date(`${preferred[1]}T00:00:00Z`);
       return [
-        `Tanggal pilihan: ${date.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}`,
+        `${lang === "en" ? "Selected date" : "Tanggal pilihan"}: ${date.toLocaleDateString(lang === "en" ? "en-US" : "id-ID", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}`,
       ];
     }
     const period = line.match(/^Period:\s*(.+)$/);
-    if (period) return [`Periode: ${period[1]}`];
+    if (period)
+      return [`${lang === "en" ? "Period" : "Periode"}: ${period[1]}`];
     return [line];
   });
   return visible.join("\n").trim() || null;

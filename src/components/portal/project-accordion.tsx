@@ -17,6 +17,8 @@ import { PortalFileList } from "./portal-file-list";
 import { CustomPackageRequestForm } from "./custom-package-request-form";
 import { PackageOrderButton } from "./package-order-button";
 import { PortalContactButtons } from "./portal-contact";
+import { useT } from "@/lib/i18n-client";
+import { portalLocale, portalStatusLabel } from "@/lib/portal-i18n";
 
 interface Project {
   id: string;
@@ -238,16 +240,17 @@ function getProjectStatusMeta(
   status: string,
   needsReview: boolean,
   allTasksDone = false,
+  lang: "id" | "en" = "id",
 ): StatusMeta {
   if (allTasksDone && status === "active" && !needsReview)
     return {
-      label: "Menunggu penutupan",
+      label: lang === "en" ? "Awaiting closure" : "Menunggu penutupan",
       badgeClass: "bg-emerald-100 text-emerald-700 border-emerald-200",
       borderClass: "border-l-emerald-400",
     };
   if (needsReview && (status === "active" || status === "on_hold")) {
     return {
-      label: "Menunggu review kamu",
+      label: lang === "en" ? "Awaiting your review" : "Menunggu review kamu",
       badgeClass: "bg-amber-100 text-amber-700 border-amber-200",
       borderClass: "border-l-amber-400",
     };
@@ -255,32 +258,32 @@ function getProjectStatusMeta(
   switch (status) {
     case "completed":
       return {
-        label: "Selesai",
+        label: portalStatusLabel("completed", lang),
         badgeClass: "bg-emerald-100 text-emerald-700 border-emerald-200",
         borderClass: "border-l-emerald-400",
       };
     case "on_hold":
       return {
-        label: "Ditunda",
+        label: portalStatusLabel("on_hold", lang),
         badgeClass: "bg-amber-100 text-amber-700 border-amber-200",
         borderClass: "border-l-amber-400",
       };
     case "cancelled":
       return {
-        label: "Dibatalkan",
+        label: portalStatusLabel("cancelled", lang),
         badgeClass: "bg-slate-100 text-slate-500 border-slate-200",
         borderClass: "border-l-slate-300",
       };
     case "draft":
       return {
-        label: "Draft",
+        label: portalStatusLabel("draft", lang),
         badgeClass: "bg-slate-100 text-slate-500 border-slate-200",
         borderClass: "border-l-slate-300",
       };
     case "active":
     default:
       return {
-        label: "Sedang dikerjakan",
+        label: portalStatusLabel("active", lang),
         badgeClass: "bg-blue-100 text-blue-700 border-blue-200",
         borderClass: "border-l-blue-400",
       };
@@ -288,12 +291,16 @@ function getProjectStatusMeta(
 }
 
 // Deadline label with days-remaining and overdue detection
-function getDeadlineMeta(finishDate: string | null, projectStatus: string) {
+function getDeadlineMeta(
+  finishDate: string | null,
+  projectStatus: string,
+  lang: "id" | "en",
+) {
   if (!finishDate) return null;
   const due = new Date(finishDate);
   if (isNaN(due.getTime())) return null;
 
-  const dateStr = due.toLocaleDateString("id-ID", {
+  const dateStr = due.toLocaleDateString(portalLocale(lang), {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -314,19 +321,35 @@ function getDeadlineMeta(finishDate: string | null, projectStatus: string) {
 
   if (diffDays < 0) {
     return {
-      text: `Target: ${dateStr} · telat ${Math.abs(diffDays)} hari`,
+      text:
+        lang === "en"
+          ? `Target: ${dateStr} · ${Math.abs(diffDays)} days late`
+          : `Target: ${dateStr} · telat ${Math.abs(diffDays)} hari`,
       overdue: true,
     };
   }
   if (diffDays === 0)
-    return { text: `Target: ${dateStr} · hari ini`, overdue: false };
+    return {
+      text: `Target: ${dateStr} · ${lang === "en" ? "today" : "hari ini"}`,
+      overdue: false,
+    };
   if (diffDays === 1)
-    return { text: `Target: ${dateStr} · besok`, overdue: false };
-  return { text: `Target: ${dateStr} · ${diffDays} hari lagi`, overdue: false };
+    return {
+      text: `Target: ${dateStr} · ${lang === "en" ? "tomorrow" : "besok"}`,
+      overdue: false,
+    };
+  return {
+    text: `Target: ${dateStr} · ${diffDays} ${lang === "en" ? "days remaining" : "hari lagi"}`,
+    overdue: false,
+  };
 }
 
 // "Update terakhir" from most recent task update or timeline event
-function getLastActivity(tasks: Task[], timeline: TimelineEvent[]) {
+function getLastActivity(
+  tasks: Task[],
+  timeline: TimelineEvent[],
+  lang: "id" | "en",
+) {
   const dates: number[] = [];
   for (const t of tasks) {
     const d = new Date(t.updatedAt).getTime();
@@ -339,11 +362,18 @@ function getLastActivity(tasks: Task[], timeline: TimelineEvent[]) {
   if (dates.length === 0) return null;
   const latest = Math.max(...dates);
   const diffDays = Math.floor((Date.now() - latest) / 86_400_000);
-  if (diffDays <= 0) return "Update hari ini";
-  if (diffDays === 1) return "Update kemarin";
-  if (diffDays < 7) return `Update ${diffDays} hari lalu`;
-  if (diffDays < 30) return `Update ${Math.floor(diffDays / 7)} minggu lalu`;
-  return `Update ${new Date(latest).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}`;
+  if (diffDays <= 0) return lang === "en" ? "Updated today" : "Update hari ini";
+  if (diffDays === 1)
+    return lang === "en" ? "Updated yesterday" : "Update kemarin";
+  if (diffDays < 7)
+    return lang === "en"
+      ? `Updated ${diffDays} days ago`
+      : `Update ${diffDays} hari lalu`;
+  if (diffDays < 30)
+    return lang === "en"
+      ? `Updated ${Math.floor(diffDays / 7)} weeks ago`
+      : `Update ${Math.floor(diffDays / 7)} minggu lalu`;
+  return `${lang === "en" ? "Updated" : "Update"} ${new Date(latest).toLocaleDateString(portalLocale(lang), { day: "numeric", month: "short" })}`;
 }
 
 function ProjectExpandedContent({
@@ -385,6 +415,7 @@ function ProjectExpandedContent({
   ownerEmail?: string | null;
   ownerName?: string | null;
 }) {
+  const { lang, t } = useT();
   const isByHours = project.billingType === "hours";
   const isByPackage = project.billingType === "package";
 
@@ -455,7 +486,9 @@ function ProjectExpandedContent({
           return (
             <div className="rounded-lg border bg-muted/30 p-4">
               <h4 className="text-sm font-semibold mb-3">
-                {isByPackage ? "Jam paket" : "Ringkasan jam"}
+                {isByPackage
+                  ? t("Jam paket", "Package hours")
+                  : t("Ringkasan jam", "Hours summary")}
               </h4>
               <div
                 className={`grid gap-4 text-center ${isByPackage && selectedPkg ? "grid-cols-4" : "grid-cols-3"}`}
@@ -474,19 +507,25 @@ function ProjectExpandedContent({
                       <p className="text-xl font-bold text-amber-600">
                         {formatMinutes(usedMinutes)}
                       </p>
-                      <p className="text-xs text-muted-foreground">Terpakai</p>
+                      <p className="text-xs text-muted-foreground">
+                        {t("Terpakai", "Used")}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xl font-bold text-emerald-600">
                         {formatMinutes(remainingMinutes!)}
                       </p>
-                      <p className="text-xs text-muted-foreground">Sisa</p>
+                      <p className="text-xs text-muted-foreground">
+                        {t("Sisa", "Remaining")}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xl font-bold">
                         {hoursSummary.entryCount}
                       </p>
-                      <p className="text-xs text-muted-foreground">Entri</p>
+                      <p className="text-xs text-muted-foreground">
+                        {t("Entri", "Entries")}
+                      </p>
                     </div>
                   </>
                 ) : (
@@ -511,7 +550,9 @@ function ProjectExpandedContent({
                       <p className="text-xl font-bold">
                         {hoursSummary.entryCount}
                       </p>
-                      <p className="text-xs text-muted-foreground">Entri</p>
+                      <p className="text-xs text-muted-foreground">
+                        {t("Entri", "Entries")}
+                      </p>
                     </div>
                   </>
                 )}
@@ -546,7 +587,9 @@ function ProjectExpandedContent({
       {/* By Package: available packages — only when no assigned package */}
       {isByPackage && !project.selectedPackageId && packages.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold mb-3">Paket tersedia</h4>
+          <h4 className="text-sm font-semibold mb-3">
+            {t("Paket tersedia", "Available packages")}
+          </h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {packages.map((pkg) => {
               let features: string[] = [];
@@ -605,7 +648,9 @@ function ProjectExpandedContent({
       {/* Orders */}
       {isByPackage && !project.selectedPackageId && orders.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold mb-2">Pesanan Anda</h4>
+          <h4 className="text-sm font-semibold mb-2">
+            {t("Pesanan Anda", "Your orders")}
+          </h4>
           <div className="space-y-2">
             {orders.map((order) => (
               <div
@@ -684,7 +729,8 @@ function ProjectExpandedContent({
         >
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 text-sm font-semibold [&::-webkit-details-marker]:hidden">
             <span className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4" /> Task ({tasks.length})
+              <CheckCircle2 className="h-4 w-4" /> {t("Tugas", "Tasks")} (
+              {tasks.length})
             </span>
             <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
           </summary>
@@ -735,7 +781,9 @@ function ProjectExpandedContent({
       {/* Contact team — WA / email only */}
       <Separator />
       <div>
-        <h4 className="mb-2 text-sm font-semibold">Hubungi tim</h4>
+        <h4 className="mb-2 text-sm font-semibold">
+          {t("Hubungi tim", "Contact team")}
+        </h4>
         <PortalContactButtons
           phone={ownerWhatsAppPhone}
           email={ownerEmail}
@@ -761,12 +809,13 @@ function ProjectSummary({
   selectedPkg: SelectedPackage | undefined;
   hoursSummary: HoursSummary | undefined;
 }) {
+  const { lang, t } = useT();
   const isByHours = project.billingType === "hours";
   const isByPackage = project.billingType === "package";
 
   const { total, done, pct } = taskProgress(tasks);
-  const deadline = getDeadlineMeta(project.finishDate, project.status);
-  const lastActivity = getLastActivity(tasks, timeline);
+  const deadline = getDeadlineMeta(project.finishDate, project.status, lang);
+  const lastActivity = getLastActivity(tasks, timeline, lang);
 
   // Primary progress line: task completion is what clients care about.
   // Falls back to billing-specific progress when a project has no visible tasks.
@@ -817,7 +866,9 @@ function ProjectSummary({
     }
 
     return (
-      <span className="text-xs text-muted-foreground">Belum ada task</span>
+      <span className="text-xs text-muted-foreground">
+        {t("Belum ada tugas", "No tasks yet")}
+      </span>
     );
   })();
 
@@ -865,6 +916,7 @@ export function ProjectAccordion({
   ownerEmail,
   ownerName,
 }: ProjectAccordionProps) {
+  const { lang, t } = useT();
   // Multi-expand: client can open several projects at once.
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
   const [showArchived, setShowArchived] = useState(false);
@@ -904,6 +956,7 @@ export function ProjectAccordion({
       project.status,
       needsReview,
       progress.total > 0 && progress.pct === 100,
+      lang,
     );
 
     return (
@@ -931,10 +984,10 @@ export function ProjectAccordion({
                 </span>
                 <Badge variant="secondary" className="shrink-0 text-[11px]">
                   {project.billingType === "hours"
-                    ? "Per jam"
+                    ? t("Per jam", "Hourly")
                     : project.billingType === "package"
-                      ? "Per paket"
-                      : "Per proyek"}
+                      ? t("Per paket", "Package")
+                      : t("Per proyek", "Per project")}
                 </Badge>
               </div>
               <div className="mt-1.5">
@@ -992,7 +1045,10 @@ export function ProjectAccordion({
       {activeProjects.length === 0 && archivedProjects.length === 0 && (
         <div className="rounded-lg border border-dashed p-8 text-center">
           <p className="text-sm text-muted-foreground">
-            Belum ada proyek yang dibagikan.
+            {t(
+              "Belum ada proyek yang dibagikan.",
+              "No projects have been shared yet.",
+            )}
           </p>
         </div>
       )}
@@ -1010,7 +1066,8 @@ export function ProjectAccordion({
               <ChevronRight className="h-4 w-4" />
             )}
             <span className="font-medium">
-              Proyek selesai ({archivedProjects.length})
+              {t("Proyek selesai", "Completed projects")} (
+              {archivedProjects.length})
             </span>
           </button>
           {showArchived && (

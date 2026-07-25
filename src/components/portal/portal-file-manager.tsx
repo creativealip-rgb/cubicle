@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n-client";
+import { portalLocale, portalStatusLabel } from "@/lib/portal-i18n";
 
 export type PortalFmProject = {
   id: string;
@@ -77,6 +79,7 @@ export function PortalFileManager({
   initialFolderId,
 }: PortalFileManagerProps) {
   const router = useRouter();
+  const { lang, t } = useT();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -211,7 +214,7 @@ export function PortalFileManager({
       file?: PortalFmFile;
     };
     if (!res.ok || !data.file) {
-      throw new Error(data.error || "Upload gagal");
+      throw new Error(data.error || t("Upload gagal", "Upload failed"));
     }
     return data.file;
   }
@@ -233,7 +236,9 @@ export function PortalFileManager({
       });
       router.refresh();
     } catch (err) {
-      setUploadError(err instanceof Error ? err.message : "Upload gagal");
+      setUploadError(
+        err instanceof Error ? err.message : t("Upload gagal", "Upload failed"),
+      );
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -246,7 +251,11 @@ export function PortalFileManager({
         <div>
           <h2 className="text-xl font-semibold">File</h2>
           <p className="text-sm text-muted-foreground">
-            Kelola file yang dibagikan. Total {totalFiles} file.
+            {t(
+              "Kelola file yang dibagikan. Total",
+              "Manage shared files. Total",
+            )}{" "}
+            {totalFiles} file.
           </p>
         </div>
         {canUpload && (
@@ -272,14 +281,16 @@ export function PortalFileManager({
               ) : (
                 <Upload className="h-4 w-4" />
               )}
-              {uploading ? "Mengunggah…" : "Unggah file"}
+              {uploading
+                ? t("Mengunggah…", "Uploading…")
+                : t("Unggah file", "Upload file")}
             </Button>
             <p className="text-[11px] text-muted-foreground">
-              Unggah ke:{" "}
+              {t("Unggah ke", "Upload to")}:{" "}
               {folderChain.at(-1)?.name ||
                 activeProject?.name ||
-                "Folder utama"}{" "}
-              · Maks. 25MB
+                t("Folder utama", "Root folder")}{" "}
+              · {t("Maks.", "Max.")} 25MB
             </p>
           </div>
         )}
@@ -296,7 +307,7 @@ export function PortalFileManager({
           )}
         >
           <Home className="h-3.5 w-3.5" />
-          Semua
+          {t("Semua", "All")}
         </button>
         {activeProject && (
           <>
@@ -371,7 +382,7 @@ export function PortalFileManager({
         <CardContent className="p-0">
           {dragOver && (
             <div className="border-b border-dashed border-primary/40 bg-primary/5 px-4 py-6 text-center text-sm text-primary">
-              Lepaskan file untuk mengunggah
+              {t("Lepaskan file untuk mengunggah", "Drop files to upload")}
             </div>
           )}
 
@@ -383,9 +394,17 @@ export function PortalFileManager({
                 clientRootFiles.length === 0 && (
                   <div className="px-4 py-12 text-center text-muted-foreground">
                     <FolderOpen className="mx-auto mb-3 h-12 w-12 opacity-30" />
-                    <p>Belum ada folder atau file yang dibagikan.</p>
+                    <p>
+                      {t(
+                        "Belum ada folder atau file yang dibagikan.",
+                        "No folders or files have been shared yet.",
+                      )}
+                    </p>
                     <p className="mt-1 text-xs">
-                      Unggah file di sini atau buka folder proyek.
+                      {t(
+                        "Unggah file di sini atau buka folder proyek.",
+                        "Upload files here or open a project folder.",
+                      )}
                     </p>
                   </div>
                 )}
@@ -412,9 +431,9 @@ export function PortalFileManager({
                         className="text-[10px] capitalize"
                       >
                         {project.status === "active"
-                          ? "Aktif"
+                          ? portalStatusLabel("active", lang)
                           : project.status === "completed"
-                            ? "Selesai"
+                            ? portalStatusLabel("completed", lang)
                             : project.status}
                       </Badge>
                     </div>
@@ -460,9 +479,14 @@ export function PortalFileManager({
               {currentFolders.length === 0 && currentFiles.length === 0 && (
                 <div className="px-4 py-12 text-center text-muted-foreground">
                   <FolderOpen className="mx-auto mb-3 h-12 w-12 opacity-30" />
-                  <p>Folder ini masih kosong.</p>
+                  <p>
+                    {t("Folder ini masih kosong.", "This folder is empty.")}
+                  </p>
                   <p className="mt-1 text-xs">
-                    Lepaskan atau unggah file untuk dibagikan.
+                    {t(
+                      "Lepaskan atau unggah file untuk dibagikan.",
+                      "Drop or upload files to share them.",
+                    )}
                   </p>
                 </div>
               )}
@@ -504,6 +528,7 @@ export function PortalFileManager({
 }
 
 function FileRow({ file, token }: { file: PortalFmFile; token: string }) {
+  const { lang, t } = useT();
   return (
     <div className="flex items-center gap-3 px-4 py-3">
       <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
@@ -513,20 +538,22 @@ function FileRow({ file, token }: { file: PortalFmFile; token: string }) {
         <div className="flex items-center gap-2">
           <p className="break-words text-sm font-medium">{file.name}</p>
           {file.fileType === "deliverable" && (
-            <Badge className="text-[10px]">Hasil kerja</Badge>
+            <Badge className="text-[10px]">
+              {t("Hasil kerja", "Deliverable")}
+            </Badge>
           )}
         </div>
         <p className="text-xs text-muted-foreground">
           {formatSize(file.sizeBytes)} ·{" "}
-          {new Date(file.createdAt).toLocaleDateString()}
+          {new Date(file.createdAt).toLocaleDateString(portalLocale(lang))}
         </p>
       </div>
       <a
         href={`/api/files/${file.id}/download?token=${encodeURIComponent(token)}`}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label={`Unduh ${file.name}`}
-        title={`Unduh ${file.name}`}
+        aria-label={`${t("Unduh", "Download")} ${file.name}`}
+        title={`${t("Unduh", "Download")} ${file.name}`}
         className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md hover:bg-muted"
       >
         <Download className="h-4 w-4" aria-hidden="true" />

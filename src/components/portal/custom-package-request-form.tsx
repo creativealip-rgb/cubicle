@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronUp, Package } from "lucide-react";
+import { useT } from "@/lib/i18n-client";
+import { portalLocale } from "@/lib/portal-i18n";
 
 interface PackageOption {
   id: string;
@@ -44,6 +46,7 @@ export function CustomPackageRequestForm({
   existingRequests,
   currency,
 }: CustomPackageRequestProps) {
+  const { lang, t } = useT();
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [hours, setHours] = useState(40);
@@ -82,12 +85,14 @@ export function CustomPackageRequestForm({
         hours,
         message || undefined,
       );
-      toast.success("Permintaan terkirim!");
+      toast.success(t("Permintaan terkirim!", "Request sent!"));
       setMessage("");
       setExpanded(false);
     } catch (err: unknown) {
       toast.error(
-        err instanceof Error ? err.message : "Failed to submit request",
+        err instanceof Error
+          ? err.message
+          : t("Gagal mengirim permintaan", "Failed to submit request"),
       );
     } finally {
       setLoading(false);
@@ -98,22 +103,24 @@ export function CustomPackageRequestForm({
     if (status === "approved")
       return (
         <Badge className="bg-emerald-100 text-emerald-700 text-[10px]">
-          Disetujui
+          {t("Disetujui", "Approved")}
         </Badge>
       );
     if (status === "rejected")
       return (
-        <Badge className="bg-red-100 text-red-700 text-[10px]">Ditolak</Badge>
+        <Badge className="bg-red-100 text-red-700 text-[10px]">
+          {t("Ditolak", "Rejected")}
+        </Badge>
       );
     return (
       <Badge className="bg-yellow-100 text-yellow-700 text-[10px]">
-        Menunggu
+        {t("Menunggu", "Pending")}
       </Badge>
     );
   };
 
   const formatPrice = (price: number) =>
-    new Intl.NumberFormat("en-US", {
+    new Intl.NumberFormat(portalLocale(lang), {
       style: "currency",
       currency: currency || "IDR",
     }).format(price);
@@ -123,7 +130,9 @@ export function CustomPackageRequestForm({
       {/* Existing Requests */}
       {existingRequests.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold mb-2">Your Requests</h4>
+          <h4 className="text-sm font-semibold mb-2">
+            {t("Permintaan Kamu", "Your Requests")}
+          </h4>
           <div className="space-y-2">
             {existingRequests.map((req) => (
               <div
@@ -132,7 +141,7 @@ export function CustomPackageRequestForm({
               >
                 <div>
                   <span className="font-medium">
-                    {req.requestedHours} hours
+                    {req.requestedHours} {t("jam", "hours")}
                   </span>
                   {req.estimatedPrice && (
                     <span className="text-muted-foreground ml-2">
@@ -143,7 +152,9 @@ export function CustomPackageRequestForm({
                 <div className="flex items-center gap-2">
                   {statusBadge(req.status)}
                   <span className="text-xs text-muted-foreground">
-                    {new Date(req.createdAt).toLocaleDateString()}
+                    {new Date(req.createdAt).toLocaleDateString(
+                      portalLocale(lang),
+                    )}
                   </span>
                 </div>
               </div>
@@ -160,7 +171,9 @@ export function CustomPackageRequestForm({
       >
         <div className="flex items-center gap-2">
           <Package className="h-4 w-4" />
-          <span className="font-medium">Request Custom Package</span>
+          <span className="font-medium">
+            {t("Minta Paket Khusus", "Request Custom Package")}
+          </span>
         </div>
         {expanded ? (
           <ChevronUp className="h-4 w-4" />
@@ -172,13 +185,16 @@ export function CustomPackageRequestForm({
       {expanded && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Custom Package Request</CardTitle>
+            <CardTitle className="text-sm">
+              {t("Permintaan Paket Khusus", "Custom Package Request")}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="hours" className="text-xs">
-                  Hours per month: <span className="font-bold">{hours}</span>
+                  {t("Jam per bulan", "Hours per month")}:{" "}
+                  <span className="font-bold">{hours}</span>
                 </Label>
                 <Input
                   id="hours"
@@ -199,7 +215,7 @@ export function CustomPackageRequestForm({
               {estimatedPrice != null && (
                 <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-center">
                   <p className="text-xs text-muted-foreground">
-                    Estimated price
+                    {t("Estimasi harga", "Estimated price")}
                   </p>
                   <p className="text-xl font-bold text-primary">
                     {formatPrice(estimatedPrice)}
@@ -209,13 +225,16 @@ export function CustomPackageRequestForm({
 
               <div className="space-y-1.5">
                 <Label htmlFor="req-message" className="text-xs">
-                  Message (optional)
+                  {t("Pesan (opsional)", "Message (optional)")}
                 </Label>
                 <Textarea
                   id="req-message"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Any specific requirements..."
+                  placeholder={t(
+                    "Tuliskan kebutuhan khusus...",
+                    "Any specific requirements...",
+                  )}
                   rows={3}
                 />
               </div>
@@ -226,7 +245,9 @@ export function CustomPackageRequestForm({
                 size="sm"
                 className="w-full"
               >
-                {loading ? "Submitting..." : "Request Quote"}
+                {loading
+                  ? t("Mengirim...", "Submitting...")
+                  : t("Minta Penawaran", "Request Quote")}
               </Button>
             </form>
           </CardContent>

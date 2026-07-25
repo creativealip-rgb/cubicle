@@ -17,6 +17,15 @@ describe("portal presentation", () => {
     ).toBe("Tanggal pilihan: 23 Jul 2026\nMohon sore hari");
   });
 
+  it("localizes client-origin metadata for English", () => {
+    expect(
+      cleanPortalRequestDescription(
+        "[CLIENT_ORIGIN meeting]\nPreferred date: 2026-07-23\nPlease use the afternoon",
+        "en",
+      ),
+    ).toBe("Selected date: Jul 23, 2026\nPlease use the afternoon");
+  });
+
   it("puts open requests before closed history", () => {
     const rows = [
       { id: "done", status: "completed" },

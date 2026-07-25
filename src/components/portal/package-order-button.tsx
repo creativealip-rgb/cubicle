@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/lib/i18n-client";
+import { portalLocale } from "@/lib/portal-i18n";
 
 interface PackageOrderButtonProps {
   token: string;
@@ -36,11 +38,12 @@ export function PackageOrderButton({
   currency,
   isHighlighted,
 }: PackageOrderButtonProps) {
+  const { lang, t } = useT();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  const formattedPrice = new Intl.NumberFormat("en-US", {
+  const formattedPrice = new Intl.NumberFormat(portalLocale(lang), {
     style: "currency",
     currency: currency || "USD",
   }).format(Number(price));
@@ -48,12 +51,30 @@ export function PackageOrderButton({
   async function handleConfirm() {
     setLoading(true);
     try {
-      await createPackageOrder(token, projectId, packageId, packageName, hours, price, currency, message || undefined);
-      toast.success(`Order for ${packageName} submitted!`);
+      await createPackageOrder(
+        token,
+        projectId,
+        packageId,
+        packageName,
+        hours,
+        price,
+        currency,
+        message || undefined,
+      );
+      toast.success(
+        t(
+          `Pesanan ${packageName} terkirim!`,
+          `Order for ${packageName} submitted!`,
+        ),
+      );
       setOpen(false);
       setMessage("");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to submit order");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t("Gagal mengirim pesanan", "Failed to submit order"),
+      );
     } finally {
       setLoading(false);
     }
@@ -67,34 +88,48 @@ export function PackageOrderButton({
         className="w-full mt-3"
         onClick={() => setOpen(true)}
       >
-        Take This Package
+        {t("Pilih Paket Ini", "Choose This Package")}
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Konfirmasi Pesanan</DialogTitle>
+            <DialogTitle>
+              {t("Konfirmasi Pesanan", "Confirm Order")}
+            </DialogTitle>
             <DialogDescription>
-              You&apos;re ordering <strong>{packageName}</strong>
-              {hours && ` (${hours} hours)`} for <strong>{formattedPrice}</strong>/month.
+              {t("Kamu memesan", "You are ordering")}{" "}
+              <strong>{packageName}</strong>
+              {hours && ` (${hours} ${t("jam", "hours")})`}{" "}
+              {t("seharga", "for")} <strong>{formattedPrice}</strong>/
+              {t("bulan", "month")}.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label htmlFor="order-message" className="text-xs">Message (optional)</Label>
+              <Label htmlFor="order-message" className="text-xs">
+                {t("Pesan (opsional)", "Message (optional)")}
+              </Label>
               <Textarea
                 id="order-message"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Any specific requirements or start date..."
+                placeholder={t(
+                  "Kebutuhan khusus atau tanggal mulai...",
+                  "Any specific requirements or start date...",
+                )}
                 rows={3}
               />
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)}>Batal</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              {t("Batal", "Cancel")}
+            </Button>
             <Button onClick={handleConfirm} disabled={loading}>
-              {loading ? "Mengirim..." : "Konfirmasi Pesanan"}
+              {loading
+                ? t("Mengirim...", "Submitting...")
+                : t("Konfirmasi Pesanan", "Confirm Order")}
             </Button>
           </DialogFooter>
         </DialogContent>

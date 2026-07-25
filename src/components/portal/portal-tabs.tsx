@@ -16,6 +16,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useT } from "@/lib/i18n-client";
 
 export type PortalTabKey =
   "overview" | "projects" | "files" | "invoices" | "contact";
@@ -64,6 +65,7 @@ export function PortalTabs({
   contact,
   counts,
 }: PortalTabsProps) {
+  const { t } = useT();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const urlTab = normalizeTab(searchParams.get("tab") ?? initialTab);
@@ -114,18 +116,18 @@ export function PortalTabs({
   }> = [
     {
       key: "overview",
-      label: "Ringkasan",
+      label: t("Ringkasan", "Overview"),
       icon: <LayoutDashboard className="h-3.5 w-3.5" />,
     },
     {
       key: "projects",
-      label: "Proyek",
+      label: t("Proyek", "Projects"),
       icon: <FolderKanban className="h-3.5 w-3.5" />,
       badge: counts?.projects,
     },
     {
       key: "files",
-      label: "File",
+      label: t("File", "Files"),
       icon: <FolderOpen className="h-3.5 w-3.5" />,
       badge: counts?.files,
     },
@@ -137,7 +139,7 @@ export function PortalTabs({
     },
     {
       key: "contact",
-      label: "Kontak",
+      label: t("Kontak", "Contact"),
       icon: <MessageCircle className="h-3.5 w-3.5" />,
     },
   ];

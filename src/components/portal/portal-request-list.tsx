@@ -13,6 +13,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n-client";
 import { Textarea } from "@/components/ui/textarea";
 import {
   completePortalRequest,
@@ -40,13 +41,6 @@ function parseDecision(
   if (description.includes("[Client REJECTED")) return "rejected";
   return null;
 }
-const typeLabels: Record<string, string> = {
-  document: "Dokumen",
-  approval: "Persetujuan",
-  info: "Informasi",
-  other: "Lainnya",
-};
-
 export function PortalRequestList({
   requests,
   token,
@@ -54,6 +48,13 @@ export function PortalRequestList({
   requests: PortalRequest[];
   token: string;
 }) {
+  const { lang, t } = useT();
+  const typeLabels: Record<string, string> = {
+    document: t("Dokumen", "Document"),
+    approval: t("Persetujuan", "Approval"),
+    info: t("Informasi", "Information"),
+    other: t("Lainnya", "Other"),
+  };
   const [items, setItems] = useState(requests);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [noteById, setNoteById] = useState<Record<string, string>>({});
@@ -66,9 +67,9 @@ export function PortalRequestList({
       setItems((p) =>
         p.map((r) => (r.id === id ? { ...r, status: "completed" } : r)),
       );
-      toast.success("Request selesai");
+      toast.success(t("Request selesai", "Request completed"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Gagal");
+      toast.error(e instanceof Error ? e.message : t("Gagal", "Failed"));
     } finally {
       setLoadingId(null);
     }
@@ -94,10 +95,12 @@ export function PortalRequestList({
         ),
       );
       toast.success(
-        decision === "approved" ? "Disetujui" : "Permintaan revisi dikirim",
+        decision === "approved"
+          ? t("Disetujui", "Approved")
+          : t("Permintaan revisi dikirim", "Revision request sent"),
       );
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Gagal");
+      toast.error(e instanceof Error ? e.message : t("Gagal", "Failed"));
     } finally {
       setLoadingId(null);
     }
@@ -115,13 +118,16 @@ export function PortalRequestList({
         body: form,
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Upload gagal");
+      if (!res.ok)
+        throw new Error(data.error ?? t("Upload gagal", "Upload failed"));
       setItems((p) =>
         p.map((r) => (r.id === id ? { ...r, status: "completed" } : r)),
       );
-      toast.success("File berhasil diunggah");
+      toast.success(t("File berhasil diunggah", "File uploaded successfully"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Upload gagal");
+      toast.error(
+        e instanceof Error ? e.message : t("Upload gagal", "Upload failed"),
+      );
     } finally {
       setLoadingId(null);
       if (fileInputs.current[id]) fileInputs.current[id]!.value = "";
@@ -130,7 +136,10 @@ export function PortalRequestList({
   if (!items.length)
     return (
       <p className="text-sm text-muted-foreground">
-        Tidak ada request atau pengingat aktif.
+        {t(
+          "Tidak ada request atau pengingat aktif.",
+          "No active requests or reminders.",
+        )}
       </p>
     );
   const { open, history } = partitionPortalRequests(items);
@@ -142,7 +151,8 @@ export function PortalRequestList({
         request.description?.replace(
           /\n\n---\n\[Client (APPROVED|REJECTED)[\s\S]*$/,
           "",
-        ) ?? null,
+        ),
+        lang,
       );
     return (
       <div
@@ -167,18 +177,18 @@ export function PortalRequestList({
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-sm font-medium">
                 {request.title === "Request Meeting"
-                  ? "Permintaan Pertemuan"
+                  ? t("Permintaan Pertemuan", "Meeting Request")
                   : request.title === "Request Report"
-                    ? "Permintaan Laporan"
+                    ? t("Permintaan Laporan", "Report Request")
                     : request.title}
               </p>
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600">
                 {done
                   ? decision === "approved"
-                    ? "Disetujui"
+                    ? t("Disetujui", "Approved")
                     : decision === "rejected"
-                      ? "Revisi diminta"
-                      : "Selesai"
+                      ? t("Revisi diminta", "Revision requested")
+                      : t("Selesai", "Completed")
                   : (typeLabels[request.type] ?? request.type)}
               </span>
             </div>
@@ -189,7 +199,8 @@ export function PortalRequestList({
             )}
             {request.dueDate && (
               <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" /> Tenggat {request.dueDate}
+                <Clock className="h-3 w-3" /> {t("Tenggat", "Due")}{" "}
+                {request.dueDate}
               </p>
             )}
             {!done && approval && (
@@ -199,7 +210,10 @@ export function PortalRequestList({
                   onChange={(e) =>
                     setNoteById((p) => ({ ...p, [request.id]: e.target.value }))
                   }
-                  placeholder="Catatan opsional atau detail revisi…"
+                  placeholder={t(
+                    "Catatan opsional atau detail revisi…",
+                    "Optional notes or revision details…",
+                  )}
                   rows={2}
                 />
                 <div className="flex flex-wrap gap-2">
@@ -209,7 +223,7 @@ export function PortalRequestList({
                     onClick={() => decide(request.id, "approved")}
                   >
                     <ThumbsUp className="h-3.5 w-3.5" />
-                    Setujui
+                    {t("Setujui", "Approve")}
                   </Button>
                   <Button
                     className="min-h-11 gap-1.5 text-red-600"
@@ -218,7 +232,7 @@ export function PortalRequestList({
                     onClick={() => decide(request.id, "rejected")}
                   >
                     <ThumbsDown className="h-3.5 w-3.5" />
-                    Minta revisi
+                    {t("Minta revisi", "Request revision")}
                   </Button>
                 </div>
               </div>
@@ -242,7 +256,7 @@ export function PortalRequestList({
                   disabled={loadingId === request.id}
                   onClick={() => fileInputs.current[request.id]?.click()}
                 >
-                  Unggah file
+                  {t("Unggah file", "Upload file")}
                 </Button>
               </>
             )}
@@ -252,7 +266,7 @@ export function PortalRequestList({
               disabled={loadingId === request.id}
               onClick={() => markDone(request.id)}
             >
-              Tandai selesai
+              {t("Tandai selesai", "Mark complete")}
             </Button>
           </div>
         )}
@@ -265,7 +279,7 @@ export function PortalRequestList({
         <div className="space-y-2">{open.map(render)}</div>
       ) : (
         <p className="text-sm text-muted-foreground">
-          Semua request sudah selesai.
+          {t("Semua request sudah selesai.", "All requests are complete.")}
         </p>
       )}
       {history.length > 0 && (
@@ -280,7 +294,7 @@ export function PortalRequestList({
             ) : (
               <ChevronRight className="h-4 w-4" />
             )}
-            Riwayat request ({history.length})
+            {t("Riwayat permintaan", "Request history")} ({history.length})
           </button>
           {showHistory && (
             <div className="mt-2 space-y-2">{history.map(render)}</div>

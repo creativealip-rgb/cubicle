@@ -2,6 +2,8 @@
 
 ## Unreleased — 2026-07-25 — Client Portal audit hardening
 
+- I18n: add a persistent `ID | EN` switch using the existing `cubiqlo_lang` cookie; localize portal headers, summaries, tabs, requests, projects, tasks, packages, files, invoices, contacts, statuses, dates, dialogs, toasts, and empty states while preserving user-entered database content
+- I18n reliability: reload after portal language changes so server-rendered and client-rendered copy switch atomically; verify ID → EN → reload → ID on the live 390 px portal without page-level overflow
 - Security: validate portal request client/project ownership by workspace; preserve token and visibility scoping on file/invoice access
 - Analytics: stop false file/invoice views on portal page load; record file views only after valid download, invoice first-view only on PDF open, and general visits as `portal_open`
 - Performance: replace per-project task, file, timeline, time-summary, and package queries with batched queries plus linear project grouping

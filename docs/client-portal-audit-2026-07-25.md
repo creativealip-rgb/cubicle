@@ -97,7 +97,7 @@ Rows are fetched in batched domain queries and grouped by project in one pass. H
 
 ```text
 npx tsc --noEmit                 PASS
-npx vitest run                   PASS — 88 tests
+npx vitest run                   PASS — 94 tests
 npm run build                    PASS
 Docker image build               PASS
 docker compose up -d cubicle     PASS
@@ -107,6 +107,8 @@ Mobile QA viewport               390 px
 Mobile page scrollWidth          390 px
 Public 80/443 owner              dokploy-traefik only
 Unrelated 9Router routing        normal response
+Language switch regression       PASS — ID → EN → reload → ID
+Language cookie persistence      PASS — server first paint follows cubiqlo_lang
 ```
 
 ## Main files
@@ -122,6 +124,9 @@ Unrelated 9Router routing        normal response
 - `src/components/portal/portal-file-list.tsx`
 - `src/components/portal/portal-invoices.tsx`
 - `src/components/portal/portal-contact.tsx`
+- `src/components/portal/portal-language-switch.tsx`
+- `src/lib/portal-i18n.ts`
+- `src/lib/portal-i18n.test.ts`
 - `src/lib/portal-presentation.ts`
 - `src/lib/portal-presentation.test.ts`
 
