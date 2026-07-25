@@ -573,6 +573,8 @@ WAL/PITR belum wajib untuk DB 15 MB dan user awal. Aktifkan saat salah satu trig
 
 ## 7.4 External monitoring
 
+**Status:** Baseline implemented 25 Juli 2026. Hermes no-agent watchdog berjalan tiap 5 menit dan memeriksa landing, login, app/DB health, anonymous auth denial, app/PostgreSQL/Redis state, DB connection saturation, disk/RAM, backup freshness/checksum, dan Traefik 5xx spike. Healthy run silent; alert dideduplikasi 15 menit dan recovery dikirim. Controlled self-test terkirim ke Telegram (message ID `47737`) tanpa mengganggu app/DB. Initial beta SLO ditetapkan 99,5% di `docs/operations/monitoring-slo.md`. Status belum full external: monitor masih berada di VPS production; Uptime Kuma belum punya Cubiqlo target/notifier, Sentry belum punya DSN/project approval, dan credentialed synthetic login belum tersedia.
+
 **Aksi:**
 1. Uptime check eksternal untuk landing, login, health, dan satu synthetic auth flow.
 2. Sentry/error tracking untuk server/client.
