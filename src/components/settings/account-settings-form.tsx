@@ -89,7 +89,7 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
               {t("Ganti password pakai password sekarang. Minimal 8 karakter.", "Use your current password. New password must be at least 8 characters.")}
             </p>
           </div>
-          <Button type="button" variant="outline" size="sm" onClick={() => setShowPasswords((v) => !v)}>
+          <Button type="button" variant="outline" size="sm" className="min-h-11" onClick={() => setShowPasswords((v) => !v)}>
             {showPasswords ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
             {showPasswords ? t("Sembunyikan", "Hide") : t("Tampilkan", "Show")}
           </Button>

@@ -128,8 +128,8 @@ export function SettingsTabs({
 
   return (
     <Tabs value={activeTab} onValueChange={changeTab} className="space-y-4">
-      <div className="overflow-x-auto -mx-1 px-1">
-        <TabsList className="h-auto min-h-9 w-full justify-start gap-1 bg-muted/70 p-1 sm:w-auto">
+      <div className="-mx-1 overflow-x-auto px-1 pb-1">
+        <TabsList className="h-auto min-h-9 w-max min-w-full justify-start gap-1 bg-muted/70 p-1 pr-3 sm:min-w-0">
           {tabs.map((tab) => (
             <TabsTrigger
               key={tab.key}
