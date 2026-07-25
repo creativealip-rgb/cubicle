@@ -36,7 +36,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        DATABASE_URL: postgresql://postgres:${CUBICLE_DB_PASSWORD}@cubicle-pg:5432/cubicle
+        DATABASE_URL: ${CUBICLE_DATABASE_URL}
         BETTER_AUTH_SECRET: ${CUBICLE_BETTER_AUTH_SECRET}
         BETTER_AUTH_URL: ${CUBICLE_BETTER_AUTH_URL}
         R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
@@ -58,7 +58,7 @@ services:
         PAKASIR_API_KEY: ${PAKASIR_API_KEY:-}
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://app.cubiqlo.com}
     environment:
-      DATABASE_URL: postgresql://postgres:${CUBICLE_DB_PASSWORD}@cubicle-pg:5432/cubicle
+      DATABASE_URL: ${CUBICLE_DATABASE_URL}
       BETTER_AUTH_SECRET: ${CUBICLE_BETTER_AUTH_SECRET}
       BETTER_AUTH_URL: ${CUBICLE_BETTER_AUTH_URL}
       R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}

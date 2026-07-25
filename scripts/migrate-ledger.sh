@@ -6,16 +6,27 @@ MIGRATION_DIR=${MIGRATION_DIR:-"$ROOT/drizzle"}
 DB_CONTAINER=${DB_CONTAINER:-cubicle-pg}
 DB_USER=${DB_USER:-postgres}
 DB_NAME=${DB_NAME:-cubicle}
+DB_HOST=${DB_HOST:-}
+DB_PASSWORD=${DB_PASSWORD:-}
+MIGRATION_ROLE=${MIGRATION_ROLE:-}
 BASELINE_ID=${BASELINE_ID:-baseline-2026-07-25}
 BASELINE_CHECKSUM=${BASELINE_CHECKSUM:-1a4fb3403575a0f69429243bcc16bce1ada4be2ab62eda8b5232223a482350a2}
 START_MIGRATION=${START_MIGRATION:-0040}
 
 psql_exec() {
-  docker exec -i "$DB_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U "$DB_USER" -d "$DB_NAME" "$@"
+  local args=(-X -v ON_ERROR_STOP=1 -U "$DB_USER" -d "$DB_NAME")
+  [[ -n "$DB_HOST" ]] && args+=(-h "$DB_HOST")
+  local pgoptions=""
+  [[ -n "$MIGRATION_ROLE" ]] && pgoptions="-c role=$MIGRATION_ROLE"
+  docker exec -e PGPASSWORD=*** -e PGOPTIONS="$pgoptions" -i "$DB_CONTAINER" psql "${args[@]}" "$@"
 }
 
 psql_value() {
-  docker exec "$DB_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U "$DB_USER" -d "$DB_NAME" -Atc "$1"
+  local args=(-X -v ON_ERROR_STOP=1 -U "$DB_USER" -d "$DB_NAME")
+  [[ -n "$DB_HOST" ]] && args+=(-h "$DB_HOST")
+  local pgoptions=""
+  [[ -n "$MIGRATION_ROLE" ]] && pgoptions="-c role=$MIGRATION_ROLE"
+  docker exec -e PGPASSWORD=*** -e PGOPTIONS="$pgoptions" "$DB_CONTAINER" psql "${args[@]}" -Atc "$1"
 }
 
 psql_exec >/dev/null <<'SQL'

@@ -253,6 +253,8 @@ Ikuti `docs/dev-production-workflow-plan.md`:
 
 ## 3.1 Pisahkan DB roles
 
+**Status:** Completed 25 Juli 2026. Runtime memakai `cubiqlo_app`; ownership, migrator, dan backup role terpisah. Clone + production permission regression lulus. Runbook: `docs/operations/database-roles.md`.
+
 **Target roles:**
 
 - `cubiqlo_owner`: pemilik schema, tidak dipakai app.
