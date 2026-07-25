@@ -56,7 +56,7 @@ export function AddExpenseButton({
         {label}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[min(90dvh,720px)] overflow-y-auto">
+        <DialogContent className="w-[calc(100%-1.5rem)] max-w-2xl max-h-[min(90dvh,720px)] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>{t("Tambah pengeluaran", "Add expense")}</DialogTitle>
           </DialogHeader>

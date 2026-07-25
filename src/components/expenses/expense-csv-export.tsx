@@ -37,7 +37,7 @@ export function ExpenseCsvExportButton({ month, categoryId, q }: ExpenseCsvExpor
   }
 
   return (
-    <Button variant="outline" size="sm" className="h-8 gap-1" onClick={handleExport} disabled={loading}>
+    <Button variant="outline" size="sm" className="h-10 gap-1 min-h-10" onClick={handleExport} disabled={loading}>
       {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
       {t("Ekspor CSV", "Export CSV")}
     </Button>

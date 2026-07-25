@@ -217,7 +217,7 @@ export function ExpenseForm({
     }
   }
 
-  const gridCols = compact ? "grid-cols-2 md:grid-cols-4" : "grid-cols-1 md:grid-cols-2";
+  const gridCols = compact ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-4" : "grid-cols-1 md:grid-cols-2";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">

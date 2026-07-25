@@ -323,10 +323,10 @@ export default async function ExpensesPage({
   const rangeEnd = Math.min(safePage * PAGE_SIZE, totalCount);
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 p-4 sm:space-y-6 sm:p-6">
       <PageHeader
         actions={
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             {canWrite && (
               <AddExpenseButton
                 workspaceId={ws.id}
@@ -334,6 +334,7 @@ export default async function ExpensesPage({
                 categories={categories}
                 projects={projectOpts}
                 clients={clientOpts}
+                triggerClassName="flex-1 sm:flex-none min-h-10"
               />
             )}
             <ExpenseCsvExportButton month={month} categoryId={categoryId || undefined} q={q || undefined} />
@@ -426,27 +427,31 @@ export default async function ExpensesPage({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {categoryBreakdown.map((c) => {
                 const pct = barTotal > 0 ? (c.primary / barTotal) * 100 : 0;
                 return (
-                  <div key={c.name} className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 w-40 shrink-0">
-                      <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
-                      <span className="text-sm truncate">{c.name}</span>
+                  <div key={c.name} className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
+                        <span className="text-sm truncate">{c.name}</span>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="text-sm tabular-nums whitespace-nowrap">
+                          {formatMoney(c.primary, baseCurrency)}
+                        </span>
+                        <span className="text-xs text-slate-500 w-8 text-right">
+                          {pct.toFixed(0)}%
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex-1 h-2 bg-slate-100 rounded overflow-hidden min-w-[40px]">
+                    <div className="h-2 bg-slate-100 rounded overflow-hidden">
                       <div
                         className="h-full rounded"
                         style={{ width: `${Math.min(100, pct)}%`, backgroundColor: c.color }}
                       />
                     </div>
-                    <span className="text-sm tabular-nums w-32 text-right whitespace-nowrap shrink-0">
-                      {formatMoney(c.primary, baseCurrency)}
-                    </span>
-                    <span className="text-xs text-slate-500 w-10 text-right shrink-0">
-                      {pct.toFixed(0)}%
-                    </span>
                   </div>
                 );
               })}
@@ -557,31 +562,31 @@ export default async function ExpensesPage({
                   />
 
                   {totalPages > 1 && (
-                    <div className="flex items-center justify-between mt-4 text-sm text-slate-500">
-                      <span>
+                    <div className="mt-4 flex flex-col gap-3 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+                      <span className="text-xs sm:text-sm">
                         {t(
                           `Menampilkan ${rangeStart}–${rangeEnd} dari ${totalCount}`,
                           `Showing ${rangeStart}–${rangeEnd} of ${totalCount}`,
                         )}
                       </span>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 self-end sm:self-auto">
                         {safePage <= 1 ? (
-                          <Button size="sm" variant="outline" className="h-8 w-8 p-0" disabled>
+                          <Button size="sm" variant="outline" className="h-10 w-10 p-0" disabled>
                             <ChevronLeft className="h-4 w-4" />
                           </Button>
                         ) : (
-                          <Button size="sm" variant="outline" className="h-8 w-8 p-0" asChild>
+                          <Button size="sm" variant="outline" className="h-10 w-10 p-0" asChild>
                             <Link href={pageHref(safePage - 1)}>
                               <ChevronLeft className="h-4 w-4" />
                             </Link>
                           </Button>
                         )}
                         {safePage >= totalPages ? (
-                          <Button size="sm" variant="outline" className="h-8 w-8 p-0" disabled>
+                          <Button size="sm" variant="outline" className="h-10 w-10 p-0" disabled>
                             <ChevronRight className="h-4 w-4" />
                           </Button>
                         ) : (
-                          <Button size="sm" variant="outline" className="h-8 w-8 p-0" asChild>
+                          <Button size="sm" variant="outline" className="h-10 w-10 p-0" asChild>
                             <Link href={pageHref(safePage + 1)}>
                               <ChevronRight className="h-4 w-4" />
                             </Link>
