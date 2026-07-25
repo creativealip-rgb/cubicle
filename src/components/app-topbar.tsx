@@ -11,6 +11,7 @@ import {
   LogOut,
   Settings,
   HelpCircle,
+  Megaphone,
   Menu,
   Sparkles,
   Check,
@@ -684,6 +685,12 @@ export function AppTopbar({ user }: AppTopbarProps) {
                     <Link href="/app/billing" className="cursor-pointer">
                       <CreditCard className="h-4 w-4" />
                       {t("Tagihan", "Billing")}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/app/whats-new" className="cursor-pointer">
+                      <Megaphone className="h-4 w-4" />
+                      What’s New
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>

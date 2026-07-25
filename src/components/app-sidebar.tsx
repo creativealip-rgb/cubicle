@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n-client";
+import { latestProductUpdateId, WHATS_NEW_STORAGE_KEY } from "@/lib/product-updates";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -34,6 +35,7 @@ import {
 
   ChevronDown,
   NotebookPen,
+  Megaphone,
 } from "lucide-react";
 import { useSidebar } from "@/components/app-shell";
 
@@ -134,6 +136,7 @@ export function AppSidebar({
   const { mobileOpen, setMobileOpen } = useSidebar();
   const { lang, t, setLang, pending } = useT();
   const canSeePersonal = workspaceRole === "owner";
+  const [hasUnreadUpdate, setHasUnreadUpdate] = useState(false);
 
   function changeLang(next: "id" | "en") {
     setLang(next);
@@ -144,6 +147,23 @@ export function AppSidebar({
     Personal: false,
     AI: false,
   });
+
+  useEffect(() => {
+    function syncWhatsNew() {
+      try {
+        setHasUnreadUpdate(window.localStorage.getItem(WHATS_NEW_STORAGE_KEY) !== latestProductUpdateId);
+      } catch {
+        setHasUnreadUpdate(false);
+      }
+    }
+    syncWhatsNew();
+    window.addEventListener("cubiqlo:whats-new-seen", syncWhatsNew);
+    window.addEventListener("storage", syncWhatsNew);
+    return () => {
+      window.removeEventListener("cubiqlo:whats-new-seen", syncWhatsNew);
+      window.removeEventListener("storage", syncWhatsNew);
+    };
+  }, []);
 
   function activeGroupForPath(path: string): string | null {
     // Sales routes hidden from nav — no group expand for them
@@ -398,6 +418,32 @@ export function AppSidebar({
 
       {/* Footer */}
       <div className="space-y-2 border-t border-sidebar-border p-3">
+        <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href="/app/whats-new"
+                className={cn(
+                  "relative flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  pathname === "/app/whats-new"
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  collapsed && "justify-center px-2",
+                )}
+              >
+                <Megaphone className="h-4 w-4 shrink-0" />
+                {!collapsed && <span className="flex-1">What’s New</span>}
+                {hasUnreadUpdate && !collapsed && (
+                  <span className="rounded-full bg-violet-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">New</span>
+                )}
+                {hasUnreadUpdate && collapsed && (
+                  <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-violet-600" aria-label="New product update" />
+                )}
+              </Link>
+            </TooltipTrigger>
+            {collapsed && <TooltipContent side="right">What’s New{hasUnreadUpdate ? " · New" : ""}</TooltipContent>}
+          </Tooltip>
+        </TooltipProvider>
         {collapsed ? (
           <button
             type="button"
