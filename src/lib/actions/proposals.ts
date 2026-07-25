@@ -11,6 +11,7 @@ import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 import { requireUser, assertWorkspaceWritable, assertClientInWorkspace } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { assertPublicTokenLifecycle, PublicTokenError } from "@/lib/public-token-policy";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -210,13 +211,33 @@ export async function acceptProposalPublic(proposalId: string, token: string) {
       .where(eq(proposals.id, proposalId))
       .limit(1);
     if (!p) throw new Error("Proposal not found");
-    if (p.sharedTokenHash !== tokenHash) throw new Error("Invalid token");
-    if (p.sharedTokenRevokedAt) throw new Error("Proposal link revoked");
-    if (p.sharedTokenExpiresAt && new Date() > p.sharedTokenExpiresAt) throw new Error("Proposal link expired");
+    try {
+      assertPublicTokenLifecycle({
+        presentedHash: tokenHash,
+        storedHash: p.sharedTokenHash,
+        revokedAt: p.sharedTokenRevokedAt,
+        expiresAt: p.sharedTokenExpiresAt,
+        status: p.status,
+        allowedStatuses: ["sent", "viewed", "accepted"],
+        processedStatuses: ["declined"],
+      });
+    } catch (error) {
+      if (error instanceof PublicTokenError) {
+        const messages = {
+          invalid: "Invalid token",
+          disabled: "Proposal link disabled",
+          revoked: "Proposal link revoked",
+          expired: "Proposal link expired",
+          processed: "Proposal was declined",
+          unavailable: "Proposal is not available",
+        } as const;
+        throw new Error(messages[error.code]);
+      }
+      throw error;
+    }
     if (p.status === "accepted") {
       return { id: proposalId, alreadyAccepted: true, projectId: p.projectId };
     }
-    if (p.status === "declined") throw new Error("Proposal was declined");
 
     const projectId = crypto.randomUUID();
     await tx.insert(projects).values({
@@ -293,8 +314,30 @@ export async function declineProposalPublic(proposalId: string, token: string, r
     .where(eq(proposals.id, proposalId))
     .limit(1);
   if (!p) throw new Error("Proposal not found");
-  if (p.sharedTokenHash !== tokenHash) throw new Error("Invalid token");
-  if (p.status === "accepted") throw new Error("Already accepted");
+  try {
+    assertPublicTokenLifecycle({
+      presentedHash: tokenHash,
+      storedHash: p.sharedTokenHash,
+      revokedAt: p.sharedTokenRevokedAt,
+      expiresAt: p.sharedTokenExpiresAt,
+      status: p.status,
+      allowedStatuses: ["sent", "viewed", "declined"],
+      processedStatuses: ["accepted"],
+    });
+  } catch (error) {
+    if (error instanceof PublicTokenError) {
+      const messages = {
+        invalid: "Invalid token",
+        disabled: "Proposal link disabled",
+        revoked: "Proposal link revoked",
+        expired: "Proposal link expired",
+        processed: "Already accepted",
+        unavailable: "Proposal is not available",
+      } as const;
+      throw new Error(messages[error.code]);
+    }
+    throw error;
+  }
   if (p.status === "declined") return { id: proposalId, alreadyDeclined: true };
 
   await db.update(proposals)

@@ -347,6 +347,14 @@ Kandidat:
 
 ## 4.3 Public token lifecycle consistency
 
+**Status:** Completed 25 Juli 2026. Shared pure policy `assertPublicTokenLifecycle` menyatukan hash match, enabled, revoked, exact expiry boundary (`<= now`), processed state, dan allowed status. Proposal accept/decline serta contract sign/decline memakai policy sebelum replay/processed handling. Portal resolver/upload, invoice share PDF, dan client file download mempertahankan equivalent SQL predicates agar token tetap terikat langsung ke client/invoice/file yang diminta. Disposable production clone membuktikan active, wrong-resource, disabled, revoked, expired, dan processed matrix; semua fixture mutation di-rollback dan clone dihapus.
+
+**Evidence:**
+- `src/lib/public-token-policy.ts`
+- `src/lib/public-token-policy.test.ts`
+- `src/lib/public-token-wiring.test.ts`
+- Disposable clone `cubicle_token_lifecycle` (removed after proof)
+
 **Area:** proposal, contract, portal, invoice, file download.
 
 **Aksi:**

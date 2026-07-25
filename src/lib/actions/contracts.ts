@@ -12,6 +12,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable, assertClientInWorkspace, assertProjectInWorkspace, ForbiddenError } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
+import { assertPublicTokenLifecycle, PublicTokenError } from "@/lib/public-token-policy";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -405,13 +406,31 @@ export async function signContract(input: {
     .where(eq(contracts.sharedTokenHash, tokenHash))
     .limit(1);
   if (!c) throw new Error("Contract not found");
-  if (c.sharedTokenRevokedAt) throw new Error("Contract revoked");
-  if (c.sharedTokenExpiresAt && c.sharedTokenExpiresAt < new Date()) {
-    throw new Error("Contract expired");
+  try {
+    assertPublicTokenLifecycle({
+      presentedHash: tokenHash,
+      storedHash: c.sharedTokenHash,
+      revokedAt: c.sharedTokenRevokedAt,
+      expiresAt: c.sharedTokenExpiresAt,
+      status: c.status,
+      allowedStatuses: ["sent", "viewed", "signed"],
+      processedStatuses: ["declined"],
+    });
+  } catch (error) {
+    if (error instanceof PublicTokenError) {
+      const messages = {
+        invalid: "Contract not found",
+        disabled: "Contract disabled",
+        revoked: "Contract revoked",
+        expired: "Contract expired",
+        processed: "Contract was declined",
+        unavailable: "Contract was not sent",
+      } as const;
+      throw new Error(messages[error.code]);
+    }
+    throw error;
   }
   if (c.status === "signed") throw new Error("Contract already signed");
-  if (c.status === "declined") throw new Error("Contract was declined");
-  if (c.status === "draft") throw new Error("Contract was not sent");
 
   // Capture IP + UA from headers (server action receives request context)
   const h = await headers();
@@ -461,9 +480,31 @@ export async function declineContract(input: { token: string; reason?: string })
     .where(eq(contracts.sharedTokenHash, tokenHash))
     .limit(1);
   if (!c) throw new Error("Contract not found");
-  if (c.sharedTokenRevokedAt) throw new Error("Contract revoked");
-  if (c.status === "signed") throw new Error("Contract already signed");
   if (c.status === "declined") throw new Error("Contract already declined");
+  try {
+    assertPublicTokenLifecycle({
+      presentedHash: tokenHash,
+      storedHash: c.sharedTokenHash,
+      revokedAt: c.sharedTokenRevokedAt,
+      expiresAt: c.sharedTokenExpiresAt,
+      status: c.status,
+      allowedStatuses: ["sent", "viewed"],
+      processedStatuses: ["signed"],
+    });
+  } catch (error) {
+    if (error instanceof PublicTokenError) {
+      const messages = {
+        invalid: "Contract not found",
+        disabled: "Contract disabled",
+        revoked: "Contract revoked",
+        expired: "Contract expired",
+        processed: "Contract already signed",
+        unavailable: "Contract was not sent",
+      } as const;
+      throw new Error(messages[error.code]);
+    }
+    throw error;
+  }
 
   const [updated] = await db.update(contracts)
     .set({
