@@ -63,10 +63,19 @@ ALERT Cubiqlo production | controlled monitoring self-test
 
 Telegram delivery succeeded with message ID `47737`. App and database were not interrupted.
 
+## Uptime Kuma checks
+
+The existing Uptime Kuma instance now has three active five-minute Cubiqlo monitors:
+
+- `Cubiqlo Landing` — HTTP `200`.
+- `Cubiqlo Login` — HTTP `200`.
+- `Cubiqlo Health + DB` — HTTP `200` plus `"db":"ok"` keyword.
+
+Initial heartbeat verification returned `up` for all three monitors. Kuma data persists in its existing Docker volume. No notification provider is configured in Kuma; Telegram alert delivery remains handled by the Hermes watchdog.
+
 ## Remaining gaps
 
-- Probe currently runs from the production VPS, so it cannot detect total VPS/network/provider loss. Add a true off-host probe later, using Uptime Kuma on another host or an external uptime provider.
-- Existing Uptime Kuma instance has no Cubiqlo monitor and no notification provider configured.
+- Both Hermes watchdog and Uptime Kuma currently run on the production VPS, so neither can detect total VPS/network/provider loss. Add a true off-host probe later, using Uptime Kuma on another host or an external uptime provider.
 - Sentry/server-client error tracking is not configured. Add only after DSN/project ownership and data-retention policy are approved.
 - The Traefik `5xx` check depends on current log format and should be replaced by structured access-log metrics when traffic grows.
 - Synthetic auth verifies anonymous denial, not a credentialed login journey. Add a dedicated non-production synthetic account before automating sign-in.
