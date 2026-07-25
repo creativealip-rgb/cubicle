@@ -8,7 +8,7 @@ export default defineConfig({
   workers: 1,
   reporter: "list",
   use: {
-    baseURL: "https://cubiqlo.com",
+    baseURL: process.env.BASE_URL ?? "https://cubiqlo.com",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },

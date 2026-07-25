@@ -37,6 +37,18 @@
 5. Contract create accepted foreign client, project, or template references and project/client mismatch.
 6. Portal request admin create/update allowed viewer mutation.
 
+## Browser E2E evidence
+
+Completed 25 July 2026 against disposable `cubicle_e2e` without production data.
+
+- Workspace A owner listed A resources but could not list/open B clients or projects.
+- Owner and member created clients only inside workspace A.
+- Viewer read workspace A but client mutation was rejected.
+- Outsider could not see workspace A or B resources.
+- Postconditions: viewer-forbidden rows `0`; unexpected workspace B mutations `0`.
+
+Suite: `e2e/cross-tenant.spec.ts`. Authentication uses Better Auth API because target is tenant boundaries, not login form stability. Keep workers at `1`; login rate limit is 5 requests per 5 minutes per IP.
+
 ## Residual risk
 
-Current automated coverage combines pure behavior tests, source-boundary regression, TypeScript, and existing application tests. It does not yet perform full browser multi-session E2E with separate owner/member/viewer accounts. Add that layer when a disposable seeded E2E database and session factory are available; never run destructive tenant fixtures against production.
+Current browser coverage exercises client/project isolation plus role mutation policy. Invoice, proposal, contract, expense, file, portal request, and public-token boundaries remain covered by unit/source guards, not browser E2E.
