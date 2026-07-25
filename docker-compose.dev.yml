@@ -1,0 +1,60 @@
+services:
+  cubicle-dev:
+    image: node:22-alpine
+    container_name: cubicle-dev
+    restart: unless-stopped
+    working_dir: /app
+    command:
+      - sh
+      - -lc
+      - node_modules/.bin/next dev --hostname 0.0.0.0 --port 3100
+    env_file:
+      - .env.development.local
+    environment:
+      NODE_ENV: development
+      NEXT_TELEMETRY_DISABLED: "1"
+      RESEND_API_KEY: ""
+      EMAIL_FROM: "Cubiqlo Dev <dev@localhost>"
+      R2_ACCOUNT_ID: ""
+      R2_ACCESS_KEY_ID: ""
+      R2_SECRET_ACCESS_KEY: ""
+      R2_BUCKET_NAME: ""
+      R2_PUBLIC_ENDPOINT: ""
+      PAKASIR_PROJECT: ""
+      PAKASIR_API_KEY: ""
+      AI_API_KEY: ""
+      OPENAI_API_KEY: ""
+      CRON_SECRET: ""
+      GOOGLE_CLIENT_ID: ""
+      GOOGLE_CLIENT_SECRET: ""
+      GOOGLE_TOKEN_ENCRYPTION_KEY: ""
+    volumes:
+      - .:/app
+    networks:
+      - dokploy-network
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1280M
+        reservations:
+          cpus: "0.1"
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3100/api/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 6
+      start_period: 60s
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  dokploy-network:
+    external: true

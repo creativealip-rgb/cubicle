@@ -2,6 +2,12 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getSessionCookie } from "better-auth/cookies"
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
 import { getCanonicalRedirect } from "@/lib/host-routing"
+import { getAuthEnvironmentOptions } from "@/lib/auth-environment"
+
+const authEnvironment = getAuthEnvironmentOptions(
+  process.env.BETTER_AUTH_URL,
+  process.env.NODE_ENV,
+)
 
 const protectedPrefixes = ["/app", "/onboarding"]
 
@@ -51,7 +57,9 @@ export async function proxy(request: NextRequest) {
     return response
   }
 
-  const sessionCookie = getSessionCookie(request)
+  const sessionCookie = getSessionCookie(request, {
+    cookiePrefix: authEnvironment.cookiePrefix,
+  })
   const canonicalRedirect = getCanonicalRedirect(
     host,
     pathname,

@@ -3,6 +3,12 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db";
 import { sendNotification } from "@/lib/notifications";
 import { resolveBetterAuthSecret } from "@/lib/auth-secret";
+import { getAuthEnvironmentOptions } from "@/lib/auth-environment";
+
+const authEnvironment = getAuthEnvironmentOptions(
+  process.env.BETTER_AUTH_URL,
+  process.env.NODE_ENV,
+);
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -133,9 +139,7 @@ export const auth = betterAuth({
     "http://127.0.0.1:3000",
   ].map((s) => s.replace(/\/$/, "")),
   advanced: {
-    crossSubDomainCookies: {
-      enabled: true,
-      domain: ".cubiqlo.com",
-    },
+    cookiePrefix: authEnvironment.cookiePrefix,
+    crossSubDomainCookies: authEnvironment.crossSubDomainCookies,
   },
 });
