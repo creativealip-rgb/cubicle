@@ -314,6 +314,8 @@ Kandidat:
 
 ## 4.1 Proposal acceptance atomicity
 
+**Status:** Completed 25 Juli 2026. Acceptance memakai satu DB transaction, proposal row `FOR UPDATE`, atomic invoice counter upsert, dan safe replay. Disposable production clone membuktikan dua request paralel menghasilkan tepat satu project/invoice/item; forced invoice failure me-roll back seluruh side effect. Regression: `src/lib/proposal-acceptance-atomicity.test.ts` dan `scripts/test-proposal-acceptance-atomicity.ts`.
+
 **File utama:**
 - `src/lib/actions/proposals.ts`
 
