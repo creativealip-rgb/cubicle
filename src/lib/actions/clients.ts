@@ -111,7 +111,7 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
     tags: parsed.tags,
     internalNotes: parsed.internalNotes || null,
     portalSlug: parsed.portalSlug || null,
-    portalSlugEnabled: parsed.portalSlugEnabled ?? true,
+    portalSlugEnabled: false,
     clientNumber,
     status: "active",
     ...portalFields,

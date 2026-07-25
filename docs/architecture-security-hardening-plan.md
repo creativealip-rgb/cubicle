@@ -420,6 +420,18 @@ Kandidat:
 
 ## 5.3 Friendly slug bukan secret utama
 
+**Status:** Completed 25 Juli 2026.
+
+**Implementasi:**
+- Client portal hanya menerima high-entropy token 256-bit yang disimpan sebagai SHA-256 hash.
+- Friendly `portalSlug` tidak lagi ikut resolver authorization dan default database dinonaktifkan.
+- Existing slug authorization dimatikan lewat migration; UI copy/open slug-only link dihapus.
+- Proposal, questionnaire, contract, dan invoice tetap memakai token acak, expiry, revocation, serta hashed-at-rest.
+- Download file tetap melewati authorization lalu menerima signed R2 URL berdurasi 5 menit.
+- Booking slug tetap identifier public sesuai fungsi discovery; mutation booking dilindungi rate limit dan validasi workspace.
+
+**Bukti:** `src/lib/friendly-slug-security.test.ts`; full suite 201 test dan lint bersih.
+
 **Aksi:**
 1. Pertahankan high-entropy secret/token sebagai authorization credential.
 2. Friendly slug hanya identifier; kombinasikan dengan secret atau authenticated session.

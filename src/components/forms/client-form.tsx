@@ -248,7 +248,7 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
         <div>
           <h3 className="text-sm font-medium">Portal klien</h3>
           <p className="text-xs text-muted-foreground">
-            Short link: /client-portal/{form.portalSlug || "slug"}
+            Akses memakai link aman dengan token yang dapat kedaluwarsa dan dicabut.
           </p>
         </div>
         <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
@@ -270,14 +270,6 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
             </p>
           </div>
           <div className="flex flex-col gap-2 text-sm sm:pb-1">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={form.portalSlugEnabled}
-                onChange={(e) => set("portalSlugEnabled", e.target.checked)}
-              />
-              Slug aktif
-            </label>
             {mode === "create" && (
               <label className="flex items-center gap-2">
                 <input

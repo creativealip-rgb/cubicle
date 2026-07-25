@@ -15,8 +15,6 @@ interface PortalTokenSectionProps {
     portalTokenHash: string | null;
     portalTokenExpiresAt: Date | string | null;
     portalTokenRevokedAt: Date | string | null;
-    portalSlug?: string | null;
-    portalSlugEnabled?: boolean;
   };
 }
 
@@ -25,7 +23,6 @@ export function PortalTokenSection({ client }: PortalTokenSectionProps) {
   const [portalUrl, setPortalUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
-  const [copiedShort, setCopiedShort] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleGenerate() {
@@ -72,14 +69,6 @@ export function PortalTokenSection({ client }: PortalTokenSectionProps) {
     setTimeout(() => setCopiedUrl(false), 2000);
   }
 
-  async function handleCopyShortLink() {
-    if (!client.portalSlug) return;
-    const url = `${window.location.origin}/client-portal/${client.portalSlug}`;
-    await navigator.clipboard.writeText(url);
-    setCopiedShort(true);
-    toast.success("Link singkat disalin");
-    setTimeout(() => setCopiedShort(false), 2000);
-  }
 
   const isExpired = client.portalTokenExpiresAt
     ? new Date(client.portalTokenExpiresAt) < new Date()
@@ -188,48 +177,7 @@ export function PortalTokenSection({ client }: PortalTokenSectionProps) {
           </div>
         )}
 
-        {client.portalSlug && (
-          <div className="rounded-lg border bg-muted/40 p-3">
-            <p className="text-xs font-medium text-muted-foreground">Link portal singkat</p>
-            <div className="mt-1 flex items-center gap-2">
-              <code className="block flex-1 break-all rounded bg-background px-2 py-1 text-xs">
-                {typeof window !== "undefined"
-                  ? `${window.location.origin}/client-portal/${client.portalSlug}`
-                  : `/client-portal/${client.portalSlug}`}
-              </code>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={handleCopyShortLink}
-              >
-                {copiedShort ? (
-                  <Check className="h-3 w-3 text-green-600" />
-                ) : (
-                  <Copy className="h-3 w-3" />
-                )}
-              </Button>
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {client.portalSlugEnabled ? "Slug aktif" : "Slug nonaktif"}
-            </p>
-          </div>
-        )}
-
         <div className="flex gap-2 flex-wrap">
-          {client.portalSlug && client.portalSlugEnabled && (
-            <Button size="sm" className="gap-1" asChild>
-              <a
-                href={`/client-portal/${client.portalSlug}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <ExternalLink className="h-3 w-3" />
-                Buka portal klien
-              </a>
-            </Button>
-          )}
           <Button
             variant="outline"
             size="sm"

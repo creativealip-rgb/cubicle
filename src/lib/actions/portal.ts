@@ -2,23 +2,22 @@
 
 import { db } from "@/db";
 import { clients, portalAccessLogs } from "@/db/schema";
-import { eq, or } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { createHash } from "crypto";
 
 export async function getClientPortalAccess(rawToken: string) {
   const tokenHash = createHash("sha256").update(rawToken).digest("hex");
   const { enforceServerActionRateLimit } = await import("@/lib/distributed-rate-limit");
   await enforceServerActionRateLimit("portal:resolve", tokenHash, { limit: 60, windowSec: 60 });
-  const slug = rawToken.trim().toLowerCase();
 
   const [client] = await db
     .select()
     .from(clients)
-    .where(or(eq(clients.portalTokenHash, tokenHash), eq(clients.portalSlug, slug)))
+    .where(eq(clients.portalTokenHash, tokenHash))
     .limit(1);
 
   if (!client) throw new Error("Invalid portal link");
-  if (client.portalSlug === slug && !client.portalSlugEnabled) throw new Error("Portal slug is disabled");
+
   if (!client.portalEnabled) throw new Error("Portal is disabled");
   if (client.portalTokenRevokedAt) throw new Error("Portal access has been revoked");
   if (client.portalTokenExpiresAt && new Date(client.portalTokenExpiresAt) < new Date()) {

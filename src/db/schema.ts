@@ -149,7 +149,7 @@ export const clients = pgTable("clients", {
   portalTokenExpiresAt: timestamp("portal_token_expires_at", { withTimezone: true }),
   portalTokenRevokedAt: timestamp("portal_token_revoked_at", { withTimezone: true }),
   portalSlug: text("portal_slug").unique(),
-  portalSlugEnabled: boolean("portal_slug_enabled").notNull().default(true),
+  portalSlugEnabled: boolean("portal_slug_enabled").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
