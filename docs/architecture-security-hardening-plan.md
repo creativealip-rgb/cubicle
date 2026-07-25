@@ -559,6 +559,8 @@ WAL/PITR belum wajib untuk DB 15 MB dan user awal. Aktifkan saat salah satu trig
 
 ## 7.3 Health-gated deployment dan rollback
 
+**Status:** Completed 25 Juli 2026. `scripts/operations/cubiqlo_deploy_release.sh` memverifikasi manifest/image ID/source revision, menjalankan shared pre-deploy guard, merekam current/previous image, mengganti hanya service app tanpa rebuild/DB/proxy changes, menunggu container health serta external DB health dan smoke routes, lalu rollback otomatis bila gate gagal. Controlled failure memakai synthetic 404 berhasil mengembalikan image `sha256:b791ce17...` dan menunggu external health pulih sebelum `ROLLBACK_OK`. Deploy nyata kemudian memakai immutable image `cubicle:sha-c2e144c4784a76c95196b953e7c042ec29d4f223` (`sha256:0ab03336...`) dengan health `status=ok`, `db=ok`.
+
 **Aksi:**
 1. Simpan current + previous image SHA.
 2. Pull/start image baru.

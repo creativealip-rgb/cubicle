@@ -51,11 +51,17 @@ rollback() {
   CUBIQLO_IMAGE="$old_id" docker compose up -d --no-deps --no-build --force-recreate cubicle >/dev/null
   for _ in $(seq 1 "$WAIT_SECONDS"); do
     state=$(docker inspect cubicle-cubicle-1 --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' 2>/dev/null || true)
-    [[ "$state" == "healthy" ]] && break
+    if [[ "$state" == "healthy" ]]; then
+      rollback_health=$(curl -fsS --max-time 10 "$HEALTH_URL" 2>/dev/null || true)
+      if grep -q '"status":"ok"' <<<"$rollback_health" && grep -q '"db":"ok"' <<<"$rollback_health"; then
+        echo "ROLLBACK_OK image=$old_id" >&2
+        return 0
+      fi
+    fi
     sleep 1
   done
-  curl -fsS --max-time 20 "$HEALTH_URL" >/dev/null
-  echo "ROLLBACK_OK image=$old_id" >&2
+  echo "ROLLBACK_FAILED image=$old_id" >&2
+  return 1
 }
 trap 'rc=$?; if [[ $rc -ne 0 ]]; then rollback || true; fi; exit $rc' EXIT
 
@@ -69,11 +75,23 @@ for _ in $(seq 1 "$WAIT_SECONDS"); do
 done
 [[ "${state:-}" == "healthy" ]] || { echo "ERROR: health timeout" >&2; false; }
 
-health=$(curl -fsS --max-time 20 "$HEALTH_URL")
-grep -q '"status":"ok"' <<<"$health"
-grep -q '"db":"ok"' <<<"$health"
+health=""
+for _ in $(seq 1 "$WAIT_SECONDS"); do
+  health=$(curl -fsS --max-time 10 "$HEALTH_URL" 2>/dev/null || true)
+  if grep -q '"status":"ok"' <<<"$health" && grep -q '"db":"ok"' <<<"$health"; then
+    break
+  fi
+  sleep 1
+done
+grep -q '"status":"ok"' <<<"$health" || { echo "ERROR: external health timeout" >&2; false; }
+grep -q '"db":"ok"' <<<"$health" || { echo "ERROR: external DB health timeout" >&2; false; }
 for url in $SMOKE_URLS; do
-  code=$(curl -LsS -o /dev/null -w '%{http_code}' --max-time 20 "$url")
+  code=""
+  for _ in $(seq 1 "$WAIT_SECONDS"); do
+    code=$(curl -LsS -o /dev/null -w '%{http_code}' --max-time 10 "$url" 2>/dev/null || true)
+    [[ "$code" == "200" ]] && break
+    sleep 1
+  done
   [[ "$code" == "200" ]] || { echo "ERROR: smoke failed $url HTTP $code" >&2; false; }
 done
 
