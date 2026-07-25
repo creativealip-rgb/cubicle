@@ -179,6 +179,7 @@ Status: **fixed + deployed + live verified**.
 - Regression test host routing: `7/7` pass; full suite `108/108` pass.
 - **Redirect-loop regression fixed:** redirect tidak lagi mempercayai keberadaan cookie mentah. Landing memvalidasi sesi lewat Better Auth; stale/logout cookie tetap bisa membuka login dan landing tanpa `ERR_TOO_MANY_REDIRECTS`.
 - Live E2E: stale cookie → login `200`, apex `200`; sesi valid → apex ke dashboard; sign-out API `200`, lalu login/apex tetap `200`.
+- Logo Cubiqlo pada halaman `/login` dan `/signup` sekarang mengarah ke landing canonical `https://cubiqlo.com/`, berlaku desktop/mobile dan sudah diverifikasi lewat klik live.
 
 ## Belum dicek / hold
 
