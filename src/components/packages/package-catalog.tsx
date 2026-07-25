@@ -200,7 +200,7 @@ export function PackageCatalog({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 sm:space-y-6">
       <div className="app-page-header">
         <div className="min-w-0">
           <h1 className="app-page-title">{t("Service", "Services")}</h1>
@@ -211,10 +211,12 @@ export function PackageCatalog({
             )}
           </p>
         </div>
-        <Button size="sm" className="gap-1" onClick={openCreate}>
-          <Plus className="h-4 w-4" />
-          {t("Service Baru", "New Service")}
-        </Button>
+        <div className="app-page-actions">
+          <Button size="sm" className="gap-1" onClick={openCreate}>
+            <Plus className="h-4 w-4" />
+            {t("Service Baru", "New Service")}
+          </Button>
+        </div>
       </div>
 
       {packages.length === 0 ? (
