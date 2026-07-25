@@ -8,7 +8,11 @@ function getWhatsAppUrl(phone: string | null | undefined, message: string) {
   return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
 }
 
-function getMailUrl(email: string | null | undefined, subject: string, body: string) {
+function getMailUrl(
+  email: string | null | undefined,
+  subject: string,
+  body: string,
+) {
   if (!email || !email.includes("@")) return null;
   return `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
@@ -32,7 +36,7 @@ export function PortalContactButtons({
   const about = projectName
     ? `project ${projectName}`
     : clientName
-      ? `account ${clientName}`
+      ? `${clientName}`
       : "project saya";
   const waText = `Halo ${who}, saya ingin diskusi soal ${about}.`;
   const mailSubject = projectName
@@ -48,19 +52,28 @@ export function PortalContactButtons({
   if (!waUrl && !mailUrl) {
     return (
       <p className="text-sm text-muted-foreground">
-        Kontak belum diset di workspace. Minta tim set email/telepon billing di Settings.
+        Kontak belum diset di workspace. Minta tim set email/telepon billing di
+        Settings.
       </p>
     );
   }
 
   return (
-    <div className={compact ? "flex flex-wrap gap-2" : "flex flex-col gap-2 sm:flex-row"}>
+    <div
+      className={
+        compact ? "flex flex-wrap gap-2" : "flex flex-col gap-2 sm:flex-row"
+      }
+    >
       {waUrl && (
         <Button
           asChild
           variant={compact ? "outline" : "default"}
           size={compact ? "sm" : "default"}
-          className={compact ? "h-8 gap-1 text-xs text-emerald-700 hover:text-emerald-800" : "gap-2 bg-emerald-600 hover:bg-emerald-700"}
+          className={
+            compact
+              ? "min-h-11 gap-1 text-xs text-emerald-700 hover:text-emerald-800"
+              : "min-h-11 gap-2 bg-emerald-600 hover:bg-emerald-700"
+          }
         >
           <a href={waUrl} target="_blank" rel="noreferrer">
             <MessageCircle className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
@@ -73,7 +86,7 @@ export function PortalContactButtons({
           asChild
           variant="outline"
           size={compact ? "sm" : "default"}
-          className={compact ? "h-8 gap-1 text-xs" : "gap-2"}
+          className={compact ? "min-h-11 gap-1 text-xs" : "min-h-11 gap-2"}
         >
           <a href={mailUrl}>
             <Mail className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />

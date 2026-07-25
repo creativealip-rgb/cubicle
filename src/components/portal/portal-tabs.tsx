@@ -12,11 +12,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export type PortalTabKey =
-  | "overview"
-  | "projects"
-  | "files"
-  | "invoices"
-  | "contact";
+  "overview" | "projects" | "files" | "invoices" | "contact";
 
 const TAB_KEYS: PortalTabKey[] = [
   "overview",
@@ -101,56 +97,58 @@ export function PortalTabs({
   }> = [
     {
       key: "overview",
-      label: "Overview",
+      label: "Ringkasan",
       icon: <LayoutDashboard className="h-3.5 w-3.5" />,
     },
     {
       key: "projects",
-      label: "Projects",
+      label: "Proyek",
       icon: <FolderKanban className="h-3.5 w-3.5" />,
       badge: counts?.projects,
     },
     {
       key: "files",
-      label: "Folders",
+      label: "File",
       icon: <FolderOpen className="h-3.5 w-3.5" />,
       badge: counts?.files,
     },
     {
       key: "invoices",
-      label: "Invoices",
+      label: "Invoice",
       icon: <Receipt className="h-3.5 w-3.5" />,
       badge: counts?.invoices,
     },
     {
       key: "contact",
-      label: "Contact",
+      label: "Kontak",
       icon: <MessageCircle className="h-3.5 w-3.5" />,
     },
   ];
 
   const panelClass =
-    "mt-0 min-h-[min(70vh,640px)] space-y-6 focus-visible:outline-none data-[state=inactive]:hidden data-[state=active]:portal-fade-in";
+    "mt-0 space-y-6 focus-visible:outline-none data-[state=inactive]:hidden data-[state=active]:portal-fade-in";
 
   return (
     <Tabs value={activeTab} onValueChange={changeTab} className="space-y-5">
-      <TabsList className="h-auto w-full flex-wrap justify-start gap-1 bg-muted/60 p-1">
-        {tabs.map((tab) => (
-          <TabsTrigger
-            key={tab.key}
-            value={tab.key}
-            className="gap-1.5 px-3 py-2 text-xs transition-all sm:text-sm data-[state=active]:shadow-sm"
-          >
-            {tab.icon}
-            <span>{tab.label}</span>
-            {typeof tab.badge === "number" && tab.badge > 0 ? (
-              <span className="rounded-full bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                {tab.badge}
-              </span>
-            ) : null}
-          </TabsTrigger>
-        ))}
-      </TabsList>
+      <div className="w-full overflow-x-auto pb-1">
+        <TabsList className="h-auto min-w-max justify-start gap-1 bg-muted/60 p-1">
+          {tabs.map((tab) => (
+            <TabsTrigger
+              key={tab.key}
+              value={tab.key}
+              className="min-h-11 gap-1.5 px-3 py-2 text-xs transition-all sm:text-sm data-[state=active]:shadow-sm"
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+              {typeof tab.badge === "number" && tab.badge > 0 ? (
+                <span className="rounded-full bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  {tab.badge}
+                </span>
+              ) : null}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </div>
 
       <TabsContent value="overview" forceMount className={panelClass}>
         {overview}

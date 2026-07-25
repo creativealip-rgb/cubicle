@@ -39,7 +39,7 @@ export function PortalActionButtons({
   const [loading, setLoading] = useState(false);
   const [projectId, setProjectId] = useState<string>("");
   const [message, setMessage] = useState("");
-  const [reportPeriod, setReportPeriod] = useState("Last 30 days");
+  const [reportPeriod, setReportPeriod] = useState("30 hari terakhir");
   const [preferredDate, setPreferredDate] = useState("");
 
   function close() {
@@ -47,7 +47,7 @@ export function PortalActionButtons({
     setKind(null);
     setMessage("");
     setProjectId("");
-    setReportPeriod("Last 30 days");
+    setReportPeriod("30 hari terakhir");
     setPreferredDate("");
   }
 
@@ -65,8 +65,8 @@ export function PortalActionButtons({
       });
       toast.success(
         kind === "report"
-          ? "Request report terkirim ke tim"
-          : "Request meeting terkirim ke tim",
+          ? "Permintaan laporan terkirim ke tim"
+          : "Permintaan pertemuan terkirim ke tim",
       );
       close();
       router.refresh();
@@ -83,20 +83,20 @@ export function PortalActionButtons({
         <Button
           type="button"
           variant="outline"
-          className="h-10 px-5 rounded-lg gap-2"
+          className="min-h-11 gap-2 rounded-lg px-4"
           onClick={() => setKind("report")}
         >
           <BarChart3 className="h-4 w-4" />
-          Request Report
+          Minta Laporan
         </Button>
         <Button
           type="button"
           variant="outline"
-          className="h-10 px-5 rounded-lg gap-2"
+          className="min-h-11 gap-2 rounded-lg px-4"
           onClick={() => setKind("meeting")}
         >
           <Calendar className="h-4 w-4" />
-          Request Meeting
+          Ajukan Pertemuan
         </Button>
       </div>
 
@@ -104,7 +104,7 @@ export function PortalActionButtons({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {kind === "report" ? "Request Report" : "Request Meeting"}
+              {kind === "report" ? "Minta Laporan" : "Ajukan Pertemuan"}
             </DialogTitle>
             <DialogDescription>
               {kind === "report"
@@ -116,16 +116,16 @@ export function PortalActionButtons({
           <div className="space-y-3">
             {projects.length > 0 && (
               <div className="space-y-1.5">
-                <Label className="text-xs">Project (opsional)</Label>
+                <Label className="text-xs">Proyek (opsional)</Label>
                 <Select
                   value={projectId || "none"}
                   onValueChange={(v) => setProjectId(v === "none" ? "" : v)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Semua project" />
+                    <SelectValue placeholder="Semua proyek" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Semua project</SelectItem>
+                    <SelectItem value="none">Semua proyek</SelectItem>
                     {projects.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.name}
@@ -145,7 +145,7 @@ export function PortalActionButtons({
                   id="report-period"
                   value={reportPeriod}
                   onChange={(e) => setReportPeriod(e.target.value)}
-                  placeholder="Last 30 days / This month"
+                  placeholder="30 hari terakhir / Bulan ini"
                 />
               </div>
             )}
@@ -183,7 +183,12 @@ export function PortalActionButtons({
           </div>
 
           <DialogFooter className="gap-2">
-            <Button type="button" variant="outline" onClick={close} disabled={loading}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={close}
+              disabled={loading}
+            >
               Batal
             </Button>
             <Button type="button" onClick={submit} disabled={loading}>
@@ -193,7 +198,7 @@ export function PortalActionButtons({
                   Mengirim…
                 </>
               ) : (
-                "Kirim request"
+                "Kirim permintaan"
               )}
             </Button>
           </DialogFooter>

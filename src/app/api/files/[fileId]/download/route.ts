@@ -2,12 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { createHash } from "crypto";
 import { db } from "@/db";
-import { clients, files, projects, workspaceMembers } from "@/db/schema";
+import {
+  clients,
+  files,
+  portalVisits,
+  projects,
+  workspaceMembers,
+} from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { getSignedDownloadUrl } from "@/lib/r2";
 import { and, eq, gt, isNull, or } from "drizzle-orm";
 
-async function canAccessFile(file: typeof files.$inferSelect, token: string | null) {
+async function canAccessFile(
+  file: typeof files.$inferSelect,
+  token: string | null,
+) {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (session?.user?.id) {
@@ -46,7 +55,10 @@ async function canAccessFile(file: typeof files.$inferSelect, token: string | nu
           eq(clients.portalEnabled, true),
           eq(clients.portalTokenHash, tokenHash),
           isNull(clients.portalTokenRevokedAt),
-          or(isNull(clients.portalTokenExpiresAt), gt(clients.portalTokenExpiresAt, new Date())),
+          or(
+            isNull(clients.portalTokenExpiresAt),
+            gt(clients.portalTokenExpiresAt, new Date()),
+          ),
         ),
       )
       .limit(1);
@@ -66,7 +78,10 @@ async function canAccessFile(file: typeof files.$inferSelect, token: string | nu
           eq(clients.portalEnabled, true),
           eq(clients.portalTokenHash, tokenHash),
           isNull(clients.portalTokenRevokedAt),
-          or(isNull(clients.portalTokenExpiresAt), gt(clients.portalTokenExpiresAt, new Date())),
+          or(
+            isNull(clients.portalTokenExpiresAt),
+            gt(clients.portalTokenExpiresAt, new Date()),
+          ),
         ),
       )
       .limit(1);
@@ -99,6 +114,75 @@ export async function GET(
   }
 
   const url = await getSignedDownloadUrl(file.storageKey);
+
+  // A portal file is viewed only after a successful token-authorized download.
+  if (token) {
+    try {
+      const tokenHash = createHash("sha256").update(token).digest("hex");
+      const [portalClient] = await db
+        .select({
+          id: clients.id,
+          name: clients.name,
+          companyName: clients.companyName,
+        })
+        .from(clients)
+        .where(
+          and(
+            eq(clients.workspaceId, file.workspaceId),
+            eq(clients.portalEnabled, true),
+            eq(clients.portalTokenHash, tokenHash),
+            isNull(clients.portalTokenRevokedAt),
+            or(
+              isNull(clients.portalTokenExpiresAt),
+              gt(clients.portalTokenExpiresAt, new Date()),
+            ),
+          ),
+        )
+        .limit(1);
+
+      if (portalClient) {
+        const [firstVisit] = await db
+          .select({ id: portalVisits.id })
+          .from(portalVisits)
+          .where(
+            and(
+              eq(portalVisits.resourceType, "file"),
+              eq(portalVisits.resourceId, file.id),
+            ),
+          )
+          .limit(1);
+        const requestHeaders = await headers();
+        await db.insert(portalVisits).values({
+          workspaceId: file.workspaceId,
+          clientId: portalClient.id,
+          resourceType: "file",
+          resourceId: file.id,
+          ipAddress: requestHeaders.get("x-forwarded-for") || undefined,
+          userAgent: requestHeaders.get("user-agent") || undefined,
+        });
+        await db
+          .update(files)
+          .set({ lastViewedAt: new Date() })
+          .where(eq(files.id, file.id));
+
+        if (!firstVisit) {
+          const { notifyWorkspaceMembers } =
+            await import("@/lib/in-app-notifications");
+          await notifyWorkspaceMembers(file.workspaceId, {
+            type: "file_viewed",
+            title: `${portalClient.companyName || portalClient.name} melihat ${file.name}`,
+            body: "File pertama kali dibuka dari portal",
+            link: `/app/files?focus=${file.id}`,
+            entityType: "file",
+            entityId: file.id,
+            actorId: null,
+          });
+        }
+      }
+    } catch {
+      // Download tetap berjalan bila analytics/notification gagal.
+    }
+  }
 
   return NextResponse.redirect(url);
 }

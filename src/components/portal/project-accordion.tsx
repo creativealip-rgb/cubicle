@@ -187,7 +187,14 @@ function progressPie(pct: number, size = 44) {
   const offset = c * (1 - Math.min(Math.max(pct, 0), 100) / 100);
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" className="shrink-0">
-      <circle cx="20" cy="20" r={r} fill="none" stroke="#e2e8f0" strokeWidth="5" />
+      <circle
+        cx="20"
+        cy="20"
+        r={r}
+        fill="none"
+        stroke="#e2e8f0"
+        strokeWidth="5"
+      />
       <circle
         cx="20"
         cy="20"
@@ -200,13 +207,19 @@ function progressPie(pct: number, size = 44) {
         strokeDashoffset={offset}
         transform="rotate(-90 20 20)"
       />
-      <text x="20" y="21" textAnchor="middle" dominantBaseline="middle" className="fill-slate-700" style={{ fontSize: 9, fontWeight: 600 }}>
+      <text
+        x="20"
+        y="21"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        className="fill-slate-700"
+        style={{ fontSize: 9, fontWeight: 600 }}
+      >
         {pct}%
       </text>
     </svg>
   );
 }
-
 
 // Whether any client-visible task is awaiting review (client action)
 function hasReviewTask(tasks: Task[]) {
@@ -221,7 +234,17 @@ type StatusMeta = {
 
 // Human status in Bahasa Indonesia + color accent.
 // `needsReview` bumps an active project to the amber "needs your review" state.
-function getProjectStatusMeta(status: string, needsReview: boolean): StatusMeta {
+function getProjectStatusMeta(
+  status: string,
+  needsReview: boolean,
+  allTasksDone = false,
+): StatusMeta {
+  if (allTasksDone && status === "active" && !needsReview)
+    return {
+      label: "Menunggu penutupan",
+      badgeClass: "bg-emerald-100 text-emerald-700 border-emerald-200",
+      borderClass: "border-l-emerald-400",
+    };
   if (needsReview && (status === "active" || status === "on_hold")) {
     return {
       label: "Menunggu review kamu",
@@ -285,13 +308,20 @@ function getDeadlineMeta(finishDate: string | null, projectStatus: string) {
   today.setHours(0, 0, 0, 0);
   const dueMid = new Date(due);
   dueMid.setHours(0, 0, 0, 0);
-  const diffDays = Math.round((dueMid.getTime() - today.getTime()) / 86_400_000);
+  const diffDays = Math.round(
+    (dueMid.getTime() - today.getTime()) / 86_400_000,
+  );
 
   if (diffDays < 0) {
-    return { text: `Target: ${dateStr} · telat ${Math.abs(diffDays)} hari`, overdue: true };
+    return {
+      text: `Target: ${dateStr} · telat ${Math.abs(diffDays)} hari`,
+      overdue: true,
+    };
   }
-  if (diffDays === 0) return { text: `Target: ${dateStr} · hari ini`, overdue: false };
-  if (diffDays === 1) return { text: `Target: ${dateStr} · besok`, overdue: false };
+  if (diffDays === 0)
+    return { text: `Target: ${dateStr} · hari ini`, overdue: false };
+  if (diffDays === 1)
+    return { text: `Target: ${dateStr} · besok`, overdue: false };
   return { text: `Target: ${dateStr} · ${diffDays} hari lagi`, overdue: false };
 }
 
@@ -367,114 +397,149 @@ function ProjectExpandedContent({
       {(project.startDate || project.finishDate) && (
         <p className="text-xs text-muted-foreground">
           {project.startDate &&
-            `Start: ${new Date(project.startDate).toLocaleDateString()}`}
+            `Mulai: ${new Date(project.startDate).toLocaleDateString("id-ID")}`}
           {project.startDate && project.finishDate && " · "}
           {project.finishDate &&
-            `Finish: ${new Date(project.finishDate).toLocaleDateString()}`}
+            `Selesai: ${new Date(project.finishDate).toLocaleDateString("id-ID")}`}
         </p>
       )}
       {isByHours && project.rate && (
         <p className="text-xs text-muted-foreground">
-          Rate:{" "}
+          Tarif:{" "}
           {new Intl.NumberFormat("en-US", {
             style: "currency",
             currency: project.currency || "IDR",
           }).format(Number(project.rate))}
-          /hr
+          /jam
         </p>
       )}
       {isByPackage && selectedPkg && (
         <div>
           <p className="text-sm font-semibold">
             {selectedPkg.name}
-            {selectedPkg.hours && ` — ${selectedPkg.hours} HOURS`}
+            {selectedPkg.hours && ` — ${selectedPkg.hours} JAM`}
           </p>
           <p className="text-xs text-muted-foreground">
-            Rate:{" "}
-            {formatCurrency(selectedPkg.price, selectedPkg.currency || project.currency || "IDR")}
-            /month
+            Tarif:{" "}
+            {formatCurrency(
+              selectedPkg.price,
+              selectedPkg.currency || project.currency || "IDR",
+            )}
+            /bulan
           </p>
         </div>
       )}
       {!isByHours && !isByPackage && project.budget && (
         <p className="text-xs text-muted-foreground">
-          Budget:{" "}
-          {formatCurrency(project.budget, project.currency || "IDR")}
+          Anggaran: {formatCurrency(project.budget, project.currency || "IDR")}
         </p>
       )}
 
       {/* Hours Summary (by_hours / by_package) */}
-      {(isByHours || (isByPackage && project.selectedPackageId)) && hoursSummary && (() => {
-        const packageTotalMinutes = selectedPkg?.hours ? selectedPkg.hours * 60 : null;
-        const usedMinutes = hoursSummary.totalMinutes;
-        const remainingMinutes = packageTotalMinutes != null ? Math.max(0, packageTotalMinutes - usedMinutes) : null;
-        const usagePercent = packageTotalMinutes != null && packageTotalMinutes > 0 ? Math.round((usedMinutes / packageTotalMinutes) * 100) : null;
+      {(isByHours || (isByPackage && project.selectedPackageId)) &&
+        hoursSummary &&
+        (() => {
+          const packageTotalMinutes = selectedPkg?.hours
+            ? selectedPkg.hours * 60
+            : null;
+          const usedMinutes = hoursSummary.totalMinutes;
+          const remainingMinutes =
+            packageTotalMinutes != null
+              ? Math.max(0, packageTotalMinutes - usedMinutes)
+              : null;
+          const usagePercent =
+            packageTotalMinutes != null && packageTotalMinutes > 0
+              ? Math.round((usedMinutes / packageTotalMinutes) * 100)
+              : null;
 
-        return (
-          <div className="rounded-lg border bg-muted/30 p-4">
-            <h4 className="text-sm font-semibold mb-3">
-              {isByPackage ? "Package Hours" : "Hours Summary"}
-            </h4>
-            <div className={`grid gap-4 text-center ${isByPackage && selectedPkg ? "grid-cols-4" : "grid-cols-3"}`}>
-              {isByPackage && selectedPkg ? (
-                <>
-                  <div>
-                    <p className="text-xl font-bold">{formatMinutes(packageTotalMinutes!)}</p>
-                    <p className="text-xs text-muted-foreground">Package Total</p>
+          return (
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <h4 className="text-sm font-semibold mb-3">
+                {isByPackage ? "Jam paket" : "Ringkasan jam"}
+              </h4>
+              <div
+                className={`grid gap-4 text-center ${isByPackage && selectedPkg ? "grid-cols-4" : "grid-cols-3"}`}
+              >
+                {isByPackage && selectedPkg ? (
+                  <>
+                    <div>
+                      <p className="text-xl font-bold">
+                        {formatMinutes(packageTotalMinutes!)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Total paket
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xl font-bold text-amber-600">
+                        {formatMinutes(usedMinutes)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Terpakai</p>
+                    </div>
+                    <div>
+                      <p className="text-xl font-bold text-emerald-600">
+                        {formatMinutes(remainingMinutes!)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Sisa</p>
+                    </div>
+                    <div>
+                      <p className="text-xl font-bold">
+                        {hoursSummary.entryCount}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Entri</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <p className="text-xl font-bold">
+                        {formatMinutes(hoursSummary.totalMinutes)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Total tercatat
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xl font-bold text-emerald-600">
+                        {formatMinutes(hoursSummary.billableMinutes)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Dapat ditagih
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xl font-bold">
+                        {hoursSummary.entryCount}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Entri</p>
+                    </div>
+                  </>
+                )}
+              </div>
+              {usagePercent != null && (
+                <div className="mt-3 space-y-1">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{usagePercent}% terpakai</span>
+                    <span>{formatMinutes(remainingMinutes!)} tersisa</span>
                   </div>
-                  <div>
-                    <p className="text-xl font-bold text-amber-600">{formatMinutes(usedMinutes)}</p>
-                    <p className="text-xs text-muted-foreground">Used</p>
+                  <div className="h-2.5 w-full rounded-full bg-slate-200">
+                    <div
+                      className={`h-full rounded-full transition-all ${usagePercent > 90 ? "bg-red-500" : usagePercent > 70 ? "bg-amber-500" : "bg-emerald-500"}`}
+                      style={{ width: `${Math.min(usagePercent, 100)}%` }}
+                    />
                   </div>
-                  <div>
-                    <p className="text-xl font-bold text-emerald-600">{formatMinutes(remainingMinutes!)}</p>
-                    <p className="text-xs text-muted-foreground">Remaining</p>
-                  </div>
-                  <div>
-                    <p className="text-xl font-bold">{hoursSummary.entryCount}</p>
-                    <p className="text-xs text-muted-foreground">Entries</p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <p className="text-xl font-bold">{formatMinutes(hoursSummary.totalMinutes)}</p>
-                    <p className="text-xs text-muted-foreground">Total Tracked</p>
-                  </div>
-                  <div>
-                    <p className="text-xl font-bold text-emerald-600">{formatMinutes(hoursSummary.billableMinutes)}</p>
-                    <p className="text-xs text-muted-foreground">Billable</p>
-                  </div>
-                  <div>
-                    <p className="text-xl font-bold">{hoursSummary.entryCount}</p>
-                    <p className="text-xs text-muted-foreground">Entries</p>
-                  </div>
-                </>
+                </div>
               )}
             </div>
-            {usagePercent != null && (
-              <div className="mt-3 space-y-1">
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{usagePercent}% used</span>
-                  <span>{formatMinutes(remainingMinutes!)} left</span>
-                </div>
-                <div className="h-2.5 w-full rounded-full bg-slate-200">
-                  <div
-                    className={`h-full rounded-full transition-all ${usagePercent > 90 ? "bg-red-500" : usagePercent > 70 ? "bg-amber-500" : "bg-emerald-500"}`}
-                    style={{ width: `${Math.min(usagePercent, 100)}%` }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      })()}
+          );
+        })()}
 
       {/* By Package: no package assigned yet */}
       {isByPackage && !project.selectedPackageId && (
         <div className="rounded-lg border bg-muted/30 p-6 text-center">
           <p className="text-sm text-muted-foreground">
-            Package not assigned yet. Your admin will assign a package to this project.
+            Package not assigned yet. Your admin will assign a package to this
+            project.
           </p>
         </div>
       )}
@@ -486,7 +551,11 @@ function ProjectExpandedContent({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {packages.map((pkg) => {
               let features: string[] = [];
-              try { features = pkg.features ? JSON.parse(pkg.features) : []; } catch { /* ignore */ }
+              try {
+                features = pkg.features ? JSON.parse(pkg.features) : [];
+              } catch {
+                /* ignore */
+              }
               const isHighlighted = !!pkg.badge;
               return (
                 <div
@@ -494,10 +563,16 @@ function ProjectExpandedContent({
                   className={`relative rounded-lg border p-5 text-center space-y-3 ${isHighlighted ? "border-primary bg-primary/5 shadow-md" : "bg-card"}`}
                 >
                   {pkg.badge && (
-                    <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px]">{pkg.badge}</Badge>
+                    <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px]">
+                      {pkg.badge}
+                    </Badge>
                   )}
                   <p className="text-lg font-bold">{pkg.name}</p>
-                  {pkg.description && <p className="text-xs text-muted-foreground">{pkg.description}</p>}
+                  {pkg.description && (
+                    <p className="text-xs text-muted-foreground">
+                      {pkg.description}
+                    </p>
+                  )}
                   <p className="text-2xl font-bold text-primary">
                     {formatCurrency(pkg.price, pkg.currency || "IDR")}
                   </p>
@@ -534,23 +609,38 @@ function ProjectExpandedContent({
           <h4 className="text-sm font-semibold mb-2">Your Orders</h4>
           <div className="space-y-2">
             {orders.map((order) => (
-              <div key={order.id} className="flex items-center justify-between rounded-lg border p-3 text-sm">
+              <div
+                key={order.id}
+                className="flex items-center justify-between rounded-lg border p-3 text-sm"
+              >
                 <div>
                   <span className="font-medium">{order.packageName}</span>
-                  {order.hours && <span className="text-muted-foreground ml-1">({order.hours}h)</span>}
+                  {order.hours && (
+                    <span className="text-muted-foreground ml-1">
+                      ({order.hours}h)
+                    </span>
+                  )}
                   <span className="text-muted-foreground ml-2">
                     — {formatCurrency(order.price, order.currency)}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   {order.status === "confirmed" ? (
-                    <Badge className="bg-emerald-100 text-emerald-700 text-[10px]">Confirmed</Badge>
+                    <Badge className="bg-emerald-100 text-emerald-700 text-[10px]">
+                      Confirmed
+                    </Badge>
                   ) : order.status === "invoiced" ? (
-                    <Badge className="bg-blue-100 text-blue-700 text-[10px]">Invoiced</Badge>
+                    <Badge className="bg-blue-100 text-blue-700 text-[10px]">
+                      Invoiced
+                    </Badge>
                   ) : order.status === "cancelled" ? (
-                    <Badge className="bg-red-100 text-red-700 text-[10px]">Cancelled</Badge>
+                    <Badge className="bg-red-100 text-red-700 text-[10px]">
+                      Cancelled
+                    </Badge>
                   ) : (
-                    <Badge className="bg-yellow-100 text-yellow-700 text-[10px]">Pending</Badge>
+                    <Badge className="bg-yellow-100 text-yellow-700 text-[10px]">
+                      Pending
+                    </Badge>
                   )}
                   <span className="text-xs text-muted-foreground">
                     {new Date(order.createdAt).toLocaleDateString()}
@@ -563,30 +653,35 @@ function ProjectExpandedContent({
       )}
 
       {/* Custom Package Request */}
-      {isByPackage && !project.selectedPackageId && packages.length > 0 && packages.some((p) => p.allowCustom) && (
-        <CustomPackageRequestForm
-          projectId={project.id}
-          token={token}
-          packages={packages.map((p) => ({
-            id: p.id,
-            name: p.name,
-            hours: p.hours,
-            price: p.price,
-            customPrice: p.customPrice,
-            minHours: p.minHours,
-            maxHours: p.maxHours,
-            currency: p.currency,
-          }))}
-          existingRequests={customReqs.filter((r) => r.projectId === project.id)}
-          currency={project.currency ?? "IDR"}
-        />
-      )}
+      {isByPackage &&
+        !project.selectedPackageId &&
+        packages.length > 0 &&
+        packages.some((p) => p.allowCustom) && (
+          <CustomPackageRequestForm
+            projectId={project.id}
+            token={token}
+            packages={packages.map((p) => ({
+              id: p.id,
+              name: p.name,
+              hours: p.hours,
+              price: p.price,
+              customPrice: p.customPrice,
+              minHours: p.minHours,
+              maxHours: p.maxHours,
+              currency: p.currency,
+            }))}
+            existingRequests={customReqs.filter(
+              (r) => r.projectId === project.id,
+            )}
+            currency={project.currency ?? "IDR"}
+          />
+        )}
 
       {/* Tasks */}
       {tasks.length > 0 && (
         <div>
           <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold">
-            <CheckCircle2 className="h-4 w-4" /> Tasks
+            <CheckCircle2 className="h-4 w-4" /> Task
           </h4>
           <PortalTaskList
             token={token}
@@ -609,7 +704,7 @@ function ProjectExpandedContent({
       {files.length > 0 && (
         <div>
           <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-            <FileText className="h-4 w-4" /> Files
+            <FileText className="h-4 w-4" /> File
           </h4>
           <PortalFileList
             files={files.map((f) => ({
@@ -624,7 +719,6 @@ function ProjectExpandedContent({
           />
         </div>
       )}
-
 
       {/* Contact team — WA / email only */}
       <Separator />
@@ -692,7 +786,9 @@ function ProjectSummary({
               style={{ width: `${Math.min(upct, 100)}%` }}
             />
           </div>
-          <span className="text-xs text-muted-foreground">{formatMinutes(Math.max(0, totalMins - usedMins))} sisa</span>
+          <span className="text-xs text-muted-foreground">
+            {formatMinutes(Math.max(0, totalMins - usedMins))} sisa
+          </span>
         </div>
       );
     }
@@ -708,7 +804,9 @@ function ProjectSummary({
       );
     }
 
-    return <span className="text-xs text-muted-foreground">Belum ada task</span>;
+    return (
+      <span className="text-xs text-muted-foreground">Belum ada task</span>
+    );
   })();
 
   return (
@@ -717,11 +815,17 @@ function ProjectSummary({
       {(deadline || lastActivity) && (
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
           {deadline && (
-            <span className={deadline.overdue ? "font-medium text-red-600" : undefined}>
+            <span
+              className={
+                deadline.overdue ? "font-medium text-red-600" : undefined
+              }
+            >
               {deadline.text}
             </span>
           )}
-          {deadline && lastActivity && <span className="text-muted-foreground/50">·</span>}
+          {deadline && lastActivity && (
+            <span className="text-muted-foreground/50">·</span>
+          )}
           {lastActivity && <span>{lastActivity}</span>}
         </div>
       )}
@@ -776,12 +880,19 @@ export function ProjectAccordion({
     const timeline = projectTimelineMap.get(project.id) || [];
     const hoursSummary = projectHoursMap.get(project.id);
     const invoices = projectInvoicesMap.get(project.id) || [];
-    const selectedPkg = project.selectedPackageId ? selectedPackageMap.get(project.selectedPackageId) : undefined;
+    const selectedPkg = project.selectedPackageId
+      ? selectedPackageMap.get(project.selectedPackageId)
+      : undefined;
     const packages = projectPackagesMap.get(project.id) || [];
     const orders = packageOrdersList.filter((o) => o.projectId === project.id);
 
     const needsReview = hasReviewTask(tasks);
-    const statusMeta = getProjectStatusMeta(project.status, needsReview);
+    const progress = taskProgress(tasks);
+    const statusMeta = getProjectStatusMeta(
+      project.status,
+      needsReview,
+      progress.total > 0 && progress.pct === 100,
+    );
 
     return (
       <Card
@@ -803,13 +914,15 @@ export function ProjectAccordion({
             />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2.5">
-                <span className="truncate text-base font-semibold">{project.name}</span>
+                <span className="truncate text-base font-semibold">
+                  {project.name}
+                </span>
                 <Badge variant="secondary" className="shrink-0 text-[11px]">
                   {project.billingType === "hours"
-                    ? "By Hours"
+                    ? "Per jam"
                     : project.billingType === "package"
-                      ? "By Package"
-                      : "By Project"}
+                      ? "Per paket"
+                      : "Per proyek"}
                 </Badge>
               </div>
               <div className="mt-1.5">
@@ -823,7 +936,10 @@ export function ProjectAccordion({
               </div>
             </div>
           </div>
-          <Badge variant="outline" className={`shrink-0 text-[11px] ${statusMeta.badgeClass}`}>
+          <Badge
+            variant="outline"
+            className={`shrink-0 text-[11px] ${statusMeta.badgeClass}`}
+          >
             {statusMeta.label}
           </Badge>
         </div>
@@ -863,7 +979,9 @@ export function ProjectAccordion({
 
       {activeProjects.length === 0 && archivedProjects.length === 0 && (
         <div className="rounded-lg border border-dashed p-8 text-center">
-          <p className="text-sm text-muted-foreground">Belum ada project yang dibagikan.</p>
+          <p className="text-sm text-muted-foreground">
+            Belum ada proyek yang dibagikan.
+          </p>
         </div>
       )}
 
@@ -872,7 +990,7 @@ export function ProjectAccordion({
           <button
             type="button"
             onClick={() => setShowArchived((v) => !v)}
-            className="flex w-full items-center gap-2 rounded-lg border border-dashed p-3 text-sm text-muted-foreground transition-colors hover:bg-muted/30"
+            className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-dashed p-3 text-sm text-muted-foreground transition-colors hover:bg-muted/30"
           >
             {showArchived ? (
               <ChevronDown className="h-4 w-4" />
@@ -880,7 +998,7 @@ export function ProjectAccordion({
               <ChevronRight className="h-4 w-4" />
             )}
             <span className="font-medium">
-              Project selesai ({archivedProjects.length})
+              Proyek selesai ({archivedProjects.length})
             </span>
           </button>
           {showArchived && (

@@ -7,7 +7,6 @@ import {
   files,
   folders,
   invoices,
-  portalVisits,
   portalRequests,
   activityLogs,
   timeEntries,
@@ -44,9 +43,13 @@ export default async function ClientPortalPage({
   const rawTab = sp?.tab;
   const initialTab = Array.isArray(rawTab) ? rawTab[0] : rawTab;
   const rawProjectId = sp?.projectId;
-  const initialProjectId = Array.isArray(rawProjectId) ? rawProjectId[0] : rawProjectId;
+  const initialProjectId = Array.isArray(rawProjectId)
+    ? rawProjectId[0]
+    : rawProjectId;
   const rawFolderId = sp?.folderId;
-  const initialFolderId = Array.isArray(rawFolderId) ? rawFolderId[0] : rawFolderId;
+  const initialFolderId = Array.isArray(rawFolderId)
+    ? rawFolderId[0]
+    : rawFolderId;
 
   let client;
   try {
@@ -138,7 +141,6 @@ export default async function ClientPortalPage({
   }> = [];
 
   if (visibleProjectIds.length > 0) {
-    // eslint-disable-next-line unused-imports/no-unused-vars -- value used via typeof in projectTasksMap below
     allVisibleTasks = await db
       .select({
         id: tasks.id,
@@ -154,51 +156,34 @@ export default async function ClientPortalPage({
       .where(
         and(
           eq(tasks.clientVisible, true),
-          // We need to check projectId is in visibleProjectIds
-          // Using SQL-level filter
+          inArray(tasks.projectId, visibleProjectIds),
         ),
       )
       .limit(500);
   }
 
-  // Actually filter by project IDs using a more targeted approach
   const projectTasksMap = new Map<string, typeof allVisibleTasks>();
-  if (visibleProjectIds.length > 0) {
-    for (const projectId of visibleProjectIds) {
-      const projectTasks = await db
-        .select({
-          id: tasks.id,
-          title: tasks.title,
-          description: tasks.description,
-          status: tasks.status,
-          priority: tasks.priority,
-          dueDate: tasks.dueDate,
-          updatedAt: tasks.updatedAt,
-          projectId: tasks.projectId,
-        })
-        .from(tasks)
-        .where(
-          and(
-            eq(tasks.projectId, projectId),
-            eq(tasks.clientVisible, true),
-          ),
-        )
-        .limit(100);
-      projectTasksMap.set(projectId, projectTasks);
-    }
+  for (const projectId of visibleProjectIds) {
+    projectTasksMap.set(
+      projectId,
+      allVisibleTasks.filter((task) => task.projectId === projectId),
+    );
   }
 
   // Fetch client-visible files per project (+ folder metadata for file manager)
-  const projectFilesMap = new Map<string, Array<{
-    id: string;
-    name: string;
-    mimeType: string | null;
-    sizeBytes: number | null;
-    fileType: string;
-    createdAt: Date;
-    projectId: string | null;
-    folderId: string | null;
-  }>>();
+  const projectFilesMap = new Map<
+    string,
+    Array<{
+      id: string;
+      name: string;
+      mimeType: string | null;
+      sizeBytes: number | null;
+      fileType: string;
+      createdAt: Date;
+      projectId: string | null;
+      folderId: string | null;
+    }>
+  >();
 
   for (const projectId of visibleProjectIds) {
     const projectFiles = await db
@@ -214,10 +199,7 @@ export default async function ClientPortalPage({
       })
       .from(files)
       .where(
-        and(
-          eq(files.projectId, projectId),
-          eq(files.visibility, "client"),
-        ),
+        and(eq(files.projectId, projectId), eq(files.visibility, "client")),
       )
       .limit(100);
     projectFilesMap.set(projectId, projectFiles);
@@ -277,49 +259,6 @@ export default async function ClientPortalPage({
   const portalFilesById = new Map(allPortalFiles.map((f) => [f.id, f]));
   const portalFilesList = [...portalFilesById.values()];
 
-  // Track file visibility on portal open: mark files last viewed, audit visits,
-  // and notify workspace on first ever portal view per file.
-  try {
-    const headersList = await headers();
-    const ipAddress = headersList.get("x-forwarded-for") || undefined;
-    const userAgent = headersList.get("user-agent") || undefined;
-    const { notifyWorkspaceMembers } = await import("@/lib/in-app-notifications");
-    for (const file of portalFilesList) {
-      const [{ seen = 0 } = {}] = await db
-        .select({ seen: sql<number>`count(*)::int` })
-        .from(portalVisits)
-        .where(and(eq(portalVisits.resourceType, "file"), eq(portalVisits.resourceId, file.id)));
-
-      await db.insert(portalVisits).values({
-        workspaceId: client.workspaceId,
-        clientId: client.id,
-        resourceType: "file",
-        resourceId: file.id,
-        ipAddress,
-        userAgent,
-      });
-
-      await db
-        .update(files)
-        .set({ lastViewedAt: new Date() })
-        .where(eq(files.id, file.id));
-
-      if (seen === 0) {
-        await notifyWorkspaceMembers(client.workspaceId, {
-          type: "file_viewed",
-          title: `${client.name} viewed ${file.name}`,
-          body: "First portal view",
-          link: `/app/files?focus=${file.id}`,
-          entityType: "file",
-          entityId: file.id,
-          actorId: null,
-        });
-      }
-    }
-  } catch {
-    // non-critical analytics / notification
-  }
-
   // Fetch client-visible comments removed — portal uses WA/email contact only.
 
   const clientVisibleActionLabels: Record<string, string> = {
@@ -332,12 +271,15 @@ export default async function ClientPortalPage({
     uploaded_file: "File shared",
   };
 
-  const projectTimelineMap = new Map<string, Array<{
-    id: string;
-    action: string;
-    entityType: string;
-    createdAt: Date;
-  }>>();
+  const projectTimelineMap = new Map<
+    string,
+    Array<{
+      id: string;
+      action: string;
+      entityType: string;
+      createdAt: Date;
+    }>
+  >();
 
   for (const project of clientProjects) {
     const projectTasks = projectTasksMap.get(project.id) || [];
@@ -376,14 +318,21 @@ export default async function ClientPortalPage({
 
   // Fetch time entry summaries for "by hours" and assigned-package projects
   const byHoursProjectIds = clientProjects
-    .filter((p) => p.billingType === "hours" || (p.billingType === "package" && p.selectedPackageId))
+    .filter(
+      (p) =>
+        p.billingType === "hours" ||
+        (p.billingType === "package" && p.selectedPackageId),
+    )
     .map((p) => p.id);
 
-  const projectHoursMap = new Map<string, {
-    totalMinutes: number;
-    billableMinutes: number;
-    entryCount: number;
-  }>();
+  const projectHoursMap = new Map<
+    string,
+    {
+      totalMinutes: number;
+      billableMinutes: number;
+      entryCount: number;
+    }
+  >();
 
   for (const projectId of byHoursProjectIds) {
     const entries = await db
@@ -406,7 +355,11 @@ export default async function ClientPortalPage({
       if (entry.manualMinutes) {
         mins = entry.manualMinutes;
       } else if (entry.startTime && entry.endTime) {
-        mins = Math.round((new Date(entry.endTime).getTime() - new Date(entry.startTime).getTime()) / 60000);
+        mins = Math.round(
+          (new Date(entry.endTime).getTime() -
+            new Date(entry.startTime).getTime()) /
+            60000,
+        );
       } else if (entry.durationMinutes) {
         mins = entry.durationMinutes;
       }
@@ -426,21 +379,24 @@ export default async function ClientPortalPage({
     .filter((p) => p.billingType === "package")
     .map((p) => p.id);
 
-  const projectPackagesMap = new Map<string, Array<{
-    id: string;
-    name: string;
-    hours: number | null;
-    price: string;
-    currency: string;
-    description: string | null;
-    features: string | null;
-    badge: string | null;
-    sortOrder: number;
-    customPrice: string | null;
-    minHours: number | null;
-    maxHours: number | null;
-    allowCustom: boolean;
-  }>>();
+  const projectPackagesMap = new Map<
+    string,
+    Array<{
+      id: string;
+      name: string;
+      hours: number | null;
+      price: string;
+      currency: string;
+      description: string | null;
+      features: string | null;
+      badge: string | null;
+      sortOrder: number;
+      customPrice: string | null;
+      minHours: number | null;
+      maxHours: number | null;
+      allowCustom: boolean;
+    }>
+  >();
 
   for (const projectId of byPackageProjectIds) {
     const pkgs = await db
@@ -469,13 +425,16 @@ export default async function ClientPortalPage({
   const customRequests = await getCustomPackageRequestsByToken(token);
 
   // Fetch selected package details for package projects with an assigned package
-  const selectedPackageMap = new Map<string, {
-    id: string;
-    name: string;
-    hours: number | null;
-    price: string;
-    currency: string;
-  }>();
+  const selectedPackageMap = new Map<
+    string,
+    {
+      id: string;
+      name: string;
+      hours: number | null;
+      price: string;
+      currency: string;
+    }
+  >();
 
   const assignedPackageIds = clientProjects
     .filter((p) => p.billingType === "package" && p.selectedPackageId)
@@ -610,31 +569,25 @@ export default async function ClientPortalPage({
     )
     .limit(100);
 
-  const activeCount = clientProjects.filter((p) => p.status === "active").length;
-  const byProjectCount = clientProjects.filter((p) => p.billingType === "project").length;
-  const byHoursCount = clientProjects.filter((p) => p.billingType === "hours").length;
-  const byPackageCount = clientProjects.filter((p) => p.billingType === "package").length;
+  const activeCount = clientProjects.filter(
+    (p) => p.status === "active",
+  ).length;
+  const byProjectCount = clientProjects.filter(
+    (p) => p.billingType === "project",
+  ).length;
+  const byHoursCount = clientProjects.filter(
+    (p) => p.billingType === "hours",
+  ).length;
+  const byPackageCount = clientProjects.filter(
+    (p) => p.billingType === "package",
+  ).length;
   const dueInvoiceCount = clientInvoices.filter((inv) =>
     ["sent", "viewed", "overdue", "partial"].includes(inv.status),
   ).length;
-  const pendingClientRequests = clientPortalRequests.filter((r) => r.status === "pending");
+  const pendingClientRequests = clientPortalRequests.filter(
+    (r) => r.status === "pending",
+  );
   const pendingReminderCount = pendingClientRequests.length;
-
-  // Mark first-viewed invoices when client opens portal
-  try {
-    const unseen = clientInvoices
-      .filter((inv) => !inv.clientFirstViewedAt && ["sent", "viewed", "overdue"].includes(inv.status))
-      .map((inv) => inv.id);
-    if (unseen.length > 0) {
-      await db
-        .update(invoices)
-        .set({ clientFirstViewedAt: new Date(), updatedAt: new Date() })
-        .where(inArray(invoices.id, unseen));
-      // Keep current render as NEW; next visit clears label
-    }
-  } catch {
-    // non-critical
-  }
 
   // Minutes per task (for portal hours display)
   const taskHoursMap = new Map<string, number>();
@@ -654,13 +607,14 @@ export default async function ClientPortalPage({
       )
       .groupBy(timeEntries.taskId);
     for (const row of taskTimeRows) {
-      if (row.taskId) taskHoursMap.set(row.taskId, Number(row.totalMinutes) || 0);
+      if (row.taskId)
+        taskHoursMap.set(row.taskId, Number(row.totalMinutes) || 0);
     }
   }
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <div className="max-w-5xl mx-auto py-12 px-4 space-y-10">
+      <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:space-y-8 sm:py-10">
         {/* Header — workspace branding */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3 min-w-0">
@@ -697,7 +651,7 @@ export default async function ClientPortalPage({
                   client.name}
               </h1>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                Client Portal for{" "}
+                Portal klien untuk{" "}
                 <span className="font-medium text-foreground">
                   {client.companyName || client.name}
                 </span>
@@ -705,7 +659,7 @@ export default async function ClientPortalPage({
               {(workspaceContact?.billingAddress ||
                 workspaceContact?.email ||
                 workspaceContact?.phone) && (
-                <div className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+                <div className="mt-2 hidden space-y-0.5 text-xs text-muted-foreground sm:block">
                   {workspaceContact.billingAddress && (
                     <p className="whitespace-pre-wrap">
                       {workspaceContact.billingAddress}
@@ -723,41 +677,53 @@ export default async function ClientPortalPage({
             </div>
           </div>
           <div className="shrink-0 rounded-full border bg-background px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            Secured Access
+            Akses aman
           </div>
         </div>
 
         {/* ─── 1. Top summary + actions ─────────────────────── */}
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3">
             <Card className="shadow-none">
               <CardContent className="p-3">
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">By project</p>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                  Per proyek
+                </p>
                 <p className="mt-1 text-xl font-semibold">{byProjectCount}</p>
               </CardContent>
             </Card>
             <Card className="shadow-none">
               <CardContent className="p-3">
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">By hours</p>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                  Per jam
+                </p>
                 <p className="mt-1 text-xl font-semibold">{byHoursCount}</p>
               </CardContent>
             </Card>
             <Card className="shadow-none">
               <CardContent className="p-3">
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">By package</p>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                  Per paket
+                </p>
                 <p className="mt-1 text-xl font-semibold">{byPackageCount}</p>
               </CardContent>
             </Card>
             <Card className="shadow-none">
               <CardContent className="p-3">
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Due invoice</p>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                  Jatuh tempo
+                </p>
                 <p className="mt-1 text-xl font-semibold">{dueInvoiceCount}</p>
               </CardContent>
             </Card>
             <Card className="shadow-none">
               <CardContent className="p-3">
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Reminder</p>
-                <p className="mt-1 text-xl font-semibold">{pendingReminderCount}</p>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                  Pengingat
+                </p>
+                <p className="mt-1 text-xl font-semibold">
+                  {pendingReminderCount}
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -766,8 +732,10 @@ export default async function ClientPortalPage({
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <FolderOpen className="h-4 w-4 text-blue-500" />
               <span>
-                <span className="font-semibold text-foreground">{activeCount}</span> active project
-                {activeCount === 1 ? "" : "s"}
+                <span className="font-semibold text-foreground">
+                  {activeCount}
+                </span>{" "}
+                proyek aktif
               </span>
             </div>
             <PortalActionButtons
@@ -787,10 +755,11 @@ export default async function ClientPortalPage({
             }}
             overview={
               <>
-                {(pendingClientRequests.length > 0 || clientPortalRequests.length > 0) && (
+                {(pendingClientRequests.length > 0 ||
+                  clientPortalRequests.length > 0) && (
                   <section>
                     <h2 className="mb-4 text-xl font-semibold">
-                      Requests & Reminders ({pendingClientRequests.length} open)
+                      Request & Pengingat ({pendingClientRequests.length} aktif)
                     </h2>
                     <PortalRequestList
                       requests={clientPortalRequests.map((r) => ({
@@ -805,28 +774,30 @@ export default async function ClientPortalPage({
                     />
                   </section>
                 )}
-                {pendingClientRequests.length === 0 && clientPortalRequests.length === 0 && (
-                  <Card className="shadow-none">
-                    <CardContent className="py-8 text-center text-muted-foreground">
-                      <p className="text-sm">No open requests or reminders.</p>
-                      <p className="mt-1 text-xs">
-                        Use Request Report / Request Meeting above when you need something.
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
+                {pendingClientRequests.length === 0 &&
+                  clientPortalRequests.length === 0 && (
+                    <Card className="shadow-none">
+                      <CardContent className="py-8 text-center text-muted-foreground">
+                        <p className="text-sm">
+                          Tidak ada request atau pengingat aktif.
+                        </p>
+                        <p className="mt-1 text-xs">
+                          Gunakan Minta Laporan atau Ajukan Pertemuan bila
+                          diperlukan.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
               </>
             }
             projects={
               <section>
-                <h2 className="mb-4 text-xl font-semibold">
-                  Projects ({clientProjects.length})
-                </h2>
+                <h2 className="mb-4 text-xl font-semibold">Proyek</h2>
                 {clientProjects.length === 0 ? (
                   <Card>
                     <CardContent className="py-8 text-center text-muted-foreground">
                       <FolderOpen className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                      <p>No projects have been shared with you yet.</p>
+                      <p>Belum ada proyek yang dibagikan.</p>
                     </CardContent>
                   </Card>
                 ) : (
@@ -836,34 +807,40 @@ export default async function ClientPortalPage({
                       startDate: p.startDate ? String(p.startDate) : null,
                       finishDate: p.finishDate ? String(p.finishDate) : null,
                     }))}
-                    projectTasksMap={new Map(
-                      [...projectTasksMap.entries()].map(([k, v]) => [
-                        k,
-                        v.map((t) => ({
-                          ...t,
-                          dueDate: t.dueDate ? String(t.dueDate) : null,
-                          updatedAt: String(t.updatedAt),
-                        })),
-                      ]),
-                    )}
-                    projectFilesMap={new Map(
-                      [...projectFilesMap.entries()].map(([k, v]) => [
-                        k,
-                        v.map((f) => ({
-                          ...f,
-                          createdAt: String(f.createdAt),
-                        })),
-                      ]),
-                    )}
-                    projectTimelineMap={new Map(
-                      [...projectTimelineMap.entries()].map(([k, v]) => [
-                        k,
-                        v.map((e) => ({
-                          ...e,
-                          createdAt: String(e.createdAt),
-                        })),
-                      ]),
-                    )}
+                    projectTasksMap={
+                      new Map(
+                        [...projectTasksMap.entries()].map(([k, v]) => [
+                          k,
+                          v.map((t) => ({
+                            ...t,
+                            dueDate: t.dueDate ? String(t.dueDate) : null,
+                            updatedAt: String(t.updatedAt),
+                          })),
+                        ]),
+                      )
+                    }
+                    projectFilesMap={
+                      new Map(
+                        [...projectFilesMap.entries()].map(([k, v]) => [
+                          k,
+                          v.map((f) => ({
+                            ...f,
+                            createdAt: String(f.createdAt),
+                          })),
+                        ]),
+                      )
+                    }
+                    projectTimelineMap={
+                      new Map(
+                        [...projectTimelineMap.entries()].map(([k, v]) => [
+                          k,
+                          v.map((e) => ({
+                            ...e,
+                            createdAt: String(e.createdAt),
+                          })),
+                        ]),
+                      )
+                    }
                     projectHoursMap={projectHoursMap}
                     taskHoursMap={taskHoursMap}
                     taskEntriesMap={
@@ -920,9 +897,7 @@ export default async function ClientPortalPage({
             }
             invoices={
               <section>
-                <h2 className="mb-4 text-xl font-semibold">
-                  Invoices ({clientInvoices.length})
-                </h2>
+                <h2 className="mb-4 text-xl font-semibold">Invoice</h2>
                 <PortalInvoices
                   invoices={clientInvoices.map((inv) => ({
                     id: inv.id,
@@ -940,7 +915,10 @@ export default async function ClientPortalPage({
                       !inv.clientFirstViewedAt &&
                       ["sent", "viewed", "overdue"].includes(inv.status),
                   }))}
-                  projects={clientProjects.map((p) => ({ id: p.id, name: p.name }))}
+                  projects={clientProjects.map((p) => ({
+                    id: p.id,
+                    name: p.name,
+                  }))}
                   token={token}
                 />
               </section>
@@ -955,7 +933,7 @@ export default async function ClientPortalPage({
                     phone={workspaceContact?.phone}
                     email={portalContactEmail}
                     ownerName={workspaceContact?.name}
-                    clientName={client.name}
+                    clientName={client.companyName || client.name}
                   />
                 </CardContent>
               </Card>
@@ -964,8 +942,7 @@ export default async function ClientPortalPage({
         </Suspense>
 
         <p className="text-center text-xs text-muted-foreground pt-8">
-          Powered by <span className="font-medium">Cubiqlo</span> — Client
-          Portal
+          Didukung <span className="font-medium">Cubiqlo</span> — Portal Klien
         </p>
       </div>
     </div>
