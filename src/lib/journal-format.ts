@@ -4,6 +4,24 @@ export type ParsedJournalBody = {
   content: string;
 };
 
+const LEGACY_MOODS: Record<string, string> = {
+  focused: "🔥",
+  productive: "🔥",
+  cautious: "🤔",
+  thoughtful: "🤔",
+  happy: "😊",
+  neutral: "😐",
+  frustrated: "😤",
+  tired: "😴",
+  sad: "😢",
+  excited: "🎉",
+};
+
+function normalizeJournalMood(raw: string): string {
+  const mood = raw.trim();
+  return LEGACY_MOODS[mood.toLowerCase()] || mood;
+}
+
 export function normalizeJournalTags(raw: string): string[] {
   const seen = new Set<string>();
   for (const part of raw.split(",")) {
@@ -22,7 +40,7 @@ export function parseJournalBody(rawBody: string): ParsedJournalBody {
   if (metaMatch) {
     return {
       tags: normalizeJournalTags(metaMatch[1]),
-      mood: metaMatch[2].trim(),
+      mood: normalizeJournalMood(metaMatch[2]),
       content: metaMatch[3],
     };
   }
@@ -30,7 +48,11 @@ export function parseJournalBody(rawBody: string): ParsedJournalBody {
   // Legacy records stored only a mood prefix in body.
   const legacyMood = body.match(/^mood:\s*([^\n]+)\n([\s\S]*)$/i);
   if (legacyMood) {
-    return { tags: [], mood: legacyMood[1].trim(), content: legacyMood[2] };
+    return {
+      tags: [],
+      mood: normalizeJournalMood(legacyMood[1]),
+      content: legacyMood[2],
+    };
   }
 
   return { tags: [], mood: "", content: body };

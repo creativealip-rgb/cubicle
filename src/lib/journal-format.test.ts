@@ -30,9 +30,13 @@ describe("journal format", () => {
       parseJournalBody("mood: focused\\nFinished checkout audit."),
     ).toEqual({
       tags: [],
-      mood: "focused",
+      mood: "🔥",
       content: "Finished checkout audit.",
     });
+  });
+
+  it("normalizes cautious legacy mood", () => {
+    expect(parseJournalBody("mood: cautious\\nCheck scope.").mood).toBe("🤔");
   });
 
   it("normalizes tags case-insensitively and removes duplicates", () => {
