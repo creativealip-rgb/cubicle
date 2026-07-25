@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { Trash2 } from "lucide-react";
 
 export function ConfirmDeleteNoteButton({
@@ -17,17 +17,15 @@ export function ConfirmDeleteNoteButton({
   confirmMessage: string;
 }) {
   return (
-    <form
+    <ConfirmSubmitButton
       action={action}
-      onSubmit={(e) => {
-        if (!confirm(confirmMessage)) e.preventDefault();
-      }}
+      fields={{ noteId, tab }}
+      label={label}
+      title={label}
+      description={confirmMessage}
+      destructive
     >
-      <input type="hidden" name="noteId" value={noteId} />
-      <input type="hidden" name="tab" value={tab} />
-      <Button type="submit" size="sm" variant="ghost" aria-label={label}>
-        <Trash2 className="h-4 w-4 text-destructive" />
-      </Button>
-    </form>
+      <Trash2 className="h-4 w-4 text-destructive" />
+    </ConfirmSubmitButton>
   );
 }

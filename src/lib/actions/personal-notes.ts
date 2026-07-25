@@ -13,7 +13,7 @@ import { writeActivityLog } from "@/lib/actions/activity";
 
 const RECURRENCE = ["none", "daily", "weekly", "monthly", "yearly"] as const;
 const STATUS = ["open", "done", "archived"] as const;
-const NOTES_PAGE_SIZE = 25;
+const NOTES_PAGE_SIZE = 10;
 
 export async function getNotesPageSize() {
   return NOTES_PAGE_SIZE;
@@ -159,7 +159,10 @@ function baseNoteConditions(
   if (opts?.query?.trim()) {
     const q = `%${opts.query.trim()}%`;
     conditions.push(
-      or(sql`${personalNotes.title} ILIKE ${q}`, sql`${personalNotes.body} ILIKE ${q}`)!,
+      or(
+        sql`${personalNotes.title} ILIKE ${q}`,
+        sql`${personalNotes.body} ILIKE ${q}`,
+      )!,
     );
   }
 
@@ -277,7 +280,10 @@ export async function createPersonalNote(input: z.infer<typeof noteSchema>) {
   return note;
 }
 
-export async function updatePersonalNote(noteId: string, input: z.infer<typeof noteSchema>) {
+export async function updatePersonalNote(
+  noteId: string,
+  input: z.infer<typeof noteSchema>,
+) {
   const { note } = await requireOwnedNote(noteId);
   const parsed = noteSchema.parse({
     ...input,
@@ -316,7 +322,10 @@ export async function updatePersonalNote(noteId: string, input: z.infer<typeof n
  * Recurring notes marked done → roll due to next occurrence, stay open.
  * Non-recurring → status done.
  */
-export async function updatePersonalNoteStatus(noteId: string, status: PersonalNoteStatus) {
+export async function updatePersonalNoteStatus(
+  noteId: string,
+  status: PersonalNoteStatus,
+) {
   if (!STATUS.includes(status)) throw new Error("Invalid status");
   const { note } = await requireOwnedNote(noteId);
   const rule = normalizeRecurrence(note.recurrenceRule || "none");
@@ -344,7 +353,10 @@ export async function updatePersonalNoteStatus(noteId: string, status: PersonalN
   revalidatePath("/app");
 }
 
-export async function togglePersonalNotePinned(noteId: string, pinned: boolean) {
+export async function togglePersonalNotePinned(
+  noteId: string,
+  pinned: boolean,
+) {
   await requireOwnedNote(noteId);
   await db
     .update(personalNotes)
@@ -392,7 +404,9 @@ export async function convertPersonalNoteToTask(
   const [project] = await db
     .select({ id: projects.id })
     .from(projects)
-    .where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId)))
+    .where(
+      and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId)),
+    )
     .limit(1);
   if (!project) throw new Error("Project not found in workspace");
 
@@ -401,39 +415,64 @@ export async function convertPersonalNoteToTask(
     : null;
   const priority = normalizePriority(opts?.priority);
 
-  const [maxPos] = await db
-    .select({ max: sql<number>`coalesce(max(${tasks.position}), -1)::int` })
-    .from(tasks)
-    .where(and(eq(tasks.projectId, projectId), eq(tasks.status, "todo")));
+  const task = await db.transaction(async (tx) => {
+    // Serialize conversion for this note so rapid/double submits cannot create duplicates.
+    await tx.execute(
+      sql`SELECT id FROM personal_notes WHERE id = ${noteId} FOR UPDATE`,
+    );
+    const [freshNote] = await tx
+      .select({
+        convertedTaskId: personalNotes.convertedTaskId,
+        status: personalNotes.status,
+      })
+      .from(personalNotes)
+      .where(
+        and(
+          eq(personalNotes.id, noteId),
+          eq(personalNotes.workspaceId, workspaceId),
+          eq(personalNotes.userId, user.id),
+        ),
+      )
+      .limit(1);
+    if (!freshNote) throw new Error("Note not found");
+    if (freshNote.convertedTaskId)
+      throw new Error("Note already converted to a task");
 
-  const [task] = await db
-    .insert(tasks)
-    .values({
-      workspaceId,
-      projectId,
-      title: note.title,
-      description: note.body || null,
-      status: "todo",
-      priority,
-      assigneeId: user.id,
-      dueDate: dueDateStr,
-      clientVisible: false,
-      position: (maxPos?.max ?? -1) + 1,
-      createdBy: user.id,
-      sourceNoteId: note.id,
-    })
-    .returning();
+    const [maxPos] = await tx
+      .select({ max: sql<number>`coalesce(max(${tasks.position}), -1)::int` })
+      .from(tasks)
+      .where(and(eq(tasks.projectId, projectId), eq(tasks.status, "todo")));
+
+    const [created] = await tx
+      .insert(tasks)
+      .values({
+        workspaceId,
+        projectId,
+        title: note.title,
+        description: note.body || null,
+        status: "todo",
+        priority,
+        assigneeId: user.id,
+        dueDate: dueDateStr,
+        clientVisible: false,
+        position: (maxPos?.max ?? -1) + 1,
+        createdBy: user.id,
+        sourceNoteId: note.id,
+      })
+      .returning();
+
+    await tx
+      .update(personalNotes)
+      .set({
+        convertedTaskId: created.id,
+        status: opts?.archiveNote === false ? freshNote.status : "archived",
+        updatedAt: new Date(),
+      })
+      .where(eq(personalNotes.id, noteId));
+    return created;
+  });
 
   await writeActivityLog(workspaceId, user.id, "created_task", "task", task.id);
-
-  await db
-    .update(personalNotes)
-    .set({
-      convertedTaskId: task.id,
-      status: opts?.archiveNote === false ? note.status : "archived",
-      updatedAt: new Date(),
-    })
-    .where(eq(personalNotes.id, noteId));
 
   revalidatePath("/app/personal");
   revalidatePath("/app/tasks");

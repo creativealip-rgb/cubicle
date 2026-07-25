@@ -918,7 +918,7 @@ export const personalNotes = pgTable("personal_notes", {
   status: text("status", { enum: ["open", "done", "archived"] }).notNull().default("open"),
   pinned: boolean("pinned").notNull().default(false),
   /** Task created from this note via convert (optional reverse link). */
-  convertedTaskId: uuid("converted_task_id"),
+  convertedTaskId: uuid("converted_task_id").references(() => tasks.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

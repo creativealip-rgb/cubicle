@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
+  countPersonalNotes,
   createPersonalNote,
   deletePersonalNote,
   listPersonalNotes,
@@ -15,6 +16,11 @@ import { Input } from "@/components/ui/input";
 import { JournalList, MoodPicker } from "@/components/journal/journal-list";
 import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { getCurrentLang, createT } from "@/lib/i18n";
+import {
+  buildJournalBody,
+  parseJournalBody,
+  stripJournalPrefix,
+} from "@/lib/journal-format";
 
 /**
  * Body format (v2):
@@ -22,56 +28,34 @@ import { getCurrentLang, createT } from "@/lib/i18n";
  *
  * Legacy (v1): plain text body (no tags/mood)
  */
-function parseJournalBody(body: string): {
-  tags: string[];
-  mood: string;
-  content: string;
-} {
-  const metaMatch = body.match(
-    /^---tags:\s*(.*?)\nmood:\s*(.*?)---\n([\s\S]*)$/,
-  );
-  if (metaMatch) {
-    const tags = metaMatch[1]
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-    const mood = metaMatch[2].trim();
-    const content = metaMatch[3];
-    return { tags, mood, content };
-  }
-  return { tags: [], mood: "", content: body };
-}
-
-function buildJournalBody(tagsRaw: string, mood: string, content: string) {
-  const tags = tagsRaw
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean)
-    .join(", ");
-  return `---tags: ${tags}\nmood: ${mood}---\n${content}`;
-}
-
-function stripJournalPrefix(title: string) {
-  return title.replace(/^\[journal\]\s*/i, "");
-}
-
 export default async function JournalPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; page?: string }>;
 }) {
   await requireWorkspaceOwnerOrRedirect();
   const lang = await getCurrentLang();
   const t = createT(lang);
   const params = await searchParams;
   const tab = params.tab === "archived" ? "archived" : "active";
+  const page = Math.max(1, Number.parseInt(params.page || "1", 10) || 1);
+  const pageSize = 10;
 
-  const rawNotes = await listPersonalNotes(undefined, {
+  const queryOpts = {
     includeSystem: true,
     titlePrefix: "[journal]",
-    status: tab === "archived" ? "archived" : "active",
-    limit: 200,
-  });
+    status: (tab === "archived" ? "archived" : "active") as
+      "archived" | "active",
+  };
+  const [totalEntries, rawNotes] = await Promise.all([
+    countPersonalNotes(undefined, queryOpts),
+    listPersonalNotes(undefined, {
+      ...queryOpts,
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
+    }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(totalEntries / pageSize));
 
   const entries = rawNotes
     .filter((n) => n.title.toLowerCase().startsWith("[journal]"))
@@ -119,13 +103,19 @@ export default async function JournalPage({
 
   async function archiveEntry(formData: FormData) {
     "use server";
-    await updatePersonalNoteStatus(String(formData.get("noteId") || ""), "archived");
+    await updatePersonalNoteStatus(
+      String(formData.get("noteId") || ""),
+      "archived",
+    );
     redirect("/app/journal?tab=active");
   }
 
   async function restoreEntry(formData: FormData) {
     "use server";
-    await updatePersonalNoteStatus(String(formData.get("noteId") || ""), "open");
+    await updatePersonalNoteStatus(
+      String(formData.get("noteId") || ""),
+      "open",
+    );
     redirect("/app/journal?tab=archived");
   }
 
@@ -163,9 +153,7 @@ export default async function JournalPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="app-page-title">
-          {t("Jurnal", "Journal")}
-        </h1>
+        <h1 className="app-page-title">{t("Jurnal", "Journal")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {t(
             "Catatan harian — insight, blockers, keputusan, refleksi.",
@@ -194,52 +182,64 @@ export default async function JournalPage({
       />
 
       {tab === "active" ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("Entri jurnal baru", "New journal entry")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form action={createEntry} className="space-y-4">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    {t("Judul", "Title")}
-                  </label>
-                  <Input
-                    name="title"
-                    placeholder={t("Judul hari ini", "Today's title")}
-                  />
+        <details className="group rounded-xl border bg-card">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-6 py-4 font-semibold">
+            <span>{t("+ Entri jurnal", "+ Journal entry")}</span>
+            <span className="text-sm text-muted-foreground group-open:hidden">
+              {t("Buka form", "Open form")}
+            </span>
+          </summary>
+          <Card className="border-0 shadow-none">
+            <CardHeader>
+              <CardTitle>
+                {t("Entri jurnal baru", "New journal entry")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form action={createEntry} className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      {t("Judul", "Title")}
+                    </label>
+                    <Input
+                      name="title"
+                      placeholder={t("Judul hari ini", "Today's title")}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      {t("Tag (pisahkan koma)", "Tags (comma separated)")}
+                    </label>
+                    <Input
+                      name="tags"
+                      placeholder={t(
+                        "kerja, rapat, blocker",
+                        "work, meeting, blocker",
+                      )}
+                    />
+                  </div>
                 </div>
+                <MoodPicker name="mood" lang={lang} />
                 <div className="space-y-2">
                   <label className="text-sm font-medium">
-                    {t("Tag (pisahkan koma)", "Tags (comma separated)")}
+                    {t("Isi", "Content")}
                   </label>
-                  <Input
-                    name="tags"
+                  <Textarea
+                    name="body"
+                    rows={8}
                     placeholder={t(
-                      "kerja, rapat, blocker",
-                      "work, meeting, blocker",
+                      "Tulis update, insight, blocker, keputusan…",
+                      "Write updates, insights, blockers, decisions…",
                     )}
+                    required
                   />
                 </div>
-              </div>
-              <MoodPicker name="mood" lang={lang} />
-              <div className="space-y-2">
-                <label className="text-sm font-medium">{t("Isi", "Content")}</label>
-                <Textarea
-                  name="body"
-                  rows={8}
-                  placeholder={t(
-                    "Tulis update, insight, blocker, keputusan…",
-                    "Write updates, insights, blockers, decisions…",
-                  )}
-                  required
-                />
-              </div>
-              <Button type="submit">{t("Simpan entri", "Save entry")}</Button>
-            </form>
-          </CardContent>
-        </Card>
+                <Button type="submit">{t("Simpan entri", "Save entry")}</Button>
+              </form>
+            </CardContent>
+          </Card>
+        </details>
       ) : null}
 
       <Card>
@@ -262,6 +262,32 @@ export default async function JournalPage({
               remove: removeEntry,
             }}
           />
+          {totalEntries > pageSize ? (
+            <div className="mt-5 flex items-center justify-between border-t pt-4 text-sm">
+              {page > 1 ? (
+                <Button variant="outline" asChild>
+                  <Link href={`/app/journal?tab=${tab}&page=${page - 1}`}>
+                    {t("Sebelumnya", "Previous")}
+                  </Link>
+                </Button>
+              ) : (
+                <span />
+              )}
+              <span className="text-muted-foreground">
+                {t("Halaman", "Page")} {Math.min(page, totalPages)} /{" "}
+                {totalPages}
+              </span>
+              {page < totalPages ? (
+                <Button variant="outline" asChild>
+                  <Link href={`/app/journal?tab=${tab}&page=${page + 1}`}>
+                    {t("Berikutnya", "Next")}
+                  </Link>
+                </Button>
+              ) : (
+                <span />
+              )}
+            </div>
+          ) : null}
         </CardContent>
       </Card>
     </div>
