@@ -71,6 +71,17 @@ Latest manual proof, 25 July 2026:
 - Technical artifact-to-running-app recovery took 15 seconds, under two-hour RTO. Host provisioning and DNS cutover are outside this measurement.
 - EXIT trap removed throwaway containers, temporary config/secrets, and isolated network.
 
+## Authenticated recovery proof — 25 July 2026
+
+- Script: `scripts/operations/cubiqlo_authenticated_recovery_drill.sh`.
+- Restored database and matching global roles into a clean internal PostgreSQL container.
+- Started an ephemeral Redis container because authentication rate limiting fails closed when `RATE_LIMIT_REDIS_URL` is unavailable. Redis is therefore a required recovery dependency, not optional infrastructure.
+- On the recovery database only, selected an existing workspace owner with a credential account, replaced its password with a random Better Auth hash generated from the locked project dependency, and removed its restored sessions. Production credentials and production database were not changed.
+- Better Auth email sign-in returned HTTP 200 and issued a session cookie.
+- Authenticated probes returned HTTP 200 without login redirects: `/api/auth/get-session`, `/app/dashboard`, `/app/clients`, `/app/projects`, `/app/invoices`, `/app/files`, and `/app/contracts`.
+- Measured local artifact-to-authenticated-app time: 11 seconds.
+- This is read-path evidence only. No email, payment, upload, create, update, or delete action was executed.
+
 ## PostgreSQL capacity baseline — 25 July 2026
 
 - Database size: 16 MB.
