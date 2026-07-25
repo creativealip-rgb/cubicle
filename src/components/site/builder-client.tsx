@@ -105,10 +105,10 @@ export function BuilderClient({ initialSite, defaults, publicUrl, action }: Buil
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Personal Landing Page Builder</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Edit konten, tambah section, atur CTA/link, lalu lihat preview kanan.</p>
+      <div className="app-page-header">
+        <div className="min-w-0">
+          <h1 className="app-page-title">Personal Landing Page Builder</h1>
+          <p className="app-page-description">Edit konten, tambah section, atur CTA/link, lalu lihat preview kanan.</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" asChild><a href="#preview">Jump to preview</a></Button>

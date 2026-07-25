@@ -201,10 +201,10 @@ export function PackageCatalog({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold">{t("Service", "Services")}</h1>
-          <p className="text-sm text-muted-foreground">
+      <div className="app-page-header">
+        <div className="min-w-0">
+          <h1 className="app-page-title">{t("Service", "Services")}</h1>
+          <p className="app-page-description">
             {t(
               "Katalog service jam yang bisa dipakai ulang di banyak proyek.",
               "Reusable hour services you can assign across projects."

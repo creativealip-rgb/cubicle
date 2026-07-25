@@ -166,7 +166,7 @@ export default async function ProjectsPage({
 
   return (
     <div className="min-w-0 space-y-4 sm:space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="app-page-header">
         <div className="min-w-0">
           <h1 className="app-page-title">{t("Proyek", "Projects")}</h1>
           <p className="text-sm text-muted-foreground">

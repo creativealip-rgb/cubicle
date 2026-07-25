@@ -424,10 +424,10 @@ export function TemplateCenterClient({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Pusat Template</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+      <div className="app-page-header">
+        <div className="min-w-0">
+          <h1 className="app-page-title">Pusat Template</h1>
+          <p className="app-page-description">
             Simpan sekali, pakai ulang di invoice, proposal & kontrak.
           </p>
         </div>

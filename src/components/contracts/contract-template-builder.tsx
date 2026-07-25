@@ -155,7 +155,7 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
               Pusat Template
             </Link>
           </Button>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="app-page-title">
             {isEdit ? "Edit template" : "Template kontrak baru"}
           </h1>
           <p className="text-sm text-slate-500 mt-1">

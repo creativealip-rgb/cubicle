@@ -163,10 +163,10 @@ export function InvoiceTemplatesClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Invoice Templates</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+      <div className="app-page-header">
+        <div className="min-w-0">
+          <h1 className="app-page-title">Invoice Templates</h1>
+          <p className="app-page-description">
             Buat template untuk invoice berulang. Simpan line items, terms, dan notes default.
           </p>
         </div>
