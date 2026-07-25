@@ -181,6 +181,17 @@ Status: **fixed + deployed + live verified**.
 - Live E2E: stale cookie → login `200`, apex `200`; sesi valid → apex ke dashboard; sign-out API `200`, lalu login/apex tetap `200`.
 - Logo Cubiqlo pada halaman `/login` dan `/signup` sekarang mengarah ke landing canonical `https://cubiqlo.com/`, berlaku desktop/mobile dan sudah diverifikasi lewat klik live.
 
+## What’s New — 2026-07-25
+
+Status: **implemented + deployed; authenticated visual automation pending valid test login**.
+
+- Halaman `/app/whats-new` berisi timeline pembaruan dengan kategori New, Improvement, dan Fix serta CTA ke fitur terkait.
+- Menu utility tersedia di footer sidebar dan dropdown akun/mobile.
+- Badge New disimpan per-browser dan ditandai dibaca saat halaman dibuka; release ID baru memunculkan badge kembali.
+- Regression data `3/3` pass; full suite `111/111` pass; touched lint, TypeScript, dan production build pass.
+- Guest guard live benar: `/app/whats-new` menuju `/login?redirect=%2Fapp%2Fwhats-new`.
+- Visual authenticated live belum diautomasi karena kredensial testing lama mengembalikan 401; akun tidak di-reset.
+
 ## Belum dicek / hold
 
 | Area | Risiko |
