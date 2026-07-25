@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   LayoutDashboard,
@@ -46,7 +52,7 @@ type PortalTabsProps = {
 /**
  * Client portal tabs.
  * - Soft URL update (history.replaceState) so page shell tidak remount / loncat tinggi.
- * - forceMount + hide inactive: state per tab (expand project) tetap hidup.
+ * - Render hanya tab aktif agar DOM mobile tetap ringan.
  * - min-h panel: tinggi area konten lebih stabil antar tab.
  */
 export function PortalTabs({
@@ -62,10 +68,21 @@ export function PortalTabs({
   const searchParams = useSearchParams();
   const urlTab = normalizeTab(searchParams.get("tab") ?? initialTab);
   const [activeTab, setActiveTab] = useState<PortalTabKey>(urlTab);
+  const tabRefs = useRef<
+    Partial<Record<PortalTabKey, HTMLButtonElement | null>>
+  >({});
 
   useEffect(() => {
     setActiveTab(urlTab);
   }, [urlTab]);
+
+  useEffect(() => {
+    tabRefs.current[activeTab]?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+  }, [activeTab]);
 
   const changeTab = useCallback(
     (tab: string) => {
@@ -130,39 +147,44 @@ export function PortalTabs({
 
   return (
     <Tabs value={activeTab} onValueChange={changeTab} className="space-y-5">
-      <div className="w-full overflow-x-auto pb-1">
-        <TabsList className="h-auto min-w-max justify-start gap-1 bg-muted/60 p-1">
-          {tabs.map((tab) => (
-            <TabsTrigger
-              key={tab.key}
-              value={tab.key}
-              className="min-h-11 gap-1.5 px-3 py-2 text-xs transition-all sm:text-sm data-[state=active]:shadow-sm"
-            >
-              {tab.icon}
-              <span>{tab.label}</span>
-              {typeof tab.badge === "number" && tab.badge > 0 ? (
-                <span className="rounded-full bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                  {tab.badge}
-                </span>
-              ) : null}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      <div className="relative w-full after:pointer-events-none after:absolute after:inset-y-0 after:right-0 after:w-8 after:bg-gradient-to-l after:from-background after:to-transparent">
+        <div className="w-full overflow-x-auto pb-1 pr-6">
+          <TabsList className="h-auto min-w-max justify-start gap-1 bg-muted/60 p-1">
+            {tabs.map((tab) => (
+              <TabsTrigger
+                key={tab.key}
+                ref={(node) => {
+                  tabRefs.current[tab.key] = node;
+                }}
+                value={tab.key}
+                className="min-h-11 gap-1.5 px-3 py-2 text-xs transition-all sm:text-sm data-[state=active]:shadow-sm"
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+                {typeof tab.badge === "number" && tab.badge > 0 ? (
+                  <span className="rounded-full bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    {tab.badge}
+                  </span>
+                ) : null}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
       </div>
 
-      <TabsContent value="overview" forceMount className={panelClass}>
+      <TabsContent value="overview" className={panelClass}>
         {overview}
       </TabsContent>
-      <TabsContent value="projects" forceMount className={panelClass}>
+      <TabsContent value="projects" className={panelClass}>
         {projects}
       </TabsContent>
-      <TabsContent value="files" forceMount className={panelClass}>
+      <TabsContent value="files" className={panelClass}>
         {files}
       </TabsContent>
-      <TabsContent value="invoices" forceMount className={panelClass}>
+      <TabsContent value="invoices" className={panelClass}>
         {invoices}
       </TabsContent>
-      <TabsContent value="contact" forceMount className={panelClass}>
+      <TabsContent value="contact" className={panelClass}>
         {contact}
       </TabsContent>
     </Tabs>

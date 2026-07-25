@@ -28,6 +28,62 @@ export function partitionPortalRequests<T extends { status: string }>(
   };
 }
 
+export function groupByProjectId<T extends { projectId: string | null }>(
+  rows: T[],
+) {
+  const grouped = new Map<string, T[]>();
+  for (const row of rows) {
+    if (!row.projectId) continue;
+    const list = grouped.get(row.projectId) ?? [];
+    list.push(row);
+    grouped.set(row.projectId, list);
+  }
+  return grouped;
+}
+
+type PortalTimeEntry = {
+  projectId: string | null;
+  manualMinutes: number | null;
+  durationMinutes: number | null;
+  startTime: Date | null;
+  endTime: Date | null;
+  billable: boolean;
+};
+
+export function summarizeProjectHours(rows: PortalTimeEntry[]) {
+  const result = new Map<
+    string,
+    { totalMinutes: number; billableMinutes: number; entryCount: number }
+  >();
+  for (const row of rows) {
+    if (!row.projectId) continue;
+    const current = result.get(row.projectId) ?? {
+      totalMinutes: 0,
+      billableMinutes: 0,
+      entryCount: 0,
+    };
+    const minutes = row.manualMinutes
+      ? row.manualMinutes
+      : row.startTime && row.endTime
+        ? Math.round((row.endTime.getTime() - row.startTime.getTime()) / 60_000)
+        : row.durationMinutes || 0;
+    current.totalMinutes += minutes;
+    if (row.billable) current.billableMinutes += minutes;
+    current.entryCount += 1;
+    result.set(row.projectId, current);
+  }
+  return result;
+}
+
+export function portalOpenVisit(workspaceId: string, clientId: string) {
+  return {
+    workspaceId,
+    clientId,
+    resourceType: "portal_open",
+    resourceId: clientId,
+  };
+}
+
 export function projectProgressLabel(
   status: string,
   completed: number,

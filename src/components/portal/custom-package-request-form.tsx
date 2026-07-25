@@ -76,25 +76,47 @@ export function CustomPackageRequestForm({
     e.preventDefault();
     setLoading(true);
     try {
-      await createCustomPackageRequest(token, projectId, hours, message || undefined);
+      await createCustomPackageRequest(
+        token,
+        projectId,
+        hours,
+        message || undefined,
+      );
       toast.success("Permintaan terkirim!");
       setMessage("");
       setExpanded(false);
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed to submit request");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to submit request",
+      );
     } finally {
       setLoading(false);
     }
   }
 
   const statusBadge = (status: string) => {
-    if (status === "approved") return <Badge className="bg-emerald-100 text-emerald-700 text-[10px]">Approved</Badge>;
-    if (status === "rejected") return <Badge className="bg-red-100 text-red-700 text-[10px]">Rejected</Badge>;
-    return <Badge className="bg-yellow-100 text-yellow-700 text-[10px]">Pending</Badge>;
+    if (status === "approved")
+      return (
+        <Badge className="bg-emerald-100 text-emerald-700 text-[10px]">
+          Disetujui
+        </Badge>
+      );
+    if (status === "rejected")
+      return (
+        <Badge className="bg-red-100 text-red-700 text-[10px]">Ditolak</Badge>
+      );
+    return (
+      <Badge className="bg-yellow-100 text-yellow-700 text-[10px]">
+        Menunggu
+      </Badge>
+    );
   };
 
   const formatPrice = (price: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: currency || "IDR" }).format(price);
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency || "IDR",
+    }).format(price);
 
   return (
     <div className="space-y-4">
@@ -104,9 +126,14 @@ export function CustomPackageRequestForm({
           <h4 className="text-sm font-semibold mb-2">Your Requests</h4>
           <div className="space-y-2">
             {existingRequests.map((req) => (
-              <div key={req.id} className="flex items-center justify-between rounded-lg border p-3 text-sm">
+              <div
+                key={req.id}
+                className="flex items-center justify-between rounded-lg border p-3 text-sm"
+              >
                 <div>
-                  <span className="font-medium">{req.requestedHours} hours</span>
+                  <span className="font-medium">
+                    {req.requestedHours} hours
+                  </span>
                   {req.estimatedPrice && (
                     <span className="text-muted-foreground ml-2">
                       — {formatPrice(Number(req.estimatedPrice))}
@@ -135,7 +162,11 @@ export function CustomPackageRequestForm({
           <Package className="h-4 w-4" />
           <span className="font-medium">Request Custom Package</span>
         </div>
-        {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        {expanded ? (
+          <ChevronUp className="h-4 w-4" />
+        ) : (
+          <ChevronDown className="h-4 w-4" />
+        )}
       </button>
 
       {expanded && (
@@ -167,8 +198,12 @@ export function CustomPackageRequestForm({
 
               {estimatedPrice != null && (
                 <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-center">
-                  <p className="text-xs text-muted-foreground">Estimated price</p>
-                  <p className="text-xl font-bold text-primary">{formatPrice(estimatedPrice)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Estimated price
+                  </p>
+                  <p className="text-xl font-bold text-primary">
+                    {formatPrice(estimatedPrice)}
+                  </p>
                 </div>
               )}
 
@@ -185,7 +220,12 @@ export function CustomPackageRequestForm({
                 />
               </div>
 
-              <Button type="submit" disabled={loading} size="sm" className="w-full">
+              <Button
+                type="submit"
+                disabled={loading}
+                size="sm"
+                className="w-full"
+              >
                 {loading ? "Submitting..." : "Request Quote"}
               </Button>
             </form>

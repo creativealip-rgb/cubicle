@@ -538,8 +538,7 @@ function ProjectExpandedContent({
       {isByPackage && !project.selectedPackageId && (
         <div className="rounded-lg border bg-muted/30 p-6 text-center">
           <p className="text-sm text-muted-foreground">
-            Package not assigned yet. Your admin will assign a package to this
-            project.
+            Paket belum ditentukan. Tim akan menentukan paket untuk proyek ini.
           </p>
         </div>
       )}
@@ -547,7 +546,7 @@ function ProjectExpandedContent({
       {/* By Package: available packages — only when no assigned package */}
       {isByPackage && !project.selectedPackageId && packages.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold mb-3">Available Packages</h4>
+          <h4 className="text-sm font-semibold mb-3">Paket tersedia</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {packages.map((pkg) => {
               let features: string[] = [];
@@ -606,7 +605,7 @@ function ProjectExpandedContent({
       {/* Orders */}
       {isByPackage && !project.selectedPackageId && orders.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold mb-2">Your Orders</h4>
+          <h4 className="text-sm font-semibold mb-2">Pesanan Anda</h4>
           <div className="space-y-2">
             {orders.map((order) => (
               <div
@@ -617,7 +616,7 @@ function ProjectExpandedContent({
                   <span className="font-medium">{order.packageName}</span>
                   {order.hours && (
                     <span className="text-muted-foreground ml-1">
-                      ({order.hours}h)
+                      ({order.hours} jam)
                     </span>
                   )}
                   <span className="text-muted-foreground ml-2">
@@ -627,19 +626,19 @@ function ProjectExpandedContent({
                 <div className="flex items-center gap-2">
                   {order.status === "confirmed" ? (
                     <Badge className="bg-emerald-100 text-emerald-700 text-[10px]">
-                      Confirmed
+                      Dikonfirmasi
                     </Badge>
                   ) : order.status === "invoiced" ? (
                     <Badge className="bg-blue-100 text-blue-700 text-[10px]">
-                      Invoiced
+                      Ditagihkan
                     </Badge>
                   ) : order.status === "cancelled" ? (
                     <Badge className="bg-red-100 text-red-700 text-[10px]">
-                      Cancelled
+                      Dibatalkan
                     </Badge>
                   ) : (
                     <Badge className="bg-yellow-100 text-yellow-700 text-[10px]">
-                      Pending
+                      Menunggu
                     </Badge>
                   )}
                   <span className="text-xs text-muted-foreground">
@@ -679,45 +678,58 @@ function ProjectExpandedContent({
 
       {/* Tasks */}
       {tasks.length > 0 && (
-        <div>
-          <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold">
-            <CheckCircle2 className="h-4 w-4" /> Task
-          </h4>
-          <PortalTaskList
-            token={token}
-            tasks={tasks.map((t) => ({
-              id: t.id,
-              title: t.title,
-              description: t.description,
-              status: t.status,
-              priority: t.priority,
-              dueDate: t.dueDate ? String(t.dueDate) : null,
-              updatedAt: String(t.updatedAt),
-              hoursMinutes: taskHoursMap?.get(t.id) ?? 0,
-              timeEntries: taskEntriesMap?.get(t.id) ?? [],
-            }))}
-          />
-        </div>
+        <details
+          className="group rounded-lg border bg-background"
+          open={tasks.length <= 3}
+        >
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 text-sm font-semibold [&::-webkit-details-marker]:hidden">
+            <span className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4" /> Task ({tasks.length})
+            </span>
+            <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="border-t p-3">
+            <PortalTaskList
+              token={token}
+              tasks={tasks.map((t) => ({
+                id: t.id,
+                title: t.title,
+                description: t.description,
+                status: t.status,
+                priority: t.priority,
+                dueDate: t.dueDate ? String(t.dueDate) : null,
+                updatedAt: String(t.updatedAt),
+                hoursMinutes: taskHoursMap?.get(t.id) ?? 0,
+                timeEntries: taskEntriesMap?.get(t.id) ?? [],
+              }))}
+            />
+          </div>
+        </details>
       )}
 
       {/* Files */}
       {files.length > 0 && (
-        <div>
-          <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-            <FileText className="h-4 w-4" /> File
-          </h4>
-          <PortalFileList
-            files={files.map((f) => ({
-              id: f.id,
-              name: f.name,
-              mimeType: f.mimeType,
-              sizeBytes: f.sizeBytes ?? null,
-              fileType: f.fileType,
-              createdAt: String(f.createdAt),
-            }))}
-            token={token}
-          />
-        </div>
+        <details className="group rounded-lg border bg-background">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 text-sm font-semibold [&::-webkit-details-marker]:hidden">
+            <span className="flex items-center gap-2">
+              <FileText className="h-4 w-4" /> File ({files.length})
+            </span>
+            <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="border-t p-3">
+            <PortalFileList
+              files={files.map((f) => ({
+                id: f.id,
+                name: f.name,
+                mimeType: f.mimeType,
+                sizeBytes: f.sizeBytes ?? null,
+                fileType: f.fileType,
+                createdAt: String(f.createdAt),
+              }))}
+              token={token}
+            />
+          </div>
+        </details>
       )}
 
       {/* Contact team — WA / email only */}
@@ -764,7 +776,7 @@ function ProjectSummary({
         <div className="flex items-center gap-2">
           {progressPie(pct)}
           <span className="text-xs font-medium text-foreground">
-            {done}/{total} task selesai
+            {done}/{total} tugas selesai
           </span>
         </div>
       );
@@ -903,7 +915,7 @@ export function ProjectAccordion({
       >
         {/* Collapsed header — always visible */}
         <div
-          className="flex cursor-pointer items-start justify-between gap-3 p-5 transition-colors hover:bg-muted/30"
+          className="flex cursor-pointer flex-col gap-3 p-5 transition-colors hover:bg-muted/30 sm:flex-row sm:items-start sm:justify-between"
           onClick={() => toggleProject(project.id)}
         >
           <div className="flex min-w-0 flex-1 items-start gap-3">
@@ -938,7 +950,7 @@ export function ProjectAccordion({
           </div>
           <Badge
             variant="outline"
-            className={`shrink-0 text-[11px] ${statusMeta.badgeClass}`}
+            className={`ml-8 w-fit shrink-0 text-[11px] sm:ml-0 ${statusMeta.badgeClass}`}
           >
             {statusMeta.label}
           </Badge>

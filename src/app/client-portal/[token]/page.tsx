@@ -13,6 +13,7 @@ import {
   users,
   packages,
   workspaces,
+  portalVisits,
 } from "@/db/schema";
 import { eq, and, sql, desc, inArray, ne, or, isNull } from "drizzle-orm";
 import { getClientPortalAccess, logPortalAccess } from "@/lib/actions/portal";
@@ -30,6 +31,11 @@ import { PortalTabs } from "@/components/portal/portal-tabs";
 import { PortalFileManager } from "@/components/portal/portal-file-manager";
 import { getCustomPackageRequestsByToken } from "@/lib/actions/custom-package-requests";
 import { getPackageOrdersByToken } from "@/lib/actions/package-orders";
+import {
+  groupByProjectId,
+  portalOpenVisit,
+  summarizeProjectHours,
+} from "@/lib/portal-presentation";
 
 export default async function ClientPortalPage({
   params,
@@ -69,6 +75,15 @@ export default async function ClientPortalPage({
       ipAddress: headersList.get("x-forwarded-for") || undefined,
       userAgent: headersList.get("user-agent") || undefined,
     });
+  } catch {
+    // Non-critical
+  }
+
+  // General portal analytics. Never use a file resource here.
+  try {
+    await db
+      .insert(portalVisits)
+      .values(portalOpenVisit(client.workspaceId, client.id));
   } catch {
     // Non-critical
   }
@@ -162,13 +177,7 @@ export default async function ClientPortalPage({
       .limit(500);
   }
 
-  const projectTasksMap = new Map<string, typeof allVisibleTasks>();
-  for (const projectId of visibleProjectIds) {
-    projectTasksMap.set(
-      projectId,
-      allVisibleTasks.filter((task) => task.projectId === projectId),
-    );
-  }
+  const projectTasksMap = groupByProjectId(allVisibleTasks);
 
   // Fetch client-visible files per project (+ folder metadata for file manager)
   const projectFilesMap = new Map<
@@ -185,7 +194,7 @@ export default async function ClientPortalPage({
     }>
   >();
 
-  for (const projectId of visibleProjectIds) {
+  if (visibleProjectIds.length > 0) {
     const projectFiles = await db
       .select({
         id: files.id,
@@ -199,10 +208,17 @@ export default async function ClientPortalPage({
       })
       .from(files)
       .where(
-        and(eq(files.projectId, projectId), eq(files.visibility, "client")),
+        and(
+          eq(files.workspaceId, client.workspaceId),
+          eq(files.clientId, client.id),
+          inArray(files.projectId, visibleProjectIds),
+          eq(files.visibility, "client"),
+        ),
       )
-      .limit(100);
-    projectFilesMap.set(projectId, projectFiles);
+      .limit(500);
+    for (const [projectId, rows] of groupByProjectId(projectFiles)) {
+      projectFilesMap.set(projectId, rows);
+    }
   }
 
   // Client-level shared files (no project) for root of file manager
@@ -281,23 +297,22 @@ export default async function ClientPortalPage({
     }>
   >();
 
+  const entityProjectMap = new Map<string, string>();
   for (const project of clientProjects) {
-    const projectTasks = projectTasksMap.get(project.id) || [];
-    const projectFiles = projectFilesMap.get(project.id) || [];
-    const visibleEntityIds = [
-      project.id,
-      ...projectTasks.map((task) => task.id),
-      ...projectFiles.map((file) => file.id),
-    ];
-
-    if (visibleEntityIds.length === 0) {
-      projectTimelineMap.set(project.id, []);
-      continue;
+    entityProjectMap.set(project.id, project.id);
+    for (const task of projectTasksMap.get(project.id) || []) {
+      entityProjectMap.set(task.id, project.id);
     }
-
-    const timeline = await db
+    for (const file of projectFilesMap.get(project.id) || []) {
+      entityProjectMap.set(file.id, project.id);
+    }
+  }
+  const visibleEntityIds = [...entityProjectMap.keys()];
+  if (visibleEntityIds.length > 0) {
+    const timelineRows = await db
       .select({
         id: activityLogs.id,
+        entityId: activityLogs.entityId,
         action: activityLogs.action,
         entityType: activityLogs.entityType,
         createdAt: activityLogs.createdAt,
@@ -311,9 +326,22 @@ export default async function ClientPortalPage({
         ),
       )
       .orderBy(desc(activityLogs.createdAt))
-      .limit(12);
-
-    projectTimelineMap.set(project.id, timeline);
+      .limit(200);
+    for (const row of timelineRows) {
+      if (!row.entityId) continue;
+      const projectId = entityProjectMap.get(row.entityId);
+      if (!projectId) continue;
+      const list = projectTimelineMap.get(projectId) || [];
+      if (list.length < 12) {
+        list.push({
+          id: row.id,
+          action: row.action,
+          entityType: row.entityType,
+          createdAt: row.createdAt,
+        });
+        projectTimelineMap.set(projectId, list);
+      }
+    }
   }
 
   // Fetch time entry summaries for "by hours" and assigned-package projects
@@ -334,9 +362,10 @@ export default async function ClientPortalPage({
     }
   >();
 
-  for (const projectId of byHoursProjectIds) {
+  if (byHoursProjectIds.length > 0) {
     const entries = await db
       .select({
+        projectId: timeEntries.projectId,
         durationMinutes: timeEntries.durationMinutes,
         manualMinutes: timeEntries.manualMinutes,
         startTime: timeEntries.startTime,
@@ -344,34 +373,16 @@ export default async function ClientPortalPage({
         billable: timeEntries.billable,
       })
       .from(timeEntries)
-      .where(eq(timeEntries.projectId, projectId))
-      .limit(500);
-
-    let totalMinutes = 0;
-    let billableMinutes = 0;
-
-    for (const entry of entries) {
-      let mins = 0;
-      if (entry.manualMinutes) {
-        mins = entry.manualMinutes;
-      } else if (entry.startTime && entry.endTime) {
-        mins = Math.round(
-          (new Date(entry.endTime).getTime() -
-            new Date(entry.startTime).getTime()) /
-            60000,
-        );
-      } else if (entry.durationMinutes) {
-        mins = entry.durationMinutes;
-      }
-      totalMinutes += mins;
-      if (entry.billable) billableMinutes += mins;
+      .where(
+        and(
+          eq(timeEntries.workspaceId, client.workspaceId),
+          inArray(timeEntries.projectId, byHoursProjectIds),
+        ),
+      )
+      .limit(2000);
+    for (const [projectId, summary] of summarizeProjectHours(entries)) {
+      projectHoursMap.set(projectId, summary);
     }
-
-    projectHoursMap.set(projectId, {
-      totalMinutes,
-      billableMinutes,
-      entryCount: entries.length,
-    });
   }
 
   // Fetch packages for "by_package" projects
@@ -398,7 +409,7 @@ export default async function ClientPortalPage({
     }>
   >();
 
-  for (const projectId of byPackageProjectIds) {
+  if (byPackageProjectIds.length > 0) {
     const pkgs = await db
       .select({
         id: packages.id,
@@ -414,11 +425,19 @@ export default async function ClientPortalPage({
         minHours: packages.minHours,
         maxHours: packages.maxHours,
         allowCustom: packages.allowCustom,
+        projectId: packages.projectId,
       })
       .from(packages)
-      .where(and(eq(packages.projectId, projectId), eq(packages.active, true)))
+      .where(
+        and(
+          inArray(packages.projectId, byPackageProjectIds),
+          eq(packages.active, true),
+        ),
+      )
       .orderBy(packages.sortOrder);
-    projectPackagesMap.set(projectId, pkgs);
+    for (const [projectId, rows] of groupByProjectId(pkgs)) {
+      projectPackagesMap.set(projectId, rows);
+    }
   }
 
   // Fetch custom package requests by token
