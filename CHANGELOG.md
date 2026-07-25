@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — 2026-07-25 — Client Portal audit hardening
+
+- Security: validate portal request client/project ownership by workspace; preserve token and visibility scoping on file/invoice access
+- Analytics: stop false file/invoice views on portal page load; record file views only after valid download, invoice first-view only on PDF open, and general visits as `portal_open`
+- Performance: replace per-project task, file, timeline, time-summary, and package queries with batched queries plus linear project grouping
+- Ringkasan/Proyek: separate active request history, hide internal metadata, clarify 100% project status, and make dense task/file sections collapsible
+- File/Invoice/Kontak: localize labels, clarify upload context, harden accessible download/PDF actions, improve mobile invoice layout, and add useful official contact guidance without online payment actions
+- Tabs/mobile: remove inactive `forceMount`, auto-scroll the active tab, add edge fades, keep touch targets at least 44 px, and preserve a 390 px page width without horizontal overflow
+- Documentation: add `docs/client-portal-audit-2026-07-25.md` with scope, decisions, files, and verification evidence
+- Verified: 88 Vitest tests, `npx tsc --noEmit`, Next.js production build, Docker rebuild/deploy, `/api/health` database OK, portal HTTP 200, mobile QA at 390 px, and `dokploy-traefik` remains sole public 80/443 owner
+
 ## v0.1.117 — 2026-07-24 — Multi-project invoice, file directory, and shared headers
 
 - Invoice creation: support multiple project line items, snapshot project values/currencies, automatic FX conversion, report-detail URLs, and safer payment/status calculations

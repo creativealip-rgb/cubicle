@@ -1,6 +1,6 @@
 # Cubiqlo Full Feature Status
 
-Last updated: 2026-07-24
+Last updated: 2026-07-25
 Live app: https://app.cubiqlo.com
 Latest verified branch: `fix/navbar-notification-dashboard-reminders`
 
@@ -20,7 +20,7 @@ Latest verified branch: `fix/navbar-notification-dashboard-reminders`
 | Database | DONE | Postgres container healthy. |
 | Health endpoint | DONE | `/api/health` returns `{"status":"ok","db":"ok"}`. |
 | Protected app routing | DONE | `/app/*` redirects unauthenticated users to `/login?redirect=...`. |
-| Git checkpoint | DONE | Latest calendar implementation pushed: `7194c74 fix: harden calendar booking experience` on `fix/navbar-notification-dashboard-reminders`. |
+| Git checkpoint | DONE | Client Portal audit fixes pushed through `b84e801 perf: finish client portal audit fixes` on `fix/navbar-notification-dashboard-reminders`. |
 
 ## Core app shell
 
@@ -40,9 +40,9 @@ Latest verified branch: `fix/navbar-notification-dashboard-reminders`
 | Client create | `/app/clients/new`, `/api/clients/create` | DONE | Dedicated non-modal fallback created. |
 | Client detail | `/app/clients/[clientId]` | DONE | v0.1.114: Ringkasan removed, Portal kept, default tab Proyek, invoice/project cards actionable. |
 | Client Excel export | `/api/clients/[clientId]/export/xlsx`, `/api/clients/export/xlsx` | DONE | v0.1.114: workspace resolve hardened; list/detail export XLSX. PDF buttons hidden from client UI. |
-| Client portal token route | `/client-portal/[token]` | DONE | Tabs Overview/Projects/Folders/Invoices/Contact; workspace branding header; Folders upload via `POST /api/client-portal/files/upload`. |
+| Client portal token route | `/client-portal/[token]` | DONE | Tabs Ringkasan/Proyek/File/Invoice/Kontak; workspace branding; mobile-safe tab navigation; File upload via `POST /api/client-portal/files/upload`; audit closure documented in `docs/client-portal-audit-2026-07-25.md`. |
 | Short client portal slug UX | Client form / portal fields | DONE | Auto slug generation and cleanup in client form. |
-| Portal access audit | `portal_visits` | PARTIAL | Schema exists; deeper analytics/reporting pending. |
+| Portal access audit | `portal_visits` | DONE | `portal_open` tracks page visits; file views occur only after valid download; invoice first-view occurs only on PDF open. Reporting UI remains optional product analytics work. |
 
 ## Projects + tasks
 
@@ -118,7 +118,7 @@ Latest verified branch: `fix/navbar-notification-dashboard-reminders`
 | --- | --- | --- | --- |
 | Files | `/app/files` | DONE | File workspace page exists. |
 | R2 storage | backend | DONE | Upload/download/delete smoke passed earlier. |
-| File permission audit | backend/client portal | PARTIAL | Basic filtering exists; deeper audit tooling pending. |
+| File permission audit | backend/client portal | DONE | Portal file access is scoped by token, workspace, client, visible project, and client visibility; page load no longer produces false file-view analytics. |
 
 ## AI + templates
 

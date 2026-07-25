@@ -1,6 +1,6 @@
 # Cubiqlo Phase 1 — Client Portal Collaboration
 
-Last updated: 2026-06-28
+Last updated: 2026-07-25
 
 ## Goal
 
@@ -64,7 +64,7 @@ Phase 1 fokus bikin client portal lebih layak dipakai klien real:
 - [x] Push ke `origin/main`
 - [x] Container `cubicle-cubicle-1` restart
 - [x] Health check OK: `GET /api/health` → `{"ok":true}`
-- [ ] Playwright E2E khusus portal slug/request/comment flow
+- [x] Browser regression QA portal slug, requests, projects, files, invoices, contact at mobile 390 px
 
 ## Files changed
 
@@ -116,12 +116,23 @@ updated_at timestamptz not null default now()
 ## Current production state
 
 ```text
-Branch: main
-Commit: c7c3add feat: complete client portal phase 1
+Branch: fix/navbar-notification-dashboard-reminders
+Latest audit commits: 745e13e, b84e801
 Container: cubicle-cubicle-1 healthy
 DB: cubicle-pg healthy
-Health: {"ok":true}
+Health: {"status":"ok","db":"ok"}
 ```
+
+## 2026-07-25 audit closure
+
+- Portal request actions validate workspace/client/project ownership.
+- Request history is separated from active work; internal metadata is removed from client-visible descriptions.
+- File page load no longer marks all visible files viewed. Download analytics and first-view notifications run only after valid download.
+- Invoice first-view is recorded only when PDF is opened.
+- General page access is recorded separately as `portal_open`.
+- Per-project task, file, timeline, hours, and package query loops were replaced with batched queries.
+- Tabs, project details, File, Invoice, and Contact were polished and verified at 390 px with no page-level horizontal overflow.
+- Detailed evidence: `docs/client-portal-audit-2026-07-25.md`.
 
 ## Next recommended phase
 
