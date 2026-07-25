@@ -13,7 +13,7 @@ export class PublicTokenError extends Error {
   }
 }
 
-type PublicTokenLifecycleInput = {
+export type PublicTokenLifecycleInput = {
   presentedHash: string;
   storedHash: string | null | undefined;
   enabled?: boolean;

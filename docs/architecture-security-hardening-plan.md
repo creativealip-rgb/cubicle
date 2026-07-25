@@ -442,6 +442,8 @@ Kandidat:
 
 ## 5.4 CSP hardening
 
+**Status:** Completed 25 Juli 2026. CSP menambahkan `object-src 'none'`, `base-uri 'self'`, dan `form-action 'self'`; production `script-src` tidak lagi memakai `'unsafe-eval'`. Regression test, 203-test suite, lint, TypeScript, dan production build exit 0. Nonce dievaluasi tetapi ditunda: Next.js nonce per-request akan memaksa dynamic rendering untuk route yang menerima CSP nonce dan perlu migration/caching test terpisah; `'unsafe-inline'` tetap menjadi residual risk yang eksplisit.
+
 **Aksi:**
 1. Tambahkan `object-src 'none'`, `base-uri 'self'`, dan `form-action` sesuai kebutuhan.
 2. Evaluasi hapus `'unsafe-eval'` production.

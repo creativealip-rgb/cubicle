@@ -2,10 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   PublicTokenError,
   assertPublicTokenLifecycle,
+  type PublicTokenLifecycleInput,
 } from "@/lib/public-token-policy";
 
 const now = new Date("2026-07-25T12:00:00.000Z");
-const base = {
+const base: PublicTokenLifecycleInput = {
   presentedHash: "hash-a",
   storedHash: "hash-a",
   enabled: true,
