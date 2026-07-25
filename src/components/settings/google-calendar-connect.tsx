@@ -55,6 +55,7 @@ export function GoogleCalendarConnect({
   }, [searchParams, router, t]);
 
   async function disconnect() {
+    if (!window.confirm(t("Putuskan Google Calendar dari akun ini?", "Disconnect Google Calendar from this account?"))) return;
     setLoading(true);
     try {
       const res = await fetch("/api/integrations/google-calendar/disconnect", {

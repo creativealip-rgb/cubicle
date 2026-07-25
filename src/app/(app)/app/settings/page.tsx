@@ -344,6 +344,7 @@ export default async function SettingsPage({
                     })}
                   </div>
                   <WorkspaceBrandingForm
+                    canEdit={canEditWorkspace}
                     defaults={{
                       billingName: workspace.billingName,
                       billingEmail: workspace.billingEmail,

@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { workspaces } from "@/db/schema";
-import { requireUser, assertWorkspaceOwner, assertWorkspaceWritable } from "@/lib/access";
+import { requireUser, assertWorkspaceOwner } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { writeActivityLog } from "@/lib/actions/activity";
 
@@ -61,7 +61,7 @@ export async function updateWorkspaceBranding(input: z.infer<typeof brandingSche
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
-  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertWorkspaceOwner(db, user.id, workspaceId);
 
   const parsed = brandingSchema.parse(input);
 

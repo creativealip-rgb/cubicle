@@ -7,7 +7,7 @@ import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { workspaceCurrencyRates, workspaces } from "@/db/schema";
-import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
+import { requireUser, assertWorkspaceMember, assertWorkspaceOwner } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { normalizeCurrency } from "@/lib/currency-base";
@@ -71,7 +71,7 @@ export async function upsertWorkspaceCurrencyRate(input: z.infer<typeof rateSche
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
-  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertWorkspaceOwner(db, user.id, workspaceId);
 
   const parsed = rateSchema.parse(input);
   const fromCurrency = normalizeCurrency(parsed.fromCurrency);
@@ -137,7 +137,7 @@ export async function deleteWorkspaceCurrencyRate(input: z.infer<typeof deleteSc
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
-  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertWorkspaceOwner(db, user.id, workspaceId);
 
   const parsed = deleteSchema.parse(input);
   const fromCurrency = normalizeCurrency(parsed.fromCurrency);
@@ -178,7 +178,7 @@ export async function updateShowBaseCurrencyApprox(
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
-  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertWorkspaceOwner(db, user.id, workspaceId);
 
   const parsed = approxToggleSchema.parse(input);
   await db

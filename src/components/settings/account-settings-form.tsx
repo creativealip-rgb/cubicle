@@ -8,6 +8,7 @@ import { updateAccountName, updateAccountPassword } from "@/lib/actions/account"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/lib/i18n-client";
 
 type AccountSettingsFormProps = {
   name: string;
@@ -17,9 +18,11 @@ type AccountSettingsFormProps = {
 
 export function AccountSettingsForm({ name, email, emailVerified }: AccountSettingsFormProps) {
   const router = useRouter();
+  const { t } = useT();
   const [displayName, setDisplayName] = useState(name);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPasswords, setShowPasswords] = useState(false);
   const [pendingName, startNameTransition] = useTransition();
   const [pendingPassword, startPasswordTransition] = useTransition();
@@ -28,24 +31,29 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
     startNameTransition(async () => {
       const res = await updateAccountName(displayName);
       if (!res.ok) {
-        toast.error(res.error ?? "Gagal menyimpan nama");
+        toast.error(res.error ?? t("Gagal menyimpan nama", "Failed to save name"));
         return;
       }
-      toast.success("Nama akun diperbarui");
+      toast.success(t("Nama akun diperbarui", "Account name updated"));
       router.refresh();
     });
   }
 
   function savePassword() {
     startPasswordTransition(async () => {
+      if (newPassword !== confirmPassword) {
+        toast.error(t("Konfirmasi password tidak cocok", "Password confirmation does not match"));
+        return;
+      }
       const res = await updateAccountPassword(currentPassword, newPassword);
       if (!res.ok) {
-        toast.error(res.error ?? "Gagal mengganti password");
+        toast.error(res.error ?? t("Gagal mengganti password", "Failed to change password"));
         return;
       }
       setCurrentPassword("");
       setNewPassword("");
-      toast.success("Password diperbarui");
+      setConfirmPassword("");
+      toast.success(t("Password diperbarui. Sesi perangkat lain sudah dikeluarkan.", "Password updated. Other device sessions were signed out."));
     });
   }
 
@@ -53,24 +61,24 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="account-name">Nama / username</Label>
+          <Label htmlFor="account-name">{t("Nama / username", "Name / username")}</Label>
           <Input
             id="account-name"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Nama tampil"
+            placeholder={t("Nama tampil", "Display name")}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="account-email">Email login</Label>
+          <Label htmlFor="account-email">{t("Email login", "Login email")}</Label>
           <Input id="account-email" value={email} disabled />
           <p className="text-xs text-muted-foreground">
-            {emailVerified ? "Email sudah terverifikasi." : "Email belum terverifikasi."} Edit email belum dibuka demi keamanan login.
+            {emailVerified ? t("Email sudah terverifikasi.", "Email is verified.") : t("Email belum terverifikasi.", "Email is not verified.")} {t("Edit email belum dibuka demi keamanan login.", "Email editing is unavailable to protect login security.")}
           </p>
         </div>
       </div>
       <Button type="button" onClick={saveName} disabled={pendingName}>
-        {pendingName ? "Menyimpan…" : "Simpan nama"}
+        {pendingName ? t("Menyimpan…", "Saving…") : t("Simpan nama", "Save name")}
       </Button>
 
       <div className="border-t pt-5">
@@ -78,38 +86,45 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
           <div>
             <h3 className="text-sm font-semibold">Password</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Ganti password pakai password sekarang. Minimal 8 karakter.
+              {t("Ganti password pakai password sekarang. Minimal 8 karakter.", "Use your current password. New password must be at least 8 characters.")}
             </p>
           </div>
           <Button type="button" variant="outline" size="sm" onClick={() => setShowPasswords((v) => !v)}>
             {showPasswords ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
-            {showPasswords ? "Sembunyikan" : "Tampilkan"}
+            {showPasswords ? t("Sembunyikan", "Hide") : t("Tampilkan", "Show")}
           </Button>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
-            <Label htmlFor="current-password">Password sekarang</Label>
+            <Label htmlFor="current-password">{t("Password sekarang", "Current password")}</Label>
             <Input
               id="current-password"
               type={showPasswords ? "text" : "password"}
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               autoComplete="current-password"
+              required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="new-password">Password baru</Label>
+            <Label htmlFor="new-password">{t("Password baru", "New password")}</Label>
             <Input
               id="new-password"
               type={showPasswords ? "text" : "password"}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               autoComplete="new-password"
+              required
+              minLength={8}
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirm-password">{t("Konfirmasi password", "Confirm password")}</Label>
+            <Input id="confirm-password" type={showPasswords ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" required minLength={8} />
+          </div>
         </div>
-        <Button type="button" className="mt-4" onClick={savePassword} disabled={pendingPassword}>
-          {pendingPassword ? "Mengganti…" : "Ganti password"}
+        <Button type="button" className="mt-4" onClick={savePassword} disabled={pendingPassword || !currentPassword || newPassword.length < 8 || newPassword !== confirmPassword}>
+          {pendingPassword ? t("Mengganti…", "Updating…") : t("Ganti password", "Change password")}
         </Button>
       </div>
     </div>

@@ -6,6 +6,9 @@ import { hashPassword, verifyPassword } from "@better-auth/utils/password";
 import { db } from "@/db";
 import { accounts, users } from "@/db/schema";
 import { requireAppSession } from "@/lib/app-auth";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { validatePasswordChange } from "@/lib/settings-validation";
 
 export type AccountActionResult = {
   ok: boolean;
@@ -39,20 +42,10 @@ export async function updateAccountPassword(
   newPassword: string,
 ): Promise<AccountActionResult> {
   const session = await requireAppSession("/app/settings?tab=account");
-  const current = currentPassword.trim();
-  const next = newPassword.trim();
-
-  if (current.length === 0) {
-    return { ok: false, error: "Password sekarang wajib diisi." };
-  }
-
-  if (next.length < 8) {
-    return { ok: false, error: "Password baru minimal 8 karakter." };
-  }
-
-  if (current === next) {
-    return { ok: false, error: "Password baru harus berbeda." };
-  }
+  const validation = validatePasswordChange(currentPassword, newPassword);
+  if (!validation.ok) return validation;
+  const current = validation.currentPassword;
+  const next = validation.newPassword;
 
   const [credential] = await db
     .select({ id: accounts.id, password: accounts.password })
@@ -74,6 +67,8 @@ export async function updateAccountPassword(
     .update(accounts)
     .set({ password: hashed, updatedAt: new Date() })
     .where(eq(accounts.id, credential.id));
+
+  await auth.api.revokeOtherSessions({ headers: await headers() });
 
   return { ok: true };
 }

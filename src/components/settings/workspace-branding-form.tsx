@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useT } from "@/lib/i18n-client";
 
 interface WorkspaceBrandingFormProps {
+  canEdit?: boolean;
   defaults: {
     billingName?: string | null;
     billingEmail?: string | null;
@@ -33,6 +34,7 @@ interface WorkspaceBrandingFormProps {
 export function WorkspaceBrandingForm({
   defaults,
   ownerEmailHint,
+  canEdit = true,
 }: WorkspaceBrandingFormProps) {
   const { t } = useT();
   const router = useRouter();
@@ -89,8 +91,8 @@ export function WorkspaceBrandingForm({
       toast.error(t("Logo max 2MB", "Logo max 2MB"));
       return;
     }
-    if (!file.type.startsWith("image/")) {
-      toast.error(t("File harus gambar", "File must be an image"));
+    if (!["image/png", "image/jpeg", "image/webp", "image/gif"].includes(file.type)) {
+      toast.error(t("Format logo harus PNG, JPG, WebP, atau GIF", "Logo must be PNG, JPG, WebP, or GIF"));
       return;
     }
 
@@ -115,6 +117,7 @@ export function WorkspaceBrandingForm({
   }
 
   async function onRemoveLogo() {
+    if (!window.confirm(t("Hapus logo workspace?", "Remove workspace logo?"))) return;
     setUploading(true);
     try {
       const res = await fetch("/api/workspace/logo", { method: "DELETE" });
@@ -134,14 +137,15 @@ export function WorkspaceBrandingForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
+      <fieldset disabled={!canEdit} className="space-y-4">
       <div className="space-y-3 rounded-lg border p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <Label>{t("Logo invoice", "Invoice logo")}</Label>
             <p className="mt-1 text-xs text-muted-foreground">
               {t(
-                "Upload PNG/JPG/WebP/SVG, max 2MB. Muncul di PDF + preview klien.",
-                "Upload PNG/JPG/WebP/SVG, max 2MB. Shows on PDF + client preview.",
+                "Upload PNG/JPG/WebP/GIF, max 2MB. Muncul di PDF + preview klien.",
+                "Upload PNG/JPG/WebP/GIF, max 2MB. Shows on PDF + client preview.",
               )}
             </p>
           </div>
@@ -163,7 +167,7 @@ export function WorkspaceBrandingForm({
           <input
             ref={fileRef}
             type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+            accept="image/png,image/jpeg,image/webp,image/gif"
             className="hidden"
             onChange={(e) => onUploadLogo(e.target.files?.[0])}
           />
@@ -171,7 +175,7 @@ export function WorkspaceBrandingForm({
             type="button"
             variant="outline"
             size="sm"
-            disabled={uploading}
+            disabled={uploading || !canEdit}
             className="gap-1.5"
             onClick={() => fileRef.current?.click()}
           >
@@ -187,7 +191,7 @@ export function WorkspaceBrandingForm({
               type="button"
               variant="ghost"
               size="sm"
-              disabled={uploading}
+              disabled={uploading || !canEdit}
               className="gap-1.5 text-destructive"
               onClick={onRemoveLogo}
             >
@@ -354,9 +358,10 @@ export function WorkspaceBrandingForm({
 
       </div>
 
-      <Button type="submit" disabled={loading || uploading}>
+      <Button type="submit" disabled={loading || uploading || !canEdit}>
         {loading ? t("Menyimpan…", "Saving…") : t("Simpan branding", "Save branding")}
       </Button>
+      </fieldset>
     </form>
   );
 }

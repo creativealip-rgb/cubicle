@@ -151,6 +151,23 @@ Step portal klien di dashboard checklist.
 
 ---
 
+## Settings audit — 2026-07-25
+
+Status: **fixed locally; deploy verification pending**.
+
+- **SET-001 fixed:** upload raster divalidasi lewat MIME allowlist + magic bytes.
+- **SET-002 fixed:** UI dan API sama-sama hanya menerima PNG/JPG/WebP/GIF.
+- **SET-003 fixed:** password tidak lagi di-trim; whitespace dipertahankan.
+- **SET-004 fixed:** ganti password me-revoke sesi perangkat lain.
+- **SET-005 fixed:** branding, logo, booking, nama workspace, dan kurs owner-only di server + read-only UI.
+- **SET-006 fixed:** konfirmasi disconnect Google, hapus logo/member; member target spesifik + tombol 44px + aria-label.
+- **SET-007 fixed:** Account Settings ikut ID/EN.
+- **SET-008 fixed:** password required, minLength, confirmation, dan invalid submit disabled.
+- **SET-009 fixed:** regression test signature gambar + password policy/whitespace.
+- **SET-010 pending:** source belum dideploy saat catatan ini dibuat.
+
+Verifikasi lokal: `101/101` tests pass, touched-file ESLint pass, production build pass. Full lint masih punya 13 error lama di luar Settings.
+
 ## Belum dicek / hold
 
 | Area | Risiko |
