@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getSessionCookie } from "better-auth/cookies"
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
+import { getCanonicalRedirect } from "@/lib/host-routing"
 
 const protectedPrefixes = ["/app", "/onboarding"]
 const authPages = ["/login", "/signup", "/forgot-password", "/verify-email", "/verify-email/success"]
@@ -52,20 +53,14 @@ export async function proxy(request: NextRequest) {
   }
 
   const sessionCookie = getSessionCookie(request)
-  const isApexHost = host === "cubiqlo.com" || host === "www.cubiqlo.com"
-  const isAppHost = host === "app.cubiqlo.com"
-  const isApexAppRoute = isApexHost && (pathname.startsWith("/app") || pathname.startsWith("/onboarding"))
-
-  // Public marketing site belongs to cubiqlo.com. App host root must never render the landing page.
-  if (isAppHost && pathname === "/") {
-    return NextResponse.redirect(new URL("/app/dashboard", request.url), 308)
-  }
-
-  // App routes live on app.cubiqlo.com. Old/bookmarked apex app URLs move to app host.
-  if (isApexAppRoute) {
-    const url = new URL(`https://app.cubiqlo.com${pathname}`)
-    url.search = request.nextUrl.search
-    return NextResponse.redirect(url, 308)
+  const canonicalRedirect = getCanonicalRedirect(
+    host,
+    pathname,
+    request.nextUrl.search,
+    Boolean(sessionCookie),
+  )
+  if (canonicalRedirect) {
+    return NextResponse.redirect(canonicalRedirect, 308)
   }
 
   // Protected routes: no session → redirect to login on the same host.
@@ -79,7 +74,7 @@ export async function proxy(request: NextRequest) {
   // Auth pages: already logged in → redirect to app
   const isAuthPage = authPages.some((p) => pathname === p)
   if (isAuthPage && sessionCookie) {
-    return NextResponse.redirect(new URL("/app/dashboard", request.url))
+    return NextResponse.redirect(new URL("https://app.cubiqlo.com/app/dashboard"))
   }
 
   return NextResponse.next()
