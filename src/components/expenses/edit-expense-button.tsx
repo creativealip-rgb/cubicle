@@ -64,32 +64,30 @@ export function EditExpenseButton({
           <DialogHeader className="shrink-0 border-b px-4 py-4 pr-12 sm:px-6">
             <DialogTitle>{t("Edit pengeluaran", "Edit expense")}</DialogTitle>
           </DialogHeader>
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
-            <ExpenseForm
-              workspaceId={workspaceId}
-              defaultCurrency={defaultCurrency}
-              categories={categories}
-              projects={projects}
-              clients={clients}
-              mode="edit"
-              initial={{
-                id: expense.id,
-                date: expense.date,
-                amount: expense.amount,
-                currency: expense.currency,
-                description: expense.description,
-                categoryId: expense.categoryId ?? "",
-                projectId: expense.projectId ?? "",
-                clientId: expense.clientId ?? "",
-                vendor: expense.vendor ?? "",
-                taxIncluded: expense.taxIncluded,
-                taxAmount: expense.taxAmount ?? "",
-                receiptUrl: expense.receiptUrl,
-              }}
-              onSuccess={() => setOpen(false)}
-              onCancel={() => setOpen(false)}
-            />
-          </div>
+          <ExpenseForm
+            workspaceId={workspaceId}
+            defaultCurrency={defaultCurrency}
+            categories={categories}
+            projects={projects}
+            clients={clients}
+            mode="edit"
+            initial={{
+              id: expense.id,
+              date: expense.date,
+              amount: expense.amount,
+              currency: expense.currency,
+              description: expense.description,
+              categoryId: expense.categoryId ?? "",
+              projectId: expense.projectId ?? "",
+              clientId: expense.clientId ?? "",
+              vendor: expense.vendor ?? "",
+              taxIncluded: expense.taxIncluded,
+              taxAmount: expense.taxAmount ?? "",
+              receiptUrl: expense.receiptUrl,
+            }}
+            onSuccess={() => setOpen(false)}
+            onCancel={() => setOpen(false)}
+          />
         </DialogContent>
       </Dialog>
     </>

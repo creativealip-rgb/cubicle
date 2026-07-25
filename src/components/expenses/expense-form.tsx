@@ -220,7 +220,8 @@ export function ExpenseForm({
   const gridCols = compact ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-4" : "grid-cols-1 md:grid-cols-2";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 pb-20">
+    <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-6">
       <div className={`grid gap-3 ${gridCols}`}>
         <div className="space-y-1">
           <Label htmlFor="date" className="text-xs">{t("Tanggal", "Date")}</Label>
@@ -419,8 +420,9 @@ export function ExpenseForm({
           </div>
         </div>
       )}
+      </div>
 
-      <div className="sticky bottom-0 -mx-4 mt-2 flex gap-2 border-t bg-background px-4 py-3 sm:-mx-6 sm:px-6">
+      <div className="shrink-0 flex gap-2 border-t bg-background px-4 py-3 sm:px-6">
         <Button type="submit" disabled={loading || uploading} size="sm" className="min-h-10">
           {loading ? (
             <Loader2 className="h-4 w-4 mr-1 animate-spin" />
