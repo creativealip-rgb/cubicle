@@ -464,7 +464,7 @@ Kandidat:
 
 ## 6.1 Off-host encrypted backup
 
-**Status:** Implemented 25 Juli 2026; alert acceptance masih pending. Local checksum backup tetap aktif. Encrypted R2 copy memakai client-side `rclone crypt`, daily/weekly/monthly retention, dan upload-download byte verification. Restore proof terbaru memuat 51 tabel. Runbook: `docs/operations/backup-recovery-observability.md`. Residual risk: backup masih memakai app R2 account/bucket dengan encrypted prefix, bukan backup-only credential/bucket; external failure alert belum diuji.
+**Status:** Implemented 25 Juli 2026; alert acceptance selesai. Local checksum backup tetap aktif. Encrypted R2 copy memakai client-side `rclone crypt`, daily/weekly/monthly retention, dan upload-download byte verification. Restore proof terbaru memuat 51 tabel. Backup watchdog normal scheduler run berstatus `ok`, healthy state silent, controlled stale/checksum/off-host/restore failure memakai path temporary menghasilkan exit 1, dan controlled delivery terkirim ke Telegram (message ID `47795`) tanpa mengubah backup asli. Runbook: `docs/operations/backup-recovery-observability.md`. Residual risk: backup masih memakai app R2 account/bucket dengan encrypted prefix, bukan backup-only credential/bucket.
 
 **Aksi:**
 1. Pertahankan backup lokal cepat.

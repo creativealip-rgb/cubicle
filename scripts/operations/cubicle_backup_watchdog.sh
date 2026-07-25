@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 # Silent on healthy state; prints one alert payload on failure/staleness.
 set -euo pipefail
-BACKUP_DIR=/root/backups/cubicle
-LOCAL_MAX_MINUTES=1560
-OFFSITE_LOG=/var/log/cubicle-backup-offsite.log
-RESTORE_LOG=/var/log/cubicle-restore-test.log
+BACKUP_DIR=${BACKUP_DIR:-/root/backups/cubicle}
+LOCAL_MAX_MINUTES=${LOCAL_MAX_MINUTES:-1560}
+OFFSITE_LOG=${OFFSITE_LOG:-/var/log/cubicle-backup-offsite.log}
+RESTORE_LOG=${RESTORE_LOG:-/var/log/cubicle-restore-test.log}
 problems=()
+
+if [[ ${1:-} == "--self-test" ]]; then
+  printf '%s\n' 'Cubiqlo backup alert: controlled delivery self-test'
+  exit 0
+fi
 
 latest=$(find "$BACKUP_DIR" -maxdepth 1 -type f -name 'cubicle_2*.sql.gz' -mmin -"$LOCAL_MAX_MINUTES" -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
 if [[ -z "$latest" ]]; then

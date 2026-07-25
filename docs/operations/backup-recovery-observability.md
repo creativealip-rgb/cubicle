@@ -126,4 +126,4 @@ Record:
 - VPS root filesystem reached 87% during Phase 6 audit. Safe Docker build-cache pruning reclaimed 10.08 GB and reduced usage to 81%; a 6-hour external watchdog now alerts at 85%.
 - General `/root/scripts/backup-all-dbs.sh` also dumps Cubiqlo, creating a duplicate local lane without checksum. Keep temporarily as defense-in-depth; remove Cubiqlo from that generic job only after dedicated lane alerting proves reliable.
 - Existing `gdrive:` rclone token is expired (`invalid_grant`) and is not part of Cubiqlo backup flow.
-- Backup watchdog failure and recovery paths were controlled-tested: stale state emitted an alert and exit 1; healthy state was silent with exit 0.
+- Backup watchdog failure and recovery paths were controlled-tested: temporary stale/checksum/off-host/restore failure state emitted an alert and exit 1; healthy state was silent with exit 0. A non-executable Hermes wrapper (`0600`) was found and fixed to `0700`; forced scheduler run then completed with status `ok`. Controlled Telegram delivery succeeded with message ID `47795` without changing real backup artifacts.
