@@ -547,6 +547,8 @@ WAL/PITR belum wajib untuk DB 15 MB dan user awal. Aktifkan saat salah satu trig
 
 ## 7.2 CI artifact build
 
+**Status:** Blocked 25 Juli 2026. Workflow `.github/workflows/ci-image.yml` sudah dibuat dan lolos `actionlint` serta local parity gate. GitHub Actions run `30169718345` tidak memulai runner karena annotation GitHub: `The job was not started because your account is locked due to a billing issue.` Akibatnya immutable GHCR image belum terbit dan acceptance phase belum terpenuhi. Setelah billing GitHub pulih, rerun workflow dan verifikasi tag `ghcr.io/creativealip-rgb/cubicle:sha-<40-char-commit>` beserta digest, provenance, dan SBOM.
+
 **Aksi:**
 1. GitHub Actions menjalankan lint, typecheck, test, build, dependency/security scan.
 2. Push image ke GHCR dengan tag Git SHA.
