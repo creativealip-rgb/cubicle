@@ -173,7 +173,7 @@ export default async function HomePage() {
             </div>
 
             <div className="relative min-w-0 lg:pl-4">
-              <div className="absolute -inset-5 rounded-[2.5rem] bg-gradient-to-br from-[#6647F0]/20 via-transparent to-[#FF7657]/20 blur-2xl" />
+              <div className="absolute inset-0 rounded-[2.5rem] bg-gradient-to-br from-[#6647F0]/20 via-transparent to-[#FF7657]/20 blur-2xl" />
               <BrowserFrame src="/screenshots/dashboard.png" alt="Dashboard Cubiqlo untuk mengelola klien, proyek, tugas, dan invoice" className="relative lg:rotate-[1deg]" />
               <div className="absolute -bottom-5 left-3 flex items-center gap-3 rounded-2xl bg-white p-3 shadow-xl ring-1 ring-slate-950/10 sm:left-8 sm:p-4">
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><CheckCircle2 className="h-5 w-5" /></span>
