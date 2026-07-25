@@ -39,7 +39,7 @@ const operationPillars = [
   {
     icon: Clock3,
     title: "Time tracking",
-    description: "Catat jam billable pakai timer, input manual, summary, dan export CSV.",
+    description: "Catat jam billable pakai timer, input manual, summary, dan export Excel.",
   },
   {
     icon: FileText,

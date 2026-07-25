@@ -72,10 +72,17 @@ export function ReportControls({ lang, preset, from, to }: Props) {
         <Button
           variant="outline"
           className="h-10"
-          onClick={() => window.print()}
+          onClick={() => {
+            const params = new URLSearchParams({ period: preset });
+            if (preset === "custom") {
+              params.set("from", from);
+              params.set("to", to);
+            }
+            window.location.href = `/api/reports/export/xlsx?${params.toString()}`;
+          }}
         >
           <Download className="mr-2 h-4 w-4" />
-          {t("Ekspor", "Export")}
+          {t("Ekspor Excel", "Export Excel")}
         </Button>
       </div>
       {customOpen && (

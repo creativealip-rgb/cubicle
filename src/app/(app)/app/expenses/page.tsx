@@ -21,7 +21,7 @@ import {
 import { CategoryManager } from "@/components/expenses/category-manager";
 import { RecurringManager } from "@/components/expenses/recurring-manager";
 import { ExpenseFilters } from "@/components/expenses/expense-filters";
-import { ExpenseCsvExportButton } from "@/components/expenses/expense-csv-export";
+import { ExpenseExcelExportButton } from "@/components/expenses/expense-excel-export";
 import { ExpensesListTable } from "@/components/expenses/expenses-list-table";
 import { AddExpenseButton } from "@/components/expenses/add-expense-button";
 import {
@@ -344,7 +344,7 @@ export default async function ExpensesPage({
                 triggerClassName="flex-1 sm:flex-none min-h-10"
               />
             )}
-            <ExpenseCsvExportButton
+            <ExpenseExcelExportButton
               month={month}
               categoryId={categoryId || undefined}
               q={q || undefined}
