@@ -8,27 +8,39 @@ import {
   expenseRecurring,
   projects,
   clients,
-  payments,
-  invoices,
   workspaceCurrencyRates,
 } from "@/db/schema";
 import { eq, desc, and, gte, lte } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { type CategoryOption, type ProjectOption, type ClientOption } from "@/components/expenses/expense-form";
+import {
+  type CategoryOption,
+  type ProjectOption,
+  type ClientOption,
+} from "@/components/expenses/expense-form";
 import { CategoryManager } from "@/components/expenses/category-manager";
 import { RecurringManager } from "@/components/expenses/recurring-manager";
 import { ExpenseFilters } from "@/components/expenses/expense-filters";
 import { ExpenseCsvExportButton } from "@/components/expenses/expense-csv-export";
 import { ExpensesListTable } from "@/components/expenses/expenses-list-table";
 import { AddExpenseButton } from "@/components/expenses/add-expense-button";
-import { TrendingDown, TrendingUp, Wallet, Tag, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  TrendingDown,
+  Tag,
+  ChevronLeft,
+  ChevronRight,
+  BarChart3,
+} from "lucide-react";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { formatMoney } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
-import { PageHeader, PageHeaderDescription, PageHeaderTitle } from "@/components/ui/page-header";
+import {
+  PageHeader,
+  PageHeaderDescription,
+  PageHeaderTitle,
+} from "@/components/ui/page-header";
 import { Suspense } from "react";
 import {
   aggregateToBase,
@@ -73,11 +85,16 @@ export default async function ExpensesPage({
 
   const params = await searchParams;
   const month =
-    params.month && /^\d{4}-\d{2}$/.test(params.month) ? params.month : currentMonthKey();
+    params.month && /^\d{4}-\d{2}$/.test(params.month)
+      ? params.month
+      : currentMonthKey();
   const categoryId = params.categoryId ?? "";
   const q = (params.q ?? "").trim();
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
-  const tab = params.tab === "categories" || params.tab === "recurring" ? params.tab : "list";
+  const tab =
+    params.tab === "categories" || params.tab === "recurring"
+      ? params.tab
+      : "list";
   const { start: monthStart, end: monthEnd } = monthBounds(month);
 
   // Categories
@@ -95,7 +112,11 @@ export default async function ExpensesPage({
 
   // Projects (include clientId so form can filter by client)
   const projectRows = await db
-    .select({ id: projects.id, name: projects.name, clientId: projects.clientId })
+    .select({
+      id: projects.id,
+      name: projects.name,
+      clientId: projects.clientId,
+    })
     .from(projects)
     .where(eq(projects.workspaceId, ws.id))
     .orderBy(projects.name);
@@ -149,35 +170,13 @@ export default async function ExpensesPage({
   const spentTotal = spentAgg.total;
   const missingFx = new Set(spentAgg.missingCurrencies);
 
-  // Income this month — convert payments to base
-  const incomeRows = await db
-    .select({ amount: payments.amount, currency: invoices.currency })
-    .from(payments)
-    .innerJoin(invoices, eq(invoices.id, payments.invoiceId))
-    .where(
-      and(
-        eq(invoices.workspaceId, ws.id),
-        gte(payments.paidAt, monthStart),
-        lte(payments.paidAt, monthEnd),
-      ),
-    );
-  const incomeAgg = aggregateToBase(
-    incomeRows.map((p) => ({
-      amount: parseFloat(p.amount),
-      currency: p.currency,
-    })),
-    baseCurrency,
-    rateMap,
-  );
-  const incomeTotal = incomeAgg.total;
-  for (const c of incomeAgg.missingCurrencies) missingFx.add(c);
-
-  const netTotal = incomeTotal - spentTotal;
-  const netPositive = netTotal >= 0;
   const missingFxList = Array.from(missingFx).sort();
 
   // Category breakdown in base currency
-  const byCategory: Record<string, { name: string; color: string; total: number }> = {};
+  const byCategory: Record<
+    string,
+    { name: string; color: string; total: number }
+  > = {};
   for (const e of monthExpenseRows) {
     const converted = convertToBase(
       parseFloat(e.amount),
@@ -259,7 +258,12 @@ export default async function ExpensesPage({
     .slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
     .map((e) => {
       const amountBase = showApprox
-        ? convertToBase(Number(e.amount) || 0, e.currency, baseCurrency, rateMap)
+        ? convertToBase(
+            Number(e.amount) || 0,
+            e.currency,
+            baseCurrency,
+            rateMap,
+          )
         : null;
       return { ...e, amountBase };
     });
@@ -284,7 +288,10 @@ export default async function ExpensesPage({
       notes: expenseRecurring.notes,
     })
     .from(expenseRecurring)
-    .leftJoin(expenseCategories, eq(expenseCategories.id, expenseRecurring.categoryId))
+    .leftJoin(
+      expenseCategories,
+      eq(expenseCategories.id, expenseRecurring.categoryId),
+    )
     .leftJoin(projects, eq(projects.id, expenseRecurring.projectId))
     .where(eq(expenseRecurring.workspaceId, ws.id))
     .orderBy(desc(expenseRecurring.isActive), expenseRecurring.name);
@@ -337,15 +344,19 @@ export default async function ExpensesPage({
                 triggerClassName="flex-1 sm:flex-none min-h-10"
               />
             )}
-            <ExpenseCsvExportButton month={month} categoryId={categoryId || undefined} q={q || undefined} />
+            <ExpenseCsvExportButton
+              month={month}
+              categoryId={categoryId || undefined}
+              q={q || undefined}
+            />
           </div>
         }
       >
         <PageHeaderTitle>{t("Pengeluaran", "Expenses")}</PageHeaderTitle>
         <PageHeaderDescription>
           {t(
-            `KPI setara ${baseCurrency} (kurs manual workspace). Daftar item tetap currency asli.`,
-            `KPI in ${baseCurrency} (workspace manual FX). List items keep original currency.`,
+            "Catat dan kelola biaya bisnis.",
+            "Record and manage business expenses.",
           )}
         </PageHeaderDescription>
       </PageHeader>
@@ -356,15 +367,18 @@ export default async function ExpensesPage({
             `Kurs belum di-set: ${missingFxList.join(", ")}. Angka currency itu di-skip di ringkasan. `,
             `Missing FX rates: ${missingFxList.join(", ")}. Those currencies are skipped in summaries. `,
           )}
-          <Link href="/app/settings?tab=workspace" className="underline underline-offset-2 font-medium">
+          <Link
+            href="/app/settings?tab=workspace"
+            className="underline underline-offset-2 font-medium"
+          >
             {t("Atur di Settings", "Set in Settings")}
           </Link>
         </div>
       )}
 
-      {/* Stats row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+      {/* Operational summary */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_auto]">
+        <Card className="min-w-0">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">
               {t("Pengeluaran bulan ini", "This month spent")}
@@ -376,42 +390,30 @@ export default async function ExpensesPage({
               {formatMoney(spentTotal, baseCurrency)}
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              {t(`setara ${baseCurrency}`, `equiv. ${baseCurrency}`)}
+              {t(
+                `Bulan terpilih · setara ${baseCurrency}`,
+                `Selected month · equiv. ${baseCurrency}`,
+              )}
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">
-              {t("Pendapatan bulan ini", "This month income")}
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-emerald-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold tabular-nums whitespace-nowrap">
-              {formatMoney(incomeTotal, baseCurrency)}
+        <Card className="lg:w-72">
+          <CardContent className="flex h-full flex-col justify-center gap-3 p-5">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <BarChart3 className="h-4 w-4 text-blue-600" />
+              {t("Butuh gambaran keuangan?", "Need a financial overview?")}
             </div>
-            <p className="text-xs text-slate-500 mt-1">{t("dari invoice lunas", "from paid invoices")}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">
-              {t("Bersih bulan ini", "Net this month")}
-            </CardTitle>
-            <Wallet className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div
-              className={`text-2xl font-semibold tabular-nums whitespace-nowrap ${
-                netPositive ? "text-emerald-600" : "text-red-600"
-              }`}
-            >
-              {formatMoney(netTotal, baseCurrency)}
-            </div>
-            <p className="text-xs text-slate-500 mt-1">
-              {t(`setara ${baseCurrency} (kurs manual)`, `equiv. ${baseCurrency} (manual FX)`)}
+            <p className="text-xs leading-relaxed text-slate-500">
+              {t(
+                "Pemasukan, bersih, tren, dan piutang tersedia di Laporan.",
+                "Income, net, trends, and receivables are available in Reports.",
+              )}
             </p>
+            <Button asChild variant="outline" size="sm" className="w-full">
+              <Link href="/app/reports">
+                {t("Lihat laporan lengkap", "View full report")}
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -423,7 +425,9 @@ export default async function ExpensesPage({
             <CardTitle className="text-base flex items-center gap-2">
               <Tag className="h-4 w-4" />
               {t("Bulan ini per kategori", "This month by category")}
-              <span className="text-xs font-normal text-slate-500">({baseCurrency})</span>
+              <span className="text-xs font-normal text-slate-500">
+                ({baseCurrency})
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -434,7 +438,10 @@ export default async function ExpensesPage({
                   <div key={c.name} className="space-y-1.5">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex min-w-0 items-center gap-2">
-                        <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
+                        <span
+                          className="h-2 w-2 rounded-full shrink-0"
+                          style={{ backgroundColor: c.color }}
+                        />
                         <span className="text-sm truncate">{c.name}</span>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
@@ -449,7 +456,10 @@ export default async function ExpensesPage({
                     <div className="h-2 bg-slate-100 rounded overflow-hidden">
                       <div
                         className="h-full rounded"
-                        style={{ width: `${Math.min(100, pct)}%`, backgroundColor: c.color }}
+                        style={{
+                          width: `${Math.min(100, pct)}%`,
+                          backgroundColor: c.color,
+                        }}
                       />
                     </div>
                   </div>
@@ -531,7 +541,10 @@ export default async function ExpensesPage({
                 <div className="py-8 text-center space-y-3">
                   <p className="text-sm text-slate-500">
                     {q || categoryId
-                      ? t("Tidak ada pengeluaran cocok filter.", "No expenses match filters.")
+                      ? t(
+                          "Tidak ada pengeluaran cocok filter.",
+                          "No expenses match filters.",
+                        )
                       : t(
                           "Belum ada pengeluaran bulan ini.",
                           "No expenses this month.",
@@ -571,22 +584,42 @@ export default async function ExpensesPage({
                       </span>
                       <div className="flex gap-1 self-end sm:self-auto">
                         {safePage <= 1 ? (
-                          <Button size="sm" variant="outline" className="h-10 w-10 p-0" disabled>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-10 w-10 p-0"
+                            disabled
+                          >
                             <ChevronLeft className="h-4 w-4" />
                           </Button>
                         ) : (
-                          <Button size="sm" variant="outline" className="h-10 w-10 p-0" asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-10 w-10 p-0"
+                            asChild
+                          >
                             <Link href={pageHref(safePage - 1)}>
                               <ChevronLeft className="h-4 w-4" />
                             </Link>
                           </Button>
                         )}
                         {safePage >= totalPages ? (
-                          <Button size="sm" variant="outline" className="h-10 w-10 p-0" disabled>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-10 w-10 p-0"
+                            disabled
+                          >
                             <ChevronRight className="h-4 w-4" />
                           </Button>
                         ) : (
-                          <Button size="sm" variant="outline" className="h-10 w-10 p-0" asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-10 w-10 p-0"
+                            asChild
+                          >
                             <Link href={pageHref(safePage + 1)}>
                               <ChevronRight className="h-4 w-4" />
                             </Link>
