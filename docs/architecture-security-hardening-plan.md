@@ -1,7 +1,7 @@
 # Cubiqlo — Architecture, Security, Database & Operations Hardening Plan
 
 **Tanggal:** 25 Juli 2026  
-**Status:** In progress; Sprint 0, development lane, dan Phase 2 audit/clone proof selesai
+**Status:** In progress; Phase 0–2, Phase 3.1–3.2 selesai; Phase 3.3 RLS pilot diputuskan HOLD berdasarkan clone proof
 **Canonical environment flow:** `docs/dev-production-workflow-plan.md`  
 **Tujuan:** Membawa Cubiqlo dari operational MVP menjadi production-disciplined SaaS tanpa rewrite.
 
@@ -274,6 +274,8 @@ Ikuti `docs/dev-production-workflow-plan.md`:
 
 ## 3.2 Tenant isolation regression suite
 
+**Status:** Completed 25 Juli 2026. Two-workspace owner/viewer browser regression, foreign-resource mutation guards, upload/download/token boundary audit, dan 138-test full suite lulus. Evidence: `e2e/cross-tenant.spec.ts`, `src/lib/tenant-boundary-wiring.test.ts`, `docs/security/cross-tenant-isolation-matrix.md`, dan `docs/security/endpoint-idor-audit-2026-07.md`.
+
 **Aksi:**
 1. Buat dua workspace + owner/member/viewer fixtures.
 2. Test direct mutation lintas workspace untuk seluruh API/action utama.
@@ -284,6 +286,8 @@ Ikuti `docs/dev-production-workflow-plan.md`:
 **Acceptance:** automated cross-tenant suite hijau.
 
 ## 3.3 RLS pilot
+
+**Status:** Clone pilot completed 25 Juli 2026; production rollout **HOLD**. RLS fail-closed terbukti memblokir cross-workspace read/write pada `files` dan `invoices`, tetapi global pooled Drizzle client belum menetapkan transaction-local tenant context. Public token resolution dan cron lintas workspace juga perlu desain capability/background role terpisah. Evidence dan prerequisites: `docs/security/rls-pilot-2026-07.md`. Production schema tidak diubah.
 
 **Scope awal:** pilih 1–2 tabel sensitif, bukan seluruh schema sekaligus.
 
