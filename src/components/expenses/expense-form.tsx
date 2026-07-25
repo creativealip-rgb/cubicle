@@ -420,8 +420,8 @@ export function ExpenseForm({
         </div>
       )}
 
-      <div className="flex gap-2">
-        <Button type="submit" disabled={loading || uploading} size="sm">
+      <div className="sticky bottom-0 -mx-4 mt-2 flex gap-2 border-t bg-background px-4 py-3 sm:-mx-6 sm:px-6">
+        <Button type="submit" disabled={loading || uploading} size="sm" className="min-h-10">
           {loading ? (
             <Loader2 className="h-4 w-4 mr-1 animate-spin" />
           ) : (
@@ -434,7 +434,7 @@ export function ExpenseForm({
               : t("Tambah pengeluaran", "Add expense")}
         </Button>
         {onCancel && (
-          <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
+          <Button type="button" variant="ghost" size="sm" className="min-h-10" onClick={onCancel}>
             <X className="h-4 w-4 mr-1" />
             {t("Batal", "Cancel")}
           </Button>

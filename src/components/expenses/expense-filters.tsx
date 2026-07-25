@@ -71,49 +71,51 @@ export function ExpenseFilters({ month, categoryId, q, categories }: ExpenseFilt
   const months = monthOptions(month);
 
   return (
-    <div className={`flex flex-col sm:flex-row gap-2 ${pending ? "opacity-70" : ""}`}>
-      <Select value={month} onValueChange={(v) => push({ month: v })}>
-        <SelectTrigger className="h-9 w-full sm:w-44">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {months.map((m) => (
-            <SelectItem key={m} value={m}>{labelMonth(m, locale)}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+    <div className={`flex flex-col gap-2 sm:flex-row ${pending ? "opacity-70" : ""}`}>
+      <div className="grid grid-cols-1 gap-2 sm:flex sm:items-center">
+        <Select value={month} onValueChange={(v) => push({ month: v })}>
+          <SelectTrigger className="h-10 w-full sm:h-9 sm:w-44">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {months.map((m) => (
+              <SelectItem key={m} value={m}>{labelMonth(m, locale)}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-      <Select
-        value={categoryId || ALL}
-        onValueChange={(v) => push({ categoryId: v === ALL ? undefined : v })}
-      >
-        <SelectTrigger className="h-9 w-full sm:w-44">
-          <SelectValue placeholder={t("Semua kategori", "All categories")} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL}>{t("Semua kategori", "All categories")}</SelectItem>
-          {categories.map((c) => (
-            <SelectItem key={c.id} value={c.id}>
-              <span className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: c.color }} />
-                {c.name}
-              </span>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        <Select
+          value={categoryId || ALL}
+          onValueChange={(v) => push({ categoryId: v === ALL ? undefined : v })}
+        >
+          <SelectTrigger className="h-10 w-full sm:h-9 sm:w-44">
+            <SelectValue placeholder={t("Semua kategori", "All categories")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>{t("Semua kategori", "All categories")}</SelectItem>
+            {categories.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: c.color }} />
+                  {c.name}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-      <form onSubmit={submitSearch} className="flex-1 flex gap-2">
-        <div className="relative flex-1">
+      <form onSubmit={submitSearch} className="flex flex-1 gap-2">
+        <div className="relative min-w-0 flex-1">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("Cari deskripsi, vendor...", "Search description, vendor...")}
-            className="h-9 pl-8"
+            className="h-10 pl-8 sm:h-9"
           />
         </div>
-        <Button type="submit" size="sm" variant="secondary" className="h-9">
+        <Button type="submit" size="sm" variant="secondary" className="h-10 shrink-0 sm:h-9">
           {t("Cari", "Search")}
         </Button>
         {(q || categoryId) && (
@@ -121,7 +123,7 @@ export function ExpenseFilters({ month, categoryId, q, categories }: ExpenseFilt
             type="button"
             size="sm"
             variant="ghost"
-            className="h-9 px-2"
+            className="h-10 w-10 shrink-0 px-0 sm:h-9 sm:w-auto sm:px-2"
             onClick={() => {
               setSearch("");
               push({ q: undefined, categoryId: undefined });

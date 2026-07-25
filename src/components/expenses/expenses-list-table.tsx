@@ -185,7 +185,7 @@ export function ExpensesListTable({
                 <span className="text-slate-400">—</span>
               )}
               {(e.projectName || e.clientName) && (
-                <span className="truncate max-w-full">
+                <span className="min-w-0 break-words">
                   {[e.projectName, e.clientName].filter(Boolean).join(" · ")}
                 </span>
               )}

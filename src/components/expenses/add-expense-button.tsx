@@ -56,20 +56,22 @@ export function AddExpenseButton({
         {label}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="w-[calc(100%-1.5rem)] max-w-2xl max-h-[min(90dvh,720px)] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader>
+        <DialogContent className="flex w-[calc(100%-1.5rem)] max-w-2xl max-h-[min(90dvh,720px)] flex-col gap-0 overflow-hidden p-0">
+          <DialogHeader className="shrink-0 border-b px-4 py-4 pr-12 sm:px-6">
             <DialogTitle>{t("Tambah pengeluaran", "Add expense")}</DialogTitle>
           </DialogHeader>
-          <ExpenseForm
-            workspaceId={workspaceId}
-            defaultCurrency={defaultCurrency}
-            categories={categories}
-            projects={projects}
-            clients={clients}
-            mode="create"
-            onSuccess={() => setOpen(false)}
-            onCancel={() => setOpen(false)}
-          />
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+            <ExpenseForm
+              workspaceId={workspaceId}
+              defaultCurrency={defaultCurrency}
+              categories={categories}
+              projects={projects}
+              clients={clients}
+              mode="create"
+              onSuccess={() => setOpen(false)}
+              onCancel={() => setOpen(false)}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </>

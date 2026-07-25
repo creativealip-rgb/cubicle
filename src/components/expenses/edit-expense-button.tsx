@@ -60,34 +60,36 @@ export function EditExpenseButton({
         <Pencil className="h-4 w-4" />
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="w-[calc(100%-1.5rem)] max-w-2xl max-h-[min(90dvh,720px)] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader>
+        <DialogContent className="flex w-[calc(100%-1.5rem)] max-w-2xl max-h-[min(90dvh,720px)] flex-col gap-0 overflow-hidden p-0">
+          <DialogHeader className="shrink-0 border-b px-4 py-4 pr-12 sm:px-6">
             <DialogTitle>{t("Edit pengeluaran", "Edit expense")}</DialogTitle>
           </DialogHeader>
-          <ExpenseForm
-            workspaceId={workspaceId}
-            defaultCurrency={defaultCurrency}
-            categories={categories}
-            projects={projects}
-            clients={clients}
-            mode="edit"
-            initial={{
-              id: expense.id,
-              date: expense.date,
-              amount: expense.amount,
-              currency: expense.currency,
-              description: expense.description,
-              categoryId: expense.categoryId ?? "",
-              projectId: expense.projectId ?? "",
-              clientId: expense.clientId ?? "",
-              vendor: expense.vendor ?? "",
-              taxIncluded: expense.taxIncluded,
-              taxAmount: expense.taxAmount ?? "",
-              receiptUrl: expense.receiptUrl,
-            }}
-            onSuccess={() => setOpen(false)}
-            onCancel={() => setOpen(false)}
-          />
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+            <ExpenseForm
+              workspaceId={workspaceId}
+              defaultCurrency={defaultCurrency}
+              categories={categories}
+              projects={projects}
+              clients={clients}
+              mode="edit"
+              initial={{
+                id: expense.id,
+                date: expense.date,
+                amount: expense.amount,
+                currency: expense.currency,
+                description: expense.description,
+                categoryId: expense.categoryId ?? "",
+                projectId: expense.projectId ?? "",
+                clientId: expense.clientId ?? "",
+                vendor: expense.vendor ?? "",
+                taxIncluded: expense.taxIncluded,
+                taxAmount: expense.taxAmount ?? "",
+                receiptUrl: expense.receiptUrl,
+              }}
+              onSuccess={() => setOpen(false)}
+              onCancel={() => setOpen(false)}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </>
