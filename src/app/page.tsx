@@ -19,6 +19,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 const operationPillars = [
   {
@@ -102,7 +105,10 @@ const pricing = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (session?.user?.id) redirect("https://app.cubiqlo.com/app/dashboard");
+
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-30 border-b border-slate-950/5 bg-white/75 backdrop-blur-2xl px-4 sm:px-6 lg:px-8">

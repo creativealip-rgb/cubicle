@@ -12,10 +12,8 @@ describe("getCanonicalRedirect", () => {
     expect(getCanonicalRedirect("cubiqlo.com", "/", "", false)).toBeNull();
   });
 
-  it("redirects logged-in apex landing visitors to app dashboard", () => {
-    expect(getCanonicalRedirect("cubiqlo.com", "/", "", true)).toBe(
-      "https://app.cubiqlo.com/app/dashboard",
-    );
+  it("does not trust a raw session cookie for apex landing redirects", () => {
+    expect(getCanonicalRedirect("cubiqlo.com", "/", "", true)).toBeNull();
   });
 
   it("redirects apex auth pages to app host and preserves query", () => {
@@ -34,5 +32,9 @@ describe("getCanonicalRedirect", () => {
     expect(getCanonicalRedirect("app.cubiqlo.com", "/", "", false)).toBe(
       "https://app.cubiqlo.com/app/dashboard",
     );
+  });
+
+  it("keeps app login reachable even when a stale cookie exists", () => {
+    expect(getCanonicalRedirect("app.cubiqlo.com", "/login", "", true)).toBeNull();
   });
 });

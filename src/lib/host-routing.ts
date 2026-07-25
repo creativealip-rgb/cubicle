@@ -15,7 +15,7 @@ export function getCanonicalRedirect(
   host: string,
   pathname: string,
   search: string,
-  hasSession: boolean,
+  _hasSession: boolean,
 ): string | null {
   const normalizedHost = host.split(":", 1)[0].toLowerCase();
 
@@ -28,10 +28,6 @@ export function getCanonicalRedirect(
   }
 
   if (normalizedHost !== "cubiqlo.com") return null;
-
-  if (pathname === "/" && hasSession) {
-    return "https://app.cubiqlo.com/app/dashboard";
-  }
 
   const belongsToApp =
     pathname.startsWith("/app") ||

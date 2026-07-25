@@ -4,7 +4,6 @@ import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
 import { getCanonicalRedirect } from "@/lib/host-routing"
 
 const protectedPrefixes = ["/app", "/onboarding"]
-const authPages = ["/login", "/signup", "/forgot-password", "/verify-email", "/verify-email/success"]
 
 // Rate limit config for auth endpoints
 const AUTH_RATE_LIMIT = { limit: 10, windowSec: 60 } // 10 req/min per IP
@@ -69,12 +68,6 @@ export async function proxy(request: NextRequest) {
     const loginUrl = new URL("/login", request.url)
     loginUrl.searchParams.set("redirect", pathname)
     return NextResponse.redirect(loginUrl)
-  }
-
-  // Auth pages: already logged in → redirect to app
-  const isAuthPage = authPages.some((p) => pathname === p)
-  if (isAuthPage && sessionCookie) {
-    return NextResponse.redirect(new URL("https://app.cubiqlo.com/app/dashboard"))
   }
 
   return NextResponse.next()
