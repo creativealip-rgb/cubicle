@@ -15,18 +15,20 @@ import {
 import { eq, desc, and, gte, lte } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ExpenseForm, type CategoryOption, type ProjectOption, type ClientOption } from "@/components/expenses/expense-form";
+import { type CategoryOption, type ProjectOption, type ClientOption } from "@/components/expenses/expense-form";
 import { CategoryManager } from "@/components/expenses/category-manager";
 import { RecurringManager } from "@/components/expenses/recurring-manager";
 import { ExpenseFilters } from "@/components/expenses/expense-filters";
 import { ExpenseCsvExportButton } from "@/components/expenses/expense-csv-export";
 import { ExpensesListTable } from "@/components/expenses/expenses-list-table";
+import { AddExpenseButton } from "@/components/expenses/add-expense-button";
 import { TrendingDown, TrendingUp, Wallet, Tag, ChevronLeft, ChevronRight } from "lucide-react";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { formatMoney } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
+import { PageHeader, PageHeaderDescription, PageHeaderTitle } from "@/components/ui/page-header";
 import { Suspense } from "react";
 import {
   aggregateToBase,
@@ -35,7 +37,7 @@ import {
   normalizeCurrency,
 } from "@/lib/currency-base";
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 10;
 
 function currentMonthKey(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -91,9 +93,9 @@ export default async function ExpensesPage({
     icon: c.icon,
   }));
 
-  // Projects
+  // Projects (include clientId so form can filter by client)
   const projectRows = await db
-    .select({ id: projects.id, name: projects.name })
+    .select({ id: projects.id, name: projects.name, clientId: projects.clientId })
     .from(projects)
     .where(eq(projects.workspaceId, ws.id))
     .orderBy(projects.name);
@@ -317,20 +319,35 @@ export default async function ExpensesPage({
     return `/app/expenses?${sp.toString()}`;
   }
 
+  const rangeStart = totalCount === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(safePage * PAGE_SIZE, totalCount);
+
   return (
     <div className="space-y-6 p-6">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-        <div>
-          <h1 className="app-page-title">{t("Pengeluaran", "Expenses")}</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            {t(
-              `KPI setara ${baseCurrency} (kurs manual workspace). Daftar item tetap currency asli.`,
-              `KPI in ${baseCurrency} (workspace manual FX). List items keep original currency.`,
+      <PageHeader
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            {canWrite && (
+              <AddExpenseButton
+                workspaceId={ws.id}
+                defaultCurrency={ws.defaultCurrency}
+                categories={categories}
+                projects={projectOpts}
+                clients={clientOpts}
+              />
             )}
-          </p>
-        </div>
-        <ExpenseCsvExportButton month={month} categoryId={categoryId || undefined} q={q || undefined} />
-      </div>
+            <ExpenseCsvExportButton month={month} categoryId={categoryId || undefined} q={q || undefined} />
+          </div>
+        }
+      >
+        <PageHeaderTitle>{t("Pengeluaran", "Expenses")}</PageHeaderTitle>
+        <PageHeaderDescription>
+          {t(
+            `KPI setara ${baseCurrency} (kurs manual workspace). Daftar item tetap currency asli.`,
+            `KPI in ${baseCurrency} (workspace manual FX). List items keep original currency.`,
+          )}
+        </PageHeaderDescription>
+      </PageHeader>
 
       {missingFxList.length > 0 && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -397,25 +414,6 @@ export default async function ExpensesPage({
           </CardContent>
         </Card>
       </div>
-
-      {/* Quick add */}
-      {canWrite && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{t("Tambah Cepat", "Quick add")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ExpenseForm
-              workspaceId={ws.id}
-              defaultCurrency={ws.defaultCurrency}
-              categories={categories}
-              projects={projectOpts}
-              clients={clientOpts}
-              compact
-            />
-          </CardContent>
-        </Card>
-      )}
 
       {/* Category breakdown */}
       {categoryBreakdown.length > 0 && (
@@ -525,14 +523,26 @@ export default async function ExpensesPage({
           {tab === "list" && (
             <>
               {expenseRows.length === 0 ? (
-                <p className="text-sm text-slate-500 py-8 text-center">
-                  {q || categoryId
-                    ? t("Tidak ada pengeluaran cocok filter.", "No expenses match filters.")
-                    : t(
-                        "Belum ada pengeluaran bulan ini. Tambah lewat form di atas.",
-                        "No expenses this month. Add one using the form above.",
-                      )}
-                </p>
+                <div className="py-8 text-center space-y-3">
+                  <p className="text-sm text-slate-500">
+                    {q || categoryId
+                      ? t("Tidak ada pengeluaran cocok filter.", "No expenses match filters.")
+                      : t(
+                          "Belum ada pengeluaran bulan ini.",
+                          "No expenses this month.",
+                        )}
+                  </p>
+                  {canWrite && !q && !categoryId && (
+                    <AddExpenseButton
+                      workspaceId={ws.id}
+                      defaultCurrency={ws.defaultCurrency}
+                      categories={categories}
+                      projects={projectOpts}
+                      clients={clientOpts}
+                      variant="outline"
+                    />
+                  )}
+                </div>
               ) : (
                 <>
                   <ExpensesListTable
@@ -550,8 +560,8 @@ export default async function ExpensesPage({
                     <div className="flex items-center justify-between mt-4 text-sm text-slate-500">
                       <span>
                         {t(
-                          `${totalCount} entri · halaman ${safePage}/${totalPages}`,
-                          `${totalCount} entries · page ${safePage}/${totalPages}`,
+                          `Menampilkan ${rangeStart}–${rangeEnd} dari ${totalCount}`,
+                          `Showing ${rangeStart}–${rangeEnd} of ${totalCount}`,
                         )}
                       </span>
                       <div className="flex gap-1">
@@ -582,7 +592,10 @@ export default async function ExpensesPage({
                   )}
                   {totalPages <= 1 && totalCount > 0 && (
                     <p className="text-xs text-slate-400 mt-3 text-right">
-                      {t(`${totalCount} entri`, `${totalCount} entries`)}
+                      {t(
+                        `Menampilkan ${rangeStart}–${rangeEnd} dari ${totalCount}`,
+                        `Showing ${rangeStart}–${rangeEnd} of ${totalCount}`,
+                      )}
                     </p>
                   )}
                 </>

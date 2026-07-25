@@ -7,12 +7,41 @@ import { db } from "@/db";
 import { expenses, expenseCategories, projects, clients } from "@/db/schema";
 import { eq, and, desc, gte, lte } from "drizzle-orm";
 import { z } from "zod";
-import { requireUser, assertWorkspaceWritable, assertWorkspaceMember } from "@/lib/access";
+import {
+  requireUser,
+  assertWorkspaceWritable,
+  assertWorkspaceMember,
+  assertClientInWorkspace,
+  assertProjectInWorkspace,
+} from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { getSignedUploadUrl as getR2UploadUrl, getSignedDownloadUrl, R2_BUCKET } from "@/lib/r2";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
+}
+
+/** Ensure optional client/project belong to workspace and match each other. */
+async function resolveExpenseRelations(
+  userId: string,
+  workspaceId: string,
+  input: { clientId?: string | null; projectId?: string | null },
+): Promise<{ clientId: string | null; projectId: string | null }> {
+  let clientId = input.clientId || null;
+  let projectId = input.projectId || null;
+
+  if (projectId) {
+    const project = await assertProjectInWorkspace(db, userId, workspaceId, projectId);
+    if (clientId && project.clientId !== clientId) {
+      throw new Error("Proyek tidak milik klien yang dipilih");
+    }
+    // Project wins: auto-align client to project owner
+    clientId = project.clientId;
+  } else if (clientId) {
+    await assertClientInWorkspace(db, userId, workspaceId, clientId);
+  }
+
+  return { clientId, projectId };
 }
 
 const createExpenseSchema = z.object({
@@ -62,12 +91,16 @@ export async function createExpense(input: z.infer<typeof createExpenseSchema>) 
   const user = requireUser(session?.user);
   await assertWorkspaceWritable(db, user.id, input.workspaceId);
   const parsed = createExpenseSchema.parse(input);
+  const relations = await resolveExpenseRelations(user.id, parsed.workspaceId, {
+    clientId: parsed.clientId,
+    projectId: parsed.projectId,
+  });
 
   const [expense] = await db.insert(expenses).values({
     workspaceId: parsed.workspaceId,
     categoryId: parsed.categoryId || null,
-    projectId: parsed.projectId || null,
-    clientId: parsed.clientId || null,
+    projectId: relations.projectId,
+    clientId: relations.clientId,
     amount: parsed.amount.toFixed(2),
     currency: parsed.currency,
     date: parsed.date,
@@ -93,14 +126,36 @@ export async function updateExpense(expenseId: string, input: z.infer<typeof upd
   await assertWorkspaceWritable(db, user.id, workspaceId);
   const parsed = updateExpenseSchema.parse(input);
 
+  const [existing] = await db
+    .select({
+      clientId: expenses.clientId,
+      projectId: expenses.projectId,
+    })
+    .from(expenses)
+    .where(and(eq(expenses.id, expenseId), eq(expenses.workspaceId, workspaceId)))
+    .limit(1);
+  if (!existing) throw new Error("Expense not found");
+
+  const nextClientId = parsed.clientId !== undefined ? parsed.clientId : existing.clientId;
+  const nextProjectId = parsed.projectId !== undefined ? parsed.projectId : existing.projectId;
+  const relations =
+    parsed.clientId !== undefined || parsed.projectId !== undefined
+      ? await resolveExpenseRelations(user.id, workspaceId, {
+          clientId: nextClientId,
+          projectId: nextProjectId,
+        })
+      : { clientId: existing.clientId, projectId: existing.projectId };
+
   const update: Record<string, unknown> = { updatedAt: new Date() };
   if (parsed.amount !== undefined) update.amount = parsed.amount.toFixed(2);
   if (parsed.currency !== undefined) update.currency = parsed.currency;
   if (parsed.date !== undefined) update.date = parsed.date;
   if (parsed.description !== undefined) update.description = parsed.description;
   if (parsed.categoryId !== undefined) update.categoryId = parsed.categoryId;
-  if (parsed.projectId !== undefined) update.projectId = parsed.projectId;
-  if (parsed.clientId !== undefined) update.clientId = parsed.clientId;
+  if (parsed.projectId !== undefined || parsed.clientId !== undefined) {
+    update.projectId = relations.projectId;
+    update.clientId = relations.clientId;
+  }
   if (parsed.vendor !== undefined) update.vendor = parsed.vendor;
   if (parsed.taxIncluded !== undefined) update.taxIncluded = parsed.taxIncluded;
   if (parsed.taxAmount !== undefined) update.taxAmount = parsed.taxAmount != null ? parsed.taxAmount.toFixed(2) : null;
@@ -295,16 +350,16 @@ export async function exportExpensesCsv(input?: {
   };
 
   const header = [
-    "date",
-    "description",
-    "amount",
-    "currency",
-    "category",
+    "tanggal",
+    "deskripsi",
+    "jumlah",
+    "mata_uang",
+    "kategori",
     "vendor",
-    "project",
-    "client",
-    "tax_included",
-    "tax_amount",
+    "proyek",
+    "klien",
+    "pajak_termasuk",
+    "jumlah_pajak",
   ].join(",");
 
   const lines = filtered.map((r) =>

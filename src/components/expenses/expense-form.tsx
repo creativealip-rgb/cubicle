@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createExpense, updateExpense } from "@/lib/actions/expenses";
@@ -27,6 +27,7 @@ export interface CategoryOption {
 export interface ProjectOption {
   id: string;
   name: string;
+  clientId?: string | null;
 }
 
 export interface ClientOption {
@@ -95,6 +96,43 @@ export function ExpenseForm({
     taxAmount: initial?.taxAmount ?? "",
     receiptUrl: initial?.receiptUrl ?? null,
   });
+
+  const filteredProjects = useMemo(() => {
+    if (!form.clientId) return projects;
+    return projects.filter((p) => !p.clientId || p.clientId === form.clientId);
+  }, [form.clientId, projects]);
+
+  function setClientId(nextClientId: string) {
+    setForm((prev) => {
+      const nextProjectStillValid =
+        !nextClientId ||
+        !prev.projectId ||
+        projects.some(
+          (p) =>
+            p.id === prev.projectId &&
+            (!p.clientId || p.clientId === nextClientId),
+        );
+      return {
+        ...prev,
+        clientId: nextClientId,
+        projectId: nextProjectStillValid ? prev.projectId : "",
+      };
+    });
+  }
+
+  function setProjectId(nextProjectId: string) {
+    setForm((prev) => {
+      if (!nextProjectId) {
+        return { ...prev, projectId: "" };
+      }
+      const project = projects.find((p) => p.id === nextProjectId);
+      return {
+        ...prev,
+        projectId: nextProjectId,
+        clientId: project?.clientId || prev.clientId,
+      };
+    });
+  }
 
   async function handleReceipt(file: File | undefined) {
     if (!file) return;
@@ -278,32 +316,15 @@ export function ExpenseForm({
               id="vendor"
               value={form.vendor}
               onChange={(e) => setForm({ ...form, vendor: e.target.value })}
-              placeholder="e.g. Figma, Grab"
+              placeholder={t("Contoh: Figma, Grab", "e.g. Figma, Grab")}
               className="h-9"
             />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="project" className="text-xs">{t("Proyek (opsional)", "Project (optional)")}</Label>
-            <Select
-              value={form.projectId || NONE}
-              onValueChange={(v) => setForm({ ...form, projectId: v === NONE ? "" : v })}
-            >
-              <SelectTrigger id="project" className="h-9">
-                <SelectValue placeholder={t("Tidak ada", "None")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NONE}>{t("Tidak ada", "None")}</SelectItem>
-                {projects.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
           <div className="space-y-1">
             <Label htmlFor="client" className="text-xs">{t("Klien (opsional)", "Client (optional)")}</Label>
             <Select
               value={form.clientId || NONE}
-              onValueChange={(v) => setForm({ ...form, clientId: v === NONE ? "" : v })}
+              onValueChange={(v) => setClientId(v === NONE ? "" : v)}
             >
               <SelectTrigger id="client" className="h-9">
                 <SelectValue placeholder={t("Tidak ada", "None")} />
@@ -315,6 +336,28 @@ export function ExpenseForm({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="project" className="text-xs">{t("Proyek (opsional)", "Project (optional)")}</Label>
+            <Select
+              value={form.projectId || NONE}
+              onValueChange={(v) => setProjectId(v === NONE ? "" : v)}
+            >
+              <SelectTrigger id="project" className="h-9">
+                <SelectValue placeholder={t("Tidak ada", "None")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NONE}>{t("Tidak ada", "None")}</SelectItem>
+                {filteredProjects.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {form.clientId && filteredProjects.length === 0 && (
+              <p className="text-[11px] text-slate-500">
+                {t("Klien ini belum punya proyek.", "This client has no projects yet.")}
+              </p>
+            )}
           </div>
           <div className="space-y-1">
             <Label htmlFor="taxAmount" className="text-xs">{t("Pajak (opsional)", "Tax (optional)")}</Label>

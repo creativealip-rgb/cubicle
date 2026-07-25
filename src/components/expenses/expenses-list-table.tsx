@@ -139,7 +139,7 @@ export function ExpensesListTable({
                 align="right"
               />
             </TableHead>
-            {canWrite && <TableHead className="w-24"></TableHead>}
+            {canWrite && <TableHead className="w-28"></TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -155,6 +155,11 @@ export function ExpensesListTable({
                 <div className="font-medium text-sm">{e.description}</div>
                 {e.vendor && (
                   <div className="text-xs text-slate-500">{e.vendor}</div>
+                )}
+                {(e.projectName || e.clientName) && (
+                  <div className="mt-0.5 text-xs text-slate-500 md:hidden">
+                    {[e.projectName, e.clientName].filter(Boolean).join(" · ")}
+                  </div>
                 )}
               </TableCell>
               <TableCell>

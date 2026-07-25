@@ -52,14 +52,15 @@ export function EditExpenseButton({
       <Button
         variant="ghost"
         size="sm"
-        className="h-7 w-7 p-0 text-slate-400 hover:text-slate-800"
+        className="h-10 w-10 p-0 text-slate-400 hover:text-slate-800"
         onClick={() => setOpen(true)}
         title={t("Edit", "Edit")}
+        aria-label={t("Edit pengeluaran", "Edit expense")}
       >
-        <Pencil className="h-3.5 w-3.5" />
+        <Pencil className="h-4 w-4" />
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[min(90dvh,720px)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t("Edit pengeluaran", "Edit expense")}</DialogTitle>
           </DialogHeader>
