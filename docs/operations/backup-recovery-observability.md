@@ -102,6 +102,15 @@ Maintenance completed after a fresh dump. PostgreSQL was recreated once, the app
 
 ## Monthly review
 
+Automated report:
+
+- Script: `scripts/operations/cubiqlo_monthly_capacity_report.sh`.
+- Hermes no-agent job: `cubiqlo-monthly-capacity-report` (`0d91e9007666`).
+- Schedule: first day of each month at 02:00 UTC / 09:00 WIB.
+- Snapshot history: `/root/backups/cubicle/metrics/capacity-YYYY-MM.bytes` for month-over-month DB growth.
+- Alert conditions: root disk at least 85%, local backup older than 26 hours, checksum failure, any waiting lock, transaction older than 10 minutes, connections at least 80% of maximum, or at least 10,000 dead tuples representing at least 20% of live plus dead rows.
+- Controlled test on 25 July 2026: healthy state returned `Status: OK`; a synthetic 30-hour-old backup returned exit 1 with `Status: ALERT — backup 30h old`.
+
 Record:
 
 - DB size and growth.
