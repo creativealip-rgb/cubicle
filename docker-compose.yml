@@ -47,6 +47,7 @@ services:
         max-file: "3"
 
   cubicle:
+    image: ${CUBIQLO_IMAGE:-cubicle-cubicle}
     restart: unless-stopped
     build:
       context: .
