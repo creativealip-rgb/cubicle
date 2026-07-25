@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db";
 import { sendNotification } from "@/lib/notifications";
+import { resolveBetterAuthSecret } from "@/lib/auth-secret";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -116,7 +117,7 @@ export const auth = betterAuth({
       });
     },
   },
-  secret: process.env.BETTER_AUTH_SECRET ?? "dev-build-placeholder-secret-change-me",
+  secret: resolveBetterAuthSecret(process.env.BETTER_AUTH_SECRET, process.env.NODE_ENV),
   baseURL: process.env.BETTER_AUTH_URL,
   trustedOrigins: [
     process.env.BETTER_AUTH_URL ?? "http://localhost:3000",

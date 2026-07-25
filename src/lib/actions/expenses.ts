@@ -4,8 +4,8 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { expenses, expenseCategories, projects, clients } from "@/db/schema";
-import { eq, and, desc, gte, lte } from "drizzle-orm";
+import { expenses, expenseCategories } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 import {
   requireUser,
@@ -28,7 +28,7 @@ async function resolveExpenseRelations(
   input: { clientId?: string | null; projectId?: string | null },
 ): Promise<{ clientId: string | null; projectId: string | null }> {
   let clientId = input.clientId || null;
-  let projectId = input.projectId || null;
+  const projectId = input.projectId || null;
 
   if (projectId) {
     const project = await assertProjectInWorkspace(db, userId, workspaceId, projectId);

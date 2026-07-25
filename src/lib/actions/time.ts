@@ -4,10 +4,10 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { timeEntries, clients, projects, tasks, users, workspaces } from "@/db/schema";
-import { eq, and, gte, lte, isNull, isNotNull, desc } from "drizzle-orm";
+import { timeEntries, clients, projects, tasks, workspaces } from "@/db/schema";
+import { eq, and, isNull, isNotNull } from "drizzle-orm";
 import { z } from "zod";
-import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
+import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 
 async function getWorkspaceId(): Promise<string> {

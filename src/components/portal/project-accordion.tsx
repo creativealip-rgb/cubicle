@@ -415,7 +415,7 @@ function ProjectExpandedContent({
   ownerEmail?: string | null;
   ownerName?: string | null;
 }) {
-  const { lang, t } = useT();
+  const { t } = useT();
   const isByHours = project.billingType === "hours";
   const isByPackage = project.billingType === "package";
 

@@ -12,22 +12,6 @@ import { TasksBoardView } from "@/components/tasks/tasks-board-view";
 import { TasksListTable } from "@/components/tasks/tasks-list-table";
 import { getCurrentLang, createT } from "@/lib/i18n";
 
-function buildTasksHref(filters: {
-  status?: string;
-  priority?: string;
-  projectId?: string;
-  assignee?: string;
-  view?: string;
-}) {
-  const params = new URLSearchParams();
-  if (filters.status && filters.status !== "all") params.set("status", filters.status);
-  if (filters.priority && filters.priority !== "all") params.set("priority", filters.priority);
-  if (filters.projectId) params.set("projectId", filters.projectId);
-  if (filters.assignee && filters.assignee !== "all") params.set("assignee", filters.assignee);
-  if (filters.view && filters.view !== "list") params.set("view", filters.view);
-  return `/app/tasks${params.toString() ? `?${params.toString()}` : ""}`;
-}
-
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
 }

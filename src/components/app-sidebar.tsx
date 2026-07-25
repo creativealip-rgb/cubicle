@@ -129,7 +129,6 @@ export function AppSidebar({
   collapsed,
   onToggle,
   badgeCounts,
-  userEmail,
   workspaceRole,
 }: AppSidebarProps) {
   const pathname = usePathname();

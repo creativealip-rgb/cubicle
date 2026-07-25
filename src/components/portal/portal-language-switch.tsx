@@ -8,6 +8,8 @@ export function PortalLanguageSwitch() {
 
   const changeLanguage = (next: "id" | "en") => {
     if (next === lang || pending) return;
+    // Browser Cookie API requires assignment; this is intentional, not React state mutation.
+    // eslint-disable-next-line react-hooks/immutability
     document.cookie = `cubiqlo_lang=${next}; path=/; max-age=31536000; samesite=lax`;
     window.location.reload();
   };
