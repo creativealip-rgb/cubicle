@@ -12,6 +12,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser, assertWorkspaceWritable, assertClientInWorkspace } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { assertPublicTokenLifecycle, PublicTokenError } from "@/lib/public-token-policy";
+import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -198,6 +199,7 @@ export async function deleteProposal(proposalId: string) {
 
 export async function acceptProposalPublic(proposalId: string, token: string) {
   const tokenHash = hashToken(token);
+  await enforceServerActionRateLimit("proposal:accept", tokenHash, { limit: 10, windowSec: 300 });
 
   return db.transaction(async (tx) => {
     const locked = await tx.execute(sql`
@@ -310,6 +312,7 @@ export async function acceptProposalPublic(proposalId: string, token: string) {
 
 export async function declineProposalPublic(proposalId: string, token: string, reason?: string) {
   const tokenHash = hashToken(token);
+  await enforceServerActionRateLimit("proposal:decline", tokenHash, { limit: 10, windowSec: 300 });
   const [p] = await db.select().from(proposals)
     .where(eq(proposals.id, proposalId))
     .limit(1);

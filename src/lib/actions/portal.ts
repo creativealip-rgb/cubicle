@@ -7,6 +7,8 @@ import { createHash } from "crypto";
 
 export async function getClientPortalAccess(rawToken: string) {
   const tokenHash = createHash("sha256").update(rawToken).digest("hex");
+  const { enforceServerActionRateLimit } = await import("@/lib/distributed-rate-limit");
+  await enforceServerActionRateLimit("portal:resolve", tokenHash, { limit: 60, windowSec: 60 });
   const slug = rawToken.trim().toLowerCase();
 
   const [client] = await db

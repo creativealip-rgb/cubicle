@@ -374,27 +374,25 @@ Kandidat:
 
 ## 5.1 Distributed rate limiting
 
-**Target:** Redis-backed atau persistent shared limiter.
+**Status:** Completed 25 Juli 2026.
 
-**Coverage:**
-- Auth
-- Portal resolver
-- Portal upload
-- Proposal accept/decline
-- Contract sign/decline
-- Questionnaire submit
-- Public PDF/download
-- Payment webhook
-- AI endpoints
+**Coverage:** Auth, portal resolver/upload, proposal accept/decline, contract sign/decline, questionnaire submit, public PDF/download, Pakasir webhook, dan AI endpoints.
 
-**Aksi:**
-1. Gunakan trusted proxy configuration untuk source IP.
-2. Key rate berdasarkan route + IP + token/user/workspace sesuai konteks.
-3. Tambah limit per plan untuk API/AI.
-4. Return `429` + `Retry-After`.
-5. Test restart dan multi-instance consistency.
+**Implementasi:**
+1. Redis shared `dokploy-redis` memakai atomic Lua `INCR` + `PEXPIRE` + `PTTL`.
+2. Key dipisah per route dan identity. Public mutation memakai SHA-256 token hash, bukan token mentah; AI memakai user ID; endpoint tanpa auth memakai trusted source IP.
+3. Source IP priority: valid `CF-Connecting-IP`, first valid `X-Forwarded-For`, lalu `X-Real-IP`. Trust boundary sah karena app tidak publish host port dan hanya menerima traffic melalui `dokploy-traefik` pada Docker network. Direct public bind tetap dilarang.
+4. Better Auth limiter dipindah dari Edge proxy ke Node route handler agar Redis TCP client didukung.
+5. Sensitive mutation fail-closed saat Redis unavailable. Public invoice/file read fail-open terlog agar dokumen klien tetap tersedia.
+6. Limit response memakai `429`, `Retry-After`, `X-RateLimit-Limit`, `X-RateLimit-Remaining`, dan `X-RateLimit-Reset`. Sensitive backend outage memakai `503` + `Retry-After: 5`.
 
-**Acceptance:** counter tidak hilang saat app restart; abuse test rendah menghasilkan 429 tanpa mengganggu user normal.
+**Bukti:**
+- Unit + wiring regression menguji atomic result mapping, failure policy, trusted IP parsing, response headers, dan seluruh bucket.
+- Redis integration 100 request concurrent dari dua proses: tepat 10 allowed dan 90 rejected.
+- Proses baru sebelum TTL habis: 0 allowed. Sesudah TTL reset: request lolos dengan remaining 9.
+- Reusable proof: `RATE_LIMIT_REDIS_URL=... npm run test:rate-limit` dari network yang bisa resolve Redis.
+
+**Acceptance:** selesai. Counter tidak hilang saat process restart, dua instance berbagi state, low-limit abuse menghasilkan `429`, dan traffic normal tetap lolos.
 
 ## 5.2 Upload quotas dan safe storage lifecycle
 

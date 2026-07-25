@@ -16,6 +16,7 @@ import { db } from "@/db";
 import { invoices, tasks } from "@/db/schema";
 import { assertWorkspaceWritable } from "@/lib/access";
 import { sendNotification } from "@/lib/notifications";
+import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -37,6 +38,8 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const limited = await enforceRateLimitResponse(req, "ai:action", { limit: 30, windowSec: 60 }, { identity: session.user.id });
+  if (limited) return limited;
 
   let body: { kind: string; payload: unknown };
   try {

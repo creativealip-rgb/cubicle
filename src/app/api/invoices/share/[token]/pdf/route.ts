@@ -12,6 +12,7 @@ import {
 } from "@/db/schema";
 import { renderInvoicePdf } from "@/lib/pdf/invoice-pdf";
 import { logPortalAccess } from "@/lib/actions/portal";
+import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -21,9 +22,11 @@ export const runtime = "nodejs";
  * Used in client emails so link opens same PDF as "Unduh PDF".
  */
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ token: string }> },
 ) {
+  const limited = await enforceRateLimitResponse(req, "public:invoice-pdf", { limit: 60, windowSec: 60 }, { failureMode: "open" });
+  if (limited) return limited;
   const { token } = await params;
   if (!token || token.length < 16) {
     return NextResponse.json({ error: "Invalid link" }, { status: 400 });

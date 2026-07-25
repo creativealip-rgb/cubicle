@@ -99,6 +99,9 @@ export async function POST(req: NextRequest) {
       headers: { "Content-Type": "application/json" },
     });
   }
+  const { enforceRateLimitResponse } = await import("@/lib/distributed-rate-limit");
+  const limited = await enforceRateLimitResponse(req, "ai:chat", { limit: 20, windowSec: 60 }, { identity: session.user.id });
+  if (limited) return limited;
   if (!aiConfig.enabled) {
     return new Response(
       JSON.stringify({

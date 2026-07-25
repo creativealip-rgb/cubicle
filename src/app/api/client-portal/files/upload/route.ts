@@ -7,6 +7,7 @@ import { getClientPortalAccess } from "@/lib/actions/portal";
 import { buildFileKey, R2_BUCKET, r2 } from "@/lib/r2";
 import { validateUploadedFile } from "@/lib/file-validation";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
 
 export const runtime = "nodejs";
 
@@ -18,6 +19,8 @@ const MAX_SIZE = 25 * 1024 * 1024;
  * Always stored as visibility=client, fileType=working_file, uploadedBy=null.
  */
 export async function POST(req: NextRequest) {
+  const limited = await enforceRateLimitResponse(req, "portal:file-upload", { limit: 10, windowSec: 300 });
+  if (limited) return limited;
   try {
     const form = await req.formData();
     const token = String(form.get("token") ?? "");

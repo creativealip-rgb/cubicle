@@ -12,6 +12,7 @@ import {
 import { auth } from "@/lib/auth";
 import { getSignedDownloadUrl } from "@/lib/r2";
 import { and, eq, gt, isNull, or } from "drizzle-orm";
+import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
 
 async function canAccessFile(
   file: typeof files.$inferSelect,
@@ -95,6 +96,8 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ fileId: string }> },
 ) {
+  const limited = await enforceRateLimitResponse(request, "public:file-download", { limit: 120, windowSec: 60 }, { failureMode: "open" });
+  if (limited) return limited;
   const { fileId } = await params;
 
   const [file] = await db

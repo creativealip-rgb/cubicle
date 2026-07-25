@@ -4,8 +4,11 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { pakasirPayments, users, workspaces } from "@/db/schema";
 import { getPakasirTransactionDetail, pakasirProject, type PakasirWebhook } from "@/lib/pakasir";
+import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
 
 export async function POST(request: Request) {
+  const limited = await enforceRateLimitResponse(request, "webhook:pakasir", { limit: 120, windowSec: 60 });
+  if (limited) return limited;
   const body = (await request.json().catch(() => null)) as PakasirWebhook | null;
   if (!body?.order_id || !body.amount || !body.project) {
     return NextResponse.json({ error: "Invalid webhook" }, { status: 400 });

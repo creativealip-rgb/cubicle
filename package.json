@@ -10,7 +10,8 @@
     "smoke": "node scripts/smoke.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e:cross-tenant": "playwright test e2e/cross-tenant.spec.ts --project=chromium --workers=1 --retries=0"
+    "e2e:cross-tenant": "playwright test e2e/cross-tenant.spec.ts --project=chromium --workers=1 --retries=0",
+    "test:rate-limit": "tsx scripts/test-distributed-rate-limit.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1068.0",
@@ -43,6 +44,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-markdown": "^10.1.0",
+    "redis": "^5.12.1",
     "resend": "^6.12.4",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",

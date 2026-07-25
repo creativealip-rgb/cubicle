@@ -13,6 +13,7 @@ import { requireUser, assertWorkspaceMember, assertWorkspaceWritable, assertClie
 import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
 import { assertPublicTokenLifecycle, PublicTokenError } from "@/lib/public-token-policy";
+import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -402,6 +403,7 @@ export async function signContract(input: {
   }
 
   const tokenHash = hashToken(input.token);
+  await enforceServerActionRateLimit("contract:sign", tokenHash, { limit: 10, windowSec: 300 });
   const [c] = await db.select().from(contracts)
     .where(eq(contracts.sharedTokenHash, tokenHash))
     .limit(1);
@@ -476,6 +478,7 @@ export async function signContract(input: {
 
 export async function declineContract(input: { token: string; reason?: string }) {
   const tokenHash = hashToken(input.token);
+  await enforceServerActionRateLimit("contract:decline", tokenHash, { limit: 10, windowSec: 300 });
   const [c] = await db.select().from(contracts)
     .where(eq(contracts.sharedTokenHash, tokenHash))
     .limit(1);
