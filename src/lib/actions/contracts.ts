@@ -9,7 +9,7 @@ import { eq, and, desc } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
-import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
+import { requireUser, assertWorkspaceMember, assertWorkspaceWritable, assertClientInWorkspace, assertProjectInWorkspace, ForbiddenError } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
 
@@ -138,6 +138,17 @@ export async function createContract(input: z.infer<typeof createContractSchema>
   const user = requireUser(session?.user);
   await assertWorkspaceWritable(db, user.id, input.workspaceId);
   const parsed = createContractSchema.parse(input);
+  await assertClientInWorkspace(db, user.id, parsed.workspaceId, parsed.clientId);
+  if (parsed.projectId) {
+    const project = await assertProjectInWorkspace(db, user.id, parsed.workspaceId, parsed.projectId);
+    if (project.clientId !== parsed.clientId) throw new ForbiddenError("Project does not belong to client");
+  }
+  if (parsed.templateId) {
+    const [template] = await db.select({ id: contractTemplates.id }).from(contractTemplates)
+      .where(and(eq(contractTemplates.id, parsed.templateId), eq(contractTemplates.workspaceId, parsed.workspaceId)))
+      .limit(1);
+    if (!template) throw new ForbiddenError("Contract template access denied");
+  }
 
   const [c] = await db.insert(contracts).values({
     workspaceId: parsed.workspaceId,

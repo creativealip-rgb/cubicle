@@ -7,7 +7,7 @@ import { db } from "@/db";
 import { clients, portalRequests, projects } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { requireUser, assertWorkspaceMember } from "@/lib/access";
+import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 
 const createPortalRequestSchema = z.object({
@@ -46,7 +46,7 @@ export async function createPortalRequest(
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
-  await assertWorkspaceMember(db, user.id, workspaceId);
+  await assertWorkspaceWritable(db, user.id, workspaceId);
   const parsed = createPortalRequestSchema.parse(input);
 
   const [client] = await db
@@ -197,7 +197,7 @@ export async function updatePortalRequestAdmin(
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
-  await assertWorkspaceMember(db, user.id, workspaceId);
+  await assertWorkspaceWritable(db, user.id, workspaceId);
   const parsed = updatePortalRequestAdminSchema.parse(input);
 
   const [request] = await db

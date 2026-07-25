@@ -9,7 +9,7 @@ import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
-import { requireUser, assertWorkspaceWritable } from "@/lib/access";
+import { requireUser, assertWorkspaceWritable, assertClientInWorkspace } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 
 async function getWorkspaceId(): Promise<string> {
@@ -65,6 +65,7 @@ export async function createProposal(input: z.infer<typeof createProposalSchema>
   const user = requireUser(session?.user);
   await assertWorkspaceWritable(db, user.id, input.workspaceId);
   const parsed = createProposalSchema.parse(input);
+  await assertClientInWorkspace(db, user.id, parsed.workspaceId, parsed.clientId);
   const { subtotal, tax, total } = computeTotals(parsed.lineItems, parsed.taxRate);
 
   const [proposal] = await db.insert(proposals).values({

@@ -7,7 +7,7 @@ import { db } from "@/db";
 import { projects, projectMembers, tasks } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
-import { requireUser, assertWorkspaceWritable, assertProjectInWorkspace } from "@/lib/access";
+import { requireUser, assertWorkspaceWritable, assertProjectInWorkspace, assertClientInWorkspace } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 
 async function getWorkspaceId(): Promise<string> {
@@ -52,6 +52,7 @@ export async function createProject(input: z.infer<typeof projectSchema>) {
   }
 
   const parsed = projectSchema.parse(input);
+  await assertClientInWorkspace(db, user.id, workspaceId, parsed.clientId);
 
   const [project] = await db.insert(projects).values({
     workspaceId,
@@ -83,6 +84,9 @@ export async function updateProject(projectId: string, input: Partial<z.infer<ty
   await assertProjectInWorkspace(db, user.id, workspaceId, projectId);
 
   const parsed = projectSchema.partial().parse(input);
+  if (parsed.clientId) {
+    await assertClientInWorkspace(db, user.id, workspaceId, parsed.clientId);
+  }
 
   const updateData: Record<string, unknown> = { updatedAt: new Date() };
   if (parsed.name !== undefined) updateData.name = parsed.name;
