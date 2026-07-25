@@ -56,15 +56,29 @@ EOF
 unset R2_SECRET_ACCESS_KEY R2_ACCESS_KEY_ID CRYPT_PASSWORD
 
 NAME=$(basename "$LATEST")
+TS=${NAME#cubicle_}
+TS=${TS%.sql.gz}
+GLOBALS="$BACKUP_DIR/cubicle_global_${TS}.sql.gz"
+if [[ ! -f "$GLOBALS" || ! -f "$GLOBALS.sha256" ]]; then
+  echo "FAIL: matching PostgreSQL globals backup missing for $NAME" >&2
+  exit 1
+fi
+sha256sum -c "$GLOBALS.sha256"
+GLOBALS_NAME=$(basename "$GLOBALS")
 DATE=$(date -u +%Y/%m/%d)
 DAILY="daily/$DATE/$NAME"
 rclone --config "$TMP_CONFIG" copyto "$LATEST" "cubiqlo-backup-crypt:$DAILY" --immutable
 rclone --config "$TMP_CONFIG" copyto "$LATEST.sha256" "cubiqlo-backup-crypt:$DAILY.sha256" --immutable
+rclone --config "$TMP_CONFIG" copyto "$GLOBALS" "cubiqlo-backup-crypt:daily/$DATE/$GLOBALS_NAME" --immutable
+rclone --config "$TMP_CONFIG" copyto "$GLOBALS.sha256" "cubiqlo-backup-crypt:daily/$DATE/$GLOBALS_NAME.sha256" --immutable
 
 # Round-trip verification proves encrypted remote object decrypts to original bytes.
 rclone --config "$TMP_CONFIG" copyto "cubiqlo-backup-crypt:$DAILY" "$VERIFY_DIR/$NAME"
 cmp -s "$LATEST" "$VERIFY_DIR/$NAME"
 sha256sum -c "$LATEST.sha256"
+rclone --config "$TMP_CONFIG" copyto "cubiqlo-backup-crypt:daily/$DATE/$GLOBALS_NAME" "$VERIFY_DIR/$GLOBALS_NAME"
+cmp -s "$GLOBALS" "$VERIFY_DIR/$GLOBALS_NAME"
+sha256sum -c "$GLOBALS.sha256"
 
 # Promote same verified artifact to weekly Sunday and monthly first-day retention tiers.
 DOW=$(date -u +%u)

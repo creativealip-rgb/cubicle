@@ -26,6 +26,7 @@
 - Crypt secret: `/root/.secrets/cubiqlo-backup/`, mode `0600`; never commit or copy beside backup objects.
 - Retention: daily 14 days, weekly 12 weeks, monthly 12 months.
 - Every run verifies local checksum, uploads encrypted data, downloads/decrypts it to a temporary directory, and byte-compares it with the local dump.
+- Every off-host set includes the database dump, matching PostgreSQL globals/roles dump, and both checksum sidecars. Upload fails closed when matching globals are absent.
 
 Current limitation: R2 uses the application storage account and bucket with an isolated encrypted prefix. This survives VPS loss, but does not isolate backup deletion permission from the app storage credential. Create a backup-only R2 bucket and write-limited credential when Cloudflare credential administration is available.
 
@@ -52,12 +53,23 @@ Latest manual proof, 25 July 2026:
 4. Download newest verified daily backup plus checksum.
 5. Verify `sha256sum -c` before decompression.
 6. Start PostgreSQL matching production major version.
-7. Restore globals only after reviewing role conflicts; restore database with `psql -v ON_ERROR_STOP=1`.
-8. Apply only migrations newer than restored ledger state through canonical migration runner.
-9. Start app against restored DB on internal Docker network.
-10. Verify `/api/health`, login, client/project CRUD read path, invoice read/PDF, client portal token access, and file metadata/download authorization.
-11. Restore or reconnect R2 application storage separately; DB restore does not reconstruct object files.
-12. Route exact production hosts through `dokploy-traefik` only after smoke tests pass.
+7. Restore globals after reviewing role conflicts. A clean `postgres:16` image already owns role `postgres`; omit only its `CREATE ROLE postgres` and matching `ALTER ROLE postgres WITH ...` statements, then restore all Cubiqlo roles with `ON_ERROR_STOP=1`.
+8. Restore database with `psql -v ON_ERROR_STOP=1`. Database-only restore fails on a clean host because objects use `cubiqlo_owner`; matching globals are mandatory.
+9. Apply only migrations newer than restored ledger state through canonical migration runner.
+10. Start app against restored DB on internal Docker network.
+11. Verify `/api/health`, login, client/project CRUD read path, invoice read/PDF, client portal token access, and file metadata/download authorization.
+12. Restore or reconnect R2 application storage separately; DB restore does not reconstruct object files.
+13. Route exact production hosts through `dokploy-traefik` only after smoke tests pass.
+
+## Full disaster drill proof — 25 July 2026
+
+- Source: newest encrypted Cloudflare R2 daily artifact, downloaded and decrypted during drill instead of read from local backup storage.
+- Database and globals SHA-256 checks passed.
+- New internal-only Docker network, clean PostgreSQL container, and production app image; no host/public ports or Traefik route.
+- Restored 52 public tables, 18 users, 17 clients, and 41 invoices.
+- `/api/health` returned DB `ok`; `/login` and `/` returned HTTP 200.
+- Technical artifact-to-running-app recovery took 15 seconds, under two-hour RTO. Host provisioning and DNS cutover are outside this measurement.
+- EXIT trap removed throwaway containers, temporary config/secrets, and isolated network.
 
 ## PostgreSQL capacity baseline — 25 July 2026
 
