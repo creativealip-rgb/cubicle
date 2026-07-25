@@ -1,0 +1,608 @@
+table_name,column_name,data_type,is_nullable,column_default
+accounts,id,text,NO,
+accounts,account_id,text,NO,
+accounts,provider_id,text,NO,
+accounts,user_id,text,NO,
+accounts,access_token,text,YES,
+accounts,refresh_token,text,YES,
+accounts,id_token,text,YES,
+accounts,access_token_expires_at,timestamp with time zone,YES,
+accounts,refresh_token_expires_at,timestamp with time zone,YES,
+accounts,scope,text,YES,
+accounts,password,text,YES,
+accounts,created_at,timestamp with time zone,NO,now()
+accounts,updated_at,timestamp with time zone,NO,now()
+activity_logs,id,uuid,NO,gen_random_uuid()
+activity_logs,workspace_id,uuid,NO,
+activity_logs,actor_id,text,YES,
+activity_logs,action,text,NO,
+activity_logs,entity_type,text,NO,
+activity_logs,entity_id,uuid,YES,
+activity_logs,metadata,jsonb,NO,'{}'::jsonb
+activity_logs,created_at,timestamp with time zone,NO,now()
+ai_conversations,id,uuid,NO,gen_random_uuid()
+ai_conversations,workspace_id,uuid,NO,
+ai_conversations,user_id,text,NO,
+ai_conversations,title,text,NO,'New chat'::text
+ai_conversations,created_at,timestamp with time zone,NO,now()
+ai_conversations,updated_at,timestamp with time zone,NO,now()
+ai_messages,id,uuid,NO,gen_random_uuid()
+ai_messages,conversation_id,uuid,NO,
+ai_messages,role,text,NO,
+ai_messages,content,text,NO,''::text
+ai_messages,tool_calls,jsonb,NO,'[]'::jsonb
+ai_messages,tool_name,text,YES,
+ai_messages,tokens,integer,NO,0
+ai_messages,created_at,timestamp with time zone,NO,now()
+ai_usage_daily,workspace_id,uuid,NO,
+ai_usage_daily,usage_date,date,NO,
+ai_usage_daily,count,integer,NO,0
+ai_usage_daily,updated_at,timestamp with time zone,NO,now()
+appointments,id,uuid,NO,gen_random_uuid()
+appointments,workspace_id,uuid,NO,
+appointments,client_id,uuid,YES,
+appointments,user_id,text,NO,
+appointments,title,text,NO,
+appointments,notes,text,YES,
+appointments,attendee_name,text,YES,
+appointments,attendee_email,text,YES,
+appointments,start_time,timestamp with time zone,NO,
+appointments,end_time,timestamp with time zone,NO,
+appointments,status,text,NO,'scheduled'::text
+appointments,created_at,timestamp with time zone,NO,now()
+appointments,google_event_id,text,YES,
+appointments,google_calendar_id,text,YES,
+availability_rules,id,uuid,NO,gen_random_uuid()
+availability_rules,workspace_id,uuid,NO,
+availability_rules,user_id,text,NO,
+availability_rules,day_of_week,integer,NO,
+availability_rules,start_time,time without time zone,NO,
+availability_rules,end_time,time without time zone,NO,
+availability_rules,timezone,text,NO,'UTC'::text
+availability_rules,created_at,timestamp with time zone,NO,now()
+client_google_calendar_connections,id,uuid,NO,gen_random_uuid()
+client_google_calendar_connections,client_id,uuid,NO,
+client_google_calendar_connections,workspace_id,uuid,NO,
+client_google_calendar_connections,connected_by_user_id,text,YES,
+client_google_calendar_connections,google_account_email,text,YES,
+client_google_calendar_connections,access_token_enc,text,YES,
+client_google_calendar_connections,refresh_token_enc,text,YES,
+client_google_calendar_connections,scope,text,YES,
+client_google_calendar_connections,token_type,text,YES,
+client_google_calendar_connections,expiry_date,timestamp with time zone,YES,
+client_google_calendar_connections,calendar_id,text,NO,'primary'::text
+client_google_calendar_connections,invite_token_hash,text,YES,
+client_google_calendar_connections,invite_token_expires_at,timestamp with time zone,YES,
+client_google_calendar_connections,status,text,NO,'pending_invite'::text
+client_google_calendar_connections,last_error,text,YES,
+client_google_calendar_connections,connected_at,timestamp with time zone,YES,
+client_google_calendar_connections,updated_at,timestamp with time zone,NO,now()
+client_google_calendar_connections,created_at,timestamp with time zone,NO,now()
+clients,id,uuid,NO,gen_random_uuid()
+clients,workspace_id,uuid,NO,
+clients,name,text,NO,
+clients,company_name,text,YES,
+clients,email,text,YES,
+clients,phone,text,YES,
+clients,website,text,YES,
+clients,address,text,YES,
+clients,status,text,NO,'active'::text
+clients,tags,ARRAY,NO,'{}'::text[]
+clients,internal_notes,text,YES,
+clients,portal_enabled,boolean,NO,false
+clients,portal_token_hash,text,YES,
+clients,portal_token_expires_at,timestamp with time zone,YES,
+clients,portal_token_revoked_at,timestamp with time zone,YES,
+clients,created_at,timestamp with time zone,NO,now()
+clients,updated_at,timestamp with time zone,NO,now()
+clients,portal_slug,text,YES,
+clients,portal_slug_enabled,boolean,NO,true
+clients,client_number,text,YES,
+comments,id,uuid,NO,gen_random_uuid()
+comments,workspace_id,uuid,NO,
+comments,entity_type,text,NO,
+comments,entity_id,uuid,NO,
+comments,body,text,NO,
+comments,visibility,text,NO,'internal'::text
+comments,author_id,text,YES,
+comments,author_name,text,YES,
+comments,author_email,text,YES,
+comments,source,text,NO,'internal'::text
+comments,created_at,timestamp with time zone,NO,now()
+contract_templates,id,uuid,NO,gen_random_uuid()
+contract_templates,workspace_id,uuid,NO,
+contract_templates,name,text,NO,
+contract_templates,body,text,NO,
+contract_templates,is_default,boolean,NO,false
+contract_templates,created_by,text,YES,
+contract_templates,created_at,timestamp with time zone,NO,now()
+contract_templates,updated_at,timestamp with time zone,NO,now()
+contracts,id,uuid,NO,gen_random_uuid()
+contracts,workspace_id,uuid,NO,
+contracts,client_id,uuid,NO,
+contracts,project_id,uuid,YES,
+contracts,template_id,uuid,YES,
+contracts,title,text,NO,
+contracts,body,text,YES,
+contracts,body_resolved,text,YES,
+contracts,variables,jsonb,NO,'{}'::jsonb
+contracts,valid_until,date,YES,
+contracts,status,text,NO,'draft'::text
+contracts,decline_reason,text,YES,
+contracts,signed_name,text,YES,
+contracts,signed_email,text,YES,
+contracts,signature_data_url,text,YES,
+contracts,signed_at,timestamp with time zone,YES,
+contracts,signed_from_ip,text,YES,
+contracts,signed_user_agent,text,YES,
+contracts,shared_token_hash,text,YES,
+contracts,shared_token_expires_at,timestamp with time zone,YES,
+contracts,shared_token_revoked_at,timestamp with time zone,YES,
+contracts,sent_at,timestamp with time zone,YES,
+contracts,viewed_at,timestamp with time zone,YES,
+contracts,declined_at,timestamp with time zone,YES,
+contracts,created_by,text,YES,
+contracts,created_at,timestamp with time zone,NO,now()
+contracts,updated_at,timestamp with time zone,NO,now()
+custom_package_requests,id,uuid,NO,gen_random_uuid()
+custom_package_requests,workspace_id,uuid,NO,
+custom_package_requests,project_id,uuid,NO,
+custom_package_requests,client_portal_token,text,NO,
+custom_package_requests,requested_hours,integer,NO,
+custom_package_requests,estimated_price,numeric,YES,
+custom_package_requests,message,text,YES,
+custom_package_requests,status,text,NO,'pending'::text
+custom_package_requests,created_at,timestamp with time zone,NO,now()
+email_messages,id,uuid,NO,gen_random_uuid()
+email_messages,workspace_id,uuid,NO,
+email_messages,client_id,uuid,YES,
+email_messages,project_id,uuid,YES,
+email_messages,user_id,text,YES,
+email_messages,to_email,text,NO,
+email_messages,subject,text,NO,
+email_messages,body,text,NO,
+email_messages,status,text,NO,'draft'::text
+email_messages,sent_at,timestamp with time zone,YES,
+email_messages,created_at,timestamp with time zone,NO,now()
+email_messages,updated_at,timestamp with time zone,NO,now()
+email_templates,id,uuid,NO,gen_random_uuid()
+email_templates,workspace_id,uuid,NO,
+email_templates,user_id,text,YES,
+email_templates,name,text,NO,
+email_templates,subject,text,NO,
+email_templates,body,text,NO,
+email_templates,category,text,NO,'general'::text
+email_templates,created_at,timestamp with time zone,NO,now()
+email_templates,updated_at,timestamp with time zone,NO,now()
+expense_categories,id,uuid,NO,gen_random_uuid()
+expense_categories,workspace_id,uuid,NO,
+expense_categories,name,text,NO,
+expense_categories,color,text,NO,'#64748b'::text
+expense_categories,icon,text,YES,
+expense_categories,is_default,boolean,NO,false
+expense_categories,created_at,timestamp with time zone,NO,now()
+expense_recurring,id,uuid,NO,gen_random_uuid()
+expense_recurring,workspace_id,uuid,NO,
+expense_recurring,name,text,NO,
+expense_recurring,amount,numeric,NO,
+expense_recurring,currency,text,NO,'IDR'::text
+expense_recurring,category_id,uuid,YES,
+expense_recurring,project_id,uuid,YES,
+expense_recurring,frequency,text,NO,'monthly'::text
+expense_recurring,start_date,date,NO,
+expense_recurring,end_date,date,YES,
+expense_recurring,last_generated_date,date,YES,
+expense_recurring,is_active,boolean,NO,true
+expense_recurring,notes,text,YES,
+expense_recurring,created_by,text,YES,
+expense_recurring,created_at,timestamp with time zone,NO,now()
+expense_recurring,updated_at,timestamp with time zone,NO,now()
+expenses,id,uuid,NO,gen_random_uuid()
+expenses,workspace_id,uuid,NO,
+expenses,category_id,uuid,YES,
+expenses,project_id,uuid,YES,
+expenses,client_id,uuid,YES,
+expenses,amount,numeric,NO,
+expenses,currency,text,NO,'IDR'::text
+expenses,date,date,NO,
+expenses,description,text,NO,
+expenses,vendor,text,YES,
+expenses,receipt_url,text,YES,
+expenses,tax_included,boolean,NO,false
+expenses,tax_amount,numeric,YES,
+expenses,created_by,text,YES,
+expenses,created_at,timestamp with time zone,NO,now()
+expenses,updated_at,timestamp with time zone,NO,now()
+files,id,uuid,NO,gen_random_uuid()
+files,workspace_id,uuid,NO,
+files,client_id,uuid,YES,
+files,project_id,uuid,YES,
+files,folder_id,uuid,YES,
+files,name,text,NO,
+files,storage_key,text,NO,
+files,mime_type,text,YES,
+files,size_bytes,bigint,YES,
+files,visibility,text,NO,'internal'::text
+files,uploaded_by,text,YES,
+files,created_at,timestamp with time zone,NO,now()
+files,file_type,text,NO,'working_file'::text
+files,last_viewed_at,timestamp with time zone,YES,
+folders,id,uuid,NO,gen_random_uuid()
+folders,workspace_id,uuid,NO,
+folders,client_id,uuid,YES,
+folders,project_id,uuid,YES,
+folders,parent_id,uuid,YES,
+folders,name,text,NO,
+folders,created_at,timestamp with time zone,NO,now()
+google_calendar_connections,id,uuid,NO,gen_random_uuid()
+google_calendar_connections,user_id,text,NO,
+google_calendar_connections,google_account_email,text,YES,
+google_calendar_connections,access_token_enc,text,NO,
+google_calendar_connections,refresh_token_enc,text,NO,
+google_calendar_connections,scope,text,YES,
+google_calendar_connections,token_type,text,YES,
+google_calendar_connections,expiry_date,timestamp with time zone,YES,
+google_calendar_connections,calendar_id,text,NO,'primary'::text
+google_calendar_connections,status,text,NO,'connected'::text
+google_calendar_connections,last_error,text,YES,
+google_calendar_connections,connected_at,timestamp with time zone,NO,now()
+google_calendar_connections,updated_at,timestamp with time zone,NO,now()
+invoice_items,id,uuid,NO,gen_random_uuid()
+invoice_items,invoice_id,uuid,NO,
+invoice_items,description,text,NO,
+invoice_items,quantity,numeric,NO,'1'::numeric
+invoice_items,unit_price,numeric,NO,'0'::numeric
+invoice_items,amount,numeric,NO,'0'::numeric
+invoice_items,source_type,text,YES,
+invoice_items,source_id,uuid,YES,
+invoice_items,created_at,timestamp with time zone,NO,now()
+invoice_items,original_currency,text,YES,
+invoice_items,original_amount,numeric,YES,
+invoice_items,conversion_rate,numeric,YES,
+invoice_templates,id,uuid,NO,gen_random_uuid()
+invoice_templates,workspace_id,uuid,NO,
+invoice_templates,name,text,NO,
+invoice_templates,terms,text,YES,
+invoice_templates,notes,text,YES,
+invoice_templates,default_currency,text,NO,'IDR'::text
+invoice_templates,default_tax_rate,numeric,YES,'0'::numeric
+invoice_templates,line_items,text,YES,
+invoice_templates,created_by,text,YES,
+invoice_templates,created_at,timestamp with time zone,NO,now()
+invoice_templates,updated_at,timestamp with time zone,NO,now()
+invoices,id,uuid,NO,gen_random_uuid()
+invoices,workspace_id,uuid,NO,
+invoices,client_id,uuid,NO,
+invoices,invoice_number,text,NO,
+invoices,issue_date,date,NO,
+invoices,due_date,date,YES,
+invoices,currency,text,NO,'IDR'::text
+invoices,subtotal,numeric,NO,'0'::numeric
+invoices,discount,numeric,NO,'0'::numeric
+invoices,tax,numeric,NO,'0'::numeric
+invoices,total,numeric,NO,'0'::numeric
+invoices,status,text,NO,'draft'::text
+invoices,notes,text,YES,
+invoices,terms,text,YES,
+invoices,shared_token_hash,text,YES,
+invoices,shared_token_expires_at,timestamp with time zone,YES,
+invoices,shared_token_revoked_at,timestamp with time zone,YES,
+invoices,created_at,timestamp with time zone,NO,now()
+invoices,updated_at,timestamp with time zone,NO,now()
+invoices,project_id,uuid,YES,
+invoices,client_first_viewed_at,timestamp with time zone,YES,
+notifications,id,uuid,NO,gen_random_uuid()
+notifications,workspace_id,uuid,NO,
+notifications,user_id,text,NO,
+notifications,type,text,NO,
+notifications,title,text,NO,
+notifications,body,text,YES,
+notifications,link,text,YES,
+notifications,entity_type,text,YES,
+notifications,entity_id,uuid,YES,
+notifications,actor_id,text,YES,
+notifications,read_at,timestamp with time zone,YES,
+notifications,created_at,timestamp with time zone,NO,now()
+package_orders,id,uuid,NO,gen_random_uuid()
+package_orders,workspace_id,uuid,NO,
+package_orders,project_id,uuid,NO,
+package_orders,package_id,uuid,NO,
+package_orders,client_portal_token,text,NO,
+package_orders,package_name,text,NO,
+package_orders,hours,integer,YES,
+package_orders,price,numeric,NO,
+package_orders,currency,text,NO,'USD'::text
+package_orders,message,text,YES,
+package_orders,status,text,NO,'pending'::text
+package_orders,created_at,timestamp with time zone,NO,now()
+packages,id,uuid,NO,gen_random_uuid()
+packages,workspace_id,uuid,NO,
+packages,project_id,uuid,YES,
+packages,name,text,NO,
+packages,hours,integer,YES,
+packages,price,numeric,NO,
+packages,currency,text,NO,'IDR'::text
+packages,description,text,YES,
+packages,features,text,YES,
+packages,badge,text,YES,
+packages,sort_order,integer,NO,0
+packages,active,boolean,NO,true
+packages,created_at,timestamp with time zone,NO,now()
+packages,custom_price,numeric,YES,
+packages,min_hours,integer,YES,
+packages,max_hours,integer,YES,
+packages,allow_custom,boolean,NO,false
+pakasir_payments,id,uuid,NO,gen_random_uuid()
+pakasir_payments,workspace_id,uuid,NO,
+pakasir_payments,order_id,text,NO,
+pakasir_payments,plan,text,NO,
+pakasir_payments,amount,numeric,NO,
+pakasir_payments,status,text,NO,'pending'::text
+pakasir_payments,payment_method,text,NO,'PAKASIR_QRIS'::text
+pakasir_payments,raw_payload,jsonb,YES,
+pakasir_payments,paid_at,timestamp with time zone,YES,
+pakasir_payments,created_at,timestamp with time zone,NO,now()
+pakasir_payments,updated_at,timestamp with time zone,NO,now()
+payments,id,uuid,NO,gen_random_uuid()
+payments,invoice_id,uuid,NO,
+payments,amount,numeric,NO,
+payments,paid_at,date,NO,
+payments,method,text,YES,
+payments,notes,text,YES,
+payments,created_at,timestamp with time zone,NO,now()
+personal_notes,id,uuid,NO,gen_random_uuid()
+personal_notes,workspace_id,uuid,NO,
+personal_notes,user_id,text,NO,
+personal_notes,title,text,NO,
+personal_notes,body,text,YES,
+personal_notes,status,text,NO,'open'::text
+personal_notes,pinned,boolean,NO,false
+personal_notes,created_at,timestamp with time zone,NO,now()
+personal_notes,updated_at,timestamp with time zone,NO,now()
+personal_notes,due_date,timestamp with time zone,YES,
+personal_notes,recurrence_rule,text,NO,'none'::text
+personal_notes,notify_7d,boolean,NO,false
+personal_notes,notify_3d,boolean,NO,false
+personal_notes,notify_1d,boolean,NO,false
+personal_notes,last_reminded_7d,timestamp with time zone,YES,
+personal_notes,last_reminded_3d,timestamp with time zone,YES,
+personal_notes,last_reminded_1d,timestamp with time zone,YES,
+personal_notes,converted_task_id,uuid,YES,
+portal_access_logs,id,uuid,NO,gen_random_uuid()
+portal_access_logs,workspace_id,uuid,YES,
+portal_access_logs,client_id,uuid,YES,
+portal_access_logs,invoice_id,uuid,YES,
+portal_access_logs,token_type,text,NO,
+portal_access_logs,token_hash_prefix,text,YES,
+portal_access_logs,ip_address,text,YES,
+portal_access_logs,user_agent,text,YES,
+portal_access_logs,accessed_at,timestamp with time zone,NO,now()
+portal_requests,id,uuid,NO,gen_random_uuid()
+portal_requests,workspace_id,uuid,NO,
+portal_requests,client_id,uuid,NO,
+portal_requests,project_id,uuid,YES,
+portal_requests,title,text,NO,
+portal_requests,description,text,YES,
+portal_requests,type,text,NO,'document'::text
+portal_requests,status,text,NO,'pending'::text
+portal_requests,due_date,date,YES,
+portal_requests,completed_at,timestamp with time zone,YES,
+portal_requests,created_by,text,YES,
+portal_requests,created_at,timestamp with time zone,NO,now()
+portal_requests,updated_at,timestamp with time zone,NO,now()
+portal_visits,id,uuid,NO,gen_random_uuid()
+portal_visits,workspace_id,uuid,NO,
+portal_visits,resource_type,text,NO,
+portal_visits,resource_id,uuid,NO,
+portal_visits,client_id,uuid,YES,
+portal_visits,ip_address,text,YES,
+portal_visits,user_agent,text,YES,
+portal_visits,visited_at,timestamp with time zone,NO,now()
+project_members,id,uuid,NO,gen_random_uuid()
+project_members,project_id,uuid,NO,
+project_members,user_id,text,NO,
+project_members,created_at,timestamp with time zone,NO,now()
+projects,id,uuid,NO,gen_random_uuid()
+projects,workspace_id,uuid,NO,
+projects,client_id,uuid,NO,
+projects,name,text,NO,
+projects,description,text,YES,
+projects,status,text,NO,'active'::text
+projects,due_date,date,YES,
+projects,client_visible,boolean,NO,false
+projects,created_by,text,YES,
+projects,created_at,timestamp with time zone,NO,now()
+projects,updated_at,timestamp with time zone,NO,now()
+projects,billing_type,text,NO,'project'::text
+projects,start_date,date,YES,
+projects,finish_date,date,YES,
+projects,rate,numeric,YES,
+projects,budget,numeric,YES,
+projects,currency,text,NO,'IDR'::text
+projects,selected_package_id,uuid,YES,
+prompt_generations,id,uuid,NO,gen_random_uuid()
+prompt_generations,workspace_id,uuid,NO,
+prompt_generations,client_id,uuid,YES,
+prompt_generations,project_id,uuid,YES,
+prompt_generations,template_id,uuid,YES,
+prompt_generations,input,jsonb,NO,'{}'::jsonb
+prompt_generations,generated_prompt,text,YES,
+prompt_generations,generated_output,text,YES,
+prompt_generations,model,text,YES,
+prompt_generations,input_tokens,integer,NO,0
+prompt_generations,output_tokens,integer,NO,0
+prompt_generations,cost_usd,numeric,NO,'0'::numeric
+prompt_generations,created_by,text,YES,
+prompt_generations,created_at,timestamp with time zone,NO,now()
+prompt_templates,id,uuid,NO,gen_random_uuid()
+prompt_templates,workspace_id,uuid,YES,
+prompt_templates,name,text,NO,
+prompt_templates,category,text,NO,
+prompt_templates,description,text,YES,
+prompt_templates,template,text,NO,
+prompt_templates,is_system,boolean,NO,false
+prompt_templates,created_at,timestamp with time zone,NO,now()
+proposal_templates,id,uuid,NO,gen_random_uuid()
+proposal_templates,workspace_id,uuid,NO,
+proposal_templates,name,text,NO,
+proposal_templates,body,text,YES,
+proposal_templates,default_currency,text,NO,'IDR'::text
+proposal_templates,default_tax_rate,numeric,NO,'0'::numeric
+proposal_templates,default_down_payment_percent,numeric,NO,'50'::numeric
+proposal_templates,line_items,text,YES,
+proposal_templates,is_default,boolean,NO,false
+proposal_templates,created_by,text,YES,
+proposal_templates,created_at,timestamp with time zone,NO,now()
+proposal_templates,updated_at,timestamp with time zone,NO,now()
+proposals,id,uuid,NO,gen_random_uuid()
+proposals,workspace_id,uuid,NO,
+proposals,client_id,uuid,NO,
+proposals,project_id,uuid,YES,
+proposals,title,text,NO,
+proposals,body,text,YES,
+proposals,line_items,jsonb,NO,'[]'::jsonb
+proposals,subtotal,numeric,NO,'0'::numeric
+proposals,tax,numeric,NO,'0'::numeric
+proposals,total,numeric,NO,'0'::numeric
+proposals,currency,text,NO,'IDR'::text
+proposals,down_payment_percent,numeric,NO,'50'::numeric
+proposals,valid_until,date,YES,
+proposals,status,text,NO,'draft'::text
+proposals,decline_reason,text,YES,
+proposals,shared_token_hash,text,YES,
+proposals,shared_token_expires_at,timestamp with time zone,YES,
+proposals,shared_token_revoked_at,timestamp with time zone,YES,
+proposals,sent_at,timestamp with time zone,YES,
+proposals,viewed_at,timestamp with time zone,YES,
+proposals,accepted_at,timestamp with time zone,YES,
+proposals,declined_at,timestamp with time zone,YES,
+proposals,created_by,text,YES,
+proposals,created_at,timestamp with time zone,NO,now()
+proposals,updated_at,timestamp with time zone,NO,now()
+questionnaire_responses,id,uuid,NO,gen_random_uuid()
+questionnaire_responses,workspace_id,uuid,NO,
+questionnaire_responses,questionnaire_id,uuid,NO,
+questionnaire_responses,client_id,uuid,YES,
+questionnaire_responses,project_id,uuid,YES,
+questionnaire_responses,respondent_name,text,YES,
+questionnaire_responses,respondent_email,text,YES,
+questionnaire_responses,answers,jsonb,NO,'{}'::jsonb
+questionnaire_responses,status,text,NO,'pending'::text
+questionnaire_responses,shared_token_hash,text,YES,
+questionnaire_responses,shared_token_expires_at,timestamp with time zone,YES,
+questionnaire_responses,shared_token_revoked_at,timestamp with time zone,YES,
+questionnaire_responses,submitted_at,timestamp with time zone,YES,
+questionnaire_responses,created_at,timestamp with time zone,NO,now()
+questionnaire_responses,updated_at,timestamp with time zone,NO,now()
+questionnaires,id,uuid,NO,gen_random_uuid()
+questionnaires,workspace_id,uuid,NO,
+questionnaires,name,text,NO,
+questionnaires,description,text,YES,
+questionnaires,schema,jsonb,NO,'[]'::jsonb
+questionnaires,created_by,text,YES,
+questionnaires,created_at,timestamp with time zone,NO,now()
+questionnaires,updated_at,timestamp with time zone,NO,now()
+sessions,id,text,NO,
+sessions,expires_at,timestamp with time zone,NO,
+sessions,token,text,NO,
+sessions,created_at,timestamp with time zone,NO,now()
+sessions,updated_at,timestamp with time zone,NO,now()
+sessions,ip_address,text,YES,
+sessions,user_agent,text,YES,
+sessions,user_id,text,NO,
+support_tickets,id,uuid,NO,gen_random_uuid()
+support_tickets,workspace_id,uuid,NO,
+support_tickets,title,text,NO,
+support_tickets,description,text,YES,
+support_tickets,status,text,NO,'open'::text
+support_tickets,priority,text,NO,'medium'::text
+support_tickets,assignee_id,text,YES,
+support_tickets,client_id,uuid,YES,
+support_tickets,project_id,uuid,YES,
+support_tickets,created_by,text,YES,
+support_tickets,created_at,timestamp with time zone,NO,now()
+support_tickets,updated_at,timestamp with time zone,NO,now()
+tasks,id,uuid,NO,gen_random_uuid()
+tasks,workspace_id,uuid,NO,
+tasks,project_id,uuid,NO,
+tasks,title,text,NO,
+tasks,description,text,YES,
+tasks,status,text,NO,'todo'::text
+tasks,priority,text,NO,'medium'::text
+tasks,assignee_id,text,YES,
+tasks,due_date,date,YES,
+tasks,position,integer,NO,0
+tasks,client_visible,boolean,NO,false
+tasks,created_by,text,YES,
+tasks,created_at,timestamp with time zone,NO,now()
+tasks,updated_at,timestamp with time zone,NO,now()
+tasks,source_note_id,uuid,YES,
+time_entries,id,uuid,NO,gen_random_uuid()
+time_entries,workspace_id,uuid,NO,
+time_entries,client_id,uuid,YES,
+time_entries,project_id,uuid,YES,
+time_entries,task_id,uuid,YES,
+time_entries,user_id,text,NO,
+time_entries,description,text,YES,
+time_entries,start_time,timestamp with time zone,YES,
+time_entries,end_time,timestamp with time zone,YES,
+time_entries,manual_minutes,integer,YES,
+time_entries,duration_minutes,integer,YES,
+time_entries,billable,boolean,NO,true
+time_entries,hourly_rate,numeric,YES,
+time_entries,status,text,NO,'draft'::text
+time_entries,created_at,timestamp with time zone,NO,now()
+time_entries,updated_at,timestamp with time zone,NO,now()
+time_entries,tags,text,YES,
+time_entries,paused_at,timestamp with time zone,YES,
+users,id,text,NO,
+users,name,text,YES,
+users,email,text,NO,
+users,email_verified,boolean,NO,false
+users,image,text,YES,
+users,created_at,timestamp with time zone,NO,now()
+users,updated_at,timestamp with time zone,NO,now()
+users,plan,text,NO,'free'::text
+users,plan_expires_at,timestamp with time zone,YES,
+verifications,id,text,NO,
+verifications,identifier,text,NO,
+verifications,value,text,NO,
+verifications,expires_at,timestamp with time zone,NO,
+verifications,created_at,timestamp with time zone,NO,now()
+verifications,updated_at,timestamp with time zone,NO,now()
+workspace_currency_rates,id,uuid,NO,gen_random_uuid()
+workspace_currency_rates,workspace_id,uuid,NO,
+workspace_currency_rates,from_currency,text,NO,
+workspace_currency_rates,rate,numeric,NO,
+workspace_currency_rates,created_at,timestamp with time zone,NO,now()
+workspace_currency_rates,updated_at,timestamp with time zone,NO,now()
+workspace_invoice_counters,workspace_id,uuid,NO,
+workspace_invoice_counters,next_number,integer,NO,1
+workspace_invoice_counters,updated_at,timestamp with time zone,NO,now()
+workspace_members,id,uuid,NO,gen_random_uuid()
+workspace_members,workspace_id,uuid,NO,
+workspace_members,user_id,text,NO,
+workspace_members,role,text,NO,
+workspace_members,created_at,timestamp with time zone,NO,now()
+workspaces,id,uuid,NO,gen_random_uuid()
+workspaces,name,text,NO,
+workspaces,slug,text,NO,
+workspaces,owner_id,text,NO,
+workspaces,default_currency,text,NO,'IDR'::text
+workspaces,default_hourly_rate,numeric,YES,
+workspaces,default_invoice_terms,text,YES,
+workspaces,default_tax_rate,numeric,NO,'0'::numeric
+workspaces,billing_name,text,YES,
+workspaces,billing_address,text,YES,
+workspaces,logo_url,text,YES,
+workspaces,booking_slug,text,YES,
+workspaces,created_at,timestamp with time zone,NO,now()
+workspaces,updated_at,timestamp with time zone,NO,now()
+workspaces,billing_email,text,YES,
+workspaces,billing_phone,text,YES,
+workspaces,tax_id,text,YES,
+workspaces,reply_to_email,text,YES,
+workspaces,invoice_email_body,text,YES,
+workspaces,plan,text,NO,'free'::text
+workspaces,plan_expires_at,timestamp with time zone,YES,
+workspaces,show_base_currency_approx,boolean,NO,true

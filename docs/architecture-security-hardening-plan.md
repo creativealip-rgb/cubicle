@@ -1,7 +1,7 @@
 # Cubiqlo — Architecture, Security, Database & Operations Hardening Plan
 
 **Tanggal:** 25 Juli 2026  
-**Status:** Approved planning artifact; belum dieksekusi  
+**Status:** In progress; Sprint 0, development lane, dan Phase 2 audit/clone proof selesai
 **Canonical environment flow:** `docs/dev-production-workflow-plan.md`  
 **Tujuan:** Membawa Cubiqlo dari operational MVP menjadi production-disciplined SaaS tanpa rewrite.
 
@@ -11,14 +11,14 @@ Hasil verifikasi langsung pada repo dan runtime production:
 
 - App container healthy; `/api/health` mengembalikan app + DB `ok`.
 - PostgreSQL container healthy dan port `5432` tidak dipublish ke host.
-- App restart policy `no`; PostgreSQL `unless-stopped`.
+- App dan PostgreSQL restart policy `unless-stopped`.
 - Live DB: 51 tabel, sekitar 15 MB.
-- Repo: 40 migration SQL; Drizzle journal hanya 5 entry.
+- Repo: 41 migration SQL termasuk cleanup candidate `0040`; Drizzle journal hanya 5 entry.
 - Live DB tidak punya authoritative `drizzle.__drizzle_migrations` ledger.
 - Live DB memiliki 35 relasi foreign key identik yang terpasang ganda.
 - PostgreSQL RLS aktif pada 0 tabel.
 - Runtime DB memakai role login `postgres` superuser.
-- Full lint gagal: 13 error + 3 warning.
+- Full lint bersih; TypeScript, production build, dan 119 tests lulus pada gate terakhir.
 - Backup harian dan weekly restore test terjadwal; backup masih satu host dengan production.
 - Header keamanan, hashed public tokens, workspace access helpers, Docker hardening dasar, health check, resource limits, dan backup checksum sudah tersedia.
 
@@ -189,6 +189,8 @@ Ikuti `docs/dev-production-workflow-plan.md`:
 
 ## 2.1 Freeze dan inventory schema
 
+**Status:** Completed 25 Juli 2026. Evidence: `docs/database/schema-baseline-2026-07.md` dan `docs/operations/evidence/`.
+
 **Aksi:**
 1. Hentikan migration baru selama audit baseline.
 2. Export schema-only dump live.
@@ -204,6 +206,8 @@ Ikuti `docs/dev-production-workflow-plan.md`:
 
 ## 2.2 Authoritative migration ledger
 
+**Status:** Pending. Root cause terkonfirmasi: production tidak memiliki tabel ledger; status historis tidak dapat dibuktikan dari DB.
+
 **Aksi:**
 1. Pilih satu mekanisme migration production.
 2. Baseline live DB tanpa mengulang migration historis.
@@ -216,6 +220,8 @@ Ikuti `docs/dev-production-workflow-plan.md`:
 **Acceptance:** command migration kedua kali menjadi no-op terkontrol; partial error menghasilkan non-zero dan transaction rollback.
 
 ## 2.3 Cleanup 35 FK duplicate
+
+**Status:** Clone verified; production not executed. Candidate: `drizzle/0040_cleanup_duplicate_foreign_keys.sql`.
 
 **Aksi:**
 1. Generate daftar constraint duplicate lengkap.

@@ -1,0 +1,5 @@
+4ae884578ebdd85f90fd0dfa400f778127156cb11764d58930c4d755f892bccf  docs/operations/evidence/production-constraints-2026-07-25.csv
+e3feee164dd86c4c3f7f1f591c13cbbc647ab09081f4bbf687f89268dc2a9431  docs/operations/evidence/production-indexes-2026-07-25.csv
+4fe815eb9f49651aba4941be1b65fd0436f386bca5118ef10f5a43c7f714fbc0  docs/operations/evidence/production-objects-2026-07-25.csv
+1a4fb3403575a0f69429243bcc16bce1ada4be2ab62eda8b5232223a482350a2  docs/operations/evidence/production-schema-2026-07-25.sql
+e526936f0ff7659bb0e341e077631a9c5f86bd774f6844c87ac0bb1f21db02ba  docs/operations/evidence/migration-manifest-2026-07-25.csv
