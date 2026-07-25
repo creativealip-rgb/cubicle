@@ -182,6 +182,10 @@ Evidence berisi schema metadata, bukan row data atau secret.
 - Inventory/schema freeze: completed.
 - Duplicate FK mapping: completed.
 - Cleanup clone proof: completed.
-- Production duplicate FK cleanup: not executed.
-- Authoritative production ledger: not created.
-- Next safe step: implement baseline ledger runner, test twice on clone, then schedule backup + production cleanup maintenance window.
+- Production duplicate FK cleanup: completed 25 Juli 2026.
+- Authoritative production ledger: created as `public.cubiqlo_migrations`.
+- Production result: duplicate groups `35 → 0`, foreign keys `161 → 126`, invalid foreign keys `0`.
+- Runner second execution: controlled no-op.
+- Pre-change backup: `/root/backups/databases/cubiqlo-manual/cubicle-pre-fk-cleanup-20260725T124656Z.dump` with SHA256 sidecar.
+- Restore proof: 51 tables, 1,992 exact rows, and identical per-table row-map SHA256.
+- Next safe step: separate least-privilege production DB roles.

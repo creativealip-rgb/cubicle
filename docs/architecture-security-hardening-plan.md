@@ -206,7 +206,7 @@ Ikuti `docs/dev-production-workflow-plan.md`:
 
 ## 2.2 Authoritative migration ledger
 
-**Status:** Pending. Root cause terkonfirmasi: production tidak memiliki tabel ledger; status historis tidak dapat dibuktikan dari DB.
+**Status:** Completed 25 Juli 2026. Baseline ledger, checksum enforcement, advisory lock, transactional runner, no-op rerun, drift rejection, dan rollback proof terverifikasi.
 
 **Aksi:**
 1. Pilih satu mekanisme migration production.
@@ -221,7 +221,7 @@ Ikuti `docs/dev-production-workflow-plan.md`:
 
 ## 2.3 Cleanup 35 FK duplicate
 
-**Status:** Clone verified; production not executed. Candidate: `drizzle/0040_cleanup_duplicate_foreign_keys.sql`.
+**Status:** Completed 25 Juli 2026. `0040` applied production; duplicate groups `35 → 0`, FK `161 → 126`, invalid FK `0`, app health tetap `ok`.
 
 **Aksi:**
 1. Generate daftar constraint duplicate lengkap.

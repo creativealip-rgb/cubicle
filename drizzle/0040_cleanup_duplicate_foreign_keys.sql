@@ -1,6 +1,5 @@
 -- Generated from production read-only constraint inventory on 2026-07-25.
--- Run only after backup and in a transaction.
-BEGIN;
+-- Transaction is owned by scripts/migrate-ledger.sh.
 SET lock_timeout = '5s';
 SET statement_timeout = '60s';
 
@@ -88,4 +87,3 @@ BEGIN
     RAISE EXCEPTION 'Duplicate foreign keys remain after cleanup';
   END IF;
 END $$;
-COMMIT;
