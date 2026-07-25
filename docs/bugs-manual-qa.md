@@ -153,7 +153,7 @@ Step portal klien di dashboard checklist.
 
 ## Settings audit — 2026-07-25
 
-Status: **fixed locally; deploy verification pending**.
+Status: **fixed + deployed + live verified**.
 
 - **SET-001 fixed:** upload raster divalidasi lewat MIME allowlist + magic bytes.
 - **SET-002 fixed:** UI dan API sama-sama hanya menerima PNG/JPG/WebP/GIF.
@@ -164,9 +164,9 @@ Status: **fixed locally; deploy verification pending**.
 - **SET-007 fixed:** Account Settings ikut ID/EN.
 - **SET-008 fixed:** password required, minLength, confirmation, dan invalid submit disabled.
 - **SET-009 fixed:** regression test signature gambar + password policy/whitespace.
-- **SET-010 pending:** source belum dideploy saat catatan ini dibuat.
+- **SET-010 fixed:** deployed; health + DB `ok`; desktop 1280px dan mobile 390×844 live verified tanpa document overflow.
 
-Verifikasi lokal: `101/101` tests pass, touched-file ESLint pass, production build pass. Full lint masih punya 13 error lama di luar Settings.
+Verifikasi: `101/101` tests pass, touched-file ESLint pass, TypeScript/build pass, live health pass. Full lint masih punya 13 error lama di luar Settings.
 
 ## Belum dicek / hold
 
