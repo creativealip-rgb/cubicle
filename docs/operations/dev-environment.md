@@ -67,6 +67,7 @@ Next.js development compiler membutuhkan memory besar saat cold compile halaman 
 - CPU limit: `1.0`.
 - Memory limit: `2G`.
 - `1280M` terbukti tidak cukup: cold compile route `/` pada Next.js 16 Turbopack membuat container `OOMKilled=true` dan respons HTTP `502`.
+- Cache Turbopack `.next/dev` memakai Docker named volume `cubicle-dev-next-cache`, bukan bind mount host. Source `/app` tetap bind-mounted agar HMR membaca perubahan repo.
 - Cold compile memakai resource besar; pantau `docker stats`.
 - Stop service saat tidak dipakai karena VPS sudah memiliki swap pressure tinggi.
 

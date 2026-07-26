@@ -30,6 +30,7 @@ services:
       GOOGLE_TOKEN_ENCRYPTION_KEY: ""
     volumes:
       - .:/app
+      - cubicle-dev-next-cache:/app/.next/dev
     networks:
       - dokploy-network
     security_opt:
@@ -55,6 +56,10 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+volumes:
+  cubicle-dev-next-cache:
+    name: cubicle-dev-next-cache
 
 networks:
   dokploy-network:
