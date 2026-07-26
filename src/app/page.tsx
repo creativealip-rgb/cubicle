@@ -151,18 +151,15 @@ export default async function HomePage() {
                 <span className="h-2 w-2 rounded-full bg-emerald-500" /> Dibangun untuk bisnis berbasis klien
               </div>
               <h1 className="mt-6 max-w-full text-[2.35rem] font-semibold leading-[1.04] tracking-[-0.04em] text-[#292D34] sm:max-w-[13ch] sm:text-6xl lg:text-[4.65rem]" style={{ fontWeight: 650 }}>
-                Kelola kerja klien dari request sampai <span className="relative text-[#6647F0]">dibayar.<span className="absolute inset-x-0 -bottom-1 h-2 rounded-full bg-[#FF7657]/30" aria-hidden="true" /></span>
+                Lebih sedikit aplikasi. <span className="relative text-[#6647F0]">Lebih banyak pekerjaan selesai.<span className="absolute inset-x-0 -bottom-1 h-2 rounded-full bg-[#FF7657]/30" aria-hidden="true" /></span>
               </h1>
-              <p className="mt-6 max-w-xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
-                Proyek, waktu, file, portal klien, dan invoice dalam satu alur. Lebih sedikit tool. Lebih banyak kerja yang selesai.
-              </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button asChild size="lg" className="h-12 w-full rounded-xl bg-[#292D34] px-6 text-white shadow-[0_12px_30px_rgba(41,45,52,.18)] hover:-translate-y-0.5 hover:bg-[#17191E] sm:w-auto">
                   <Link href="/signup">Buat workspace gratis <ArrowRight className="h-4 w-4" /></Link>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="h-12 w-full rounded-xl border-slate-300 bg-white/80 px-6 sm:w-auto"><Link href="#workflow">Lihat cara kerja</Link></Button>
               </div>
-              <p className="mt-4 text-sm text-slate-500">Free forever · tanpa kartu kredit · setup sekitar 5 menit</p>
+              <p className="mt-4 text-sm text-slate-500">Gratis selamanya · tanpa kartu kredit · langsung bisa dipakai</p>
               <div className="mt-8 grid grid-cols-3 gap-3 border-t border-slate-200/80 pt-6 text-xs text-slate-600 sm:flex sm:items-center sm:gap-5 sm:text-sm">
                 <div><strong className="block text-lg text-[#292D34] sm:text-xl">1</strong> workspace</div>
                 <div className="hidden h-8 w-px bg-slate-200 sm:block" />
@@ -188,16 +185,16 @@ export default async function HomePage() {
 
         <section className="border-y border-slate-950/[0.06] bg-white px-4 py-8 sm:px-6 lg:px-8">
           <div className="mx-auto grid max-w-7xl gap-6 sm:grid-cols-[1fr_auto] sm:items-center">
-            <p className="max-w-3xl text-lg font-medium leading-8 text-[#292D34] sm:text-xl">Project management berhenti di task. <span className="text-[#6647F0]">Cubiqlo lanjut sampai klien menerima hasil dan invoice dibayar.</span></p>
-            <p className="text-xs font-semibold uppercase tracking-[.18em] text-slate-400">Client operations, end-to-end</p>
+            <p className="max-w-3xl text-lg font-medium leading-8 text-[#292D34] sm:text-xl">Project management berhenti di task. <span className="text-[#6647F0]">Cubiqlo lanjut sampai hasil diterima dan invoice dibayar.</span></p>
+            <p className="text-xs font-semibold uppercase tracking-[.18em] text-slate-400">Dari proyek sampai pembayaran</p>
           </div>
         </section>
 
         <section id="workflow" className="px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <div className="grid gap-8 lg:grid-cols-[.8fr_1.2fr] lg:items-end">
-              <div><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#6647F0]">Satu alur kerja</p><h2 className="mt-4 max-w-xl text-3xl font-semibold leading-tight tracking-[-.03em] sm:text-5xl">Konteks ikut bergerak. Bukan disalin ulang.</h2></div>
-              <p className="max-w-2xl text-lg leading-8 text-slate-600 lg:justify-self-end">Data klien yang masuk di awal tetap dipakai saat tim bekerja, hasil dibagikan, dan invoice dibuat.</p>
+              <div><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#6647F0]">Satu alur kerja</p><h2 className="mt-4 max-w-xl text-3xl font-semibold leading-tight tracking-[-.03em] sm:text-5xl">Data cukup dimasukkan sekali. Sisanya tetap terhubung.</h2></div>
+              <p className="max-w-2xl text-lg leading-8 text-slate-600 lg:justify-self-end">Informasi klien yang lu masukkan di awal ikut ke proyek, portal, dan invoice tanpa input ulang.</p>
             </div>
 
             <div className="mt-14 grid gap-8 lg:grid-cols-[.72fr_1.28fr] lg:items-center">
@@ -224,7 +221,7 @@ export default async function HomePage() {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-violet-200 ring-1 ring-white/15"><ShieldCheck className="h-4 w-4" /> Portal klien aman</div>
               <h2 className="mt-6 text-4xl font-semibold leading-[1.08] tracking-[-.035em] sm:text-6xl">Satu link.<br /><span className="text-violet-300">Lebih sedikit “update dong?”</span></h2>
-              <p className="mt-6 max-w-xl text-lg leading-8 text-slate-300">Klien melihat progress, deliverable, komentar, dan invoice. Kerjaan internal tetap internal.</p>
+              <p className="mt-6 max-w-xl text-lg leading-8 text-slate-300">Klien melihat progress, hasil kerja, komentar, dan invoice. Mereka hanya melihat yang lu bagikan. Catatan internal tetap aman.</p>
               <div className="mt-8 grid gap-3 sm:grid-cols-2">
                 {["Progress terpilih", "File deliverable", "Komentar publik", "Link invoice", "Token aman", "Data internal terlindungi"].map(item => <div key={item} className="flex items-center gap-2 text-sm text-slate-200"><Check className="h-4 w-4 text-emerald-400" />{item}</div>)}
               </div>
@@ -243,7 +240,7 @@ export default async function HomePage() {
 
         <section id="compare" className="px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mx-auto max-w-6xl">
-            <div className="mx-auto max-w-3xl text-center"><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#6647F0]">Dibangun lebih dekat</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.03em] sm:text-5xl">Client ops tanpa harga dan workflow impor.</h2><p className="mt-5 text-lg leading-8 text-slate-600">Mulai gratis, gunakan Rupiah, dan aktifkan portal tanpa menambah tool baru.</p></div>
+            <div className="mx-auto max-w-3xl text-center"><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#6647F0]">Dibuat untuk bisnis Indonesia</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.03em] sm:text-5xl">Dibuat untuk cara kerja dan harga bisnis Indonesia.</h2><p className="mt-5 text-lg leading-8 text-slate-600">Mulai gratis, gunakan Rupiah, dan kelola portal klien tanpa membayar add-on tambahan.</p></div>
             <div className="mt-12 hidden overflow-hidden rounded-3xl bg-white shadow-[0_20px_60px_rgba(41,45,52,.08)] ring-1 ring-slate-200 md:block">
               <table className="w-full text-left text-sm"><thead className="bg-slate-50"><tr><th className="px-6 py-5" /><th className="px-6 py-5 text-slate-500">HoneyBook</th><th className="px-6 py-5 text-slate-500">Bonsai</th><th className="bg-[#F4F0FF] px-6 py-5 text-[#6647F0]">Cubiqlo</th></tr></thead><tbody>{comparison.map(row => <tr key={row.label} className="border-t border-slate-100"><td className="px-6 py-4 font-medium">{row.label}</td><td className="px-6 py-4 text-slate-500">{row.honeybook}</td><td className="px-6 py-4 text-slate-500">{row.bonsai}</td><td className="bg-[#F4F0FF]/65 px-6 py-4 font-semibold text-[#6647F0]">{row.cubiqlo}</td></tr>)}</tbody></table>
             </div>
@@ -261,13 +258,13 @@ export default async function HomePage() {
 
         <section id="pricing" className="bg-white px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mx-auto max-w-7xl">
-            <div className="mx-auto max-w-3xl text-center"><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#6647F0]">Harga transparan</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.03em] sm:text-5xl">Mulai gratis. Upgrade saat bisnis bergerak.</h2><p className="mt-5 text-lg text-slate-600">Tidak perlu kartu kredit untuk mulai.</p></div>
+            <div className="mx-auto max-w-3xl text-center"><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#6647F0]">Harga transparan</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.03em] sm:text-5xl">Mulai gratis. Upgrade saat klien bertambah.</h2><p className="mt-5 text-lg text-slate-600">Tidak perlu kartu kredit untuk mulai.</p></div>
             <div className="mt-12 grid gap-5 lg:grid-cols-3">{pricing.map(plan => <div key={plan.name} className={`relative flex flex-col rounded-3xl p-6 ${plan.featured ? "bg-[#292D34] text-white shadow-[0_24px_70px_rgba(41,45,52,.22)] lg:-translate-y-3" : "bg-[#FBFAFE] ring-1 ring-slate-200"}`}>{plan.featured && <span className="absolute right-5 top-5 rounded-full bg-[#FF7657] px-3 py-1 text-xs font-semibold">Paling populer</span>}<p className={`text-sm font-semibold ${plan.featured ? "text-violet-300" : "text-[#6647F0]"}`}>{plan.name}</p><p className={`mt-3 text-sm ${plan.featured ? "text-slate-300" : "text-slate-600"}`}>{plan.audience}</p><div className="mt-7 flex items-end gap-2"><strong className="text-3xl tracking-[-.03em]">{plan.price}</strong><span className={`pb-1 text-xs ${plan.featured ? "text-slate-400" : "text-slate-500"}`}>{plan.suffix}</span></div><div className={`my-6 h-px ${plan.featured ? "bg-white/10" : "bg-slate-200"}`} /><div className="flex-1 space-y-3">{plan.items.map(item => <div key={item} className={`flex items-center gap-2 text-sm ${plan.featured ? "text-slate-200" : "text-slate-700"}`}><Check className={`h-4 w-4 ${plan.featured ? "text-emerald-400" : "text-[#6647F0]"}`} />{item}</div>)}</div><Button asChild className={`mt-8 h-11 rounded-xl ${plan.featured ? "bg-white text-[#292D34] hover:bg-violet-50" : "bg-[#292D34] text-white hover:bg-[#17191E]"}`}><Link href="/signup">{plan.cta}<ArrowRight className="h-4 w-4" /></Link></Button></div>)}</div>
           </div>
         </section>
 
         <section className="px-4 py-20 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-5xl overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-[#6647F0] via-[#7456F4] to-[#FF7657] px-6 py-14 text-center text-white shadow-[0_30px_90px_rgba(102,71,240,.28)] sm:px-12 sm:py-16"><p className="text-xs font-semibold uppercase tracking-[.2em] text-white/70">Kerja klien, lebih tenang</p><h2 className="mx-auto mt-4 max-w-3xl text-3xl font-semibold tracking-[-.035em] sm:text-5xl">Satu workspace dari request pertama sampai pembayaran.</h2><p className="mx-auto mt-5 max-w-xl text-lg text-white/80">Mulai gratis. Rapikan satu klien hari ini.</p><Button asChild size="lg" className="mt-8 h-12 rounded-xl bg-white px-6 text-[#292D34] hover:bg-violet-50"><Link href="/signup">Buat workspace gratis <ArrowRight className="h-4 w-4" /></Link></Button></div>
+          <div className="mx-auto max-w-5xl overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-[#6647F0] via-[#7456F4] to-[#FF7657] px-6 py-14 text-center text-white shadow-[0_30px_90px_rgba(102,71,240,.28)] sm:px-12 sm:py-16"><p className="text-xs font-semibold uppercase tracking-[.2em] text-white/70">Kerja klien, lebih rapi</p><h2 className="mx-auto mt-4 max-w-3xl text-3xl font-semibold tracking-[-.035em] sm:text-5xl">Kerja klien nggak harus tercecer di banyak aplikasi.</h2><p className="mx-auto mt-5 max-w-xl text-lg text-white/80">Mulai gratis. Rapikan satu klien hari ini.</p><Button asChild size="lg" className="mt-8 h-12 rounded-xl bg-white px-6 text-[#292D34] hover:bg-violet-50"><Link href="/signup">Buat workspace gratis <ArrowRight className="h-4 w-4" /></Link></Button></div>
         </section>
       </main>
 
