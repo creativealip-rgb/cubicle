@@ -142,14 +142,18 @@ export default async function ProjectsPage({
       status: projects.status,
       dueDate: projects.dueDate,
       clientVisible: projects.clientVisible,
+      billingType: projects.billingType,
       clientId: projects.clientId,
       clientName: clients.name,
-      totalTasks: sql<number>`count(${tasks.id})::int`,
-      doneTasks: sql<number>`count(case when ${tasks.status} = 'done' then 1 end)::int`,
+      totalTasks: sql<number>`count(distinct ${tasks.id})::int`,
+      doneTasks: sql<number>`count(distinct case when ${tasks.status} = 'done' then ${tasks.id} end)::int`,
+      trackedMinutes: sql<number>`coalesce((select sum(te.duration_minutes) from time_entries te where te.project_id = ${projects.id}), 0)::int`,
+      packageHours: sql<number | null>`(select p.hours from packages p where p.id = ${projects.selectedPackageId})`,
     })
     .from(projects)
     .leftJoin(clients, eq(clients.id, projects.clientId))
     .leftJoin(tasks, eq(tasks.projectId, projects.id))
+
     .where(and(...whereClauses))
     .groupBy(projects.id, clients.name)
     .orderBy(desc(projects.createdAt));

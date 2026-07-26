@@ -9,6 +9,7 @@ import { SortableHeader } from "@/components/ui/sortable-header";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { cn } from "@/lib/utils";
+import { getProjectProgress, progressColor } from "@/lib/project-progress";
 
 export type ProjectListItem = {
   id: string;
@@ -19,6 +20,9 @@ export type ProjectListItem = {
   clientVisible: boolean;
   totalTasks: number;
   doneTasks: number;
+  billingType: string;
+  trackedMinutes: number;
+  packageHours: number | null;
 };
 
 const STATUS_ORDER = [
@@ -44,8 +48,7 @@ const statusColors: Record<string, string> = {
 };
 
 function progressPct(project: ProjectListItem) {
-  if (project.totalTasks <= 0) return 0;
-  return Math.min(100, Math.max(0, Math.round((project.doneTasks / project.totalTasks) * 100)));
+  return getProjectProgress(project).pct;
 }
 
 function dueDays(dueDate: string | null) {
@@ -68,15 +71,15 @@ function dueTone(dueDate: string | null, status: string) {
 }
 
 function ProgressBar({ project }: { project: ProjectListItem }) {
-  const pct = progressPct(project);
+  const progress = getProjectProgress(project);
   return (
     <div className="relative h-5 w-full overflow-hidden rounded-full bg-muted shadow-inner">
       <div
-        className={cn("h-full rounded-full transition-all", statusColors[project.status] ?? "bg-slate-400")}
-        style={{ width: `${pct}%` }}
+        className="h-full rounded-full transition-all"
+        style={{ width: `${progress.pct}%`, backgroundColor: progressColor(progress.pct) }}
       />
       <div className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold leading-none text-slate-700 mix-blend-multiply">
-        {pct}%
+        {progress.label}
       </div>
     </div>
   );
