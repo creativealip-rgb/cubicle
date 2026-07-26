@@ -1,5 +1,19 @@
 # Deployment Log
 
+## 26 July 2026 — Full-feature QA fixes and production schema recovery
+
+- Source revision: `d953e0f05da19244f879d992cedd0b543b9be5ce`
+- Release image: `cubicle-cubicle:latest`
+- Image ID: `sha256:4422277ac2e7e3d6071a223a4ada0b4c55b705eb1adb13c35734c9fef0bfd678`
+- Database recovery: applied ledger migrations `0043_persist_portal_token_encrypted.sql`, `0044_portal_password.sql`, and `0045_meeting_request_workflow.sql`; restored client creation, portal credential fields, invoice client lookup, and meeting workflow schema parity.
+- QA scope: inventoried 62 pages, 46 API routes, and 37 server-action modules; smoked 37 authenticated routes, anonymous auth boundaries, public invalid-token states, read-only authenticated APIs, desktop UI, and representative 390 px mobile routes.
+- Mutation proof: created a disposable verified QA account/workspace, client with portal enabled, and invoice with one `Rp125.000` line item through production UI; verified persisted DB state, then deleted the QA user and confirmed zero remaining QA users, workspaces, clients, invoices, and items.
+- Fixes: corrected 4 px AI Brain mobile overflow, updated five stale portal/CSP regression assertions, and removed the unused AI welcome-screen lint warning.
+- Release gate: 57/57 Vitest files and 292/292 tests, ESLint, TypeScript, Next.js production build, `git diff --check`, pre-deploy collision scan, Docker rebuild, and app-only container recreation.
+- Deploy result: container `cubicle-cubicle-1` running and healthy; app/DB health `ok`; protected app route redirects to login; unrelated 9Router route remains correct; runtime logs contain no new application errors.
+- Proxy safety: `dokploy-traefik` remains the only container publishing public ports 80/443; Cubiqlo remains internal on port 3000 through `dokploy-network`.
+- Side-effect exclusions: no real payment, external email, Google OAuth, paid AI generation, external upload, cron, or webhook execution during this pass.
+
 ## 25 July 2026 — Dependency security patch
 
 - Source revision: `df2b69cd4b22807c31802920f1cd32443b7439ca`

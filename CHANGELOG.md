@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — 2026-07-26 — Production full-feature QA and schema recovery
+
+- Production database: apply ledger migrations `0043_persist_portal_token_encrypted.sql`, `0044_portal_password.sql`, and `0045_meeting_request_workflow.sql` after client and invoice creation exposed schema drift
+- Client and invoice flows: verify authenticated UI creation end to end, including portal-enabled client creation, invoice number generation, line-item persistence, and correct `Rp125.000` total; remove all disposable QA records afterward
+- Full-product smoke: inventory 62 pages, 46 API routes, and 37 server-action modules; confirm 37 authenticated app routes render HTTP 200 without application errors and protected routes redirect anonymous users to login
+- Mobile: remove a 4 px horizontal overflow on AI Brain at 390 px by matching the full-page wrapper margin to the mobile app-shell padding
+- Regression suite: update stale portal/CSP source assertions for the current slug-plus-password portal flow and centralized security-header helper; keep production CSP free of `unsafe-eval`
+- Code quality: remove the unused-component lint warning from the legacy AI welcome screen
+- Verified: 57/57 test files and 292/292 tests, ESLint, `npx tsc --noEmit`, Next.js production build, app/DB health `ok`, container healthy, clean runtime logs, and `dokploy-traefik` remains the sole public 80/443 owner
+- Deployment: source revision `d953e0f05da19244f879d992cedd0b543b9be5ce`, image ID `sha256:4422277ac2e7e3d6071a223a4ada0b4c55b705eb1adb13c35734c9fef0bfd678`
+
 ## Unreleased — 2026-07-25 — Client Portal audit hardening
 
 - I18n: add a persistent `ID | EN` switch using the existing `cubiqlo_lang` cookie; localize portal headers, summaries, tabs, requests, projects, tasks, packages, files, invoices, contacts, statuses, dates, dialogs, toasts, and empty states while preserving user-entered database content
