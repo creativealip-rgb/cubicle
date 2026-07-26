@@ -291,60 +291,6 @@ function getProjectStatusMeta(
   }
 }
 
-// Deadline label with days-remaining and overdue detection
-function getDeadlineMeta(
-  finishDate: string | null,
-  projectStatus: string,
-  lang: "id" | "en",
-) {
-  if (!finishDate) return null;
-  const due = new Date(finishDate);
-  if (isNaN(due.getTime())) return null;
-
-  const dateStr = due.toLocaleDateString(portalLocale(lang), {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-
-  // Completed/cancelled projects don't need urgency framing
-  if (projectStatus === "completed" || projectStatus === "cancelled") {
-    return { text: `Target: ${dateStr}`, overdue: false };
-  }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const dueMid = new Date(due);
-  dueMid.setHours(0, 0, 0, 0);
-  const diffDays = Math.round(
-    (dueMid.getTime() - today.getTime()) / 86_400_000,
-  );
-
-  if (diffDays < 0) {
-    return {
-      text:
-        lang === "en"
-          ? `Target: ${dateStr} · ${Math.abs(diffDays)} days late`
-          : `Target: ${dateStr} · telat ${Math.abs(diffDays)} hari`,
-      overdue: true,
-    };
-  }
-  if (diffDays === 0)
-    return {
-      text: `Target: ${dateStr} · ${lang === "en" ? "today" : "hari ini"}`,
-      overdue: false,
-    };
-  if (diffDays === 1)
-    return {
-      text: `Target: ${dateStr} · ${lang === "en" ? "tomorrow" : "besok"}`,
-      overdue: false,
-    };
-  return {
-    text: `Target: ${dateStr} · ${diffDays} ${lang === "en" ? "days remaining" : "hari lagi"}`,
-    overdue: false,
-  };
-}
-
 // "Update terakhir" from most recent task update or timeline event
 function getLastActivity(
   tasks: Task[],
@@ -801,74 +747,38 @@ function ProjectSummary({
   project,
   tasks,
   timeline,
-  selectedPkg,
-  hoursSummary,
 }: {
   project: Project;
   tasks: Task[];
   timeline: TimelineEvent[];
-  selectedPkg: SelectedPackage | undefined;
-  hoursSummary: HoursSummary | undefined;
 }) {
   const { lang, t } = useT();
-  const isByHours = project.billingType === "hours";
-  const isByPackage = project.billingType === "package";
-
+  const isTaskProgress = project.billingType === "project";
   const { total, done, pct } = taskProgress(tasks);
-  const billingProgress = getProjectProgress({
-    billingType: project.billingType,
-    totalTasks: total,
-    doneTasks: done,
-    trackedMinutes: hoursSummary?.totalMinutes ?? 0,
-    packageHours: selectedPkg?.hours ?? null,
-  });
-  const deadline = getDeadlineMeta(project.finishDate, project.status, lang);
   const lastActivity = getLastActivity(tasks, timeline, lang);
+  const formatDate = (value: string) => new Date(value).toLocaleDateString(portalLocale(lang), {
+    day: "numeric", month: "short", year: "numeric",
+  });
 
-  const progressLine = (() => {
-    if (!isByHours && !isByPackage) {
-      return total > 0 ? (
+  return (
+    <div className="space-y-1.5">
+      {isTaskProgress && total > 0 ? (
         <div className="flex items-center gap-2">
           {progressPie(pct)}
           <span className="text-xs font-medium text-foreground">{done}/{total} tugas selesai</span>
         </div>
-      ) : <span className="text-xs text-muted-foreground">{t("Belum ada tugas", "No tasks yet")}</span>;
-    }
-
-    return (
-      <div className="flex items-center gap-2">
-        {isByPackage ? <Package className="h-3.5 w-3.5 text-muted-foreground" /> : <Clock className="h-3.5 w-3.5 text-muted-foreground" />}
-        {isByPackage && selectedPkg?.hours ? progressPie(billingProgress.pct) : null}
-        <div className="space-y-0.5">
-          <p className="text-xs font-medium text-foreground">
-            {billingProgress.label}{isByHours ? ` ${t("tercatat", "tracked")}` : ""}
-          </p>
-          {total > 0 && <p className="text-[11px] text-muted-foreground">{done}/{total} tugas selesai</p>}
-        </div>
-      </div>
-    );
-  })();
-
-  return (
-    <div className="space-y-1">
-      {progressLine}
-      {(deadline || lastActivity) && (
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
-          {deadline && (
-            <span
-              className={
-                deadline.overdue ? "font-medium text-red-600" : undefined
-              }
-            >
-              {deadline.text}
-            </span>
-          )}
-          {deadline && lastActivity && (
-            <span className="text-muted-foreground/50">·</span>
-          )}
-          {lastActivity && <span>{lastActivity}</span>}
-        </div>
+      ) : total > 0 ? (
+        <p className="text-[11px] text-muted-foreground">{done}/{total} tugas selesai</p>
+      ) : (
+        <span className="text-xs text-muted-foreground">{t("Belum ada tugas", "No tasks yet")}</span>
       )}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
+        {project.startDate && <span>{t("Mulai", "Start")}: {formatDate(project.startDate)}</span>}
+        {project.startDate && project.finishDate && <span className="text-muted-foreground/50">·</span>}
+        {project.finishDate && <span>{t("Target selesai", "Target finish")}: {formatDate(project.finishDate)}</span>}
+        {(project.startDate || project.finishDate) && lastActivity && <span className="text-muted-foreground/50">·</span>}
+        {lastActivity && <span>{lastActivity}</span>}
+      </div>
     </div>
   );
 }
@@ -929,6 +839,19 @@ export function ProjectAccordion({
 
     const needsReview = hasReviewTask(tasks);
     const progress = taskProgress(tasks);
+    const billingProgress = getProjectProgress({
+      billingType: project.billingType,
+      totalTasks: progress.total,
+      doneTasks: progress.done,
+      trackedMinutes: hoursSummary?.totalMinutes ?? 0,
+      packageHours: selectedPkg?.hours ?? null,
+    });
+    const billingHoursLabel =
+      project.billingType === "hours"
+        ? `${billingProgress.label} ${t("tercatat", "tracked")}`
+        : project.billingType === "package"
+          ? billingProgress.label
+          : null;
     const packageQuotaExhausted =
       project.billingType === "package" &&
       project.status === "active" &&
@@ -983,18 +906,28 @@ export function ProjectAccordion({
                   project={project}
                   tasks={tasks}
                   timeline={timeline}
-                  selectedPkg={selectedPkg}
-                  hoursSummary={hoursSummary}
                 />
               </div>
             </div>
           </div>
-          <Badge
-            variant="outline"
-            className={`ml-8 w-fit shrink-0 text-[11px] sm:ml-0 ${statusMeta.badgeClass}`}
-          >
-            {statusMeta.label}
-          </Badge>
+          <div className="ml-8 flex shrink-0 flex-col items-end gap-2 sm:ml-0">
+            <Badge
+              variant="outline"
+              className={`w-fit text-[11px] ${statusMeta.badgeClass}`}
+            >
+              {statusMeta.label}
+            </Badge>
+            {billingHoursLabel && (
+              <div className="flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold text-foreground">
+                {project.billingType === "package" ? (
+                  <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                ) : (
+                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                )}
+                <span>{billingHoursLabel}</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Expanded content */}

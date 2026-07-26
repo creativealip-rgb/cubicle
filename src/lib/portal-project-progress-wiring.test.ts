@@ -21,4 +21,20 @@ describe("portal project progress wiring", () => {
   it("marks active package projects with exhausted quota", () => {
     expect(source).toContain('t("Kuota habis", "Quota exhausted")');
   });
+
+  it("renders hourly and package usage in the right-side metadata", () => {
+    expect(source).toContain("billingHoursLabel");
+    expect(source).toContain('className="ml-8 flex shrink-0 flex-col items-end gap-2 sm:ml-0"');
+  });
+
+  it("does not render percentage progress for package work", () => {
+    expect(source).not.toContain("isByPackage && selectedPkg?.hours ? progressPie");
+  });
+
+  it("shows project start and target dates from stored project fields", () => {
+    expect(source).toContain('t("Mulai", "Start")');
+    expect(source).toContain('t("Target selesai", "Target finish")');
+    expect(source).toContain("project.startDate");
+    expect(source).toContain("project.finishDate");
+  });
 });
