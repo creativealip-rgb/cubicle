@@ -73,7 +73,7 @@ export default async function ClientDetailPage({
         ? "projects"
         : tabParam && allowedTabs.has(tabParam)
           ? tabParam
-          : "projects";
+          : "portal";
 
   try {
     await assertClientInWorkspace(db, user.id, workspaceId, clientId);
@@ -370,6 +370,9 @@ export default async function ClientDetailPage({
       <Tabs defaultValue={initialTab}>
         <div className="overflow-x-auto -mx-1 px-1">
           <TabsList className="h-auto min-h-9 w-full flex-wrap justify-start gap-1 p-1">
+            <TabsTrigger value="portal" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm" asChild>
+              <Link href={`?tab=portal`}><Globe className="h-3 w-3 shrink-0" /> Portal</Link>
+            </TabsTrigger>
             <TabsTrigger value="projects" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm" asChild>
               <Link href={`?tab=projects`}>
                 <FileText className="h-3 w-3 shrink-0" /> Proyek ({clientProjects.length})
@@ -385,11 +388,7 @@ export default async function ClientDetailPage({
                 <Calendar className="h-3 w-3 shrink-0" /> Calendar
               </Link>
             </TabsTrigger>
-            <TabsTrigger value="portal" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm" asChild>
-              <Link href={`?tab=portal`}>
-                <Globe className="h-3 w-3 shrink-0" /> Portal
-              </Link>
-            </TabsTrigger>
+
             <TabsTrigger value="notes" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm" asChild>
               <Link href={`?tab=notes`}>
                 <MessageSquare className="h-3 w-3 shrink-0" /> Catatan

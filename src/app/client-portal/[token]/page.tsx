@@ -1,5 +1,5 @@
-import { headers } from "next/headers";
-import { notFound } from "next/navigation";
+import { cookies, headers } from "next/headers";
+import { notFound, redirect } from "next/navigation";
 import { db } from "@/db";
 import {
   projects,
@@ -14,6 +14,7 @@ import {
   packages,
   workspaces,
   portalVisits,
+  clients,
 } from "@/db/schema";
 import { eq, and, sql, desc, inArray, ne, or, isNull } from "drizzle-orm";
 import { getClientPortalAccess, logPortalAccess } from "@/lib/actions/portal";
@@ -21,7 +22,7 @@ import { pickReplyTo } from "@/lib/workspace-reply-to";
 import { Suspense } from "react";
 import { PortalTabsFallback } from "@/components/portal/portal-loading";
 import { Card, CardContent } from "@/components/ui/card";
-import { FolderOpen } from "lucide-react";
+import { FolderOpen, Globe } from "lucide-react";
 import { PortalContactButtons } from "@/components/portal/portal-contact";
 import { ProjectAccordion } from "@/components/portal/project-accordion";
 import { PortalInvoices } from "@/components/portal/portal-invoices";
@@ -32,6 +33,10 @@ import { PortalFileManager } from "@/components/portal/portal-file-manager";
 import { PortalLanguageSwitch } from "@/components/portal/portal-language-switch";
 import { LangProvider } from "@/lib/i18n-client";
 import { createT, getCurrentLang } from "@/lib/i18n";
+import { decryptSecret } from "@/lib/google-calendar";
+import { PORTAL_COOKIE, verifyPortalSession } from "@/lib/portal-password";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { getCustomPackageRequestsByToken } from "@/lib/actions/custom-package-requests";
 import { getPackageOrdersByToken } from "@/lib/actions/package-orders";
 import {
@@ -47,7 +52,7 @@ export default async function ClientPortalPage({
   params: Promise<{ token: string }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { token } = await params;
+  const { token: slugOrToken } = await params;
   const lang = await getCurrentLang();
   const t = createT(lang);
   const sp = searchParams ? await searchParams : undefined;
@@ -61,6 +66,47 @@ export default async function ClientPortalPage({
   const initialFolderId = Array.isArray(rawFolderId)
     ? rawFolderId[0]
     : rawFolderId;
+
+  let token = slugOrToken;
+  const [slugClient] = await db.select().from(clients).where(eq(clients.portalSlug, slugOrToken));
+  if (slugClient) {
+    const secret = process.env.BETTER_AUTH_SECRET;
+    const session = (await cookies()).get(PORTAL_COOKIE)?.value;
+    const unlocked = !!secret && !!session && !!verifyPortalSession(
+      session, slugClient.id, slugClient.portalSessionVersion, secret,
+    );
+    if (!unlocked) {
+      const error = sp?.error;
+      return (
+        <main className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+          <Card className="w-full max-w-sm">
+            <CardContent className="space-y-4 p-6">
+              <div className="text-center"><Globe className="mx-auto mb-3 h-8 w-8 text-primary" />
+                <h1 className="text-lg font-semibold">Portal Klien</h1>
+                <p className="text-sm text-muted-foreground">Masukkan password untuk melanjutkan.</p>
+              </div>
+              <form action={`/client-portal/${slugOrToken}/unlock`} method="post" className="space-y-3">
+                <Input name="password" type="password" autoComplete="current-password" required minLength={8} placeholder="Password portal" />
+                {error && <p className="text-sm text-destructive">Password salah atau terlalu banyak percobaan.</p>}
+                <Button className="w-full" type="submit">Buka portal</Button>
+              </form>
+            </CardContent>
+          </Card>
+        </main>
+      );
+    }
+    if (!slugClient.portalEnabled || !slugClient.portalSlugEnabled || !slugClient.portalTokenEnc) notFound();
+    try { token = decryptSecret(slugClient.portalTokenEnc); } catch { notFound(); }
+  } else {
+    try {
+      const legacyClient = await getClientPortalAccess(token);
+      if (legacyClient.portalSlug && legacyClient.portalPasswordHash) {
+        redirect(`/client-portal/${legacyClient.portalSlug}`);
+      }
+    } catch (error) {
+      if (error && typeof error === "object" && "digest" in error) throw error;
+    }
+  }
 
   let client;
   try {

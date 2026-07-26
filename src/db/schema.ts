@@ -151,6 +151,8 @@ export const clients = pgTable("clients", {
   portalTokenRevokedAt: timestamp("portal_token_revoked_at", { withTimezone: true }),
   portalSlug: text("portal_slug").unique(),
   portalSlugEnabled: boolean("portal_slug_enabled").notNull().default(false),
+  portalPasswordHash: text("portal_password_hash"),
+  portalSessionVersion: text("portal_session_version").notNull().default("1"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
