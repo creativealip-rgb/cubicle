@@ -243,6 +243,15 @@ export const portalRequests = pgTable("portal_requests", {
   type: text("type", { enum: ["document", "approval", "info", "other"] }).notNull().default("document"),
   status: text("status", { enum: ["pending", "completed", "cancelled"] }).notNull().default("pending"),
   dueDate: date("due_date"),
+  meetingStartTime: timestamp("meeting_start_time", { withTimezone: true }),
+  meetingDurationMinutes: integer("meeting_duration_minutes"),
+  meetingTimezone: text("meeting_timezone"),
+  meetingStatus: text("meeting_status", {
+    enum: ["requested", "counter_proposed", "approved", "rejected"],
+  }),
+  meetingResponseNote: text("meeting_response_note"),
+  meetingProposedByUserId: text("meeting_proposed_by_user_id").references(() => users.id, { onDelete: "set null" }),
+  appointmentId: uuid("appointment_id").references(() => appointments.id, { onDelete: "set null" }),
   completedAt: timestamp("completed_at", { withTimezone: true }),
   createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -448,6 +457,24 @@ export const appointments = pgTable("appointments", {
   googleCalendarId: text("google_calendar_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const appointmentCalendarSyncs = pgTable(
+  "appointment_calendar_syncs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    appointmentId: uuid("appointment_id").notNull().references(() => appointments.id, { onDelete: "cascade" }),
+    targetType: text("target_type", { enum: ["user", "client"] }).notNull(),
+    targetId: text("target_id").notNull(),
+    provider: text("provider", { enum: ["google"] }).notNull().default("google"),
+    externalEventId: text("external_event_id"),
+    externalCalendarId: text("external_calendar_id"),
+    status: text("status", { enum: ["pending", "synced", "failed", "skipped"] }).notNull().default("pending"),
+    lastError: text("last_error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [unique().on(table.appointmentId, table.targetType, table.provider)],
+);
 
 // ─── Google Calendar connections (per user / workspace owner) ───
 
