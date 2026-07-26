@@ -3,7 +3,6 @@
 import { readFileSync } from "fs";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
@@ -11,22 +10,15 @@ import { promptGenerations } from "@/db/schema";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { promptBriefSchema } from "@/lib/prompts/catalog";
+import { buildPromptRequest, parsePromptResult, serializePromptResult } from "@/lib/prompts/build-prompt";
 
 const MONTHLY_CAP_USD = 50;
 
-const visualPromptSchema = z.object({
-  mode: z.string().min(1),
-  brand: z.string().min(1),
-  product: z.string().min(1),
-  offer: z.string().optional().default(""),
-  audience: z.string().optional().default(""),
-  style: z.string().optional().default("Clean commercial"),
-  ratio: z.string().optional().default("1:1 Instagram"),
-  color: z.string().optional().default("brand colors"),
-  notes: z.string().optional().default(""),
-  draftPrompt: z.string().optional().default(""),
-  model: z.string().optional().default("ag/gemini-pro-agent"),
-});
+const visualPromptSchema = promptBriefSchema.transform((input) => ({
+  ...input,
+  model: input.model || "ag/gemini-pro-agent",
+}));
 
 function getApiKey() {
   try {
@@ -102,43 +94,16 @@ function parseAiResponse(rawText: string) {
   };
 }
 
-function buildSystemPrompt() {
-  return `You are Cubiqlo Visual Prompt Studio, an Indonesian commercial creative director for AI-generated ads. Produce practical, production-ready outputs like Auto Feeds style tools, but do not mention Auto Feeds. Always answer in Indonesian unless user input is English. Be specific, structured, and ready to paste into image/video generation tools.`;
-}
 
-function buildUserPrompt(input: z.infer<typeof visualPromptSchema>) {
-  return `Buat output kreatif untuk mode: ${input.mode}.
-
-BRIEF
-Brand: ${input.brand}
-Product/Campaign: ${input.product}
-Offer: ${input.offer}
-Audience: ${input.audience}
-Style: ${input.style}
-Ratio/Platform: ${input.ratio}
-Color palette: ${input.color}
-Notes: ${input.notes}
-Draft prompt awal: ${input.draftPrompt}
-
-OUTPUT WAJIB:
-1. Final visual prompt siap paste ke AI image/design tool
-2. Overlay copy: headline, subheadline, CTA, badge
-3. Layout/composition direction
-4. Caption pendek untuk posting/ads
-5. Negative prompt
-6. Export checklist
-
-Jika mode adalah 9 Feed Konsisten, buat 9 post plan. Jika Carousel, buat 7 slide plan. Jika Storyboard, buat 8 scene plan. Jika Copy Writing, buat 10 variasi hook/body/CTA.`;
-}
-
-export async function generateVisualPrompt(rawInput: z.input<typeof visualPromptSchema>) {
+export async function generateVisualPrompt(rawInput: unknown) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
   await assertWorkspaceWritable(db, user.id, workspaceId);
 
   const input = visualPromptSchema.parse(rawInput);
-  const generatedPrompt = buildUserPrompt(input);
+  const request = buildPromptRequest(input);
+  const generatedPrompt = request.userPrompt;
   const apiKey = getApiKey();
   const apiBase =
     process.env.OPENAI_API_BASE || process.env.AI_BASE_URL || "http://9router:20128/v1";
@@ -171,7 +136,13 @@ export async function generateVisualPrompt(rawInput: z.input<typeof visualPrompt
   let costUsd = "0.0000";
 
   if (!apiKey) {
-    generatedOutput = `[SIMULATED AI]\n\n${generatedPrompt}\n\nTambahkan API key agar output digenerate AI beneran.`;
+    generatedOutput = serializePromptResult({
+      version: 1,
+      promptType: input.promptType,
+      title: `${input.campaign} — draft`,
+      readyOutput: [{ label: "Draft materi", content: "Konfigurasi AI belum tersedia di environment ini." }],
+      technicalPrompt: generatedPrompt,
+    });
     inputTokens = Math.ceil(generatedPrompt.length / 4);
     outputTokens = Math.ceil(generatedOutput.length / 4);
     costUsd = estimateCost(input.model, inputTokens, outputTokens).toFixed(4);
@@ -185,7 +156,7 @@ export async function generateVisualPrompt(rawInput: z.input<typeof visualPrompt
       body: JSON.stringify({
         model: input.model,
         messages: [
-          { role: "system", content: buildSystemPrompt() },
+          { role: "system", content: request.systemPrompt },
           { role: "user", content: generatedPrompt },
         ],
         temperature: 0.7,
@@ -194,15 +165,16 @@ export async function generateVisualPrompt(rawInput: z.input<typeof visualPrompt
     });
 
     if (!response.ok) {
-      const body = await response.text();
-      throw new Error(`AI API error: ${response.status} ${body}`);
+      await response.text();
+      throw new Error("Layanan AI sedang bermasalah. Coba lagi beberapa saat.");
     }
 
     const rawText = await response.text();
     const parsed = parseAiResponse(rawText);
-    generatedOutput = parsed.content || "AI returned empty output.";
+    const normalized = parsePromptResult(parsed.content, input.promptType);
+    generatedOutput = serializePromptResult(normalized.result);
     inputTokens =
-      parsed.promptTokens || Math.ceil((buildSystemPrompt().length + generatedPrompt.length) / 4);
+      parsed.promptTokens || Math.ceil((request.systemPrompt.length + generatedPrompt.length) / 4);
     outputTokens = parsed.completionTokens || Math.ceil(generatedOutput.length / 4);
     costUsd = estimateCost(input.model, inputTokens, outputTokens).toFixed(4);
   }

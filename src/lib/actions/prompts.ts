@@ -301,6 +301,7 @@ export async function listGenerations(workspaceId?: string, projectId?: string) 
       id: promptGenerations.id,
       templateId: promptGenerations.templateId,
       templateName: promptTemplates.name,
+      input: promptGenerations.input,
       generatedOutput: promptGenerations.generatedOutput,
       model: promptGenerations.model,
       inputTokens: promptGenerations.inputTokens,
