@@ -370,20 +370,30 @@ export default async function ClientDetailPage({
       <Tabs defaultValue={initialTab}>
         <div className="overflow-x-auto -mx-1 px-1">
           <TabsList className="h-auto min-h-9 w-full flex-wrap justify-start gap-1 p-1">
-            <TabsTrigger value="projects" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
-              <FileText className="h-3 w-3 shrink-0" /> Proyek ({clientProjects.length})
+            <TabsTrigger value="projects" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm" asChild>
+              <Link href={`?tab=projects`}>
+                <FileText className="h-3 w-3 shrink-0" /> Proyek ({clientProjects.length})
+              </Link>
             </TabsTrigger>
-            <TabsTrigger value="invoices" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
-              <Receipt className="h-3 w-3 shrink-0" /> Invoice ({clientInvoices.length})
+            <TabsTrigger value="invoices" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm" asChild>
+              <Link href={`?tab=invoices`}>
+                <Receipt className="h-3 w-3 shrink-0" /> Invoice ({clientInvoices.length})
+              </Link>
             </TabsTrigger>
-            <TabsTrigger value="calendar" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
-              <Calendar className="h-3 w-3 shrink-0" /> Calendar
+            <TabsTrigger value="calendar" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm" asChild>
+              <Link href={`?tab=calendar`}>
+                <Calendar className="h-3 w-3 shrink-0" /> Calendar
+              </Link>
             </TabsTrigger>
-            <TabsTrigger value="portal" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
-              <Globe className="h-3 w-3 shrink-0" /> Portal
+            <TabsTrigger value="portal" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm" asChild>
+              <Link href={`?tab=portal`}>
+                <Globe className="h-3 w-3 shrink-0" /> Portal
+              </Link>
             </TabsTrigger>
-            <TabsTrigger value="notes" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
-              <MessageSquare className="h-3 w-3 shrink-0" /> Catatan
+            <TabsTrigger value="notes" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm" asChild>
+              <Link href={`?tab=notes`}>
+                <MessageSquare className="h-3 w-3 shrink-0" /> Catatan
+              </Link>
             </TabsTrigger>
           </TabsList>
         </div>
