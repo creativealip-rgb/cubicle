@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -182,11 +183,17 @@ export function PortalTabs({
                   {t("Kontak", "Contact")}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="w-[calc(100%-2rem)] max-w-sm">
-                <DialogHeader>
-                  <DialogTitle>{t("Kontak", "Contact")}</DialogTitle>
+              <DialogContent className="w-[calc(100%-2rem)] max-w-sm gap-5 overflow-hidden rounded-2xl p-0">
+                <DialogHeader className="border-b bg-muted/30 px-6 pb-5 pt-6 text-left">
+                  <DialogTitle>{t("Hubungi tim", "Contact team")}</DialogTitle>
+                  <DialogDescription>
+                    {t(
+                      "Pilih kanal komunikasi yang paling nyaman untuk menghubungi tim.",
+                      "Choose your preferred channel to contact the team.",
+                    )}
+                  </DialogDescription>
                 </DialogHeader>
-                {contact}
+                <div className="px-6 pb-6">{contact}</div>
               </DialogContent>
             </Dialog>
           </TabsList>

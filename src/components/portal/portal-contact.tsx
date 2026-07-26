@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n-client";
-import { Clock3, Mail, MessageCircle, ShieldCheck } from "lucide-react";
+import { ChevronRight, Clock3, Mail, MessageCircle, ShieldCheck } from "lucide-react";
 
 function getWhatsAppUrl(phone: string | null | undefined, message: string) {
   if (!phone) return null;
@@ -67,6 +67,74 @@ export function PortalContactButtons({
           "Official contact details are not available yet. Ask the workspace manager to update the email or phone number.",
         )}
       </p>
+    );
+  }
+
+  if (compact) {
+    return (
+      <div className="space-y-4">
+        <div>
+          <p className="text-sm font-semibold text-foreground">
+            {lang === "en" ? `Contact ${who}` : `Hubungi ${who}`}
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            {t(
+              "Pilih kanal resmi untuk melanjutkan percakapan.",
+              "Choose an official channel to continue the conversation.",
+            )}
+          </p>
+        </div>
+        <div className="space-y-2.5">
+          {waUrl && (
+            <Button
+              asChild
+              className="h-auto min-h-16 w-full justify-between rounded-xl bg-emerald-600 px-4 py-3 text-left hover:bg-emerald-700"
+            >
+              <a href={waUrl} target="_blank" rel="noreferrer">
+                <span className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/15">
+                    <MessageCircle className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold">WhatsApp</span>
+                    <span className="block text-xs font-normal text-white/80">
+                      {t("Respons lebih cepat", "Faster response")}
+                    </span>
+                  </span>
+                </span>
+                <ChevronRight className="h-4 w-4 shrink-0" />
+              </a>
+            </Button>
+          )}
+          {mailUrl && (
+            <Button
+              asChild
+              variant="outline"
+              className="h-auto min-h-16 w-full justify-between rounded-xl px-4 py-3 text-left"
+            >
+              <a href={mailUrl}>
+                <span className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                    <Mail className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold">Email</span>
+                    <span className="block truncate text-xs font-normal text-muted-foreground">{email}</span>
+                  </span>
+                </span>
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+              </a>
+            </Button>
+          )}
+        </div>
+        <p className="flex items-start gap-2 text-[11px] leading-relaxed text-muted-foreground">
+          <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          {t(
+            "Pesan otomatis menyertakan konteks proyek kamu.",
+            "Your message automatically includes your project context.",
+          )}
+        </p>
+      </div>
     );
   }
 
