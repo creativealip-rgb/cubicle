@@ -5,13 +5,19 @@ const page = readFileSync(
   "src/app/client-portal/[token]/page.tsx",
   "utf8",
 );
+const tabs = readFileSync(
+  "src/components/portal/portal-tabs.tsx",
+  "utf8",
+);
 
-describe("client portal contact tab", () => {
-  it("renders only compact contact actions", () => {
-    const contact = page.slice(page.indexOf("contact={"), page.indexOf("                  }", page.indexOf("contact={")));
-    expect(contact).toContain("<PortalContactButtons");
-    expect(contact).toContain("compact");
-    expect(contact).not.toContain("<CardHeader>");
-    expect(contact).not.toContain("Hubungi Tim");
+describe("client portal contact action", () => {
+  it("opens compact contact actions from a dialog button, not a tab", () => {
+    expect(page).toContain("contact={");
+    expect(page).toContain("<PortalContactButtons");
+    expect(page).toContain("compact");
+    expect(tabs).toContain("<DialogTrigger asChild>");
+    expect(tabs).toContain("<DialogContent");
+    expect(tabs).not.toContain('value="contact"');
+    expect(tabs).not.toContain('key: "contact"');
   });
 });

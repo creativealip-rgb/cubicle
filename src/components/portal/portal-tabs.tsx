@@ -16,17 +16,23 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useT } from "@/lib/i18n-client";
 
-export type PortalTabKey =
-  "overview" | "projects" | "files" | "invoices" | "contact";
+export type PortalTabKey = "overview" | "projects" | "files" | "invoices";
 
 const TAB_KEYS: PortalTabKey[] = [
   "overview",
   "projects",
   "files",
   "invoices",
-  "contact",
 ];
 
 function normalizeTab(tab?: string | null): PortalTabKey {
@@ -137,11 +143,6 @@ export function PortalTabs({
       icon: <Receipt className="h-3.5 w-3.5" />,
       badge: counts?.invoices,
     },
-    {
-      key: "contact",
-      label: t("Kontak", "Contact"),
-      icon: <MessageCircle className="h-3.5 w-3.5" />,
-    },
   ];
 
   const panelClass =
@@ -170,6 +171,24 @@ export function PortalTabs({
                 ) : null}
               </TabsTrigger>
             ))}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="min-h-11 gap-1.5 px-3 py-2 text-xs font-medium sm:text-sm"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  {t("Kontak", "Contact")}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="w-[calc(100%-2rem)] max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>{t("Kontak", "Contact")}</DialogTitle>
+                </DialogHeader>
+                {contact}
+              </DialogContent>
+            </Dialog>
           </TabsList>
         </div>
       </div>
@@ -185,9 +204,6 @@ export function PortalTabs({
       </TabsContent>
       <TabsContent value="invoices" className={panelClass}>
         {invoices}
-      </TabsContent>
-      <TabsContent value="contact" className={panelClass}>
-        {contact}
       </TabsContent>
     </Tabs>
   );
