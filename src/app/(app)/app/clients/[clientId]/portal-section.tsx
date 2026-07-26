@@ -9,18 +9,26 @@ import { Badge } from "@/components/ui/badge";
 import { Copy, Check, Globe, RefreshCw, X, ExternalLink } from "lucide-react";
 
 interface PortalTokenSectionProps {
+  existingPortalToken: string | null;
   client: {
     id: string;
     portalEnabled: boolean;
+    portalSlug: string | null;
+    portalSlugEnabled: boolean;
     portalTokenHash: string | null;
     portalTokenExpiresAt: Date | string | null;
     portalTokenRevokedAt: Date | string | null;
   };
 }
 
-export function PortalTokenSection({ client }: PortalTokenSectionProps) {
+export function PortalTokenSection({ client, existingPortalToken }: PortalTokenSectionProps) {
   const [showToken, setShowToken] = useState<string | null>(null);
-  const [portalUrl, setPortalUrl] = useState<string | null>(null);
+  const [portalToken, setPortalToken] = useState<string | null>(existingPortalToken);
+  const portalUrl = portalToken
+    ? client.portalSlugEnabled && client.portalSlug
+      ? `${typeof window === "undefined" ? "" : window.location.origin}/client-portal/s/${client.portalSlug}?token=${portalToken}`
+      : `${typeof window === "undefined" ? "" : window.location.origin}/client-portal/${portalToken}`
+    : null;
   const [copied, setCopied] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -29,10 +37,8 @@ export function PortalTokenSection({ client }: PortalTokenSectionProps) {
     setLoading(true);
     try {
       const result = await generatePortalToken(client.id);
-      const origin = window.location.origin;
-      const url = `${origin}/client-portal/${result.token}`;
       setShowToken(result.token);
-      setPortalUrl(url);
+      setPortalToken(result.token);
       toast.success("Portal aktif. Salin link & bagikan ke klien.");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Gagal");
@@ -46,7 +52,7 @@ export function PortalTokenSection({ client }: PortalTokenSectionProps) {
     try {
       await revokePortalToken(client.id);
       setShowToken(null);
-      setPortalUrl(null);
+      setPortalToken(null);
       toast.success("Portal dicabut");
     } finally {
       setLoading(false);
@@ -120,7 +126,7 @@ export function PortalTokenSection({ client }: PortalTokenSectionProps) {
           )}
         </div>
 
-        {portalUrl && showToken && (
+        {portalUrl && (
           <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 space-y-3">
             <div>
               <p className="text-xs font-medium text-emerald-900">Link portal (siap bagikan)</p>
@@ -152,28 +158,30 @@ export function PortalTokenSection({ client }: PortalTokenSectionProps) {
                 </Button>
               </div>
             </div>
-            <div>
-              <p className="text-xs font-medium text-muted-foreground">
-                Token mentah (hanya tampil sekali)
-              </p>
-              <div className="mt-1 flex items-center gap-2">
-                <code className="flex-1 text-xs bg-background rounded px-2 py-1 break-all">
-                  {showToken}
-                </code>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 shrink-0"
-                  onClick={handleCopyToken}
-                >
-                  {copied ? (
-                    <Check className="h-3 w-3 text-green-600" />
-                  ) : (
-                    <Copy className="h-3 w-3" />
-                  )}
-                </Button>
+            {showToken && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">
+                  Token mentah (hanya tampil sekali)
+                </p>
+                <div className="mt-1 flex items-center gap-2">
+                  <code className="flex-1 text-xs bg-background rounded px-2 py-1 break-all">
+                    {showToken}
+                  </code>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={handleCopyToken}
+                  >
+                    {copied ? (
+                      <Check className="h-3 w-3 text-green-600" />
+                    ) : (
+                      <Copy className="h-3 w-3" />
+                    )}
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 

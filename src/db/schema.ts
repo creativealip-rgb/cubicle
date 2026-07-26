@@ -146,6 +146,7 @@ export const clients = pgTable("clients", {
   internalNotes: text("internal_notes"),
   portalEnabled: boolean("portal_enabled").notNull().default(false),
   portalTokenHash: text("portal_token_hash").unique(),
+  portalTokenEnc: text("portal_token_enc"),
   portalTokenExpiresAt: timestamp("portal_token_expires_at", { withTimezone: true }),
   portalTokenRevokedAt: timestamp("portal_token_revoked_at", { withTimezone: true }),
   portalSlug: text("portal_slug").unique(),

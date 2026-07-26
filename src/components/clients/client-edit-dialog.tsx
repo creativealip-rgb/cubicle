@@ -45,7 +45,7 @@ export function ClientEditDialog({ defaultValues }: ClientEditDialogProps) {
         <DialogHeader className="shrink-0 border-b px-5 py-4 pr-12 text-left">
           <DialogTitle>Ubah Klien</DialogTitle>
           <DialogDescription>
-            Perbarui data kontak, alamat, dan link portal klien.
+            Perbarui data kontak, alamat, catatan, dan slug portal klien.
           </DialogDescription>
         </DialogHeader>
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">

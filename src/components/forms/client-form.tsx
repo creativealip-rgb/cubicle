@@ -24,7 +24,6 @@ interface ClientFormProps {
     tags?: string[];
     internalNotes?: string;
     portalSlug?: string;
-    portalSlugEnabled?: boolean;
     portalEnabled?: boolean;
   };
   onSuccess?: () => void;
@@ -43,7 +42,6 @@ function slugify(value: string) {
 export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: ClientFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [slugTouched, setSlugTouched] = useState(Boolean(defaultValues?.portalSlug));
   const [form, setForm] = useState({
     name: defaultValues?.name ?? "",
     companyName: defaultValues?.companyName ?? "",
@@ -54,8 +52,6 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
     tags: defaultValues?.tags?.join(", ") ?? "",
     internalNotes: defaultValues?.internalNotes ?? "",
     portalSlug: defaultValues?.portalSlug ?? "",
-    portalSlugEnabled: defaultValues?.portalSlugEnabled ?? true,
-    // Create default: activate portal when slug enabled (user can uncheck).
     portalEnabled: defaultValues?.portalEnabled ?? mode === "create",
   });
 
@@ -78,7 +74,7 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
           : [],
         internalNotes: form.internalNotes || undefined,
         portalSlug: form.portalSlug || undefined,
-        portalSlugEnabled: form.portalSlugEnabled,
+        portalSlugEnabled: Boolean(form.portalSlug),
         ...(mode === "create" ? { portalEnabled: form.portalEnabled } : {}),
       };
 
@@ -119,22 +115,10 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
   }
 
   function set(k: keyof typeof form, v: string | boolean) {
-    setForm((prev) => {
-      const next = { ...prev, [k]: v };
-      if (k === "name" && typeof v === "string" && !slugTouched) {
-        next.portalSlug = slugify(v);
-      }
-      return next;
-    });
-  }
-
-  function setPortalSlug(value: string) {
-    setSlugTouched(true);
-    set("portalSlug", slugify(value));
+    setForm((prev) => ({ ...prev, [k]: v }));
   }
 
   function regeneratePortalSlug() {
-    setSlugTouched(true);
     set("portalSlug", slugify(form.companyName || form.name));
   }
 
@@ -248,40 +232,34 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
         <div>
           <h3 className="text-sm font-medium">Portal klien</h3>
           <p className="text-xs text-muted-foreground">
-            Akses memakai link aman dengan token yang dapat kedaluwarsa dan dicabut.
+            Slug tampil di link; token aman tetap wajib untuk membuka portal.
           </p>
         </div>
-        <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-          <div className="space-y-1.5">
-            <Label htmlFor="portalSlug">Slug portal</Label>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Input
-                id="portalSlug"
-                value={form.portalSlug}
-                onChange={(e) => setPortalSlug(e.target.value)}
-                placeholder="kopi-senja"
-              />
-              <Button type="button" variant="outline" onClick={regeneratePortalSlug} className="shrink-0">
-                Generate
-              </Button>
-            </div>
-            <p className="text-[11px] text-muted-foreground">
-              Huruf kecil, angka, dash. Harus unik.
-            </p>
+        <div className="space-y-1.5">
+          <Label htmlFor="portalSlug">Slug portal</Label>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Input
+              id="portalSlug"
+              value={form.portalSlug}
+              onChange={(e) => set("portalSlug", slugify(e.target.value))}
+              placeholder="kopi-senja"
+            />
+            <Button type="button" variant="outline" onClick={regeneratePortalSlug} className="shrink-0">
+              Generate
+            </Button>
           </div>
-          <div className="flex flex-col gap-2 text-sm sm:pb-1">
-            {mode === "create" && (
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={form.portalEnabled}
-                  onChange={(e) => set("portalEnabled", e.target.checked)}
-                />
-                Aktifkan portal sekarang
-              </label>
-            )}
-          </div>
+          <p className="text-[11px] text-muted-foreground">Huruf kecil, angka, dash. Harus unik.</p>
         </div>
+        {mode === "create" && (
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={form.portalEnabled}
+              onChange={(e) => set("portalEnabled", e.target.checked)}
+            />
+            Aktifkan portal sekarang
+          </label>
+        )}
       </section>
 
       <div className="sticky bottom-0 -mx-1 border-t bg-background/95 px-1 pt-3 backdrop-blur supports-[backdrop-filter]:bg-background/80">

@@ -11,6 +11,7 @@ import { z } from "zod";
 import { requireUser, assertWorkspaceWritable, assertClientInWorkspace } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { createHash, randomBytes } from "crypto";
+import { encryptSecret } from "@/lib/google-calendar";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -84,6 +85,7 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
   let portalFields: {
     portalEnabled?: boolean;
     portalTokenHash?: string;
+    portalTokenEnc?: string;
     portalTokenExpiresAt?: Date;
     portalTokenRevokedAt?: null;
   } = {};
@@ -93,6 +95,7 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
     portalFields = {
       portalEnabled: true,
       portalTokenHash: createHash("sha256").update(rawPortalToken).digest("hex"),
+      portalTokenEnc: encryptSecret(rawPortalToken),
       portalTokenExpiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 90),
       portalTokenRevokedAt: null,
     };
@@ -229,6 +232,7 @@ export async function generatePortalToken(clientId: string) {
     .set({
       portalEnabled: true,
       portalTokenHash: tokenHash,
+      portalTokenEnc: encryptSecret(rawToken),
       portalTokenExpiresAt: expiresAt,
       portalTokenRevokedAt: null,
       updatedAt: new Date(),
@@ -249,6 +253,7 @@ export async function revokePortalToken(clientId: string) {
   await db.update(clients)
     .set({
       portalTokenRevokedAt: new Date(),
+      portalTokenEnc: null,
       portalEnabled: false,
       updatedAt: new Date(),
     })

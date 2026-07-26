@@ -35,6 +35,7 @@ import { PortalRequestAdmin } from "@/components/portal/portal-request-admin";
 import { ClientEditDialog } from "@/components/clients/client-edit-dialog";
 import { ClientGoogleCalendarPanel } from "@/components/clients/client-google-calendar-panel";
 import { billingTypeLabel } from "@/lib/feature-access";
+import { decryptSecret } from "@/lib/google-calendar";
 import {
   getClientGoogleConnectionStatus,
   listClientGoogleEvents,
@@ -82,6 +83,20 @@ export default async function ClientDetailPage({
 
   const [client] = await db.select().from(clients).where(eq(clients.id, clientId));
   if (!client) notFound();
+
+  let existingPortalToken: string | null = null;
+  if (
+    client.portalEnabled &&
+    client.portalTokenEnc &&
+    !client.portalTokenRevokedAt &&
+    (!client.portalTokenExpiresAt || client.portalTokenExpiresAt > new Date())
+  ) {
+    try {
+      existingPortalToken = decryptSecret(client.portalTokenEnc);
+    } catch {
+      existingPortalToken = null;
+    }
+  }
 
   // Google Calendar client (separate from user calendar)
   const clientGcalStatus = await getClientGoogleConnectionStatus(clientId);
@@ -374,7 +389,10 @@ export default async function ClientDetailPage({
         </div>
 
         <TabsContent value="portal" className="space-y-4 pt-4">
-          <PortalTokenSection client={client} />
+          <PortalTokenSection
+            client={client}
+            existingPortalToken={existingPortalToken}
+          />
           <PortalRequestAdmin
             clientId={client.id}
             initialRequests={clientPortalRequests}
