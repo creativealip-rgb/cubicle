@@ -20,7 +20,7 @@ import { getClientPortalAccess, logPortalAccess } from "@/lib/actions/portal";
 import { pickReplyTo } from "@/lib/workspace-reply-to";
 import { Suspense } from "react";
 import { PortalTabsFallback } from "@/components/portal/portal-loading";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { FolderOpen } from "lucide-react";
 import { PortalContactButtons } from "@/components/portal/portal-contact";
 import { ProjectAccordion } from "@/components/portal/project-accordion";
@@ -955,18 +955,14 @@ export default async function ClientPortalPage({
                 </section>
               }
               contact={
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">
-                      {t("Hubungi Tim", "Contact the Team")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="max-w-lg">
+                <Card className="w-fit max-w-full">
+                  <CardContent className="p-3">
                     <PortalContactButtons
                       phone={workspaceContact?.phone}
                       email={portalContactEmail}
                       ownerName={workspaceContact?.name}
                       clientName={client.companyName || client.name}
+                      compact
                     />
                   </CardContent>
                 </Card>
