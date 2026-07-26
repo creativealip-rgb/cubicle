@@ -8,6 +8,7 @@ import {
   folders,
   invoices,
   portalRequests,
+  appointments,
   activityLogs,
   timeEntries,
   users,
@@ -629,6 +630,11 @@ export default async function ClientPortalPage({
       status: portalRequests.status,
       dueDate: portalRequests.dueDate,
       projectId: portalRequests.projectId,
+      meetingStartTime: portalRequests.meetingStartTime,
+      meetingDurationMinutes: portalRequests.meetingDurationMinutes,
+      meetingTimezone: portalRequests.meetingTimezone,
+      meetingStatus: portalRequests.meetingStatus,
+      meetingResponseNote: portalRequests.meetingResponseNote,
     })
     .from(portalRequests)
     .where(
@@ -638,6 +644,13 @@ export default async function ClientPortalPage({
       ),
     )
     .limit(100);
+
+  const upcomingMeetings = await db
+    .select({ id: appointments.id, title: appointments.title, startTime: appointments.startTime, endTime: appointments.endTime, status: appointments.status })
+    .from(appointments)
+    .where(and(eq(appointments.workspaceId, client.workspaceId), eq(appointments.clientId, client.id), eq(appointments.status, "scheduled"), sql`${appointments.endTime} >= now()`))
+    .orderBy(appointments.startTime)
+    .limit(10);
 
   const activeCount = clientProjects.filter(
     (p) => p.status === "active",
@@ -815,6 +828,17 @@ export default async function ClientPortalPage({
               }}
               overview={
                 <>
+                  {upcomingMeetings.length > 0 && (
+                    <section className="mb-8">
+                      <h2 className="mb-4 text-xl font-semibold">{t("Jadwal Pertemuan", "Meeting Schedule")}</h2>
+                      <div className="space-y-2">{upcomingMeetings.map((meeting) => (
+                        <Card key={meeting.id} className="shadow-none"><CardContent className="p-4">
+                          <p className="font-medium">{meeting.title}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">{new Intl.DateTimeFormat(lang === "id" ? "id-ID" : "en-US", { dateStyle: "full", timeStyle: "short" }).format(meeting.startTime)}</p>
+                        </CardContent></Card>
+                      ))}</div>
+                    </section>
+                  )}
                   {(pendingClientRequests.length > 0 ||
                     clientPortalRequests.length > 0) && (
                     <section>
@@ -830,6 +854,11 @@ export default async function ClientPortalPage({
                           type: r.type,
                           status: r.status,
                           dueDate: r.dueDate ? String(r.dueDate) : null,
+                          meetingStartTime: r.meetingStartTime,
+                          meetingDurationMinutes: r.meetingDurationMinutes,
+                          meetingTimezone: r.meetingTimezone,
+                          meetingStatus: r.meetingStatus,
+                          meetingResponseNote: r.meetingResponseNote,
                         }))}
                         token={token}
                       />

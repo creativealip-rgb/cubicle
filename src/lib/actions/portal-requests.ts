@@ -366,6 +366,8 @@ export async function approveMeetingRequest(requestId: string) {
   const actor = await meetingAdminActor();
   const { approveMeetingRequestRecord } = await import("@/lib/meeting-request-service");
   const appointment = await approveMeetingRequestRecord(z.string().uuid().parse(requestId), actor);
+  const { syncMeetingAppointmentCalendars } = await import("@/lib/meeting-calendar-sync");
+  await syncMeetingAppointmentCalendars(appointment.id);
   revalidatePath("/app/calendar"); revalidatePath("/app/clients");
   return appointment;
 }
@@ -390,6 +392,8 @@ export async function acceptMeetingCounterProposal(token: string, requestId: str
   const client = await getClientPortalAccess(token);
   const { acceptMeetingCounterProposalRecord } = await import("@/lib/meeting-request-service");
   const row = await acceptMeetingCounterProposalRecord(z.string().uuid().parse(requestId), { workspaceId: client.workspaceId, clientId: client.id });
+  const { syncMeetingAppointmentCalendars } = await import("@/lib/meeting-calendar-sync");
+  await syncMeetingAppointmentCalendars(row.id);
   revalidatePath(`/client-portal/${token}`); revalidatePath("/app/calendar"); return row;
 }
 

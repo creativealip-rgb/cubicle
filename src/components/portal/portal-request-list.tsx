@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n-client";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  acceptMeetingCounterProposal,
   completePortalRequest,
   respondPortalRequest,
 } from "@/lib/actions/portal-requests";
@@ -31,6 +32,11 @@ interface PortalRequest {
   type: string;
   status: string;
   dueDate: string | null;
+  meetingStartTime?: Date | string | null;
+  meetingDurationMinutes?: number | null;
+  meetingTimezone?: string | null;
+  meetingStatus?: string | null;
+  meetingResponseNote?: string | null;
 }
 
 function parseDecision(
@@ -73,6 +79,15 @@ export function PortalRequestList({
     } finally {
       setLoadingId(null);
     }
+  }
+  async function acceptMeeting(id: string) {
+    setLoadingId(id);
+    try {
+      await acceptMeetingCounterProposal(token, id);
+      setItems((p) => p.map((r) => r.id === id ? { ...r, status: "completed", meetingStatus: "approved" } : r));
+      toast.success(t("Jadwal disetujui dan masuk kalender", "Schedule approved and added to calendar"));
+    } catch (e) { toast.error(e instanceof Error ? e.message : t("Gagal", "Failed")); }
+    finally { setLoadingId(null); }
   }
   async function decide(id: string, decision: "approved" | "rejected") {
     setLoadingId(id);
@@ -203,6 +218,18 @@ export function PortalRequestList({
                 {request.dueDate}
               </p>
             )}
+            {request.meetingStartTime && (
+              <div className="mt-2 rounded-md bg-muted/40 p-2 text-xs">
+                <p className="font-medium">{new Intl.DateTimeFormat(lang === "id" ? "id-ID" : "en-US", { dateStyle: "medium", timeStyle: "short", timeZone: request.meetingTimezone || undefined }).format(new Date(request.meetingStartTime))}</p>
+                <p className="text-muted-foreground">{request.meetingDurationMinutes} menit · {request.meetingTimezone}</p>
+                {request.meetingResponseNote && <p className="mt-1 text-muted-foreground">{request.meetingResponseNote}</p>}
+              </div>
+            )}
+            {!done && request.meetingStatus === "counter_proposed" && (
+              <Button className="mt-3 min-h-11" disabled={loadingId === request.id} onClick={() => acceptMeeting(request.id)}>
+                {t("Setujui jadwal", "Approve schedule")}
+              </Button>
+            )}
             {!done && approval && (
               <div className="mt-3 space-y-2">
                 <Textarea
@@ -239,7 +266,7 @@ export function PortalRequestList({
             )}
           </div>
         </div>
-        {!done && !approval && (
+        {!done && !approval && request.meetingStatus !== "counter_proposed" && (
           <div className="flex shrink-0 flex-wrap gap-2 sm:flex-col">
             {request.type === "document" && (
               <>
