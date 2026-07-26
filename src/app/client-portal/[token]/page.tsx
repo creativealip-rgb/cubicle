@@ -640,7 +640,7 @@ export default async function ClientPortalPage({
     <LangProvider lang={lang}>
       <div className="min-h-screen bg-muted/30">
         <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:space-y-8 sm:py-10">
-          {/* Header — workspace branding */}
+          {/* Header — client identity with workspace branding */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-3 min-w-0">
               {workspaceContact?.logoUrl ? (
@@ -669,36 +669,17 @@ export default async function ClientPortalPage({
                 </div>
               )}
               <div className="min-w-0">
-                <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                  {workspaceContact?.billingName ||
-                    workspaceContact?.name ||
-                    client.companyName ||
-                    client.name}
+                <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+                  {client.companyName || client.name}
                 </h1>
                 <p className="mt-0.5 text-sm text-muted-foreground">
-                  {t("Portal klien untuk", "Client portal for")}{" "}
+                  {t("Dikelola oleh", "Managed by")}{" "}
                   <span className="font-medium text-foreground">
-                    {client.companyName || client.name}
+                    {workspaceContact?.billingName ||
+                      workspaceContact?.name ||
+                      "Cubiqlo"}
                   </span>
                 </p>
-                {(workspaceContact?.billingAddress ||
-                  workspaceContact?.email ||
-                  workspaceContact?.phone) && (
-                  <div className="mt-2 hidden space-y-0.5 text-xs text-muted-foreground sm:block">
-                    {workspaceContact.billingAddress && (
-                      <p className="whitespace-pre-wrap">
-                        {workspaceContact.billingAddress}
-                      </p>
-                    )}
-                    {(workspaceContact.email || workspaceContact.phone) && (
-                      <p>
-                        {[workspaceContact.email, workspaceContact.phone]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </p>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-2 self-start">

@@ -16,7 +16,7 @@ export function PortalLanguageSwitch() {
 
   return (
     <div
-      className="inline-flex rounded-lg border bg-background p-0.5 shadow-sm"
+      className="inline-flex rounded-lg border bg-background p-0.5"
       role="group"
       aria-label={lang === "en" ? "Portal language" : "Bahasa portal"}
     >
@@ -31,7 +31,7 @@ export function PortalLanguageSwitch() {
             value === "id" ? "Gunakan Bahasa Indonesia" : "Use English"
           }
           className={cn(
-            "min-h-11 min-w-11 rounded-md px-3 text-xs font-semibold transition-colors disabled:cursor-wait disabled:opacity-50",
+            "h-7 min-w-8 rounded-md px-2 text-[11px] font-semibold transition-colors disabled:cursor-wait disabled:opacity-50",
             lang === value
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:bg-muted hover:text-foreground",
