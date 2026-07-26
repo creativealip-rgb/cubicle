@@ -26,10 +26,14 @@ Jangan commit kredensial atau menyalin data pengguna production ke development.
 
 ## Start / Update
 
+`docker-compose.dev.yml` adalah satu-satunya Compose source untuk service ini. Jangan menambahkan override yang mengganti `next dev` menjadi `next start`.
+
 ```bash
 docker compose -f docker-compose.dev.yml config --quiet
-docker compose -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.dev.yml up -d --force-recreate cubicle-dev
 ```
+
+Runtime wajib menunjukkan `next dev` dan `NODE_ENV=development`. Perintah ini hanya merecreate `cubicle-dev`; jangan gunakan `--remove-orphans` karena project Compose juga mendeteksi container production sebagai orphan.
 
 ## Stop untuk membebaskan resource
 
@@ -61,8 +65,9 @@ Expected:
 Next.js development compiler membutuhkan memory besar saat cold compile halaman dashboard.
 
 - CPU limit: `1.0`.
-- Memory limit: `1280M`.
-- Cold compile sempat menyentuh limit; pantau `docker stats`.
+- Memory limit: `2G`.
+- `1280M` terbukti tidak cukup: cold compile route `/` pada Next.js 16 Turbopack membuat container `OOMKilled=true` dan respons HTTP `502`.
+- Cold compile memakai resource besar; pantau `docker stats`.
 - Stop service saat tidak dipakai karena VPS sudah memiliki swap pressure tinggi.
 
 ## HMR check

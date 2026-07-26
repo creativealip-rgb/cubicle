@@ -31,6 +31,8 @@ export const viewport: Viewport = {
   themeColor: "#2563eb",
 };
 
+const isDevelopment = process.env.CUBIQLO_ENV === "development";
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://cubiqlo.com"),
   title: {
@@ -71,8 +73,8 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   robots: {
-    index: true,
-    follow: true,
+    index: !isDevelopment,
+    follow: !isDevelopment,
   },
 };
 
