@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { approveMeetingRequest, counterProposeMeetingRequest, rejectMeetingRequest } from "@/lib/actions/portal-requests";
 
 type RequestRow = {
@@ -36,6 +37,9 @@ export function PortalRequestAdmin({
 }) {
   const [requests, setRequests] = useState(initialRequests);
   const [loading, setLoading] = useState(false);
+  const [meetingDialog, setMeetingDialog] = useState<{ mode: "reschedule" | "reject"; request: RequestRow } | null>(null);
+  const [schedule, setSchedule] = useState({ date: "", time: "09:00", duration: "60", timezone: "Asia/Jakarta", note: "Usulan jadwal baru dari tim" });
+  const [rejectionReason, setRejectionReason] = useState("");
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -92,27 +96,36 @@ export function PortalRequestAdmin({
     }
   }
 
-  async function meetingAction(request: RequestRow, action: "approve" | "reject" | "reschedule") {
+  function openMeetingDialog(request: RequestRow, mode: "reschedule" | "reject") {
+    const start = request.meetingStartTime ? new Date(request.meetingStartTime) : null;
+    if (mode === "reschedule") setSchedule({ date: request.dueDate || (start ? start.toISOString().slice(0, 10) : ""), time: start ? `${String(start.getHours()).padStart(2, "0")}:${String(start.getMinutes()).padStart(2, "0")}` : "09:00", duration: String(request.meetingDurationMinutes || 60), timezone: request.meetingTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Jakarta", note: "Usulan jadwal baru dari tim" });
+    else setRejectionReason("");
+    setMeetingDialog({ mode, request });
+  }
+
+  async function approveMeeting(request: RequestRow) {
+    setLoading(true);
+    try { await approveMeetingRequest(request.id); toast.success("Meeting disetujui"); window.location.reload(); }
+    catch (err) { toast.error(err instanceof Error ? err.message : "Gagal memproses meeting"); }
+    finally { setLoading(false); }
+  }
+
+  async function submitMeetingDialog(e: React.FormEvent) {
+    e.preventDefault();
+    if (!meetingDialog) return;
     setLoading(true);
     try {
-      if (action === "approve") await approveMeetingRequest(request.id);
-      if (action === "reject") {
-        const reason = window.prompt("Alasan penolakan");
-        if (!reason?.trim()) return;
-        await rejectMeetingRequest(request.id, reason);
+      if (meetingDialog.mode === "reject") {
+        if (!rejectionReason.trim()) throw new Error("Alasan penolakan wajib diisi");
+        await rejectMeetingRequest(meetingDialog.request.id, rejectionReason.trim());
+        toast.success("Meeting ditolak");
+      } else {
+        await counterProposeMeetingRequest({ requestId: meetingDialog.request.id, date: schedule.date, time: schedule.time, durationMinutes: Number(schedule.duration), timezone: schedule.timezone, note: schedule.note.trim() || "Usulan jadwal baru dari tim" });
+        toast.success("Jadwal baru dikirim ke klien");
       }
-      if (action === "reschedule") {
-        const date = window.prompt("Tanggal baru (YYYY-MM-DD)", request.dueDate || "");
-        const time = window.prompt("Jam mulai (HH:mm)", "09:00");
-        const duration = window.prompt("Durasi menit (30/45/60/90/120)", String(request.meetingDurationMinutes || 60));
-        if (!date || !time || !duration) return;
-        await counterProposeMeetingRequest({ requestId: request.id, date, time, durationMinutes: Number(duration), timezone: request.meetingTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone, note: "Usulan jadwal baru dari tim" });
-      }
-      toast.success(action === "approve" ? "Meeting disetujui" : action === "reject" ? "Meeting ditolak" : "Jadwal baru dikirim");
-      window.location.reload();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal memproses meeting");
-    } finally { setLoading(false); }
+      setMeetingDialog(null); window.location.reload();
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Gagal memproses meeting"); }
+    finally { setLoading(false); }
   }
 
   return (
@@ -221,9 +234,9 @@ export function PortalRequestAdmin({
               <div className="flex shrink-0 flex-wrap gap-2">
                 {meetingRequest && request.status === "pending" ? (
                   <>
-                    <Button size="sm" disabled={loading || !request.meetingStartTime} onClick={() => meetingAction(request, "approve")}>Setujui</Button>
-                    <Button size="sm" variant="outline" disabled={loading} onClick={() => meetingAction(request, "reschedule")}>Ubah jadwal</Button>
-                    <Button size="sm" variant="destructive" disabled={loading} onClick={() => meetingAction(request, "reject")}>Tolak</Button>
+                    <Button size="sm" disabled={loading || !request.meetingStartTime} onClick={() => approveMeeting(request)}>Setujui</Button>
+                    <Button size="sm" variant="outline" disabled={loading} onClick={() => openMeetingDialog(request, "reschedule")}>Ubah jadwal</Button>
+                    <Button size="sm" variant="destructive" disabled={loading} onClick={() => openMeetingDialog(request, "reject")}>Tolak</Button>
                   </>
                 ) : request.status !== "completed" && (
                   <Button size="sm" variant="outline" disabled={loading} onClick={() => updateStatus(request.id, "completed")}>
@@ -245,6 +258,40 @@ export function PortalRequestAdmin({
           );
         })}
       </div>
+
+      <Dialog open={Boolean(meetingDialog)} onOpenChange={(open) => !open && !loading && setMeetingDialog(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          <form onSubmit={submitMeetingDialog}>
+            <DialogHeader>
+              <DialogTitle>{meetingDialog?.mode === "reject" ? "Tolak Pertemuan" : "Ubah Jadwal Pertemuan"}</DialogTitle>
+              <DialogDescription>{meetingDialog?.mode === "reject" ? "Berikan alasan yang jelas untuk klien." : "Kirim usulan waktu baru. Klien perlu menyetujuinya sebelum masuk kalender."}</DialogDescription>
+            </DialogHeader>
+            {meetingDialog?.mode === "reject" ? (
+              <div className="py-5">
+                <Label htmlFor="meeting-rejection">Alasan penolakan</Label>
+                <Textarea id="meeting-rejection" className="mt-2 min-h-28" value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} placeholder="Contoh: Tim belum tersedia pada jadwal tersebut..." required autoFocus />
+              </div>
+            ) : (
+              <div className="grid gap-4 py-5">
+                {meetingDialog?.request.meetingStartTime && <div className="rounded-lg bg-muted/50 p-3 text-sm"><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Jadwal sebelumnya</p><p className="mt-1 font-medium">{new Intl.DateTimeFormat("id-ID", { dateStyle: "full", timeStyle: "short", timeZone: meetingDialog.request.meetingTimezone || undefined }).format(new Date(meetingDialog.request.meetingStartTime))}</p></div>}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2"><Label htmlFor="meeting-date">Tanggal baru</Label><Input id="meeting-date" type="date" value={schedule.date} onChange={(e) => setSchedule((p) => ({ ...p, date: e.target.value }))} required /></div>
+                  <div className="space-y-2"><Label htmlFor="meeting-time">Jam mulai</Label><Input id="meeting-time" type="time" value={schedule.time} onChange={(e) => setSchedule((p) => ({ ...p, time: e.target.value }))} required /></div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2"><Label>Durasi</Label><Select value={schedule.duration} onValueChange={(duration) => setSchedule((p) => ({ ...p, duration }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{[30, 45, 60, 90, 120].map((minutes) => <SelectItem key={minutes} value={String(minutes)}>{minutes} menit</SelectItem>)}</SelectContent></Select></div>
+                  <div className="space-y-2"><Label htmlFor="meeting-timezone">Zona waktu</Label><Input id="meeting-timezone" value={schedule.timezone} onChange={(e) => setSchedule((p) => ({ ...p, timezone: e.target.value }))} required /></div>
+                </div>
+                <div className="space-y-2"><Label htmlFor="meeting-note">Catatan untuk klien</Label><Textarea id="meeting-note" value={schedule.note} onChange={(e) => setSchedule((p) => ({ ...p, note: e.target.value }))} placeholder="Jelaskan alasan atau konteks perubahan jadwal..." /></div>
+              </div>
+            )}
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button type="button" variant="outline" disabled={loading} onClick={() => setMeetingDialog(null)}>Batal</Button>
+              <Button type="submit" variant={meetingDialog?.mode === "reject" ? "destructive" : "default"} disabled={loading || (meetingDialog?.mode === "reject" ? !rejectionReason.trim() : !schedule.date || !schedule.time || !schedule.timezone)}>{loading ? "Memproses..." : meetingDialog?.mode === "reject" ? "Tolak pertemuan" : "Kirim usulan jadwal"}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
