@@ -10,6 +10,8 @@ describe("calendar upcoming empty state", () => {
     expect(emptyState).toContain("flex");
     expect(emptyState).toContain("items-center");
     expect(emptyState).toContain("justify-center");
-    expect(emptyState).toContain("min-h-");
+    expect(emptyState).toContain("min-h-[20rem]");
+    expect(page).toContain('className="flex h-full flex-col lg:col-span-2"');
+    expect(page).toContain('className="flex flex-1 flex-col space-y-3"');
   });
 });

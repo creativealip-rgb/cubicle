@@ -165,7 +165,7 @@ export default async function CalendarPage() {
         </Card>
 
         {/* Upcoming Appointments */}
-        <Card className="lg:col-span-2">
+        <Card className="flex h-full flex-col lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base font-semibold">
               <Calendar className="mr-2 inline h-4 w-4" />
@@ -175,9 +175,9 @@ export default async function CalendarPage() {
               {upcoming.length} {t("terjadwal", "scheduled")}
             </Badge>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="flex flex-1 flex-col space-y-3">
             {upcoming.length === 0 && (
-              <div className="flex min-h-48 items-center justify-center py-8 text-center">
+              <div className="flex min-h-[20rem] flex-1 items-center justify-center py-8 text-center">
                 <div>
                   <Calendar className="mx-auto mb-2 h-10 w-10 text-muted-foreground/30" />
                   <p className="text-sm text-muted-foreground">{t("Belum ada jadwal mendatang", "No upcoming appointments")}</p>
