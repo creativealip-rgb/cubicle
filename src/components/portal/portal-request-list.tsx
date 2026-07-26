@@ -161,7 +161,7 @@ export function PortalRequestList({
       >
         <div className="flex min-w-0 flex-1 gap-3">
           <div
-            className={`mt-0.5 rounded-md p-2 ${decision === "rejected" ? "bg-red-50 text-red-600" : decision === "approved" ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"}`}
+            className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${decision === "rejected" ? "bg-red-50 text-red-600" : decision === "approved" ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"}`}
           >
             {decision === "approved" ? (
               <ThumbsUp className="h-4 w-4" />
