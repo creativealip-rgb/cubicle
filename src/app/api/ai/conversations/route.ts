@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id");
 
   if (id) {
-    const messages = await listMessages(id);
+    const messages = await listMessages(id, wsId, session.user.id);
     return NextResponse.json({ messages });
   }
 
