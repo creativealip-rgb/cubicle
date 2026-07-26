@@ -367,12 +367,7 @@ export default async function InvoicesPage({
             )}
           </p>
         </div>
-        <div className="flex w-full gap-2 sm:w-auto">
-          <Link href="/app/templates?tab=invoice" className="min-w-0 flex-1 sm:flex-none">
-            <Button variant="outline" size="sm" className="w-full gap-2 sm:w-auto">
-              <FileText className="h-4 w-4" /> {t("Template", "Templates")}
-            </Button>
-          </Link>
+        <div className="flex w-full sm:w-auto">
           {canWrite && (
             <Link href="/app/invoices/new" className="min-w-0 flex-1 sm:flex-none">
               <Button size="sm" className="w-full gap-2 sm:w-auto">
