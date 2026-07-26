@@ -1038,7 +1038,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
 // ────────────────────────────────────────────────────────────────────────────
 // Full-page welcome screen — ChatGPT/Notion AI-style hub layout
 // ────────────────────────────────────────────────────────────────────────────
-function WelcomeScreen({
+function _WelcomeScreen({
   input,
   setInput,
   send,

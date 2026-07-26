@@ -21,8 +21,9 @@ describe("friendly slug authorization boundary", () => {
     const section = read("src/app/(app)/app/clients/[clientId]/portal-section.tsx");
     expect(form).not.toContain("Short link: /client-portal/");
     expect(form).not.toContain("Slug aktif");
-    expect(section).not.toContain("client.portalSlug");
-    expect(section).not.toContain("Link portal singkat");
+    expect(section).toContain("const slug=client.portalSlug || fallbackSlug");
+    expect(section).toContain("/client-portal/${slug}");
+    expect(section).not.toContain("?token=");
   });
 
   it("keeps public document credentials high entropy, hashed, expiring, and revocable", () => {

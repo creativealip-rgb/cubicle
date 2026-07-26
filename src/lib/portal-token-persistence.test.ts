@@ -4,16 +4,17 @@ import { readFileSync } from "node:fs";
 const read = (path: string) => readFileSync(path, "utf8");
 
 describe("portal token persistence", () => {
-  it("keeps editable slug controls and builds a token-authenticated vanity URL", () => {
+  it("keeps editable slug controls and builds a password-authenticated vanity URL", () => {
     const form = read("src/components/forms/client-form.tsx");
     const section = read("src/app/(app)/app/clients/[clientId]/portal-section.tsx");
-    const vanityRoute = read("src/app/client-portal/s/[slug]/page.tsx");
+    const portalPage = read("src/app/client-portal/[token]/page.tsx");
 
     expect(form).toContain("Slug portal");
     expect(form).toContain("portalSlug: form.portalSlug");
-    expect(section).toContain("/client-portal/s/${client.portalSlug}?token=${portalToken}");
-    expect(vanityRoute).toContain("getClientPortalAccess(rawToken)");
-    expect(vanityRoute).toContain("client.portalSlug !== slug");
+    expect(section).toContain("/client-portal/${slug}");
+    expect(section).not.toContain("?token=");
+    expect(portalPage).toContain("eq(clients.portalSlug, slugOrToken)");
+    expect(portalPage).toContain("verifyPortalSession(");
   });
   it("stores generated portal tokens encrypted and clears them on revoke", () => {
     const schema = read("src/db/schema.ts");
@@ -24,20 +25,19 @@ describe("portal token persistence", () => {
     expect(actions).toContain("portalTokenEnc: null");
   });
 
-  it("hydrates the existing portal link after tab remount or client edit refresh", () => {
-    const page = read("src/app/(app)/app/clients/[clientId]/page.tsx");
+  it("renders a stable portal link after tab remount or client edit refresh", () => {
     const section = read("src/app/(app)/app/clients/[clientId]/portal-section.tsx");
 
-    expect(page).toContain("existingPortalToken={existingPortalToken}");
     expect(section).toContain("existingPortalToken: string | null");
-    expect(section).toContain("useState<string | null>(existingPortalToken)");
+    expect(section).toContain("const slug=client.portalSlug || fallbackSlug");
+    expect(section).toContain("const portalUrl=`${origin}/client-portal/${slug}`");
   });
 
-  it("never renders the persisted raw token after its one-time generation view", () => {
+  it("never renders a raw portal token", () => {
     const section = read("src/app/(app)/app/clients/[clientId]/portal-section.tsx");
 
-    expect(section).toContain("Link portal (siap bagikan)");
-    expect(section).toContain("{showToken && (");
-    expect(section).not.toContain("portalUrl && showToken &&");
+    expect(section).toContain("Link portal");
+    expect(section).not.toContain("portalToken}");
+    expect(section).not.toContain("?token=");
   });
 });
