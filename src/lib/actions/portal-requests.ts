@@ -99,7 +99,10 @@ const createClientPortalRequestSchema = z.object({
   kind: z.enum(["report", "meeting"]),
   message: z.string().max(2000).optional().nullable(),
   projectId: z.string().uuid().optional().nullable(),
-  preferredDate: z.string().optional().nullable(), // YYYY-MM-DD for meeting
+  preferredDate: z.string().optional().nullable(),
+  preferredTime: z.string().optional().nullable(),
+  durationMinutes: z.number().optional().nullable(),
+  timezone: z.string().optional().nullable(),
   reportPeriod: z.string().max(120).optional().nullable(), // e.g. "Last 30 days"
 });
 
@@ -130,6 +133,15 @@ export async function createClientPortalRequest(
   }
 
   const isReport = parsed.kind === "report";
+  const schedule = !isReport
+    ? (await import("@/lib/meeting-schedule")).buildMeetingSchedule({
+        date: parsed.preferredDate || "",
+        time: parsed.preferredTime || "",
+        durationMinutes: parsed.durationMinutes || 0,
+        timezone: parsed.timezone || "",
+      })
+    : null;
+  if (!isReport && !parsed.message?.trim()) throw new Error("Agenda meeting wajib diisi");
   const title = isReport ? "Request Report" : "Request Meeting";
   const type = isReport ? ("info" as const) : ("other" as const);
 
@@ -159,6 +171,10 @@ export async function createClientPortalRequest(
         !isReport && parsed.preferredDate?.trim()
           ? parsed.preferredDate.trim()
           : null,
+      meetingStartTime: schedule?.start || null,
+      meetingDurationMinutes: schedule?.durationMinutes || null,
+      meetingTimezone: schedule?.timezone || null,
+      meetingStatus: schedule ? "requested" : null,
       createdBy: null,
     })
     .returning();
@@ -331,4 +347,57 @@ export async function respondPortalRequest(
     .returning();
 
   return { ...row, decision: parsed.decision };
+}
+
+const meetingScheduleActionSchema = z.object({
+  requestId: z.string().uuid(), date: z.string(), time: z.string(),
+  durationMinutes: z.number(), timezone: z.string(), note: z.string().max(2000).optional(),
+});
+
+async function meetingAdminActor() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  return { workspaceId, userId: user.id };
+}
+
+export async function approveMeetingRequest(requestId: string) {
+  const actor = await meetingAdminActor();
+  const { approveMeetingRequestRecord } = await import("@/lib/meeting-request-service");
+  const appointment = await approveMeetingRequestRecord(z.string().uuid().parse(requestId), actor);
+  revalidatePath("/app/calendar"); revalidatePath("/app/clients");
+  return appointment;
+}
+
+export async function rejectMeetingRequest(requestId: string, reason: string) {
+  const actor = await meetingAdminActor();
+  const { rejectMeetingRequestRecord } = await import("@/lib/meeting-request-service");
+  const row = await rejectMeetingRequestRecord(z.string().uuid().parse(requestId), actor, reason);
+  revalidatePath("/app/clients"); return row;
+}
+
+export async function counterProposeMeetingRequest(input: z.infer<typeof meetingScheduleActionSchema>) {
+  const parsed = meetingScheduleActionSchema.parse(input);
+  const actor = await meetingAdminActor();
+  const { counterProposeMeetingRequestRecord } = await import("@/lib/meeting-request-service");
+  const row = await counterProposeMeetingRequestRecord(parsed.requestId, actor, parsed, parsed.note);
+  revalidatePath("/app/clients"); return row;
+}
+
+export async function acceptMeetingCounterProposal(token: string, requestId: string) {
+  const { getClientPortalAccess } = await import("@/lib/actions/portal");
+  const client = await getClientPortalAccess(token);
+  const { acceptMeetingCounterProposalRecord } = await import("@/lib/meeting-request-service");
+  const row = await acceptMeetingCounterProposalRecord(z.string().uuid().parse(requestId), { workspaceId: client.workspaceId, clientId: client.id });
+  revalidatePath(`/client-portal/${token}`); revalidatePath("/app/calendar"); return row;
+}
+
+export async function resubmitMeetingRequest(token: string, input: z.infer<typeof meetingScheduleActionSchema>) {
+  const parsed = meetingScheduleActionSchema.parse(input);
+  const { getClientPortalAccess } = await import("@/lib/actions/portal");
+  const client = await getClientPortalAccess(token);
+  const { resubmitMeetingRequestRecord } = await import("@/lib/meeting-request-service");
+  const row = await resubmitMeetingRequestRecord(parsed.requestId, { workspaceId: client.workspaceId, clientId: client.id }, parsed, parsed.note);
+  revalidatePath(`/client-portal/${token}`); return row;
 }
