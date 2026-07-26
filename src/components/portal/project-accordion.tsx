@@ -19,6 +19,7 @@ import { PackageOrderButton } from "./package-order-button";
 import { PortalContactButtons } from "./portal-contact";
 import { useT } from "@/lib/i18n-client";
 import { portalLocale, portalStatusLabel } from "@/lib/portal-i18n";
+import { getProjectProgress } from "@/lib/project-progress";
 
 interface Project {
   id: string;
@@ -814,61 +815,37 @@ function ProjectSummary({
   const isByPackage = project.billingType === "package";
 
   const { total, done, pct } = taskProgress(tasks);
+  const billingProgress = getProjectProgress({
+    billingType: project.billingType,
+    totalTasks: total,
+    doneTasks: done,
+    trackedMinutes: hoursSummary?.totalMinutes ?? 0,
+    packageHours: selectedPkg?.hours ?? null,
+  });
   const deadline = getDeadlineMeta(project.finishDate, project.status, lang);
   const lastActivity = getLastActivity(tasks, timeline, lang);
 
-  // Primary progress line: task completion is what clients care about.
-  // Falls back to billing-specific progress when a project has no visible tasks.
   const progressLine = (() => {
-    if (total > 0) {
-      return (
+    if (!isByHours && !isByPackage) {
+      return total > 0 ? (
         <div className="flex items-center gap-2">
           {progressPie(pct)}
-          <span className="text-xs font-medium text-foreground">
-            {done}/{total} tugas selesai
-          </span>
+          <span className="text-xs font-medium text-foreground">{done}/{total} tugas selesai</span>
         </div>
-      );
-    }
-
-    if (isByPackage && selectedPkg && hoursSummary) {
-      const totalMins = selectedPkg.hours ? selectedPkg.hours * 60 : 0;
-      const usedMins = hoursSummary.totalMinutes;
-      const upct = totalMins > 0 ? Math.round((usedMins / totalMins) * 100) : 0;
-      return (
-        <div className="flex items-center gap-2">
-          <Package className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">
-            {formatMinutes(usedMins)} / {formatMinutes(totalMins)}
-          </span>
-          <div className="h-1.5 w-20 rounded-full bg-slate-200">
-            <div
-              className={`h-full rounded-full ${upct > 90 ? "bg-red-500" : upct > 70 ? "bg-amber-500" : "bg-emerald-500"}`}
-              style={{ width: `${Math.min(upct, 100)}%` }}
-            />
-          </div>
-          <span className="text-xs text-muted-foreground">
-            {formatMinutes(Math.max(0, totalMins - usedMins))} sisa
-          </span>
-        </div>
-      );
-    }
-
-    if (isByHours && hoursSummary) {
-      return (
-        <div className="flex items-center gap-2">
-          <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">
-            {formatMinutes(hoursSummary.totalMinutes)} tercatat
-          </span>
-        </div>
-      );
+      ) : <span className="text-xs text-muted-foreground">{t("Belum ada tugas", "No tasks yet")}</span>;
     }
 
     return (
-      <span className="text-xs text-muted-foreground">
-        {t("Belum ada tugas", "No tasks yet")}
-      </span>
+      <div className="flex items-center gap-2">
+        {isByPackage ? <Package className="h-3.5 w-3.5 text-muted-foreground" /> : <Clock className="h-3.5 w-3.5 text-muted-foreground" />}
+        {isByPackage && selectedPkg?.hours ? progressPie(billingProgress.pct) : null}
+        <div className="space-y-0.5">
+          <p className="text-xs font-medium text-foreground">
+            {billingProgress.label}{isByHours ? ` ${t("tercatat", "tracked")}` : ""}
+          </p>
+          {total > 0 && <p className="text-[11px] text-muted-foreground">{done}/{total} tugas selesai</p>}
+        </div>
+      </div>
     );
   })();
 
@@ -952,12 +929,23 @@ export function ProjectAccordion({
 
     const needsReview = hasReviewTask(tasks);
     const progress = taskProgress(tasks);
-    const statusMeta = getProjectStatusMeta(
-      project.status,
-      needsReview,
-      progress.total > 0 && progress.pct === 100,
-      lang,
-    );
+    const packageQuotaExhausted =
+      project.billingType === "package" &&
+      project.status === "active" &&
+      !!selectedPkg?.hours &&
+      (hoursSummary?.totalMinutes ?? 0) >= selectedPkg.hours * 60;
+    const statusMeta = packageQuotaExhausted
+      ? {
+          label: t("Kuota habis", "Quota exhausted"),
+          badgeClass: "bg-amber-100 text-amber-700 border-amber-200",
+          borderClass: "border-l-amber-400",
+        }
+      : getProjectStatusMeta(
+          project.status,
+          needsReview,
+          project.billingType === "project" && progress.total > 0 && progress.pct === 100,
+          lang,
+        );
 
     return (
       <Card
