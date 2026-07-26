@@ -38,4 +38,9 @@ describe("distributed rate limiter wiring", () => {
     const compose = read("docker-compose.yml");
     expect(compose).toContain("RATE_LIMIT_REDIS_URL: ${RATE_LIMIT_REDIS_URL");
   });
+
+  it("passes isolated Redis URL into development runtime", () => {
+    const compose = read("docker-compose.dev.yml");
+    expect(compose).toContain("RATE_LIMIT_REDIS_URL: redis://cubicle-dev-redis:6379");
+  });
 });

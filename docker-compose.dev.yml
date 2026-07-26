@@ -28,6 +28,7 @@ services:
       GOOGLE_CLIENT_ID: ""
       GOOGLE_CLIENT_SECRET: ""
       GOOGLE_TOKEN_ENCRYPTION_KEY: ""
+      RATE_LIMIT_REDIS_URL: redis://cubicle-dev-redis:6379
     volumes:
       - .:/app
       - cubicle-dev-next-cache:/app/.next/dev
