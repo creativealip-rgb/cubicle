@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { approveMeetingRequest, counterProposeMeetingRequest, rejectMeetingRequest } from "@/lib/actions/portal-requests";
 
 type RequestRow = {
   id: string;
@@ -16,6 +17,10 @@ type RequestRow = {
   status: string;
   dueDate: string | null;
   projectId: string | null;
+  meetingStartTime?: Date | string | null;
+  meetingDurationMinutes?: number | null;
+  meetingTimezone?: string | null;
+  meetingStatus?: "requested" | "counter_proposed" | "approved" | "rejected" | null;
 };
 
 type ProjectOption = { id: string; name: string };
@@ -87,6 +92,29 @@ export function PortalRequestAdmin({
     }
   }
 
+  async function meetingAction(request: RequestRow, action: "approve" | "reject" | "reschedule") {
+    setLoading(true);
+    try {
+      if (action === "approve") await approveMeetingRequest(request.id);
+      if (action === "reject") {
+        const reason = window.prompt("Alasan penolakan");
+        if (!reason?.trim()) return;
+        await rejectMeetingRequest(request.id, reason);
+      }
+      if (action === "reschedule") {
+        const date = window.prompt("Tanggal baru (YYYY-MM-DD)", request.dueDate || "");
+        const time = window.prompt("Jam mulai (HH:mm)", "09:00");
+        const duration = window.prompt("Durasi menit (30/45/60/90/120)", String(request.meetingDurationMinutes || 60));
+        if (!date || !time || !duration) return;
+        await counterProposeMeetingRequest({ requestId: request.id, date, time, durationMinutes: Number(duration), timezone: request.meetingTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone, note: "Usulan jadwal baru dari tim" });
+      }
+      toast.success(action === "approve" ? "Meeting disetujui" : action === "reject" ? "Meeting ditolak" : "Jadwal baru dikirim");
+      window.location.reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal memproses meeting");
+    } finally { setLoading(false); }
+  }
+
   return (
     <div className="space-y-4">
       <form onSubmit={submit} className="grid gap-3 rounded-lg border p-4">
@@ -136,6 +164,7 @@ export function PortalRequestAdmin({
           <p className="text-center text-sm text-muted-foreground">No portal requests yet</p>
         )}
         {requests.map((request) => {
+          const meetingRequest = request.title === "Request Meeting" || Boolean(request.meetingStatus);
           const decision = request.description?.includes("[Client APPROVED")
             ? "approved"
             : request.description?.includes("[Client REJECTED")
@@ -189,8 +218,14 @@ export function PortalRequestAdmin({
                   <p className="mt-1 text-xs text-muted-foreground">Due {request.dueDate}</p>
                 )}
               </div>
-              <div className="flex shrink-0 gap-2">
-                {request.status !== "completed" && (
+              <div className="flex shrink-0 flex-wrap gap-2">
+                {meetingRequest && request.status === "pending" ? (
+                  <>
+                    <Button size="sm" disabled={loading || !request.meetingStartTime} onClick={() => meetingAction(request, "approve")}>Setujui</Button>
+                    <Button size="sm" variant="outline" disabled={loading} onClick={() => meetingAction(request, "reschedule")}>Ubah jadwal</Button>
+                    <Button size="sm" variant="destructive" disabled={loading} onClick={() => meetingAction(request, "reject")}>Tolak</Button>
+                  </>
+                ) : request.status !== "completed" && (
                   <Button size="sm" variant="outline" disabled={loading} onClick={() => updateStatus(request.id, "completed")}>
                     Mark done
                   </Button>

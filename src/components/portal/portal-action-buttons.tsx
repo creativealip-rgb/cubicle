@@ -43,6 +43,11 @@ export function PortalActionButtons({
   const [message, setMessage] = useState("");
   const [reportPeriod, setReportPeriod] = useState("30 hari terakhir");
   const [preferredDate, setPreferredDate] = useState("");
+  const [preferredTime, setPreferredTime] = useState("");
+  const [durationMinutes, setDurationMinutes] = useState("60");
+  const [timezone, setTimezone] = useState(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Jakarta",
+  );
 
   function close() {
     if (loading) return;
@@ -51,6 +56,8 @@ export function PortalActionButtons({
     setProjectId("");
     setReportPeriod("30 hari terakhir");
     setPreferredDate("");
+    setPreferredTime("");
+    setDurationMinutes("60");
   }
 
   async function submit() {
@@ -64,6 +71,9 @@ export function PortalActionButtons({
         projectId: projectId || null,
         reportPeriod: kind === "report" ? reportPeriod || null : null,
         preferredDate: kind === "meeting" ? preferredDate || null : null,
+        preferredTime: kind === "meeting" ? preferredTime || null : null,
+        durationMinutes: kind === "meeting" ? Number(durationMinutes) : null,
+        timezone: kind === "meeting" ? timezone : null,
       });
       toast.success(
         kind === "report"
@@ -180,25 +190,40 @@ export function PortalActionButtons({
             )}
 
             {kind === "meeting" && (
-              <div className="space-y-1.5">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
                 <Label htmlFor="preferred-date" className="text-xs">
-                  {t(
-                    "Tanggal preferensi (opsional)",
-                    "Preferred date (optional)",
-                  )}
+                  {t("Tanggal", "Date")} *
                 </Label>
                 <Input
                   id="preferred-date"
                   type="date"
                   value={preferredDate}
                   onChange={(e) => setPreferredDate(e.target.value)}
+                  required
                 />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="preferred-time" className="text-xs">{t("Jam mulai", "Start time")} *</Label>
+                  <Input id="preferred-time" type="time" value={preferredTime} onChange={(e) => setPreferredTime(e.target.value)} required />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">{t("Durasi", "Duration")} *</Label>
+                  <Select value={durationMinutes} onValueChange={setDurationMinutes}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{[30,45,60,90,120].map((minutes) => <SelectItem key={minutes} value={String(minutes)}>{minutes} menit</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="meeting-timezone" className="text-xs">{t("Zona waktu", "Timezone")} *</Label>
+                  <Input id="meeting-timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)} required />
+                </div>
               </div>
             )}
 
             <div className="space-y-1.5">
               <Label htmlFor="request-message" className="text-xs">
-                {t("Catatan", "Notes")}
+                {kind === "meeting" ? t("Agenda", "Agenda") : t("Catatan", "Notes")} {kind === "meeting" ? "*" : ""}
               </Label>
               <Textarea
                 id="request-message"
@@ -216,6 +241,7 @@ export function PortalActionButtons({
                       )
                 }
                 rows={3}
+                required={kind === "meeting"}
               />
             </div>
           </div>
@@ -229,7 +255,7 @@ export function PortalActionButtons({
             >
               {t("Batal", "Cancel")}
             </Button>
-            <Button type="button" onClick={submit} disabled={loading}>
+            <Button type="button" onClick={submit} disabled={loading || (kind === "meeting" && (!preferredDate || !preferredTime || !timezone || !message.trim()))}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
