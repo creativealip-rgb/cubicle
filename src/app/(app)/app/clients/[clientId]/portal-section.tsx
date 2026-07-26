@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { generatePortalToken, revokePortalToken, setClientPortalPassword } from "@/lib/actions/clients";
 import { Button } from "@/components/ui/button";
@@ -18,9 +18,11 @@ export function PortalTokenSection({ client }: Props) {
   const [copied,setCopied]=useState(false);
   const [loading,setLoading]=useState(false);
   const [password,setPassword]=useState("");
+  const [origin,setOrigin]=useState("");
+  useEffect(()=>setOrigin(window.location.origin),[]);
   const fallbackSlug=`client-${client.id.slice(0,8)}`;
   const slug=client.portalSlug || fallbackSlug;
-  const portalUrl=typeof window === "undefined" ? `/client-portal/${slug}` : `${window.location.origin}/client-portal/${slug}`;
+  const portalUrl=`${origin}/client-portal/${slug}`;
   const active=client.portalEnabled && !!client.portalPasswordHash && !client.portalTokenRevokedAt;
 
   async function savePassword(){
