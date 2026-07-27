@@ -65,8 +65,10 @@ Expected:
 Next.js development compiler membutuhkan memory besar saat cold compile halaman dashboard.
 
 - CPU limit: `1.0`.
-- Memory limit: `2G`.
+- Memory limit: `3G`.
 - `1280M` terbukti tidak cukup: cold compile route `/` pada Next.js 16 Turbopack membuat container `OOMKilled=true` dan respons HTTP `502`.
+- `2G` masih sering membuat dev route cold compile lambat/healthcheck flapping dan user melihat `Bad Gateway`; dinaikkan ke `3G` pada 27 Juli 2026.
+- Healthcheck dibuat longgar: interval `45s`, timeout `20s`, retries `8`, start period `180s`.
 - Cache Turbopack `.next/dev` memakai Docker named volume `cubicle-dev-next-cache`, bukan bind mount host. Source `/app` tetap bind-mounted agar HMR membaca perubahan repo.
 - Cold compile memakai resource besar; pantau `docker stats`.
 - Stop service saat tidak dipakai karena VPS sudah memiliki swap pressure tinggi.

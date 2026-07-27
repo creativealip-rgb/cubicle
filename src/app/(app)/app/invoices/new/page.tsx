@@ -4,8 +4,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { clients, invoiceTemplates, projects, timeEntries, packages, workspaceCurrencyRates, workspaces } from "@/db/schema";
-import { eq, asc, and, ne } from "drizzle-orm";
+import { clients, invoiceTemplates, projects, packages, workspaceCurrencyRates, workspaces } from "@/db/schema";
+import { eq, asc } from "drizzle-orm";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,12 +64,6 @@ export default async function NewInvoicePage() {
   const [workspace] = await db.select({ defaultCurrency: workspaces.defaultCurrency }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
   const currencyRates = await db.select({ fromCurrency: workspaceCurrencyRates.fromCurrency, rate: workspaceCurrencyRates.rate }).from(workspaceCurrencyRates).where(eq(workspaceCurrencyRates.workspaceId, workspaceId));
 
-  const timeEntryOptions = await db.select({
-    id: timeEntries.id, clientId: timeEntries.clientId, projectId: timeEntries.projectId,
-    description: timeEntries.description, durationMinutes: timeEntries.durationMinutes, hourlyRate: timeEntries.hourlyRate,
-  }).from(timeEntries).where(and(
-    eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.billable, true), ne(timeEntries.status, "invoiced"),
-  )).orderBy(asc(timeEntries.createdAt));
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -102,7 +96,7 @@ export default async function NewInvoicePage() {
               </Link>
             </div>
           ) : (
-            <InvoiceForm mode="create" clients={clientOptions} projects={projectOptions} templates={templateOptions} timeEntries={timeEntryOptions} baseCurrency={workspace?.defaultCurrency || "IDR"} currencyRates={currencyRates} />
+            <InvoiceForm mode="create" clients={clientOptions} projects={projectOptions} templates={templateOptions} baseCurrency={workspace?.defaultCurrency || "IDR"} currencyRates={currencyRates} />
           )}
         </CardContent>
       </Card>

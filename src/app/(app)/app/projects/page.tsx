@@ -13,28 +13,22 @@ import { ProjectsListTable } from "@/components/projects/projects-list-table";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { Suspense } from "react";
-
-const STATUS_TABS = [
-  "all",
-  "active",
-  "draft",
-  "on_hold",
-  "completed",
-  "cancelled",
-  "archived",
-] as const;
-
-type StatusTab = (typeof STATUS_TABS)[number];
+import {
+  PROJECT_STATUS_TABS,
+  buildProjectsHref,
+  parseBillingType,
+  type ProjectStatusTab,
+} from "@/lib/project-list-filters";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
 }
 
-function parseStatusTab(raw?: string): StatusTab {
-  if (raw && (STATUS_TABS as readonly string[]).includes(raw)) {
-    return raw as StatusTab;
+function parseStatusTab(raw?: string): ProjectStatusTab {
+  if (raw && (PROJECT_STATUS_TABS as readonly string[]).includes(raw)) {
+    return raw as ProjectStatusTab;
   }
-  return "all";
+  return "active";
 }
 
 function isUuid(value?: string): value is string {
@@ -46,23 +40,13 @@ function isUuid(value?: string): value is string {
   );
 }
 
-function buildProjectsHref(filters: {
-  status: StatusTab;
-  clientId?: string;
-}): string {
-  const params = new URLSearchParams();
-  if (filters.status !== "all") params.set("status", filters.status);
-  if (filters.clientId) params.set("clientId", filters.clientId);
-  const qs = params.toString();
-  return qs ? `/app/projects?${qs}` : "/app/projects";
-}
-
 export default async function ProjectsPage({
   searchParams,
 }: {
   searchParams: Promise<{
     clientId?: string;
     status?: string;
+    billingType?: string;
   }>;
 }) {
   const lang = await getCurrentLang();
@@ -75,8 +59,8 @@ export default async function ProjectsPage({
     cancelled: t("Dibatalkan", "Cancelled"),
     archived: t("Diarsipkan", "Archived"),
   };
-  const tabLabel = (tab: StatusTab) => {
-    if (tab === "all") return t("Semua", "All");
+  const tabLabel = (tab: ProjectStatusTab) => {
+
     return PROJECT_STATUS_LABELS[tab] ?? tab;
   };
 
@@ -92,6 +76,7 @@ export default async function ProjectsPage({
   const params = await searchParams;
   const statusTab = parseStatusTab(params.status);
   const clientId = isUuid(params.clientId) ? params.clientId : undefined;
+  const billingType = parseBillingType(params.billingType);
 
   // Plan limit (per-user free plan: max 5 projects)
   const [userPlan] = await db.select({ plan: users.plan }).from(users).where(eq(users.id, user.id)).limit(1);
@@ -112,6 +97,7 @@ export default async function ProjectsPage({
   // Counts per status (respect client filter)
   const statusCountWhere: SQL[] = [eq(projects.workspaceId, workspaceId)];
   if (clientId) statusCountWhere.push(eq(projects.clientId, clientId));
+  if (billingType) statusCountWhere.push(eq(projects.billingType, billingType));
 
   const statusCountRows = await db
     .select({
@@ -125,15 +111,12 @@ export default async function ProjectsPage({
   const countsByStatus = Object.fromEntries(
     statusCountRows.map((row) => [row.status, Number(row.total) || 0]),
   ) as Record<string, number>;
-  const totalAll = Object.values(countsByStatus).reduce((sum, n) => sum + n, 0);
-  const tabCount = (tab: StatusTab) =>
-    tab === "all" ? totalAll : countsByStatus[tab] ?? 0;
+  const tabCount = (tab: ProjectStatusTab) => countsByStatus[tab] ?? 0;
 
   const whereClauses: SQL[] = [eq(projects.workspaceId, workspaceId)];
-  if (statusTab !== "all") {
-    whereClauses.push(eq(projects.status, statusTab));
-  }
+  whereClauses.push(eq(projects.status, statusTab));
   if (clientId) whereClauses.push(eq(projects.clientId, clientId));
+  if (billingType) whereClauses.push(eq(projects.billingType, billingType));
 
   const projectsList = await db
     .select({
@@ -161,9 +144,10 @@ export default async function ProjectsPage({
   const filtersForHref = {
     status: statusTab,
     clientId,
+    billingType,
   };
 
-  const hasExtraFilters = Boolean(clientId);
+  const hasExtraFilters = Boolean(clientId || billingType);
   const selectedClient = clientId
     ? clientOptions.find((c) => c.id === clientId)
     : undefined;
@@ -214,12 +198,12 @@ export default async function ProjectsPage({
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <StatusFilterTabs
             activeValue={statusTab}
-            tabs={STATUS_TABS.map((tab) => ({
+            tabs={PROJECT_STATUS_TABS.map((tab) => ({
               value: tab,
               label: tabLabel(tab),
               href: buildProjectsHref({ ...filtersForHref, status: tab }),
               count: tabCount(tab),
-              alwaysShow: tab === "all" || tab === "active" || tab === "draft",
+              alwaysShow: tab === "active" || tab === "draft",
             }))}
           />
 
@@ -238,7 +222,16 @@ export default async function ProjectsPage({
       {hasExtraFilters && (
         <p className="-mt-2 text-xs text-muted-foreground">
           {t("Filter aktif:", "Active filters:")}{" "}
-          {selectedClient?.name ?? t("Semua klien", "All clients")}
+          {[
+            selectedClient?.name,
+            billingType === "project"
+              ? t("Per Project", "Per Project")
+              : billingType === "hours"
+                ? t("Per Jam", "Hourly")
+                : billingType === "package"
+                  ? t("Service", "Service")
+                  : null,
+          ].filter(Boolean).join(" · ")}
         </p>
       )}
 
@@ -246,6 +239,13 @@ export default async function ProjectsPage({
         projects={projectsList}
         hasExtraFilters={hasExtraFilters}
         statusTab={statusTab}
+        billingType={billingType}
+        billingTypeHrefs={{
+          all: buildProjectsHref({ ...filtersForHref, billingType: undefined }),
+          project: buildProjectsHref({ ...filtersForHref, billingType: "project" }),
+          hours: buildProjectsHref({ ...filtersForHref, billingType: "hours" }),
+          package: buildProjectsHref({ ...filtersForHref, billingType: "package" }),
+        }}
       />
     </div>
   );

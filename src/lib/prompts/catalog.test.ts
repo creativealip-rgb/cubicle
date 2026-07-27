@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { launchPromptCatalog, mapLegacyPromptType, promptBriefSchema } from "./catalog";
 
-const ids = ["instagram-feed","carousel","story","content-series","product-ad","promo-discount","testimonial-review","product-photography","product-try-on","fnb-menu","short-video-script","video-storyboard","ugc-ad","youtube-thumbnail","marketing-copy"];
+const ids = ["instagram-feed","carousel","story","content-series","product-ad","promo-discount","testimonial-review","product-photography","product-try-on","fnb-menu","short-video-script","video-storyboard","ugc-ad","youtube-thumbnail","marketing-copy","article"];
 
 describe("Prompt Studio catalog", () => {
-  it("contains exactly 15 unique launch types", () => {
+  it("contains exactly 16 unique launch types", () => {
     expect(launchPromptCatalog.map((item) => item.id)).toEqual(ids);
-    expect(new Set(ids).size).toBe(15);
+    expect(new Set(ids).size).toBe(16);
   });
 
   it("covers five categories", () => {

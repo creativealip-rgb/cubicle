@@ -46,14 +46,6 @@ interface TemplateOption {
   terms: string | null;
 }
 
-interface TimeEntryOption {
-  id: string;
-  clientId: string | null;
-  projectId: string | null;
-  description: string | null;
-  durationMinutes: number | null;
-  hourlyRate: string | null;
-}
 
 interface InvoiceFormProps {
   mode: "create" | "edit";
@@ -70,18 +62,18 @@ interface InvoiceFormProps {
   clients: ClientOption[];
   projects?: ProjectOption[];
   templates?: TemplateOption[];
-  timeEntries?: TimeEntryOption[];
+
   baseCurrency?: string;
   currencyRates?: Array<{ fromCurrency: string; rate: string }>;
   onSuccess?: () => void;
 }
 
-export function InvoiceForm({ mode, defaultValues, clients, projects, templates, timeEntries = [], baseCurrency = "IDR", currencyRates = [], onSuccess }: InvoiceFormProps) {
+export function InvoiceForm({ mode, defaultValues, clients, projects, templates, baseCurrency = "IDR", currencyRates = [], onSuccess }: InvoiceFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState([{ description: "", quantity: 1, unitPrice: 0 }]);
   const [dueDateTouched, setDueDateTouched] = useState(Boolean(defaultValues?.dueDate));
-  const [selectedTimeIds, setSelectedTimeIds] = useState<string[]>([]);
+
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>(defaultValues?.projectId ? [defaultValues.projectId] : []);
   const [form, setForm] = useState({
     clientId: defaultValues?.clientId ?? "",
@@ -93,7 +85,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
     terms: defaultValues?.terms ?? "",
   });
 
-  // Filter projects and eligible timesheets by selected client/project.
+  // Filter projects by selected client.
   const clientProjects = projects?.filter(p => p.clientId === form.clientId) ?? [];
   const rateMap = buildRateMap(currencyRates);
   const selectedProjects = clientProjects.filter((project) => selectedProjectIds.includes(project.id));
@@ -103,13 +95,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
     return { description: project.name, quantity: 1, unitPrice: converted?.amount ?? 0, projectId: project.id, originalAmount, originalCurrency: project.currency, conversionRate: converted?.rate ?? null };
   });
   const missingRateProjects = projectItems.filter((item) => item.conversionRate === null);
-  const eligibleTimeEntries = timeEntries.filter((entry) => entry.clientId === form.clientId && selectedProjectIds.includes(entry.projectId || ""));
-  const selectedTimeItems = eligibleTimeEntries.filter((entry) => selectedTimeIds.includes(entry.id)).map((entry) => ({
-    description: entry.description?.trim() || "Timesheet",
-    quantity: (entry.durationMinutes || 0) / 60,
-    unitPrice: Number(entry.hourlyRate || 0),
-    sourceId: entry.id,
-  }));
+
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -117,7 +103,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
       toast.error("Pilih klien dulu");
       return;
     }
-    const validItems = [...items.filter((item) => item.description.trim()), ...selectedTimeItems];
+    const validItems = items.filter((item) => item.description.trim());
     if (missingRateProjects.length) { toast.error("Lengkapi kurs workspace sebelum membuat invoice"); return; }
     if (mode === "create" && validItems.length === 0 && projectItems.length === 0) {
       toast.error("Tambahkan minimal satu item tagihan");
@@ -209,7 +195,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         <Label htmlFor="clientId">Klien *</Label>
         <Select
           value={form.clientId}
-          onValueChange={(v) => { setSelectedTimeIds([]); setSelectedProjectIds([]); setForm((prev) => ({ ...prev, clientId: v, projectId: "" })); }}
+          onValueChange={(v) => { setSelectedProjectIds([]); setForm((prev) => ({ ...prev, clientId: v, projectId: "" })); }}
           disabled={mode === "edit"}
           required
         >
@@ -238,7 +224,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
                     type="checkbox"
                     checked={selected}
                     onChange={(event) => {
-                      setSelectedTimeIds([]);
+
                       setSelectedProjectIds((prev) => event.target.checked ? [...prev, project.id] : prev.filter((id) => id !== project.id));
                     }}
                   />
@@ -312,20 +298,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
               <Button type="button" variant="ghost" size="icon" disabled={items.length === 1} onClick={() => setItems((prev) => prev.filter((_, i) => i !== index))}>×</Button>
             </div>
           ))}
-          {eligibleTimeEntries.length > 0 && (
-            <div className="space-y-2 border-t pt-3">
-              <Label>Import timesheet</Label>
-              {eligibleTimeEntries.map((entry) => {
-                const hours = (entry.durationMinutes || 0) / 60;
-                return <label key={entry.id} className="flex cursor-pointer items-center gap-3 rounded-md border p-3 text-sm">
-                  <input type="checkbox" checked={selectedTimeIds.includes(entry.id)} onChange={(e) => setSelectedTimeIds((prev) => e.target.checked ? [...prev, entry.id] : prev.filter((id) => id !== entry.id))} />
-                  <span className="min-w-0 flex-1 truncate">{entry.description || "Timesheet"}</span>
-                  <span className="text-muted-foreground">{hours.toFixed(2)} jam</span>
-                </label>;
-              })}
-            </div>
-          )}
-          <div className="flex justify-between border-t pt-3 text-sm font-semibold"><span>Subtotal</span><span>{new Intl.NumberFormat("id-ID", { style: "currency", currency: form.currency, maximumFractionDigits: form.currency === "IDR" ? 0 : 2 }).format(calculateDraftItemsSubtotal([...projectItems, ...items, ...selectedTimeItems]))}</span></div>
+          <div className="flex justify-between border-t pt-3 text-sm font-semibold"><span>Subtotal</span><span>{new Intl.NumberFormat("id-ID", { style: "currency", currency: form.currency, maximumFractionDigits: form.currency === "IDR" ? 0 : 2 }).format(calculateDraftItemsSubtotal([...projectItems, ...items]))}</span></div>
         </div>
       )}
 

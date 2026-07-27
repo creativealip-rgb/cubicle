@@ -8,14 +8,7 @@ import {
 } from "@/db/schema";
 import { eq, and, sql, gte } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
-import {
-  Users,
-  Briefcase,
-  ArrowUpRight,
-  TrendingUp,
-  ListChecks,
-  ArrowRight,
-} from "lucide-react";
+import { ArrowUpRight, TrendingUp, ListChecks, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,7 +50,6 @@ export default async function DashboardPage() {
 
   const result = await db.execute(
     sql`SELECT
-      (SELECT count(*)::int FROM clients WHERE workspace_id = ${workspaceId} AND status = 'active') as active_clients,
       (SELECT count(*)::int FROM projects WHERE workspace_id = ${workspaceId} AND status = 'active') as active_projects,
       (SELECT count(*)::int FROM clients WHERE workspace_id = ${workspaceId}) as total_clients,
       (SELECT count(*)::int FROM projects WHERE workspace_id = ${workspaceId}) as total_projects,
@@ -67,7 +59,6 @@ export default async function DashboardPage() {
     `,
   );
   const counts = result.rows[0] as Record<string, number>;
-  const activeClients = counts.active_clients || 0;
   const activeProjects = counts.active_projects || 0;
   const totalClients = counts.total_clients || 0;
   const totalProjects = counts.total_projects || 0;
@@ -260,26 +251,6 @@ export default async function DashboardPage() {
     return action.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   }
 
-  const kpiCards = [
-    {
-      label: t("Klien Aktif", "Active Clients"),
-      value: String(activeClients),
-      change: `${activeClients} ${t("total", "total")}`,
-      icon: Users,
-      iconBg: "bg-slate-100 text-slate-600",
-      accentBorder: "border-l-slate-300",
-      href: "/app/clients",
-    },
-    {
-      label: t("Proyek Aktif", "Active Projects"),
-      value: String(activeProjects),
-      change: `${activeProjects} ${t("berjalan", "running")}`,
-      icon: Briefcase,
-      iconBg: "bg-slate-100 text-slate-600",
-      accentBorder: "border-l-slate-300",
-      href: "/app/projects",
-    },
-  ];
 
   const firstName = (session?.user?.name || "User").split(" ")[0];
 
@@ -312,7 +283,17 @@ export default async function DashboardPage() {
     meta?: string;
   };
 
-  const reminderItems: ReminderItem[] = [];
+  const reminderItems: ReminderItem[] = [
+    {
+      key: "active-projects",
+      label: t("Proyek Aktif", "Active Projects"),
+      href: "/app/projects",
+      tone: "blue",
+      group: "action",
+      count: activeProjects,
+      meta: t(`${activeProjects} berjalan`, `${activeProjects} running`),
+    },
+  ];
   if (att.overdueInvoices > 0) {
     reminderItems.push({
       key: "inv-overdue",
@@ -406,42 +387,33 @@ export default async function DashboardPage() {
         ]}
       />
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
-        <div className="space-y-6">
-          <section className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              {t("Kerja", "Work")}
-            </h2>
-            <div className="grid grid-cols-2 gap-4">
-              {kpiCards.map((kpi) => {
-                const Icon = kpi.icon;
-                return (
-                  <Link key={kpi.label} href={kpi.href} className="group">
-                    <Card
-                      className={`relative cursor-pointer border-l-4 ${kpi.accentBorder} transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg`}
-                    >
-                      <CardContent className="p-5">
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1.5">
-                            <p className="text-sm text-muted-foreground">{kpi.label}</p>
-                            <p className="text-2xl font-bold tracking-tight">{kpi.value}</p>
-                            <p className="text-xs text-muted-foreground">{kpi.change}</p>
-                          </div>
-                          <div
-                            className={`flex h-9 w-9 items-center justify-center rounded-lg transition-transform group-hover:scale-110 ${kpi.iconBg}`}
-                          >
-                            <Icon className="h-4 w-4" />
-                          </div>
-                        </div>
-                        <ArrowUpRight className="absolute right-3 top-3 h-3.5 w-3.5 text-slate-300 opacity-0 transition-opacity group-hover:opacity-100" />
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Reminder</h2>
+          <Badge variant="secondary">{reminderItems.length}</Badge>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          {reminderItems.slice(0, 5).map((item) => (
+            <Link key={item.key} href={item.href} className="group">
+              <Card className="h-full border-l-4 border-l-blue-500 transition hover:-translate-y-0.5 hover:shadow-md">
+                <CardContent className="flex min-h-24 items-start justify-between gap-3 p-4">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{item.label}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">{item.meta || t("Perlu ditangani", "Needs attention")}</p>
+                  </div>
+                  {item.count != null ? <Badge>{item.count}</Badge> : <ArrowRight className="h-4 w-4 text-muted-foreground" />}
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+          {reminderItems.length === 0 ? (
+            <Card className="sm:col-span-2 xl:col-span-5"><CardContent className="p-4 text-sm text-muted-foreground">{t("Tidak ada reminder aktif", "No active reminders")}</CardContent></Card>
+          ) : null}
+        </div>
+      </section>
 
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
+        <div>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base font-semibold">
@@ -481,8 +453,8 @@ export default async function DashboardPage() {
           </Card>
         </div>
 
-        <div className="space-y-4 xl:sticky xl:top-20 xl:self-start xl:pt-[30px]">
-          <Card>
+        <div className="xl:self-start">
+          <Card className="hidden">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-start justify-between gap-3 text-sm font-semibold">
                 <span>

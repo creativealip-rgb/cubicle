@@ -222,31 +222,33 @@ export function NotesListClient({
             )}
           >
             <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 space-y-1">
+              <button
+                type="button"
+                className="min-w-0 flex-1 space-y-1 text-left"
+                onClick={() => toggleExpanded(note.id)}
+                aria-expanded={expanded}
+              >
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="font-medium">{note.title}</h3>
-                  {note.pinned ? (
-                    <Badge variant="secondary">{t("Disematkan", "Pinned")}</Badge>
-                  ) : null}
-                  {note.status === "done" ? (
-                    <Badge>{t("Selesai", "Done")}</Badge>
-                  ) : null}
-                  {note.status === "archived" ? (
-                    <Badge variant="outline">{t("Arsip", "Archived")}</Badge>
-                  ) : null}
                   {overdue ? (
                     <Badge variant="destructive">{t("Terlambat", "Overdue")}</Badge>
                   ) : null}
-                  {rule !== "none" ? (
+                  {note.pinned && expanded ? (
+                    <Badge variant="secondary">{t("Disematkan", "Pinned")}</Badge>
+                  ) : null}
+                  {expanded && note.status === "done" ? (
+                    <Badge>{t("Selesai", "Done")}</Badge>
+                  ) : null}
+                  {expanded && note.status === "archived" ? (
+                    <Badge variant="outline">{t("Arsip", "Archived")}</Badge>
+                  ) : null}
+                  {expanded && rule !== "none" ? (
                     <Badge variant="outline">{recurrenceLabel(rule, t)}</Badge>
                   ) : null}
-                  {note.convertedTaskId ? (
+                  {expanded && note.convertedTaskId ? (
                     <Badge variant="secondary">{t("Jadi task", "Converted")}</Badge>
                   ) : null}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {t("Diperbarui", "Updated")} {formatDate(note.updatedAt, lang)}
-                </p>
                 {note.dueDate ? (
                   <p
                     className={cn(
@@ -256,32 +258,44 @@ export function NotesListClient({
                   >
                     {t("Tenggat", "Due")} {formatDate(note.dueDate, lang)}
                   </p>
-                ) : null}
-                {(note.notify7d || note.notify3d || note.notify1d) && (
+                ) : (
                   <p className="text-xs text-muted-foreground">
-                    {t("Ingatkan", "Remind")}{" "}
-                    {[
-                      note.notify7d && "7d",
-                      note.notify3d && "3d",
-                      note.notify1d && "1d",
-                    ]
-                      .filter(Boolean)
-                      .join(" / ")}{" "}
-                    {t("sebelum tenggat", "before due")}
+                    {t("Tanpa tenggat", "No due date")}
                   </p>
                 )}
-                {note.convertedTaskId ? (
-                  <p className="text-xs">
-                    <Link
-                      href={`/app/tasks?focus=${note.convertedTaskId}`}
-                      className="inline-flex items-center gap-1 text-primary hover:underline"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      {t("Buka task terkait", "Open linked task")}
-                    </Link>
-                  </p>
+                {expanded ? (
+                  <>
+                    <p className="text-xs text-muted-foreground">
+                      {t("Diperbarui", "Updated")} {formatDate(note.updatedAt, lang)}
+                    </p>
+                    {(note.notify7d || note.notify3d || note.notify1d) && (
+                      <p className="text-xs text-muted-foreground">
+                        {t("Ingatkan", "Remind")}{" "}
+                        {[
+                          note.notify7d && "7d",
+                          note.notify3d && "3d",
+                          note.notify1d && "1d",
+                        ]
+                          .filter(Boolean)
+                          .join(" / ")}{" "}
+                        {t("sebelum tenggat", "before due")}
+                      </p>
+                    )}
+                    {note.convertedTaskId ? (
+                      <p className="text-xs">
+                        <Link
+                          href={`/app/tasks?focus=${note.convertedTaskId}`}
+                          className="inline-flex items-center gap-1 text-primary hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          {t("Buka task terkait", "Open linked task")}
+                        </Link>
+                      </p>
+                    ) : null}
+                  </>
                 ) : null}
-              </div>
+              </button>
               <div className="flex flex-wrap justify-end gap-1">
                 <Button
                   type="button"
@@ -292,6 +306,8 @@ export function NotesListClient({
                 >
                   {expanded ? t("Tutup", "Collapse") : t("Buka", "Expand")}
                 </Button>
+                {expanded ? (
+                  <>
                 <form action={actions.togglePinned}>
                   <input type="hidden" name="noteId" value={note.id} />
                   <input type="hidden" name="tab" value={tab} />
@@ -370,12 +386,14 @@ export function NotesListClient({
                     "Delete this note permanently?",
                   )}
                 />
+                  </>
+                ) : null}
               </div>
             </div>
 
-            {note.body ? (
+            {expanded && note.body ? (
               <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-                {expanded ? note.body : bodyPreview}
+                {note.body}
               </p>
             ) : null}
 

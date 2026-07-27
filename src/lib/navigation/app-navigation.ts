@@ -28,6 +28,7 @@ export const appNavigation: NavigationEntry[] = [
   { kind: "group", id: "work", icon: Briefcase, label: { id: "Pekerjaan", en: "Work" }, children: [
     direct("clients", "/app/clients", Users, { id: "Klien", en: "Clients" }, { id: "Kelola relasi, data, dan portal klien", en: "Manage client relationships, data, and portals" }),
     direct("projects", "/app/projects", Briefcase, { id: "Proyek", en: "Projects" }, { id: "Pantau pekerjaan dan progres proyek", en: "Track project work and progress" }),
+    direct("services", "/app/packages", Package, { id: "Service", en: "Services" }, { id: "Atur layanan dan harga", en: "Set services and pricing" }),
     direct("tasks", "/app/tasks", CheckSquare, { id: "Tugas", en: "Tasks" }, { id: "Lihat tugas terbuka dan prioritas", en: "Review open tasks and priorities" }, "myOpenTasks"),
   ]},
   direct("time", "/app/time", Clock, { id: "Waktu", en: "Time" }),
@@ -35,7 +36,6 @@ export const appNavigation: NavigationEntry[] = [
   direct("files", "/app/files", FolderOpen, { id: "File", en: "Files" }),
   { kind: "group", id: "finance", icon: Wallet, label: { id: "Keuangan", en: "Finance" }, children: [
     direct("invoices", "/app/invoices", FileText, { id: "Invoice", en: "Invoices" }, { id: "Kelola tagihan dan status pembayaran", en: "Manage invoices and payment status" }, "unpaidInvoices"),
-    direct("services", "/app/packages", Package, { id: "Service", en: "Services" }, { id: "Atur layanan dan harga", en: "Set services and pricing" }),
     direct("expenses", "/app/expenses", Wallet, { id: "Pengeluaran", en: "Expenses" }, { id: "Catat biaya operasional", en: "Record operating costs" }),
     direct("reports", "/app/reports", BarChart3, { id: "Laporan", en: "Reports" }, { id: "Lihat ringkasan performa", en: "View performance summaries" }),
   ]},

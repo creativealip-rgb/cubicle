@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Clock, Plus } from "lucide-react";
+import { Check, ChevronDown, Clock, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/empty-state";
 import { SortableHeader } from "@/components/ui/sortable-header";
@@ -10,6 +10,13 @@ import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { cn } from "@/lib/utils";
 import { getProjectProgress, progressColor } from "@/lib/project-progress";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import type { ProjectBillingType } from "@/lib/project-list-filters";
 
 export type ProjectListItem = {
   id: string;
@@ -89,10 +96,14 @@ export function ProjectsListTable({
   projects,
   hasExtraFilters,
   statusTab,
+  billingType,
+  billingTypeHrefs,
 }: {
   projects: ProjectListItem[];
   hasExtraFilters: boolean;
   statusTab: string;
+  billingType?: ProjectBillingType;
+  billingTypeHrefs: Record<"all" | ProjectBillingType, string>;
 }) {
   const { t, locale } = useT();
 
@@ -174,13 +185,27 @@ export function ProjectsListTable({
           />
         </div>
         <div className="col-span-2">
-          <SortableHeader
-            as="div"
-            label={t("Progres", "Progress")}
-            dir={dirFor("progress")}
-            onClick={() => toggle("progress")}
-            className="text-xs"
-          />
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-1 rounded-sm text-xs font-medium hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              {t("Progres", "Progress")}
+              <ChevronDown className="h-3 w-3" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {([
+                ["all", t("Semua jenis", "All types")],
+                ["project", t("Per Project", "Per Project")],
+                ["hours", t("Per Jam", "Hourly")],
+                ["package", t("Service", "Service")],
+              ] as const).map(([value, label]) => (
+                <DropdownMenuItem key={value} asChild>
+                  <Link href={billingTypeHrefs[value]} className="flex items-center justify-between gap-4">
+                    {label}
+                    {(billingType ?? "all") === value && <Check className="h-4 w-4" />}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div className="col-span-2">
           <SortableHeader

@@ -22,7 +22,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import {
   NotesListClient,
@@ -245,7 +244,18 @@ export default async function PersonalPage({
       </div>
 
       <form action="/app/personal" className="flex flex-wrap gap-2">
-        <input type="hidden" name="tab" value={tab} />
+        <select
+          name="tab"
+          defaultValue={tab}
+          className="flex h-10 min-w-[160px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+          aria-label={t("Filter status", "Status filter")}
+        >
+          {tabs.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.label} ({item.count})
+            </option>
+          ))}
+        </select>
         <Input
           name="q"
           placeholder={t("Cari catatan…", "Search notes…")}
@@ -255,24 +265,12 @@ export default async function PersonalPage({
         <Button type="submit" variant="outline">
           {t("Cari", "Search")}
         </Button>
-        {query ? (
+        {query || tab !== "open" ? (
           <Button type="button" variant="ghost" asChild>
-            <Link href={buildHref(tab, "")}>{t("Reset", "Clear")}</Link>
+            <Link href={buildHref("open", "")}>{t("Reset", "Clear")}</Link>
           </Button>
         ) : null}
       </form>
-
-      <StatusFilterTabs
-        activeValue={tab}
-        hideEmpty={false}
-        tabs={tabs.map((item) => ({
-          value: item.id,
-          label: item.label,
-          href: buildHref(item.id, query),
-          count: item.count,
-          alwaysShow: true,
-        }))}
-      />
 
       <div className="space-y-6">
         <details className="group rounded-xl border bg-card">

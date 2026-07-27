@@ -360,6 +360,7 @@ export async function getMonthlyUsage(workspaceId?: string) {
       totalInputTokens: sql<number>`coalesce(sum(${promptGenerations.inputTokens}), 0)`,
       totalOutputTokens: sql<number>`coalesce(sum(${promptGenerations.outputTokens}), 0)`,
       totalCost: sql<string>`coalesce(sum(${promptGenerations.costUsd}), '0')`,
+      totalGenerations: sql<number>`count(*)::int`,
     })
     .from(promptGenerations)
     .where(
@@ -373,6 +374,7 @@ export async function getMonthlyUsage(workspaceId?: string) {
     totalInputTokens: Number(result?.totalInputTokens ?? 0),
     totalOutputTokens: Number(result?.totalOutputTokens ?? 0),
     totalCost: Number(result?.totalCost ?? 0),
+    totalGenerations: Number(result?.totalGenerations ?? 0),
     monthlyCap: MONTHLY_CAP_USD,
   };
 }

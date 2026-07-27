@@ -8,7 +8,6 @@ import {
   folders,
   invoices,
   portalRequests,
-  appointments,
   activityLogs,
   timeEntries,
   users,
@@ -28,7 +27,7 @@ import { PortalContactButtons } from "@/components/portal/portal-contact";
 import { ProjectAccordion } from "@/components/portal/project-accordion";
 import { PortalInvoices } from "@/components/portal/portal-invoices";
 import { PortalActionButtons } from "@/components/portal/portal-action-buttons";
-import { PortalRequestList } from "@/components/portal/portal-request-list";
+
 import { PortalTabs } from "@/components/portal/portal-tabs";
 import { PortalFileManager } from "@/components/portal/portal-file-manager";
 import { PortalLanguageSwitch } from "@/components/portal/portal-language-switch";
@@ -645,13 +644,6 @@ export default async function ClientPortalPage({
     )
     .limit(100);
 
-  const upcomingMeetings = await db
-    .select({ id: appointments.id, title: appointments.title, startTime: appointments.startTime, endTime: appointments.endTime, status: appointments.status })
-    .from(appointments)
-    .where(and(eq(appointments.workspaceId, client.workspaceId), eq(appointments.clientId, client.id), eq(appointments.status, "scheduled"), sql`${appointments.endTime} >= now()`))
-    .orderBy(appointments.startTime)
-    .limit(10);
-
   const activeCount = clientProjects.filter(
     (p) => p.status === "active",
   ).length;
@@ -779,7 +771,7 @@ export default async function ClientPortalPage({
               <Card className="shadow-none">
                 <CardContent className="p-3">
                   <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {t("Jatuh tempo", "Due")}
+                    {t("Invoice ke", "Invoice To")}
                   </p>
                   <p className="mt-1 text-xl font-semibold">
                     {dueInvoiceCount}
@@ -826,65 +818,6 @@ export default async function ClientPortalPage({
                 files: portalFilesList.length,
                 invoices: clientInvoices.length,
               }}
-              overview={
-                <>
-                  {upcomingMeetings.length > 0 && (
-                    <section className="mb-8">
-                      <h2 className="mb-4 text-xl font-semibold">{t("Jadwal Pertemuan", "Meeting Schedule")}</h2>
-                      <div className="space-y-2">{upcomingMeetings.map((meeting) => (
-                        <Card key={meeting.id} className="shadow-none"><CardContent className="p-4">
-                          <p className="font-medium">{meeting.title}</p>
-                          <p className="mt-1 text-sm text-muted-foreground">{new Intl.DateTimeFormat(lang === "id" ? "id-ID" : "en-US", { dateStyle: "full", timeStyle: "short" }).format(meeting.startTime)}</p>
-                        </CardContent></Card>
-                      ))}</div>
-                    </section>
-                  )}
-                  {(pendingClientRequests.length > 0 ||
-                    clientPortalRequests.length > 0) && (
-                    <section>
-                      <h2 className="mb-4 text-xl font-semibold">
-                        {t("Permintaan & Pengingat", "Requests & Reminders")} (
-                        {pendingClientRequests.length} {t("aktif", "active")})
-                      </h2>
-                      <PortalRequestList
-                        requests={clientPortalRequests.map((r) => ({
-                          id: r.id,
-                          title: r.title,
-                          description: r.description,
-                          type: r.type,
-                          status: r.status,
-                          dueDate: r.dueDate ? String(r.dueDate) : null,
-                          meetingStartTime: r.meetingStartTime,
-                          meetingDurationMinutes: r.meetingDurationMinutes,
-                          meetingTimezone: r.meetingTimezone,
-                          meetingStatus: r.meetingStatus,
-                          meetingResponseNote: r.meetingResponseNote,
-                        }))}
-                        token={token}
-                      />
-                    </section>
-                  )}
-                  {pendingClientRequests.length === 0 &&
-                    clientPortalRequests.length === 0 && (
-                      <Card className="shadow-none">
-                        <CardContent className="py-8 text-center text-muted-foreground">
-                          <p className="text-sm">
-                            {t(
-                              "Tidak ada request atau pengingat aktif.",
-                              "No active requests or reminders.",
-                            )}
-                          </p>
-                          <p className="mt-1 text-xs">
-                            {t(
-                              "Gunakan Minta Laporan atau Ajukan Pertemuan bila diperlukan.",
-                              "Use Request Report or Schedule Meeting when needed.",
-                            )}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    )}
-                </>
-              }
               projects={
                 <section>
                   <h2 className="mb-4 text-xl font-semibold">

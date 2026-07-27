@@ -43,16 +43,18 @@ services:
         limits:
           cpus: "1.0"
           # Next 16 Turbopack cold-compiling `/` exceeds 1280M and gets OOM-killed.
-          memory: 2G
+          # 2G still caused frequent Bad Gateway during cold route compiles; dev lane gets 3G.
+          memory: 3G
         reservations:
           cpus: "0.1"
           memory: 256M
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3100/api/health || exit 1"]
-      interval: 20s
-      timeout: 5s
-      retries: 6
-      start_period: 60s
+      # Dev cold compiles can take 30-60s; keep healthcheck loose so Traefik/dev restarts don't flap.
+      interval: 45s
+      timeout: 20s
+      retries: 8
+      start_period: 180s
     logging:
       options:
         max-size: "10m"

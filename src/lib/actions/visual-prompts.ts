@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { promptGenerations } from "@/db/schema";
+import { promptGenerations, users } from "@/db/schema";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { writeActivityLog } from "@/lib/actions/activity";
@@ -112,9 +112,12 @@ export async function generateVisualPrompt(rawInput: unknown) {
   const monthStart = new Date();
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
+  const [account] = await db.select({ plan: users.plan }).from(users).where(eq(users.id, user.id)).limit(1);
+  const generationLimit = account?.plan === "team" ? null : account?.plan === "solo" ? 100 : 10;
   const [usage] = await db
     .select({
       totalCost: sql<string>`coalesce(sum(${promptGenerations.costUsd}), '0')`,
+      totalGenerations: sql<number>`count(*)::int`,
     })
     .from(promptGenerations)
     .where(
@@ -124,6 +127,10 @@ export async function generateVisualPrompt(rawInput: unknown) {
       ),
     );
   const currentCost = Number(usage?.totalCost ?? "0");
+  const currentGenerations = Number(usage?.totalGenerations ?? 0);
+  if (generationLimit !== null && currentGenerations >= generationLimit) {
+    throw new Error(`Jatah generate bulanan ${generationLimit} sudah habis.`);
+  }
   if (currentCost >= MONTHLY_CAP_USD) {
     throw new Error(
       `Monthly usage cap of $${MONTHLY_CAP_USD} reached. Current: $${currentCost.toFixed(4)}`,

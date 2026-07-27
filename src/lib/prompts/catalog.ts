@@ -4,7 +4,7 @@ export const promptTypeIds = [
   "instagram-feed", "carousel", "story", "content-series", "product-ad",
   "promo-discount", "testimonial-review", "product-photography", "product-try-on",
   "fnb-menu", "short-video-script", "video-storyboard", "ugc-ad",
-  "youtube-thumbnail", "marketing-copy",
+  "youtube-thumbnail", "marketing-copy", "article",
 ] as const;
 
 export type PromptTypeId = (typeof promptTypeIds)[number];
@@ -51,6 +51,7 @@ export const launchPromptCatalog: PromptCatalogEntry[] = [
   entry("ugc-ad", "video", "UGC Ad", "Script UGC natural dari masalah sampai CTA.", "user-round", [field("platform", "Platform", "text", { required: true }), field("duration", "Durasi", "text", { required: true }), field("creatorProfile", "Profil kreator", "textarea", { required: true }), field("objection", "Keberatan audiens", "textarea"), field("proofAvailable", "Bukti tersedia", "textarea")], ["Natural hook", "Problem", "Demo", "Proof", "Objection handling", "CTA"]),
   entry("youtube-thumbnail", "video", "YouTube Thumbnail", "Thumbnail kuat dengan teks singkat dan kontras.", "youtube", [field("videoTopic", "Topik / judul video", "textarea", { required: true }), field("subject", "Subjek", "text", { required: true }), field("face", "Wajah", "select", { required: true, options: ["face", "no-face"] }), field("textPreference", "Preferensi teks")], ["Subject", "Expression", "Composition", "Teks 3–5 kata", "Contrast", "Negative prompt"]),
   entry("marketing-copy", "brand-copy", "Marketing Copy", "Satu format copy yang fokus dan siap dipakai.", "type", [field("copyFormat", "Format copy", "select", { required: true, options: ["caption", "ad-copy", "product-description", "headline-set", "cta-set", "broadcast-message"] }), field("length", "Panjang", "select", { required: true, options: ["short", "medium", "long"] }), field("channel", "Channel", "text", { required: true }), field("tone", "Tone")], ["Copy final", "CTA"]),
+  entry("article", "brand-copy", "Artikel", "Artikel terstruktur dengan judul, isi, dan CTA siap edit.", "file-text", [field("topic", "Topik", "text", { required: true }), field("length", "Panjang", "select", { required: true, options: ["short", "medium", "long"] }), field("keywords", "Kata kunci", "text"), field("tone", "Tone")], ["Judul", "Artikel", "CTA"]),
 ];
 
 const baseSchema = z.object({

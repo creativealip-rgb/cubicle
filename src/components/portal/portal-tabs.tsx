@@ -9,7 +9,7 @@ import {
 } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
-  LayoutDashboard,
+
   FolderKanban,
   FolderOpen,
   Receipt,
@@ -27,10 +27,10 @@ import {
 } from "@/components/ui/dialog";
 import { useT } from "@/lib/i18n-client";
 
-export type PortalTabKey = "overview" | "projects" | "files" | "invoices";
+export type PortalTabKey = "projects" | "files" | "invoices";
 
 const TAB_KEYS: PortalTabKey[] = [
-  "overview",
+
   "projects",
   "files",
   "invoices",
@@ -40,12 +40,12 @@ function normalizeTab(tab?: string | null): PortalTabKey {
   if (tab && (TAB_KEYS as string[]).includes(tab)) {
     return tab as PortalTabKey;
   }
-  return "overview";
+  return "projects";
 }
 
 type PortalTabsProps = {
   initialTab?: string | null;
-  overview: ReactNode;
+
   projects: ReactNode;
   files: ReactNode;
   invoices: ReactNode;
@@ -65,7 +65,7 @@ type PortalTabsProps = {
  */
 export function PortalTabs({
   initialTab,
-  overview,
+
   projects,
   files,
   invoices,
@@ -104,7 +104,7 @@ export function PortalTabs({
         params.delete("projectId");
         params.delete("folderId");
       }
-      if (next === "overview") params.delete("tab");
+      if (next === "projects") params.delete("tab");
       else params.set("tab", next);
 
       const qs = params.toString();
@@ -121,11 +121,7 @@ export function PortalTabs({
     icon: ReactNode;
     badge?: number;
   }> = [
-    {
-      key: "overview",
-      label: t("Ringkasan", "Overview"),
-      icon: <LayoutDashboard className="h-3.5 w-3.5" />,
-    },
+
     {
       key: "projects",
       label: t("Proyek", "Projects"),
@@ -200,9 +196,7 @@ export function PortalTabs({
         </div>
       </div>
 
-      <TabsContent value="overview" className={panelClass}>
-        {overview}
-      </TabsContent>
+
       <TabsContent value="projects" className={panelClass}>
         {projects}
       </TabsContent>
