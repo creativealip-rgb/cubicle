@@ -34,7 +34,7 @@ export default async function NewProposalPage() {
             {t("Semua proposal", "All proposals")}
           </Link>
         </Button>
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="app-page-title">
           {t("Proposal baru", "New proposal")}
         </h1>
         <p className="text-sm text-slate-500 mt-1">

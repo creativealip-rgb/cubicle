@@ -220,6 +220,8 @@ export async function submitQuestionnaire(input: {
   answers: Record<string, string | string[] | number>;
 }) {
   const tokenHash = hashToken(input.token);
+  const { enforceServerActionRateLimit } = await import("@/lib/distributed-rate-limit");
+  await enforceServerActionRateLimit("questionnaire:submit", tokenHash, { limit: 10, windowSec: 300 });
   const [resp] = await db.select().from(questionnaireResponses)
     .where(eq(questionnaireResponses.sharedTokenHash, tokenHash))
     .limit(1);

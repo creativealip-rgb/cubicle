@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Search,
@@ -11,6 +11,7 @@ import {
   LogOut,
   Settings,
   HelpCircle,
+  Megaphone,
   Menu,
   Sparkles,
   Check,
@@ -97,6 +98,7 @@ function formatElapsed(startTime?: string | null, pausedAt?: string | null) {
 export function AppTopbar({ user }: AppTopbarProps) {
   const { t } = useT();
   const router = useRouter();
+  const pathname = usePathname();
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
@@ -376,7 +378,9 @@ export function AppTopbar({ user }: AppTopbarProps) {
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" className="h-9 gap-1 px-2.5 sm:px-3">
                     <Plus className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t("Baru", "New")}</span>
+                    <span className={cn("hidden sm:inline", pathname === "/app/projects" && "lg:hidden")}>
+                      {t("Baru", "New")}
+                    </span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
@@ -552,7 +556,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
                           {t("Upgrade untuk multi workspace", "Upgrade for multiple workspaces")}
                         </p>
                         <p className="text-[10px] text-muted-foreground">
-                          Solo · Rp 49rb/{t("bulan", "month")}
+                          Solo · Rp 588rb/{t("tahun", "year")}
                         </p>
                       </div>
                     </Link>
@@ -584,7 +588,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
                           {t("Upgrade untuk undang anggota", "Upgrade to invite members")}
                         </p>
                         <p className="text-[10px] text-muted-foreground">
-                          Team · Rp 99rb/{t("bulan", "month")}
+                          Team · Rp 1,188jt/{t("tahun", "year")}
                         </p>
                       </div>
                     </Link>
@@ -681,6 +685,12 @@ export function AppTopbar({ user }: AppTopbarProps) {
                     <Link href="/app/billing" className="cursor-pointer">
                       <CreditCard className="h-4 w-4" />
                       {t("Tagihan", "Billing")}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/app/whats-new" className="cursor-pointer">
+                      <Megaphone className="h-4 w-4" />
+                      What’s New
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>

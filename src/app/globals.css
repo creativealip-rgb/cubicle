@@ -3,6 +3,34 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@layer components {
+  .app-page-header {
+    @apply flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .app-page-title {
+    @apply break-words font-display text-xl font-semibold leading-tight tracking-tight text-foreground sm:text-2xl;
+  }
+
+  .app-page-description {
+    @apply mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground;
+  }
+
+  .app-page-actions {
+    @apply flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto;
+  }
+
+  /* Incremental bridge: legacy page headers already use app-page-title. */
+  .app-page-header > :first-child,
+  :where(main) div:has(> .app-page-title) {
+    @apply min-w-0;
+  }
+
+  :where(main) div:has(> .app-page-title) > p {
+    @apply mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground;
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

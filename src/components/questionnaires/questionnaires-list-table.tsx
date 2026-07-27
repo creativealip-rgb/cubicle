@@ -51,8 +51,8 @@ export function QuestionnairesListTable({
   );
 
   return (
-    <div className="hidden overflow-hidden rounded-2xl border bg-white md:block">
-      <Table>
+    <div className="hidden overflow-hidden rounded-lg border bg-card md:block">
+      <Table className="[&_td]:p-3 [&_th]:px-3">
         <TableHeader>
           <TableRow>
             <TableHead>
@@ -94,8 +94,11 @@ export function QuestionnairesListTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sorted.map((q) => (
-            <TableRow key={q.id}>
+          {sorted.map((q, index) => (
+            <TableRow
+              key={q.id}
+              className={`border-b border-slate-200 hover:bg-slate-100/70 ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"}`}
+            >
               <TableCell>
                 <Link
                   href={`/app/questionnaires/${q.id}`}

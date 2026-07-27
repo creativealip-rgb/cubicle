@@ -2,6 +2,7 @@
   "name": "cubicle",
   "version": "0.1.112",
   "private": true,
+  "packageManager": "npm@10.9.7",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,7 +10,9 @@
     "lint": "eslint",
     "smoke": "node scripts/smoke.mjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e:cross-tenant": "playwright test e2e/cross-tenant.spec.ts --project=chromium --workers=1 --retries=0",
+    "test:rate-limit": "tsx scripts/test-distributed-rate-limit.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1068.0",
@@ -30,21 +33,22 @@
     "@radix-ui/react-tabs": "^1.1.14",
     "@radix-ui/react-tooltip": "^1.2.9",
     "@react-pdf/renderer": "^4.5.1",
-    "better-auth": "^1.6.18",
+    "better-auth": "1.6.22",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.2",
+    "exceljs": "^4.4.0",
     "lucide-react": "^1.18.0",
-    "next": "16.2.9",
+    "next": "^16.2.11",
     "pg": "^8.21.0",
-    "postcss": "8.5.15",
+    "postcss": "8.5.18",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-markdown": "^10.1.0",
+    "redis": "^5.12.1",
     "resend": "^6.12.4",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
-    "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -58,7 +62,7 @@
     "@vitejs/plugin-react": "^6.0.3",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
-    "eslint-config-next": "16.2.9",
+    "eslint-config-next": "^16.2.11",
     "eslint-plugin-unused-imports": "^4.4.1",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
@@ -66,7 +70,9 @@
     "vitest": "^4.1.9"
   },
   "overrides": {
-    "postcss": "8.5.15",
-    "esbuild": "^0.28.1"
+    "postcss": "8.5.18",
+    "esbuild": "^0.28.1",
+    "sharp": "0.35.3",
+    "uuid": "^11.1.1"
   }
 }

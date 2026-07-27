@@ -73,10 +73,11 @@ export function TeamManager({
     }
   }
 
-  async function handleRemove(memberId: string) {
-    if (!confirm("Hapus anggota tim ini dari workspace?")) return;
+  async function handleRemove(member: Member) {
+    const target = member.email || member.name || "anggota ini";
+    if (!confirm(`Hapus ${target} dari workspace?`)) return;
     try {
-      await removeWorkspaceMember(memberId);
+      await removeWorkspaceMember(member.id);
       toast.success("Anggota dihapus");
       router.refresh();
     } catch (err: unknown) {
@@ -169,8 +170,9 @@ export function TeamManager({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-destructive"
-                  onClick={() => handleRemove(member.id)}
+                  className="h-11 w-11 text-destructive"
+                  aria-label={`Hapus ${member.email || member.name || "anggota"}`}
+                  onClick={() => handleRemove(member)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>

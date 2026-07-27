@@ -50,7 +50,7 @@ export function taskStatusVariant(status: string, lang?: Lang): StatusBadgeConfi
     case "in_progress":
       return { variant: "default", label: tr(lang, "Dikerjakan", "In Progress") };
     case "review":
-      return { variant: "warning", label: tr(lang, "Ditinjau", "Review") };
+      return { variant: "outline", label: tr(lang, "Review", "Review") };
     case "done":
       return { variant: "success", label: tr(lang, "Selesai", "Done") };
     default:

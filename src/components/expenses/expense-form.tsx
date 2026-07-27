@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createExpense, updateExpense } from "@/lib/actions/expenses";
@@ -27,6 +27,7 @@ export interface CategoryOption {
 export interface ProjectOption {
   id: string;
   name: string;
+  clientId?: string | null;
 }
 
 export interface ClientOption {
@@ -95,6 +96,43 @@ export function ExpenseForm({
     taxAmount: initial?.taxAmount ?? "",
     receiptUrl: initial?.receiptUrl ?? null,
   });
+
+  const filteredProjects = useMemo(() => {
+    if (!form.clientId) return projects;
+    return projects.filter((p) => !p.clientId || p.clientId === form.clientId);
+  }, [form.clientId, projects]);
+
+  function setClientId(nextClientId: string) {
+    setForm((prev) => {
+      const nextProjectStillValid =
+        !nextClientId ||
+        !prev.projectId ||
+        projects.some(
+          (p) =>
+            p.id === prev.projectId &&
+            (!p.clientId || p.clientId === nextClientId),
+        );
+      return {
+        ...prev,
+        clientId: nextClientId,
+        projectId: nextProjectStillValid ? prev.projectId : "",
+      };
+    });
+  }
+
+  function setProjectId(nextProjectId: string) {
+    setForm((prev) => {
+      if (!nextProjectId) {
+        return { ...prev, projectId: "" };
+      }
+      const project = projects.find((p) => p.id === nextProjectId);
+      return {
+        ...prev,
+        projectId: nextProjectId,
+        clientId: project?.clientId || prev.clientId,
+      };
+    });
+  }
 
   async function handleReceipt(file: File | undefined) {
     if (!file) return;
@@ -179,10 +217,11 @@ export function ExpenseForm({
     }
   }
 
-  const gridCols = compact ? "grid-cols-2 md:grid-cols-4" : "grid-cols-1 md:grid-cols-2";
+  const gridCols = compact ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-4" : "grid-cols-1 md:grid-cols-2";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-6">
       <div className={`grid gap-3 ${gridCols}`}>
         <div className="space-y-1">
           <Label htmlFor="date" className="text-xs">{t("Tanggal", "Date")}</Label>
@@ -278,32 +317,15 @@ export function ExpenseForm({
               id="vendor"
               value={form.vendor}
               onChange={(e) => setForm({ ...form, vendor: e.target.value })}
-              placeholder="e.g. Figma, Grab"
+              placeholder={t("Contoh: Figma, Grab", "e.g. Figma, Grab")}
               className="h-9"
             />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="project" className="text-xs">{t("Proyek (opsional)", "Project (optional)")}</Label>
-            <Select
-              value={form.projectId || NONE}
-              onValueChange={(v) => setForm({ ...form, projectId: v === NONE ? "" : v })}
-            >
-              <SelectTrigger id="project" className="h-9">
-                <SelectValue placeholder={t("Tidak ada", "None")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NONE}>{t("Tidak ada", "None")}</SelectItem>
-                {projects.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
           <div className="space-y-1">
             <Label htmlFor="client" className="text-xs">{t("Klien (opsional)", "Client (optional)")}</Label>
             <Select
               value={form.clientId || NONE}
-              onValueChange={(v) => setForm({ ...form, clientId: v === NONE ? "" : v })}
+              onValueChange={(v) => setClientId(v === NONE ? "" : v)}
             >
               <SelectTrigger id="client" className="h-9">
                 <SelectValue placeholder={t("Tidak ada", "None")} />
@@ -315,6 +337,28 @@ export function ExpenseForm({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="project" className="text-xs">{t("Proyek (opsional)", "Project (optional)")}</Label>
+            <Select
+              value={form.projectId || NONE}
+              onValueChange={(v) => setProjectId(v === NONE ? "" : v)}
+            >
+              <SelectTrigger id="project" className="h-9">
+                <SelectValue placeholder={t("Tidak ada", "None")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NONE}>{t("Tidak ada", "None")}</SelectItem>
+                {filteredProjects.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {form.clientId && filteredProjects.length === 0 && (
+              <p className="text-[11px] text-slate-500">
+                {t("Klien ini belum punya proyek.", "This client has no projects yet.")}
+              </p>
+            )}
           </div>
           <div className="space-y-1">
             <Label htmlFor="taxAmount" className="text-xs">{t("Pajak (opsional)", "Tax (optional)")}</Label>
@@ -376,9 +420,10 @@ export function ExpenseForm({
           </div>
         </div>
       )}
+      </div>
 
-      <div className="flex gap-2">
-        <Button type="submit" disabled={loading || uploading} size="sm">
+      <div className="shrink-0 flex gap-2 border-t bg-background px-4 py-3 sm:px-6">
+        <Button type="submit" disabled={loading || uploading} size="sm" className="min-h-10">
           {loading ? (
             <Loader2 className="h-4 w-4 mr-1 animate-spin" />
           ) : (
@@ -391,7 +436,7 @@ export function ExpenseForm({
               : t("Tambah pengeluaran", "Add expense")}
         </Button>
         {onCancel && (
-          <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
+          <Button type="button" variant="ghost" size="sm" className="min-h-10" onClick={onCancel}>
             <X className="h-4 w-4 mr-1" />
             {t("Batal", "Cancel")}
           </Button>

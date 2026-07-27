@@ -1,6 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db, type Db } from "@/db";
-import { clients, projects, tasks, workspaceMembers } from "@/db/schema";
+import { clients, expenses, folders, projects, tasks, workspaceMembers } from "@/db/schema";
 
 export type Role = "owner" | "member" | "viewer";
 
@@ -82,6 +82,28 @@ export async function assertProjectInWorkspace(database: Db, userId: string, wor
 
   if (!project) throw new ForbiddenError("Project access denied");
   return project;
+}
+
+export async function assertFolderInWorkspace(database: Db, userId: string, workspaceId: string, folderId: string) {
+  await assertWorkspaceMember(database, userId, workspaceId);
+  const [folder] = await database
+    .select()
+    .from(folders)
+    .where(and(eq(folders.id, folderId), eq(folders.workspaceId, workspaceId)))
+    .limit(1);
+  if (!folder) throw new ForbiddenError("Folder access denied");
+  return folder;
+}
+
+export async function assertExpenseInWorkspace(database: Db, userId: string, workspaceId: string, expenseId: string) {
+  await assertWorkspaceMember(database, userId, workspaceId);
+  const [expense] = await database
+    .select()
+    .from(expenses)
+    .where(and(eq(expenses.id, expenseId), eq(expenses.workspaceId, workspaceId)))
+    .limit(1);
+  if (!expense) throw new ForbiddenError("Expense access denied");
+  return expense;
 }
 
 export async function assertTaskInWorkspace(database: Db, userId: string, workspaceId: string, taskId: string) {

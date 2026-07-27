@@ -54,7 +54,7 @@ export default async function QuestionnairesPage() {
     <div className="space-y-6 p-4 sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("Kuesioner", "Questionnaires")}</h1>
+          <h1 className="app-page-title">{t("Kuesioner", "Questionnaires")}</h1>
           <p className="mt-1 text-sm text-slate-500">
             {t(
               "Form intake klien. Jawaban jadi brief proyek.",

@@ -21,14 +21,14 @@ const plans = [
   {
     key: "solo",
     name: "Solo",
-    price: "Rp 49rb/bulan",
+    price: "Rp 588rb/tahun",
     description: "Untuk freelancer yang butuh unlimited clients.",
     features: ["1 pengguna", "Klien unlimited", "Client portal", "AI assistant", "Booking", "Proposal & kontrak"],
   },
   {
     key: "team",
     name: "Team",
-    price: "Rp 99rb/bulan",
+    price: "Rp 1,188jt/tahun",
     description: "Untuk team kecil yang handle banyak client bareng.",
     features: ["5 pengguna", "Workspace bersama", "Peran tim", "Laporan lanjutan", "Prioritas support"],
   },
@@ -58,9 +58,9 @@ export default async function BillingPage() {
     <div className="space-y-8">
       <div>
         <p className="text-sm font-medium text-[#6647F0]">{t("Billing", "Billing")}</p>
-        <h1 className="text-3xl font-semibold text-slate-950">{t("Langganan", "Subscription")}</h1>
+        <h1 className="app-page-title">{t("Langganan", "Subscription")}</h1>
         <p className="mt-2 text-slate-600">
-          {t("Bayar via Pakasir QRIS. Plan aktif otomatis setelah webhook payment diterima.", "Pay via Pakasir QRIS. Plan activates automatically after payment webhook is received.")}
+          {t("Bayar setahun sekali via Pakasir QRIS, tanpa pajak. Plan aktif otomatis setelah webhook payment diterima.", "Pay once yearly via Pakasir QRIS, tax-free. Plan activates automatically after payment webhook is received.")}
         </p>
       </div>
 

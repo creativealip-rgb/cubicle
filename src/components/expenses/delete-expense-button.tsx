@@ -47,11 +47,12 @@ export function DeleteExpenseButton({ expenseId, description }: DeleteExpenseBut
       <Button
         variant="ghost"
         size="sm"
-        className="h-7 w-7 p-0 text-slate-400 hover:text-red-600"
+        className="h-10 w-10 p-0 text-slate-400 hover:text-red-600"
         onClick={() => setOpen(true)}
         title={t("Hapus", "Delete")}
+        aria-label={t("Hapus pengeluaran", "Delete expense")}
       >
-        <Trash2 className="h-3.5 w-3.5" />
+        <Trash2 className="h-4 w-4" />
       </Button>
       <DialogContent>
         <DialogHeader>

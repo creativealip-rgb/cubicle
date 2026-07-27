@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { invoices, invoiceItems, clients, workspaces, payments } from "@/db/schema";
+import {
+  invoices,
+  invoiceItems,
+  clients,
+  workspaces,
+  payments,
+} from "@/db/schema";
 import { renderInvoicePdf } from "@/lib/pdf/invoice-pdf";
 import { getClientPortalAccess, logPortalAccess } from "@/lib/actions/portal";
 
@@ -47,7 +53,10 @@ export async function GET(
 
   // Don't leak drafts to clients
   if (inv.status === "draft") {
-    return NextResponse.json({ error: "Invoice not available" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Invoice not available" },
+      { status: 404 },
+    );
   }
 
   const [ws] = await db
@@ -69,6 +78,18 @@ export async function GET(
     .from(payments)
     .where(eq(payments.invoiceId, invoiceId));
   const amountPaid = pays.reduce((sum, p) => sum + Number(p.amount), 0);
+
+  // Mark viewed only when client actually opens the PDF, not on portal page load.
+  try {
+    if (!inv.clientFirstViewedAt) {
+      await db
+        .update(invoices)
+        .set({ clientFirstViewedAt: new Date(), updatedAt: new Date() })
+        .where(eq(invoices.id, inv.id));
+    }
+  } catch {
+    // non-critical analytics
+  }
 
   // Audit the download (non-critical)
   try {

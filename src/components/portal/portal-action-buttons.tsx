@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { BarChart3, Calendar, Loader2 } from "lucide-react";
 import { createClientPortalRequest } from "@/lib/actions/portal-requests";
+import { useT } from "@/lib/i18n-client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -35,20 +36,28 @@ export function PortalActionButtons({
   projects: ProjectOption[];
 }) {
   const router = useRouter();
+  const { t } = useT();
   const [kind, setKind] = useState<"report" | "meeting" | null>(null);
   const [loading, setLoading] = useState(false);
   const [projectId, setProjectId] = useState<string>("");
   const [message, setMessage] = useState("");
-  const [reportPeriod, setReportPeriod] = useState("Last 30 days");
+  const [reportPeriod, setReportPeriod] = useState("30 hari terakhir");
   const [preferredDate, setPreferredDate] = useState("");
+  const [preferredTime, setPreferredTime] = useState("");
+  const [durationMinutes, setDurationMinutes] = useState("60");
+  const [timezone, setTimezone] = useState(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Jakarta",
+  );
 
   function close() {
     if (loading) return;
     setKind(null);
     setMessage("");
     setProjectId("");
-    setReportPeriod("Last 30 days");
+    setReportPeriod("30 hari terakhir");
     setPreferredDate("");
+    setPreferredTime("");
+    setDurationMinutes("60");
   }
 
   async function submit() {
@@ -62,16 +71,29 @@ export function PortalActionButtons({
         projectId: projectId || null,
         reportPeriod: kind === "report" ? reportPeriod || null : null,
         preferredDate: kind === "meeting" ? preferredDate || null : null,
+        preferredTime: kind === "meeting" ? preferredTime || null : null,
+        durationMinutes: kind === "meeting" ? Number(durationMinutes) : null,
+        timezone: kind === "meeting" ? timezone : null,
       });
       toast.success(
         kind === "report"
-          ? "Request report terkirim ke tim"
-          : "Request meeting terkirim ke tim",
+          ? t(
+              "Permintaan laporan terkirim ke tim",
+              "Report request sent to the team",
+            )
+          : t(
+              "Permintaan pertemuan terkirim ke tim",
+              "Meeting request sent to the team",
+            ),
       );
       close();
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal kirim request");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t("Gagal kirim request", "Failed to send request"),
+      );
     } finally {
       setLoading(false);
     }
@@ -83,20 +105,20 @@ export function PortalActionButtons({
         <Button
           type="button"
           variant="outline"
-          className="h-10 px-5 rounded-lg gap-2"
+          className="min-h-11 gap-2 rounded-lg px-4"
           onClick={() => setKind("report")}
         >
           <BarChart3 className="h-4 w-4" />
-          Request Report
+          {t("Minta Laporan", "Request Report")}
         </Button>
         <Button
           type="button"
           variant="outline"
-          className="h-10 px-5 rounded-lg gap-2"
+          className="min-h-11 gap-2 rounded-lg px-4"
           onClick={() => setKind("meeting")}
         >
           <Calendar className="h-4 w-4" />
-          Request Meeting
+          {t("Ajukan Pertemuan", "Schedule Meeting")}
         </Button>
       </div>
 
@@ -104,28 +126,42 @@ export function PortalActionButtons({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {kind === "report" ? "Request Report" : "Request Meeting"}
+              {kind === "report"
+                ? t("Minta Laporan", "Request Report")
+                : t("Ajukan Pertemuan", "Schedule Meeting")}
             </DialogTitle>
             <DialogDescription>
               {kind === "report"
-                ? "Tim akan siapkan ringkasan progress / jam / invoice sesuai permintaan."
-                : "Tim akan hubungi kamu untuk jadwalkan meeting."}
+                ? t(
+                    "Tim akan siapkan ringkasan progress / jam / invoice sesuai permintaan.",
+                    "The team will prepare the requested progress, hours, or invoice summary.",
+                  )
+                : t(
+                    "Tim akan hubungi kamu untuk jadwalkan meeting.",
+                    "The team will contact you to schedule the meeting.",
+                  )}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3">
             {projects.length > 0 && (
               <div className="space-y-1.5">
-                <Label className="text-xs">Project (opsional)</Label>
+                <Label className="text-xs">
+                  {t("Proyek (opsional)", "Project (optional)")}
+                </Label>
                 <Select
                   value={projectId || "none"}
                   onValueChange={(v) => setProjectId(v === "none" ? "" : v)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Semua project" />
+                    <SelectValue
+                      placeholder={t("Semua proyek", "All projects")}
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Semua project</SelectItem>
+                    <SelectItem value="none">
+                      {t("Semua proyek", "All projects")}
+                    </SelectItem>
                     {projects.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.name}
@@ -139,34 +175,55 @@ export function PortalActionButtons({
             {kind === "report" && (
               <div className="space-y-1.5">
                 <Label htmlFor="report-period" className="text-xs">
-                  Periode
+                  {t("Periode", "Period")}
                 </Label>
                 <Input
                   id="report-period"
                   value={reportPeriod}
                   onChange={(e) => setReportPeriod(e.target.value)}
-                  placeholder="Last 30 days / This month"
+                  placeholder={t(
+                    "30 hari terakhir / Bulan ini",
+                    "Last 30 days / This month",
+                  )}
                 />
               </div>
             )}
 
             {kind === "meeting" && (
-              <div className="space-y-1.5">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
                 <Label htmlFor="preferred-date" className="text-xs">
-                  Tanggal preferensi (opsional)
+                  {t("Tanggal", "Date")} *
                 </Label>
                 <Input
                   id="preferred-date"
                   type="date"
                   value={preferredDate}
                   onChange={(e) => setPreferredDate(e.target.value)}
+                  required
                 />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="preferred-time" className="text-xs">{t("Jam mulai", "Start time")} *</Label>
+                  <Input id="preferred-time" type="time" value={preferredTime} onChange={(e) => setPreferredTime(e.target.value)} required />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">{t("Durasi", "Duration")} *</Label>
+                  <Select value={durationMinutes} onValueChange={setDurationMinutes}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{[30,45,60,90,120].map((minutes) => <SelectItem key={minutes} value={String(minutes)}>{minutes} menit</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="meeting-timezone" className="text-xs">{t("Zona waktu", "Timezone")} *</Label>
+                  <Input id="meeting-timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)} required />
+                </div>
               </div>
             )}
 
             <div className="space-y-1.5">
               <Label htmlFor="request-message" className="text-xs">
-                Catatan
+                {kind === "meeting" ? t("Agenda", "Agenda") : t("Catatan", "Notes")} {kind === "meeting" ? "*" : ""}
               </Label>
               <Textarea
                 id="request-message"
@@ -174,26 +231,38 @@ export function PortalActionButtons({
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder={
                   kind === "report"
-                    ? "Mis. butuh ringkasan jam billable + status task…"
-                    : "Mis. topik meeting, zona waktu, jam preferensi…"
+                    ? t(
+                        "Mis. butuh ringkasan jam billable + status task…",
+                        "E.g. billable hours summary and task status…",
+                      )
+                    : t(
+                        "Mis. topik meeting, zona waktu, jam preferensi…",
+                        "E.g. meeting topic, time zone, preferred time…",
+                      )
                 }
                 rows={3}
+                required={kind === "meeting"}
               />
             </div>
           </div>
 
           <DialogFooter className="gap-2">
-            <Button type="button" variant="outline" onClick={close} disabled={loading}>
-              Batal
+            <Button
+              type="button"
+              variant="outline"
+              onClick={close}
+              disabled={loading}
+            >
+              {t("Batal", "Cancel")}
             </Button>
-            <Button type="button" onClick={submit} disabled={loading}>
+            <Button type="button" onClick={submit} disabled={loading || (kind === "meeting" && (!preferredDate || !preferredTime || !timezone || !message.trim()))}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Mengirim…
+                  {t("Mengirim…", "Sending…")}
                 </>
               ) : (
-                "Kirim request"
+                t("Kirim permintaan", "Send request")
               )}
             </Button>
           </DialogFooter>

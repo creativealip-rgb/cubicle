@@ -11,7 +11,7 @@ import { SupportPageClient } from "./support-client";
 
 export default async function SupportPage() {
   const session = await auth.api.getSession({ headers: await headers() });
-  const user = requireUser(session?.user);
+  requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
 
   const [tickets, counts, clientList, projectList, memberList] = await Promise.all([

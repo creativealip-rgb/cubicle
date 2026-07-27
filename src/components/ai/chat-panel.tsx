@@ -31,6 +31,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { stripThinking } from "@/lib/ai/strip";
+import { useT } from "@/lib/i18n-client";
+import { AssistantEmptyState } from "@/components/ai/assistant-empty-state";
+import { AssistantHistory } from "@/components/ai/assistant-history";
+import { AssistantConfirmationCard } from "@/components/ai/assistant-confirmation";
+import { getAssistantCopy, humanizeToolStatus, sanitizeAssistantError, type AssistantLang } from "@/lib/ai/ui-copy";
 
 type Role = "user" | "assistant" | "tool";
 
@@ -131,6 +136,9 @@ const MODULE_ICONS = [
 
 export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "fullpage" } = {}) {
   const isFullpage = variant === "fullpage";
+  const { lang: currentLang } = useT();
+  const lang: AssistantLang = currentLang === "en" ? "en" : "id";
+  const assistantText = getAssistantCopy(lang);
   const [open, setOpen] = useState(isFullpage);
   useEffect(() => {
     if (isFullpage) setOpen(true);
@@ -141,6 +149,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conv[]>([]);
   const [showHistoryBelow, setShowHistoryBelow] = useState(true);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [lastUsage, setLastUsage] = useState<{
     prompt_tokens: number;
     completion_tokens: number;
@@ -603,21 +612,16 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
           <div className="flex min-h-0 flex-1 flex-col">
             {/* Full-page welcome (empty state, big screen) — AI workspace hub feel */}
             {isFullpage && messages.length === 0 ? (
-              <WelcomeScreen
+              <AssistantEmptyState
+                lang={lang}
                 input={input}
                 setInput={setInput}
                 send={send}
                 onKeyDown={onKeyDown}
                 busy={busy}
-                stopStream={stopStream}
-                listening={listening}
-                voiceSupported={voiceSupported}
-                toggleVoice={toggleVoice}
+                stop={stopStream}
                 inputRef={inputRef}
-                conversations={conversations}
-                conversationId={conversationId}
-                loadConversation={loadConversation}
-                deleteConversation={deleteConversation}
+                openHistory={() => setHistoryOpen(true)}
               />
             ) : (
               <>{/* Header */}
@@ -628,8 +632,8 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                           <Sparkles className="h-4 w-4" />
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-slate-900">Cubiqlo AI</p>
-                          <p className="text-[11px] text-slate-400">gemini-3-flash · workspace assistant</p>
+                          <p className="text-sm font-semibold text-slate-900">{assistantText.title}</p>
+                          <p className="text-[11px] text-slate-400">{assistantText.subtitle}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
@@ -646,7 +650,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                         </button>
                         {messages.length > 0 && (
                           <button
-                            onClick={() => setShowHistoryBelow((v) => !v)}
+                            onClick={() => isFullpage ? setHistoryOpen(true) : setShowHistoryBelow((v) => !v)}
                             className={cn(
                               "rounded-lg px-3 py-1.5 text-xs font-medium transition",
                               showHistoryBelow
@@ -686,7 +690,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                         </button>
                         {messages.length > 0 && (
                           <button
-                            onClick={() => setShowHistoryBelow((v) => !v)}
+                            onClick={() => isFullpage ? setHistoryOpen(true) : setShowHistoryBelow((v) => !v)}
                             className={cn(
                               "rounded-md p-1 hover:bg-white/10",
                               showHistoryBelow ? "bg-white/15 text-white" : "text-white/80 hover:text-white",
@@ -762,7 +766,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                           <div className="flex flex-col gap-1.5 text-slate-500">
                             <div className="flex items-center gap-2">
                               <Loader2 className="h-3 w-3 animate-spin" />
-                              <span>{m.status || "Thinking…"}</span>
+                              <span aria-live="polite">{isFullpage ? humanizeToolStatus(m.status, lang) : (m.status || "Thinking…")}</span>
                             </div>
                             {m.content && (
                               <div className="text-slate-900">
@@ -778,7 +782,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                                     className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-slate-200"
                                   >
                                     <Sparkles className="h-2.5 w-2.5" />
-                                    {te.name}
+                                    {isFullpage ? humanizeToolStatus(te.name, lang) : te.name}
                                   </span>
                                 ))}
                               </div>
@@ -788,7 +792,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                           <div className="flex items-start gap-2">
                             <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                             <div className="flex-1">
-                              <span className="text-xs">{m.error}</span>
+                              <span className="text-xs" aria-live="polite">{isFullpage ? sanitizeAssistantError(m.error, lang) : m.error}</span>
                               {(m.error.includes("plan") || m.error.includes("Upgrade") || m.error.includes("Batas")) && (
                                 <a
                                   href="/app/billing"
@@ -810,7 +814,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                                     className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-slate-200"
                                   >
                                     <Sparkles className="h-2.5 w-2.5" />
-                                    {te.name}
+                                    {isFullpage ? humanizeToolStatus(te.name, lang) : te.name}
                                   </span>
                                 ))}
                               </div>
@@ -829,11 +833,20 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                         )}
 
                         {m.confirmation && m.confirmationStatus === "pending" && (
-                          <ConfirmationCard
-                            conf={m.confirmation}
-                            onConfirm={() => confirmAction(i)}
-                            onDismiss={() => dismissAction(i)}
-                          />
+                          isFullpage ? (
+                            <AssistantConfirmationCard
+                              conf={m.confirmation}
+                              lang={lang}
+                              onConfirm={() => confirmAction(i)}
+                              onDismiss={() => dismissAction(i)}
+                            />
+                          ) : (
+                            <ConfirmationCard
+                              conf={m.confirmation}
+                              onConfirm={() => confirmAction(i)}
+                              onDismiss={() => dismissAction(i)}
+                            />
+                          )
                         )}
                         {m.confirmation && m.confirmationStatus === "done" && (
                           <div className="mt-2 flex items-center gap-1 text-xs text-green-700">
@@ -872,7 +885,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={onKeyDown}
-                      placeholder="Ask about clients, projects, tasks, invoices…"
+                      placeholder={isFullpage ? assistantText.placeholder : "Ask about clients, projects, tasks, invoices…"}
                       rows={1}
                       disabled={busy}
                       className={cn(
@@ -932,8 +945,8 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                     </Button>
                   </form>
                   <div className="flex items-center justify-between px-1 pt-1 text-[10px] text-slate-400">
-                    <span>Press Enter to send · Shift+Enter for newline</span>
-                    {lastUsage && (
+                    <span>{isFullpage ? assistantText.hint : "Press Enter to send · Shift+Enter for newline"}</span>
+                    {!isFullpage && lastUsage && (
                       <span title={`prompt: ${lastUsage.prompt_tokens} · completion: ${lastUsage.completion_tokens}`}>
                         {lastUsage.total_tokens.toLocaleString()} tokens
                       </span>
@@ -942,7 +955,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                 </div>
 
                 {/* History list */}
-                {showHistoryBelow && (
+                {showHistoryBelow && !isFullpage && (
                   <div className={cn("border-t", isFullpage ? "border-slate-200 bg-white" : "bg-slate-50/50")}>
                     <div className={cn("flex items-center justify-between pt-3 pb-1", isFullpage ? "px-6" : "px-4")}>
                       <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
@@ -1004,6 +1017,17 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                 )}
               </>
             )}
+            {isFullpage && (
+              <AssistantHistory
+                open={historyOpen}
+                onClose={() => setHistoryOpen(false)}
+                lang={lang}
+                items={conversations}
+                activeId={conversationId}
+                onLoad={loadConversation}
+                onDelete={deleteConversation}
+              />
+            )}
           </div>
         </div>
       )}
@@ -1014,7 +1038,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
 // ────────────────────────────────────────────────────────────────────────────
 // Full-page welcome screen — ChatGPT/Notion AI-style hub layout
 // ────────────────────────────────────────────────────────────────────────────
-function WelcomeScreen({
+function _WelcomeScreen({
   input,
   setInput,
   send,

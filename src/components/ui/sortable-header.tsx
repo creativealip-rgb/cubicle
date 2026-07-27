@@ -56,7 +56,7 @@ export function SortableHeader({
           active ? "text-foreground" : "text-muted-foreground",
           className,
         )}
-        aria-sort={dir === "asc" ? "ascending" : dir === "desc" ? "descending" : "none"}
+        aria-pressed={active}
       >
         {content}
       </button>
@@ -73,7 +73,7 @@ export function SortableHeader({
         active ? "text-foreground" : "text-muted-foreground",
         className,
       )}
-      aria-sort={dir === "asc" ? "ascending" : dir === "desc" ? "descending" : "none"}
+      aria-pressed={active}
     >
       {content}
     </button>

@@ -14,6 +14,7 @@ import {
   assertProjectInWorkspace,
 } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { assertFolderScopeMatches, getFolderDeleteBlocker } from "@/lib/file-manager-rules";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -50,7 +51,11 @@ export async function createFolder(input: z.infer<typeof createFolderSchema>) {
     await assertProjectInWorkspace(db, user.id, parsed.workspaceId, parsed.projectId);
   }
   if (parsed.parentId) {
-    await assertFolderInWorkspace(parsed.workspaceId, parsed.parentId);
+    const parent = await assertFolderInWorkspace(parsed.workspaceId, parsed.parentId);
+    assertFolderScopeMatches(
+      { clientId: parent.clientId, projectId: parent.projectId },
+      { clientId: parsed.clientId || null, projectId: parsed.projectId || null },
+    );
   }
 
   const [folder] = await db
@@ -106,18 +111,22 @@ export async function deleteFolder(folderId: string) {
     .from(folders)
     .where(and(eq(folders.parentId, folderId), eq(folders.workspaceId, workspaceId)))
     .limit(1);
-  if (childFolder) throw new Error("Folder masih punya sub-folder. Kosongkan dulu.");
-
   const [childFile] = await db
     .select({ id: files.id })
     .from(files)
     .where(and(eq(files.folderId, folderId), eq(files.workspaceId, workspaceId)))
     .limit(1);
-  if (childFile) throw new Error("Folder masih berisi file. Pindahkan atau hapus dulu.");
+  const blocker = getFolderDeleteBlocker({
+    hasChildFolder: Boolean(childFolder),
+    hasChildFile: Boolean(childFile),
+  });
+  if (blocker) {
+    return { success: false as const, error: blocker };
+  }
 
   await db.delete(folders).where(eq(folders.id, folderId));
   await writeActivityLog(workspaceId, user.id, "deleted_folder", "folder", folderId);
-  return { success: true };
+  return { success: true as const };
 }
 
 export async function listFolders(

@@ -3,6 +3,22 @@ services:
     image: postgres:16
     container_name: cubicle-pg
     restart: unless-stopped
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - effective_cache_size=768MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - track_io_timing=on
+      - -c
+      - log_min_duration_statement=500
     environment:
       POSTGRES_DB: cubicle
       POSTGRES_USER: postgres
@@ -31,33 +47,17 @@ services:
         max-file: "3"
 
   cubicle:
+    image: ${CUBIQLO_IMAGE:-cubicle-cubicle}
+    restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        DATABASE_URL: postgresql://postgres:${CUBICLE_DB_PASSWORD}@cubicle-pg:5432/cubicle
-        BETTER_AUTH_SECRET: ${CUBICLE_BETTER_AUTH_SECRET}
-        BETTER_AUTH_URL: ${CUBICLE_BETTER_AUTH_URL}
-        R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
-        R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
-        R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
-        R2_BUCKET_NAME: ${R2_BUCKET_NAME:-}
-        R2_PUBLIC_ENDPOINT: ${R2_PUBLIC_ENDPOINT:-}
-        OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-        OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
-        OPENAI_COMPATIBLE_BASE_URL: ${OPENAI_COMPATIBLE_BASE_URL:-}
-        OPENAI_COMPATIBLE_API_KEY: ${OPENAI_COMPATIBLE_API_KEY:-}
-        RESEND_API_KEY: ${RESEND_API_KEY:-}
-        MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}
-        SIGNED_URL_TTL_SECONDS: ${SIGNED_URL_TTL_SECONDS:-300}
-        AI_API_KEY: ${AI_API_KEY:-}
-        AI_BASE_URL: ${AI_BASE_URL:-http://10.0.1.12:20128/v1}
-        AI_MODEL: ${AI_MODEL:-tr/MiniMax-M3}
-        PAKASIR_PROJECT: ${PAKASIR_PROJECT:-}
-        PAKASIR_API_KEY: ${PAKASIR_API_KEY:-}
-        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://cubiqlo.com}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://app.cubiqlo.com}
+        VCS_REF: ${VCS_REF:-unknown}
+        BUILD_DATE: ${BUILD_DATE:-unknown}
     environment:
-      DATABASE_URL: postgresql://postgres:${CUBICLE_DB_PASSWORD}@cubicle-pg:5432/cubicle
+      DATABASE_URL: ${CUBICLE_DATABASE_URL}
       BETTER_AUTH_SECRET: ${CUBICLE_BETTER_AUTH_SECRET}
       BETTER_AUTH_URL: ${CUBICLE_BETTER_AUTH_URL}
       R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
@@ -78,23 +78,24 @@ services:
       AI_MODEL: ${AI_MODEL:-tr/MiniMax-M3}
       PAKASIR_PROJECT: ${PAKASIR_PROJECT:-}
       PAKASIR_API_KEY: ${PAKASIR_API_KEY:-}
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://cubiqlo.com}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://app.cubiqlo.com}
       CRON_SECRET: ${CRON_SECRET:-}
       CUBICLE_URL: ${CUBICLE_URL:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-https://cubiqlo.com/api/integrations/google-calendar/callback}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-https://app.cubiqlo.com/api/integrations/google-calendar/callback}
       GOOGLE_TOKEN_ENCRYPTION_KEY: ${GOOGLE_TOKEN_ENCRYPTION_KEY:-}
+      RATE_LIMIT_REDIS_URL: ${RATE_LIMIT_REDIS_URL:-redis://dokploy-redis:6379}
     volumes:
       - /root/9router-public-api-key.txt:/run/secrets/9router_api_key:ro
     labels:
       - traefik.enable=true
       - traefik.docker.network=dokploy-network
-      - traefik.http.routers.cubicle.rule=Host(`cubiqlo.com`) || Host(`www.cubiqlo.com`)
+      - traefik.http.routers.cubicle.rule=Host(`cubiqlo.com`) || Host(`www.cubiqlo.com`) || Host(`app.cubiqlo.com`)
       - traefik.http.routers.cubicle.entrypoints=websecure
       - traefik.http.routers.cubicle.tls.certresolver=letsencrypt
       - traefik.http.services.cubicle.loadbalancer.server.port=3000
-      - traefik.http.routers.cubicle-http.rule=Host(`cubiqlo.com`) || Host(`www.cubiqlo.com`)
+      - traefik.http.routers.cubicle-http.rule=Host(`cubiqlo.com`) || Host(`www.cubiqlo.com`) || Host(`app.cubiqlo.com`)
       - traefik.http.routers.cubicle-http.entrypoints=web
       - traefik.http.routers.cubicle-http.middlewares=redirect-to-https@file
     depends_on:

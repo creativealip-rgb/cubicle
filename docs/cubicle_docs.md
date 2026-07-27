@@ -203,6 +203,13 @@ Access control:
 ### Storage
 - Upload menggunakan R2 (Cloudflare) signed URL
 - Penyimpanan: `workspaces/{workspaceId}/files/{fileId}/{filename}`
+- Batas upload: **25 MB per file**
+- Delete file meminta konfirmasi, menghapus object R2, lalu menghapus record database
+- Subfolder wajib memakai scope `clientId` dan `projectId` yang sama dengan parent folder
+
+### Permissions
+- Owner/member dapat upload, rename, dan delete
+- Viewer hanya dapat melihat dan membuka file
 
 ---
 

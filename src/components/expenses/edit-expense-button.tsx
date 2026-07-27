@@ -52,15 +52,16 @@ export function EditExpenseButton({
       <Button
         variant="ghost"
         size="sm"
-        className="h-7 w-7 p-0 text-slate-400 hover:text-slate-800"
+        className="h-10 w-10 p-0 text-slate-400 hover:text-slate-800"
         onClick={() => setOpen(true)}
         title={t("Edit", "Edit")}
+        aria-label={t("Edit pengeluaran", "Edit expense")}
       >
-        <Pencil className="h-3.5 w-3.5" />
+        <Pencil className="h-4 w-4" />
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="flex w-[calc(100%-1.5rem)] max-w-2xl max-h-[min(90dvh,720px)] flex-col gap-0 overflow-hidden p-0">
+          <DialogHeader className="shrink-0 border-b px-4 py-4 pr-12 sm:px-6">
             <DialogTitle>{t("Edit pengeluaran", "Edit expense")}</DialogTitle>
           </DialogHeader>
           <ExpenseForm

@@ -104,9 +104,9 @@ export default async function TasksPage({
   return (
     <div className="min-w-0 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="app-page-header">
         <div className="min-w-0">
-          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{t("Tugas", "Tasks")}</h1>
+          <h1 className="app-page-title">{t("Tugas", "Tasks")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {t("Pantau pekerjaan di semua proyek", "Track work across all projects")}
           </p>
@@ -116,12 +116,12 @@ export default async function TasksPage({
 
       <div className="rounded-lg border border-blue-200 bg-blue-50/60 px-3 py-2.5 text-sm text-blue-950 sm:px-4 sm:py-3">
         <p className="font-medium">
-          {t("Tugas ≠ timer", "Tasks ≠ timer")}
+          {t("Tugas dan Timer terpisah", "Tasks and Timer are separate")}
         </p>
         <p className="mt-1 text-xs text-blue-900/80">
           {t(
-            "Tugas = to-do / status kerja. Timer = jam billable. Buka task → Mulai timer: auto-link client/project/task + deskripsi = judul. Stop instan, tanpa form.",
-            "Tasks = to-do / work status. Timer = billable hours. Open a task → Start timer: auto-links client/project/task + description = title. Instant stop, no form.",
+            "Tugas buat status kerja. Timer buat jam billable. Buka tugas lalu mulai timer kalau mau catat waktu.",
+            "Tasks track work status. Timer tracks billable hours. Open a task, then start timer when you want to log time.",
           )}{" "}
           <a href="/app/time" className="font-medium underline underline-offset-2">
             {t("Buka Time Tracking", "Open Time Tracking")}
@@ -130,17 +130,20 @@ export default async function TasksPage({
       </div>
 
       {/* Filters + view toggle */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <TaskFilters
-          projects={projectList}
-          members={memberList}
-          current={{
-            status: params.status,
-            priority: params.priority,
-            projectId: params.projectId,
-            assignee: params.assignee,
-          }}
-        />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <TaskFilters
+            projects={projectList}
+            members={memberList}
+            currentUserId={currentUserId}
+            current={{
+              status: params.status,
+              priority: params.priority,
+              projectId: params.projectId,
+              assignee: params.assignee === currentUserId ? "me" : params.assignee,
+            }}
+          />
+        </div>
         <TaskViewToggle current={view} />
       </div>
 

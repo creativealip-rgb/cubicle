@@ -1,9 +1,18 @@
 import type { NextConfig } from "next";
 import { version } from "./package.json";
+import {
+  contentSecurityPolicy,
+  developmentOrigins,
+  type RuntimeEnvironment,
+} from "./src/lib/security-headers";
+
+const runtimeEnvironment = (process.env.NODE_ENV ||
+  "production") as RuntimeEnvironment;
 
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  allowedDevOrigins: developmentOrigins(runtimeEnvironment),
 
   // Expose app version (single source of truth: package.json) to the client bundle.
   env: {
@@ -37,18 +46,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https:",
-              "font-src 'self' data:",
-              // R2 presigned PUT/GET lives on *.r2.cloudflarestorage.com.
-              // Without this, browser blocks the request and surfaces
-              // "Network error during upload" / "failed to fetch".
-              "connect-src 'self' https://cubiqlo.com wss://cubiqlo.com https://*.r2.cloudflarestorage.com",
-              "frame-ancestors 'none'",
-            ].join("; "),
+            value: contentSecurityPolicy(runtimeEnvironment),
           },
         ],
       },

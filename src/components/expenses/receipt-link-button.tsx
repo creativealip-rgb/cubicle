@@ -31,12 +31,13 @@ export function ReceiptLinkButton({ expenseId }: { expenseId: string }) {
     <Button
       variant="ghost"
       size="sm"
-      className="h-7 w-7 p-0 text-slate-400 hover:text-blue-600"
+      className="h-10 w-10 p-0 text-slate-400 hover:text-blue-600"
       onClick={open}
       title={t("Lihat struk", "View receipt")}
+      aria-label={t("Lihat struk", "View receipt")}
       disabled={loading}
     >
-      {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Paperclip className="h-3.5 w-3.5" />}
+      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
     </Button>
   );
 }

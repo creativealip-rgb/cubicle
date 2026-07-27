@@ -107,3 +107,21 @@ export function validateUploadedFile(filename: string, head: Uint8Array): FileVa
 
   return { ok: true, extension: ext };
 }
+
+const RECEIPT_MIME_BY_EXTENSION: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  gif: "image/gif",
+  pdf: "application/pdf",
+};
+
+export function validateExpenseReceipt(filename: string, mime: string, head: Uint8Array): FileValidationResult {
+  const validation = validateUploadedFile(filename, head);
+  if (!validation.ok) return validation;
+  if (RECEIPT_MIME_BY_EXTENSION[validation.extension] !== mime) {
+    return { ok: false, reason: "Tipe receipt tidak cocok dengan ekstensi", extension: validation.extension };
+  }
+  return validation;
+}

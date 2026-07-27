@@ -4,10 +4,10 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { timeEntries, clients, projects, tasks, users, workspaces } from "@/db/schema";
-import { eq, and, gte, lte, isNull, isNotNull, desc } from "drizzle-orm";
+import { timeEntries, clients, projects, tasks, workspaces } from "@/db/schema";
+import { eq, and, isNull, isNotNull } from "drizzle-orm";
 import { z } from "zod";
-import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
+import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 
 async function getWorkspaceId(): Promise<string> {
@@ -96,15 +96,6 @@ const stopTimerSchema = z.object({
   description: z.string().trim().optional().nullable(),
   tags: z.string().optional().nullable(),
   hourlyRate: z.number().nonnegative().optional(),
-});
-
-const exportCsvFiltersSchema = z.object({
-  workspaceId: z.string().uuid(),
-  clientId: z.string().uuid().optional(),
-  projectId: z.string().uuid().optional(),
-  dateFrom: z.string().optional(),
-  dateTo: z.string().optional(),
-  billable: z.boolean().optional(),
 });
 
 /** Cap single timer segment at 24h from start. */
@@ -515,63 +506,6 @@ export async function deleteTimeEntry(entryId: string) {
   await db.delete(timeEntries).where(eq(timeEntries.id, entryId));
   await writeActivityLog(workspaceId, user.id, "deleted_time_entry", "time_entry", entryId);
   return { success: true };
-}
-
-export async function exportTimeCsv(filters: z.infer<typeof exportCsvFiltersSchema>) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const user = requireUser(session?.user);
-  await assertWorkspaceMember(db, user.id, filters.workspaceId);
-
-  const parsed = exportCsvFiltersSchema.parse(filters);
-
-  const conditions = [eq(timeEntries.workspaceId, parsed.workspaceId)];
-  if (parsed.clientId) conditions.push(eq(timeEntries.clientId, parsed.clientId));
-  if (parsed.projectId) conditions.push(eq(timeEntries.projectId, parsed.projectId));
-  if (parsed.dateFrom) conditions.push(gte(timeEntries.startTime, new Date(parsed.dateFrom)));
-  if (parsed.dateTo) conditions.push(lte(timeEntries.startTime, new Date(parsed.dateTo)));
-  if (parsed.billable !== undefined) conditions.push(eq(timeEntries.billable, parsed.billable));
-
-  const entries = await db
-    .select({
-      date: timeEntries.startTime,
-      client: clients.name,
-      project: projects.name,
-      task: tasks.title,
-      description: timeEntries.description,
-      durationMinutes: timeEntries.durationMinutes,
-      billable: timeEntries.billable,
-      user: users.name,
-      status: timeEntries.status,
-    })
-    .from(timeEntries)
-    .leftJoin(clients, eq(clients.id, timeEntries.clientId))
-    .leftJoin(projects, eq(projects.id, timeEntries.projectId))
-    .leftJoin(tasks, eq(tasks.id, timeEntries.taskId))
-    .leftJoin(users, eq(users.id, timeEntries.userId))
-    .where(and(...conditions))
-    .orderBy(desc(timeEntries.startTime))
-    .limit(5000);
-
-  const header = "Date,Client,Project,Task,Description,Minutes,Billable,User,Status";
-  const rows = entries.map((e) => {
-    const escape = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    return [
-      escape(e.date ? new Date(e.date).toISOString().split("T")[0] : ""),
-      escape(e.client),
-      escape(e.project),
-      escape(e.task),
-      escape(e.description),
-      String(e.durationMinutes ?? 0),
-      String(e.billable ?? false),
-      escape(e.user),
-      escape(e.status),
-    ].join(",");
-  });
-
-  const csv = [header, ...rows].join("\n");
-
-  await writeActivityLog(parsed.workspaceId, user.id, "exported_time_csv", "time_entry");
-  return csv;
 }
 
 export async function getActiveTimer(workspaceId: string, userId: string) {

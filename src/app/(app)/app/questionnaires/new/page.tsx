@@ -29,7 +29,7 @@ export default async function NewQuestionnairePage() {
         </Button>
       </div>
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Kuesioner Baru</h1>
+        <h1 className="app-page-title">Kuesioner Baru</h1>
         <p className="text-sm text-slate-500 mt-1">Buat form. Kirim ke klien. Dapatkan brief yang terstruktur.</p>
       </div>
       <QuestionnaireBuilder

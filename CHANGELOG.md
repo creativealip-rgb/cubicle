@@ -1,5 +1,76 @@
 # Changelog
 
+## Unreleased — 2026-07-26 — Production full-feature QA and schema recovery
+
+- Production database: apply ledger migrations `0043_persist_portal_token_encrypted.sql`, `0044_portal_password.sql`, and `0045_meeting_request_workflow.sql` after client and invoice creation exposed schema drift
+- Client and invoice flows: verify authenticated UI creation end to end, including portal-enabled client creation, invoice number generation, line-item persistence, and correct `Rp125.000` total; remove all disposable QA records afterward
+- Full-product smoke: inventory 62 pages, 46 API routes, and 37 server-action modules; confirm 37 authenticated app routes render HTTP 200 without application errors and protected routes redirect anonymous users to login
+- Mobile: remove a 4 px horizontal overflow on AI Brain at 390 px by matching the full-page wrapper margin to the mobile app-shell padding
+- Regression suite: update stale portal/CSP source assertions for the current slug-plus-password portal flow and centralized security-header helper; keep production CSP free of `unsafe-eval`
+- Code quality: remove the unused-component lint warning from the legacy AI welcome screen
+- Verified: 57/57 test files and 292/292 tests, ESLint, `npx tsc --noEmit`, Next.js production build, app/DB health `ok`, container healthy, clean runtime logs, and `dokploy-traefik` remains the sole public 80/443 owner
+- Deployment: source revision `d953e0f05da19244f879d992cedd0b543b9be5ce`, image ID `sha256:4422277ac2e7e3d6071a223a4ada0b4c55b705eb1adb13c35734c9fef0bfd678`
+
+## Unreleased — 2026-07-25 — Client Portal audit hardening
+
+- I18n: add a persistent `ID | EN` switch using the existing `cubiqlo_lang` cookie; localize portal headers, summaries, tabs, requests, projects, tasks, packages, files, invoices, contacts, statuses, dates, dialogs, toasts, and empty states while preserving user-entered database content
+- I18n reliability: reload after portal language changes so server-rendered and client-rendered copy switch atomically; verify ID → EN → reload → ID on the live 390 px portal without page-level overflow
+- Security: validate portal request client/project ownership by workspace; preserve token and visibility scoping on file/invoice access
+- Analytics: stop false file/invoice views on portal page load; record file views only after valid download, invoice first-view only on PDF open, and general visits as `portal_open`
+- Performance: replace per-project task, file, timeline, time-summary, and package queries with batched queries plus linear project grouping
+- Ringkasan/Proyek: separate active request history, hide internal metadata, clarify 100% project status, and make dense task/file sections collapsible
+- File/Invoice/Kontak: localize labels, clarify upload context, harden accessible download/PDF actions, improve mobile invoice layout, and add useful official contact guidance without online payment actions
+- Tabs/mobile: remove inactive `forceMount`, auto-scroll the active tab, add edge fades, keep touch targets at least 44 px, and preserve a 390 px page width without horizontal overflow
+- Documentation: add `docs/client-portal-audit-2026-07-25.md` with scope, decisions, files, and verification evidence
+- Verified: 88 Vitest tests, `npx tsc --noEmit`, Next.js production build, Docker rebuild/deploy, `/api/health` database OK, portal HTTP 200, mobile QA at 390 px, and `dokploy-traefik` remains sole public 80/443 owner
+
+## v0.1.117 — 2026-07-24 — Multi-project invoice, file directory, and shared headers
+
+- Invoice creation: support multiple project line items, snapshot project values/currencies, automatic FX conversion, report-detail URLs, and safer payment/status calculations
+- Invoice communication: improve send/reminder message defaults, report options, invoice metadata, list presentation, PDF timesheet output, and item deletion behavior
+- File manager: separate **Semua Berkas**, **Folder Workspace**, and **Klien**; add independent multi-expand navigation for clients, projects, and nested folders with consistent animated chevrons
+- Folder safety: return readable deletion blockers for non-empty folders instead of masked Next.js Server Action errors; keep custom-folder rename/delete controls scoped to workspace, client, and project folders
+- App consistency: normalize 29 internal page titles through shared `app-page-title` styling and add reusable `PageHeader` primitives for responsive title, subtitle, and action layout
+- Documentation: add multi-project invoice design/implementation plans and update release notes
+- Verified: 18/18 focused file-manager tests, `npx tsc --noEmit`, `git diff --check`, Docker production build/deploy, container healthy, `/api/health` database OK, and public proxy ownership unchanged (`dokploy-traefik` only on ports 80/443)
+
+## v0.1.116 — 2026-07-24 — File manager safety and responsive UX
+
+- File deletion: require explicit confirmation and delete the matching Cloudflare R2 object before removing its database record
+- Folder integrity: reject nested folders whose client/project scope differs from the parent folder
+- File manager UX: use denser rows and separators, improve empty-state guidance, hide irrelevant search/filter controls when empty, and keep folder actions visible
+- Mobile/accessibility: improve responsive header/dialog layouts, enlarge touch targets, add folder-action labels, tooltips for truncated names, localized dates, and clearer Indonesian file-type labels
+- Upload flow: show the 25 MB limit and clarify drag-and-drop guidance
+- Verified: 4/4 file-manager rule tests, `npx tsc --noEmit`, `git diff --check`, Docker build/deploy, container healthy, `/api/health` OK, browser QA with no resource errors or horizontal overflow
+
+## v0.1.115 — 2026-07-24 — Calendar and public booking hardening
+
+- Calendar: add confirmation dialogs before deleting availability rules or cancelling appointments
+- Calendar actions: enlarge touch targets and replace ambiguous `.ics` action with **Unduh .ics**
+- Availability form: localize copy, improve mobile layout, and validate end time after start time
+- Public booking: localize Indonesian copy, show booking timezone, improve date controls, and use responsive 2/3-column slot grid
+- Slot engine: convert availability windows from each rule's IANA timezone to UTC before conflict checks and persistence
+- Verified: `npx tsc --noEmit`, `git diff --check`, Docker build/deploy, container healthy, `/api/health` OK, booking route HTTP 200, browser QA with no resource errors or horizontal overflow
+
+## v0.1.114 — 2026-07-24 — App UX polish, shared list density, timer page
+
+- Client detail: keep Portal flow, remove redundant Ringkasan surface, default detail tab to Proyek, add compact portal action where useful
+- Clients: Excel export endpoints hardened with workspace resolve; edit dialog made compact/scrollable with grouped fields
+- Shared list UI: normalize Clients, Projects, Tasks, Invoices, Proposals, Contracts, Expenses, Questionnaires, and Time entries with compact `p-3` rows, visible separators, and zebra backgrounds
+- Projects/Tasks: add Review status styling, clearer deadline/tenggat context, compact task filters, project/client links, and cleaner progress display
+- Navigation/content: hide Penjualan, rename Paket to Service, keep topbar create less noisy on dense pages
+- Settings/Auth: add account settings form for profile name/password and route/domain handling for `app.cubiqlo.com`
+- Time page: clarify Tasks vs Timer split, compact timer card, improve manual-entry dialog on mobile, and make timesheet list match other dense lists
+- Verified: `npx tsc --noEmit`, Docker build, deploy, `/api/health` 200, container healthy
+
+## v0.1.113 — 2026-07-23 — Dashboard action queue + event-only notifications
+
+- Renamed dashboard **Reminder** section to **Perlu ditangani** with cleaner product copy
+- Grouped dashboard action queue into **Urgent**, **Menunggu aksi**, and **Terjadwal** so due items, approvals, contracts, appointments, and personal reminders do not feel mixed
+- Clarified notification bell as an event inbox for recent client/team updates
+- Kept recurring/state urgency (`invoice_overdue`, `task_due_soon`) out of notification bell list and unread counts; those now belong to dashboard action queue only
+- Verified live with `testing@cubiqlo.com`: dashboard shows grouped action queue, notification API returns no dashboard-only reminders in bell
+
 ## v0.1.112 — 2026-07-22 — Branded noreply email logo
 
 - Added Cubiqlo icon to default transactional email wrapper so client/user emails from `noreply@cubiqlo.com` show branded header inside the email body

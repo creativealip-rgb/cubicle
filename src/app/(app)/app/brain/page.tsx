@@ -19,7 +19,7 @@ export default function BrainPage() {
     // justify-center has room to vertically center when content is short.
     // When content > viewport, inner padded grows past wrapper and the
     // wrapper's overflow-y-auto scrolls — single scroll, no nesting.
-    <div className="-mx-4 md:-mx-6 -mt-4 md:-mt-6 -mb-24 md:-mb-28 h-[calc(100dvh-3.5rem)] overflow-y-auto bg-white">
+    <div className="-mx-3 md:-mx-6 -mt-4 md:-mt-6 -mb-24 md:-mb-28 h-[calc(100dvh-3.5rem)] overflow-y-auto bg-white">
       <div className="mx-auto flex min-h-full w-full max-w-4xl flex-col items-center justify-center px-4 py-8 md:px-6 md:py-12">
         <AIChatPanel variant="fullpage" />
       </div>

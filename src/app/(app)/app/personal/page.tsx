@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import {
   NotesListClient,
@@ -102,9 +103,11 @@ export default async function PersonalPage({
   const t = createT(lang);
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
-  const tab = (["open", "done", "archived", "all"].includes(params.tab ?? "")
-    ? params.tab
-    : "open") as Tab;
+  const tab = (
+    ["open", "done", "archived", "all"].includes(params.tab ?? "")
+      ? params.tab
+      : "open"
+  ) as Tab;
   const pageSize = await getNotesPageSize();
 
   const workspaceId = await getWorkspaceForCurrentUser();
@@ -119,7 +122,12 @@ export default async function PersonalPage({
     db
       .select({ id: projects.id, name: projects.name })
       .from(projects)
-      .where(and(eq(projects.workspaceId, workspaceId), eq(projects.status, "active")))
+      .where(
+        and(
+          eq(projects.workspaceId, workspaceId),
+          eq(projects.status, "active"),
+        ),
+      )
       .orderBy(projects.name)
       .limit(100),
   ]);
@@ -227,9 +235,7 @@ export default async function PersonalPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          {t("Catatan", "Notes")}
-        </h1>
+        <h1 className="app-page-title">{t("Catatan", "Notes")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {t(
             "Catatan pribadi di workspace ini. Tidak tampil ke client.",
@@ -256,112 +262,122 @@ export default async function PersonalPage({
         ) : null}
       </form>
 
-      <div className="flex flex-wrap gap-2">
-        {tabs.map((item) => (
-          <Button
-            key={item.id}
-            asChild
-            size="sm"
-            variant={tab === item.id ? "default" : "outline"}
-          >
-            <Link href={buildHref(item.id, query)}>
-              {item.label}
-              <span className="ml-1.5 tabular-nums opacity-80">{item.count}</span>
-            </Link>
-          </Button>
-        ))}
-      </div>
+      <StatusFilterTabs
+        activeValue={tab}
+        hideEmpty={false}
+        tabs={tabs.map((item) => ({
+          value: item.id,
+          label: item.label,
+          href: buildHref(item.id, query),
+          count: item.count,
+          alwaysShow: true,
+        }))}
+      />
 
-      <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
-        <Card className="h-fit">
-          <CardHeader>
-            <CardTitle>{t("Catatan baru", "New note")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form action={createNote} className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="title" className="text-sm font-medium">
-                  {t("Judul", "Title")}
-                </label>
-                <Input
-                  id="title"
-                  name="title"
-                  placeholder={t("Follow up client…", "Follow up client…")}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="body" className="text-sm font-medium">
-                  {t("Isi", "Body")}
-                </label>
-                <Textarea
-                  id="body"
-                  name="body"
-                  rows={6}
-                  placeholder={t(
-                    "Catatan, ide, reminder personal…",
-                    "Notes, ideas, personal reminders…",
-                  )}
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="dueDate" className="text-sm font-medium">
-                  {t("Tenggat", "Due date")}
-                </label>
-                <Input id="dueDate" name="dueDate" type="datetime-local" />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="recurrenceRule" className="text-sm font-medium">
-                  {t("Pengulangan", "Recurrence")}
-                </label>
-                <select
-                  id="recurrenceRule"
-                  name="recurrenceRule"
-                  defaultValue="none"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  {RECURRENCE_OPTIONS.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {recurrenceLabel(opt, t)}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-muted-foreground">
-                  {t(
-                    "Saat selesai / lewat tenggat: due date auto-maju ke periode berikutnya.",
-                    "On done / past due: due date auto-advances to the next period.",
-                  )}
-                </p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm font-medium">
-                  {t("Ingatkan (hari sebelum tenggat)", "Remind (days before due)")}
-                </p>
-                <div className="grid grid-cols-3 gap-2 text-sm">
-                  <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
-                    <input type="checkbox" name="notify7d" />
-                    7d
+      <div className="space-y-6">
+        <details className="group rounded-xl border bg-card">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-6 py-4 font-semibold">
+            <span>{t("+ Catatan baru", "+ New note")}</span>
+            <span className="text-sm text-muted-foreground group-open:hidden">
+              {t("Buka form", "Open form")}
+            </span>
+          </summary>
+          <Card className="h-fit border-0 shadow-none">
+            <CardHeader>
+              <CardTitle>{t("Catatan baru", "New note")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form action={createNote} className="space-y-4">
+                <div className="space-y-2">
+                  <label htmlFor="title" className="text-sm font-medium">
+                    {t("Judul", "Title")}
                   </label>
-                  <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
-                    <input type="checkbox" name="notify3d" />
-                    3d
-                  </label>
-                  <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
-                    <input type="checkbox" name="notify1d" />
-                    1d
-                  </label>
+                  <Input
+                    id="title"
+                    name="title"
+                    placeholder={t("Follow up client…", "Follow up client…")}
+                    required
+                  />
                 </div>
-              </div>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" name="pinned" />
-                {t("Sematkan catatan", "Pin note")}
-              </label>
-              <Button type="submit" className="w-full">
-                {t("Buat catatan", "Create note")}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                <div className="space-y-2">
+                  <label htmlFor="body" className="text-sm font-medium">
+                    {t("Isi", "Body")}
+                  </label>
+                  <Textarea
+                    id="body"
+                    name="body"
+                    rows={6}
+                    placeholder={t(
+                      "Catatan, ide, reminder personal…",
+                      "Notes, ideas, personal reminders…",
+                    )}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="dueDate" className="text-sm font-medium">
+                    {t("Tenggat", "Due date")}
+                  </label>
+                  <Input id="dueDate" name="dueDate" type="datetime-local" />
+                </div>
+                <div className="space-y-2">
+                  <label
+                    htmlFor="recurrenceRule"
+                    className="text-sm font-medium"
+                  >
+                    {t("Pengulangan", "Recurrence")}
+                  </label>
+                  <select
+                    id="recurrenceRule"
+                    name="recurrenceRule"
+                    defaultValue="none"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    {RECURRENCE_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {recurrenceLabel(opt, t)}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-muted-foreground">
+                    {t(
+                      "Saat selesai / lewat tenggat: due date auto-maju ke periode berikutnya.",
+                      "On done / past due: due date auto-advances to the next period.",
+                    )}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">
+                    {t(
+                      "Ingatkan (hari sebelum tenggat)",
+                      "Remind (days before due)",
+                    )}
+                  </p>
+                  <div className="grid grid-cols-3 gap-2 text-sm">
+                    <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
+                      <input type="checkbox" name="notify7d" />
+                      7d
+                    </label>
+                    <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
+                      <input type="checkbox" name="notify3d" />
+                      3d
+                    </label>
+                    <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
+                      <input type="checkbox" name="notify1d" />
+                      1d
+                    </label>
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" name="pinned" />
+                  {t("Sematkan catatan", "Pin note")}
+                </label>
+                <Button type="submit" className="w-full">
+                  {t("Buat catatan", "Create note")}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </details>
 
         <Card>
           <CardHeader>

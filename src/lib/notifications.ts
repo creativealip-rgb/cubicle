@@ -156,6 +156,7 @@ export async function notifyInvoiceSent(opts: {
   projectName?: string;
   dueDate?: string | null;
   customBody?: string | null;
+  detailReportUrl?: string | null;
 }) {
   const vars = {
     client_name: opts.clientName,
@@ -164,6 +165,7 @@ export async function notifyInvoiceSent(opts: {
     amount: opts.amount,
     due_date: opts.dueDate ?? "",
     invoice_link: opts.portalUrl,
+    detail_report_link: opts.detailReportUrl ?? "",
     workspace_name: opts.workspaceName ?? "Cubiqlo",
   };
 
@@ -173,9 +175,12 @@ export async function notifyInvoiceSent(opts: {
     `Download / view PDF invoice:\n${opts.portalUrl}\n\n` +
     `Thank you for your business.`;
 
-  const text = opts.customBody?.trim()
+  const baseText = opts.customBody?.trim()
     ? applyInvoiceEmailTemplate(opts.customBody, vars)
     : defaultText;
+  const text = opts.detailReportUrl && !baseText.includes(opts.detailReportUrl)
+    ? `${baseText}\n\nDetail report:\n${opts.detailReportUrl}`
+    : baseText;
 
   return sendNotification({
     to: opts.clientEmail,

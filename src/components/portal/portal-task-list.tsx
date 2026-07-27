@@ -17,6 +17,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { respondPortalTask } from "@/lib/actions/tasks";
+import { useT } from "@/lib/i18n-client";
+import { portalLocale, portalStatusLabel } from "@/lib/portal-i18n";
 
 export interface PortalTaskTimeEntry {
   id: string;
@@ -44,19 +46,13 @@ function cleanDescription(description: string | null): string | null {
   return cleaned || null;
 }
 
-function parseClientDecision(description: string | null): "approved" | "rejected" | null {
+function parseClientDecision(
+  description: string | null,
+): "approved" | "rejected" | null {
   if (!description) return null;
   if (description.includes("[Client APPROVED")) return "approved";
   if (description.includes("[Client REVISION_REQUESTED")) return "rejected";
   return null;
-}
-
-function statusLabel(status: string) {
-  if (status === "done") return "Selesai";
-  if (status === "review") return "Perlu review kamu";
-  if (status === "in_progress") return "Dikerjakan";
-  if (status === "todo") return "Antrian";
-  return status.replace(/_/g, " ");
 }
 
 function formatMinutes(mins: number) {
@@ -73,6 +69,7 @@ export function PortalTaskList({
   token: string;
 }) {
   const router = useRouter();
+  const { lang, t } = useT();
   const [items, setItems] = useState(tasks);
   const [noteById, setNoteById] = useState<Record<string, string>>({});
   const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -114,18 +111,24 @@ export function PortalTaskList({
         ),
       );
       toast.success(
-        decision === "approved" ? "Task disetujui" : "Revisi dikirim ke tim",
+        decision === "approved"
+          ? t("Tugas disetujui", "Task approved")
+          : t("Revisi dikirim ke tim", "Revision sent to the team"),
       );
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal");
+      toast.error(err instanceof Error ? err.message : t("Gagal", "Failed"));
     } finally {
       setLoadingId(null);
     }
   }
 
   if (items.length === 0) {
-    return <p className="text-sm text-muted-foreground">Belum ada task</p>;
+    return (
+      <p className="text-sm text-muted-foreground">
+        {t("Belum ada tugas", "No tasks yet")}
+      </p>
+    );
   }
 
   return (
@@ -169,7 +172,7 @@ export function PortalTaskList({
                           : ""
                     }`}
                   >
-                    {statusLabel(task.status)}
+                    {portalStatusLabel(task.status, lang)}
                   </Badge>
                 </div>
                 {desc && (
@@ -187,7 +190,9 @@ export function PortalTaskList({
                   {task.dueDate && (
                     <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
                       <Clock className="h-3 w-3" />
-                      {new Date(task.dueDate).toLocaleDateString("id-ID")}
+                      {new Date(task.dueDate).toLocaleDateString(
+                        portalLocale(lang),
+                      )}
                     </span>
                   )}
                   {hasEntries && (
@@ -201,7 +206,11 @@ export function PortalTaskList({
                       ) : (
                         <ChevronRight className="h-3 w-3" />
                       )}
-                      {entries.length} time entr{entries.length === 1 ? "y" : "ies"}
+                      {entries.length}{" "}
+                      {t(
+                        "entri waktu",
+                        entries.length === 1 ? "time entry" : "time entries",
+                      )}
                     </button>
                   )}
                 </div>
@@ -209,7 +218,10 @@ export function PortalTaskList({
                 {awaiting && (
                   <div className="mt-3 space-y-2 rounded-md border border-amber-200 bg-white p-2.5">
                     <p className="text-xs text-amber-800">
-                      Tim minta review kamu. Setujui atau minta revisi.
+                      {t(
+                        "Tim meminta review kamu. Setujui atau minta revisi.",
+                        "The team requested your review. Approve or request a revision.",
+                      )}
                     </p>
                     <Textarea
                       value={noteById[task.id] || ""}
@@ -219,7 +231,10 @@ export function PortalTaskList({
                           [task.id]: e.target.value,
                         }))
                       }
-                      placeholder="Catatan opsional (wajib buat revisi lebih jelas)"
+                      placeholder={t(
+                        "Catatan opsional (wajib buat revisi lebih jelas)",
+                        "Optional note (required to clarify a revision)",
+                      )}
                       className="min-h-[64px] text-sm"
                       disabled={busy}
                     />
@@ -236,7 +251,7 @@ export function PortalTaskList({
                         ) : (
                           <CheckCircle2 className="h-3.5 w-3.5" />
                         )}
-                        Setujui
+                        {t("Setujui", "Approve")}
                       </Button>
                       <Button
                         type="button"
@@ -251,7 +266,7 @@ export function PortalTaskList({
                         ) : (
                           <MessageSquareWarning className="h-3.5 w-3.5" />
                         )}
-                        Minta revisi
+                        {t("Minta revisi", "Request revision")}
                       </Button>
                     </div>
                   </div>
@@ -270,7 +285,9 @@ export function PortalTaskList({
                           </p>
                           <p className="text-[10px] text-muted-foreground">
                             {entry.startTime
-                              ? new Date(entry.startTime).toLocaleDateString("id-ID")
+                              ? new Date(entry.startTime).toLocaleDateString(
+                                  portalLocale(lang),
+                                )
                               : "—"}
                             {entry.userName ? ` · ${entry.userName}` : ""}
                           </p>

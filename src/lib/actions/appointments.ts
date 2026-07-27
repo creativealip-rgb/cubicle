@@ -347,6 +347,36 @@ export async function createPublicAppointment(
 
 // ─── Slot computation ───
 
+function zonedDateTimeToUtc(date: string, time: string, timeZone: string): Date {
+  const [year, month, day] = date.split("-").map(Number);
+  const [hour, minute] = time.split(":").map(Number);
+  const expectedUtc = Date.UTC(year, month - 1, day, hour, minute);
+  let guess = expectedUtc;
+
+  for (let i = 0; i < 3; i += 1) {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(new Date(guess));
+    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+    const representedUtc = Date.UTC(
+      Number(values.year),
+      Number(values.month) - 1,
+      Number(values.day),
+      Number(values.hour),
+      Number(values.minute),
+    );
+    guess += expectedUtc - representedUtc;
+  }
+
+  return new Date(guess);
+}
+
 export async function getAvailableSlots(workspaceId: string, date: string) {
   const rules = await db
     .select()
@@ -354,21 +384,14 @@ export async function getAvailableSlots(workspaceId: string, date: string) {
     .where(eq(availabilityRules.workspaceId, workspaceId))
     .orderBy(availabilityRules.dayOfWeek);
 
-  const targetDate = new Date(date);
-  const dayOfWeek = targetDate.getDay();
+  const [year, month, day] = date.split("-").map(Number);
+  const dayOfWeek = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+  const dayRules = rules.filter((rule) => rule.dayOfWeek === dayOfWeek);
 
-  const dayRules = rules.filter((r) => r.dayOfWeek === dayOfWeek);
+  if (dayRules.length === 0) return [];
 
-  if (dayRules.length === 0) {
-    return [];
-  }
-
-  // Get booked appointments for that day
-  const dayStart = new Date(targetDate);
-  dayStart.setHours(0, 0, 0, 0);
-  const dayEnd = new Date(targetDate);
-  dayEnd.setHours(23, 59, 59, 999);
-
+  const earliestStart = new Date(Math.min(...dayRules.map((rule) => zonedDateTimeToUtc(date, rule.startTime, rule.timezone).getTime())));
+  const latestEnd = new Date(Math.max(...dayRules.map((rule) => zonedDateTimeToUtc(date, rule.endTime, rule.timezone).getTime())));
   const bookedSlots = await db
     .select({ startTime: appointments.startTime, endTime: appointments.endTime })
     .from(appointments)
@@ -376,21 +399,16 @@ export async function getAvailableSlots(workspaceId: string, date: string) {
       and(
         eq(appointments.workspaceId, workspaceId),
         eq(appointments.status, "scheduled"),
-        gte(appointments.startTime, dayStart),
-        lte(appointments.endTime, dayEnd)
+        lt(appointments.startTime, latestEnd),
+        gt(appointments.endTime, earliestStart),
       )
     );
 
-  // Generate 30-min slots from availability rules, excluding booked
   const slots: { start: string; end: string }[] = [];
 
   for (const rule of dayRules) {
-    const [sh, sm] = rule.startTime.split(":").map(Number);
-    const [eh, em] = rule.endTime.split(":").map(Number);
-    let current = new Date(targetDate);
-    current.setHours(sh, sm, 0, 0);
-    const ruleEnd = new Date(targetDate);
-    ruleEnd.setHours(eh, em, 0, 0);
+    let current = zonedDateTimeToUtc(date, rule.startTime, rule.timezone);
+    const ruleEnd = zonedDateTimeToUtc(date, rule.endTime, rule.timezone);
 
     while (current < ruleEnd) {
       const slotEnd = new Date(current.getTime() + 30 * 60 * 1000);

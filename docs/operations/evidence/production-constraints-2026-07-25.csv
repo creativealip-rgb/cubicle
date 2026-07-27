@@ -1,0 +1,237 @@
+schema_name,table_name,conname,contype,definition,convalidated,condeferrable,condeferred
+public,accounts,accounts_user_id_users_id_fk,f,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,t,f,f
+public,accounts,accounts_pkey,p,PRIMARY KEY (id),t,f,f
+public,activity_logs,activity_logs_actor_id_users_id_fk,f,FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,activity_logs,activity_logs_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,activity_logs,activity_logs_pkey,p,PRIMARY KEY (id),t,f,f
+public,ai_conversations,ai_conversations_user_id_users_id_fk,f,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,t,f,f
+public,ai_conversations,ai_conversations_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,ai_conversations,ai_conversations_pkey,p,PRIMARY KEY (id),t,f,f
+public,ai_messages,ai_messages_role_check,c,"CHECK (role = ANY (ARRAY['user'::text, 'assistant'::text, 'tool'::text]))",t,f,f
+public,ai_messages,ai_messages_conversation_id_ai_conversations_id_fk,f,FOREIGN KEY (conversation_id) REFERENCES ai_conversations(id) ON DELETE CASCADE,t,f,f
+public,ai_messages,ai_messages_conversation_id_fkey,f,FOREIGN KEY (conversation_id) REFERENCES ai_conversations(id) ON DELETE CASCADE,t,f,f
+public,ai_messages,ai_messages_pkey,p,PRIMARY KEY (id),t,f,f
+public,ai_usage_daily,ai_usage_daily_workspace_id_fkey,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,ai_usage_daily,ai_usage_daily_ws_date,u,"UNIQUE (workspace_id, usage_date)",t,f,f
+public,appointments,appointments_client_id_clients_id_fk,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,t,f,f
+public,appointments,appointments_user_id_users_id_fk,f,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,t,f,f
+public,appointments,appointments_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,appointments,appointments_pkey,p,PRIMARY KEY (id),t,f,f
+public,availability_rules,availability_rules_user_id_users_id_fk,f,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,t,f,f
+public,availability_rules,availability_rules_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,availability_rules,availability_rules_pkey,p,PRIMARY KEY (id),t,f,f
+public,client_google_calendar_connections,client_google_calendar_connections_client_id_fkey,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,t,f,f
+public,client_google_calendar_connections,client_google_calendar_connections_connected_by_user_id_fkey,f,FOREIGN KEY (connected_by_user_id) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,client_google_calendar_connections,client_google_calendar_connections_workspace_id_fkey,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,client_google_calendar_connections,client_google_calendar_connections_pkey,p,PRIMARY KEY (id),t,f,f
+public,client_google_calendar_connections,client_google_calendar_connections_client_id_key,u,UNIQUE (client_id),t,f,f
+public,client_google_calendar_connections,client_google_calendar_connections_invite_token_hash_key,u,UNIQUE (invite_token_hash),t,f,f
+public,clients,clients_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,clients,clients_pkey,p,PRIMARY KEY (id),t,f,f
+public,clients,clients_portal_token_hash_unique,u,UNIQUE (portal_token_hash),t,f,f
+public,comments,comments_author_id_users_id_fk,f,FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,comments,comments_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,comments,comments_pkey,p,PRIMARY KEY (id),t,f,f
+public,contract_templates,contract_templates_created_by_users_id_fk,f,FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,contract_templates,contract_templates_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,contract_templates,contract_templates_pkey,p,PRIMARY KEY (id),t,f,f
+public,contracts,contracts_client_id_clients_id_fk,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,t,f,f
+public,contracts,contracts_created_by_users_id_fk,f,FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,contracts,contracts_project_id_projects_id_fk,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL,t,f,f
+public,contracts,contracts_template_id_contract_templates_id_fk,f,FOREIGN KEY (template_id) REFERENCES contract_templates(id) ON DELETE SET NULL,t,f,f
+public,contracts,contracts_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,contracts,contracts_pkey,p,PRIMARY KEY (id),t,f,f
+public,contracts,contracts_shared_token_hash_unique,u,UNIQUE (shared_token_hash),t,f,f
+public,custom_package_requests,custom_package_requests_project_id_fkey,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,t,f,f
+public,custom_package_requests,custom_package_requests_project_id_projects_id_fk,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,t,f,f
+public,custom_package_requests,custom_package_requests_workspace_id_fkey,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,custom_package_requests,custom_package_requests_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,custom_package_requests,custom_package_requests_pkey,p,PRIMARY KEY (id),t,f,f
+public,email_messages,email_messages_client_id_clients_id_fk,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,t,f,f
+public,email_messages,email_messages_client_id_fkey,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,t,f,f
+public,email_messages,email_messages_project_id_fkey,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL,t,f,f
+public,email_messages,email_messages_project_id_projects_id_fk,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL,t,f,f
+public,email_messages,email_messages_user_id_fkey,f,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,email_messages,email_messages_user_id_users_id_fk,f,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,email_messages,email_messages_workspace_id_fkey,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,email_messages,email_messages_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,email_messages,email_messages_pkey,p,PRIMARY KEY (id),t,f,f
+public,email_templates,email_templates_user_id_fkey,f,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,email_templates,email_templates_user_id_users_id_fk,f,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,email_templates,email_templates_workspace_id_fkey,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,email_templates,email_templates_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,email_templates,email_templates_pkey,p,PRIMARY KEY (id),t,f,f
+public,email_templates,email_templates_workspace_id_name_key,u,"UNIQUE (workspace_id, name)",t,f,f
+public,expense_categories,expense_categories_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,expense_categories,expense_categories_pkey,p,PRIMARY KEY (id),t,f,f
+public,expense_categories,expense_categories_workspace_id_name_unique,u,"UNIQUE (workspace_id, name)",t,f,f
+public,expense_recurring,expense_recurring_category_id_expense_categories_id_fk,f,FOREIGN KEY (category_id) REFERENCES expense_categories(id) ON DELETE SET NULL,t,f,f
+public,expense_recurring,expense_recurring_created_by_users_id_fk,f,FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,expense_recurring,expense_recurring_project_id_projects_id_fk,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL,t,f,f
+public,expense_recurring,expense_recurring_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,expense_recurring,expense_recurring_pkey,p,PRIMARY KEY (id),t,f,f
+public,expenses,expenses_category_id_expense_categories_id_fk,f,FOREIGN KEY (category_id) REFERENCES expense_categories(id) ON DELETE SET NULL,t,f,f
+public,expenses,expenses_client_id_clients_id_fk,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,t,f,f
+public,expenses,expenses_created_by_users_id_fk,f,FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,expenses,expenses_project_id_projects_id_fk,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL,t,f,f
+public,expenses,expenses_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,expenses,expenses_pkey,p,PRIMARY KEY (id),t,f,f
+public,files,files_file_type_check,c,"CHECK (file_type = ANY (ARRAY['working_file'::text, 'deliverable'::text]))",t,f,f
+public,files,files_client_id_clients_id_fk,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,t,f,f
+public,files,files_folder_id_folders_id_fk,f,FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL,t,f,f
+public,files,files_project_id_projects_id_fk,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,t,f,f
+public,files,files_uploaded_by_users_id_fk,f,FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,files,files_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,files,files_pkey,p,PRIMARY KEY (id),t,f,f
+public,folders,folders_client_id_clients_id_fk,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,t,f,f
+public,folders,folders_parent_id_folders_id_fk,f,FOREIGN KEY (parent_id) REFERENCES folders(id) ON DELETE CASCADE,t,f,f
+public,folders,folders_project_id_projects_id_fk,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,t,f,f
+public,folders,folders_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,folders,folders_pkey,p,PRIMARY KEY (id),t,f,f
+public,google_calendar_connections,google_calendar_connections_user_id_fkey,f,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,t,f,f
+public,google_calendar_connections,google_calendar_connections_pkey,p,PRIMARY KEY (id),t,f,f
+public,google_calendar_connections,google_calendar_connections_user_id_key,u,UNIQUE (user_id),t,f,f
+public,invoice_items,invoice_items_invoice_id_invoices_id_fk,f,FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE,t,f,f
+public,invoice_items,invoice_items_pkey,p,PRIMARY KEY (id),t,f,f
+public,invoice_templates,invoice_templates_created_by_fkey,f,FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,invoice_templates,invoice_templates_created_by_users_id_fk,f,FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,invoice_templates,invoice_templates_workspace_id_fkey,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,invoice_templates,invoice_templates_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,invoice_templates,invoice_templates_pkey,p,PRIMARY KEY (id),t,f,f
+public,invoices,invoices_client_id_clients_id_fk,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,t,f,f
+public,invoices,invoices_project_id_fkey,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL,t,f,f
+public,invoices,invoices_project_id_projects_id_fk,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL,t,f,f
+public,invoices,invoices_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,invoices,invoices_pkey,p,PRIMARY KEY (id),t,f,f
+public,invoices,invoices_shared_token_hash_unique,u,UNIQUE (shared_token_hash),t,f,f
+public,invoices,invoices_workspace_id_invoice_number_unique,u,"UNIQUE (workspace_id, invoice_number)",t,f,f
+public,notifications,notifications_actor_id_fkey,f,FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,notifications,notifications_actor_id_users_id_fk,f,FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,notifications,notifications_user_id_fkey,f,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,t,f,f
+public,notifications,notifications_user_id_users_id_fk,f,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,t,f,f
+public,notifications,notifications_workspace_id_fkey,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,notifications,notifications_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,notifications,notifications_pkey,p,PRIMARY KEY (id),t,f,f
+public,package_orders,package_orders_package_id_fkey,f,FOREIGN KEY (package_id) REFERENCES packages(id) ON DELETE CASCADE,t,f,f
+public,package_orders,package_orders_package_id_packages_id_fk,f,FOREIGN KEY (package_id) REFERENCES packages(id) ON DELETE CASCADE,t,f,f
+public,package_orders,package_orders_project_id_fkey,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,t,f,f
+public,package_orders,package_orders_project_id_projects_id_fk,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,t,f,f
+public,package_orders,package_orders_workspace_id_fkey,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,package_orders,package_orders_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,package_orders,package_orders_pkey,p,PRIMARY KEY (id),t,f,f
+public,packages,packages_project_id_fkey,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,t,f,f
+public,packages,packages_project_id_projects_id_fk,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,t,f,f
+public,packages,packages_workspace_id_fkey,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,packages,packages_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,packages,packages_pkey,p,PRIMARY KEY (id),t,f,f
+public,pakasir_payments,pakasir_payments_workspace_id_fkey,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,pakasir_payments,pakasir_payments_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,pakasir_payments,pakasir_payments_pkey,p,PRIMARY KEY (id),t,f,f
+public,pakasir_payments,pakasir_payments_order_id_key,u,UNIQUE (order_id),t,f,f
+public,payments,payments_invoice_id_invoices_id_fk,f,FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE,t,f,f
+public,payments,payments_pkey,p,PRIMARY KEY (id),t,f,f
+public,personal_notes,personal_notes_converted_task_id_fkey,f,FOREIGN KEY (converted_task_id) REFERENCES tasks(id) ON DELETE SET NULL,t,f,f
+public,personal_notes,personal_notes_converted_task_id_tasks_id_fk,f,FOREIGN KEY (converted_task_id) REFERENCES tasks(id) ON DELETE SET NULL,t,f,f
+public,personal_notes,personal_notes_user_id_fkey,f,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,t,f,f
+public,personal_notes,personal_notes_user_id_users_id_fk,f,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,t,f,f
+public,personal_notes,personal_notes_workspace_id_fkey,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,personal_notes,personal_notes_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,personal_notes,personal_notes_pkey,p,PRIMARY KEY (id),t,f,f
+public,portal_access_logs,portal_access_logs_client_id_clients_id_fk,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,t,f,f
+public,portal_access_logs,portal_access_logs_invoice_id_invoices_id_fk,f,FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE SET NULL,t,f,f
+public,portal_access_logs,portal_access_logs_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE SET NULL,t,f,f
+public,portal_access_logs,portal_access_logs_pkey,p,PRIMARY KEY (id),t,f,f
+public,portal_requests,portal_requests_status_check,c,"CHECK (status = ANY (ARRAY['pending'::text, 'completed'::text, 'cancelled'::text]))",t,f,f
+public,portal_requests,portal_requests_type_check,c,"CHECK (type = ANY (ARRAY['document'::text, 'approval'::text, 'info'::text, 'other'::text]))",t,f,f
+public,portal_requests,portal_requests_client_id_clients_id_fk,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,t,f,f
+public,portal_requests,portal_requests_client_id_fkey,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,t,f,f
+public,portal_requests,portal_requests_created_by_fkey,f,FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,portal_requests,portal_requests_created_by_users_id_fk,f,FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,portal_requests,portal_requests_project_id_fkey,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,t,f,f
+public,portal_requests,portal_requests_project_id_projects_id_fk,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,t,f,f
+public,portal_requests,portal_requests_workspace_id_fkey,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,portal_requests,portal_requests_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,portal_requests,portal_requests_pkey,p,PRIMARY KEY (id),t,f,f
+public,portal_visits,portal_visits_client_id_clients_id_fk,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,t,f,f
+public,portal_visits,portal_visits_client_id_fkey,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,t,f,f
+public,portal_visits,portal_visits_workspace_id_fkey,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,portal_visits,portal_visits_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,portal_visits,portal_visits_pkey,p,PRIMARY KEY (id),t,f,f
+public,project_members,project_members_project_id_projects_id_fk,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,t,f,f
+public,project_members,project_members_user_id_users_id_fk,f,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,t,f,f
+public,project_members,project_members_pkey,p,PRIMARY KEY (id),t,f,f
+public,project_members,project_members_project_id_user_id_unique,u,"UNIQUE (project_id, user_id)",t,f,f
+public,projects,projects_client_id_clients_id_fk,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,t,f,f
+public,projects,projects_created_by_users_id_fk,f,FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,projects,projects_selected_package_id_fkey,f,FOREIGN KEY (selected_package_id) REFERENCES packages(id) ON DELETE SET NULL,t,f,f
+public,projects,projects_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,projects,projects_pkey,p,PRIMARY KEY (id),t,f,f
+public,prompt_generations,prompt_generations_client_id_clients_id_fk,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,t,f,f
+public,prompt_generations,prompt_generations_created_by_users_id_fk,f,FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,prompt_generations,prompt_generations_project_id_projects_id_fk,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL,t,f,f
+public,prompt_generations,prompt_generations_template_id_prompt_templates_id_fk,f,FOREIGN KEY (template_id) REFERENCES prompt_templates(id) ON DELETE SET NULL,t,f,f
+public,prompt_generations,prompt_generations_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,prompt_generations,prompt_generations_pkey,p,PRIMARY KEY (id),t,f,f
+public,prompt_templates,prompt_templates_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,prompt_templates,prompt_templates_pkey,p,PRIMARY KEY (id),t,f,f
+public,proposal_templates,proposal_templates_created_by_fkey,f,FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,proposal_templates,proposal_templates_workspace_id_fkey,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,proposal_templates,proposal_templates_pkey,p,PRIMARY KEY (id),t,f,f
+public,proposals,proposals_client_id_clients_id_fk,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,t,f,f
+public,proposals,proposals_created_by_users_id_fk,f,FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,proposals,proposals_project_id_projects_id_fk,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL,t,f,f
+public,proposals,proposals_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,proposals,proposals_pkey,p,PRIMARY KEY (id),t,f,f
+public,proposals,proposals_shared_token_hash_unique,u,UNIQUE (shared_token_hash),t,f,f
+public,questionnaire_responses,questionnaire_responses_client_id_clients_id_fk,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,t,f,f
+public,questionnaire_responses,questionnaire_responses_project_id_projects_id_fk,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL,t,f,f
+public,questionnaire_responses,questionnaire_responses_questionnaire_id_questionnaires_id_fk,f,FOREIGN KEY (questionnaire_id) REFERENCES questionnaires(id) ON DELETE CASCADE,t,f,f
+public,questionnaire_responses,questionnaire_responses_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,questionnaire_responses,questionnaire_responses_pkey,p,PRIMARY KEY (id),t,f,f
+public,questionnaire_responses,questionnaire_responses_shared_token_hash_unique,u,UNIQUE (shared_token_hash),t,f,f
+public,questionnaires,questionnaires_created_by_users_id_fk,f,FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,questionnaires,questionnaires_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,questionnaires,questionnaires_pkey,p,PRIMARY KEY (id),t,f,f
+public,sessions,sessions_user_id_users_id_fk,f,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,t,f,f
+public,sessions,sessions_pkey,p,PRIMARY KEY (id),t,f,f
+public,sessions,sessions_token_unique,u,UNIQUE (token),t,f,f
+public,support_tickets,support_tickets_priority_check,c,"CHECK (priority = ANY (ARRAY['low'::text, 'medium'::text, 'high'::text, 'urgent'::text]))",t,f,f
+public,support_tickets,support_tickets_status_check,c,"CHECK (status = ANY (ARRAY['open'::text, 'in_progress'::text, 'resolved'::text, 'closed'::text]))",t,f,f
+public,support_tickets,support_tickets_assignee_id_fkey,f,FOREIGN KEY (assignee_id) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,support_tickets,support_tickets_assignee_id_users_id_fk,f,FOREIGN KEY (assignee_id) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,support_tickets,support_tickets_client_id_clients_id_fk,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,t,f,f
+public,support_tickets,support_tickets_client_id_fkey,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL,t,f,f
+public,support_tickets,support_tickets_created_by_fkey,f,FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,support_tickets,support_tickets_created_by_users_id_fk,f,FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,support_tickets,support_tickets_project_id_fkey,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL,t,f,f
+public,support_tickets,support_tickets_project_id_projects_id_fk,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL,t,f,f
+public,support_tickets,support_tickets_workspace_id_fkey,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,support_tickets,support_tickets_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,support_tickets,support_tickets_pkey,p,PRIMARY KEY (id),t,f,f
+public,tasks,tasks_assignee_id_users_id_fk,f,FOREIGN KEY (assignee_id) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,tasks,tasks_created_by_users_id_fk,f,FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,t,f,f
+public,tasks,tasks_project_id_projects_id_fk,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,t,f,f
+public,tasks,tasks_source_note_id_fkey,f,FOREIGN KEY (source_note_id) REFERENCES personal_notes(id) ON DELETE SET NULL,t,f,f
+public,tasks,tasks_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,tasks,tasks_pkey,p,PRIMARY KEY (id),t,f,f
+public,time_entries,time_entries_client_id_clients_id_fk,f,FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,t,f,f
+public,time_entries,time_entries_project_id_projects_id_fk,f,FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,t,f,f
+public,time_entries,time_entries_task_id_tasks_id_fk,f,FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE SET NULL,t,f,f
+public,time_entries,time_entries_user_id_users_id_fk,f,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,t,f,f
+public,time_entries,time_entries_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,time_entries,time_entries_pkey,p,PRIMARY KEY (id),t,f,f
+public,users,users_pkey,p,PRIMARY KEY (id),t,f,f
+public,users,users_email_unique,u,UNIQUE (email),t,f,f
+public,verifications,verifications_pkey,p,PRIMARY KEY (id),t,f,f
+public,workspace_currency_rates,workspace_currency_rates_workspace_id_fkey,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,workspace_currency_rates,workspace_currency_rates_pkey,p,PRIMARY KEY (id),t,f,f
+public,workspace_invoice_counters,workspace_invoice_counters_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,workspace_invoice_counters,workspace_invoice_counters_pkey,p,PRIMARY KEY (workspace_id),t,f,f
+public,workspace_members,workspace_members_user_id_users_id_fk,f,FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,t,f,f
+public,workspace_members,workspace_members_workspace_id_workspaces_id_fk,f,FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,t,f,f
+public,workspace_members,workspace_members_pkey,p,PRIMARY KEY (id),t,f,f
+public,workspace_members,workspace_members_workspace_id_user_id_unique,u,"UNIQUE (workspace_id, user_id)",t,f,f
+public,workspaces,workspaces_owner_id_users_id_fk,f,FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,t,f,f
+public,workspaces,workspaces_pkey,p,PRIMARY KEY (id),t,f,f
+public,workspaces,workspaces_booking_slug_unique,u,UNIQUE (booking_slug),t,f,f
+public,workspaces,workspaces_slug_unique,u,UNIQUE (slug),t,f,f

@@ -5,15 +5,19 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { workspaces } from "@/db/schema";
-import { requireUser, assertWorkspaceWritable } from "@/lib/access";
+import { requireUser, assertWorkspaceOwner } from "@/lib/access";
+import { detectImageMime } from "@/lib/settings-validation";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { r2, R2_BUCKET } from "@/lib/r2";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { safeUploadErrorResponse, validateContentLength } from "@/lib/upload-safety";
 
 export const runtime = "nodejs";
 
 const MAX_BYTES = 2 * 1024 * 1024;
-const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"]);
+// Keep uploads raster-only. SVG can carry active content and must not be stored
+// from an untrusted browser upload without a dedicated sanitizer.
+const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
 function brandingLogoKey(workspaceId: string) {
   return `workspaces/${workspaceId}/branding/logo`;
@@ -38,10 +42,11 @@ function publicLogoUrl(workspaceId: string) {
  */
 export async function POST(req: NextRequest) {
   try {
+    if (!validateContentLength(req.headers.get("content-length"), MAX_BYTES)) return NextResponse.json({ error: "Upload too large" }, { status: 413 });
     const session = await auth.api.getSession({ headers: await headers() });
     const user = requireUser(session?.user);
     const workspaceId = await getWorkspaceForCurrentUser();
-    await assertWorkspaceWritable(db, user.id, workspaceId);
+    await assertWorkspaceOwner(db, user.id, workspaceId);
 
     const form = await req.formData();
     const file = form.get("file");
@@ -54,12 +59,16 @@ export async function POST(req: NextRequest) {
     const mime = file.type || "application/octet-stream";
     if (!ALLOWED.has(mime)) {
       return NextResponse.json(
-        { error: "Logo must be image (png/jpg/webp/gif/svg)" },
+        { error: "Logo must be image (png/jpg/webp/gif)" },
         { status: 400 },
       );
     }
 
     const body = Buffer.from(await file.arrayBuffer());
+    const detectedMime = detectImageMime(body);
+    if (!detectedMime || detectedMime !== mime) {
+      return NextResponse.json({ error: "Logo content does not match file type" }, { status: 400 });
+    }
     const key = brandingLogoKey(workspaceId);
 
     await r2.send(
@@ -83,9 +92,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, logoUrl });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Upload failed";
-    const status = /not found|forbidden|unauthorized|access/i.test(message) ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    const safe = safeUploadErrorResponse(err);
+    return NextResponse.json({ error: safe.error }, { status: safe.status });
   }
 }
 
@@ -95,7 +103,7 @@ export async function DELETE() {
     const session = await auth.api.getSession({ headers: await headers() });
     const user = requireUser(session?.user);
     const workspaceId = await getWorkspaceForCurrentUser();
-    await assertWorkspaceWritable(db, user.id, workspaceId);
+    await assertWorkspaceOwner(db, user.id, workspaceId);
 
     try {
       await r2.send(

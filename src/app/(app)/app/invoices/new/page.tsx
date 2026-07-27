@@ -4,8 +4,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { clients, invoiceTemplates, projects } from "@/db/schema";
-import { eq, asc } from "drizzle-orm";
+import { clients, invoiceTemplates, projects, timeEntries, packages, workspaceCurrencyRates, workspaces } from "@/db/schema";
+import { eq, asc, and, ne } from "drizzle-orm";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,13 +51,28 @@ export default async function NewInvoicePage() {
       clientId: projects.clientId,
       billingType: projects.billingType,
       currency: projects.currency,
+      budget: projects.budget,
+      rate: projects.rate,
+      packagePrice: packages.price,
+      packageCustomPrice: packages.customPrice,
     })
     .from(projects)
+    .leftJoin(packages, eq(projects.selectedPackageId, packages.id))
     .where(eq(projects.workspaceId, workspaceId))
     .orderBy(asc(projects.name));
 
+  const [workspace] = await db.select({ defaultCurrency: workspaces.defaultCurrency }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  const currencyRates = await db.select({ fromCurrency: workspaceCurrencyRates.fromCurrency, rate: workspaceCurrencyRates.rate }).from(workspaceCurrencyRates).where(eq(workspaceCurrencyRates.workspaceId, workspaceId));
+
+  const timeEntryOptions = await db.select({
+    id: timeEntries.id, clientId: timeEntries.clientId, projectId: timeEntries.projectId,
+    description: timeEntries.description, durationMinutes: timeEntries.durationMinutes, hourlyRate: timeEntries.hourlyRate,
+  }).from(timeEntries).where(and(
+    eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.billable, true), ne(timeEntries.status, "invoiced"),
+  )).orderBy(asc(timeEntries.createdAt));
+
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex items-center gap-3">
         <Link href="/app/invoices">
           <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -65,29 +80,29 @@ export default async function NewInvoicePage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Invoice Baru</h1>
+          <h1 className="app-page-title">Invoice Baru</h1>
           <p className="text-sm text-muted-foreground">
-            Buat draft invoice, lalu tambah item setelah disimpan.
+            Lengkapi detail dan item tagihan dalam satu langkah.
           </p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Invoice details</CardTitle>
+          <CardTitle>Detail invoice</CardTitle>
         </CardHeader>
         <CardContent>
           {clientOptions.length === 0 ? (
             <div className="space-y-3 rounded-lg border border-dashed p-6 text-center">
               <p className="text-sm text-muted-foreground">
-                Add client before creating invoice.
+                Tambahkan klien sebelum membuat invoice.
               </p>
               <Link href="/app/clients/new">
-                <Button>Add Client</Button>
+                <Button>Tambah Klien</Button>
               </Link>
             </div>
           ) : (
-            <InvoiceForm mode="create" clients={clientOptions} projects={projectOptions} templates={templateOptions} />
+            <InvoiceForm mode="create" clients={clientOptions} projects={projectOptions} templates={templateOptions} timeEntries={timeEntryOptions} baseCurrency={workspace?.defaultCurrency || "IDR"} currencyRates={currencyRates} />
           )}
         </CardContent>
       </Card>

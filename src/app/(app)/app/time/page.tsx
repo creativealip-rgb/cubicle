@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { timeEntries, clients, projects, tasks, users } from "@/db/schema";
-import { eq, and, isNull, desc } from "drizzle-orm";
+import { eq, and, isNull, isNotNull, desc } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { TimerWidget } from "@/components/time/timer-widget";
 import { Timesheet } from "@/components/time/timesheet";
@@ -81,7 +81,7 @@ export default async function TimePage() {
     .leftJoin(projects, eq(projects.id, timeEntries.projectId))
     .leftJoin(tasks, eq(tasks.id, timeEntries.taskId))
     .leftJoin(users, eq(users.id, timeEntries.userId))
-    .where(eq(timeEntries.workspaceId, workspaceId))
+    .where(and(eq(timeEntries.workspaceId, workspaceId), isNotNull(timeEntries.endTime)))
     .orderBy(desc(timeEntries.createdAt))
     .limit(200);
 
@@ -115,7 +115,7 @@ export default async function TimePage() {
     <div className="min-w-0 space-y-4 sm:space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{t("Pelacakan Waktu", "Time Tracking")}</h1>
+          <h1 className="app-page-title">{t("Pelacakan Waktu", "Time Tracking")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("Pantau waktu di semua project", "Track time across all projects")}</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -133,12 +133,12 @@ export default async function TimePage() {
 
       <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 px-4 py-3 text-sm text-emerald-950">
         <p className="font-medium">
-          {t("Timer = jam billable", "Timer = billable hours")}
+          {t("Tugas dan Timer terpisah", "Tasks and Timer are separate")}
         </p>
         <p className="mt-1 text-xs text-emerald-900/80">
           {t(
-            "Pakai timer / entri manual untuk jam kerja. Tugas di menu Tugas cuma checklist — tidak otomatis hitung jam. Tag opsional (Riset, Follow Up, dll) biar filter timesheet gampang.",
-            "Use the timer / manual entry for work hours. Tasks are just a checklist — they don't auto-track hours. Optional tags (Research, Follow Up, etc.) make timesheet filters easier.",
+            "Tugas buat status kerja. Timer buat jam billable. Buka tugas lalu mulai timer kalau mau catat waktu.",
+            "Tasks track work status. Timer tracks billable hours. Open a task then start a timer when you want to log time.",
           )}{" "}
           <a href="/app/tasks" className="font-medium underline underline-offset-2">
             {t("Kelola tugas", "Manage tasks")}

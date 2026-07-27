@@ -5,12 +5,14 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { proposals, projects, invoices, invoiceItems, workspaceInvoiceCounters } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
-import { requireUser, assertWorkspaceWritable } from "@/lib/access";
+import { requireUser, assertWorkspaceWritable, assertClientInWorkspace } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { assertPublicTokenLifecycle, PublicTokenError } from "@/lib/public-token-policy";
+import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -65,6 +67,7 @@ export async function createProposal(input: z.infer<typeof createProposalSchema>
   const user = requireUser(session?.user);
   await assertWorkspaceWritable(db, user.id, input.workspaceId);
   const parsed = createProposalSchema.parse(input);
+  await assertClientInWorkspace(db, user.id, parsed.workspaceId, parsed.clientId);
   const { subtotal, tax, total } = computeTotals(parsed.lineItems, parsed.taxRate);
 
   const [proposal] = await db.insert(proposals).values({
@@ -196,104 +199,148 @@ export async function deleteProposal(proposalId: string) {
 
 export async function acceptProposalPublic(proposalId: string, token: string) {
   const tokenHash = hashToken(token);
-  const [p] = await db.select().from(proposals)
-    .where(eq(proposals.id, proposalId))
-    .limit(1);
-  if (!p) throw new Error("Proposal not found");
-  if (p.sharedTokenHash !== tokenHash) throw new Error("Invalid token");
-  if (p.sharedTokenRevokedAt) throw new Error("Proposal link revoked");
-  if (p.sharedTokenExpiresAt && new Date() > p.sharedTokenExpiresAt) throw new Error("Proposal link expired");
-  if (p.status === "accepted") {
-    return { id: proposalId, alreadyAccepted: true, projectId: p.projectId };
-  }
-  if (p.status === "declined") throw new Error("Proposal was declined");
+  await enforceServerActionRateLimit("proposal:accept", tokenHash, { limit: 10, windowSec: 300 });
 
-  // Create project
-  const projectId = crypto.randomUUID();
-  await db.insert(projects).values({
-    id: projectId,
-    workspaceId: p.workspaceId,
-    clientId: p.clientId,
-    name: p.title,
-    status: "active",
-  });
+  return db.transaction(async (tx) => {
+    const locked = await tx.execute(sql`
+      SELECT id FROM proposals
+      WHERE id = ${proposalId}
+      FOR UPDATE
+    `);
+    if (locked.rowCount === 0) throw new Error("Proposal not found");
 
-  // Create down-payment invoice
-  const [counter] = await db.select().from(workspaceInvoiceCounters)
-    .where(eq(workspaceInvoiceCounters.workspaceId, p.workspaceId))
-    .limit(1);
-  const nextNumber = (counter?.nextNumber ?? 1);
-  const invoiceNumber = `INV-${String(nextNumber).padStart(4, "0")}`;
-  const downPaymentAmount = parseFloat(p.total) * (parseFloat(p.downPaymentPercent) / 100);
-  const dpSubtotal = downPaymentAmount;
-  const dpTax = 0; // down-payment typically a simple fraction
-  const dpTotal = downPaymentAmount;
+    const [p] = await tx.select().from(proposals)
+      .where(eq(proposals.id, proposalId))
+      .limit(1);
+    if (!p) throw new Error("Proposal not found");
+    try {
+      assertPublicTokenLifecycle({
+        presentedHash: tokenHash,
+        storedHash: p.sharedTokenHash,
+        revokedAt: p.sharedTokenRevokedAt,
+        expiresAt: p.sharedTokenExpiresAt,
+        status: p.status,
+        allowedStatuses: ["sent", "viewed", "accepted"],
+        processedStatuses: ["declined"],
+      });
+    } catch (error) {
+      if (error instanceof PublicTokenError) {
+        const messages = {
+          invalid: "Invalid token",
+          disabled: "Proposal link disabled",
+          revoked: "Proposal link revoked",
+          expired: "Proposal link expired",
+          processed: "Proposal was declined",
+          unavailable: "Proposal is not available",
+        } as const;
+        throw new Error(messages[error.code]);
+      }
+      throw error;
+    }
+    if (p.status === "accepted") {
+      return { id: proposalId, alreadyAccepted: true, projectId: p.projectId };
+    }
 
-  const invoiceId = crypto.randomUUID();
-  await db.insert(invoices).values({
-    id: invoiceId,
-    workspaceId: p.workspaceId,
-    clientId: p.clientId,
-    invoiceNumber,
-    issueDate: new Date().toISOString().slice(0, 10),
-    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-    currency: p.currency,
-    subtotal: dpSubtotal.toFixed(2),
-    discount: "0",
-    tax: dpTax.toFixed(2),
-    total: dpTotal.toFixed(2),
-    status: "draft",
-    notes: `Down payment (${p.downPaymentPercent}%) for proposal: ${p.title}`,
-  });
-  // Invoice item summary
-  await db.insert(invoiceItems).values({
-    invoiceId,
-    description: `Down payment (${p.downPaymentPercent}%) — ${p.title}`,
-    quantity: "1",
-    unitPrice: dpTotal.toFixed(2),
-    amount: dpTotal.toFixed(2),
-    sourceType: "manual",
-  });
-  // Bump counter
-  if (counter) {
-    await db.update(workspaceInvoiceCounters)
-      .set({ nextNumber: nextNumber + 1, updatedAt: new Date() })
-      .where(eq(workspaceInvoiceCounters.workspaceId, p.workspaceId));
-  } else {
-    await db.insert(workspaceInvoiceCounters).values({
+    const projectId = crypto.randomUUID();
+    await tx.insert(projects).values({
+      id: projectId,
       workspaceId: p.workspaceId,
-      nextNumber: nextNumber + 1,
+      clientId: p.clientId,
+      name: p.title,
+      status: "active",
     });
-  }
 
-  // Update proposal
-  await db.update(proposals)
-    .set({
-      status: "accepted",
+    const [counter] = await tx.insert(workspaceInvoiceCounters)
+      .values({ workspaceId: p.workspaceId, nextNumber: 2 })
+      .onConflictDoUpdate({
+        target: workspaceInvoiceCounters.workspaceId,
+        set: {
+          nextNumber: sql`${workspaceInvoiceCounters.nextNumber} + 1`,
+          updatedAt: new Date(),
+        },
+      })
+      .returning({ nextNumber: workspaceInvoiceCounters.nextNumber });
+    const allocatedNumber = counter.nextNumber - 1;
+    const invoiceNumber = `INV-${String(allocatedNumber).padStart(4, "0")}`;
+    const downPaymentAmount = parseFloat(p.total) * (parseFloat(p.downPaymentPercent) / 100);
+    const dpTotal = downPaymentAmount;
+
+    const invoiceId = crypto.randomUUID();
+    await tx.insert(invoices).values({
+      id: invoiceId,
+      workspaceId: p.workspaceId,
+      clientId: p.clientId,
+      invoiceNumber,
+      issueDate: new Date().toISOString().slice(0, 10),
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      currency: p.currency,
+      subtotal: dpTotal.toFixed(2),
+      discount: "0",
+      tax: "0.00",
+      total: dpTotal.toFixed(2),
+      status: "draft",
+      notes: `Down payment (${p.downPaymentPercent}%) for proposal: ${p.title}`,
+    });
+    await tx.insert(invoiceItems).values({
+      invoiceId,
+      description: `Down payment (${p.downPaymentPercent}%) — ${p.title}`,
+      quantity: "1",
+      unitPrice: dpTotal.toFixed(2),
+      amount: dpTotal.toFixed(2),
+      sourceType: "manual",
+    });
+
+    await tx.update(proposals)
+      .set({
+        status: "accepted",
+        projectId,
+        acceptedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(and(eq(proposals.id, proposalId), eq(proposals.status, p.status)));
+
+    return {
+      id: proposalId,
       projectId,
-      acceptedAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .where(eq(proposals.id, proposalId));
-
-  return {
-    id: proposalId,
-    projectId,
-    invoiceId,
-    invoiceNumber,
-    downPaymentAmount: dpTotal,
-    currency: p.currency,
-  };
+      invoiceId,
+      invoiceNumber,
+      downPaymentAmount: dpTotal,
+      currency: p.currency,
+    };
+  });
 }
 
 export async function declineProposalPublic(proposalId: string, token: string, reason?: string) {
   const tokenHash = hashToken(token);
+  await enforceServerActionRateLimit("proposal:decline", tokenHash, { limit: 10, windowSec: 300 });
   const [p] = await db.select().from(proposals)
     .where(eq(proposals.id, proposalId))
     .limit(1);
   if (!p) throw new Error("Proposal not found");
-  if (p.sharedTokenHash !== tokenHash) throw new Error("Invalid token");
-  if (p.status === "accepted") throw new Error("Already accepted");
+  try {
+    assertPublicTokenLifecycle({
+      presentedHash: tokenHash,
+      storedHash: p.sharedTokenHash,
+      revokedAt: p.sharedTokenRevokedAt,
+      expiresAt: p.sharedTokenExpiresAt,
+      status: p.status,
+      allowedStatuses: ["sent", "viewed", "declined"],
+      processedStatuses: ["accepted"],
+    });
+  } catch (error) {
+    if (error instanceof PublicTokenError) {
+      const messages = {
+        invalid: "Invalid token",
+        disabled: "Proposal link disabled",
+        revoked: "Proposal link revoked",
+        expired: "Proposal link expired",
+        processed: "Already accepted",
+        unavailable: "Proposal is not available",
+      } as const;
+      throw new Error(messages[error.code]);
+    }
+    throw error;
+  }
   if (p.status === "declined") return { id: proposalId, alreadyDeclined: true };
 
   await db.update(proposals)

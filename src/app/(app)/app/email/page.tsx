@@ -83,7 +83,7 @@ export default async function EmailPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Email</h1>
+        <h1 className="app-page-title">Email</h1>
         <p className="text-sm text-muted-foreground mt-1">Tulis, simpan draf, dan kirim email ke klien langsung dari workspace.</p>
       </div>
 

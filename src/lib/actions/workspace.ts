@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { workspaces } from "@/db/schema";
-import { requireUser, assertWorkspaceOwner, assertWorkspaceWritable } from "@/lib/access";
+import { requireUser, assertWorkspaceOwner } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { writeActivityLog } from "@/lib/actions/activity";
 
@@ -32,7 +32,6 @@ const brandingSchema = z.object({
   defaultTaxRate: z.number().min(0).max(100).optional(),
   defaultHourlyRate: z.number().nonnegative().optional().nullable(),
   defaultInvoiceTerms: z.string().max(5000).optional().or(z.literal("")),
-  invoiceEmailBody: z.string().max(10000).optional().or(z.literal("")),
   replyToEmail: z.string().email().optional().or(z.literal("")),
 });
 
@@ -62,7 +61,7 @@ export async function updateWorkspaceBranding(input: z.infer<typeof brandingSche
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
-  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertWorkspaceOwner(db, user.id, workspaceId);
 
   const parsed = brandingSchema.parse(input);
 
@@ -85,7 +84,6 @@ export async function updateWorkspaceBranding(input: z.infer<typeof brandingSche
             ? null
             : String(parsed.defaultHourlyRate),
       defaultInvoiceTerms: parsed.defaultInvoiceTerms || null,
-      invoiceEmailBody: parsed.invoiceEmailBody || null,
       replyToEmail: parsed.replyToEmail || null,
       updatedAt: new Date(),
     })

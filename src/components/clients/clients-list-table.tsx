@@ -2,16 +2,10 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { MoreHorizontal, Globe, Plus } from "lucide-react";
+import { Globe, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { SortableHeader } from "@/components/ui/sortable-header";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
@@ -24,11 +18,13 @@ export type ClientListItem = {
   status: string;
   tags: string[] | null;
   portalEnabled: boolean | null;
+  portalSlug: string | null;
+  portalSlugEnabled: boolean | null;
   projectCount: number;
 };
 
 const STATUS_ORDER = ["active", "inactive", "archived"] as const;
-type SortKey = "number" | "name" | "company" | "projects" | "portal" | "status";
+type SortKey = "name" | "company" | "projects" | "portal" | "status";
 
 export function ClientsListTable({
   clients,
@@ -52,7 +48,6 @@ export function ClientsListTable({
 
   const getters = useMemo(
     () => ({
-      number: (r: ClientListItem) => r.clientNumber ?? "",
       name: (r: ClientListItem) => r.name,
       company: (r: ClientListItem) => r.companyName ?? "",
       projects: (r: ClientListItem) => r.projectCount,
@@ -106,16 +101,7 @@ export function ClientsListTable({
   return (
     <>
       <div className="hidden md:block rounded-lg border bg-card">
-        <div className="grid grid-cols-8 gap-4 p-3 text-xs font-medium text-muted-foreground border-b">
-          <div>
-            <SortableHeader
-              as="div"
-              label={t("No.", "No.")}
-              dir={dirFor("number")}
-              onClick={() => toggle("number")}
-              className="text-xs"
-            />
-          </div>
+        <div className="grid grid-cols-6 gap-4 p-3 text-xs font-medium text-muted-foreground border-b">
           <div className="col-span-2">
             <SortableHeader
               as="div"
@@ -161,17 +147,13 @@ export function ClientsListTable({
               className="text-xs"
             />
           </div>
-          <div className="text-right">{t("Aksi", "Actions")}</div>
         </div>
         {clients.length === 0 && emptyDesktop}
-        {sorted.map((client) => (
+        {sorted.map((client, index) => (
           <div
             key={client.id}
-            className="grid grid-cols-8 gap-4 p-3 items-center border-b last:border-0 hover:bg-muted/50 transition-colors"
+            className={`grid grid-cols-6 gap-4 p-3 items-center border-b border-slate-200 last:border-0 hover:bg-slate-100/70 transition-colors ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"}`}
           >
-            <div className="text-xs font-mono text-muted-foreground">
-              {client.clientNumber || "—"}
-            </div>
             <div className="col-span-2">
               <Link
                 href={`/app/clients/${client.id}`}
@@ -217,41 +199,6 @@ export function ClientsListTable({
                 {statusLabel(client.status)}
               </Badge>
             </div>
-            <div className="text-right">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link href={`/app/clients/${client.id}`}>
-                      {t("Lihat Detail", "View Details")}
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href={`/app/projects?clientId=${client.id}`}>
-                      {t("Lihat Proyek", "View Projects")}
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <a
-                      href={`/api/clients/${client.id}/export/pdf`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {t("Unduh PDF", "Download PDF")}
-                    </a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <a href={`/api/clients/${client.id}/export/xlsx`} rel="noreferrer">
-                      {t("Unduh Excel", "Download Excel")}
-                    </a>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
           </div>
         ))}
       </div>
@@ -290,66 +237,31 @@ export function ClientsListTable({
         {sorted.map((client) => (
           <Card key={client.id}>
             <CardContent className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  {client.clientNumber && (
-                    <p className="text-[11px] font-mono text-muted-foreground">
-                      {client.clientNumber}
-                    </p>
-                  )}
-                  <Link
-                    href={`/app/clients/${client.id}`}
-                    className="font-medium hover:underline"
+              <div className="space-y-1">
+                <Link
+                  href={`/app/clients/${client.id}`}
+                  className="font-medium hover:underline"
+                >
+                  {client.name}
+                </Link>
+                {client.companyName && (
+                  <p className="text-sm text-muted-foreground">
+                    {client.companyName}
+                  </p>
+                )}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Badge variant="outline" className="text-[10px]">
+                    {client.projectCount} {t("proyek", "projects")}
+                  </Badge>
+                  <Badge
+                    variant={
+                      client.status === "active" ? "default" : "secondary"
+                    }
+                    className="text-[10px]"
                   >
-                    {client.name}
-                  </Link>
-                  {client.companyName && (
-                    <p className="text-sm text-muted-foreground">
-                      {client.companyName}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Badge variant="outline" className="text-[10px]">
-                      {client.projectCount} {t("proyek", "projects")}
-                    </Badge>
-                    <Badge
-                      variant={
-                        client.status === "active" ? "default" : "secondary"
-                      }
-                      className="text-[10px]"
-                    >
-                      {statusLabel(client.status)}
-                    </Badge>
-                  </div>
+                    {statusLabel(client.status)}
+                  </Badge>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link href={`/app/clients/${client.id}`}>
-                        {t("Lihat Detail", "View Details")}
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <a
-                        href={`/api/clients/${client.id}/export/pdf`}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {t("Unduh PDF", "Download PDF")}
-                      </a>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <a href={`/api/clients/${client.id}/export/xlsx`} rel="noreferrer">
-                        {t("Unduh Excel", "Download Excel")}
-                      </a>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </div>
             </CardContent>
           </Card>

@@ -1,6 +1,6 @@
 # Cubiqlo — Bugs + Kekurangan (Manual QA Backlog)
 
-Status: **P0–P3 mostly fixed through v0.1.50** (2026-07-18)  
+Status: **P0–P3 mostly fixed; calendar/booking QA fixed through v0.1.115** (2026-07-24)
 Live: Docker `cubicle-cubicle-1` healthy  
 Sumber: manual QA Alip + Coder  
 Workspace acuan: **Alip Testing** (`alipdevcom@gmail.com`)
@@ -151,11 +151,52 @@ Step portal klien di dashboard checklist.
 
 ---
 
+## Settings audit — 2026-07-25
+
+Status: **fixed + deployed + live verified**.
+
+- **SET-001 fixed:** upload raster divalidasi lewat MIME allowlist + magic bytes.
+- **SET-002 fixed:** UI dan API sama-sama hanya menerima PNG/JPG/WebP/GIF.
+- **SET-003 fixed:** password tidak lagi di-trim; whitespace dipertahankan.
+- **SET-004 fixed:** ganti password me-revoke sesi perangkat lain.
+- **SET-005 fixed:** branding, logo, booking, nama workspace, dan kurs owner-only di server + read-only UI.
+- **SET-006 fixed:** konfirmasi disconnect Google, hapus logo/member; member target spesifik + tombol 44px + aria-label.
+- **SET-007 fixed:** Account Settings ikut ID/EN.
+- **SET-008 fixed:** password required, minLength, confirmation, dan invalid submit disabled.
+- **SET-009 fixed:** regression test signature gambar + password policy/whitespace.
+- **SET-010 fixed:** deployed; health + DB `ok`; desktop 1280px dan mobile 390×844 live verified tanpa document overflow.
+
+Verifikasi: `101/101` tests pass, touched-file ESLint pass, TypeScript/build pass, live health pass. Full lint masih punya 13 error lama di luar Settings.
+
+## Host routing — 2026-07-25
+
+Status: **fixed + deployed + live verified**.
+
+- Guest `cubiqlo.com/` tetap melihat landing page.
+- User dengan session yang membuka `cubiqlo.com/` otomatis pindah ke `app.cubiqlo.com/app/dashboard`.
+- Auth dan app routes di apex pindah ke `app.cubiqlo.com` dengan path/query tetap utuh.
+- `www.cubiqlo.com/*` canonical ke `cubiqlo.com/*`.
+- Regression test host routing: `7/7` pass; full suite `108/108` pass.
+- **Redirect-loop regression fixed:** redirect tidak lagi mempercayai keberadaan cookie mentah. Landing memvalidasi sesi lewat Better Auth; stale/logout cookie tetap bisa membuka login dan landing tanpa `ERR_TOO_MANY_REDIRECTS`.
+- Live E2E: stale cookie → login `200`, apex `200`; sesi valid → apex ke dashboard; sign-out API `200`, lalu login/apex tetap `200`.
+- Logo Cubiqlo pada halaman `/login` dan `/signup` sekarang mengarah ke landing canonical `https://cubiqlo.com/`, berlaku desktop/mobile dan sudah diverifikasi lewat klik live.
+
+## What’s New — 2026-07-25
+
+Status: **implemented + deployed; authenticated visual automation pending valid test login**.
+
+- Halaman `/app/whats-new` berisi timeline pembaruan dengan kategori New, Improvement, dan Fix serta CTA ke fitur terkait.
+- Menu utility tersedia di footer sidebar dan dropdown akun/mobile.
+- Badge New disimpan per-browser dan ditandai dibaca saat halaman dibuka; release ID baru memunculkan badge kembali.
+- Regression data `3/3` pass; full suite `111/111` pass; touched lint, TypeScript, dan production build pass.
+- Guest guard live benar: `/app/whats-new` menuju `/login?redirect=%2Fapp%2Fwhats-new`.
+- Visual authenticated live belum diautomasi karena kredensial testing lama mengembalikan 401; akun tidak di-reset.
+
 ## Belum dicek / hold
 
 | Area | Risiko |
 |---|---|
-| Kalender | availability seed ada; booking UX unknown |
+| Kalender | **checked/fixed v0.1.115** — confirmation guards, localized form, visible timezone, responsive booking UI, timezone-correct slots, valid ICS download |
 | Brain | AI quality/cost unknown |
 | Prompt | template/gen flow unknown |
 | Menu Penjualan | HOLD (PROD-003) |

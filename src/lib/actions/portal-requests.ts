@@ -4,10 +4,10 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { portalRequests, projects } from "@/db/schema";
+import { clients, portalRequests, projects } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { requireUser, assertWorkspaceMember } from "@/lib/access";
+import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 
 const createPortalRequestSchema = z.object({
@@ -40,18 +40,38 @@ const updatePortalRequestAdminSchema = z.object({
   status: z.enum(["pending", "completed", "cancelled"]),
 });
 
-export async function createPortalRequest(input: z.infer<typeof createPortalRequestSchema>) {
+export async function createPortalRequest(
+  input: z.infer<typeof createPortalRequestSchema>,
+) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
-  await assertWorkspaceMember(db, user.id, workspaceId);
+  await assertWorkspaceWritable(db, user.id, workspaceId);
   const parsed = createPortalRequestSchema.parse(input);
+
+  const [client] = await db
+    .select({ id: clients.id })
+    .from(clients)
+    .where(
+      and(
+        eq(clients.id, parsed.clientId),
+        eq(clients.workspaceId, workspaceId),
+      ),
+    )
+    .limit(1);
+  if (!client) throw new Error("Client not found");
 
   if (parsed.projectId) {
     const [project] = await db
       .select({ id: projects.id })
       .from(projects)
-      .where(and(eq(projects.id, parsed.projectId), eq(projects.workspaceId, workspaceId)))
+      .where(
+        and(
+          eq(projects.id, parsed.projectId),
+          eq(projects.workspaceId, workspaceId),
+          eq(projects.clientId, parsed.clientId),
+        ),
+      )
       .limit(1);
     if (!project) throw new Error("Project not found");
   }
@@ -79,7 +99,10 @@ const createClientPortalRequestSchema = z.object({
   kind: z.enum(["report", "meeting"]),
   message: z.string().max(2000).optional().nullable(),
   projectId: z.string().uuid().optional().nullable(),
-  preferredDate: z.string().optional().nullable(), // YYYY-MM-DD for meeting
+  preferredDate: z.string().optional().nullable(),
+  preferredTime: z.string().optional().nullable(),
+  durationMinutes: z.number().optional().nullable(),
+  timezone: z.string().optional().nullable(),
   reportPeriod: z.string().max(120).optional().nullable(), // e.g. "Last 30 days"
 });
 
@@ -110,6 +133,15 @@ export async function createClientPortalRequest(
   }
 
   const isReport = parsed.kind === "report";
+  const schedule = !isReport
+    ? (await import("@/lib/meeting-schedule")).buildMeetingSchedule({
+        date: parsed.preferredDate || "",
+        time: parsed.preferredTime || "",
+        durationMinutes: parsed.durationMinutes || 0,
+        timezone: parsed.timezone || "",
+      })
+    : null;
+  if (!isReport && !parsed.message?.trim()) throw new Error("Agenda meeting wajib diisi");
   const title = isReport ? "Request Report" : "Request Meeting";
   const type = isReport ? ("info" as const) : ("other" as const);
 
@@ -135,20 +167,32 @@ export async function createClientPortalRequest(
       title,
       description,
       type,
-      dueDate: !isReport && parsed.preferredDate?.trim() ? parsed.preferredDate.trim() : null,
+      dueDate:
+        !isReport && parsed.preferredDate?.trim()
+          ? parsed.preferredDate.trim()
+          : null,
+      meetingStartTime: schedule?.start || null,
+      meetingDurationMinutes: schedule?.durationMinutes || null,
+      meetingTimezone: schedule?.timezone || null,
+      meetingStatus: schedule ? "requested" : null,
       createdBy: null,
     })
     .returning();
 
   try {
-    const { notifyWorkspaceMembers } = await import("@/lib/in-app-notifications");
+    const { notifyWorkspaceMembers } =
+      await import("@/lib/in-app-notifications");
     const clientLabel = client.companyName || client.name || "Client";
     await notifyWorkspaceMembers(client.workspaceId, {
       type: isReport ? "portal_report_request" : "portal_meeting_request",
       title: isReport
         ? `${clientLabel} minta report`
         : `${clientLabel} minta meeting`,
-      body: parsed.message?.trim() || (isReport ? "Request report dari portal" : "Request meeting dari portal"),
+      body:
+        parsed.message?.trim() ||
+        (isReport
+          ? "Request report dari portal"
+          : "Request meeting dari portal"),
       link: `/app/clients/${client.id}?tab=portal`,
       entityType: "portal_request",
       entityId: row.id,
@@ -163,17 +207,24 @@ export async function createClientPortalRequest(
   return row;
 }
 
-export async function updatePortalRequestAdmin(input: z.infer<typeof updatePortalRequestAdminSchema>) {
+export async function updatePortalRequestAdmin(
+  input: z.infer<typeof updatePortalRequestAdminSchema>,
+) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
-  await assertWorkspaceMember(db, user.id, workspaceId);
+  await assertWorkspaceWritable(db, user.id, workspaceId);
   const parsed = updatePortalRequestAdminSchema.parse(input);
 
   const [request] = await db
     .select({ id: portalRequests.id })
     .from(portalRequests)
-    .where(and(eq(portalRequests.id, parsed.requestId), eq(portalRequests.workspaceId, workspaceId)))
+    .where(
+      and(
+        eq(portalRequests.id, parsed.requestId),
+        eq(portalRequests.workspaceId, workspaceId),
+      ),
+    )
     .limit(1);
 
   if (!request) throw new Error("Request not found");
@@ -192,12 +243,19 @@ export async function updatePortalRequestAdmin(input: z.infer<typeof updatePorta
   return row;
 }
 
-export async function completePortalRequestAdmin(input: z.infer<typeof completePortalRequestAdminSchema>) {
+export async function completePortalRequestAdmin(
+  input: z.infer<typeof completePortalRequestAdminSchema>,
+) {
   const parsed = completePortalRequestAdminSchema.parse(input);
-  return updatePortalRequestAdmin({ requestId: parsed.requestId, status: "completed" });
+  return updatePortalRequestAdmin({
+    requestId: parsed.requestId,
+    status: "completed",
+  });
 }
 
-export async function completePortalRequest(input: z.infer<typeof completePortalRequestSchema>) {
+export async function completePortalRequest(
+  input: z.infer<typeof completePortalRequestSchema>,
+) {
   const parsed = completePortalRequestSchema.parse(input);
   const { getClientPortalAccess } = await import("@/lib/actions/portal");
   const client = await getClientPortalAccess(parsed.token);
@@ -218,7 +276,11 @@ export async function completePortalRequest(input: z.infer<typeof completePortal
 
   const [row] = await db
     .update(portalRequests)
-    .set({ status: "completed", completedAt: new Date(), updatedAt: new Date() })
+    .set({
+      status: "completed",
+      completedAt: new Date(),
+      updatedAt: new Date(),
+    })
     .where(eq(portalRequests.id, parsed.requestId))
     .returning();
 
@@ -229,7 +291,9 @@ export async function completePortalRequest(input: z.infer<typeof completePortal
  * Client portal: approve / reject an approval-type request.
  * Stores decision in description trailer (no schema migration).
  */
-export async function respondPortalRequest(input: z.infer<typeof respondPortalRequestSchema>) {
+export async function respondPortalRequest(
+  input: z.infer<typeof respondPortalRequestSchema>,
+) {
   const parsed = respondPortalRequestSchema.parse(input);
   const { getClientPortalAccess } = await import("@/lib/actions/portal");
   const client = await getClientPortalAccess(parsed.token);
@@ -260,10 +324,16 @@ export async function respondPortalRequest(input: z.infer<typeof respondPortalRe
   }
 
   const stamp = new Date().toISOString();
-  const decisionLabel = parsed.decision === "approved" ? "APPROVED" : "REJECTED";
-  const noteLine = parsed.note?.trim() ? `\nClient note: ${parsed.note.trim()}` : "";
+  const decisionLabel =
+    parsed.decision === "approved" ? "APPROVED" : "REJECTED";
+  const noteLine = parsed.note?.trim()
+    ? `\nClient note: ${parsed.note.trim()}`
+    : "";
   const trailer = `\n\n---\n[Client ${decisionLabel} @ ${stamp}]${noteLine}`;
-  const nextDescription = `${request.description || ""}${trailer}`.slice(0, 8000);
+  const nextDescription = `${request.description || ""}${trailer}`.slice(
+    0,
+    8000,
+  );
 
   const [row] = await db
     .update(portalRequests)
@@ -277,4 +347,61 @@ export async function respondPortalRequest(input: z.infer<typeof respondPortalRe
     .returning();
 
   return { ...row, decision: parsed.decision };
+}
+
+const meetingScheduleActionSchema = z.object({
+  requestId: z.string().uuid(), date: z.string(), time: z.string(),
+  durationMinutes: z.number(), timezone: z.string(), note: z.string().max(2000).optional(),
+});
+
+async function meetingAdminActor() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  return { workspaceId, userId: user.id };
+}
+
+export async function approveMeetingRequest(requestId: string) {
+  const actor = await meetingAdminActor();
+  const { approveMeetingRequestRecord } = await import("@/lib/meeting-request-service");
+  const appointment = await approveMeetingRequestRecord(z.string().uuid().parse(requestId), actor);
+  const { syncMeetingAppointmentCalendars } = await import("@/lib/meeting-calendar-sync");
+  await syncMeetingAppointmentCalendars(appointment.id);
+  revalidatePath("/app/calendar"); revalidatePath("/app/clients");
+  return appointment;
+}
+
+export async function rejectMeetingRequest(requestId: string, reason: string) {
+  const actor = await meetingAdminActor();
+  const { rejectMeetingRequestRecord } = await import("@/lib/meeting-request-service");
+  const row = await rejectMeetingRequestRecord(z.string().uuid().parse(requestId), actor, reason);
+  revalidatePath("/app/clients"); return row;
+}
+
+export async function counterProposeMeetingRequest(input: z.infer<typeof meetingScheduleActionSchema>) {
+  const parsed = meetingScheduleActionSchema.parse(input);
+  const actor = await meetingAdminActor();
+  const { counterProposeMeetingRequestRecord } = await import("@/lib/meeting-request-service");
+  const row = await counterProposeMeetingRequestRecord(parsed.requestId, actor, parsed, parsed.note);
+  revalidatePath("/app/clients"); return row;
+}
+
+export async function acceptMeetingCounterProposal(token: string, requestId: string) {
+  const { getClientPortalAccess } = await import("@/lib/actions/portal");
+  const client = await getClientPortalAccess(token);
+  const { acceptMeetingCounterProposalRecord } = await import("@/lib/meeting-request-service");
+  const row = await acceptMeetingCounterProposalRecord(z.string().uuid().parse(requestId), { workspaceId: client.workspaceId, clientId: client.id });
+  const { syncMeetingAppointmentCalendars } = await import("@/lib/meeting-calendar-sync");
+  await syncMeetingAppointmentCalendars(row.id);
+  revalidatePath(`/client-portal/${token}`); revalidatePath("/app/calendar"); return row;
+}
+
+export async function resubmitMeetingRequest(token: string, input: z.infer<typeof meetingScheduleActionSchema>) {
+  const parsed = meetingScheduleActionSchema.parse(input);
+  const { getClientPortalAccess } = await import("@/lib/actions/portal");
+  const client = await getClientPortalAccess(token);
+  const { resubmitMeetingRequestRecord } = await import("@/lib/meeting-request-service");
+  const row = await resubmitMeetingRequestRecord(parsed.requestId, { workspaceId: client.workspaceId, clientId: client.id }, parsed, parsed.note);
+  revalidatePath(`/client-portal/${token}`); return row;
 }

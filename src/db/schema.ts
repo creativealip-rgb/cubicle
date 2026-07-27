@@ -146,10 +146,13 @@ export const clients = pgTable("clients", {
   internalNotes: text("internal_notes"),
   portalEnabled: boolean("portal_enabled").notNull().default(false),
   portalTokenHash: text("portal_token_hash").unique(),
+  portalTokenEnc: text("portal_token_enc"),
   portalTokenExpiresAt: timestamp("portal_token_expires_at", { withTimezone: true }),
   portalTokenRevokedAt: timestamp("portal_token_revoked_at", { withTimezone: true }),
   portalSlug: text("portal_slug").unique(),
-  portalSlugEnabled: boolean("portal_slug_enabled").notNull().default(true),
+  portalSlugEnabled: boolean("portal_slug_enabled").notNull().default(false),
+  portalPasswordHash: text("portal_password_hash"),
+  portalSessionVersion: text("portal_session_version").notNull().default("1"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -240,6 +243,15 @@ export const portalRequests = pgTable("portal_requests", {
   type: text("type", { enum: ["document", "approval", "info", "other"] }).notNull().default("document"),
   status: text("status", { enum: ["pending", "completed", "cancelled"] }).notNull().default("pending"),
   dueDate: date("due_date"),
+  meetingStartTime: timestamp("meeting_start_time", { withTimezone: true }),
+  meetingDurationMinutes: integer("meeting_duration_minutes"),
+  meetingTimezone: text("meeting_timezone"),
+  meetingStatus: text("meeting_status", {
+    enum: ["requested", "counter_proposed", "approved", "rejected"],
+  }),
+  meetingResponseNote: text("meeting_response_note"),
+  meetingProposedByUserId: text("meeting_proposed_by_user_id").references(() => users.id, { onDelete: "set null" }),
+  appointmentId: uuid("appointment_id").references(() => appointments.id, { onDelete: "set null" }),
   completedAt: timestamp("completed_at", { withTimezone: true }),
   createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -382,8 +394,11 @@ export const invoiceItems = pgTable("invoice_items", {
   quantity: numeric("quantity", { precision: 12, scale: 2 }).notNull().default("1"),
   unitPrice: numeric("unit_price", { precision: 12, scale: 2 }).notNull().default("0"),
   amount: numeric("amount", { precision: 12, scale: 2 }).notNull().default("0"),
-  sourceType: text("source_type", { enum: ["manual", "time_entry"] }),
+  sourceType: text("source_type", { enum: ["manual", "time_entry", "project"] }),
   sourceId: uuid("source_id"),
+  originalCurrency: text("original_currency"),
+  originalAmount: numeric("original_amount", { precision: 12, scale: 2 }),
+  conversionRate: numeric("conversion_rate", { precision: 18, scale: 8 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -442,6 +457,24 @@ export const appointments = pgTable("appointments", {
   googleCalendarId: text("google_calendar_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const appointmentCalendarSyncs = pgTable(
+  "appointment_calendar_syncs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    appointmentId: uuid("appointment_id").notNull().references(() => appointments.id, { onDelete: "cascade" }),
+    targetType: text("target_type", { enum: ["user", "client"] }).notNull(),
+    targetId: text("target_id").notNull(),
+    provider: text("provider", { enum: ["google"] }).notNull().default("google"),
+    externalEventId: text("external_event_id"),
+    externalCalendarId: text("external_calendar_id"),
+    status: text("status", { enum: ["pending", "synced", "failed", "skipped"] }).notNull().default("pending"),
+    lastError: text("last_error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [unique().on(table.appointmentId, table.targetType, table.provider)],
+);
 
 // ─── Google Calendar connections (per user / workspace owner) ───
 
@@ -915,7 +948,7 @@ export const personalNotes = pgTable("personal_notes", {
   status: text("status", { enum: ["open", "done", "archived"] }).notNull().default("open"),
   pinned: boolean("pinned").notNull().default(false),
   /** Task created from this note via convert (optional reverse link). */
-  convertedTaskId: uuid("converted_task_id"),
+  convertedTaskId: uuid("converted_task_id").references(() => tasks.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

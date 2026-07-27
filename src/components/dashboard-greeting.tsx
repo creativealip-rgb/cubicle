@@ -45,7 +45,14 @@ export function DashboardGreeting({ firstName, lang }: DashboardGreetingProps) {
   const locale = lang === "id" ? "id-ID" : "en-US";
   const greeting = getGreeting(now, lang);
   const todayLong = useMemo(
-    () => now.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long", timeZone: TIME_ZONE }),
+    () =>
+      now.toLocaleDateString(locale, {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        timeZone: TIME_ZONE,
+      }),
     [locale, now],
   );
 

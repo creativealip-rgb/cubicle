@@ -125,7 +125,7 @@ export default async function ProposalDetailPage({
               {t("Semua proposal", "All proposals")}
             </Link>
           </Button>
-          <h1 className="text-2xl font-semibold tracking-tight break-words">
+          <h1 className="app-page-title">
             {p.title}
           </h1>
           <p className="text-sm text-slate-500 mt-1">

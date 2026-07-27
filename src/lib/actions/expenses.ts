@@ -4,15 +4,44 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { expenses, expenseCategories, projects, clients } from "@/db/schema";
-import { eq, and, desc, gte, lte } from "drizzle-orm";
+import { expenses, expenseCategories } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import { z } from "zod";
-import { requireUser, assertWorkspaceWritable, assertWorkspaceMember } from "@/lib/access";
+import {
+  requireUser,
+  assertWorkspaceWritable,
+  assertWorkspaceMember,
+  assertClientInWorkspace,
+  assertProjectInWorkspace,
+} from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
-import { getSignedUploadUrl as getR2UploadUrl, getSignedDownloadUrl, R2_BUCKET } from "@/lib/r2";
+import { getSignedDownloadUrl, R2_BUCKET } from "@/lib/r2";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
+}
+
+/** Ensure optional client/project belong to workspace and match each other. */
+async function resolveExpenseRelations(
+  userId: string,
+  workspaceId: string,
+  input: { clientId?: string | null; projectId?: string | null },
+): Promise<{ clientId: string | null; projectId: string | null }> {
+  let clientId = input.clientId || null;
+  const projectId = input.projectId || null;
+
+  if (projectId) {
+    const project = await assertProjectInWorkspace(db, userId, workspaceId, projectId);
+    if (clientId && project.clientId !== clientId) {
+      throw new Error("Proyek tidak milik klien yang dipilih");
+    }
+    // Project wins: auto-align client to project owner
+    clientId = project.clientId;
+  } else if (clientId) {
+    await assertClientInWorkspace(db, userId, workspaceId, clientId);
+  }
+
+  return { clientId, projectId };
 }
 
 const createExpenseSchema = z.object({
@@ -62,12 +91,16 @@ export async function createExpense(input: z.infer<typeof createExpenseSchema>) 
   const user = requireUser(session?.user);
   await assertWorkspaceWritable(db, user.id, input.workspaceId);
   const parsed = createExpenseSchema.parse(input);
+  const relations = await resolveExpenseRelations(user.id, parsed.workspaceId, {
+    clientId: parsed.clientId,
+    projectId: parsed.projectId,
+  });
 
   const [expense] = await db.insert(expenses).values({
     workspaceId: parsed.workspaceId,
     categoryId: parsed.categoryId || null,
-    projectId: parsed.projectId || null,
-    clientId: parsed.clientId || null,
+    projectId: relations.projectId,
+    clientId: relations.clientId,
     amount: parsed.amount.toFixed(2),
     currency: parsed.currency,
     date: parsed.date,
@@ -93,14 +126,36 @@ export async function updateExpense(expenseId: string, input: z.infer<typeof upd
   await assertWorkspaceWritable(db, user.id, workspaceId);
   const parsed = updateExpenseSchema.parse(input);
 
+  const [existing] = await db
+    .select({
+      clientId: expenses.clientId,
+      projectId: expenses.projectId,
+    })
+    .from(expenses)
+    .where(and(eq(expenses.id, expenseId), eq(expenses.workspaceId, workspaceId)))
+    .limit(1);
+  if (!existing) throw new Error("Expense not found");
+
+  const nextClientId = parsed.clientId !== undefined ? parsed.clientId : existing.clientId;
+  const nextProjectId = parsed.projectId !== undefined ? parsed.projectId : existing.projectId;
+  const relations =
+    parsed.clientId !== undefined || parsed.projectId !== undefined
+      ? await resolveExpenseRelations(user.id, workspaceId, {
+          clientId: nextClientId,
+          projectId: nextProjectId,
+        })
+      : { clientId: existing.clientId, projectId: existing.projectId };
+
   const update: Record<string, unknown> = { updatedAt: new Date() };
   if (parsed.amount !== undefined) update.amount = parsed.amount.toFixed(2);
   if (parsed.currency !== undefined) update.currency = parsed.currency;
   if (parsed.date !== undefined) update.date = parsed.date;
   if (parsed.description !== undefined) update.description = parsed.description;
   if (parsed.categoryId !== undefined) update.categoryId = parsed.categoryId;
-  if (parsed.projectId !== undefined) update.projectId = parsed.projectId;
-  if (parsed.clientId !== undefined) update.clientId = parsed.clientId;
+  if (parsed.projectId !== undefined || parsed.clientId !== undefined) {
+    update.projectId = relations.projectId;
+    update.clientId = relations.clientId;
+  }
   if (parsed.vendor !== undefined) update.vendor = parsed.vendor;
   if (parsed.taxIncluded !== undefined) update.taxIncluded = parsed.taxIncluded;
   if (parsed.taxAmount !== undefined) update.taxAmount = parsed.taxAmount != null ? parsed.taxAmount.toFixed(2) : null;
@@ -183,36 +238,6 @@ export async function deleteCategory(categoryId: string) {
   return { id: categoryId };
 }
 
-const receiptUploadSchema = z.object({
-  workspaceId: z.string().uuid(),
-  expenseId: z.string().uuid().optional(),
-  fileName: z.string().min(1).max(200),
-  mime: z.string().min(1).max(100),
-  size: z.number().positive().max(10 * 1024 * 1024, "Receipt must be under 10MB"),
-});
-
-/** Presigned PUT for expense receipt. Stores key under workspaces/{ws}/expenses/... */
-export async function getExpenseReceiptUploadUrl(
-  input: z.infer<typeof receiptUploadSchema>,
-): Promise<{ uploadUrl: string; storageKey: string }> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const user = requireUser(session?.user);
-  await assertWorkspaceWritable(db, user.id, input.workspaceId);
-  const parsed = receiptUploadSchema.parse(input);
-
-  const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"];
-  if (!allowed.includes(parsed.mime)) {
-    throw new Error("Receipt must be image (jpg/png/webp/gif) or PDF");
-  }
-
-  const crypto = await import("crypto");
-  const id = parsed.expenseId || crypto.randomUUID();
-  const safeFilename = parsed.fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const storageKey = `workspaces/${parsed.workspaceId}/expenses/${id}/${safeFilename}`;
-  const uploadUrl = await getR2UploadUrl(storageKey, parsed.mime, 300);
-  return { uploadUrl, storageKey };
-}
-
 export async function getExpenseReceiptDownloadUrl(expenseId: string): Promise<string | null> {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
@@ -234,93 +259,4 @@ export async function getExpenseReceiptDownloadUrl(expenseId: string): Promise<s
   }
   void R2_BUCKET; // ensure module init
   return getSignedDownloadUrl(row.receiptUrl, 300);
-}
-
-export async function exportExpensesCsv(input?: {
-  month?: string;
-  categoryId?: string;
-  q?: string;
-}): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const user = requireUser(session?.user);
-  const workspaceId = await getWorkspaceId();
-  await assertWorkspaceMember(db, user.id, workspaceId);
-
-  const conditions = [eq(expenses.workspaceId, workspaceId)];
-  if (input?.month && /^\d{4}-\d{2}$/.test(input.month)) {
-    conditions.push(gte(expenses.date, `${input.month}-01`));
-    conditions.push(lte(expenses.date, `${input.month}-31`));
-  }
-  if (input?.categoryId) {
-    conditions.push(eq(expenses.categoryId, input.categoryId));
-  }
-
-  const rows = await db
-    .select({
-      date: expenses.date,
-      description: expenses.description,
-      amount: expenses.amount,
-      currency: expenses.currency,
-      vendor: expenses.vendor,
-      taxIncluded: expenses.taxIncluded,
-      taxAmount: expenses.taxAmount,
-      categoryName: expenseCategories.name,
-      projectName: projects.name,
-      clientName: clients.name,
-    })
-    .from(expenses)
-    .leftJoin(expenseCategories, eq(expenseCategories.id, expenses.categoryId))
-    .leftJoin(projects, eq(projects.id, expenses.projectId))
-    .leftJoin(clients, eq(clients.id, expenses.clientId))
-    .where(and(...conditions))
-    .orderBy(desc(expenses.date), desc(expenses.createdAt))
-    .limit(5000);
-
-  const q = input?.q?.trim().toLowerCase();
-  const filtered = q
-    ? rows.filter(
-        (r) =>
-          r.description.toLowerCase().includes(q) ||
-          (r.vendor?.toLowerCase().includes(q) ?? false) ||
-          (r.categoryName?.toLowerCase().includes(q) ?? false) ||
-          (r.projectName?.toLowerCase().includes(q) ?? false) ||
-          (r.clientName?.toLowerCase().includes(q) ?? false),
-      )
-    : rows;
-
-  const esc = (v: string | number | boolean | null | undefined) => {
-    const s = v == null ? "" : String(v);
-    if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-    return s;
-  };
-
-  const header = [
-    "date",
-    "description",
-    "amount",
-    "currency",
-    "category",
-    "vendor",
-    "project",
-    "client",
-    "tax_included",
-    "tax_amount",
-  ].join(",");
-
-  const lines = filtered.map((r) =>
-    [
-      esc(r.date),
-      esc(r.description),
-      esc(r.amount),
-      esc(r.currency),
-      esc(r.categoryName),
-      esc(r.vendor),
-      esc(r.projectName),
-      esc(r.clientName),
-      esc(r.taxIncluded),
-      esc(r.taxAmount),
-    ].join(","),
-  );
-
-  return [header, ...lines].join("\n");
 }

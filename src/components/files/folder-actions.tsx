@@ -68,7 +68,7 @@ export function NewFolderButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1">
+        <Button variant="outline" size="sm" className="h-10 gap-1 sm:h-9">
           <FolderPlus className="h-3.5 w-3.5" /> {t("Folder Baru", "New Folder")}
         </Button>
       </DialogTrigger>
@@ -135,7 +135,11 @@ export function FolderRowActions({
   async function handleDelete() {
     setBusy(true);
     try {
-      await deleteFolder(folderId);
+      const result = await deleteFolder(folderId);
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
       toast.success(t("Folder dihapus", "Folder deleted"));
       setDeleteOpen(false);
       router.refresh();
@@ -153,8 +157,9 @@ export function FolderRowActions({
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 flex-shrink-0"
+            className="h-9 w-9 flex-shrink-0 text-muted-foreground hover:text-foreground lg:h-8 lg:w-8"
             onClick={(e) => e.preventDefault()}
+            aria-label={t(`Aksi folder ${currentName}`, `Actions for folder ${currentName}`)}
           >
             <MoreVertical className="h-3.5 w-3.5" />
           </Button>

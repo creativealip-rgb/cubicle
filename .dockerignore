@@ -7,6 +7,7 @@ node_modules
 npm-debug.log*
 pnpm-debug.log*
 yarn-debug.log*
+200/
 Dockerfile*
 docker-compose*.yml
 README.md

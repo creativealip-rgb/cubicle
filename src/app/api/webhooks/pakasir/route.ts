@@ -1,12 +1,15 @@
-import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { pakasirPayments, users, workspaces } from "@/db/schema";
 import { getPakasirTransactionDetail, pakasirProject, type PakasirWebhook } from "@/lib/pakasir";
+import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
+import { annualPlanExpiry } from "@/lib/billing-plans";
 
 export async function POST(request: Request) {
+  const limited = await enforceRateLimitResponse(request, "webhook:pakasir", { limit: 120, windowSec: 60 });
+  if (limited) return limited;
   const body = (await request.json().catch(() => null)) as PakasirWebhook | null;
   if (!body?.order_id || !body.amount || !body.project) {
     return NextResponse.json({ error: "Invalid webhook" }, { status: 400 });
@@ -60,31 +63,83 @@ export async function POST(request: Request) {
   }
 
   const paidAt = body.completed_at ? new Date(body.completed_at) : new Date();
-  const expiresAt = new Date(paidAt.getTime() + 30 * 24 * 60 * 60 * 1000);
+  if (Number.isNaN(paidAt.getTime())) {
+    return NextResponse.json({ error: "Invalid completion time" }, { status: 400 });
+  }
+  const expiresAt = annualPlanExpiry(paidAt);
 
-  // Update the workspace OWNER's plan (user-level, not workspace-level)
-  const [workspace] = await db
-    .select({ ownerId: workspaces.ownerId })
-    .from(workspaces)
-    .where(eq(workspaces.id, payment.workspaceId))
-    .limit(1);
+  const result = await db.transaction(async (tx) => {
+    const locked = await tx.execute(sql`
+      SELECT id FROM pakasir_payments
+      WHERE id = ${payment.id}
+      FOR UPDATE
+    `);
+    if (locked.rowCount === 0) return { kind: "not_found" as const };
 
-  if (workspace?.ownerId) {
-    await db.update(users).set({
-      plan: payment.plan,
-      planExpiresAt: expiresAt,
-    }).where(eq(users.id, workspace.ownerId));
-    revalidatePath("/app/billing");
+    const [current] = await tx
+      .select()
+      .from(pakasirPayments)
+      .where(eq(pakasirPayments.id, payment.id))
+      .limit(1);
+    if (!current) return { kind: "not_found" as const };
+    if (current.status === "completed") {
+      return { kind: "idempotent" as const, plan: current.plan };
+    }
+    if (current.status !== "pending") {
+      return { kind: "ignored" as const, status: current.status };
+    }
+    if (current.orderId !== body.order_id || Math.round(Number(current.amount)) !== Number(body.amount)) {
+      return { kind: "mismatch" as const };
+    }
+
+    const [workspace] = await tx
+      .select({ ownerId: workspaces.ownerId })
+      .from(workspaces)
+      .where(eq(workspaces.id, current.workspaceId))
+      .limit(1);
+    if (!workspace?.ownerId) return { kind: "owner_not_found" as const };
+
+    await tx
+      .update(users)
+      .set({ plan: current.plan, planExpiresAt: expiresAt })
+      .where(eq(users.id, workspace.ownerId));
+
+    const completed = await tx
+      .update(pakasirPayments)
+      .set({
+        status: "completed",
+        rawPayload: body,
+        paidAt,
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(pakasirPayments.id, current.id),
+        eq(pakasirPayments.status, "pending"),
+      ))
+      .returning({ id: pakasirPayments.id });
+    if (completed.length !== 1) return { kind: "idempotent" as const, plan: current.plan };
+
+    return { kind: "activated" as const, plan: current.plan };
+  });
+
+  if (result.kind === "not_found") {
+    return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+  }
+  if (result.kind === "mismatch") {
+    return NextResponse.json({ error: "Payment mismatch" }, { status: 400 });
+  }
+  if (result.kind === "owner_not_found") {
+    return NextResponse.json({ error: "Workspace owner not found" }, { status: 409 });
+  }
+  if (result.kind === "idempotent") {
+    return NextResponse.json({ ok: true, idempotent: true });
+  }
+  if (result.kind === "ignored") {
+    return NextResponse.json({ ok: true, ignored: true, status: result.status });
   }
 
-  await db.update(pakasirPayments).set({
-    status: "completed",
-    rawPayload: body,
-    paidAt,
-    updatedAt: new Date(),
-  }).where(eq(pakasirPayments.id, payment.id));
-
-  return NextResponse.json({ ok: true, activated: true, plan: payment.plan });
+  revalidatePath("/app/billing");
+  return NextResponse.json({ ok: true, activated: true, plan: result.plan });
 }
 
 export async function GET() {

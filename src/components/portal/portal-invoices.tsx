@@ -3,8 +3,9 @@
 import { useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Download, ChevronDown, ChevronRight, FileText } from "lucide-react";
+import { useT } from "@/lib/i18n-client";
+import { portalLocale, portalStatusLabel } from "@/lib/portal-i18n";
 
 export type PortalInvoice = {
   id: string;
@@ -28,27 +29,58 @@ const PAID = new Set(["paid"]);
 
 type StatusMeta = { label: string; className: string };
 
-function invoiceStatusMeta(status: string, isOverdue: boolean): StatusMeta {
+function invoiceStatusMeta(
+  status: string,
+  isOverdue: boolean,
+  lang: "id" | "en",
+): StatusMeta {
   if (isOverdue || status === "overdue") {
-    return { label: "Jatuh Tempo", className: "bg-red-100 text-red-700 border-red-200" };
+    return {
+      label: lang === "en" ? "Overdue" : "Jatuh Tempo",
+      className: "bg-red-100 text-red-700 border-red-200",
+    };
   }
   switch (status) {
     case "paid":
-      return { label: "Lunas", className: "bg-emerald-100 text-emerald-700 border-emerald-200" };
+      return {
+        label: portalStatusLabel("paid", lang),
+        className: "bg-emerald-100 text-emerald-700 border-emerald-200",
+      };
     case "partial":
-      return { label: "Sebagian Lunas", className: "bg-amber-100 text-amber-700 border-amber-200" };
+      return {
+        label: lang === "en" ? "Partially Paid" : "Sebagian Lunas",
+        className: "bg-amber-100 text-amber-700 border-amber-200",
+      };
     case "sent":
-      return { label: "Menunggu Pembayaran", className: "bg-blue-100 text-blue-700 border-blue-200" };
+      return {
+        label: lang === "en" ? "Awaiting Payment" : "Menunggu Pembayaran",
+        className: "bg-blue-100 text-blue-700 border-blue-200",
+      };
     case "viewed":
-      return { label: "Menunggu Pembayaran", className: "bg-blue-100 text-blue-700 border-blue-200" };
+      return {
+        label: lang === "en" ? "Awaiting Payment" : "Menunggu Pembayaran",
+        className: "bg-blue-100 text-blue-700 border-blue-200",
+      };
     case "cancelled":
-      return { label: "Dibatalkan", className: "bg-slate-100 text-slate-500 border-slate-200" };
+      return {
+        label: portalStatusLabel("cancelled", lang),
+        className: "bg-slate-100 text-slate-500 border-slate-200",
+      };
     case "archived":
-      return { label: "Arsip", className: "bg-slate-100 text-slate-500 border-slate-200" };
+      return {
+        label: lang === "en" ? "Archived" : "Arsip",
+        className: "bg-slate-100 text-slate-500 border-slate-200",
+      };
     case "draft":
-      return { label: "Draft", className: "bg-slate-100 text-slate-500 border-slate-200" };
+      return {
+        label: portalStatusLabel("draft", lang),
+        className: "bg-slate-100 text-slate-500 border-slate-200",
+      };
     default:
-      return { label: status, className: "bg-slate-100 text-slate-600 border-slate-200" };
+      return {
+        label: status,
+        className: "bg-slate-100 text-slate-600 border-slate-200",
+      };
   }
 }
 
@@ -63,11 +95,15 @@ function fmtMoney(amount: number, currency: string) {
   }).format(amount);
 }
 
-function fmtDate(d: string | null) {
+function fmtDate(d: string | null, locale: string) {
   if (!d) return "—";
   const dt = new Date(d);
   if (isNaN(dt.getTime())) return "—";
-  return dt.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  return dt.toLocaleDateString(locale, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 function isInvoiceOverdue(inv: PortalInvoice) {
@@ -99,7 +135,13 @@ function sumByCurrency(list: PortalInvoice[]) {
     .map(([currency, amount]) => ({ currency, amount }));
 }
 
-function MoneyStack({ entries, className }: { entries: { currency: string; amount: number }[]; className?: string }) {
+function MoneyStack({
+  entries,
+  className,
+}: {
+  entries: { currency: string; amount: number }[];
+  className?: string;
+}) {
   if (entries.length === 0) {
     return <span className={className}>—</span>;
   }
@@ -123,30 +165,41 @@ function InvoiceRow({
   projectName: string;
   token: string;
 }) {
+  const { lang, t } = useT();
   const overdue = isInvoiceOverdue(inv);
-  const meta = invoiceStatusMeta(inv.status, overdue);
-  const canDownload = inv.status !== "draft" && inv.status !== "cancelled" && inv.status !== "archived";
+  const meta = invoiceStatusMeta(inv.status, overdue, lang);
+  const canDownload =
+    inv.status !== "draft" &&
+    inv.status !== "cancelled" &&
+    inv.status !== "archived";
   const pdfUrl = `/api/client-portal/invoices/${inv.id}/pdf?token=${encodeURIComponent(token)}`;
 
   return (
-    <div className="flex items-center justify-between gap-3 p-3">
+    <div className="flex flex-col items-stretch gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="font-mono text-sm font-medium truncate">{inv.invoiceNumber || "—"}</span>
+          <span className="font-mono text-sm font-medium truncate">
+            {inv.invoiceNumber || "—"}
+          </span>
           {inv.isNew && (
             <Badge className="bg-blue-600 text-white text-[10px] shrink-0 hover:bg-blue-600">
-              NEW
+              {t("BARU", "NEW")}
             </Badge>
           )}
         </div>
-        <div className="mt-0.5 text-xs text-muted-foreground truncate">
-          {projectName} · {fmtDate(inv.issueDate)}
+        <div className="mt-0.5 break-words text-xs text-muted-foreground">
+          {projectName} · {fmtDate(inv.issueDate, portalLocale(lang))}
         </div>
       </div>
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-end justify-between gap-3 sm:shrink-0 sm:items-center sm:justify-end">
         <div className="text-right">
-          <div className="font-mono text-sm font-semibold">{fmtMoney(Number(inv.total), inv.currency)}</div>
-          <Badge variant="outline" className={`mt-0.5 text-[10px] ${meta.className}`}>
+          <div className="font-mono text-sm font-semibold">
+            {fmtMoney(Number(inv.total), inv.currency)}
+          </div>
+          <Badge
+            variant="outline"
+            className={`mt-0.5 text-[10px] ${meta.className}`}
+          >
             {meta.label}
           </Badge>
         </div>
@@ -155,7 +208,7 @@ function InvoiceRow({
             href={pdfUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1 rounded-md border px-2 py-1.5 text-xs text-primary hover:bg-muted"
+            className="inline-flex min-h-11 items-center gap-1 rounded-md border px-3 py-2 text-xs text-primary hover:bg-muted"
           >
             <Download className="h-3 w-3" /> PDF
           </a>
@@ -174,17 +227,23 @@ export function PortalInvoices({
   projects: ProjectRef[];
   token: string;
 }) {
+  const { t } = useT();
   const [showPaid, setShowPaid] = useState(false);
 
   const projectName = (id: string | null) =>
-    id ? projects.find((p) => p.id === id)?.name || "Tanpa project" : "Tanpa project";
+    id
+      ? projects.find((p) => p.id === id)?.name ||
+        t("Tanpa proyek", "No project")
+      : t("Tanpa proyek", "No project");
 
   const { outstanding, paid, other, outstandingSum, paidSum } = useMemo(() => {
     const sorter = (a: PortalInvoice, b: PortalInvoice) =>
       new Date(b.issueDate || b.dueDate || 0).getTime() -
       new Date(a.issueDate || a.dueDate || 0).getTime();
 
-    const outstanding = invoices.filter((i) => OUTSTANDING.has(i.status)).sort(sorter);
+    const outstanding = invoices
+      .filter((i) => OUTSTANDING.has(i.status))
+      .sort(sorter);
     const paid = invoices.filter((i) => PAID.has(i.status)).sort(sorter);
     const other = invoices
       .filter((i) => !OUTSTANDING.has(i.status) && !PAID.has(i.status))
@@ -204,7 +263,7 @@ export function PortalInvoices({
       <Card>
         <CardContent className="py-8 text-center text-muted-foreground">
           <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
-          <p>Belum ada invoice.</p>
+          <p>{t("Belum ada invoice.", "No invoices yet.")}</p>
         </CardContent>
       </Card>
     );
@@ -218,7 +277,9 @@ export function PortalInvoices({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Card className={hasOutstanding ? "border-l-4 border-l-amber-400" : ""}>
           <CardContent className="p-4">
-            <p className="text-xs font-medium text-muted-foreground">Belum Dibayar</p>
+            <p className="text-xs font-medium text-muted-foreground">
+              {t("Belum Dibayar", "Outstanding")}
+            </p>
             <div className="mt-1">
               <MoneyStack
                 entries={outstandingSum}
@@ -232,11 +293,18 @@ export function PortalInvoices({
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs font-medium text-muted-foreground">Sudah Lunas</p>
+            <p className="text-xs font-medium text-muted-foreground">
+              {t("Sudah Lunas", "Paid")}
+            </p>
             <div className="mt-1">
-              <MoneyStack entries={paidSum} className="text-lg font-bold text-emerald-600" />
+              <MoneyStack
+                entries={paidSum}
+                className="text-lg font-bold text-emerald-600"
+              />
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">{paid.length} invoice</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {paid.length} invoice
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -245,7 +313,7 @@ export function PortalInvoices({
       {outstanding.length > 0 && (
         <div>
           <h3 className="mb-2 text-sm font-semibold text-foreground">
-            Perlu Dibayar ({outstanding.length})
+            {t("Perlu Dibayar", "Payment Required")} ({outstanding.length})
           </h3>
           <Card className="overflow-hidden">
             <div className="divide-y">
@@ -286,8 +354,14 @@ export function PortalInvoices({
             onClick={() => setShowPaid((v) => !v)}
             className="flex w-full items-center gap-2 rounded-lg border border-dashed p-3 text-sm text-muted-foreground transition-colors hover:bg-muted/30"
           >
-            {showPaid ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            <span className="font-medium">Riwayat Pembayaran ({paid.length})</span>
+            {showPaid ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+            <span className="font-medium">
+              Riwayat Pembayaran ({paid.length})
+            </span>
           </button>
           {showPaid && (
             <Card className="mt-3 overflow-hidden">

@@ -1,6 +1,10 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Download, File, Image } from "lucide-react";
+import { useT } from "@/lib/i18n-client";
+import { portalLocale } from "@/lib/portal-i18n";
 
 interface PortalFile {
   id: string;
@@ -18,6 +22,7 @@ export function PortalFileList({
   files: PortalFile[];
   token?: string;
 }) {
+  const { lang, t } = useT();
   function getFileIcon(mimeType: string | null) {
     if (!mimeType) return <File className="h-4 w-4 text-muted-foreground" />;
     if (mimeType.startsWith("image/"))
@@ -41,11 +46,15 @@ export function PortalFileList({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <p className="text-sm font-medium truncate">{file.name}</p>
-              {file.fileType === "deliverable" && <Badge className="text-[10px]">Deliverable</Badge>}
+              {file.fileType === "deliverable" && (
+                <Badge className="text-[10px]">
+                  {t("Hasil kerja", "Deliverable")}
+                </Badge>
+              )}
             </div>
             <p className="text-xs text-muted-foreground">
               {formatSize(file.sizeBytes)} •{" "}
-              {new Date(file.createdAt).toLocaleDateString()}
+              {new Date(file.createdAt).toLocaleDateString(portalLocale(lang))}
             </p>
           </div>
           <a
@@ -53,7 +62,12 @@ export function PortalFileList({
             target="_blank"
             rel="noopener"
           >
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-11 w-11"
+              aria-label={`${t("Unduh", "Download")} ${file.name}`}
+            >
               <Download className="h-4 w-4" />
             </Button>
           </a>

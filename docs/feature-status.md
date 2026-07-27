@@ -1,8 +1,8 @@
 # Cubiqlo Full Feature Status
 
-Last updated: 2026-07-05
-Live app: https://cubiqlo.com
-Latest verified commit: `2babd61 fix: close forms before refresh`
+Last updated: 2026-07-25
+Live app: https://app.cubiqlo.com
+Latest verified branch: `fix/navbar-notification-dashboard-reminders`
 
 ## Status legend
 
@@ -15,43 +15,43 @@ Latest verified commit: `2babd61 fix: close forms before refresh`
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| Production domain | DONE | `https://cubiqlo.com` live over HTTPS. |
+| Production domain | DONE | `https://app.cubiqlo.com` live over HTTPS; apex keeps public/redirect behavior. |
 | Docker deploy | DONE | `cubicle-cubicle-1` rebuild/recreate flow works. |
 | Database | DONE | Postgres container healthy. |
 | Health endpoint | DONE | `/api/health` returns `{"status":"ok","db":"ok"}`. |
 | Protected app routing | DONE | `/app/*` redirects unauthenticated users to `/login?redirect=...`. |
-| Git checkpoint | DONE | Latest pushed: `3101df9 feat: publish personal landing pages`. |
+| Git checkpoint | DONE | Client Portal audit fixes pushed through `b84e801 perf: finish client portal audit fixes` on `fix/navbar-notification-dashboard-reminders`. |
 
 ## Core app shell
 
 | Feature | Route/File | Status | Notes |
 | --- | --- | --- | --- |
-| App shell sidebar/topbar | `/app/*` | DONE | Grouped sidebar, workspace dropdown, global search entry, create button, timer, notifications. |
+| App shell sidebar/topbar | `/app/*` | DONE | Grouped sidebar, workspace dropdown, global search entry, compact create button on dense pages, timer, notifications. Penjualan hidden; Paket labeled Service. |
 | Auth login/signup/reset | `/login`, `/signup`, `/forgot-password`, `/reset-password` | DONE | Basic auth flow live. |
 | Workspace context | `active_workspace_id` cookie + workspace helpers | DONE | Auto-bootstrap and membership checks exist. |
-| Dashboard | `/app/dashboard` | DONE | Reminder → Kerja (Klien/Proyek only) → activity + Keuangan. Greeting date-only. Due/timer not duplicated (Reminder + topbar). |
-| Notifications | `/api/notifications` | PARTIAL | In-app notifications exist; deeper WA/push automation pending. |
+| Dashboard | `/app/dashboard` | DONE | `Perlu ditangani` action queue groups urgent, waiting-action, and scheduled reminders. Greeting date-only. Due/timer not duplicated (dashboard + topbar). |
+| Notifications | `/api/notifications` | PARTIAL | Bell is event inbox only. Dashboard-only recurring urgency (`invoice_overdue`, `task_due_soon`) is excluded from bell list/unread counts; deeper WA/push automation pending. |
 
 ## Client operations
 
 | Feature | Route | Status | Notes |
 | --- | --- | --- | --- |
-| Clients list | `/app/clients` | DONE | Client management page exists. |
+| Clients list | `/app/clients` | DONE | v0.1.114: compact zebra list, portal status/action, no redundant row actions, Excel export. |
 | Client create | `/app/clients/new`, `/api/clients/create` | DONE | Dedicated non-modal fallback created. |
-| Client detail | `/app/clients/[clientId]` | DONE | Client profile/detail route exists. |
-| Client PDF export | `/api/clients/[clientId]/export/pdf`, `/api/clients/export/pdf` | DONE | Single client PDF and bulk combined PDF shipped. |
-| Client portal token route | `/client-portal/[token]` | DONE | Tabs Overview/Projects/Folders/Invoices/Contact; workspace branding header; Folders upload via `POST /api/client-portal/files/upload`. |
+| Client detail | `/app/clients/[clientId]` | DONE | v0.1.114: Ringkasan removed, Portal kept, default tab Proyek, invoice/project cards actionable. |
+| Client Excel export | `/api/clients/[clientId]/export/xlsx`, `/api/clients/export/xlsx` | DONE | v0.1.114: workspace resolve hardened; list/detail export XLSX. PDF buttons hidden from client UI. |
+| Client portal token route | `/client-portal/[token]` | DONE | Tabs Ringkasan/Proyek/File/Invoice/Kontak; workspace branding; mobile-safe tab navigation; File upload via `POST /api/client-portal/files/upload`; audit closure documented in `docs/client-portal-audit-2026-07-25.md`. |
 | Short client portal slug UX | Client form / portal fields | DONE | Auto slug generation and cleanup in client form. |
-| Portal access audit | `portal_visits` | PARTIAL | Schema exists; deeper analytics/reporting pending. |
+| Portal access audit | `portal_visits` | DONE | `portal_open` tracks page visits; file views occur only after valid download; invoice first-view occurs only on PDF open. Reporting UI remains optional product analytics work. |
 
 ## Projects + tasks
 
 | Feature | Route | Status | Notes |
 | --- | --- | --- | --- |
-| Projects list | `/app/projects` | DONE | Workspace project page exists. |
+| Projects list | `/app/projects` | DONE | v0.1.114: compact zebra list, Review status, due-date context, client link, simplified client-only filter, progress % inside bar. |
 | Project billing type + dates | project form/schema | DONE | Supports `by project` / `by hours`, start date, finish date. |
 | Project detail | `/app/projects/[projectId]` | DONE | Detail page with related data. |
-| Tasks | `/app/tasks` | DONE | Task board/list exists. |
+| Tasks | `/app/tasks` | DONE | v0.1.114: compact list, Review status, tenggat context, status as dropdown, assignee filter uses Saya, list/board toggle retained. |
 | Project timeline | Project detail + portal | DONE | Internal timeline and client-safe visibility shipped earlier. |
 | Nodes/reminder center | `/app/nodes` | REMOVED | Removed from sidebar and route because meeting clarified this should be Notes/reminders. |
 
@@ -59,7 +59,7 @@ Latest verified commit: `2babd61 fix: close forms before refresh`
 
 | Feature | Route/API | Status | Notes |
 | --- | --- | --- | --- |
-| Time tracking | `/app/time` | DONE | Time page and active timer endpoint exist. |
+| Time tracking | `/app/time` | DONE | v0.1.114: clarified Tasks vs Timer split, compact timer card, mobile-safe manual-entry dialog, timesheet list matches shared density/zebra pattern. |
 | Time tags | time entry forms/table | DONE | Project > Task > Tag detail added with default/custom tag support. |
 | Time CSV export | Existing time export | DONE | Existing export supported. |
 | Time PDF export | `/api/time/export/pdf` | DONE | PDF dashboard/detailed report options added; unauthenticated returns `401` instead of `500`. |
@@ -69,7 +69,7 @@ Latest verified commit: `2babd61 fix: close forms before refresh`
 
 | Feature | Route/API | Status | Notes |
 | --- | --- | --- | --- |
-| Invoices list | `/app/invoices` | DONE | Invoice management page exists. |
+| Invoices list | `/app/invoices` | DONE | v0.1.114: compact shared list density with visible separators/zebra. |
 | Invoice create | `/app/invoices/new` | DONE | New invoice route exists. |
 | Invoice detail | `/app/invoices/[invoiceId]` | DONE | Detail route exists. |
 | Public invoice link | `/invoice/[token]` | DONE | Public invoice page and view marking exists. |
@@ -82,13 +82,13 @@ Latest verified commit: `2babd61 fix: close forms before refresh`
 
 | Feature | Route | Status | Notes |
 | --- | --- | --- | --- |
-| Proposals list/detail/new | `/app/proposals`, `/app/proposals/new`, `/app/proposals/[proposalId]` | DONE | v0.1.32: status tabs, activity date fix, detail i18n, DP/valid meta, send/resend+copy, delete guard. |
+| Proposals list/detail/new | `/app/proposals`, `/app/proposals/new`, `/app/proposals/[proposalId]` | DONE | v0.1.114: compact list density; earlier v0.1.32 status tabs, activity date fix, detail i18n, DP/valid meta, send/resend+copy, delete guard. |
 | Public proposal | `/proposal/[token]` | DONE | Public token page exists. |
 | Template Center | `/app/templates` (+ editor `/app/contract-templates/new|[id]`) | DONE | v0.1.37: tab Proposal + tabs kiri; invoice/proposal/contract CRUD; prompt tab soon. |
-| Contracts list/detail | `/app/contracts`, `/app/contracts/[contractId]` | DONE | v0.1.33: status tabs, activity date fix, detail i18n, send/resend+copy, revoke, delete guard. |
+| Contracts list/detail | `/app/contracts`, `/app/contracts/[contractId]` | DONE | v0.1.114: compact list density; earlier v0.1.33 status tabs, activity date fix, detail i18n, send/resend+copy, revoke, delete guard. |
 | Public contract | `/contract/[token]` | DONE | Public token page exists. |
 | Contract template editor | `/app/contract-templates/new|[id]` | DONE | List page removed (redirect to Template Center). Full editor kept. |
-| Questionnaires | `/app/questionnaires` | DONE | Questionnaire routes exist. |
+| Questionnaires | `/app/questionnaires` | DONE | v0.1.114: compact shared list density; questionnaire routes exist. |
 | Intake | `/intake/[token]` | DONE | Public intake route exists. |
 
 ## Communication
@@ -106,9 +106,10 @@ Latest verified commit: `2babd61 fix: close forms before refresh`
 
 | Feature | Route/API | Status | Notes |
 | --- | --- | --- | --- |
-| Calendar | `/app/calendar` | DONE | Calendar page exists. |
-| Public booking | `/booking/[slug]` | DONE | Public booking route exists. |
-| ICS invite | `/api/calendar/[appointmentId]/ics` | DONE | `.ics` calendar invite route added. |
+| Calendar | `/app/calendar` | DONE | v0.1.115: localized availability form, end-time validation, destructive-action confirmations, larger touch targets, and explicit **Unduh .ics** action. |
+| Public booking | `/booking/[slug]` | DONE | v0.1.115: Indonesian copy, visible IANA timezone, timezone-correct slot display, responsive date controls, and 2/3-column slot grid. |
+| Booking slot computation | `getAvailableSlots` | DONE | Availability rule local time is converted from its IANA timezone to UTC before overlap checks; booked-range query uses true rule window. |
+| ICS invite | `/api/calendar/[appointmentId]/ics` | DONE | `.ics` calendar invite route works; live download returned valid VCALENDAR content during QA. |
 | Google/Outlook sync | n/a | TODO | Real provider sync pending. |
 
 ## Files + storage
@@ -117,7 +118,7 @@ Latest verified commit: `2babd61 fix: close forms before refresh`
 | --- | --- | --- | --- |
 | Files | `/app/files` | DONE | File workspace page exists. |
 | R2 storage | backend | DONE | Upload/download/delete smoke passed earlier. |
-| File permission audit | backend/client portal | PARTIAL | Basic filtering exists; deeper audit tooling pending. |
+| File permission audit | backend/client portal | DONE | Portal file access is scoped by token, workspace, client, visible project, and client visibility; page load no longer produces false file-view analytics. |
 
 ## AI + templates
 

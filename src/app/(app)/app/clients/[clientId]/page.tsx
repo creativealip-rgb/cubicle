@@ -24,10 +24,9 @@ import {
   Globe,
   FileText,
   Calendar,
-  MessageSquare,
   ArrowLeft,
   Receipt,
-  Users,
+  MessageSquare,
   Download,
   Wallet,
 } from "lucide-react";
@@ -36,6 +35,7 @@ import { PortalRequestAdmin } from "@/components/portal/portal-request-admin";
 import { ClientEditDialog } from "@/components/clients/client-edit-dialog";
 import { ClientGoogleCalendarPanel } from "@/components/clients/client-google-calendar-panel";
 import { billingTypeLabel } from "@/lib/feature-access";
+import { decryptSecret } from "@/lib/google-calendar";
 import {
   getClientGoogleConnectionStatus,
   listClientGoogleEvents,
@@ -58,7 +58,6 @@ export default async function ClientDetailPage({
   const { clientId } = await params;
   const { tab: tabParam } = await searchParams;
   const allowedTabs = new Set([
-    "overview",
     "projects",
     "invoices",
     "calendar",
@@ -66,12 +65,15 @@ export default async function ClientDetailPage({
     "notes",
   ]);
   // Legacy deep-link ?tab=appointments → Calendar
+  // Ringkasan (overview) di-hide; deep-link lama fallback ke projects
   const initialTab =
     tabParam === "appointments"
       ? "calendar"
-      : tabParam && allowedTabs.has(tabParam)
-        ? tabParam
-        : "overview";
+      : tabParam === "overview"
+        ? "projects"
+        : tabParam && allowedTabs.has(tabParam)
+          ? tabParam
+          : "portal";
 
   try {
     await assertClientInWorkspace(db, user.id, workspaceId, clientId);
@@ -81,6 +83,20 @@ export default async function ClientDetailPage({
 
   const [client] = await db.select().from(clients).where(eq(clients.id, clientId));
   if (!client) notFound();
+
+  let existingPortalToken: string | null = null;
+  if (
+    client.portalEnabled &&
+    client.portalTokenEnc &&
+    !client.portalTokenRevokedAt &&
+    (!client.portalTokenExpiresAt || client.portalTokenExpiresAt > new Date())
+  ) {
+    try {
+      existingPortalToken = decryptSecret(client.portalTokenEnc);
+    } catch {
+      existingPortalToken = null;
+    }
+  }
 
   // Google Calendar client (separate from user calendar)
   const clientGcalStatus = await getClientGoogleConnectionStatus(clientId);
@@ -231,11 +247,8 @@ export default async function ClientDetailPage({
           <Link href="/app/clients" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-3 w-3" /> Kembali ke Klien
           </Link>
-          {client.clientNumber && (
-            <p className="text-xs font-mono text-muted-foreground">{client.clientNumber}</p>
-          )}
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight">{client.name}</h1>
+            <h1 className="app-page-title">{client.name}</h1>
             <Badge variant={client.status === "active" ? "default" : "secondary"}>
               {client.status === "active" ? "Aktif" : client.status === "inactive" ? "Tidak aktif" : client.status === "archived" ? "Arsip" : client.status}
             </Badge>
@@ -261,12 +274,7 @@ export default async function ClientDetailPage({
         </div>
         <div className="flex flex-wrap gap-2 justify-end">
           <Button size="sm" variant="outline" className="gap-1" asChild>
-            <a href={`/api/clients/${client.id}/export/pdf`} target="_blank" rel="noreferrer">
-              <Download className="h-3 w-3" /> PDF
-            </a>
-          </Button>
-          <Button size="sm" variant="outline" className="gap-1" asChild>
-            <a href={`/api/clients/${client.id}/export/xlsx`} rel="noreferrer">
+            <a href={`/api/clients/${client.id}/export/xlsx`} download>
               <Download className="h-3 w-3" /> Excel
             </a>
           </Button>
@@ -358,35 +366,42 @@ export default async function ClientDetailPage({
         </CardContent>
       </Card>
 
-      {/* Tabs */}
+      {/* Tabs — Ringkasan di-hide, Portal tetap; wrap di mobile */}
       <Tabs defaultValue={initialTab}>
-        <TabsList>
-          <TabsTrigger value="overview" className="gap-1">
-            <Users className="h-3 w-3" /> Ringkasan
-          </TabsTrigger>
-          <TabsTrigger value="projects" className="gap-1">
-            <FileText className="h-3 w-3" /> Proyek ({clientProjects.length})
-          </TabsTrigger>
-          <TabsTrigger value="invoices" className="gap-1">
-            <Receipt className="h-3 w-3" /> Invoice ({clientInvoices.length})
-          </TabsTrigger>
-          <TabsTrigger value="calendar" className="gap-1">
-            <Calendar className="h-3 w-3" /> Calendar
-          </TabsTrigger>
-          <TabsTrigger value="portal" className="gap-1">
-            <Globe className="h-3 w-3" /> Portal
-          </TabsTrigger>
-          <TabsTrigger value="notes" className="gap-1">
-            <MessageSquare className="h-3 w-3" /> Catatan
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-1 px-1">
+          <TabsList className="h-auto min-h-9 w-full flex-wrap justify-start gap-1 p-1">
+            <TabsTrigger value="portal" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm" asChild>
+              <Link href={`?tab=portal`}><Globe className="h-3 w-3 shrink-0" /> Portal</Link>
+            </TabsTrigger>
+            <TabsTrigger value="projects" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm" asChild>
+              <Link href={`?tab=projects`}>
+                <FileText className="h-3 w-3 shrink-0" /> Proyek ({clientProjects.length})
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="invoices" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm" asChild>
+              <Link href={`?tab=invoices`}>
+                <Receipt className="h-3 w-3 shrink-0" /> Invoice ({clientInvoices.length})
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm" asChild>
+              <Link href={`?tab=calendar`}>
+                <Calendar className="h-3 w-3 shrink-0" /> Calendar
+              </Link>
+            </TabsTrigger>
 
-        <TabsContent value="overview" className="space-y-4 pt-4">
-          <PortalTokenSection client={client} />
-        </TabsContent>
+            <TabsTrigger value="notes" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm" asChild>
+              <Link href={`?tab=notes`}>
+                <MessageSquare className="h-3 w-3 shrink-0" /> Catatan
+              </Link>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="portal" className="space-y-4 pt-4">
-          <PortalTokenSection client={client} />
+          <PortalTokenSection
+            client={client}
+            existingPortalToken={existingPortalToken}
+          />
           <PortalRequestAdmin
             clientId={client.id}
             initialRequests={clientPortalRequests}
@@ -481,9 +496,13 @@ export default async function ClientDetailPage({
           )}
           {clientInvoices.map((inv) => (
             <Card key={inv.id}>
-              <CardContent className="p-4 flex items-center justify-between">
+              <CardContent className="p-0">
+                <Link
+                  href={`/app/invoices/${inv.id}`}
+                  className="flex items-center justify-between p-4 transition-colors hover:bg-muted/50"
+                >
                 <div>
-                  <p className="text-sm font-medium">{inv.invoiceNumber}</p>
+                  <p className="text-sm font-medium hover:underline">{inv.invoiceNumber}</p>
                   <p className="text-xs text-muted-foreground">
                     {inv.issueDate} · Tenggat: {inv.dueDate ?? "—"}
                   </p>
@@ -497,6 +516,7 @@ export default async function ClientDetailPage({
                   </Badge>
                   <span className="text-sm font-semibold">{inv.currency} {inv.total}</span>
                 </div>
+                </Link>
               </CardContent>
             </Card>
           ))}

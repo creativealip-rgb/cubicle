@@ -28,6 +28,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useT } from "@/lib/i18n-client";
+import { timeEntryStatusVariant } from "@/lib/status-badge";
 
 const PAGE_SIZE = 10;
 
@@ -81,7 +82,10 @@ function toDateInputValue(value: Date | string | null | undefined): string {
   if (!value) return "";
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toISOString().slice(0, 10);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetProps) {
@@ -108,13 +112,15 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
   const [editMinutes, setEditMinutes] = useState("");
   const [editBillable, setEditBillable] = useState(true);
   const [editStatus, setEditStatus] = useState<"draft" | "approved">("draft");
+  const [deleteEntry, setDeleteEntry] = useState<TimeEntry | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   // True when description was auto-filled from task title in this edit session.
   const [descriptionFromTask, setDescriptionFromTask] = useState(false);
 
   const filteredEntries = useMemo(() => {
     return entries.filter((e) => {
-      if (clientFilter !== "all" && e.clientName !== clientFilter) return false;
-      if (projectFilter !== "all" && e.projectName !== projectFilter) return false;
+      if (clientFilter !== "all" && e.clientId !== clientFilter) return false;
+      if (projectFilter !== "all" && e.projectId !== projectFilter) return false;
       if (billableFilter === "billable" && !e.billable) return false;
       if (billableFilter === "non-billable" && e.billable) return false;
       if (
@@ -171,6 +177,17 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
     return tasks.filter((tk) => tk.projectId === editProjectId);
   }, [editProjectId, tasks]);
 
+  const filterProjects = useMemo(() => {
+    if (clientFilter === "all") return projects;
+    return projects.filter((project) => project.clientId === clientFilter);
+  }, [clientFilter, projects]);
+
+  const editMinutesNumber = Number(editMinutes);
+  const editClientError = editOpen && !editClientId;
+  const editProjectError = editOpen && !editProjectId;
+  const editMinutesError = editOpen && (!Number.isFinite(editMinutesNumber) || editMinutesNumber <= 0);
+  const editValid = !editClientError && !editProjectError && !editMinutesError;
+
   function formatDuration(minutes: number | null): string {
     const hLabel = t("j", "h");
     const mLabel = t("mnt", "m");
@@ -194,13 +211,18 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
     }).format(numericRate);
   }
 
-  async function handleDelete(entryId: string) {
+  async function handleDelete() {
+    if (!deleteEntry) return;
+    setDeleteLoading(true);
     try {
-      await deleteTimeEntry(entryId);
+      await deleteTimeEntry(deleteEntry.id);
       toast.success(t("Entri dihapus", "Entry deleted"));
+      setDeleteEntry(null);
       router.refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal menghapus", "Failed to delete"));
+    } finally {
+      setDeleteLoading(false);
     }
   }
 
@@ -256,7 +278,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
     setEditLoading(true);
     try {
       const startIso = editDate
-        ? new Date(`${editDate}T00:00:00.000Z`).toISOString()
+        ? new Date(`${editDate}T00:00:00`).toISOString()
         : editEntry.startTime
           ? new Date(editEntry.startTime).toISOString()
           : new Date().toISOString();
@@ -285,16 +307,6 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
       setEditLoading(false);
     }
   }
-
-  const uniqueClients = useMemo(() => {
-    const set = new Set(entries.map((e) => e.clientName).filter(Boolean));
-    return Array.from(set) as string[];
-  }, [entries]);
-
-  const uniqueProjects = useMemo(() => {
-    const set = new Set(entries.map((e) => e.projectName).filter(Boolean));
-    return Array.from(set) as string[];
-  }, [entries]);
 
   const uniqueTags = useMemo(() => {
     const set = new Set<string>();
@@ -331,24 +343,27 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
         </Card>
       </div>
 
-      <Card>
-        <CardContent className="p-4">
+      <Card className="rounded-lg border bg-card">
+        <CardContent className="p-3">
           <div className="flex items-center gap-2 mb-3">
             <Filter className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-medium">{t("Filter", "Filter")}</span>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-6">
             <div className="space-y-1">
               <Label className="text-[10px]">{t("Klien", "Client")}</Label>
-              <Select value={clientFilter} onValueChange={setClientFilter}>
+              <Select value={clientFilter} onValueChange={(value) => {
+                setClientFilter(value);
+                setProjectFilter("all");
+              }}>
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue placeholder={t("Semua", "All")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("Semua Klien", "All Clients")}</SelectItem>
-                  {uniqueClients.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -362,9 +377,9 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("Semua Proyek", "All Projects")}</SelectItem>
-                  {uniqueProjects.map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {p}
+                  {filterProjects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -399,7 +414,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row col-span-2 md:col-span-1">
+            <div className="col-span-2 flex flex-col gap-2 sm:flex-row">
               <div className="space-y-1 flex-1 min-w-0">
                 <Label className="text-[10px]">{t("Dari", "From")}</Label>
                 <Input
@@ -433,8 +448,8 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
           )}
         />
       ) : (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2 px-1">
+        <div className="overflow-hidden rounded-lg border bg-card">
+          <div className="flex items-center justify-between gap-2 border-b bg-muted/40 px-3 py-2">
             <p className="text-xs text-muted-foreground">
               {t(
                 `Menampilkan ${(safePage - 1) * PAGE_SIZE + 1}–${Math.min(safePage * PAGE_SIZE, filteredEntries.length)} dari ${filteredEntries.length}`,
@@ -450,10 +465,14 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
             ) : null}
           </div>
 
-          {pageEntries.map((entry) => (
-            <Card key={entry.id}>
-              <CardContent className="p-4 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-3 min-w-0">
+          {pageEntries.map((entry, index) => (
+            <Card key={entry.id} className="rounded-none border-0 shadow-none">
+              <CardContent
+                className={`flex flex-col gap-3 !border-b border-slate-200 p-3 hover:!bg-slate-100/70 sm:flex-row sm:items-center sm:justify-between ${
+                  index % 2 === 0 ? "!bg-white" : "!bg-slate-50"
+                }`}
+              >
+                <div className="flex min-w-0 items-start gap-3 sm:items-center">
                   <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate">
@@ -497,7 +516,15 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
+                <div className="flex w-full flex-wrap items-center gap-1.5 pl-8 sm:w-auto sm:flex-shrink-0 sm:justify-end sm:pl-0">
+                  {(() => {
+                    const status = timeEntryStatusVariant(entry.status, locale.startsWith("en") ? ("en" as const) : undefined);
+                    return (
+                      <Badge variant={status.variant} className="text-[10px]">
+                        {status.label}
+                      </Badge>
+                    );
+                  })()}
                   {entry.billable && (
                     <Badge variant="outline" className="text-[10px]">
                       {formatRate(entry.hourlyRate, entry.projectCurrency)
@@ -516,8 +543,9 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7"
+                      className="h-11 w-11 rounded-lg border border-transparent hover:border-border hover:bg-background sm:h-9 sm:w-9"
                       onClick={() => openEdit(entry)}
+                      aria-label={t("Edit entri", "Edit entry")}
                       title={t("Edit entri", "Edit entry")}
                     >
                       <Pencil className="h-3.5 w-3.5" />
@@ -526,9 +554,11 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 text-destructive"
-                    onClick={() => handleDelete(entry.id)}
+                    className="h-11 w-11 rounded-lg border border-transparent text-destructive hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive sm:h-9 sm:w-9"
+                    onClick={() => setDeleteEntry(entry)}
                     disabled={entry.status === "invoiced"}
+                    aria-label={t("Hapus entri", "Delete entry")}
+                    title={t("Hapus entri", "Delete entry")}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -538,7 +568,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
           ))}
 
           {totalPages > 1 ? (
-            <div className="flex items-center justify-between gap-2 border-t pt-3">
+            <div className="flex items-center justify-between gap-2 border-t px-3 py-3">
               <Button
                 type="button"
                 size="sm"
@@ -567,12 +597,35 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
         </div>
       )}
 
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="sm:max-w-lg">
+      <Dialog open={Boolean(deleteEntry)} onOpenChange={(open) => !open && setDeleteEntry(null)}>
+        <DialogContent className="max-w-[calc(100%-2rem)] gap-4 sm:max-w-sm">
           <DialogHeader>
+            <DialogTitle>{t("Hapus entri waktu?", "Delete time entry?")}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {t(
+              `Entri “${deleteEntry?.description || "Tanpa judul"}” akan dihapus permanen.`,
+              `The entry “${deleteEntry?.description || "Untitled"}” will be permanently deleted.`,
+            )}
+          </p>
+          <DialogFooter className="gap-2 sm:gap-3">
+            <Button className="min-h-11 flex-1" variant="outline" onClick={() => setDeleteEntry(null)} disabled={deleteLoading}>
+              {t("Batal", "Cancel")}
+            </Button>
+            <Button className="min-h-11 flex-1" variant="destructive" onClick={handleDelete} disabled={deleteLoading}>
+              {deleteLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              {t("Hapus", "Delete")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="flex max-h-[min(90dvh,760px)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-xl">
+          <DialogHeader className="shrink-0 border-b px-5 py-4 pr-12">
             <DialogTitle>{t("Edit entri waktu", "Edit time entry")}</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-3 py-2">
+          <div className="grid min-h-0 gap-4 overflow-y-auto px-5 py-5">
             <div className="space-y-1.5">
               <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
               <Input
@@ -601,7 +654,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                     setEditTaskId("__none__");
                   }}
                 >
-                  <SelectTrigger className="h-9 text-sm">
+                  <SelectTrigger className={`h-10 text-sm ${editClientError ? "border-destructive" : ""}`}>
                     <SelectValue placeholder={t("Pilih klien", "Select client")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -612,6 +665,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                     ))}
                   </SelectContent>
                 </Select>
+                {editClientError ? <p className="text-xs text-destructive">{t("Klien wajib dipilih", "Client is required")}</p> : null}
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">{t("Proyek", "Project")}</Label>
@@ -623,7 +677,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                   }}
                   disabled={!editClientId}
                 >
-                  <SelectTrigger className="h-9 text-sm">
+                  <SelectTrigger className={`h-10 text-sm ${editProjectError ? "border-destructive" : ""}`}>
                     <SelectValue placeholder={t("Pilih proyek", "Select project")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -634,6 +688,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                     ))}
                   </SelectContent>
                 </Select>
+                {editProjectError ? <p className="text-xs text-destructive">{t("Proyek wajib dipilih", "Project is required")}</p> : null}
               </div>
             </div>
             <div className="space-y-1.5">
@@ -673,8 +728,10 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                   min="1"
                   value={editMinutes}
                   onChange={(e) => setEditMinutes(e.target.value)}
-                  className="h-9"
+                  className={`h-10 ${editMinutesError ? "border-destructive" : ""}`}
+                  aria-invalid={editMinutesError}
                 />
+                {editMinutesError ? <p className="text-xs text-destructive">{t("Minimal 1 menit", "Minimum 1 minute")}</p> : null}
               </div>
             </div>
             <div className="space-y-1.5">
@@ -719,11 +776,11 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditOpen(false)} disabled={editLoading}>
+          <DialogFooter className="shrink-0 gap-2 border-t bg-background px-5 py-4 sm:gap-3">
+            <Button className="min-h-11 sm:min-w-28" variant="outline" onClick={() => setEditOpen(false)} disabled={editLoading}>
               {t("Batal", "Cancel")}
             </Button>
-            <Button onClick={handleSaveEdit} disabled={editLoading}>
+            <Button className="min-h-11 sm:min-w-28" onClick={handleSaveEdit} disabled={editLoading || !editValid}>
               {editLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("Simpan", "Save")}
             </Button>
           </DialogFooter>

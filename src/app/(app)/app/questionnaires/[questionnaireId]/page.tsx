@@ -82,7 +82,7 @@ export default async function QuestionnaireDetailPage({ params }: { params: Prom
 
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{q.name}</h1>
+          <h1 className="app-page-title">{q.name}</h1>
           {q.description && (
             <p className="text-sm text-slate-500 mt-1">{q.description}</p>
           )}

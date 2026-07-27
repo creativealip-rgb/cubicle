@@ -8,12 +8,16 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /** Don't re-send same window within this period (covers hourly cron + clock skew). */
-const DEDUPE_MS = 20 * 60 * 60 * 1000; // 20 hours
+const DEDUPE_MS = 25 * 60 * 60 * 1000; // exceed the 24-hour delivery window
 
 type WindowField = "notify7d" | "notify3d" | "notify1d";
 type RemindedField = "lastReminded7d" | "lastReminded3d" | "lastReminded1d";
 
-const WINDOWS: { days: number; notify: WindowField; reminded: RemindedField }[] = [
+const WINDOWS: {
+  days: number;
+  notify: WindowField;
+  reminded: RemindedField;
+}[] = [
   { days: 7, notify: "notify7d", reminded: "lastReminded7d" },
   { days: 3, notify: "notify3d", reminded: "lastReminded3d" },
   { days: 1, notify: "notify1d", reminded: "lastReminded1d" },
@@ -24,7 +28,10 @@ export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET;
 
   if (!cronSecret && process.env.NODE_ENV === "production") {
-    return NextResponse.json({ error: "Cron secret is not configured" }, { status: 503 });
+    return NextResponse.json(
+      { error: "Cron secret is not configured" },
+      { status: 503 },
+    );
   }
 
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
@@ -33,16 +40,14 @@ export async function GET(request: Request) {
 
   try {
     // First: roll open recurring notes whose due date already passed
-    const { rollOverdueRecurringNotes } = await import(
-      "@/lib/actions/personal-notes"
-    );
+    const { rollOverdueRecurringNotes } =
+      await import("@/lib/actions/personal-notes");
     const rolled = await rollOverdueRecurringNotes(200);
 
     const now = new Date();
     const dedupeBefore = new Date(now.getTime() - DEDUPE_MS);
     const results: {
       noteId: string;
-      title: string;
       daysUntil: number;
       emailed: boolean;
       skipped?: string;
@@ -50,7 +55,9 @@ export async function GET(request: Request) {
 
     for (const { days, notify, reminded } of WINDOWS) {
       // Window: dueDate in [now + (days-1)d, now + days d)
-      const windowStart = new Date(now.getTime() + (days - 1) * 24 * 3600 * 1000);
+      const windowStart = new Date(
+        now.getTime() + (days - 1) * 24 * 3600 * 1000,
+      );
       const windowEnd = new Date(now.getTime() + days * 24 * 3600 * 1000);
 
       const notes = await db
@@ -74,7 +81,7 @@ export async function GET(request: Request) {
             // hide system notes
             sql`${personalNotes.title} NOT LIKE ${"[journal]%"}`,
             sql`${personalNotes.title} NOT LIKE ${"[site]%"}`,
-            // dedupe: never reminded OR last reminded older than 20h
+            // dedupe: never reminded OR last reminded older than delivery window
             or(
               isNull(personalNotes[reminded]),
               sql`${personalNotes[reminded]} < ${dedupeBefore.toISOString()}`,
@@ -93,7 +100,6 @@ export async function GET(request: Request) {
         if (!owner?.email) {
           results.push({
             noteId: note.id,
-            title: note.title,
             daysUntil: days,
             emailed: false,
             skipped: "no-email",
@@ -131,7 +137,6 @@ export async function GET(request: Request) {
 
         results.push({
           noteId: note.id,
-          title: note.title,
           daysUntil: days,
           emailed: Boolean(emailed.success),
         });
@@ -147,6 +152,9 @@ export async function GET(request: Request) {
     });
   } catch (err) {
     console.error("[cron/personal-note-reminders] error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

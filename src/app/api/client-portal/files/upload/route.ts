@@ -4,13 +4,15 @@ import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import { db } from "@/db";
 import { files, folders, projects } from "@/db/schema";
 import { getClientPortalAccess } from "@/lib/actions/portal";
-import { buildFileKey, R2_BUCKET, r2 } from "@/lib/r2";
+import { buildFileKey, R2_BUCKET, r2, deleteStoredFile } from "@/lib/r2";
 import { validateUploadedFile } from "@/lib/file-validation";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
+import { assertUploadQuota, getUploadQuotaLimits, safeUploadErrorResponse, validateContentLength } from "@/lib/upload-safety";
 
 export const runtime = "nodejs";
 
-const MAX_SIZE = 25 * 1024 * 1024;
+const MAX_SIZE = getUploadQuotaLimits("team").maxFileBytes;
 
 /**
  * Client-portal file upload (token auth, no workspace session).
@@ -18,6 +20,10 @@ const MAX_SIZE = 25 * 1024 * 1024;
  * Always stored as visibility=client, fileType=working_file, uploadedBy=null.
  */
 export async function POST(req: NextRequest) {
+  let uploadedObject: string | null = null;
+  if (!validateContentLength(req.headers.get("content-length"), MAX_SIZE)) return NextResponse.json({ error: "Upload too large" }, { status: 413 });
+  const limited = await enforceRateLimitResponse(req, "portal:file-upload", { limit: 10, windowSec: 300 });
+  if (limited) return limited;
   try {
     const form = await req.formData();
     const token = String(form.get("token") ?? "");
@@ -51,7 +57,7 @@ export async function POST(req: NextRequest) {
     const visibleProjectIds = visibleProjects.map((p) => p.id);
 
     let projectId: string | null = projectIdRaw;
-    let folderId: string | null = folderIdRaw;
+    const folderId: string | null = folderIdRaw;
 
     if (projectId) {
       if (!visibleProjectIds.includes(projectId)) {
@@ -98,6 +104,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    await assertUploadQuota(client.workspaceId, upload.size, client.id);
     const body = Buffer.from(await upload.arrayBuffer());
     const validation = validateUploadedFile(upload.name, body.subarray(0, 16));
     if (!validation.ok) {
@@ -121,6 +128,7 @@ export async function POST(req: NextRequest) {
       }),
     );
 
+    uploadedObject = storageKey;
     const [fileRow] = await db
       .insert(files)
       .values({
@@ -183,8 +191,8 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Upload failed";
-    const status = /invalid|disabled|revoked|expired/i.test(message) ? 403 : 400;
-    return NextResponse.json({ error: message }, { status });
+    if (uploadedObject) await deleteStoredFile(uploadedObject).catch(() => undefined);
+    const safe = safeUploadErrorResponse(err);
+    return NextResponse.json({ error: safe.error }, { status: safe.status });
   }
 }

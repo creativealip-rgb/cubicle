@@ -1,13 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getSessionCookie } from "better-auth/cookies"
-import { checkRateLimit, getClientIp } from "@/lib/rate-limit"
+
+import { getCanonicalRedirect } from "@/lib/host-routing"
+import { getAuthEnvironmentOptions } from "@/lib/auth-environment"
+
+const authEnvironment = getAuthEnvironmentOptions(
+  process.env.BETTER_AUTH_URL,
+  process.env.NODE_ENV,
+)
 
 const protectedPrefixes = ["/app", "/onboarding"]
-const authPages = ["/login", "/signup", "/forgot-password", "/verify-email", "/verify-email/success"]
 
-// Rate limit config for auth endpoints
-const AUTH_RATE_LIMIT = { limit: 10, windowSec: 60 } // 10 req/min per IP
-const LOGIN_RATE_LIMIT = { limit: 5, windowSec: 300 } // 5 req/5min per IP (stricter)
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -20,51 +23,26 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url, 301)
   }
 
-  // Rate limit auth API endpoints
-  if (pathname.startsWith("/api/auth")) {
-    const ip = getClientIp(request)
-    const isLogin = pathname.includes("sign-in") || pathname.includes("login")
-    const config = isLogin ? LOGIN_RATE_LIMIT : AUTH_RATE_LIMIT
-    const { allowed, remaining, resetAt } = checkRateLimit(`auth:${ip}`, config)
 
-    if (!allowed) {
-      const retryAfter = Math.ceil((resetAt - Date.now()) / 1000)
-      return NextResponse.json(
-        { error: "Too many requests. Please try again later." },
-        {
-          status: 429,
-          headers: {
-            "Retry-After": String(retryAfter),
-            "X-RateLimit-Limit": String(config.limit),
-            "X-RateLimit-Remaining": "0",
-            "X-RateLimit-Reset": String(Math.ceil(resetAt / 1000)),
-          },
-        },
-      )
-    }
-
-    // Continue with rate limit headers
-    const response = NextResponse.next()
-    response.headers.set("X-RateLimit-Limit", String(config.limit))
-    response.headers.set("X-RateLimit-Remaining", String(remaining))
-    response.headers.set("X-RateLimit-Reset", String(Math.ceil(resetAt / 1000)))
-    return response
+  const sessionCookie = getSessionCookie(request, {
+    cookiePrefix: authEnvironment.cookiePrefix,
+  })
+  const canonicalRedirect = getCanonicalRedirect(
+    host,
+    pathname,
+    request.nextUrl.search,
+    Boolean(sessionCookie),
+  )
+  if (canonicalRedirect) {
+    return NextResponse.redirect(canonicalRedirect, 308)
   }
 
-  const sessionCookie = getSessionCookie(request)
-
-  // Protected routes: no session → redirect to login
+  // Protected routes: no session → redirect to login on the same host.
   const isProtected = protectedPrefixes.some((p) => pathname.startsWith(p))
   if (isProtected && !sessionCookie) {
     const loginUrl = new URL("/login", request.url)
     loginUrl.searchParams.set("redirect", pathname)
     return NextResponse.redirect(loginUrl)
-  }
-
-  // Auth pages: already logged in → redirect to app
-  const isAuthPage = authPages.some((p) => pathname === p)
-  if (isAuthPage && sessionCookie) {
-    return NextResponse.redirect(new URL("/app/dashboard", request.url))
   }
 
   return NextResponse.next()

@@ -11,6 +11,8 @@ import { z } from "zod";
 import { requireUser, assertWorkspaceWritable, assertClientInWorkspace } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { createHash, randomBytes } from "crypto";
+import { hashPassword } from "@better-auth/utils/password";
+import { encryptSecret } from "@/lib/google-calendar";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -84,6 +86,7 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
   let portalFields: {
     portalEnabled?: boolean;
     portalTokenHash?: string;
+    portalTokenEnc?: string;
     portalTokenExpiresAt?: Date;
     portalTokenRevokedAt?: null;
   } = {};
@@ -93,6 +96,7 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
     portalFields = {
       portalEnabled: true,
       portalTokenHash: createHash("sha256").update(rawPortalToken).digest("hex"),
+      portalTokenEnc: encryptSecret(rawPortalToken),
       portalTokenExpiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 90),
       portalTokenRevokedAt: null,
     };
@@ -111,7 +115,7 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
     tags: parsed.tags,
     internalNotes: parsed.internalNotes || null,
     portalSlug: parsed.portalSlug || null,
-    portalSlugEnabled: parsed.portalSlugEnabled ?? true,
+    portalSlugEnabled: false,
     clientNumber,
     status: "active",
     ...portalFields,
@@ -229,6 +233,7 @@ export async function generatePortalToken(clientId: string) {
     .set({
       portalEnabled: true,
       portalTokenHash: tokenHash,
+      portalTokenEnc: encryptSecret(rawToken),
       portalTokenExpiresAt: expiresAt,
       portalTokenRevokedAt: null,
       updatedAt: new Date(),
@@ -249,6 +254,7 @@ export async function revokePortalToken(clientId: string) {
   await db.update(clients)
     .set({
       portalTokenRevokedAt: new Date(),
+      portalTokenEnc: null,
       portalEnabled: false,
       updatedAt: new Date(),
     })
@@ -256,4 +262,26 @@ export async function revokePortalToken(clientId: string) {
 
   await writeActivityLog(workspaceId, user.id, "revoked_portal_token", "client", clientId);
   return { success: true };
+}
+
+export async function setClientPortalPassword(clientId: string, password: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertClientInWorkspace(db, user.id, workspaceId, clientId);
+  const value = z.string().min(8, "Password minimal 8 karakter").max(128).parse(password);
+  const [current] = await db.select({ slug: clients.portalSlug }).from(clients)
+    .where(and(eq(clients.id, clientId), eq(clients.workspaceId, workspaceId)));
+  const slug = current?.slug || `client-${clientId.slice(0, 8)}`;
+  await db.update(clients).set({
+    portalSlug: slug,
+    portalSlugEnabled: true,
+    portalEnabled: true,
+    portalPasswordHash: await hashPassword(value),
+    portalSessionVersion: randomBytes(16).toString("hex"),
+    updatedAt: new Date(),
+  }).where(and(eq(clients.id, clientId), eq(clients.workspaceId, workspaceId)));
+  await writeActivityLog(workspaceId, user.id, "updated_portal_password", "client", clientId);
+  return { success: true, slug };
 }

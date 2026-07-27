@@ -7,7 +7,8 @@ import { db } from "@/db";
 import { tasks, users, workspaceMembers, projects } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
-import { requireUser, assertWorkspaceWritable, assertTaskInWorkspace } from "@/lib/access";
+import { requireUser, assertWorkspaceWritable, assertTaskInWorkspace, assertProjectInWorkspace } from "@/lib/access";
+import { assertWorkspaceUserReference } from "@/lib/tenant-reference-rules";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyTaskAssigned } from "@/lib/notifications";
 import { createNotification, notifyWorkspaceMembers } from "@/lib/in-app-notifications";
@@ -94,6 +95,16 @@ const updateTaskSchema = z.object({
   clientVisible: z.boolean().optional(),
 });
 
+async function assertAssigneeInWorkspace(workspaceId: string, assigneeId: string | null | undefined) {
+  if (!assigneeId) return;
+  const [member] = await db
+    .select({ userId: workspaceMembers.userId })
+    .from(workspaceMembers)
+    .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, assigneeId)))
+    .limit(1);
+  assertWorkspaceUserReference(member, assigneeId);
+}
+
 export async function createTask(input: z.infer<typeof taskSchema>) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
@@ -101,6 +112,8 @@ export async function createTask(input: z.infer<typeof taskSchema>) {
   await assertWorkspaceWritable(db, user.id, workspaceId);
 
   const parsed = taskSchema.parse(input);
+  await assertProjectInWorkspace(db, user.id, workspaceId, parsed.projectId);
+  await assertAssigneeInWorkspace(workspaceId, parsed.assigneeId);
 
   // Get max position for the project+status
   const [maxPos] = await db
@@ -144,6 +157,9 @@ export async function updateTask(taskId: string, input: z.infer<typeof updateTas
   await assertTaskInWorkspace(db, user.id, workspaceId, taskId);
 
   const parsed = updateTaskSchema.parse(input);
+  if (parsed.assigneeId !== undefined) {
+    await assertAssigneeInWorkspace(workspaceId, parsed.assigneeId);
+  }
 
   const updateData: Record<string, unknown> = { updatedAt: new Date() };
   if (parsed.title !== undefined) updateData.title = parsed.title;
@@ -235,6 +251,7 @@ export async function assignTask(taskId: string, assigneeId: string | null) {
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   await assertTaskInWorkspace(db, user.id, workspaceId, taskId);
+  await assertAssigneeInWorkspace(workspaceId, assigneeId);
 
   const [task] = await db.update(tasks)
     .set({ assigneeId, updatedAt: new Date() })

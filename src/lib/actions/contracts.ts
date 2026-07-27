@@ -9,9 +9,12 @@ import { eq, and, desc } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
-import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
+import { requireUser, assertWorkspaceMember, assertWorkspaceWritable, assertClientInWorkspace, assertProjectInWorkspace, ForbiddenError } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
+import { assertPublicTokenLifecycle, PublicTokenError } from "@/lib/public-token-policy";
+import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
+import { validateSignatureDataUrl } from "@/lib/upload-safety";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -138,6 +141,17 @@ export async function createContract(input: z.infer<typeof createContractSchema>
   const user = requireUser(session?.user);
   await assertWorkspaceWritable(db, user.id, input.workspaceId);
   const parsed = createContractSchema.parse(input);
+  await assertClientInWorkspace(db, user.id, parsed.workspaceId, parsed.clientId);
+  if (parsed.projectId) {
+    const project = await assertProjectInWorkspace(db, user.id, parsed.workspaceId, parsed.projectId);
+    if (project.clientId !== parsed.clientId) throw new ForbiddenError("Project does not belong to client");
+  }
+  if (parsed.templateId) {
+    const [template] = await db.select({ id: contractTemplates.id }).from(contractTemplates)
+      .where(and(eq(contractTemplates.id, parsed.templateId), eq(contractTemplates.workspaceId, parsed.workspaceId)))
+      .limit(1);
+    if (!template) throw new ForbiddenError("Contract template access denied");
+  }
 
   const [c] = await db.insert(contracts).values({
     workspaceId: parsed.workspaceId,
@@ -385,22 +399,40 @@ export async function signContract(input: {
   if (!input.signedEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.signedEmail)) {
     throw new Error("Valid email is required");
   }
-  if (!input.signatureDataUrl || !input.signatureDataUrl.startsWith("data:image/")) {
-    throw new Error("Signature is required");
-  }
+  const signatureValidation = validateSignatureDataUrl(input.signatureDataUrl);
+  if (!signatureValidation.ok) throw new Error(signatureValidation.reason);
 
   const tokenHash = hashToken(input.token);
+  await enforceServerActionRateLimit("contract:sign", tokenHash, { limit: 10, windowSec: 300 });
   const [c] = await db.select().from(contracts)
     .where(eq(contracts.sharedTokenHash, tokenHash))
     .limit(1);
   if (!c) throw new Error("Contract not found");
-  if (c.sharedTokenRevokedAt) throw new Error("Contract revoked");
-  if (c.sharedTokenExpiresAt && c.sharedTokenExpiresAt < new Date()) {
-    throw new Error("Contract expired");
+  try {
+    assertPublicTokenLifecycle({
+      presentedHash: tokenHash,
+      storedHash: c.sharedTokenHash,
+      revokedAt: c.sharedTokenRevokedAt,
+      expiresAt: c.sharedTokenExpiresAt,
+      status: c.status,
+      allowedStatuses: ["sent", "viewed", "signed"],
+      processedStatuses: ["declined"],
+    });
+  } catch (error) {
+    if (error instanceof PublicTokenError) {
+      const messages = {
+        invalid: "Contract not found",
+        disabled: "Contract disabled",
+        revoked: "Contract revoked",
+        expired: "Contract expired",
+        processed: "Contract was declined",
+        unavailable: "Contract was not sent",
+      } as const;
+      throw new Error(messages[error.code]);
+    }
+    throw error;
   }
   if (c.status === "signed") throw new Error("Contract already signed");
-  if (c.status === "declined") throw new Error("Contract was declined");
-  if (c.status === "draft") throw new Error("Contract was not sent");
 
   // Capture IP + UA from headers (server action receives request context)
   const h = await headers();
@@ -446,13 +478,36 @@ export async function signContract(input: {
 
 export async function declineContract(input: { token: string; reason?: string }) {
   const tokenHash = hashToken(input.token);
+  await enforceServerActionRateLimit("contract:decline", tokenHash, { limit: 10, windowSec: 300 });
   const [c] = await db.select().from(contracts)
     .where(eq(contracts.sharedTokenHash, tokenHash))
     .limit(1);
   if (!c) throw new Error("Contract not found");
-  if (c.sharedTokenRevokedAt) throw new Error("Contract revoked");
-  if (c.status === "signed") throw new Error("Contract already signed");
   if (c.status === "declined") throw new Error("Contract already declined");
+  try {
+    assertPublicTokenLifecycle({
+      presentedHash: tokenHash,
+      storedHash: c.sharedTokenHash,
+      revokedAt: c.sharedTokenRevokedAt,
+      expiresAt: c.sharedTokenExpiresAt,
+      status: c.status,
+      allowedStatuses: ["sent", "viewed"],
+      processedStatuses: ["signed"],
+    });
+  } catch (error) {
+    if (error instanceof PublicTokenError) {
+      const messages = {
+        invalid: "Contract not found",
+        disabled: "Contract disabled",
+        revoked: "Contract revoked",
+        expired: "Contract expired",
+        processed: "Contract already signed",
+        unavailable: "Contract was not sent",
+      } as const;
+      throw new Error(messages[error.code]);
+    }
+    throw error;
+  }
 
   const [updated] = await db.update(contracts)
     .set({

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+
 import { Loader2, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,14 +15,15 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
+
 } from "@/components/ui/card";
 import { authClient } from "@/lib/auth-client";
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") ?? "/app/dashboard";
+  const requestedRedirect = searchParams.get("redirect");
+  const redirect = requestedRedirect?.startsWith("/") && !requestedRedirect.startsWith("//") ? requestedRedirect : "/app/dashboard";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -83,23 +84,22 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full border-slate-200 bg-white shadow-xl shadow-slate-200/50">
       <CardHeader className="space-y-1 text-center">
-        <Image src="/logo-icon.png" alt="Cubiqlo" width={40} height={40} className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover" />
-        <CardTitle className="text-2xl">Selamat datang kembali</CardTitle>
+        <h1 className="text-2xl font-semibold tracking-tight">Selamat datang kembali</h1>
         <CardDescription>
           Masuk ke workspace Cubiqlo kamu
         </CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} aria-busy={loading}>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <div role="alert" aria-live="polite" className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {error}
             </div>
           )}
           {unverified && (
-            <div className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900 space-y-2">
+            <div role="alert" aria-live="polite" className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900 space-y-2">
               <p className="font-medium">Email belum diverifikasi</p>
               <p className="text-amber-800">
                 Kamu perlu verifikasi email sebelum bisa login. Cek inbox atau folder spam.
@@ -111,6 +111,7 @@ export function LoginForm() {
                 </div>
               ) : (
                 <Button
+                  type="button"
                   variant="outline"
                   size="sm"
                   className="w-full border-amber-300 bg-white text-amber-900 hover:bg-amber-100"
@@ -156,7 +157,7 @@ export function LoginForm() {
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Masuk
+            {loading ? "Sedang masuk…" : "Masuk"}
           </Button>
         </CardContent>
       </form>

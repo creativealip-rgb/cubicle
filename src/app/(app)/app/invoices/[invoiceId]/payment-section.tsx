@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { formatDateID, formatMoney } from "@/lib/utils";
+import { getInvoicePaymentState } from "@/lib/invoice-payment-rules";
 
 interface Payment {
   id: string;
@@ -57,7 +58,7 @@ export function PaymentSection({
 
   const currencyCode = currency || "IDR";
   const paidSoFar = payments.reduce((sum, p) => sum + Number(p.amount), 0);
-  const remaining = Math.max(0, total - paidSoFar);
+  const { remaining, fullyPaid } = getInvoicePaymentState(total, paidSoFar);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -124,7 +125,7 @@ export function PaymentSection({
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-1">
+          <Button variant="outline" size="sm" className="gap-1" disabled={fullyPaid}>
             <Plus className="h-3.5 w-3.5" /> Catat Pembayaran
           </Button>
         </DialogTrigger>
@@ -139,7 +140,8 @@ export function PaymentSection({
                 id="amount"
                 type="number"
                 step="0.01"
-                min="0"
+                min="0.01"
+                max={remaining}
                 value={form.amount}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, amount: e.target.value }))
@@ -195,6 +197,11 @@ export function PaymentSection({
           </form>
         </DialogContent>
       </Dialog>
+      {fullyPaid && (
+        <p className="text-xs text-amber-700">
+          Pembayaran sudah penuh. Ubah status invoice menjadi Lunas secara manual jika diperlukan.
+        </p>
+      )}
     </div>
   );
 }

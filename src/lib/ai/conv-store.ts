@@ -87,6 +87,8 @@ export async function listConversations(
 
 export async function listMessages(
   conversationId: string,
+  workspaceId: string,
+  userId: string,
   limit = 100,
 ): Promise<PersistedMessage[]> {
   const rows = await db
@@ -100,6 +102,14 @@ export async function listMessages(
       createdAt: aiMessages.createdAt,
     })
     .from(aiMessages)
+    .innerJoin(
+      aiConversations,
+      and(
+        eq(aiMessages.conversationId, aiConversations.id),
+        eq(aiConversations.workspaceId, workspaceId),
+        eq(aiConversations.userId, userId),
+      ),
+    )
     .where(eq(aiMessages.conversationId, conversationId))
     .orderBy(aiMessages.createdAt)
     .limit(limit);

@@ -12,7 +12,7 @@ export function DeleteItemButton({ itemId }: { itemId: string }) {
   const [loading, setLoading] = useState(false);
 
   async function handleDelete() {
-    if (!confirm("Delete this item?")) return;
+    if (!confirm("Hapus item invoice ini?")) return;
     setLoading(true);
     try {
       await deleteInvoiceItem(itemId);

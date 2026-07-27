@@ -124,8 +124,8 @@ export function ContractsListTable({
   );
 
   return (
-    <div className="bg-white rounded-2xl border overflow-x-auto">
-      <Table>
+    <div className="overflow-hidden rounded-lg border bg-card">
+      <Table className="[&_td]:p-3 [&_th]:px-3">
         <TableHeader>
           <TableRow>
             <TableHead>
@@ -160,10 +160,13 @@ export function ContractsListTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sorted.map((c) => {
+          {sorted.map((c, index) => {
             const status = projectStatusVariant(c.status, lang);
             return (
-              <TableRow key={c.id}>
+              <TableRow
+                key={c.id}
+                className={`border-b border-slate-200 hover:bg-slate-100/70 ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"}`}
+              >
                 <TableCell>
                   <Link
                     href={`/app/contracts/${c.id}`}

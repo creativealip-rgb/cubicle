@@ -381,8 +381,8 @@ export function TimerWidget({
 
   return (
     <>
-      <Card>
-        <CardContent className="p-6">
+      <Card className="rounded-lg border bg-card">
+        <CardContent className="p-4">
           {activeTimer ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -432,8 +432,8 @@ export function TimerWidget({
               {isEmptyTimer ? (
                 <p className="text-sm text-muted-foreground">
                   {t(
-                    "Timer kosong — lengkapi client, project, task, deskripsi saat stop.",
-                    "Empty timer — fill client, project, task, description on stop.",
+                    "Timer kosong — hentikan sekarang, lalu lengkapi detailnya di timesheet.",
+                    "Empty timer — stop it now, then complete the details in the timesheet.",
                   )}
                 </p>
               ) : (

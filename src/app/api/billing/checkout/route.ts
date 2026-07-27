@@ -5,26 +5,15 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { pakasirPayments, users, workspaceMembers } from "@/db/schema";
 import { createPakasirTransaction, isPakasirConfigured, pakasirPaymentUrl } from "@/lib/pakasir";
+import { BILLING_PLANS, isBillingPlan, type BillingPlan } from "@/lib/billing-plans";
 
-const PLANS = {
-  free: { amount: 0, label: "Free" },
-  solo: { amount: 49000, label: "Solo" },
-  team: { amount: 99000, label: "Team" },
-} as const;
-
-const PLAN_RANK: Record<Plan, number> = {
+const PLAN_RANK: Record<BillingPlan, number> = {
   free: 0,
   solo: 1,
   team: 2,
 };
 
-type Plan = keyof typeof PLANS;
-
-function isPlan(value: unknown): value is Plan {
-  return value === "free" || value === "solo" || value === "team";
-}
-
-function isUpgrade(current: Plan, target: Plan) {
+function isUpgrade(current: BillingPlan, target: BillingPlan) {
   return PLAN_RANK[target] > PLAN_RANK[current];
 }
 
@@ -40,7 +29,7 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => ({}));
   const plan = String(body.plan || "").toLowerCase();
-  if (!isPlan(plan)) {
+  if (!isBillingPlan(plan)) {
     return NextResponse.json({ error: "Plan tidak valid. Pilih solo atau team." }, { status: 400 });
   }
   if (plan === "free") {
@@ -58,12 +47,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
   }
 
-  const currentPlan = (user.plan ?? "free") as Plan;
+  const currentPlan = (user.plan ?? "free") as BillingPlan;
   const now = new Date();
 
   if (currentPlan === plan) {
     return NextResponse.json(
-      { error: `Kamu sudah di plan ${PLANS[plan].label}` },
+      { error: `Kamu sudah di plan ${BILLING_PLANS[plan].label}` },
       { status: 409 },
     );
   }
@@ -93,7 +82,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Workspace tidak ditemukan" }, { status: 404 });
   }
 
-  const amount = PLANS[plan].amount;
+  const amount = BILLING_PLANS[plan].amount;
   const shortWs = membership.workspaceId.replace(/-/g, "").slice(0, 10).toUpperCase();
   const orderId = `CUB-${shortWs}-${plan.toUpperCase()}-${Date.now()}`;
 

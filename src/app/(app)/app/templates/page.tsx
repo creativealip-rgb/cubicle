@@ -34,7 +34,7 @@ export default async function TemplateCenterPage({
     return (
       <div className="mx-auto max-w-xl space-y-4 py-6">
         <div className="flex items-center gap-2">
-          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
+          <h1 className="app-page-title">
             {t("Template", "Templates")}
           </h1>
           <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
