@@ -1,10 +1,20 @@
 # Cubiqlo — Project, Service, Package, Task, Activity, dan Time Tracking Plan
 
 **Tanggal:** 2026-07-27  
-**Status:** Approved product direction — Phase 0A containment live; Phase 0B migration gate berikutnya
+**Status:** Approved product direction — Phase 0A containment live dengan integration evidence pending; Phase 0B migration gate berikutnya
 **Owner:** Alip  
 **Prepared by:** Wowo  
 **Repo:** `/root/projects/cubicle`
+
+### Audit eksekusi 2026-07-27
+
+- `dev.cubiqlo.com` aktif sebagai production-build preview (`NODE_ENV=production`), bukan HMR, dengan DB `cubicle_dev` dan Redis terpisah.
+- Normalized schema dump `cubicle_dev` dan `cubicle` identik pada audit ini.
+- Ledger dev belum mencatat migration `0043`–`0045` walau seluruh object migration tersebut sudah ada dari schema clone; jangan replay SQL secara buta.
+- `scripts/migrate-ledger.sh` masih default ke `DB_NAME=cubicle`; seluruh migration dev wajib memakai target eksplisit dan runner perlu fail-closed terhadap target ambigu.
+- Akun QA yang tercatat di secret operasional tidak ada di `cubicle_dev`; authenticated dev QA menjadi blocker sebelum Phase 1.
+- `docs/operations/dev-environment.md` masih menggambarkan lane HMR lama dan harus diselaraskan dengan production-build preview aktual.
+- Audit source lulus `npx tsc --noEmit` dan full Vitest (`61` file, `311` test), tetapi test Phase 0A masih dominan source/wiring assertion, bukan behavioral DB integration.
 
 ---
 
@@ -97,12 +107,8 @@ Description  = detail pekerjaan pada satu sesi
 - Belum ada setting timer per Project.
 - Manual duration berisiko membentuk timestamp `00:00` semu.
 - Pause menggeser `startTime`, sehingga durasi benar tetapi waktu mulai asli tidak terjaga.
-- Portal Package order mempercayai `packageName`, `hours`, `price`, dan `currency` dari browser serta belum mengikat token–client–Project–Package secara lengkap.
-- Raw portal bearer token disimpan pada `package_orders`/`custom_package_requests` dan dikirim ke Client Components setelah password unlock.
-- Timer write path belum memvalidasi relasi workspace–Client–Project–Task secara utuh; pause/resume/stop belum membatasi timer ke pemiliknya.
-- Start timer masih read-close-insert tanpa transaction/DB uniqueness, sehingga race dapat membuat lebih dari satu active timer.
-- Invoice import menerima entry selain `approved + billable + completed`, mengubah rate entry saat import, dan restore status hardcoded ke `approved`.
-- `deleteTimeEntry` belum menolak entry `invoiced`; `invoice_items.source_id` belum punya FK/unique source guard.
+- Portal authority, bearer-token containment, timer tenant/ownership guard, active-timer uniqueness, dan invoice-time eligibility sudah dikandung oleh Phase 0A.
+- Behavioral DB integration untuk cross-workspace mutation, timer ownership, concurrent start, dan invoice idempotency masih perlu membuktikan containment Phase 0A secara runtime.
 - Navigation sudah menampilkan label `Service`, tetapi route/schema/action tetap model Package lama; test registry navigasi drift.
 
 ### File terkait saat ini
@@ -944,13 +950,19 @@ Jangan rewrite otomatis. Nilai itu tetap fakta historis meski redundan. Untuk UI
 - [x] Tambah partial unique index active timer `(workspace_id, user_id) WHERE end_time IS NULL AND manual_minutes IS NULL`; start/switch atomik dalam transaction.
 - [x] Block edit/delete entry `invoiced`; invoice import hanya `approved + billable + completed + duration>0 + same client/project/workspace`.
 - [x] Invoice import atomik dan idempotent; jangan mutasi rate snapshot Time Entry; simpan previous status saat link dibuat dan restore status tersebut ketika link draft dilepas.
-- [x] Tambah behavioral negative tests untuk cross-workspace identifier, token/client mismatch, timer ownership, concurrent start, dan invoice eligibility.
+- [x] Tambah regression test source/wiring untuk authority portal, archive semantics, tenant resolver, ownership guard, active-timer constraint, dan invoice eligibility.
+- [ ] Tambah behavioral integration test nyata untuk cross-workspace identifier, token/client mismatch, timer ownership, concurrent start, dan invoice eligibility/idempotency. Test harus mengeksekusi action/DB boundary; string/source assertion saja tidak memenuhi item ini.
 - [ ] Ops follow-up: audit/rotate credential QA historis bila ada credential nyata pernah masuk git history/docs. Jangan blok Phase 0B schema, tapi wajib sebelum public handoff besar.
 
-**Acceptance:** lulus di production. Spoof price/currency ditolak; token Client A tidak dapat menulis Project B; raw token tidak muncul di client payload/history write baru; member tidak dapat mengontrol timer user lain; kombinasi Client/Project/Task silang ditolak; concurrent start menghasilkan satu timer; draft/non-billable/open entry tidak dapat di-invoice; invoiced entry immutable; archive tidak menghapus assignment/order/request.
+**Acceptance:** containment runtime sudah live di production. Evidence Phase 0A baru lengkap setelah behavioral integration membuktikan spoof price/currency ditolak; token Client A tidak dapat menulis Project B; raw token tidak muncul di client payload/history write baru; member tidak dapat mengontrol timer user lain; kombinasi Client/Project/Task silang ditolak; concurrent start menghasilkan satu timer; draft/non-billable/open entry tidak dapat di-invoice; invoiced entry immutable; archive tidak menghapus assignment/order/request.
 
 ## Phase 0B — Schema ADR, migration evidence, dan release gate
 
+- [x] Audit normalized schema dump dev/prod; hasil 2026-07-27 identik. Ulangi dan simpan evidence pada setiap migration rehearsal.
+- [ ] Rekonsiliasi ledger dev untuk migration `0043`–`0045` yang object-nya sudah ada dari schema clone; catat checksum tanpa replay DDL dan verifikasi ulang schema diff nol.
+- [ ] Ubah migration workflow agar target DB wajib eksplisit dan fail-closed. Command polos `./migrate.sh` tidak boleh diam-diam memilih production untuk release plan ini.
+- [ ] Selaraskan `docs/operations/dev-environment.md` dengan runtime production-build preview aktual; hapus instruksi HMR/`next dev`/resource lama yang bertentangan.
+- [ ] Buat ulang akun QA sintetis di `cubicle_dev`, perbarui secret operasional, lalu buktikan login dan smoke test authenticated tanpa menyentuh akun production.
 - [ ] Finalkan ERD dengan `project_package_assignments`, currency snapshot, explicit invoice source relations, dan `timer_segments`.
 - [ ] Klasifikasikan legacy copy `/month` sebagai `legacy_recurring_unmodeled`; tidak ada reinterpretasi otomatis sebagai one-off.
 - [ ] Buat transition matrix approval/permission dan migration compatibility matrix.
@@ -958,7 +970,20 @@ Jangan rewrite otomatis. Nilai itu tetap fakta historis meski redundan. Untuk UI
 - [ ] Kunci naming ID/EN dan migration route compatibility.
 - [ ] Kunci Package baru sebagai one-off allowance; recurring belum dijanjikan.
 
-**Acceptance:** seluruh pilihan schema sudah menjadi ADR; backup dapat direstore; reconciliation baseline tersimpan; migration fresh + existing snapshot lulus dua kali; rollback diuji.
+**Acceptance:** seluruh pilihan schema sudah menjadi ADR; dev login + authenticated smoke test lulus; schema dan ledger dev punya evidence yang dapat diaudit; migration menolak target ambigu; backup dapat direstore; reconciliation baseline tersimpan; migration fresh + existing snapshot lulus dua kali; rollback diuji.
+
+### Gate wajib sebelum Phase 1
+
+Phase 1 tidak boleh dimulai sebelum seluruh kondisi ini lulus:
+
+1. Akun QA dev valid dan authenticated smoke test `/app/dashboard`, `/app/time`, dan `/app/projects` lulus.
+2. Normalized schema diff dev/prod nol pada baseline, lalu perubahan Phase 1 hanya muncul sebagai diff yang direncanakan.
+3. Ledger dev `0043`–`0046` konsisten dengan object dan checksum aktual tanpa replay migration applied.
+4. Migration runner memerlukan target eksplisit dan mempunyai test yang membuktikan target ambigu ditolak.
+5. Backup dev memiliki checksum, dapat direstore ke DB disposable, dan hasil restore lolos reconciliation baseline.
+6. Orphan report, ID mapping, row count, totals per currency, tracked minutes, dan rollback command tersimpan sebagai evidence.
+7. Behavioral integration Phase 0A lulus pada DB disposable/dev.
+8. Dokumentasi operator dev sesuai dengan Compose dan runtime aktual.
 
 ## Phase 1 — Project tracking mode dan description independence
 
@@ -1016,7 +1041,7 @@ Jangan rewrite otomatis. Nilai itu tetap fakta historis meski redundan. Untuk UI
 
 - [ ] Edit metadata timer saat running.
 - [ ] Atomic switch Activity/Task; MVP menutup entry lama dan memulai entry baru dalam satu transaction agar atribusi tidak menulis ulang histori.
-- [ ] Tambah unique partial index untuk satu active timer per workspace/user dan transaction/locking pada start/switch.
+- [x] Tambah unique partial index untuk satu active timer per workspace/user dan transaction/advisory locking pada start lewat Phase 0A; behavioral concurrency proof tetap wajib di Phase 0B.
 - [ ] Preserve original start time melalui accumulated time atau timer segments.
 - [ ] Duration-only memakai `entry_type=duration`, `work_date`, timezone snapshot, dan duration tanpa midnight timestamp palsu.
 - [ ] Cross-tab/device refresh.
@@ -1031,8 +1056,9 @@ Jangan rewrite otomatis. Nilai itu tetap fakta historis meski redundan. Untuk UI
 - [ ] Weekly grid.
 - [ ] Copy previous week.
 - [ ] Implement transition matrix `draft → submitted → approved|rejected → invoiced`; rejected dapat kembali ke draft sesuai permission.
-- [ ] Hanya entry `approved + billable` yang dapat masuk invoice.
-- [ ] Simpan audit metadata dan previous status saat invoice link dibuat/dilepas.
+- [x] Batasi invoice import ke entry `approved + billable + completed + duration>0` lewat Phase 0A; behavioral eligibility/idempotency proof tetap wajib di Phase 0B.
+- [x] Simpan dan restore previous status saat invoice link draft dibuat/dilepas lewat Phase 0A.
+- [ ] Tambah audit metadata approval/submission/rejection dan tegakkan transition permission.
 - [ ] Period locking; rejected/locked/invoiced tidak dapat diedit sembarang role.
 - [ ] Timer-only/manual-entry policy.
 - [ ] Forgotten timer dan target-hours reminders.
