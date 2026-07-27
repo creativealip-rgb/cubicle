@@ -2,13 +2,11 @@ import { requireAppSession } from "@/lib/app-auth";
 import { getCurrentLang, getLocale, createT } from "@/lib/i18n";
 import { db } from "@/db";
 import {
-  appointments,
-  personalNotes,
   workspaceCurrencyRates,
 } from "@/db/schema";
-import { eq, and, sql, gte } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
-import { ArrowUpRight, TrendingUp, ListChecks, ArrowRight } from "lucide-react";
+import { ArrowUpRight, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -66,65 +64,24 @@ export default async function DashboardPage() {
   const totalTimeEntries = counts.total_time_entries || 0;
   const portalActive = counts.portal_active || 0;
 
-  const todayStr = new Date().toISOString().split("T")[0]!;
+  const now = new Date();
+  const in7d = new Date(now.getTime() + 7 * 24 * 3600 * 1000);
+  const in7dDateStr = in7d.toISOString().split("T")[0]!;
   const attention = await db
     .select({
-      overdueInvoices: sql<number>`(SELECT count(*)::int FROM invoices WHERE workspace_id = ${workspaceId} AND status NOT IN ('paid','cancelled','archived') AND due_date < current_date)`,
-      tasksDueToday: sql<number>`(SELECT count(*)::int FROM tasks WHERE workspace_id = ${workspaceId} AND status != 'done' AND due_date <= ${todayStr})`,
-      contractsAwaiting: sql<number>`(SELECT count(*)::int FROM contracts WHERE workspace_id = ${workspaceId} AND status IN ('draft','sent','viewed'))`,
+      tasksDueSoon: sql<number>`(SELECT count(*)::int FROM tasks WHERE workspace_id = ${workspaceId} AND status != 'done' AND due_date IS NOT NULL AND due_date <= ${in7dDateStr})`,
+      noteReminders: sql<number>`(SELECT count(*)::int FROM personal_notes WHERE workspace_id = ${workspaceId} AND user_id = ${session?.user?.id ?? ""} AND status = 'open' AND due_date IS NOT NULL AND due_date <= ${in7d.toISOString()} AND title NOT LIKE ${"[journal]%"} AND title NOT LIKE ${"[site]%"})`,
+      invoiceDueSoon: sql<number>`(SELECT count(*)::int FROM invoices WHERE workspace_id = ${workspaceId} AND status NOT IN ('paid','cancelled','archived') AND due_date IS NOT NULL AND due_date <= ${in7dDateStr})`,
       clientApprovals: sql<number>`(SELECT count(*)::int FROM tasks WHERE workspace_id = ${workspaceId} AND status = 'review' AND client_visible = true)`,
     })
     .from(sql`(select 1) as _`)
     .limit(1);
   const att = attention[0] ?? {
-    overdueInvoices: 0,
-    tasksDueToday: 0,
-    contractsAwaiting: 0,
+    tasksDueSoon: 0,
+    noteReminders: 0,
+    invoiceDueSoon: 0,
     clientApprovals: 0,
   };
-
-  const now = new Date();
-  const in7d = new Date(now.getTime() + 7 * 24 * 3600 * 1000);
-  const upcomingReminders = await db
-    .select({
-      id: personalNotes.id,
-      title: personalNotes.title,
-      dueDate: personalNotes.dueDate,
-      recurrenceRule: personalNotes.recurrenceRule,
-    })
-    .from(personalNotes)
-    .where(
-      and(
-        eq(personalNotes.workspaceId, workspaceId),
-        eq(personalNotes.userId, session?.user?.id ?? ""),
-        eq(personalNotes.status, "open"),
-        sql`${personalNotes.dueDate} IS NOT NULL`,
-        sql`${personalNotes.dueDate} <= ${in7d.toISOString()}`,
-        sql`${personalNotes.dueDate} >= ${now.toISOString()}`,
-        sql`${personalNotes.title} NOT LIKE ${"[journal]%"}`,
-        sql`${personalNotes.title} NOT LIKE ${"[site]%"}`,
-      ),
-    )
-    .orderBy(personalNotes.dueDate)
-    .limit(5);
-
-  const upcomingAppts = await db
-    .select({
-      id: appointments.id,
-      title: appointments.title,
-      startTime: appointments.startTime,
-      attendeeName: appointments.attendeeName,
-    })
-    .from(appointments)
-    .where(
-      and(
-        eq(appointments.workspaceId, workspaceId),
-        eq(appointments.status, "scheduled"),
-        gte(appointments.startTime, new Date()),
-      ),
-    )
-    .orderBy(appointments.startTime)
-    .limit(5);
 
   // Revenue last 30 days only (payments) — convert to base currency
   const rateRows = await db
@@ -283,90 +240,62 @@ export default async function DashboardPage() {
     meta?: string;
   };
 
+  // Fixed 5 reminder cards (always visible), matching meeting brief.
   const reminderItems: ReminderItem[] = [
     {
       key: "active-projects",
       label: t("Proyek Aktif", "Active Projects"),
-      href: "/app/projects",
+      href: "/app/projects?status=active",
       tone: "blue",
       group: "action",
       count: activeProjects,
-      meta: t(`${activeProjects} berjalan`, `${activeProjects} running`),
+      meta: t("Proyek sedang berjalan", "Running projects"),
     },
-  ];
-  if (att.overdueInvoices > 0) {
-    reminderItems.push({
-      key: "inv-overdue",
-      label: t("Invoice jatuh tempo", "Overdue invoices"),
-      href: "/app/invoices?status=overdue",
-      tone: "rose",
-      group: "urgent",
-      count: att.overdueInvoices,
-    });
-  }
-  if (att.tasksDueToday > 0) {
-    reminderItems.push({
-      key: "task-today",
-      label: t("Tugas perlu dikerjakan", "Tasks due"),
+    {
+      key: "tasks-due",
+      label: t("Task", "Tasks"),
       href: "/app/tasks?filter=today",
       tone: "amber",
       group: "urgent",
-      count: att.tasksDueToday,
-    });
-  }
-  if (att.clientApprovals > 0) {
-    reminderItems.push({
-      key: "approval",
-      label: t("Approval task client", "Client task approval"),
-      href: "/app/tasks?status=review",
-      tone: "purple",
-      group: "action",
-      count: att.clientApprovals,
-    });
-  }
-  // Contract reminder hidden while Sales nav is off.
-  // if (att.contractsAwaiting > 0) {
-  //   reminderItems.push({
-  //     key: "contract",
-  //     label: t("Kontrak menunggu", "Awaiting contracts"),
-  //     href: "/app/contracts",
-  //     tone: "blue",
-  //     group: "action",
-  //     count: att.contractsAwaiting,
-  //   });
-  // }
-  for (const apt of upcomingAppts.slice(0, 3)) {
-    reminderItems.push({
-      key: `apt-${apt.id}`,
-      label: apt.title,
-      href: "/app/calendar",
-      tone: "slate",
-      group: "scheduled",
-      meta: new Date(apt.startTime).toLocaleString(locale, {
-        weekday: "short",
-        day: "numeric",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    });
-  }
-  for (const r of upcomingReminders) {
-    reminderItems.push({
-      key: `note-${r.id}`,
-      label: r.title,
+      count: Number(att.tasksDueSoon) || 0,
+      meta: t("Task mau jatuh tempo", "Tasks due soon"),
+    },
+    {
+      key: "note-reminders",
+      label: t("Reminder", "Reminders"),
       href: "/app/personal",
       tone: "blue",
       group: "scheduled",
-      meta: r.dueDate
-        ? new Date(r.dueDate).toLocaleDateString(locale, {
-            weekday: "short",
-            day: "numeric",
-            month: "short",
-          })
-        : undefined,
-    });
-  }
+      count: Number(att.noteReminders) || 0,
+      meta: t("Reminder dari note", "Note reminders"),
+    },
+    {
+      key: "invoice-due",
+      label: t("Invoice Due", "Invoice Due"),
+      href: "/app/invoices?status=overdue",
+      tone: "rose",
+      group: "urgent",
+      count: Number(att.invoiceDueSoon) || 0,
+      meta: t("Invoice mau jatuh tempo", "Invoices due soon"),
+    },
+    {
+      key: "approval",
+      label: t("Approval", "Approval"),
+      href: "/app/tasks?status=review",
+      tone: "purple",
+      group: "action",
+      count: Number(att.clientApprovals) || 0,
+      meta: t("Approval task client", "Client task approval"),
+    },
+  ];
+
+  const reminderToneBorder: Record<ReminderTone, string> = {
+    rose: "border-l-rose-500",
+    amber: "border-l-amber-500",
+    blue: "border-l-blue-500",
+    purple: "border-l-purple-500",
+    slate: "border-l-slate-400",
+  };
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -393,22 +322,19 @@ export default async function DashboardPage() {
           <Badge variant="secondary">{reminderItems.length}</Badge>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          {reminderItems.slice(0, 5).map((item) => (
+          {reminderItems.map((item) => (
             <Link key={item.key} href={item.href} className="group">
-              <Card className="h-full border-l-4 border-l-blue-500 transition hover:-translate-y-0.5 hover:shadow-md">
+              <Card className={`h-full border-l-4 ${reminderToneBorder[item.tone]} transition hover:-translate-y-0.5 hover:shadow-md`}>
                 <CardContent className="flex min-h-24 items-start justify-between gap-3 p-4">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{item.label}</p>
                     <p className="mt-2 text-xs text-muted-foreground">{item.meta || t("Perlu ditangani", "Needs attention")}</p>
                   </div>
-                  {item.count != null ? <Badge>{item.count}</Badge> : <ArrowRight className="h-4 w-4 text-muted-foreground" />}
+                  <Badge variant={item.count && item.count > 0 ? "default" : "secondary"}>{item.count ?? 0}</Badge>
                 </CardContent>
               </Card>
             </Link>
           ))}
-          {reminderItems.length === 0 ? (
-            <Card className="sm:col-span-2 xl:col-span-5"><CardContent className="p-4 text-sm text-muted-foreground">{t("Tidak ada reminder aktif", "No active reminders")}</CardContent></Card>
-          ) : null}
         </div>
       </section>
 
@@ -454,72 +380,6 @@ export default async function DashboardPage() {
         </div>
 
         <div className="xl:self-start">
-          <Card className="hidden">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-start justify-between gap-3 text-sm font-semibold">
-                <span>
-                  {t("Perlu ditangani", "Needs attention")}
-                  <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
-                    {reminderItems.length}
-                  </span>
-                </span>
-                <ListChecks className="mt-0.5 h-4 w-4 text-slate-400" />
-              </CardTitle>
-              <p className="text-xs text-muted-foreground">
-                {t("Prioritas aktif yang belum selesai", "Active priorities that still need work")}
-              </p>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {reminderItems.length === 0 ? (
-                <div className="flex items-center gap-2 rounded-lg border border-dashed border-slate-200 px-3 py-3 text-sm text-muted-foreground">
-                  <ListChecks className="h-4 w-4" />
-                  {t("Tidak ada prioritas aktif", "No active priorities")}
-                </div>
-              ) : (
-                <div className="divide-y divide-slate-100">
-                  {reminderItems.slice(0, 5).map((item) => {
-                    const itemToneClass: Record<ReminderTone, string> = {
-                      rose: "bg-rose-500 text-rose-700",
-                      amber: "bg-amber-500 text-amber-700",
-                      blue: "bg-blue-500 text-blue-700",
-                      purple: "bg-purple-500 text-purple-700",
-                      slate: "bg-slate-400 text-slate-700",
-                    };
-                    return (
-                      <Link
-                        key={item.key}
-                        href={item.href}
-                        className="group -mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 text-sm transition-colors hover:bg-slate-50/80"
-                      >
-                        <div className="min-w-0 flex items-center gap-2.5">
-                          <span className={`h-2 w-2 shrink-0 rounded-full ${itemToneClass[item.tone].split(" ")[0]}`} />
-                          <span className="truncate font-medium text-slate-900">{item.label}</span>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-2">
-                          {item.count != null && (
-                            <Badge variant="secondary" className="h-5 rounded-full px-1.5 text-[10px]">
-                              {item.count}
-                            </Badge>
-                          )}
-                          {item.meta && (
-                            <span className="whitespace-nowrap text-[11px] text-muted-foreground">
-                              {item.meta}
-                            </span>
-                          )}
-                          <ArrowRight className="h-3.5 w-3.5 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-500" />
-                        </div>
-                      </Link>
-                    );
-                  })}
-                  {reminderItems.length > 5 && (
-                    <Link href="/app/tasks" className="block pt-2 text-xs font-medium text-blue-600 hover:text-blue-700">
-                      {t(`+${reminderItems.length - 5} lainnya`, `+${reminderItems.length - 5} more`)}
-                    </Link>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
           {/* Finance sidebar: 30d revenue only */}
           <Card className="bg-gradient-to-b from-slate-50 to-white">
             <CardHeader className="pb-1">

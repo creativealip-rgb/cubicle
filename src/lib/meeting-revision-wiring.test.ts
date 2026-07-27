@@ -42,11 +42,15 @@ describe("meeting revision wiring", () => {
     expect(page).not.toContain("<StatusFilterTabs");
   });
 
-  it("keeps dashboard to reminder, recent activity, and finance content", () => {
+  it("keeps dashboard to fixed top reminder cards", () => {
     const page = read("src/app/(app)/app/dashboard/page.tsx");
     expect(page).not.toContain('label: t("Klien Aktif", "Active Clients")');
     expect(page).not.toContain('{t("Kerja", "Work")}');
     expect(page).toContain('key: "active-projects"');
+    expect(page).toContain('key: "tasks-due"');
+    expect(page).toContain('key: "note-reminders"');
+    expect(page).toContain('key: "invoice-due"');
+    expect(page).toContain('key: "approval"');
     expect(page).toContain('xl:grid-cols-[minmax(0,1fr)_400px]');
   });
 });
