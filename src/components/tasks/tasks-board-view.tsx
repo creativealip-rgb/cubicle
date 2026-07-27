@@ -18,6 +18,7 @@ interface Task {
   clientVisible: boolean;
   projectId?: string;
   projectName?: string | null;
+  timeTrackingMode?: "off" | "internal" | "billable" | null;
   assigneeId: string | null;
   assigneeName: string | null;
   sourceNoteId?: string | null;

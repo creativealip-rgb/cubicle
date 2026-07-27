@@ -107,6 +107,10 @@ export function StopTimerDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!prefill?.entryId) return;
+    if (!clientId || !projectId) {
+      toast.error(t("Klien dan Project wajib dipilih", "Client and Project are required"));
+      return;
+    }
     setLoading(true);
     try {
       await stopTimer({
@@ -141,7 +145,7 @@ export function StopTimerDialog({
         <form onSubmit={handleSubmit} className="mt-2 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-xs">{t("Klien", "Client")}</Label>
+              <Label className="text-xs">{t("Klien *", "Client *")}</Label>
               <Select value={clientId} onValueChange={handleClientChange}>
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue placeholder={t("Opsional", "Optional")} />
@@ -156,13 +160,13 @@ export function StopTimerDialog({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">{t("Proyek", "Project")}</Label>
+              <Label className="text-xs">{t("Proyek *", "Project *")}</Label>
               <Select value={projectId} onValueChange={handleProjectChange} disabled={!clientId}>
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue
                     placeholder={
                       clientId
-                        ? t("Opsional", "Optional")
+                        ? t("Wajib dipilih", "Required")
                         : t("Pilih klien dulu", "Select client first")
                     }
                   />

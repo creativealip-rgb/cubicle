@@ -1,0 +1,82 @@
+import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+const read = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
+
+describe("Phase 1 project time tracking wiring", () => {
+  it("adds additive project mode columns and deterministic backfill", () => {
+    const schema = read("src/db/schema.ts");
+    const migration = read("drizzle/0047_project_time_tracking_mode.sql");
+
+    expect(schema).toContain('timeTrackingMode: text("time_tracking_mode"');
+    expect(schema).toContain('["off", "internal", "billable"]');
+    expect(schema).toContain('activityRequired: boolean("activity_required")');
+    expect(migration).toContain('ADD COLUMN IF NOT EXISTS "time_tracking_mode" text');
+    expect(migration).toContain("WHEN p.billing_type = 'hours' THEN 'billable'");
+    expect(migration).toContain("WHEN p.billing_type = 'package' AND pkg.hours > 0 THEN 'billable'");
+    expect(migration).toContain("ELSE 'internal'");
+    expect(migration).toContain("CHECK (time_tracking_mode IN ('off', 'internal', 'billable'))");
+    expect(migration).toContain('ADD COLUMN IF NOT EXISTS "activity_required" boolean');
+  });
+
+  it("enforces project mode across start, task quick-start, manual, reassign, and stop", () => {
+    const time = read("src/lib/actions/time.ts");
+    expect(time).toContain("assertProjectTimeTrackingEnabled(db, parsed.workspaceId, parsed.projectId)");
+    expect(time).toContain("assertProjectTimeTrackingEnabled(db, workspaceId, row.projectId)");
+    expect(time).toContain("assertProjectTimeTrackingEnabled(db, workspaceId, nextProjectId)");
+    expect(time).toContain("assertHistoricalTimeEntryMutable(db, workspaceId, entry.projectId)");
+    expect(time).toContain("await assertProjectTimeTrackingEnabled(db, workspaceId, entry.projectId)");
+    expect(time).toContain("Project wajib dipilih sebelum timer dihentikan");
+    expect(time).toContain("timeEntryBillableForMode");
+
+    const projectsAction = read("src/lib/actions/projects.ts");
+    expect(projectsAction).toContain("const projectUpdateSchema = projectInputSchema.partial()");
+    expect(projectsAction).toContain("const parsed = projectUpdateSchema.parse(input)");
+    expect(projectsAction).not.toContain("projectSchema.partial().parse(input)");
+  });
+
+  it("keeps task title as context and never persists it as a new entry description", () => {
+    const time = read("src/lib/actions/time.ts");
+    const widget = read("src/components/time/timer-widget.tsx");
+    const manual = read("src/components/time/manual-entry-form.tsx");
+    const taskSheet = read("src/components/tasks/task-detail-sheet.tsx");
+
+    expect(time).not.toContain("if ((!description || !description.trim()) && parsed.taskId)");
+    expect(time).not.toContain("description: row.title");
+    expect(widget).not.toContain("setDescription(task.title)");
+    expect(manual).not.toContain("setDescription(task.title)");
+    expect(taskSheet).toContain("Task sebagai konteks; deskripsi pekerjaan tetap terpisah");
+  });
+
+  it("filters off projects from write UI but keeps historical entries visible", () => {
+    const page = read("src/app/(app)/app/time/page.tsx");
+    const projectPage = read("src/app/(app)/app/projects/[projectId]/page.tsx");
+    const taskSheet = read("src/components/tasks/task-detail-sheet.tsx");
+
+    const timesheet = read("src/components/time/timesheet.tsx");
+
+    expect(page).toContain("timeTrackingMode: projects.timeTrackingMode");
+    expect(page).toContain("projectTimeTrackingMode: projects.timeTrackingMode");
+    expect(page).toContain('filter((project) => project.timeTrackingMode !== "off")');
+    expect(projectPage).toContain('project.timeTrackingMode !== "off"');
+    expect(projectPage).toContain("projectTimeEntries.length > 0");
+    expect(taskSheet).toContain("timeTrackingMode?:");
+    expect(taskSheet).toContain('task.timeTrackingMode === "off"');
+    expect(timesheet).toContain('entry.projectTimeTrackingMode === "off"');
+    expect(timesheet).toContain('t("Hanya baca", "Read only")');
+  });
+
+  it("keeps create-form defaults and empty-timer completion aligned with server policy", () => {
+    const projectForm = read("src/components/forms/project-form.tsx");
+    const timerWidget = read("src/components/time/timer-widget.tsx");
+    const topbar = read("src/components/app-topbar.tsx");
+
+    expect(projectForm).toContain("selectedPackage?.hours");
+    expect(projectForm).toContain('timeTrackingMode: selectedPackage?.hours && selectedPackage.hours > 0 ? "billable" : "internal"');
+    expect(timerWidget).toContain("<StopTimerDialog");
+    expect(timerWidget).toContain("open={stopDialogOpen}");
+    expect(topbar).toContain('if (!activeTimer.projectId)');
+    expect(topbar).toContain('router.push("/app/time")');
+  });
+});

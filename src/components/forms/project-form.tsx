@@ -24,6 +24,8 @@ interface ProjectFormProps {
     clientId?: string;
     status?: string;
     billingType?: string;
+    timeTrackingMode?: "off" | "internal" | "billable";
+    activityRequired?: boolean;
     currency?: string;
     rate?: string;
     budget?: string;
@@ -46,6 +48,8 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
     clientId: defaultValues?.clientId ?? clientId ?? "",
     status: defaultValues?.status ?? "active",
     billingType: defaultValues?.billingType ?? "project",
+    timeTrackingMode: defaultValues?.timeTrackingMode ?? (defaultValues?.billingType === "hours" ? "billable" : "internal"),
+    activityRequired: defaultValues?.activityRequired ?? false,
     currency: defaultValues?.currency ?? "IDR",
     rate: defaultValues?.rate ?? "",
     budget: defaultValues?.budget ?? "",
@@ -97,6 +101,8 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
         clientId: form.clientId,
         status: form.status as "draft" | "active" | "on_hold" | "completed" | "cancelled" | "archived",
         billingType: form.billingType as "project" | "hours" | "package",
+        timeTrackingMode: form.timeTrackingMode,
+        activityRequired: form.activityRequired,
         currency: form.currency,
         rate: form.rate ? Number(form.rate) : undefined,
         budget: form.budget ? Number(form.budget) : undefined,
@@ -170,7 +176,14 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>Jenis Project</Label>
-          <Select value={form.billingType} onValueChange={(v) => setForm((p) => ({ ...p, billingType: v }))}>
+          <Select
+            value={form.billingType}
+            onValueChange={(value) => setForm((previous) => ({
+              ...previous,
+              billingType: value,
+              ...(mode === "create" ? { timeTrackingMode: value === "hours" ? "billable" : "internal" } : {}),
+            }))}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Jenis project" />
             </SelectTrigger>
@@ -201,7 +214,17 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
             <>
               <Select
                 value={form.selectedPackageId || "__none__"}
-                onValueChange={(v) => setForm((p) => ({ ...p, selectedPackageId: v === "__none__" ? "" : v }))}
+                onValueChange={(value) => {
+                  const selectedPackageId = value === "__none__" ? "" : value;
+                  const selectedPackage = projectPackages.find((pkg) => pkg.id === selectedPackageId);
+                  setForm((previous) => ({
+                    ...previous,
+                    selectedPackageId,
+                    ...(mode === "create" ? {
+                      timeTrackingMode: selectedPackage?.hours && selectedPackage.hours > 0 ? "billable" : "internal",
+                    } : {}),
+                  }));
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Pilih service" />
@@ -234,6 +257,45 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
           )}
         </div>
       )}
+      <div className="space-y-3 rounded-lg border bg-muted/30 p-3">
+        <div className="space-y-2">
+          <Label>Mode pelacakan waktu</Label>
+          <Select
+            value={form.timeTrackingMode}
+            onValueChange={(value) => setForm((previous) => ({
+              ...previous,
+              timeTrackingMode: value as "off" | "internal" | "billable",
+              activityRequired: value === "off" ? false : previous.activityRequired,
+            }))}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="off">Mati — timer tidak digunakan</SelectItem>
+              <SelectItem value="internal">Internal — catat biaya, bukan tagihan</SelectItem>
+              <SelectItem value="billable">Billable — dasar billing/usage</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Mode menentukan izin entri waktu dan status billable. Histori lama tetap tersimpan saat mode dimatikan.
+          </p>
+        </div>
+        <div className="flex items-start gap-2">
+          <input
+            type="checkbox"
+            id="activityRequired"
+            checked={form.activityRequired}
+            disabled={form.timeTrackingMode === "off"}
+            onChange={(event) => setForm((previous) => ({ ...previous, activityRequired: event.target.checked }))}
+            className="mt-0.5 h-4 w-4 rounded border-gray-300"
+          />
+          <div>
+            <Label htmlFor="activityRequired">Activity wajib saat mencatat waktu</Label>
+            <p className="text-xs text-muted-foreground">Dipakai saat selector Activity tersedia pada fase berikutnya.</p>
+          </div>
+        </div>
+      </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>Mata Uang *</Label>

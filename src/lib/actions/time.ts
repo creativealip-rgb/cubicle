@@ -10,6 +10,12 @@ import { z } from "zod";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { assertTimeEntryContext } from "@/lib/time-entry-context";
+import {
+  assertHistoricalTimeEntryMutable,
+  assertProjectTimeTrackingEnabled,
+  getProjectTimeTrackingMode,
+} from "@/lib/project-time-tracking-policy-db";
+import { timeEntryBillableForMode } from "@/lib/project-time-tracking-policy";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -112,17 +118,9 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
 
   const parsed = startTimerSchema.parse(input);
   await assertTimeEntryContext(db, parsed.workspaceId, parsed);
-
-  // Optional: auto-map description from task title when blank.
-  let description = parsed.description || null;
-  if ((!description || !description.trim()) && parsed.taskId) {
-    const [task] = await db
-      .select({ title: tasks.title })
-      .from(tasks)
-      .where(and(eq(tasks.id, parsed.taskId), eq(tasks.workspaceId, parsed.workspaceId)))
-      .limit(1);
-    if (task?.title) description = task.title;
-  }
+  const projectMode = parsed.projectId
+    ? await assertProjectTimeTrackingEnabled(db, parsed.workspaceId, parsed.projectId)
+    : null;
 
   const resolvedRate = parsed.projectId
     ? await resolveHourlyRate({
@@ -175,13 +173,13 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
       projectId: parsed.projectId || null,
       taskId: parsed.taskId || null,
       userId: user.id,
-      description,
+      description: parsed.description || null,
       tags: parsed.tags || null,
       startTime: new Date(),
       endTime: null,
       pausedAt: null,
       manualMinutes: null,
-      billable: true,
+      billable: projectMode ? timeEntryBillableForMode(projectMode) : false,
       hourlyRate: resolvedRate,
       status: "draft",
     }).returning();
@@ -194,7 +192,7 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
 
 /**
  * Start timer from a task card/sheet.
- * Resolves client+project from task, maps description from task title.
+ * Resolves client+project from task. Task title remains context only.
  * Stop remains instant — no form required.
  */
 export async function startTimerFromTask(taskId: string) {
@@ -219,13 +217,13 @@ export async function startTimerFromTask(taskId: string) {
   if (!row) throw new Error("Task not found");
   if (!row.projectId) throw new Error("Task belum terhubung ke proyek");
   if (!row.clientId) throw new Error("Proyek task belum punya klien");
+  await assertProjectTimeTrackingEnabled(db, workspaceId, row.projectId);
 
   return startTimer({
     workspaceId,
     clientId: row.clientId,
     projectId: row.projectId,
     taskId: row.taskId,
-    description: row.title,
   });
 }
 
@@ -291,6 +289,9 @@ export async function resumeTimer(entryId: string) {
   if (!entry.pausedAt) {
     return entry; // already running
   }
+  if (entry.projectId) {
+    await assertProjectTimeTrackingEnabled(db, workspaceId, entry.projectId);
+  }
 
   const now = new Date();
   const pauseMs = Math.max(0, now.getTime() - entry.pausedAt.getTime());
@@ -348,6 +349,9 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
   const nextClientId = parsed.clientId ?? entry.clientId ?? null;
   const nextProjectId = parsed.projectId ?? entry.projectId ?? null;
   const nextTaskId = parsed.taskId ?? entry.taskId ?? null;
+  if (!nextProjectId) {
+    throw new Error("Project wajib dipilih sebelum timer dihentikan");
+  }
   const nextDescription =
     parsed.description !== undefined && parsed.description !== null
       ? parsed.description
@@ -358,6 +362,10 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
     projectId: nextProjectId,
     taskId: nextTaskId,
   });
+  const keepsOriginalProject = nextProjectId === entry.projectId;
+  const projectMode = keepsOriginalProject
+    ? await getProjectTimeTrackingMode(db, workspaceId, nextProjectId)
+    : await assertProjectTimeTrackingEnabled(db, workspaceId, nextProjectId);
 
   const resolvedRate = await resolveHourlyRate({
     workspaceId,
@@ -373,6 +381,7 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
       taskId: nextTaskId,
       description: nextDescription,
       tags: nextTags,
+      billable: projectMode === "off" ? entry.billable : timeEntryBillableForMode(projectMode),
       hourlyRate: resolvedRate ?? entry.hourlyRate,
       endTime: finalEnd,
       pausedAt: null,
@@ -392,6 +401,8 @@ export async function createManualEntry(input: z.infer<typeof createManualEntryS
 
   const parsed = createManualEntrySchema.parse(input);
   await assertTimeEntryContext(db, parsed.workspaceId, parsed);
+  const projectMode = await assertProjectTimeTrackingEnabled(db, parsed.workspaceId, parsed.projectId);
+  const billable = timeEntryBillableForMode(projectMode);
 
   // Manual entry is NOT a running timer. Set both start + end from the
   // chosen date + duration so active-timer queries (endTime IS NULL) never
@@ -404,9 +415,9 @@ export async function createManualEntry(input: z.infer<typeof createManualEntryS
   const end = new Date(start.getTime() + parsed.durationMinutes * 60 * 1000);
 
   // Resolve rate: explicit input → project rate → workspace default.
-  // Only auto-fill when billable.
+  // Only auto-fill when project mode is billable.
   let resolvedRate: string | null = null;
-  if (parsed.billable) {
+  if (billable) {
     resolvedRate = await resolveHourlyRate({
       workspaceId: parsed.workspaceId,
       projectId: parsed.projectId,
@@ -426,7 +437,7 @@ export async function createManualEntry(input: z.infer<typeof createManualEntryS
     endTime: end,
     pausedAt: null,
     manualMinutes: parsed.durationMinutes,
-    billable: parsed.billable,
+    billable,
     hourlyRate: resolvedRate,
     status: "draft",
   }).returning();
@@ -451,6 +462,7 @@ export async function updateTimeEntry(entryId: string, input: z.infer<typeof upd
   if (entry.status === "invoiced") {
     throw new Error("Entri sudah di-invoice, tidak bisa diedit");
   }
+  await assertHistoricalTimeEntryMutable(db, workspaceId, entry.projectId);
 
   const parsed = updateTimeEntrySchema.parse(input);
   const nextClientId = parsed.clientId !== undefined ? parsed.clientId : entry.clientId;
@@ -461,6 +473,8 @@ export async function updateTimeEntry(entryId: string, input: z.infer<typeof upd
     projectId: nextProjectId,
     taskId: nextTaskId,
   });
+  if (!nextProjectId) throw new Error("Project wajib dipilih untuk entri waktu");
+  const projectMode = await assertProjectTimeTrackingEnabled(db, workspaceId, nextProjectId);
   const updateData: Record<string, unknown> = { updatedAt: new Date() };
 
   if (parsed.description !== undefined) updateData.description = parsed.description;
@@ -471,7 +485,7 @@ export async function updateTimeEntry(entryId: string, input: z.infer<typeof upd
   if (parsed.startTime !== undefined) updateData.startTime = parsed.startTime ? new Date(parsed.startTime) : null;
   if (parsed.endTime !== undefined) updateData.endTime = parsed.endTime ? new Date(parsed.endTime) : null;
   if (parsed.manualMinutes !== undefined) updateData.manualMinutes = parsed.manualMinutes;
-  if (parsed.billable !== undefined) updateData.billable = parsed.billable;
+  updateData.billable = timeEntryBillableForMode(projectMode);
   if (parsed.status !== undefined) {
     if (parsed.status === "invoiced") {
       throw new Error("Status invoiced hanya lewat proses invoice");
@@ -527,6 +541,7 @@ export async function deleteTimeEntry(entryId: string) {
   if (entry.status === "invoiced") {
     throw new Error("Entri sudah di-invoice, tidak bisa dihapus");
   }
+  await assertHistoricalTimeEntryMutable(db, workspaceId, entry.projectId);
 
   await db.delete(timeEntries).where(eq(timeEntries.id, entryId));
   await writeActivityLog(workspaceId, user.id, "deleted_time_entry", "time_entry", entryId);

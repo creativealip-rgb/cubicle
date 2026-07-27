@@ -60,6 +60,8 @@ export default async function ProjectDetailPage({
       description: projects.description,
       status: projects.status,
       billingType: projects.billingType,
+      timeTrackingMode: projects.timeTrackingMode,
+      activityRequired: projects.activityRequired,
       currency: projects.currency,
       rate: projects.rate,
       budget: projects.budget,
@@ -108,6 +110,7 @@ export default async function ProjectDetailPage({
       clientVisible: tasks.clientVisible,
       projectId: tasks.projectId,
       projectName: projects.name,
+      timeTrackingMode: projects.timeTrackingMode,
     })
     .from(tasks)
     .leftJoin(users, eq(users.id, tasks.assigneeId))
@@ -161,6 +164,7 @@ export default async function ProjectDetailPage({
         `Back to ${project.clientName || "Client"}`,
       )
     : t("Kembali ke Proyek", "Back to Projects");
+  const showTimeTab = project.timeTrackingMode !== "off" || projectTimeEntries.length > 0;
 
   return (
     <div className="space-y-6">
@@ -234,6 +238,8 @@ export default async function ProjectDetailPage({
                 clientId: project.clientId,
                 status: project.status,
                 billingType: project.billingType,
+                timeTrackingMode: project.timeTrackingMode,
+                activityRequired: project.activityRequired,
                 currency: project.currency,
                 rate: project.rate ?? "",
                 budget: project.budget ?? "",
@@ -283,9 +289,11 @@ export default async function ProjectDetailPage({
           <TabsTrigger value="files" className="gap-1">
             <FileText className="h-3 w-3" /> {t("Berkas", "Files")} ({projectFiles.length})
           </TabsTrigger>
-          <TabsTrigger value="time" className="gap-1">
-            <Clock className="h-3 w-3" /> {t("Waktu", "Time")} ({projectTimeEntries.length})
-          </TabsTrigger>
+          {showTimeTab ? (
+            <TabsTrigger value="time" className="gap-1">
+              <Clock className="h-3 w-3" /> {t("Waktu", "Time")} ({projectTimeEntries.length})
+            </TabsTrigger>
+          ) : null}
         </TabsList>
 
         <TabsContent value="tasks" className="pt-4">
@@ -312,7 +320,7 @@ export default async function ProjectDetailPage({
           ))}
         </TabsContent>
 
-        <TabsContent value="time" className="pt-4 space-y-3">
+        {showTimeTab ? <TabsContent value="time" className="pt-4 space-y-3">
           {projectTimeEntries.length === 0 && (
             <p className="text-sm text-muted-foreground py-8 text-center">Belum ada catatan waktu</p>
           )}
@@ -334,7 +342,7 @@ export default async function ProjectDetailPage({
               </CardContent>
             </Card>
           ))}
-        </TabsContent>
+        </TabsContent> : null}
 
       </Tabs>
     </div>

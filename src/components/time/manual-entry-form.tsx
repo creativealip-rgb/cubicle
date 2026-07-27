@@ -55,7 +55,6 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
   const [projectId, setProjectId] = useState("");
   const [taskId, setTaskId] = useState("");
   const [description, setDescription] = useState("");
-  const [descriptionFromTask, setDescriptionFromTask] = useState(false);
   const [tags, setTags] = useState("");
   const [date, setDate] = useState(localDateValue);
   const [hours, setHours] = useState("0");
@@ -85,38 +84,16 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
     setProjectId("");
     setTaskId("");
     setHourlyRate("");
-    if (descriptionFromTask) {
-      setDescription("");
-      setDescriptionFromTask(false);
-    }
   }
 
   function handleProjectChange(value: string) {
     setProjectId(value);
     setTaskId("");
     setHourlyRate("");
-    if (descriptionFromTask) {
-      setDescription("");
-      setDescriptionFromTask(false);
-    }
   }
 
   function handleTaskChange(value: string) {
-    const next = value === "__none__" ? "" : value;
-    setTaskId(next);
-    if (!next) {
-      if (descriptionFromTask) {
-        setDescription("");
-        setDescriptionFromTask(false);
-      }
-      return;
-    }
-    const task = tasks.find((tk) => tk.id === next);
-    if (!task?.title) return;
-    if (!description.trim() || descriptionFromTask) {
-      setDescription(task.title);
-      setDescriptionFromTask(true);
-    }
+    setTaskId(value === "__none__" ? "" : value);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -150,7 +127,6 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
       setProjectId("");
       setTaskId("");
       setDescription("");
-      setDescriptionFromTask(false);
       setTags("");
       setDate(localDateValue());
       setHours("0");
@@ -235,17 +211,14 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
             <Label className="text-xs">Deskripsi</Label>
             <Input
               value={description}
-              onChange={(e) => {
-                setDescriptionFromTask(false);
-                setDescription(e.target.value);
-              }}
+              onChange={(e) => setDescription(e.target.value)}
               placeholder="Ngerjain apa aja?"
               className="h-9"
             />
             <p className="text-[11px] text-muted-foreground">
               {t(
-                "Pilih task → deskripsi auto-map dari judul (bisa diedit).",
-                "Pick a task → description auto-maps from title (editable).",
+                "Task sebagai konteks; deskripsi pekerjaan tetap terpisah",
+                "Task is context; work description stays separate",
               )}
             </p>
           </div>

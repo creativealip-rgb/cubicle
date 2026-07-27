@@ -49,6 +49,7 @@ interface TimeEntry {
   clientName: string | null;
   projectName: string | null;
   projectCurrency: string | null;
+  projectTimeTrackingMode: "off" | "internal" | "billable" | null;
   taskTitle: string | null;
   userName: string | null;
   createdAt: Date | string;
@@ -63,6 +64,7 @@ interface Project {
   id: string;
   name: string;
   clientId?: string | null;
+  timeTrackingMode?: "off" | "internal" | "billable" | null;
 }
 
 interface Task {
@@ -114,8 +116,6 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
   const [editStatus, setEditStatus] = useState<"draft" | "approved">("draft");
   const [deleteEntry, setDeleteEntry] = useState<TimeEntry | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  // True when description was auto-filled from task title in this edit session.
-  const [descriptionFromTask, setDescriptionFromTask] = useState(false);
 
   const filteredEntries = useMemo(() => {
     return entries.filter((e) => {
@@ -168,8 +168,9 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
   );
 
   const editProjects = useMemo(() => {
-    if (!editClientId) return projects;
-    return projects.filter((p) => p.clientId === editClientId);
+    const writableProjects = projects.filter((p) => p.timeTrackingMode !== "off");
+    if (!editClientId) return writableProjects;
+    return writableProjects.filter((p) => p.clientId === editClientId);
   }, [editClientId, projects]);
 
   const editTasks = useMemo(() => {
@@ -241,26 +242,11 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
     setEditMinutes(String(entry.durationMinutes ?? entry.manualMinutes ?? 0));
     setEditBillable(entry.billable);
     setEditStatus(entry.status === "approved" ? "approved" : "draft");
-    setDescriptionFromTask(false);
     setEditOpen(true);
   }
 
   function handleEditTaskChange(nextTaskId: string) {
     setEditTaskId(nextTaskId);
-    if (!nextTaskId || nextTaskId === "__none__") {
-      if (descriptionFromTask) {
-        setEditDescription("");
-        setDescriptionFromTask(false);
-      }
-      return;
-    }
-    const task = tasks.find((tk) => tk.id === nextTaskId);
-    if (!task?.title) return;
-    // Auto-map when blank or previously auto-filled from another task.
-    if (!editDescription.trim() || descriptionFromTask) {
-      setEditDescription(task.title);
-      setDescriptionFromTask(true);
-    }
   }
 
   async function handleSaveEdit() {
@@ -535,33 +521,41 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                   <Badge variant="secondary" className="text-[10px]">
                     {formatDuration(entry.durationMinutes)}
                   </Badge>
-                  {entry.status === "invoiced" ? (
+                  {entry.projectTimeTrackingMode === "off" ? (
                     <Badge variant="outline" className="text-[10px]">
-                      Invoice
+                      {t("Hanya baca", "Read only")}
                     </Badge>
                   ) : (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-11 w-11 rounded-lg border border-transparent hover:border-border hover:bg-background sm:h-9 sm:w-9"
-                      onClick={() => openEdit(entry)}
-                      aria-label={t("Edit entri", "Edit entry")}
-                      title={t("Edit entri", "Edit entry")}
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
+                    <>
+                      {entry.status === "invoiced" ? (
+                        <Badge variant="outline" className="text-[10px]">
+                          Invoice
+                        </Badge>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-11 w-11 rounded-lg border border-transparent hover:border-border hover:bg-background sm:h-9 sm:w-9"
+                          onClick={() => openEdit(entry)}
+                          aria-label={t("Edit entri", "Edit entry")}
+                          title={t("Edit entri", "Edit entry")}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-11 w-11 rounded-lg border border-transparent text-destructive hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive sm:h-9 sm:w-9"
+                        onClick={() => setDeleteEntry(entry)}
+                        disabled={entry.status === "invoiced"}
+                        aria-label={t("Hapus entri", "Delete entry")}
+                        title={t("Hapus entri", "Delete entry")}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </>
                   )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-11 w-11 rounded-lg border border-transparent text-destructive hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive sm:h-9 sm:w-9"
-                    onClick={() => setDeleteEntry(entry)}
-                    disabled={entry.status === "invoiced"}
-                    aria-label={t("Hapus entri", "Delete entry")}
-                    title={t("Hapus entri", "Delete entry")}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -630,16 +624,13 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
               <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
               <Input
                 value={editDescription}
-                onChange={(e) => {
-                  setDescriptionFromTask(false);
-                  setEditDescription(e.target.value);
-                }}
+                onChange={(e) => setEditDescription(e.target.value)}
                 className="h-9"
               />
               <p className="text-[11px] text-muted-foreground">
                 {t(
-                  "Pilih task → deskripsi auto-map dari judul (bisa diedit).",
-                  "Pick a task → description auto-maps from title (editable).",
+                  "Task sebagai konteks; deskripsi pekerjaan tetap terpisah",
+                  "Task is context; work description stays separate",
                 )}
               </p>
             </div>

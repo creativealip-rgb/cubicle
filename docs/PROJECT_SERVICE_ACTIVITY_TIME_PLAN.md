@@ -987,15 +987,15 @@ Phase 1 tidak boleh dimulai sebelum seluruh kondisi ini lulus:
 
 ## Phase 1 — Project tracking mode dan description independence
 
-- [ ] Tambah `time_tracking_mode` dan `activity_required`.
-- [ ] Backfill/default sesuai billing type.
-- [ ] Hide/show timer UI per Project.
-- [ ] Tegakkan mode di seluruh server action/API: start, Task quick-start, manual entry, edit/reassign, dan completion.
-- [ ] Kunci aturan timer tanpa Project: boleh capture cepat, tetapi tidak boleh selesai sebelum memilih Project non-`off`.
-- [ ] Hentikan auto-copy Task title sebagai description permanen.
-- [ ] Task quick-start memakai placeholder/context.
-- [ ] Pastikan project `off` tetap punya Task/Service/invoice normal.
-- [ ] Jaga histori log saat mode berubah; histori tampil read-only.
+- [x] Tambah `time_tracking_mode` dan `activity_required`.
+- [x] Backfill/default sesuai billing type.
+- [x] Hide/show timer UI per Project.
+- [x] Tegakkan mode di seluruh server action/API: start, Task quick-start, manual entry, edit/reassign, dan completion.
+- [x] Kunci aturan timer tanpa Project: boleh capture cepat, tetapi tidak boleh selesai sebelum memilih Project non-`off`.
+- [x] Hentikan auto-copy Task title sebagai description permanen.
+- [x] Task quick-start memakai placeholder/context.
+- [x] Pastikan project `off` tetap punya Task/Service/invoice normal.
+- [x] Jaga histori log saat mode berubah; histori tampil read-only.
 
 **Acceptance:** Project `off` bersih di UI dan menolak write lewat direct server/API test; timer kosong tidak dapat diselesaikan tanpa Project valid; log baru tidak menduplikasi Task title otomatis; histori tetap terbaca.
 

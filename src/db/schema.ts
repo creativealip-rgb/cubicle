@@ -169,6 +169,8 @@ export const projects = pgTable("projects", {
   description: text("description"),
   status: text("status", { enum: ["draft", "active", "on_hold", "completed", "cancelled", "archived"] }).notNull().default("active"),
   billingType: text("billing_type", { enum: ["project", "hours", "package"] }).notNull().default("project"),
+  timeTrackingMode: text("time_tracking_mode", { enum: ["off", "internal", "billable"] }).notNull().default("internal"),
+  activityRequired: boolean("activity_required").notNull().default(false),
   rate: numeric("rate", { precision: 12, scale: 2 }),
   budget: numeric("budget", { precision: 12, scale: 2 }),
   currency: text("currency").notNull().default("IDR"),

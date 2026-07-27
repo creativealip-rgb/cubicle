@@ -72,6 +72,7 @@ export default async function TimePage() {
       clientName: clients.name,
       projectName: projects.name,
       projectCurrency: projects.currency,
+      projectTimeTrackingMode: projects.timeTrackingMode,
       taskTitle: tasks.title,
       userName: users.name,
       createdAt: timeEntries.createdAt,
@@ -98,6 +99,7 @@ export default async function TimePage() {
       name: projects.name,
       clientId: projects.clientId,
       billingType: projects.billingType,
+      timeTrackingMode: projects.timeTrackingMode,
       rate: projects.rate,
     })
     .from(projects)
@@ -111,6 +113,10 @@ export default async function TimePage() {
     .orderBy(tasks.title)
     .limit(200);
 
+  const writableProjectList = projectList.filter((project) => project.timeTrackingMode !== "off");
+  const writableProjectIds = new Set(writableProjectList.map((project) => project.id));
+  const writableTaskList = taskList.filter((task) => task.projectId && writableProjectIds.has(task.projectId));
+
   return (
     <div className="min-w-0 space-y-4 sm:space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -123,8 +129,8 @@ export default async function TimePage() {
             <ManualEntryForm
               workspaceId={workspaceId}
               clients={clientList}
-              projects={projectList}
-              tasks={taskList}
+              projects={writableProjectList}
+              tasks={writableTaskList}
             />
           )}
           <PdfExportButton clients={clientList} projects={projectList} />
@@ -152,8 +158,8 @@ export default async function TimePage() {
           workspaceId={workspaceId}
           userId={user.id}
           clients={clientList}
-          projects={projectList}
-          tasks={taskList}
+          projects={writableProjectList}
+          tasks={writableTaskList}
           initialTimer={
           activeTimer
             ? {
@@ -193,6 +199,7 @@ export default async function TimePage() {
           clientName: e.clientName,
           projectName: e.projectName,
           projectCurrency: e.projectCurrency,
+          projectTimeTrackingMode: e.projectTimeTrackingMode,
           taskTitle: e.taskTitle,
           userName: e.userName,
           createdAt: e.createdAt,
