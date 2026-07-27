@@ -243,13 +243,15 @@ export default async function JournalPage({
             ]}
           />
 
-          <section className="overflow-hidden rounded-lg border bg-card">
-            <div className="border-b px-4 py-2 text-xs text-muted-foreground">
-              {tab === "archived"
-                ? t("Arsip jurnal", "Archived journal")
-                : t("Entri jurnal", "Journal entries")}
-            </div>
-            <div className="p-3 sm:p-4">
+          <Card className="overflow-hidden">
+            <CardHeader className="border-b pb-3">
+              <CardTitle className="text-base">
+                {tab === "archived"
+                  ? t("Arsip jurnal", "Archived journal")
+                  : t("Entri jurnal", "Journal entries")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
               <JournalList
                 entries={entries}
                 tab={tab}
@@ -287,8 +289,8 @@ export default async function JournalPage({
                   )}
                 </div>
               ) : null}
-            </div>
-          </section>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

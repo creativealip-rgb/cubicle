@@ -19,6 +19,7 @@ import { projects } from "@/db/schema";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { requireWorkspaceOwnerOrRedirect } from "@/lib/require-workspace-owner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -246,7 +247,7 @@ export default async function PersonalPage({
       </div>
 
       <div
-        className="grid items-start gap-4 lg:grid-cols-[380px_minmax(0,1fr)]"
+        className="grid items-start gap-4 lg:grid-cols-[400px_minmax(0,1fr)]"
         data-ui="notes-split-view"
       >
         <Card id="new-note" className="h-fit lg:sticky lg:top-4">
@@ -336,22 +337,19 @@ export default async function PersonalPage({
         </Card>
 
         <div className="min-w-0 space-y-3">
-          <form
-            action="/app/personal"
-            className="flex flex-wrap gap-2 rounded-lg border bg-card p-2"
-          >
-            <select
-              name="tab"
-              defaultValue={tab}
-              className="flex h-10 min-w-[160px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-              aria-label={t("Filter status", "Status filter")}
-            >
-              {tabs.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.label} ({item.count})
-                </option>
-              ))}
-            </select>
+          <StatusFilterTabs
+            activeValue={tab}
+            hideEmpty={false}
+            tabs={tabs.map((item) => ({
+              value: item.id,
+              label: item.label,
+              count: item.count,
+              href: buildHref(item.id, query),
+              alwaysShow: true,
+            }))}
+          />
+          <form action="/app/personal" className="flex gap-2">
+            <input type="hidden" name="tab" value={tab} />
             <Input
               name="q"
               placeholder={t("Cari catatan…", "Search notes…")}
@@ -368,11 +366,13 @@ export default async function PersonalPage({
             ) : null}
           </form>
 
-          <section className="overflow-hidden rounded-lg border bg-card">
-            <div className="border-b px-4 py-2 text-xs text-muted-foreground">
-              {t("Daftar catatan", "Note list")}
-            </div>
-            <div className="px-3 py-2 sm:px-4">
+          <Card className="overflow-hidden">
+            <CardHeader className="border-b pb-3">
+              <CardTitle className="text-base">
+                {t("Daftar catatan", "Note list")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
               <NotesListClient
                 initialNotes={notes.map(toNoteItem)}
                 total={tabTotal}
@@ -389,8 +389,8 @@ export default async function PersonalPage({
                   convertToTask,
                 }}
               />
-            </div>
-          </section>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

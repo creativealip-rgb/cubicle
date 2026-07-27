@@ -40,10 +40,10 @@ describe("meeting revision wiring", () => {
     const page = read("src/app/(app)/app/personal/page.tsx");
     const list = read("src/components/notes/notes-list-client.tsx");
     expect(action).toContain("const NOTES_PAGE_SIZE = 10");
-    expect(page).not.toContain("<StatusFilterTabs");
+    expect(page).toContain("<StatusFilterTabs");
     expect(page).toContain('data-ui="notes-todoist-compact"');
     expect(page).toContain('data-ui="notes-split-view"');
-    expect(page).toContain("lg:grid-cols-[380px_minmax(0,1fr)]");
+    expect(page).toContain("lg:grid-cols-[400px_minmax(0,1fr)]");
     expect(list).toContain('data-ui="todoist-note-list"');
     expect(list).not.toContain("IntersectionObserver");
   });
