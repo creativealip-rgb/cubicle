@@ -1,0 +1,186 @@
+format	cubiqlo-phase0b-reconciliation-v1
+server_version	16.14 (Debian 16.14-1.pgdg13+1)
+row_count	accounts	2
+row_count	activity_logs	229
+row_count	ai_conversations	2
+row_count	ai_messages	10
+row_count	ai_usage_daily	1
+row_count	appointment_calendar_syncs	0
+row_count	appointments	2
+row_count	availability_rules	5
+row_count	client_google_calendar_connections	0
+row_count	clients	8
+row_count	comments	0
+row_count	contract_templates	1
+row_count	contracts	2
+row_count	cubiqlo_migrations	8
+row_count	custom_package_requests	0
+row_count	email_messages	0
+row_count	email_templates	0
+row_count	expense_categories	4
+row_count	expense_recurring	3
+row_count	expenses	3
+row_count	files	3
+row_count	folders	0
+row_count	google_calendar_connections	0
+row_count	invoice_items	50
+row_count	invoice_templates	2
+row_count	invoices	14
+row_count	notifications	1
+row_count	package_orders	0
+row_count	packages	5
+row_count	pakasir_payments	0
+row_count	payments	5
+row_count	personal_notes	13
+row_count	portal_access_logs	65
+row_count	portal_requests	7
+row_count	portal_visits	65
+row_count	project_members	15
+row_count	projects	24
+row_count	prompt_generations	8
+row_count	prompt_templates	0
+row_count	proposal_templates	1
+row_count	proposals	3
+row_count	questionnaire_responses	1
+row_count	questionnaires	1
+row_count	sessions	16
+row_count	support_tickets	0
+row_count	tasks	63
+row_count	time_entries	56
+row_count	users	2
+row_count	verifications	0
+row_count	workspace_currency_rates	2
+row_count	workspace_invoice_counters	1
+row_count	workspace_members	2
+row_count	workspaces	2
+orphan	projects_client_missing	0
+orphan	projects_client_workspace_mismatch	0
+orphan	projects_selected_package_missing	0
+orphan	projects_selected_package_workspace_mismatch	0
+orphan	packages_project_missing	0
+orphan	packages_project_workspace_mismatch	0
+orphan	tasks_project_missing	0
+orphan	tasks_project_workspace_mismatch	0
+orphan	time_entries_client_missing	0
+orphan	time_entries_client_workspace_mismatch	0
+orphan	time_entries_project_missing	0
+orphan	time_entries_project_workspace_mismatch	0
+orphan	time_entries_task_missing	0
+orphan	time_entries_task_context_mismatch	0
+orphan	time_entries_user_missing	0
+orphan	package_orders_project_missing	0
+orphan	package_orders_package_missing	0
+orphan	package_orders_client_missing	0
+orphan	package_orders_context_mismatch	0
+orphan	invoices_client_missing	0
+orphan	invoices_project_missing	0
+orphan	invoices_context_mismatch	0
+orphan	invoice_items_invoice_missing	0
+orphan	invoice_items_time_source_missing	3
+orphan	invoice_items_project_source_missing	0
+orphan	invoice_items_source_context_mismatch	0
+project_package_map	161cda72-3cbc-495e-9305-4a710044db56	bcfbe33a-087f-4cf3-af29-8fdb1e618f25			none
+project_package_map	2469ba56-7987-433a-b0e7-f2150e5c1248	bcfbe33a-087f-4cf3-af29-8fdb1e618f25			none
+project_package_map	3d5ae156-1d1c-4e9d-a600-26f6a3805cc5	bcfbe33a-087f-4cf3-af29-8fdb1e618f25			none
+project_package_map	6ee2a865-f1ee-4950-bd6d-53a7af7b5474	bcfbe33a-087f-4cf3-af29-8fdb1e618f25	26aec60b-958d-425d-8839-763df19be9e6	26aec60b-958d-425d-8839-763df19be9e6	resolved
+project_package_map	a6c237f9-85cd-4752-975f-3401ef85cf7f	bcfbe33a-087f-4cf3-af29-8fdb1e618f25			none
+project_package_map	d1000000-0000-4000-8000-000000000101	bcfbe33a-087f-4cf3-af29-8fdb1e618f25			none
+project_package_map	d1000000-0000-4000-8000-000000000102	bcfbe33a-087f-4cf3-af29-8fdb1e618f25			none
+project_package_map	d1000000-0000-4000-8000-000000000103	bcfbe33a-087f-4cf3-af29-8fdb1e618f25	26aec60b-958d-425d-8839-763df19be9e6	26aec60b-958d-425d-8839-763df19be9e6	resolved
+project_package_map	d1000000-0000-4000-8000-000000000201	bcfbe33a-087f-4cf3-af29-8fdb1e618f25			none
+project_package_map	d1000000-0000-4000-8000-000000000202	bcfbe33a-087f-4cf3-af29-8fdb1e618f25			none
+project_package_map	d1000000-0000-4000-8000-000000000203	bcfbe33a-087f-4cf3-af29-8fdb1e618f25	26aec60b-958d-425d-8839-763df19be9e6	26aec60b-958d-425d-8839-763df19be9e6	resolved
+project_package_map	d1000000-0000-4000-8000-000000000301	bcfbe33a-087f-4cf3-af29-8fdb1e618f25			none
+project_package_map	d1000000-0000-4000-8000-000000000302	bcfbe33a-087f-4cf3-af29-8fdb1e618f25			none
+project_package_map	d1000000-0000-4000-8000-000000000303	bcfbe33a-087f-4cf3-af29-8fdb1e618f25	26aec60b-958d-425d-8839-763df19be9e6	26aec60b-958d-425d-8839-763df19be9e6	resolved
+project_package_map	d1000000-0000-4000-8000-000000000401	bcfbe33a-087f-4cf3-af29-8fdb1e618f25			none
+project_package_map	d1000000-0000-4000-8000-000000000402	bcfbe33a-087f-4cf3-af29-8fdb1e618f25			none
+project_package_map	d1000000-0000-4000-8000-000000000403	bcfbe33a-087f-4cf3-af29-8fdb1e618f25	26aec60b-958d-425d-8839-763df19be9e6	26aec60b-958d-425d-8839-763df19be9e6	resolved
+project_package_map	d1000000-0000-4000-8000-000000000501	bcfbe33a-087f-4cf3-af29-8fdb1e618f25			none
+project_package_map	d1000000-0000-4000-8000-000000000502	bcfbe33a-087f-4cf3-af29-8fdb1e618f25			none
+project_package_map	d1000000-0000-4000-8000-000000000503	bcfbe33a-087f-4cf3-af29-8fdb1e618f25	26aec60b-958d-425d-8839-763df19be9e6	26aec60b-958d-425d-8839-763df19be9e6	resolved
+project_package_map	d5d3d7d8-3d32-4308-b514-a1fc6553fe05	bcfbe33a-087f-4cf3-af29-8fdb1e618f25			none
+project_package_map	dfbcb9d5-ab4f-4079-bc06-c42a212d540b	bcfbe33a-087f-4cf3-af29-8fdb1e618f25	fb2ca084-4a45-4389-93d0-9cdb9c529bea	fb2ca084-4a45-4389-93d0-9cdb9c529bea	resolved
+project_package_map	e050d5c2-89bc-4240-9c26-4ccd31a31bd0	bcfbe33a-087f-4cf3-af29-8fdb1e618f25	a0cee823-5898-41b1-9863-62e032b52825	a0cee823-5898-41b1-9863-62e032b52825	resolved
+project_package_map	f75d4d8c-c7a4-4940-b03e-adf098b540b7	bcfbe33a-087f-4cf3-af29-8fdb1e618f25			none
+invoice_source_map	06ba6362-c3cb-466b-b0ef-6ac09f1bf814	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	8911fa25-1137-43b3-9d7c-1b74ccd46d01	resolved
+invoice_source_map	071daa38-098a-4448-8eb5-680a5140107d	c837da23-ed97-4b10-a48b-ad7b2796eee8			manual_or_snapshot
+invoice_source_map	0e541bb3-6d48-463e-aa9e-d633cfcdcd4e	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	9ca6a56d-ff84-40c4-9889-b7fb29578d65	resolved
+invoice_source_map	1babb990-3c78-4291-9795-0cedf9a705a9	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	da18b562-f63d-4cdd-8648-c5e084965dbc	resolved
+invoice_source_map	1efcf350-8ef6-4f28-9c6f-e651d996b297	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	1b2f6f45-9a6c-4211-9396-7a49a928841e	resolved
+invoice_source_map	27d1b695-34c4-4c39-baa7-f11b2f5551d9	f718dd7c-f9a2-4f43-be6f-437d97328f05	time_entry	ef4708ac-ff25-4229-87df-5a9bf0142684	resolved
+invoice_source_map	32fcdab7-ece1-47ba-8584-83b03b51d260	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	7681c6e1-3715-45ea-b25b-b6916c298458	resolved
+invoice_source_map	3a79441a-2a89-4644-8bd3-c847b7359e15	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	1865178e-368c-43d8-b69e-c9d59f9826d5	resolved
+invoice_source_map	42580571-1502-437f-8068-1aa9190c131b	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	18838034-fe26-43c5-8799-d92e787419fe	resolved
+invoice_source_map	44cae6b6-e0ba-4dbb-9740-14a270c01c9e	1b1be8c7-72d9-4e06-aa8d-cb95364d43b2			manual_or_snapshot
+invoice_source_map	4e64e307-646d-44a9-ab73-b99eac4f17e0	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	848ab661-72da-4f30-9662-2924f97b6730	resolved
+invoice_source_map	501ff072-3434-4e31-8151-25b62d21b571	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	8b1c938c-2c1c-4161-b372-a1ebedd2f5fb	resolved
+invoice_source_map	51b7e5ea-b808-4f2a-9b95-86c2f49be689	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	ab28919e-b3ed-4bcd-a9da-af6b6203282d	resolved
+invoice_source_map	523815b7-abce-4515-8170-fca8be922cb0	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	30a8a793-5a9c-4f92-b60e-7563050e3956	resolved
+invoice_source_map	5e0a0dc1-d6eb-4f74-91c1-9abe85207c7c	f718dd7c-f9a2-4f43-be6f-437d97328f05	time_entry	31762859-f897-4837-958d-b80b429a4688	resolved
+invoice_source_map	608b6d5b-bcd0-4696-b407-576b2261b9ee	79898be0-35a5-4a15-b2ce-20e8034c9cef			manual_or_snapshot
+invoice_source_map	65755e26-406e-47b7-8cf0-72a2812b21a7	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	4d185591-c08c-4cba-b1da-f37b8e073e1b	resolved
+invoice_source_map	768b934e-2846-47a7-b7ba-2fa02f5134db	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	003755ba-7e6a-4cf2-872b-7cd79cbe412a	resolved
+invoice_source_map	77164b28-8415-485e-bcfd-a8cfc93fcae8	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	6ac75369-0657-445b-a5fa-4486dbfe748d	resolved
+invoice_source_map	7b8a38e7-d7ed-4b79-8a7c-1a05c9c8137d	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	1e51dfa2-d014-4b12-a2bd-56494ebdabab	resolved
+invoice_source_map	81409f8a-7243-4152-843a-439c2513372d	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	97a0630f-0220-41e2-8bf2-ad25ea6cd5f2	resolved
+invoice_source_map	8757ded1-e756-4f5a-b906-510bea633c24	f718dd7c-f9a2-4f43-be6f-437d97328f05	time_entry	e6a66a49-cfd2-419e-a858-3b3939e45847	resolved
+invoice_source_map	8985e225-4166-444b-b6ae-69fd51b98cb3	f718dd7c-f9a2-4f43-be6f-437d97328f05	time_entry	9359be14-bdc4-4836-bfc1-cacdb8321f4e	resolved
+invoice_source_map	90084030-e46f-4fe6-b473-a1bd11565b73	9641bb87-18be-4368-84e7-98f48eebf96c			manual_or_snapshot
+invoice_source_map	9033e6ce-853e-48e5-921b-cc7557400f36	a68f4e96-bd21-499c-a789-55345525904c			manual_or_snapshot
+invoice_source_map	92c56ff9-2bfe-4603-823b-da82dc678838	9143da72-7047-44c8-b5da-ea4fd1a6f4b6	manual		manual_or_snapshot
+invoice_source_map	9f55bddc-ee75-481b-bd2b-eecc64087d8c	f718dd7c-f9a2-4f43-be6f-437d97328f05	time_entry	d67cc653-8d81-4136-babc-c80e5373c700	resolved
+invoice_source_map	aacc9f4e-9e3a-45af-8e82-fe3c9ab2ec95	9641bb87-18be-4368-84e7-98f48eebf96c	time_entry	57aadfe9-8f7a-4996-84c4-38937eaa7c4f	orphan_or_unknown
+invoice_source_map	adde107e-94d2-461a-8007-1afb8e5eeba7	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	c14fff92-88e5-4a03-b717-a5bbdebfb615	resolved
+invoice_source_map	b51a579f-12a3-4818-9c9b-35807848db77	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	6b666fa1-7483-443b-94bc-a5a5d80872b7	resolved
+invoice_source_map	b78046b4-1adc-4058-b90e-cd96dae6a876	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	f6a1f6b2-75bc-41b0-9ee2-1ed8e38b7644	resolved
+invoice_source_map	b98df694-0cfa-4c1d-890c-a8cc4c8ce685	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	6e75cd68-b5de-47fa-9057-6794ffaea10e	resolved
+invoice_source_map	bd4ca16e-6538-4bed-a41a-5f4d7de1f41d	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	da3384fb-afbf-47a3-8073-7e78ac1dedd2	resolved
+invoice_source_map	bdbe0514-d34e-45e2-bcf8-7ead2f4ad049	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	fa0baa49-5ceb-48e5-a309-628897ef13ed	resolved
+invoice_source_map	c2cf6a28-4583-47a2-83ff-644218b812e0	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	ca288061-acd0-4a05-8261-5631f6973a42	resolved
+invoice_source_map	c48631e6-eed4-436e-b90a-857e35ca078c	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	7ec0c5e3-b8f0-43f1-a08e-bd0f7ba7133a	resolved
+invoice_source_map	c563278c-a032-4a83-a854-d7d5f998f5c3	acf96063-abda-498c-9802-d1330be4206b	manual		manual_or_snapshot
+invoice_source_map	c7d2787a-6427-4123-a552-dde5c17dcb96	e6c470ca-8631-410f-8852-600bb48799a4	manual		manual_or_snapshot
+invoice_source_map	caf60500-02c8-4edc-a496-aa91cf617a07	9641bb87-18be-4368-84e7-98f48eebf96c	time_entry	f85aebf9-c602-4ea9-bca0-2c232ac82262	orphan_or_unknown
+invoice_source_map	cdc5aedd-1169-4916-bdd7-4988c944a1d2	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	de169048-9950-4851-9c66-a08a96ecaa28	resolved
+invoice_source_map	d3bf4bf0-5289-4e54-b7bf-ff319c8ad97f	53dc089b-d53b-4936-941c-e3d8931bb1ce			manual_or_snapshot
+invoice_source_map	df1392db-e7d6-4de6-b9ac-e2f437e408f9	f718dd7c-f9a2-4f43-be6f-437d97328f05	time_entry	e510a6a0-5a37-4b08-bb82-2e113944d8ad	resolved
+invoice_source_map	e0217388-1392-491f-b824-d8f8dcf89ffd	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	821648fc-562b-49a5-bc5d-b3c59a864505	resolved
+invoice_source_map	e8b270de-c817-4207-84ee-1d399d00b220	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	57fc6d0d-4cd1-43ba-afc6-85d1591f494c	resolved
+invoice_source_map	ec9220f7-442c-4716-9e62-6a77618c1b72	9641bb87-18be-4368-84e7-98f48eebf96c	time_entry	99d8257b-001f-4da8-94f2-281af888010c	orphan_or_unknown
+invoice_source_map	f501cf21-3e77-4fa4-b881-c9024c1d0c3f	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	54037502-8be4-404b-b598-f47a64019ce3	resolved
+invoice_source_map	f59d25c6-c0cc-4089-9b28-9bbd02dbb44d	de5e4b1e-dcd2-40f6-9a65-8cf12b167801			manual_or_snapshot
+invoice_source_map	f9463ec1-f49e-470d-9151-3da37ee799ee	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	bf893b87-08b9-49c1-bafe-c01bfcf5f2a5	resolved
+invoice_source_map	fc097a19-841e-4923-b201-1477b97524da	4add9e9e-e67c-4a5e-a2f8-5f7193e73815			manual_or_snapshot
+invoice_source_map	ff3d692d-9ac8-4fe9-964d-001ff8d0daa7	646cc7e5-871e-4d61-a6e6-4ea39409d2ea	time_entry	38c792e3-ced6-445a-95f9-6fef4b1ca597	resolved
+package_classification	26aec60b-958d-425d-8839-763df19be9e6	bcfbe33a-087f-4cf3-af29-8fdb1e618f25	legacy_recurring_unmodeled	true	40	8000000.00	IDR
+package_classification	76d75bfb-cca2-4d95-af89-8d8288dbfda6	bcfbe33a-087f-4cf3-af29-8fdb1e618f25	legacy_recurring_unmodeled	true	20	900.00	EUR
+package_classification	a0cee823-5898-41b1-9863-62e032b52825	bcfbe33a-087f-4cf3-af29-8fdb1e618f25	legacy_unclassified	true		250000.00	IDR
+package_classification	d0fd38d8-8ae7-4c93-93a5-fdfef9142da5	bcfbe33a-087f-4cf3-af29-8fdb1e618f25	legacy_unclassified	true	30	1200.00	SGD
+package_classification	fb2ca084-4a45-4389-93d0-9cdb9c529bea	bcfbe33a-087f-4cf3-af29-8fdb1e618f25	legacy_unclassified	true	60	1800.00	USD
+invoice_total	archived	IDR	1	1500000.00	1500000.00
+invoice_total	cancelled	IDR	1	500000.00	500000.00
+invoice_total	draft	EUR	1	100.00	100.00
+invoice_total	draft	GBP	1	100.00	100.00
+invoice_total	draft	IDR	2	12500000.00	12500000.00
+invoice_total	draft	USD	1	240.00	240.00
+invoice_total	paid	IDR	4	44700000.00	44700000.00
+invoice_total	sent	IDR	1	25000000.00	25000000.00
+invoice_total	sent	SGD	1	100.00	100.00
+invoice_total	viewed	IDR	1	25000000.00	25000000.00
+time_total	approved	true	7	635	2026-07-08	2026-07-18
+time_total	draft	false	5	155	2026-07-10	2026-07-18
+time_total	draft	true	6	313	2026-07-09	2026-07-21
+time_total	invoiced	true	36	2865	2026-06-23	2026-07-18
+time_total	submitted	true	2	165	2026-07-08	2026-07-13
+portal_visibility	projects	false	8
+portal_visibility	projects	true	16
+portal_visibility	active_packages	true	5
+ledger	0040_cleanup_duplicate_foreign_keys.sql	92b93f422592f73204a9e5c519d40aecca9014bc5b91d0a6de9e2a733e0cd6c4	5	postgres
+ledger	0041_disable_portal_slug_auth.sql	91541b3c65ea3219f694daa77e8f477357fcc077e464e196b6ff8f9ea8e6b215	3	cubiqlo_migrator
+ledger	0042_add_fk_indexes.sql	fde3d495e0dbeec93e7535b120c58e00499dd0afda393bc257b2dabdcace783a	4	cubiqlo_migrator
+ledger	0043_persist_portal_token_encrypted.sql	95ed13dbcce0a61bd843b1a22aaaea20c3a55e9d42eb5e7dbdca67f9cb02312e	0	postgres
+ledger	0044_portal_password.sql	c8c219393f3826682e909c7791d2ae598817e4133a6c0f6bbedba96cbcf0e652	0	postgres
+ledger	0045_meeting_request_workflow.sql	efd2d31c41c30cd17e9913cda48fe7d634446581d1acec94f9754c103c30704a	0	postgres
+ledger	0046_phase0a_integrity_containment.sql	92c4682185d2b3c38c71fdc2407fb3a3918f1400b15492c11fce6a7f2e439ddb	0	postgres
+ledger	baseline-2026-07-25	1a4fb3403575a0f69429243bcc16bce1ada4be2ab62eda8b5232223a482350a2	0	postgres

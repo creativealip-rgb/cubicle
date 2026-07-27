@@ -5,13 +5,23 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 MIGRATION_DIR=${MIGRATION_DIR:-"$ROOT/drizzle"}
 DB_CONTAINER=${DB_CONTAINER:-cubicle-pg}
 DB_USER=${DB_USER:-postgres}
-DB_NAME=${DB_NAME:-cubicle}
+DB_NAME=${DB_NAME-}
 DB_HOST=${DB_HOST:-}
 DB_PASSWORD=${DB_PASSWORD:-}
 MIGRATION_ROLE=${MIGRATION_ROLE:-}
 BASELINE_ID=${BASELINE_ID:-baseline-2026-07-25}
 BASELINE_CHECKSUM=${BASELINE_CHECKSUM:-1a4fb3403575a0f69429243bcc16bce1ada4be2ab62eda8b5232223a482350a2}
 START_MIGRATION=${START_MIGRATION:-0040}
+
+if [[ -z "$DB_NAME" ]]; then
+  echo "DB_NAME is required; pass the exact target database explicitly" >&2
+  exit 1
+fi
+
+if [[ "$DB_NAME" == "cubicle" && "${ALLOW_PRODUCTION_MIGRATION:-}" != "1" ]]; then
+  echo "Refusing production migration for DB_NAME=cubicle without ALLOW_PRODUCTION_MIGRATION=1" >&2
+  exit 1
+fi
 
 psql_exec() {
   local args=(-X -v ON_ERROR_STOP=1 -U "$DB_USER" -d "$DB_NAME")

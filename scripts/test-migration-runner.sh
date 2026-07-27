@@ -8,6 +8,40 @@ TEST_DB=${TEST_DB:-cubicle_migration_runner_test}
 RUNNER="$ROOT/scripts/migrate-ledger.sh"
 FIXTURE_DUMP=${FIXTURE_DUMP:-$(find /root/backups/databases/cubiqlo-manual -maxdepth 1 -name 'cubicle-pre-fk-cleanup-*.dump' -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)}
 
+assert_rejected() {
+  local label=$1
+  local expected=$2
+  shift 2
+  local output
+  output=$(mktemp)
+
+  if "$@" >"$output" 2>&1; then
+    echo "expected $label rejection" >&2
+    rm -f "$output"
+    exit 1
+  fi
+  if ! grep -qF "$expected" "$output"; then
+    echo "$label rejection did not contain: $expected" >&2
+    cat "$output" >&2
+    rm -f "$output"
+    exit 1
+  fi
+  rm -f "$output"
+}
+
+assert_rejected \
+  "missing DB_NAME" \
+  "DB_NAME is required" \
+  env -u DB_NAME -u ALLOW_PRODUCTION_MIGRATION "$RUNNER"
+assert_rejected \
+  "empty DB_NAME" \
+  "DB_NAME is required" \
+  env -u ALLOW_PRODUCTION_MIGRATION DB_NAME= "$RUNNER"
+assert_rejected \
+  "unacknowledged production target" \
+  "Refusing production migration" \
+  env -u ALLOW_PRODUCTION_MIGRATION DB_NAME=cubicle "$RUNNER"
+
 cleanup() {
   docker exec "$DB_CONTAINER" dropdb -U "$DB_USER" --if-exists "$TEST_DB" >/dev/null 2>&1 || true
 }
@@ -31,14 +65,18 @@ after_duplicates=$(docker exec "$DB_CONTAINER" psql -U "$DB_USER" -d "$TEST_DB" 
 
 ledger_count=$(docker exec "$DB_CONTAINER" psql -U "$DB_USER" -d "$TEST_DB" -Atc \
   "SELECT count(*) FROM cubiqlo_migrations")
-[[ "$ledger_count" == "2" ]]
+expected_ledger_count=$(find "$ROOT/drizzle" -maxdepth 1 -type f -name '[0-9][0-9][0-9][0-9]_*.sql' -printf '%f\n' \
+  | awk -v start="${START_MIGRATION:-0040}" 'substr($0,1,4) >= start' \
+  | wc -l)
+expected_ledger_count=$((expected_ledger_count + 1))
+[[ "$ledger_count" == "$expected_ledger_count" ]]
 
 # Second execution must be a controlled no-op.
 second_output=$(DB_CONTAINER="$DB_CONTAINER" DB_USER="$DB_USER" DB_NAME="$TEST_DB" "$RUNNER")
 grep -q "0040_cleanup_duplicate_foreign_keys.sql ... already applied" <<<"$second_output"
 ledger_count_after=$(docker exec "$DB_CONTAINER" psql -U "$DB_USER" -d "$TEST_DB" -Atc \
   "SELECT count(*) FROM cubiqlo_migrations")
-[[ "$ledger_count_after" == "2" ]]
+[[ "$ledger_count_after" == "$expected_ledger_count" ]]
 
 # A recorded checksum mismatch must fail before executing SQL.
 docker exec "$DB_CONTAINER" psql -U "$DB_USER" -d "$TEST_DB" -c \
