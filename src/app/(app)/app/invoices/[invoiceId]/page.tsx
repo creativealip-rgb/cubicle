@@ -9,9 +9,7 @@ import {
   invoiceItems,
   payments,
   clients,
-  timeEntries,
   projects,
-  workspaces,
   packages,
 } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -20,10 +18,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Share2, Download, Clock } from "lucide-react";
+import { ArrowLeft, Share2, Download } from "lucide-react";
 import { InvoiceItemManager } from "./add-item-button";
 import { DeleteItemButton } from "./delete-item-button";
-import { ImportTimeSection } from "./import-time-section";
 import { PaymentSection } from "./payment-section";
 import { ShareTokenSection } from "./share-token-section";
 import { SendInvoiceButton } from "./send-invoice-button";
@@ -117,68 +114,6 @@ export default async function InvoiceDetailPage({
       };
     }
   }
-
-  // Workspace default hourly rate — used when entry/project rate is empty
-  // (package/project billing often has no project.rate).
-  const [wsRateRow] = await db
-    .select({ defaultHourlyRate: workspaces.defaultHourlyRate })
-    .from(workspaces)
-    .where(eq(workspaces.id, workspaceId))
-    .limit(1);
-  const workspaceDefaultRate = wsRateRow?.defaultHourlyRate
-    ? Number(wsRateRow.defaultHourlyRate)
-    : 0;
-
-  // Fetch unbilled time entries for this invoice's project (fallback: client-wide
-  // only when invoice has no project_id). Preview rate: entry → project → workspace.
-  const unbilledTimeEntries = await db
-    .select({
-      id: timeEntries.id,
-      description: timeEntries.description,
-      durationMinutes: timeEntries.durationMinutes,
-      hourlyRate: timeEntries.hourlyRate,
-      startTime: timeEntries.startTime,
-      status: timeEntries.status,
-      projectRate: projects.rate,
-      projectName: projects.name,
-    })
-    .from(timeEntries)
-    .leftJoin(projects, eq(projects.id, timeEntries.projectId))
-    .where(
-      and(
-        eq(timeEntries.workspaceId, workspaceId),
-        eq(timeEntries.clientId, inv.clientId),
-        eq(timeEntries.billable, true),
-        // Invoice made with a project → only that project's unbilled time.
-        inv.projectId ? eq(timeEntries.projectId, inv.projectId) : undefined,
-      ),
-    )
-    .limit(200);
-
-  const unbilled = unbilledTimeEntries
-    .filter((t) => t.status !== "invoiced")
-    .map((t) => {
-      const entryRate = t.hourlyRate ? Number(t.hourlyRate) : 0;
-      const projectRate = t.projectRate ? Number(t.projectRate) : 0;
-      const effectiveRate =
-        entryRate > 0
-          ? entryRate
-          : projectRate > 0
-            ? projectRate
-            : workspaceDefaultRate > 0
-              ? workspaceDefaultRate
-              : 0;
-      return {
-        id: t.id,
-        description: t.description,
-        durationMinutes: t.durationMinutes,
-        hourlyRate: t.hourlyRate,
-        startTime: t.startTime,
-        status: t.status,
-        effectiveRate,
-        projectName: t.projectName,
-      };
-    });
 
   const totalPaid = pays.reduce((sum, p) => sum + Number(p.amount), 0);
 
@@ -377,18 +312,6 @@ export default async function InvoiceDetailPage({
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Import Time */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-4 w-4" /> {t("Import Catatan Waktu", "Import Time Entries")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ImportTimeSection invoiceId={invoiceId} timeEntries={unbilled} currency={inv.currency} />
         </CardContent>
       </Card>
 
