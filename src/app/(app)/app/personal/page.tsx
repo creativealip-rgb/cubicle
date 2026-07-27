@@ -243,168 +243,155 @@ export default async function PersonalPage({
             )}
           </p>
         </div>
-        <Button asChild className="shrink-0">
-          <a href="#new-note">{t("+ Catatan", "+ Note")}</a>
-        </Button>
       </div>
 
-      <form
-        action="/app/personal"
-        className="flex flex-wrap gap-2 rounded-lg border bg-card p-2"
+      <div
+        className="grid items-start gap-4 lg:grid-cols-[380px_minmax(0,1fr)]"
+        data-ui="notes-split-view"
       >
-        <select
-          name="tab"
-          defaultValue={tab}
-          className="flex h-10 min-w-[160px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-          aria-label={t("Filter status", "Status filter")}
-        >
-          {tabs.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.label} ({item.count})
-            </option>
-          ))}
-        </select>
-        <Input
-          name="q"
-          placeholder={t("Cari catatan…", "Search notes…")}
-          defaultValue={query}
-          className="min-w-[200px] flex-1"
-        />
-        <Button type="submit" variant="outline" className="sr-only">
-          {t("Cari", "Search")}
-        </Button>
-        {query || tab !== "open" ? (
-          <Button type="button" variant="ghost" asChild>
-            <Link href={buildHref("open", "")}>{t("Reset", "Clear")}</Link>
-          </Button>
-        ) : null}
-      </form>
-
-      <div className="space-y-3">
-        <details id="new-note" className="group rounded-lg border bg-card">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center px-4 py-3 text-sm font-semibold">
-            <span>{t("Catatan baru", "New note")}</span>
-          </summary>
-          <Card className="h-fit border-0 shadow-none">
-            <CardHeader>
-              <CardTitle>{t("Catatan baru", "New note")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form action={createNote} className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="title" className="text-sm font-medium">
-                    {t("Judul", "Title")}
-                  </label>
-                  <Input
-                    id="title"
-                    name="title"
-                    placeholder={t("Follow up client…", "Follow up client…")}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="body" className="text-sm font-medium">
-                    {t("Isi", "Body")}
-                  </label>
-                  <Textarea
-                    id="body"
-                    name="body"
-                    rows={6}
-                    placeholder={t(
-                      "Catatan, ide, reminder personal…",
-                      "Notes, ideas, personal reminders…",
-                    )}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="dueDate" className="text-sm font-medium">
-                    {t("Tenggat", "Due date")}
-                  </label>
-                  <Input id="dueDate" name="dueDate" type="datetime-local" />
-                </div>
-                <div className="space-y-2">
-                  <label
-                    htmlFor="recurrenceRule"
-                    className="text-sm font-medium"
-                  >
-                    {t("Pengulangan", "Recurrence")}
-                  </label>
-                  <select
-                    id="recurrenceRule"
-                    name="recurrenceRule"
-                    defaultValue="none"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  >
-                    {RECURRENCE_OPTIONS.map((opt) => (
-                      <option key={opt} value={opt}>
-                        {recurrenceLabel(opt, t)}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-xs text-muted-foreground">
-                    {t(
-                      "Saat selesai / lewat tenggat: due date auto-maju ke periode berikutnya.",
-                      "On done / past due: due date auto-advances to the next period.",
-                    )}
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">
-                    {t(
-                      "Ingatkan (hari sebelum tenggat)",
-                      "Remind (days before due)",
-                    )}
-                  </p>
-                  <div className="grid grid-cols-3 gap-2 text-sm">
-                    <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
-                      <input type="checkbox" name="notify7d" />
-                      7d
-                    </label>
-                    <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
-                      <input type="checkbox" name="notify3d" />
-                      3d
-                    </label>
-                    <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
-                      <input type="checkbox" name="notify1d" />
-                      1d
-                    </label>
-                  </div>
-                </div>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" name="pinned" />
-                  {t("Sematkan catatan", "Pin note")}
+        <Card id="new-note" className="h-fit lg:sticky lg:top-4">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">
+              {t("Catatan baru", "New note")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form action={createNote} className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="title" className="text-sm font-medium">
+                  {t("Judul", "Title")}
                 </label>
-                <Button type="submit" className="w-full">
-                  {t("Buat catatan", "Create note")}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </details>
+                <Input
+                  id="title"
+                  name="title"
+                  placeholder={t("Follow up client…", "Follow up client…")}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="body" className="text-sm font-medium">
+                  {t("Isi", "Body")}
+                </label>
+                <Textarea
+                  id="body"
+                  name="body"
+                  rows={6}
+                  placeholder={t(
+                    "Catatan, ide, reminder personal…",
+                    "Notes, ideas, personal reminders…",
+                  )}
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="dueDate" className="text-sm font-medium">
+                  {t("Tenggat", "Due date")}
+                </label>
+                <Input id="dueDate" name="dueDate" type="datetime-local" />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="recurrenceRule" className="text-sm font-medium">
+                  {t("Pengulangan", "Recurrence")}
+                </label>
+                <select
+                  id="recurrenceRule"
+                  name="recurrenceRule"
+                  defaultValue="none"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  {RECURRENCE_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {recurrenceLabel(opt, t)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium">
+                  {t("Ingatkan sebelum tenggat", "Remind before due")}
+                </p>
+                <div className="grid grid-cols-3 gap-2 text-sm">
+                  <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
+                    <input type="checkbox" name="notify7d" />
+                    7d
+                  </label>
+                  <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
+                    <input type="checkbox" name="notify3d" />
+                    3d
+                  </label>
+                  <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
+                    <input type="checkbox" name="notify1d" />
+                    1d
+                  </label>
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="pinned" />
+                {t("Sematkan catatan", "Pin note")}
+              </label>
+              <Button type="submit" className="w-full">
+                {t("Simpan catatan", "Save note")}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
 
-        <section className="overflow-hidden rounded-lg border bg-card">
-          <div className="border-b px-4 py-2 text-xs text-muted-foreground">
-            {t("Daftar catatan", "Note list")}
-          </div>
-          <div className="px-3 py-2 sm:px-4">
-            <NotesListClient
-              initialNotes={notes.map(toNoteItem)}
-              total={tabTotal}
-              pageSize={pageSize}
-              tab={tab}
-              query={query}
-              projects={projectList}
-              lang={lang}
-              actions={{
-                setStatus,
-                togglePinned,
-                removeNote,
-                updateNote,
-                convertToTask,
-              }}
+        <div className="min-w-0 space-y-3">
+          <form
+            action="/app/personal"
+            className="flex flex-wrap gap-2 rounded-lg border bg-card p-2"
+          >
+            <select
+              name="tab"
+              defaultValue={tab}
+              className="flex h-10 min-w-[160px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+              aria-label={t("Filter status", "Status filter")}
+            >
+              {tabs.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.label} ({item.count})
+                </option>
+              ))}
+            </select>
+            <Input
+              name="q"
+              placeholder={t("Cari catatan…", "Search notes…")}
+              defaultValue={query}
+              className="min-w-[200px] flex-1"
             />
-          </div>
-        </section>
+            <Button type="submit" variant="outline" className="sr-only">
+              {t("Cari", "Search")}
+            </Button>
+            {query || tab !== "open" ? (
+              <Button type="button" variant="ghost" asChild>
+                <Link href={buildHref("open", "")}>{t("Reset", "Clear")}</Link>
+              </Button>
+            ) : null}
+          </form>
+
+          <section className="overflow-hidden rounded-lg border bg-card">
+            <div className="border-b px-4 py-2 text-xs text-muted-foreground">
+              {t("Daftar catatan", "Note list")}
+            </div>
+            <div className="px-3 py-2 sm:px-4">
+              <NotesListClient
+                initialNotes={notes.map(toNoteItem)}
+                total={tabTotal}
+                pageSize={pageSize}
+                tab={tab}
+                query={query}
+                projects={projectList}
+                lang={lang}
+                actions={{
+                  setStatus,
+                  togglePinned,
+                  removeNote,
+                  updateNote,
+                  convertToTask,
+                }}
+              />
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );

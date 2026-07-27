@@ -42,6 +42,8 @@ describe("meeting revision wiring", () => {
     expect(action).toContain("const NOTES_PAGE_SIZE = 10");
     expect(page).not.toContain("<StatusFilterTabs");
     expect(page).toContain('data-ui="notes-todoist-compact"');
+    expect(page).toContain('data-ui="notes-split-view"');
+    expect(page).toContain("lg:grid-cols-[380px_minmax(0,1fr)]");
     expect(list).toContain('data-ui="todoist-note-list"');
     expect(list).not.toContain("IntersectionObserver");
   });
@@ -50,6 +52,8 @@ describe("meeting revision wiring", () => {
     const page = read("src/app/(app)/app/journal/page.tsx");
     const list = read("src/components/journal/journal-list.tsx");
     expect(page).toContain('data-ui="journal-compact-timeline"');
+    expect(page).toContain('data-ui="journal-split-view"');
+    expect(page).toContain("lg:grid-cols-[400px_minmax(0,1fr)]");
     expect(list).toContain('data-ui="journal-timeline-list"');
     expect(page).toContain("const pageSize = 10");
     expect(list).not.toContain("todoist-note-list");

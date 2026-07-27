@@ -162,67 +162,41 @@ export default async function JournalPage({
             )}
           </p>
         </div>
-        {tab === "active" ? (
-          <Button asChild>
-            <a href="#new-journal">{t("+ Entri", "+ Entry")}</a>
-          </Button>
-        ) : null}
       </div>
 
-      <StatusFilterTabs
-        activeValue={tab}
-        hideEmpty={false}
-        tabs={[
-          {
-            value: "active",
-            label: t("Aktif", "Active"),
-            href: "/app/journal?tab=active",
-            alwaysShow: true,
-          },
-          {
-            value: "archived",
-            label: t("Arsip", "Archived"),
-            href: "/app/journal?tab=archived",
-            alwaysShow: true,
-          },
-        ]}
-      />
-
-      {tab === "active" ? (
-        <details id="new-journal" className="group rounded-lg border bg-card">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center px-4 py-3 text-sm font-semibold">
-            <span>{t("Entri jurnal baru", "New journal entry")}</span>
-          </summary>
-          <Card className="border-0 shadow-none">
-            <CardHeader>
-              <CardTitle>
+      <div
+        className="grid items-start gap-4 lg:grid-cols-[400px_minmax(0,1fr)]"
+        data-ui="journal-split-view"
+      >
+        {tab === "active" ? (
+          <Card id="new-journal" className="h-fit lg:sticky lg:top-4">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">
                 {t("Entri jurnal baru", "New journal entry")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <form action={createEntry} className="space-y-4">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">
-                      {t("Judul", "Title")}
-                    </label>
-                    <Input
-                      name="title"
-                      placeholder={t("Judul hari ini", "Today's title")}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">
-                      {t("Tag (pisahkan koma)", "Tags (comma separated)")}
-                    </label>
-                    <Input
-                      name="tags"
-                      placeholder={t(
-                        "kerja, rapat, blocker",
-                        "work, meeting, blocker",
-                      )}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    {t("Judul", "Title")}
+                  </label>
+                  <Input
+                    name="title"
+                    placeholder={t("Judul hari ini", "Today's title")}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    {t("Tag", "Tags")}
+                  </label>
+                  <Input
+                    name="tags"
+                    placeholder={t(
+                      "kerja, rapat, blocker",
+                      "work, meeting, blocker",
+                    )}
+                  />
                 </div>
                 <MoodPicker name="mood" lang={lang} />
                 <div className="space-y-2">
@@ -231,7 +205,7 @@ export default async function JournalPage({
                   </label>
                   <Textarea
                     name="body"
-                    rows={8}
+                    rows={10}
                     placeholder={t(
                       "Tulis update, insight, blocker, keputusan…",
                       "Write updates, insights, blockers, decisions…",
@@ -239,59 +213,84 @@ export default async function JournalPage({
                     required
                   />
                 </div>
-                <Button type="submit">{t("Simpan entri", "Save entry")}</Button>
+                <Button type="submit" className="w-full">
+                  {t("Simpan entri", "Save entry")}
+                </Button>
               </form>
             </CardContent>
           </Card>
-        </details>
-      ) : null}
+        ) : (
+          <div className="hidden lg:block" />
+        )}
 
-      <section className="overflow-hidden rounded-lg border bg-card">
-        <div className="border-b px-4 py-2 text-xs text-muted-foreground">
-          {tab === "archived"
-            ? t("Arsip jurnal", "Archived journal")
-            : t("Entri jurnal", "Journal entries")}
-        </div>
-        <div className="p-3 sm:p-4">
-          <JournalList
-            entries={entries}
-            tab={tab}
-            lang={lang}
-            actions={{
-              archive: archiveEntry,
-              restore: restoreEntry,
-              update: updateEntry,
-              remove: removeEntry,
-            }}
+        <div className="min-w-0 space-y-3">
+          <StatusFilterTabs
+            activeValue={tab}
+            hideEmpty={false}
+            tabs={[
+              {
+                value: "active",
+                label: t("Aktif", "Active"),
+                href: "/app/journal?tab=active",
+                alwaysShow: true,
+              },
+              {
+                value: "archived",
+                label: t("Arsip", "Archived"),
+                href: "/app/journal?tab=archived",
+                alwaysShow: true,
+              },
+            ]}
           />
-          {totalEntries > pageSize ? (
-            <div className="mt-5 flex items-center justify-between border-t pt-4 text-sm">
-              {page > 1 ? (
-                <Button variant="outline" asChild>
-                  <Link href={`/app/journal?tab=${tab}&page=${page - 1}`}>
-                    {t("Sebelumnya", "Previous")}
-                  </Link>
-                </Button>
-              ) : (
-                <span />
-              )}
-              <span className="text-muted-foreground">
-                {t("Halaman", "Page")} {Math.min(page, totalPages)} /{" "}
-                {totalPages}
-              </span>
-              {page < totalPages ? (
-                <Button variant="outline" asChild>
-                  <Link href={`/app/journal?tab=${tab}&page=${page + 1}`}>
-                    {t("Berikutnya", "Next")}
-                  </Link>
-                </Button>
-              ) : (
-                <span />
-              )}
+
+          <section className="overflow-hidden rounded-lg border bg-card">
+            <div className="border-b px-4 py-2 text-xs text-muted-foreground">
+              {tab === "archived"
+                ? t("Arsip jurnal", "Archived journal")
+                : t("Entri jurnal", "Journal entries")}
             </div>
-          ) : null}
+            <div className="p-3 sm:p-4">
+              <JournalList
+                entries={entries}
+                tab={tab}
+                lang={lang}
+                actions={{
+                  archive: archiveEntry,
+                  restore: restoreEntry,
+                  update: updateEntry,
+                  remove: removeEntry,
+                }}
+              />
+              {totalEntries > pageSize ? (
+                <div className="mt-5 flex items-center justify-between border-t pt-4 text-sm">
+                  {page > 1 ? (
+                    <Button variant="outline" asChild>
+                      <Link href={`/app/journal?tab=${tab}&page=${page - 1}`}>
+                        {t("Sebelumnya", "Previous")}
+                      </Link>
+                    </Button>
+                  ) : (
+                    <span />
+                  )}
+                  <span className="text-muted-foreground">
+                    {t("Halaman", "Page")} {Math.min(page, totalPages)} /{" "}
+                    {totalPages}
+                  </span>
+                  {page < totalPages ? (
+                    <Button variant="outline" asChild>
+                      <Link href={`/app/journal?tab=${tab}&page=${page + 1}`}>
+                        {t("Berikutnya", "Next")}
+                      </Link>
+                    </Button>
+                  ) : (
+                    <span />
+                  )}
+                </div>
+              ) : null}
+            </div>
+          </section>
         </div>
-      </section>
+      </div>
     </div>
   );
 }
