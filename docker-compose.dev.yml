@@ -1,18 +1,37 @@
 services:
+  cubicle-dev-redis:
+    image: redis:7-alpine
+    container_name: cubicle-dev-redis
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    networks:
+      - dokploy-network
+    logging:
+      options:
+        max-size: "5m"
+        max-file: "2"
+
   cubicle-dev:
-    image: node:22-alpine
+    image: cubicle-dev:prod
     container_name: cubicle-dev
     restart: unless-stopped
-    working_dir: /app
-    command:
-      - sh
-      - -lc
-      - node_modules/.bin/next dev --hostname 0.0.0.0 --port 3100
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_APP_URL: https://dev.cubiqlo.com
+        VCS_REF: ${VCS_REF:-dev-local}
+        BUILD_DATE: ${BUILD_DATE:-unknown}
     env_file:
       - .env.development.local
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
+      PORT: "3100"
+      HOSTNAME: 0.0.0.0
       NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_APP_URL: https://dev.cubiqlo.com
+      BETTER_AUTH_URL: https://dev.cubiqlo.com
+      CUBIQLO_ENV: development
       RESEND_API_KEY: ""
       EMAIL_FROM: "Cubiqlo Dev <dev@localhost>"
       R2_ACCOUNT_ID: ""
@@ -29,9 +48,6 @@ services:
       GOOGLE_CLIENT_SECRET: ""
       GOOGLE_TOKEN_ENCRYPTION_KEY: ""
       RATE_LIMIT_REDIS_URL: redis://cubicle-dev-redis:6379
-    volumes:
-      - .:/app
-      - cubicle-dev-next-cache:/app/.next/dev
     networks:
       - dokploy-network
     security_opt:
@@ -42,27 +58,22 @@ services:
       resources:
         limits:
           cpus: "1.0"
-          # Next 16 Turbopack cold-compiling `/` exceeds 1280M and gets OOM-killed.
-          # 2G still caused frequent Bad Gateway during cold route compiles; dev lane gets 3G.
-          memory: 3G
+          memory: 1G
         reservations:
           cpus: "0.1"
           memory: 256M
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3100/api/health || exit 1"]
-      # Dev cold compiles can take 30-60s; keep healthcheck loose so Traefik/dev restarts don't flap.
-      interval: 45s
-      timeout: 20s
-      retries: 8
-      start_period: 180s
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     logging:
       options:
         max-size: "10m"
         max-file: "3"
-
-volumes:
-  cubicle-dev-next-cache:
-    name: cubicle-dev-next-cache
+    depends_on:
+      - cubicle-dev-redis
 
 networks:
   dokploy-network:

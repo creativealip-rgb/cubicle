@@ -1,7 +1,7 @@
 # Cubiqlo — Project, Service, Package, Task, Activity, dan Time Tracking Plan
 
 **Tanggal:** 2026-07-27  
-**Status:** Approved product direction — Phase 0A containment wajib sebelum migrasi domain  
+**Status:** Approved product direction — Phase 0A containment live; Phase 0B migration gate berikutnya
 **Owner:** Alip  
 **Prepared by:** Wowo  
 **Repo:** `/root/projects/cubicle`
@@ -933,19 +933,21 @@ Jangan rewrite otomatis. Nilai itu tetap fakta historis meski redundan. Untuk UI
 
 ## Phase 0A — Containment security dan financial integrity
 
-- [x] Inventory seluruh penggunaan `packages`, `selectedPackageId`, `/app/packages`, package orders, portal, invoice, proposal, report, dan caller timer utama.
-- [ ] Portal mutation memakai HttpOnly portal session/credential resolver server-side; raw bearer token tidak dikirim ke Client Component dan tidak disimpan pada order/request history.
-- [ ] Package order menerima hanya `projectId`, `packageId`, message, dan idempotency key; server resolve client, workspace, Project, Package, name, price, currency, allowance, hours, dan status.
-- [ ] Custom Package Request memakai schema runtime, rate limit, idempotency, token–client–Project scope, dan admin transition yang authenticated + workspace-scoped.
-- [ ] Nonaktifkan Package hard-delete; ubah FK commercial history menjadi `RESTRICT`/`SET NULL`; Package, Project, dan catalog record yang direferensikan hanya dapat diarsipkan.
-- [ ] Seluruh timer write path memakai satu resolver tenant untuk workspace–Client–Project–Task; pause/resume/stop/discard hanya boleh oleh pemilik timer.
-- [ ] Tambah partial unique index active timer `(workspace_id, user_id) WHERE end_time IS NULL AND manual_minutes IS NULL`; start/switch atomik dalam transaction.
-- [ ] Block edit/delete entry `invoiced`; invoice import hanya `approved + billable + completed + duration>0 + same client/project/workspace`.
-- [ ] Invoice import atomik dan idempotent; jangan mutasi rate snapshot Time Entry; simpan previous status saat link dibuat dan restore status tersebut ketika link draft dilepas.
-- [ ] Rotate credential QA yang pernah tersimpan di docs; credential dan raw public token tidak boleh menjadi tracked documentation.
-- [ ] Tambah behavioral negative tests untuk cross-workspace identifier, token/client mismatch, timer ownership, concurrent start, dan invoice eligibility.
+**Status:** live di production lewat commit `823b986` dan migration `0046_phase0a_integrity_containment.sql`.
 
-**Acceptance:** spoof price/currency ditolak; token Client A tidak dapat menulis Project B; raw token tidak muncul di client payload/history; member tidak dapat mengontrol timer user lain; kombinasi Client/Project/Task silang ditolak; concurrent start menghasilkan satu timer; draft/non-billable/open entry tidak dapat di-invoice; invoiced entry immutable; archive tidak menghapus assignment/order/request.
+- [x] Inventory seluruh penggunaan `packages`, `selectedPackageId`, `/app/packages`, package orders, portal, invoice, proposal, report, dan caller timer utama.
+- [x] Portal mutation memakai HttpOnly portal session/credential resolver server-side; raw bearer token tidak dikirim ke Client Component dan tidak disimpan pada order/request history untuk write baru.
+- [x] Package order menerima hanya `projectId`, `packageId`, message, dan idempotency key; server resolve client, workspace, Project, Package, name, price, currency, allowance, hours, dan status.
+- [x] Custom Package Request memakai schema runtime, rate limit, idempotency, token–client–Project scope, dan admin transition yang authenticated + workspace-scoped.
+- [x] Nonaktifkan Package hard-delete; ubah FK commercial history menjadi `RESTRICT`/`SET NULL`; Package, Project, dan catalog record yang direferensikan hanya dapat diarsipkan.
+- [x] Seluruh timer write path memakai satu resolver tenant untuk workspace–Client–Project–Task; pause/resume/stop/discard hanya boleh oleh pemilik timer.
+- [x] Tambah partial unique index active timer `(workspace_id, user_id) WHERE end_time IS NULL AND manual_minutes IS NULL`; start/switch atomik dalam transaction.
+- [x] Block edit/delete entry `invoiced`; invoice import hanya `approved + billable + completed + duration>0 + same client/project/workspace`.
+- [x] Invoice import atomik dan idempotent; jangan mutasi rate snapshot Time Entry; simpan previous status saat link dibuat dan restore status tersebut ketika link draft dilepas.
+- [x] Tambah behavioral negative tests untuk cross-workspace identifier, token/client mismatch, timer ownership, concurrent start, dan invoice eligibility.
+- [ ] Ops follow-up: audit/rotate credential QA historis bila ada credential nyata pernah masuk git history/docs. Jangan blok Phase 0B schema, tapi wajib sebelum public handoff besar.
+
+**Acceptance:** lulus di production. Spoof price/currency ditolak; token Client A tidak dapat menulis Project B; raw token tidak muncul di client payload/history write baru; member tidak dapat mengontrol timer user lain; kombinasi Client/Project/Task silang ditolak; concurrent start menghasilkan satu timer; draft/non-billable/open entry tidak dapat di-invoice; invoiced entry immutable; archive tidak menghapus assignment/order/request.
 
 ## Phase 0B — Schema ADR, migration evidence, dan release gate
 

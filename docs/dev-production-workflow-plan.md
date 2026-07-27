@@ -8,17 +8,20 @@
 
 Cubiqlo memakai dua environment untuk sekarang:
 
-1. **Development:** `https://dev.cubiqlo.com`
-   - Tempat coding, polish UI, dan QA cepat.
-   - Menjalankan `next dev` dengan HMR.
-   - Perubahan terlihat beberapa detik setelah file disimpan.
+1. **Development preview:** `https://dev.cubiqlo.com`
+   - Tempat QA internal sebelum production.
+   - Menjalankan hasil `next build` / standalone Docker seperti production.
    - Memakai database dan data dummy terpisah.
+   - Dilindungi Basic Auth.
+   - Cocok untuk cek bug yang hanya muncul di production build.
 
 2. **Production:**
    - Landing: `https://cubiqlo.com`
    - Dashboard: `https://app.cubiqlo.com`
-   - Menjalankan hasil `next build` dalam Docker.
+   - Menjalankan hasil `next build` dalam Docker dengan data asli.
    - Hanya diperbarui setelah satu batch perubahan selesai dan lolos pemeriksaan.
+
+**Catatan:** HMR cepat tetap bisa dibuat terpisah nanti sebagai `dev-hmr.cubiqlo.com` atau lokal. `dev.cubiqlo.com` sekarang sengaja dibuat production-build preview karena Alip minta build seperti production.
 
 **Staging belum dibuat.** Tambahkan `staging.cubiqlo.com` nanti saat pengguna aktif meningkat, ada tester eksternal, atau release sering menyentuh auth, pembayaran, dan migration DB.
 
@@ -27,13 +30,15 @@ Cubiqlo memakai dua environment untuk sekarang:
 ```text
 Buat branch kerja
     ↓
-Edit + save
+Edit batch kecil
     ↓
-dev.cubiqlo.com auto-refresh
+Build dev image seperti production
     ↓
-Cek desktop/mobile dan alur terkait
+Recreate dev.cubiqlo.com
     ↓
-Ulangi sampai satu batch polish selesai
+Cek desktop/mobile dan alur terkait di data dummy
+    ↓
+Ulangi sampai satu batch selesai
     ↓
 Lint/typecheck/test terarah
     ↓
@@ -41,7 +46,7 @@ Commit + push
     ↓
 Build production satu kali
     ↓
-Recreate container app
+Recreate container app production
     ↓
 Health check + smoke test app.cubiqlo.com
 ```
@@ -87,20 +92,22 @@ Cookie harus host-only atau memakai nama berbeda. Jangan set cookie domain globa
 
 ### Komponen
 
-- Process Next.js development pada port internal, contoh `3100`.
-- Process manager: systemd atau Docker Compose service khusus development.
-- Reverse proxy: Dokploy Traefik.
+- Next.js standalone container pada port internal `3100`.
+- Build memakai Dockerfile production yang sama, dengan `NEXT_PUBLIC_APP_URL=https://dev.cubiqlo.com`.
+- Runtime memakai `.env.development.local` dan database `cubicle_dev`.
+- Reverse proxy: Dokploy Traefik static file route.
 - DNS Cloudflare: record `dev` ke VPS.
-- Proteksi akses: Cloudflare Access atau Basic Auth agar dev tidak publik.
+- Proteksi akses: Basic Auth agar dev tidak publik.
 
-### Perintah development
+### Perintah development preview
 
 ```bash
 cd /root/projects/cubicle
-npm run dev -- --hostname 0.0.0.0 --port 3100
+VCS_REF=$(git rev-parse --short HEAD) BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ) docker compose -f docker-compose.dev.yml build cubicle-dev
+ACT="up -d --no-deps --force-recreate" && docker compose -f docker-compose.dev.yml $ACT cubicle-dev
 ```
 
-Process wajib berjalan sebagai service, bukan terminal sementara. Service harus auto-restart jika crash, tetapi tidak boleh mengambil port 80/443.
+Service wajib berjalan lewat Docker Compose, auto-restart jika crash, dan tidak boleh mengambil port 80/443. Untuk perubahan source kecil tetap perlu rebuild dev image, karena lane ini production-build preview, bukan HMR.
 
 ### Routing
 
@@ -260,17 +267,17 @@ Perubahan source tetap membutuhkan `next build`; optimasi hanya mengurangi waktu
 
 ## 11. Fase Implementasi
 
-### Fase 1 — Dev lane aman
+### Fase 1 — Dev production-build lane aman
 
 - Buat DB `cubicle_dev`.
 - Siapkan env development tanpa secret production yang tidak diperlukan.
 - Seed akun/data QA.
-- Jalankan Next dev sebagai service pada port `3100`.
+- Jalankan standalone production build sebagai service pada port `3100`.
 - Tambahkan DNS dan route `dev.cubiqlo.com`.
-- Lindungi dev dengan access control.
-- Verifikasi login, dashboard, HMR, DB isolation, dan tidak ada cookie collision.
+- Lindungi dev dengan Basic Auth.
+- Verifikasi login, dashboard, DB isolation, cookie isolation, dan production tetap tidak berubah.
 
-**Acceptance:** perubahan UI tampil tanpa rebuild; data yang dibuat di dev tidak muncul di production.
+**Acceptance:** dev menjalankan `NODE_ENV=production` + standalone build, tetapi memakai DB `cubicle_dev`; data yang dibuat di dev tidak muncul di production.
 
 ### Fase 2 — Release discipline
 
@@ -316,7 +323,7 @@ Trigger membuat staging:
 
 ## 12. Target Hasil
 
-- Feedback UI development: beberapa detik melalui HMR.
+- Dev preview memakai build production shape sebelum menyentuh data asli.
 - Production deploy: satu kali per batch, bukan setiap edit.
 - Risiko pengguna terkena perubahan setengah jadi turun.
 - Build production tetap reproducible.
@@ -326,13 +333,14 @@ Trigger membuat staging:
 
 1. Perbaiki restart policy production.
 2. Buat DB development dan env terpisah.
-3. Jalankan service dev pada port `3100`.
+3. Jalankan service dev production-build pada port `3100`.
 4. Tambahkan DNS/Traefik/proteksi `dev.cubiqlo.com`.
 5. Verifikasi isolasi DB, auth, cookie, email, payment, dan storage.
-6. Mulai workflow polish batch.
-7. Bersihkan lint baseline.
-8. Tambahkan Docker build cache.
-9. Evaluasi CI/GHCR setelah workflow dipakai beberapa release.
+6. Mulai workflow QA batch lewat dev production-build.
+7. Jika butuh feedback detik-an, buat lane HMR terpisah.
+8. Bersihkan lint baseline.
+9. Tambahkan Docker build cache.
+10. Evaluasi CI/GHCR setelah workflow dipakai beberapa release.
 
 ---
 
