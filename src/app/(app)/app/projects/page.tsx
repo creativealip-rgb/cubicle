@@ -203,7 +203,7 @@ export default async function ProjectsPage({
             </div>
             <Button size="sm" className="bg-[#6647F0] hover:bg-[#5333DD] shrink-0" asChild>
               <Link href="/app/billing">
-                {t("Upgrade ke Solo — Rp 49rb/bln", "Upgrade to Solo — Rp 49k/mo")}
+                {t("Upgrade ke Solo — Rp 588rb/tahun", "Upgrade to Solo — Rp 588k/year")}
               </Link>
             </Button>
           </div>

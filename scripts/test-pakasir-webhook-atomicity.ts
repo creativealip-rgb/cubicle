@@ -15,14 +15,14 @@ async function seedPayment(label: string) {
   if (!workspace.rows[0]) throw new Error("workspace fixture missing");
   const row = await pool.query(
     `INSERT INTO pakasir_payments (workspace_id, order_id, plan, amount, status)
-     VALUES ($1, $2, 'solo', 49000, 'pending') RETURNING id, workspace_id, order_id`,
+     VALUES ($1, $2, 'solo', 588000, 'pending') RETURNING id, workspace_id, order_id`,
     [workspace.rows[0].id, `atomic-${label}-${suffix}`],
   );
   await pool.query(`UPDATE users SET plan='free', plan_expires_at=NULL WHERE id=$1`, [workspace.rows[0].owner_id]);
   return { ...row.rows[0], ownerId: workspace.rows[0].owner_id };
 }
 
-async function complete(payment: { id: string; order_id: string }, amount = 49000) {
+async function complete(payment: { id: string; order_id: string }, amount = 588000) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");

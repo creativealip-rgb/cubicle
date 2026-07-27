@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { pakasirPayments, users, workspaces } from "@/db/schema";
 import { getPakasirTransactionDetail, pakasirProject, type PakasirWebhook } from "@/lib/pakasir";
 import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
+import { annualPlanExpiry } from "@/lib/billing-plans";
 
 export async function POST(request: Request) {
   const limited = await enforceRateLimitResponse(request, "webhook:pakasir", { limit: 120, windowSec: 60 });
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
   if (Number.isNaN(paidAt.getTime())) {
     return NextResponse.json({ error: "Invalid completion time" }, { status: 400 });
   }
-  const expiresAt = new Date(paidAt.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const expiresAt = annualPlanExpiry(paidAt);
 
   const result = await db.transaction(async (tx) => {
     const locked = await tx.execute(sql`

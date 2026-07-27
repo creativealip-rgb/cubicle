@@ -556,7 +556,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
                           {t("Upgrade untuk multi workspace", "Upgrade for multiple workspaces")}
                         </p>
                         <p className="text-[10px] text-muted-foreground">
-                          Solo · Rp 49rb/{t("bulan", "month")}
+                          Solo · Rp 588rb/{t("tahun", "year")}
                         </p>
                       </div>
                     </Link>
@@ -588,7 +588,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
                           {t("Upgrade untuk undang anggota", "Upgrade to invite members")}
                         </p>
                         <p className="text-[10px] text-muted-foreground">
-                          Team · Rp 99rb/{t("bulan", "month")}
+                          Team · Rp 1,188jt/{t("tahun", "year")}
                         </p>
                       </div>
                     </Link>

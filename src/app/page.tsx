@@ -66,8 +66,8 @@ const pricing = [
   {
     name: "Solo",
     audience: "Untuk freelancer yang mulai serius.",
-    price: "Rp 49rb",
-    suffix: "/bulan",
+    price: "Rp 588rb",
+    suffix: "/tahun",
     items: ["1 user", "Unlimited clients", "Client portal", "AI assistant", "Calendar & booking", "Proposal & contract"],
     cta: "Pilih Solo",
     featured: true,
@@ -75,8 +75,8 @@ const pricing = [
   {
     name: "Team",
     audience: "Untuk tim kecil yang kerja bareng.",
-    price: "Rp 99rb",
-    suffix: "/bulan",
+    price: "Rp 1,188jt",
+    suffix: "/tahun",
     items: ["5 users", "Unlimited clients", "Shared workspace", "Team roles", "Advanced report", "Priority support"],
     cta: "Pilih Team",
     featured: false,
