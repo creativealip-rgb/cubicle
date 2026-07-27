@@ -68,6 +68,7 @@ export default async function ClientPortalPage({
     : rawFolderId;
 
   let token = slugOrToken;
+  let portalCredential = slugOrToken;
   const [slugClient] = await db.select().from(clients).where(eq(clients.portalSlug, slugOrToken));
   if (slugClient) {
     const secret = process.env.BETTER_AUTH_SECRET;
@@ -97,7 +98,10 @@ export default async function ClientPortalPage({
     }
     if (!slugClient.portalEnabled || !slugClient.portalSlugEnabled || !slugClient.portalTokenEnc) notFound();
     try { token = decryptSecret(slugClient.portalTokenEnc); } catch { notFound(); }
+    // Mutations authenticate with slug + HttpOnly session. Raw token stays server-only.
+    portalCredential = slugOrToken;
   } else {
+    portalCredential = token;
     try {
       const legacyClient = await getClientPortalAccess(token);
       if (legacyClient.portalSlug && legacyClient.portalPasswordHash) {
@@ -492,7 +496,7 @@ export default async function ClientPortalPage({
   }
 
   // Fetch custom package requests by token
-  const customRequests = await getCustomPackageRequestsByToken(token);
+  const customRequests = await getCustomPackageRequestsByToken(portalCredential);
 
   // Fetch selected package details for package projects with an assigned package
   const selectedPackageMap = new Map<
@@ -528,7 +532,7 @@ export default async function ClientPortalPage({
   }
 
   // Fetch package orders by token
-  const packageOrdersList = await getPackageOrdersByToken(token);
+  const packageOrdersList = await getPackageOrdersByToken(portalCredential);
 
   // Financial summary — invoices for this client
   const clientInvoices = await db
@@ -801,7 +805,7 @@ export default async function ClientPortalPage({
                 </span>
               </div>
               <PortalActionButtons
-                token={token}
+                token={portalCredential}
                 projects={clientProjects.map((p) => ({
                   id: p.id,
                   name: p.name,
@@ -900,7 +904,7 @@ export default async function ClientPortalPage({
                         createdAt: String(o.createdAt),
                       }))}
                       clientVisibleActionLabels={clientVisibleActionLabels}
-                      token={token}
+                      token={portalCredential}
                       workspaceId={client.workspaceId}
                       ownerWhatsAppPhone={workspaceContact?.phone}
                       ownerEmail={portalContactEmail}
@@ -911,7 +915,7 @@ export default async function ClientPortalPage({
               }
               files={
                 <PortalFileManager
-                  token={token}
+                  token={portalCredential}
                   projects={clientProjects.map((p) => ({
                     id: p.id,
                     name: p.name,
@@ -958,7 +962,7 @@ export default async function ClientPortalPage({
                       id: p.id,
                       name: p.name,
                     }))}
-                    token={token}
+                    token={portalCredential}
                   />
                 </section>
               }

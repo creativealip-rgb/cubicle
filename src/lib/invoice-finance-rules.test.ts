@@ -23,7 +23,7 @@ describe("invoice finance rules", () => {
     });
   });
 
-  it.each(["paid", "cancelled", "archived"])(
+  it.each(["sent", "viewed", "paid", "overdue", "cancelled", "archived"])(
     "rejects financial mutation for %s invoice",
     (status) => {
       expect(() => assertInvoiceFinancialsMutable(status)).toThrow(
@@ -32,7 +32,7 @@ describe("invoice finance rules", () => {
     },
   );
 
-  it.each(["draft", "sent", "viewed", "overdue"])(
+  it.each(["draft"])(
     "allows financial mutation for %s invoice",
     (status) => {
       expect(() => assertInvoiceFinancialsMutable(status)).not.toThrow();

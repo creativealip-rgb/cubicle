@@ -93,9 +93,13 @@ export async function deletePackage(packageId: string) {
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
-  await db
-    .delete(packages)
-    .where(and(eq(packages.id, packageId), eq(packages.workspaceId, workspaceId)));
+  const [archived] = await db
+    .update(packages)
+    .set({ active: false })
+    .where(and(eq(packages.id, packageId), eq(packages.workspaceId, workspaceId)))
+    .returning({ id: packages.id });
+  if (!archived) throw new Error("Package not found");
+  return { success: true as const, archived: true as const };
 }
 
 export async function getPackagesByProject(projectId: string) {

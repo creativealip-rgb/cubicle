@@ -16,7 +16,7 @@ import {
   packages,
   workspaceCurrencyRates,
 } from "@/db/schema";
-import { eq, and, desc, sql, inArray, lt } from "drizzle-orm";
+import { eq, and, desc, sql, inArray, lt, isNotNull } from "drizzle-orm";
 import { z } from "zod";
 import { createHash, randomBytes } from "crypto";
 import { requireUser, assertWorkspaceWritable, assertWorkspaceMember } from "@/lib/access";
@@ -223,7 +223,8 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
           const eligible = await tx.select({ id: timeEntries.id }).from(timeEntries).where(and(
             inArray(timeEntries.id, sourceIds), eq(timeEntries.workspaceId, workspaceId),
             eq(timeEntries.clientId, parsed.clientId), eq(timeEntries.billable, true),
-            sql`${timeEntries.status} <> 'invoiced'`,
+            eq(timeEntries.status, "approved"), isNotNull(timeEntries.endTime),
+            sql`${timeEntries.durationMinutes} > 0`,
             projectIds.length ? inArray(timeEntries.projectId, projectIds) : sql`true`,
           ));
           if (eligible.length !== new Set(sourceIds).size) throw new Error("Ada timesheet yang tidak valid atau sudah ditagihkan");
@@ -238,6 +239,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
           amount: String(item.quantity * item.unitPrice),
           sourceType: item.sourceId ? "time_entry" as const : "manual" as const,
           sourceId: item.sourceId ?? null,
+          previousTimeEntryStatus: item.sourceId ? "approved" as const : null,
           originalCurrency: null,
           originalAmount: null,
           conversionRate: null,
@@ -537,9 +539,10 @@ export async function deleteInvoiceItem(itemId: string) {
         .limit(1);
 
       if (!stillLinked) {
+        const previousStatus = item.previousTimeEntryStatus ?? "approved";
         await tx
           .update(timeEntries)
-          .set({ status: "approved", updatedAt: new Date() })
+          .set({ status: previousStatus, updatedAt: new Date() })
           .where(
             and(
               eq(timeEntries.id, item.sourceId),
@@ -568,100 +571,108 @@ export async function importTimeEntries(input: z.infer<typeof importTimeSchema>)
   const inv = await assertInvoiceInWorkspace(parsed.invoiceId, workspaceId);
   assertInvoiceFinancialsMutable(inv.status);
 
-  for (const teId of parsed.timeEntryIds) {
-    const [te] = await db
-      .select()
+  const uniqueIds = Array.from(new Set(parsed.timeEntryIds));
+  if (!uniqueIds.length || uniqueIds.length !== parsed.timeEntryIds.length) {
+    throw new Error("Pilih Time Entry unik minimal satu");
+  }
+
+  await db.transaction(async (tx) => {
+    const entries = await tx
+      .select({
+        id: timeEntries.id,
+        projectId: timeEntries.projectId,
+        clientId: timeEntries.clientId,
+        description: timeEntries.description,
+        durationMinutes: timeEntries.durationMinutes,
+        hourlyRate: timeEntries.hourlyRate,
+        projectName: projects.name,
+      })
       .from(timeEntries)
-      .where(and(eq(timeEntries.id, teId), eq(timeEntries.workspaceId, workspaceId)))
-      .limit(1);
-    if (!te) continue;
-    if (te.status === "invoiced") continue;
-    // Invoice bound to a project → reject time from other projects.
-    if (inv.projectId && te.projectId !== inv.projectId) continue;
-    // Always keep client match.
-    if (te.clientId !== inv.clientId) continue;
+      .leftJoin(
+        projects,
+        and(
+          eq(projects.id, timeEntries.projectId),
+          eq(projects.workspaceId, timeEntries.workspaceId),
+        ),
+      )
+      .where(
+        and(
+          inArray(timeEntries.id, uniqueIds),
+          eq(timeEntries.workspaceId, workspaceId),
+          eq(timeEntries.clientId, inv.clientId),
+          eq(timeEntries.status, "approved"),
+          eq(timeEntries.billable, true),
+          isNotNull(timeEntries.endTime),
+          sql`${timeEntries.durationMinutes} > 0`,
+          inv.projectId ? eq(timeEntries.projectId, inv.projectId) : sql`true`,
+        ),
+      )
+      .for("update");
 
-    const minutes = te.durationMinutes || 0;
-    const hours = minutes / 60;
-    let rate = te.hourlyRate ? Number(te.hourlyRate) : 0;
-
-    // Resolve project name + rate together (used for line description + billing).
-    let projectName: string | null = null;
-    if (te.projectId) {
-      const [proj] = await db
-        .select({ name: projects.name, rate: projects.rate })
-        .from(projects)
-        .where(eq(projects.id, te.projectId))
-        .limit(1);
-      if (proj?.name) projectName = proj.name;
-      if ((!rate || !Number.isFinite(rate) || rate <= 0) && proj?.rate) {
-        const projectRate = Number(proj.rate);
-        if (Number.isFinite(projectRate) && projectRate > 0) {
-          rate = projectRate;
-        }
-      }
+    if (entries.length !== uniqueIds.length) {
+      throw new Error("Semua Time Entry harus approved, billable, selesai, berdurasi positif, dan sesuai invoice");
+    }
+    if (entries.some((entry) => !entry.hourlyRate || Number(entry.hourlyRate) <= 0)) {
+      throw new Error("Time Entry belum memiliki billing rate snapshot");
     }
 
-    // Fallback chain: entry rate → project rate → workspace default
-    if (!rate || !Number.isFinite(rate) || rate <= 0) {
-      const [wsRate] = await db
-        .select({ defaultHourlyRate: workspaces.defaultHourlyRate })
-        .from(workspaces)
-        .where(eq(workspaces.id, workspaceId))
-        .limit(1);
-      if (wsRate?.defaultHourlyRate) {
-        const wsDefault = Number(wsRate.defaultHourlyRate);
-        if (Number.isFinite(wsDefault) && wsDefault > 0) {
-          rate = wsDefault;
-        }
-      }
-    }
-
-    // Persist resolved rate on the time entry so UI + future imports stay consistent.
-    if (rate > 0 && (!te.hourlyRate || Number(te.hourlyRate) <= 0)) {
-      await db
-        .update(timeEntries)
-        .set({ hourlyRate: String(rate), updatedAt: new Date() })
-        .where(eq(timeEntries.id, teId));
-    }
-
-    const amount = hours * rate;
-    const workDesc = (te.description || "").trim() || "Time entry";
-    // Client-facing: "Project — work description" so PDF/line items show project context.
-    const lineDescription = projectName ? `${projectName} — ${workDesc}` : workDesc;
-
-    // Check if already imported to this invoice (via sourceId)
-    const [existing] = await db
-      .select()
+    const existingLinks = await tx
+      .select({ sourceId: invoiceItems.sourceId })
       .from(invoiceItems)
       .where(
         and(
-          eq(invoiceItems.invoiceId, parsed.invoiceId),
           eq(invoiceItems.sourceType, "time_entry"),
-          eq(invoiceItems.sourceId, teId),
+          inArray(invoiceItems.sourceId, uniqueIds),
         ),
-      )
-      .limit(1);
+      );
+    if (existingLinks.length) throw new Error("Ada Time Entry yang sudah ditagihkan");
 
-    if (!existing) {
-      await db.insert(invoiceItems).values({
+    await tx.insert(invoiceItems).values(entries.map((entry) => {
+      const hours = Number(entry.durationMinutes) / 60;
+      const rate = Number(entry.hourlyRate);
+      const workDesc = (entry.description || "").trim() || "Time entry";
+      return {
         invoiceId: parsed.invoiceId,
-        description: lineDescription,
+        description: entry.projectName ? `${entry.projectName} — ${workDesc}` : workDesc,
         quantity: String(hours),
         unitPrice: String(rate),
-        amount: String(amount),
-        sourceType: "time_entry",
-        sourceId: teId,
-      });
-    }
+        amount: String(hours * rate),
+        sourceType: "time_entry" as const,
+        sourceId: entry.id,
+        previousTimeEntryStatus: "approved" as const,
+      };
+    }));
 
-    await db
+    await tx
       .update(timeEntries)
       .set({ status: "invoiced", updatedAt: new Date() })
-      .where(eq(timeEntries.id, teId));
-  }
+      .where(
+        and(
+          inArray(timeEntries.id, uniqueIds),
+          eq(timeEntries.status, "approved"),
+        ),
+      );
 
-  await recalculateInvoice(parsed.invoiceId);
+    const [result] = await tx
+      .select({ sum: sql<string>`coalesce(sum(${invoiceItems.amount}), '0')` })
+      .from(invoiceItems)
+      .where(eq(invoiceItems.invoiceId, parsed.invoiceId));
+    const totals = calculateInvoiceTotals(
+      Number(result?.sum || 0),
+      Number(inv.discount),
+      Number(inv.tax),
+    );
+    await tx
+      .update(invoices)
+      .set({
+        subtotal: String(totals.subtotal),
+        discount: String(totals.discount),
+        tax: String(totals.tax),
+        total: String(totals.total),
+        updatedAt: new Date(),
+      })
+      .where(eq(invoices.id, parsed.invoiceId));
+  });
   await writeActivityLog(workspaceId, user.id, "imported_time_to_invoice", "invoice", parsed.invoiceId);
   return { success: true };
 }

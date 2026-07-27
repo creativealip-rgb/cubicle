@@ -1,81 +1,129 @@
 "use server";
 
+import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
+import { and, asc, eq } from "drizzle-orm";
+import { z } from "zod";
+import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { customPackageRequests, packages } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { customPackageRequests, packages, projects } from "@/db/schema";
+import { requireUser, assertWorkspaceWritable } from "@/lib/access";
+import { getWorkspaceForCurrentUser } from "@/lib/workspace";
+import { getClientPortalAccess } from "@/lib/actions/portal";
+import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
+
+const createRequestSchema = z.object({
+  credential: z.string().min(1).max(512),
+  projectId: z.string().uuid(),
+  hours: z.number().int().positive().max(100000),
+  message: z.string().trim().max(2000).optional().nullable(),
+  idempotencyKey: z.string().uuid(),
+});
+
+const updateStatusSchema = z.object({
+  requestId: z.string().uuid(),
+  status: z.enum(["approved", "rejected"]),
+});
 
 export async function createCustomPackageRequest(
-  token: string,
-  projectId: string,
-  hours: number,
-  message?: string,
+  input: z.infer<typeof createRequestSchema>,
 ) {
-  // Find matching package to estimate price
-  const pkgs = await db
+  const parsed = createRequestSchema.parse(input);
+  const client = await getClientPortalAccess(parsed.credential);
+  await enforceServerActionRateLimit("portal:custom-package-request", client.id, {
+    limit: 10,
+    windowSec: 300,
+  });
+
+  const [project] = await db
+    .select({ id: projects.id, workspaceId: projects.workspaceId })
+    .from(projects)
+    .where(
+      and(
+        eq(projects.id, parsed.projectId),
+        eq(projects.workspaceId, client.workspaceId),
+        eq(projects.clientId, client.id),
+        eq(projects.clientVisible, true),
+        eq(projects.billingType, "package"),
+      ),
+    )
+    .limit(1);
+  if (!project) throw new Error("Project tidak tersedia");
+
+  const projectPackages = await db
     .select()
     .from(packages)
-    .where(and(eq(packages.projectId, projectId), eq(packages.active, true), eq(packages.allowCustom, true)));
+    .where(
+      and(
+        eq(packages.projectId, project.id),
+        eq(packages.workspaceId, project.workspaceId),
+        eq(packages.active, true),
+        eq(packages.allowCustom, true),
+      ),
+    )
+    .orderBy(asc(packages.sortOrder));
+  if (!projectPackages.length) throw new Error("Custom Package tidak tersedia");
 
-  let estimatedPrice: number | null = null;
-
-  if (pkgs.length > 0) {
-    // Find best matching package: prefer one whose hours range covers requested hours,
-    // otherwise use the one with lowest hours >= requested, or fallback to first
-    const matching = pkgs.find(
-      (p) =>
-        p.hours != null &&
-        (p.minHours == null || hours >= p.minHours) &&
-        (p.maxHours == null || hours <= p.maxHours),
-    );
-
-    if (matching) {
-      const basePrice = Number(matching.customPrice ?? matching.price);
-      const baseHours = matching.hours ?? 1;
-      estimatedPrice = Math.round((basePrice / baseHours) * hours);
-    } else {
-      // Fallback: use first package's rate
-      const fallback = pkgs[0];
-      const basePrice = Number(fallback.customPrice ?? fallback.price);
-      const baseHours = fallback.hours ?? 1;
-      estimatedPrice = Math.round((basePrice / baseHours) * hours);
-    }
+  const min = Math.min(...projectPackages.map((pkg) => pkg.minHours ?? 1));
+  const max = Math.max(...projectPackages.map((pkg) => pkg.maxHours ?? pkg.hours ?? min));
+  if (parsed.hours < min || parsed.hours > max) {
+    throw new Error(`Jam harus antara ${min} dan ${max}`);
   }
 
-  // Get workspaceId from first package (all share same workspace)
-  const workspaceId = pkgs[0]?.workspaceId ?? null;
-  if (!workspaceId) {
-    throw new Error("No packages found for this project");
-  }
+  const matched = projectPackages.find((pkg) => {
+    const lower = pkg.minHours ?? 0;
+    const upper = pkg.maxHours ?? Number.MAX_SAFE_INTEGER;
+    return parsed.hours >= lower && parsed.hours <= upper;
+  }) ?? projectPackages[0];
+  const basePrice = Number(matched.customPrice ?? matched.price);
+  const baseHours = matched.hours && matched.hours > 0 ? matched.hours : parsed.hours;
+  const estimatedPrice = Math.round((basePrice / baseHours) * parsed.hours);
 
-  const [request] = await db
+  const [created] = await db
     .insert(customPackageRequests)
     .values({
-      workspaceId,
-      projectId,
-      clientPortalToken: token,
-      requestedHours: hours,
-      estimatedPrice: estimatedPrice != null ? String(estimatedPrice) : null,
-      message: message || null,
+      workspaceId: project.workspaceId,
+      clientId: client.id,
+      projectId: project.id,
+      clientPortalToken: null,
+      idempotencyKey: parsed.idempotencyKey,
+      requestedHours: parsed.hours,
+      estimatedPrice: String(estimatedPrice),
+      message: parsed.message || null,
       status: "pending",
     })
+    .onConflictDoNothing()
     .returning();
 
-  return request;
+  if (created) {
+    revalidatePath(`/client-portal/${parsed.credential}`);
+    return created;
+  }
+  const [existing] = await db
+    .select()
+    .from(customPackageRequests)
+    .where(
+      and(
+        eq(customPackageRequests.clientId, client.id),
+        eq(customPackageRequests.idempotencyKey, parsed.idempotencyKey),
+      ),
+    )
+    .limit(1);
+  if (!existing) throw new Error("Request gagal dibuat");
+  return existing;
 }
 
-export async function getCustomPackageRequests(workspaceId: string) {
+export async function getCustomPackageRequestsByToken(credential: string) {
+  const client = await getClientPortalAccess(credential);
   return db
     .select()
     .from(customPackageRequests)
-    .where(eq(customPackageRequests.workspaceId, workspaceId))
-    .orderBy(customPackageRequests.createdAt);
-}
-
-export async function getCustomPackageRequestsByToken(token: string) {
-  return db
-    .select()
-    .from(customPackageRequests)
-    .where(eq(customPackageRequests.clientPortalToken, token))
+    .where(
+      and(
+        eq(customPackageRequests.workspaceId, client.workspaceId),
+        eq(customPackageRequests.clientId, client.id),
+      ),
+    )
     .orderBy(customPackageRequests.createdAt);
 }
 
@@ -83,8 +131,23 @@ export async function updateCustomPackageRequestStatus(
   requestId: string,
   status: "approved" | "rejected",
 ) {
-  await db
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  const parsed = updateStatusSchema.parse({ requestId, status });
+
+  const [updated] = await db
     .update(customPackageRequests)
-    .set({ status })
-    .where(eq(customPackageRequests.id, requestId));
+    .set({ status: parsed.status })
+    .where(
+      and(
+        eq(customPackageRequests.id, parsed.requestId),
+        eq(customPackageRequests.workspaceId, workspaceId),
+        eq(customPackageRequests.status, "pending"),
+      ),
+    )
+    .returning();
+  if (!updated) throw new Error("Request tidak ditemukan atau sudah diproses");
+  return updated;
 }

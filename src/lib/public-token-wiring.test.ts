@@ -52,11 +52,14 @@ describe("public token lifecycle wiring", () => {
 
   it("binds portal file token to requested file client or project", () => {
     const source = read("src/app/api/files/[fileId]/download/route.ts");
+    const portal = read("src/lib/actions/portal.ts");
     expect(source).toContain("eq(files.id, file.id)");
-    expect(source).toContain("eq(clients.portalTokenHash, tokenHash)");
-    expect(source).toContain("eq(clients.portalEnabled, true)");
-    expect(source).toContain("isNull(clients.portalTokenRevokedAt)");
-    expect(source).toContain("gt(clients.portalTokenExpiresAt, new Date())");
+    expect(source).toContain("getClientPortalAccess(token)");
+    expect(source).toContain("eq(projects.clientId, portalClient.id)");
+    expect(portal).toContain("eq(clients.portalTokenHash, tokenHash)");
+    expect(portal).toContain("client.portalEnabled");
+    expect(portal).toContain("client.portalTokenRevokedAt");
+    expect(portal).toContain("client.portalTokenExpiresAt");
   });
 
   it("binds invoice share token directly to one invoice and enforces lifecycle", () => {

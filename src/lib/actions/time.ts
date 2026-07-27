@@ -5,10 +5,11 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { timeEntries, clients, projects, tasks, workspaces } from "@/db/schema";
-import { eq, and, isNull, isNotNull } from "drizzle-orm";
+import { eq, and, isNull, isNotNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { assertTimeEntryContext } from "@/lib/time-entry-context";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -110,36 +111,7 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
   await assertWorkspaceWritable(db, user.id, input.workspaceId);
 
   const parsed = startTimerSchema.parse(input);
-
-  // Auto-close any existing open timer for this user in this workspace.
-  // Paused entries close at pausedAt; running ones close at now.
-  const openEntries = await db
-    .select()
-    .from(timeEntries)
-    .where(
-      and(
-        eq(timeEntries.workspaceId, parsed.workspaceId),
-        eq(timeEntries.userId, user.id),
-        isNull(timeEntries.endTime),
-        isNull(timeEntries.manualMinutes),
-      ),
-    );
-
-  for (const open of openEntries) {
-    if (!open.startTime) {
-      await db.delete(timeEntries).where(eq(timeEntries.id, open.id));
-      continue;
-    }
-    const endCandidate = open.pausedAt ?? new Date();
-    await db
-      .update(timeEntries)
-      .set({
-        endTime: cappedEnd(open.startTime, endCandidate),
-        pausedAt: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(timeEntries.id, open.id));
-  }
+  await assertTimeEntryContext(db, parsed.workspaceId, parsed);
 
   // Optional: auto-map description from task title when blank.
   let description = parsed.description || null;
@@ -166,22 +138,55 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
           explicitRate: parsed.hourlyRate,
         });
 
-  const [entry] = await db.insert(timeEntries).values({
-    workspaceId: parsed.workspaceId,
-    clientId: parsed.clientId || null,
-    projectId: parsed.projectId || null,
-    taskId: parsed.taskId || null,
-    userId: user.id,
-    description,
-    tags: parsed.tags || null,
-    startTime: new Date(),
-    endTime: null,
-    pausedAt: null,
-    manualMinutes: null,
-    billable: true,
-    hourlyRate: resolvedRate,
-    status: "draft",
-  }).returning();
+  const entry = await db.transaction(async (tx) => {
+    // Serializes starts for the same user/workspace even before unique-index conflict.
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${parsed.workspaceId}), hashtext(${user.id}))`);
+    const openEntries = await tx
+      .select()
+      .from(timeEntries)
+      .where(
+        and(
+          eq(timeEntries.workspaceId, parsed.workspaceId),
+          eq(timeEntries.userId, user.id),
+          isNull(timeEntries.endTime),
+          isNull(timeEntries.manualMinutes),
+        ),
+      );
+
+    for (const open of openEntries) {
+      if (!open.startTime) {
+        await tx.delete(timeEntries).where(eq(timeEntries.id, open.id));
+        continue;
+      }
+      const endCandidate = open.pausedAt ?? new Date();
+      await tx
+        .update(timeEntries)
+        .set({
+          endTime: cappedEnd(open.startTime, endCandidate),
+          pausedAt: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(timeEntries.id, open.id));
+    }
+
+    const [created] = await tx.insert(timeEntries).values({
+      workspaceId: parsed.workspaceId,
+      clientId: parsed.clientId || null,
+      projectId: parsed.projectId || null,
+      taskId: parsed.taskId || null,
+      userId: user.id,
+      description,
+      tags: parsed.tags || null,
+      startTime: new Date(),
+      endTime: null,
+      pausedAt: null,
+      manualMinutes: null,
+      billable: true,
+      hourlyRate: resolvedRate,
+      status: "draft",
+    }).returning();
+    return created;
+  });
 
   await writeActivityLog(parsed.workspaceId, user.id, "started_timer", "time_entry", entry.id);
   return entry;
@@ -238,6 +243,7 @@ export async function pauseTimer(entryId: string) {
     .limit(1);
 
   if (!entry) throw new Error("Time entry not found");
+  if (entry.userId !== user.id) throw new Error("Timer milik user lain");
   if (entry.endTime) throw new Error("Timer already stopped");
   if (!entry.startTime) {
     await db.delete(timeEntries).where(eq(timeEntries.id, entryId));
@@ -275,6 +281,7 @@ export async function resumeTimer(entryId: string) {
     .limit(1);
 
   if (!entry) throw new Error("Time entry not found");
+  if (entry.userId !== user.id) throw new Error("Timer milik user lain");
   if (entry.endTime) throw new Error("Timer already stopped");
   if (!entry.startTime) {
     await db.delete(timeEntries).where(eq(timeEntries.id, entryId));
@@ -326,6 +333,7 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
     .limit(1);
 
   if (!entry) throw new Error("Time entry not found");
+  if (entry.userId !== user.id) throw new Error("Timer milik user lain");
   if (entry.endTime) throw new Error("Timer already stopped");
 
   if (!entry.startTime) {
@@ -345,6 +353,11 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
       ? parsed.description
       : entry.description;
   const nextTags = parsed.tags !== undefined ? parsed.tags : entry.tags;
+  await assertTimeEntryContext(db, workspaceId, {
+    clientId: nextClientId,
+    projectId: nextProjectId,
+    taskId: nextTaskId,
+  });
 
   const resolvedRate = await resolveHourlyRate({
     workspaceId,
@@ -378,6 +391,7 @@ export async function createManualEntry(input: z.infer<typeof createManualEntryS
   await assertWorkspaceWritable(db, user.id, input.workspaceId);
 
   const parsed = createManualEntrySchema.parse(input);
+  await assertTimeEntryContext(db, parsed.workspaceId, parsed);
 
   // Manual entry is NOT a running timer. Set both start + end from the
   // chosen date + duration so active-timer queries (endTime IS NULL) never
@@ -439,6 +453,14 @@ export async function updateTimeEntry(entryId: string, input: z.infer<typeof upd
   }
 
   const parsed = updateTimeEntrySchema.parse(input);
+  const nextClientId = parsed.clientId !== undefined ? parsed.clientId : entry.clientId;
+  const nextProjectId = parsed.projectId !== undefined ? parsed.projectId : entry.projectId;
+  const nextTaskId = parsed.taskId !== undefined ? parsed.taskId : entry.taskId;
+  await assertTimeEntryContext(db, workspaceId, {
+    clientId: nextClientId,
+    projectId: nextProjectId,
+    taskId: nextTaskId,
+  });
   const updateData: Record<string, unknown> = { updatedAt: new Date() };
 
   if (parsed.description !== undefined) updateData.description = parsed.description;
@@ -502,6 +524,9 @@ export async function deleteTimeEntry(entryId: string) {
     .limit(1);
 
   if (!entry) throw new Error("Time entry not found");
+  if (entry.status === "invoiced") {
+    throw new Error("Entri sudah di-invoice, tidak bisa dihapus");
+  }
 
   await db.delete(timeEntries).where(eq(timeEntries.id, entryId));
   await writeActivityLog(workspaceId, user.id, "deleted_time_entry", "time_entry", entryId);

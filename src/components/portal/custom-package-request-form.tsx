@@ -79,12 +79,13 @@ export function CustomPackageRequestForm({
     e.preventDefault();
     setLoading(true);
     try {
-      await createCustomPackageRequest(
-        token,
+      await createCustomPackageRequest({
+        credential: token,
         projectId,
         hours,
-        message || undefined,
-      );
+        message: message || null,
+        idempotencyKey: crypto.randomUUID(),
+      });
       toast.success(t("Permintaan terkirim!", "Request sent!"));
       setMessage("");
       setExpanded(false);

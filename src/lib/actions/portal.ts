@@ -2,22 +2,45 @@
 
 import { db } from "@/db";
 import { clients, portalAccessLogs } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { createHash } from "crypto";
+import { cookies } from "next/headers";
+import { PORTAL_COOKIE, verifyPortalSession } from "@/lib/portal-password";
 
-export async function getClientPortalAccess(rawToken: string) {
-  const tokenHash = createHash("sha256").update(rawToken).digest("hex");
+export async function getClientPortalAccess(credential: string) {
+  const value = credential.trim();
+  if (!value) throw new Error("Invalid portal link");
+  const tokenHash = createHash("sha256").update(value).digest("hex");
   const { enforceServerActionRateLimit } = await import("@/lib/distributed-rate-limit");
   await enforceServerActionRateLimit("portal:resolve", tokenHash, { limit: 60, windowSec: 60 });
 
-  const [client] = await db
+  let client: typeof clients.$inferSelect | undefined;
+  [client] = await db
     .select()
     .from(clients)
     .where(eq(clients.portalTokenHash, tokenHash))
     .limit(1);
 
-  if (!client) throw new Error("Invalid portal link");
+  // Password-protected portal mutations use slug + HttpOnly session, never raw bearer token.
+  if (!client) {
+    [client] = await db
+      .select()
+      .from(clients)
+      .where(
+        and(
+          eq(clients.portalSlug, value),
+          eq(clients.portalSlugEnabled, true),
+        ),
+      )
+      .limit(1);
+    const secret = process.env.BETTER_AUTH_SECRET;
+    const session = (await cookies()).get(PORTAL_COOKIE)?.value;
+    const unlocked = !!client && !!secret && !!session && !!client.portalPasswordHash
+      && !!verifyPortalSession(session, client.id, client.portalSessionVersion, secret);
+    if (!unlocked) client = undefined;
+  }
 
+  if (!client) throw new Error("Invalid portal link");
   if (!client.portalEnabled) throw new Error("Portal is disabled");
   if (client.portalTokenRevokedAt) throw new Error("Portal access has been revoked");
   if (client.portalTokenExpiresAt && new Date(client.portalTokenExpiresAt) < new Date()) {

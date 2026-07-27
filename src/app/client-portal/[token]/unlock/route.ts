@@ -21,7 +21,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
   if (!secret) return new NextResponse("Portal unavailable", { status: 503 });
   const response = NextResponse.redirect(portalPublicUrl(request, `/client-portal/${slug}`), 303);
   response.cookies.set(PORTAL_COOKIE, createPortalSession(client.id, client.portalSessionVersion, secret), {
-    httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", maxAge: 86400, path: `/client-portal/${slug}`,
+    httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", maxAge: 86400, path: "/",
   });
   return response;
 }

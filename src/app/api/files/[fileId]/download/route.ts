@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { createHash } from "crypto";
 import { db } from "@/db";
 import {
-  clients,
   files,
   portalVisits,
   projects,
@@ -11,8 +9,9 @@ import {
 } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { getSignedDownloadUrl } from "@/lib/r2";
-import { and, eq, gt, isNull, or } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
+import { getClientPortalAccess } from "@/lib/actions/portal";
 
 async function canAccessFile(
   file: typeof files.$inferSelect,
@@ -38,8 +37,12 @@ async function canAccessFile(
   }
 
   if (!token || file.visibility !== "client") return false;
-
-  const tokenHash = createHash("sha256").update(token).digest("hex");
+  let portalClient;
+  try {
+    portalClient = await getClientPortalAccess(token);
+  } catch {
+    return false;
+  }
 
   // Project-scoped client-visible file
   if (file.projectId) {
@@ -47,19 +50,13 @@ async function canAccessFile(
       .select({ id: files.id })
       .from(files)
       .innerJoin(projects, eq(projects.id, files.projectId))
-      .innerJoin(clients, eq(clients.id, projects.clientId))
       .where(
         and(
           eq(files.id, file.id),
           eq(files.visibility, "client"),
+          eq(files.workspaceId, portalClient.workspaceId),
           eq(projects.clientVisible, true),
-          eq(clients.portalEnabled, true),
-          eq(clients.portalTokenHash, tokenHash),
-          isNull(clients.portalTokenRevokedAt),
-          or(
-            isNull(clients.portalTokenExpiresAt),
-            gt(clients.portalTokenExpiresAt, new Date()),
-          ),
+          eq(projects.clientId, portalClient.id),
         ),
       )
       .limit(1);
@@ -67,26 +64,8 @@ async function canAccessFile(
   }
 
   // Client-level file (no project) shared via portal
-  if (file.clientId) {
-    const [clientFile] = await db
-      .select({ id: files.id })
-      .from(files)
-      .innerJoin(clients, eq(clients.id, files.clientId))
-      .where(
-        and(
-          eq(files.id, file.id),
-          eq(files.visibility, "client"),
-          eq(clients.portalEnabled, true),
-          eq(clients.portalTokenHash, tokenHash),
-          isNull(clients.portalTokenRevokedAt),
-          or(
-            isNull(clients.portalTokenExpiresAt),
-            gt(clients.portalTokenExpiresAt, new Date()),
-          ),
-        ),
-      )
-      .limit(1);
-    if (clientFile) return true;
+  if (file.clientId === portalClient.id && file.workspaceId === portalClient.workspaceId) {
+    return true;
   }
 
   return false;
@@ -121,29 +100,9 @@ export async function GET(
   // A portal file is viewed only after a successful token-authorized download.
   if (token) {
     try {
-      const tokenHash = createHash("sha256").update(token).digest("hex");
-      const [portalClient] = await db
-        .select({
-          id: clients.id,
-          name: clients.name,
-          companyName: clients.companyName,
-        })
-        .from(clients)
-        .where(
-          and(
-            eq(clients.workspaceId, file.workspaceId),
-            eq(clients.portalEnabled, true),
-            eq(clients.portalTokenHash, tokenHash),
-            isNull(clients.portalTokenRevokedAt),
-            or(
-              isNull(clients.portalTokenExpiresAt),
-              gt(clients.portalTokenExpiresAt, new Date()),
-            ),
-          ),
-        )
-        .limit(1);
+      const portalClient = await getClientPortalAccess(token);
 
-      if (portalClient) {
+      if (portalClient.workspaceId === file.workspaceId) {
         const [firstVisit] = await db
           .select({ id: portalVisits.id })
           .from(portalVisits)

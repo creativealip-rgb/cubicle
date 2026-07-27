@@ -2,6 +2,7 @@ import {
   bigint,
   boolean,
   date,
+  index,
   integer,
   jsonb,
   numeric,
@@ -10,6 +11,7 @@ import {
   time,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
@@ -263,23 +265,31 @@ export const portalRequests = pgTable("portal_requests", {
 export const customPackageRequests = pgTable("custom_package_requests", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
-  clientPortalToken: text("client_portal_token").notNull(),
+  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "restrict" }),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "restrict" }),
+  clientPortalToken: text("client_portal_token"), // legacy only; new writes use client_id
+  idempotencyKey: text("idempotency_key"),
   requestedHours: integer("requested_hours").notNull(),
   estimatedPrice: numeric("estimated_price", { precision: 12, scale: 2 }),
   message: text("message"),
   status: text("status", { enum: ["pending", "approved", "rejected"] }).notNull().default("pending"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [
+  uniqueIndex("custom_package_requests_client_idempotency_uidx")
+    .on(table.clientId, table.idempotencyKey)
+    .where(sql`${table.idempotencyKey} is not null`),
+]);
 
 // ─── Package Orders (client portal) ───
 
 export const packageOrders = pgTable("package_orders", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
-  packageId: uuid("package_id").notNull().references(() => packages.id, { onDelete: "cascade" }),
-  clientPortalToken: text("client_portal_token").notNull(),
+  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "restrict" }),
+  packageId: uuid("package_id").references(() => packages.id, { onDelete: "set null" }),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "restrict" }),
+  clientPortalToken: text("client_portal_token"), // legacy only; new writes use client_id
+  idempotencyKey: text("idempotency_key"),
   packageName: text("package_name").notNull(),
   hours: integer("hours"),
   price: numeric("price", { precision: 12, scale: 2 }).notNull(),
@@ -287,7 +297,11 @@ export const packageOrders = pgTable("package_orders", {
   message: text("message"),
   status: text("status", { enum: ["pending", "confirmed", "invoiced", "cancelled"] }).notNull().default("pending"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [
+  uniqueIndex("package_orders_client_idempotency_uidx")
+    .on(table.clientId, table.idempotencyKey)
+    .where(sql`${table.idempotencyKey} is not null`),
+]);
 
 // ─── Comments (polymorphic) ───
 
@@ -359,7 +373,11 @@ export const timeEntries = pgTable("time_entries", {
   status: text("status", { enum: ["draft", "approved", "invoiced"] }).notNull().default("draft"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [
+  uniqueIndex("time_entries_one_active_per_user_workspace_uidx")
+    .on(table.workspaceId, table.userId)
+    .where(sql`${table.endTime} is null and ${table.manualMinutes} is null`),
+]);
 
 // ─── Invoices ───
 
@@ -396,11 +414,17 @@ export const invoiceItems = pgTable("invoice_items", {
   amount: numeric("amount", { precision: 12, scale: 2 }).notNull().default("0"),
   sourceType: text("source_type", { enum: ["manual", "time_entry", "project"] }),
   sourceId: uuid("source_id"),
+  previousTimeEntryStatus: text("previous_time_entry_status", { enum: ["draft", "approved"] }),
   originalCurrency: text("original_currency"),
   originalAmount: numeric("original_amount", { precision: 12, scale: 2 }),
   conversionRate: numeric("conversion_rate", { precision: 18, scale: 8 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [
+  uniqueIndex("invoice_items_time_entry_source_uidx")
+    .on(table.sourceId)
+    .where(sql`${table.sourceType} = 'time_entry' and ${table.sourceId} is not null`),
+  index("invoice_items_source_lookup_idx").on(table.sourceType, table.sourceId),
+]);
 
 export const payments = pgTable("payments", {
   id: uuid("id").defaultRandom().primaryKey(),

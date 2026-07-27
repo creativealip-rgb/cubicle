@@ -189,7 +189,7 @@ export function PackageCatalog({
     setLoading(true);
     try {
       await deletePackage(deleteTarget.id);
-      toast.success(t("Service dihapus", "Service deleted"));
+      toast.success(t("Service diarsipkan", "Service archived"));
       setDeleteTarget(null);
       router.refresh();
     } catch (err: unknown) {

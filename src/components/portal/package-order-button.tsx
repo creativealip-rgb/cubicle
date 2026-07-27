@@ -51,16 +51,13 @@ export function PackageOrderButton({
   async function handleConfirm() {
     setLoading(true);
     try {
-      await createPackageOrder(
-        token,
+      await createPackageOrder({
+        credential: token,
         projectId,
         packageId,
-        packageName,
-        hours,
-        price,
-        currency,
-        message || undefined,
-      );
+        message: message || null,
+        idempotencyKey: crypto.randomUUID(),
+      });
       toast.success(
         t(
           `Pesanan ${packageName} terkirim!`,

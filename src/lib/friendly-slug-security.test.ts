@@ -4,11 +4,13 @@ import { readFileSync } from "node:fs";
 const read = (path: string) => readFileSync(path, "utf8");
 
 describe("friendly slug authorization boundary", () => {
-  it("does not resolve client portal access by friendly slug", () => {
+  it("resolves password portal slug only with HttpOnly session guard", () => {
     const portal = read("src/lib/actions/portal.ts");
-    expect(portal).not.toContain("eq(clients.portalSlug");
     expect(portal).not.toContain("or(eq(clients.portalTokenHash");
     expect(portal).toContain("eq(clients.portalTokenHash, tokenHash)");
+    expect(portal).toContain("eq(clients.portalSlug, value)");
+    expect(portal).toContain("verifyPortalSession");
+    expect(portal).toContain("client.portalPasswordHash");
   });
 
   it("disables portal slug authorization by default", () => {
