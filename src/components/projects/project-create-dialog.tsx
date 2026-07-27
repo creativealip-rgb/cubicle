@@ -47,7 +47,7 @@ export function ProjectCreateDialog({
           {t("Proyek Baru", "New Project")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-h-[90dvh] w-[calc(100%-1rem)] overflow-y-auto p-4 sm:max-w-[500px] sm:p-6">
         <DialogHeader>
           <DialogTitle>{t("Proyek Baru", "New Project")}</DialogTitle>
         </DialogHeader>

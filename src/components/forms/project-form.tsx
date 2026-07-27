@@ -6,12 +6,14 @@ import { toast } from "sonner";
 import { createProject, updateProject } from "@/lib/actions/projects";
 import { isStaleServerActionError } from "@/lib/client-errors";
 import { Button } from "@/components/ui/button";
+import { DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getPackagesByProject, getWorkspacePackages } from "@/lib/actions/packages";
 import { formatMoney } from "@/lib/utils";
 import Link from "next/link";
+import { useT } from "@/lib/i18n-client";
 
 interface ProjectFormProps {
   mode: "create" | "edit";
@@ -40,6 +42,7 @@ interface ProjectFormProps {
 
 export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuccess }: ProjectFormProps) {
   const router = useRouter();
+  const { t } = useT();
   const [loading, setLoading] = useState(false);
   const [projectPackages, setProjectPackages] = useState<Array<{ id: string; name: string; hours: number | null; price: string; currency: string }>>([]);
   const [form, setForm] = useState({
@@ -329,7 +332,7 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
           </Select>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label htmlFor="startDate">Mulai</Label>
           <Input id="startDate" type="date" value={form.startDate} onChange={(e) => setForm((p) => ({ ...p, startDate: e.target.value }))} />
@@ -353,9 +356,16 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
         />
         <Label htmlFor="clientVisible">Terlihat oleh klien</Label>
       </div>
-      <Button type="submit" disabled={loading} className="w-full">
-        {loading ? "Menyimpan..." : mode === "create" ? "Buat Project" : "Simpan Perubahan"}
-      </Button>
+      <div className="grid grid-cols-2 gap-2">
+        <DialogClose asChild>
+          <Button type="button" variant="outline" disabled={loading}>
+            {t("Batal", "Cancel")}
+          </Button>
+        </DialogClose>
+        <Button type="submit" disabled={loading}>
+          {loading ? "Menyimpan..." : mode === "create" ? "Buat Project" : "Simpan Perubahan"}
+        </Button>
+      </div>
     </form>
   );
 }

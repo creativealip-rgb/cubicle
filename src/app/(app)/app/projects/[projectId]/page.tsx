@@ -223,7 +223,7 @@ export default async function ProjectDetailPage({
               <Pencil className="h-3 w-3" /> {t("Ubah", "Edit")}
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="max-h-[90dvh] w-[calc(100%-1rem)] overflow-y-auto p-4 sm:max-w-[500px] sm:p-6">
             <DialogHeader>
               <DialogTitle>{t("Ubah Proyek", "Edit Project")}</DialogTitle>
             </DialogHeader>

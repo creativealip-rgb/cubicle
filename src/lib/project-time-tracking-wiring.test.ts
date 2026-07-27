@@ -79,4 +79,18 @@ describe("Phase 1 project time tracking wiring", () => {
     expect(topbar).toContain('if (!activeTimer.projectId)');
     expect(topbar).toContain('router.push("/app/time")');
   });
+
+  it("keeps project dialogs reachable on mobile", () => {
+    const createDialog = read("src/components/projects/project-create-dialog.tsx");
+    const projectPage = read("src/app/(app)/app/projects/[projectId]/page.tsx");
+    const projectForm = read("src/components/forms/project-form.tsx");
+
+    expect(createDialog).toContain('max-h-[90dvh]');
+    expect(createDialog).toContain('overflow-y-auto');
+    expect(projectPage).toContain('max-h-[90dvh]');
+    expect(projectPage).toContain('overflow-y-auto');
+    expect(projectForm).toContain('grid-cols-1 sm:grid-cols-3');
+    expect(projectForm).toContain('<DialogClose asChild>');
+    expect(projectForm).toContain('t("Batal", "Cancel")');
+  });
 });
