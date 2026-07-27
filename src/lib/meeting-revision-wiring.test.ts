@@ -35,11 +35,24 @@ describe("meeting revision wiring", () => {
     expect(studio).not.toContain("usage.totalCost.toFixed");
   });
 
-  it("keeps personal page at ten items and uses compact dropdown filtering", () => {
+  it("keeps personal page at ten items and uses Todoist compact rows", () => {
     const action = read("src/lib/actions/personal-notes.ts");
     const page = read("src/app/(app)/app/personal/page.tsx");
+    const list = read("src/components/notes/notes-list-client.tsx");
     expect(action).toContain("const NOTES_PAGE_SIZE = 10");
     expect(page).not.toContain("<StatusFilterTabs");
+    expect(page).toContain('data-ui="notes-todoist-compact"');
+    expect(list).toContain('data-ui="todoist-note-list"');
+    expect(list).not.toContain("IntersectionObserver");
+  });
+
+  it("keeps Journal separate with compact timeline rows", () => {
+    const page = read("src/app/(app)/app/journal/page.tsx");
+    const list = read("src/components/journal/journal-list.tsx");
+    expect(page).toContain('data-ui="journal-compact-timeline"');
+    expect(list).toContain('data-ui="journal-timeline-list"');
+    expect(page).toContain("const pageSize = 10");
+    expect(list).not.toContain("todoist-note-list");
   });
 
   it("keeps dashboard to fixed top reminder cards", () => {
@@ -51,6 +64,6 @@ describe("meeting revision wiring", () => {
     expect(page).toContain('key: "note-reminders"');
     expect(page).toContain('key: "invoice-due"');
     expect(page).toContain('key: "approval"');
-    expect(page).toContain('xl:grid-cols-[minmax(0,1fr)_400px]');
+    expect(page).toContain("xl:grid-cols-[minmax(0,1fr)_400px]");
   });
 });

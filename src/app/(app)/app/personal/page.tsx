@@ -232,18 +232,26 @@ export default async function PersonalPage({
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="app-page-title">{t("Catatan", "Notes")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t(
-            "Catatan pribadi di workspace ini. Tidak tampil ke client.",
-            "Private notes in this workspace. Hidden from clients.",
-          )}
-        </p>
+    <div className="space-y-4" data-ui="notes-todoist-compact">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="app-page-title">{t("Catatan", "Notes")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t(
+              "Catatan pribadi di workspace ini. Tidak tampil ke client.",
+              "Private notes in this workspace. Hidden from clients.",
+            )}
+          </p>
+        </div>
+        <Button asChild className="shrink-0">
+          <a href="#new-note">{t("+ Catatan", "+ Note")}</a>
+        </Button>
       </div>
 
-      <form action="/app/personal" className="flex flex-wrap gap-2">
+      <form
+        action="/app/personal"
+        className="flex flex-wrap gap-2 rounded-lg border bg-card p-2"
+      >
         <select
           name="tab"
           defaultValue={tab}
@@ -262,7 +270,7 @@ export default async function PersonalPage({
           defaultValue={query}
           className="min-w-[200px] flex-1"
         />
-        <Button type="submit" variant="outline">
+        <Button type="submit" variant="outline" className="sr-only">
           {t("Cari", "Search")}
         </Button>
         {query || tab !== "open" ? (
@@ -272,13 +280,10 @@ export default async function PersonalPage({
         ) : null}
       </form>
 
-      <div className="space-y-6">
-        <details className="group rounded-xl border bg-card">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-6 py-4 font-semibold">
-            <span>{t("+ Catatan baru", "+ New note")}</span>
-            <span className="text-sm text-muted-foreground group-open:hidden">
-              {t("Buka form", "Open form")}
-            </span>
+      <div className="space-y-3">
+        <details id="new-note" className="group rounded-lg border bg-card">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center px-4 py-3 text-sm font-semibold">
+            <span>{t("Catatan baru", "New note")}</span>
           </summary>
           <Card className="h-fit border-0 shadow-none">
             <CardHeader>
@@ -377,11 +382,11 @@ export default async function PersonalPage({
           </Card>
         </details>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("Daftar catatan", "Note list")}</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <section className="overflow-hidden rounded-lg border bg-card">
+          <div className="border-b px-4 py-2 text-xs text-muted-foreground">
+            {t("Daftar catatan", "Note list")}
+          </div>
+          <div className="px-3 py-2 sm:px-4">
             <NotesListClient
               initialNotes={notes.map(toNoteItem)}
               total={tabTotal}
@@ -398,8 +403,8 @@ export default async function PersonalPage({
                 convertToTask,
               }}
             />
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       </div>
     </div>
   );

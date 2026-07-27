@@ -151,15 +151,22 @@ export default async function JournalPage({
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="app-page-title">{t("Jurnal", "Journal")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t(
-            "Catatan harian — insight, blockers, keputusan, refleksi.",
-            "Daily notes — insights, blockers, decisions, reflections.",
-          )}
-        </p>
+    <div className="space-y-4" data-ui="journal-compact-timeline">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="app-page-title">{t("Jurnal", "Journal")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t(
+              "Catatan harian — insight, blockers, keputusan, refleksi.",
+              "Daily notes — insights, blockers, decisions, reflections.",
+            )}
+          </p>
+        </div>
+        {tab === "active" ? (
+          <Button asChild>
+            <a href="#new-journal">{t("+ Entri", "+ Entry")}</a>
+          </Button>
+        ) : null}
       </div>
 
       <StatusFilterTabs
@@ -182,12 +189,9 @@ export default async function JournalPage({
       />
 
       {tab === "active" ? (
-        <details className="group rounded-xl border bg-card">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-6 py-4 font-semibold">
-            <span>{t("+ Entri jurnal", "+ Journal entry")}</span>
-            <span className="text-sm text-muted-foreground group-open:hidden">
-              {t("Buka form", "Open form")}
-            </span>
+        <details id="new-journal" className="group rounded-lg border bg-card">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center px-4 py-3 text-sm font-semibold">
+            <span>{t("Entri jurnal baru", "New journal entry")}</span>
           </summary>
           <Card className="border-0 shadow-none">
             <CardHeader>
@@ -242,15 +246,13 @@ export default async function JournalPage({
         </details>
       ) : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {tab === "archived"
-              ? t("Arsip jurnal", "Archived journal")
-              : t("Entri jurnal", "Journal entries")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <section className="overflow-hidden rounded-lg border bg-card">
+        <div className="border-b px-4 py-2 text-xs text-muted-foreground">
+          {tab === "archived"
+            ? t("Arsip jurnal", "Archived journal")
+            : t("Entri jurnal", "Journal entries")}
+        </div>
+        <div className="p-3 sm:p-4">
           <JournalList
             entries={entries}
             tab={tab}
@@ -288,8 +290,8 @@ export default async function JournalPage({
               )}
             </div>
           ) : null}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
     </div>
   );
 }
