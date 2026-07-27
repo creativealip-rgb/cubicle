@@ -1,3 +1,5 @@
+name: cubicle-dev
+
 services:
   cubicle-dev-redis:
     image: redis:7-alpine
