@@ -93,7 +93,7 @@ const createManualEntrySchema = z.object({
 
 const weeklyTimeCellSchema = z.object({
   projectId: z.string().uuid(),
-  taskId: z.string().uuid().nullable().optional(),
+  activityId: z.string().uuid(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   totalMinutes: z.number().int().min(0).max(24 * 60),
 });
@@ -516,19 +516,19 @@ export async function setWeeklyTimeCell(input: z.infer<typeof weeklyTimeCellSche
   const [project] = await db.select({ clientId: projects.clientId }).from(projects)
     .where(and(eq(projects.id, parsed.projectId), eq(projects.workspaceId, workspaceId))).limit(1);
   if (!project?.clientId) throw new Error("Project wajib punya klien");
-  await assertTimeEntryContext(db, workspaceId, { clientId: project.clientId, projectId: parsed.projectId, taskId: parsed.taskId ?? null });
+  await assertTimeEntryContext(db, workspaceId, { clientId: project.clientId, projectId: parsed.projectId, taskId: null });
   const projectMode = await assertProjectTimeTrackingEnabled(db, workspaceId, parsed.projectId);
-  const activityPolicy = await assertActivityWriteAllowed(db, { workspaceId, projectId: parsed.projectId, activityId: null, stage: "manual" });
+  const activityPolicy = await assertActivityWriteAllowed(db, { workspaceId, projectId: parsed.projectId, activityId: parsed.activityId, stage: "manual" });
   const start = new Date(`${parsed.date}T00:00:00.000Z`);
   const nextDay = new Date(start.getTime() + 86_400_000);
 
   const result = await db.transaction(async (tx) => {
     const rows = await tx.select().from(timeEntries).where(and(
       eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.userId, user.id),
-      eq(timeEntries.projectId, parsed.projectId), parsed.taskId ? eq(timeEntries.taskId, parsed.taskId) : isNull(timeEntries.taskId),
+      eq(timeEntries.projectId, parsed.projectId), eq(timeEntries.activityId, parsed.activityId),
       gte(timeEntries.startTime, start), lt(timeEntries.startTime, nextDay),
     ));
-    const managed = rows.filter((row) => row.status === "draft" && row.manualMinutes != null && row.tags?.split(",").map((tag) => tag.trim()).includes(WEEKLY_GRID_TAG));
+    const managed = rows.filter((row) => row.taskId == null && row.status === "draft" && row.manualMinutes != null && row.tags?.split(",").map((tag) => tag.trim()).includes(WEEKLY_GRID_TAG));
     const managedIds = new Set(managed.map((row) => row.id));
     const immutableMinutes = rows.filter((row) => !managedIds.has(row.id)).reduce((sum, row) => sum + Math.max(0, row.durationMinutes ?? row.manualMinutes ?? 0), 0);
     if (parsed.totalMinutes < immutableMinutes) throw new Error(`Minimum ${immutableMinutes} menit karena ada timer atau entri terkunci`);
@@ -542,7 +542,7 @@ export async function setWeeklyTimeCell(input: z.infer<typeof weeklyTimeCellSche
     const hourlyRate = billable ? await resolveHourlyRate({ workspaceId, projectId: parsed.projectId, projectActivityRate: activityPolicy.rateOverride, activityDefaultRate: activityPolicy.defaultHourlyRate }) : null;
     const [created] = await tx.insert(timeEntries).values({
       workspaceId, clientId: project.clientId, projectId: parsed.projectId, activityId: activityPolicy.activityId,
-      taskId: parsed.taskId ?? null, userId: user.id, description: "Weekly timesheet", tags: WEEKLY_GRID_TAG,
+      taskId: null, userId: user.id, description: "Weekly timesheet", tags: WEEKLY_GRID_TAG,
       startTime: start, endTime: new Date(start.getTime() + editableMinutes * 60_000), manualMinutes: editableMinutes,
       billable, hourlyRate, status: "draft",
     }).returning();
