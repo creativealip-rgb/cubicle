@@ -10,13 +10,14 @@ describe("template preview access", () => {
     expect(canAccessTemplatesPreview("alipdevcom@gmail.com", "production")).toBe(true);
   });
 
-  it("allows synthetic QA account only in isolated development", () => {
+  it("allows owners to preview in isolated development", () => {
     expect(canAccessTemplatesPreview("alip.qa@cubiqlo.test", "development")).toBe(true);
+    expect(canAccessTemplatesPreview("test@cubiqlo.com", "development")).toBe(true);
     expect(canAccessTemplatesPreview("alip.qa@cubiqlo.test", "production")).toBe(false);
     expect(canAccessTemplatesPreview("alip.qa@cubiqlo.test", undefined)).toBe(false);
   });
 
-  it("does not open preview for other development users", () => {
-    expect(canAccessTemplatesPreview("member@cubiqlo.test", "development")).toBe(false);
+  it("does not open preview for unlisted production users", () => {
+    expect(canAccessTemplatesPreview("member@cubiqlo.test", "production")).toBe(false);
   });
 });

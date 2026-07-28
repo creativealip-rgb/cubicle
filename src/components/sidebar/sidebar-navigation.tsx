@@ -46,7 +46,7 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
   function placePanel(id: SidebarGroupId) {
     const rect = triggers.current[id]?.getBoundingClientRect();
     if (!rect) return;
-    const panelHeight = id === "sales" ? 460 : id === "finance" ? 300 : 240;
+    const panelHeight = id === "sales" ? 430 : id === "finance" ? 300 : 240;
     setPosition({ top: Math.max(12, Math.min(rect.top - 8, window.innerHeight - panelHeight - 12)), left: rect.right + 8 });
   }
   function scheduleOpen(id: SidebarGroupId) {
@@ -119,9 +119,9 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
           if (event.key === "ArrowDown") { event.preventDefault(); links[(index + 1) % links.length]?.focus(); }
           if (event.key === "ArrowUp") { event.preventDefault(); links[(index - 1 + links.length) % links.length]?.focus(); }
         }}
-        className="fixed z-[60] w-[280px] rounded-xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10 motion-reduce:transition-none">
+        className="fixed z-[60] w-[340px] rounded-xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10 motion-reduce:transition-none">
         <p className="px-3 pb-2 pt-1 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">{t(openEntry.label.id, openEntry.label.en)}</p>
-        <div className="space-y-1">{openEntry.children.map((item) => { const Icon = item.icon; const isActive = active.itemId === item.id; const badge = badgeFor(item.badgeKey); return <Link key={item.id} href={item.href} onClick={onNavigate} aria-current={isActive ? "page" : undefined} className={cn("flex min-h-14 items-start gap-3 rounded-lg px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500", isActive ? "bg-violet-50 text-violet-800 ring-1 ring-violet-200" : "hover:bg-slate-50")}><span className="mt-0.5 rounded-md bg-slate-100 p-1.5"><Icon className="h-4 w-4" /></span><span className="min-w-0 flex-1"><span className="block text-sm font-semibold">{t(item.label.id, item.label.en)}</span><span className="block truncate text-xs text-slate-500">{item.description && t(item.description.id, item.description.en)}</span></span>{badge > 0 && <span className="rounded-full bg-blue-600 px-1.5 py-0.5 text-xs font-semibold text-white">{formatSidebarBadge(badge)}</span>}</Link>; })}</div>
+        <div className="space-y-1">{openEntry.children.map((item) => { const Icon = item.icon; const isActive = active.itemId === item.id; const badge = badgeFor(item.badgeKey); return <Link key={item.id} href={item.href} onClick={onNavigate} aria-current={isActive ? "page" : undefined} className={cn("flex min-h-14 items-start gap-3 rounded-lg px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500", isActive ? "bg-violet-50 text-violet-800 ring-1 ring-violet-200" : "hover:bg-slate-50")}><span className="mt-0.5 rounded-md bg-slate-100 p-1.5"><Icon className="h-4 w-4" /></span><span className="min-w-0 flex-1"><span className="block text-sm font-semibold">{t(item.label.id, item.label.en)}</span><span className="block text-xs leading-5 text-slate-500">{item.description && t(item.description.id, item.description.en)}</span></span>{badge > 0 && <span className="rounded-full bg-blue-600 px-1.5 py-0.5 text-xs font-semibold text-white">{formatSidebarBadge(badge)}</span>}</Link>; })}</div>
       </div>}
     </div>
 

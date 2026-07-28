@@ -54,7 +54,7 @@ describe("Phase 2 Activity catalog wiring", () => {
     ]) {
       const source = read(path);
       const project = source.indexOf('t("Proyek", "Project")');
-      const activity = source.indexOf('t("Activity", "Activity")');
+      const activity = source.indexOf('t("Aktivitas", "Activity")');
       const task = source.indexOf('t("Tugas terkait", "Related Task")');
       const description = source.indexOf('t("Deskripsi", "Description")');
       expect(project, `${path}: Project label`).toBeGreaterThan(-1);

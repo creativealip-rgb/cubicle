@@ -406,7 +406,7 @@ export default async function ReportsPage({
     .groupBy(timeEntries.activityId, activities.name)
     .orderBy(desc(sql`sum(${timeEntries.durationMinutes})`));
 
-  const detailedTimeRows = await db.select({ projectId: timeEntries.projectId, projectName: projects.name, taskId: timeEntries.taskId, taskTitle: tasks.title, userId: timeEntries.userId, userName: users.name, durationMinutes: timeEntries.durationMinutes, billable: timeEntries.billable, hourlyRate: timeEntries.hourlyRate }).from(timeEntries).leftJoin(projects, eq(projects.id, timeEntries.projectId)).leftJoin(tasks, eq(tasks.id, timeEntries.taskId)).leftJoin(users, eq(users.id, timeEntries.userId)).where(and(eq(timeEntries.workspaceId, ws.id), gte(sql`(${timeEntries.startTime})::date`, period.start), lte(sql`(${timeEntries.startTime})::date`, period.end)));
+  const detailedTimeRows = await db.select({ clientId: timeEntries.clientId, clientName: clients.name, projectId: timeEntries.projectId, projectName: projects.name, taskId: timeEntries.taskId, taskTitle: tasks.title, userId: timeEntries.userId, userName: users.name, durationMinutes: timeEntries.durationMinutes, billable: timeEntries.billable, hourlyRate: timeEntries.hourlyRate }).from(timeEntries).leftJoin(clients, eq(clients.id, timeEntries.clientId)).leftJoin(projects, eq(projects.id, timeEntries.projectId)).leftJoin(tasks, eq(tasks.id, timeEntries.taskId)).leftJoin(users, eq(users.id, timeEntries.userId)).where(and(eq(timeEntries.workspaceId, ws.id), gte(sql`(${timeEntries.startTime})::date`, period.start), lte(sql`(${timeEntries.startTime})::date`, period.end)));
   const timeReport = buildTimeReport(detailedTimeRows);
 
   const activityTime = activityTimeRows.map((row) => ({
@@ -424,6 +424,7 @@ export default async function ReportsPage({
 
   if (activeTab === "time") {
     const sections = [
+      [t("Per Klien", "By client"), timeReport.byClient],
       [t("Per Proyek", "By project"), timeReport.byProject],
       [t("Per Tugas", "By task"), timeReport.byTask],
       [t("Per Anggota", "By member"), timeReport.byMember],
@@ -439,8 +440,8 @@ export default async function ReportsPage({
           {[[t("Total", "Total"), timeReport.summary.totalMinutes], ["Billable", timeReport.summary.billableMinutes], ["Non-billable", timeReport.summary.nonBillableMinutes]].map(([label, minutes]) => <div key={String(label)}><p className="text-xs text-muted-foreground">{label}</p><p className="text-xl font-semibold tabular-nums">{(Number(minutes) / 60).toFixed(1)}h</p></div>)}
           <div><p className="text-xs text-muted-foreground">{t("Estimasi nilai", "Estimated value")}</p><p className="text-xl font-semibold tabular-nums">{formatMoney(timeReport.summary.billableValue, baseCurrency)}</p></div>
         </CardContent></Card>
-        <div className="grid gap-4 lg:grid-cols-3">{sections.map(([title, rows]) => <Card key={title}><CardHeader><CardTitle className="text-base">{title}</CardTitle></CardHeader><CardContent>{rows.length === 0 ? <p className="text-sm text-muted-foreground">{t("Belum ada waktu tercatat.", "No tracked time yet.")}</p> : <div className="divide-y">{rows.slice(0, 10).map(row => <div key={row.id} className="flex justify-between gap-3 py-2 text-sm"><span className="truncate">{row.name}</span><span className="tabular-nums">{(row.minutes / 60).toFixed(1)}h</span></div>)}</div>}</CardContent></Card>)}</div>
-        <Card><CardHeader><CardTitle className="text-base">{t("Per Activity", "By activity")}</CardTitle></CardHeader><CardContent>{activityTime.length === 0 ? <p className="text-sm text-muted-foreground">{t("Belum ada waktu tercatat.", "No tracked time yet.")}</p> : <div className="divide-y">{activityTime.slice(0, 10).map(row => <div key={row.id} className="flex justify-between py-2 text-sm"><span>{row.name}</span><span>{(row.minutes / 60).toFixed(1)}h</span></div>)}</div>}</CardContent></Card>
+        <div className="grid gap-4 md:grid-cols-2">{sections.map(([title, rows]) => <Card key={title}><CardHeader><CardTitle className="text-base">{title}</CardTitle></CardHeader><CardContent>{rows.length === 0 ? <p className="text-sm text-muted-foreground">{t("Belum ada waktu tercatat.", "No tracked time yet.")}</p> : <div className="divide-y">{rows.slice(0, 10).map(row => <div key={row.id} className="flex justify-between gap-3 py-2 text-sm"><span className="truncate">{row.name}</span><span className="tabular-nums">{(row.minutes / 60).toFixed(1)}h</span></div>)}</div>}</CardContent></Card>)}</div>
+        <Card><CardHeader><CardTitle className="text-base">{t("Per Aktivitas", "By activity")}</CardTitle></CardHeader><CardContent>{activityTime.length === 0 ? <p className="text-sm text-muted-foreground">{t("Belum ada waktu tercatat.", "No tracked time yet.")}</p> : <div className="divide-y">{activityTime.slice(0, 10).map(row => <div key={row.id} className="flex justify-between py-2 text-sm"><span>{row.name}</span><span>{(row.minutes / 60).toFixed(1)}h</span></div>)}</div>}</CardContent></Card>
         <div className="flex flex-wrap gap-2"><Button asChild variant="outline"><Link href="/app/time/history">{t("Riwayat dan ekspor PDF", "History and PDF export")}</Link></Button><Button asChild><Link href="/app/invoices?tab=uninvoiced">{t("Buat invoice dari waktu", "Invoice tracked time")}</Link></Button></div>
       </div>
     );
