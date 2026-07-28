@@ -16,6 +16,7 @@ import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { billingTypeHint, billingTypeLabel } from "@/lib/feature-access";
 import { ProjectTasksTab } from "@/components/tasks/project-tasks-tab";
+import { ProjectActivitySettings } from "@/components/projects/project-activity-settings";
 import { ProjectForm } from "@/components/forms/project-form";
 import Link from "next/link";
 import {
@@ -286,6 +287,9 @@ export default async function ProjectDetailPage({
           <TabsTrigger value="tasks" className="gap-1">
             <CheckSquare className="h-3 w-3" /> {t("Tugas", "Tasks")} ({projectTasks.length})
           </TabsTrigger>
+          <TabsTrigger value="activities" className="gap-1">
+            <Clock className="h-3 w-3" /> {t("Activity", "Activities")}
+          </TabsTrigger>
           <TabsTrigger value="files" className="gap-1">
             <FileText className="h-3 w-3" /> {t("Berkas", "Files")} ({projectFiles.length})
           </TabsTrigger>
@@ -298,6 +302,10 @@ export default async function ProjectDetailPage({
 
         <TabsContent value="tasks" className="pt-4">
           <ProjectTasksTab projectId={projectId} tasks={projectTasks} members={projectMembers} />
+        </TabsContent>
+
+        <TabsContent value="activities" className="pt-4">
+          <ProjectActivitySettings projectId={projectId} />
         </TabsContent>
 
         <TabsContent value="files" className="pt-4 space-y-3">

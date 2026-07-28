@@ -30,6 +30,7 @@ interface Project {
   name: string;
   clientId?: string | null;
   billingType?: string | null;
+  activityRequired?: boolean | null;
   rate?: string | null;
 }
 
@@ -39,10 +40,21 @@ interface Task {
   projectId?: string | null;
 }
 
+interface Activity {
+  id: string;
+  name: string;
+  projectId?: string | null;
+  enabled?: boolean | null;
+  status?: string | null;
+  defaultHourlyRate?: string | number | null;
+  rateOverride?: string | number | null;
+}
+
 interface ActiveTimer {
   id: string;
   clientId: string | null;
   projectId: string | null;
+  activityId?: string | null;
   taskId: string | null;
   description: string | null;
   tags?: string | null;
@@ -50,6 +62,7 @@ interface ActiveTimer {
   pausedAt?: Date | string | null;
   clientName: string | null;
   projectName: string | null;
+  activityName?: string | null;
   taskTitle: string | null;
 }
 
@@ -59,6 +72,7 @@ interface TimerWidgetProps {
   clients: Client[];
   projects: Project[];
   tasks: Task[];
+  activities?: Activity[];
   initialTimer: ActiveTimer | null;
 }
 
@@ -95,6 +109,7 @@ export function TimerWidget({
   clients,
   projects: allProjects,
   tasks: allTasks,
+  activities: allActivities = [],
   initialTimer,
 }: TimerWidgetProps) {
   const router = useRouter();
@@ -107,12 +122,15 @@ export function TimerWidget({
 
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [selectedActivityId, setSelectedActivityId] = useState<string>("");
+  const setActivityId = useCallback((value: string) => setSelectedActivityId(value), []);
   const [selectedTaskId, setSelectedTaskId] = useState<string>("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [hourlyRate, setHourlyRate] = useState("");
 
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
+  const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
 
   const selectedProject = allProjects.find((p) => p.id === selectedProjectId);
@@ -125,23 +143,29 @@ export function TimerWidget({
     if (selectedClientId) {
       setFilteredProjects(allProjects.filter((p) => p.clientId === selectedClientId));
       setSelectedProjectId("");
+      setActivityId("");
       setSelectedTaskId("__none__");
     } else {
       setFilteredProjects([]);
       setSelectedProjectId("");
+      setActivityId("");
       setSelectedTaskId("__none__");
     }
-  }, [selectedClientId, allProjects]);
+  }, [selectedClientId, allProjects, setActivityId]);
 
   useEffect(() => {
     if (selectedProjectId) {
+      setFilteredActivities(allActivities.filter((a) => a.projectId === selectedProjectId));
       setFilteredTasks(allTasks.filter((tk) => tk.projectId === selectedProjectId));
+      setActivityId("");
       setSelectedTaskId("__none__");
     } else {
+      setFilteredActivities([]);
       setFilteredTasks([]);
+      setActivityId("");
       setSelectedTaskId("__none__");
     }
-  }, [selectedProjectId, allTasks]);
+  }, [selectedProjectId, allTasks, allActivities, setActivityId]);
 
   const loadActiveFromApi = useCallback(async () => {
     try {
@@ -195,6 +219,7 @@ export function TimerWidget({
         workspaceId,
         clientId: selectedClientId,
         projectId: selectedProjectId,
+        activityId: selectedActivityId || null,
         taskId: selectedTaskId && selectedTaskId !== "__none__" ? selectedTaskId : undefined,
         description: description || undefined,
         tags: tags || undefined,
@@ -203,12 +228,14 @@ export function TimerWidget({
 
       const client = clients.find((c) => c.id === selectedClientId);
       const project = allProjects.find((p) => p.id === selectedProjectId);
+      const activity = allActivities.find((a) => a.id === selectedActivityId);
       const task = allTasks.find((tk) => tk.id === selectedTaskId);
 
       setActiveTimer({
         id: entry.id,
         clientId: selectedClientId,
         projectId: selectedProjectId,
+        activityId: selectedActivityId || null,
         taskId: selectedTaskId && selectedTaskId !== "__none__" ? selectedTaskId : null,
         description: description || null,
         tags: tags || null,
@@ -216,6 +243,7 @@ export function TimerWidget({
         pausedAt: null,
         clientName: client?.name ?? null,
         projectName: project?.name ?? null,
+        activityName: activity?.name ?? null,
         taskTitle: task?.title ?? null,
       });
       selfDispatched.current = true;
@@ -230,6 +258,7 @@ export function TimerWidget({
   }, [
     selectedClientId,
     selectedProjectId,
+    selectedActivityId,
     selectedTaskId,
     description,
     tags,
@@ -237,6 +266,7 @@ export function TimerWidget({
     workspaceId,
     clients,
     allProjects,
+    allActivities,
     allTasks,
     router,
     t,
@@ -250,6 +280,7 @@ export function TimerWidget({
         id: entry.id,
         clientId: null,
         projectId: null,
+        activityId: null,
         taskId: null,
         description: null,
         tags: null,
@@ -257,6 +288,7 @@ export function TimerWidget({
         pausedAt: null,
         clientName: null,
         projectName: null,
+        activityName: null,
         taskTitle: null,
       });
       selfDispatched.current = true;
@@ -502,7 +534,7 @@ export function TimerWidget({
                 <h3 className="text-sm font-semibold">{t("Mulai Timer", "Start Timer")}</h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs">{t("Klien", "Client")}</Label>
                   <Select value={selectedClientId} onValueChange={setSelectedClientId}>
@@ -538,7 +570,27 @@ export function TimerWidget({
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">{t("Tugas (opsional)", "Task (optional)")}</Label>
+                  <Label className="text-xs">{t("Activity", "Activity")}</Label>
+                  <Select
+                    value={selectedActivityId || "__none__"}
+                    onValueChange={(value) => setSelectedActivityId(value === "__none__" ? "" : value)}
+                    disabled={!selectedProjectId}
+                  >
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder={t("Pilih activity", "Select activity")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
+                      {filteredActivities.map((a) => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">{t("Tugas terkait", "Related Task")}</Label>
                   <Select
                     value={selectedTaskId}
                     onValueChange={setSelectedTaskId}
@@ -658,6 +710,7 @@ export function TimerWidget({
           entryId: activeTimer.id,
           clientId: activeTimer.clientId,
           projectId: activeTimer.projectId,
+          activityId: activeTimer.activityId,
           taskId: activeTimer.taskId,
           description: activeTimer.description,
           tags: activeTimer.tags,
@@ -665,6 +718,7 @@ export function TimerWidget({
         clients={clients}
         projects={allProjects}
         tasks={allTasks}
+        activities={allActivities}
         onStopped={() => {
           setActiveTimer(null);
           setElapsed("00:00:00");

@@ -31,10 +31,17 @@ export type TimerFormTask = {
   projectId?: string | null;
 };
 
+export type TimerFormActivity = {
+  id: string;
+  name: string;
+  projectId?: string | null;
+};
+
 export type StopTimerPrefill = {
   entryId: string;
   clientId?: string | null;
   projectId?: string | null;
+  activityId?: string | null;
   taskId?: string | null;
   description?: string | null;
   tags?: string | null;
@@ -47,6 +54,7 @@ interface StopTimerDialogProps {
   clients: TimerFormClient[];
   projects: TimerFormProject[];
   tasks: TimerFormTask[];
+  activities?: TimerFormActivity[];
   onStopped?: () => void;
 }
 
@@ -57,12 +65,14 @@ export function StopTimerDialog({
   clients,
   projects,
   tasks,
+  activities = [],
   onStopped,
 }: StopTimerDialogProps) {
   const { t } = useT();
   const [loading, setLoading] = useState(false);
   const [clientId, setClientId] = useState("");
   const [projectId, setProjectId] = useState("");
+  const [activityId, setActivityId] = useState("");
   const [taskId, setTaskId] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
@@ -72,6 +82,7 @@ export function StopTimerDialog({
     if (!open || !prefill) return;
     setClientId(prefill.clientId || "");
     setProjectId(prefill.projectId || "");
+    setActivityId(prefill.activityId || "");
     setTaskId(prefill.taskId || "");
     setDescription(prefill.description || "");
     setTags(prefill.tags || "");
@@ -82,6 +93,11 @@ export function StopTimerDialog({
     if (!clientId) return [];
     return projects.filter((p) => p.clientId === clientId);
   }, [clientId, projects]);
+
+  const filteredActivities = useMemo(() => {
+    if (!projectId) return [];
+    return activities.filter((a) => a.projectId === projectId);
+  }, [projectId, activities]);
 
   const filteredTasks = useMemo(() => {
     if (!projectId) return [];
@@ -94,12 +110,14 @@ export function StopTimerDialog({
   function handleClientChange(value: string) {
     setClientId(value);
     setProjectId("");
+    setActivityId("");
     setTaskId("");
     setHourlyRate("");
   }
 
   function handleProjectChange(value: string) {
     setProjectId(value);
+    setActivityId("");
     setTaskId("");
     setHourlyRate("");
   }
@@ -117,6 +135,7 @@ export function StopTimerDialog({
         entryId: prefill.entryId,
         clientId: clientId || null,
         projectId: projectId || null,
+        activityId: activityId || null,
         taskId: taskId || null,
         description: description.trim() || null,
         tags: tags || null,
@@ -160,7 +179,7 @@ export function StopTimerDialog({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">{t("Proyek *", "Project *")}</Label>
+              <Label className="text-xs">{t("Proyek", "Project")} *</Label>
               <Select value={projectId} onValueChange={handleProjectChange} disabled={!clientId}>
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue
@@ -191,8 +210,12 @@ export function StopTimerDialog({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs">{t("Tugas", "Task")}</Label>
-            <Select value={taskId} onValueChange={setTaskId} disabled={!projectId}>
+            <Label className="text-xs">{t("Activity", "Activity")}</Label>
+            <Select
+              value={activityId || "__none__"}
+              onValueChange={(value) => setActivityId(value === "__none__" ? "" : value)}
+              disabled={!projectId}
+            >
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue
                   placeholder={
@@ -203,19 +226,35 @@ export function StopTimerDialog({
                 />
               </SelectTrigger>
               <SelectContent>
-                {filteredTasks.length === 0 ? (
-                  <SelectItem value="__none__" disabled>
-                    {projectId
-                      ? t("Tidak ada tugas", "No tasks")
-                      : t("Pilih proyek dulu", "Select project first")}
+                <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
+                {filteredActivities.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.name}
                   </SelectItem>
-                ) : (
-                  filteredTasks.map((tk) => (
-                    <SelectItem key={tk.id} value={tk.id}>
-                      {tk.title}
-                    </SelectItem>
-                  ))
-                )}
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs">{t("Tugas terkait", "Related Task")}</Label>
+            <Select value={taskId || "__none__"} onValueChange={(v) => setTaskId(v === "__none__" ? "" : v)} disabled={!projectId}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue
+                  placeholder={
+                    projectId
+                      ? t("Opsional", "Optional")
+                      : t("Pilih proyek dulu", "Select project first")
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
+                {filteredTasks.map((tk) => (
+                  <SelectItem key={tk.id} value={tk.id}>
+                    {tk.title}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

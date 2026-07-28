@@ -1,7 +1,9 @@
 import {
   bigint,
   boolean,
+  check,
   date,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -182,7 +184,9 @@ export const projects = pgTable("projects", {
   createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [
+  unique("projects_id_workspace_unique").on(table.id, table.workspaceId),
+]);
 
 export const projectMembers = pgTable("project_members", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -352,12 +356,68 @@ export const files = pgTable("files", {
 
 // ─── Time tracking ───
 
+export const activities = pgTable("activities", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  defaultBillable: boolean("default_billable").notNull().default(true),
+  defaultHourlyRate: numeric("default_hourly_rate", { precision: 12, scale: 2 }),
+  status: text("status", { enum: ["active", "archived"] }).notNull().default("active"),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique("activities_id_workspace_unique").on(table.id, table.workspaceId),
+  uniqueIndex("activities_workspace_active_name_uidx")
+    .on(table.workspaceId, sql`lower(btrim(${table.name}))`)
+    .where(sql`${table.status} = 'active'`),
+  index("activities_workspace_status_name_idx").on(table.workspaceId, table.status, table.name),
+  check("activities_name_not_blank_check", sql`length(btrim(${table.name})) > 0`),
+  check(
+    "activities_default_hourly_rate_check",
+    sql`${table.defaultHourlyRate} is null or ${table.defaultHourlyRate} >= 0`,
+  ),
+]);
+
+export const projectActivities = pgTable("project_activities", {
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id").notNull(),
+  activityId: uuid("activity_id").notNull(),
+  enabled: boolean("enabled").notNull().default(true),
+  rateOverride: numeric("rate_override", { precision: 12, scale: 2 }),
+  billableOverride: boolean("billable_override"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique("project_activities_project_activity_unique").on(table.projectId, table.activityId),
+  foreignKey({
+    columns: [table.projectId, table.workspaceId],
+    foreignColumns: [projects.id, projects.workspaceId],
+    name: "project_activities_project_workspace_fk",
+  }).onDelete("cascade"),
+  foreignKey({
+    columns: [table.activityId, table.workspaceId],
+    foreignColumns: [activities.id, activities.workspaceId],
+    name: "project_activities_activity_workspace_fk",
+  }).onDelete("cascade"),
+  index("project_activities_workspace_project_enabled_idx").on(
+    table.workspaceId,
+    table.projectId,
+    table.enabled,
+  ),
+  check(
+    "project_activities_rate_override_check",
+    sql`${table.rateOverride} is null or ${table.rateOverride} >= 0`,
+  ),
+]);
+
 export const timeEntries = pgTable("time_entries", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   // Nullable so quick-timer can start/stop empty; fill later via timesheet edit.
   clientId: uuid("client_id").references(() => clients.id, { onDelete: "cascade" }),
   projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
+  activityId: uuid("activity_id"),
   taskId: uuid("task_id").references(() => tasks.id, { onDelete: "set null" }),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   description: text("description"),
@@ -379,6 +439,16 @@ export const timeEntries = pgTable("time_entries", {
   uniqueIndex("time_entries_one_active_per_user_workspace_uidx")
     .on(table.workspaceId, table.userId)
     .where(sql`${table.endTime} is null and ${table.manualMinutes} is null`),
+  foreignKey({
+    columns: [table.activityId, table.workspaceId],
+    foreignColumns: [activities.id, activities.workspaceId],
+    name: "time_entries_activity_workspace_fk",
+  }).onDelete("restrict"),
+  index("time_entries_workspace_activity_start_idx").on(
+    table.workspaceId,
+    table.activityId,
+    table.startTime,
+  ),
 ]);
 
 // ─── Invoices ───
@@ -608,6 +678,7 @@ export const workspaceRelations = relations(workspaces, ({ many }) => ({
   members: many(workspaceMembers),
   clients: many(clients),
   projects: many(projects),
+  activities: many(activities),
 }));
 
 export const clientRelations = relations(clients, ({ one, many }) => ({
@@ -620,6 +691,28 @@ export const projectRelations = relations(projects, ({ one, many }) => ({
   client: one(clients, { fields: [projects.clientId], references: [clients.id] }),
   tasks: many(tasks),
   members: many(projectMembers),
+  activities: many(projectActivities),
+}));
+
+export const activityRelations = relations(activities, ({ one, many }) => ({
+  workspace: one(workspaces, { fields: [activities.workspaceId], references: [workspaces.id] }),
+  projects: many(projectActivities),
+  timeEntries: many(timeEntries),
+}));
+
+export const projectActivityRelations = relations(projectActivities, ({ one }) => ({
+  workspace: one(workspaces, { fields: [projectActivities.workspaceId], references: [workspaces.id] }),
+  project: one(projects, { fields: [projectActivities.projectId], references: [projects.id] }),
+  activity: one(activities, { fields: [projectActivities.activityId], references: [activities.id] }),
+}));
+
+export const timeEntryRelations = relations(timeEntries, ({ one }) => ({
+  workspace: one(workspaces, { fields: [timeEntries.workspaceId], references: [workspaces.id] }),
+  client: one(clients, { fields: [timeEntries.clientId], references: [clients.id] }),
+  project: one(projects, { fields: [timeEntries.projectId], references: [projects.id] }),
+  task: one(tasks, { fields: [timeEntries.taskId], references: [tasks.id] }),
+  activity: one(activities, { fields: [timeEntries.activityId], references: [activities.id] }),
+  user: one(users, { fields: [timeEntries.userId], references: [users.id] }),
 }));
 
 export const taskRelations = relations(tasks, ({ one }) => ({

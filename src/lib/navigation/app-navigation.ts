@@ -30,6 +30,7 @@ export const appNavigation: NavigationEntry[] = [
     direct("projects", "/app/projects", Briefcase, { id: "Proyek", en: "Projects" }, { id: "Pantau pekerjaan dan progres proyek", en: "Track project work and progress" }),
     direct("services", "/app/packages", Package, { id: "Service", en: "Services" }, { id: "Atur layanan dan harga", en: "Set services and pricing" }),
     direct("tasks", "/app/tasks", CheckSquare, { id: "Tugas", en: "Tasks" }, { id: "Lihat tugas terbuka dan prioritas", en: "Review open tasks and priorities" }, "myOpenTasks"),
+    direct("activities", "/app/activities", Clock, { id: "Activity", en: "Activities" }, { id: "Katalog activity workspace", en: "Workspace activity catalog" }),
   ]},
   direct("time", "/app/time", Clock, { id: "Waktu", en: "Time" }),
   direct("calendar", "/app/calendar", Calendar, { id: "Kalender", en: "Calendar" }),

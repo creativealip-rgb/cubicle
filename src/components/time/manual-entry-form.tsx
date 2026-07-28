@@ -31,11 +31,18 @@ interface Task {
   projectId?: string;
 }
 
+interface Activity {
+  id: string;
+  name: string;
+  projectId?: string;
+}
+
 interface ManualEntryFormProps {
   workspaceId: string;
   clients: Client[];
   projects: Project[];
   tasks: Task[];
+  activities?: Activity[];
 }
 
 function localDateValue(date = new Date()): string {
@@ -45,7 +52,7 @@ function localDateValue(date = new Date()): string {
   return `${year}-${month}-${day}`;
 }
 
-export function ManualEntryForm({ workspaceId, clients, projects, tasks }: ManualEntryFormProps) {
+export function ManualEntryForm({ workspaceId, clients, projects, tasks, activities = [] }: ManualEntryFormProps) {
   const { t } = useT();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -53,6 +60,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
 
   const [clientId, setClientId] = useState("");
   const [projectId, setProjectId] = useState("");
+  const [activityId, setActivityId] = useState("");
   const [taskId, setTaskId] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
@@ -74,6 +82,11 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
     return tasks.filter((tk) => tk.projectId === projectId);
   }, [projectId, tasks]);
 
+  const filteredActivities = useMemo(() => {
+    if (!projectId) return [];
+    return activities.filter((a) => a.projectId === projectId);
+  }, [projectId, activities]);
+
   // Rate input only makes sense for hourly-billed projects; otherwise the
   // backend inherits the project rate and the manual field is just noise.
   const selectedProject = projects.find((p) => p.id === projectId);
@@ -82,12 +95,14 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
   function handleClientChange(value: string) {
     setClientId(value);
     setProjectId("");
+    setActivityId("");
     setTaskId("");
     setHourlyRate("");
   }
 
   function handleProjectChange(value: string) {
     setProjectId(value);
+    setActivityId("");
     setTaskId("");
     setHourlyRate("");
   }
@@ -113,6 +128,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
         workspaceId,
         clientId,
         projectId,
+        activityId: activityId || null,
         taskId: taskId || undefined,
         description: description || undefined,
         tags: tags || undefined,
@@ -125,6 +141,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
       setOpen(false);
       setClientId("");
       setProjectId("");
+      setActivityId("");
       setTaskId("");
       setDescription("");
       setTags("");
@@ -155,10 +172,10 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
         <form onSubmit={handleSubmit} className="min-h-0 space-y-4 overflow-y-auto px-5 py-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label className="text-xs">Klien *</Label>
+              <Label className="text-xs">{t("Klien", "Client")} *</Label>
               <Select value={clientId} onValueChange={handleClientChange}>
                 <SelectTrigger className="h-9 text-sm">
-                  <SelectValue placeholder="Pilih klien" />
+                  <SelectValue placeholder={t("Pilih klien", "Select client")} />
                 </SelectTrigger>
                 <SelectContent>
                   {clients.map((c) => (
@@ -168,15 +185,15 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">Proyek *</Label>
+              <Label className="text-xs">{t("Proyek", "Project")} *</Label>
               <Select value={projectId} onValueChange={handleProjectChange} disabled={!clientId}>
                 <SelectTrigger className="h-9 text-sm">
-                  <SelectValue placeholder={clientId ? "Pilih proyek" : "Pilih klien dulu"} />
+                  <SelectValue placeholder={clientId ? t("Pilih proyek", "Select project") : t("Pilih klien dulu", "Select client first")} />
                 </SelectTrigger>
                 <SelectContent>
                   {filteredProjects.length === 0 ? (
                     <SelectItem value="__none__" disabled>
-                      {clientId ? "Tidak ada proyek" : "Pilih klien dulu"}
+                      {clientId ? t("Tidak ada proyek", "No projects") : t("Pilih klien dulu", "Select client first")}
                     </SelectItem>
                   ) : (
                     filteredProjects.map((p) => (
@@ -189,17 +206,36 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs">Tugas (opsional)</Label>
+            <Label className="text-xs">{t("Activity", "Activity")}</Label>
+            <Select
+              value={activityId || "__none__"}
+              onValueChange={(value) => setActivityId(value === "__none__" ? "" : value)}
+              disabled={!projectId}
+            >
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder={projectId ? t("Pilih activity", "Select activity") : t("Pilih proyek dulu", "Select project first")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
+                {filteredActivities.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs">{t("Tugas terkait", "Related Task")}</Label>
             <Select
               value={taskId || "__none__"}
               onValueChange={handleTaskChange}
               disabled={!projectId}
             >
               <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder={projectId ? "Pilih tugas" : "Pilih proyek dulu"} />
+                <SelectValue placeholder={projectId ? t("Pilih tugas", "Select task") : t("Pilih proyek dulu", "Select project first")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__none__">Tidak ada</SelectItem>
+                <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
                 {filteredTasks.map((tk) => (
                   <SelectItem key={tk.id} value={tk.id}>{tk.title}</SelectItem>
                 ))}
@@ -208,7 +244,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks }: Manua
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs">Deskripsi</Label>
+            <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
             <Input
               value={description}
               onChange={(e) => setDescription(e.target.value)}

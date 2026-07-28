@@ -19,7 +19,7 @@ describe("app navigation registry", () => {
     expect(new Set(routes).size).toBe(routes.length);
     expect(routes).toEqual([
       "/app/dashboard", "/app/clients", "/app/projects", "/app/packages", "/app/tasks",
-      "/app/time", "/app/calendar", "/app/files", "/app/invoices",
+      "/app/activities", "/app/time", "/app/calendar", "/app/files", "/app/invoices",
       "/app/expenses", "/app/reports", "/app/personal",
       "/app/journal", "/app/personal-site", "/app/brain", "/app/prompts",
     ]);
@@ -28,7 +28,7 @@ describe("app navigation registry", () => {
   it("keeps work hierarchy and direct tools", () => {
     const work = appNavigation.find((entry) => entry.id === "work");
     expect(work?.kind).toBe("group");
-    if (work?.kind === "group") expect(work.children.map((item) => item.id)).toEqual(["clients", "projects", "services", "tasks"]);
+    if (work?.kind === "group") expect(work.children.map((item) => item.id)).toEqual(["clients", "projects", "services", "tasks", "activities"]);
     expect(appNavigation.filter((entry) => entry.kind === "direct").map((entry) => entry.id)).toEqual(["dashboard", "time", "calendar", "files"]);
   });
 

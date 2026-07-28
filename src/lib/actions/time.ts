@@ -16,45 +16,51 @@ import {
   getProjectTimeTrackingMode,
 } from "@/lib/project-time-tracking-policy-db";
 import { timeEntryBillableForMode } from "@/lib/project-time-tracking-policy";
+import { resolveActivityHourlyRate } from "@/lib/activity-policy";
+import { assertActivityWriteAllowed } from "@/lib/activity-policy-db";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
 }
 
-/** Resolve hourly rate: explicit → project rate (any billing) → workspace default. */
+/** Resolve hourly-rate snapshot from explicit input down to workspace default. */
 async function resolveHourlyRate(opts: {
   workspaceId: string;
   projectId?: string | null;
   explicitRate?: number | null;
+  projectActivityRate?: number | null;
+  activityDefaultRate?: number | null;
 }): Promise<string | null> {
-  if (opts.explicitRate !== undefined && opts.explicitRate !== null) {
-    const n = Number(opts.explicitRate);
-    if (Number.isFinite(n) && n >= 0) return String(n);
-  }
-
+  let projectRate: number | null = null;
   if (opts.projectId) {
-    const [proj] = await db
+    const [project] = await db
       .select({ rate: projects.rate })
       .from(projects)
-      .where(eq(projects.id, opts.projectId))
+      .where(and(eq(projects.id, opts.projectId), eq(projects.workspaceId, opts.workspaceId)))
       .limit(1);
-    if (proj?.rate) {
-      const projectRate = Number(proj.rate);
-      if (Number.isFinite(projectRate) && projectRate > 0) return String(projectRate);
-    }
+    const value = Number(project?.rate);
+    if (project?.rate != null && Number.isFinite(value) && value >= 0) projectRate = value;
   }
 
-  const [ws] = await db
+  let workspaceDefaultRate: number | null = null;
+  const [workspace] = await db
     .select({ defaultHourlyRate: workspaces.defaultHourlyRate })
     .from(workspaces)
     .where(eq(workspaces.id, opts.workspaceId))
     .limit(1);
-  if (ws?.defaultHourlyRate) {
-    const wsDefault = Number(ws.defaultHourlyRate);
-    if (Number.isFinite(wsDefault) && wsDefault > 0) return String(wsDefault);
+  const workspaceValue = Number(workspace?.defaultHourlyRate);
+  if (workspace?.defaultHourlyRate != null && Number.isFinite(workspaceValue) && workspaceValue >= 0) {
+    workspaceDefaultRate = workspaceValue;
   }
 
-  return null;
+  const resolved = resolveActivityHourlyRate({
+    explicitRate: opts.explicitRate,
+    projectActivityRate: opts.projectActivityRate,
+    activityDefaultRate: opts.activityDefaultRate,
+    projectRate,
+    workspaceDefaultRate,
+  });
+  return resolved == null ? null : String(resolved);
 }
 
 const startTimerSchema = z.object({
@@ -62,6 +68,7 @@ const startTimerSchema = z.object({
   // Quick timer may start empty; fill required fields on stop.
   clientId: z.string().uuid().optional().nullable(),
   projectId: z.string().uuid().optional().nullable(),
+  activityId: z.string().uuid().optional().nullable(),
   taskId: z.string().uuid().optional().nullable(),
   description: z.string().optional().nullable(),
   tags: z.string().optional().nullable(),
@@ -72,6 +79,7 @@ const createManualEntrySchema = z.object({
   workspaceId: z.string().uuid(),
   clientId: z.string().uuid(),
   projectId: z.string().uuid(),
+  activityId: z.string().uuid().optional().nullable(),
   taskId: z.string().uuid().optional(),
   description: z.string().optional(),
   tags: z.string().optional(),
@@ -86,11 +94,13 @@ const updateTimeEntrySchema = z.object({
   tags: z.string().nullable().optional(),
   clientId: z.string().uuid().optional(),
   projectId: z.string().uuid().optional(),
+  activityId: z.string().uuid().nullable().optional(),
   taskId: z.string().uuid().nullable().optional(),
   startTime: z.string().nullable().optional(),
   endTime: z.string().nullable().optional(),
   manualMinutes: z.number().nullable().optional(),
   billable: z.boolean().optional(),
+  hourlyRate: z.number().nonnegative().nullable().optional(),
   status: z.enum(["draft", "approved", "invoiced"]).optional(),
 });
 
@@ -99,6 +109,7 @@ const stopTimerSchema = z.object({
   // Optional: quick-stop may leave blank; fill later via timesheet edit.
   clientId: z.string().uuid().optional().nullable(),
   projectId: z.string().uuid().optional().nullable(),
+  activityId: z.string().uuid().optional().nullable(),
   taskId: z.string().uuid().optional().nullable(),
   description: z.string().trim().optional().nullable(),
   tags: z.string().optional().nullable(),
@@ -121,20 +132,20 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
   const projectMode = parsed.projectId
     ? await assertProjectTimeTrackingEnabled(db, parsed.workspaceId, parsed.projectId)
     : null;
+  const activityPolicy = await assertActivityWriteAllowed(db, {
+    workspaceId: parsed.workspaceId,
+    projectId: parsed.projectId,
+    activityId: parsed.activityId,
+    stage: "start",
+  });
 
-  const resolvedRate = parsed.projectId
-    ? await resolveHourlyRate({
-        workspaceId: parsed.workspaceId,
-        projectId: parsed.projectId,
-        explicitRate: parsed.hourlyRate,
-      })
-    : parsed.hourlyRate !== undefined
-      ? String(parsed.hourlyRate)
-      : await resolveHourlyRate({
-          workspaceId: parsed.workspaceId,
-          projectId: null,
-          explicitRate: parsed.hourlyRate,
-        });
+  const resolvedRate = await resolveHourlyRate({
+    workspaceId: parsed.workspaceId,
+    projectId: parsed.projectId,
+    explicitRate: parsed.hourlyRate,
+    projectActivityRate: activityPolicy.rateOverride,
+    activityDefaultRate: activityPolicy.defaultHourlyRate,
+  });
 
   const entry = await db.transaction(async (tx) => {
     // Serializes starts for the same user/workspace even before unique-index conflict.
@@ -171,6 +182,7 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
       workspaceId: parsed.workspaceId,
       clientId: parsed.clientId || null,
       projectId: parsed.projectId || null,
+      activityId: activityPolicy.activityId,
       taskId: parsed.taskId || null,
       userId: user.id,
       description: parsed.description || null,
@@ -348,6 +360,8 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
 
   const nextClientId = parsed.clientId ?? entry.clientId ?? null;
   const nextProjectId = parsed.projectId ?? entry.projectId ?? null;
+  const nextActivityId =
+    parsed.activityId !== undefined ? parsed.activityId : entry.activityId;
   const nextTaskId = parsed.taskId ?? entry.taskId ?? null;
   if (!nextProjectId) {
     throw new Error("Project wajib dipilih sebelum timer dihentikan");
@@ -366,11 +380,19 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
   const projectMode = keepsOriginalProject
     ? await getProjectTimeTrackingMode(db, workspaceId, nextProjectId)
     : await assertProjectTimeTrackingEnabled(db, workspaceId, nextProjectId);
+  const activityPolicy = await assertActivityWriteAllowed(db, {
+    workspaceId,
+    projectId: nextProjectId,
+    activityId: nextActivityId,
+    stage: "completion",
+  });
 
   const resolvedRate = await resolveHourlyRate({
     workspaceId,
     projectId: nextProjectId,
     explicitRate: parsed.hourlyRate,
+    projectActivityRate: activityPolicy.rateOverride,
+    activityDefaultRate: activityPolicy.defaultHourlyRate,
   });
 
   const [updated] = await db
@@ -378,6 +400,7 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
     .set({
       clientId: nextClientId,
       projectId: nextProjectId,
+      activityId: activityPolicy.activityId,
       taskId: nextTaskId,
       description: nextDescription,
       tags: nextTags,
@@ -402,6 +425,12 @@ export async function createManualEntry(input: z.infer<typeof createManualEntryS
   const parsed = createManualEntrySchema.parse(input);
   await assertTimeEntryContext(db, parsed.workspaceId, parsed);
   const projectMode = await assertProjectTimeTrackingEnabled(db, parsed.workspaceId, parsed.projectId);
+  const activityPolicy = await assertActivityWriteAllowed(db, {
+    workspaceId: parsed.workspaceId,
+    projectId: parsed.projectId,
+    activityId: parsed.activityId,
+    stage: "manual",
+  });
   const billable = timeEntryBillableForMode(projectMode);
 
   // Manual entry is NOT a running timer. Set both start + end from the
@@ -414,7 +443,7 @@ export async function createManualEntry(input: z.infer<typeof createManualEntryS
   }
   const end = new Date(start.getTime() + parsed.durationMinutes * 60 * 1000);
 
-  // Resolve rate: explicit input → project rate → workspace default.
+  // Resolve rate: explicit → Project Activity override → Activity default → Project → workspace.
   // Only auto-fill when project mode is billable.
   let resolvedRate: string | null = null;
   if (billable) {
@@ -422,6 +451,8 @@ export async function createManualEntry(input: z.infer<typeof createManualEntryS
       workspaceId: parsed.workspaceId,
       projectId: parsed.projectId,
       explicitRate: parsed.hourlyRate,
+      projectActivityRate: activityPolicy.rateOverride,
+      activityDefaultRate: activityPolicy.defaultHourlyRate,
     });
   }
 
@@ -429,6 +460,7 @@ export async function createManualEntry(input: z.infer<typeof createManualEntryS
     workspaceId: parsed.workspaceId,
     clientId: parsed.clientId,
     projectId: parsed.projectId,
+    activityId: activityPolicy.activityId,
     taskId: parsed.taskId || null,
     userId: user.id,
     description: parsed.description || null,
@@ -467,6 +499,8 @@ export async function updateTimeEntry(entryId: string, input: z.infer<typeof upd
   const parsed = updateTimeEntrySchema.parse(input);
   const nextClientId = parsed.clientId !== undefined ? parsed.clientId : entry.clientId;
   const nextProjectId = parsed.projectId !== undefined ? parsed.projectId : entry.projectId;
+  const nextActivityId =
+    parsed.activityId !== undefined ? parsed.activityId : entry.activityId;
   const nextTaskId = parsed.taskId !== undefined ? parsed.taskId : entry.taskId;
   await assertTimeEntryContext(db, workspaceId, {
     clientId: nextClientId,
@@ -475,17 +509,44 @@ export async function updateTimeEntry(entryId: string, input: z.infer<typeof upd
   });
   if (!nextProjectId) throw new Error("Project wajib dipilih untuk entri waktu");
   const projectMode = await assertProjectTimeTrackingEnabled(db, workspaceId, nextProjectId);
+  const activityPolicy = parsed.status === "approved"
+    ? await assertActivityWriteAllowed(db, {
+        workspaceId,
+        projectId: nextProjectId,
+        activityId: nextActivityId,
+        stage: "approval",
+      })
+    : await assertActivityWriteAllowed(db, {
+        workspaceId,
+        projectId: nextProjectId,
+        activityId: nextActivityId,
+        stage: "edit",
+      });
   const updateData: Record<string, unknown> = { updatedAt: new Date() };
 
   if (parsed.description !== undefined) updateData.description = parsed.description;
   if (parsed.tags !== undefined) updateData.tags = parsed.tags;
   if (parsed.clientId !== undefined) updateData.clientId = parsed.clientId;
   if (parsed.projectId !== undefined) updateData.projectId = parsed.projectId;
+  updateData.activityId = activityPolicy.activityId;
   if (parsed.taskId !== undefined) updateData.taskId = parsed.taskId;
   if (parsed.startTime !== undefined) updateData.startTime = parsed.startTime ? new Date(parsed.startTime) : null;
   if (parsed.endTime !== undefined) updateData.endTime = parsed.endTime ? new Date(parsed.endTime) : null;
   if (parsed.manualMinutes !== undefined) updateData.manualMinutes = parsed.manualMinutes;
   updateData.billable = timeEntryBillableForMode(projectMode);
+  if (parsed.hourlyRate !== undefined || parsed.activityId !== undefined || parsed.projectId !== undefined) {
+    updateData.hourlyRate = await resolveHourlyRate({
+      workspaceId,
+      projectId: nextProjectId,
+      explicitRate: parsed.hourlyRate !== undefined
+        ? parsed.hourlyRate
+        : entry.hourlyRate == null
+          ? null
+          : Number(entry.hourlyRate),
+      projectActivityRate: activityPolicy.rateOverride,
+      activityDefaultRate: activityPolicy.defaultHourlyRate,
+    });
+  }
   if (parsed.status !== undefined) {
     if (parsed.status === "invoiced") {
       throw new Error("Status invoiced hanya lewat proses invoice");
@@ -554,6 +615,7 @@ export async function getActiveTimer(workspaceId: string, userId: string) {
       id: timeEntries.id,
       clientId: timeEntries.clientId,
       projectId: timeEntries.projectId,
+      activityId: timeEntries.activityId,
       taskId: timeEntries.taskId,
       description: timeEntries.description,
       startTime: timeEntries.startTime,
