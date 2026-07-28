@@ -400,6 +400,13 @@ export function AppTopbar({ user }: AppTopbarProps) {
                   <DropdownMenuItem asChild>
                     <Link href="/app/clients/new">{t("Klien", "Client")}</Link>
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/app/proposals/new">{t("Proposal", "Proposal")}</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/app/questionnaires/new">{t("Kuesioner", "Questionnaire")}</Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/app/invoices/new">{t("Invoice", "Invoice")}</Link>
                   </DropdownMenuItem>
