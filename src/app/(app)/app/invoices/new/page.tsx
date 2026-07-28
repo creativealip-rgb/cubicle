@@ -1,26 +1,16 @@
-import { getWorkspaceForCurrentUser } from "@/lib/workspace";
-import { headers } from "next/headers";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { clients, invoiceTemplates, projects, packages, workspaceCurrencyRates, workspaces, timeEntries } from "@/db/schema";
 import { eq, asc, and, inArray, isNotNull, sql } from "drizzle-orm";
-import { requireUser, assertWorkspaceWritable } from "@/lib/access";
+import { requireWorkspaceWritableOrRedirect } from "@/lib/require-workspace-owner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InvoiceForm } from "@/components/forms/invoice-form";
 import { parseUuidList } from "@/lib/finance-tabs";
 
-async function getWorkspaceId(): Promise<string> {
-  return getWorkspaceForCurrentUser();
-}
-
 export default async function NewInvoicePage({ searchParams }: { searchParams: Promise<{ timeEntryIds?: string | string[] }> }) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const user = requireUser(session?.user);
-  const workspaceId = await getWorkspaceId();
-  await assertWorkspaceWritable(db, user.id, workspaceId);
+  const { workspaceId } = await requireWorkspaceWritableOrRedirect("/app/invoices");
   const requestedIds = parseUuidList((await searchParams).timeEntryIds);
   const selectedTimeEntries = requestedIds.length ? await db.select({ id: timeEntries.id, clientId: timeEntries.clientId, projectId: timeEntries.projectId, description: timeEntries.description, durationMinutes: timeEntries.durationMinutes, hourlyRate: timeEntries.hourlyRate }).from(timeEntries).where(and(inArray(timeEntries.id, requestedIds), eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.status, "approved"), eq(timeEntries.billable, true), isNotNull(timeEntries.endTime), sql`${timeEntries.durationMinutes} > 0`)) : [];
   const selectedClientId = selectedTimeEntries.length && selectedTimeEntries.every(row => row.clientId === selectedTimeEntries[0].clientId) ? selectedTimeEntries[0].clientId : undefined;

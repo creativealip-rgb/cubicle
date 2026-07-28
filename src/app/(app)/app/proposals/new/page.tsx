@@ -1,10 +1,8 @@
-import { headers } from "next/headers";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { clients } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
-import { requireUser, assertWorkspaceWritable } from "@/lib/access";
+import { requireWorkspaceWritableOrRedirect } from "@/lib/require-workspace-owner";
 import { ProposalForm } from "@/components/proposals/proposal-form";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { Button } from "@/components/ui/button";
@@ -14,15 +12,13 @@ import { getCurrentLang, createT } from "@/lib/i18n";
 export default async function NewProposalPage() {
   const lang = await getCurrentLang();
   const t = createT(lang);
-  const session = await auth.api.getSession({ headers: await headers() });
-  const user = requireUser(session?.user);
+  const { workspaceId } = await requireWorkspaceWritableOrRedirect("/app/proposals");
   const ws = await getWorkspaceFullForCurrentUser();
-  await assertWorkspaceWritable(db, user.id, ws.id);
 
   const clientRows = await db
     .select({ id: clients.id, name: clients.name })
     .from(clients)
-    .where(and(eq(clients.workspaceId, ws.id), eq(clients.status, "active")))
+    .where(and(eq(clients.workspaceId, workspaceId), eq(clients.status, "active")))
     .orderBy(clients.name);
 
   return (

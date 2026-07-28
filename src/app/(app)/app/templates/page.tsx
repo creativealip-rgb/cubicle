@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { canAccessTemplatesPreview } from "@/lib/feature-access";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { TemplateCenterClient } from "@/components/template-center-client";
+import { requireWorkspaceOwnerOrRedirect } from "@/lib/require-workspace-owner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,6 +16,7 @@ export default async function TemplateCenterPage({
 }: {
   searchParams: Promise<{ tab?: string }>;
 }) {
+  await requireWorkspaceOwnerOrRedirect();
   const lang = await getCurrentLang();
   const t = createT(lang);
   const session = await auth.api.getSession({ headers: await headers() });
