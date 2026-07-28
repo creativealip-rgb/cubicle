@@ -589,7 +589,7 @@ export function TimerWidget({
                       </Select>
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs">{t("Activity", "Activity")}</Label>
+                      <Label className="text-xs">{t("Aktivitas", "Activity")}</Label>
                       <Select
                         value={selectedActivityId || "__none__"}
                         onValueChange={(value) => setSelectedActivityId(value === "__none__" ? "" : value)}
@@ -678,7 +678,7 @@ export function TimerWidget({
                   )}
                   {activeTimer.activityName && (
                     <p>
-                      {t("Activity", "Activity")}: {activeTimer.activityName}
+                      {t("Aktivitas", "Activity")}: {activeTimer.activityName}
                     </p>
                   )}
                   {activeTimer.taskTitle && (
@@ -815,7 +815,7 @@ export function TimerWidget({
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">{t("Activity", "Activity")}</Label>
+                  <Label className="text-xs">{t("Aktivitas", "Activity")}</Label>
                   <Select
                     value={selectedActivityId || "__none__"}
                     onValueChange={(value) => setSelectedActivityId(value === "__none__" ? "" : value)}

@@ -14,8 +14,7 @@ export function canAccessTemplatesPreview(
   environment = process.env.CUBIQLO_ENV,
 ): boolean {
   const normalized = normalizeEmail(email);
-  return TEMPLATES_PREVIEW_EMAILS.has(normalized)
-    || (environment === "development" && normalized === "alip.qa@cubiqlo.test");
+  return environment === "development" || TEMPLATES_PREVIEW_EMAILS.has(normalized);
 }
 
 export function billingTypeLabel(
