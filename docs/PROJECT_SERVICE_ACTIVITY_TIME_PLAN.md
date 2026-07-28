@@ -1001,27 +1001,31 @@ Phase 1 tidak boleh dimulai sebelum seluruh kondisi ini lulus:
 
 ## Phase 2 — Activity catalog ala My Hours
 
-- [ ] Tambah Activities CRUD workspace.
-- [ ] Tambah enabled Activities per Project.
-- [ ] Tambah `activity_id` pada timer/manual/edit entry.
-- [ ] Timer order: Project → Activity → Related Task → Description.
-- [ ] Report/filter/group by Activity.
-- [ ] Seed template profesi opsional.
-- [ ] Recent/favorite timer combination.
+**Status 2026-07-28:** implemented di branch `feat/service-catalog-phase3`; dev deploy/smoke sedang diverifikasi. Evidence kode: `src/lib/activity-wiring.test.ts`, `drizzle/0048_activity_catalog.sql`, `src/lib/actions/activities.ts`, `src/components/projects/project-activity-settings.tsx`, `src/components/time/*`, `src/app/(app)/app/reports/page.tsx`.
+
+- [x] Tambah Activities CRUD workspace.
+- [x] Tambah enabled Activities per Project.
+- [x] Tambah `activity_id` pada timer/manual/edit entry.
+- [x] Timer order: Project → Activity → Related Task → Description.
+- [x] Report/filter/group by Activity.
+- [ ] Seed template profesi opsional — deferred; belum ada fixture/template default.
+- [ ] Recent/favorite timer combination — deferred; belum ada model/UI favorite combination.
 
 **Acceptance:** satu Activity reusable dipakai banyak log; description per log dapat berbeda; Task tetap opsional; legacy null tampil sebagai `Tanpa aktivitas`; bila `activity_required=true`, entry tidak dapat diselesaikan/submitted sebelum Activity dipilih; cross-workspace Activity ID ditolak.
 
 ## Phase 3 — Service catalog untuk semua billing type
 
-- [ ] Buat Service CRUD terpisah.
-- [ ] Service categories dan pricing model.
-- [ ] Buat `project_services` snapshot.
-- [ ] Project dapat memilih banyak Service.
-- [ ] By Project/Hours/Package semua dapat memakai Service.
-- [ ] Proposal/invoice dapat mengambil Project Service lines.
-- [ ] Archive Service tanpa merusak histori.
+**Status 2026-07-28:** implemented sebagai Service catalog + Project Service snapshot di branch `feat/service-catalog-phase3`; invoice/proposal generation dari Project Service lines masih deferred ke fase integrasi berikutnya. Evidence kode: `src/lib/service-catalog-wiring.test.ts`, `drizzle/0049_service_catalog.sql`, `src/lib/actions/services.ts`, `src/lib/service-snapshots.ts`, `src/components/services/service-catalog.tsx`, `src/components/projects/project-service-settings.tsx`.
 
-**Acceptance:** Service reusable lintas Project; harga/scope Project lama stabil setelah katalog diedit; invoice/proposal line punya source + snapshot; generate ulang idempotent; invoice `sent`/`paid` immutable; archive Service tidak menghapus histori.
+- [x] Buat Service CRUD terpisah.
+- [x] Service categories dan pricing model.
+- [x] Buat `project_services` snapshot.
+- [x] Project dapat memilih banyak Service.
+- [x] By Project/Hours/Package semua dapat memakai Service.
+- [ ] Proposal/invoice dapat mengambil Project Service lines — deferred; belum ada generate line dari `project_services`.
+- [x] Archive Service tanpa merusak histori.
+
+**Acceptance:** Service reusable lintas Project; harga/scope Project lama stabil setelah katalog diedit; invoice/proposal line punya source + snapshot; generate ulang idempotent; invoice `sent`/`paid` immutable; archive Service tidak menghapus histori. Catatan: bagian invoice/proposal line generation belum complete.
 
 ## Phase 4 — Package builder bersih
 
