@@ -7,6 +7,7 @@ import { eq, and, isNull, isNotNull, desc } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { TimerWidget } from "@/components/time/timer-widget";
 import { Timesheet } from "@/components/time/timesheet";
+import { TeamTimesheetView } from "@/components/time/team-timesheet-view";
 import { ManualEntryForm } from "@/components/time/manual-entry-form";
 import { PdfExportButton } from "@/components/time/pdf-export-button";
 import { getCurrentLang, createT } from "@/lib/i18n";
@@ -35,17 +36,23 @@ export default async function TimePage() {
       description: timeEntries.description,
       tags: timeEntries.tags,
       startTime: timeEntries.startTime,
+      endTime: timeEntries.endTime,
       pausedAt: timeEntries.pausedAt,
+      durationMinutes: timeEntries.durationMinutes,
+      manualMinutes: timeEntries.manualMinutes,
+      status: timeEntries.status,
       clientName: clients.name,
       projectName: projects.name,
       activityName: activities.name,
       taskTitle: tasks.title,
+      userName: users.name,
     })
     .from(timeEntries)
     .leftJoin(clients, eq(clients.id, timeEntries.clientId))
     .leftJoin(projects, eq(projects.id, timeEntries.projectId))
     .leftJoin(activities, eq(activities.id, timeEntries.activityId))
     .leftJoin(tasks, eq(tasks.id, timeEntries.taskId))
+    .leftJoin(users, eq(users.id, timeEntries.userId))
     .where(
       and(
         eq(timeEntries.workspaceId, workspaceId),
@@ -150,6 +157,40 @@ export default async function TimePage() {
   const writableProjectList = projectList.filter((project) => project.timeTrackingMode !== "off");
   const writableProjectIds = new Set(writableProjectList.map((project) => project.id));
   const writableTaskList = taskList.filter((task) => task.projectId && writableProjectIds.has(task.projectId));
+  const teamEntries = [
+    ...entries.map((entry) => ({
+      id: entry.id,
+      description: entry.description,
+      clientName: entry.clientName,
+      projectName: entry.projectName,
+      activityName: entry.activityName,
+      taskTitle: entry.taskTitle,
+      userName: entry.userName,
+      startTime: entry.startTime,
+      endTime: entry.endTime,
+      pausedAt: null,
+      durationMinutes: entry.durationMinutes,
+      manualMinutes: entry.manualMinutes,
+      status: entry.status,
+    })),
+    ...(activeTimer
+      ? [{
+          id: activeTimer.id,
+          description: activeTimer.description,
+          clientName: activeTimer.clientName,
+          projectName: activeTimer.projectName,
+          activityName: activeTimer.activityName,
+          taskTitle: activeTimer.taskTitle,
+          userName: activeTimer.userName,
+          startTime: activeTimer.startTime,
+          endTime: activeTimer.endTime,
+          pausedAt: activeTimer.pausedAt,
+          durationMinutes: activeTimer.durationMinutes,
+          manualMinutes: activeTimer.manualMinutes,
+          status: activeTimer.status,
+        }]
+      : []),
+  ];
 
   return (
     <div className="min-w-0 space-y-4 sm:space-y-6">
@@ -217,6 +258,8 @@ export default async function TimePage() {
           }
         />
       )}
+
+      <TeamTimesheetView entries={teamEntries} />
 
       {/* Timesheet */}
       <Timesheet
