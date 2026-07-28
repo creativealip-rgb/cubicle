@@ -10,6 +10,7 @@ import { z } from "zod";
 import { requireUser, assertWorkspaceWritable, assertProjectInWorkspace, assertClientInWorkspace } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { defaultTimeTrackingMode, TIME_TRACKING_MODES } from "@/lib/project-time-tracking-policy";
+import { syncProjectServiceSnapshots } from "@/lib/actions/services";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -31,6 +32,7 @@ const projectInputSchema = z.object({
   dueDate: z.string().optional(),
   clientVisible: z.boolean(),
   selectedPackageId: z.string().uuid().optional(),
+  serviceIds: z.array(z.string().uuid()).optional(),
 });
 
 const projectCreateSchema = projectInputSchema.extend({
@@ -104,6 +106,10 @@ export async function createProject(input: z.input<typeof projectCreateSchema>) 
     createdBy: user.id,
   }).returning();
 
+  if (parsed.serviceIds !== undefined) {
+    await syncProjectServiceSnapshots(project.id, parsed.serviceIds);
+  }
+
   await writeActivityLog(workspaceId, user.id, "created_project", "project", project.id);
   return { ok: true as const, project };
 }
@@ -141,6 +147,10 @@ export async function updateProject(projectId: string, input: z.input<typeof pro
     .set(updateData)
     .where(eq(projects.id, projectId))
     .returning();
+
+  if (parsed.serviceIds !== undefined) {
+    await syncProjectServiceSnapshots(projectId, parsed.serviceIds);
+  }
 
   await writeActivityLog(workspaceId, user.id, "updated_project", "project", projectId);
   return project;

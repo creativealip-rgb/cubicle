@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  BarChart3, Brain, Briefcase, Calendar, CheckSquare, Clock, FileText,
+  BarChart3, Brain, Briefcase, BriefcaseBusiness, Calendar, CheckSquare, Clock, FileText,
   FolderOpen, LayoutDashboard, NotebookPen, Package, Sparkles, Users, Wallet,
 } from "lucide-react";
 
@@ -28,7 +28,8 @@ export const appNavigation: NavigationEntry[] = [
   { kind: "group", id: "work", icon: Briefcase, label: { id: "Pekerjaan", en: "Work" }, children: [
     direct("clients", "/app/clients", Users, { id: "Klien", en: "Clients" }, { id: "Kelola relasi, data, dan portal klien", en: "Manage client relationships, data, and portals" }),
     direct("projects", "/app/projects", Briefcase, { id: "Proyek", en: "Projects" }, { id: "Pantau pekerjaan dan progres proyek", en: "Track project work and progress" }),
-    direct("services", "/app/packages", Package, { id: "Service", en: "Services" }, { id: "Atur layanan dan harga", en: "Set services and pricing" }),
+    direct("services", "/app/services", BriefcaseBusiness, { id: "Layanan", en: "Services" }, { id: "Katalog layanan dasar", en: "Base service catalog" }),
+    direct("packages", "/app/packages", Package, { id: "Paket", en: "Packages" }, { id: "Atur paket harga lama", en: "Manage legacy pricing packages" }),
     direct("tasks", "/app/tasks", CheckSquare, { id: "Tugas", en: "Tasks" }, { id: "Lihat tugas terbuka dan prioritas", en: "Review open tasks and priorities" }, "myOpenTasks"),
     direct("activities", "/app/activities", Clock, { id: "Activity", en: "Activities" }, { id: "Katalog activity workspace", en: "Workspace activity catalog" }),
   ]},

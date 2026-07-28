@@ -2,8 +2,8 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { projects, clients, tasks, files, timeEntries, workspaceMembers, users } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { projects, clients, tasks, files, timeEntries, workspaceMembers, users, projectServices } from "@/db/schema";
+import { and, eq, desc } from "drizzle-orm";
 import { requireUser, assertProjectInWorkspace } from "@/lib/access";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import { projectStatusVariant } from "@/lib/status-badge";
 import { billingTypeHint, billingTypeLabel } from "@/lib/feature-access";
 import { ProjectTasksTab } from "@/components/tasks/project-tasks-tab";
 import { ProjectActivitySettings } from "@/components/projects/project-activity-settings";
+import { ProjectServiceSettings } from "@/components/projects/project-service-settings";
 import { ProjectForm } from "@/components/forms/project-form";
 import Link from "next/link";
 import {
@@ -146,6 +147,18 @@ export default async function ProjectDetailPage({
     .orderBy(desc(timeEntries.createdAt))
     .limit(20);
 
+  const projectServiceRows = await db
+    .select({ serviceId: projectServices.serviceId })
+    .from(projectServices)
+    .where(and(
+      eq(projectServices.projectId, projectId),
+      eq(projectServices.workspaceId, workspaceId),
+      eq(projectServices.status, "active"),
+    ));
+  const activeProjectServiceIds = projectServiceRows
+    .map((row) => row.serviceId)
+    .filter((id): id is string => Boolean(id));
+
   const statusColors: Record<string, string> = {
     active: "bg-emerald-500",
     draft: "bg-slate-400",
@@ -249,6 +262,7 @@ export default async function ProjectDetailPage({
                 dueDate: project.dueDate ?? "",
                 clientVisible: project.clientVisible,
                 selectedPackageId: project.selectedPackageId,
+                serviceIds: activeProjectServiceIds,
               }}
             />
           </DialogContent>
@@ -287,6 +301,9 @@ export default async function ProjectDetailPage({
           <TabsTrigger value="tasks" className="gap-1">
             <CheckSquare className="h-3 w-3" /> {t("Tugas", "Tasks")} ({projectTasks.length})
           </TabsTrigger>
+          <TabsTrigger value="services" className="gap-1">
+            <Wallet className="h-3 w-3" /> {t("Layanan", "Services")}
+          </TabsTrigger>
           <TabsTrigger value="activities" className="gap-1">
             <Clock className="h-3 w-3" /> {t("Activity", "Activities")}
           </TabsTrigger>
@@ -302,6 +319,10 @@ export default async function ProjectDetailPage({
 
         <TabsContent value="tasks" className="pt-4">
           <ProjectTasksTab projectId={projectId} tasks={projectTasks} members={projectMembers} />
+        </TabsContent>
+
+        <TabsContent value="services" className="pt-4">
+          <ProjectServiceSettings projectId={projectId} />
         </TabsContent>
 
         <TabsContent value="activities" className="pt-4">
