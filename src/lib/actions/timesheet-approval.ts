@@ -10,6 +10,7 @@ import { assertWorkspaceOwner, assertWorkspaceWritable, requireUser } from "@/li
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { weekStartIso } from "@/lib/timesheet-approval";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { nextEntryStatusForDecision } from "@/lib/timesheet-lifecycle";
 
 const submitSchema = z.object({ weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), note: z.string().trim().max(1000).optional() });
 const reviewSchema = z.object({ submissionId: z.string().uuid(), decision: z.enum(["approved", "rejected"]), note: z.string().trim().max(1000).optional() });
@@ -31,10 +32,17 @@ export async function submitWeeklyTimesheet(input: z.infer<typeof submitSchema>)
   if (!rows.length) throw new Error("Tidak ada entri waktu untuk dikirim");
   const totalMinutes = rows.reduce((sum, row) => sum + Number(row.minutes ?? 0), 0);
   const billableMinutes = rows.filter((row) => row.billable).reduce((sum, row) => sum + Number(row.minutes ?? 0), 0);
-  const [submission] = await db.insert(timesheetSubmissions).values({ workspaceId, userId: user.id, weekStart: iso, status: "submitted", submitterNote: parsed.note || null, reviewNote: null, totalMinutes, billableMinutes, submittedAt: new Date(), reviewedAt: null, reviewedBy: null, updatedAt: new Date() }).onConflictDoUpdate({
-    target: [timesheetSubmissions.workspaceId, timesheetSubmissions.userId, timesheetSubmissions.weekStart],
-    set: { status: "submitted", submitterNote: parsed.note || null, reviewNote: null, totalMinutes, billableMinutes, submittedAt: new Date(), reviewedAt: null, reviewedBy: null, updatedAt: new Date() },
-  }).returning();
+  const now = new Date();
+  const submission = await db.transaction(async (tx) => {
+    const [saved] = await tx.insert(timesheetSubmissions).values({ workspaceId, userId: user.id, weekStart: iso, status: "submitted", submitterNote: parsed.note || null, reviewNote: null, totalMinutes, billableMinutes, submittedAt: now, reviewedAt: null, reviewedBy: null, updatedAt: now }).onConflictDoUpdate({
+      target: [timesheetSubmissions.workspaceId, timesheetSubmissions.userId, timesheetSubmissions.weekStart],
+      set: { status: "submitted", submitterNote: parsed.note || null, reviewNote: null, totalMinutes, billableMinutes, submittedAt: now, reviewedAt: null, reviewedBy: null, updatedAt: now },
+    }).returning();
+    await tx.update(timeEntries).set({ status: "submitted", submittedAt: now, approvedAt: null, rejectedAt: null, reviewedBy: null, updatedAt: now }).where(and(
+      eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.userId, user.id), gte(timeEntries.startTime, start), lt(timeEntries.startTime, end), eq(timeEntries.status, "draft"),
+    ));
+    return saved;
+  });
   await writeActivityLog(workspaceId, user.id, "submitted_weekly_timesheet", "timesheet_submission", submission.id);
   return submission;
 }
@@ -48,9 +56,10 @@ export async function reviewWeeklyTimesheet(input: z.infer<typeof reviewSchema>)
   const [submission] = await db.select().from(timesheetSubmissions).where(and(eq(timesheetSubmissions.id, parsed.submissionId), eq(timesheetSubmissions.workspaceId, workspaceId))).limit(1);
   if (!submission || submission.status !== "submitted") throw new Error("Timesheet tidak tersedia untuk direview");
   const { start, end } = range(submission.weekStart);
-  const entryStatus = parsed.decision === "approved" ? "approved" : "draft";
+  const now = new Date();
+  const entryStatus = nextEntryStatusForDecision(parsed.decision);
   await db.transaction(async (tx) => {
-    await tx.update(timeEntries).set({ status: entryStatus, updatedAt: new Date() }).where(and(eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.userId, submission.userId), gte(timeEntries.startTime, start), lt(timeEntries.startTime, end), ne(timeEntries.status, "invoiced")));
+    await tx.update(timeEntries).set({ status: entryStatus, approvedAt: parsed.decision === "approved" ? now : null, rejectedAt: parsed.decision === "rejected" ? now : null, reviewedBy: user.id, updatedAt: now }).where(and(eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.userId, submission.userId), gte(timeEntries.startTime, start), lt(timeEntries.startTime, end), eq(timeEntries.status, "submitted")));
     await tx.update(timesheetSubmissions).set({ status: parsed.decision, reviewNote: parsed.note || null, reviewedAt: new Date(), reviewedBy: user.id, updatedAt: new Date() }).where(eq(timesheetSubmissions.id, submission.id));
   });
   await writeActivityLog(workspaceId, user.id, `${parsed.decision}_weekly_timesheet`, "timesheet_submission", submission.id);

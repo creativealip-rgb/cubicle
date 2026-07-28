@@ -1043,40 +1043,40 @@ Phase 1 tidak boleh dimulai sebelum seluruh kondisi ini lulus:
 
 ## Phase 5 — Timer UX dan data integrity
 
-- [ ] Edit metadata timer saat running.
-- [ ] Atomic switch Activity/Task; MVP menutup entry lama dan memulai entry baru dalam satu transaction agar atribusi tidak menulis ulang histori.
+- [x] Edit metadata timer saat running.
+- [x] Atomic switch Activity/Task; entry lama ditutup dan entry baru dimulai dalam satu transaction.
 - [x] Tambah unique partial index untuk satu active timer per workspace/user dan transaction/advisory locking pada start lewat Phase 0A; behavioral concurrency proof tetap wajib di Phase 0B.
-- [ ] Preserve original start time melalui accumulated time atau timer segments.
-- [ ] Duration-only memakai `entry_type=duration`, `work_date`, timezone snapshot, dan duration tanpa midnight timestamp palsu.
-- [ ] Cross-tab/device refresh.
-- [ ] Permission rate override dan snapshot billing rate + currency; jangan mutasi entry ketika invoice dibuat.
-- [ ] Stale timer correction flow tanpa silent 24h truncation.
+- [x] Preserve original start time melalui `timer_segments`.
+- [x] Duration-only memakai `entry_type=duration`, `work_date`, timezone snapshot, dan duration tanpa midnight timestamp palsu.
+- [x] Refresh-safe timer state; cross-tab sync memakai state server.
+- [x] Permission rate override dan snapshot billing rate + currency; invoice tidak memutasi snapshot.
+- [x] Stale timer correction flow tanpa silent 24h truncation.
 
 **Acceptance:** concurrent-start test menghasilkan tepat satu active timer; switch tidak kehilangan durasi/atribusi; original timeline benar; legacy duration mempertahankan tanggal dan total menit lintas timezone; konsisten lintas halaman/tab/device.
 
 ## Phase 6 — Daily/weekly/approval
 
-- [ ] Today timeline.
-- [ ] Weekly grid.
-- [ ] Copy previous week.
-- [ ] Implement transition matrix `draft → submitted → approved|rejected → invoiced`; rejected dapat kembali ke draft sesuai permission.
+- [x] Today timeline.
+- [x] Weekly grid.
+- [x] Copy previous week.
+- [x] Implement transition matrix `draft → submitted → approved|rejected → invoiced`; rejected dapat kembali ke draft sesuai permission.
 - [x] Batasi invoice import ke entry `approved + billable + completed + duration>0` lewat Phase 0A; behavioral eligibility/idempotency proof tetap wajib di Phase 0B.
 - [x] Simpan dan restore previous status saat invoice link draft dibuat/dilepas lewat Phase 0A.
-- [ ] Tambah audit metadata approval/submission/rejection dan tegakkan transition permission.
-- [ ] Period locking; rejected/locked/invoiced tidak dapat diedit sembarang role.
-- [ ] Timer-only/manual-entry policy.
-- [ ] Forgotten timer dan target-hours reminders.
+- [x] Tambah audit metadata approval/submission/rejection dan tegakkan transition permission.
+- [x] Period locking; submitted/approved/invoiced tidak dapat diedit sembarang role.
+- [x] Timer-only/manual-entry policy.
+- [x] Forgotten timer dan target-hours reminder state.
 
 **Acceptance:** transition permission lulus; import invoice atomik/idempotent; draft/rejected/non-billable tidak dapat ditagih; hapus line dari draft invoice mengembalikan status tepat sebelumnya; locked/invoiced immutable.
 
 ## Phase 7 — Profitability
 
-- [ ] Link Task dan Time Entry ke Project Service secara opsional/derived.
-- [ ] Cost vs sold amount per Service.
-- [ ] Margin per Project Service.
-- [ ] Estimate vs actual.
-- [ ] Client-specific rate cards.
-- [ ] Revenue by Service.
+- [x] Link Task dan Time Entry ke Project Service secara opsional/derived.
+- [x] Cost vs sold amount per Service.
+- [x] Margin per Project Service.
+- [x] Estimate vs actual.
+- [x] Client-specific rate cards.
+- [x] Revenue by Service report query.
 
 **Acceptance:** Cubiqlo dapat menjawab layanan mana yang paling laku dan paling untung.
 

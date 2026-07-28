@@ -362,6 +362,8 @@ export const projectServices = pgTable("project_services", {
   currencySnapshot: text("currency_snapshot").notNull().default("IDR"),
   amount: numeric("amount", { precision: 12, scale: 2 }),
   includedAllowance: numeric("included_allowance", { precision: 12, scale: 2 }),
+  estimatedMinutes: integer("estimated_minutes"),
+  costRateSnapshot: numeric("cost_rate_snapshot", { precision: 12, scale: 2 }),
   sortOrder: integer("sort_order").notNull().default(0),
   status: text("status", { enum: ["active", "archived"] }).notNull().default("active"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -599,6 +601,20 @@ export const projectActivities = pgTable("project_activities", {
   ),
 ]);
 
+export const clientServiceRateCards = pgTable("client_service_rate_cards", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  serviceId: uuid("service_id").notNull(),
+  hourlyRate: numeric("hourly_rate", { precision: 12, scale: 2 }).notNull(),
+  currency: text("currency").notNull().default("IDR"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique("client_service_rate_cards_client_service_unique").on(table.clientId, table.serviceId),
+  foreignKey({ columns: [table.serviceId, table.workspaceId], foreignColumns: [services.id, services.workspaceId], name: "client_service_rate_cards_service_workspace_fk" }).onDelete("cascade"),
+]);
+
 export const timesheetSubmissions = pgTable("timesheet_submissions", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
@@ -636,12 +652,20 @@ export const timeEntries = pgTable("time_entries", {
   // When set, timer is paused on the same open entry (endTime still null).
   pausedAt: timestamp("paused_at", { withTimezone: true }),
   manualMinutes: integer("manual_minutes"),
+  entryType: text("entry_type", { enum: ["timer", "duration"] }).notNull().default("timer"),
+  workDate: date("work_date"),
+  timezoneSnapshot: text("timezone_snapshot").notNull().default("UTC"),
   durationMinutes: integer("duration_minutes").generatedAlwaysAs(
     sql`case when start_time is not null and end_time is not null then greatest(0, floor(extract(epoch from (end_time - start_time)) / 60)::integer) else coalesce(manual_minutes, 0) end`,
   ),
   billable: boolean("billable").notNull().default(true),
   hourlyRate: numeric("hourly_rate", { precision: 12, scale: 2 }),
-  status: text("status", { enum: ["draft", "approved", "invoiced"] }).notNull().default("draft"),
+  currencySnapshot: text("currency_snapshot").notNull().default("IDR"),
+  status: text("status", { enum: ["draft", "submitted", "approved", "rejected", "invoiced"] }).notNull().default("draft"),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }),
+  approvedAt: timestamp("approved_at", { withTimezone: true }),
+  rejectedAt: timestamp("rejected_at", { withTimezone: true }),
+  reviewedBy: text("reviewed_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
@@ -658,6 +682,20 @@ export const timeEntries = pgTable("time_entries", {
     table.activityId,
     table.startTime,
   ),
+]);
+
+export const timerSegments = pgTable("timer_segments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  timeEntryId: uuid("time_entry_id").notNull().references(() => timeEntries.id, { onDelete: "cascade" }),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+  endedAt: timestamp("ended_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("timer_segments_entry_started_idx").on(table.timeEntryId, table.startedAt),
+  uniqueIndex("timer_segments_one_open_per_entry_uidx")
+    .on(table.timeEntryId)
+    .where(sql`${table.endedAt} is null`),
 ]);
 
 // ─── Invoices ───

@@ -4,7 +4,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { timeEntries, clients, projects, tasks, workspaces } from "@/db/schema";
+import { timeEntries, timerSegments, clients, projects, tasks, workspaces } from "@/db/schema";
 import { eq, and, isNull, isNotNull, sql, gte, lt } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
@@ -135,10 +135,10 @@ const stopTimerSchema = z.object({
   hourlyRate: z.number().nonnegative().optional(),
 });
 
-/** Cap single timer segment at 24h from start. */
-function cappedEnd(startTime: Date, candidate: Date): Date {
-  const maxEnd = new Date(startTime.getTime() + 24 * 3600 * 1000);
-  return candidate > maxEnd ? maxEnd : candidate;
+function assertTimerNotStale(startTime: Date, candidate: Date) {
+  if (candidate.getTime() - startTime.getTime() > 24 * 3600 * 1000) {
+    throw new Error("Timer lebih dari 24 jam. Koreksi waktu mulai/selesai sebelum melanjutkan.");
+  }
 }
 
 export async function startTimer(input: z.infer<typeof startTimerSchema>) {
@@ -187,10 +187,14 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
         continue;
       }
       const endCandidate = open.pausedAt ?? new Date();
+      assertTimerNotStale(open.startTime, endCandidate);
+      await tx.update(timerSegments).set({ endedAt: endCandidate }).where(
+        and(eq(timerSegments.timeEntryId, open.id), isNull(timerSegments.endedAt)),
+      );
       await tx
         .update(timeEntries)
         .set({
-          endTime: cappedEnd(open.startTime, endCandidate),
+          endTime: endCandidate,
           pausedAt: null,
           updatedAt: new Date(),
         })
@@ -214,6 +218,11 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
       hourlyRate: resolvedRate,
       status: "draft",
     }).returning();
+    await tx.insert(timerSegments).values({
+      workspaceId: parsed.workspaceId,
+      timeEntryId: created.id,
+      startedAt: created.startTime!,
+    });
     return created;
   });
 
@@ -283,11 +292,16 @@ export async function pauseTimer(entryId: string) {
     return entry; // already paused
   }
 
-  const [updated] = await db
-    .update(timeEntries)
-    .set({ pausedAt: new Date(), updatedAt: new Date() })
-    .where(eq(timeEntries.id, entryId))
-    .returning();
+  const now = new Date();
+  const [updated] = await db.transaction(async (tx) => {
+    await tx.update(timerSegments).set({ endedAt: now }).where(
+      and(eq(timerSegments.timeEntryId, entryId), isNull(timerSegments.endedAt)),
+    );
+    return tx.update(timeEntries)
+      .set({ pausedAt: now, updatedAt: now })
+      .where(eq(timeEntries.id, entryId))
+      .returning();
+  });
 
   await writeActivityLog(workspaceId, user.id, "paused_timer", "time_entry", entryId);
   return updated;
@@ -325,18 +339,13 @@ export async function resumeTimer(entryId: string) {
   }
 
   const now = new Date();
-  const pauseMs = Math.max(0, now.getTime() - entry.pausedAt.getTime());
-  const shiftedStart = new Date(entry.startTime.getTime() + pauseMs);
-
-  const [updated] = await db
-    .update(timeEntries)
-    .set({
-      startTime: shiftedStart,
-      pausedAt: null,
-      updatedAt: now,
-    })
-    .where(eq(timeEntries.id, entryId))
-    .returning();
+  const [updated] = await db.transaction(async (tx) => {
+    await tx.insert(timerSegments).values({ workspaceId, timeEntryId: entryId, startedAt: now });
+    return tx.update(timeEntries)
+      .set({ pausedAt: null, updatedAt: now })
+      .where(eq(timeEntries.id, entryId))
+      .returning();
+  });
 
   await writeActivityLog(workspaceId, user.id, "resumed_timer", "time_entry", entryId);
   return updated;
@@ -375,7 +384,8 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
   }
 
   const endCandidate = entry.pausedAt ?? new Date();
-  const finalEnd = cappedEnd(entry.startTime, endCandidate);
+  assertTimerNotStale(entry.startTime, endCandidate);
+  const finalEnd = endCandidate;
 
   const nextClientId = parsed.clientId ?? entry.clientId ?? null;
   const nextProjectId = parsed.projectId ?? entry.projectId ?? null;
@@ -414,23 +424,27 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
     activityDefaultRate: activityPolicy.defaultHourlyRate,
   });
 
-  const [updated] = await db
-    .update(timeEntries)
-    .set({
-      clientId: nextClientId,
-      projectId: nextProjectId,
-      activityId: activityPolicy.activityId,
-      taskId: nextTaskId,
-      description: nextDescription,
-      tags: nextTags,
-      billable: projectMode === "off" ? entry.billable : timeEntryBillableForMode(projectMode),
-      hourlyRate: resolvedRate ?? entry.hourlyRate,
-      endTime: finalEnd,
-      pausedAt: null,
-      updatedAt: new Date(),
-    })
-    .where(eq(timeEntries.id, parsed.entryId))
-    .returning();
+  const [updated] = await db.transaction(async (tx) => {
+    await tx.update(timerSegments).set({ endedAt: finalEnd }).where(
+      and(eq(timerSegments.timeEntryId, parsed.entryId), isNull(timerSegments.endedAt)),
+    );
+    return tx.update(timeEntries)
+      .set({
+        clientId: nextClientId,
+        projectId: nextProjectId,
+        activityId: activityPolicy.activityId,
+        taskId: nextTaskId,
+        description: nextDescription,
+        tags: nextTags,
+        billable: projectMode === "off" ? entry.billable : timeEntryBillableForMode(projectMode),
+        hourlyRate: resolvedRate ?? entry.hourlyRate,
+        endTime: finalEnd,
+        pausedAt: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(timeEntries.id, parsed.entryId))
+      .returning();
+  });
 
   await writeActivityLog(workspaceId, user.id, "stopped_timer", "time_entry", parsed.entryId);
   return updated;
@@ -452,15 +466,7 @@ export async function createManualEntry(input: z.infer<typeof createManualEntryS
   });
   const billable = timeEntryBillableForMode(projectMode);
 
-  // Manual entry is NOT a running timer. Set both start + end from the
-  // chosen date + duration so active-timer queries (endTime IS NULL) never
-  // pick it up. Previously endTime=null made seed/manual rows look like
-  // active timers and the navbar clock jumped by hours.
-  const start = new Date(`${parsed.date}T00:00:00.000Z`);
-  if (Number.isNaN(start.getTime())) {
-    throw new Error("Invalid date");
-  }
-  const end = new Date(start.getTime() + parsed.durationMinutes * 60 * 1000);
+  // Duration-only entries use explicit workDate + minutes, not fake midnight timestamps.
 
   // Resolve rate: explicit → Project Activity override → Activity default → Project → workspace.
   // Only auto-fill when project mode is billable.
@@ -484,10 +490,13 @@ export async function createManualEntry(input: z.infer<typeof createManualEntryS
     userId: user.id,
     description: parsed.description || null,
     tags: parsed.tags || null,
-    startTime: start,
-    endTime: end,
+    startTime: null,
+    endTime: null,
     pausedAt: null,
     manualMinutes: parsed.durationMinutes,
+    entryType: "duration",
+    workDate: parsed.date,
+    timezoneSnapshot: "UTC",
     billable,
     hourlyRate: resolvedRate,
     status: "draft",
@@ -644,6 +653,7 @@ export async function updateTimeEntry(entryId: string, input: z.infer<typeof upd
   if (entry.status === "invoiced") {
     throw new Error("Entri sudah di-invoice, tidak bisa diedit");
   }
+  if (entry.status === "submitted") throw new Error("Entri sedang menunggu persetujuan dan terkunci");
   if (entry.status === "approved") throw new Error("Entri sudah disetujui dan terkunci");
   await assertTimesheetWeekMutable(db, workspaceId, entry.userId, entry.startTime ?? entry.createdAt);
   await assertHistoricalTimeEntryMutable(db, workspaceId, entry.projectId);
