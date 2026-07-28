@@ -102,6 +102,7 @@ describe("Phase 2 Activity catalog wiring", () => {
 
     expect(page).toContain("ActivityCatalog");
     expect(compatibilityPage).toContain('redirect("/app/time/activities")');
-    expect(navigation).toContain('direct("activities", "/app/activities"');
+    expect(navigation).toContain('direct("time", "/app/time"');
+    expect(navigation).toContain('["/app/activities"]');
   });
 });
