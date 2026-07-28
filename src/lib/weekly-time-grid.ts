@@ -1,14 +1,16 @@
+import { effectiveWorkDate } from "@/lib/effective-work-date";
+
 export const WEEKLY_GRID_TAG = "mh1-weekly-grid";
 
 export interface WeeklyGridEntry {
   id: string;
   projectId: string | null;
   projectName: string | null;
-  activityId: string | null;
-  activityName: string | null;
   taskId: string | null;
   taskTitle: string | null;
+  workDate?: string | null;
   startTime: Date | string | null;
+  createdAt?: Date | string | null;
   durationMinutes: number | null;
   manualMinutes: number | null;
   tags: string | null;
@@ -26,16 +28,10 @@ export interface WeeklyGridRow {
   key: string;
   projectId: string;
   projectName: string;
-  activityId: string | null;
-  activityName: string | null;
+  taskId: string;
+  taskTitle: string | null;
   cells: WeeklyGridCell[];
   totalMinutes: number;
-}
-
-function isoDate(value: Date | string | null): string | null {
-  if (!value) return null;
-  const date = value instanceof Date ? value : new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
 }
 
 export function getWeekDates(anchor: Date | string): Date[] {
@@ -92,18 +88,19 @@ export function buildWeeklyGrid(entries: WeeklyGridEntry[], anchor: Date | strin
 
   for (const entry of entries) {
     if (!entry.projectId) continue;
-    const date = isoDate(entry.startTime);
+    const date = effectiveWorkDate(entry);
     const dayIndex = date ? dateIndexes.get(date) : undefined;
     if (dayIndex == null) continue;
-    const key = `${entry.projectId}:${entry.activityId ?? "activity"}`;
+    if (!entry.taskId) continue;
+    const key = `${entry.projectId}:${entry.taskId ?? "task"}`;
     let row = rows.get(key);
     if (!row) {
       row = {
         key,
         projectId: entry.projectId,
         projectName: entry.projectName || "Project",
-        activityId: entry.activityId,
-        activityName: entry.activityName,
+        taskId: entry.taskId,
+        taskTitle: entry.taskTitle,
         cells: dateKeys.map((day) => ({ date: day, totalMinutes: 0, editableMinutes: 0, immutableMinutes: 0 })),
         totalMinutes: 0,
       };
@@ -118,7 +115,7 @@ export function buildWeeklyGrid(entries: WeeklyGridEntry[], anchor: Date | strin
   }
 
   const resultRows = Array.from(rows.values()).sort((left, right) =>
-    left.projectName.localeCompare(right.projectName) || (left.activityName || "").localeCompare(right.activityName || ""),
+    left.projectName.localeCompare(right.projectName) || (left.taskTitle || "").localeCompare(right.taskTitle || ""),
   );
   const dayTotals = dateKeys.map((_, index) => resultRows.reduce((sum, row) => sum + row.cells[index].totalMinutes, 0));
   return { dates, rows: resultRows, dayTotals, weekTotalMinutes: dayTotals.reduce((sum, value) => sum + value, 0) };
