@@ -43,15 +43,11 @@ export function TimeHeader() {
             );
           })}
         </nav>
-        <Link
-          href="/app/time/activities"
-          className={cn(
-            "mb-2 shrink-0 text-sm font-medium text-muted-foreground hover:text-foreground sm:ml-4",
-            pathname === "/app/time/activities" && "text-foreground",
-          )}
-        >
-          Kelola Aktivitas
-        </Link>
+        <div className="mb-2 flex shrink-0 gap-3 text-sm font-medium text-muted-foreground sm:ml-4">
+          <Link href="/app/reports?tab=time" className="hover:text-foreground">Laporan Waktu</Link>
+          <Link href="/app/invoices?tab=uninvoiced" className="hover:text-foreground">Belum Ditagihkan</Link>
+          <Link href="/app/time/activities" className={cn("hover:text-foreground", pathname === "/app/time/activities" && "text-foreground")}>Kelola Aktivitas</Link>
+        </div>
       </div>
     </header>
   );
