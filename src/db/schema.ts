@@ -1401,31 +1401,6 @@ export const personalSites = pgTable("personal_sites", {
 ]);
 
 // ─── Portal visit audit ───
-export const personalSites = pgTable("personal_sites", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  slug: text("slug").notNull(),
-  published: boolean("published").notNull().default(false),
-  title: text("title").notNull(),
-  subtitle: text("subtitle"),
-  hero: text("hero").notNull(),
-  about: text("about"),
-  ctaLabel: text("cta_label"),
-  ctaUrl: text("cta_url"),
-  theme: text("theme", { enum: ["midnight", "paper", "studio"] }).notNull().default("midnight"),
-  accent: text("accent").notNull().default("#6647F0"),
-  sections: jsonb("sections").$type<PersonalSiteSection[]>().notNull().default(sql`'[]'::jsonb`),
-  links: jsonb("links").$type<PersonalSiteLink[]>().notNull().default(sql`'[]'::jsonb`),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => [
-  uniqueIndex("personal_sites_owner_workspace_uidx").on(table.workspaceId, table.userId),
-  uniqueIndex("personal_sites_slug_uidx").on(table.slug),
-  index("personal_sites_public_slug_idx").on(table.slug, table.published),
-]);
-
-// ─── Portal visit audit ───
 
 export const supportTickets = pgTable("support_tickets", {
   id: uuid("id").defaultRandom().primaryKey(),
