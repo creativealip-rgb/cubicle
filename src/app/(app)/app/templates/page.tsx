@@ -25,10 +25,9 @@ export default async function TemplateCenterPage({
   const tab =
     params.tab === "contract" ||
     params.tab === "proposal" ||
-    params.tab === "prompt" ||
     params.tab === "invoice"
       ? params.tab
-      : "invoice";
+      : "proposal";
 
   if (!canPreview) {
     return (
@@ -52,8 +51,8 @@ export default async function TemplateCenterPage({
               </p>
               <p className="text-sm text-muted-foreground">
                 {t(
-                  "Fitur template invoice, kontrak, proposal, dan prompt masih disiapkan. Menu tetap kelihatan biar lo tau arah produknya.",
-                  "Invoice, contract, proposal, and prompt templates are still being prepared. The menu stays visible so you know what's next.",
+                  "Fitur template proposal, kontrak, dan invoice masih disiapkan. Menu tetap kelihatan biar lo tau arah produknya.",
+                  "Proposal, contract, and invoice templates are still being prepared. The menu stays visible so you know what's next.",
                 )}
               </p>
             </div>
