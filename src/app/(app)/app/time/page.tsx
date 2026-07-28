@@ -14,6 +14,7 @@ import { PdfExportButton } from "@/components/time/pdf-export-button";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { TimesheetApprovalPanel } from "@/components/time/timesheet-approval-panel";
 import { weekStartIso } from "@/lib/timesheet-approval";
+import { uniqueRecentTimerCombinations } from "@/lib/timer-combinations";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -196,6 +197,19 @@ export default async function TimePage() {
       : []),
   ];
 
+  const recentTimerCombinations = uniqueRecentTimerCombinations(
+    entries
+      .filter((entry) => entry.projectId)
+      .map((entry) => ({
+        clientId: entry.clientId,
+        projectId: entry.projectId!,
+        activityId: entry.activityId,
+        taskId: entry.taskId,
+        description: entry.description,
+        tags: entry.tags,
+      })),
+  );
+
   const currentWeekStart = weekStartIso(new Date());
   const approvalRows = await db.select({ id: timesheetSubmissions.id, userId: timesheetSubmissions.userId, userName: users.name, weekStart: timesheetSubmissions.weekStart, status: timesheetSubmissions.status, totalMinutes: timesheetSubmissions.totalMinutes, billableMinutes: timesheetSubmissions.billableMinutes, submitterNote: timesheetSubmissions.submitterNote, reviewNote: timesheetSubmissions.reviewNote }).from(timesheetSubmissions).leftJoin(users, eq(users.id, timesheetSubmissions.userId)).where(eq(timesheetSubmissions.workspaceId, workspaceId)).orderBy(desc(timesheetSubmissions.submittedAt)).limit(50);
   const currentApproval = approvalRows.find((item) => item.userId === user.id && item.weekStart === currentWeekStart) ?? null;
@@ -246,6 +260,7 @@ export default async function TimePage() {
           projects={writableProjectList}
           tasks={writableTaskList}
           activities={activityList}
+          recentCombinations={recentTimerCombinations}
           initialTimer={
           activeTimer
             ? {

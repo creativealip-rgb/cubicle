@@ -14,11 +14,13 @@ import { StopTimerDialog } from "@/components/time/stop-timer-dialog";
 import {
   Play,
   Square,
+  Star,
   Clock,
   Loader2,
   Pause,
 } from "lucide-react";
 import { useT } from "@/lib/i18n-client";
+import { timerCombinationKey, toggleFavoriteKey, type TimerCombination } from "@/lib/timer-combinations";
 
 interface Client {
   id: string;
@@ -73,6 +75,7 @@ interface TimerWidgetProps {
   projects: Project[];
   tasks: Task[];
   activities?: Activity[];
+  recentCombinations?: TimerCombination[];
   initialTimer: ActiveTimer | null;
 }
 
@@ -110,6 +113,7 @@ export function TimerWidget({
   projects: allProjects,
   tasks: allTasks,
   activities: allActivities = [],
+  recentCombinations = [],
   initialTimer,
 }: TimerWidgetProps) {
   const router = useRouter();
@@ -129,6 +133,30 @@ export function TimerWidget({
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [hourlyRate, setHourlyRate] = useState("");
+  const [favoriteKeys, setFavoriteKeys] = useState<string[]>([]);
+
+  useEffect(() => {
+    try { setFavoriteKeys(JSON.parse(localStorage.getItem("cubicle:timer-favorites") || "[]")); } catch { setFavoriteKeys([]); }
+  }, []);
+
+  const applyCombination = useCallback((item: TimerCombination) => {
+    setSelectedClientId(item.clientId ?? "");
+    setTimeout(() => {
+      setSelectedProjectId(item.projectId);
+      setTimeout(() => {
+        setSelectedActivityId(item.activityId ?? "");
+        setSelectedTaskId(item.taskId ?? "__none__");
+        setDescription(item.description ?? "");
+        setTags(item.tags ?? "");
+      }, 0);
+    }, 0);
+  }, []);
+
+  function toggleFavorite(item: TimerCombination) {
+    const next = toggleFavoriteKey(favoriteKeys, timerCombinationKey(item));
+    setFavoriteKeys(next);
+    localStorage.setItem("cubicle:timer-favorites", JSON.stringify(next));
+  }
 
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
@@ -728,6 +756,28 @@ export function TimerWidget({
                 <Clock className="h-5 w-5 text-muted-foreground" />
                 <h3 className="text-sm font-semibold">{t("Mulai Timer", "Start Timer")}</h3>
               </div>
+
+              {recentCombinations.length > 0 && (
+                <div className="flex gap-2 overflow-x-auto pb-1" aria-label={t("Timer terbaru dan favorit", "Recent and favorite timers")}>
+                  {[...recentCombinations].sort((a, b) => Number(favoriteKeys.includes(timerCombinationKey(b))) - Number(favoriteKeys.includes(timerCombinationKey(a)))).map((item) => {
+                    const key = timerCombinationKey(item);
+                    const project = allProjects.find((value) => value.id === item.projectId);
+                    const activity = allActivities.find((value) => value.id === item.activityId);
+                    const favorite = favoriteKeys.includes(key);
+                    return (
+                      <div key={key} className="flex shrink-0 items-center rounded-md border bg-muted/30">
+                        <button type="button" className="px-3 py-2 text-left text-xs" onClick={() => applyCombination(item)}>
+                          <span className="block font-medium">{project?.name ?? t("Proyek", "Project")}</span>
+                          <span className="text-muted-foreground">{activity?.name ?? item.description ?? t("Tanpa aktivitas", "No activity")}</span>
+                        </button>
+                        <button type="button" className="p-2" aria-label={favorite ? t("Hapus favorit", "Remove favorite") : t("Jadikan favorit", "Add favorite")} onClick={() => toggleFavorite(item)}>
+                          <Star className={`h-4 w-4 ${favorite ? "fill-amber-400 text-amber-500" : "text-muted-foreground"}`} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
