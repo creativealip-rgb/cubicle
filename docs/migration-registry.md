@@ -9,10 +9,10 @@ Reserve a number here before creating SQL. Recheck remote refs and every worktre
 - `0048` — Activity Catalog Phase 2.
 - `0049` — Service Catalog Phase 3.
 - `0050` — Package Builder Phase 4 — integrated; applied to `cubicle_dev`.
-- `0051` — Timesheet approval lifecycle — `feat/mh1-weekly-track` — integrated pending dev apply.
-- `0052` — Timer integrity and segments — `feat/mh1-weekly-track` — integrated pending dev apply.
-- `0053` — Time-entry submission/review lifecycle — `feat/mh1-weekly-track` — integrated pending dev apply.
-- `0054` — Service profitability and client rate cards — `feat/mh1-weekly-track` — integrated pending dev apply.
+- `0051` — Timesheet approval lifecycle — `feat/mh1-weekly-track` — integrated; applied to `cubicle_dev`.
+- `0052` — Timer integrity and segments — `feat/mh1-weekly-track` — integrated; applied to `cubicle_dev`.
+- `0053` — Time-entry submission/review lifecycle — `feat/mh1-weekly-track` — integrated; applied to `cubicle_dev`.
+- `0054` — Service profitability and client rate cards — `feat/mh1-weekly-track` — integrated; applied to `cubicle_dev`.
 - `0055` — Personal Landing Page V2 — integrated; applied to `cubicle_dev`.
 - `0056+` — unreserved.
 
