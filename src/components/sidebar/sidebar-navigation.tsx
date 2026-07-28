@@ -46,7 +46,7 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
   function placePanel(id: SidebarGroupId) {
     const rect = triggers.current[id]?.getBoundingClientRect();
     if (!rect) return;
-    const panelHeight = id === "finance" ? 300 : 240;
+    const panelHeight = id === "sales" ? 460 : id === "finance" ? 300 : 240;
     setPosition({ top: Math.max(12, Math.min(rect.top - 8, window.innerHeight - panelHeight - 12)), left: rect.right + 8 });
   }
   function scheduleOpen(id: SidebarGroupId) {
