@@ -17,7 +17,7 @@ import {
   projectServices,
   workspaceCurrencyRates,
 } from "@/db/schema";
-import { eq, and, desc, sql, inArray, lt, isNotNull } from "drizzle-orm";
+import { eq, and, desc, sql, inArray, lt, isNotNull, ne } from "drizzle-orm";
 import { z } from "zod";
 import { createHash, randomBytes } from "crypto";
 import { requireUser, assertWorkspaceWritable, assertWorkspaceMember } from "@/lib/access";
@@ -34,7 +34,7 @@ import { validateInvoiceMessage } from "@/lib/invoice-message";
 import { buildInvoiceReportUrl, normalizeInvoiceReportRange, signInvoiceReportRange } from "@/lib/invoice-report-options";
 import { resolveWorkspaceReplyTo } from "@/lib/workspace-reply-to";
 import { buildRateMap } from "@/lib/currency-base";
-import { convertCurrency, resolveProjectAmount } from "@/lib/invoice-project-items";
+import { convertCurrency, resolveFixedPriceInvoiceAmount, resolveProjectAmount } from "@/lib/invoice-project-items";
 import { buildProjectServiceDocumentLines } from "@/lib/project-service-lines";
 import { assertBillingModelAllowsTimeInvoice, resolveBillingModel } from "@/lib/billing-model";
 
@@ -156,9 +156,25 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
   const projectItemValues: Array<{ description: string; quantity: number; unitPrice: number; sourceId: string; originalCurrency: string; originalAmount: number; conversionRate: number }> = [];
   const projectServiceItemValues: Array<{ description: string; quantity: number; unitPrice: number; sourceId: string; originalCurrency: string; originalAmount: number; conversionRate: number }> = [];
   for (const projectId of projectIds) {
-    const [project] = await db.select({ id: projects.id, name: projects.name, billingType: projects.billingType, budget: projects.budget, rate: projects.rate, currency: projects.currency, packagePrice: packages.price, packageCustomPrice: packages.customPrice }).from(projects).leftJoin(packages, eq(projects.selectedPackageId, packages.id)).where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId), eq(projects.clientId, parsed.clientId))).limit(1);
+    const [project] = await db.select({ id: projects.id, name: projects.name, billingModel: projects.billingModel, billingType: projects.billingType, budget: projects.budget, rate: projects.rate, currency: projects.currency, packagePrice: packages.price, packageCustomPrice: packages.customPrice }).from(projects).leftJoin(packages, eq(projects.selectedPackageId, packages.id)).where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId), eq(projects.clientId, parsed.clientId))).limit(1);
     if (!project) throw new Error("Ada proyek yang tidak sesuai dengan klien");
-    const originalAmount = resolveProjectAmount({ billingType: project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packageCustomPrice ?? project.packagePrice ?? 0) || null });
+    let originalAmount = resolveProjectAmount({ billingType: project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packageCustomPrice ?? project.packagePrice ?? 0) || null });
+    if (resolveBillingModel(project) === "fixed_price") {
+      const [prior] = await db
+        .select({ amount: sql<string>`coalesce(sum(${invoiceItems.originalAmount}), '0')` })
+        .from(invoiceItems)
+        .innerJoin(invoices, eq(invoices.id, invoiceItems.invoiceId))
+        .where(and(
+          eq(invoiceItems.sourceType, "project"),
+          eq(invoiceItems.sourceId, project.id),
+          eq(invoices.workspaceId, workspaceId),
+          ne(invoices.status, "cancelled"),
+          ne(invoices.status, "archived"),
+        ));
+      const previouslyInvoicedAmount = Number(prior?.amount ?? 0);
+      originalAmount = resolveFixedPriceInvoiceAmount(originalAmount, previouslyInvoicedAmount);
+      if (originalAmount <= 0) throw new Error("Nilai Fixed Price Project sudah seluruhnya ditagihkan");
+    }
     if (project.billingType === "hours") continue;
     const serviceRows = await db
       .select({
@@ -241,6 +257,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
           workspaceId,
           clientId: parsed.clientId,
           projectId: parsed.projectId || null,
+          billingSource: projectItemValues.length ? "fixed_price" : null,
           invoiceNumber,
           issueDate: parsed.issueDate,
           dueDate: parsed.dueDate || null,
