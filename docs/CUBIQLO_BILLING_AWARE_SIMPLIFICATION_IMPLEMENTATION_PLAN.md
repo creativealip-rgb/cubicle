@@ -3,7 +3,7 @@
 **Status:** Approved product direction; Phase 0A/0B executable after additive compatibility migration 0056 is registered and applied to dev
 **Owner:** Alip
 **Prepared:** 28 July 2026
-**Baseline:** verified canonical `origin/dev/integration` at `42f79589f4e369d26319e1e1fcae6bc7317c3cba`; implementation must start from a new feature worktree created from latest remote SHA after fetch
+**Baseline:** canonical paths and baseline SHA must be re-verified against the latest `origin/dev/integration` observed when the feature worktree is created; never rely on a hardcoded historical SHA
 **Production gate:** No production deploy or production DB migration without explicit Alip approval
 **Canonical repo path:** `docs/CUBIQLO_BILLING_AWARE_SIMPLIFICATION_IMPLEMENTATION_PLAN.md`
 
@@ -177,6 +177,32 @@ ALTER TABLE projects
   CHECK (retainer_reset_day IS NULL OR retainer_reset_day BETWEEN 1 AND 28),
   ADD CONSTRAINT projects_retainer_overage_policy_check
   CHECK (retainer_overage_policy IS NULL OR retainer_overage_policy IN ('none','warn','bill'));
+```
+
+Migration 0057 also adds this exact cross-column constraint using a retry-safe guarded `DO $$` block that checks `pg_constraint` before `ALTER TABLE`:
+
+```sql
+ALTER TABLE projects
+  ADD CONSTRAINT projects_retainer_configuration_check
+  CHECK (
+    billing_model <> 'retainer'
+    OR (
+      retainer_fee IS NOT NULL
+      AND retainer_fee >= 0
+      AND retainer_included_minutes IS NOT NULL
+      AND retainer_included_minutes >= 0
+      AND retainer_period_unit = 'month'
+      AND retainer_reset_day BETWEEN 1 AND 28
+      AND retainer_overage_policy IN ('none', 'warn', 'bill')
+      AND (
+        retainer_overage_policy <> 'bill'
+        OR (
+          retainer_overage_rate IS NOT NULL
+          AND retainer_overage_rate >= 0
+        )
+      )
+    )
+  );
 ```
 
 Migration `0057` also adds the authoritative workspace timezone:
@@ -747,29 +773,9 @@ SELECT
 
 Add more queries for proposal/package/service relations as discovered.
 
-### Classification table
+### Phase 0B output boundary
 
-Migration `drizzle/0061_legacy_billing_classification.sql`:
-
-```sql
-CREATE TABLE legacy_project_billing_classifications (
-  project_id uuid NOT NULL,
-  workspace_id uuid NOT NULL REFERENCES workspaces(id) ON DELETE RESTRICT,
-  legacy_billing_type text NOT NULL,
-  target_billing_model text,
-  confidence text NOT NULL DEFAULT 'unreviewed',
-  evidence jsonb NOT NULL DEFAULT '{}'::jsonb,
-  reviewed_by uuid REFERENCES users(id) ON DELETE SET NULL,
-  reviewed_at timestamptz,
-  notes text,
-  CHECK (target_billing_model IS NULL OR target_billing_model IN ('fixed_price','retainer')),
-  CHECK (confidence IN ('unreviewed','automatic','manual','blocked')),
-  PRIMARY KEY (project_id),
-  FOREIGN KEY (project_id, workspace_id)
-    REFERENCES projects(id, workspace_id)
-    ON DELETE RESTRICT
-);
-```
+Phase 0B is profiling-only. It does not create or write the classification table. It produces the preflight SQL output and `docs/audits/BILLING_AWARE_PREFLIGHT_DEV_YYYYMMDD.md`. Migration 0061 and classification-table writes occur in Phase 3 and Phase 8 respectively.
 
 ### Deterministic mapping
 
@@ -1047,6 +1053,35 @@ feat: align weekly time approval with task workflow
 
 Migration 0056 is already applied in Phase 0A.1. Apply migrations `0057`–`0061` only after dry-run on dev clone and reservation through `docs/migration-registry.md`.
 
+### Migration 0061 — Classification table specification
+
+This schema is applied in Phase 3, after profiling has already produced evidence. Review/classification rows are populated later in Phase 8.
+
+
+
+Migration `drizzle/0061_legacy_billing_classification.sql`:
+
+```sql
+CREATE TABLE legacy_project_billing_classifications (
+  project_id uuid NOT NULL,
+  workspace_id uuid NOT NULL REFERENCES workspaces(id) ON DELETE RESTRICT,
+  legacy_billing_type text NOT NULL,
+  target_billing_model text,
+  confidence text NOT NULL DEFAULT 'unreviewed',
+  evidence jsonb NOT NULL DEFAULT '{}'::jsonb,
+  reviewed_by text REFERENCES users(id) ON DELETE SET NULL,
+  reviewed_at timestamptz,
+  notes text,
+  CHECK (target_billing_model IS NULL OR target_billing_model IN ('fixed_price','retainer')),
+  CHECK (confidence IN ('unreviewed','automatic','manual','blocked')),
+  PRIMARY KEY (project_id),
+  FOREIGN KEY (project_id, workspace_id)
+    REFERENCES projects(id, workspace_id)
+    ON DELETE RESTRICT
+);
+```
+
+
 Commit:
 
 ```text
@@ -1193,7 +1228,7 @@ git status --short
 git worktree add <new-path> -b feat/billing-aware-phase0 origin/dev/integration
 ```
 
-Do not implement on `feat/mh1-weekly-track` or the shared root checkout. Canonical paths verified existing at `dfd1f4d`: `src/components/time/time-route-content.tsx`, `src/components/time/time-header.tsx`, `src/components/forms/task-form.tsx`, and `src/components/tasks/project-tasks-tab.tsx`. New component paths remain explicitly marked `new`. The implementation baseline SHA must be updated in the first phase audit artifact to the remote SHA observed at worktree creation.
+Do not implement on `feat/mh1-weekly-track` or the shared root checkout. At feature-worktree creation, re-verify these canonical paths against the observed remote SHA: `src/components/time/time-route-content.tsx`, `src/components/time/time-header.tsx`, `src/components/forms/task-form.tsx`, and `src/components/tasks/project-tasks-tab.tsx`. New component paths remain explicitly marked `new`. Record the observed remote SHA and path verification in the first phase audit artifact.
 
 ## 21. Commit and Deployment Boundaries
 
