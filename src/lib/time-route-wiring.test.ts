@@ -4,29 +4,25 @@ import { join } from "node:path";
 
 const read = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 
-describe("Menu IA Batch 2 Time route wiring", () => {
-  it("exposes shared Time navigation and all workflow routes", () => {
+describe("Billing-aware Waktu route wiring", () => {
+  it("exposes canonical Harian and Mingguan navigation", () => {
     const header = read("src/components/time/time-header.tsx");
-    expect(header).toContain('href: "/app/time"');
-    expect(header).toContain('href: "/app/time/timesheet"');
-    expect(header).toContain('href: "/app/time/history"');
+    expect(header).toContain('href: "/app/time?view=daily"');
+    expect(header).toContain('href: "/app/time?view=weekly"');
     expect(header).toContain('href: "/app/time/approvals"');
-    expect(header).toContain('href="/app/time/activities"');
-    expect(header).toContain('aria-current={active ? "page" : undefined}');
+    expect(header).not.toContain('href="/app/time/activities"');
+    expect(header).not.toContain('label: "Timer"');
   });
 
-  it("keeps each route focused on one existing workflow", () => {
-    const expected = {
-      "src/app/(app)/app/time/page.tsx": "timer",
-      "src/app/(app)/app/time/timesheet/page.tsx": "timesheet",
-      "src/app/(app)/app/time/history/page.tsx": "history",
-      "src/app/(app)/app/time/approvals/page.tsx": "approvals",
-    };
-    for (const [path, mode] of Object.entries(expected)) {
-      expect(read(path)).toContain(`<TimeRouteContent mode="${mode}" />`);
-    }
+  it("uses one history-first route with compatibility redirects", () => {
+    const page = read("src/app/(app)/app/time/page.tsx");
+    expect(page).toContain('view === "weekly" ? "timesheet" : "history"');
+    expect(page).toContain("selectedDate");
+    expect(read("src/app/(app)/app/time/timesheet/page.tsx")).toContain('redirect("/app/time?view=weekly")');
+    expect(read("src/app/(app)/app/time/history/page.tsx")).toContain('redirect("/app/time?view=daily")');
+    expect(read("src/app/(app)/app/time/approvals/page.tsx")).toContain('<TimeRouteContent mode="approvals" />');
     const content = read("src/components/time/time-route-content.tsx");
-    for (const component of ["TimerWidget", "ManualEntryForm", "WeeklyTimeGrid", "TeamTimesheetView", "Timesheet", "PdfExportButton", "TimesheetApprovalPanel"]) {
+    for (const component of ["WaktuHistory", "WaktuNavigation", "AddTimeLogDialog", "NewTimerDialog", "ActiveTimerCard", "WeeklyTimeGrid", "TimesheetApprovalPanel"]) {
       expect(content).toContain(component);
     }
   });

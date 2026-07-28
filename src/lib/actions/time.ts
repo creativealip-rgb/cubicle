@@ -67,11 +67,10 @@ async function resolveHourlyRate(opts: {
 
 const startTimerSchema = z.object({
   workspaceId: z.string().uuid(),
-  // Quick timer may start empty; fill required fields on stop.
-  clientId: z.string().uuid().optional().nullable(),
-  projectId: z.string().uuid().optional().nullable(),
+  clientId: z.string().uuid(),
+  projectId: z.string().uuid(),
   activityId: z.string().uuid().optional().nullable(),
-  taskId: z.string().uuid().optional().nullable(),
+  taskId: z.string().uuid(),
   description: z.string().optional().nullable(),
   tags: z.string().optional().nullable(),
   hourlyRate: z.number().nonnegative().optional(),
@@ -82,8 +81,8 @@ const createManualEntrySchema = z.object({
   clientId: z.string().uuid(),
   projectId: z.string().uuid(),
   activityId: z.string().uuid().optional().nullable(),
-  taskId: z.string().uuid().optional(),
-  description: z.string().optional(),
+  taskId: z.string().uuid(),
+  description: z.string().trim().min(1, "Deskripsi pekerjaan wajib diisi"),
   tags: z.string().optional(),
   date: z.string().min(1),
   durationMinutes: z.number().positive(),
@@ -148,9 +147,7 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
 
   const parsed = startTimerSchema.parse(input);
   await assertTimeEntryContext(db, parsed.workspaceId, parsed);
-  const projectMode = parsed.projectId
-    ? await assertProjectTimeTrackingEnabled(db, parsed.workspaceId, parsed.projectId)
-    : null;
+  const projectMode = await assertProjectTimeTrackingEnabled(db, parsed.workspaceId, parsed.projectId);
   const activityPolicy = await assertActivityWriteAllowed(db, {
     workspaceId: parsed.workspaceId,
     projectId: parsed.projectId,

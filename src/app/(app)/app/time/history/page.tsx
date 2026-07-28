@@ -1,5 +1,2 @@
-import { TimeRouteContent } from "@/components/time/time-route-content";
-
-export default function Page() {
-  return <TimeRouteContent mode="history" />;
-}
+import { redirect } from "next/navigation";
+export default function Page(){redirect("/app/time?view=daily")}

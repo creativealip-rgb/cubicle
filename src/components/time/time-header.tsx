@@ -6,26 +6,25 @@ import { BarChart3, ChevronDown, ReceiptText, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const primaryTabs = [
-  { href: "/app/time", label: "Timer", mobileLabel: "Timer" },
-  { href: "/app/time/timesheet", label: "Lembar Waktu", mobileLabel: "Lembar" },
-  { href: "/app/time/history", label: "Riwayat", mobileLabel: "Riwayat" },
+  { href: "/app/time?view=daily", label: "Harian", mobileLabel: "Harian" },
+  { href: "/app/time?view=weekly", label: "Mingguan", mobileLabel: "Mingguan" },
 ] as const;
 
 const secondaryItems = [
   { href: "/app/time/approvals", label: "Persetujuan", icon: Settings2 },
-  { href: "/app/time/activities", label: "Kelola Aktivitas", icon: Settings2 },
+
   { href: "/app/reports?tab=time", label: "Laporan Waktu", icon: BarChart3 },
   { href: "/app/invoices?tab=uninvoiced", label: "Belum Ditagihkan", icon: ReceiptText },
 ] as const;
 
 export function TimeHeader() {
   const pathname = usePathname();
-  const secondaryActive = pathname === "/app/time/approvals" || pathname === "/app/time/activities";
+  const secondaryActive = pathname === "/app/time/approvals";
 
   return (
     <header className="space-y-3 sm:space-y-4">
       <div>
-        <h1 className="app-page-title">Pelacakan Waktu</h1>
+        <h1 className="app-page-title">Waktu</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Catat waktu, tinjau lembar mingguan, dan kelola persetujuan.
         </p>
@@ -93,12 +92,7 @@ export function TimeHeader() {
             >
               Persetujuan
             </Link>
-            <Link
-              href="/app/time/activities"
-              className={cn("rounded-lg px-2.5 py-1.5 text-sm font-medium hover:bg-muted", pathname === "/app/time/activities" ? "text-primary" : "text-muted-foreground")}
-            >
-              Kelola Aktivitas
-            </Link>
+
             <details className="group relative">
               <summary className="flex cursor-pointer list-none items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground [&::-webkit-details-marker]:hidden">
                 Tautan <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
