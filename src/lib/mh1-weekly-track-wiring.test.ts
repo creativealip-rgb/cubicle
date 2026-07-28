@@ -29,7 +29,7 @@ describe("MH1 weekly track wiring", () => {
   });
 
   it("wires the weekly grid into the time page", () => {
-    const page = read("src/app/(app)/app/time/page.tsx");
+    const page = read("src/components/time/time-route-content.tsx");
     expect(page).toContain('import { WeeklyTimeGrid } from "@/components/time/weekly-time-grid"');
     expect(page).toContain("<WeeklyTimeGrid");
     expect(page).toContain("user.id");
