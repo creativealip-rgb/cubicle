@@ -45,10 +45,13 @@ interface TimeEntry {
   status: string;
   clientId?: string | null;
   projectId?: string | null;
+  activityId?: string | null;
   taskId?: string | null;
   clientName: string | null;
   projectName: string | null;
+  activityName?: string | null;
   projectCurrency: string | null;
+  projectTimeTrackingMode: "off" | "internal" | "billable" | null;
   taskTitle: string | null;
   userName: string | null;
   createdAt: Date | string;
@@ -63,6 +66,7 @@ interface Project {
   id: string;
   name: string;
   clientId?: string | null;
+  timeTrackingMode?: "off" | "internal" | "billable" | null;
 }
 
 interface Task {
@@ -71,11 +75,18 @@ interface Task {
   projectId?: string | null;
 }
 
+interface Activity {
+  id: string;
+  name: string;
+  projectId?: string | null;
+}
+
 interface TimesheetProps {
   entries: TimeEntry[];
   clients: Client[];
   projects: Project[];
   tasks?: Task[];
+  activities?: Activity[];
 }
 
 function toDateInputValue(value: Date | string | null | undefined): string {
@@ -88,12 +99,13 @@ function toDateInputValue(value: Date | string | null | undefined): string {
   return `${year}-${month}-${day}`;
 }
 
-export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetProps) {
+export function Timesheet({ entries, clients, projects, tasks = [], activities = [] }: TimesheetProps) {
   const { t, locale } = useT();
   const router = useRouter();
 
   const [clientFilter, setClientFilter] = useState<string>("all");
   const [projectFilter, setProjectFilter] = useState<string>("all");
+  const [activityFilter, setActivityFilter] = useState<string>("all");
   const [billableFilter, setBillableFilter] = useState<string>("all");
   const [tagFilter, setTagFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState("");
@@ -107,6 +119,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
   const [editTags, setEditTags] = useState("");
   const [editClientId, setEditClientId] = useState("");
   const [editProjectId, setEditProjectId] = useState("");
+  const [editActivityId, setEditActivityId] = useState("");
   const [editTaskId, setEditTaskId] = useState("__none__");
   const [editDate, setEditDate] = useState("");
   const [editMinutes, setEditMinutes] = useState("");
@@ -114,13 +127,13 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
   const [editStatus, setEditStatus] = useState<"draft" | "approved">("draft");
   const [deleteEntry, setDeleteEntry] = useState<TimeEntry | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  // True when description was auto-filled from task title in this edit session.
-  const [descriptionFromTask, setDescriptionFromTask] = useState(false);
 
   const filteredEntries = useMemo(() => {
     return entries.filter((e) => {
       if (clientFilter !== "all" && e.clientId !== clientFilter) return false;
       if (projectFilter !== "all" && e.projectId !== projectFilter) return false;
+      if (activityFilter === "none" && e.activityId) return false;
+      if (activityFilter !== "all" && activityFilter !== "none" && e.activityId !== activityFilter) return false;
       if (billableFilter === "billable" && !e.billable) return false;
       if (billableFilter === "non-billable" && e.billable) return false;
       if (
@@ -141,11 +154,11 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
       }
       return true;
     });
-  }, [entries, clientFilter, projectFilter, billableFilter, tagFilter, dateFrom, dateTo]);
+  }, [entries, clientFilter, projectFilter, activityFilter, billableFilter, tagFilter, dateFrom, dateTo]);
 
   useEffect(() => {
     setPage(1);
-  }, [clientFilter, projectFilter, billableFilter, tagFilter, dateFrom, dateTo, entries.length]);
+  }, [clientFilter, projectFilter, activityFilter, billableFilter, tagFilter, dateFrom, dateTo, entries.length]);
 
   const totalPages = Math.max(1, Math.ceil(filteredEntries.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -168,14 +181,20 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
   );
 
   const editProjects = useMemo(() => {
-    if (!editClientId) return projects;
-    return projects.filter((p) => p.clientId === editClientId);
+    const writableProjects = projects.filter((p) => p.timeTrackingMode !== "off");
+    if (!editClientId) return writableProjects;
+    return writableProjects.filter((p) => p.clientId === editClientId);
   }, [editClientId, projects]);
 
   const editTasks = useMemo(() => {
     if (!editProjectId) return [];
     return tasks.filter((tk) => tk.projectId === editProjectId);
   }, [editProjectId, tasks]);
+
+  const editActivities = useMemo(() => {
+    if (!editProjectId) return [];
+    return activities.filter((a) => a.projectId === editProjectId);
+  }, [editProjectId, activities]);
 
   const filterProjects = useMemo(() => {
     if (clientFilter === "all") return projects;
@@ -236,31 +255,17 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
     setEditTags(entry.tags || "");
     setEditClientId(entry.clientId || "");
     setEditProjectId(entry.projectId || "");
+    setEditActivityId(entry.activityId || "");
     setEditTaskId(entry.taskId || "__none__");
     setEditDate(toDateInputValue(entry.startTime));
     setEditMinutes(String(entry.durationMinutes ?? entry.manualMinutes ?? 0));
     setEditBillable(entry.billable);
     setEditStatus(entry.status === "approved" ? "approved" : "draft");
-    setDescriptionFromTask(false);
     setEditOpen(true);
   }
 
   function handleEditTaskChange(nextTaskId: string) {
     setEditTaskId(nextTaskId);
-    if (!nextTaskId || nextTaskId === "__none__") {
-      if (descriptionFromTask) {
-        setEditDescription("");
-        setDescriptionFromTask(false);
-      }
-      return;
-    }
-    const task = tasks.find((tk) => tk.id === nextTaskId);
-    if (!task?.title) return;
-    // Auto-map when blank or previously auto-filled from another task.
-    if (!editDescription.trim() || descriptionFromTask) {
-      setEditDescription(task.title);
-      setDescriptionFromTask(true);
-    }
   }
 
   async function handleSaveEdit() {
@@ -289,6 +294,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
         tags: editTags || null,
         clientId: editClientId,
         projectId: editProjectId,
+        activityId: editActivityId || null,
         taskId: editTaskId && editTaskId !== "__none__" ? editTaskId : null,
         startTime: startIso,
         endTime: endIso,
@@ -380,6 +386,29 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                   {filterProjects.map((project) => (
                     <SelectItem key={project.id} value={project.id}>
                       {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">{t("Activity", "Activity")}</Label>
+              <Select value={activityFilter} onValueChange={setActivityFilter}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue placeholder={t("Semua", "All")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("Semua Activity", "All Activities")}</SelectItem>
+                  <SelectItem value="none">{t("Tanpa aktivitas", "No activity")}</SelectItem>
+                  {Array.from(
+                    new Map(
+                      entries
+                        .filter((e) => e.activityId && e.activityName)
+                        .map((e) => [e.activityId!, e.activityName!]),
+                    ),
+                  ).map(([id, name]) => (
+                    <SelectItem key={id} value={id}>
+                      {name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -535,33 +564,41 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                   <Badge variant="secondary" className="text-[10px]">
                     {formatDuration(entry.durationMinutes)}
                   </Badge>
-                  {entry.status === "invoiced" ? (
+                  {entry.projectTimeTrackingMode === "off" ? (
                     <Badge variant="outline" className="text-[10px]">
-                      Invoice
+                      {t("Hanya baca", "Read only")}
                     </Badge>
                   ) : (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-11 w-11 rounded-lg border border-transparent hover:border-border hover:bg-background sm:h-9 sm:w-9"
-                      onClick={() => openEdit(entry)}
-                      aria-label={t("Edit entri", "Edit entry")}
-                      title={t("Edit entri", "Edit entry")}
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
+                    <>
+                      {entry.status === "invoiced" ? (
+                        <Badge variant="outline" className="text-[10px]">
+                          Invoice
+                        </Badge>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-11 w-11 rounded-lg border border-transparent hover:border-border hover:bg-background sm:h-9 sm:w-9"
+                          onClick={() => openEdit(entry)}
+                          aria-label={t("Edit entri", "Edit entry")}
+                          title={t("Edit entri", "Edit entry")}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-11 w-11 rounded-lg border border-transparent text-destructive hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive sm:h-9 sm:w-9"
+                        onClick={() => setDeleteEntry(entry)}
+                        disabled={entry.status === "invoiced"}
+                        aria-label={t("Hapus entri", "Delete entry")}
+                        title={t("Hapus entri", "Delete entry")}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </>
                   )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-11 w-11 rounded-lg border border-transparent text-destructive hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive sm:h-9 sm:w-9"
-                    onClick={() => setDeleteEntry(entry)}
-                    disabled={entry.status === "invoiced"}
-                    aria-label={t("Hapus entri", "Delete entry")}
-                    title={t("Hapus entri", "Delete entry")}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -630,16 +667,13 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
               <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
               <Input
                 value={editDescription}
-                onChange={(e) => {
-                  setDescriptionFromTask(false);
-                  setEditDescription(e.target.value);
-                }}
+                onChange={(e) => setEditDescription(e.target.value)}
                 className="h-9"
               />
               <p className="text-[11px] text-muted-foreground">
                 {t(
-                  "Pilih task → deskripsi auto-map dari judul (bisa diedit).",
-                  "Pick a task → description auto-maps from title (editable).",
+                  "Task sebagai konteks; deskripsi pekerjaan tetap terpisah",
+                  "Task is context; work description stays separate",
                 )}
               </p>
             </div>
@@ -651,6 +685,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                   onValueChange={(v) => {
                     setEditClientId(v);
                     setEditProjectId("");
+                    setEditActivityId("");
                     setEditTaskId("__none__");
                   }}
                 >
@@ -673,6 +708,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                   value={editProjectId}
                   onValueChange={(v) => {
                     setEditProjectId(v);
+                    setEditActivityId("");
                     setEditTaskId("__none__");
                   }}
                   disabled={!editClientId}
@@ -692,7 +728,27 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">{t("Tugas", "Task")}</Label>
+              <Label className="text-xs">{t("Activity", "Activity")}</Label>
+              <Select
+                value={editActivityId || "__none__"}
+                onValueChange={(v) => setEditActivityId(v === "__none__" ? "" : v)}
+                disabled={!editProjectId}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder={t("Opsional", "Optional")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
+                  {editActivities.map((activity) => (
+                    <SelectItem key={activity.id} value={activity.id}>
+                      {activity.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">{t("Tugas terkait", "Related Task")}</Label>
               <Select
                 value={editTaskId}
                 onValueChange={handleEditTaskChange}

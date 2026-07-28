@@ -3,13 +3,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { startTimer, pauseTimer, resumeTimer, discardTimer, stopTimer } from "@/lib/actions/time";
+import { startTimer, pauseTimer, resumeTimer, discardTimer, stopTimer, updateActiveTimerMetadata } from "@/lib/actions/time";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { StopTimerDialog } from "@/components/time/stop-timer-dialog";
 import {
   Play,
   Square,
@@ -29,6 +30,7 @@ interface Project {
   name: string;
   clientId?: string | null;
   billingType?: string | null;
+  activityRequired?: boolean | null;
   rate?: string | null;
 }
 
@@ -38,10 +40,21 @@ interface Task {
   projectId?: string | null;
 }
 
+interface Activity {
+  id: string;
+  name: string;
+  projectId?: string | null;
+  enabled?: boolean | null;
+  status?: string | null;
+  defaultHourlyRate?: string | number | null;
+  rateOverride?: string | number | null;
+}
+
 interface ActiveTimer {
   id: string;
   clientId: string | null;
   projectId: string | null;
+  activityId?: string | null;
   taskId: string | null;
   description: string | null;
   tags?: string | null;
@@ -49,6 +62,7 @@ interface ActiveTimer {
   pausedAt?: Date | string | null;
   clientName: string | null;
   projectName: string | null;
+  activityName?: string | null;
   taskTitle: string | null;
 }
 
@@ -58,6 +72,7 @@ interface TimerWidgetProps {
   clients: Client[];
   projects: Project[];
   tasks: Task[];
+  activities?: Activity[];
   initialTimer: ActiveTimer | null;
 }
 
@@ -94,6 +109,7 @@ export function TimerWidget({
   clients,
   projects: allProjects,
   tasks: allTasks,
+  activities: allActivities = [],
   initialTimer,
 }: TimerWidgetProps) {
   const router = useRouter();
@@ -101,18 +117,21 @@ export function TimerWidget({
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(initialTimer);
   const [elapsed, setElapsed] = useState("00:00:00");
   const [loading, setLoading] = useState(false);
+  const [stopDialogOpen, setStopDialogOpen] = useState(false);
+  const [editingActiveTimer, setEditingActiveTimer] = useState(false);
   const selfDispatched = useRef(false);
 
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [selectedActivityId, setSelectedActivityId] = useState<string>("");
+  const setActivityId = useCallback((value: string) => setSelectedActivityId(value), []);
   const [selectedTaskId, setSelectedTaskId] = useState<string>("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [hourlyRate, setHourlyRate] = useState("");
-  // Track whether description was auto-filled from task (so we can refresh when task changes).
-  const descriptionFromTaskRef = useRef(false);
 
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
+  const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
 
   const selectedProject = allProjects.find((p) => p.id === selectedProjectId);
@@ -125,40 +144,29 @@ export function TimerWidget({
     if (selectedClientId) {
       setFilteredProjects(allProjects.filter((p) => p.clientId === selectedClientId));
       setSelectedProjectId("");
+      setActivityId("");
       setSelectedTaskId("__none__");
     } else {
       setFilteredProjects([]);
       setSelectedProjectId("");
+      setActivityId("");
       setSelectedTaskId("__none__");
     }
-  }, [selectedClientId, allProjects]);
+  }, [selectedClientId, allProjects, setActivityId]);
 
   useEffect(() => {
     if (selectedProjectId) {
+      setFilteredActivities(allActivities.filter((a) => a.projectId === selectedProjectId));
       setFilteredTasks(allTasks.filter((tk) => tk.projectId === selectedProjectId));
+      setActivityId("");
       setSelectedTaskId("__none__");
     } else {
+      setFilteredActivities([]);
       setFilteredTasks([]);
+      setActivityId("");
       setSelectedTaskId("__none__");
     }
-  }, [selectedProjectId, allTasks]);
-
-  // Auto-map timer description from selected task title when blank / previously auto-filled.
-  useEffect(() => {
-    if (!selectedTaskId || selectedTaskId === "__none__") {
-      if (descriptionFromTaskRef.current) {
-        setDescription("");
-        descriptionFromTaskRef.current = false;
-      }
-      return;
-    }
-    const task = allTasks.find((tk) => tk.id === selectedTaskId);
-    if (!task?.title) return;
-    if (!description.trim() || descriptionFromTaskRef.current) {
-      setDescription(task.title);
-      descriptionFromTaskRef.current = true;
-    }
-  }, [selectedTaskId, allTasks]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedProjectId, allTasks, allActivities, setActivityId]);
 
   const loadActiveFromApi = useCallback(async () => {
     try {
@@ -212,6 +220,7 @@ export function TimerWidget({
         workspaceId,
         clientId: selectedClientId,
         projectId: selectedProjectId,
+        activityId: selectedActivityId || null,
         taskId: selectedTaskId && selectedTaskId !== "__none__" ? selectedTaskId : undefined,
         description: description || undefined,
         tags: tags || undefined,
@@ -220,12 +229,14 @@ export function TimerWidget({
 
       const client = clients.find((c) => c.id === selectedClientId);
       const project = allProjects.find((p) => p.id === selectedProjectId);
+      const activity = allActivities.find((a) => a.id === selectedActivityId);
       const task = allTasks.find((tk) => tk.id === selectedTaskId);
 
       setActiveTimer({
         id: entry.id,
         clientId: selectedClientId,
         projectId: selectedProjectId,
+        activityId: selectedActivityId || null,
         taskId: selectedTaskId && selectedTaskId !== "__none__" ? selectedTaskId : null,
         description: description || null,
         tags: tags || null,
@@ -233,6 +244,7 @@ export function TimerWidget({
         pausedAt: null,
         clientName: client?.name ?? null,
         projectName: project?.name ?? null,
+        activityName: activity?.name ?? null,
         taskTitle: task?.title ?? null,
       });
       selfDispatched.current = true;
@@ -247,6 +259,7 @@ export function TimerWidget({
   }, [
     selectedClientId,
     selectedProjectId,
+    selectedActivityId,
     selectedTaskId,
     description,
     tags,
@@ -254,6 +267,7 @@ export function TimerWidget({
     workspaceId,
     clients,
     allProjects,
+    allActivities,
     allTasks,
     router,
     t,
@@ -267,6 +281,7 @@ export function TimerWidget({
         id: entry.id,
         clientId: null,
         projectId: null,
+        activityId: null,
         taskId: null,
         description: null,
         tags: null,
@@ -274,6 +289,7 @@ export function TimerWidget({
         pausedAt: null,
         clientName: null,
         projectName: null,
+        activityName: null,
         taskTitle: null,
       });
       selfDispatched.current = true;
@@ -363,6 +379,10 @@ export function TimerWidget({
 
   const handleStop = useCallback(async () => {
     if (!activeTimer || loading) return;
+    if (isEmptyTimer) {
+      setStopDialogOpen(true);
+      return;
+    }
     setLoading(true);
     try {
       await stopTimer(activeTimer.id);
@@ -377,7 +397,85 @@ export function TimerWidget({
     } finally {
       setLoading(false);
     }
-  }, [activeTimer, loading, router, t]);
+  }, [activeTimer, isEmptyTimer, loading, router, t]);
+
+  const startEditingActiveTimer = useCallback(() => {
+    if (!activeTimer) return;
+    setSelectedClientId(activeTimer.clientId || "");
+    setSelectedProjectId(activeTimer.projectId || "");
+    setActivityId(activeTimer.activityId || "");
+    setSelectedTaskId(activeTimer.taskId || "__none__");
+    setDescription(activeTimer.description || "");
+    setTags(activeTimer.tags || "");
+    setHourlyRate("");
+    setEditingActiveTimer(true);
+  }, [activeTimer, setActivityId]);
+
+  const handleSaveActiveMetadata = useCallback(async () => {
+    if (!activeTimer || loading) return;
+    if (!selectedClientId || !selectedProjectId) {
+      toast.error(t("Pilih klien dan proyek", "Select a client and project"));
+      return;
+    }
+    setLoading(true);
+    try {
+      const updated = await updateActiveTimerMetadata(activeTimer.id, {
+        clientId: selectedClientId,
+        projectId: selectedProjectId,
+        activityId: selectedActivityId || null,
+        taskId: selectedTaskId && selectedTaskId !== "__none__" ? selectedTaskId : null,
+        description: description || null,
+        tags: tags || null,
+        hourlyRate: hourlyRate ? Number(hourlyRate) : undefined,
+      });
+      const client = clients.find((c) => c.id === selectedClientId);
+      const project = allProjects.find((p) => p.id === selectedProjectId);
+      const activity = allActivities.find((a) => a.id === selectedActivityId);
+      const task = allTasks.find((tk) => tk.id === selectedTaskId);
+      setActiveTimer((prev) =>
+        prev
+          ? {
+              ...prev,
+              clientId: updated.clientId ?? selectedClientId,
+              projectId: updated.projectId ?? selectedProjectId,
+              activityId: updated.activityId ?? (selectedActivityId || null),
+              taskId: updated.taskId ?? (selectedTaskId !== "__none__" ? selectedTaskId : null),
+              description: updated.description ?? (description || null),
+              tags: updated.tags ?? (tags || null),
+              clientName: client?.name ?? null,
+              projectName: project?.name ?? null,
+              activityName: activity?.name ?? null,
+              taskTitle: task?.title ?? null,
+            }
+          : prev,
+      );
+      setEditingActiveTimer(false);
+      selfDispatched.current = true;
+      window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
+      toast.success(t("Detail timer diperbarui", "Timer details updated"));
+      router.refresh();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("Gagal menyimpan detail timer", "Failed to save timer details"));
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    activeTimer,
+    loading,
+    selectedClientId,
+    selectedProjectId,
+    selectedActivityId,
+    selectedTaskId,
+    description,
+    tags,
+    hourlyRate,
+    clients,
+    allProjects,
+    allActivities,
+    allTasks,
+    router,
+    t,
+  ]);
 
   return (
     <>
@@ -429,11 +527,113 @@ export function TimerWidget({
                 </div>
               )}
 
-              {isEmptyTimer ? (
+              {editingActiveTimer ? (
+                <div className="space-y-3 rounded-lg border bg-slate-50 p-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">{t("Klien *", "Client *")}</Label>
+                      <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue placeholder={t("Pilih klien", "Select client")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {clients.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">{t("Proyek", "Project")} *</Label>
+                      <Select value={selectedProjectId} onValueChange={setSelectedProjectId} disabled={!selectedClientId}>
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue placeholder={t("Pilih proyek", "Select project")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {filteredProjects.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">{t("Activity", "Activity")}</Label>
+                      <Select
+                        value={selectedActivityId || "__none__"}
+                        onValueChange={(value) => setSelectedActivityId(value === "__none__" ? "" : value)}
+                        disabled={!selectedProjectId}
+                      >
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue placeholder={t("Pilih activity", "Select activity")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
+                          {filteredActivities.map((a) => (
+                            <SelectItem key={a.id} value={a.id}>
+                              {a.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">{t("Tugas terkait", "Related Task")}</Label>
+                      <Select value={selectedTaskId} onValueChange={setSelectedTaskId} disabled={!selectedProjectId}>
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue placeholder={t("Pilih tugas", "Select task")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
+                          {filteredTasks.map((tk) => (
+                            <SelectItem key={tk.id} value={tk.id}>
+                              {tk.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
+                    <Input value={description} onChange={(e) => setDescription(e.target.value)} className="h-9" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">{t("Tag", "Tags")}</Label>
+                    <Input value={tags} onChange={(e) => setTags(e.target.value)} className="h-9" />
+                  </div>
+                  {isHourly && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">{t("Tarif per jam", "Hourly rate")}</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="1000"
+                        value={hourlyRate}
+                        onChange={(e) => setHourlyRate(e.target.value)}
+                        placeholder={selectedProject?.rate ? String(selectedProject.rate) : "e.g. 150000"}
+                        className="h-9"
+                      />
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" onClick={handleSaveActiveMetadata} disabled={loading || !selectedClientId || !selectedProjectId}>
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      {t("Simpan Detail", "Save Details")}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setEditingActiveTimer(false)} disabled={loading}>
+                      {t("Batal", "Cancel")}
+                    </Button>
+                  </div>
+                </div>
+              ) : isEmptyTimer ? (
                 <p className="text-sm text-muted-foreground">
                   {t(
-                    "Timer kosong — hentikan sekarang, lalu lengkapi detailnya di timesheet.",
-                    "Empty timer — stop it now, then complete the details in the timesheet.",
+                    "Timer kosong — pilih klien dan Project saat menghentikan.",
+                    "Empty timer — choose client and Project when stopping.",
                   )}
                 </p>
               ) : (
@@ -446,6 +646,11 @@ export function TimerWidget({
                   {activeTimer.projectName && (
                     <p>
                       {t("Proyek", "Project")}: {activeTimer.projectName}
+                    </p>
+                  )}
+                  {activeTimer.activityName && (
+                    <p>
+                      {t("Activity", "Activity")}: {activeTimer.activityName}
                     </p>
                   )}
                   {activeTimer.taskTitle && (
@@ -486,6 +691,15 @@ export function TimerWidget({
                   </Button>
                 )}
                 <Button
+                  variant="outline"
+                  size="lg"
+                  className="flex-1 gap-2 min-w-[120px]"
+                  onClick={startEditingActiveTimer}
+                  disabled={loading || editingActiveTimer}
+                >
+                  {t("Edit Detail", "Edit Details")}
+                </Button>
+                <Button
                   variant="destructive"
                   size="lg"
                   className="flex-1 gap-2 min-w-[140px]"
@@ -515,7 +729,7 @@ export function TimerWidget({
                 <h3 className="text-sm font-semibold">{t("Mulai Timer", "Start Timer")}</h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs">{t("Klien", "Client")}</Label>
                   <Select value={selectedClientId} onValueChange={setSelectedClientId}>
@@ -551,7 +765,27 @@ export function TimerWidget({
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">{t("Tugas (opsional)", "Task (optional)")}</Label>
+                  <Label className="text-xs">{t("Activity", "Activity")}</Label>
+                  <Select
+                    value={selectedActivityId || "__none__"}
+                    onValueChange={(value) => setSelectedActivityId(value === "__none__" ? "" : value)}
+                    disabled={!selectedProjectId}
+                  >
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder={t("Pilih activity", "Select activity")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
+                      {filteredActivities.map((a) => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">{t("Tugas terkait", "Related Task")}</Label>
                   <Select
                     value={selectedTaskId}
                     onValueChange={setSelectedTaskId}
@@ -576,17 +810,14 @@ export function TimerWidget({
                 <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
                 <Input
                   value={description}
-                  onChange={(e) => {
-                    descriptionFromTaskRef.current = false;
-                    setDescription(e.target.value);
-                  }}
+                  onChange={(e) => setDescription(e.target.value)}
                   placeholder={t("Lagi ngerjain apa?", "What are you working on?")}
                   className="h-9"
                 />
                 <p className="text-[11px] text-muted-foreground">
                   {t(
-                    "Pilih task → deskripsi auto-map dari judul task (bisa diedit).",
-                    "Pick a task → description auto-maps from task title (editable).",
+                    "Task sebagai konteks; deskripsi pekerjaan tetap terpisah",
+                    "Task is context; work description stays separate",
                   )}
                 </p>
               </div>
@@ -659,14 +890,38 @@ export function TimerWidget({
               </div>
               <p className="text-[11px] text-muted-foreground">
                 {t(
-                  "Mulai kosong = stop langsung. Lengkapi client/project/deskripsi nanti di timesheet.",
-                  "Start empty = stop instantly. Fill client/project/description later in timesheet.",
+                  "Mulai kosong sekarang. Pilih client/project saat menghentikan.",
+                  "Start empty now. Choose client/project when stopping.",
                 )}
               </p>
             </div>
           )}
         </CardContent>
       </Card>
+      <StopTimerDialog
+        open={stopDialogOpen}
+        onOpenChange={setStopDialogOpen}
+        prefill={activeTimer ? {
+          entryId: activeTimer.id,
+          clientId: activeTimer.clientId,
+          projectId: activeTimer.projectId,
+          activityId: activeTimer.activityId,
+          taskId: activeTimer.taskId,
+          description: activeTimer.description,
+          tags: activeTimer.tags,
+        } : null}
+        clients={clients}
+        projects={allProjects}
+        tasks={allTasks}
+        activities={allActivities}
+        onStopped={() => {
+          setActiveTimer(null);
+          setElapsed("00:00:00");
+          selfDispatched.current = true;
+          window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
+          router.refresh();
+        }}
+      />
     </>
   );
 }

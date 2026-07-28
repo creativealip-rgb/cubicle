@@ -10,6 +10,11 @@
     "lint": "eslint",
     "smoke": "node scripts/smoke.mjs",
     "test": "vitest run",
+    "test:phase0a:db": "SOURCE_DB=cubicle_dev ./scripts/test-phase0a-db-integration.sh",
+    "test:phase1:db": "SOURCE_DB=cubicle_dev ./scripts/test-phase1-db-integration.sh",
+    "test:phase2:db": "SOURCE_DB=cubicle_dev ./scripts/test-phase2-db-integration.sh",
+    "test:phase3:db": "SOURCE_DB=cubicle_dev ./scripts/test-phase3-db-integration.sh",
+    "test:phase4:db": "SOURCE_DB=cubicle_dev ./scripts/test-phase4-db-integration.sh",
     "test:watch": "vitest",
     "e2e:cross-tenant": "playwright test e2e/cross-tenant.spec.ts --project=chromium --workers=1 --retries=0",
     "test:rate-limit": "tsx scripts/test-distributed-rate-limit.ts"

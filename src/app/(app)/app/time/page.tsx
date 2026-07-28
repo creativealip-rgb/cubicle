@@ -2,7 +2,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { timeEntries, clients, projects, tasks, users } from "@/db/schema";
+import { timeEntries, clients, projects, tasks, users, activities, projectActivities } from "@/db/schema";
 import { eq, and, isNull, isNotNull, desc } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { TimerWidget } from "@/components/time/timer-widget";
@@ -30,6 +30,7 @@ export default async function TimePage() {
       id: timeEntries.id,
       clientId: timeEntries.clientId,
       projectId: timeEntries.projectId,
+      activityId: timeEntries.activityId,
       taskId: timeEntries.taskId,
       description: timeEntries.description,
       tags: timeEntries.tags,
@@ -37,11 +38,13 @@ export default async function TimePage() {
       pausedAt: timeEntries.pausedAt,
       clientName: clients.name,
       projectName: projects.name,
+      activityName: activities.name,
       taskTitle: tasks.title,
     })
     .from(timeEntries)
     .leftJoin(clients, eq(clients.id, timeEntries.clientId))
     .leftJoin(projects, eq(projects.id, timeEntries.projectId))
+    .leftJoin(activities, eq(activities.id, timeEntries.activityId))
     .leftJoin(tasks, eq(tasks.id, timeEntries.taskId))
     .where(
       and(
@@ -68,10 +71,13 @@ export default async function TimePage() {
       status: timeEntries.status,
       clientId: timeEntries.clientId,
       projectId: timeEntries.projectId,
+      activityId: timeEntries.activityId,
       taskId: timeEntries.taskId,
       clientName: clients.name,
       projectName: projects.name,
       projectCurrency: projects.currency,
+      projectTimeTrackingMode: projects.timeTrackingMode,
+      activityName: activities.name,
       taskTitle: tasks.title,
       userName: users.name,
       createdAt: timeEntries.createdAt,
@@ -79,6 +85,7 @@ export default async function TimePage() {
     .from(timeEntries)
     .leftJoin(clients, eq(clients.id, timeEntries.clientId))
     .leftJoin(projects, eq(projects.id, timeEntries.projectId))
+    .leftJoin(activities, eq(activities.id, timeEntries.activityId))
     .leftJoin(tasks, eq(tasks.id, timeEntries.taskId))
     .leftJoin(users, eq(users.id, timeEntries.userId))
     .where(and(eq(timeEntries.workspaceId, workspaceId), isNotNull(timeEntries.endTime)))
@@ -98,6 +105,8 @@ export default async function TimePage() {
       name: projects.name,
       clientId: projects.clientId,
       billingType: projects.billingType,
+      timeTrackingMode: projects.timeTrackingMode,
+      activityRequired: projects.activityRequired,
       rate: projects.rate,
     })
     .from(projects)
@@ -111,6 +120,37 @@ export default async function TimePage() {
     .orderBy(tasks.title)
     .limit(200);
 
+  const activityList = await db
+    .select({
+      id: activities.id,
+      name: activities.name,
+      projectId: projectActivities.projectId,
+      enabled: projectActivities.enabled,
+      status: activities.status,
+      defaultHourlyRate: activities.defaultHourlyRate,
+      rateOverride: projectActivities.rateOverride,
+    })
+    .from(projectActivities)
+    .innerJoin(
+      activities,
+      and(
+        eq(activities.id, projectActivities.activityId),
+        eq(activities.workspaceId, projectActivities.workspaceId),
+      ),
+    )
+    .where(
+      and(
+        eq(projectActivities.workspaceId, workspaceId),
+        eq(projectActivities.enabled, true),
+        eq(activities.status, "active"),
+      ),
+    )
+    .orderBy(activities.name);
+
+  const writableProjectList = projectList.filter((project) => project.timeTrackingMode !== "off");
+  const writableProjectIds = new Set(writableProjectList.map((project) => project.id));
+  const writableTaskList = taskList.filter((task) => task.projectId && writableProjectIds.has(task.projectId));
+
   return (
     <div className="min-w-0 space-y-4 sm:space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -123,8 +163,9 @@ export default async function TimePage() {
             <ManualEntryForm
               workspaceId={workspaceId}
               clients={clientList}
-              projects={projectList}
-              tasks={taskList}
+              projects={writableProjectList}
+              tasks={writableTaskList}
+              activities={activityList}
             />
           )}
           <PdfExportButton clients={clientList} projects={projectList} />
@@ -152,14 +193,16 @@ export default async function TimePage() {
           workspaceId={workspaceId}
           userId={user.id}
           clients={clientList}
-          projects={projectList}
-          tasks={taskList}
+          projects={writableProjectList}
+          tasks={writableTaskList}
+          activities={activityList}
           initialTimer={
           activeTimer
             ? {
                 id: activeTimer.id,
                 clientId: activeTimer.clientId,
                 projectId: activeTimer.projectId,
+                activityId: activeTimer.activityId,
                 taskId: activeTimer.taskId,
                 description: activeTimer.description,
                 tags: activeTimer.tags,
@@ -167,6 +210,7 @@ export default async function TimePage() {
                 pausedAt: activeTimer.pausedAt,
                 clientName: activeTimer.clientName,
                 projectName: activeTimer.projectName,
+                activityName: activeTimer.activityName,
                 taskTitle: activeTimer.taskTitle,
               }
             : null
@@ -189,10 +233,13 @@ export default async function TimePage() {
           status: e.status,
           clientId: e.clientId,
           projectId: e.projectId,
+          activityId: e.activityId,
           taskId: e.taskId,
           clientName: e.clientName,
           projectName: e.projectName,
+          activityName: e.activityName,
           projectCurrency: e.projectCurrency,
+          projectTimeTrackingMode: e.projectTimeTrackingMode,
           taskTitle: e.taskTitle,
           userName: e.userName,
           createdAt: e.createdAt,
@@ -200,6 +247,7 @@ export default async function TimePage() {
         clients={clientList}
         projects={projectList}
         tasks={taskList}
+        activities={activityList}
       />
     </div>
   );

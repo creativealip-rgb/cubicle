@@ -10,9 +10,10 @@ describe("Phase 0A containment wiring", () => {
     const button = read("src/components/portal/package-order-button.tsx");
     expect(action).toContain("getClientPortalAccess(parsed.credential)");
     expect(action).toContain("eq(projects.clientId, client.id)");
-    expect(action).toContain("eq(packages.workspaceId, projects.workspaceId)");
-    expect(action).toContain("resource.packageProjectId !== resource.projectId");
-    expect(action).toContain("const authoritativePrice = resource.customPrice ?? resource.price");
+    expect(action).toContain("eq(projectPackageAssignments.projectId, projects.id)");
+    expect(action).toContain("eq(projectPackageAssignments.workspaceId, client.workspaceId)");
+    expect(action).toContain("eq(projectPackageAssignments.sourcePackageId, parsed.packageId)");
+    expect(action).toContain("price: resource.priceSnapshot");
     expect(action).toContain("clientPortalToken: null");
     expect(action).toContain("idempotencyKey: parsed.idempotencyKey");
     const submitPayload = button.slice(
@@ -39,7 +40,7 @@ describe("Phase 0A containment wiring", () => {
   it("archives packages instead of hard-deleting commercial history", () => {
     const action = read("src/lib/actions/packages.ts");
     const migration = read("drizzle/0046_phase0a_integrity_containment.sql");
-    expect(action).toContain(".set({ active: false })");
+    expect(action).toContain(".set({ active: false, status: \"archived\", updatedAt: new Date() })");
     expect(action).not.toContain("db.delete(packages)");
     expect(migration).toContain("FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE RESTRICT");
     expect(migration).toContain("FOREIGN KEY (package_id) REFERENCES packages(id) ON DELETE SET NULL");

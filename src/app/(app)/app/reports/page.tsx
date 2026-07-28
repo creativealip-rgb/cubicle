@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import Link from "next/link";
-import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import {
   AlertCircle,
   BarChart3,
@@ -12,12 +12,14 @@ import {
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import {
+  activities,
   clients,
   expenseCategories,
   expenses,
   invoices,
   payments,
   projects,
+  timeEntries,
   workspaceCurrencyRates,
 } from "@/db/schema";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
@@ -372,6 +374,32 @@ export default async function ReportsPage({
   const projectExpenses = Array.from(projectMap.values())
     .sort((a, b) => b.total - a.total)
     .slice(0, 10);
+
+  const activityTimeRows = await db
+    .select({
+      activityId: timeEntries.activityId,
+      activityName: activities.name,
+      minutes: sql<number>`coalesce(sum(${timeEntries.durationMinutes}), 0)::int`,
+      entries: sql<number>`count(*)::int`,
+    })
+    .from(timeEntries)
+    .leftJoin(activities, eq(activities.id, timeEntries.activityId))
+    .where(
+      and(
+        eq(timeEntries.workspaceId, ws.id),
+        gte(sql`(${timeEntries.startTime})::date`, period.start),
+        lte(sql`(${timeEntries.startTime})::date`, period.end),
+      ),
+    )
+    .groupBy(timeEntries.activityId, activities.name)
+    .orderBy(desc(sql`sum(${timeEntries.durationMinutes})`));
+
+  const activityTime = activityTimeRows.map((row) => ({
+    id: row.activityId ?? "none",
+    name: row.activityName ?? t("Tanpa aktivitas", "No activity"),
+    minutes: Number(row.minutes ?? 0),
+    entries: Number(row.entries ?? 0),
+  }));
   const missingFxList = Array.from(missingFx).sort();
 
   return (
@@ -748,6 +776,38 @@ export default async function ReportsPage({
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+            )}
+          </section>
+          <section>
+            <h2 className="mb-1 font-semibold">
+              {t("Waktu per Activity", "Time by Activity")}
+            </h2>
+            <p className="mb-3 text-xs text-slate-500">
+              {reportPeriodLabel(period, lang)}
+            </p>
+            {activityTime.length === 0 ? (
+              <p className="text-sm text-slate-500">
+                {t("Belum ada waktu tercatat.", "No tracked time yet.")}
+              </p>
+            ) : (
+              <div className="divide-y rounded-lg border">
+                {activityTime.slice(0, 10).map((activity) => (
+                  <div
+                    key={activity.id}
+                    className="flex items-center justify-between gap-3 p-3"
+                  >
+                    <div>
+                      <p className="font-medium">{activity.name}</p>
+                      <p className="text-xs text-slate-500">
+                        {activity.entries} {t("entri", "entries")}
+                      </p>
+                    </div>
+                    <span className="font-medium tabular-nums">
+                      {Math.round((activity.minutes / 60) * 10) / 10}h
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
           </section>

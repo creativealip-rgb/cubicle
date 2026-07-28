@@ -1,4 +1,4 @@
-import { getWorkspacePackages } from "@/lib/actions/packages";
+import { getWorkspacePackageBuilderData } from "@/lib/actions/packages";
 import { PackageCatalog, type CatalogPackage } from "@/components/packages/package-catalog";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { db } from "@/db";
@@ -13,10 +13,11 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function PackagesPage() {
-  const [rows, ws] = await Promise.all([
-    getWorkspacePackages(),
+  const [builderData, ws] = await Promise.all([
+    getWorkspacePackageBuilderData(),
     getWorkspaceFullForCurrentUser(),
   ]);
+  const rows = builderData.packages;
 
   const baseCurrency = normalizeCurrency(ws.defaultCurrency || "IDR");
   const showApprox = ws.showBaseCurrencyApprox !== false;
@@ -50,6 +51,11 @@ export default async function PackagesPage() {
       allowCustom: p.allowCustom,
       minHours: p.minHours,
       maxHours: p.maxHours,
+      includedServices: p.includedServices.map((service) => ({
+        serviceId: service.serviceId,
+        serviceName: service.serviceName,
+        includedAllowance: service.includedAllowance,
+      })),
     };
   });
 

@@ -26,6 +26,7 @@ export type TasksListItem = {
   clientVisible: boolean;
   projectId: string | null;
   projectName: string | null;
+  timeTrackingMode: "off" | "internal" | "billable" | null;
   clientName: string | null;
   assigneeId: string | null;
   assigneeName: string | null;
