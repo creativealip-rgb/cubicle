@@ -3,6 +3,10 @@ ALTER TABLE project_services
   ADD COLUMN IF NOT EXISTS cost_rate_snapshot numeric(12,2);
 
 ALTER TABLE project_services
+  DROP CONSTRAINT IF EXISTS project_services_estimated_minutes_check,
+  DROP CONSTRAINT IF EXISTS project_services_cost_rate_snapshot_check;
+
+ALTER TABLE project_services
   ADD CONSTRAINT project_services_estimated_minutes_check CHECK (estimated_minutes IS NULL OR estimated_minutes >= 0),
   ADD CONSTRAINT project_services_cost_rate_snapshot_check CHECK (cost_rate_snapshot IS NULL OR cost_rate_snapshot >= 0);
 
