@@ -14,6 +14,7 @@ import {
   clients,
   projects,
   packages,
+  projectServices,
   workspaceCurrencyRates,
 } from "@/db/schema";
 import { eq, and, desc, sql, inArray, lt, isNotNull } from "drizzle-orm";
@@ -34,6 +35,7 @@ import { buildInvoiceReportUrl, normalizeInvoiceReportRange, signInvoiceReportRa
 import { resolveWorkspaceReplyTo } from "@/lib/workspace-reply-to";
 import { buildRateMap } from "@/lib/currency-base";
 import { convertCurrency, resolveProjectAmount } from "@/lib/invoice-project-items";
+import { buildProjectServiceDocumentLines } from "@/lib/project-service-lines";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -151,11 +153,46 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
   const rateRows = await db.select({ fromCurrency: workspaceCurrencyRates.fromCurrency, rate: workspaceCurrencyRates.rate }).from(workspaceCurrencyRates).where(eq(workspaceCurrencyRates.workspaceId, workspaceId));
   const rateMap = buildRateMap(rateRows);
   const projectItemValues: Array<{ description: string; quantity: number; unitPrice: number; sourceId: string; originalCurrency: string; originalAmount: number; conversionRate: number }> = [];
+  const projectServiceItemValues: Array<{ description: string; quantity: number; unitPrice: number; sourceId: string; originalCurrency: string; originalAmount: number; conversionRate: number }> = [];
   for (const projectId of projectIds) {
     const [project] = await db.select({ id: projects.id, name: projects.name, billingType: projects.billingType, budget: projects.budget, rate: projects.rate, currency: projects.currency, packagePrice: packages.price, packageCustomPrice: packages.customPrice }).from(projects).leftJoin(packages, eq(projects.selectedPackageId, packages.id)).where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId), eq(projects.clientId, parsed.clientId))).limit(1);
     if (!project) throw new Error("Ada proyek yang tidak sesuai dengan klien");
     const originalAmount = resolveProjectAmount({ billingType: project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packageCustomPrice ?? project.packagePrice ?? 0) || null });
     if (project.billingType === "hours") continue;
+    const serviceRows = await db
+      .select({
+        id: projectServices.id,
+        nameSnapshot: projectServices.nameSnapshot,
+        descriptionSnapshot: projectServices.descriptionSnapshot,
+        quantity: projectServices.quantity,
+        unitPrice: projectServices.unitPrice,
+        amount: projectServices.amount,
+        currencySnapshot: projectServices.currencySnapshot,
+        status: projectServices.status,
+      })
+      .from(projectServices)
+      .where(and(
+        eq(projectServices.workspaceId, workspaceId),
+        eq(projectServices.projectId, projectId),
+        eq(projectServices.status, "active"),
+      ));
+    if (serviceRows.length) {
+      for (const row of serviceRows) {
+        const [line] = buildProjectServiceDocumentLines([row], row.currencySnapshot);
+        const converted = convertCurrency(line.amount, line.originalCurrency, parsed.currency || ws?.defaultCurrency || "IDR", ws?.defaultCurrency || "IDR", rateMap);
+        if (!converted) throw new Error(`Kurs ${line.originalCurrency} ke ${parsed.currency} belum tersedia`);
+        projectServiceItemValues.push({
+          description: line.description,
+          quantity: line.quantity,
+          unitPrice: converted.amount / line.quantity,
+          sourceId: line.sourceId,
+          originalCurrency: line.originalCurrency,
+          originalAmount: line.amount,
+          conversionRate: converted.rate,
+        });
+      }
+      continue;
+    }
     const converted = convertCurrency(originalAmount, project.currency, parsed.currency || ws?.defaultCurrency || "IDR", ws?.defaultCurrency || "IDR", rateMap);
     if (!converted) throw new Error(`Kurs ${project.currency} ke ${parsed.currency} belum tersedia`);
     projectItemValues.push({ description: project.name, quantity: 1, unitPrice: converted.amount, sourceId: project.id, originalCurrency: project.currency, originalAmount, conversionRate: converted.rate });
@@ -217,7 +254,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
         })
         .returning();
 
-      if ((parsed.items?.length || projectItemValues.length) && inv) {
+      if ((parsed.items?.length || projectItemValues.length || projectServiceItemValues.length) && inv) {
         const sourceIds = parsed.items?.flatMap((item) => item.sourceId ? [item.sourceId] : []) ?? [];
         if (sourceIds.length) {
           const eligible = await tx.select({ id: timeEntries.id }).from(timeEntries).where(and(
@@ -231,6 +268,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
         }
         const values = [
           ...projectItemValues.map((item) => ({ invoiceId: inv.id, description: item.description, quantity: "1", unitPrice: String(item.unitPrice), amount: String(item.unitPrice), sourceType: "project" as const, sourceId: item.sourceId, originalCurrency: item.originalCurrency, originalAmount: String(item.originalAmount), conversionRate: String(item.conversionRate) })),
+          ...projectServiceItemValues.map((item) => ({ invoiceId: inv.id, description: item.description, quantity: String(item.quantity), unitPrice: String(item.unitPrice), amount: String(item.quantity * item.unitPrice), sourceType: "project" as const, sourceId: item.sourceId, originalCurrency: item.originalCurrency, originalAmount: String(item.originalAmount), conversionRate: String(item.conversionRate) })),
           ...(parsed.items ?? []).map((item) => ({
           invoiceId: inv.id,
           description: item.description,

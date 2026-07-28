@@ -4,7 +4,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { proposals, projects, invoices, invoiceItems, workspaceInvoiceCounters } from "@/db/schema";
+import { proposals, projects, projectServices, invoices, invoiceItems, workspaceInvoiceCounters } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
@@ -13,6 +13,7 @@ import { requireUser, assertWorkspaceWritable, assertClientInWorkspace } from "@
 import { writeActivityLog } from "@/lib/actions/activity";
 import { assertPublicTokenLifecycle, PublicTokenError } from "@/lib/public-token-policy";
 import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
+import { buildProjectServiceDocumentLines } from "@/lib/project-service-lines";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -28,9 +29,10 @@ const lineItemSchema = z.object({
 const createProposalSchema = z.object({
   workspaceId: z.string().uuid(),
   clientId: z.string().uuid(),
+  projectIds: z.array(z.string().uuid()).optional(),
   title: z.string().min(1).max(200),
   body: z.string().max(10000).optional().nullable(),
-  lineItems: z.array(lineItemSchema).min(1),
+  lineItems: z.array(lineItemSchema).default([]),
   currency: z.string().min(3).max(3).default("IDR"),
   taxRate: z.number().min(0).max(100).default(0),
   downPaymentPercent: z.number().min(0).max(100).default(50),
@@ -68,14 +70,47 @@ export async function createProposal(input: z.infer<typeof createProposalSchema>
   await assertWorkspaceWritable(db, user.id, input.workspaceId);
   const parsed = createProposalSchema.parse(input);
   await assertClientInWorkspace(db, user.id, parsed.workspaceId, parsed.clientId);
-  const { subtotal, tax, total } = computeTotals(parsed.lineItems, parsed.taxRate);
+  const projectIds = Array.from(new Set(parsed.projectIds ?? []));
+  if ((parsed.projectIds?.length ?? 0) !== projectIds.length) throw new Error("Proyek duplikat tidak diizinkan");
+  const generatedLineItems: Array<z.infer<typeof lineItemSchema>> = [];
+  for (const projectId of projectIds) {
+    const [project] = await db.select({ id: projects.id }).from(projects).where(and(
+      eq(projects.id, projectId),
+      eq(projects.workspaceId, parsed.workspaceId),
+      eq(projects.clientId, parsed.clientId),
+    )).limit(1);
+    if (!project) throw new Error("Ada proyek yang tidak sesuai dengan klien");
+    const serviceRows = await db.select({
+      id: projectServices.id,
+      nameSnapshot: projectServices.nameSnapshot,
+      descriptionSnapshot: projectServices.descriptionSnapshot,
+      quantity: projectServices.quantity,
+      unitPrice: projectServices.unitPrice,
+      amount: projectServices.amount,
+      currencySnapshot: projectServices.currencySnapshot,
+      status: projectServices.status,
+    }).from(projectServices).where(and(
+      eq(projectServices.workspaceId, parsed.workspaceId),
+      eq(projectServices.projectId, projectId),
+      eq(projectServices.status, "active"),
+    ));
+    generatedLineItems.push(...buildProjectServiceDocumentLines(serviceRows, parsed.currency).map((line) => ({
+      description: line.description,
+      quantity: line.quantity,
+      unitPrice: line.unitPrice,
+      amount: line.amount,
+    })));
+  }
+  const lineItems = [...parsed.lineItems, ...generatedLineItems];
+  if (!lineItems.length) throw new Error("Proposal membutuhkan minimal satu item");
+  const { subtotal, tax, total } = computeTotals(lineItems, parsed.taxRate);
 
   const [proposal] = await db.insert(proposals).values({
     workspaceId: parsed.workspaceId,
     clientId: parsed.clientId,
     title: parsed.title,
     body: parsed.body || null,
-    lineItems: parsed.lineItems,
+    lineItems,
     subtotal: subtotal.toFixed(2),
     tax: tax.toFixed(2),
     total: total.toFixed(2),

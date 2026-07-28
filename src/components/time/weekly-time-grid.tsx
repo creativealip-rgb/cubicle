@@ -43,12 +43,12 @@ export function WeeklyTimeGrid({
   const [taskId, setTaskId] = useState("project");
   const [pending, startTransition] = useTransition();
   const grid = useMemo(() => buildWeeklyGrid(entries, anchor), [entries, anchor]);
-  const dates = getWeekDates(anchor);
+  const dates = useMemo(() => getWeekDates(anchor), [anchor]);
   const previousAnchor = useMemo(() => {
     const value = new Date(dates[0]);
     value.setUTCDate(value.getUTCDate() - 7);
     return value;
-  }, [anchor]);
+  }, [dates]);
   const previousGrid = useMemo(() => buildWeeklyGrid(entries, previousAnchor), [entries, previousAnchor]);
 
   const rows = useMemo(() => {
