@@ -8,6 +8,7 @@ import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { TimerWidget } from "@/components/time/timer-widget";
 import { Timesheet } from "@/components/time/timesheet";
 import { TeamTimesheetView } from "@/components/time/team-timesheet-view";
+import { WeeklyTimeGrid } from "@/components/time/weekly-time-grid";
 import { ManualEntryForm } from "@/components/time/manual-entry-form";
 import { PdfExportButton } from "@/components/time/pdf-export-button";
 import { getCurrentLang, createT } from "@/lib/i18n";
@@ -80,6 +81,7 @@ export default async function TimePage() {
       projectId: timeEntries.projectId,
       activityId: timeEntries.activityId,
       taskId: timeEntries.taskId,
+      userId: timeEntries.userId,
       clientName: clients.name,
       projectName: projects.name,
       projectCurrency: projects.currency,
@@ -260,6 +262,26 @@ export default async function TimePage() {
       )}
 
       <TeamTimesheetView entries={teamEntries} />
+
+      <WeeklyTimeGrid
+        entries={entries
+          .filter((entry) => entry.userId === user.id)
+          .map((entry) => ({
+            id: entry.id,
+            projectId: entry.projectId,
+            projectName: entry.projectName,
+            taskId: entry.taskId,
+            taskTitle: entry.taskTitle,
+            startTime: entry.startTime,
+            durationMinutes: entry.durationMinutes,
+            manualMinutes: entry.manualMinutes,
+            tags: entry.tags,
+            status: entry.status,
+          }))}
+        projects={writableProjectList.map((project) => ({ id: project.id, name: project.name }))}
+        tasks={writableTaskList}
+        canWrite={canWrite}
+      />
 
       {/* Timesheet */}
       <Timesheet

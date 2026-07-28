@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { timeEntries, clients, projects, tasks, workspaces } from "@/db/schema";
-import { eq, and, isNull, isNotNull, sql } from "drizzle-orm";
+import { eq, and, isNull, isNotNull, sql, gte, lt } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
@@ -18,6 +18,7 @@ import {
 import { timeEntryBillableForMode } from "@/lib/project-time-tracking-policy";
 import { resolveActivityHourlyRate } from "@/lib/activity-policy";
 import { assertActivityWriteAllowed } from "@/lib/activity-policy-db";
+import { WEEKLY_GRID_TAG } from "@/lib/weekly-time-grid";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -87,6 +88,13 @@ const createManualEntrySchema = z.object({
   durationMinutes: z.number().positive(),
   billable: z.boolean().default(true),
   hourlyRate: z.number().nonnegative().optional(),
+});
+
+const weeklyTimeCellSchema = z.object({
+  projectId: z.string().uuid(),
+  taskId: z.string().uuid().nullable().optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  totalMinutes: z.number().int().min(0).max(24 * 60),
 });
 
 const updateTimeEntrySchema = z.object({
@@ -486,6 +494,51 @@ export async function createManualEntry(input: z.infer<typeof createManualEntryS
 
   await writeActivityLog(parsed.workspaceId, user.id, "created_time_entry", "time_entry", entry.id);
   return entry;
+}
+
+export async function setWeeklyTimeCell(input: z.infer<typeof weeklyTimeCellSchema>) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  const parsed = weeklyTimeCellSchema.parse(input);
+  const [project] = await db.select({ clientId: projects.clientId }).from(projects)
+    .where(and(eq(projects.id, parsed.projectId), eq(projects.workspaceId, workspaceId))).limit(1);
+  if (!project?.clientId) throw new Error("Project wajib punya klien");
+  await assertTimeEntryContext(db, workspaceId, { clientId: project.clientId, projectId: parsed.projectId, taskId: parsed.taskId ?? null });
+  const projectMode = await assertProjectTimeTrackingEnabled(db, workspaceId, parsed.projectId);
+  const activityPolicy = await assertActivityWriteAllowed(db, { workspaceId, projectId: parsed.projectId, activityId: null, stage: "manual" });
+  const start = new Date(`${parsed.date}T00:00:00.000Z`);
+  const nextDay = new Date(start.getTime() + 86_400_000);
+
+  const result = await db.transaction(async (tx) => {
+    const rows = await tx.select().from(timeEntries).where(and(
+      eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.userId, user.id),
+      eq(timeEntries.projectId, parsed.projectId), parsed.taskId ? eq(timeEntries.taskId, parsed.taskId) : isNull(timeEntries.taskId),
+      gte(timeEntries.startTime, start), lt(timeEntries.startTime, nextDay),
+    ));
+    const managed = rows.filter((row) => row.status === "draft" && row.manualMinutes != null && row.tags?.split(",").map((tag) => tag.trim()).includes(WEEKLY_GRID_TAG));
+    const managedIds = new Set(managed.map((row) => row.id));
+    const immutableMinutes = rows.filter((row) => !managedIds.has(row.id)).reduce((sum, row) => sum + Math.max(0, row.durationMinutes ?? row.manualMinutes ?? 0), 0);
+    if (parsed.totalMinutes < immutableMinutes) throw new Error(`Minimum ${immutableMinutes} menit karena ada timer atau entri terkunci`);
+    if (managed.length) await tx.delete(timeEntries).where(and(
+      eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.userId, user.id), eq(timeEntries.status, "draft"),
+      sql`${timeEntries.id} in (${sql.join(managed.map((row) => sql`${row.id}`), sql`, `)})`,
+    ));
+    const editableMinutes = parsed.totalMinutes - immutableMinutes;
+    if (!editableMinutes) return { totalMinutes: immutableMinutes, immutableMinutes };
+    const billable = timeEntryBillableForMode(projectMode);
+    const hourlyRate = billable ? await resolveHourlyRate({ workspaceId, projectId: parsed.projectId, projectActivityRate: activityPolicy.rateOverride, activityDefaultRate: activityPolicy.defaultHourlyRate }) : null;
+    const [created] = await tx.insert(timeEntries).values({
+      workspaceId, clientId: project.clientId, projectId: parsed.projectId, activityId: activityPolicy.activityId,
+      taskId: parsed.taskId ?? null, userId: user.id, description: "Weekly timesheet", tags: WEEKLY_GRID_TAG,
+      startTime: start, endTime: new Date(start.getTime() + editableMinutes * 60_000), manualMinutes: editableMinutes,
+      billable, hourlyRate, status: "draft",
+    }).returning();
+    return created;
+  });
+  await writeActivityLog(workspaceId, user.id, "updated_weekly_time_cell", "time_entry", "id" in result ? result.id : parsed.projectId);
+  return result;
 }
 
 export async function updateActiveTimerMetadata(
