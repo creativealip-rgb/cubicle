@@ -83,8 +83,8 @@ describe("Phase 3 Service catalog wiring", () => {
     expect(serviceCatalog).toContain("createService");
     expect(serviceCatalog).toContain("archiveService");
     expect(serviceCatalog).toContain("pricingModel");
-    expect(navigation).toContain('direct("services", "/app/services"');
-    expect(navigation).toContain('{ id: "Layanan", en: "Services" }');
+    expect(navigation).not.toContain('direct("services", "/app/services"');
+    expect(navigation).not.toContain('direct("packages", "/app/packages"');
 
     expect(packagePage).toContain("PackageCatalog");
     expect(packageCatalog).toContain('t("Paket", "Packages")');

@@ -1,14 +1,14 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  BarChart3, Brain, Briefcase, BriefcaseBusiness, Calendar, CheckSquare, ClipboardList, Clock,
-  FileSignature, FileText, FolderOpen, LayoutDashboard, Layers, NotebookPen, Package, Send,
+  BarChart3, Brain, Briefcase, Calendar, CheckSquare, Clock,
+  FileText, FolderOpen, LayoutDashboard, NotebookPen,
   Sparkles, Users, Wallet,
 } from "lucide-react";
 
 export type LocalizedText = { id: string; en: string };
 export type SidebarBadgeKey = "myOpenTasks" | "unpaidInvoices";
 export type SidebarBadgeCounts = Partial<Record<SidebarBadgeKey, number>>;
-export type SidebarGroupId = "work" | "sales" | "finance" | "personal" | "ai";
+export type SidebarGroupId = "work" | "finance" | "personal" | "ai";
 export type WorkspaceRole = "owner" | "member" | "viewer";
 
 export type DirectNavItem = {
@@ -41,16 +41,7 @@ export const appNavigation: NavigationEntry[] = [
   direct("time", "/app/time", Clock, { id: "Waktu", en: "Time" }, undefined, undefined, ["/app/activities"]),
   direct("calendar", "/app/calendar", Calendar, { id: "Kalender", en: "Calendar" }),
   direct("files", "/app/files", FolderOpen, { id: "File", en: "Files" }),
-  { kind: "group", id: "sales", icon: Send, label: { id: "Penjualan", en: "Sales" }, children: [
-    direct("proposals", "/app/proposals", FileText, { id: "Proposal", en: "Proposals" }, { id: "Susun dan kirim penawaran ke calon atau klien", en: "Prepare and send offers to prospects or clients" }),
-    direct("contracts", "/app/contracts", FileSignature, { id: "Kontrak", en: "Contracts" }, { id: "Kelola persetujuan dan tanda tangan", en: "Manage approvals and signatures" }),
-    direct("questionnaires", "/app/questionnaires", ClipboardList, { id: "Kuesioner", en: "Questionnaires" }, { id: "Kumpulkan kebutuhan sebelum pekerjaan dimulai", en: "Collect requirements before work begins" }),
-    direct("services", "/app/services", BriefcaseBusiness, { id: "Layanan", en: "Services" }, { id: "Katalog penawaran komersial dasar", en: "Catalog base commercial offerings" }),
-    direct("packages", "/app/packages", Package, { id: "Paket", en: "Packages" }, { id: "Bundle beberapa layanan dan allowance", en: "Bundle services and allowances" }),
-    direct("templates", "/app/templates", Layers, { id: "Template", en: "Templates" }, { id: "Kelola template dokumen dan komunikasi", en: "Manage document and communication templates" }, undefined, [
-      "/app/invoice-templates", "/app/contract-templates", "/app/invoices/templates",
-    ]),
-  ]},
+
   { kind: "group", id: "finance", icon: Wallet, label: { id: "Keuangan", en: "Finance" }, children: [
     direct("invoices", "/app/invoices", FileText, { id: "Invoice", en: "Invoices" }, { id: "Kelola tagihan, pembayaran, dan waktu belum ditagihkan", en: "Manage invoices, payments, and uninvoiced time" }, "unpaidInvoices"),
     direct("expenses", "/app/expenses", Wallet, { id: "Pengeluaran", en: "Expenses" }, { id: "Catat biaya operasional", en: "Record operating costs" }),

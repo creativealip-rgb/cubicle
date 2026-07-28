@@ -596,7 +596,7 @@ export function TimerWidget({
                         disabled={!selectedProjectId}
                       >
                         <SelectTrigger className="h-9 text-sm">
-                          <SelectValue placeholder={t("Pilih activity", "Select activity")} />
+                          <SelectValue placeholder={t("Pilih aktivitas", "Select activity")} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
@@ -752,14 +752,17 @@ export function TimerWidget({
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Clock className="h-5 w-5 text-muted-foreground" />
-                <h3 className="text-sm font-semibold">{t("Mulai Timer", "Start Timer")}</h3>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-sm font-semibold">{t("Mulai Timer", "Start Timer")}</h3>
+                </div>
+                <span className="font-mono text-2xl font-semibold tabular-nums">00:00:00</span>
               </div>
 
               {recentCombinations.length > 0 && (
                 <div className="flex gap-2 overflow-x-auto pb-1" aria-label={t("Timer terbaru dan favorit", "Recent and favorite timers")}>
-                  {[...recentCombinations].sort((a, b) => Number(favoriteKeys.includes(timerCombinationKey(b))) - Number(favoriteKeys.includes(timerCombinationKey(a)))).map((item) => {
+                  {[...recentCombinations].sort((a, b) => Number(favoriteKeys.includes(timerCombinationKey(b))) - Number(favoriteKeys.includes(timerCombinationKey(a)))).slice(0, 3).map((item) => {
                     const key = timerCombinationKey(item);
                     const project = allProjects.find((value) => value.id === item.projectId);
                     const activity = allActivities.find((value) => value.id === item.activityId);
@@ -778,6 +781,11 @@ export function TimerWidget({
                   })}
                 </div>
               )}
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
+                <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("Apa yang sedang dikerjakan?", "What are you working on?")} className="h-11 text-base" />
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
@@ -822,7 +830,7 @@ export function TimerWidget({
                     disabled={!selectedProjectId}
                   >
                     <SelectTrigger className="h-9 text-sm">
-                      <SelectValue placeholder={t("Pilih activity", "Select activity")} />
+                      <SelectValue placeholder={t("Pilih aktivitas", "Select activity")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
@@ -856,23 +864,9 @@ export function TimerWidget({
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
-                <Input
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder={t("Lagi ngerjain apa?", "What are you working on?")}
-                  className="h-9"
-                />
-                <p className="text-[11px] text-muted-foreground">
-                  {t(
-                    "Task sebagai konteks; deskripsi pekerjaan tetap terpisah",
-                    "Task is context; work description stays separate",
-                  )}
-                </p>
-              </div>
-
-              <div className="space-y-1.5">
+              <details className="rounded-lg border bg-muted/20 p-3">
+                <summary className="cursor-pointer text-sm font-medium">{t("Opsi lainnya", "More options")}</summary>
+                <div className="mt-3 space-y-1.5">
                 <Label className="text-xs">{t("Tag (opsional)", "Tags (optional)")}</Label>
                 <Input
                   value={tags}
@@ -904,46 +898,18 @@ export function TimerWidget({
               {isHourly && (
                 <div className="space-y-1.5">
                   <Label className="text-xs">{t("Tarif per jam", "Hourly rate")}</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="1000"
-                    value={hourlyRate}
-                    onChange={(e) => setHourlyRate(e.target.value)}
-                    placeholder={selectedProject?.rate ? String(selectedProject.rate) : "e.g. 150000"}
-                    className="h-9"
-                  />
-                  <p className="text-[11px] text-muted-foreground">
-                    {t("Kosongkan untuk pakai tarif proyek.", "Leave empty to use the project rate.")}
-                  </p>
+                  <Input type="number" min="0" step="1000" value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} placeholder={selectedProject?.rate ? String(selectedProject.rate) : "e.g. 150000"} className="h-9" />
+                  <p className="text-[11px] text-muted-foreground">{t("Kosongkan untuk pakai tarif proyek.", "Leave empty to use the project rate.")}</p>
                 </div>
               )}
+              </details>
 
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button
-                  className="flex-1 gap-2"
-                  onClick={handleStart}
-                  disabled={loading || !selectedClientId || !selectedProjectId}
-                >
+              <div className="flex">
+                <Button className="w-full gap-2 sm:w-auto sm:min-w-48" onClick={selectedClientId && selectedProjectId ? handleStart : handleStartEmpty} disabled={loading}>
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                  {t("Mulai dengan detail", "Start with details")}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1 gap-2"
-                  onClick={handleStartEmpty}
-                  disabled={loading}
-                >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                  {t("Mulai kosong", "Start empty")}
+                  {t("Mulai Timer", "Start Timer")}
                 </Button>
               </div>
-              <p className="text-[11px] text-muted-foreground">
-                {t(
-                  "Mulai kosong sekarang. Pilih client/project saat menghentikan.",
-                  "Start empty now. Choose client/project when stopping.",
-                )}
-              </p>
             </div>
           )}
         </CardContent>
