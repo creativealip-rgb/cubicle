@@ -50,7 +50,7 @@ describe("Phase 1 project time tracking wiring", () => {
   });
 
   it("filters off projects from write UI but keeps historical entries visible", () => {
-    const page = read("src/app/(app)/app/time/page.tsx");
+    const page = read("src/components/time/time-route-content.tsx");
     const projectPage = read("src/app/(app)/app/projects/[projectId]/page.tsx");
     const taskSheet = read("src/components/tasks/task-detail-sheet.tsx");
 

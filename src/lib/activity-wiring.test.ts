@@ -82,7 +82,7 @@ describe("Phase 2 Activity catalog wiring", () => {
 
   it("filters and groups by Activity while labeling legacy null rows", () => {
     const timesheet = read("src/components/time/timesheet.tsx");
-    const timePage = read("src/app/(app)/app/time/page.tsx");
+    const timePage = read("src/components/time/time-route-content.tsx");
     const reports = read("src/app/(app)/app/reports/page.tsx");
 
     expect(timePage).toContain("activityName:");
@@ -95,11 +95,13 @@ describe("Phase 2 Activity catalog wiring", () => {
     expect(reports).toContain('t("Tanpa aktivitas", "No activity")');
   });
 
-  it("exposes workspace Activity catalog from app navigation", () => {
-    const page = read("src/app/(app)/app/activities/page.tsx");
+  it("exposes workspace Activity catalog under Time and preserves compatibility", () => {
+    const page = read("src/app/(app)/app/time/activities/page.tsx");
+    const compatibilityPage = read("src/app/(app)/app/activities/page.tsx");
     const navigation = read("src/lib/navigation/app-navigation.ts");
 
     expect(page).toContain("ActivityCatalog");
+    expect(compatibilityPage).toContain('redirect("/app/time/activities")');
     expect(navigation).toContain('direct("activities", "/app/activities"');
   });
 });

@@ -33,7 +33,7 @@ describe("MH2 weekly timesheet approval wiring", () => {
 
   it("renders submit and owner review controls", () => {
     const component = read("src/components/time/timesheet-approval-panel.tsx");
-    const page = read("src/app/(app)/app/time/page.tsx");
+    const page = read("src/components/time/time-route-content.tsx");
     expect(component).toContain("Kirim timesheet");
     expect(component).toContain("Setujui");
     expect(component).toContain("Tolak");

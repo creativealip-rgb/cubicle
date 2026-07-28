@@ -1,5 +1,5 @@
 import { TimeRouteContent } from "@/components/time/time-route-content";
 
 export default function Page() {
-  return <TimeRouteContent mode="timer" />;
+  return <TimeRouteContent mode="approvals" />;
 }
