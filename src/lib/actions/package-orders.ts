@@ -1,12 +1,16 @@
 "use server";
 
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { z } from "zod";
 import { db } from "@/db";
 import { packageItems, packageOrders, projectPackageAssignments, projects, services } from "@/db/schema";
 import { getClientPortalAccess } from "@/lib/actions/portal";
 import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
+import { auth } from "@/lib/auth";
+import { requireUser, assertWorkspaceWritable } from "@/lib/access";
+import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 
 const createPackageOrderSchema = z.object({
   credential: z.string().min(1).max(512),
@@ -14,6 +18,11 @@ const createPackageOrderSchema = z.object({
   packageId: z.string().uuid(),
   message: z.string().trim().max(2000).optional().nullable(),
   idempotencyKey: z.string().uuid(),
+});
+
+const transitionPackageOrderSchema = z.object({
+  orderId: z.string().uuid(),
+  decision: z.enum(["confirm", "cancel"]),
 });
 
 export async function getPackageItemsForOrders(projectPackageAssignmentIds: string[]) {
@@ -137,6 +146,19 @@ export async function createPackageOrder(
   return existing;
 }
 
+export async function getWorkspacePackageOrders() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  return db
+    .select()
+    .from(packageOrders)
+    .where(eq(packageOrders.workspaceId, workspaceId))
+    .orderBy(packageOrders.createdAt);
+}
+
 export async function getPackageOrdersByToken(credential: string) {
   const client = await getClientPortalAccess(credential);
   return db
@@ -149,4 +171,50 @@ export async function getPackageOrdersByToken(credential: string) {
       ),
     )
     .orderBy(packageOrders.createdAt);
+}
+
+/** Admin-only terminal transition. Commercial snapshots remain immutable. */
+export async function transitionPackageOrder(input: z.infer<typeof transitionPackageOrderSchema>) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  const parsed = transitionPackageOrderSchema.parse(input);
+
+  const order = await db.transaction(async (tx) => {
+    const locked = await tx.execute(sql`
+      SELECT id FROM package_orders
+      WHERE id = ${parsed.orderId} AND workspace_id = ${workspaceId}
+      FOR UPDATE
+    `);
+    if (locked.rowCount === 0) throw new Error("Order tidak ditemukan");
+
+    const [current] = await tx
+      .select()
+      .from(packageOrders)
+      .where(and(
+        eq(packageOrders.id, parsed.orderId),
+        eq(packageOrders.workspaceId, workspaceId),
+      ))
+      .limit(1);
+    if (!current) throw new Error("Order tidak ditemukan");
+    if (current.status !== "pending") throw new Error("Order sudah diproses");
+
+    const [updated] = await tx
+      .update(packageOrders)
+      .set({ status: parsed.decision === "confirm" ? "confirmed" : "cancelled" })
+      .where(and(
+        eq(packageOrders.id, parsed.orderId),
+        eq(packageOrders.workspaceId, workspaceId),
+        eq(packageOrders.status, "pending"),
+      ))
+      .returning();
+    if (!updated) throw new Error("Order sudah diproses");
+    return updated;
+  });
+
+  revalidatePath("/app/packages");
+  revalidatePath(`/app/projects/${order.projectId}`);
+  revalidatePath("/client-portal/[token]", "page");
+  return order;
 }

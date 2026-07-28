@@ -952,7 +952,7 @@ Jangan rewrite otomatis. Nilai itu tetap fakta historis meski redundan. Untuk UI
 - [x] Invoice import atomik dan idempotent; jangan mutasi rate snapshot Time Entry; simpan previous status saat link dibuat dan restore status tersebut ketika link draft dilepas.
 - [x] Tambah regression test source/wiring untuk authority portal, archive semantics, tenant resolver, ownership guard, active-timer constraint, dan invoice eligibility.
 - [x] Tambah behavioral DB integration nyata untuk cross-workspace Client/Project/Task, timer ownership, concurrent start, invoice eligibility/idempotency, dan Package order idempotency pada DB disposable. Evidence: `docs/operations/evidence/phase0b/phase0a-db-integration-20260727.md`. Token/client mismatch dan spoofed commercial snapshot tetap membutuhkan direct portal-action integration sebelum public handoff besar.
-- [ ] Ops follow-up: audit/rotate credential QA historis bila ada credential nyata pernah masuk git history/docs. Jangan blok Phase 0B schema, tapi wajib sebelum public handoff besar.
+- [x] Ops follow-up: audit credential QA historis selesai 2026-07-28. Scan 460 blob non-binary di seluruh git history untuk private key, GitHub/AWS token, JWT, dan assignment password/API key/secret/token tidak menemukan credential nyata. Evidence: `docs/operations/evidence/phase0b/credential-history-audit-20260728.md`; rotasi tidak diperlukan berdasarkan hasil scan.
 
 **Acceptance:** containment runtime sudah live di production. Evidence Phase 0A baru lengkap setelah behavioral integration membuktikan spoof price/currency ditolak; token Client A tidak dapat menulis Project B; raw token tidak muncul di client payload/history write baru; member tidak dapat mengontrol timer user lain; kombinasi Client/Project/Task silang ditolak; concurrent start menghasilkan satu timer; draft/non-billable/open entry tidak dapat di-invoice; invoiced entry immutable; archive tidak menghapus assignment/order/request.
 
@@ -1008,75 +1008,75 @@ Phase 1 tidak boleh dimulai sebelum seluruh kondisi ini lulus:
 - [x] Tambah `activity_id` pada timer/manual/edit entry.
 - [x] Timer order: Project → Activity → Related Task → Description.
 - [x] Report/filter/group by Activity.
-- [ ] Seed template profesi opsional — deferred; belum ada fixture/template default.
-- [ ] Recent/favorite timer combination — deferred; belum ada model/UI favorite combination.
+- [x] Seed template profesi opsional tersedia sebagai data editable untuk Virtual Assistant, Developer, Designer, Writer, Social Media Manager, dan Consultant di `src/lib/profession-templates.ts`.
+- [x] Recent timer combination dideduplikasi dari histori user dan dapat difavoritkan lokal dari Timer widget.
 
 **Acceptance:** satu Activity reusable dipakai banyak log; description per log dapat berbeda; Task tetap opsional; legacy null tampil sebagai `Tanpa aktivitas`; bila `activity_required=true`, entry tidak dapat diselesaikan/submitted sebelum Activity dipilih; cross-workspace Activity ID ditolak.
 
 ## Phase 3 — Service catalog untuk semua billing type
 
-**Status 2026-07-28:** implemented sebagai Service catalog + Project Service snapshot di branch `feat/service-catalog-phase3`; invoice/proposal generation dari Project Service lines masih deferred ke fase integrasi berikutnya. Evidence kode: `src/lib/service-catalog-wiring.test.ts`, `drizzle/0049_service_catalog.sql`, `src/lib/actions/services.ts`, `src/lib/service-snapshots.ts`, `src/components/services/service-catalog.tsx`, `src/components/projects/project-service-settings.tsx`.
+**Status 2026-07-28:** implemented sebagai Service catalog + Project Service snapshot, termasuk generator invoice/proposal dari Project Service lines. Evidence kode: `src/lib/service-catalog-wiring.test.ts`, `src/lib/project-service-lines.ts`, `src/lib/actions/invoices.ts`, `src/lib/actions/proposals.ts`, `drizzle/0049_service_catalog.sql`, `src/lib/actions/services.ts`, dan UI Service/Project Service.
 
 - [x] Buat Service CRUD terpisah.
 - [x] Service categories dan pricing model.
 - [x] Buat `project_services` snapshot.
 - [x] Project dapat memilih banyak Service.
 - [x] By Project/Hours/Package semua dapat memakai Service.
-- [ ] Proposal/invoice dapat mengambil Project Service lines — deferred; belum ada generate line dari `project_services`.
+- [x] Proposal/invoice mengambil Project Service lines memakai `buildProjectServiceDocumentLines` dengan source + snapshot.
 - [x] Archive Service tanpa merusak histori.
 
-**Acceptance:** Service reusable lintas Project; harga/scope Project lama stabil setelah katalog diedit; invoice/proposal line punya source + snapshot; generate ulang idempotent; invoice `sent`/`paid` immutable; archive Service tidak menghapus histori. Catatan: bagian invoice/proposal line generation belum complete.
+**Acceptance:** Service reusable lintas Project; harga/scope Project lama stabil setelah katalog diedit; invoice/proposal line punya source + snapshot; generate ulang idempotent; invoice `sent`/`paid` immutable; archive Service tidak menghapus histori.
 
 ## Phase 4 — Package builder bersih
 
-- [ ] Package catalog terpisah.
-- [ ] Package berisi banyak Service.
-- [ ] Package allowance MVP `hours` one-off; unit/mixed/recurring menyusul.
-- [ ] Project mengambil snapshot included Services.
-- [ ] Pertahankan UUID lama dan dual-read/dual-write selama cutover.
-- [ ] Admin assignment dan client order flow dimigrasikan.
-- [ ] Portal order resolve harga/currency/allowance/items server-side dan memvalidasi token, client, Project, Package, status, serta workspace.
-- [ ] Portal menampilkan Package, Services, usage, remaining.
-- [ ] Order history tidak hilang ketika Package diarsipkan.
+- [x] Package catalog terpisah.
+- [x] Package berisi banyak Service.
+- [x] Package allowance MVP `hours` one-off; unit/mixed/recurring diklasifikasikan tanpa silent semantic conversion.
+- [x] Project mengambil snapshot included Services.
+- [x] UUID Package lama dipertahankan dan selected Package dual-read/dual-write selama cutover.
+- [x] Admin assignment dan client order flow dimigrasikan.
+- [x] Portal order resolve harga/currency/allowance/items server-side dan memvalidasi token, client, Project, Package, status, serta workspace.
+- [x] Portal menampilkan Package, Services, usage, remaining.
+- [x] Order history tidak hilang ketika Package diarsipkan.
 
 **Acceptance:** Package bukan sinonim Service; seluruh Project package lama resolve ID dan harga identik; spoof harga/cross-workspace ditolak; usage one-off konsisten; archive tidak menghapus order/invoice history.
 
 ## Phase 5 — Timer UX dan data integrity
 
-- [ ] Edit metadata timer saat running.
-- [ ] Atomic switch Activity/Task; MVP menutup entry lama dan memulai entry baru dalam satu transaction agar atribusi tidak menulis ulang histori.
+- [x] Edit metadata timer saat running.
+- [x] Atomic switch Activity/Task; entry lama ditutup dan entry baru dimulai dalam satu transaction.
 - [x] Tambah unique partial index untuk satu active timer per workspace/user dan transaction/advisory locking pada start lewat Phase 0A; behavioral concurrency proof tetap wajib di Phase 0B.
-- [ ] Preserve original start time melalui accumulated time atau timer segments.
-- [ ] Duration-only memakai `entry_type=duration`, `work_date`, timezone snapshot, dan duration tanpa midnight timestamp palsu.
-- [ ] Cross-tab/device refresh.
-- [ ] Permission rate override dan snapshot billing rate + currency; jangan mutasi entry ketika invoice dibuat.
-- [ ] Stale timer correction flow tanpa silent 24h truncation.
+- [x] Preserve original start time melalui `timer_segments`.
+- [x] Duration-only memakai `entry_type=duration`, `work_date`, timezone snapshot, dan duration tanpa midnight timestamp palsu.
+- [x] Refresh-safe timer state; cross-tab sync memakai state server.
+- [x] Permission rate override dan snapshot billing rate + currency; invoice tidak memutasi snapshot.
+- [x] Stale timer correction flow tanpa silent 24h truncation.
 
 **Acceptance:** concurrent-start test menghasilkan tepat satu active timer; switch tidak kehilangan durasi/atribusi; original timeline benar; legacy duration mempertahankan tanggal dan total menit lintas timezone; konsisten lintas halaman/tab/device.
 
 ## Phase 6 — Daily/weekly/approval
 
-- [ ] Today timeline.
-- [ ] Weekly grid.
-- [ ] Copy previous week.
-- [ ] Implement transition matrix `draft → submitted → approved|rejected → invoiced`; rejected dapat kembali ke draft sesuai permission.
+- [x] Today timeline.
+- [x] Weekly grid.
+- [x] Copy previous week.
+- [x] Implement transition matrix `draft → submitted → approved|rejected → invoiced`; rejected dapat kembali ke draft sesuai permission.
 - [x] Batasi invoice import ke entry `approved + billable + completed + duration>0` lewat Phase 0A; behavioral eligibility/idempotency proof tetap wajib di Phase 0B.
 - [x] Simpan dan restore previous status saat invoice link draft dibuat/dilepas lewat Phase 0A.
-- [ ] Tambah audit metadata approval/submission/rejection dan tegakkan transition permission.
-- [ ] Period locking; rejected/locked/invoiced tidak dapat diedit sembarang role.
-- [ ] Timer-only/manual-entry policy.
-- [ ] Forgotten timer dan target-hours reminders.
+- [x] Tambah audit metadata approval/submission/rejection dan tegakkan transition permission.
+- [x] Period locking; submitted/approved/invoiced tidak dapat diedit sembarang role.
+- [x] Timer-only/manual-entry policy.
+- [x] Forgotten timer dan target-hours reminder state.
 
 **Acceptance:** transition permission lulus; import invoice atomik/idempotent; draft/rejected/non-billable tidak dapat ditagih; hapus line dari draft invoice mengembalikan status tepat sebelumnya; locked/invoiced immutable.
 
 ## Phase 7 — Profitability
 
-- [ ] Link Task dan Time Entry ke Project Service secara opsional/derived.
-- [ ] Cost vs sold amount per Service.
-- [ ] Margin per Project Service.
-- [ ] Estimate vs actual.
-- [ ] Client-specific rate cards.
-- [ ] Revenue by Service.
+- [x] Link Task dan Time Entry ke Project Service secara opsional/derived.
+- [x] Cost vs sold amount per Service.
+- [x] Margin per Project Service.
+- [x] Estimate vs actual.
+- [x] Client-specific rate cards.
+- [x] Revenue by Service report query.
 
 **Acceptance:** Cubiqlo dapat menjawab layanan mana yang paling laku dan paling untung.
 

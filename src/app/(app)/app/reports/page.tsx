@@ -20,6 +20,8 @@ import {
   payments,
   projects,
   timeEntries,
+  tasks,
+  users,
   workspaceCurrencyRates,
 } from "@/db/schema";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
@@ -38,6 +40,7 @@ import {
   reportPeriodLabel,
 } from "@/lib/report-period";
 import { ReportControls } from "@/components/reports/report-controls";
+import { buildTimeReport } from "@/lib/time-reporting";
 import { IncomeExpenseChart } from "@/components/reports/income-expense-chart";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -394,6 +397,9 @@ export default async function ReportsPage({
     .groupBy(timeEntries.activityId, activities.name)
     .orderBy(desc(sql`sum(${timeEntries.durationMinutes})`));
 
+  const detailedTimeRows = await db.select({ projectId: timeEntries.projectId, projectName: projects.name, taskId: timeEntries.taskId, taskTitle: tasks.title, userId: timeEntries.userId, userName: users.name, durationMinutes: timeEntries.durationMinutes, billable: timeEntries.billable, hourlyRate: timeEntries.hourlyRate }).from(timeEntries).leftJoin(projects, eq(projects.id, timeEntries.projectId)).leftJoin(tasks, eq(tasks.id, timeEntries.taskId)).leftJoin(users, eq(users.id, timeEntries.userId)).where(and(eq(timeEntries.workspaceId, ws.id), gte(sql`(${timeEntries.startTime})::date`, period.start), lte(sql`(${timeEntries.startTime})::date`, period.end)));
+  const timeReport = buildTimeReport(detailedTimeRows);
+
   const activityTime = activityTimeRows.map((row) => ({
     id: row.activityId ?? "none",
     name: row.activityName ?? t("Tanpa aktivitas", "No activity"),
@@ -620,6 +626,8 @@ export default async function ReportsPage({
           </CardContent>
         </Card>
       </div>
+
+      <Card><CardHeader><CardTitle>Kinerja Waktu</CardTitle><CardDescription>{reportPeriodLabel(period, lang)}</CardDescription></CardHeader><CardContent className="space-y-4"><div className="grid grid-cols-2 gap-3 sm:grid-cols-4"><div><p className="text-xs text-muted-foreground">Total</p><p className="font-semibold">{(timeReport.summary.totalMinutes/60).toFixed(1)}h</p></div><div><p className="text-xs text-muted-foreground">Billable</p><p className="font-semibold">{(timeReport.summary.billableMinutes/60).toFixed(1)}h</p></div><div><p className="text-xs text-muted-foreground">Non-billable</p><p className="font-semibold">{(timeReport.summary.nonBillableMinutes/60).toFixed(1)}h</p></div><div><p className="text-xs text-muted-foreground">Estimasi nilai</p><p className="font-semibold">{formatMoney(timeReport.summary.billableValue, baseCurrency)}</p></div></div><div className="grid gap-4 lg:grid-cols-3">{[["Per Proyek",timeReport.byProject],["Per Tugas",timeReport.byTask],["Per Anggota",timeReport.byMember]].map(([title,rows])=><div key={title as string}><h3 className="mb-2 text-sm font-semibold">{title as string}</h3><div className="divide-y rounded-lg border">{(rows as typeof timeReport.byProject).slice(0,10).map(row=><div key={row.id} className="flex justify-between gap-2 p-2 text-sm"><span className="truncate">{row.name}</span><span className="tabular-nums">{(row.minutes/60).toFixed(1)}h</span></div>)}</div></div>)}</div></CardContent></Card>
 
       <Card>
         <CardHeader className="flex flex-row items-start justify-between gap-4">

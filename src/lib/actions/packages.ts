@@ -25,6 +25,7 @@ import {
   buildProjectPackageSnapshot,
   buildProjectServiceSnapshotsFromPackage,
 } from "@/lib/package-snapshots";
+import { buildPackageAssignmentArchivePredicate } from "@/lib/package-assignment-archive";
 
 async function actor() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -365,15 +366,32 @@ export async function syncProjectPackageAssignment(projectId: string, packageId:
   await assertProjectInWorkspace(db, user.id, workspaceId, projectId);
 
   const assignment = await db.transaction(async (tx) => {
+    const [previousAssignment] = await tx
+      .select({ id: projectPackageAssignments.id })
+      .from(projectPackageAssignments)
+      .where(and(
+        eq(projectPackageAssignments.workspaceId, workspaceId),
+        eq(projectPackageAssignments.projectId, projectId),
+        eq(projectPackageAssignments.status, "active"),
+      ))
+      .limit(1);
+
     await tx
       .update(projectPackageAssignments)
       .set({ status: "archived", updatedAt: new Date() })
       .where(and(eq(projectPackageAssignments.workspaceId, workspaceId), eq(projectPackageAssignments.projectId, projectId), eq(projectPackageAssignments.status, "active")));
 
-    await tx
-      .update(projectServices)
-      .set({ status: "archived", updatedAt: new Date() })
-      .where(and(eq(projectServices.workspaceId, workspaceId), eq(projectServices.projectId, projectId), eq(projectServices.sourcePackageAssignmentId, projectServices.sourcePackageAssignmentId)));
+    const archiveScope = buildPackageAssignmentArchivePredicate(workspaceId, projectId, previousAssignment?.id ?? null);
+    if (archiveScope) {
+      await tx
+        .update(projectServices)
+        .set({ status: "archived", updatedAt: new Date() })
+        .where(and(
+          eq(projectServices.workspaceId, archiveScope.workspaceId),
+          eq(projectServices.projectId, archiveScope.projectId),
+          eq(projectServices.sourcePackageAssignmentId, archiveScope.sourcePackageAssignmentId),
+        ));
+    }
 
     if (!packageId) return null;
 
