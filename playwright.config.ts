@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test"
 
+const httpUser = process.env.PLAYWRIGHT_HTTP_USER
+const httpPassword = process.env.PLAYWRIGHT_HTTP_PASSWORD
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
@@ -9,6 +12,9 @@ export default defineConfig({
   reporter: "list",
   use: {
     baseURL: process.env.BASE_URL ?? "https://cubiqlo.com",
+    ...(httpUser && httpPassword
+      ? { httpCredentials: { username: httpUser, password: httpPassword } }
+      : {}),
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
