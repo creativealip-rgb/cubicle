@@ -599,6 +599,26 @@ export const projectActivities = pgTable("project_activities", {
   ),
 ]);
 
+export const timesheetSubmissions = pgTable("timesheet_submissions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  weekStart: date("week_start").notNull(),
+  status: text("status", { enum: ["submitted", "approved", "rejected"] }).notNull().default("submitted"),
+  submitterNote: text("submitter_note"),
+  reviewNote: text("review_note"),
+  totalMinutes: integer("total_minutes").notNull().default(0),
+  billableMinutes: integer("billable_minutes").notNull().default(0),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  reviewedBy: text("reviewed_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique("timesheet_submissions_workspace_user_week_unique").on(table.workspaceId, table.userId, table.weekStart),
+  index("timesheet_submissions_workspace_status_week_idx").on(table.workspaceId, table.status, table.weekStart),
+]);
+
 export const timeEntries = pgTable("time_entries", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),

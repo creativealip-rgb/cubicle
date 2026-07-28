@@ -2,7 +2,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { timeEntries, clients, projects, tasks, users, activities, projectActivities } from "@/db/schema";
+import { timeEntries, clients, projects, tasks, users, activities, projectActivities, timesheetSubmissions } from "@/db/schema";
 import { eq, and, isNull, isNotNull, desc } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { TimerWidget } from "@/components/time/timer-widget";
@@ -12,6 +12,8 @@ import { WeeklyTimeGrid } from "@/components/time/weekly-time-grid";
 import { ManualEntryForm } from "@/components/time/manual-entry-form";
 import { PdfExportButton } from "@/components/time/pdf-export-button";
 import { getCurrentLang, createT } from "@/lib/i18n";
+import { TimesheetApprovalPanel } from "@/components/time/timesheet-approval-panel";
+import { weekStartIso } from "@/lib/timesheet-approval";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -194,6 +196,11 @@ export default async function TimePage() {
       : []),
   ];
 
+  const currentWeekStart = weekStartIso(new Date());
+  const approvalRows = await db.select({ id: timesheetSubmissions.id, userId: timesheetSubmissions.userId, userName: users.name, weekStart: timesheetSubmissions.weekStart, status: timesheetSubmissions.status, totalMinutes: timesheetSubmissions.totalMinutes, billableMinutes: timesheetSubmissions.billableMinutes, submitterNote: timesheetSubmissions.submitterNote, reviewNote: timesheetSubmissions.reviewNote }).from(timesheetSubmissions).leftJoin(users, eq(users.id, timesheetSubmissions.userId)).where(eq(timesheetSubmissions.workspaceId, workspaceId)).orderBy(desc(timesheetSubmissions.submittedAt)).limit(50);
+  const currentApproval = approvalRows.find((item) => item.userId === user.id && item.weekStart === currentWeekStart) ?? null;
+  const pendingApprovals = member.role === "owner" ? approvalRows.filter((item) => item.status === "submitted") : [];
+
   return (
     <div className="min-w-0 space-y-4 sm:space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -260,6 +267,8 @@ export default async function TimePage() {
           }
         />
       )}
+
+      <TimesheetApprovalPanel weekStart={currentWeekStart} current={currentApproval} pending={pendingApprovals} isOwner={member.role === "owner"} />
 
       <TeamTimesheetView entries={teamEntries} />
 

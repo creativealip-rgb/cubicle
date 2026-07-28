@@ -19,6 +19,7 @@ import { timeEntryBillableForMode } from "@/lib/project-time-tracking-policy";
 import { resolveActivityHourlyRate } from "@/lib/activity-policy";
 import { assertActivityWriteAllowed } from "@/lib/activity-policy-db";
 import { WEEKLY_GRID_TAG } from "@/lib/weekly-time-grid";
+import { assertTimesheetWeekMutable } from "@/lib/timesheet-approval";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -502,6 +503,7 @@ export async function setWeeklyTimeCell(input: z.infer<typeof weeklyTimeCellSche
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   const parsed = weeklyTimeCellSchema.parse(input);
+  await assertTimesheetWeekMutable(db, workspaceId, user.id, parsed.date);
   const [project] = await db.select({ clientId: projects.clientId }).from(projects)
     .where(and(eq(projects.id, parsed.projectId), eq(projects.workspaceId, workspaceId))).limit(1);
   if (!project?.clientId) throw new Error("Project wajib punya klien");
@@ -642,6 +644,8 @@ export async function updateTimeEntry(entryId: string, input: z.infer<typeof upd
   if (entry.status === "invoiced") {
     throw new Error("Entri sudah di-invoice, tidak bisa diedit");
   }
+  if (entry.status === "approved") throw new Error("Entri sudah disetujui dan terkunci");
+  await assertTimesheetWeekMutable(db, workspaceId, entry.userId, entry.startTime ?? entry.createdAt);
   await assertHistoricalTimeEntryMutable(db, workspaceId, entry.projectId);
 
   const parsed = updateTimeEntrySchema.parse(input);
@@ -750,6 +754,8 @@ export async function deleteTimeEntry(entryId: string) {
   if (entry.status === "invoiced") {
     throw new Error("Entri sudah di-invoice, tidak bisa dihapus");
   }
+  if (entry.status === "approved") throw new Error("Entri sudah disetujui dan terkunci");
+  await assertTimesheetWeekMutable(db, workspaceId, entry.userId, entry.startTime ?? entry.createdAt);
   await assertHistoricalTimeEntryMutable(db, workspaceId, entry.projectId);
 
   await db.delete(timeEntries).where(eq(timeEntries.id, entryId));
