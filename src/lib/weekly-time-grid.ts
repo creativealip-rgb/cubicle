@@ -4,6 +4,8 @@ export interface WeeklyGridEntry {
   id: string;
   projectId: string | null;
   projectName: string | null;
+  activityId: string | null;
+  activityName: string | null;
   taskId: string | null;
   taskTitle: string | null;
   startTime: Date | string | null;
@@ -24,8 +26,8 @@ export interface WeeklyGridRow {
   key: string;
   projectId: string;
   projectName: string;
-  taskId: string | null;
-  taskTitle: string | null;
+  activityId: string | null;
+  activityName: string | null;
   cells: WeeklyGridCell[];
   totalMinutes: number;
 }
@@ -93,15 +95,15 @@ export function buildWeeklyGrid(entries: WeeklyGridEntry[], anchor: Date | strin
     const date = isoDate(entry.startTime);
     const dayIndex = date ? dateIndexes.get(date) : undefined;
     if (dayIndex == null) continue;
-    const key = `${entry.projectId}:${entry.taskId ?? "project"}`;
+    const key = `${entry.projectId}:${entry.activityId ?? "activity"}`;
     let row = rows.get(key);
     if (!row) {
       row = {
         key,
         projectId: entry.projectId,
         projectName: entry.projectName || "Project",
-        taskId: entry.taskId,
-        taskTitle: entry.taskTitle,
+        activityId: entry.activityId,
+        activityName: entry.activityName,
         cells: dateKeys.map((day) => ({ date: day, totalMinutes: 0, editableMinutes: 0, immutableMinutes: 0 })),
         totalMinutes: 0,
       };
@@ -116,7 +118,7 @@ export function buildWeeklyGrid(entries: WeeklyGridEntry[], anchor: Date | strin
   }
 
   const resultRows = Array.from(rows.values()).sort((left, right) =>
-    left.projectName.localeCompare(right.projectName) || (left.taskTitle || "").localeCompare(right.taskTitle || ""),
+    left.projectName.localeCompare(right.projectName) || (left.activityName || "").localeCompare(right.activityName || ""),
   );
   const dayTotals = dateKeys.map((_, index) => resultRows.reduce((sum, row) => sum + row.cells[index].totalMinutes, 0));
   return { dates, rows: resultRows, dayTotals, weekTotalMinutes: dayTotals.reduce((sum, value) => sum + value, 0) };

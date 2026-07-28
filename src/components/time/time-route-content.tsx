@@ -231,7 +231,7 @@ export async function TimeRouteContent({ mode }: { mode: "timer" | "timesheet" |
       )}
       {mode === "timesheet" && (
         <>
-          <WeeklyTimeGrid entries={entries.filter((entry) => entry.userId === user.id).map((entry) => ({ id: entry.id, projectId: entry.projectId, projectName: entry.projectName, taskId: entry.taskId, taskTitle: entry.taskTitle, startTime: entry.startTime, durationMinutes: entry.durationMinutes, manualMinutes: entry.manualMinutes, tags: entry.tags, status: entry.status }))} projects={writableProjectList.map((project) => ({ id: project.id, name: project.name }))} tasks={writableTaskList} canWrite={canWrite} />
+          <WeeklyTimeGrid entries={entries.filter((entry) => entry.userId === user.id).map((entry) => ({ id: entry.id, projectId: entry.projectId, projectName: entry.projectName, activityId: entry.activityId, activityName: entry.activityName, taskId: entry.taskId, taskTitle: entry.taskTitle, startTime: entry.startTime, durationMinutes: entry.durationMinutes, manualMinutes: entry.manualMinutes, tags: entry.tags, status: entry.status }))} projects={writableProjectList.map((project) => ({ id: project.id, name: project.name }))} activities={activityList.map((activity) => ({ id: activity.id, name: activity.name, projectId: activity.projectId }))} canWrite={canWrite} />
           {member.role === "owner" && <TeamTimesheetView entries={teamEntries} />}
         </>
       )}
