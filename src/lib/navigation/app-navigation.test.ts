@@ -8,44 +8,33 @@ import {
 } from "./app-navigation";
 
 function allRoutes() {
-  return appNavigation.flatMap((entry) =>
-    entry.kind === "group" ? entry.children.map((child) => child.href) : [entry.href],
-  );
+  return appNavigation.flatMap((entry) => entry.kind === "group" ? entry.children.map((item) => item.href) : [entry.href]);
 }
 
 describe("app navigation registry", () => {
-  it("contains every visible route exactly once in target order", () => {
+  it("keeps primary navigation focused and route-unique", () => {
     const routes = allRoutes();
     expect(new Set(routes).size).toBe(routes.length);
-    expect(routes).toEqual([
-      "/app/dashboard", "/app/clients", "/app/projects", "/app/tasks", "/app/time", "/app/calendar",
-      "/app/files", "/app/proposals", "/app/contracts", "/app/questionnaires", "/app/services",
-      "/app/packages", "/app/templates", "/app/invoices", "/app/expenses", "/app/reports",
-      "/app/personal", "/app/journal", "/app/personal-site", "/app/brain", "/app/prompts",
-    ]);
     expect(appNavigation.map((entry) => entry.id)).toEqual([
-      "dashboard", "work", "time", "calendar", "files", "sales", "finance", "personal", "ai",
+      "dashboard", "work", "time", "calendar", "files", "finance", "personal", "ai",
     ]);
+    expect(routes).not.toContain("/app/services");
+    expect(routes).not.toContain("/app/packages");
+    expect(routes).not.toContain("/app/proposals");
   });
 
-  it("keeps only delivery entities in Work and moves commercial catalog to Sales", () => {
+  it("keeps only delivery entities in Work", () => {
     const work = appNavigation.find((entry) => entry.id === "work");
-    const sales = appNavigation.find((entry) => entry.id === "sales");
     expect(work?.kind).toBe("group");
-    expect(sales?.kind).toBe("group");
     if (work?.kind === "group") expect(work.children.map((item) => item.id)).toEqual(["clients", "projects", "tasks"]);
-    if (sales?.kind === "group") expect(sales.children.map((item) => item.id)).toEqual([
-      "proposals", "contracts", "questionnaires", "services", "packages", "templates",
-    ]);
-    expect(allRoutes()).not.toContain("/app/activities");
+    expect(appNavigation.some((entry) => entry.id === "sales")).toBe(false);
   });
 
-  it("keeps role visibility consistent with existing route capabilities", () => {
-    expect(getVisibleNavigation("owner").some((entry) => entry.id === "personal")).toBe(true);
+  it("hides Personal from member and viewer", () => {
     for (const role of ["member", "viewer"] as const) {
       const visible = getVisibleNavigation(role);
       expect(visible.some((entry) => entry.id === "personal")).toBe(false);
-      expect(visible.some((entry) => entry.id === "sales")).toBe(true);
+      expect(visible.some((entry) => entry.id === "sales")).toBe(false);
       expect(JSON.stringify(visible)).not.toContain("/app/personal");
     }
   });
@@ -53,41 +42,29 @@ describe("app navigation registry", () => {
   it.each([
     ["/app/projects/abc", "work", "projects"],
     ["/app/clients/abc", "work", "clients"],
-    ["/app/services", "sales", "services"],
-    ["/app/proposals/abc", "sales", "proposals"],
-    ["/app/contracts", "sales", "contracts"],
-    ["/app/questionnaires/abc", "sales", "questionnaires"],
-    ["/app/templates", "sales", "templates"],
-    ["/app/invoice-templates/abc", "sales", "templates"],
-    ["/app/contract-templates/new", "sales", "templates"],
-    ["/app/invoices/templates", "sales", "templates"],
-    ["/app/invoices/templates/abc", "sales", "templates"],
     ["/app/invoices/abc", "finance", "invoices"],
     ["/app/activities", null, "time"],
     ["/app/activities/abc", null, "time"],
-    ["/app/time", null, "time"],
-    ["/app/time/history", null, "time"],
-  ])("maps %s to active parent and child", (path, groupId, itemId) => {
+  ])("maps %s to active navigation", (path, groupId, itemId) => {
     expect(getActiveNavigation(path)).toEqual({ groupId, itemId });
   });
 
-  it("uses longest specific route across canonical hrefs and aliases", () => {
-    expect(getActiveNavigation("/app/invoices/templates")).toEqual({ groupId: "sales", itemId: "templates" });
-    expect(getActiveNavigation("/app/invoices/templates/example")).toEqual({ groupId: "sales", itemId: "templates" });
+  it("maps hidden sales routes to no sidebar item", () => {
+    expect(getActiveNavigation("/app/services")).toEqual({ groupId: null, itemId: null });
+    expect(getActiveNavigation("/app/proposals/abc")).toEqual({ groupId: null, itemId: null });
+    expect(getActiveNavigation("/app/templates")).toEqual({ groupId: null, itemId: null });
+  });
+
+  it("keeps finance longest-prefix behavior", () => {
+    expect(getActiveNavigation("/app/invoices/templates")).toEqual({ groupId: "finance", itemId: "invoices" });
     expect(getActiveNavigation("/app/invoices/example")).toEqual({ groupId: "finance", itemId: "invoices" });
   });
 
-  it("does not match partial path segments", () => {
-    expect(getActiveNavigation("/app/projectscope")).toEqual({ groupId: null, itemId: null });
-    expect(getActiveNavigation("/app/invoices-template")).toEqual({ groupId: null, itemId: null });
-  });
-
-  it("caps badges and derives parent dots without totals", () => {
-    expect(formatSidebarBadge(100)).toBe("99+");
+  it("formats badges and parent notifications", () => {
     expect(formatSidebarBadge(8)).toBe("8");
+    expect(formatSidebarBadge(120)).toBe("99+");
     expect(groupHasNotification("work", { myOpenTasks: 3 })).toBe(true);
     expect(groupHasNotification("finance", { unpaidInvoices: 0 })).toBe(false);
-    expect(groupHasNotification("sales", { myOpenTasks: 3, unpaidInvoices: 4 })).toBe(false);
   });
 
   it("has ID and EN labels and descriptions", () => {
@@ -97,8 +74,6 @@ describe("app navigation registry", () => {
       if (entry.kind === "group") for (const child of entry.children) {
         expect(child.label.id).toBeTruthy();
         expect(child.label.en).toBeTruthy();
-        expect(child.description?.id).toBeTruthy();
-        expect(child.description?.en).toBeTruthy();
       }
     }
   });

@@ -11,6 +11,7 @@ import { TeamTimesheetView } from "@/components/time/team-timesheet-view";
 import { WeeklyTimeGrid } from "@/components/time/weekly-time-grid";
 import { ManualEntryForm } from "@/components/time/manual-entry-form";
 import { PdfExportButton } from "@/components/time/pdf-export-button";
+import Link from "next/link";
 
 import { TimePageShell } from "@/components/time/time-header";
 import { TimesheetApprovalPanel } from "@/components/time/timesheet-approval-panel";
@@ -224,8 +225,8 @@ export async function TimeRouteContent({ mode }: { mode: "timer" | "timesheet" |
           </div>
           {canWrite && <TimerWidget workspaceId={workspaceId} userId={user.id} clients={clientList} projects={writableProjectList} tasks={writableTaskList} activities={activityList} recentCombinations={recentTimerCombinations} initialTimer={activeTimer ? { id: activeTimer.id, clientId: activeTimer.clientId, projectId: activeTimer.projectId, activityId: activeTimer.activityId, taskId: activeTimer.taskId, description: activeTimer.description, tags: activeTimer.tags, startTime: activeTimer.startTime!, pausedAt: activeTimer.pausedAt, clientName: activeTimer.clientName, projectName: activeTimer.projectName, activityName: activeTimer.activityName, taskTitle: activeTimer.taskTitle } : null} />}
           <section aria-labelledby="recent-time-heading">
-            <h2 id="recent-time-heading" className="mb-3 text-base font-semibold">Hari ini dan terbaru</h2>
-            <Timesheet entries={entries.slice(0, 8).map((e) => ({ id: e.id, description: e.description, tags: e.tags, durationMinutes: e.durationMinutes, manualMinutes: e.manualMinutes, billable: e.billable ?? false, hourlyRate: e.hourlyRate, startTime: e.startTime, endTime: e.endTime, status: e.status, clientId: e.clientId, projectId: e.projectId, activityId: e.activityId, taskId: e.taskId, clientName: e.clientName, projectName: e.projectName, activityName: e.activityName, projectCurrency: e.projectCurrency, projectTimeTrackingMode: e.projectTimeTrackingMode, taskTitle: e.taskTitle, userName: e.userName, createdAt: e.createdAt }))} clients={clientList} projects={projectList} tasks={taskList} activities={activityList} />
+            <div className="mb-3 flex items-center justify-between"><h2 id="recent-time-heading" className="text-base font-semibold">Hari ini</h2><Link href="/app/time/history" className="text-sm font-medium text-primary hover:underline">Lihat semua di Riwayat</Link></div>
+            <Timesheet entries={entries.slice(0, 3).map((e) => ({ id: e.id, description: e.description, tags: e.tags, durationMinutes: e.durationMinutes, manualMinutes: e.manualMinutes, billable: e.billable ?? false, hourlyRate: e.hourlyRate, startTime: e.startTime, endTime: e.endTime, status: e.status, clientId: e.clientId, projectId: e.projectId, activityId: e.activityId, taskId: e.taskId, clientName: e.clientName, projectName: e.projectName, activityName: e.activityName, projectCurrency: e.projectCurrency, projectTimeTrackingMode: e.projectTimeTrackingMode, taskTitle: e.taskTitle, userName: e.userName, createdAt: e.createdAt }))} clients={clientList} projects={projectList} tasks={taskList} activities={activityList} />
           </section>
         </>
       )}
