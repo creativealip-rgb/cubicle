@@ -205,20 +205,30 @@ export const packages = pgTable("packages", {
   // Non-NULL = legacy per-project package (kept for backward compatibility).
   projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
   name: text("name").notNull(), // e.g. "40 HOURS", "60 HOURS"
-  hours: integer("hours"), // hours included per month
+  hours: integer("hours"), // legacy included hours; dual-read with allowanceValue
   price: numeric("price", { precision: 12, scale: 2 }).notNull(),
   currency: text("currency").notNull().default("IDR"),
   description: text("description"), // subtitle
   features: text("features"), // JSON array of feature strings
   badge: text("badge"), // e.g. "BEST FOR A TEAM"
   sortOrder: integer("sort_order").notNull().default(0),
-  active: boolean("active").notNull().default(true),
+  active: boolean("active").notNull().default(true), // legacy status flag
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   customPrice: numeric("custom_price", { precision: 12, scale: 2 }),
   minHours: integer("min_hours"),
   maxHours: integer("max_hours"),
   allowCustom: boolean("allow_custom").notNull().default(false),
-});
+  allowanceType: text("allowance_type", { enum: ["hours"] }).notNull().default("hours"),
+  allowanceValue: numeric("allowance_value", { precision: 12, scale: 2 }),
+  lifecycleClass: text("lifecycle_class", { enum: ["one_off", "legacy_recurring_unmodeled"] }).notNull().default("one_off"),
+  status: text("status", { enum: ["active", "archived"] }).notNull().default("active"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique("packages_id_workspace_unique").on(table.id, table.workspaceId),
+  index("packages_workspace_status_sort_idx").on(table.workspaceId, table.status, table.sortOrder),
+  check("packages_price_check", sql`${table.price} >= 0`),
+  check("packages_allowance_value_check", sql`${table.allowanceValue} is null or ${table.allowanceValue} >= 0`),
+]);
 
 // ─── Services (Phase 3 catalog) ───
 
@@ -267,12 +277,82 @@ export const services = pgTable("services", {
   check("services_default_price_check", sql`${table.defaultPrice} is null or ${table.defaultPrice} >= 0`),
 ]);
 
+export const packageItems = pgTable("package_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  packageId: uuid("package_id").notNull(),
+  serviceId: uuid("service_id").notNull(),
+  quantity: numeric("quantity", { precision: 12, scale: 2 }).notNull().default("1"),
+  unit: text("unit").notNull().default("service"),
+  unitPrice: numeric("unit_price", { precision: 12, scale: 2 }),
+  currency: text("currency").notNull().default("IDR"),
+  includedAllowance: numeric("included_allowance", { precision: 12, scale: 2 }),
+  sortOrder: integer("sort_order").notNull().default(0),
+  status: text("status", { enum: ["active", "archived"] }).notNull().default("active"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique("package_items_id_workspace_unique").on(table.id, table.workspaceId),
+  unique("package_items_package_service_unique").on(table.packageId, table.serviceId),
+  foreignKey({
+    columns: [table.packageId, table.workspaceId],
+    foreignColumns: [packages.id, packages.workspaceId],
+    name: "package_items_package_workspace_fk",
+  }).onDelete("cascade"),
+  foreignKey({
+    columns: [table.serviceId, table.workspaceId],
+    foreignColumns: [services.id, services.workspaceId],
+    name: "package_items_service_workspace_fk",
+  }).onDelete("restrict"),
+  index("package_items_workspace_package_status_idx").on(table.workspaceId, table.packageId, table.status),
+  check("package_items_quantity_check", sql`${table.quantity} >= 0`),
+  check("package_items_unit_price_check", sql`${table.unitPrice} is null or ${table.unitPrice} >= 0`),
+  check("package_items_included_allowance_check", sql`${table.includedAllowance} is null or ${table.includedAllowance} >= 0`),
+]);
+
+export const projectPackageAssignments = pgTable("project_package_assignments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id").notNull(),
+  sourcePackageId: uuid("source_package_id"),
+  sourceLifecycleClass: text("source_lifecycle_class", { enum: ["one_off", "legacy_recurring_unmodeled"] }).notNull().default("one_off"),
+  nameSnapshot: text("name_snapshot").notNull(),
+  descriptionSnapshot: text("description_snapshot"),
+  priceSnapshot: numeric("price_snapshot", { precision: 12, scale: 2 }).notNull(),
+  currencySnapshot: text("currency_snapshot").notNull().default("IDR"),
+  allowanceTypeSnapshot: text("allowance_type_snapshot", { enum: ["hours"] }).notNull().default("hours"),
+  allowanceValueSnapshot: numeric("allowance_value_snapshot", { precision: 12, scale: 2 }),
+  assignedAt: timestamp("assigned_at", { withTimezone: true }).notNull().defaultNow(),
+  status: text("status", { enum: ["active", "archived"] }).notNull().default("active"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique("project_package_assignments_id_workspace_unique").on(table.id, table.workspaceId),
+  uniqueIndex("project_package_assignments_active_project_uidx")
+    .on(table.projectId)
+    .where(sql`${table.status} = 'active'`),
+  foreignKey({
+    columns: [table.projectId, table.workspaceId],
+    foreignColumns: [projects.id, projects.workspaceId],
+    name: "project_package_assignments_project_workspace_fk",
+  }).onDelete("cascade"),
+  foreignKey({
+    columns: [table.sourcePackageId, table.workspaceId],
+    foreignColumns: [packages.id, packages.workspaceId],
+    name: "project_package_assignments_source_package_workspace_fk",
+  }).onDelete("set null"),
+  index("project_package_assignments_workspace_project_status_idx").on(table.workspaceId, table.projectId, table.status),
+  check("project_package_assignments_price_snapshot_check", sql`${table.priceSnapshot} >= 0`),
+  check("project_package_assignments_allowance_value_check", sql`${table.allowanceValueSnapshot} is null or ${table.allowanceValueSnapshot} >= 0`),
+]);
+
 export const projectServices = pgTable("project_services", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   projectId: uuid("project_id").notNull(),
   serviceId: uuid("service_id"),
   packageItemId: uuid("package_item_id"),
+  projectPackageAssignmentId: uuid("project_package_assignment_id"),
   sourcePackageAssignmentId: uuid("source_package_assignment_id"),
   nameSnapshot: text("name_snapshot").notNull(),
   descriptionSnapshot: text("description_snapshot"),
@@ -300,6 +380,21 @@ export const projectServices = pgTable("project_services", {
     foreignColumns: [services.id, services.workspaceId],
     name: "project_services_service_workspace_fk",
   }).onDelete("restrict"),
+  foreignKey({
+    columns: [table.packageItemId, table.workspaceId],
+    foreignColumns: [packageItems.id, packageItems.workspaceId],
+    name: "project_services_package_item_workspace_fk",
+  }).onDelete("set null"),
+  foreignKey({
+    columns: [table.projectPackageAssignmentId, table.workspaceId],
+    foreignColumns: [projectPackageAssignments.id, projectPackageAssignments.workspaceId],
+    name: "project_services_project_package_assignment_workspace_fk",
+  }).onDelete("set null"),
+  foreignKey({
+    columns: [table.sourcePackageAssignmentId, table.workspaceId],
+    foreignColumns: [projectPackageAssignments.id, projectPackageAssignments.workspaceId],
+    name: "project_services_source_package_assignment_workspace_fk",
+  }).onDelete("set null"),
   index("project_services_workspace_project_status_idx").on(table.workspaceId, table.projectId, table.status),
   check("project_services_quantity_check", sql`${table.quantity} >= 0`),
   check("project_services_unit_price_check", sql`${table.unitPrice} is null or ${table.unitPrice} >= 0`),
@@ -381,6 +476,7 @@ export const packageOrders = pgTable("package_orders", {
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "restrict" }),
   packageId: uuid("package_id").references(() => packages.id, { onDelete: "set null" }),
+  projectPackageAssignmentId: uuid("project_package_assignment_id"),
   clientId: uuid("client_id").references(() => clients.id, { onDelete: "restrict" }),
   clientPortalToken: text("client_portal_token"), // legacy only; new writes use client_id
   idempotencyKey: text("idempotency_key"),
@@ -395,6 +491,11 @@ export const packageOrders = pgTable("package_orders", {
   uniqueIndex("package_orders_client_idempotency_uidx")
     .on(table.clientId, table.idempotencyKey)
     .where(sql`${table.idempotencyKey} is not null`),
+  foreignKey({
+    columns: [table.projectPackageAssignmentId, table.workspaceId],
+    foreignColumns: [projectPackageAssignments.id, projectPackageAssignments.workspaceId],
+    name: "package_orders_project_package_assignment_workspace_fk",
+  }).onDelete("set null"),
 ]);
 
 // ─── Comments (polymorphic) ───
@@ -767,6 +868,9 @@ export const workspaceRelations = relations(workspaces, ({ many }) => ({
   members: many(workspaceMembers),
   clients: many(clients),
   projects: many(projects),
+  packages: many(packages),
+  packageItems: many(packageItems),
+  projectPackageAssignments: many(projectPackageAssignments),
   activities: many(activities),
   serviceCategories: many(serviceCategories),
   services: many(services),
@@ -785,6 +889,15 @@ export const projectRelations = relations(projects, ({ one, many }) => ({
   members: many(projectMembers),
   activities: many(projectActivities),
   services: many(projectServices),
+  packageAssignments: many(projectPackageAssignments),
+}));
+
+export const packageRelations = relations(packages, ({ one, many }) => ({
+  workspace: one(workspaces, { fields: [packages.workspaceId], references: [workspaces.id] }),
+  project: one(projects, { fields: [packages.projectId], references: [projects.id] }),
+  packageItems: many(packageItems),
+  assignments: many(projectPackageAssignments),
+  orders: many(packageOrders),
 }));
 
 export const serviceCategoryRelations = relations(serviceCategories, ({ one, many }) => ({
@@ -795,13 +908,31 @@ export const serviceCategoryRelations = relations(serviceCategories, ({ one, man
 export const serviceRelations = relations(services, ({ one, many }) => ({
   workspace: one(workspaces, { fields: [services.workspaceId], references: [workspaces.id] }),
   category: one(serviceCategories, { fields: [services.categoryId], references: [serviceCategories.id] }),
+  packageItems: many(packageItems),
   projects: many(projectServices),
+}));
+
+export const packageItemRelations = relations(packageItems, ({ one, many }) => ({
+  workspace: one(workspaces, { fields: [packageItems.workspaceId], references: [workspaces.id] }),
+  package: one(packages, { fields: [packageItems.packageId], references: [packages.id] }),
+  service: one(services, { fields: [packageItems.serviceId], references: [services.id] }),
+  projectServices: many(projectServices),
+}));
+
+export const projectPackageAssignmentRelations = relations(projectPackageAssignments, ({ one, many }) => ({
+  workspace: one(workspaces, { fields: [projectPackageAssignments.workspaceId], references: [workspaces.id] }),
+  project: one(projects, { fields: [projectPackageAssignments.projectId], references: [projects.id] }),
+  package: one(packages, { fields: [projectPackageAssignments.sourcePackageId], references: [packages.id] }),
+  projectServices: many(projectServices),
+  packageOrders: many(packageOrders),
 }));
 
 export const projectServiceRelations = relations(projectServices, ({ one, many }) => ({
   workspace: one(workspaces, { fields: [projectServices.workspaceId], references: [workspaces.id] }),
   project: one(projects, { fields: [projectServices.projectId], references: [projects.id] }),
   service: one(services, { fields: [projectServices.serviceId], references: [services.id] }),
+  packageItem: one(packageItems, { fields: [projectServices.packageItemId], references: [packageItems.id] }),
+  packageAssignment: one(projectPackageAssignments, { fields: [projectServices.projectPackageAssignmentId], references: [projectPackageAssignments.id] }),
   tasks: many(tasks),
   timeEntries: many(timeEntries),
 }));

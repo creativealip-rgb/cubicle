@@ -108,6 +108,8 @@ interface PackageItem {
   minHours: number | null;
   maxHours: number | null;
   allowCustom: boolean;
+  projectPackageAssignmentId?: string | null;
+  includedServices?: Array<{ serviceName: string; includedAllowance: string | null }>;
 }
 
 interface CustomRequest {
@@ -365,6 +367,13 @@ function ProjectExpandedContent({
   const { t } = useT();
   const isByHours = project.billingType === "hours";
   const isByPackage = project.billingType === "package";
+  const assignedPackage = selectedPkg
+    ? packages.find((pkg) => pkg.id === selectedPkg.id) ?? null
+    : null;
+  const includedServices = assignedPackage?.includedServices ?? [];
+  const remainingHours = selectedPkg?.hours != null && hoursSummary
+    ? Math.max(0, selectedPkg.hours - hoursSummary.totalMinutes / 60)
+    : null;
 
   return (
     <CardContent className="border-t pt-4 pb-4 space-y-4">
@@ -392,19 +401,30 @@ function ProjectExpandedContent({
         </p>
       )}
       {isByPackage && selectedPkg && (
-        <div>
-          <p className="text-sm font-semibold">
-            {selectedPkg.name}
-            {selectedPkg.hours && ` — ${selectedPkg.hours} JAM`}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Tarif:{" "}
-            {formatCurrency(
-              selectedPkg.price,
-              selectedPkg.currency || project.currency || "IDR",
-            )}
-            /bulan
-          </p>
+        <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+          <div>
+            <p className="text-sm font-semibold">
+              {selectedPkg.name}
+              {selectedPkg.hours && ` — ${selectedPkg.hours} JAM`}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Tarif:{" "}
+              {formatCurrency(
+                selectedPkg.price,
+                selectedPkg.currency || project.currency || "IDR",
+              )}
+              /bulan
+              {remainingHours != null && ` · ${remainingHours.toFixed(1)} jam tersisa`}
+            </p>
+          </div>
+          {includedServices.length > 0 ? (
+            <div className="text-xs text-muted-foreground">
+              <p className="font-medium text-foreground">Layanan termasuk</p>
+              <p>{includedServices.map((service) => service.serviceName).join(", ")}</p>
+            </div>
+          ) : assignedPackage?.projectPackageAssignmentId ? (
+            <p className="text-xs text-muted-foreground">Paket diarsipkan, riwayat order tetap aman.</p>
+          ) : null}
         </div>
       )}
       {!isByHours && !isByPackage && project.budget && (
@@ -575,6 +595,12 @@ function ProjectExpandedContent({
                       ))}
                     </ul>
                   )}
+                  {pkg.includedServices && pkg.includedServices.length > 0 && (
+                    <div className="rounded-md bg-muted/40 p-2 text-left text-xs text-muted-foreground">
+                      <p className="font-medium text-foreground">Layanan termasuk</p>
+                      <p>{pkg.includedServices.map((service) => service.serviceName).join(", ")}</p>
+                    </div>
+                  )}
                   <PackageOrderButton
                     token={token}
                     projectId={project.id}
@@ -592,11 +618,11 @@ function ProjectExpandedContent({
         </div>
       )}
 
-      {/* Orders */}
+      {/* Order history */}
       {isByPackage && !project.selectedPackageId && orders.length > 0 && (
         <div>
           <h4 className="text-sm font-semibold mb-2">
-            {t("Pesanan Anda", "Your orders")}
+            {t("Riwayat order", "Order history")}
           </h4>
           <div className="space-y-2">
             {orders.map((order) => (
@@ -633,6 +659,7 @@ function ProjectExpandedContent({
                       Menunggu
                     </Badge>
                   )}
+                  {!order.packageName && <span className="text-xs text-muted-foreground">Paket diarsipkan</span>}
                   <span className="text-xs text-muted-foreground">
                     {new Date(order.createdAt).toLocaleDateString()}
                   </span>

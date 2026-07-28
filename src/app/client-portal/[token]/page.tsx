@@ -12,6 +12,7 @@ import {
   timeEntries,
   users,
   packages,
+  projectPackageAssignments,
   workspaces,
   portalVisits,
   clients,
@@ -38,7 +39,7 @@ import { PORTAL_COOKIE, verifyPortalSession } from "@/lib/portal-password";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { getCustomPackageRequestsByToken } from "@/lib/actions/custom-package-requests";
-import { getPackageOrdersByToken } from "@/lib/actions/package-orders";
+import { getPackageItemsForOrders, getPackageOrdersByToken } from "@/lib/actions/package-orders";
 import {
   groupByProjectId,
   portalOpenVisit,
@@ -461,10 +462,73 @@ export default async function ClientPortalPage({
       minHours: number | null;
       maxHours: number | null;
       allowCustom: boolean;
+      projectPackageAssignmentId: string | null;
+      includedServices: Array<{ serviceName: string; includedAllowance: string | null }>;
     }>
   >();
+  const packageItemsMap = new Map<string, Array<{ serviceName: string; includedAllowance: string | null }>>();
+  const packageUsageMap = new Map<string, { usedHours: number; totalHours: number | null; remainingHours: number | null }>();
+  const assignmentByPackageId = new Map<string, string>();
 
   if (byPackageProjectIds.length > 0) {
+    const assignmentRows = await db
+      .select({
+        id: projectPackageAssignments.id,
+        projectId: projectPackageAssignments.projectId,
+        sourcePackageId: projectPackageAssignments.sourcePackageId,
+        name: projectPackageAssignments.nameSnapshot,
+        hours: projectPackageAssignments.allowanceValueSnapshot,
+        price: projectPackageAssignments.priceSnapshot,
+        currency: projectPackageAssignments.currencySnapshot,
+        description: projectPackageAssignments.descriptionSnapshot,
+      })
+      .from(projectPackageAssignments)
+      .where(
+        and(
+          inArray(projectPackageAssignments.projectId, byPackageProjectIds),
+          eq(projectPackageAssignments.workspaceId, client.workspaceId),
+          eq(projectPackageAssignments.status, "active"),
+        ),
+      );
+
+    const assignmentIds = assignmentRows.map((assignment) => assignment.id);
+    const orderItemRows = await getPackageItemsForOrders(assignmentIds);
+    for (const item of orderItemRows) {
+      const list = packageItemsMap.get(item.projectPackageAssignmentId) || [];
+      list.push({ serviceName: item.serviceName, includedAllowance: item.includedAllowance });
+      packageItemsMap.set(item.projectPackageAssignmentId, list);
+    }
+
+    for (const assignment of assignmentRows) {
+      if (!assignment.sourcePackageId) continue;
+      assignmentByPackageId.set(assignment.sourcePackageId, assignment.id);
+      const totalHours = assignment.hours == null ? null : Number(assignment.hours);
+      const usedHours = (projectHoursMap.get(assignment.projectId)?.totalMinutes ?? 0) / 60;
+      const remainingHours = totalHours == null ? null : Math.max(0, totalHours - usedHours);
+      packageUsageMap.set(assignment.id, { usedHours, totalHours, remainingHours });
+      const row = {
+        id: assignment.sourcePackageId,
+        name: assignment.name,
+        hours: totalHours == null ? null : Math.trunc(totalHours),
+        price: assignment.price,
+        currency: assignment.currency,
+        description: assignment.description,
+        features: null,
+        badge: null,
+        sortOrder: 0,
+        customPrice: null,
+        minHours: null,
+        maxHours: null,
+        allowCustom: false,
+        projectId: assignment.projectId,
+        projectPackageAssignmentId: assignment.id,
+        includedServices: packageItemsMap.get(assignment.id) || [],
+      };
+      const existing = projectPackagesMap.get(assignment.projectId) || [];
+      existing.push(row);
+      projectPackagesMap.set(assignment.projectId, existing);
+    }
+
     const pkgs = await db
       .select({
         id: packages.id,
@@ -491,7 +555,11 @@ export default async function ClientPortalPage({
       )
       .orderBy(packages.sortOrder);
     for (const [projectId, rows] of groupByProjectId(pkgs)) {
-      projectPackagesMap.set(projectId, rows);
+      const existing = projectPackagesMap.get(projectId) || [];
+      projectPackagesMap.set(projectId, [
+        ...existing,
+        ...rows.map((row) => ({ ...row, projectPackageAssignmentId: row.id ? assignmentByPackageId.get(row.id) ?? null : null, includedServices: [] })),
+      ]);
     }
   }
 
@@ -515,19 +583,49 @@ export default async function ClientPortalPage({
     .map((p) => p.selectedPackageId!);
 
   if (assignedPackageIds.length > 0) {
-    const selectedPkgs = await db
+    const selectedAssignments = await db
       .select({
-        id: packages.id,
-        name: packages.name,
-        hours: packages.hours,
-        price: packages.price,
-        currency: packages.currency,
+        id: projectPackageAssignments.sourcePackageId,
+        name: projectPackageAssignments.nameSnapshot,
+        hours: projectPackageAssignments.allowanceValueSnapshot,
+        price: projectPackageAssignments.priceSnapshot,
+        currency: projectPackageAssignments.currencySnapshot,
       })
-      .from(packages)
-      .where(inArray(packages.id, assignedPackageIds));
+      .from(projectPackageAssignments)
+      .where(
+        and(
+          inArray(projectPackageAssignments.sourcePackageId, assignedPackageIds),
+          eq(projectPackageAssignments.workspaceId, client.workspaceId),
+          eq(projectPackageAssignments.status, "active"),
+        ),
+      );
+    for (const pkg of selectedAssignments) {
+      if (!pkg.id) continue;
+      selectedPackageMap.set(pkg.id, {
+        id: pkg.id,
+        name: pkg.name,
+        hours: pkg.hours == null ? null : Math.trunc(Number(pkg.hours)),
+        price: pkg.price,
+        currency: pkg.currency,
+      });
+    }
 
-    for (const pkg of selectedPkgs) {
-      selectedPackageMap.set(pkg.id, pkg);
+    const missingIds = assignedPackageIds.filter((id) => !selectedPackageMap.has(id));
+    if (missingIds.length > 0) {
+      const selectedPkgs = await db
+        .select({
+          id: packages.id,
+          name: packages.name,
+          hours: packages.hours,
+          price: packages.price,
+          currency: packages.currency,
+        })
+        .from(packages)
+        .where(inArray(packages.id, missingIds));
+
+      for (const pkg of selectedPkgs) {
+        selectedPackageMap.set(pkg.id, pkg);
+      }
     }
   }
 

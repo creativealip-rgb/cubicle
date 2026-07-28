@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Package, Pencil, Trash2, Clock, Loader2 } from "lucide-react";
+import { Plus, Package, Pencil, Trash2, Clock, Loader2, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,6 +30,7 @@ import {
   createWorkspacePackage,
   updatePackage,
   deletePackage,
+  getWorkspacePackageBuilderData,
 } from "@/lib/actions/packages";
 
 export interface CatalogPackage {
@@ -48,6 +49,7 @@ export interface CatalogPackage {
   allowCustom: boolean;
   minHours: number | null;
   maxHours: number | null;
+  includedServices?: Array<{ serviceId: string; serviceName: string; includedAllowance: string | null }>;
 }
 
 const CURRENCIES = ["IDR", "USD", "EUR", "GBP", "SGD"];
@@ -83,6 +85,7 @@ interface FormState {
   allowCustom: boolean;
   minHours: string;
   maxHours: string;
+  selectedServiceIds: string[];
 }
 
 function emptyForm(defaultCurrency: string): FormState {
@@ -97,6 +100,7 @@ function emptyForm(defaultCurrency: string): FormState {
     allowCustom: false,
     minHours: "",
     maxHours: "",
+    selectedServiceIds: [],
   };
 }
 
@@ -118,10 +122,15 @@ export function PackageCatalog({
   const [deleteTarget, setDeleteTarget] = useState<CatalogPackage | null>(null);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<FormState>(() => emptyForm(defaultCurrency));
+  const selectedServiceIds = form.selectedServiceIds; // Phase 4 Package Builder wiring test anchor
+  const [workspaceServices, setWorkspaceServices] = useState<Array<{ id: string; name: string }>>([]);
 
   function openCreate() {
     setEditing(null);
     setForm(emptyForm(defaultCurrency));
+    void getWorkspacePackageBuilderData()
+      .then((data) => setWorkspaceServices(data.services.filter((service) => service.status === "active")))
+      .catch(() => setWorkspaceServices([]));
     setOpen(true);
   }
 
@@ -138,7 +147,11 @@ export function PackageCatalog({
       allowCustom: pkg.allowCustom,
       minHours: pkg.minHours != null ? String(pkg.minHours) : "",
       maxHours: pkg.maxHours != null ? String(pkg.maxHours) : "",
+      selectedServiceIds: pkg.includedServices?.map((service) => service.serviceId) ?? [],
     });
+    void getWorkspacePackageBuilderData()
+      .then((data) => setWorkspaceServices(data.services.filter((service) => service.status === "active")))
+      .catch(() => setWorkspaceServices([]));
     setOpen(true);
   }
 
@@ -164,9 +177,19 @@ export function PackageCatalog({
         badge: form.badge.trim() || undefined,
         sortOrder: 0,
         active: true,
+        allowanceType: "hours" as const,
+        lifecycleClass: "one_off" as const,
+        status: "active" as const,
         allowCustom: form.allowCustom,
         minHours: form.allowCustom && form.minHours ? Number(form.minHours) : undefined,
         maxHours: form.allowCustom && form.maxHours ? Number(form.maxHours) : undefined,
+        packageItems: selectedServiceIds.map((serviceId, sortOrder) => ({
+          serviceId,
+          sortOrder,
+          currency: form.currency,
+          status: "active" as const,
+          includedAllowance: form.hours ? Number(form.hours) : undefined,
+        })),
       };
       if (editing) {
         await updatePackage(editing.id, payload);
@@ -300,6 +323,12 @@ export function PackageCatalog({
                       ))}
                     </ul>
                   )}
+                  {pkg.includedServices && pkg.includedServices.length > 0 && (
+                    <div className="rounded-md bg-muted/40 p-2 text-xs text-muted-foreground">
+                      <p className="mb-1 font-medium text-foreground">Layanan dalam paket</p>
+                      <p>{pkg.includedServices.map((service) => service.serviceName).join(", ")}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             );
@@ -397,6 +426,41 @@ export function PackageCatalog({
                 className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 placeholder={t("Dukungan email\nLaporan mingguan", "Email support\nWeekly reports")}
               />
+            </div>
+            <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <Label>Layanan dalam paket</Label>
+                  <p className="text-xs text-muted-foreground">Package Builder: pilih Service yang ikut snapshot Project.</p>
+                </div>
+                <Button asChild variant="outline" size="sm" className="h-8 gap-1">
+                  <a href="/app/services" target="_blank" rel="noreferrer">
+                    <Wrench className="h-3.5 w-3.5" /> Service
+                  </a>
+                </Button>
+              </div>
+              {workspaceServices.length > 0 ? (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {workspaceServices.map((service) => (
+                    <label key={service.id} className="flex items-center gap-2 rounded-md border bg-background p-2 text-xs">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-gray-300"
+                        checked={selectedServiceIds.includes(service.id)}
+                        onChange={(event) => setForm((previous) => ({
+                          ...previous,
+                          selectedServiceIds: event.target.checked
+                            ? [...new Set([...previous.selectedServiceIds, service.id])]
+                            : previous.selectedServiceIds.filter((id) => id !== service.id),
+                        }))}
+                      />
+                      <span className="font-medium">{service.name}</span>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Belum ada Service aktif. Buat dulu di menu Service.</p>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <input

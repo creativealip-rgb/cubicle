@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { packages, projects, projectMembers, tasks } from "@/db/schema";
+import { assignPackageToProject, syncProjectPackageAssignment } from "@/lib/actions/packages";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceWritable, assertProjectInWorkspace, assertClientInWorkspace } from "@/lib/access";
@@ -47,12 +48,12 @@ const projectUpdateSchema = projectInputSchema.partial();
 async function resolvePackageHours(workspaceId: string, packageId?: string) {
   if (!packageId) return null;
   const [pkg] = await db
-    .select({ hours: packages.hours })
+    .select({ hours: packages.hours, allowanceValue: packages.allowanceValue })
     .from(packages)
     .where(and(eq(packages.id, packageId), eq(packages.workspaceId, workspaceId)))
     .limit(1);
   if (!pkg) throw new Error("Package tidak berada di workspace aktif");
-  return pkg.hours;
+  return pkg.allowanceValue == null ? pkg.hours : Number(pkg.allowanceValue);
 }
 
 export async function createProject(input: z.input<typeof projectCreateSchema>) {
@@ -106,7 +107,9 @@ export async function createProject(input: z.input<typeof projectCreateSchema>) 
     createdBy: user.id,
   }).returning();
 
-  if (parsed.serviceIds !== undefined) {
+  if (parsed.billingType === "package" && parsed.selectedPackageId) {
+    await assignPackageToProject(project.id, parsed.selectedPackageId);
+  } else if (parsed.serviceIds !== undefined) {
     await syncProjectServiceSnapshots(project.id, parsed.serviceIds);
   }
 
@@ -148,7 +151,9 @@ export async function updateProject(projectId: string, input: z.input<typeof pro
     .where(eq(projects.id, projectId))
     .returning();
 
-  if (parsed.serviceIds !== undefined) {
+  if (parsed.billingType === "package" && parsed.selectedPackageId !== undefined) {
+    await syncProjectPackageAssignment(projectId, parsed.selectedPackageId || null);
+  } else if (parsed.serviceIds !== undefined) {
     await syncProjectServiceSnapshots(projectId, parsed.serviceIds);
   }
 

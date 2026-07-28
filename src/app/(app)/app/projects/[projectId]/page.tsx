@@ -148,7 +148,7 @@ export default async function ProjectDetailPage({
     .limit(20);
 
   const projectServiceRows = await db
-    .select({ serviceId: projectServices.serviceId })
+    .select({ serviceId: projectServices.serviceId, projectPackageAssignmentId: projectServices.projectPackageAssignmentId })
     .from(projectServices)
     .where(and(
       eq(projectServices.projectId, projectId),
@@ -158,7 +158,6 @@ export default async function ProjectDetailPage({
   const activeProjectServiceIds = projectServiceRows
     .map((row) => row.serviceId)
     .filter((id): id is string => Boolean(id));
-
   const statusColors: Record<string, string> = {
     active: "bg-emerald-500",
     draft: "bg-slate-400",

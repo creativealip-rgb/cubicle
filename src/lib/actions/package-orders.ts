@@ -1,10 +1,10 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/db";
-import { packageOrders, packages, projects } from "@/db/schema";
+import { packageItems, packageOrders, projectPackageAssignments, projects, services } from "@/db/schema";
 import { getClientPortalAccess } from "@/lib/actions/portal";
 import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
 
@@ -16,17 +16,33 @@ const createPackageOrderSchema = z.object({
   idempotencyKey: z.string().uuid(),
 });
 
-/** Portal order. Commercial values always come from authoritative DB rows. */
-export async function createPackageOrder(
-  input: z.infer<typeof createPackageOrderSchema>,
-) {
-  const parsed = createPackageOrderSchema.parse(input);
-  const client = await getClientPortalAccess(parsed.credential);
-  await enforceServerActionRateLimit("portal:package-order", client.id, {
-    limit: 10,
-    windowSec: 300,
-  });
+export async function getPackageItemsForOrders(projectPackageAssignmentIds: string[]) {
+  const ids = [...new Set(projectPackageAssignmentIds.filter(Boolean))];
+  if (ids.length === 0) return [];
+  return db
+    .select({
+      id: packageItems.id,
+      projectPackageAssignmentId: projectPackageAssignments.id,
+      packageId: packageItems.packageId,
+      serviceId: packageItems.serviceId,
+      serviceName: services.name,
+      quantity: packageItems.quantity,
+      unit: packageItems.unit,
+      includedAllowance: packageItems.includedAllowance,
+      sortOrder: packageItems.sortOrder,
+    })
+    .from(projectPackageAssignments)
+    .innerJoin(packageItems, and(
+      eq(packageItems.packageId, projectPackageAssignments.sourcePackageId),
+      eq(packageItems.workspaceId, projectPackageAssignments.workspaceId),
+      eq(packageItems.status, "active"),
+    ))
+    .innerJoin(services, and(eq(services.id, packageItems.serviceId), eq(services.workspaceId, packageItems.workspaceId)))
+    .where(inArray(projectPackageAssignments.id, ids))
+    .orderBy(asc(packageItems.sortOrder), asc(services.name));
+}
 
+async function resolveProjectPackageForPortalOrder(client: { id: string; workspaceId: string }, parsed: z.infer<typeof createPackageOrderSchema>) {
   const [resource] = await db
     .select({
       projectId: projects.id,
@@ -34,21 +50,21 @@ export async function createPackageOrder(
       clientId: projects.clientId,
       clientVisible: projects.clientVisible,
       billingType: projects.billingType,
-      packageId: packages.id,
-      packageProjectId: packages.projectId,
-      packageName: packages.name,
-      hours: packages.hours,
-      price: packages.price,
-      customPrice: packages.customPrice,
-      currency: packages.currency,
-      active: packages.active,
+      assignmentId: projectPackageAssignments.id,
+      packageId: projectPackageAssignments.sourcePackageId,
+      packageNameSnapshot: projectPackageAssignments.nameSnapshot,
+      priceSnapshot: projectPackageAssignments.priceSnapshot,
+      currencySnapshot: projectPackageAssignments.currencySnapshot,
+      allowanceValueSnapshot: projectPackageAssignments.allowanceValueSnapshot,
     })
     .from(projects)
     .innerJoin(
-      packages,
+      projectPackageAssignments,
       and(
-        eq(packages.id, parsed.packageId),
-        eq(packages.workspaceId, projects.workspaceId),
+        eq(projectPackageAssignments.projectId, projects.id),
+        eq(projectPackageAssignments.workspaceId, client.workspaceId),
+        eq(projectPackageAssignments.status, "active"),
+        eq(projectPackageAssignments.sourcePackageId, parsed.packageId),
       ),
     )
     .where(
@@ -62,15 +78,26 @@ export async function createPackageOrder(
     .limit(1);
 
   if (!resource) throw new Error("Project atau Package tidak tersedia");
-  if (!resource.active) throw new Error("Package sudah tidak aktif");
-  if (resource.billingType !== "package") {
-    throw new Error("Project tidak memakai billing Package");
-  }
-  if (resource.packageProjectId !== resource.projectId) {
-    throw new Error("Package tidak tersedia untuk Project ini");
-  }
+  if (resource.billingType !== "package") throw new Error("Project tidak memakai billing Package");
+  return resource;
+}
 
-  const authoritativePrice = resource.customPrice ?? resource.price;
+/** Portal order. Commercial values always come from authoritative DB snapshots. */
+export async function createPackageOrder(
+  input: z.infer<typeof createPackageOrderSchema>,
+) {
+  const parsed = createPackageOrderSchema.parse(input);
+  const client = await getClientPortalAccess(parsed.credential);
+  await enforceServerActionRateLimit("portal:package-order", client.id, {
+    limit: 10,
+    windowSec: 300,
+  });
+
+  const resource = await resolveProjectPackageForPortalOrder(client, parsed);
+  const hours = resource.allowanceValueSnapshot == null
+    ? null
+    : Math.trunc(Number(resource.allowanceValueSnapshot));
+
   const [created] = await db
     .insert(packageOrders)
     .values({
@@ -78,12 +105,13 @@ export async function createPackageOrder(
       clientId: client.id,
       projectId: resource.projectId,
       packageId: resource.packageId,
+      projectPackageAssignmentId: resource.assignmentId,
       clientPortalToken: null,
       idempotencyKey: parsed.idempotencyKey,
-      packageName: resource.packageName,
-      hours: resource.hours,
-      price: authoritativePrice,
-      currency: resource.currency,
+      packageName: resource.packageNameSnapshot,
+      hours,
+      price: resource.priceSnapshot,
+      currency: resource.currencySnapshot,
       message: parsed.message || null,
       status: "pending",
     })
