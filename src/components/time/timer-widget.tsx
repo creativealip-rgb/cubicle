@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { startTimer, pauseTimer, resumeTimer, discardTimer, stopTimer } from "@/lib/actions/time";
+import { startTimer, pauseTimer, resumeTimer, discardTimer, stopTimer, updateActiveTimerMetadata } from "@/lib/actions/time";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -118,6 +118,7 @@ export function TimerWidget({
   const [elapsed, setElapsed] = useState("00:00:00");
   const [loading, setLoading] = useState(false);
   const [stopDialogOpen, setStopDialogOpen] = useState(false);
+  const [editingActiveTimer, setEditingActiveTimer] = useState(false);
   const selfDispatched = useRef(false);
 
   const [selectedClientId, setSelectedClientId] = useState<string>("");
@@ -398,6 +399,84 @@ export function TimerWidget({
     }
   }, [activeTimer, isEmptyTimer, loading, router, t]);
 
+  const startEditingActiveTimer = useCallback(() => {
+    if (!activeTimer) return;
+    setSelectedClientId(activeTimer.clientId || "");
+    setSelectedProjectId(activeTimer.projectId || "");
+    setActivityId(activeTimer.activityId || "");
+    setSelectedTaskId(activeTimer.taskId || "__none__");
+    setDescription(activeTimer.description || "");
+    setTags(activeTimer.tags || "");
+    setHourlyRate("");
+    setEditingActiveTimer(true);
+  }, [activeTimer, setActivityId]);
+
+  const handleSaveActiveMetadata = useCallback(async () => {
+    if (!activeTimer || loading) return;
+    if (!selectedClientId || !selectedProjectId) {
+      toast.error(t("Pilih klien dan proyek", "Select a client and project"));
+      return;
+    }
+    setLoading(true);
+    try {
+      const updated = await updateActiveTimerMetadata(activeTimer.id, {
+        clientId: selectedClientId,
+        projectId: selectedProjectId,
+        activityId: selectedActivityId || null,
+        taskId: selectedTaskId && selectedTaskId !== "__none__" ? selectedTaskId : null,
+        description: description || null,
+        tags: tags || null,
+        hourlyRate: hourlyRate ? Number(hourlyRate) : undefined,
+      });
+      const client = clients.find((c) => c.id === selectedClientId);
+      const project = allProjects.find((p) => p.id === selectedProjectId);
+      const activity = allActivities.find((a) => a.id === selectedActivityId);
+      const task = allTasks.find((tk) => tk.id === selectedTaskId);
+      setActiveTimer((prev) =>
+        prev
+          ? {
+              ...prev,
+              clientId: updated.clientId ?? selectedClientId,
+              projectId: updated.projectId ?? selectedProjectId,
+              activityId: updated.activityId ?? (selectedActivityId || null),
+              taskId: updated.taskId ?? (selectedTaskId !== "__none__" ? selectedTaskId : null),
+              description: updated.description ?? (description || null),
+              tags: updated.tags ?? (tags || null),
+              clientName: client?.name ?? null,
+              projectName: project?.name ?? null,
+              activityName: activity?.name ?? null,
+              taskTitle: task?.title ?? null,
+            }
+          : prev,
+      );
+      setEditingActiveTimer(false);
+      selfDispatched.current = true;
+      window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
+      toast.success(t("Detail timer diperbarui", "Timer details updated"));
+      router.refresh();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("Gagal menyimpan detail timer", "Failed to save timer details"));
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    activeTimer,
+    loading,
+    selectedClientId,
+    selectedProjectId,
+    selectedActivityId,
+    selectedTaskId,
+    description,
+    tags,
+    hourlyRate,
+    clients,
+    allProjects,
+    allActivities,
+    allTasks,
+    router,
+    t,
+  ]);
+
   return (
     <>
       <Card className="rounded-lg border bg-card">
@@ -448,7 +527,109 @@ export function TimerWidget({
                 </div>
               )}
 
-              {isEmptyTimer ? (
+              {editingActiveTimer ? (
+                <div className="space-y-3 rounded-lg border bg-slate-50 p-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">{t("Klien *", "Client *")}</Label>
+                      <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue placeholder={t("Pilih klien", "Select client")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {clients.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">{t("Proyek", "Project")} *</Label>
+                      <Select value={selectedProjectId} onValueChange={setSelectedProjectId} disabled={!selectedClientId}>
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue placeholder={t("Pilih proyek", "Select project")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {filteredProjects.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">{t("Activity", "Activity")}</Label>
+                      <Select
+                        value={selectedActivityId || "__none__"}
+                        onValueChange={(value) => setSelectedActivityId(value === "__none__" ? "" : value)}
+                        disabled={!selectedProjectId}
+                      >
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue placeholder={t("Pilih activity", "Select activity")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
+                          {filteredActivities.map((a) => (
+                            <SelectItem key={a.id} value={a.id}>
+                              {a.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">{t("Tugas terkait", "Related Task")}</Label>
+                      <Select value={selectedTaskId} onValueChange={setSelectedTaskId} disabled={!selectedProjectId}>
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue placeholder={t("Pilih tugas", "Select task")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
+                          {filteredTasks.map((tk) => (
+                            <SelectItem key={tk.id} value={tk.id}>
+                              {tk.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
+                    <Input value={description} onChange={(e) => setDescription(e.target.value)} className="h-9" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">{t("Tag", "Tags")}</Label>
+                    <Input value={tags} onChange={(e) => setTags(e.target.value)} className="h-9" />
+                  </div>
+                  {isHourly && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">{t("Tarif per jam", "Hourly rate")}</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="1000"
+                        value={hourlyRate}
+                        onChange={(e) => setHourlyRate(e.target.value)}
+                        placeholder={selectedProject?.rate ? String(selectedProject.rate) : "e.g. 150000"}
+                        className="h-9"
+                      />
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" onClick={handleSaveActiveMetadata} disabled={loading || !selectedClientId || !selectedProjectId}>
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      {t("Simpan Detail", "Save Details")}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setEditingActiveTimer(false)} disabled={loading}>
+                      {t("Batal", "Cancel")}
+                    </Button>
+                  </div>
+                </div>
+              ) : isEmptyTimer ? (
                 <p className="text-sm text-muted-foreground">
                   {t(
                     "Timer kosong — pilih klien dan Project saat menghentikan.",
@@ -465,6 +646,11 @@ export function TimerWidget({
                   {activeTimer.projectName && (
                     <p>
                       {t("Proyek", "Project")}: {activeTimer.projectName}
+                    </p>
+                  )}
+                  {activeTimer.activityName && (
+                    <p>
+                      {t("Activity", "Activity")}: {activeTimer.activityName}
                     </p>
                   )}
                   {activeTimer.taskTitle && (
@@ -504,6 +690,15 @@ export function TimerWidget({
                     {t("Jeda", "Pause")}
                   </Button>
                 )}
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="flex-1 gap-2 min-w-[120px]"
+                  onClick={startEditingActiveTimer}
+                  disabled={loading || editingActiveTimer}
+                >
+                  {t("Edit Detail", "Edit Details")}
+                </Button>
                 <Button
                   variant="destructive"
                   size="lg"

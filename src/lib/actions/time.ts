@@ -104,6 +104,16 @@ const updateTimeEntrySchema = z.object({
   status: z.enum(["draft", "approved", "invoiced"]).optional(),
 });
 
+const updateActiveTimerMetadataSchema = z.object({
+  clientId: z.string().uuid().optional().nullable(),
+  projectId: z.string().uuid().optional().nullable(),
+  activityId: z.string().uuid().optional().nullable(),
+  taskId: z.string().uuid().optional().nullable(),
+  description: z.string().trim().optional().nullable(),
+  tags: z.string().optional().nullable(),
+  hourlyRate: z.number().nonnegative().optional().nullable(),
+});
+
 const stopTimerSchema = z.object({
   entryId: z.string().uuid(),
   // Optional: quick-stop may leave blank; fill later via timesheet edit.
@@ -476,6 +486,91 @@ export async function createManualEntry(input: z.infer<typeof createManualEntryS
 
   await writeActivityLog(parsed.workspaceId, user.id, "created_time_entry", "time_entry", entry.id);
   return entry;
+}
+
+export async function updateActiveTimerMetadata(
+  entryId: string,
+  input: z.infer<typeof updateActiveTimerMetadataSchema>,
+) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const [entry] = await db
+    .select()
+    .from(timeEntries)
+    .where(
+      and(
+        eq(timeEntries.id, entryId),
+        eq(timeEntries.workspaceId, workspaceId),
+        isNull(timeEntries.endTime),
+        isNull(timeEntries.manualMinutes),
+      ),
+    )
+    .limit(1);
+
+  if (!entry) throw new Error("Timer sudah selesai, edit lewat timesheet");
+  if (entry.userId !== user.id) throw new Error("Timer milik user lain");
+  if (!entry.startTime) throw new Error("Timer tidak valid");
+
+  const parsed = updateActiveTimerMetadataSchema.parse(input);
+  const nextClientId = parsed.clientId !== undefined ? parsed.clientId : entry.clientId;
+  const nextProjectId = parsed.projectId !== undefined ? parsed.projectId : entry.projectId;
+  const nextActivityId = parsed.activityId !== undefined ? parsed.activityId : entry.activityId;
+  const nextTaskId = parsed.taskId !== undefined ? parsed.taskId : entry.taskId;
+
+  await assertTimeEntryContext(db, workspaceId, {
+    clientId: nextClientId,
+    projectId: nextProjectId,
+    taskId: nextTaskId,
+  });
+
+  const projectMode = nextProjectId
+    ? await assertProjectTimeTrackingEnabled(db, workspaceId, nextProjectId)
+    : null;
+  const activityPolicy = await assertActivityWriteAllowed(db, {
+    workspaceId,
+    projectId: nextProjectId,
+    activityId: nextActivityId,
+    stage: "edit",
+  });
+
+  const updateData: Record<string, unknown> = {
+    updatedAt: new Date(),
+    clientId: nextClientId ?? null,
+    projectId: nextProjectId ?? null,
+    activityId: activityPolicy.activityId,
+    taskId: nextTaskId ?? null,
+    billable: projectMode ? timeEntryBillableForMode(projectMode) : false,
+  };
+
+  if (parsed.description !== undefined) updateData.description = parsed.description || null;
+  if (parsed.tags !== undefined) updateData.tags = parsed.tags || null;
+  if (parsed.hourlyRate !== undefined || nextProjectId !== entry.projectId || nextActivityId !== entry.activityId) {
+    updateData.hourlyRate = projectMode
+      ? await resolveHourlyRate({
+          workspaceId,
+          projectId: nextProjectId,
+          explicitRate: parsed.hourlyRate === undefined
+            ? entry.hourlyRate == null
+              ? null
+              : Number(entry.hourlyRate)
+            : parsed.hourlyRate,
+          projectActivityRate: activityPolicy.rateOverride,
+          activityDefaultRate: activityPolicy.defaultHourlyRate,
+        })
+      : null;
+  }
+
+  const [updated] = await db
+    .update(timeEntries)
+    .set(updateData)
+    .where(eq(timeEntries.id, entryId))
+    .returning();
+
+  await writeActivityLog(workspaceId, user.id, "updated_active_timer", "time_entry", entryId);
+  return updated;
 }
 
 export async function updateTimeEntry(entryId: string, input: z.infer<typeof updateTimeEntrySchema>) {
