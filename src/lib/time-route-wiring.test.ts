@@ -33,7 +33,7 @@ describe("Menu IA Batch 2 Time route wiring", () => {
 
   it("reuses Activity catalog and preserves old route through redirect", () => {
     expect(read("src/app/(app)/app/time/activities/page.tsx")).toContain("ActivityCatalog");
-    expect(read("src/app/(app)/app/activities/page.tsx")).toContain('redirect("/app/time/activities")');
+    expect(read("src/app/(app)/app/activities/page.tsx")).toContain('router.replace("/app/time/activities")');
   });
 
   it("preserves topbar timer event contract", () => {

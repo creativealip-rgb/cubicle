@@ -65,13 +65,14 @@ interface InvoiceFormProps {
 
   baseCurrency?: string;
   currencyRates?: Array<{ fromCurrency: string; rate: string }>;
+  initialItems?: Array<{ description: string; quantity: number; unitPrice: number; sourceId?: string }>;
   onSuccess?: () => void;
 }
 
-export function InvoiceForm({ mode, defaultValues, clients, projects, templates, baseCurrency = "IDR", currencyRates = [], onSuccess }: InvoiceFormProps) {
+export function InvoiceForm({ mode, defaultValues, clients, projects, templates, baseCurrency = "IDR", currencyRates = [], initialItems = [], onSuccess }: InvoiceFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [items, setItems] = useState([{ description: "", quantity: 1, unitPrice: 0 }]);
+  const [items, setItems] = useState(initialItems.length ? initialItems : [{ description: "", quantity: 1, unitPrice: 0 }]);
   const [dueDateTouched, setDueDateTouched] = useState(Boolean(defaultValues?.dueDate));
 
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>(defaultValues?.projectId ? [defaultValues.projectId] : []);
