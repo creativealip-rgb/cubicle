@@ -14,7 +14,8 @@ Reserve a number here before creating SQL. Recheck remote refs and every worktre
 - `0053` — Time-entry submission/review lifecycle — `feat/mh1-weekly-track` — integrated; applied to `cubicle_dev`.
 - `0054` — Service profitability and client rate cards — `feat/mh1-weekly-track` — integrated; applied to `cubicle_dev`.
 - `0055` — Personal Landing Page V2 — integrated; applied to `cubicle_dev`.
-- `0056+` — unreserved.
+- `0056` — Billing-model compatibility + Phase 0A containment — Coder — `feat/billing-aware-phase0` — committed; applied to `cubicle_dev`.
+- `0057+` — unreserved.
 
 ## Reservation protocol
 

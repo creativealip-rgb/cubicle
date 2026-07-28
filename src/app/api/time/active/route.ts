@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { clients, projects, tasks, workspaces } from "@/db/schema";
 import { getActiveTimer } from "@/lib/actions/time";
+import { allowsTimeTracking, resolveBillingModel } from "@/lib/billing-model";
 
 export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -38,6 +39,7 @@ export async function GET() {
         name: projects.name,
         clientId: projects.clientId,
         billingType: projects.billingType,
+        billingModel: projects.billingModel,
         rate: projects.rate,
       })
       .from(projects)
@@ -50,6 +52,11 @@ export async function GET() {
       .orderBy(asc(tasks.title))
       .limit(300),
   ]);
+
+  const timeProjectList = projectList.filter((project) =>
+    allowsTimeTracking(resolveBillingModel(project)),
+  );
+  const allowedProjectIds = new Set(timeProjectList.map((project) => project.id));
 
   return NextResponse.json({
     workspaceId: workspace.id,
@@ -69,8 +76,8 @@ export async function GET() {
       : null,
     options: {
       clients: clientList,
-      projects: projectList,
-      tasks: taskList,
+      projects: timeProjectList,
+      tasks: taskList.filter((task) => allowedProjectIds.has(task.projectId)),
     },
   });
 }

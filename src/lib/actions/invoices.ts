@@ -36,6 +36,7 @@ import { resolveWorkspaceReplyTo } from "@/lib/workspace-reply-to";
 import { buildRateMap } from "@/lib/currency-base";
 import { convertCurrency, resolveProjectAmount } from "@/lib/invoice-project-items";
 import { buildProjectServiceDocumentLines } from "@/lib/project-service-lines";
+import { assertBillingModelAllowsTimeInvoice, resolveBillingModel } from "@/lib/billing-model";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -624,6 +625,8 @@ export async function importTimeEntries(input: z.infer<typeof importTimeSchema>)
         durationMinutes: timeEntries.durationMinutes,
         hourlyRate: timeEntries.hourlyRate,
         projectName: projects.name,
+        billingModel: projects.billingModel,
+        billingType: projects.billingType,
       })
       .from(timeEntries)
       .leftJoin(
@@ -652,6 +655,9 @@ export async function importTimeEntries(input: z.infer<typeof importTimeSchema>)
     }
     if (entries.some((entry) => !entry.hourlyRate || Number(entry.hourlyRate) <= 0)) {
       throw new Error("Time Entry belum memiliki billing rate snapshot");
+    }
+    for (const entry of entries) {
+      assertBillingModelAllowsTimeInvoice(resolveBillingModel(entry));
     }
 
     const existingLinks = await tx
