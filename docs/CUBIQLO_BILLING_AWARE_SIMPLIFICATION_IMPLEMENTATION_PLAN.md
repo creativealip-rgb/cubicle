@@ -1,6 +1,6 @@
 # Cubiqlo Billing-Aware Simplification — Executable Implementation Plan
 
-**Status:** Approved product direction; Phase 0A/0B executable after additive compatibility migration 0056 is registered and applied to dev
+**Status:** Approved product direction; Phase 0A/0B executable from a clean feature worktree. Phase 0A.1 must register and apply additive migration 0056 to dev before Phase 0A.2 guards.
 **Owner:** Alip
 **Prepared:** 28 July 2026
 **Baseline:** canonical paths and baseline SHA must be re-verified against the latest `origin/dev/integration` observed when the feature worktree is created; never rely on a hardcoded historical SHA
@@ -803,7 +803,7 @@ chore: add billing migration preflight
 
 ### Rollback
 
-Drop only additive classification table if unused. Never modify legacy rows in this phase.
+Phase 0B has no schema rollback. Remove only generated profiling artifacts if invalid, then rerun profiling. Never modify legacy rows in this phase.
 
 ---
 
