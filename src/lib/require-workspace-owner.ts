@@ -32,3 +32,27 @@ export async function requireWorkspaceOwnerOrRedirect(
   if (member?.role !== "owner") redirect(fallback);
   return { userId, workspaceId };
 }
+
+/** Writable pages must redirect viewers before loading workspace data. */
+export async function requireWorkspaceWritableOrRedirect(
+  fallback = "/app/dashboard",
+): Promise<{ userId: string; workspaceId: string }> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const userId = session?.user?.id;
+  if (!userId) redirect("/login");
+
+  const workspaceId = await getWorkspaceForCurrentUser();
+  const [member] = await db
+    .select({ role: workspaceMembers.role })
+    .from(workspaceMembers)
+    .where(
+      and(
+        eq(workspaceMembers.workspaceId, workspaceId),
+        eq(workspaceMembers.userId, userId),
+      ),
+    )
+    .limit(1);
+
+  if (member?.role !== "owner" && member?.role !== "member") redirect(fallback);
+  return { userId, workspaceId };
+}

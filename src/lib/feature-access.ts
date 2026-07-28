@@ -9,8 +9,13 @@ export function normalizeEmail(email?: string | null): string {
 }
 
 /** Templates center is "Soon" for everyone; only preview emails can open full UI. */
-export function canAccessTemplatesPreview(email?: string | null): boolean {
-  return TEMPLATES_PREVIEW_EMAILS.has(normalizeEmail(email));
+export function canAccessTemplatesPreview(
+  email?: string | null,
+  environment = process.env.CUBIQLO_ENV,
+): boolean {
+  const normalized = normalizeEmail(email);
+  return TEMPLATES_PREVIEW_EMAILS.has(normalized)
+    || (environment === "development" && normalized === "alip.qa@cubiqlo.test");
 }
 
 export function billingTypeLabel(
