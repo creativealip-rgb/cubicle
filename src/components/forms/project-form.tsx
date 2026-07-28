@@ -10,7 +10,7 @@ import { DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getPackagesByProject, getWorkspacePackages } from "@/lib/actions/packages";
+import { getPackagesByProject, getWorkspacePackageBuilderData } from "@/lib/actions/packages";
 import { getWorkspaceServices } from "@/lib/actions/services";
 import { formatMoney } from "@/lib/utils";
 import Link from "next/link";
@@ -46,7 +46,7 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
   const router = useRouter();
   const { t } = useT();
   const [loading, setLoading] = useState(false);
-  const [projectPackages, setProjectPackages] = useState<Array<{ id: string; name: string; hours: number | null; price: string; currency: string }>>([]);
+  const [projectPackages, setProjectPackages] = useState<Array<{ id: string; name: string; hours: number | null; price: string; currency: string; includedServices?: Array<{ serviceName: string }> }>>([]);
   const [workspaceServices, setWorkspaceServices] = useState<Array<{
     id: string;
     name: string;
@@ -100,19 +100,21 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
     if (form.billingType !== "package") return;
     async function load() {
       try {
-        const catalog = await getWorkspacePackages();
+        const builderData = await getWorkspacePackageBuilderData();
+        const catalog = builderData.packages;
         const merged = catalog.map((p) => ({
           id: p.id,
           name: p.name,
           hours: p.hours,
           price: p.price,
           currency: p.currency,
+          includedServices: p.includedServices,
         }));
         if (mode === "edit" && defaultValues?.id) {
           const legacy = await getPackagesByProject(defaultValues.id);
           for (const p of legacy) {
             if (!merged.some((m) => m.id === p.id)) {
-              merged.push({ id: p.id, name: p.name, hours: p.hours, price: p.price, currency: p.currency });
+              merged.push({ id: p.id, name: p.name, hours: p.hours, price: p.price, currency: p.currency, includedServices: [] });
             }
           }
         }
@@ -273,6 +275,12 @@ export function ProjectForm({ mode, clientId, clients = [], defaultValues, onSuc
                   ))}
                 </SelectContent>
               </Select>
+              {projectPackages.find((pkg) => pkg.id === form.selectedPackageId)?.includedServices?.length ? (
+                <div className="rounded-md border bg-muted/30 p-2 text-xs text-muted-foreground">
+                  <p className="font-medium text-foreground">Layanan dalam paket</p>
+                  <p>{projectPackages.find((pkg) => pkg.id === form.selectedPackageId)?.includedServices?.map((service) => service.serviceName).join(", ")}</p>
+                </div>
+              ) : null}
               <p className="text-xs text-muted-foreground">
                 Kelola daftar service di{" "}
                 <Link href="/app/packages" className="underline hover:text-foreground" target="_blank">
