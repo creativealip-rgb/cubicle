@@ -32,16 +32,14 @@ Source tidak di-bind-mount ke container. Setiap perubahan aplikasi perlu build i
 
 ## Start / Update
 
-`docker-compose.dev.yml` adalah satu-satunya Compose source untuk lane ini.
+`docker-compose.dev.yml` adalah Compose source untuk lane ini, tetapi shared dev hanya boleh dideploy dari branch `dev/integration` oleh integration owner melalui wrapper terkunci:
 
 ```bash
-export VCS_REF="$(git rev-parse HEAD)"
-export BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-
-docker compose -f docker-compose.dev.yml config --quiet
-docker compose -f docker-compose.dev.yml build cubicle-dev
-docker compose -f docker-compose.dev.yml up -d --no-deps --force-recreate cubicle-dev
+cd /root/.config/superpowers/worktrees/cubicle/dev-integration
+scripts/operations/deploy-dev-integration.sh
 ```
+
+Feature agent tidak boleh menjalankan direct build/recreate, migration dev, `docker rm/restart cubicle-dev`, atau deploy shared dev. Wrapper memverifikasi branch/remote/clean tree, mengambil `flock`, memberi OCI revision commit, lalu membuktikan production tidak berubah.
 
 Jangan pakai `--remove-orphans`; Compose project ini dapat mendeteksi container production sebagai orphan. Jangan recreate `cubicle-pg`, container production, atau `dokploy-traefik` untuk update dev.
 

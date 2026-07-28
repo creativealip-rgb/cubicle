@@ -18,6 +18,18 @@ Before planning, editing, testing, deploying, or reviewing Cubiqlo:
 10. Never use `docker cp` to deploy Next.js code and never use `docker restart` to load a newly built image.
 11. Before any production deployment, follow release gates, backup rules, deployment commands, health checks, smoke tests, and rollback notes in the canonical workflow document.
 
+## Shared development integration rules
+
+1. Feature agents own implementation branches only. They may edit, test, commit, and push, but must not migrate `cubicle_dev`, build/recreate `cubicle-dev`, or deploy `dev.cubiqlo.com` directly.
+2. `dev/integration` is the only branch allowed to deploy shared `dev.cubiqlo.com`.
+3. Wowo/main Hermes is default integration owner. Another agent may deploy shared dev only when Alip explicitly delegates ownership for that deployment.
+4. Before integration: fetch remote refs, inspect all worktrees including untracked migrations, merge completed feature commits, then run combined lint, typecheck, tests, and build.
+5. Shared-dev deployment must use `scripts/operations/deploy-dev-integration.sh`. Direct Docker mutation of `cubicle-dev` is forbidden for feature agents.
+6. Never bypass the host `flock` when another dev deployment is active.
+7. Reserve migration numbers in `docs/migration-registry.md` before creating SQL.
+8. Every handoff must report separately: implemented, tested, committed, pushed, integrated, migrated-dev, deployed-dev, deployed-production.
+9. Production remains approval-gated. `dev/integration` must not be merged/deployed to production without Alip's explicit approval and production release gates.
+
 If task instructions conflict with the canonical workflow, stop and report conflict before changing runtime or deployment infrastructure.
 
 ## Shared project context

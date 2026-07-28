@@ -51,7 +51,7 @@ Recreate container app production
 Health check + smoke test app.cubiqlo.com
 ```
 
-Aturan utama: **commit boleh sering; deploy production tidak harus mengikuti setiap commit.**
+Aturan utama: **feature agent boleh sering commit/push, tetapi shared dev hanya boleh dideploy dari `dev/integration` oleh integration owner. Deploy production tidak harus mengikuti setiap commit.**
 
 ## 3. Isolasi Environment Development
 
@@ -102,12 +102,11 @@ Cookie harus host-only atau memakai nama berbeda. Jangan set cookie domain globa
 ### Perintah development preview
 
 ```bash
-cd /root/projects/cubicle
-VCS_REF=$(git rev-parse --short HEAD) BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ) docker compose -f docker-compose.dev.yml build cubicle-dev
-ACT="up -d --no-deps --force-recreate" && docker compose -f docker-compose.dev.yml $ACT cubicle-dev
+cd /root/.config/superpowers/worktrees/cubicle/dev-integration
+scripts/operations/deploy-dev-integration.sh
 ```
 
-Service wajib berjalan lewat Docker Compose, auto-restart jika crash, dan tidak boleh mengambil port 80/443. Untuk perubahan source kecil tetap perlu rebuild dev image, karena lane ini production-build preview, bukan HMR.
+Wrapper memverifikasi branch `dev/integration`, remote sync, clean tree, dan exclusive host lock sebelum build/recreate. Service wajib berjalan lewat Docker Compose, auto-restart jika crash, dan tidak boleh mengambil port 80/443. Untuk perubahan source kecil tetap perlu rebuild dev image, karena lane ini production-build preview, bukan HMR.
 
 ### Routing
 
@@ -125,6 +124,8 @@ Gunakan struktur sederhana:
 
 ```text
 main                         production-ready
+dev/integration              satu-satunya sumber shared dev
+feat/<nama-fitur>            pekerjaan fitur agent
 polish/<nama-batch>          pekerjaan aktif
 fix/<nama-bug>               bug mendesak
 ```
@@ -138,6 +139,16 @@ fix/login-redirect-loop
 ```
 
 Satu batch ideal berisi perubahan yang masih satu area. Jangan gabungkan migration DB besar dengan polish warna/copy.
+
+### Ownership, handoff, dan deploy lock
+
+- Feature agent: implementasi, test, commit, push. Tidak deploy shared dev.
+- Integration owner: merge branch siap ke `dev/integration`, combined gates, migration dev, deploy, smoke, cleanup data QA, dan update board.
+- Default integration owner: Wowo/main Hermes. Penggantian owner memerlukan instruksi eksplisit Alip.
+- Handoff wajib menyebut branch, commit SHA, migration, gate, data/runtime yang disentuh, dan status `implemented`, `tested`, `committed`, `pushed`, `integrated`, `migrated-dev`, `deployed-dev`, `deployed-production`.
+- `dev/integration` tidak dipakai untuk coding fitur langsung; hanya merge/cherry-pick terverifikasi dan fix integrasi kecil.
+- Shared dev memakai lock `flock` di `/root/.hermes/shared-workspace/locks/cubiqlo-dev-deploy.lock`. Deploy kedua gagal cepat; jangan hapus atau bypass lock.
+- Migration wajib direservasi di `docs/migration-registry.md` sebelum SQL dibuat.
 
 ## 6. Kapan Harus Deploy Production
 
