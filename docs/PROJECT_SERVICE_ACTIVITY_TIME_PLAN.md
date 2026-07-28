@@ -1,7 +1,7 @@
 # Cubiqlo — Project, Service, Package, Task, Activity, dan Time Tracking Plan
 
 **Tanggal:** 2026-07-27  
-**Status:** Approved product direction — Phase 0A containment live dengan integration evidence pending; Phase 0B migration gate berikutnya
+**Status:** Approved product direction — Phase 0A containment live; Phase 0B development gate complete dengan documented follow-up sebelum public handoff/production cutover
 **Owner:** Alip  
 **Prepared by:** Wowo  
 **Repo:** `/root/projects/cubicle`
@@ -10,11 +10,11 @@
 
 - `dev.cubiqlo.com` aktif sebagai production-build preview (`NODE_ENV=production`), bukan HMR, dengan DB `cubicle_dev` dan Redis terpisah.
 - Normalized schema dump `cubicle_dev` dan `cubicle` identik pada audit ini.
-- Ledger dev belum mencatat migration `0043`–`0045` walau seluruh object migration tersebut sudah ada dari schema clone; jangan replay SQL secara buta.
-- `scripts/migrate-ledger.sh` masih default ke `DB_NAME=cubicle`; seluruh migration dev wajib memakai target eksplisit dan runner perlu fail-closed terhadap target ambigu.
-- Akun QA yang tercatat di secret operasional tidak ada di `cubicle_dev`; authenticated dev QA menjadi blocker sebelum Phase 1.
-- `docs/operations/dev-environment.md` masih menggambarkan lane HMR lama dan harus diselaraskan dengan production-build preview aktual.
-- Audit source lulus `npx tsc --noEmit` dan full Vitest (`61` file, `311` test), tetapi test Phase 0A masih dominan source/wiring assertion, bukan behavioral DB integration.
+- Ledger `cubicle_dev` migration `0043`–`0045` sudah direkonsiliasi berdasarkan schema proof dan checksum tanpa replay DDL.
+- `scripts/migrate-ledger.sh` sekarang mewajibkan `DB_NAME` eksplisit dan menolak target production tanpa acknowledgement khusus.
+- Akun QA sintetis tersedia hanya di `cubicle_dev`; login, session, dan authenticated dashboard smoke lulus.
+- `docs/operations/dev-environment.md` sudah mengikuti runtime production-build preview aktual.
+- Audit source lulus `npx tsc --noEmit`, full Vitest (`61` file, `311` test), behavioral DB integration (`10` checks), migration runner integration, dan production build.
 
 ---
 
@@ -951,7 +951,7 @@ Jangan rewrite otomatis. Nilai itu tetap fakta historis meski redundan. Untuk UI
 - [x] Block edit/delete entry `invoiced`; invoice import hanya `approved + billable + completed + duration>0 + same client/project/workspace`.
 - [x] Invoice import atomik dan idempotent; jangan mutasi rate snapshot Time Entry; simpan previous status saat link dibuat dan restore status tersebut ketika link draft dilepas.
 - [x] Tambah regression test source/wiring untuk authority portal, archive semantics, tenant resolver, ownership guard, active-timer constraint, dan invoice eligibility.
-- [ ] Tambah behavioral integration test nyata untuk cross-workspace identifier, token/client mismatch, timer ownership, concurrent start, dan invoice eligibility/idempotency. Test harus mengeksekusi action/DB boundary; string/source assertion saja tidak memenuhi item ini.
+- [x] Tambah behavioral DB integration nyata untuk cross-workspace Client/Project/Task, timer ownership, concurrent start, invoice eligibility/idempotency, dan Package order idempotency pada DB disposable. Evidence: `docs/operations/evidence/phase0b/phase0a-db-integration-20260727.md`. Token/client mismatch dan spoofed commercial snapshot tetap membutuhkan direct portal-action integration sebelum public handoff besar.
 - [ ] Ops follow-up: audit/rotate credential QA historis bila ada credential nyata pernah masuk git history/docs. Jangan blok Phase 0B schema, tapi wajib sebelum public handoff besar.
 
 **Acceptance:** containment runtime sudah live di production. Evidence Phase 0A baru lengkap setelah behavioral integration membuktikan spoof price/currency ditolak; token Client A tidak dapat menulis Project B; raw token tidak muncul di client payload/history write baru; member tidak dapat mengontrol timer user lain; kombinasi Client/Project/Task silang ditolak; concurrent start menghasilkan satu timer; draft/non-billable/open entry tidak dapat di-invoice; invoiced entry immutable; archive tidak menghapus assignment/order/request.
@@ -959,16 +959,16 @@ Jangan rewrite otomatis. Nilai itu tetap fakta historis meski redundan. Untuk UI
 ## Phase 0B — Schema ADR, migration evidence, dan release gate
 
 - [x] Audit normalized schema dump dev/prod; hasil 2026-07-27 identik. Ulangi dan simpan evidence pada setiap migration rehearsal.
-- [ ] Rekonsiliasi ledger dev untuk migration `0043`–`0045` yang object-nya sudah ada dari schema clone; catat checksum tanpa replay DDL dan verifikasi ulang schema diff nol.
-- [ ] Ubah migration workflow agar target DB wajib eksplisit dan fail-closed. Command polos `./migrate.sh` tidak boleh diam-diam memilih production untuk release plan ini.
-- [ ] Selaraskan `docs/operations/dev-environment.md` dengan runtime production-build preview aktual; hapus instruksi HMR/`next dev`/resource lama yang bertentangan.
-- [ ] Buat ulang akun QA sintetis di `cubicle_dev`, perbarui secret operasional, lalu buktikan login dan smoke test authenticated tanpa menyentuh akun production.
-- [ ] Finalkan ERD dengan `project_package_assignments`, currency snapshot, explicit invoice source relations, dan `timer_segments`.
-- [ ] Klasifikasikan legacy copy `/month` sebagai `legacy_recurring_unmodeled`; tidak ada reinterpretasi otomatis sebagai one-off.
-- [ ] Buat transition matrix approval/permission dan migration compatibility matrix.
-- [ ] Buat orphan report, ID mapping, reconciliation script, backup, restore-test, dan rollback rehearsal.
-- [ ] Kunci naming ID/EN dan migration route compatibility.
-- [ ] Kunci Package baru sebagai one-off allowance; recurring belum dijanjikan.
+- [x] Rekonsiliasi ledger dev untuk migration `0043`–`0045` yang object-nya sudah ada dari schema clone; catat checksum tanpa replay DDL dan verifikasi ulang schema diff nol. Evidence: `docs/operations/evidence/phase0b/dev-ledger-reconciliation-0043-0045.md`.
+- [x] Ubah migration workflow agar target DB wajib eksplisit dan fail-closed. Command polos `./migrate.sh` tidak boleh diam-diam memilih production untuk release plan ini.
+- [x] Selaraskan `docs/operations/dev-environment.md` dengan runtime production-build preview aktual; hapus instruksi HMR/`next dev`/resource lama yang bertentangan.
+- [x] Buat ulang akun QA sintetis di `cubicle_dev`, perbarui secret operasional, lalu buktikan login dan smoke test authenticated tanpa menyentuh akun production. Evidence: `docs/operations/evidence/phase0b/dev-qa-auth-smoke.md`.
+- [x] Finalkan ERD dengan `project_package_assignments`, currency snapshot, explicit invoice source relations, dan `timer_segments` pada `docs/architecture/ADR-001-project-service-activity-time-schema.md`.
+- [x] Klasifikasikan legacy copy `/month` sebagai `legacy_recurring_unmodeled`; tidak ada reinterpretasi otomatis sebagai one-off.
+- [x] Buat transition matrix approval/permission dan migration compatibility matrix pada ADR.
+- [x] Buat orphan report, ID mapping, reconciliation script, backup checksum, restore-test, dan rollback rehearsal. Evidence: `docs/operations/evidence/phase0b/reconciliation-summary-20260727.md` dan `docs/operations/evidence/phase0b/backup-restore-rollback-20260727T173307Z.md`.
+- [x] Kunci naming ID/EN dan migration route compatibility pada ADR.
+- [x] Kunci Package baru sebagai one-off allowance; recurring belum dijanjikan pada ADR.
 
 **Acceptance:** seluruh pilihan schema sudah menjadi ADR; dev login + authenticated smoke test lulus; schema dan ledger dev punya evidence yang dapat diaudit; migration menolak target ambigu; backup dapat direstore; reconciliation baseline tersimpan; migration fresh + existing snapshot lulus dua kali; rollback diuji.
 
@@ -987,41 +987,45 @@ Phase 1 tidak boleh dimulai sebelum seluruh kondisi ini lulus:
 
 ## Phase 1 — Project tracking mode dan description independence
 
-- [ ] Tambah `time_tracking_mode` dan `activity_required`.
-- [ ] Backfill/default sesuai billing type.
-- [ ] Hide/show timer UI per Project.
-- [ ] Tegakkan mode di seluruh server action/API: start, Task quick-start, manual entry, edit/reassign, dan completion.
-- [ ] Kunci aturan timer tanpa Project: boleh capture cepat, tetapi tidak boleh selesai sebelum memilih Project non-`off`.
-- [ ] Hentikan auto-copy Task title sebagai description permanen.
-- [ ] Task quick-start memakai placeholder/context.
-- [ ] Pastikan project `off` tetap punya Task/Service/invoice normal.
-- [ ] Jaga histori log saat mode berubah; histori tampil read-only.
+- [x] Tambah `time_tracking_mode` dan `activity_required`.
+- [x] Backfill/default sesuai billing type.
+- [x] Hide/show timer UI per Project.
+- [x] Tegakkan mode di seluruh server action/API: start, Task quick-start, manual entry, edit/reassign, dan completion.
+- [x] Kunci aturan timer tanpa Project: boleh capture cepat, tetapi tidak boleh selesai sebelum memilih Project non-`off`.
+- [x] Hentikan auto-copy Task title sebagai description permanen.
+- [x] Task quick-start memakai placeholder/context.
+- [x] Pastikan project `off` tetap punya Task/Service/invoice normal.
+- [x] Jaga histori log saat mode berubah; histori tampil read-only.
 
 **Acceptance:** Project `off` bersih di UI dan menolak write lewat direct server/API test; timer kosong tidak dapat diselesaikan tanpa Project valid; log baru tidak menduplikasi Task title otomatis; histori tetap terbaca.
 
 ## Phase 2 — Activity catalog ala My Hours
 
-- [ ] Tambah Activities CRUD workspace.
-- [ ] Tambah enabled Activities per Project.
-- [ ] Tambah `activity_id` pada timer/manual/edit entry.
-- [ ] Timer order: Project → Activity → Related Task → Description.
-- [ ] Report/filter/group by Activity.
-- [ ] Seed template profesi opsional.
-- [ ] Recent/favorite timer combination.
+**Status 2026-07-28:** implemented di branch `feat/service-catalog-phase3`; dev deploy/smoke sedang diverifikasi. Evidence kode: `src/lib/activity-wiring.test.ts`, `drizzle/0048_activity_catalog.sql`, `src/lib/actions/activities.ts`, `src/components/projects/project-activity-settings.tsx`, `src/components/time/*`, `src/app/(app)/app/reports/page.tsx`.
+
+- [x] Tambah Activities CRUD workspace.
+- [x] Tambah enabled Activities per Project.
+- [x] Tambah `activity_id` pada timer/manual/edit entry.
+- [x] Timer order: Project → Activity → Related Task → Description.
+- [x] Report/filter/group by Activity.
+- [ ] Seed template profesi opsional — deferred; belum ada fixture/template default.
+- [ ] Recent/favorite timer combination — deferred; belum ada model/UI favorite combination.
 
 **Acceptance:** satu Activity reusable dipakai banyak log; description per log dapat berbeda; Task tetap opsional; legacy null tampil sebagai `Tanpa aktivitas`; bila `activity_required=true`, entry tidak dapat diselesaikan/submitted sebelum Activity dipilih; cross-workspace Activity ID ditolak.
 
 ## Phase 3 — Service catalog untuk semua billing type
 
-- [ ] Buat Service CRUD terpisah.
-- [ ] Service categories dan pricing model.
-- [ ] Buat `project_services` snapshot.
-- [ ] Project dapat memilih banyak Service.
-- [ ] By Project/Hours/Package semua dapat memakai Service.
-- [ ] Proposal/invoice dapat mengambil Project Service lines.
-- [ ] Archive Service tanpa merusak histori.
+**Status 2026-07-28:** implemented sebagai Service catalog + Project Service snapshot di branch `feat/service-catalog-phase3`; invoice/proposal generation dari Project Service lines masih deferred ke fase integrasi berikutnya. Evidence kode: `src/lib/service-catalog-wiring.test.ts`, `drizzle/0049_service_catalog.sql`, `src/lib/actions/services.ts`, `src/lib/service-snapshots.ts`, `src/components/services/service-catalog.tsx`, `src/components/projects/project-service-settings.tsx`.
 
-**Acceptance:** Service reusable lintas Project; harga/scope Project lama stabil setelah katalog diedit; invoice/proposal line punya source + snapshot; generate ulang idempotent; invoice `sent`/`paid` immutable; archive Service tidak menghapus histori.
+- [x] Buat Service CRUD terpisah.
+- [x] Service categories dan pricing model.
+- [x] Buat `project_services` snapshot.
+- [x] Project dapat memilih banyak Service.
+- [x] By Project/Hours/Package semua dapat memakai Service.
+- [ ] Proposal/invoice dapat mengambil Project Service lines — deferred; belum ada generate line dari `project_services`.
+- [x] Archive Service tanpa merusak histori.
+
+**Acceptance:** Service reusable lintas Project; harga/scope Project lama stabil setelah katalog diedit; invoice/proposal line punya source + snapshot; generate ulang idempotent; invoice `sent`/`paid` immutable; archive Service tidak menghapus histori. Catatan: bagian invoice/proposal line generation belum complete.
 
 ## Phase 4 — Package builder bersih
 

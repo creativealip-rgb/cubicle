@@ -71,6 +71,7 @@ export default async function TasksPage({
       clientVisible: tasks.clientVisible,
       projectId: tasks.projectId,
       projectName: projects.name,
+      timeTrackingMode: projects.timeTrackingMode,
       clientName: clients.name,
       assigneeId: tasks.assigneeId,
       assigneeName: users.name,

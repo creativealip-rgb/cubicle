@@ -2,8 +2,8 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { projects, clients, tasks, files, timeEntries, workspaceMembers, users } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { projects, clients, tasks, files, timeEntries, workspaceMembers, users, projectServices } from "@/db/schema";
+import { and, eq, desc } from "drizzle-orm";
 import { requireUser, assertProjectInWorkspace } from "@/lib/access";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,8 @@ import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { billingTypeHint, billingTypeLabel } from "@/lib/feature-access";
 import { ProjectTasksTab } from "@/components/tasks/project-tasks-tab";
+import { ProjectActivitySettings } from "@/components/projects/project-activity-settings";
+import { ProjectServiceSettings } from "@/components/projects/project-service-settings";
 import { ProjectForm } from "@/components/forms/project-form";
 import Link from "next/link";
 import {
@@ -60,6 +62,8 @@ export default async function ProjectDetailPage({
       description: projects.description,
       status: projects.status,
       billingType: projects.billingType,
+      timeTrackingMode: projects.timeTrackingMode,
+      activityRequired: projects.activityRequired,
       currency: projects.currency,
       rate: projects.rate,
       budget: projects.budget,
@@ -108,6 +112,7 @@ export default async function ProjectDetailPage({
       clientVisible: tasks.clientVisible,
       projectId: tasks.projectId,
       projectName: projects.name,
+      timeTrackingMode: projects.timeTrackingMode,
     })
     .from(tasks)
     .leftJoin(users, eq(users.id, tasks.assigneeId))
@@ -142,6 +147,18 @@ export default async function ProjectDetailPage({
     .orderBy(desc(timeEntries.createdAt))
     .limit(20);
 
+  const projectServiceRows = await db
+    .select({ serviceId: projectServices.serviceId })
+    .from(projectServices)
+    .where(and(
+      eq(projectServices.projectId, projectId),
+      eq(projectServices.workspaceId, workspaceId),
+      eq(projectServices.status, "active"),
+    ));
+  const activeProjectServiceIds = projectServiceRows
+    .map((row) => row.serviceId)
+    .filter((id): id is string => Boolean(id));
+
   const statusColors: Record<string, string> = {
     active: "bg-emerald-500",
     draft: "bg-slate-400",
@@ -161,6 +178,7 @@ export default async function ProjectDetailPage({
         `Back to ${project.clientName || "Client"}`,
       )
     : t("Kembali ke Proyek", "Back to Projects");
+  const showTimeTab = project.timeTrackingMode !== "off" || projectTimeEntries.length > 0;
 
   return (
     <div className="space-y-6">
@@ -219,7 +237,7 @@ export default async function ProjectDetailPage({
               <Pencil className="h-3 w-3" /> {t("Ubah", "Edit")}
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="max-h-[90dvh] w-[calc(100%-1rem)] overflow-y-auto p-4 sm:max-w-[500px] sm:p-6">
             <DialogHeader>
               <DialogTitle>{t("Ubah Proyek", "Edit Project")}</DialogTitle>
             </DialogHeader>
@@ -234,6 +252,8 @@ export default async function ProjectDetailPage({
                 clientId: project.clientId,
                 status: project.status,
                 billingType: project.billingType,
+                timeTrackingMode: project.timeTrackingMode,
+                activityRequired: project.activityRequired,
                 currency: project.currency,
                 rate: project.rate ?? "",
                 budget: project.budget ?? "",
@@ -242,6 +262,7 @@ export default async function ProjectDetailPage({
                 dueDate: project.dueDate ?? "",
                 clientVisible: project.clientVisible,
                 selectedPackageId: project.selectedPackageId,
+                serviceIds: activeProjectServiceIds,
               }}
             />
           </DialogContent>
@@ -280,16 +301,32 @@ export default async function ProjectDetailPage({
           <TabsTrigger value="tasks" className="gap-1">
             <CheckSquare className="h-3 w-3" /> {t("Tugas", "Tasks")} ({projectTasks.length})
           </TabsTrigger>
+          <TabsTrigger value="services" className="gap-1">
+            <Wallet className="h-3 w-3" /> {t("Layanan", "Services")}
+          </TabsTrigger>
+          <TabsTrigger value="activities" className="gap-1">
+            <Clock className="h-3 w-3" /> {t("Activity", "Activities")}
+          </TabsTrigger>
           <TabsTrigger value="files" className="gap-1">
             <FileText className="h-3 w-3" /> {t("Berkas", "Files")} ({projectFiles.length})
           </TabsTrigger>
-          <TabsTrigger value="time" className="gap-1">
-            <Clock className="h-3 w-3" /> {t("Waktu", "Time")} ({projectTimeEntries.length})
-          </TabsTrigger>
+          {showTimeTab ? (
+            <TabsTrigger value="time" className="gap-1">
+              <Clock className="h-3 w-3" /> {t("Waktu", "Time")} ({projectTimeEntries.length})
+            </TabsTrigger>
+          ) : null}
         </TabsList>
 
         <TabsContent value="tasks" className="pt-4">
           <ProjectTasksTab projectId={projectId} tasks={projectTasks} members={projectMembers} />
+        </TabsContent>
+
+        <TabsContent value="services" className="pt-4">
+          <ProjectServiceSettings projectId={projectId} />
+        </TabsContent>
+
+        <TabsContent value="activities" className="pt-4">
+          <ProjectActivitySettings projectId={projectId} />
         </TabsContent>
 
         <TabsContent value="files" className="pt-4 space-y-3">
@@ -312,7 +349,7 @@ export default async function ProjectDetailPage({
           ))}
         </TabsContent>
 
-        <TabsContent value="time" className="pt-4 space-y-3">
+        {showTimeTab ? <TabsContent value="time" className="pt-4 space-y-3">
           {projectTimeEntries.length === 0 && (
             <p className="text-sm text-muted-foreground py-8 text-center">Belum ada catatan waktu</p>
           )}
@@ -334,7 +371,7 @@ export default async function ProjectDetailPage({
               </CardContent>
             </Card>
           ))}
-        </TabsContent>
+        </TabsContent> : null}
 
       </Tabs>
     </div>

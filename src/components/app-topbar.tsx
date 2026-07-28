@@ -282,6 +282,11 @@ export function AppTopbar({ user }: AppTopbarProps) {
 
   async function handleStopTimer() {
     if (!activeTimer || timerBusy) return;
+    if (!activeTimer.projectId) {
+      toast.info(t("Lengkapi Project di halaman timer", "Complete Project on timer page"));
+      router.push("/app/time");
+      return;
+    }
     setTimerBusy(true);
     try {
       await stopTimer(activeTimer.id);

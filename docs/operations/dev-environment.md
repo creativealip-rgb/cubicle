@@ -4,49 +4,70 @@
 
 - URL: `https://dev.cubiqlo.com`
 - Public access: Traefik Basic Auth wajib.
-- Application login: akun QA development terpisah.
+- Application login: akun QA sintetis development terpisah.
 - Kredensial lokal VPS: `/root/.secrets/cubiqlo-dev-access.txt` (`0600`).
 - Search indexing: `X-Robots-Tag: noindex, nofollow, noarchive`.
 - Cache: `no-store`.
 
 Jangan commit kredensial atau menyalin data pengguna production ke development.
 
-## Isolation
+## Runtime aktual
+
+`dev.cubiqlo.com` adalah **production-build preview**, bukan HMR lane.
 
 - Service: `cubicle-dev`.
+- Image: `cubicle-dev:prod`, dibangun lewat root `Dockerfile`.
+- Command image: `node server.js` dari Next.js standalone output.
+- Runtime: `NODE_ENV=production`.
 - Internal port: `3100`; tidak dipublish ke host.
 - Public proxy: hanya `dokploy-traefik` pada port 80/443.
 - Route: exact `Host(`dev.cubiqlo.com`)`.
 - Database: `cubicle_dev`.
 - DB role: `cubiqlo_dev`, non-superuser, tanpa `CREATEDB`/`CREATEROLE`.
-- Initial database: schema-only clone, tanpa row production.
-- Auth secret: terpisah dalam `.env.development.local`.
-- Cookie: `__Secure-cubiqlo_dev.*`, host-only; tidak memakai `.cubiqlo.com`.
+- Redis: `cubicle-dev-redis`, terpisah dari production.
+- Auth secret dan cookie namespace: terpisah dari production.
 - Email, payment, R2, AI, cron, dan Google OAuth: kosong/nonaktif pada service dev.
+
+Source tidak di-bind-mount ke container. Setiap perubahan aplikasi perlu build image baru dan recreate service dev.
 
 ## Start / Update
 
-`docker-compose.dev.yml` adalah satu-satunya Compose source untuk service ini. Jangan menambahkan override yang mengganti `next dev` menjadi `next start`.
+`docker-compose.dev.yml` adalah satu-satunya Compose source untuk lane ini.
 
 ```bash
+export VCS_REF="$(git rev-parse HEAD)"
+export BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
 docker compose -f docker-compose.dev.yml config --quiet
-docker compose -f docker-compose.dev.yml up -d --force-recreate cubicle-dev
+docker compose -f docker-compose.dev.yml build cubicle-dev
+docker compose -f docker-compose.dev.yml up -d --no-deps --force-recreate cubicle-dev
 ```
 
-Runtime wajib menunjukkan `next dev` dan `NODE_ENV=development`. Perintah ini hanya merecreate `cubicle-dev`; jangan gunakan `--remove-orphans` karena project Compose juga mendeteksi container production sebagai orphan.
+Jangan pakai `--remove-orphans`; Compose project ini dapat mendeteksi container production sebagai orphan. Jangan recreate `cubicle-pg`, container production, atau `dokploy-traefik` untuk update dev.
 
-## Stop untuk membebaskan resource
+## Migration dev
+
+Migration target wajib eksplisit. Runner menolak target kosong dan menolak production `cubicle` tanpa acknowledgement khusus.
 
 ```bash
-docker compose -f docker-compose.dev.yml stop
+DB_NAME=cubicle_dev ./scripts/migrate-ledger.sh
 ```
+
+Sebelum migration yang mengubah schema/data:
+
+1. Verifikasi `current_database()` bernilai `cubicle_dev`.
+2. Buat `pg_dump -Fc` dan checksum.
+3. Restore-test backup ke DB disposable.
+4. Jalankan migration dengan target eksplisit.
+5. Simpan schema/row-count/reconciliation evidence.
 
 ## Verification
 
 ```bash
 docker inspect cubicle-dev \
-  --format 'state={{.State.Status}} health={{.State.Health.Status}} restart={{.HostConfig.RestartPolicy.Name}} ports={{json .HostConfig.PortBindings}}'
+  --format 'state={{.State.Status}} health={{.State.Health.Status}} restart={{.HostConfig.RestartPolicy.Name}} ports={{json .HostConfig.PortBindings}} cmd={{json .Config.Cmd}}'
 
+docker exec cubicle-dev sh -lc 'printf "NODE_ENV=%s CUBIQLO_ENV=%s PORT=%s\n" "$NODE_ENV" "$CUBIQLO_ENV" "$PORT"'
 docker stats --no-stream cubicle-dev
 curl -I https://dev.cubiqlo.com
 ```
@@ -55,41 +76,48 @@ Expected:
 
 - Tanpa Basic Auth: HTTP `401`.
 - Dengan Basic Auth: login page HTTP `200`.
+- `cmd=["node","server.js"]`.
+- `NODE_ENV=production`, `CUBIQLO_ENV=development`, `PORT=3100`.
 - `PortBindings`: `{}`.
 - Health: `healthy`.
 - Response headers memuat `X-Robots-Tag` dan `Cache-Control: no-store`.
 - Hanya `dokploy-traefik` bind public port 80/443.
 
-## Resource limit
+## Resource limit aktual
 
-Next.js development compiler membutuhkan memory besar saat cold compile halaman dashboard.
+Konfigurasi `docker-compose.dev.yml`:
 
 - CPU limit: `1.0`.
-- Memory limit: `3G`.
-- `1280M` terbukti tidak cukup: cold compile route `/` pada Next.js 16 Turbopack membuat container `OOMKilled=true` dan respons HTTP `502`.
-- `2G` masih sering membuat dev route cold compile lambat/healthcheck flapping dan user melihat `Bad Gateway`; dinaikkan ke `3G` pada 27 Juli 2026.
-- Healthcheck dibuat longgar: interval `45s`, timeout `20s`, retries `8`, start period `180s`.
-- Cache Turbopack `.next/dev` memakai Docker named volume `cubicle-dev-next-cache`, bukan bind mount host. Source `/app` tetap bind-mounted agar HMR membaca perubahan repo.
-- Cold compile memakai resource besar; pantau `docker stats`.
-- Stop service saat tidak dipakai karena VPS sudah memiliki swap pressure tinggi.
+- Memory limit: `1G`.
+- Reservation: `0.1` CPU, `256M` memory.
+- Healthcheck: interval `30s`, timeout `5s`, retries `5`, start period `60s`.
+- Log rotation: `10m`, maksimum `3` file.
 
-## HMR check
+Production-build preview tidak menjalankan compiler Turbopack saat request, jadi tidak memakai cache `.next/dev` atau resource HMR lama.
 
-1. Login memakai kredensial QA development.
-2. Buka halaman target.
-3. Edit source lokal.
-4. Pastikan perubahan tampil tanpa image production rebuild.
-5. Revert perubahan test yang tidak diperlukan.
+## QA flow
+
+1. Build dan recreate `cubicle-dev`.
+2. Login memakai akun QA sintetis development.
+3. Jalankan smoke authenticated pada halaman/flow target.
+4. Periksa log container dan respons API terkait.
+5. Pastikan tidak ada row production berubah.
+
+## Stop untuk membebaskan resource
+
+```bash
+docker compose -f docker-compose.dev.yml stop cubicle-dev cubicle-dev-redis
+```
 
 ## Database reset
 
-Jangan replay semua migration SQL sampai migration ledger dibenahi. Untuk reset aman:
-
 1. Stop `cubicle-dev`.
-2. Drop/recreate `cubicle_dev` saja; jangan menyentuh `cubicle`.
-3. Import schema-only dari production.
-4. Pastikan total production rows tidak berubah.
-5. Buat ulang data QA sintetis.
+2. Backup/checksum `cubicle_dev` jika perlu evidence.
+3. Drop/recreate **hanya** `cubicle_dev`; jangan menyentuh `cubicle`.
+4. Import baseline schema yang disetujui.
+5. Rekonsiliasi authoritative migration ledger; jangan replay DDL yang object-nya sudah ada.
+6. Buat ulang data QA sintetis.
+7. Buktikan login dan smoke authenticated.
 
 ## External configuration
 

@@ -48,6 +48,7 @@ interface Task {
   clientVisible: boolean;
   projectId?: string;
   projectName?: string | null;
+  timeTrackingMode?: "off" | "internal" | "billable" | null;
   sourceNoteId?: string | null;
 }
 
@@ -68,6 +69,7 @@ export function TaskDetailSheet({
   const [open, setOpen] = useState(defaultOpen);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const timeTrackingOff = task.timeTrackingMode === "off";
 
   async function handleStatusChange(status: string) {
     setLoading(true);
@@ -218,23 +220,25 @@ export function TaskDetailSheet({
           </div>
 
           {/* Start timer from task */}
-          <div className="space-y-2">
-            <Button
-              type="button"
-              className="w-full gap-2"
-              onClick={handleStartTimer}
-              disabled={loading || !task.projectId}
-            >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-              {t("Mulai timer dari task", "Start timer from task")}
-            </Button>
-            <p className="text-[11px] text-muted-foreground">
-              {t(
-                "Link client/project/task otomatis. Deskripsi timer = judul task. Stop langsung, tanpa form.",
-                "Auto-links client/project/task. Timer description = task title. Stop is instant, no form.",
-              )}
-            </p>
-          </div>
+          {!timeTrackingOff ? (
+            <div className="space-y-2">
+              <Button
+                type="button"
+                className="w-full gap-2"
+                onClick={handleStartTimer}
+                disabled={loading || !task.projectId}
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                {t("Mulai timer dari task", "Start timer from task")}
+              </Button>
+              <p className="text-[11px] text-muted-foreground">
+                {t(
+                  "Task sebagai konteks; deskripsi pekerjaan tetap terpisah",
+                  "Task is context; work description stays separate",
+                )}
+              </p>
+            </div>
+          ) : null}
 
           <Separator />
 

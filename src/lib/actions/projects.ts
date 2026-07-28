@@ -4,33 +4,58 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { projects, projectMembers, tasks } from "@/db/schema";
+import { packages, projects, projectMembers, tasks } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceWritable, assertProjectInWorkspace, assertClientInWorkspace } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { defaultTimeTrackingMode, TIME_TRACKING_MODES } from "@/lib/project-time-tracking-policy";
+import { syncProjectServiceSnapshots } from "@/lib/actions/services";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
 }
 
-const projectSchema = z.object({
+const projectInputSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   clientId: z.string().uuid("Valid client required"),
-  status: z.enum(["draft", "active", "on_hold", "completed", "cancelled", "archived"]).default("active"),
-  billingType: z.enum(["project", "hours", "package"]).default("project"),
-  currency: z.string().default("IDR"),
+  status: z.enum(["draft", "active", "on_hold", "completed", "cancelled", "archived"]),
+  billingType: z.enum(["project", "hours", "package"]),
+  timeTrackingMode: z.enum(TIME_TRACKING_MODES).optional(),
+  activityRequired: z.boolean(),
+  currency: z.string(),
   rate: z.number().optional(),
   budget: z.number().optional(),
   startDate: z.string().optional(),
   finishDate: z.string().optional(),
   dueDate: z.string().optional(),
-  clientVisible: z.boolean().default(false),
+  clientVisible: z.boolean(),
   selectedPackageId: z.string().uuid().optional(),
+  serviceIds: z.array(z.string().uuid()).optional(),
 });
 
-export async function createProject(input: z.infer<typeof projectSchema>) {
+const projectCreateSchema = projectInputSchema.extend({
+  status: projectInputSchema.shape.status.default("active"),
+  billingType: projectInputSchema.shape.billingType.default("project"),
+  activityRequired: projectInputSchema.shape.activityRequired.default(false),
+  currency: projectInputSchema.shape.currency.default("IDR"),
+  clientVisible: projectInputSchema.shape.clientVisible.default(false),
+});
+const projectUpdateSchema = projectInputSchema.partial();
+
+async function resolvePackageHours(workspaceId: string, packageId?: string) {
+  if (!packageId) return null;
+  const [pkg] = await db
+    .select({ hours: packages.hours })
+    .from(packages)
+    .where(and(eq(packages.id, packageId), eq(packages.workspaceId, workspaceId)))
+    .limit(1);
+  if (!pkg) throw new Error("Package tidak berada di workspace aktif");
+  return pkg.hours;
+}
+
+export async function createProject(input: z.input<typeof projectCreateSchema>) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -51,8 +76,15 @@ export async function createProject(input: z.infer<typeof projectSchema>) {
     };
   }
 
-  const parsed = projectSchema.parse(input);
+  const parsed = projectCreateSchema.parse(input);
   await assertClientInWorkspace(db, user.id, workspaceId, parsed.clientId);
+  const packageHours = parsed.billingType === "package"
+    ? await resolvePackageHours(workspaceId, parsed.selectedPackageId)
+    : null;
+  const timeTrackingMode = parsed.timeTrackingMode ?? defaultTimeTrackingMode({
+    billingType: parsed.billingType,
+    packageHours,
+  });
 
   const [project] = await db.insert(projects).values({
     workspaceId,
@@ -61,6 +93,8 @@ export async function createProject(input: z.infer<typeof projectSchema>) {
     description: parsed.description || null,
     status: parsed.status,
     billingType: parsed.billingType,
+    timeTrackingMode,
+    activityRequired: parsed.activityRequired,
     currency: parsed.currency,
     rate: parsed.rate ? String(parsed.rate) : null,
     budget: parsed.budget ? String(parsed.budget) : null,
@@ -72,18 +106,22 @@ export async function createProject(input: z.infer<typeof projectSchema>) {
     createdBy: user.id,
   }).returning();
 
+  if (parsed.serviceIds !== undefined) {
+    await syncProjectServiceSnapshots(project.id, parsed.serviceIds);
+  }
+
   await writeActivityLog(workspaceId, user.id, "created_project", "project", project.id);
   return { ok: true as const, project };
 }
 
-export async function updateProject(projectId: string, input: Partial<z.infer<typeof projectSchema>>) {
+export async function updateProject(projectId: string, input: z.input<typeof projectUpdateSchema>) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   await assertProjectInWorkspace(db, user.id, workspaceId, projectId);
 
-  const parsed = projectSchema.partial().parse(input);
+  const parsed = projectUpdateSchema.parse(input);
   if (parsed.clientId) {
     await assertClientInWorkspace(db, user.id, workspaceId, parsed.clientId);
   }
@@ -94,6 +132,8 @@ export async function updateProject(projectId: string, input: Partial<z.infer<ty
   if (parsed.clientId !== undefined) updateData.clientId = parsed.clientId;
   if (parsed.status !== undefined) updateData.status = parsed.status;
   if (parsed.billingType !== undefined) updateData.billingType = parsed.billingType;
+  if (parsed.timeTrackingMode !== undefined) updateData.timeTrackingMode = parsed.timeTrackingMode;
+  if (parsed.activityRequired !== undefined) updateData.activityRequired = parsed.activityRequired;
   if (parsed.currency !== undefined) updateData.currency = parsed.currency;
   if (parsed.rate !== undefined) updateData.rate = parsed.rate ? String(parsed.rate) : null;
   if (parsed.budget !== undefined) updateData.budget = parsed.budget ? String(parsed.budget) : null;
@@ -107,6 +147,10 @@ export async function updateProject(projectId: string, input: Partial<z.infer<ty
     .set(updateData)
     .where(eq(projects.id, projectId))
     .returning();
+
+  if (parsed.serviceIds !== undefined) {
+    await syncProjectServiceSnapshots(projectId, parsed.serviceIds);
+  }
 
   await writeActivityLog(workspaceId, user.id, "updated_project", "project", projectId);
   return project;
