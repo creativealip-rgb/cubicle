@@ -302,8 +302,35 @@ export function TimerWidget({
   ]);
 
   const handleStartEmpty = useCallback(async () => {
-    router.push("/app/time?action=timer");
-  }, [router]);
+    if (loading) return;
+    setLoading(true);
+    try {
+      const entry = await startTimer({ workspaceId });
+      setActiveTimer({
+        id: entry.id,
+        clientId: null,
+        projectId: null,
+        activityId: null,
+        taskId: null,
+        description: null,
+        tags: null,
+        startTime: entry.startTime!,
+        pausedAt: null,
+        clientName: null,
+        projectName: null,
+        activityName: null,
+        taskTitle: null,
+      });
+      selfDispatched.current = true;
+      window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
+      toast.success(t("Timer dimulai. Detail bisa diisi nanti lewat timesheet.", "Timer started. Details can be filled later from the timesheet."));
+      router.refresh();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("Gagal memulai timer", "Failed to start timer"));
+    } finally {
+      setLoading(false);
+    }
+  }, [loading, router, t, workspaceId]);
 
   const handlePause = useCallback(async () => {
     if (!activeTimer || loading) return;
@@ -381,10 +408,6 @@ export function TimerWidget({
 
   const handleStop = useCallback(async () => {
     if (!activeTimer || loading) return;
-    if (isEmptyTimer) {
-      setStopDialogOpen(true);
-      return;
-    }
     setLoading(true);
     try {
       await stopTimer(activeTimer.id);

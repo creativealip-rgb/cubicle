@@ -41,7 +41,7 @@ import { authClient } from "@/lib/auth-client";
 import { useSidebar } from "@/components/app-shell";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { getUserWorkspaces, switchWorkspace, createWorkspace } from "@/lib/actions/workspace-switch";
-import { pauseTimer, resumeTimer, stopTimer } from "@/lib/actions/time";
+import { pauseTimer, resumeTimer, startTimer, stopTimer } from "@/lib/actions/time";
 import { useT } from "@/lib/i18n-client";
 import { cn } from "@/lib/utils";
 
@@ -224,7 +224,11 @@ export function AppTopbar({ user }: AppTopbarProps) {
     }
     setTimerBusy(true);
     try {
-      router.push("/app/time?action=timer");
+      await startTimer({ workspaceId });
+      toast.success(t("Timer dimulai. Detail bisa diisi nanti lewat timesheet.", "Timer started. Details can be filled later from the timesheet."));
+      await loadActiveTimer();
+      window.dispatchEvent(new Event("cubicle:timer-changed"));
+      router.refresh();
     } catch (err: unknown) {
       toast.error(
         err instanceof Error
@@ -278,11 +282,6 @@ export function AppTopbar({ user }: AppTopbarProps) {
 
   async function handleStopTimer() {
     if (!activeTimer || timerBusy) return;
-    if (!activeTimer.projectId) {
-      toast.info(t("Lengkapi Project di halaman timer", "Complete Project on timer page"));
-      router.push("/app/time");
-      return;
-    }
     setTimerBusy(true);
     try {
       await stopTimer(activeTimer.id);

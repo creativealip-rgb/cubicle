@@ -27,7 +27,7 @@ describe("Phase 1 project time tracking wiring", () => {
     expect(time).toContain("assertProjectTimeTrackingEnabled(db, workspaceId, nextProjectId)");
     expect(time).toContain("assertHistoricalTimeEntryMutable(db, workspaceId, entry.projectId)");
     expect(time).toContain("await assertProjectTimeTrackingEnabled(db, workspaceId, entry.projectId)");
-    expect(time).toContain("Project wajib dipilih sebelum timer dihentikan");
+    expect(time).not.toContain("Project wajib dipilih sebelum timer dihentikan");
     expect(time).toContain("timeEntryBillableForMode");
 
     const projectsAction = read("src/lib/actions/projects.ts");
@@ -67,7 +67,7 @@ describe("Phase 1 project time tracking wiring", () => {
     expect(timesheet).toContain('t("Hanya baca", "Read only")');
   });
 
-  it("keeps canonical billing defaults and empty-timer completion aligned with server policy", () => {
+  it("keeps canonical billing defaults and empty timers aligned with direct controls", () => {
     const projectForm = read("src/components/forms/project-form.tsx");
     const timerWidget = read("src/components/time/timer-widget.tsx");
     const topbar = read("src/components/app-topbar.tsx");
@@ -76,10 +76,11 @@ describe("Phase 1 project time tracking wiring", () => {
     expect(projectForm).toContain('<SelectItem value="fixed_price">Harga Tetap</SelectItem>');
     expect(projectForm).toContain('<SelectItem value="hourly">Per Jam</SelectItem>');
     expect(projectForm).not.toContain("selectedPackage?.hours");
-    expect(timerWidget).toContain("<StopTimerDialog");
-    expect(timerWidget).toContain("open={stopDialogOpen}");
-    expect(topbar).toContain('if (!activeTimer.projectId)');
-    expect(topbar).toContain('router.push("/app/time")');
+    expect(timerWidget).toContain("startTimer({ workspaceId })");
+    expect(timerWidget).not.toContain("setStopDialogOpen(true)");
+    expect(topbar).toContain("await startTimer({ workspaceId })");
+    expect(topbar).toContain("await stopTimer(activeTimer.id)");
+    expect(topbar).not.toContain('if (!activeTimer.projectId)');
   });
 
   it("keeps project dialogs reachable on mobile", () => {
