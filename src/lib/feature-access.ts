@@ -22,13 +22,15 @@ export function billingTypeLabel(
   lang: "id" | "en" = "id",
 ): string {
   switch (billingType) {
+    case "fixed_price":
+    case "project":
+      return lang === "id" ? "Fixed Price" : "Fixed Price";
     case "hours":
       return lang === "id" ? "Per Jam" : "By Hours";
     case "package":
       return lang === "id" ? "Per Paket" : "By Package";
-    case "project":
     default:
-      return lang === "id" ? "Per Proyek" : "By Project";
+      return lang === "id" ? "Fixed Price" : "Fixed Price";
   }
 }
 
@@ -37,6 +39,11 @@ export function billingTypeHint(
   lang: "id" | "en" = "id",
 ): string {
   switch (billingType) {
+    case "fixed_price":
+    case "project":
+      return lang === "id"
+        ? "Ditagih fixed rate sesuai nilai project."
+        : "Billed at a fixed rate for the project scope.";
     case "hours":
       return lang === "id"
         ? "Ditagih berdasarkan jam kerja (timer / time entry)."
@@ -45,10 +52,9 @@ export function billingTypeHint(
       return lang === "id"
         ? "Ditagih lewat paket jam / deliverable yang dipilih."
         : "Billed via the selected package (hours / deliverable).";
-    case "project":
     default:
       return lang === "id"
-        ? "Ditagih fixed per proyek (budget / fixed fee)."
-        : "Billed fixed per project (budget / fixed fee).";
+        ? "Ditagih fixed rate sesuai nilai project."
+        : "Billed at a fixed rate for the project scope.";
   }
 }

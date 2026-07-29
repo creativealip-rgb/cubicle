@@ -28,6 +28,7 @@ export type ProjectListItem = {
   totalTasks: number;
   doneTasks: number;
   billingType: string;
+  billingModel?: string | null;
   trackedMinutes: number;
   packageHours: number | null;
 };
@@ -193,9 +194,10 @@ export function ProjectsListTable({
             <DropdownMenuContent align="start">
               {([
                 ["all", t("Semua jenis", "All types")],
-                ["project", t("Per Project", "Per Project")],
-                ["hours", t("Per Jam", "Hourly")],
-                ["package", t("Service", "Service")],
+                ["fixed_price", t("Fixed Price", "Fixed Price")],
+                ["hourly", t("Per Jam", "Hourly")],
+                ["retainer", t("Retainer", "Retainer")],
+                ["package", t("Paket", "Package")],
               ] as const).map(([value, label]) => (
                 <DropdownMenuItem key={value} asChild>
                   <Link href={billingTypeHrefs[value]} className="flex items-center justify-between gap-4">

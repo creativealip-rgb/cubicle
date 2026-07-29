@@ -62,6 +62,7 @@ export default async function ProjectDetailPage({
       description: projects.description,
       status: projects.status,
       billingType: projects.billingType,
+      billingModel: projects.billingModel,
       timeTrackingMode: projects.timeTrackingMode,
       activityRequired: projects.activityRequired,
       currency: projects.currency,
@@ -178,6 +179,7 @@ export default async function ProjectDetailPage({
       )
     : t("Kembali ke Proyek", "Back to Projects");
   const showTimeTab = project.timeTrackingMode !== "off" || projectTimeEntries.length > 0;
+  const billingDisplayType = project.billingModel ?? project.billingType;
 
   return (
     <div className="space-y-6">
@@ -205,7 +207,7 @@ export default async function ProjectDetailPage({
           <div className="flex flex-wrap items-center gap-2 pt-1">
             <Badge variant="outline" className="gap-1 font-normal">
               <Wallet className="h-3 w-3" />
-              {billingTypeLabel(project.billingType, lang)}
+              {billingTypeLabel(billingDisplayType, lang)}
             </Badge>
             {project.billingType === "hours" && project.rate && (
               <span className="text-xs text-muted-foreground">
@@ -213,13 +215,13 @@ export default async function ProjectDetailPage({
                 /{t("jam", "hr")}
               </span>
             )}
-            {project.billingType === "project" && project.budget && (
+            {billingDisplayType === "fixed_price" && project.budget && (
               <span className="text-xs text-muted-foreground">
-                {t("Budget", "Budget")}: {project.currency}{" "}
+                {t("Fixed rate", "Fixed rate")}: {project.currency}{" "}
                 {Number(project.budget).toLocaleString(locale)}
               </span>
             )}
-            {project.billingType === "package" && (
+            {billingDisplayType === "package" && (
               <span className="text-xs text-muted-foreground">
                 {t("Billing paket", "Package billing")}
                 {project.selectedPackageId ? "" : ` · ${t("paket belum dipilih", "no package selected")}`}
@@ -227,7 +229,7 @@ export default async function ProjectDetailPage({
             )}
           </div>
           <p className="max-w-xl text-xs text-muted-foreground">
-            {billingTypeHint(project.billingType, lang)}
+            {billingTypeHint(billingDisplayType, lang)}
           </p>
         </div>
         <Dialog>

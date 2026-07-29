@@ -117,6 +117,7 @@ export default async function ClientDetailPage({
       dueDate: projects.dueDate,
       clientVisible: projects.clientVisible,
       billingType: projects.billingType,
+      billingModel: projects.billingModel,
       currency: projects.currency,
       rate: projects.rate,
       budget: projects.budget,
@@ -416,8 +417,9 @@ export default async function ClientDetailPage({
           {clientProjects.map((project) => {
             const usedHours = project.usedMinutes / 60;
             const packageHours = project.packageHours;
-            const isPackage = project.billingType === "package";
-            const isHours = project.billingType === "hours";
+            const billingDisplayType = project.billingModel ?? project.billingType;
+            const isPackage = billingDisplayType === "package";
+            const isHours = billingDisplayType === "hourly" || billingDisplayType === "hours";
             const progressPercent = isPackage
               ? project.packageUsedPercent
               : project.taskCount > 0
@@ -434,15 +436,17 @@ export default async function ClientDetailPage({
                 : `${project.doneCount}/${project.taskCount} tugas selesai`;
             const billingMeta = isHours && project.rate
               ? `Rate ${project.currency} ${Number(project.rate).toLocaleString("id-ID")}/jam`
-              : project.billingType === "project" && project.budget
-                ? `Budget ${project.currency} ${Number(project.budget).toLocaleString("id-ID")}`
+              : billingDisplayType === "fixed_price" && project.budget
+                ? `Fixed rate ${project.currency} ${Number(project.budget).toLocaleString("id-ID")}`
                 : isPackage
                   ? project.packageName
                     ? `${project.packageName}${
                         packageHours != null ? ` · ${packageHours} jam` : ""
                       }`
                     : "Billing paket · paket belum dipilih"
-                  : "Billing per proyek";
+                  : billingDisplayType === "retainer"
+                    ? "Retainer"
+                    : "Fixed Price";
 
             return (
               <Card key={project.id}>
@@ -458,7 +462,7 @@ export default async function ClientDetailPage({
                       <Badge variant="outline" className="text-[10px]">{project.status}</Badge>
                       <Badge variant="secondary" className="gap-1 text-[10px] font-normal">
                         <Wallet className="h-3 w-3" />
-                        {billingTypeLabel(project.billingType, "id")}
+                        {billingTypeLabel(billingDisplayType, "id")}
                       </Badge>
                       <span>{progressLabel}</span>
                       {project.dueDate && <span>Tenggat: {project.dueDate}</span>}

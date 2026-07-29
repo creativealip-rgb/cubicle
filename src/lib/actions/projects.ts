@@ -22,7 +22,7 @@ const projectInputSchema = z.object({
   description: z.string().optional(),
   clientId: z.string().uuid("Valid client required"),
   status: z.enum(["draft", "active", "on_hold", "completed", "cancelled", "archived"]),
-  billingType: z.enum(["project", "hours", "package"]).default("project"),
+  billingType: z.enum(["fixed_price", "hourly", "retainer", "package", "project", "hours"]).default("fixed_price"),
   billingModel: z.enum(["fixed_price", "hourly", "retainer"]).default("fixed_price"),
   retainerFee: z.number().nonnegative().optional(),
   retainerIncludedMinutes: z.number().int().nonnegative().optional(),
@@ -57,12 +57,26 @@ async function assertBillingModelTransitionAllowed(projectId: string, nextModel:
 
 const projectCreateSchema = projectInputSchema.extend({
   status: projectInputSchema.shape.status.default("active"),
-  billingType: projectInputSchema.shape.billingType.default("project"),
+  billingType: projectInputSchema.shape.billingType.default("fixed_price"),
   activityRequired: projectInputSchema.shape.activityRequired.default(false),
   currency: projectInputSchema.shape.currency.default("IDR"),
   clientVisible: projectInputSchema.shape.clientVisible.default(false),
 });
 const projectUpdateSchema = projectInputSchema.partial();
+
+type ProjectBillingType = "fixed_price" | "hourly" | "retainer" | "package" | "project" | "hours";
+
+function billingTypeForModel(parsed: {
+  billingModel?: "fixed_price" | "hourly" | "retainer";
+  billingType?: ProjectBillingType;
+}): ProjectBillingType | undefined {
+  if (parsed.billingModel === "fixed_price") return "fixed_price";
+  if (parsed.billingModel === "hourly") return "hourly";
+  if (parsed.billingModel === "retainer") return "retainer";
+  if (parsed.billingType === "project") return "fixed_price";
+  if (parsed.billingType === "hours") return "hourly";
+  return parsed.billingType;
+}
 
 
 export async function createProject(input: z.input<typeof projectCreateSchema>) {
@@ -97,7 +111,8 @@ export async function createProject(input: z.input<typeof projectCreateSchema>) 
     name: parsed.name,
     description: parsed.description || null,
     status: parsed.status,
-    billingType: parsed.billingType,
+    billingType: billingTypeForModel(parsed) ?? "fixed_price",
+    billingModel: parsed.billingModel,
     timeTrackingMode,
     activityRequired: parsed.activityRequired,
     currency: parsed.currency,
@@ -140,7 +155,7 @@ export async function updateProject(projectId: string, input: z.input<typeof pro
   if (parsed.description !== undefined) updateData.description = parsed.description;
   if (parsed.clientId !== undefined) updateData.clientId = parsed.clientId;
   if (parsed.status !== undefined) updateData.status = parsed.status;
-  if (parsed.billingType !== undefined) updateData.billingType = parsed.billingType;
+  if (parsed.billingType !== undefined || parsed.billingModel !== undefined) updateData.billingType = billingTypeForModel(parsed);
   if (parsed.billingModel !== undefined) updateData.billingModel = parsed.billingModel;
   if (parsed.retainerFee !== undefined) updateData.retainerFee = String(parsed.retainerFee);
   if (parsed.retainerIncludedMinutes !== undefined) updateData.retainerIncludedMinutes = parsed.retainerIncludedMinutes;
