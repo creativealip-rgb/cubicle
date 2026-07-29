@@ -23,13 +23,15 @@ describe("MH1 weekly track wiring", () => {
     expect(component).toContain("export function WeeklyTimeGrid");
     expect(component).toContain("setWeeklyTimeCell");
     expect(component).toContain("Minggu sebelumnya");
+    expect(component).toContain("Project / Task");
+    expect(component).not.toContain("activityId");
     expect(component).toContain("Salin baris minggu lalu");
     expect(component).toContain("Tambah baris");
     expect(component).toContain("weekTotalMinutes");
   });
 
   it("wires the weekly grid into the time page", () => {
-    const page = read("src/app/(app)/app/time/page.tsx");
+    const page = read("src/components/time/time-route-content.tsx");
     expect(page).toContain('import { WeeklyTimeGrid } from "@/components/time/weekly-time-grid"');
     expect(page).toContain("<WeeklyTimeGrid");
     expect(page).toContain("user.id");

@@ -16,17 +16,19 @@ import { useT } from "@/lib/i18n-client";
 
 export function ProjectCreateDialog({
   clients,
+  initialOpen = false,
   isAtLimit = false,
   projectCount = 0,
   projectLimit = 5,
 }: {
   clients: Array<{ id: string; name: string }>;
+  initialOpen?: boolean;
   isAtLimit?: boolean;
   projectCount?: number;
   projectLimit?: number;
 }) {
   const { t } = useT();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initialOpen);
 
   if (isAtLimit) {
     return (

@@ -10,8 +10,11 @@ import {
   projects,
   workspaceCurrencyRates,
   workspaceMembers,
+  timeEntries,
+  invoiceItems,
+  users,
 } from "@/db/schema";
-import { eq, desc, and, count, ne, isNull, SQL, sql, inArray } from "drizzle-orm";
+import { eq, desc, and, count, ne, isNull, isNotNull, SQL, sql, inArray } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +26,7 @@ import { InvoicesListTable } from "@/components/invoices/invoices-list-table";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { billingTypeLabel } from "@/lib/feature-access";
 import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
+import { parseInvoiceTab, withQuery } from "@/lib/finance-tabs";
 import {
   buildRateMap,
   convertToBase,
@@ -87,6 +91,10 @@ function billingFilterLabel(filter: BillingFilter, lang: "id" | "en"): string {
   return billingTypeLabel(filter, lang);
 }
 
+function InvoiceAreaTabs({ active, allHref, uninvoicedHref, invoicedHref }: { active: "all" | "uninvoiced" | "invoiced"; allHref: string; uninvoicedHref: string; invoicedHref: string }) {
+  return <nav aria-label="Area invoice" className="flex gap-1 overflow-x-auto border-b">{[["all", "Semua Invoice", allHref], ["uninvoiced", "Belum Ditagihkan", uninvoicedHref], ["invoiced", "Sudah Ditagihkan", invoicedHref]].map(([value, label, href]) => <Link key={value} href={href} aria-current={active === value ? "page" : undefined} className={`shrink-0 border-b-2 px-3 py-2 text-sm font-medium ${active === value ? "border-primary" : "border-transparent text-muted-foreground"}`}>{label}</Link>)}</nav>;
+}
+
 type InvoiceListFilters = {
   status: StatusTab;
   clientId?: string;
@@ -139,6 +147,7 @@ export default async function InvoicesPage({
     page?: string;
     clientId?: string;
     billing?: string;
+    tab?: string;
   }>;
 }) {
   const lang = await getCurrentLang();
@@ -149,6 +158,7 @@ export default async function InvoicesPage({
   const workspaceId = ws.id;
   const baseCurrency = normalizeCurrency(ws.defaultCurrency || "IDR");
   const params = await searchParams;
+  const activeTab = parseInvoiceTab(params.tab);
   const statusTab = parseStatusTab(params.status);
   const page = parsePage(params.page);
   const billing = parseBillingFilter(params.billing);
@@ -160,6 +170,25 @@ export default async function InvoicesPage({
     .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, user.id)))
     .limit(1);
   const canWrite = member?.role === "owner" || member?.role === "member";
+
+  const invoiceTabHref = (tab: "all" | "uninvoiced" | "invoiced") => withQuery("/app/invoices", {
+    clientId: params.clientId,
+    billing: params.billing,
+  }, { tab: tab === "all" ? undefined : tab });
+
+  if (activeTab === "uninvoiced") {
+    const eligible = await db.select({ id: timeEntries.id, clientId: timeEntries.clientId, clientName: clients.name, projectId: timeEntries.projectId, projectName: projects.name, userName: users.name, description: timeEntries.description, durationMinutes: timeEntries.durationMinutes, hourlyRate: timeEntries.hourlyRate, currency: projects.currency }).from(timeEntries).innerJoin(clients, eq(clients.id, timeEntries.clientId)).innerJoin(projects, eq(projects.id, timeEntries.projectId)).leftJoin(users, eq(users.id, timeEntries.userId)).where(and(eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.status, "approved"), eq(timeEntries.billable, true), isNotNull(timeEntries.endTime), sql`${timeEntries.durationMinutes} > 0`)).orderBy(clients.name, projects.name, desc(timeEntries.startTime));
+    const groups = new Map<string, typeof eligible>();
+    for (const entry of eligible) { const key = `${entry.clientId}:${entry.projectId}`; groups.set(key, [...(groups.get(key) ?? []), entry]); }
+    return <div className="space-y-4 sm:space-y-6">
+      <div className="app-page-header"><div><h1 className="app-page-title">{t("Invoice", "Invoices")}</h1><p className="text-sm text-muted-foreground">{t("Waktu disetujui, billable, selesai, dan belum terkait invoice.", "Approved, billable, completed time not yet linked to an invoice.")}</p></div></div>
+      <InvoiceAreaTabs active={activeTab} allHref={invoiceTabHref("all")} uninvoicedHref={invoiceTabHref("uninvoiced")} invoicedHref={invoiceTabHref("invoiced")} />
+      {eligible.length === 0 ? <EmptyState icon={CheckCircle2} title={t("Tidak ada waktu belum ditagihkan", "No uninvoiced time")} description={t("Entri harus selesai, billable, dan berstatus Disetujui.", "Entries must be completed, billable, and Approved.")} /> : <div className="space-y-4">{Array.from(groups.values()).map(group => { const first = group[0]; const minutes = group.reduce((sum, row) => sum + Number(row.durationMinutes ?? 0), 0); const amount = group.reduce((sum, row) => sum + Number(row.durationMinutes ?? 0) / 60 * Number(row.hourlyRate ?? 0), 0); const ids = group.map(row => row.id).join(","); return <Card key={`${first.clientId}:${first.projectId}`}><CardHeader className="flex flex-row items-start justify-between gap-3"><div><CardTitle className="text-base">{first.clientName} · {first.projectName}</CardTitle><p className="text-sm text-muted-foreground">{group.length} entri · {(minutes / 60).toFixed(1)} jam · {formatMoney(amount, first.currency)}</p></div>{canWrite && <Button asChild size="sm"><Link href={`/app/invoices/new?timeEntryIds=${ids}`}>{t("Buat Invoice", "Create Invoice")}</Link></Button>}</CardHeader><CardContent className="divide-y">{group.map(row => <div key={row.id} className="flex justify-between gap-3 py-2 text-sm"><span className="truncate">{row.description || row.userName || t("Entri waktu", "Time entry")}</span><span className="tabular-nums">{(Number(row.durationMinutes ?? 0) / 60).toFixed(1)}h</span></div>)}</CardContent></Card>; })}</div>}
+    </div>;
+  }
+
+  const timeLinkedInvoiceRows = activeTab === "invoiced" ? await db.select({ invoiceId: invoiceItems.invoiceId }).from(invoiceItems).innerJoin(invoices, eq(invoices.id, invoiceItems.invoiceId)).where(and(eq(invoices.workspaceId, workspaceId), eq(invoiceItems.sourceType, "time_entry"))).groupBy(invoiceItems.invoiceId) : [];
+  const timeLinkedInvoiceIds = timeLinkedInvoiceRows.map(row => row.invoiceId);
 
   const rateRows = await db
     .select({
@@ -231,6 +260,7 @@ export default async function InvoicesPage({
     clientId,
     billing,
   });
+  if (activeTab === "invoiced") listConditions.push(timeLinkedInvoiceIds.length ? inArray(invoices.id, timeLinkedInvoiceIds) : sql`false`);
 
   const invoiceList = await db
     .select({
@@ -379,6 +409,8 @@ export default async function InvoicesPage({
           )}
         </div>
       </div>
+
+      <InvoiceAreaTabs active={activeTab} allHref={invoiceTabHref("all")} uninvoicedHref={invoiceTabHref("uninvoiced")} invoicedHref={invoiceTabHref("invoiced")} />
 
       {/* KPI summary — base currency */}
       {totalAllIncludingArchived > 0 && (

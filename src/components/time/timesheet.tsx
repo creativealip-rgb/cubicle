@@ -392,7 +392,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-[10px]">{t("Activity", "Activity")}</Label>
+              <Label className="text-[10px]">{t("Aktivitas", "Activity")}</Label>
               <Select value={activityFilter} onValueChange={setActivityFilter}>
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue placeholder={t("Semua", "All")} />
@@ -728,7 +728,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">{t("Activity", "Activity")}</Label>
+              <Label className="text-xs">{t("Aktivitas", "Activity")}</Label>
               <Select
                 value={editActivityId || "__none__"}
                 onValueChange={(v) => setEditActivityId(v === "__none__" ? "" : v)}

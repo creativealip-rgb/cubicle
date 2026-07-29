@@ -1,0 +1,3 @@
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS billing_source text, ADD COLUMN IF NOT EXISTS billing_period_start date, ADD COLUMN IF NOT EXISTS billing_period_end date, ADD COLUMN IF NOT EXISTS retainer_period_id uuid;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='invoices_retainer_period_workspace_fk') THEN ALTER TABLE invoices ADD CONSTRAINT invoices_retainer_period_workspace_fk FOREIGN KEY(retainer_period_id,workspace_id) REFERENCES retainer_periods(id,workspace_id) ON DELETE RESTRICT; END IF; END $$;
+CREATE UNIQUE INDEX IF NOT EXISTS invoices_active_retainer_period_unique ON invoices(retainer_period_id) WHERE retainer_period_id IS NOT NULL AND status NOT IN ('cancelled');

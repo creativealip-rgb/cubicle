@@ -33,6 +33,7 @@ import { PortalTabs } from "@/components/portal/portal-tabs";
 import { PortalFileManager } from "@/components/portal/portal-file-manager";
 import { PortalLanguageSwitch } from "@/components/portal/portal-language-switch";
 import { LangProvider } from "@/lib/i18n-client";
+import { resolveBillingModel } from "@/lib/billing-model";
 import { createT, getCurrentLang } from "@/lib/i18n";
 import { decryptSecret } from "@/lib/google-calendar";
 import { PORTAL_COOKIE, verifyPortalSession } from "@/lib/portal-password";
@@ -181,6 +182,7 @@ export default async function ClientPortalPage({
       description: projects.description,
       status: projects.status,
       clientVisible: projects.clientVisible,
+      billingModel: projects.billingModel,
       billingType: projects.billingType,
       rate: projects.rate,
       budget: projects.budget,
@@ -200,6 +202,9 @@ export default async function ClientPortalPage({
 
   // Fetch all tasks for visible projects in one query
   const visibleProjectIds = clientProjects.map((p) => p.id);
+  const timeVisibleProjectIds = clientProjects
+    .filter((p) => resolveBillingModel(p) !== "fixed_price")
+    .map((p) => p.id);
   let allVisibleTasks: Array<{
     id: string;
     title: string;
@@ -685,7 +690,7 @@ export default async function ClientPortalPage({
     }>
   >();
 
-  if (visibleProjectIds.length > 0) {
+  if (timeVisibleProjectIds.length > 0) {
     const taskLinkedEntries = await db
       .select({
         id: timeEntries.id,
@@ -702,7 +707,7 @@ export default async function ClientPortalPage({
         and(
           eq(timeEntries.workspaceId, client.workspaceId),
           sql`${timeEntries.taskId} is not null`,
-          inArray(timeEntries.projectId, visibleProjectIds),
+          inArray(timeEntries.projectId, timeVisibleProjectIds),
         ),
       )
       .orderBy(desc(timeEntries.startTime))
@@ -768,7 +773,7 @@ export default async function ClientPortalPage({
 
   // Minutes per task (for portal hours display)
   const taskHoursMap = new Map<string, number>();
-  if (visibleProjectIds.length > 0) {
+  if (timeVisibleProjectIds.length > 0) {
     const taskTimeRows = await db
       .select({
         taskId: timeEntries.taskId,
@@ -779,7 +784,7 @@ export default async function ClientPortalPage({
         and(
           eq(timeEntries.workspaceId, client.workspaceId),
           sql`${timeEntries.taskId} is not null`,
-          inArray(timeEntries.projectId, visibleProjectIds),
+          inArray(timeEntries.projectId, timeVisibleProjectIds),
         ),
       )
       .groupBy(timeEntries.taskId);

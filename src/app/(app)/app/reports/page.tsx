@@ -41,6 +41,7 @@ import {
 } from "@/lib/report-period";
 import { ReportControls } from "@/components/reports/report-controls";
 import { buildTimeReport } from "@/lib/time-reporting";
+import { parseReportTab, withQuery } from "@/lib/finance-tabs";
 import { IncomeExpenseChart } from "@/components/reports/income-expense-chart";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -89,14 +90,22 @@ function deltaText(current: number, previous: number, lang: string) {
   return `${percent > 0 ? "+" : "−"}${Math.abs(percent)}% ${lang === "en" ? "vs previous period" : "dari periode lalu"}`;
 }
 
+function ReportTabs({ active, financeHref, timeHref, financeLabel, timeLabel }: { active: "finance" | "time"; financeHref: string; timeHref: string; financeLabel: string; timeLabel: string }) {
+  return <nav aria-label="Jenis laporan" className="flex gap-1 border-b">
+    <Link href={financeHref} aria-current={active === "finance" ? "page" : undefined} className={`border-b-2 px-3 py-2 text-sm font-medium ${active === "finance" ? "border-primary" : "border-transparent text-muted-foreground"}`}>{financeLabel}</Link>
+    <Link href={timeHref} aria-current={active === "time" ? "page" : undefined} className={`border-b-2 px-3 py-2 text-sm font-medium ${active === "time" ? "border-primary" : "border-transparent text-muted-foreground"}`}>{timeLabel}</Link>
+  </nav>;
+}
+
 export default async function ReportsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string; from?: string; to?: string }>;
+  searchParams: Promise<{ tab?: string; period?: string; from?: string; to?: string }>;
 }) {
   const lang = await getCurrentLang();
   const t = createT(lang);
   const query = await searchParams;
+  const activeTab = parseReportTab(query.tab);
   const period = buildReportPeriod(query);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
@@ -397,7 +406,7 @@ export default async function ReportsPage({
     .groupBy(timeEntries.activityId, activities.name)
     .orderBy(desc(sql`sum(${timeEntries.durationMinutes})`));
 
-  const detailedTimeRows = await db.select({ projectId: timeEntries.projectId, projectName: projects.name, taskId: timeEntries.taskId, taskTitle: tasks.title, userId: timeEntries.userId, userName: users.name, durationMinutes: timeEntries.durationMinutes, billable: timeEntries.billable, hourlyRate: timeEntries.hourlyRate }).from(timeEntries).leftJoin(projects, eq(projects.id, timeEntries.projectId)).leftJoin(tasks, eq(tasks.id, timeEntries.taskId)).leftJoin(users, eq(users.id, timeEntries.userId)).where(and(eq(timeEntries.workspaceId, ws.id), gte(sql`(${timeEntries.startTime})::date`, period.start), lte(sql`(${timeEntries.startTime})::date`, period.end)));
+  const detailedTimeRows = await db.select({ clientId: timeEntries.clientId, clientName: clients.name, projectId: timeEntries.projectId, projectName: projects.name, taskId: timeEntries.taskId, taskTitle: tasks.title, userId: timeEntries.userId, userName: users.name, durationMinutes: timeEntries.durationMinutes, billable: timeEntries.billable, hourlyRate: timeEntries.hourlyRate }).from(timeEntries).leftJoin(clients, eq(clients.id, timeEntries.clientId)).leftJoin(projects, eq(projects.id, timeEntries.projectId)).leftJoin(tasks, eq(tasks.id, timeEntries.taskId)).leftJoin(users, eq(users.id, timeEntries.userId)).where(and(eq(timeEntries.workspaceId, ws.id), gte(sql`(${timeEntries.startTime})::date`, period.start), lte(sql`(${timeEntries.startTime})::date`, period.end)));
   const timeReport = buildTimeReport(detailedTimeRows);
 
   const activityTime = activityTimeRows.map((row) => ({
@@ -407,6 +416,36 @@ export default async function ReportsPage({
     entries: Number(row.entries ?? 0),
   }));
   const missingFxList = Array.from(missingFx).sort();
+  const reportHref = (tab: "finance" | "time") => withQuery("/app/reports", {
+    period: query.period,
+    from: query.from,
+    to: query.to,
+  }, { tab: tab === "finance" ? undefined : tab });
+
+  if (activeTab === "time") {
+    const sections = [
+      [t("Per Klien", "By client"), timeReport.byClient],
+      [t("Per Proyek", "By project"), timeReport.byProject],
+      [t("Per Tugas", "By task"), timeReport.byTask],
+      [t("Per Anggota", "By member"), timeReport.byMember],
+    ] as const;
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        <div className="app-page-header">
+          <div><h1 className="app-page-title">{t("Laporan", "Reports")}</h1><p className="mt-1 text-sm text-muted-foreground">{t("Analisis waktu lintas proyek dan anggota.", "Time analysis across projects and members.")}</p></div>
+          <ReportControls lang={lang} preset={period.preset} from={period.start} to={period.end} />
+        </div>
+        <ReportTabs active="time" financeHref={reportHref("finance")} timeHref={reportHref("time")} financeLabel={t("Keuangan", "Finance")} timeLabel={t("Waktu", "Time")} />
+        <Card><CardHeader><CardTitle>{t("Kinerja Waktu", "Time performance")}</CardTitle><CardDescription>{reportPeriodLabel(period, lang)}</CardDescription></CardHeader><CardContent className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {[[t("Total", "Total"), timeReport.summary.totalMinutes], ["Billable", timeReport.summary.billableMinutes], ["Non-billable", timeReport.summary.nonBillableMinutes]].map(([label, minutes]) => <div key={String(label)}><p className="text-xs text-muted-foreground">{label}</p><p className="text-xl font-semibold tabular-nums">{(Number(minutes) / 60).toFixed(1)}h</p></div>)}
+          <div><p className="text-xs text-muted-foreground">{t("Estimasi nilai", "Estimated value")}</p><p className="text-xl font-semibold tabular-nums">{formatMoney(timeReport.summary.billableValue, baseCurrency)}</p></div>
+        </CardContent></Card>
+        <div className="grid gap-4 md:grid-cols-2">{sections.map(([title, rows]) => <Card key={title}><CardHeader><CardTitle className="text-base">{title}</CardTitle></CardHeader><CardContent>{rows.length === 0 ? <p className="text-sm text-muted-foreground">{t("Belum ada waktu tercatat.", "No tracked time yet.")}</p> : <div className="divide-y">{rows.slice(0, 10).map(row => <div key={row.id} className="flex justify-between gap-3 py-2 text-sm"><span className="truncate">{row.name}</span><span className="tabular-nums">{(row.minutes / 60).toFixed(1)}h</span></div>)}</div>}</CardContent></Card>)}</div>
+        <Card><CardHeader><CardTitle className="text-base">{t("Per Aktivitas", "By activity")}</CardTitle></CardHeader><CardContent>{activityTime.length === 0 ? <p className="text-sm text-muted-foreground">{t("Belum ada waktu tercatat.", "No tracked time yet.")}</p> : <div className="divide-y">{activityTime.slice(0, 10).map(row => <div key={row.id} className="flex justify-between py-2 text-sm"><span>{row.name}</span><span>{(row.minutes / 60).toFixed(1)}h</span></div>)}</div>}</CardContent></Card>
+        <div className="flex flex-wrap gap-2"><Button asChild variant="outline"><Link href="/app/time/history">{t("Riwayat dan ekspor PDF", "History and PDF export")}</Link></Button><Button asChild><Link href="/app/invoices?tab=uninvoiced">{t("Buat invoice dari waktu", "Invoice tracked time")}</Link></Button></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -429,6 +468,8 @@ export default async function ReportsPage({
           />
         </div>
       </div>
+
+      <ReportTabs active="finance" financeHref={reportHref("finance")} timeHref={reportHref("time")} financeLabel={t("Keuangan", "Finance")} timeLabel={t("Waktu", "Time")} />
 
       {missingFxList.length > 0 && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">

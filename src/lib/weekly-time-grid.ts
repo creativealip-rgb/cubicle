@@ -1,3 +1,5 @@
+import { effectiveWorkDate } from "@/lib/effective-work-date";
+
 export const WEEKLY_GRID_TAG = "mh1-weekly-grid";
 
 export interface WeeklyGridEntry {
@@ -6,7 +8,9 @@ export interface WeeklyGridEntry {
   projectName: string | null;
   taskId: string | null;
   taskTitle: string | null;
+  workDate?: string | null;
   startTime: Date | string | null;
+  createdAt?: Date | string | null;
   durationMinutes: number | null;
   manualMinutes: number | null;
   tags: string | null;
@@ -24,16 +28,10 @@ export interface WeeklyGridRow {
   key: string;
   projectId: string;
   projectName: string;
-  taskId: string | null;
+  taskId: string;
   taskTitle: string | null;
   cells: WeeklyGridCell[];
   totalMinutes: number;
-}
-
-function isoDate(value: Date | string | null): string | null {
-  if (!value) return null;
-  const date = value instanceof Date ? value : new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
 }
 
 export function getWeekDates(anchor: Date | string): Date[] {
@@ -90,10 +88,11 @@ export function buildWeeklyGrid(entries: WeeklyGridEntry[], anchor: Date | strin
 
   for (const entry of entries) {
     if (!entry.projectId) continue;
-    const date = isoDate(entry.startTime);
+    const date = effectiveWorkDate(entry);
     const dayIndex = date ? dateIndexes.get(date) : undefined;
     if (dayIndex == null) continue;
-    const key = `${entry.projectId}:${entry.taskId ?? "project"}`;
+    if (!entry.taskId) continue;
+    const key = `${entry.projectId}:${entry.taskId ?? "task"}`;
     let row = rows.get(key);
     if (!row) {
       row = {

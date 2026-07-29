@@ -1,20 +1,5 @@
-import { getWorkspaceActivities } from "@/lib/actions/activities";
-import {
-  ActivityCatalog,
-  type CatalogActivity,
-} from "@/components/activities/activity-catalog";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-
-export default async function ActivitiesPage() {
-  const rows = await getWorkspaceActivities({ includeArchived: true });
-  const activities: CatalogActivity[] = rows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    defaultBillable: row.defaultBillable,
-    defaultHourlyRate: row.defaultHourlyRate,
-    status: row.status,
-  }));
-
-  return <ActivityCatalog activities={activities} />;
+export default function LegacyCatalogHiddenPage() {
+  redirect("/app/time");
 }

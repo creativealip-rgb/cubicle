@@ -47,6 +47,7 @@ export default async function ProjectsPage({
     clientId?: string;
     status?: string;
     billingType?: string;
+    create?: string;
   }>;
 }) {
   const lang = await getCurrentLang();
@@ -97,7 +98,8 @@ export default async function ProjectsPage({
   // Counts per status (respect client filter)
   const statusCountWhere: SQL[] = [eq(projects.workspaceId, workspaceId)];
   if (clientId) statusCountWhere.push(eq(projects.clientId, clientId));
-  if (billingType) statusCountWhere.push(eq(projects.billingType, billingType));
+  if (billingType === "package") statusCountWhere.push(eq(projects.billingType, "package"));
+  else if (billingType) statusCountWhere.push(eq(projects.billingModel, billingType));
 
   const statusCountRows = await db
     .select({
@@ -116,7 +118,8 @@ export default async function ProjectsPage({
   const whereClauses: SQL[] = [eq(projects.workspaceId, workspaceId)];
   whereClauses.push(eq(projects.status, statusTab));
   if (clientId) whereClauses.push(eq(projects.clientId, clientId));
-  if (billingType) whereClauses.push(eq(projects.billingType, billingType));
+  if (billingType === "package") whereClauses.push(eq(projects.billingType, "package"));
+  else if (billingType) whereClauses.push(eq(projects.billingModel, billingType));
 
   const projectsList = await db
     .select({
@@ -126,6 +129,7 @@ export default async function ProjectsPage({
       dueDate: projects.dueDate,
       clientVisible: projects.clientVisible,
       billingType: projects.billingType,
+      billingModel: projects.billingModel,
       clientId: projects.clientId,
       clientName: clients.name,
       totalTasks: sql<number>`count(distinct ${tasks.id})::int`,
@@ -164,6 +168,7 @@ export default async function ProjectsPage({
         {canWrite && (
           <ProjectCreateDialog
             clients={clientOptions}
+            initialOpen={params.create === "1"}
             isAtLimit={isAtLimit}
             projectCount={projectCount}
             projectLimit={projectLimit}
@@ -224,13 +229,15 @@ export default async function ProjectsPage({
           {t("Filter aktif:", "Active filters:")}{" "}
           {[
             selectedClient?.name,
-            billingType === "project"
-              ? t("Per Project", "Per Project")
-              : billingType === "hours"
+            billingType === "fixed_price"
+              ? t("Fixed Price", "Fixed Price")
+              : billingType === "hourly"
                 ? t("Per Jam", "Hourly")
-                : billingType === "package"
-                  ? t("Service", "Service")
-                  : null,
+                : billingType === "retainer"
+                  ? t("Retainer", "Retainer")
+                  : billingType === "package"
+                    ? t("Paket", "Package")
+                    : null,
           ].filter(Boolean).join(" · ")}
         </p>
       )}
@@ -242,8 +249,9 @@ export default async function ProjectsPage({
         billingType={billingType}
         billingTypeHrefs={{
           all: buildProjectsHref({ ...filtersForHref, billingType: undefined }),
-          project: buildProjectsHref({ ...filtersForHref, billingType: "project" }),
-          hours: buildProjectsHref({ ...filtersForHref, billingType: "hours" }),
+          fixed_price: buildProjectsHref({ ...filtersForHref, billingType: "fixed_price" }),
+          hourly: buildProjectsHref({ ...filtersForHref, billingType: "hourly" }),
+          retainer: buildProjectsHref({ ...filtersForHref, billingType: "retainer" }),
           package: buildProjectsHref({ ...filtersForHref, billingType: "package" }),
         }}
       />

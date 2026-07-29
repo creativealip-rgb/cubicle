@@ -15,11 +15,12 @@ describe("MH2 weekly timesheet approval wiring", () => {
     expect(migration).toContain("timesheet_submissions_workspace_user_week_unique");
   });
 
-  it("provides submit and owner review actions", () => {
+  it("provides submit and writable reviewer actions", () => {
     const actions = read("src/lib/actions/timesheet-approval.ts");
     expect(actions).toContain("export async function submitWeeklyTimesheet");
     expect(actions).toContain("export async function reviewWeeklyTimesheet");
-    expect(actions).toContain("assertWorkspaceOwner");
+    expect(actions).toContain("assertWorkspaceWritable");
+    expect(actions).toContain("Tidak dapat menyetujui timesheet sendiri");
     expect(actions).toContain('decision: z.enum(["approved", "rejected"])');
   });
 
@@ -33,8 +34,8 @@ describe("MH2 weekly timesheet approval wiring", () => {
 
   it("renders submit and owner review controls", () => {
     const component = read("src/components/time/timesheet-approval-panel.tsx");
-    const page = read("src/app/(app)/app/time/page.tsx");
-    expect(component).toContain("Kirim timesheet");
+    const page = read("src/components/time/time-route-content.tsx");
+    expect(component).toContain("Kirim Minggu Ini");
     expect(component).toContain("Setujui");
     expect(component).toContain("Tolak");
     expect(page).toContain("TimesheetApprovalPanel");

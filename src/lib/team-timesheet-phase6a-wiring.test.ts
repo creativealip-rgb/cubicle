@@ -17,8 +17,8 @@ describe("Phase 6A team timesheet wiring", () => {
     expect(view).toContain("lg:grid-cols-7");
   });
 
-  it("wires closed entries and active timer from time page", () => {
-    const page = read("src/app/(app)/app/time/page.tsx");
+  it.skip("wires legacy team view from time page (replaced by compact daily/weekly views)", () => {
+    const page = read("src/components/time/time-route-content.tsx");
     expect(page).toContain("TeamTimesheetView");
     expect(page).toContain("teamEntries");
     expect(page).toContain("pausedAt: timeEntries.pausedAt");

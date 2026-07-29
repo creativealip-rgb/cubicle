@@ -1,176 +1,99 @@
 "use client";
 
+import { ArrowDown, ArrowUp, Copy, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, ChevronUp, ChevronDown, Copy } from "lucide-react";
+import {
+  PERSONAL_SITE_SECTION_TYPES,
+  type PersonalSiteSection,
+} from "@/lib/personal-site/model";
+import { useT } from "@/lib/i18n-client";
 
-export type SiteSection = {
-  id: string;
-  type: string;
-  heading: string;
-  content: string;
-};
-
-const sectionTypes = [
-  { value: "services", label: "Services" },
-  { value: "process", label: "Process" },
-  { value: "pricing", label: "Pricing" },
-  { value: "portfolio", label: "Portfolio" },
-  { value: "testimonials", label: "Testimonials" },
-  { value: "faq", label: "FAQ" },
-  { value: "contact", label: "Contact" },
-  { value: "custom", label: "Custom" },
-];
-
-interface SectionEditorProps {
-  sections: SiteSection[];
-  onChange: (sections: SiteSection[]) => void;
+function id() {
+  return crypto.randomUUID();
 }
 
-export function SectionEditor({ sections, onChange }: SectionEditorProps) {
-  const addSection = () => {
-    const newSection: SiteSection = {
-      id: Date.now().toString(),
-      type: "custom",
-      heading: "New Section",
-      content: "",
-    };
-    onChange([...sections, newSection]);
+function emptySection(type: PersonalSiteSection["type"]): PersonalSiteSection {
+  const base = { id: id(), heading: "Section" };
+  switch (type) {
+    case "services": return { ...base, type, items: [{ id: id(), title: "", description: "" }] };
+    case "process": return { ...base, type, steps: [{ id: id(), title: "", description: "" }] };
+    case "pricing": return { ...base, type, offers: [{ id: id(), name: "", price: "", description: "" }] };
+    case "portfolio": return { ...base, type, projects: [{ id: id(), title: "", description: "", url: "" }] };
+    case "testimonials": return { ...base, type, testimonials: [{ id: id(), quote: "", author: "", role: "" }] };
+    case "faq": return { ...base, type, items: [{ id: id(), question: "", answer: "" }] };
+    case "contact": return { ...base, type, methods: [{ id: id(), label: "", value: "", url: "" }] };
+    case "custom": return { ...base, type, content: "" };
+  }
+}
+
+function Rows({ section, onChange }: { section: PersonalSiteSection; onChange: (section: PersonalSiteSection) => void }) {
+  const { t } = useT();
+  const deleteLabel = t("Hapus baris", "Delete row");
+  const addLabel = t("Tambah baris", "Add row");
+
+  if (section.type === "services") return <div className="space-y-2">{section.items.map((item) => <div key={item.id} className="grid gap-2 rounded-lg bg-background p-2 sm:grid-cols-[0.8fr_1.2fr_auto]"><Input aria-label={t("Nama layanan", "Service name")} placeholder={t("Nama layanan", "Service name")} value={item.title} onChange={(e) => onChange({ ...section, items: section.items.map((row) => row.id === item.id ? { ...row, title: e.target.value } : row) })} /><Input aria-label={t("Deskripsi layanan", "Service description")} placeholder={t("Hasil atau ruang lingkup", "Outcome or scope")} value={item.description} onChange={(e) => onChange({ ...section, items: section.items.map((row) => row.id === item.id ? { ...row, description: e.target.value } : row) })} /><IconDelete label={deleteLabel} onClick={() => onChange({ ...section, items: section.items.filter((row) => row.id !== item.id) })} /></div>)}<AddRow label={addLabel} onClick={() => onChange({ ...section, items: [...section.items, { id: id(), title: "", description: "" }] })} /></div>;
+
+  if (section.type === "process") return <div className="space-y-2">{section.steps.map((step) => <div key={step.id} className="grid gap-2 rounded-lg bg-background p-2 sm:grid-cols-[0.8fr_1.2fr_auto]"><Input aria-label={t("Judul langkah", "Step title")} placeholder={t("Judul langkah", "Step title")} value={step.title} onChange={(e) => onChange({ ...section, steps: section.steps.map((row) => row.id === step.id ? { ...row, title: e.target.value } : row) })} /><Input aria-label={t("Deskripsi langkah", "Step description")} placeholder={t("Apa yang terjadi", "What happens")} value={step.description} onChange={(e) => onChange({ ...section, steps: section.steps.map((row) => row.id === step.id ? { ...row, description: e.target.value } : row) })} /><IconDelete label={deleteLabel} onClick={() => onChange({ ...section, steps: section.steps.filter((row) => row.id !== step.id) })} /></div>)}<AddRow label={addLabel} onClick={() => onChange({ ...section, steps: [...section.steps, { id: id(), title: "", description: "" }] })} /></div>;
+
+  if (section.type === "pricing") return <div className="space-y-2">{section.offers.map((offer) => <div key={offer.id} className="grid gap-2 rounded-lg bg-background p-2 sm:grid-cols-[0.8fr_0.5fr_1fr_auto]"><Input aria-label={t("Nama penawaran", "Offer name")} placeholder={t("Nama paket", "Package name")} value={offer.name} onChange={(e) => onChange({ ...section, offers: section.offers.map((row) => row.id === offer.id ? { ...row, name: e.target.value } : row) })} /><Input aria-label={t("Harga", "Price")} placeholder="Rp..., $..., Custom" value={offer.price} onChange={(e) => onChange({ ...section, offers: section.offers.map((row) => row.id === offer.id ? { ...row, price: e.target.value } : row) })} /><Input aria-label={t("Deskripsi penawaran", "Offer description")} placeholder={t("Cakupan singkat", "Short scope")} value={offer.description} onChange={(e) => onChange({ ...section, offers: section.offers.map((row) => row.id === offer.id ? { ...row, description: e.target.value } : row) })} /><IconDelete label={deleteLabel} onClick={() => onChange({ ...section, offers: section.offers.filter((row) => row.id !== offer.id) })} /></div>)}<AddRow label={addLabel} onClick={() => onChange({ ...section, offers: [...section.offers, { id: id(), name: "", price: "", description: "" }] })} /></div>;
+
+  if (section.type === "portfolio") return <div className="space-y-2">{section.projects.map((project) => <div key={project.id} className="grid gap-2 rounded-lg bg-background p-2 sm:grid-cols-2"><Input aria-label={t("Nama proyek", "Project name")} placeholder={t("Nama proyek", "Project name")} value={project.title} onChange={(e) => onChange({ ...section, projects: section.projects.map((row) => row.id === project.id ? { ...row, title: e.target.value } : row) })} /><Input aria-label={t("URL proyek", "Project URL")} placeholder="https://..." value={project.url} onChange={(e) => onChange({ ...section, projects: section.projects.map((row) => row.id === project.id ? { ...row, url: e.target.value } : row) })} /><Textarea className="sm:col-span-1" aria-label={t("Deskripsi proyek", "Project description")} placeholder={t("Masalah, kontribusi, hasil nyata", "Problem, contribution, real outcome")} value={project.description} onChange={(e) => onChange({ ...section, projects: section.projects.map((row) => row.id === project.id ? { ...row, description: e.target.value } : row) })} /><IconDelete className="self-end justify-self-end" label={deleteLabel} onClick={() => onChange({ ...section, projects: section.projects.filter((row) => row.id !== project.id) })} /></div>)}<AddRow label={addLabel} onClick={() => onChange({ ...section, projects: [...section.projects, { id: id(), title: "", description: "", url: "" }] })} /></div>;
+
+  if (section.type === "testimonials") return <div className="space-y-2">{section.testimonials.map((item) => <div key={item.id} className="grid gap-2 rounded-lg bg-background p-2 sm:grid-cols-2"><Textarea className="sm:col-span-2" aria-label={t("Kutipan", "Quote")} placeholder={t("Masukkan testimoni asli", "Add a real testimonial")} value={item.quote} onChange={(e) => onChange({ ...section, testimonials: section.testimonials.map((row) => row.id === item.id ? { ...row, quote: e.target.value } : row) })} /><Input aria-label={t("Nama pemberi testimoni", "Testimonial author")} placeholder={t("Nama asli", "Real name")} value={item.author} onChange={(e) => onChange({ ...section, testimonials: section.testimonials.map((row) => row.id === item.id ? { ...row, author: e.target.value } : row) })} /><div className="flex gap-2"><Input aria-label={t("Peran", "Role")} placeholder={t("Peran / perusahaan", "Role / company")} value={item.role} onChange={(e) => onChange({ ...section, testimonials: section.testimonials.map((row) => row.id === item.id ? { ...row, role: e.target.value } : row) })} /><IconDelete label={deleteLabel} onClick={() => onChange({ ...section, testimonials: section.testimonials.filter((row) => row.id !== item.id) })} /></div></div>)}<AddRow label={addLabel} onClick={() => onChange({ ...section, testimonials: [...section.testimonials, { id: id(), quote: "", author: "", role: "" }] })} /></div>;
+
+  if (section.type === "faq") return <div className="space-y-2">{section.items.map((item) => <div key={item.id} className="grid gap-2 rounded-lg bg-background p-2 sm:grid-cols-[1fr_1.4fr_auto]"><Input aria-label={t("Pertanyaan", "Question")} placeholder={t("Pertanyaan", "Question")} value={item.question} onChange={(e) => onChange({ ...section, items: section.items.map((row) => row.id === item.id ? { ...row, question: e.target.value } : row) })} /><Textarea aria-label={t("Jawaban", "Answer")} placeholder={t("Jawaban", "Answer")} value={item.answer} onChange={(e) => onChange({ ...section, items: section.items.map((row) => row.id === item.id ? { ...row, answer: e.target.value } : row) })} /><IconDelete label={deleteLabel} onClick={() => onChange({ ...section, items: section.items.filter((row) => row.id !== item.id) })} /></div>)}<AddRow label={addLabel} onClick={() => onChange({ ...section, items: [...section.items, { id: id(), question: "", answer: "" }] })} /></div>;
+
+  if (section.type === "contact") return <div className="space-y-2">{section.methods.map((method) => <div key={method.id} className="grid gap-2 rounded-lg bg-background p-2 sm:grid-cols-[0.6fr_0.8fr_1.2fr_auto]"><Input aria-label={t("Label kontak", "Contact label")} placeholder="Email / WhatsApp" value={method.label} onChange={(e) => onChange({ ...section, methods: section.methods.map((row) => row.id === method.id ? { ...row, label: e.target.value } : row) })} /><Input aria-label={t("Nilai kontak", "Contact value")} placeholder="hello@..." value={method.value} onChange={(e) => onChange({ ...section, methods: section.methods.map((row) => row.id === method.id ? { ...row, value: e.target.value } : row) })} /><Input aria-label={t("URL kontak", "Contact URL")} placeholder="mailto:, tel:, https://" value={method.url} onChange={(e) => onChange({ ...section, methods: section.methods.map((row) => row.id === method.id ? { ...row, url: e.target.value } : row) })} /><IconDelete label={deleteLabel} onClick={() => onChange({ ...section, methods: section.methods.filter((row) => row.id !== method.id) })} /></div>)}<AddRow label={addLabel} onClick={() => onChange({ ...section, methods: [...section.methods, { id: id(), label: "", value: "", url: "" }] })} /></div>;
+
+  return <Textarea aria-label={t("Isi section", "Section content")} rows={5} placeholder={t("Tulis isi section", "Write section content")} value={section.content} onChange={(e) => onChange({ ...section, content: e.target.value })} />;
+}
+
+function IconDelete({ label, onClick, className = "" }: { label: string; onClick: () => void; className?: string }) {
+  return <Button type="button" variant="ghost" size="icon" className={`h-10 w-10 text-destructive ${className}`} aria-label={label} onClick={onClick}><Trash2 className="h-4 w-4" /></Button>;
+}
+function AddRow({ label, onClick }: { label: string; onClick: () => void }) {
+  return <Button type="button" variant="outline" size="sm" className="min-h-10" onClick={onClick}><Plus className="h-4 w-4" />{label}</Button>;
+}
+
+export function SectionEditor({ sections, onChange }: { sections: PersonalSiteSection[]; onChange: (sections: PersonalSiteSection[]) => void }) {
+  const { t } = useT();
+  const update = (idValue: string, next: PersonalSiteSection) => onChange(sections.map((section) => section.id === idValue ? next : section));
+  const move = (index: number, delta: number) => {
+    const target = index + delta;
+    if (target < 0 || target >= sections.length) return;
+    const next = [...sections];
+    [next[index], next[target]] = [next[target], next[index]];
+    onChange(next);
   };
-
-  const removeSection = (id: string) => {
-    onChange(sections.filter((s) => s.id !== id));
+  const remove = (section: PersonalSiteSection) => {
+    if (JSON.stringify(section).length > 160 && !window.confirm(t("Hapus section beserta isinya?", "Delete this section and its content?"))) return;
+    onChange(sections.filter((item) => item.id !== section.id));
   };
+  const duplicate = (section: PersonalSiteSection) => onChange([...sections.slice(0, sections.indexOf(section) + 1), { ...structuredClone(section), id: id(), heading: `${section.heading} (${t("salinan", "copy")})` }, ...sections.slice(sections.indexOf(section) + 1)]);
+  const add = () => onChange([...sections, emptySection("custom")]);
 
-  const duplicateSection = (id: string) => {
-    const section = sections.find((s) => s.id === id);
-    if (!section) return;
-    const newSection: SiteSection = {
-      ...section,
-      id: Date.now().toString(),
-      heading: `${section.heading} (copy)`,
-    };
-    const index = sections.findIndex((s) => s.id === id);
-    const newSections = [...sections];
-    newSections.splice(index + 1, 0, newSection);
-    onChange(newSections);
-  };
-
-  const moveSection = (id: string, direction: "up" | "down") => {
-    const index = sections.findIndex((s) => s.id === id);
-    if (index === -1) return;
-    if (direction === "up" && index === 0) return;
-    if (direction === "down" && index === sections.length - 1) return;
-
-    const newSections = [...sections];
-    const newIndex = direction === "up" ? index - 1 : index + 1;
-    [newSections[index], newSections[newIndex]] = [newSections[newIndex], newSections[index]];
-    onChange(newSections);
-  };
-
-  const updateSection = (id: string, updates: Partial<SiteSection>) => {
-    onChange(sections.map((s) => (s.id === id ? { ...s, ...updates } : s)));
-  };
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <label className="text-sm font-medium">Sections</label>
-        <Button type="button" variant="outline" size="sm" onClick={addSection} className="gap-1">
-          <Plus className="h-3.5 w-3.5" />
-          Add section
-        </Button>
+  return <div className="space-y-3">
+    <div className="flex items-center justify-between"><div><h3 className="font-semibold">{t("Section", "Sections")}</h3><p className="text-xs text-muted-foreground">{t("Maksimal 12 section. Tipe menentukan tampilan publik.", "Up to 12 sections. Type controls public layout.")}</p></div>{sections.length === 0 && <AddRow label={t("Tambah section", "Add section")} onClick={add} />}</div>
+    {sections.map((section, index) => <div key={section.id} className="space-y-3 rounded-xl bg-muted/35 p-3 sm:p-4">
+      <div className="grid gap-2 sm:grid-cols-[150px_1fr_auto]">
+        <Select value={section.type} onValueChange={(value) => {
+          if (!window.confirm(t("Ganti tipe akan mereset isi section ini. Lanjut?", "Changing type resets this section. Continue?"))) return;
+          const replacement = emptySection(value as PersonalSiteSection["type"]);
+          update(section.id, { ...replacement, id: section.id, heading: section.heading } as PersonalSiteSection);
+        }}><SelectTrigger className="min-h-10"><SelectValue /></SelectTrigger><SelectContent>{PERSONAL_SITE_SECTION_TYPES.map((type) => <SelectItem key={type} value={type}>{type[0].toUpperCase() + type.slice(1)}</SelectItem>)}</SelectContent></Select>
+        <Input aria-label={t("Judul section", "Section heading")} placeholder={t("Judul section", "Section heading")} value={section.heading} onChange={(e) => update(section.id, { ...section, heading: e.target.value })} />
+        <div className="flex gap-1">
+          <Button type="button" variant="ghost" size="icon" className="h-10 w-10" aria-label={t("Naikkan section", "Move section up")} disabled={index === 0} onClick={() => move(index, -1)}><ArrowUp className="h-4 w-4" /></Button>
+          <Button type="button" variant="ghost" size="icon" className="h-10 w-10" aria-label={t("Turunkan section", "Move section down")} disabled={index === sections.length - 1} onClick={() => move(index, 1)}><ArrowDown className="h-4 w-4" /></Button>
+          <Button type="button" variant="ghost" size="icon" className="h-10 w-10" aria-label={t("Duplikat section", "Duplicate section")} onClick={() => duplicate(section)}><Copy className="h-4 w-4" /></Button>
+          <Button type="button" variant="ghost" size="icon" className="h-10 w-10 text-destructive" aria-label={t("Hapus section", "Delete section")} onClick={() => remove(section)}><Trash2 className="h-4 w-4" /></Button>
+        </div>
       </div>
-
-      <div className="space-y-2">
-        {sections.map((section, index) => (
-          <div key={section.id} className="rounded-lg border bg-card p-3 space-y-2">
-            <div className="flex items-center gap-2">
-              <Select
-                value={section.type}
-                onValueChange={(value) => updateSection(section.id, { type: value })}
-              >
-                <SelectTrigger className="w-[130px] h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {sectionTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Input
-                value={section.heading}
-                onChange={(e) => updateSection(section.id, { heading: e.target.value })}
-                placeholder="Section heading"
-                className="h-8 flex-1"
-              />
-
-              <div className="flex items-center gap-0.5">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => moveSection(section.id, "up")}
-                  disabled={index === 0}
-                >
-                  <ChevronUp className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => moveSection(section.id, "down")}
-                  disabled={index === sections.length - 1}
-                >
-                  <ChevronDown className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => duplicateSection(section.id)}
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-destructive hover:text-destructive"
-                  onClick={() => removeSection(section.id)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-
-            <Textarea
-              value={section.content}
-              onChange={(e) => updateSection(section.id, { content: e.target.value })}
-              placeholder="Section content..."
-              rows={3}
-            />
-          </div>
-        ))}
-      </div>
-
-      {sections.length === 0 && (
-        <p className="text-sm text-muted-foreground text-center py-4">
-          Belum ada section. Klik &quot;Add section&quot; untuk mulai.
-        </p>
-      )}
-
-      {/* Hidden input to store sections as JSON */}
-      <input type="hidden" name="sections" value={JSON.stringify(sections)} />
-    </div>
-  );
+      <Rows section={section} onChange={(next) => update(section.id, next)} />
+    </div>)}
+    {sections.length > 0 && sections.length < 12 && <AddRow label={t("Tambah section", "Add section")} onClick={add} />}
+  </div>;
 }

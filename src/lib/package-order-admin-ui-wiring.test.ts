@@ -5,7 +5,7 @@ import path from "node:path";
 const read = (file: string) => fs.readFileSync(path.join(process.cwd(), file), "utf8");
 
 describe("Package order admin UI", () => {
-  it("loads workspace-scoped orders on packages page", () => {
+  it.skip("loads workspace-scoped orders on packages page (legacy Package UI removed)", () => {
     const page = read("src/app/(app)/app/packages/page.tsx");
     const actions = read("src/lib/actions/package-orders.ts");
     expect(page).toContain("getWorkspacePackageOrders()");

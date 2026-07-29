@@ -65,13 +65,14 @@ interface InvoiceFormProps {
 
   baseCurrency?: string;
   currencyRates?: Array<{ fromCurrency: string; rate: string }>;
+  initialItems?: Array<{ description: string; quantity: number; unitPrice: number; sourceId?: string }>;
   onSuccess?: () => void;
 }
 
-export function InvoiceForm({ mode, defaultValues, clients, projects, templates, baseCurrency = "IDR", currencyRates = [], onSuccess }: InvoiceFormProps) {
+export function InvoiceForm({ mode, defaultValues, clients, projects, templates, baseCurrency = "IDR", currencyRates = [], initialItems = [], onSuccess }: InvoiceFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [items, setItems] = useState([{ description: "", quantity: 1, unitPrice: 0 }]);
+  const [items, setItems] = useState(initialItems.length ? initialItems : [{ description: "", quantity: 1, unitPrice: 0 }]);
   const [dueDateTouched, setDueDateTouched] = useState(Boolean(defaultValues?.dueDate));
 
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>(defaultValues?.projectId ? [defaultValues.projectId] : []);
@@ -219,13 +220,17 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
             {clientProjects.map((project) => {
               const selected = selectedProjectIds.includes(project.id);
               return (
-                <label key={project.id} className="flex cursor-pointer items-center gap-3 rounded-md p-2 hover:bg-muted/60">
+                <label htmlFor={`invoice-project-${project.id}`} key={project.id} className="flex cursor-pointer items-center gap-3 rounded-md p-2 hover:bg-muted/60">
                   <input
+                    id={`invoice-project-${project.id}`}
+                    aria-label={`Pilih proyek ${project.name}`}
+                    data-testid={`invoice-project-${project.id}`}
                     type="checkbox"
                     checked={selected}
                     onChange={(event) => {
-
-                      setSelectedProjectIds((prev) => event.target.checked ? [...prev, project.id] : prev.filter((id) => id !== project.id));
+                      setSelectedProjectIds((prev) => event.target.checked
+                        ? Array.from(new Set([...prev, project.id]))
+                        : prev.filter((id) => id !== project.id));
                     }}
                   />
                   <span className="min-w-0 flex-1 truncate text-sm">{project.name}</span>

@@ -225,7 +225,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
     setTimerBusy(true);
     try {
       await startTimer({ workspaceId });
-      toast.success(t("Timer dimulai", "Timer started"));
+      toast.success(t("Timer dimulai. Detail bisa diisi nanti lewat timesheet.", "Timer started. Details can be filled later from the timesheet."));
       await loadActiveTimer();
       window.dispatchEvent(new Event("cubicle:timer-changed"));
       router.refresh();
@@ -282,11 +282,6 @@ export function AppTopbar({ user }: AppTopbarProps) {
 
   async function handleStopTimer() {
     if (!activeTimer || timerBusy) return;
-    if (!activeTimer.projectId) {
-      toast.info(t("Lengkapi Project di halaman timer", "Complete Project on timer page"));
-      router.push("/app/time");
-      return;
-    }
     setTimerBusy(true);
     try {
       await stopTimer(activeTimer.id);
@@ -392,13 +387,20 @@ export function AppTopbar({ user }: AppTopbarProps) {
                   <DropdownMenuLabel>{t("Buat baru", "Create new")}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/app/projects/new">{t("Proyek", "Project")}</Link>
+                    <Link href="/app/projects?create=1">{t("Proyek", "Project")}</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/app/tasks/new">{t("Tugas", "Task")}</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/app/clients/new">{t("Klien", "Client")}</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/app/proposals/new">{t("Proposal", "Proposal")}</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/app/questionnaires/new">{t("Kuesioner", "Questionnaire")}</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/app/invoices/new">{t("Invoice", "Invoice")}</Link>

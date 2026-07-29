@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased — 2026-07-29 — Billing-aware integration staging and VPS migration
+
+- Billing model: standardize project terminology and behavior around **Fixed Price**, **Hourly**, and **Retainer**; remove misleading **By Project / Per Proyek** labels from current project surfaces.
+- Time tracking: unify Timer, Timesheet, and History navigation; add active-timer controls, editable daily entries, and compact weekly grid behavior; restrict time tracking to eligible billing models.
+- Data integrity: add migrations `0056`–`0063` for billing compatibility, retainer configuration/ledger, invoice source integrity, task behavior, legacy classification, cleanup, and temporary legacy-runtime compatibility.
+- Personal site: integrate Personal Landing V2 schema, renderer, editor, URL wiring, tests, and authenticated staging flow.
+- Staging infrastructure: migrate `dev.cubiqlo.com` to VPS `43.134.165.218`, restore the PostgreSQL baseline, apply migrations through `0063`, and seed isolated QA data.
+- TLS/routing: add exact-host Traefik routing for `dev.cubiqlo.com`, separate its ACME certificate from the sslip preview host, and issue a valid Let's Encrypt certificate without adding another public reverse proxy.
+- Verified staging: 494/494 tests, production build, public TLS validation, `/login` HTTP 200, `/api/health` HTTP 200 with database `ok`, and `dokploy-traefik` remains sole owner of public ports 80/443.
+
 ## Unreleased — 2026-07-26 — Production full-feature QA and schema recovery
 
 - Production database: apply ledger migrations `0043_persist_portal_token_encrypted.sql`, `0044_portal_password.sql`, and `0045_meeting_request_workflow.sql` after client and invoice creation exposed schema drift

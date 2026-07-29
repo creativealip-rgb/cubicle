@@ -1,5 +1,12 @@
-import { redirect } from "next/navigation";
+"use client";
 
-export default function InvoiceTemplatesPage() {
-  redirect("/app/templates?tab=invoice");
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
+export default function RedirectPage() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace("/app/templates?tab=invoice");
+  }, [router]);
+  return null;
 }

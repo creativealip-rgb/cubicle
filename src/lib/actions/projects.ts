@@ -4,13 +4,13 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { packages, projects, projectMembers, tasks } from "@/db/schema";
+import { projects, projectMembers, tasks, timeEntries, invoices } from "@/db/schema";
 import { assignPackageToProject, syncProjectPackageAssignment } from "@/lib/actions/packages";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceWritable, assertProjectInWorkspace, assertClientInWorkspace } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
-import { defaultTimeTrackingMode, TIME_TRACKING_MODES } from "@/lib/project-time-tracking-policy";
+import { TIME_TRACKING_MODES } from "@/lib/project-time-tracking-policy";
 import { syncProjectServiceSnapshots } from "@/lib/actions/services";
 
 async function getWorkspaceId(): Promise<string> {
@@ -22,7 +22,13 @@ const projectInputSchema = z.object({
   description: z.string().optional(),
   clientId: z.string().uuid("Valid client required"),
   status: z.enum(["draft", "active", "on_hold", "completed", "cancelled", "archived"]),
-  billingType: z.enum(["project", "hours", "package"]),
+  billingType: z.enum(["fixed_price", "hourly", "retainer", "package", "project", "hours"]).default("fixed_price"),
+  billingModel: z.enum(["fixed_price", "hourly", "retainer"]).default("fixed_price"),
+  retainerFee: z.number().nonnegative().optional(),
+  retainerIncludedMinutes: z.number().int().nonnegative().optional(),
+  retainerResetDay: z.number().int().min(1).max(28).optional(),
+  retainerOveragePolicy: z.enum(["none", "warn", "bill"]).optional(),
+  retainerOverageRate: z.number().nonnegative().optional(),
   timeTrackingMode: z.enum(TIME_TRACKING_MODES).optional(),
   activityRequired: z.boolean(),
   currency: z.string(),
@@ -36,25 +42,42 @@ const projectInputSchema = z.object({
   serviceIds: z.array(z.string().uuid()).optional(),
 });
 
+function validateRetainerConfiguration(parsed: { billingModel?: string; retainerFee?: number; retainerIncludedMinutes?: number; retainerResetDay?: number; retainerOveragePolicy?: string; retainerOverageRate?: number }) {
+  if (parsed.billingModel !== "retainer") return;
+  if (parsed.retainerFee == null || parsed.retainerIncludedMinutes == null || parsed.retainerResetDay == null || !parsed.retainerOveragePolicy) throw new Error("Konfigurasi Retainer belum lengkap");
+  if (parsed.retainerOveragePolicy === "bill" && parsed.retainerOverageRate == null) throw new Error("Rate overage wajib diisi");
+}
+async function assertBillingModelTransitionAllowed(projectId: string, nextModel: string) {
+  const [current] = await db.select({ billingModel: projects.billingModel }).from(projects).where(eq(projects.id, projectId)).limit(1);
+  if (!current || current.billingModel === nextModel) return;
+  const [time] = await db.select({ id: timeEntries.id }).from(timeEntries).where(eq(timeEntries.projectId, projectId)).limit(1);
+  const [invoice] = await db.select({ id: invoices.id }).from(invoices).where(eq(invoices.projectId, projectId)).limit(1);
+  if (time || invoice) throw new Error("Model tagihan tidak dapat diubah setelah ada waktu atau invoice");
+}
+
 const projectCreateSchema = projectInputSchema.extend({
   status: projectInputSchema.shape.status.default("active"),
-  billingType: projectInputSchema.shape.billingType.default("project"),
+  billingType: projectInputSchema.shape.billingType.default("fixed_price"),
   activityRequired: projectInputSchema.shape.activityRequired.default(false),
   currency: projectInputSchema.shape.currency.default("IDR"),
   clientVisible: projectInputSchema.shape.clientVisible.default(false),
 });
 const projectUpdateSchema = projectInputSchema.partial();
 
-async function resolvePackageHours(workspaceId: string, packageId?: string) {
-  if (!packageId) return null;
-  const [pkg] = await db
-    .select({ hours: packages.hours, allowanceValue: packages.allowanceValue })
-    .from(packages)
-    .where(and(eq(packages.id, packageId), eq(packages.workspaceId, workspaceId)))
-    .limit(1);
-  if (!pkg) throw new Error("Package tidak berada di workspace aktif");
-  return pkg.allowanceValue == null ? pkg.hours : Number(pkg.allowanceValue);
+type ProjectBillingType = "fixed_price" | "hourly" | "retainer" | "package" | "project" | "hours";
+
+function billingTypeForModel(parsed: {
+  billingModel?: "fixed_price" | "hourly" | "retainer";
+  billingType?: ProjectBillingType;
+}): ProjectBillingType | undefined {
+  if (parsed.billingModel === "fixed_price") return "fixed_price";
+  if (parsed.billingModel === "hourly") return "hourly";
+  if (parsed.billingModel === "retainer") return "retainer";
+  if (parsed.billingType === "project") return "fixed_price";
+  if (parsed.billingType === "hours") return "hourly";
+  return parsed.billingType;
 }
+
 
 export async function createProject(input: z.input<typeof projectCreateSchema>) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -78,14 +101,9 @@ export async function createProject(input: z.input<typeof projectCreateSchema>) 
   }
 
   const parsed = projectCreateSchema.parse(input);
+  validateRetainerConfiguration(parsed);
   await assertClientInWorkspace(db, user.id, workspaceId, parsed.clientId);
-  const packageHours = parsed.billingType === "package"
-    ? await resolvePackageHours(workspaceId, parsed.selectedPackageId)
-    : null;
-  const timeTrackingMode = parsed.timeTrackingMode ?? defaultTimeTrackingMode({
-    billingType: parsed.billingType,
-    packageHours,
-  });
+  const timeTrackingMode = parsed.timeTrackingMode ?? (parsed.billingModel === "fixed_price" ? "off" : "billable");
 
   const [project] = await db.insert(projects).values({
     workspaceId,
@@ -93,7 +111,8 @@ export async function createProject(input: z.input<typeof projectCreateSchema>) 
     name: parsed.name,
     description: parsed.description || null,
     status: parsed.status,
-    billingType: parsed.billingType,
+    billingType: billingTypeForModel(parsed) ?? "fixed_price",
+    billingModel: parsed.billingModel,
     timeTrackingMode,
     activityRequired: parsed.activityRequired,
     currency: parsed.currency,
@@ -125,6 +144,8 @@ export async function updateProject(projectId: string, input: z.input<typeof pro
   await assertProjectInWorkspace(db, user.id, workspaceId, projectId);
 
   const parsed = projectUpdateSchema.parse(input);
+  if (parsed.billingModel) await assertBillingModelTransitionAllowed(projectId, parsed.billingModel);
+  validateRetainerConfiguration(parsed);
   if (parsed.clientId) {
     await assertClientInWorkspace(db, user.id, workspaceId, parsed.clientId);
   }
@@ -134,7 +155,13 @@ export async function updateProject(projectId: string, input: z.input<typeof pro
   if (parsed.description !== undefined) updateData.description = parsed.description;
   if (parsed.clientId !== undefined) updateData.clientId = parsed.clientId;
   if (parsed.status !== undefined) updateData.status = parsed.status;
-  if (parsed.billingType !== undefined) updateData.billingType = parsed.billingType;
+  if (parsed.billingType !== undefined || parsed.billingModel !== undefined) updateData.billingType = billingTypeForModel(parsed);
+  if (parsed.billingModel !== undefined) updateData.billingModel = parsed.billingModel;
+  if (parsed.retainerFee !== undefined) updateData.retainerFee = String(parsed.retainerFee);
+  if (parsed.retainerIncludedMinutes !== undefined) updateData.retainerIncludedMinutes = parsed.retainerIncludedMinutes;
+  if (parsed.retainerResetDay !== undefined) updateData.retainerResetDay = parsed.retainerResetDay;
+  if (parsed.retainerOveragePolicy !== undefined) updateData.retainerOveragePolicy = parsed.retainerOveragePolicy;
+  if (parsed.retainerOverageRate !== undefined) updateData.retainerOverageRate = String(parsed.retainerOverageRate);
   if (parsed.timeTrackingMode !== undefined) updateData.timeTrackingMode = parsed.timeTrackingMode;
   if (parsed.activityRequired !== undefined) updateData.activityRequired = parsed.activityRequired;
   if (parsed.currency !== undefined) updateData.currency = parsed.currency;

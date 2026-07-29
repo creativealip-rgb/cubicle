@@ -9,9 +9,19 @@ Reserve a number here before creating SQL. Recheck remote refs and every worktre
 - `0048` — Activity Catalog Phase 2.
 - `0049` — Service Catalog Phase 3.
 - `0050` — Package Builder Phase 4 — integrated; applied to `cubicle_dev`.
-- `0051`–`0054` — unreserved.
+- `0051` — Timesheet approval lifecycle — `feat/mh1-weekly-track` — integrated; applied to `cubicle_dev`.
+- `0052` — Timer integrity and segments — `feat/mh1-weekly-track` — integrated; applied to `cubicle_dev`.
+- `0053` — Time-entry submission/review lifecycle — `feat/mh1-weekly-track` — integrated; applied to `cubicle_dev`.
+- `0054` — Service profitability and client rate cards — `feat/mh1-weekly-track` — integrated; applied to `cubicle_dev`.
 - `0055` — Personal Landing Page V2 — integrated; applied to `cubicle_dev`.
-- `0056+` — unreserved.
+- `0056` — Billing-model compatibility + Phase 0A containment — Coder — `feat/billing-aware-phase0` — committed; applied to `cubicle_dev`.
+- `0057` — Retainer configuration + workspace timezone — Coder — `feat/billing-aware-phase1` — committed.
+- `0058` — Retainer period ledger + time-entry linkage — Coder — `feat/billing-aware-phase1` — committed.
+- `0059` — Retainer invoice source integrity — Coder — `feat/billing-aware-phase1` — committed.
+- `0060` — Task behavior + archive metadata — Coder — `feat/billing-aware-phase1` — committed.
+- `0061` — Legacy billing classification table — Coder — `feat/billing-aware-phase1` — committed.
+- `0062` — Billing-aware Phase 9 destructive cleanup — Coder — `feat/billing-aware-phase1` — reserved; dry-run only, production untouched.
+- `0063` — Restore temporary legacy compatibility after Phase 9 cleanup — Coder — `feat/mh1-weekly-track` — applied to new staging VPS; production untouched.
 
 ## Reservation protocol
 

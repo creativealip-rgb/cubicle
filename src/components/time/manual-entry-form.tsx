@@ -113,8 +113,8 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks, activit
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!clientId || !projectId) {
-      toast.error(t("Klien dan proyek wajib diisi", "Client and project required"));
+    if (!clientId || !projectId || !taskId || !description.trim()) {
+      toast.error(t("Klien, proyek, task, dan deskripsi wajib diisi", "Client, project, task, and description required"));
       return;
     }
     const durationMinutes = parseInt(hours || "0") * 60 + parseInt(minutes || "0");
@@ -129,8 +129,8 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks, activit
         clientId,
         projectId,
         activityId: activityId || null,
-        taskId: taskId || undefined,
-        description: description || undefined,
+        taskId,
+        description: description.trim(),
         tags: tags || undefined,
         date,
         durationMinutes,
@@ -206,7 +206,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks, activit
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs">{t("Activity", "Activity")}</Label>
+            <Label className="text-xs">{t("Aktivitas", "Activity")}</Label>
             <Select
               value={activityId || "__none__"}
               onValueChange={(value) => setActivityId(value === "__none__" ? "" : value)}
