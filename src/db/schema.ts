@@ -647,8 +647,30 @@ export const timesheetSubmissions = pgTable("timesheet_submissions", {
 ]);
 
 export const retainerPeriods = pgTable("retainer_periods", {
-  id: uuid("id").defaultRandom().primaryKey(), workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "restrict" }), projectId: uuid("project_id").notNull(), periodStart: date("period_start").notNull(), periodEnd: date("period_end").notNull(), timezoneSnapshot: text("timezone_snapshot").notNull(), feeSnapshot: numeric("fee_snapshot", { precision: 12, scale: 2 }).notNull(), currencySnapshot: text("currency_snapshot").notNull(), includedMinutesSnapshot: integer("included_minutes_snapshot").notNull(), overagePolicySnapshot: text("overage_policy_snapshot").notNull(), overageRateSnapshot: numeric("overage_rate_snapshot", { precision: 12, scale: 2 }), approvedMinutes: integer("approved_minutes").notNull().default(0), overageMinutes: integer("overage_minutes").notNull().default(0), status: text("status", { enum: ["open", "locked", "invoiced"] }).notNull().default("open"), invoiceGeneration: integer("invoice_generation").notNull().default(0), lockedAt: timestamp("locked_at", { withTimezone: true }), invoicedAt: timestamp("invoiced_at", { withTimezone: true }), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [unique("retainer_periods_id_workspace_unique").on(t.id,t.workspaceId), unique().on(t.projectId,t.periodStart,t.periodEnd), foreignKey({columns:[t.projectId,t.workspaceId],foreignColumns:[projects.id,projects.workspaceId]}).onDelete("restrict")]);
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "restrict" }),
+  projectId: uuid("project_id").notNull(),
+  periodStart: date("period_start").notNull(),
+  periodEnd: date("period_end").notNull(),
+  timezoneSnapshot: text("timezone_snapshot").notNull(),
+  feeSnapshot: numeric("fee_snapshot", { precision: 12, scale: 2 }).notNull(),
+  currencySnapshot: text("currency_snapshot").notNull(),
+  includedMinutesSnapshot: integer("included_minutes_snapshot").notNull(),
+  overagePolicySnapshot: text("overage_policy_snapshot", { enum: ["none", "warn", "bill"] }).notNull(),
+  overageRateSnapshot: numeric("overage_rate_snapshot", { precision: 12, scale: 2 }),
+  approvedMinutes: integer("approved_minutes").notNull().default(0),
+  overageMinutes: integer("overage_minutes").notNull().default(0),
+  status: text("status", { enum: ["open", "locked", "invoiced"] }).notNull().default("open"),
+  invoiceGeneration: integer("invoice_generation").notNull().default(0),
+  lockedAt: timestamp("locked_at", { withTimezone: true }),
+  invoicedAt: timestamp("invoiced_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique("retainer_periods_id_workspace_unique").on(t.id, t.workspaceId),
+  unique().on(t.projectId, t.periodStart, t.periodEnd),
+  foreignKey({ columns: [t.projectId, t.workspaceId], foreignColumns: [projects.id, projects.workspaceId] }).onDelete("restrict"),
+]);
 
 export const timeEntries = pgTable("time_entries", {
   id: uuid("id").defaultRandom().primaryKey(),
