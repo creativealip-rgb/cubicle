@@ -20,6 +20,7 @@ Reserve a number here before creating SQL. Recheck remote refs and every worktre
 - `0059` — Retainer invoice source integrity — Coder — `feat/billing-aware-phase1` — committed.
 - `0060` — Task behavior + archive metadata — Coder — `feat/billing-aware-phase1` — committed.
 - `0061` — Legacy billing classification table — Coder — `feat/billing-aware-phase1` — committed.
+- `0062` — Billing-aware Phase 9 destructive cleanup — Coder — `feat/billing-aware-phase1` — reserved; dry-run only, production untouched.
 
 ## Reservation protocol
 
