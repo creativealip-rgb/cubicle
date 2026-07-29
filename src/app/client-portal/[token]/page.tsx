@@ -28,6 +28,7 @@ import { PortalContactButtons } from "@/components/portal/portal-contact";
 import { ProjectAccordion } from "@/components/portal/project-accordion";
 import { PortalInvoices } from "@/components/portal/portal-invoices";
 import { PortalActionButtons } from "@/components/portal/portal-action-buttons";
+import { PortalRequestList } from "@/components/portal/portal-request-list";
 
 import { PortalTabs } from "@/components/portal/portal-tabs";
 import { PortalFileManager } from "@/components/portal/portal-file-manager";
@@ -754,15 +755,10 @@ export default async function ClientPortalPage({
   const activeCount = clientProjects.filter(
     (p) => p.status === "active",
   ).length;
-  const byProjectCount = clientProjects.filter(
-    (p) => p.billingType === "project",
-  ).length;
-  const byHoursCount = clientProjects.filter(
-    (p) => p.billingType === "hours",
-  ).length;
-  const byPackageCount = clientProjects.filter(
-    (p) => p.billingType === "package",
-  ).length;
+  const billingModels = clientProjects.map((p) => resolveBillingModel(p));
+  const byProjectCount = billingModels.filter((model) => model === "fixed_price").length;
+  const byHoursCount = billingModels.filter((model) => model === "hourly").length;
+  const byPackageCount = billingModels.filter((model) => model === "legacy_package").length;
   const dueInvoiceCount = clientInvoices.filter((inv) =>
     ["sent", "viewed", "overdue", "partial"].includes(inv.status),
   ).length;
@@ -924,6 +920,7 @@ export default async function ClientPortalPage({
                 projects: clientProjects.length,
                 files: portalFilesList.length,
                 invoices: clientInvoices.length,
+                requests: pendingClientRequests.length,
               }}
               projects={
                 <section>
@@ -1064,6 +1061,23 @@ export default async function ClientPortalPage({
                     projects={clientProjects.map((p) => ({
                       id: p.id,
                       name: p.name,
+                    }))}
+                    token={portalCredential}
+                  />
+                </section>
+              }
+              requests={
+                <section>
+                  <h2 className="mb-4 text-xl font-semibold">
+                    {t("Request", "Requests")}
+                  </h2>
+                  <PortalRequestList
+                    requests={clientPortalRequests.map((request) => ({
+                      ...request,
+                      dueDate: request.dueDate ? String(request.dueDate) : null,
+                      meetingStartTime: request.meetingStartTime
+                        ? String(request.meetingStartTime)
+                        : null,
                     }))}
                     token={portalCredential}
                   />

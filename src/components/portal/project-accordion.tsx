@@ -20,12 +20,14 @@ import { PortalContactButtons } from "./portal-contact";
 import { useT } from "@/lib/i18n-client";
 import { portalLocale, portalStatusLabel } from "@/lib/portal-i18n";
 import { getProjectProgress } from "@/lib/project-progress";
+import { resolveBillingModel } from "@/lib/billing-model";
 
 interface Project {
   id: string;
   name: string;
   description: string | null;
   status: string;
+  billingModel?: string | null;
   billingType: string;
   rate: string | null;
   budget: string | null;
@@ -172,6 +174,18 @@ function formatCurrency(amount: string | number, currency: string) {
     currency: code,
     minimumFractionDigits: Number(amount) % 1 === 0 ? 0 : 2,
   }).format(Number(amount));
+}
+
+function projectBillingLabel(project: Project, t: ReturnType<typeof useT>["t"]) {
+  const model = resolveBillingModel({
+    billingModel: project.billingModel,
+    billingType: project.billingType,
+  });
+
+  if (model === "hourly") return t("Per jam", "Hourly");
+  if (model === "retainer") return t("Retainer", "Retainer");
+  if (model === "legacy_package") return t("Per paket", "Package");
+  return t("Harga tetap", "Fixed price");
 }
 
 // ── Portal UX helpers (client-facing, Bahasa Indonesia) ──
@@ -921,11 +935,7 @@ export function ProjectAccordion({
                   {project.name}
                 </span>
                 <Badge variant="secondary" className="shrink-0 text-[11px]">
-                  {project.billingType === "hours"
-                    ? t("Per jam", "Hourly")
-                    : project.billingType === "package"
-                      ? t("Per paket", "Package")
-                      : t("Per proyek", "Per project")}
+                  {projectBillingLabel(project, t)}
                 </Badge>
               </div>
               <div className="mt-1.5">
