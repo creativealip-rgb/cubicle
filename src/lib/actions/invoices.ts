@@ -450,12 +450,53 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
     .where(eq(invoices.id, invoiceId))
     .returning();
 
+  if (parsed.status === "cancelled" && currentInvoice.status === "draft") {
+    await revertInvoiceTimeEntrySources(workspaceId, invoiceId);
+  }
+
   await writeActivityLog(workspaceId, user.id, "updated_invoice", "invoice", invoiceId);
 
   return inv;
 }
+async function revertInvoiceTimeEntrySources(workspaceId: string, invoiceId: string) {
+  const linkedTimeEntryIds = await db
+    .select({ sourceId: invoiceItems.sourceId })
+    .from(invoiceItems)
+    .where(and(eq(invoiceItems.invoiceId, invoiceId), eq(invoiceItems.sourceType, "time_entry")));
 
-// ─── Line Items ───
+  for (const row of linkedTimeEntryIds) {
+    if (!row.sourceId) continue;
+    const [sourceItem] = await db
+      .select({ previousTimeEntryStatus: invoiceItems.previousTimeEntryStatus })
+      .from(invoiceItems)
+      .where(and(eq(invoiceItems.invoiceId, invoiceId), eq(invoiceItems.sourceType, "time_entry"), eq(invoiceItems.sourceId, row.sourceId)))
+      .limit(1);
+    await db
+      .update(timeEntries)
+      .set({ status: sourceItem?.previousTimeEntryStatus ?? "approved", updatedAt: new Date() })
+      .where(and(eq(timeEntries.id, row.sourceId), eq(timeEntries.workspaceId, workspaceId)));
+  }
+}
+
+export async function cancelDraftInvoice(invoiceId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const inv = await assertInvoiceInWorkspace(invoiceId, workspaceId);
+  if (inv.status !== "draft") throw new Error("Hanya draft invoice yang bisa dibatalkan dari aksi ini");
+
+  await db.transaction(async (tx) => {
+    await revertInvoiceTimeEntrySources(workspaceId, invoiceId);
+    await tx.delete(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId));
+    await tx.update(invoices).set({ status: "cancelled", updatedAt: new Date() }).where(eq(invoices.id, invoiceId));
+  });
+
+  await writeActivityLog(workspaceId, user.id, "cancelled_draft_invoice", "invoice", invoiceId);
+  return { success: true };
+}
+
 
 export async function recalculateInvoice(invoiceId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
