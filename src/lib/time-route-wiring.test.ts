@@ -9,7 +9,9 @@ describe("Billing-aware Waktu route wiring", () => {
     const header = read("src/components/time/time-header.tsx");
     expect(header).toContain('href: "/app/time?view=daily"');
     expect(header).toContain('href: "/app/time?view=weekly"');
-    expect(header).toContain('href: "/app/time/approvals"');
+    expect(header).not.toContain('href: "/app/time/approvals"');
+    expect(header).not.toContain("Persetujuan");
+    expect(header).not.toContain("Tautan");
     expect(header).not.toContain('href="/app/time/activities"');
     expect(header).not.toContain('label: "Timer"');
   });

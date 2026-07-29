@@ -19,17 +19,18 @@ describe("billing-aware Waktu Phase 1", () => {
     expect(header).not.toContain("Kelola Aktivitas");
   });
 
-  it("uses Project then required Task without Activity in new dialogs", () => {
+  it("keeps manual logs task-first while empty timers start immediately", () => {
     const manual = read("src/components/time/add-time-log-dialog.tsx");
     const timer = read("src/components/time/new-timer-dialog.tsx");
-    for (const source of [manual, timer]) {
-      expect(source).toContain("projectId");
-      expect(source).toContain("taskId");
-      expect(source).not.toContain("activityId");
-      expect(source).not.toContain("clientId");
-    }
+    expect(manual).toContain("projectId");
+    expect(manual).toContain("taskId");
+    expect(manual).not.toContain("activityId");
+    expect(manual).not.toContain("clientId");
     expect(manual).toContain("description.trim()");
     expect(timer).toContain("startTimer");
+    expect(timer).toContain("startTimer({ workspaceId })");
+    expect(timer).not.toContain("projectId");
+    expect(timer).not.toContain("taskId");
   });
 
   it("keeps active timer synchronized and provides compatibility redirects", () => {
@@ -42,9 +43,11 @@ describe("billing-aware Waktu Phase 1", () => {
     expect(timesheetPage).toContain('redirect("/app/time?view=weekly")');
   });
 
-  it("requires Task and description at server boundaries", () => {
+  it("allows empty timer starts but requires Task and description for manual entries", () => {
     const actions = read("src/lib/actions/time.ts");
-    expect(actions).toContain('taskId: z.string().uuid()');
+    expect(actions).toContain('taskId: z.string().uuid().optional().nullable()');
+    expect(actions).toContain('const createManualEntrySchema = z.object({');
+    expect(actions).toContain('taskId: z.string().uuid(),');
     expect(actions).toContain('description: z.string().trim().min(1');
   });
 });
