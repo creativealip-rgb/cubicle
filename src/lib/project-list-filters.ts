@@ -8,10 +8,12 @@ export const PROJECT_STATUS_TABS = [
 ] as const;
 
 export type ProjectStatusTab = (typeof PROJECT_STATUS_TABS)[number];
-export type ProjectBillingType = "project" | "hours" | "package";
+export type ProjectBillingType = "fixed_price" | "hourly" | "retainer" | "package";
 
 export function parseBillingType(raw?: string): ProjectBillingType | undefined {
-  return raw === "project" || raw === "hours" || raw === "package" ? raw : undefined;
+  if (raw === "project") return "fixed_price";
+  if (raw === "hours") return "hourly";
+  return raw === "fixed_price" || raw === "hourly" || raw === "retainer" || raw === "package" ? raw : undefined;
 }
 
 export function buildProjectsHref(filters: {

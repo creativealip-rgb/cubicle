@@ -172,7 +172,7 @@ export const projects = pgTable("projects", {
   name: text("name").notNull(),
   description: text("description"),
   status: text("status", { enum: ["draft", "active", "on_hold", "completed", "cancelled", "archived"] }).notNull().default("active"),
-  billingType: text("billing_type", { enum: ["project", "hours", "package"] }).notNull().default("project"),
+  billingType: text("billing_type", { enum: ["fixed_price", "hourly", "retainer", "package", "project", "hours"] }).notNull().default("fixed_price"),
   billingModel: text("billing_model", { enum: ["fixed_price", "hourly", "retainer", "legacy_package"] }),
   retainerFee: numeric("retainer_fee", { precision: 12, scale: 2 }),
   retainerIncludedMinutes: integer("retainer_included_minutes"),

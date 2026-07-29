@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import { buildProjectsHref, parseBillingType } from "./project-list-filters";
 
 describe("project list billing type filter", () => {
-  it("accepts project billing types and rejects unknown values", () => {
-    expect(parseBillingType("project")).toBe("project");
-    expect(parseBillingType("hours")).toBe("hours");
+  it("accepts canonical billing models and maps legacy query values", () => {
+    expect(parseBillingType("project")).toBe("fixed_price");
+    expect(parseBillingType("hours")).toBe("hourly");
+    expect(parseBillingType("fixed_price")).toBe("fixed_price");
+    expect(parseBillingType("hourly")).toBe("hourly");
+    expect(parseBillingType("retainer")).toBe("retainer");
     expect(parseBillingType("package")).toBe("package");
     expect(parseBillingType("unknown")).toBeUndefined();
   });
@@ -13,8 +16,8 @@ describe("project list billing type filter", () => {
     expect(buildProjectsHref({
       status: "draft",
       clientId: "client-1",
-      billingType: "hours",
-    })).toBe("/app/projects?status=draft&clientId=client-1&billingType=hours");
+      billingType: "hourly",
+    })).toBe("/app/projects?status=draft&clientId=client-1&billingType=hourly");
   });
 
   it("removes billingType when all project types are selected", () => {
