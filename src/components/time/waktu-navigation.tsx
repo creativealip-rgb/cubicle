@@ -5,24 +5,33 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { localDateIso, shiftDateIso, weekStartDate } from "@/lib/effective-work-date";
 
-export function WaktuNavigation({ view, selectedDate }: { view: "daily" | "weekly"; selectedDate: string }) {
+export function WaktuNavigation({
+  view,
+  selectedDate,
+  actions,
+}: {
+  view: "daily" | "weekly";
+  selectedDate: string;
+  actions?: React.ReactNode;
+}) {
   const step = view === "weekly" ? 7 : 1;
   const today = localDateIso(new Date());
+  const weekStart = localDateIso(weekStartDate(new Date(`${selectedDate}T12:00:00`)));
+  const dates = view === "weekly"
+    ? [new Date(`${weekStart}T00:00:00.000Z`), new Date(`${shiftDateIso(weekStart, 6)}T00:00:00.000Z`)]
+    : [new Date(`${selectedDate}T00:00:00.000Z`)];
   const label = view === "weekly"
-    ? `${localDateIso(weekStartDate(new Date(`${selectedDate}T12:00:00`)))} – ${shiftDateIso(localDateIso(weekStartDate(new Date(`${selectedDate}T12:00:00`))), 6)}`
-    : new Intl.DateTimeFormat("id-ID", { dateStyle: "full" }).format(new Date(`${selectedDate}T12:00:00`));
+    ? `${dates[0].toLocaleDateString("id-ID", { day: "numeric", month: "short", timeZone: "UTC" })} – ${dates[1].toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}`
+    : dates[0].toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
   const href = (date: string) => `/app/time?view=${view}&date=${date}`;
 
-  return <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-3">
-    <div className="flex items-center gap-2">
-      <Button asChild variant="outline" size="icon" aria-label="Periode sebelumnya"><Link href={href(shiftDateIso(selectedDate, -step))}><ChevronLeft className="h-4 w-4" /></Link></Button>
-      <span className="min-w-48 text-center text-sm font-semibold">{label}</span>
-      <Button asChild variant="outline" size="icon" aria-label="Periode berikutnya"><Link href={href(shiftDateIso(selectedDate, step))}><ChevronRight className="h-4 w-4" /></Link></Button>
-      <Button asChild variant="ghost" size="sm"><Link href={href(today)}>Hari Ini</Link></Button>
+  return <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className="flex items-center gap-1 rounded-full border bg-muted/40 p-1 text-xs">
+      <Button asChild variant="ghost" size="icon" className="h-7 w-7 rounded-full" aria-label="Periode sebelumnya"><Link href={href(shiftDateIso(selectedDate, -step))}><ChevronLeft className="h-3.5 w-3.5" /></Link></Button>
+      <span className="min-w-28 px-1 text-center font-medium text-muted-foreground">{label}</span>
+      <Button asChild variant="ghost" size="icon" className="h-7 w-7 rounded-full" aria-label="Periode berikutnya"><Link href={href(shiftDateIso(selectedDate, step))}><ChevronRight className="h-3.5 w-3.5" /></Link></Button>
+      <Button asChild variant="ghost" size="sm" className="h-7 rounded-full px-2 text-xs"><Link href={href(today)}>{view === "weekly" ? "Minggu ini" : "Hari ini"}</Link></Button>
     </div>
-    <div className="flex rounded-lg border p-1">
-      <Button asChild size="sm" variant={view === "daily" ? "default" : "ghost"}><Link href={`/app/time?view=daily&date=${selectedDate}`}>Harian</Link></Button>
-      <Button asChild size="sm" variant={view === "weekly" ? "default" : "ghost"}><Link href={`/app/time?view=weekly&date=${selectedDate}`}>Mingguan</Link></Button>
-    </div>
+    {actions && <div className="flex flex-wrap items-center justify-end gap-2">{actions}</div>}
   </div>;
 }

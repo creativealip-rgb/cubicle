@@ -7,7 +7,6 @@ import { eq, and, isNull, isNotNull, desc, gte, lt, or } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { TimerWidget } from "@/components/time/timer-widget";
 import { Timesheet } from "@/components/time/timesheet";
-import { TeamTimesheetView } from "@/components/time/team-timesheet-view";
 import { WeeklyTimeGrid } from "@/components/time/weekly-time-grid";
 import { ManualEntryForm } from "@/components/time/manual-entry-form";
 import { PdfExportButton } from "@/components/time/pdf-export-button";
@@ -173,41 +172,6 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
   const writableProjectList = projectList.filter((project) => project.timeTrackingMode !== "off");
   const writableProjectIds = new Set(writableProjectList.map((project) => project.id));
   const writableTaskList = taskList.filter((task) => task.projectId && writableProjectIds.has(task.projectId));
-  const teamEntries = [
-    ...entries.map((entry) => ({
-      id: entry.id,
-      description: entry.description,
-      clientName: entry.clientName,
-      projectName: entry.projectName,
-      activityName: entry.activityName,
-      taskTitle: entry.taskTitle,
-      userName: entry.userName,
-      startTime: entry.startTime,
-      endTime: entry.endTime,
-      pausedAt: null,
-      durationMinutes: entry.durationMinutes,
-      manualMinutes: entry.manualMinutes,
-      status: entry.status,
-    })),
-    ...(activeTimer
-      ? [{
-          id: activeTimer.id,
-          description: activeTimer.description,
-          clientName: activeTimer.clientName,
-          projectName: activeTimer.projectName,
-          activityName: activeTimer.activityName,
-          taskTitle: activeTimer.taskTitle,
-          userName: activeTimer.userName,
-          startTime: activeTimer.startTime,
-          endTime: activeTimer.endTime,
-          pausedAt: activeTimer.pausedAt,
-          durationMinutes: activeTimer.durationMinutes,
-          manualMinutes: activeTimer.manualMinutes,
-          status: activeTimer.status,
-        }]
-      : []),
-  ];
-
   const recentTimerCombinations = uniqueRecentTimerCombinations(
     entries
       .filter((entry) => entry.projectId)
@@ -242,16 +206,12 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
       )}
       {mode === "timesheet" && (
         <>
-          <WaktuNavigation view="weekly" selectedDate={selectedDate} />
-          <div className="flex flex-wrap justify-end gap-2">{canWrite && <AddTimeLogDialog workspaceId={workspaceId} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId }))} />}{canWrite && <NewTimerDialog initialOpen={action === "timer"} workspaceId={workspaceId} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId }))} />}</div>
-          <WeeklyTimeGrid entries={entries.map((entry) => ({ id: entry.id, projectId: entry.projectId, projectName: entry.projectName, taskId: entry.taskId, taskTitle: entry.taskTitle, workDate: entry.workDate, startTime: entry.startTime, createdAt: entry.createdAt, durationMinutes: entry.durationMinutes, manualMinutes: entry.manualMinutes, tags: entry.tags, status: entry.status }))} projects={writableProjectList.map((project) => ({ id: project.id, name: project.name }))} tasks={writableTaskList.map((task) => ({ id: task.id, title: task.title, projectId: task.projectId! }))} canWrite={canWrite} />
-          {member.role === "owner" && <TeamTimesheetView entries={teamEntries} />}
+          <WeeklyTimeGrid selectedDate={selectedDate} entries={entries.map((entry) => ({ id: entry.id, projectId: entry.projectId, projectName: entry.projectName, taskId: entry.taskId, taskTitle: entry.taskTitle, workDate: entry.workDate, startTime: entry.startTime, createdAt: entry.createdAt, durationMinutes: entry.durationMinutes, manualMinutes: entry.manualMinutes, tags: entry.tags, status: entry.status }))} projects={writableProjectList.map((project) => ({ id: project.id, name: project.name }))} tasks={writableTaskList.map((task) => ({ id: task.id, title: task.title, projectId: task.projectId! }))} canWrite={canWrite} />
         </>
       )}
       {mode === "history" && (
         <>
-          <WaktuNavigation view="daily" selectedDate={selectedDate} />
-          <div className="flex flex-wrap justify-end gap-2">{canWrite && <AddTimeLogDialog workspaceId={workspaceId} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId }))} />}{canWrite && <NewTimerDialog initialOpen={action === "timer"} workspaceId={workspaceId} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId }))} />}<PdfExportButton clients={clientList} projects={projectList} /></div>
+          <WaktuNavigation view="daily" selectedDate={selectedDate} actions={<>{canWrite && <AddTimeLogDialog workspaceId={workspaceId} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId }))} />}{canWrite && <NewTimerDialog initialOpen={action === "timer"} workspaceId={workspaceId} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId }))} />}<PdfExportButton clients={clientList} projects={projectList} /></>} />
           <ActiveTimerCard initialTimer={activeTimer ? { id: activeTimer.id, projectName: activeTimer.projectName, taskTitle: activeTimer.taskTitle, description: activeTimer.description, startTime: activeTimer.startTime! } : null} />
           <WaktuHistory view="daily" selectedDate={selectedDate} entries={entries.map((e) => ({ id: e.id, projectName: e.projectName, clientName: e.clientName, taskTitle: e.taskTitle, description: e.description, workDate: e.workDate, startTime: e.startTime, createdAt: e.createdAt, durationMinutes: e.durationMinutes, manualMinutes: e.manualMinutes }))} />
         </>

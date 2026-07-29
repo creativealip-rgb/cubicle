@@ -67,10 +67,10 @@ async function resolveHourlyRate(opts: {
 
 const startTimerSchema = z.object({
   workspaceId: z.string().uuid(),
-  clientId: z.string().uuid(),
-  projectId: z.string().uuid(),
+  clientId: z.string().uuid().optional().nullable(),
+  projectId: z.string().uuid().optional().nullable(),
   activityId: z.string().uuid().optional().nullable(),
-  taskId: z.string().uuid(),
+  taskId: z.string().uuid().optional().nullable(),
   description: z.string().optional().nullable(),
   tags: z.string().optional().nullable(),
   hourlyRate: z.number().nonnegative().optional(),
@@ -147,7 +147,9 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
 
   const parsed = startTimerSchema.parse(input);
   await assertTimeEntryContext(db, parsed.workspaceId, parsed);
-  const projectMode = await assertProjectTimeTrackingEnabled(db, parsed.workspaceId, parsed.projectId);
+  const projectMode = parsed.projectId
+    ? await assertProjectTimeTrackingEnabled(db, parsed.workspaceId, parsed.projectId)
+    : null;
   const activityPolicy = await assertActivityWriteAllowed(db, {
     workspaceId: parsed.workspaceId,
     projectId: parsed.projectId,
@@ -389,9 +391,6 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
   const nextActivityId =
     parsed.activityId !== undefined ? parsed.activityId : entry.activityId;
   const nextTaskId = parsed.taskId ?? entry.taskId ?? null;
-  if (!nextProjectId) {
-    throw new Error("Project wajib dipilih sebelum timer dihentikan");
-  }
   const nextDescription =
     parsed.description !== undefined && parsed.description !== null
       ? parsed.description
@@ -403,9 +402,11 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
     taskId: nextTaskId,
   });
   const keepsOriginalProject = nextProjectId === entry.projectId;
-  const projectMode = keepsOriginalProject
-    ? await getProjectTimeTrackingMode(db, workspaceId, nextProjectId)
-    : await assertProjectTimeTrackingEnabled(db, workspaceId, nextProjectId);
+  const projectMode = nextProjectId
+    ? keepsOriginalProject
+      ? await getProjectTimeTrackingMode(db, workspaceId, nextProjectId)
+      : await assertProjectTimeTrackingEnabled(db, workspaceId, nextProjectId)
+    : null;
   const activityPolicy = await assertActivityWriteAllowed(db, {
     workspaceId,
     projectId: nextProjectId,
@@ -433,7 +434,7 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
         taskId: nextTaskId,
         description: nextDescription,
         tags: nextTags,
-        billable: projectMode === "off" ? entry.billable : timeEntryBillableForMode(projectMode),
+        billable: projectMode ? timeEntryBillableForMode(projectMode) : false,
         hourlyRate: resolvedRate ?? entry.hourlyRate,
         endTime: finalEnd,
         pausedAt: null,
