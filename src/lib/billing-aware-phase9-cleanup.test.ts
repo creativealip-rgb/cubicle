@@ -28,6 +28,9 @@ describe("billing-aware Phase 9 cleanup gate", () => {
     expect(audit).toContain("Backup");
     expect(audit).toContain("Dry-run");
     expect(audit).toContain("Production: untouched");
+    expect(migration).toContain("DROP CONSTRAINT IF EXISTS project_services_package_item_workspace_fk");
+    expect(migration).toContain("DROP CONSTRAINT IF EXISTS project_services_project_package_assignment_workspace_fk");
+    expect(migration).toContain("DROP COLUMN IF EXISTS package_item_id");
     expect(migration).toContain("DROP TABLE IF EXISTS project_activities");
     expect(migration).toContain("DROP TABLE IF EXISTS activities");
     expect(migration).toContain("DROP TABLE IF EXISTS project_package_assignments");

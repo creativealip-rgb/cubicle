@@ -59,8 +59,8 @@ Remove obsolete Package/Activity active write paths and obsolete catalog schema:
 
 - Package write operations now fail closed with `Paket legacy sudah masuk fase cleanup; data historis hanya bisa dibaca`.
 - Activity write operations now fail closed with `Aktivitas legacy sudah masuk fase cleanup; data historis hanya bisa dibaca`.
-- Migration removes `time_entries.activity_id`, `projects.selected_package_id`, and Package/Activity catalog tables.
-- `services` and `project_services` are not dropped.
+- Migration removes `time_entries.activity_id`, `projects.selected_package_id`, package/order assignment pointers, project-service package linkage columns, and Package/Activity catalog tables.
+- `services` and `project_services` are not dropped; project-service commercial snapshots remain readable.
 
 ## Production status
 
