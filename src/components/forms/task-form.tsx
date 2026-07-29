@@ -120,6 +120,7 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], project
           </Select>
         </div>
       )}
+      <p className="text-xs text-muted-foreground">Behavior mengikuti Project: Harga Tetap = Tugas sekali selesai; Per Jam/Retainer = Tugas berulang.</p>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>{t("Status", "Status")}</Label>

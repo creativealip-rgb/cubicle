@@ -41,7 +41,7 @@ import { authClient } from "@/lib/auth-client";
 import { useSidebar } from "@/components/app-shell";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { getUserWorkspaces, switchWorkspace, createWorkspace } from "@/lib/actions/workspace-switch";
-import { pauseTimer, resumeTimer, startTimer, stopTimer } from "@/lib/actions/time";
+import { pauseTimer, resumeTimer, stopTimer } from "@/lib/actions/time";
 import { useT } from "@/lib/i18n-client";
 import { cn } from "@/lib/utils";
 
@@ -224,11 +224,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
     }
     setTimerBusy(true);
     try {
-      await startTimer({ workspaceId });
-      toast.success(t("Timer dimulai", "Timer started"));
-      await loadActiveTimer();
-      window.dispatchEvent(new Event("cubicle:timer-changed"));
-      router.refresh();
+      router.push("/app/time?action=timer");
     } catch (err: unknown) {
       toast.error(
         err instanceof Error

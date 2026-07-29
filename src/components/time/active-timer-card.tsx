@@ -1,0 +1,6 @@
+"use client";
+import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Clock } from "lucide-react";
+type ActiveTimer={id:string;projectName:string|null;taskTitle:string|null;description:string|null;startTime:string|Date};
+export function ActiveTimerCard({initialTimer}:{initialTimer:ActiveTimer|null}){const router=useRouter();const [timer,setTimer]=useState(initialTimer);const load=useCallback(async()=>{const response=await fetch("/api/time/active",{cache:"no-store"});if(response.ok)setTimer(((await response.json()) as {activeTimer:ActiveTimer|null}).activeTimer)},[]);useEffect(()=>{const sync=()=>{void load();router.refresh()};window.addEventListener("cubicle:timer-changed",sync);return()=>window.removeEventListener("cubicle:timer-changed",sync)},[load,router]);if(!timer)return null;return <section className="rounded-xl border bg-card p-4"><div className="flex items-center gap-2 text-sm font-semibold"><Clock className="h-4 w-4 text-primary"/>Timer aktif</div><p className="mt-2 font-medium">{timer.projectName} · {timer.taskTitle}</p>{timer.description&&<p className="text-sm text-muted-foreground">{timer.description}</p>}</section>}

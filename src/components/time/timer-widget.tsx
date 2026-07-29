@@ -238,8 +238,8 @@ export function TimerWidget({
   }, [activeTimer]);
 
   const handleStart = useCallback(async () => {
-    if (!selectedClientId || !selectedProjectId) {
-      toast.error(t("Pilih klien dan proyek", "Select a client and project"));
+    if (!selectedClientId || !selectedProjectId || !selectedTaskId || selectedTaskId === "__none__") {
+      toast.error(t("Pilih klien, proyek, dan task", "Select a client, project, and task"));
       return;
     }
     setLoading(true);
@@ -249,7 +249,7 @@ export function TimerWidget({
         clientId: selectedClientId,
         projectId: selectedProjectId,
         activityId: selectedActivityId || null,
-        taskId: selectedTaskId && selectedTaskId !== "__none__" ? selectedTaskId : undefined,
+        taskId: selectedTaskId,
         description: description || undefined,
         tags: tags || undefined,
         hourlyRate: hourlyRate ? Number(hourlyRate) : undefined,
@@ -302,34 +302,8 @@ export function TimerWidget({
   ]);
 
   const handleStartEmpty = useCallback(async () => {
-    setLoading(true);
-    try {
-      const entry = await startTimer({ workspaceId });
-      setActiveTimer({
-        id: entry.id,
-        clientId: null,
-        projectId: null,
-        activityId: null,
-        taskId: null,
-        description: null,
-        tags: null,
-        startTime: entry.startTime!,
-        pausedAt: null,
-        clientName: null,
-        projectName: null,
-        activityName: null,
-        taskTitle: null,
-      });
-      selfDispatched.current = true;
-      window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
-      toast.success(t("Timer kosong dimulai", "Empty timer started"));
-      router.refresh();
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : t("Gagal memulai timer", "Failed to start timer"));
-    } finally {
-      setLoading(false);
-    }
-  }, [workspaceId, router, t]);
+    router.push("/app/time?action=timer");
+  }, [router]);
 
   const handlePause = useCallback(async () => {
     if (!activeTimer || loading) return;

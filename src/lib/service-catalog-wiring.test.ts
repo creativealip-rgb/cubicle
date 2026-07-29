@@ -93,7 +93,7 @@ describe("Phase 3 Service catalog wiring", () => {
     expect(packageCatalog).not.toContain('t("Service Baru", "New Service")');
   });
 
-  it("lets Projects select many Services across billing types without legacy Package coupling", () => {
+  it("preserves Project Service snapshots outside the simplified canonical Project form", () => {
     const projectActions = read("src/lib/actions/projects.ts");
     const projectForm = read("src/components/forms/project-form.tsx");
     const projectPage = read("src/app/(app)/app/projects/[projectId]/page.tsx");
@@ -101,11 +101,10 @@ describe("Phase 3 Service catalog wiring", () => {
 
     expect(projectActions).toContain("serviceIds: z.array(z.string().uuid()).optional()");
     expect(projectActions).toContain("syncProjectServiceSnapshots");
-    expect(projectForm).toContain("getWorkspaceServices");
-    expect(projectForm).toContain("serviceIds");
-    expect(projectForm).toContain('defaultValues?.serviceIds !== undefined');
-    expect(projectForm).toContain('href="/app/services"');
+    expect(projectForm).not.toContain("getWorkspaceServices");
     expect(projectForm).not.toContain('<Label>Service</Label>');
+    expect(projectForm).not.toContain('href="/app/services"');
+    expect(projectForm).not.toContain("Layanan Project");
     expect(projectPage).toContain("ProjectServiceSettings");
     expect(projectPage).toContain("projectServiceRows");
     expect(projectPage).toContain('TabsTrigger value="services"');

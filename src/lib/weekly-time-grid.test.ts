@@ -35,15 +35,13 @@ describe("weekly time grid", () => {
     ]);
   });
 
-  it("groups by project and activity while preserving related tasks in totals", () => {
+  it("groups by project and task", () => {
     const entries: WeeklyGridEntry[] = [
       {
         id: "timer",
         projectId: "project-1",
         projectName: "Website",
-        activityId: "activity-1",
-        activityName: "Development",
-        taskId: "task-1",
+                taskId: "task-1",
         taskTitle: "Build",
         startTime: "2026-07-27T01:00:00.000Z",
         durationMinutes: 60,
@@ -55,9 +53,7 @@ describe("weekly time grid", () => {
         id: "grid",
         projectId: "project-1",
         projectName: "Website",
-        activityId: "activity-1",
-        activityName: "Development",
-        taskId: "task-1",
+                taskId: "task-1",
         taskTitle: "Build",
         startTime: "2026-07-27T00:00:00.000Z",
         durationMinutes: 120,
@@ -69,10 +65,8 @@ describe("weekly time grid", () => {
         id: "approved",
         projectId: "project-1",
         projectName: "Website",
-        activityId: null,
-        activityName: null,
-        taskId: null,
-        taskTitle: null,
+                taskId: "task-2",
+        taskTitle: "Review",
         startTime: "2026-07-28T00:00:00.000Z",
         durationMinutes: 30,
         manualMinutes: 30,
@@ -83,7 +77,7 @@ describe("weekly time grid", () => {
 
     const grid = buildWeeklyGrid(entries, "2026-07-29");
     expect(grid.rows).toHaveLength(2);
-    const activityRow = grid.rows.find((row) => row.activityId === "activity-1");
+    const activityRow = grid.rows.find((row) => row.taskId === "task-1");
     expect(activityRow?.cells[0]).toMatchObject({ totalMinutes: 180, editableMinutes: 120, immutableMinutes: 60 });
     expect(activityRow?.totalMinutes).toBe(180);
     expect(grid.dayTotals.slice(0, 2)).toEqual([180, 30]);

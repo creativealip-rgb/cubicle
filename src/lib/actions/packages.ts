@@ -38,6 +38,10 @@ async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
 }
 
+function assertLegacyPackageCleanupWriteBlocked() {
+  throw new Error("Paket legacy sudah masuk fase cleanup; data historis hanya bisa dibaca");
+}
+
 const packageItemSchema = z.object({
   serviceId: z.string().uuid(),
   quantity: z.number().nonnegative().optional(),
@@ -127,6 +131,7 @@ async function assertPackageItemsInWorkspace(workspaceId: string, rows: z.infer<
 }
 
 export async function upsertPackageItems(packageId: string, input: z.infer<typeof packageItemSchema>[]) {
+  await assertLegacyPackageCleanupWriteBlocked();
   const { user, workspaceId } = await actor();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   await assertPackageInWorkspace(packageId, workspaceId);
@@ -233,6 +238,7 @@ export async function getWorkspacePackageBuilderData() {
 }
 
 export async function createPackage(projectId: string, data: z.infer<typeof packageSchema>) {
+  await assertLegacyPackageCleanupWriteBlocked();
   const { user, workspaceId } = await actor();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   await assertProjectInWorkspace(db, user.id, workspaceId, projectId);
@@ -248,6 +254,7 @@ export async function createPackage(projectId: string, data: z.infer<typeof pack
 }
 
 export async function updatePackage(packageId: string, data: Partial<z.infer<typeof packageSchema>>) {
+  await assertLegacyPackageCleanupWriteBlocked();
   const { user, workspaceId } = await actor();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   await assertPackageInWorkspace(packageId, workspaceId);
@@ -288,6 +295,7 @@ export async function updatePackage(packageId: string, data: Partial<z.infer<typ
 }
 
 export async function deletePackage(packageId: string) {
+  await assertLegacyPackageCleanupWriteBlocked();
   const { user, workspaceId } = await actor();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   const [archived] = await db
@@ -322,6 +330,7 @@ export async function getWorkspacePackages(options?: { includeArchived?: boolean
 }
 
 export async function createWorkspacePackage(data: z.infer<typeof packageSchema>) {
+  await assertLegacyPackageCleanupWriteBlocked();
   const { user, workspaceId } = await actor();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   const parsed = packageSchema.parse(data);
@@ -361,6 +370,7 @@ async function getPackageItemsForAssignment(workspaceId: string, packageId: stri
 }
 
 export async function syncProjectPackageAssignment(projectId: string, packageId: string | null) {
+  await assertLegacyPackageCleanupWriteBlocked();
   const { user, workspaceId } = await actor();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   await assertProjectInWorkspace(db, user.id, workspaceId, projectId);
@@ -443,6 +453,7 @@ export async function syncProjectPackageAssignment(projectId: string, packageId:
 }
 
 export async function assignPackageToProject(projectId: string, packageId: string | null) {
+  await assertLegacyPackageCleanupWriteBlocked();
   const { user, workspaceId } = await actor();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   await assertProjectInWorkspace(db, user.id, workspaceId, projectId);

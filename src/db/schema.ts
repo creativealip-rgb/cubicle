@@ -91,6 +91,7 @@ export const workspaces = pgTable("workspaces", {
   replyToEmail: text("reply_to_email"),
   invoiceEmailBody: text("invoice_email_body"),
   bookingSlug: text("booking_slug").unique(),
+  timezone: text("timezone").notNull().default("UTC"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -173,6 +174,12 @@ export const projects = pgTable("projects", {
   status: text("status", { enum: ["draft", "active", "on_hold", "completed", "cancelled", "archived"] }).notNull().default("active"),
   billingType: text("billing_type", { enum: ["project", "hours", "package"] }).notNull().default("project"),
   billingModel: text("billing_model", { enum: ["fixed_price", "hourly", "retainer", "legacy_package"] }),
+  retainerFee: numeric("retainer_fee", { precision: 12, scale: 2 }),
+  retainerIncludedMinutes: integer("retainer_included_minutes"),
+  retainerPeriodUnit: text("retainer_period_unit", { enum: ["month"] }),
+  retainerResetDay: integer("retainer_reset_day"),
+  retainerOveragePolicy: text("retainer_overage_policy", { enum: ["none", "warn", "bill"] }),
+  retainerOverageRate: numeric("retainer_overage_rate", { precision: 12, scale: 2 }),
   timeTrackingMode: text("time_tracking_mode", { enum: ["off", "internal", "billable"] }).notNull().default("internal"),
   activityRequired: boolean("activity_required").notNull().default(false),
   rate: numeric("rate", { precision: 12, scale: 2 }),
@@ -410,6 +417,8 @@ export const tasks = pgTable("tasks", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  behavior: text("behavior", { enum: ["one_time", "recurring"] }),
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
   projectServiceId: uuid("project_service_id").references(() => projectServices.id, { onDelete: "set null" }),
   title: text("title").notNull(),
   description: text("description"),
@@ -637,6 +646,32 @@ export const timesheetSubmissions = pgTable("timesheet_submissions", {
   index("timesheet_submissions_workspace_status_week_idx").on(table.workspaceId, table.status, table.weekStart),
 ]);
 
+export const retainerPeriods = pgTable("retainer_periods", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "restrict" }),
+  projectId: uuid("project_id").notNull(),
+  periodStart: date("period_start").notNull(),
+  periodEnd: date("period_end").notNull(),
+  timezoneSnapshot: text("timezone_snapshot").notNull(),
+  feeSnapshot: numeric("fee_snapshot", { precision: 12, scale: 2 }).notNull(),
+  currencySnapshot: text("currency_snapshot").notNull(),
+  includedMinutesSnapshot: integer("included_minutes_snapshot").notNull(),
+  overagePolicySnapshot: text("overage_policy_snapshot", { enum: ["none", "warn", "bill"] }).notNull(),
+  overageRateSnapshot: numeric("overage_rate_snapshot", { precision: 12, scale: 2 }),
+  approvedMinutes: integer("approved_minutes").notNull().default(0),
+  overageMinutes: integer("overage_minutes").notNull().default(0),
+  status: text("status", { enum: ["open", "locked", "invoiced"] }).notNull().default("open"),
+  invoiceGeneration: integer("invoice_generation").notNull().default(0),
+  lockedAt: timestamp("locked_at", { withTimezone: true }),
+  invoicedAt: timestamp("invoiced_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique("retainer_periods_id_workspace_unique").on(t.id, t.workspaceId),
+  unique().on(t.projectId, t.periodStart, t.periodEnd),
+  foreignKey({ columns: [t.projectId, t.workspaceId], foreignColumns: [projects.id, projects.workspaceId] }).onDelete("restrict"),
+]);
+
 export const timeEntries = pgTable("time_entries", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
@@ -646,6 +681,7 @@ export const timeEntries = pgTable("time_entries", {
   activityId: uuid("activity_id"),
   projectServiceId: uuid("project_service_id").references(() => projectServices.id, { onDelete: "set null" }),
   taskId: uuid("task_id").references(() => tasks.id, { onDelete: "set null" }),
+  retainerPeriodId: uuid("retainer_period_id"),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   description: text("description"),
   tags: text("tags"),
@@ -707,6 +743,10 @@ export const invoices = pgTable("invoices", {
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
   projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
+  billingSource: text("billing_source"),
+  billingPeriodStart: date("billing_period_start"),
+  billingPeriodEnd: date("billing_period_end"),
+  retainerPeriodId: uuid("retainer_period_id"),
   invoiceNumber: text("invoice_number").notNull(),
   issueDate: date("issue_date").notNull(),
   dueDate: date("due_date"),
@@ -725,6 +765,8 @@ export const invoices = pgTable("invoices", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [unique().on(table.workspaceId, table.invoiceNumber)]);
+
+export const legacyProjectBillingClassifications = pgTable("legacy_project_billing_classifications", { projectId: uuid("project_id").primaryKey(), workspaceId: uuid("workspace_id").notNull(), legacyBillingType: text("legacy_billing_type").notNull(), targetBillingModel: text("target_billing_model"), confidence: text("confidence").notNull().default("unreviewed"), evidence: jsonb("evidence").notNull().default(sql`'{}'::jsonb`), reviewedBy: text("reviewed_by"), reviewedAt: timestamp("reviewed_at", {withTimezone:true}), notes: text("notes") });
 
 export const invoiceItems = pgTable("invoice_items", {
   id: uuid("id").defaultRandom().primaryKey(),
