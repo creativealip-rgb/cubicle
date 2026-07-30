@@ -7,6 +7,20 @@ Workspace acuan: **Alip Testing** (`alipdevcom@gmail.com`)
 
 ---
 
+## Open — hold fix
+
+### CLIENT-001 — Hapus tab Catatan di detail client
+**Prioritas:** P3
+**Status:** fixed
+Tab `Catatan` redundant karena catatan internal sudah tampil di ringkasan/detail utama client. Trigger dan content tab dihapus; catatan internal tetap tampil di ringkasan client.
+
+### TASK-001 — Hapus banner “Tugas dan Timer terpisah”
+**Prioritas:** P3
+**Status:** fixed
+Banner penjelasan `Tugas dan Timer terpisah` di halaman Tugas dihapus. Filter dan daftar tugas tetap.
+
+---
+
 ## Progress snapshot (v0.1.41 → v0.1.50)
 
 | Ver | Fokus |

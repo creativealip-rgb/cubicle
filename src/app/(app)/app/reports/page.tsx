@@ -41,6 +41,7 @@ import {
 } from "@/lib/report-period";
 import { ReportControls } from "@/components/reports/report-controls";
 import { buildTimeReport } from "@/lib/time-reporting";
+import { effectiveWorkDateSql } from "@/lib/effective-work-date";
 import { parseReportTab, withQuery } from "@/lib/finance-tabs";
 import { IncomeExpenseChart } from "@/components/reports/income-expense-chart";
 import { Badge } from "@/components/ui/badge";
@@ -399,14 +400,14 @@ export default async function ReportsPage({
     .where(
       and(
         eq(timeEntries.workspaceId, ws.id),
-        gte(sql`(${timeEntries.startTime})::date`, period.start),
-        lte(sql`(${timeEntries.startTime})::date`, period.end),
+        gte(effectiveWorkDateSql(timeEntries), period.start),
+        lte(effectiveWorkDateSql(timeEntries), period.end),
       ),
     )
     .groupBy(timeEntries.activityId, activities.name)
     .orderBy(desc(sql`sum(${timeEntries.durationMinutes})`));
 
-  const detailedTimeRows = await db.select({ clientId: timeEntries.clientId, clientName: clients.name, projectId: timeEntries.projectId, projectName: projects.name, taskId: timeEntries.taskId, taskTitle: tasks.title, userId: timeEntries.userId, userName: users.name, durationMinutes: timeEntries.durationMinutes, billable: timeEntries.billable, hourlyRate: timeEntries.hourlyRate }).from(timeEntries).leftJoin(clients, eq(clients.id, timeEntries.clientId)).leftJoin(projects, eq(projects.id, timeEntries.projectId)).leftJoin(tasks, eq(tasks.id, timeEntries.taskId)).leftJoin(users, eq(users.id, timeEntries.userId)).where(and(eq(timeEntries.workspaceId, ws.id), gte(sql`(${timeEntries.startTime})::date`, period.start), lte(sql`(${timeEntries.startTime})::date`, period.end)));
+  const detailedTimeRows = await db.select({ clientId: timeEntries.clientId, clientName: clients.name, projectId: timeEntries.projectId, projectName: projects.name, taskId: timeEntries.taskId, taskTitle: tasks.title, userId: timeEntries.userId, userName: users.name, durationMinutes: timeEntries.durationMinutes, billable: timeEntries.billable, hourlyRate: timeEntries.hourlyRate }).from(timeEntries).leftJoin(clients, eq(clients.id, timeEntries.clientId)).leftJoin(projects, eq(projects.id, timeEntries.projectId)).leftJoin(tasks, eq(tasks.id, timeEntries.taskId)).leftJoin(users, eq(users.id, timeEntries.userId)).where(and(eq(timeEntries.workspaceId, ws.id), gte(effectiveWorkDateSql(timeEntries), period.start), lte(effectiveWorkDateSql(timeEntries), period.end)));
   const timeReport = buildTimeReport(detailedTimeRows);
 
   const activityTime = activityTimeRows.map((row) => ({

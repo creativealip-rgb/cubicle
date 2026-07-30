@@ -124,21 +124,6 @@ export default async function TasksPage({
         <TaskCreateDialog projectId={params.projectId} members={memberList} projects={taskProjects} />
       </div>
 
-      <div className="rounded-lg border border-blue-200 bg-blue-50/60 px-3 py-2.5 text-sm text-blue-950 sm:px-4 sm:py-3">
-        <p className="font-medium">
-          {t("Tugas dan Timer terpisah", "Tasks and Timer are separate")}
-        </p>
-        <p className="mt-1 text-xs text-blue-900/80">
-          {t(
-            "Tugas buat status kerja. Timer buat jam billable. Buka tugas lalu mulai timer kalau mau catat waktu.",
-            "Tasks track work status. Timer tracks billable hours. Open a task, then start timer when you want to log time.",
-          )}{" "}
-          <a href="/app/time" className="font-medium underline underline-offset-2">
-            {t("Buka Time Tracking", "Open Time Tracking")}
-          </a>
-        </p>
-      </div>
-
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <TaskBehaviorTabs current={params.behavior} />
         <TaskViewToggle current={view} />

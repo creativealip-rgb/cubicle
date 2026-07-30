@@ -20,7 +20,7 @@ import { AddTimeLogDialog } from "@/components/time/add-time-log-dialog";
 import { NewTimerDialog } from "@/components/time/new-timer-dialog";
 import { ActiveTimerCard } from "@/components/time/active-timer-card";
 import { WaktuNavigation } from "@/components/time/waktu-navigation";
-import { shiftDateIso, weekStartDate, localDateIso } from "@/lib/effective-work-date";
+import { effectiveWorkDateSql, shiftDateIso, weekStartDate, localDateIso } from "@/lib/effective-work-date";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -109,7 +109,7 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
     .leftJoin(activities, eq(activities.id, timeEntries.activityId))
     .leftJoin(tasks, eq(tasks.id, timeEntries.taskId))
     .leftJoin(users, eq(users.id, timeEntries.userId))
-    .where(and(eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.userId, user.id), or(isNotNull(timeEntries.endTime), isNotNull(timeEntries.manualMinutes)), or(and(gte(timeEntries.workDate, selectedStart), lt(timeEntries.workDate, selectedEnd)), isNull(timeEntries.workDate))))
+    .where(and(eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.userId, user.id), or(isNotNull(timeEntries.endTime), isNotNull(timeEntries.manualMinutes)), gte(effectiveWorkDateSql(timeEntries), selectedStart), lt(effectiveWorkDateSql(timeEntries), selectedEnd)))
     .orderBy(desc(timeEntries.createdAt))
     .limit(200);
 

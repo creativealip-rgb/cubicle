@@ -26,7 +26,6 @@ import {
   Calendar,
   ArrowLeft,
   Receipt,
-  MessageSquare,
   Download,
   Wallet,
 } from "lucide-react";
@@ -62,7 +61,6 @@ export default async function ClientDetailPage({
     "invoices",
     "calendar",
     "portal",
-    "notes",
   ]);
   // Legacy deep-link ?tab=appointments → Calendar
   // Ringkasan (overview) di-hide; deep-link lama fallback ke projects
@@ -390,11 +388,6 @@ export default async function ClientDetailPage({
               </Link>
             </TabsTrigger>
 
-            <TabsTrigger value="notes" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm" asChild>
-              <Link href={`?tab=notes`}>
-                <MessageSquare className="h-3 w-3 shrink-0" /> Catatan
-              </Link>
-            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -550,16 +543,6 @@ export default async function ClientDetailPage({
           />
         </TabsContent>
 
-        <TabsContent value="notes" className="space-y-4 pt-4">
-          <div className="space-y-4">
-            <div>
-              <h4 className="text-sm font-medium">Catatan Internal</h4>
-              <p className="text-sm text-muted-foreground mt-1">
-                {client.internalNotes || "Belum ada catatan internal."}
-              </p>
-            </div>
-          </div>
-        </TabsContent>
       </Tabs>
     </div>
   );
