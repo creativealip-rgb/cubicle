@@ -87,6 +87,7 @@ interface TimesheetProps {
   projects: Project[];
   tasks?: Task[];
   activities?: Activity[];
+  compact?: boolean;
 }
 
 function toDateInputValue(value: Date | string | null | undefined): string {
@@ -99,7 +100,7 @@ function toDateInputValue(value: Date | string | null | undefined): string {
   return `${year}-${month}-${day}`;
 }
 
-export function Timesheet({ entries, clients, projects, tasks = [], activities = [] }: TimesheetProps) {
+export function Timesheet({ entries, clients, projects, tasks = [], activities = [], compact = false }: TimesheetProps) {
   const { t, locale } = useT();
   const router = useRouter();
 
@@ -332,7 +333,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {!compact && <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">{t("Total Waktu", "Total Time")}</p>
@@ -351,9 +352,9 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
             <p className="text-xl font-bold">{filteredEntries.length}</p>
           </CardContent>
         </Card>
-      </div>
+      </div>}
 
-      <Card className="rounded-lg border bg-card">
+      {!compact && <Card className="rounded-lg border bg-card">
         <CardContent className="p-3">
           <div className="flex items-center gap-2 mb-3">
             <Filter className="h-4 w-4 text-muted-foreground" />
@@ -469,7 +470,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card>}
 
       {filteredEntries.length === 0 ? (
         <EmptyState

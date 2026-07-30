@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { setWeeklyTimeCell } from "@/lib/actions/time";
 import { buildWeeklyGrid, formatDurationInput, getWeekDates, parseDurationInput, type WeeklyGridEntry } from "@/lib/weekly-time-grid";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { localDateIso, shiftDateIso, weekStartDate } from "@/lib/effective-work-date";
@@ -122,28 +121,16 @@ export function WeeklyTimeGrid({
   const weekTotalMinutes = rows.reduce((sum, row) => sum + row.totalMinutes, 0);
 
   return (
-    <Card>
-      <CardHeader className="space-y-4 p-4 pb-2">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <CardTitle className="text-base">Timesheet Mingguan</CardTitle>
-            <p className="mt-1 text-xs text-muted-foreground">Tambah baris Project/Task, lalu isi jam per hari.</p>
-          </div>
-          <div className="flex shrink-0 items-center gap-1 rounded-full border bg-muted/40 p-1 text-xs">
-            <Button asChild size="icon" variant="ghost" className="h-7 w-7 rounded-full" aria-label="Minggu sebelumnya"><Link href={previousHref}><ChevronLeft className="h-3.5 w-3.5" /></Link></Button>
-            <span className="min-w-32 px-1 text-center font-medium text-muted-foreground">{compactWeekLabel(dates)}</span>
-            <Button asChild size="icon" variant="ghost" className="h-7 w-7 rounded-full" aria-label="Minggu berikutnya"><Link href={nextHref}><ChevronRight className="h-3.5 w-3.5" /></Link></Button>
-            <Button asChild size="sm" variant="ghost" className="h-7 rounded-full px-2 text-xs"><Link href={todayHref}>Minggu ini</Link></Button>
-          </div>
+    <section className="rounded-lg border bg-card">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
+        <span className="text-sm font-medium">{compactWeekLabel(dates)}</span>
+        <div className="flex items-center gap-1 text-xs">
+          <Button asChild size="icon" variant="ghost" className="h-7 w-7 rounded-full" aria-label="Minggu sebelumnya"><Link href={previousHref}><ChevronLeft className="h-3.5 w-3.5" /></Link></Button>
+          <Button asChild size="icon" variant="ghost" className="h-7 w-7 rounded-full" aria-label="Minggu berikutnya"><Link href={nextHref}><ChevronRight className="h-3.5 w-3.5" /></Link></Button>
+          <Button asChild size="sm" variant="ghost" className="h-7 rounded-full px-2 text-xs"><Link href={todayHref}>Minggu ini</Link></Button>
         </div>
-        {canWrite && <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto_auto]">
-          <Select value={projectId} onValueChange={(value) => { setProjectId(value); setTaskId(""); }}><SelectTrigger><SelectValue placeholder="Pilih project" /></SelectTrigger><SelectContent>{projects.map((project) => <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>)}</SelectContent></Select>
-          <Select value={taskId} onValueChange={setTaskId} disabled={!projectId}><SelectTrigger><SelectValue placeholder="Pilih task" /></SelectTrigger><SelectContent>{availableActivities.map((task) => <SelectItem key={task.id} value={task.id}>{task.title}</SelectItem>)}</SelectContent></Select>
-          <Button variant="outline" onClick={addRow} disabled={!projectId || !taskId}><Plus className="mr-2 h-4 w-4" />Tambah baris</Button>
-          <Button variant="ghost" onClick={copyPreviousRows} disabled={!previousGrid.rows.length}><Copy className="mr-2 h-4 w-4" />Salin baris minggu lalu</Button>
-        </div>}
-      </CardHeader>
-      <CardContent className="p-4 pt-2">
+      </div>
+      <div className="p-3">
         {!rows.length ? <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">Belum ada baris minggu ini. Tambah Project/Task atau salin struktur minggu lalu.</div> : <>
           <div className="hidden overflow-x-auto lg:block"><div className="min-w-[900px]">
             <div className="grid grid-cols-[minmax(210px,1.7fr)_repeat(7,minmax(76px,1fr))_86px] gap-1 border-b pb-2 text-center text-xs font-medium text-muted-foreground"><span className="text-left">Project / Task</span>{dates.map((date) => <span key={date.toISOString()}>{date.toLocaleDateString("id-ID", { weekday: "short", day: "numeric", timeZone: "UTC" })}</span>)}<span>Total</span></div>
@@ -152,7 +139,13 @@ export function WeeklyTimeGrid({
           <div className="space-y-3 lg:hidden">{rows.map((row) => <div key={row.key} className="rounded-lg border p-3"><div className="mb-3 flex items-start justify-between gap-2"><div className="min-w-0"><p className="truncate text-sm font-medium">{row.projectName}</p><p className="truncate text-xs text-muted-foreground">{row.taskTitle ?? "Tanpa task"}</p></div><strong className="text-sm">{minutesLabel(row.totalMinutes)}</strong></div><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{row.cells.map((cell, index) => <label key={cell.date} className="text-xs text-muted-foreground"><span className="mb-1 block">{dates[index].toLocaleDateString("id-ID", { weekday: "short", day: "numeric", timeZone: "UTC" })}</span><Input className="h-9 text-center text-xs" defaultValue={formatDurationInput(cell.totalMinutes)} disabled={!canWrite || pending || !row.taskId} onBlur={(event) => saveCell(row, index, event.target.value)} /></label>)}</div></div>)}</div>
           <div className="mt-3 flex justify-end rounded-md bg-muted/50 px-3 py-2 text-sm"><span className="mr-3 text-muted-foreground">Total minggu</span><strong>{minutesLabel(weekTotalMinutes)}</strong></div>
         </>}
-      </CardContent>
-    </Card>
+        {canWrite && <div className="mt-3 grid gap-2 border-t pt-3 sm:grid-cols-[1fr_1fr_auto_auto]">
+          <Select value={projectId} onValueChange={(value) => { setProjectId(value); setTaskId(""); }}><SelectTrigger><SelectValue placeholder="Pilih project" /></SelectTrigger><SelectContent>{projects.map((project) => <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>)}</SelectContent></Select>
+          <Select value={taskId} onValueChange={setTaskId} disabled={!projectId}><SelectTrigger><SelectValue placeholder="Pilih task" /></SelectTrigger><SelectContent>{availableActivities.map((task) => <SelectItem key={task.id} value={task.id}>{task.title}</SelectItem>)}</SelectContent></Select>
+          <Button variant="outline" onClick={addRow} disabled={!projectId || !taskId}><Plus className="mr-2 h-4 w-4" />Tambah baris</Button>
+          <Button variant="ghost" onClick={copyPreviousRows} disabled={!previousGrid.rows.length}><Copy className="mr-2 h-4 w-4" />Salin baris minggu lalu</Button>
+        </div>}
+      </div>
+    </section>
   );
 }
