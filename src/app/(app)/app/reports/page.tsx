@@ -486,7 +486,7 @@ export default async function ReportsPage({
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         {[
           {
             label: t("Pemasukan", "Income"),
@@ -509,23 +509,30 @@ export default async function ReportsPage({
             icon: BarChart3,
             tone: net >= 0 ? "text-emerald-600" : "text-red-600",
           },
-        ].map((item) => (
-          <Card key={item.label}>
+        ].map((item) => {
+          const hasValue = item.value !== 0;
+          return (
+          <Card
+            key={item.label}
+            className={item.label === t("Bersih", "Net") ? "col-span-2 md:col-span-1" : undefined}
+          >
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-slate-600">
                 {item.label}
               </CardTitle>
-              <item.icon className={`h-4 w-4 ${item.tone}`} />
+              <item.icon className={`h-4 w-4 ${hasValue ? item.tone : "text-slate-400"}`} />
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6">
               <div
-                className={`text-2xl font-semibold tabular-nums ${item.tone}`}
+                className={`text-xl font-semibold tabular-nums sm:text-2xl ${hasValue ? item.tone : "text-slate-700"}`}
               >
                 {formatMoney(item.value, baseCurrency)}
               </div>
-              <p className="mt-1 text-xs text-slate-500">
-                {deltaText(item.value, item.previous, lang)}
-              </p>
+              {(item.value !== 0 || item.previous !== 0) && (
+                <p className="mt-1 text-xs text-slate-500">
+                  {deltaText(item.value, item.previous, lang)}
+                </p>
+              )}
               {item.label === t("Bersih", "Net") && income > 0 && (
                 <p className="mt-0.5 text-xs text-slate-500">
                   {t("Margin", "Margin")} {Math.round((net / income) * 100)}%
@@ -533,7 +540,8 @@ export default async function ReportsPage({
               )}
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
       </div>
 
       <Card>
