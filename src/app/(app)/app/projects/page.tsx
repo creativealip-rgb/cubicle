@@ -8,11 +8,8 @@ import { requireUser } from "@/lib/access";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ProjectCreateDialog } from "@/components/projects/project-create-dialog";
-import { ProjectFilters } from "@/components/projects/project-filters";
 import { ProjectsListTable } from "@/components/projects/projects-list-table";
 import { getCurrentLang, createT } from "@/lib/i18n";
-import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
-import { Suspense } from "react";
 import {
   PROJECT_STATUS_TABS,
   buildProjectsHref,
@@ -197,31 +194,6 @@ export default async function ProjectsPage({
         </div>
       )}
 
-      <div className="space-y-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <StatusFilterTabs
-            activeValue={statusTab}
-            tabs={PROJECT_STATUS_TABS.map((tab) => ({
-              value: tab,
-              label: tabLabel(tab),
-              href: buildProjectsHref({ ...filtersForHref, status: tab }),
-              count: tabCount(tab),
-              alwaysShow: tab === "active" || tab === "draft",
-            }))}
-          />
-
-          <Suspense fallback={null}>
-            <ProjectFilters
-              clients={clientOptions}
-              current={{
-                status: statusTab,
-                clientId,
-              }}
-            />
-          </Suspense>
-        </div>
-        </div>
-
       {hasExtraFilters && (
         <p className="-mt-2 text-xs text-muted-foreground">
           {t("Filter aktif:", "Active filters:")}{" "}
@@ -242,6 +214,8 @@ export default async function ProjectsPage({
 
       <ProjectsListTable
         projects={projectsList}
+        clients={clientOptions}
+        currentClientId={clientId}
         hasExtraFilters={hasExtraFilters}
         statusTab={statusTab}
         billingType={billingType}

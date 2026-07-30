@@ -6,7 +6,7 @@ import { tasks, projects, clients, users, workspaceMembers } from "@/db/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { TaskCreateDialog } from "@/components/tasks/task-create-dialog";
-import { TaskFilters } from "@/components/tasks/task-filters";
+
 import { TaskViewToggle } from "@/components/tasks/task-view-toggle";
 import { TasksBoardView } from "@/components/tasks/tasks-board-view";
 import { TasksListTable } from "@/components/tasks/tasks-list-table";
@@ -140,30 +140,14 @@ export default async function TasksPage({
 
       <TaskBehaviorTabs current={params.behavior} />
 
-      {/* Filters + view toggle */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <TaskFilters
-            projects={taskProjects}
-            members={memberList}
-            currentUserId={currentUserId}
-            current={{
-              status: params.status,
-              priority: params.priority,
-              projectId: params.projectId,
-              assignee: params.assignee === currentUserId ? "me" : params.assignee,
-            }}
-          />
-        </div>
-        <TaskViewToggle current={view} />
-      </div>
+      <div className="flex justify-end"><TaskViewToggle current={view} /></div>
 
       {/* Board view */}
       {view === "board" && <TasksBoardView tasks={taskList} members={memberList} />}
 
       {/* Task List */}
       {view === "list" && (
-        <TasksListTable tasks={taskList} members={memberList} focusId={focusId} />
+        <TasksListTable tasks={taskList} members={memberList} projects={taskProjects} currentUserId={currentUserId} currentFilters={{ status: params.status, priority: params.priority, projectId: params.projectId, assignee: params.assignee }} focusId={focusId} />
       )}
     </div>
   );

@@ -14,6 +14,7 @@ import {
   taskPriorityLabel,
 } from "@/lib/status-badge";
 import { Filter, Clock, AlertTriangle } from "lucide-react";
+import { TableHeaderFilter } from "@/components/ui/table-header-filter";
 
 export type TasksListItem = {
   id: string;
@@ -67,10 +68,16 @@ type SortKey =
 export function TasksListTable({
   tasks,
   members,
+  projects,
+  currentUserId,
+  currentFilters,
   focusId = null,
 }: {
   tasks: TasksListItem[];
   members: Member[];
+  projects: Array<{ id: string; name: string }>;
+  currentUserId: string;
+  currentFilters: { status?: string; priority?: string; projectId?: string; assignee?: string };
   focusId?: string | null;
 }) {
   const { t, lang, locale } = useT();
@@ -140,22 +147,10 @@ export function TasksListTable({
           />
         </div>
         <div className="w-44">
-          <SortableHeader
-            as="div"
-            label={t("Proyek", "Project")}
-            dir={dirFor("project")}
-            onClick={() => toggle("project")}
-            className="text-[11px] uppercase tracking-wide"
-          />
+          <TableHeaderFilter label={t("Proyek", "Project")} queryKey="projectId" value={currentFilters.projectId} basePath="/app/tasks" options={[{value:"all",label:t("Semua proyek","All projects")},...projects.map(p=>({value:p.id,label:p.name}))]} className="text-[11px] uppercase tracking-wide" />
         </div>
         <div className="w-28">
-          <SortableHeader
-            as="div"
-            label={t("Ditugaskan", "Assignee")}
-            dir={dirFor("assignee")}
-            onClick={() => toggle("assignee")}
-            className="text-[11px] uppercase tracking-wide"
-          />
+          <TableHeaderFilter label={t("Ditugaskan", "Assignee")} queryKey="assignee" value={currentFilters.assignee} basePath="/app/tasks" options={[{value:"all",label:t("Semua petugas","All assignees")},{value:"me",label:t("Saya","Me")},{value:"unassigned",label:t("Belum ditugaskan","Unassigned")},...members.filter(m=>m.id!==currentUserId).map(m=>({value:m.id,label:m.name||m.email||m.id.slice(0,8)}))]} className="text-[11px] uppercase tracking-wide" />
         </div>
         <div className="w-24">
           <SortableHeader
@@ -167,22 +162,10 @@ export function TasksListTable({
           />
         </div>
         <div className="w-20">
-          <SortableHeader
-            as="div"
-            label={t("Prioritas", "Priority")}
-            dir={dirFor("priority")}
-            onClick={() => toggle("priority")}
-            className="text-[11px] uppercase tracking-wide"
-          />
+          <TableHeaderFilter label={t("Prioritas", "Priority")} queryKey="priority" value={currentFilters.priority} basePath="/app/tasks" options={[{value:"all",label:t("Semua prioritas","All priorities")},{value:"urgent",label:t("Mendesak","Urgent")},{value:"high",label:t("Tinggi","High")},{value:"medium",label:t("Sedang","Medium")},{value:"low",label:t("Rendah","Low")}]} className="text-[11px] uppercase tracking-wide" />
         </div>
         <div className="w-24">
-          <SortableHeader
-            as="div"
-            label={t("Status", "Status")}
-            dir={dirFor("status")}
-            onClick={() => toggle("status")}
-            className="text-[11px] uppercase tracking-wide"
-          />
+          <TableHeaderFilter label={t("Status", "Status")} queryKey="status" value={currentFilters.status} basePath="/app/tasks" options={[{value:"all",label:t("Semua status","All statuses")},{value:"todo",label:t("Belum Mulai","To Do")},{value:"in_progress",label:t("Dikerjakan","In Progress")},{value:"review",label:"Review"},{value:"done",label:t("Selesai","Done")}]} className="text-[11px] uppercase tracking-wide" />
         </div>
       </div>
 
