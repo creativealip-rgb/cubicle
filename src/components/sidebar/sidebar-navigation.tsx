@@ -10,6 +10,7 @@ import {
   formatSidebarBadge, getActiveNavigation, getVisibleNavigation, groupHasNotification,
   type NavGroup, type SidebarBadgeCounts, type SidebarGroupId, type WorkspaceRole,
 } from "@/lib/navigation/app-navigation";
+import { resolveSidebarOpenGroup, type SidebarGroupOverride } from "@/lib/sidebar-open-group";
 
 const OPEN_DELAY_MS = 150;
 const CLOSE_DELAY_MS = 300;
@@ -29,14 +30,14 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
   const entries = getVisibleNavigation(workspaceRole);
   const active = getActiveNavigation(pathname);
   const [hovered, setHovered] = useState<SidebarGroupId | null>(null);
-  const [pinned, setPinned] = useState<SidebarGroupId | null>(null);
+  const [desktopOverride, setDesktopOverride] = useState<SidebarGroupOverride>({ kind: "default" });
   const [mobileGroup, setMobileGroup] = useState<SidebarGroupId | null>(active.groupId);
   const [position, setPosition] = useState<PanelPosition>({ top: 64, left: collapsed ? 76 : 268 });
   const triggers = useRef<Partial<Record<SidebarGroupId, HTMLButtonElement | null>>>({});
   const rootRef = useRef<HTMLDivElement>(null);
   const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const openGroup = pinned ?? hovered;
+  const openGroup = resolveSidebarOpenGroup({ hovered, override: desktopOverride, activeGroup: active.groupId });
   const openEntry = entries.find((entry): entry is NavGroup => entry.kind === "group" && entry.id === openGroup);
 
   function clearTimers() {
@@ -50,12 +51,10 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
     setPosition({ top: Math.max(12, Math.min(rect.top - 8, window.innerHeight - panelHeight - 12)), left: rect.right + 8 });
   }
   function scheduleOpen(id: SidebarGroupId) {
-    if (pinned) return;
     clearTimers();
     openTimer.current = setTimeout(() => { placePanel(id); setHovered(id); }, OPEN_DELAY_MS);
   }
   function scheduleClose() {
-    if (pinned) return;
     clearTimers();
     closeTimer.current = setTimeout(() => setHovered(null), CLOSE_DELAY_MS);
   }
@@ -63,16 +62,19 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
     clearTimers();
     placePanel(id);
     setHovered(null);
-    setPinned((current) => current === id ? null : id);
+    setDesktopOverride(openGroup === id ? { kind: "closed" } : { kind: "open", groupId: id });
   }
   function closeDesktop(restoreFocus = false) {
     const previous = openGroup;
-    clearTimers(); setHovered(null); setPinned(null);
+    clearTimers(); setHovered(null); setDesktopOverride({ kind: "closed" });
     if (restoreFocus && previous) triggers.current[previous]?.focus();
   }
 
   useEffect(() => {
-    setPinned(null); setHovered(null); setMobileGroup(active.groupId);
+    setDesktopOverride({ kind: "default" });
+    setHovered(null);
+    setMobileGroup(active.groupId);
+    if (active.groupId) requestAnimationFrame(() => placePanel(active.groupId!));
   }, [pathname, active.groupId]);
   useEffect(() => () => clearTimers(), []);
   useEffect(() => {
@@ -102,11 +104,11 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
         return <div key={entry.id} onPointerEnter={() => scheduleOpen(entry.id)} onPointerLeave={scheduleClose}>
           <button ref={(node) => { triggers.current[entry.id] = node; }} type="button" aria-expanded={expanded} aria-controls={`sidebar-flyout-${entry.id}`}
             onClick={() => togglePinned(entry.id)} onKeyDown={(event) => {
-              if (event.key === "ArrowRight" || event.key === "ArrowDown") { event.preventDefault(); placePanel(entry.id); setPinned(entry.id); requestAnimationFrame(() => document.querySelector<HTMLAnchorElement>(`#sidebar-flyout-${entry.id} a`)?.focus()); }
+              if (event.key === "ArrowRight" || event.key === "ArrowDown") { event.preventDefault(); placePanel(entry.id); setDesktopOverride({ kind: "open", groupId: entry.id }); requestAnimationFrame(() => document.querySelector<HTMLAnchorElement>(`#sidebar-flyout-${entry.id} a`)?.focus()); }
               if (event.key === "Escape") closeDesktop(true);
             }}
             className={cn("relative flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500", isActive || expanded ? "bg-violet-50 text-violet-700 ring-1 ring-violet-200" : "text-sidebar-foreground hover:bg-sidebar-accent", collapsed && "justify-center px-2")}>
-            <Icon className="h-4 w-4 shrink-0" />{!collapsed && <><span className="flex-1 text-left">{t(entry.label.id, entry.label.en)}</span><ChevronRight className="h-4 w-4" /></>}
+            <Icon className="h-4 w-4 shrink-0" />{!collapsed && <><span className="flex-1 text-left">{t(entry.label.id, entry.label.en)}</span>{expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</>}
             {hasDot && !expanded && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-blue-600" aria-label={t("Memiliki notifikasi terbuka", "Has open notifications")} />}
           </button>
         </div>;
