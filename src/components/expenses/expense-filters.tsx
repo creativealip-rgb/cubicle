@@ -74,7 +74,7 @@ export function ExpenseFilters({ month, categoryId, q, categories }: ExpenseFilt
     <div className={`flex flex-col gap-2 sm:flex-row ${pending ? "opacity-70" : ""}`}>
       <div className="grid grid-cols-1 gap-2 sm:flex sm:items-center">
         <Select value={month} onValueChange={(v) => push({ month: v })}>
-          <SelectTrigger className="h-10 w-full sm:h-9 sm:w-44">
+          <SelectTrigger className="h-10 w-full sm:h-9 sm:w-44" aria-label={t("Filter bulan pengeluaran", "Filter expense month")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -88,7 +88,7 @@ export function ExpenseFilters({ month, categoryId, q, categories }: ExpenseFilt
           value={categoryId || ALL}
           onValueChange={(v) => push({ categoryId: v === ALL ? undefined : v })}
         >
-          <SelectTrigger className="h-10 w-full sm:h-9 sm:w-44">
+          <SelectTrigger className="h-10 w-full sm:h-9 sm:w-44" aria-label={t("Filter kategori pengeluaran", "Filter expense category")}>
             <SelectValue placeholder={t("Semua kategori", "All categories")} />
           </SelectTrigger>
           <SelectContent>
@@ -111,6 +111,7 @@ export function ExpenseFilters({ month, categoryId, q, categories }: ExpenseFilt
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            aria-label={t("Cari pengeluaran", "Search expenses")}
             placeholder={t("Cari deskripsi, vendor...", "Search description, vendor...")}
             className="h-10 pl-8 sm:h-9"
           />
@@ -129,6 +130,7 @@ export function ExpenseFilters({ month, categoryId, q, categories }: ExpenseFilt
               push({ q: undefined, categoryId: undefined });
             }}
             title={t("Reset filter", "Clear filters")}
+            aria-label={t("Reset filter", "Clear filters")}
           >
             <X className="h-4 w-4" />
           </Button>

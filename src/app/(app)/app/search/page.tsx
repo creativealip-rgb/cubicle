@@ -111,6 +111,7 @@ export default async function SearchPage({
               <Input
                 name="q"
                 defaultValue={q}
+                aria-label={t("Cari workspace", "Search workspace")}
                 placeholder={t("Ketik nama, email, nomor invoice…", "Type name, email, invoice number…")}
                 className="h-10 pl-9"
                 autoFocus
