@@ -5,11 +5,11 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { generateInvoiceShareToken, revokeInvoiceShareToken } from "@/lib/actions/invoices";
 import { Button } from "@/components/ui/button";
-import { Copy, Check, RefreshCw, X } from "lucide-react";
+import { Copy, Check, ExternalLink, RefreshCw, X } from "lucide-react";
 
-function sharePdfUrl(token: string) {
+function shareInvoiceUrl(token: string) {
   const base = typeof window !== "undefined" ? window.location.origin : "";
-  return `${base}/api/invoices/share/${token}/pdf`;
+  return `${base}/invoice/${token}`;
 }
 
 export function ShareTokenSection({
@@ -43,7 +43,7 @@ export function ShareTokenSection({
     try {
       const generated = await generateInvoiceShareToken(invoiceId);
       setToken(generated.token);
-      toast.success("Link PDF dibuat");
+      toast.success("Link invoice dibuat");
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal buat link");
@@ -54,10 +54,10 @@ export function ShareTokenSection({
 
   async function handleCopy() {
     if (!token) return;
-    const url = sharePdfUrl(token);
+    const url = shareInvoiceUrl(token);
     await navigator.clipboard.writeText(url);
     setCopied(true);
-    toast.success("Link PDF disalin");
+    toast.success("Link invoice disalin");
     setTimeout(() => setCopied(false), 2000);
   }
 
@@ -65,8 +65,7 @@ export function ShareTokenSection({
     <div className="space-y-3">
       {!hasToken && !isExpired && (
         <p className="text-sm text-muted-foreground">
-          Buat link berbagi PDF invoice. Siapa pun yang punya link bisa buka file PDF yang sama
-          seperti tombol Unduh PDF.
+          Buat link berbagi invoice. Siapa pun yang punya link bisa melihat invoice tanpa login.
         </p>
       )}
 
@@ -85,11 +84,11 @@ export function ShareTokenSection({
       {token && (
         <div className="rounded-lg border bg-muted/50 p-3 space-y-2">
           <p className="text-xs font-medium text-muted-foreground">
-            Link PDF (hanya tampil sekali)
+            Link invoice (hanya tampil sekali)
           </p>
           <div className="flex items-center gap-2">
             <code className="flex-1 text-xs bg-background rounded px-2 py-1 break-all">
-              {sharePdfUrl(token)}
+              {shareInvoiceUrl(token)}
             </code>
             <Button
               variant="outline"
@@ -108,6 +107,14 @@ export function ShareTokenSection({
       )}
 
       <div className="flex gap-2">
+        {token && (
+          <Button type="button" variant="outline" size="sm" className="gap-1" asChild>
+            <a href={shareInvoiceUrl(token)} target="_blank" rel="noreferrer">
+              <ExternalLink className="h-3 w-3" />
+              Lihat Invoice
+            </a>
+          </Button>
+        )}
         <Button
           type="button"
           variant="outline"
@@ -117,7 +124,7 @@ export function ShareTokenSection({
           disabled={loading}
         >
           <RefreshCw className="h-3 w-3" />
-          {loading ? "Membuat..." : "Buat Link PDF"}
+          {loading ? "Membuat..." : "Buat Link Invoice"}
         </Button>
         {hasToken && !isExpired && (
           <Button

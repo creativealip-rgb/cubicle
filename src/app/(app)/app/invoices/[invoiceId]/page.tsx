@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Share2, Download } from "lucide-react";
+import { ArrowLeft, Share2 } from "lucide-react";
 import { InvoiceItemManager } from "./add-item-button";
 import { DeleteItemButton } from "./delete-item-button";
 import { PaymentSection } from "./payment-section";
@@ -170,12 +170,6 @@ export default async function InvoiceDetailPage({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" variant="outline" className="gap-2" asChild>
-            <Link href={`/api/invoices/${invoiceId}/pdf`} target="_blank">
-              <Download className="h-4 w-4" />
-              {t("Unduh Invoice", "Download Invoice")}
-            </Link>
-          </Button>
           <SendInvoiceButton
             invoiceId={invoiceId}
             defaultMessage={defaultInvoiceMessage}
