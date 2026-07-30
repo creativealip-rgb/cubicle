@@ -23,7 +23,7 @@ import { pickReplyTo } from "@/lib/workspace-reply-to";
 import { Suspense } from "react";
 import { PortalTabsFallback } from "@/components/portal/portal-loading";
 import { Card, CardContent } from "@/components/ui/card";
-import { FolderOpen, Globe } from "lucide-react";
+import { FolderOpen, Globe, LockKeyhole } from "lucide-react";
 import { PortalContactButtons } from "@/components/portal/portal-contact";
 import { ProjectAccordion } from "@/components/portal/project-accordion";
 import { PortalInvoices } from "@/components/portal/portal-invoices";
@@ -758,7 +758,7 @@ export default async function ClientPortalPage({
   const billingModels = clientProjects.map((p) => resolveBillingModel(p));
   const byProjectCount = billingModels.filter((model) => model === "fixed_price").length;
   const byHoursCount = billingModels.filter((model) => model === "hourly").length;
-  const byPackageCount = billingModels.filter((model) => model === "legacy_package").length;
+  const retainerCount = billingModels.filter((model) => model === "retainer").length;
   const dueInvoiceCount = clientInvoices.filter((inv) =>
     ["sent", "viewed", "overdue", "partial"].includes(inv.status),
   ).length;
@@ -838,8 +838,8 @@ export default async function ClientPortalPage({
             </div>
             <div className="flex shrink-0 items-center gap-2 self-start">
               <PortalLanguageSwitch />
-              <div className="hidden rounded-full border bg-background px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:block">
-                {t("Akses aman", "Secure access")}
+              <div className="hidden items-center gap-1.5 rounded-full border bg-background px-3 py-1 text-[11px] font-medium text-muted-foreground sm:flex">
+                <LockKeyhole className="h-3 w-3" /> {t("Akses aman", "Secure access")}
               </div>
             </div>
           </div>
@@ -850,7 +850,7 @@ export default async function ClientPortalPage({
               <Card className="shadow-none">
                 <CardContent className="p-3">
                   <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {t("Per proyek", "Per project")}
+                    {t("Fixed Price", "Fixed Price")}
                   </p>
                   <p className="mt-1 text-xl font-semibold">{byProjectCount}</p>
                 </CardContent>
@@ -858,7 +858,7 @@ export default async function ClientPortalPage({
               <Card className="shadow-none">
                 <CardContent className="p-3">
                   <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {t("Per jam", "Hourly")}
+                    {t("Hourly", "Hourly")}
                   </p>
                   <p className="mt-1 text-xl font-semibold">{byHoursCount}</p>
                 </CardContent>
@@ -866,15 +866,15 @@ export default async function ClientPortalPage({
               <Card className="shadow-none">
                 <CardContent className="p-3">
                   <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {t("Per paket", "Package")}
+                    {t("Retainer", "Retainer")}
                   </p>
-                  <p className="mt-1 text-xl font-semibold">{byPackageCount}</p>
+                  <p className="mt-1 text-xl font-semibold">{retainerCount}</p>
                 </CardContent>
               </Card>
               <Card className="shadow-none">
                 <CardContent className="p-3">
                   <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {t("Invoice ke", "Invoice To")}
+                    {t("Invoice", "Invoice")}
                   </p>
                   <p className="mt-1 text-xl font-semibold">
                     {dueInvoiceCount}
@@ -933,8 +933,8 @@ export default async function ClientPortalPage({
                         <FolderOpen className="h-12 w-12 mx-auto mb-3 opacity-30" />
                         <p>
                           {t(
-                            "Belum ada proyek yang dibagikan.",
-                            "No projects have been shared yet.",
+                            "Belum ada proyek yang dibagikan. Hubungi pengelola workspace jika kamu membutuhkan akses.",
+                            "No projects have been shared yet. Contact the workspace manager if you need access.",
                           )}
                         </p>
                       </CardContent>
@@ -1069,7 +1069,7 @@ export default async function ClientPortalPage({
               requests={
                 <section>
                   <h2 className="mb-4 text-xl font-semibold">
-                    {t("Request", "Requests")}
+                    {t("Permintaan", "Requests")}
                   </h2>
                   <PortalRequestList
                     requests={clientPortalRequests.map((request) => ({

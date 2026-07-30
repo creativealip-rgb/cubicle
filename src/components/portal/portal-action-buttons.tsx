@@ -113,7 +113,6 @@ export function PortalActionButtons({
         </Button>
         <Button
           type="button"
-          variant="outline"
           className="min-h-11 gap-2 rounded-lg px-4"
           onClick={() => setKind("meeting")}
         >

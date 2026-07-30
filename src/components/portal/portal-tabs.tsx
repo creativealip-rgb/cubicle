@@ -147,7 +147,7 @@ export function PortalTabs({
     },
     {
       key: "requests",
-      label: t("Request", "Requests"),
+      label: t("Permintaan", "Requests"),
       icon: <Bell className="h-3.5 w-3.5" />,
       badge: counts?.requests,
     },
