@@ -156,7 +156,11 @@ export async function updateProject(projectId: string, input: z.input<typeof pro
   if (parsed.clientId !== undefined) updateData.clientId = parsed.clientId;
   if (parsed.status !== undefined) updateData.status = parsed.status;
   if (parsed.billingType !== undefined || parsed.billingModel !== undefined) updateData.billingType = billingTypeForModel(parsed);
-  if (parsed.billingModel !== undefined) updateData.billingModel = parsed.billingModel;
+  if (parsed.billingModel !== undefined) {
+    updateData.billingModel = parsed.billingModel;
+    const nextTrackingMode = parsed.timeTrackingMode ?? (parsed.billingModel === "fixed_price" ? "off" : "billable");
+    updateData.timeTrackingMode = nextTrackingMode;
+  }
   if (parsed.retainerFee !== undefined) updateData.retainerFee = String(parsed.retainerFee);
   if (parsed.retainerIncludedMinutes !== undefined) updateData.retainerIncludedMinutes = parsed.retainerIncludedMinutes;
   if (parsed.retainerResetDay !== undefined) updateData.retainerResetDay = parsed.retainerResetDay;
@@ -169,7 +173,7 @@ export async function updateProject(projectId: string, input: z.input<typeof pro
   if (parsed.budget !== undefined) updateData.budget = parsed.budget ? String(parsed.budget) : null;
   if (parsed.startDate !== undefined) updateData.startDate = parsed.startDate || null;
   if (parsed.finishDate !== undefined) updateData.finishDate = parsed.finishDate || null;
-  if (parsed.dueDate !== undefined) updateData.dueDate = parsed.dueDate;
+  if (parsed.dueDate !== undefined) updateData.dueDate = parsed.dueDate || null;
   if (parsed.clientVisible !== undefined) updateData.clientVisible = parsed.clientVisible;
   if (parsed.selectedPackageId !== undefined) updateData.selectedPackageId = parsed.selectedPackageId || null;
 
