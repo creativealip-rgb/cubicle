@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.1.119-dev — 2026-07-30 — Dev UI/UX audit hardening
+
+- App shell accessibility: label global desktop/mobile search inputs and enlarge menu, sidebar, language, and onboarding controls to 44 px touch targets
+- Dashboard mobile: show at most three incomplete onboarding actions by default, add expand/collapse for remaining steps, and preserve the five fixed Reminder cards
+- Reports mobile: compact financial KPIs into a two-column layout, keep Net full-width, neutralize zero-value color, and hide empty prior-period comparison noise
+- Personal Site: split the long builder into Identity, Content, Links, and Appearance stages while preserving sticky preview, save/publish actions, and URL/slug behavior
+- Settings mobile: replace the crowded horizontal tab strip with an accessible section selector; retain URL-synced state and full 44 px desktop tabs
+- TDD evidence: each batch was implemented through focused RED → GREEN wiring tests; latest integrated suite passed 117/117 test files
+- Quality: ESLint reported 0 errors and one pre-existing timer dependency warning; TypeScript/Next.js production builds passed for every batch
+- Git/PR ledger: PR #6 `93a0660` global accessibility, #7 `1114753` dashboard, #8 `6166679` reports, #9 `c4ecee9` Personal Site, #10 `fef1927` Settings
+- Dev deployment: `dev.cubiqlo.com` runs revision `fef1927849097991626ca75a8c2743874e3608c5`, app/DB health `ok`, restart count `0`, and `dokploy-traefik` remains sole owner of public ports 80/443
+- Scope: production application/container was not changed; remaining audit work includes Prompt Studio density, per-page form accessibility, workspace-owned detail fixtures, interaction QA, invoice project-item WIP, and final 44-route desktop/mobile sweep
+
 ## v0.1.118-dev — 2026-07-30 — Dev integration recovery, Waktu UX, and route-aware sidebar
 
 - Waktu Harian: restore the complete editable Timesheet instead of the read-only history component; keep row click/keyboard editing, deletion, empty-row guidance, filtering internals, and max 10 entries per page
