@@ -33,21 +33,31 @@
 | Authenticated interaction QA | `a8e27aa` | PR #15 / `5768cde` | Client CRUD persistence, keyboard navigation, filters, and pagination exercised; disposable fixture cleaned |
 | Client create + Invoice tab follow-ups | `7b1ce55`, `2e49a7c` | Direct dev follow-ups | Hard navigation + list invalidation verified live; both Invoice tab rows expose horizontal scroll with fade |
 | Existing-invoice project items | `75f32a5` | PR #16 / `ca8b9c3` | Same-client Fixed Price Project added through mobile UI; DB provenance/totals verified; duplicate option removed |
+| Final 44-route sweep + labels | `2e25e77` | Direct dev integration commit | 88/88 desktop/mobile renders passed; visible unlabeled controls reduced to 0; hidden Radix select false positives documented |
 
 ## Verification ledger
 
 - Every batch used focused RED → GREEN wiring tests before implementation.
-- Latest tracked suite: 122/122 Vitest files and 537/537 tests passed.
+- Latest tracked suite: 123/123 Vitest files and 541/541 tests passed.
 - ESLint: 0 errors; one pre-existing `timer-widget.tsx` hook dependency warning.
 - TypeScript / Next.js production builds passed for all merged batches.
-- Current dev revision: `ca8b9c3b4ddec3d64de1ef5fb2f59342f94e8d4a`.
+- Current dev revision: `2e25e77cc32f469d5f80c0e08591b9a6cd3828c6`.
 - Runtime: container healthy, restart count 0, app/DB health `ok`.
 - Proxy: `dokploy-traefik` remains sole public 80/443 owner.
 - Production application/container unchanged.
 
+## Final sweep result
+
+- 44 canonical app routes, including owned dynamic fixtures.
+- 88/88 authenticated renders passed across desktop `1440×1000` and mobile `390×844`.
+- 0 navigation failures, error boundaries, console-error pages, horizontal-overflow pages, or broken-image pages.
+- 0 visible unlabeled controls after final label pass.
+- Generic scanner still reports hidden Radix native selects; each is `aria-hidden`, `tabindex=-1`, clipped to 1×1, and not user-focusable.
+- Production remained unchanged.
+
 ## Remaining work
 
-1. Final full 44-route desktop/mobile sweep after all fixes.
+None for this UI/UX dev audit scope.
 
 ## Local WIP excluded from UI/UX documentation commit
 
