@@ -17,6 +17,10 @@ describe("sidebar navigation interaction wiring", () => {
     expect(source).toContain('className="fixed z-[60]');
   });
 
+  it("left-aligns desktop and mobile parent labels beside their icons", () => {
+    expect(source.match(/<span className="flex-1 text-left">\{t\(entry\.label\.id, entry\.label\.en\)\}<\/span>/g)).toHaveLength(2);
+  });
+
   it("shows a chevron on every desktop group", () => {
     expect(source).toContain("<ChevronRight");
   });

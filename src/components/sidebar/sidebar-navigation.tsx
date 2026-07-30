@@ -137,7 +137,7 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
                 title={collapsed ? t(entry.label.id, entry.label.en) : undefined}
               >
                 <Icon className="h-4 w-4 shrink-0" />
-                {!collapsed && <span className="flex-1">{t(entry.label.id, entry.label.en)}</span>}
+                {!collapsed && <span className="flex-1 text-left">{t(entry.label.id, entry.label.en)}</span>}
                 {groupHasNotification(entry.id, badgeCounts) && !groupActive && <span className="h-2 w-2 rounded-full bg-blue-600" />}
                 {!collapsed && <ChevronRight className={cn("h-4 w-4 shrink-0 transition-transform", groupOpen && "rotate-90")} />}
               </button>
