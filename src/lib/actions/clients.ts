@@ -1,5 +1,6 @@
 "use server";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 
 import { auth } from "@/lib/auth";
@@ -135,6 +136,7 @@ export async function createClient(input: z.infer<typeof clientSchema>) {
   const gate = await assertCanCreateClient(workspaceId, user.id);
   if (!gate.ok) return gate;
   const client = await insertClient(workspaceId, user.id, input);
+  revalidatePath("/app/clients");
   return { ok: true as const, client };
 }
 

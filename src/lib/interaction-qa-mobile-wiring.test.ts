@@ -5,10 +5,12 @@ import { resolve } from "node:path";
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
 describe("authenticated interaction mobile polish", () => {
-  it("redirects after create before refreshing the destination", () => {
-    const source = read("src/components/forms/client-form.tsx");
-    expect(source).toContain("if (redirectTo) {\n        router.push(redirectTo);\n        router.refresh();\n      } else {\n        router.refresh();\n      }");
-    expect(source).not.toContain("router.refresh();\n      if (redirectTo) router.push(redirectTo);");
+  it("hard-navigates after create and invalidates the client list", () => {
+    const form = read("src/components/forms/client-form.tsx");
+    const actions = read("src/lib/actions/clients.ts");
+    expect(form).toContain("if (redirectTo) window.location.assign(redirectTo);");
+    expect(form).not.toContain("router.push(redirectTo)");
+    expect(actions).toContain('revalidatePath("/app/clients")');
   });
 
   it("adds a mobile scroll affordance to invoice status filters", () => {
