@@ -13,7 +13,11 @@
 - Authenticated interaction QA: verify client create/search/keyboard-open/edit/reload persistence, Tasks/Expenses filters, and Expenses/Invoices pagination; harden client-list invalidation and add visible fade affordances to both Invoice tab rows
 - Existing-invoice project items: add Manual / Dari Proyek Klien source selection, same-client Fixed Price eligibility, remaining-value calculation, currency conversion, duplicate prevention, and mobile-safe dialog behavior
 - Final route sweep: verify all 44 app routes at desktop and mobile, connect visible form labels on Clients, Personal Notes, Journal, Questionnaire Builder, and Invoice metadata, and distinguish hidden Radix selects from visible controls
-- TDD evidence: each batch was implemented through focused RED → GREEN wiring tests; latest tracked suite passed 123/123 test files and 541/541 tests
+- Waktu mobile actions: balance Catat Waktu / Mulai Timer into a two-column 44 px mobile row, move Ekspor PDF to a full-width 44 px secondary row, and preserve compact desktop sizing
+- Empty-user E2E: verify signup → email verification → empty dashboard → client → project → task → manual time → draft invoice through real browser forms, with reload persistence and desktop/mobile checks
+- Project billing transition: normalize empty due dates to `NULL` and synchronize Fixed Price/Hourly/Retainer transitions with canonical time-tracking modes
+- Manual time history: render duration-only entries with `manual_minutes` even when `end_time` is null, and associate all Catat Waktu labels with their controls
+- TDD evidence: each batch was implemented through focused RED → GREEN wiring tests; latest tracked suite passed 126/126 test files and 547/547 tests
 - Quality: ESLint reported 0 errors and one pre-existing timer dependency warning; TypeScript/Next.js production builds passed for every batch
 - Git/PR ledger: PR #6 `93a0660` global accessibility, #7 `1114753` dashboard, #8 `6166679` reports, #9 `c4ecee9` Personal Site, #10 `fef1927` Settings, #12 `f1366e4` Prompt Studio
 - Per-page accessibility PR: #13 / `ba01d56`; Search mobile follow-up `d5985b9`
@@ -21,9 +25,12 @@
 - Interaction QA PR: #15 / `5768cde`; create-navigation follow-up `7b1ce55`; Invoice tab affordance follow-up `2e49a7c`
 - Invoice project-item PR: #16 / `ca8b9c3`
 - Final route accessibility commit: `2e25e77`
-- Dev deployment: `dev.cubiqlo.com` runs revision `2e25e77cc32f469d5f80c0e08591b9a6cd3828c6`, image `sha256:e8ced146f7aa7467248b634cb434e96e8a922ca72a0cb9177dee9d807a9e0afc`, app/DB health `ok`, restart count `0`, and `dokploy-traefik` remains sole owner of public ports 80/443
+- Waktu mobile action commit: `1eb316d`; billing transition commit: `ee69b6d`; manual-time visibility commit: `3a543a0`
+- Dev deployment: `dev.cubiqlo.com` runs revision `3a543a08ce56e4d4c7c6bc0fafb2f1d1515a1a9b`, image `sha256:c0b79bfc6e6181a977e2b753f6261f93944661773c1747815565bb94c47e9e10`, app/DB health `ok`, restart count `0`, and `dokploy-traefik` remains sole owner of public ports 80/443
 - Authenticated mobile QA: Prompt Studio selectors visible and operable at 390×844, category switch updated type options, no horizontal overflow, no browser-console errors, and desktop card controls remained hidden on mobile
 - Final authenticated sweep: 88/88 renders, 0 navigation failures, 0 error boundaries, 0 console-error pages, 0 horizontal-overflow pages, 0 broken-image pages, and 0 visible unlabeled controls; scanner-only residuals are hidden Radix selects (`aria-hidden`, `tabindex=-1`, 1×1)
+- Empty-user E2E evidence: isolated dev workspace contains exactly one client, project, task, 120-minute time entry, and draft `INV-0001`; invoice item persisted at 2 × IDR 250,000 = IDR 500,000; final desktop/mobile routes had HTTP 200, no overflow, no error boundary, and no console errors
+- Detailed evidence: `docs/e2e-empty-user-client-to-invoice-2026-07-30.md`
 - Scope: production application/container was not changed; UI/UX dev audit is complete
 
 ## v0.1.118-dev — 2026-07-30 — Dev integration recovery, Waktu UX, and route-aware sidebar

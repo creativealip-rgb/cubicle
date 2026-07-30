@@ -34,14 +34,16 @@
 | Client create + Invoice tab follow-ups | `7b1ce55`, `2e49a7c` | Direct dev follow-ups | Hard navigation + list invalidation verified live; both Invoice tab rows expose horizontal scroll with fade |
 | Existing-invoice project items | `75f32a5` | PR #16 / `ca8b9c3` | Same-client Fixed Price Project added through mobile UI; DB provenance/totals verified; duplicate option removed |
 | Final 44-route sweep + labels | `2e25e77` | Direct dev integration commit | 88/88 desktop/mobile renders passed; visible unlabeled controls reduced to 0; hidden Radix select false positives documented |
+| Waktu mobile actions | `1eb316d` | Direct dev integration commit | Two 179×44 px primary actions + one 366×44 px export action at 390 px; no overflow or console errors |
+| Empty-user client-to-invoice E2E | `ee69b6d`, `3a543a0` | Direct dev integration commits | Browser signup through draft invoice; fixed billing transition 500 and invisible manual time; all entities persisted on desktop/mobile |
 
 ## Verification ledger
 
 - Every batch used focused RED → GREEN wiring tests before implementation.
-- Latest tracked suite: 123/123 Vitest files and 541/541 tests passed.
+- Latest tracked suite: 126/126 Vitest files and 547/547 tests passed.
 - ESLint: 0 errors; one pre-existing `timer-widget.tsx` hook dependency warning.
 - TypeScript / Next.js production builds passed for all merged batches.
-- Current dev revision: `2e25e77cc32f469d5f80c0e08591b9a6cd3828c6`.
+- Current dev revision: `3a543a08ce56e4d4c7c6bc0fafb2f1d1515a1a9b`.
 - Runtime: container healthy, restart count 0, app/DB health `ok`.
 - Proxy: `dokploy-traefik` remains sole public 80/443 owner.
 - Production application/container unchanged.
@@ -54,6 +56,16 @@
 - 0 visible unlabeled controls after final label pass.
 - Generic scanner still reports hidden Radix native selects; each is `aria-hidden`, `tabindex=-1`, clipped to 1×1, and not user-focusable.
 - Production remained unchanged.
+
+## Empty-user E2E result
+
+- Isolated account started with onboarding `0/7` and zero client/project/task/invoice counts.
+- Real browser forms created one client, one project, one task, one 120-minute manual entry, and draft `INV-0001` totaling IDR 500,000.
+- Reload persistence passed for every entity.
+- Fixed Price → Hourly exposed and verified the empty-date/tracking-mode transition fix.
+- Manual duration entry exposed and verified the `end_time` / `manual_minutes` query fix.
+- Desktop/mobile target routes returned HTTP 200 with no overflow, error boundaries, or console errors.
+- Full evidence: `docs/e2e-empty-user-client-to-invoice-2026-07-30.md`.
 
 ## Remaining work
 
