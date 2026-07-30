@@ -11,15 +11,17 @@
 - Per-page accessibility: label task status/priority/project/assignee filters, expense month/category/search/reset controls, and workspace search; keep all five Search tabs readable at 390 px
 - Workspace-owned detail fixtures: make the reusable QA seed collision-safe, populate client/project/invoice/proposal/contract/questionnaire/template details, and harden Project/Template mobile tabs
 - Authenticated interaction QA: verify client create/search/keyboard-open/edit/reload persistence, Tasks/Expenses filters, and Expenses/Invoices pagination; harden client-list invalidation and add visible fade affordances to both Invoice tab rows
-- TDD evidence: each batch was implemented through focused RED → GREEN wiring tests; latest tracked suite passed 121/121 test files and 534/534 tests
+- Existing-invoice project items: add Manual / Dari Proyek Klien source selection, same-client Fixed Price eligibility, remaining-value calculation, currency conversion, duplicate prevention, and mobile-safe dialog behavior
+- TDD evidence: each batch was implemented through focused RED → GREEN wiring tests; latest tracked suite passed 122/122 test files and 537/537 tests
 - Quality: ESLint reported 0 errors and one pre-existing timer dependency warning; TypeScript/Next.js production builds passed for every batch
 - Git/PR ledger: PR #6 `93a0660` global accessibility, #7 `1114753` dashboard, #8 `6166679` reports, #9 `c4ecee9` Personal Site, #10 `fef1927` Settings, #12 `f1366e4` Prompt Studio
 - Per-page accessibility PR: #13 / `ba01d56`; Search mobile follow-up `d5985b9`
 - Detail fixtures PR: #14 / `413cfe9`
 - Interaction QA PR: #15 / `5768cde`; create-navigation follow-up `7b1ce55`; Invoice tab affordance follow-up `2e49a7c`
-- Dev deployment: `dev.cubiqlo.com` runs revision `2e49a7c5bc2c13f5816d37ac577361ea37567564`, image `sha256:823692664743c95c3c2233394c26b4e959bd0b955d321b44b227725c25e9cfa2`, app/DB health `ok`, restart count `0`, and `dokploy-traefik` remains sole owner of public ports 80/443
+- Invoice project-item PR: #16 / `ca8b9c3`
+- Dev deployment: `dev.cubiqlo.com` runs revision `ca8b9c3b4ddec3d64de1ef5fb2f59342f94e8d4a`, image `sha256:24f7133eb605e59918540a14738fb122322076ed22df36793c8f6af0a06268fa`, app/DB health `ok`, restart count `0`, and `dokploy-traefik` remains sole owner of public ports 80/443
 - Authenticated mobile QA: Prompt Studio selectors visible and operable at 390×844, category switch updated type options, no horizontal overflow, no browser-console errors, and desktop card controls remained hidden on mobile
-- Scope: production application/container was not changed; remaining audit work includes invoice project-item WIP and final 44-route desktop/mobile sweep
+- Scope: production application/container was not changed; remaining audit work is the final 44-route desktop/mobile sweep
 
 ## v0.1.118-dev — 2026-07-30 — Dev integration recovery, Waktu UX, and route-aware sidebar
 
