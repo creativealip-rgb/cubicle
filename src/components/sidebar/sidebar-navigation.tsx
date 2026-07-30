@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n-client";
+import { resolveSidebarOpenGroup, type SidebarGroupOverride } from "@/lib/sidebar-open-group";
 import {
   formatSidebarBadge,
   getActiveNavigation,
@@ -29,10 +30,19 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
   const entries = getVisibleNavigation(workspaceRole);
   const active = getActiveNavigation(pathname);
   const [mobileGroup, setMobileGroup] = useState<SidebarGroupId | null>(active.groupId);
+  const [hoveredGroup, setHoveredGroup] = useState<SidebarGroupId | null>(null);
+  const [desktopOverride, setDesktopOverride] = useState<SidebarGroupOverride>({ kind: "default" });
+  const desktopGroup = resolveSidebarOpenGroup({ hovered: hoveredGroup, override: desktopOverride, activeGroup: active.groupId });
 
   useEffect(() => {
     setMobileGroup(active.groupId);
+    setDesktopOverride({ kind: "default" });
   }, [pathname, active.groupId]);
+
+  function toggleDesktopGroup(groupId: SidebarGroupId) {
+    setDesktopOverride(desktopGroup === groupId ? { kind: "closed" } : { kind: "open", groupId });
+    setHoveredGroup(null);
+  }
 
   function badgeFor(key?: "myOpenTasks" | "unpaidInvoices") {
     return key ? (badgeCounts[key] ?? 0) : 0;
@@ -74,12 +84,26 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
           if (entry.kind === "direct") return directLink(entry, collapsed);
           const Icon = entry.icon;
           const groupActive = active.groupId === entry.id;
+          const groupOpen = desktopGroup === entry.id;
           return (
-            <div key={entry.id} className="space-y-1">
-              <div
+            <div
+              key={entry.id}
+              className="space-y-1"
+              onMouseEnter={() => setHoveredGroup(entry.id)}
+              onMouseLeave={() => setHoveredGroup(null)}
+              onFocus={() => setHoveredGroup(entry.id)}
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget)) setHoveredGroup(null);
+              }}
+            >
+              <button
+                type="button"
                 aria-current={groupActive ? "true" : undefined}
+                aria-expanded={groupOpen}
+                aria-controls={`sidebar-desktop-${entry.id}`}
+                onClick={() => toggleDesktopGroup(entry.id)}
                 className={cn(
-                  "relative flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium",
+                  "relative flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500",
                   groupActive ? "bg-violet-50 text-violet-700" : "text-sidebar-foreground",
                   collapsed && "justify-center px-2",
                 )}
@@ -88,9 +112,10 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
                 <Icon className="h-4 w-4 shrink-0" />
                 {!collapsed && <span className="flex-1">{t(entry.label.id, entry.label.en)}</span>}
                 {groupHasNotification(entry.id, badgeCounts) && !groupActive && <span className="h-2 w-2 rounded-full bg-blue-600" />}
-              </div>
-              {groupActive && !collapsed && (
-                <div className="ml-4 space-y-1 border-l border-slate-200 pl-2">
+                {!collapsed && <ChevronRight className={cn("h-4 w-4 shrink-0 transition-transform", groupOpen && "rotate-90")} />}
+              </button>
+              {groupOpen && !collapsed && (
+                <div id={`sidebar-desktop-${entry.id}`} className="ml-4 space-y-1 border-l border-slate-200 pl-2">
                   {entry.children.map((item) => directLink(item))}
                 </div>
               )}
