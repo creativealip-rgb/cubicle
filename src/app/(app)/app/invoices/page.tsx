@@ -92,7 +92,7 @@ function billingFilterLabel(filter: BillingFilter, lang: "id" | "en"): string {
 }
 
 function InvoiceAreaTabs({ active, allHref, uninvoicedHref, invoicedHref }: { active: "all" | "uninvoiced" | "invoiced"; allHref: string; uninvoicedHref: string; invoicedHref: string }) {
-  return <nav aria-label="Area invoice" className="flex gap-1 overflow-x-auto border-b">{[["all", "Semua Invoice", allHref], ["uninvoiced", "Belum Ditagihkan", uninvoicedHref], ["invoiced", "Sudah Ditagihkan", invoicedHref]].map(([value, label, href]) => <Link key={value} href={href} aria-current={active === value ? "page" : undefined} className={`shrink-0 border-b-2 px-3 py-2 text-sm font-medium ${active === value ? "border-primary" : "border-transparent text-muted-foreground"}`}>{label}</Link>)}</nav>;
+  return <div className="relative overflow-hidden after:pointer-events-none after:absolute after:inset-y-0 after:right-0 after:w-8 after:bg-gradient-to-l after:from-background after:to-transparent lg:after:hidden"><nav aria-label="Area invoice" className="flex gap-1 overflow-x-auto border-b pr-8">{[["all", "Semua Invoice", allHref], ["uninvoiced", "Belum Ditagihkan", uninvoicedHref], ["invoiced", "Sudah Ditagihkan", invoicedHref]].map(([value, label, href]) => <Link key={value} href={href} aria-current={active === value ? "page" : undefined} className={`shrink-0 border-b-2 px-3 py-2 text-sm font-medium ${active === value ? "border-primary" : "border-transparent text-muted-foreground"}`}>{label}</Link>)}</nav></div>;
 }
 
 type InvoiceListFilters = {
