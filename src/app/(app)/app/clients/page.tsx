@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { ClientsListTable } from "@/components/clients/clients-list-table";
+import { ClientCreateDialog } from "@/components/clients/client-create-dialog";
 import { getCurrentLang, createT } from "@/lib/i18n";
 
 async function getWorkspaceId(): Promise<string> {
@@ -133,12 +134,7 @@ export default async function ClientsPage({
                 {t("Upgrade dulu", "Upgrade first")}
               </Button>
             ) : (
-              <Button size="sm" className="gap-1" asChild>
-                <Link href="/app/clients/new">
-                  <Plus className="h-4 w-4" />
-                  <span className="sm:inline">{t("Tambah Klien", "Add Client")}</span>
-                </Link>
-              </Button>
+              <ClientCreateDialog />
             )
           )}
         </div>

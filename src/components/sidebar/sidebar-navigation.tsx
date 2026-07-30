@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n-client";
@@ -12,6 +12,7 @@ import {
   getActiveNavigation,
   getVisibleNavigation,
   groupHasNotification,
+  type NavGroup,
   type SidebarBadgeCounts,
   type SidebarGroupId,
   type WorkspaceRole,
@@ -30,18 +31,47 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
   const entries = getVisibleNavigation(workspaceRole);
   const active = getActiveNavigation(pathname);
   const [mobileGroup, setMobileGroup] = useState<SidebarGroupId | null>(active.groupId);
-  const [hoveredGroup, setHoveredGroup] = useState<SidebarGroupId | null>(null);
+  const [flyoutGroup, setFlyoutGroup] = useState<SidebarGroupId | null>(null);
+  const [flyoutPosition, setFlyoutPosition] = useState({ top: 64, left: collapsed ? 76 : 268 });
   const [desktopOverride, setDesktopOverride] = useState<SidebarGroupOverride>({ kind: "default" });
-  const desktopGroup = resolveSidebarOpenGroup({ hovered: hoveredGroup, override: desktopOverride, activeGroup: active.groupId });
+  const triggerRefs = useRef<Partial<Record<SidebarGroupId, HTMLButtonElement | null>>>({});
+  const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const desktopGroup = resolveSidebarOpenGroup({ hovered: flyoutGroup, override: desktopOverride, activeGroup: active.groupId });
+  const flyoutEntry = entries.find((entry): entry is NavGroup => entry.kind === "group" && entry.id === flyoutGroup);
 
   useEffect(() => {
     setMobileGroup(active.groupId);
     setDesktopOverride({ kind: "default" });
   }, [pathname, active.groupId]);
 
+  function clearFlyoutTimers() {
+    if (openTimer.current) clearTimeout(openTimer.current);
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+  }
+
+  function placeFlyout(groupId: SidebarGroupId) {
+    const rect = triggerRefs.current[groupId]?.getBoundingClientRect();
+    if (rect) setFlyoutPosition({ top: Math.max(12, rect.top - 8), left: rect.right + 8 });
+  }
+
+  function scheduleFlyoutOpen(groupId: SidebarGroupId) {
+    clearFlyoutTimers();
+    openTimer.current = setTimeout(() => {
+      placeFlyout(groupId);
+      setFlyoutGroup(groupId);
+    }, 150);
+  }
+
+  function scheduleFlyoutClose() {
+    clearFlyoutTimers();
+    closeTimer.current = setTimeout(() => setFlyoutGroup(null), 250);
+  }
+
   function toggleDesktopGroup(groupId: SidebarGroupId) {
-    setDesktopOverride(desktopGroup === groupId ? { kind: "closed" } : { kind: "open", groupId });
-    setHoveredGroup(null);
+    clearFlyoutTimers();
+    placeFlyout(groupId);
+    setFlyoutGroup((current) => current === groupId ? null : groupId);
   }
 
   function badgeFor(key?: "myOpenTasks" | "unpaidInvoices") {
@@ -89,14 +119,11 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
             <div
               key={entry.id}
               className="space-y-1"
-              onMouseEnter={() => setHoveredGroup(entry.id)}
-              onMouseLeave={() => setHoveredGroup(null)}
-              onFocus={() => setHoveredGroup(entry.id)}
-              onBlur={(event) => {
-                if (!event.currentTarget.contains(event.relatedTarget)) setHoveredGroup(null);
-              }}
+              onMouseEnter={() => scheduleFlyoutOpen(entry.id)}
+              onMouseLeave={scheduleFlyoutClose}
             >
               <button
+                ref={(node) => { triggerRefs.current[entry.id] = node; }}
                 type="button"
                 aria-current={groupActive ? "true" : undefined}
                 aria-expanded={groupOpen}
@@ -114,7 +141,7 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
                 {groupHasNotification(entry.id, badgeCounts) && !groupActive && <span className="h-2 w-2 rounded-full bg-blue-600" />}
                 {!collapsed && <ChevronRight className={cn("h-4 w-4 shrink-0 transition-transform", groupOpen && "rotate-90")} />}
               </button>
-              {groupOpen && !collapsed && (
+              {groupActive && !collapsed && (
                 <div id={`sidebar-desktop-${entry.id}`} className="ml-4 space-y-1 border-l border-slate-200 pl-2">
                   {entry.children.map((item) => directLink(item))}
                 </div>
@@ -122,6 +149,22 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
             </div>
           );
         })}
+        {flyoutEntry && flyoutEntry.id !== active.groupId && (
+          <div
+            id={`sidebar-flyout-${flyoutEntry.id}`}
+            role="navigation"
+            aria-label={t(flyoutEntry.label.id, flyoutEntry.label.en)}
+            style={{ top: flyoutPosition.top, left: flyoutPosition.left }}
+            onMouseEnter={() => { clearFlyoutTimers(); setFlyoutGroup(flyoutEntry.id); }}
+            onMouseLeave={scheduleFlyoutClose}
+            className="fixed z-[60] w-72 rounded-xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10"
+          >
+            <p className="px-3 pb-2 pt-1 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
+              {t(flyoutEntry.label.id, flyoutEntry.label.en)}
+            </p>
+            <div className="space-y-1">{flyoutEntry.children.map((item) => directLink(item))}</div>
+          </div>
+        )}
       </div>
 
       <div className="space-y-1 lg:hidden">
