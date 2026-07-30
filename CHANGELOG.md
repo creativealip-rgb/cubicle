@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.1.118-dev — 2026-07-30 — Dev integration recovery, Waktu UX, and route-aware sidebar
+
+- Waktu Harian: restore the complete editable Timesheet instead of the read-only history component; keep row click/keyboard editing, deletion, empty-row guidance, filtering internals, and max 10 entries per page
+- Waktu compact UX: hide legacy summary/filter cards on the daily route, restore the compact weekly wrapper, and move weekly add-row controls below the grid
+- Active timer: show live elapsed time, safe no-project/no-task fallbacks, pause/resume/stop controls, and synchronize timer changes without rendering the broken `null · null` label
+- Sidebar: automatically open the Pekerjaan, Keuangan, Personal, or AI flyout for active child routes; preserve temporary hover previews, manual close/open overrides, collapsed flyouts, mobile accordion behavior, badges, and keyboard navigation
+- Task workflow: preserve separate Semua/Sekali selesai/Aktivitas berulang views with task behavior independent from billing model
+- Invoice sharing: restore persisted shared-invoice links across refresh and retain the editable daily-time integration baseline
+- Cron security: centralize four cron-route authorization checks with constant-time bearer-token comparison while preserving recurring-note rollover, 7/3/1-day reminder windows, deduplication, and system-note exclusion
+- Recovery discipline: move previously container-only Waktu hotpatch behavior into Git-backed source and regression tests so future clean image rebuilds no longer overwrite it
+- Verification: 112/112 Vitest files and 507/507 tests passed; ESLint reported 0 errors and one pre-existing timer dependency warning; Next.js production build passed
+- Dev deployment: `dev/integration` revision `bccc2d7bc1856560cd5c0389c671cb1176dfb9df`, image `sha256:338e12d312f42a5dcd88f36e6529e00aecd83396a2923367ff013b836efe1e86`, app/DB health `ok`, and `dokploy-traefik` remained sole owner of public ports 80/443
+- Scope: deployed to `dev.cubiqlo.com`; production application/container was not changed
+
 ## Unreleased — 2026-07-26 — Production full-feature QA and schema recovery
 
 - Production database: apply ledger migrations `0043_persist_portal_token_encrypted.sql`, `0044_portal_password.sql`, and `0045_meeting_request_workflow.sql` after client and invoice creation exposed schema drift
