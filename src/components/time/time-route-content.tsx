@@ -109,7 +109,7 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
     .leftJoin(activities, eq(activities.id, timeEntries.activityId))
     .leftJoin(tasks, eq(tasks.id, timeEntries.taskId))
     .leftJoin(users, eq(users.id, timeEntries.userId))
-    .where(and(eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.userId, user.id), isNotNull(timeEntries.endTime), or(and(gte(timeEntries.workDate, selectedStart), lt(timeEntries.workDate, selectedEnd)), isNull(timeEntries.workDate))))
+    .where(and(eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.userId, user.id), or(isNotNull(timeEntries.endTime), isNotNull(timeEntries.manualMinutes)), or(and(gte(timeEntries.workDate, selectedStart), lt(timeEntries.workDate, selectedEnd)), isNull(timeEntries.workDate))))
     .orderBy(desc(timeEntries.createdAt))
     .limit(200);
 
