@@ -106,7 +106,7 @@ export function DashboardOnboarding({ lang, steps }: DashboardOnboardingProps) {
             type="button"
             onClick={dismiss}
             aria-label={t("Tutup panduan", "Dismiss guide")}
-            className="rounded-md p-1 text-blue-900/50 transition-colors hover:bg-blue-100 hover:text-blue-900"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-md text-blue-900/50 transition-colors hover:bg-blue-100 hover:text-blue-900"
           >
             <X className="h-4 w-4" />
           </button>

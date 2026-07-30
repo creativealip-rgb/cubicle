@@ -312,7 +312,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
       <Button
         variant="ghost"
         size="icon"
-        className="h-9 w-9 shrink-0 lg:hidden"
+        className="h-11 w-11 shrink-0 lg:hidden"
         onClick={() => setMobileOpen(true)}
         aria-label="Buka menu"
       >
@@ -326,16 +326,17 @@ export function AppTopbar({ user }: AppTopbarProps) {
           <Input
             autoFocus
             type="search"
+            aria-label={t("Cari", "Search")}
             placeholder={t("Cari…", "Search…")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-9 pl-9 pr-9 text-sm"
+            className="h-11 pl-9 pr-11 text-sm"
           />
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            className="absolute right-0.5 h-8 w-8"
+            className="absolute right-0 h-11 w-11"
             onClick={() => {
               setSearchOpen(false);
               setSearch("");
@@ -352,6 +353,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
+              aria-label={t("Cari", "Search")}
               placeholder={t("Cari…", "Search…")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -364,7 +366,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
             type="button"
             variant="ghost"
             size="icon"
-            className="h-9 w-9 shrink-0 sm:hidden"
+            className="h-11 w-11 shrink-0 sm:hidden"
             onClick={() => setSearchOpen(true)}
             aria-label={t("Cari", "Search")}
           >
