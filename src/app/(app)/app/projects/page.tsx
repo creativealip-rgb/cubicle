@@ -16,6 +16,7 @@ import {
   parseBillingType,
   type ProjectStatusTab,
 } from "@/lib/project-list-filters";
+import { ActiveFilterSummary } from "@/components/ui/active-filter-summary";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -194,23 +195,11 @@ export default async function ProjectsPage({
         </div>
       )}
 
-      {hasExtraFilters && (
-        <p className="-mt-2 text-xs text-muted-foreground">
-          {t("Filter aktif:", "Active filters:")}{" "}
-          {[
-            selectedClient?.name,
-            billingType === "fixed_price"
-              ? t("Fixed Price", "Fixed Price")
-              : billingType === "hourly"
-                ? t("Per Jam", "Hourly")
-                : billingType === "retainer"
-                  ? t("Retainer", "Retainer")
-                  : billingType === "package"
-                    ? t("Paket", "Package")
-                    : null,
-          ].filter(Boolean).join(" · ")}
-        </p>
-      )}
+      <ActiveFilterSummary basePath="/app/projects" filters={[
+        { key: "clientId", label: t("Klien", "Client"), value: selectedClient?.name },
+        { key: "status", label: t("Status", "Status"), value: statusTab === "active" ? undefined : tabLabel(statusTab) },
+        { key: "billingType", label: t("Model", "Model"), value: billingType === "fixed_price" ? "Fixed Price" : billingType === "hourly" ? t("Per Jam", "Hourly") : billingType === "retainer" ? "Retainer" : billingType === "package" ? t("Paket", "Package") : undefined },
+      ]} />
 
       <ProjectsListTable
         projects={projectsList}

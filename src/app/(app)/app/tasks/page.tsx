@@ -13,6 +13,7 @@ import { TasksListTable } from "@/components/tasks/tasks-list-table";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { TaskBehaviorTabs } from "@/components/tasks/task-behavior-tabs";
 import { defaultTaskBehavior, resolveBillingModel } from "@/lib/billing-model";
+import { ActiveFilterSummary } from "@/components/ui/active-filter-summary";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -138,9 +139,17 @@ export default async function TasksPage({
         </p>
       </div>
 
-      <TaskBehaviorTabs current={params.behavior} />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <TaskBehaviorTabs current={params.behavior} />
+        <TaskViewToggle current={view} />
+      </div>
 
-      <div className="flex justify-end"><TaskViewToggle current={view} /></div>
+      <ActiveFilterSummary basePath="/app/tasks" filters={[
+        { key: "projectId", label: t("Proyek", "Project"), value: taskProjects.find((project) => project.id === params.projectId)?.name },
+        { key: "assignee", label: t("Petugas", "Assignee"), value: params.assignee === "me" ? t("Saya", "Me") : params.assignee === "unassigned" ? t("Belum ditugaskan", "Unassigned") : memberList.find((member) => member.id === params.assignee)?.name },
+        { key: "priority", label: t("Prioritas", "Priority"), value: params.priority },
+        { key: "status", label: t("Status", "Status"), value: params.status },
+      ]} />
 
       {/* Board view */}
       {view === "board" && <TasksBoardView tasks={taskList} members={memberList} />}
