@@ -125,16 +125,30 @@ export function SettingsTabs({
       icon: <LayoutGrid className="h-3.5 w-3.5" />,
     },
   ];
+  const activeTabItem = tabs.find((tab) => tab.key === activeTab);
 
   return (
     <Tabs value={activeTab} onValueChange={changeTab} className="space-y-4">
-      <div className="-mx-1 overflow-x-auto px-1 pb-1">
+      <label className="block md:hidden">
+        <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+          {t("Bagian pengaturan", "Settings section")}
+        </span>
+        <select
+          value={activeTabItem?.key ?? "workspace"}
+          onChange={(event) => changeTab(event.target.value)}
+          aria-label={t("Pilih bagian pengaturan", "Choose settings section")}
+          className="h-11 w-full rounded-md border bg-background px-3 text-sm font-medium"
+        >
+          {tabs.map((tab) => <option key={tab.key} value={tab.key}>{tab.label}</option>)}
+        </select>
+      </label>
+      <div className="hidden md:block">
         <TabsList className="h-auto min-h-9 w-max min-w-full justify-start gap-1 bg-muted/70 p-1 pr-3 sm:min-w-0">
           {tabs.map((tab) => (
             <TabsTrigger
               key={tab.key}
               value={tab.key}
-              className="gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm"
+              className="min-h-11 gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm"
             >
               {tab.icon}
               <span className="whitespace-nowrap">{tab.label}</span>
