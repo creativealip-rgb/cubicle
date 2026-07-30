@@ -32,6 +32,10 @@ export function WaktuNavigation({
       <Button asChild variant="ghost" size="icon" className="h-7 w-7 rounded-full" aria-label="Periode berikutnya"><Link href={href(shiftDateIso(selectedDate, step))}><ChevronRight className="h-3.5 w-3.5" /></Link></Button>
       <Button asChild variant="ghost" size="sm" className="h-7 rounded-full px-2 text-xs"><Link href={href(today)}>{view === "weekly" ? "Minggu ini" : "Hari ini"}</Link></Button>
     </div>
-    {actions && <div className="flex flex-wrap items-center justify-end gap-2">{actions}</div>}
+    {actions && (
+      <div className="grid w-full grid-cols-2 gap-2 [&>*:last-child]:col-span-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end sm:[&>*:last-child]:col-span-1">
+        {actions}
+      </div>
+    )}
   </div>;
 }
