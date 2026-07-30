@@ -489,21 +489,24 @@ export default async function InvoicesPage({
       {/* Status tabs + filters (same row pattern as Clients page) */}
       <div className="space-y-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <StatusFilterTabs
-            activeValue={statusTab}
-            tabs={STATUS_TABS.map((tab) => ({
-              value: tab,
-              label: tabLabel(tab, lang),
-              href: buildInvoicesHref({ ...filtersForHref, status: tab, page: 1 }),
-              count: tabCount(tab),
-              alwaysShow:
-                tab === "all" ||
-                tab === "draft" ||
-                tab === "paid" ||
-                tab === "sent" ||
-                tab === "archived",
-            }))}
-          />
+          <div className="relative -mx-1 overflow-hidden px-1 after:pointer-events-none after:absolute after:inset-y-0 after:right-0 after:w-8 after:bg-gradient-to-l after:from-background after:to-transparent lg:after:hidden">
+            <StatusFilterTabs
+              activeValue={statusTab}
+              listClassName="max-w-full pr-8 lg:pr-1"
+              tabs={STATUS_TABS.map((tab) => ({
+                value: tab,
+                label: tabLabel(tab, lang),
+                href: buildInvoicesHref({ ...filtersForHref, status: tab, page: 1 }),
+                count: tabCount(tab),
+                alwaysShow:
+                  tab === "all" ||
+                  tab === "draft" ||
+                  tab === "paid" ||
+                  tab === "sent" ||
+                  tab === "archived",
+              }))}
+            />
+          </div>
 
           <form
             method="get"

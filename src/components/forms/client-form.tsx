@@ -91,8 +91,12 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
       }
 
       onSuccess?.();
-      router.refresh();
-      if (redirectTo) router.push(redirectTo);
+      if (redirectTo) {
+        router.push(redirectTo);
+        router.refresh();
+      } else {
+        router.refresh();
+      }
     } catch (err: unknown) {
       const msg = isStaleServerActionError(err)
         ? "App baru di-deploy. Refresh halaman, lalu coba lagi."
