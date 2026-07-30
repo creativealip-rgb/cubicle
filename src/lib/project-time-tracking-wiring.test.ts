@@ -75,6 +75,10 @@ describe("Phase 1 project time tracking wiring", () => {
     expect(projectForm).toContain('defaultValues?.billingType==="hours"?"hourly":"fixed_price"');
     expect(projectForm).toContain('<SelectItem value="fixed_price">Harga Tetap</SelectItem>');
     expect(projectForm).toContain('<SelectItem value="hourly">Per Jam</SelectItem>');
+    expect(projectForm).toContain('<SelectItem value="retainer">Retainer</SelectItem>');
+    const projectsAction = read("src/lib/actions/projects.ts");
+    expect(projectsAction).toContain("retainerFee: parsed.retainerFee != null ? String(parsed.retainerFee) : null");
+    expect(projectsAction).toContain('retainerPeriodUnit: parsed.billingModel === "retainer" ? "month" : null');
     expect(projectForm).not.toContain("selectedPackage?.hours");
     expect(timerWidget).toContain("startTimer({ workspaceId })");
     expect(timerWidget).not.toContain("setStopDialogOpen(true)");
