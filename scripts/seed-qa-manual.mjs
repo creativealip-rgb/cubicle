@@ -137,13 +137,16 @@ async function main() {
       internal_notes, portal_enabled, portal_token_hash, portal_token_expires_at, portal_slug, portal_slug_enabled
     ) VALUES
     ($1,$4,'Rina Prameswari','Kopi Senja Roastery','rina.prameswari@kopisenja.test','081298765432','https://kopisenja.test','Jl. Braga No. 45, Bandung 40111','active',ARRAY['branding','social','retainer'],
-     '[INTERNAL] Budget Q3 45jt. Jangan share ke portal.', true, $5, $7, 'kopi-senja-qa', true),
+     '[INTERNAL] Budget Q3 45jt. Jangan share ke portal.', true, $5, $7, $8, true),
     ($2,$4,'dr. Andi Harmoni','Klinik Harmoni','admin@klinikharmoni.test','0215550123','https://klinikharmoni.test','Jl. Kemang Raya No. 8, Jakarta Selatan','active',ARRAY['website','seo'],
-     '[INTERNAL] Prefer email pagi. PIC design: Sinta.', true, $6, $7, 'klinik-harmoni-qa', true),
+     '[INTERNAL] Prefer email pagi. PIC design: Sinta.', true, $6, $7, $9, true),
     ($3,$4,'Budi Santoso','PT Awan Digital','budi@awandigital.test','081311122233','https://awandigital.test','BSD City, Tangerang Selatan','inactive',ARRAY['consulting'],
      '[INTERNAL] Kontrak selesai 2025. Archive candidate.', false, NULL, NULL, NULL, false)
     `,
-    [c1, c2, c3, wsId, sha256(portal1), sha256(portal2), daysFromNow(90)]
+    [
+      c1, c2, c3, wsId, sha256(portal1), sha256(portal2), daysFromNow(90),
+      `kopi-senja-qa-${SUFFIX}`, `klinik-harmoni-qa-${SUFFIX}`,
+    ]
   );
   console.log("✅ Clients x3 + portal tokens");
 
