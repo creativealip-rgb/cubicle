@@ -11,6 +11,8 @@ import { TaskViewToggle } from "@/components/tasks/task-view-toggle";
 import { TasksBoardView } from "@/components/tasks/tasks-board-view";
 import { TasksListTable } from "@/components/tasks/tasks-list-table";
 import { getCurrentLang, createT } from "@/lib/i18n";
+import { TaskBehaviorTabs } from "@/components/tasks/task-behavior-tabs";
+import { defaultTaskBehavior, resolveBillingModel } from "@/lib/billing-model";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -26,6 +28,7 @@ export default async function TasksPage({
     assignee?: string;
     view?: string;
     focus?: string;
+    behavior?: string;
   }>;
 }) {
   const lang = await getCurrentLang();
@@ -39,6 +42,9 @@ export default async function TasksPage({
   const focusId = params.focus || null;
 
   const whereClauses = [eq(tasks.workspaceId, workspaceId)];
+
+  if (params.behavior === "one_time") whereClauses.push(eq(tasks.behavior, "one_time"));
+  else if (params.behavior === "recurring") whereClauses.push(eq(tasks.behavior, "recurring"));
 
   if (params.status && params.status !== "all") {
     whereClauses.push(eq(tasks.status, params.status as typeof tasks.status.enumValues[number]));
@@ -76,6 +82,7 @@ export default async function TasksPage({
       assigneeId: tasks.assigneeId,
       assigneeName: users.name,
       sourceNoteId: tasks.sourceNoteId,
+      behavior: tasks.behavior,
     })
     .from(tasks)
     .leftJoin(projects, eq(projects.id, tasks.projectId))
@@ -86,9 +93,10 @@ export default async function TasksPage({
 
   // Get projects for filter
   const projectList = await db
-    .select({ id: projects.id, name: projects.name })
+    .select({ id: projects.id, name: projects.name, billingModel: projects.billingModel, billingType: projects.billingType })
     .from(projects)
     .where(eq(projects.workspaceId, workspaceId));
+  const taskProjects = projectList.map((project) => ({ id: project.id, name: project.name, defaultBehavior: defaultTaskBehavior(resolveBillingModel(project)) }));
 
   // Get workspace members for filter + assignee selector
   const memberList = await db
@@ -112,7 +120,7 @@ export default async function TasksPage({
             {t("Pantau pekerjaan di semua proyek", "Track work across all projects")}
           </p>
         </div>
-        <TaskCreateDialog projectId={params.projectId} members={memberList} projects={projectList} />
+        <TaskCreateDialog projectId={params.projectId} members={memberList} projects={taskProjects} />
       </div>
 
       <div className="rounded-lg border border-blue-200 bg-blue-50/60 px-3 py-2.5 text-sm text-blue-950 sm:px-4 sm:py-3">
@@ -130,11 +138,13 @@ export default async function TasksPage({
         </p>
       </div>
 
+      <TaskBehaviorTabs current={params.behavior} />
+
       {/* Filters + view toggle */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <TaskFilters
-            projects={projectList}
+            projects={taskProjects}
             members={memberList}
             currentUserId={currentUserId}
             current={{

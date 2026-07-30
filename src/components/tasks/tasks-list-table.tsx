@@ -31,6 +31,7 @@ export type TasksListItem = {
   assigneeId: string | null;
   assigneeName: string | null;
   sourceNoteId?: string | null;
+  behavior: "one_time" | "recurring" | null;
 };
 
 type Member = { id: string; name: string | null; email: string | null };
@@ -210,6 +211,9 @@ export function TasksListTable({
                       {t("Dari catatan", "From note")}
                     </p>
                   ) : null}
+                  <Badge variant="outline" className="mt-1 text-[10px] font-normal">
+                    {task.behavior === "recurring" ? t("Aktivitas berulang", "Recurring activity") : t("Sekali selesai", "One-time")}
+                  </Badge>
                 </div>
                 <div className="text-xs text-muted-foreground md:w-44">
                   <p className="truncate">{task.projectName ?? t("Tanpa proyek", "No project")}</p>

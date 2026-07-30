@@ -84,6 +84,7 @@ const taskSchema = z.object({
   assigneeId: z.string().optional(),
   dueDate: z.string().optional(),
   clientVisible: z.boolean().default(false),
+  behavior: z.enum(["one_time", "recurring"]).optional(),
 });
 
 const updateTaskSchema = z.object({
@@ -94,6 +95,7 @@ const updateTaskSchema = z.object({
   assigneeId: z.string().nullable().optional(),
   dueDate: z.string().nullable().optional(),
   clientVisible: z.boolean().optional(),
+  behavior: z.enum(["one_time", "recurring"]).optional(),
 });
 
 async function assertAssigneeInWorkspace(workspaceId: string, assigneeId: string | null | undefined) {
@@ -117,7 +119,7 @@ export async function createTask(input: z.infer<typeof taskSchema>) {
   await assertAssigneeInWorkspace(workspaceId, parsed.assigneeId);
   const [project] = await db.select({ billingModel: projects.billingModel, billingType: projects.billingType }).from(projects).where(eq(projects.id, parsed.projectId)).limit(1);
   if (!project) throw new Error("Project tidak ditemukan");
-  const projectBehavior = defaultTaskBehavior(resolveBillingModel(project));
+  const projectBehavior = parsed.behavior ?? defaultTaskBehavior(resolveBillingModel(project));
 
   // Get max position for the project+status
   const [maxPos] = await db
@@ -174,6 +176,7 @@ export async function updateTask(taskId: string, input: z.infer<typeof updateTas
   if (parsed.assigneeId !== undefined) updateData.assigneeId = parsed.assigneeId;
   if (parsed.dueDate !== undefined) updateData.dueDate = parsed.dueDate;
   if (parsed.clientVisible !== undefined) updateData.clientVisible = parsed.clientVisible;
+  if (parsed.behavior !== undefined) updateData.behavior = parsed.behavior;
 
   const [task] = await db.update(tasks)
     .set(updateData as typeof tasks.$inferInsert)
