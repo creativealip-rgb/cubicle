@@ -299,7 +299,7 @@ export default async function ClientDetailPage({
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">Proyek Aktif</p>
@@ -314,20 +314,7 @@ export default async function ClientDetailPage({
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Portal</p>
-            <p className="text-2xl font-bold">
-              {client.portalEnabled ? (
-                <span className="flex items-center gap-1 text-green-600 text-base">
-                  <Globe className="h-4 w-4" /> Aktif
-                </span>
-              ) : (
-                <span className="text-muted-foreground text-base">Nonaktif</span>
-              )}
-            </p>
-          </CardContent>
-        </Card>
+
       </div>
 
       {/* Contact Info Row */}
@@ -437,7 +424,7 @@ export default async function ClientDetailPage({
             const billingMeta = isHours && project.rate
               ? `Rate ${project.currency} ${Number(project.rate).toLocaleString("id-ID")}/jam`
               : billingDisplayType === "fixed_price" && project.budget
-                ? `Fixed rate ${project.currency} ${Number(project.budget).toLocaleString("id-ID")}`
+                ? `${project.currency} ${Number(project.budget).toLocaleString("id-ID")}`
                 : isPackage
                   ? project.packageName
                     ? `${project.packageName}${

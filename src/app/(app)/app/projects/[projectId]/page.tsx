@@ -2,8 +2,8 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { projects, clients, tasks, files, timeEntries, workspaceMembers, users, projectServices } from "@/db/schema";
-import { and, eq, desc } from "drizzle-orm";
+import { projects, clients, tasks, files, timeEntries, workspaceMembers, users } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { requireUser, assertProjectInWorkspace } from "@/lib/access";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,7 @@ import { projectStatusVariant } from "@/lib/status-badge";
 import { billingTypeHint, billingTypeLabel } from "@/lib/feature-access";
 import { ProjectTasksTab } from "@/components/tasks/project-tasks-tab";
 import { ProjectActivitySettings } from "@/components/projects/project-activity-settings";
-import { ProjectServiceSettings } from "@/components/projects/project-service-settings";
+
 import { ProjectForm } from "@/components/forms/project-form";
 import Link from "next/link";
 import {
@@ -148,17 +148,7 @@ export default async function ProjectDetailPage({
     .orderBy(desc(timeEntries.createdAt))
     .limit(20);
 
-  const projectServiceRows = await db
-    .select({ serviceId: projectServices.serviceId, projectPackageAssignmentId: projectServices.projectPackageAssignmentId })
-    .from(projectServices)
-    .where(and(
-      eq(projectServices.projectId, projectId),
-      eq(projectServices.workspaceId, workspaceId),
-      eq(projectServices.status, "active"),
-    ));
-  const activeProjectServiceIds = projectServiceRows
-    .map((row) => row.serviceId)
-    .filter((id): id is string => Boolean(id));
+
   const statusColors: Record<string, string> = {
     active: "bg-emerald-500",
     draft: "bg-slate-400",
@@ -209,7 +199,7 @@ export default async function ProjectDetailPage({
               <Wallet className="h-3 w-3" />
               {billingTypeLabel(billingDisplayType, lang)}
             </Badge>
-            {project.billingType === "hours" && project.rate && (
+            {(billingDisplayType === "hourly" || project.billingType === "hours") && project.rate && (
               <span className="text-xs text-muted-foreground">
                 {t("Rate", "Rate")}: {project.currency} {Number(project.rate).toLocaleString(locale)}
                 /{t("jam", "hr")}
@@ -217,8 +207,8 @@ export default async function ProjectDetailPage({
             )}
             {billingDisplayType === "fixed_price" && project.budget && (
               <span className="text-xs text-muted-foreground">
-                {t("Fixed rate", "Fixed rate")}: {project.currency}{" "}
-                {Number(project.budget).toLocaleString(locale)}
+                {t("Nominal", "Amount")}: {project.currency}{" "}
+                <span className="font-medium tabular-nums">{Number(project.budget).toLocaleString(locale)}</span>
               </span>
             )}
             {billingDisplayType === "package" && (
@@ -263,7 +253,7 @@ export default async function ProjectDetailPage({
                 dueDate: project.dueDate ?? "",
                 clientVisible: project.clientVisible,
                 selectedPackageId: project.selectedPackageId,
-                serviceIds: activeProjectServiceIds,
+
               }}
             />
           </DialogContent>
@@ -302,11 +292,8 @@ export default async function ProjectDetailPage({
           <TabsTrigger value="tasks" className="gap-1">
             <CheckSquare className="h-3 w-3" /> {t("Tugas", "Tasks")} ({projectTasks.length})
           </TabsTrigger>
-          <TabsTrigger value="services" className="gap-1">
-            <Wallet className="h-3 w-3" /> {t("Layanan", "Services")}
-          </TabsTrigger>
           <TabsTrigger value="activities" className="gap-1">
-            <Clock className="h-3 w-3" /> {t("Activity", "Activities")}
+            <Clock className="h-3 w-3" /> {t("Jenis Pekerjaan", "Work Types")}
           </TabsTrigger>
           <TabsTrigger value="files" className="gap-1">
             <FileText className="h-3 w-3" /> {t("Berkas", "Files")} ({projectFiles.length})
@@ -322,9 +309,6 @@ export default async function ProjectDetailPage({
           <ProjectTasksTab projectId={projectId} tasks={projectTasks} members={projectMembers} />
         </TabsContent>
 
-        <TabsContent value="services" className="pt-4">
-          <ProjectServiceSettings projectId={projectId} />
-        </TabsContent>
 
         <TabsContent value="activities" className="pt-4">
           <ProjectActivitySettings projectId={projectId} />
