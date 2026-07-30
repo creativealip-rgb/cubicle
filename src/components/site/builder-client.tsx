@@ -22,6 +22,8 @@ import {
 } from "@/lib/personal-site/model";
 import { useT } from "@/lib/i18n-client";
 
+type EditorSection = "identity" | "content" | "links" | "appearance";
+
 export function BuilderClient({
   initialSite,
   action,
@@ -42,6 +44,7 @@ export function BuilderClient({
   const [savedSnapshot, setSavedSnapshot] = useState(() => JSON.stringify(initialSite));
   const submittedSnapshotRef = useRef(JSON.stringify(initialSite));
   const [mode, setMode] = useState<"edit" | "preview">("edit");
+  const [editorSection, setEditorSection] = useState<EditorSection>("identity");
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
   const [slugStatus, setSlugStatus] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle");
 
@@ -112,7 +115,7 @@ export function BuilderClient({
         <p className="app-page-description">{t("Buat halaman publik singkat untuk layanan, karya, dan kontak kamu.", "Create a focused public page for your services, work, and contact details.")}</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="outline" asChild><a href={previewUrl} target="_blank" rel="noreferrer"><Eye className="h-4 w-4" />{t("Preview penuh", "Full preview")}</a></Button>
+        <Button type="button" variant="outline" asChild><a href={previewUrl} target="_blank" rel="noreferrer"><Eye className="h-4 w-4" />{t("Buka preview di tab baru", "Open preview in new tab")}</a></Button>
         {site.published && <Button type="button" asChild><a href={publicUrl} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" />{t("Buka halaman publik", "Open public page")}</a></Button>}
       </div>
     </header>
@@ -128,12 +131,23 @@ export function BuilderClient({
       <form action={formAction} onSubmit={() => { submittedSnapshotRef.current = serialized; }} className={`${mode === "preview" ? "hidden xl:block" : "block"} min-w-0 space-y-4`}>
         <input type="hidden" name="site" value={serialized} />
 
-        <Card>
+        <div className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1 sm:grid-cols-4" role="tablist" aria-label={t("Bagian editor", "Editor section")}>
+          {([
+            ["identity", t("Identitas", "Identity")],
+            ["content", t("Konten", "Content")],
+            ["links", t("Tautan", "Links")],
+            ["appearance", t("Tampilan", "Appearance")],
+          ] as const).map(([value, label]) => (
+            <Button key={value} type="button" role="tab" aria-selected={editorSection === value} variant={editorSection === value ? "default" : "ghost"} className="min-h-11" onClick={() => setEditorSection(value)}>{label}</Button>
+          ))}
+        </div>
+
+        <Card className={editorSection !== "identity" ? "hidden" : undefined}>
           <CardHeader><CardTitle>{t("Mulai dari template", "Start with a template")}</CardTitle></CardHeader>
           <CardContent><PresetPicker onSelect={applyPreset} /></CardContent>
         </Card>
 
-        <Card>
+        <Card className={editorSection !== "identity" ? "hidden" : undefined}>
           <CardHeader><CardTitle>{t("Identitas", "Identity")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <Field label={t("Nama / studio", "Name / studio")} error={state.fieldErrors?.title?.[0]}><Input value={site.title} maxLength={100} onChange={(e) => update("title", e.target.value)} /></Field>
@@ -143,7 +157,7 @@ export function BuilderClient({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={editorSection !== "identity" ? "hidden" : undefined}>
           <CardHeader><CardTitle>{t("Aksi utama", "Primary action")}</CardTitle></CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <Field label={t("Label tombol", "Button label")} error={state.fieldErrors?.ctaLabel?.[0]}><Input value={site.ctaLabel} maxLength={60} onChange={(e) => update("ctaLabel", e.target.value)} /></Field>
@@ -151,17 +165,17 @@ export function BuilderClient({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={editorSection !== "content" ? "hidden" : undefined}>
           <CardHeader><CardTitle>{t("Konten", "Content")}</CardTitle></CardHeader>
           <CardContent><SectionEditor sections={site.sections} onChange={(sections) => update("sections", sections)} /></CardContent>
         </Card>
 
-        <Card>
+        <Card className={editorSection !== "links" ? "hidden" : undefined}>
           <CardHeader><CardTitle>{t("Tautan tambahan", "Additional links")}</CardTitle></CardHeader>
           <CardContent><LinkEditor links={site.links} onChange={(links) => update("links", links)} /></CardContent>
         </Card>
 
-        <Card>
+        <Card className={editorSection !== "appearance" ? "hidden" : undefined}>
           <CardHeader><CardTitle>{t("Tampilan", "Appearance")}</CardTitle></CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <Field label={t("Tema", "Theme")}><Select value={site.theme} onValueChange={(value) => update("theme", value as PersonalSiteInput["theme"])}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="midnight">Midnight</SelectItem><SelectItem value="paper">Paper</SelectItem><SelectItem value="studio">Studio</SelectItem></SelectContent></Select></Field>
@@ -169,7 +183,7 @@ export function BuilderClient({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={editorSection !== "appearance" ? "hidden" : undefined}>
           <CardHeader><CardTitle>{t("Publikasi", "Publishing")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <Field label={t("Slug publik", "Public slug")} error={state.fieldErrors?.slug?.[0]} hint={`URL: ${publicUrl}`}><Input value={site.slug} onChange={(e) => update("slug", e.target.value)} onBlur={() => update("slug", normalizePersonalSiteSlug(site.slug))} /></Field>
