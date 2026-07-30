@@ -37,6 +37,7 @@ import { buildRateMap } from "@/lib/currency-base";
 import { convertCurrency, resolveFixedPriceInvoiceAmount, resolveProjectAmount } from "@/lib/invoice-project-items";
 import { buildProjectServiceDocumentLines } from "@/lib/project-service-lines";
 import { assertBillingModelAllowsTimeInvoice, resolveBillingModel } from "@/lib/billing-model";
+import { encryptSecret } from "@/lib/google-calendar";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -964,6 +965,7 @@ export async function generateInvoiceShareToken(invoiceId: string, expiresAt?: s
     .update(invoices)
     .set({
       sharedTokenHash: tokenHash,
+      sharedTokenEnc: encryptSecret(rawToken),
       sharedTokenExpiresAt: expiry,
       sharedTokenRevokedAt: null,
       updatedAt: new Date(),
@@ -985,6 +987,7 @@ export async function revokeInvoiceShareToken(invoiceId: string) {
     .update(invoices)
     .set({
       sharedTokenRevokedAt: new Date(),
+      sharedTokenEnc: null,
       updatedAt: new Date(),
     })
     .where(eq(invoices.id, invoiceId));

@@ -759,6 +759,7 @@ export const invoices = pgTable("invoices", {
   notes: text("notes"),
   terms: text("terms"),
   sharedTokenHash: text("shared_token_hash").unique(),
+  sharedTokenEnc: text("shared_token_enc"),
   sharedTokenExpiresAt: timestamp("shared_token_expires_at", { withTimezone: true }),
   sharedTokenRevokedAt: timestamp("shared_token_revoked_at", { withTimezone: true }),
   clientFirstViewedAt: timestamp("client_first_viewed_at", { withTimezone: true }),

@@ -32,6 +32,7 @@ import { invoiceStatusVariant } from "@/lib/status-badge";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { billingTypeLabel } from "@/lib/feature-access";
 import { buildDefaultInvoiceMessage } from "@/lib/invoice-message";
+import { decryptSecret } from "@/lib/google-calendar";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -122,6 +123,14 @@ export default async function InvoiceDetailPage({
   const shareExpired = inv.sharedTokenExpiresAt
     ? new Date(inv.sharedTokenExpiresAt) < new Date()
     : false;
+  let existingShareToken: string | null = null;
+  if (hasShareToken && !shareExpired && inv.sharedTokenEnc) {
+    try {
+      existingShareToken = decryptSecret(inv.sharedTokenEnc);
+    } catch {
+      existingShareToken = null;
+    }
+  }
 
   const isPaid = Number(inv.total) > 0 && totalPaid >= Number(inv.total);
   const displayStatus = isPaid
@@ -370,6 +379,7 @@ export default async function InvoiceDetailPage({
             invoiceId={invoiceId}
             hasToken={!!hasShareToken}
             isExpired={shareExpired}
+            initialToken={existingShareToken}
           />
         </CardContent>
       </Card>

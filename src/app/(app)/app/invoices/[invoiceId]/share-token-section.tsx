@@ -16,13 +16,15 @@ export function ShareTokenSection({
   invoiceId,
   hasToken,
   isExpired,
+  initialToken,
 }: {
   invoiceId: string;
   hasToken: boolean;
   isExpired: boolean;
+  initialToken: string | null;
 }) {
   const router = useRouter();
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(initialToken);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
 
