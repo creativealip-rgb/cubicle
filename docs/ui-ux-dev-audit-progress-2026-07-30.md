@@ -30,23 +30,24 @@
 | Per-page filter accessibility | `d22dbb2` | PR #13 / `ba01d56` | Named Tasks, Expenses, and Search controls; authenticated mobile lookup passed |
 | Search mobile tab fit | `d5985b9` | Direct dev follow-up | All five search tabs fully readable at 390 px; no page overflow or console errors |
 | Workspace detail fixtures | `3cdba1b` | PR #14 / `413cfe9` | Seven owned detail surfaces render seeded markers at 390 px; no overflow, error boundary, or console errors |
+| Authenticated interaction QA | `a8e27aa` | PR #15 / `5768cde` | Client CRUD persistence, keyboard navigation, filters, and pagination exercised; disposable fixture cleaned |
+| Client create + Invoice tab follow-ups | `7b1ce55`, `2e49a7c` | Direct dev follow-ups | Hard navigation + list invalidation verified live; both Invoice tab rows expose horizontal scroll with fade |
 
 ## Verification ledger
 
 - Every batch used focused RED → GREEN wiring tests before implementation.
-- Latest tracked suite: 120/120 Vitest files and 532/532 tests passed.
+- Latest tracked suite: 121/121 Vitest files and 534/534 tests passed.
 - ESLint: 0 errors; one pre-existing `timer-widget.tsx` hook dependency warning.
 - TypeScript / Next.js production builds passed for all merged batches.
-- Current dev revision: `413cfe910be41ecd457acf66f948bfa81aa74181`.
+- Current dev revision: `2e49a7c5bc2c13f5816d37ac577361ea37567564`.
 - Runtime: container healthy, restart count 0, app/DB health `ok`.
 - Proxy: `dokploy-traefik` remains sole public 80/443 owner.
 - Production application/container unchanged.
 
 ## Remaining work
 
-1. Authenticated interaction QA: modals, filters, pagination, keyboard navigation, and disposable create/edit/delete flows.
-2. Complete existing invoice project-item selector WIP.
-3. Final full 44-route desktop/mobile sweep after all fixes.
+1. Complete existing invoice project-item selector WIP.
+2. Final full 44-route desktop/mobile sweep after all fixes.
 
 ## Local WIP excluded from UI/UX documentation commit
 
