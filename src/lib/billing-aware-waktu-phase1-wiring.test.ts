@@ -10,7 +10,7 @@ describe("billing-aware Waktu Phase 1", () => {
     const header = read("src/components/time/time-header.tsx");
     const route = read("src/components/time/time-route-content.tsx");
     expect(page).toContain("searchParams");
-    expect(route).toContain("WaktuHistory");
+    expect(route).toContain("<Timesheet");
     expect(route).toContain("AddTimeLogDialog");
     expect(route).toContain("NewTimerDialog");
     expect(header).toContain("Harian");

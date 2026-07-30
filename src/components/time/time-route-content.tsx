@@ -16,7 +16,6 @@ import { TimePageShell } from "@/components/time/time-header";
 import { TimesheetApprovalPanel } from "@/components/time/timesheet-approval-panel";
 import { weekStartIso } from "@/lib/timesheet-approval";
 import { uniqueRecentTimerCombinations } from "@/lib/timer-combinations";
-import { WaktuHistory } from "@/components/time/waktu-history";
 import { AddTimeLogDialog } from "@/components/time/add-time-log-dialog";
 import { NewTimerDialog } from "@/components/time/new-timer-dialog";
 import { ActiveTimerCard } from "@/components/time/active-timer-card";
@@ -213,7 +212,7 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
         <>
           <WaktuNavigation view="daily" selectedDate={selectedDate} actions={<>{canWrite && <AddTimeLogDialog workspaceId={workspaceId} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId }))} />}{canWrite && <NewTimerDialog initialOpen={action === "timer"} workspaceId={workspaceId} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId }))} />}<PdfExportButton clients={clientList} projects={projectList} /></>} />
           <ActiveTimerCard initialTimer={activeTimer ? { id: activeTimer.id, projectName: activeTimer.projectName, taskTitle: activeTimer.taskTitle, description: activeTimer.description, startTime: activeTimer.startTime! } : null} />
-          <WaktuHistory view="daily" selectedDate={selectedDate} entries={entries.map((e) => ({ id: e.id, projectName: e.projectName, clientName: e.clientName, taskTitle: e.taskTitle, description: e.description, workDate: e.workDate, startTime: e.startTime, createdAt: e.createdAt, durationMinutes: e.durationMinutes, manualMinutes: e.manualMinutes }))} />
+          <Timesheet entries={entries.map((e) => ({ id: e.id, description: e.description, tags: e.tags, durationMinutes: e.durationMinutes, manualMinutes: e.manualMinutes, billable: e.billable ?? false, hourlyRate: e.hourlyRate, startTime: e.startTime, endTime: e.endTime, status: e.status, clientId: e.clientId, projectId: e.projectId, activityId: e.activityId, taskId: e.taskId, clientName: e.clientName, projectName: e.projectName, activityName: e.activityName, projectCurrency: e.projectCurrency, projectTimeTrackingMode: e.projectTimeTrackingMode, taskTitle: e.taskTitle, userName: e.userName, createdAt: e.createdAt }))} clients={clientList} projects={projectList} tasks={taskList} activities={activityList} />
         </>
       )}
       {mode === "approvals" && <TimesheetApprovalPanel weekStart={currentWeekStart} current={currentApproval} pending={pendingApprovals} isOwner={member.role === "owner"} />}

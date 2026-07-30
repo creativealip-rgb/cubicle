@@ -24,7 +24,7 @@ describe("Billing-aware Waktu route wiring", () => {
     expect(read("src/app/(app)/app/time/history/page.tsx")).toContain('redirect("/app/time?view=daily")');
     expect(read("src/app/(app)/app/time/approvals/page.tsx")).toContain('<TimeRouteContent mode="approvals" />');
     const content = read("src/components/time/time-route-content.tsx");
-    for (const component of ["WaktuHistory", "WaktuNavigation", "AddTimeLogDialog", "NewTimerDialog", "ActiveTimerCard", "WeeklyTimeGrid", "TimesheetApprovalPanel"]) {
+    for (const component of ["Timesheet", "WaktuNavigation", "AddTimeLogDialog", "NewTimerDialog", "ActiveTimerCard", "WeeklyTimeGrid", "TimesheetApprovalPanel"]) {
       expect(content).toContain(component);
     }
   });

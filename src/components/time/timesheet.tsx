@@ -245,9 +245,13 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
     }
   }
 
+  function canEditEntry(entry: TimeEntry) {
+    return entry.status !== "invoiced" && entry.projectTimeTrackingMode !== "off";
+  }
+
   function openEdit(entry: TimeEntry) {
-    if (entry.status === "invoiced") {
-      toast.error(t("Entri sudah di-invoice", "Entry already invoiced"));
+    if (!canEditEntry(entry)) {
+      toast.error(t("Entri hanya dapat dibaca", "Entry is read only"));
       return;
     }
     setEditEntry(entry);
@@ -497,15 +501,27 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
           {pageEntries.map((entry, index) => (
             <Card key={entry.id} className="rounded-none border-0 shadow-none">
               <CardContent
+                role={canEditEntry(entry) ? "button" : undefined}
+                tabIndex={canEditEntry(entry) ? 0 : undefined}
+                aria-label={canEditEntry(entry) ? t("Edit entri waktu", "Edit time entry") : undefined}
+                onClick={() => canEditEntry(entry) && openEdit(entry)}
+                onKeyDown={(event) => {
+                  if (canEditEntry(entry) && (event.key === "Enter" || event.key === " ")) {
+                    event.preventDefault();
+                    openEdit(entry);
+                  }
+                }}
                 className={`flex flex-col gap-3 !border-b border-slate-200 p-3 hover:!bg-slate-100/70 sm:flex-row sm:items-center sm:justify-between ${
                   index % 2 === 0 ? "!bg-white" : "!bg-slate-50"
-                }`}
+                } ${canEditEntry(entry) ? "cursor-pointer outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset" : ""}`}
               >
                 <div className="flex min-w-0 items-start gap-3 sm:items-center">
                   <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {entry.description || t("Tanpa judul", "Untitled")}
+                    <p className={`text-sm font-medium truncate ${!entry.projectId && !entry.taskId && !entry.description ? "italic text-muted-foreground" : ""}`}>
+                      {entry.projectId || entry.taskId || entry.description
+                        ? entry.description || entry.taskTitle || entry.projectName || t("Tanpa judul", "Untitled")
+                        : t("Tambah proyek, task, dan detail lainnya", "Add project, task, and other details")}
                     </p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
                       {entry.clientName && <span>{entry.clientName}</span>}
@@ -579,7 +595,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
                           variant="ghost"
                           size="icon"
                           className="h-11 w-11 rounded-lg border border-transparent hover:border-border hover:bg-background sm:h-9 sm:w-9"
-                          onClick={() => openEdit(entry)}
+                          onClick={(event) => { event.stopPropagation(); openEdit(entry); }}
                           aria-label={t("Edit entri", "Edit entry")}
                           title={t("Edit entri", "Edit entry")}
                         >
@@ -590,7 +606,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
                         variant="ghost"
                         size="icon"
                         className="h-11 w-11 rounded-lg border border-transparent text-destructive hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive sm:h-9 sm:w-9"
-                        onClick={() => setDeleteEntry(entry)}
+                        onClick={(event) => { event.stopPropagation(); setDeleteEntry(entry); }}
                         disabled={entry.status === "invoiced"}
                         aria-label={t("Hapus entri", "Delete entry")}
                         title={t("Hapus entri", "Delete entry")}
