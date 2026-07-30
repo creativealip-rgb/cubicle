@@ -8,12 +8,14 @@
 - Personal Site: split the long builder into Identity, Content, Links, and Appearance stages while preserving sticky preview, save/publish actions, and URL/slug behavior
 - Settings mobile: replace the crowded horizontal tab strip with an accessible section selector; retain URL-synced state and full 44 px desktop tabs
 - Prompt Studio mobile: replace dense category/type card lists with compact accessible selectors, preserve visual cards on desktop, and tighten mobile form spacing
-- TDD evidence: each batch was implemented through focused RED → GREEN wiring tests; latest tracked suite passed 118/118 test files and 525/525 tests
+- Per-page accessibility: label task status/priority/project/assignee filters, expense month/category/search/reset controls, and workspace search; keep all five Search tabs readable at 390 px
+- TDD evidence: each batch was implemented through focused RED → GREEN wiring tests; latest tracked suite passed 119/119 test files and 528/528 tests
 - Quality: ESLint reported 0 errors and one pre-existing timer dependency warning; TypeScript/Next.js production builds passed for every batch
 - Git/PR ledger: PR #6 `93a0660` global accessibility, #7 `1114753` dashboard, #8 `6166679` reports, #9 `c4ecee9` Personal Site, #10 `fef1927` Settings, #12 `f1366e4` Prompt Studio
-- Dev deployment: `dev.cubiqlo.com` runs revision `f1366e48d2a683f6b076a515abd4686b3f781a88`, image `sha256:10dc1d56669d9bc0407f57b575103b328a7175b4f2f017fba536cce75b4f1192`, app/DB health `ok`, restart count `0`, and `dokploy-traefik` remains sole owner of public ports 80/443
+- Per-page accessibility PR: #13 / `ba01d56`; Search mobile follow-up `d5985b9`
+- Dev deployment: `dev.cubiqlo.com` runs revision `d5985b991b8fff5e8fa351a0b802bf1fb8d87490`, image `sha256:e3e553f49d34fa1f131a5784b900b37f8b3401dce887075bca24d58f8e3d5518`, app/DB health `ok`, restart count `0`, and `dokploy-traefik` remains sole owner of public ports 80/443
 - Authenticated mobile QA: Prompt Studio selectors visible and operable at 390×844, category switch updated type options, no horizontal overflow, no browser-console errors, and desktop card controls remained hidden on mobile
-- Scope: production application/container was not changed; remaining audit work includes per-page form accessibility, workspace-owned detail fixtures, interaction QA, invoice project-item WIP, and final 44-route desktop/mobile sweep
+- Scope: production application/container was not changed; remaining audit work includes workspace-owned detail fixtures, interaction QA, invoice project-item WIP, and final 44-route desktop/mobile sweep
 
 ## v0.1.118-dev — 2026-07-30 — Dev integration recovery, Waktu UX, and route-aware sidebar
 
