@@ -20,7 +20,7 @@ export function TaskCreateDialog({
 }: {
   projectId?: string;
   members?: Array<{ id: string; name: string | null; email: string | null }>;
-  projects?: Array<{ id: string; name: string }>;
+  projects?: Array<{ id: string; name: string; defaultBehavior?: "one_time" | "recurring" }>;
 }) {
   const { t } = useT();
   const [open, setOpen] = useState(false);
