@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { updateTask } from "@/lib/actions/tasks";
-import { startTimerFromTask } from "@/lib/actions/time";
+
 import {
   Sheet,
   SheetContent,
@@ -29,7 +29,6 @@ import {
   EyeOff,
   AlertTriangle,
   StickyNote,
-  Play,
   Loader2,
 } from "lucide-react";
 import Link from "next/link";
@@ -69,7 +68,7 @@ export function TaskDetailSheet({
   const [open, setOpen] = useState(defaultOpen);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const timeTrackingOff = task.timeTrackingMode === "off";
+
 
   async function handleStatusChange(status: string) {
     setLoading(true);
@@ -123,24 +122,6 @@ export function TaskDetailSheet({
     }
   }
 
-  async function handleStartTimer() {
-    if (!task.projectId) {
-      toast.error(t("Task belum punya proyek", "Task has no project"));
-      return;
-    }
-    setLoading(true);
-    try {
-      await startTimerFromTask(task.id);
-      window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
-      toast.success(t("Timer task dimulai", "Task timer started"));
-      setOpen(false);
-      router.refresh();
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : t("Gagal mulai timer", "Failed to start timer"));
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function handleAssigneeChange(assigneeId: string) {
     setLoading(true);
@@ -219,26 +200,6 @@ export function TaskDetailSheet({
             </p>
           </div>
 
-          {/* Start timer from task */}
-          {!timeTrackingOff ? (
-            <div className="space-y-2">
-              <Button
-                type="button"
-                className="w-full gap-2"
-                onClick={handleStartTimer}
-                disabled={loading || !task.projectId}
-              >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                {t("Mulai timer dari task", "Start timer from task")}
-              </Button>
-              <p className="text-[11px] text-muted-foreground">
-                {t(
-                  "Task sebagai konteks; deskripsi pekerjaan tetap terpisah",
-                  "Task is context; work description stays separate",
-                )}
-              </p>
-            </div>
-          ) : null}
 
           <Separator />
 
