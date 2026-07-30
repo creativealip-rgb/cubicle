@@ -184,16 +184,16 @@ export default async function ProjectDetailPage({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="space-y-2">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 space-y-2">
           <Link
             href={backHref}
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-3 w-3" /> {backLabel}
           </Link>
-          <div className="flex items-center gap-3">
-            <h1 className="app-page-title">{project.name}</h1>
+          <div className="flex min-w-0 items-center gap-3">
+            <h1 className="min-w-0 truncate app-page-title">{project.name}</h1>
             <Badge variant={projectStatusVariant(project.status, lang).variant}>{projectStatusVariant(project.status, lang).label}</Badge>
           </div>
           {project.clientName && (
@@ -298,7 +298,7 @@ export default async function ProjectDetailPage({
 
       {/* Tabs */}
       <Tabs defaultValue="tasks">
-        <TabsList>
+        <TabsList className="max-w-full justify-start overflow-x-auto">
           <TabsTrigger value="tasks" className="gap-1">
             <CheckSquare className="h-3 w-3" /> {t("Tugas", "Tasks")} ({projectTasks.length})
           </TabsTrigger>

@@ -453,7 +453,7 @@ export function TemplateCenterClient({
       </div>
 
       <Tabs value={activeTab} onValueChange={changeTab}>
-        <TabsList className="inline-flex h-auto w-auto max-w-full flex-wrap justify-start gap-1">
+        <TabsList className="inline-flex h-auto max-w-full justify-start gap-1 overflow-x-auto">
           <TabsTrigger value="proposal" className="gap-1.5">
             <ScrollText className="h-4 w-4" /> Proposal ({proposalTpls.length})
           </TabsTrigger>
