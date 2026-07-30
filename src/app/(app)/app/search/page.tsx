@@ -127,7 +127,7 @@ export default async function SearchPage({
             <StatusFilterTabs
               activeValue={kindFilter}
               hideEmpty={false}
-              listClassName="w-full"
+              listClassName="w-full [&_[role=tab]]:px-2 [&_[role=tab]]:text-xs"
               tabs={filters.map((f) => ({
                 value: f.key,
                 label: f.label,

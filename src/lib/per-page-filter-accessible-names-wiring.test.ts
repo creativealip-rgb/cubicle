@@ -25,4 +25,9 @@ describe("per-page filter accessible names", () => {
     const source = read("src/app/(app)/app/search/page.tsx");
     expect(source).toContain('aria-label={t("Cari workspace", "Search workspace")}');
   });
+
+  it("keeps every workspace search tab readable on mobile", () => {
+    const source = read("src/app/(app)/app/search/page.tsx");
+    expect(source).toContain('listClassName="w-full [&_[role=tab]]:px-2 [&_[role=tab]]:text-xs"');
+  });
 });
