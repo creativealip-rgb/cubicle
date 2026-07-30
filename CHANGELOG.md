@@ -7,11 +7,13 @@
 - Reports mobile: compact financial KPIs into a two-column layout, keep Net full-width, neutralize zero-value color, and hide empty prior-period comparison noise
 - Personal Site: split the long builder into Identity, Content, Links, and Appearance stages while preserving sticky preview, save/publish actions, and URL/slug behavior
 - Settings mobile: replace the crowded horizontal tab strip with an accessible section selector; retain URL-synced state and full 44 px desktop tabs
-- TDD evidence: each batch was implemented through focused RED → GREEN wiring tests; latest integrated suite passed 117/117 test files
+- Prompt Studio mobile: replace dense category/type card lists with compact accessible selectors, preserve visual cards on desktop, and tighten mobile form spacing
+- TDD evidence: each batch was implemented through focused RED → GREEN wiring tests; latest tracked suite passed 118/118 test files and 525/525 tests
 - Quality: ESLint reported 0 errors and one pre-existing timer dependency warning; TypeScript/Next.js production builds passed for every batch
-- Git/PR ledger: PR #6 `93a0660` global accessibility, #7 `1114753` dashboard, #8 `6166679` reports, #9 `c4ecee9` Personal Site, #10 `fef1927` Settings
-- Dev deployment: `dev.cubiqlo.com` runs revision `fef1927849097991626ca75a8c2743874e3608c5`, app/DB health `ok`, restart count `0`, and `dokploy-traefik` remains sole owner of public ports 80/443
-- Scope: production application/container was not changed; remaining audit work includes Prompt Studio density, per-page form accessibility, workspace-owned detail fixtures, interaction QA, invoice project-item WIP, and final 44-route desktop/mobile sweep
+- Git/PR ledger: PR #6 `93a0660` global accessibility, #7 `1114753` dashboard, #8 `6166679` reports, #9 `c4ecee9` Personal Site, #10 `fef1927` Settings, #12 `f1366e4` Prompt Studio
+- Dev deployment: `dev.cubiqlo.com` runs revision `f1366e48d2a683f6b076a515abd4686b3f781a88`, image `sha256:10dc1d56669d9bc0407f57b575103b328a7175b4f2f017fba536cce75b4f1192`, app/DB health `ok`, restart count `0`, and `dokploy-traefik` remains sole owner of public ports 80/443
+- Authenticated mobile QA: Prompt Studio selectors visible and operable at 390×844, category switch updated type options, no horizontal overflow, no browser-console errors, and desktop card controls remained hidden on mobile
+- Scope: production application/container was not changed; remaining audit work includes per-page form accessibility, workspace-owned detail fixtures, interaction QA, invoice project-item WIP, and final 44-route desktop/mobile sweep
 
 ## v0.1.118-dev — 2026-07-30 — Dev integration recovery, Waktu UX, and route-aware sidebar
 
