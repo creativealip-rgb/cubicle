@@ -39,7 +39,7 @@ export function TaskFilters({ projects, members, current, currentUserId }: TaskF
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Select value={current.status ?? "all"} onValueChange={(v) => apply("status", v)}>
-        <SelectTrigger className="h-9 w-full text-xs sm:w-[140px]">
+        <SelectTrigger className="h-9 w-full text-xs sm:w-[140px]" aria-label={t("Filter status tugas", "Filter task status")}>
           <SelectValue placeholder={t("Status", "Status")} />
         </SelectTrigger>
         <SelectContent>
@@ -52,7 +52,7 @@ export function TaskFilters({ projects, members, current, currentUserId }: TaskF
       </Select>
 
       <Select value={current.priority ?? "all"} onValueChange={(v) => apply("priority", v)}>
-        <SelectTrigger className="h-9 w-full text-xs sm:w-[140px]">
+        <SelectTrigger className="h-9 w-full text-xs sm:w-[140px]" aria-label={t("Filter prioritas tugas", "Filter task priority")}>
           <SelectValue placeholder={t("Prioritas", "Priority")} />
         </SelectTrigger>
         <SelectContent>
@@ -65,7 +65,7 @@ export function TaskFilters({ projects, members, current, currentUserId }: TaskF
       </Select>
 
       <Select value={current.projectId ?? "all"} onValueChange={(v) => apply("projectId", v)}>
-        <SelectTrigger className="h-9 w-full text-xs sm:w-[160px]">
+        <SelectTrigger className="h-9 w-full text-xs sm:w-[160px]" aria-label={t("Filter proyek tugas", "Filter task project")}>
           <SelectValue placeholder={t("Proyek", "Project")} />
         </SelectTrigger>
         <SelectContent>
@@ -77,7 +77,7 @@ export function TaskFilters({ projects, members, current, currentUserId }: TaskF
       </Select>
 
       <Select value={current.assignee ?? "all"} onValueChange={(v) => apply("assignee", v)}>
-        <SelectTrigger className="h-9 w-full text-xs sm:w-[160px]">
+        <SelectTrigger className="h-9 w-full text-xs sm:w-[160px]" aria-label={t("Filter petugas", "Filter assignee")}>
           <SelectValue placeholder={t("Ditugaskan ke", "Assignee")} />
         </SelectTrigger>
         <SelectContent>
