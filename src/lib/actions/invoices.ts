@@ -82,6 +82,11 @@ const addItemSchema = z.object({
   unitPrice: z.number().min(0).default(0),
 });
 
+const addProjectItemSchema = z.object({
+  invoiceId: z.string().uuid(),
+  projectId: z.string().uuid(),
+});
+
 const updateItemSchema = z.object({
   description: z.string().min(1).optional(),
   quantity: z.number().positive().optional(),
@@ -563,6 +568,41 @@ export async function addInvoiceItem(input: z.infer<typeof addItemSchema>) {
 
   await recalculateInvoice(parsed.invoiceId);
   await writeActivityLog(workspaceId, user.id, "added_invoice_item", "invoice_item", item.id);
+  return item;
+}
+
+export async function addProjectInvoiceItem(input: z.infer<typeof addProjectItemSchema>) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  const parsed = addProjectItemSchema.parse(input);
+  const invoice = await assertInvoiceInWorkspace(parsed.invoiceId, workspaceId);
+  assertInvoiceFinancialsMutable(invoice.status);
+
+  const [project] = await db.select({ id: projects.id, name: projects.name, clientId: projects.clientId, billingType: projects.billingType, billingModel: projects.billingModel, budget: projects.budget, currency: projects.currency })
+    .from(projects).where(and(eq(projects.id, parsed.projectId), eq(projects.workspaceId, workspaceId))).limit(1);
+  if (!project) throw new Error("Proyek tidak ditemukan");
+  if (project.clientId !== invoice.clientId) throw new Error("Proyek tidak sesuai dengan klien invoice");
+  if ((project.billingModel ?? project.billingType) !== "fixed_price" && project.billingType !== "project") throw new Error("Hanya Fixed Price Project yang bisa ditambahkan langsung");
+
+  const [duplicate] = await db.select({ id: invoiceItems.id }).from(invoiceItems).where(and(eq(invoiceItems.invoiceId, parsed.invoiceId), eq(invoiceItems.sourceType, "project"), eq(invoiceItems.sourceId, parsed.projectId))).limit(1);
+  if (duplicate) throw new Error("Proyek ini sudah ada di invoice");
+
+  const [prior] = await db.select({ amount: sql<string>`coalesce(sum(${invoiceItems.originalAmount}), '0')` }).from(invoiceItems)
+    .innerJoin(invoices, eq(invoices.id, invoiceItems.invoiceId))
+    .where(and(eq(invoiceItems.sourceType, "project"), eq(invoiceItems.sourceId, project.id), eq(invoices.workspaceId, workspaceId), ne(invoices.status, "cancelled"), ne(invoices.status, "archived")));
+  const originalAmount = resolveFixedPriceInvoiceAmount(Number(project.budget ?? 0), Number(prior?.amount ?? 0));
+  if (originalAmount <= 0) throw new Error("Nilai Fixed Price Project sudah seluruhnya ditagihkan");
+
+  const [workspace] = await db.select({ defaultCurrency: workspaces.defaultCurrency }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  const rateRows = await db.select({ fromCurrency: workspaceCurrencyRates.fromCurrency, rate: workspaceCurrencyRates.rate }).from(workspaceCurrencyRates).where(eq(workspaceCurrencyRates.workspaceId, workspaceId));
+  const converted = convertCurrency(originalAmount, project.currency, invoice.currency, workspace?.defaultCurrency ?? "IDR", buildRateMap(rateRows));
+  if (!converted) throw new Error(`Kurs ${project.currency} ke ${invoice.currency} belum tersedia`);
+
+  const [item] = await db.insert(invoiceItems).values({ invoiceId: parsed.invoiceId, description: project.name, quantity: "1", unitPrice: String(converted.amount), amount: String(converted.amount), sourceType: "project", sourceId: project.id, originalCurrency: project.currency, originalAmount: String(originalAmount), conversionRate: String(converted.rate) }).returning();
+  await recalculateInvoice(parsed.invoiceId);
+  await writeActivityLog(workspaceId, user.id, "added_project_invoice_item", "invoice_item", item.id);
   return item;
 }
 
