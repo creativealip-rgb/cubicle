@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.1.120-dev — 2026-07-30 — Navigation, compact filters, billing QA, and portal polish
+
+- Sidebar navigation: replace covering desktop flyouts with route-active inline child menus for Pekerjaan, Keuangan, Personal, and AI; keep mobile accordions and collapsed desktop behavior compact
+- Project/Task lists: move status, client, billing model, project, assignee, and priority filters into their table headers; remove redundant filter rows while preserving Task behavior tabs and List/Board controls
+- Active-filter UX: align Task behavior tabs with List/Board controls, show active filters as labeled chips, and add one-click Hapus filter without clearing behavior or view state
+- Task detail: remove the duplicate Mulai timer dari task action; timer remains available from the dedicated Waktu/topbar flow
+- Billing project QA: create isolated Hourly and Retainer projects through browser UI, persist Retainer fee/included minutes/reset configuration correctly, and log five manual time entries per project
+- Client Portal: replace legacy Per proyek/Per jam/Per paket labels with Fixed Price/Hourly/Retainer, rename Invoice ke to Invoice, localize Request to Permintaan, add a lock icon to Akses aman, make Ajukan Pertemuan primary, and improve the no-shared-project guidance
+- Verification: focused Vitest wiring suites, TypeScript, and Next.js Docker production builds passed; authenticated desktop/mobile browser QA reported zero console errors and zero horizontal overflow
+- Commits: `ebd1523`, `33ca5ac`, `e1900af`, `a5520a2`, `cb02d39`, `6b861c1`, `12812c8`
+- Dev deployment: `dev.cubiqlo.com` runs revision `12812c8a3d2a5048eaf2e7f988983174be193bee`, image `sha256:b08e3e181a6fbf13e9f3c1925550b50427907fe401fd42387658c3397f08876c`, app/DB health `ok`, and production container was unchanged
+
 ## v0.1.119-dev — 2026-07-30 — Dev UI/UX audit hardening
 
 - App shell accessibility: label global desktop/mobile search inputs and enlarge menu, sidebar, language, and onboarding controls to 44 px touch targets
