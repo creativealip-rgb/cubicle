@@ -352,6 +352,7 @@ export default async function PersonalPage({
             <input type="hidden" name="tab" value={tab} />
             <Input
               name="q"
+              aria-label={t("Cari catatan", "Search notes")}
               placeholder={t("Cari catatan…", "Search notes…")}
               defaultValue={query}
               className="min-w-[200px] flex-1"

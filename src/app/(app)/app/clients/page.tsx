@@ -198,6 +198,7 @@ export default async function ClientsPage({
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               name="search"
+              aria-label={t("Cari klien", "Search clients")}
               defaultValue={search}
               placeholder={t("Cari klien...", "Search clients...")}
               className="pl-8"

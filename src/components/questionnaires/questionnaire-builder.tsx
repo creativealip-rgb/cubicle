@@ -126,16 +126,18 @@ export function QuestionnaireBuilder({
       <Card>
         <CardContent className="pt-6 space-y-4">
           <div>
-            <label className="text-sm font-medium block mb-1">Name</label>
+            <label htmlFor="questionnaire-name" className="text-sm font-medium block mb-1">Name</label>
             <Input
+              id="questionnaire-name"
               placeholder="mis. Intake klien baru"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </div>
           <div>
-            <label className="text-sm font-medium block mb-1">Description (optional)</label>
+            <label htmlFor="questionnaire-description" className="text-sm font-medium block mb-1">Description (optional)</label>
             <Textarea
+              id="questionnaire-description"
               placeholder="Untuk apa kuesioner ini, dan apa yang kamu lakukan dengan jawabannya"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
