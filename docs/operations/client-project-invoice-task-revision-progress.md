@@ -11,11 +11,12 @@ Plan: `docs/plans/2026-08-01-client-project-invoice-task-workspace-revision.md`
 - Task 3 — Project-scoped Invoice dialog. Commit `9c749e0`. 32 targeted tests and TypeScript passed.
 - Task 4 — Client Invoice formatting and Portal control accessibility. Commit `63203e5`. 11 targeted tests, TypeScript, and ESLint passed.
 - Task 5 — authenticated Portal password encryption primitive. Commit `15b2f76`. 8 tests, TypeScript, and ESLint passed.
-- Task 6 — additive Portal password ciphertext schema. 2 tests and TypeScript passed; PostgreSQL 16 clone apply, legacy-null check, encrypted fixture, replay, and cleanup passed.
+- Task 6 — additive Portal password ciphertext schema. Commit `cad7643`. 2 tests and TypeScript passed; PostgreSQL 16 clone apply, legacy-null check, encrypted fixture, replay, and cleanup passed.
+- Task 7 — atomic Portal password mutation and owner-only guarded reveal. 14 tests and TypeScript passed.
 
 ## Current
 
-- Task 7 — atomic Portal password mutation and guarded reveal.
+- Task 8 — truthful Client Portal password states.
 
 ## Release state
 

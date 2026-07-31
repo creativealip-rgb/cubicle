@@ -6,7 +6,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { clients } from "@/db/schema";
+import { clients, workspaceMembers } from "@/db/schema";
 import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceWritable, assertClientInWorkspace } from "@/lib/access";
@@ -14,6 +14,7 @@ import { writeActivityLog } from "@/lib/actions/activity";
 import { createHash, randomBytes } from "crypto";
 import { hashPassword } from "@better-auth/utils/password";
 import { encryptSecret } from "@/lib/google-calendar";
+import { decryptPortalPassword, encryptPortalPassword } from "@/lib/portal-password-encryption";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -292,14 +293,42 @@ export async function setClientPortalPassword(clientId: string, password: string
   const [current] = await db.select({ slug: clients.portalSlug }).from(clients)
     .where(and(eq(clients.id, clientId), eq(clients.workspaceId, workspaceId)));
   const slug = current?.slug || `client-${clientId.slice(0, 8)}`;
-  await db.update(clients).set({
-    portalSlug: slug,
-    portalSlugEnabled: true,
-    portalEnabled: true,
-    portalPasswordHash: await hashPassword(value),
-    portalSessionVersion: randomBytes(16).toString("hex"),
-    updatedAt: new Date(),
-  }).where(and(eq(clients.id, clientId), eq(clients.workspaceId, workspaceId)));
+  const key = process.env.PORTAL_PASSWORD_ENCRYPTION_KEY;
+  if (!key) throw new Error("PORTAL_PASSWORD_ENCRYPTION_KEY belum dikonfigurasi");
+  const encrypted = encryptPortalPassword(value, key);
+  const passwordHash = await hashPassword(value);
+  await db.transaction(async (tx) => {
+    await tx.update(clients).set({
+      portalSlug: slug,
+      portalSlugEnabled: true,
+      portalEnabled: true,
+      portalPasswordHash: passwordHash,
+      portalPasswordCiphertext: encrypted.ciphertext,
+      portalPasswordNonce: encrypted.nonce,
+      portalPasswordEncryptionVersion: encrypted.version,
+      portalPasswordEncryptedAt: new Date(),
+      portalSessionVersion: randomBytes(16).toString("hex"),
+      updatedAt: new Date(),
+    }).where(and(eq(clients.id, clientId), eq(clients.workspaceId, workspaceId)));
+  });
   await writeActivityLog(workspaceId, user.id, "updated_portal_password", "client", clientId);
   return { success: true, slug };
+}
+
+export async function revealClientPortalPassword(clientId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertClientInWorkspace(db, user.id, workspaceId, clientId);
+  const [member] = await db.select({ role: workspaceMembers.role }).from(workspaceMembers)
+    .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, user.id))).limit(1);
+  if (!member || member.role !== "owner") throw new Error("Hanya owner dapat melihat password Portal");
+  const [client] = await db.select({ ciphertext: clients.portalPasswordCiphertext, nonce: clients.portalPasswordNonce, version: clients.portalPasswordEncryptionVersion }).from(clients)
+    .where(and(eq(clients.id, clientId), eq(clients.workspaceId, workspaceId))).limit(1);
+  if (!client?.ciphertext || !client.nonce || !client.version) return { state: "unrecoverable" as const };
+  const key = process.env.PORTAL_PASSWORD_ENCRYPTION_KEY;
+  if (!key) throw new Error("PORTAL_PASSWORD_ENCRYPTION_KEY belum dikonfigurasi");
+  const password = decryptPortalPassword({ ciphertext: client.ciphertext, nonce: client.nonce, version: client.version }, key);
+  await writeActivityLog(workspaceId, user.id, "revealed_portal_password", "client", clientId);
+  return { state: "revealed" as const, password };
 }
