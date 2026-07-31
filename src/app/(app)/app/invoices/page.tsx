@@ -10,8 +10,11 @@ import {
   projects,
   workspaceCurrencyRates,
   workspaceMembers,
+  timeEntries,
+  invoiceItems,
+  users,
 } from "@/db/schema";
-import { eq, desc, and, count, ne, isNull, SQL, sql, inArray } from "drizzle-orm";
+import { eq, desc, and, count, ne, isNull, isNotNull, SQL, sql, inArray } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +26,7 @@ import { InvoicesListTable } from "@/components/invoices/invoices-list-table";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { billingTypeLabel } from "@/lib/feature-access";
 import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
+import { parseInvoiceTab, withQuery } from "@/lib/finance-tabs";
 import {
   buildRateMap,
   convertToBase,
@@ -87,10 +91,13 @@ function billingFilterLabel(filter: BillingFilter, lang: "id" | "en"): string {
   return billingTypeLabel(filter, lang);
 }
 
+function InvoiceAreaTabs({ active, allHref, uninvoicedHref, invoicedHref }: { active: "all" | "uninvoiced" | "invoiced"; allHref: string; uninvoicedHref: string; invoicedHref: string }) {
+  return <div className="relative overflow-hidden after:pointer-events-none after:absolute after:inset-y-0 after:right-0 after:w-8 after:bg-gradient-to-l after:from-background after:to-transparent lg:after:hidden"><nav aria-label="Area invoice" className="flex gap-1 overflow-x-auto border-b pr-8">{[["all", "Semua Invoice", allHref], ["uninvoiced", "Belum Ditagihkan", uninvoicedHref], ["invoiced", "Sudah Ditagihkan", invoicedHref]].map(([value, label, href]) => <Link key={value} href={href} aria-current={active === value ? "page" : undefined} className={`shrink-0 border-b-2 px-3 py-2 text-sm font-medium ${active === value ? "border-primary" : "border-transparent text-muted-foreground"}`}>{label}</Link>)}</nav></div>;
+}
+
 type InvoiceListFilters = {
   status: StatusTab;
   clientId?: string;
-  projectId?: string;
   billing: BillingFilter;
   page: number;
 };
@@ -99,7 +106,6 @@ function buildInvoicesHref(filters: InvoiceListFilters): string {
   const params = new URLSearchParams();
   if (filters.status !== "all") params.set("status", filters.status);
   if (filters.clientId) params.set("clientId", filters.clientId);
-  if (filters.projectId) params.set("projectId", filters.projectId);
   if (filters.billing !== "all") params.set("billing", filters.billing);
   if (filters.page > 1) params.set("page", String(filters.page));
   const qs = params.toString();
@@ -110,7 +116,6 @@ function buildFilterConditions(opts: {
   workspaceId: string;
   statusTab: StatusTab;
   clientId?: string;
-  projectId?: string;
   billing: BillingFilter;
 }): SQL[] {
   const conditions: SQL[] = [eq(invoices.workspaceId, opts.workspaceId)];
@@ -123,10 +128,6 @@ function buildFilterConditions(opts: {
 
   if (opts.clientId) {
     conditions.push(eq(invoices.clientId, opts.clientId));
-  }
-
-  if (opts.projectId) {
-    conditions.push(eq(invoices.projectId, opts.projectId));
   }
 
   if (opts.billing === "none") {
@@ -145,8 +146,8 @@ export default async function InvoicesPage({
     status?: string;
     page?: string;
     clientId?: string;
-    projectId?: string;
     billing?: string;
+    tab?: string;
   }>;
 }) {
   const lang = await getCurrentLang();
@@ -157,11 +158,11 @@ export default async function InvoicesPage({
   const workspaceId = ws.id;
   const baseCurrency = normalizeCurrency(ws.defaultCurrency || "IDR");
   const params = await searchParams;
+  const activeTab = parseInvoiceTab(params.tab);
   const statusTab = parseStatusTab(params.status);
   const page = parsePage(params.page);
   const billing = parseBillingFilter(params.billing);
   const clientId = isUuid(params.clientId) ? params.clientId : undefined;
-  const projectId = isUuid(params.projectId) ? params.projectId : undefined;
 
   const [member] = await db
     .select({ role: workspaceMembers.role })
@@ -169,6 +170,25 @@ export default async function InvoicesPage({
     .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, user.id)))
     .limit(1);
   const canWrite = member?.role === "owner" || member?.role === "member";
+
+  const invoiceTabHref = (tab: "all" | "uninvoiced" | "invoiced") => withQuery("/app/invoices", {
+    clientId: params.clientId,
+    billing: params.billing,
+  }, { tab: tab === "all" ? undefined : tab });
+
+  if (activeTab === "uninvoiced") {
+    const eligible = await db.select({ id: timeEntries.id, clientId: timeEntries.clientId, clientName: clients.name, projectId: timeEntries.projectId, projectName: projects.name, userName: users.name, description: timeEntries.description, durationMinutes: timeEntries.durationMinutes, hourlyRate: timeEntries.hourlyRate, currency: projects.currency }).from(timeEntries).innerJoin(clients, eq(clients.id, timeEntries.clientId)).innerJoin(projects, eq(projects.id, timeEntries.projectId)).leftJoin(users, eq(users.id, timeEntries.userId)).where(and(eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.status, "approved"), eq(timeEntries.billable, true), isNotNull(timeEntries.endTime), sql`${timeEntries.durationMinutes} > 0`)).orderBy(clients.name, projects.name, desc(timeEntries.startTime));
+    const groups = new Map<string, typeof eligible>();
+    for (const entry of eligible) { const key = `${entry.clientId}:${entry.projectId}`; groups.set(key, [...(groups.get(key) ?? []), entry]); }
+    return <div className="space-y-4 sm:space-y-6">
+      <div className="app-page-header"><div><h1 className="app-page-title">{t("Invoice", "Invoices")}</h1><p className="text-sm text-muted-foreground">{t("Waktu disetujui, billable, selesai, dan belum terkait invoice.", "Approved, billable, completed time not yet linked to an invoice.")}</p></div></div>
+      <InvoiceAreaTabs active={activeTab} allHref={invoiceTabHref("all")} uninvoicedHref={invoiceTabHref("uninvoiced")} invoicedHref={invoiceTabHref("invoiced")} />
+      {eligible.length === 0 ? <EmptyState icon={CheckCircle2} title={t("Tidak ada waktu belum ditagihkan", "No uninvoiced time")} description={t("Entri harus selesai, billable, dan berstatus Disetujui.", "Entries must be completed, billable, and Approved.")} /> : <div className="space-y-4">{Array.from(groups.values()).map(group => { const first = group[0]; const minutes = group.reduce((sum, row) => sum + Number(row.durationMinutes ?? 0), 0); const amount = group.reduce((sum, row) => sum + Number(row.durationMinutes ?? 0) / 60 * Number(row.hourlyRate ?? 0), 0); const ids = group.map(row => row.id).join(","); return <Card key={`${first.clientId}:${first.projectId}`}><CardHeader className="flex flex-row items-start justify-between gap-3"><div><CardTitle className="text-base">{first.clientName} · {first.projectName}</CardTitle><p className="text-sm text-muted-foreground">{group.length} entri · {(minutes / 60).toFixed(1)} jam · {formatMoney(amount, first.currency)}</p></div>{canWrite && <Button asChild size="sm"><Link href={`/app/invoices/new?timeEntryIds=${ids}`}>{t("Buat Invoice", "Create Invoice")}</Link></Button>}</CardHeader><CardContent className="divide-y">{group.map(row => <div key={row.id} className="flex justify-between gap-3 py-2 text-sm"><span className="truncate">{row.description || row.userName || t("Entri waktu", "Time entry")}</span><span className="tabular-nums">{(Number(row.durationMinutes ?? 0) / 60).toFixed(1)}h</span></div>)}</CardContent></Card>; })}</div>}
+    </div>;
+  }
+
+  const timeLinkedInvoiceRows = activeTab === "invoiced" ? await db.select({ invoiceId: invoiceItems.invoiceId }).from(invoiceItems).innerJoin(invoices, eq(invoices.id, invoiceItems.invoiceId)).where(and(eq(invoices.workspaceId, workspaceId), eq(invoiceItems.sourceType, "time_entry"))).groupBy(invoiceItems.invoiceId) : [];
+  const timeLinkedInvoiceIds = timeLinkedInvoiceRows.map(row => row.invoiceId);
 
   const rateRows = await db
     .select({
@@ -190,16 +210,9 @@ export default async function InvoicesPage({
     .where(eq(clients.workspaceId, workspaceId))
     .orderBy(clients.name);
 
-  const projectOptions = await db
-    .select({ id: projects.id, name: projects.name })
-    .from(projects)
-    .where(eq(projects.workspaceId, workspaceId))
-    .orderBy(projects.name);
-
   // Counts per status (respect client/billing filters; include archived for badge)
   const statusCountWhere: SQL[] = [eq(invoices.workspaceId, workspaceId)];
   if (clientId) statusCountWhere.push(eq(invoices.clientId, clientId));
-  if (projectId) statusCountWhere.push(eq(invoices.projectId, projectId));
   if (billing === "none") statusCountWhere.push(isNull(invoices.projectId));
   else if (billing !== "all") statusCountWhere.push(eq(projects.billingType, billing));
 
@@ -245,9 +258,9 @@ export default async function InvoicesPage({
     workspaceId,
     statusTab,
     clientId,
-    projectId,
     billing,
   });
+  if (activeTab === "invoiced") listConditions.push(timeLinkedInvoiceIds.length ? inArray(invoices.id, timeLinkedInvoiceIds) : sql`false`);
 
   const invoiceList = await db
     .select({
@@ -363,12 +376,11 @@ export default async function InvoicesPage({
   const filtersForHref = {
     status: statusTab,
     clientId,
-    projectId,
     billing,
     page: currentPage,
   };
 
-  const hasExtraFilters = Boolean(clientId) || Boolean(projectId) || billing !== "all";
+  const hasExtraFilters = Boolean(clientId) || billing !== "all";
   const selectedClient = clientId
     ? clientOptions.find((c) => c.id === clientId)
     : undefined;
@@ -397,6 +409,8 @@ export default async function InvoicesPage({
           )}
         </div>
       </div>
+
+      <InvoiceAreaTabs active={activeTab} allHref={invoiceTabHref("all")} uninvoicedHref={invoiceTabHref("uninvoiced")} invoicedHref={invoiceTabHref("invoiced")} />
 
       {/* KPI summary — base currency */}
       {totalAllIncludingArchived > 0 && (
@@ -472,24 +486,74 @@ export default async function InvoicesPage({
         </div>
       )}
 
-      {/* Status tabs */}
+      {/* Status tabs + filters (same row pattern as Clients page) */}
       <div className="space-y-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <StatusFilterTabs
-            activeValue={statusTab}
-            tabs={STATUS_TABS.map((tab) => ({
-              value: tab,
-              label: tabLabel(tab, lang),
-              href: buildInvoicesHref({ ...filtersForHref, status: tab, page: 1 }),
-              count: tabCount(tab),
-              alwaysShow:
-                tab === "all" ||
-                tab === "draft" ||
-                tab === "paid" ||
-                tab === "sent" ||
-                tab === "archived",
-            }))}
-          />
+          <div className="relative -mx-1 overflow-hidden px-1 after:pointer-events-none after:absolute after:inset-y-0 after:right-0 after:w-8 after:bg-gradient-to-l after:from-background after:to-transparent lg:after:hidden">
+            <StatusFilterTabs
+              activeValue={statusTab}
+              listClassName="max-w-full pr-8 lg:pr-1"
+              tabs={STATUS_TABS.map((tab) => ({
+                value: tab,
+                label: tabLabel(tab, lang),
+                href: buildInvoicesHref({ ...filtersForHref, status: tab, page: 1 }),
+                count: tabCount(tab),
+                alwaysShow:
+                  tab === "all" ||
+                  tab === "draft" ||
+                  tab === "paid" ||
+                  tab === "sent" ||
+                  tab === "archived",
+              }))}
+            />
+          </div>
+
+          <form
+            method="get"
+            action="/app/invoices"
+            className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto"
+          >
+            {statusTab !== "all" && <input type="hidden" name="status" value={statusTab} />}
+            <select
+              id="invoice-filter-client"
+              name="clientId"
+              defaultValue={clientId ?? ""}
+              aria-label={t("Klien", "Client")}
+              className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm sm:w-44"
+            >
+              <option value="">{t("Semua klien", "All clients")}</option>
+              {clientOptions.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.companyName || c.name}
+                </option>
+              ))}
+            </select>
+            <select
+              id="invoice-filter-billing"
+              name="billing"
+              defaultValue={billing === "all" ? "" : billing}
+              aria-label={t("Jenis proyek", "Project type")}
+              className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm sm:w-44"
+            >
+              <option value="">{billingFilterLabel("all", lang)}</option>
+              <option value="hours">{billingFilterLabel("hours", lang)}</option>
+              <option value="package">{billingFilterLabel("package", lang)}</option>
+              <option value="project">{billingFilterLabel("project", lang)}</option>
+              <option value="none">{billingFilterLabel("none", lang)}</option>
+            </select>
+            <div className="flex gap-2">
+              <Button type="submit" size="sm" variant="outline" className="flex-1 sm:flex-none">
+                {t("Filter", "Filter")}
+              </Button>
+              {hasExtraFilters && (
+                <Link href={buildInvoicesHref({ status: statusTab, page: 1, billing: "all" })}>
+                  <Button type="button" variant="ghost" size="sm">
+                    {t("Reset", "Reset")}
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </form>
         </div>
       </div>
 
@@ -499,8 +563,6 @@ export default async function InvoicesPage({
           {selectedClient
             ? selectedClient.companyName || selectedClient.name
             : t("Semua klien", "All clients")}
-          {" · "}
-          {projectId ? projectOptions.find((p) => p.id === projectId)?.name ?? t("Proyek terpilih", "Selected project") : t("Semua proyek", "All projects")}
           {" · "}
           {billingFilterLabel(billing, lang)}
         </p>
@@ -543,13 +605,7 @@ export default async function InvoicesPage({
         />
       ) : (
         <>
-          <InvoicesListTable
-            invoices={invoiceListWithBase}
-            baseCurrency={baseCurrency}
-            clientOptions={clientOptions.map((c) => ({ id: c.id, name: c.companyName || c.name }))}
-            projectOptions={projectOptions}
-            currentFilters={{ status: statusTab, clientId, projectId, billing }}
-          />
+          <InvoicesListTable invoices={invoiceListWithBase} baseCurrency={baseCurrency} />
 
           {/* Pagination */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

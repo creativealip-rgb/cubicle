@@ -12,6 +12,7 @@ import {
 
   FolderKanban,
   FolderOpen,
+  Bell,
   Receipt,
   MessageCircle,
 } from "lucide-react";
@@ -27,13 +28,14 @@ import {
 } from "@/components/ui/dialog";
 import { useT } from "@/lib/i18n-client";
 
-export type PortalTabKey = "projects" | "files" | "invoices";
+export type PortalTabKey = "projects" | "files" | "invoices" | "requests";
 
 const TAB_KEYS: PortalTabKey[] = [
 
   "projects",
   "files",
   "invoices",
+  "requests",
 ];
 
 function normalizeTab(tab?: string | null): PortalTabKey {
@@ -49,11 +51,13 @@ type PortalTabsProps = {
   projects: ReactNode;
   files: ReactNode;
   invoices: ReactNode;
+  requests: ReactNode;
   contact: ReactNode;
   counts?: {
     projects?: number;
     files?: number;
     invoices?: number;
+    requests?: number;
   };
 };
 
@@ -69,6 +73,7 @@ export function PortalTabs({
   projects,
   files,
   invoices,
+  requests,
   contact,
   counts,
 }: PortalTabsProps) {
@@ -140,6 +145,12 @@ export function PortalTabs({
       icon: <Receipt className="h-3.5 w-3.5" />,
       badge: counts?.invoices,
     },
+    {
+      key: "requests",
+      label: t("Permintaan", "Requests"),
+      icon: <Bell className="h-3.5 w-3.5" />,
+      badge: counts?.requests,
+    },
   ];
 
   const panelClass =
@@ -205,6 +216,9 @@ export function PortalTabs({
       </TabsContent>
       <TabsContent value="invoices" className={panelClass}>
         {invoices}
+      </TabsContent>
+      <TabsContent value="requests" className={panelClass}>
+        {requests}
       </TabsContent>
     </Tabs>
   );

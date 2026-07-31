@@ -1,5 +1,7 @@
 import { getWorkspacePackageBuilderData } from "@/lib/actions/packages";
 import { PackageCatalog, type CatalogPackage } from "@/components/packages/package-catalog";
+import { PackageOrderAdminPanel } from "@/components/packages/package-order-admin-panel";
+import { getWorkspacePackageOrders } from "@/lib/actions/package-orders";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { db } from "@/db";
 import { workspaceCurrencyRates } from "@/db/schema";
@@ -13,9 +15,10 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function PackagesPage() {
-  const [builderData, ws] = await Promise.all([
+  const [builderData, ws, orders] = await Promise.all([
     getWorkspacePackageBuilderData(),
     getWorkspaceFullForCurrentUser(),
+    getWorkspacePackageOrders(),
   ]);
   const rows = builderData.packages;
 
@@ -60,10 +63,16 @@ export default async function PackagesPage() {
   });
 
   return (
-    <PackageCatalog
-      packages={packages}
-      defaultCurrency={ws.defaultCurrency || "IDR"}
-      baseCurrency={baseCurrency}
-    />
+    <div className="space-y-8">
+      <PackageCatalog
+        packages={packages}
+        defaultCurrency={ws.defaultCurrency || "IDR"}
+        baseCurrency={baseCurrency}
+      />
+      <PackageOrderAdminPanel orders={orders.map((order) => ({
+        ...order,
+        createdAt: order.createdAt.toISOString(),
+      }))} />
+    </div>
   );
 }

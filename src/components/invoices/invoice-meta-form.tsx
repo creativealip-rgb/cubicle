@@ -142,8 +142,9 @@ export function InvoiceMetaForm({ invoiceId, defaults, project }: InvoiceMetaFor
           </Select>
         </div>
         <div className="space-y-2">
-          <Label>{t("Mata uang", "Currency")}</Label>
+          <Label htmlFor="invoice-currency">{t("Mata uang", "Currency")}</Label>
           <select
+            id="invoice-currency"
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
             value={form.currency}
             onChange={(e) => setForm((p) => ({ ...p, currency: e.target.value }))}
@@ -156,24 +157,27 @@ export function InvoiceMetaForm({ invoiceId, defaults, project }: InvoiceMetaFor
           </select>
         </div>
         <div className="space-y-2">
-          <Label>{t("Tanggal terbit", "Issue date")}</Label>
+          <Label htmlFor="invoice-issue-date">{t("Tanggal terbit", "Issue date")}</Label>
           <Input
+            id="invoice-issue-date"
             type="date"
             value={form.issueDate}
             onChange={(e) => setForm((p) => ({ ...p, issueDate: e.target.value }))}
           />
         </div>
         <div className="space-y-2">
-          <Label>{t("Jatuh tempo", "Due date")}</Label>
+          <Label htmlFor="invoice-due-date">{t("Jatuh tempo", "Due date")}</Label>
           <Input
+            id="invoice-due-date"
             type="date"
             value={form.dueDate}
             onChange={(e) => setForm((p) => ({ ...p, dueDate: e.target.value }))}
           />
         </div>
         <div className="space-y-2">
-          <Label>{t("Pajak (nominal)", "Tax amount")}</Label>
+          <Label htmlFor="invoice-tax">{t("Pajak (nominal)", "Tax amount")}</Label>
           <Input
+            id="invoice-tax"
             type="number"
             min="0"
             step="0.01"
@@ -182,8 +186,9 @@ export function InvoiceMetaForm({ invoiceId, defaults, project }: InvoiceMetaFor
           />
         </div>
         <div className="space-y-2">
-          <Label>{t("Diskon (nominal)", "Discount amount")}</Label>
+          <Label htmlFor="invoice-discount">{t("Diskon (nominal)", "Discount amount")}</Label>
           <Input
+            id="invoice-discount"
             type="number"
             min="0"
             step="0.01"
@@ -192,16 +197,18 @@ export function InvoiceMetaForm({ invoiceId, defaults, project }: InvoiceMetaFor
           />
         </div>
         <div className="space-y-2 md:col-span-2">
-          <Label>{t("Catatan", "Notes")}</Label>
+          <Label htmlFor="invoice-notes">{t("Catatan", "Notes")}</Label>
           <Textarea
+            id="invoice-notes"
             rows={3}
             value={form.notes}
             onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
           />
         </div>
         <div className="space-y-2 md:col-span-2">
-          <Label>{t("Syarat", "Terms")}</Label>
+          <Label htmlFor="invoice-terms">{t("Syarat", "Terms")}</Label>
           <Textarea
+            id="invoice-terms"
             rows={3}
             value={form.terms}
             onChange={(e) => setForm((p) => ({ ...p, terms: e.target.value }))}

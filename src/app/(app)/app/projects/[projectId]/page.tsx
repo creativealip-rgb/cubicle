@@ -62,6 +62,7 @@ export default async function ProjectDetailPage({
       description: projects.description,
       status: projects.status,
       billingType: projects.billingType,
+      billingModel: projects.billingModel,
       timeTrackingMode: projects.timeTrackingMode,
       activityRequired: projects.activityRequired,
       currency: projects.currency,
@@ -178,20 +179,21 @@ export default async function ProjectDetailPage({
       )
     : t("Kembali ke Proyek", "Back to Projects");
   const showTimeTab = project.timeTrackingMode !== "off" || projectTimeEntries.length > 0;
+  const billingDisplayType = project.billingModel ?? project.billingType;
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="space-y-2">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 space-y-2">
           <Link
             href={backHref}
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-3 w-3" /> {backLabel}
           </Link>
-          <div className="flex items-center gap-3">
-            <h1 className="app-page-title">{project.name}</h1>
+          <div className="flex min-w-0 items-center gap-3">
+            <h1 className="min-w-0 truncate app-page-title">{project.name}</h1>
             <Badge variant={projectStatusVariant(project.status, lang).variant}>{projectStatusVariant(project.status, lang).label}</Badge>
           </div>
           {project.clientName && (
@@ -205,7 +207,7 @@ export default async function ProjectDetailPage({
           <div className="flex flex-wrap items-center gap-2 pt-1">
             <Badge variant="outline" className="gap-1 font-normal">
               <Wallet className="h-3 w-3" />
-              {billingTypeLabel(project.billingType, lang)}
+              {billingTypeLabel(billingDisplayType, lang)}
             </Badge>
             {project.billingType === "hours" && project.rate && (
               <span className="text-xs text-muted-foreground">
@@ -213,13 +215,13 @@ export default async function ProjectDetailPage({
                 /{t("jam", "hr")}
               </span>
             )}
-            {project.billingType === "project" && project.budget && (
+            {billingDisplayType === "fixed_price" && project.budget && (
               <span className="text-xs text-muted-foreground">
-                {t("Budget", "Budget")}: {project.currency}{" "}
+                {t("Fixed rate", "Fixed rate")}: {project.currency}{" "}
                 {Number(project.budget).toLocaleString(locale)}
               </span>
             )}
-            {project.billingType === "package" && (
+            {billingDisplayType === "package" && (
               <span className="text-xs text-muted-foreground">
                 {t("Billing paket", "Package billing")}
                 {project.selectedPackageId ? "" : ` · ${t("paket belum dipilih", "no package selected")}`}
@@ -227,7 +229,7 @@ export default async function ProjectDetailPage({
             )}
           </div>
           <p className="max-w-xl text-xs text-muted-foreground">
-            {billingTypeHint(project.billingType, lang)}
+            {billingTypeHint(billingDisplayType, lang)}
           </p>
         </div>
         <Dialog>
@@ -296,7 +298,7 @@ export default async function ProjectDetailPage({
 
       {/* Tabs */}
       <Tabs defaultValue="tasks">
-        <TabsList>
+        <TabsList className="max-w-full justify-start overflow-x-auto">
           <TabsTrigger value="tasks" className="gap-1">
             <CheckSquare className="h-3 w-3" /> {t("Tugas", "Tasks")} ({projectTasks.length})
           </TabsTrigger>

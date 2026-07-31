@@ -1,15 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { SectionEditor, type SiteSection } from "./section-editor";
+import { SectionEditor } from "./section-editor";
+import type { PersonalSiteSection } from "@/lib/personal-site/model";
 
-/**
- * Client wrapper for SectionEditor that manages its own state.
- * Use this in Server Components — pass initialSections (serializable)
- * instead of trying to pass onChange across the server/client boundary.
- */
-export function SectionEditorForm({ initialSections }: { initialSections: SiteSection[] }) {
-  const [sections, setSections] = useState<SiteSection[]>(initialSections);
-
+/** Client wrapper kept for compatibility with server-component callers. */
+export function SectionEditorForm({ initialSections }: { initialSections: PersonalSiteSection[] }) {
+  const [sections, setSections] = useState<PersonalSiteSection[]>(initialSections);
   return <SectionEditor sections={sections} onChange={setSections} />;
 }

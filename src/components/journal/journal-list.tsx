@@ -126,6 +126,7 @@ export function JournalList({
         <div className="relative min-w-[180px] flex-1">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
+            aria-label={isId ? "Cari entri jurnal" : "Search journal entries"}
             placeholder={
               isId ? "Cari entri jurnal…" : "Search journal entries…"
             }

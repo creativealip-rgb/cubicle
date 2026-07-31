@@ -23,16 +23,18 @@ import { pickReplyTo } from "@/lib/workspace-reply-to";
 import { Suspense } from "react";
 import { PortalTabsFallback } from "@/components/portal/portal-loading";
 import { Card, CardContent } from "@/components/ui/card";
-import { FolderOpen, Globe } from "lucide-react";
+import { FolderOpen, Globe, LockKeyhole } from "lucide-react";
 import { PortalContactButtons } from "@/components/portal/portal-contact";
 import { ProjectAccordion } from "@/components/portal/project-accordion";
 import { PortalInvoices } from "@/components/portal/portal-invoices";
 import { PortalActionButtons } from "@/components/portal/portal-action-buttons";
+import { PortalRequestList } from "@/components/portal/portal-request-list";
 
 import { PortalTabs } from "@/components/portal/portal-tabs";
 import { PortalFileManager } from "@/components/portal/portal-file-manager";
 import { PortalLanguageSwitch } from "@/components/portal/portal-language-switch";
 import { LangProvider } from "@/lib/i18n-client";
+import { resolveBillingModel } from "@/lib/billing-model";
 import { createT, getCurrentLang } from "@/lib/i18n";
 import { decryptSecret } from "@/lib/google-calendar";
 import { PORTAL_COOKIE, verifyPortalSession } from "@/lib/portal-password";
@@ -181,6 +183,7 @@ export default async function ClientPortalPage({
       description: projects.description,
       status: projects.status,
       clientVisible: projects.clientVisible,
+      billingModel: projects.billingModel,
       billingType: projects.billingType,
       rate: projects.rate,
       budget: projects.budget,
@@ -200,6 +203,9 @@ export default async function ClientPortalPage({
 
   // Fetch all tasks for visible projects in one query
   const visibleProjectIds = clientProjects.map((p) => p.id);
+  const timeVisibleProjectIds = clientProjects
+    .filter((p) => resolveBillingModel(p) !== "fixed_price")
+    .map((p) => p.id);
   let allVisibleTasks: Array<{
     id: string;
     title: string;
@@ -685,7 +691,7 @@ export default async function ClientPortalPage({
     }>
   >();
 
-  if (visibleProjectIds.length > 0) {
+  if (timeVisibleProjectIds.length > 0) {
     const taskLinkedEntries = await db
       .select({
         id: timeEntries.id,
@@ -702,7 +708,7 @@ export default async function ClientPortalPage({
         and(
           eq(timeEntries.workspaceId, client.workspaceId),
           sql`${timeEntries.taskId} is not null`,
-          inArray(timeEntries.projectId, visibleProjectIds),
+          inArray(timeEntries.projectId, timeVisibleProjectIds),
         ),
       )
       .orderBy(desc(timeEntries.startTime))
@@ -749,15 +755,10 @@ export default async function ClientPortalPage({
   const activeCount = clientProjects.filter(
     (p) => p.status === "active",
   ).length;
-  const byProjectCount = clientProjects.filter(
-    (p) => p.billingType === "project",
-  ).length;
-  const byHoursCount = clientProjects.filter(
-    (p) => p.billingType === "hours",
-  ).length;
-  const byPackageCount = clientProjects.filter(
-    (p) => p.billingType === "package",
-  ).length;
+  const billingModels = clientProjects.map((p) => resolveBillingModel(p));
+  const byProjectCount = billingModels.filter((model) => model === "fixed_price").length;
+  const byHoursCount = billingModels.filter((model) => model === "hourly").length;
+  const retainerCount = billingModels.filter((model) => model === "retainer").length;
   const dueInvoiceCount = clientInvoices.filter((inv) =>
     ["sent", "viewed", "overdue", "partial"].includes(inv.status),
   ).length;
@@ -768,7 +769,7 @@ export default async function ClientPortalPage({
 
   // Minutes per task (for portal hours display)
   const taskHoursMap = new Map<string, number>();
-  if (visibleProjectIds.length > 0) {
+  if (timeVisibleProjectIds.length > 0) {
     const taskTimeRows = await db
       .select({
         taskId: timeEntries.taskId,
@@ -779,7 +780,7 @@ export default async function ClientPortalPage({
         and(
           eq(timeEntries.workspaceId, client.workspaceId),
           sql`${timeEntries.taskId} is not null`,
-          inArray(timeEntries.projectId, visibleProjectIds),
+          inArray(timeEntries.projectId, timeVisibleProjectIds),
         ),
       )
       .groupBy(timeEntries.taskId);
@@ -837,8 +838,8 @@ export default async function ClientPortalPage({
             </div>
             <div className="flex shrink-0 items-center gap-2 self-start">
               <PortalLanguageSwitch />
-              <div className="hidden rounded-full border bg-background px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:block">
-                {t("Akses aman", "Secure access")}
+              <div className="hidden items-center gap-1.5 rounded-full border bg-background px-3 py-1 text-[11px] font-medium text-muted-foreground sm:flex">
+                <LockKeyhole className="h-3 w-3" /> {t("Akses aman", "Secure access")}
               </div>
             </div>
           </div>
@@ -849,7 +850,7 @@ export default async function ClientPortalPage({
               <Card className="shadow-none">
                 <CardContent className="p-3">
                   <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {t("Per proyek", "Per project")}
+                    {t("Fixed Price", "Fixed Price")}
                   </p>
                   <p className="mt-1 text-xl font-semibold">{byProjectCount}</p>
                 </CardContent>
@@ -857,7 +858,7 @@ export default async function ClientPortalPage({
               <Card className="shadow-none">
                 <CardContent className="p-3">
                   <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {t("Per jam", "Hourly")}
+                    {t("Hourly", "Hourly")}
                   </p>
                   <p className="mt-1 text-xl font-semibold">{byHoursCount}</p>
                 </CardContent>
@@ -865,15 +866,15 @@ export default async function ClientPortalPage({
               <Card className="shadow-none">
                 <CardContent className="p-3">
                   <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {t("Per paket", "Package")}
+                    {t("Retainer", "Retainer")}
                   </p>
-                  <p className="mt-1 text-xl font-semibold">{byPackageCount}</p>
+                  <p className="mt-1 text-xl font-semibold">{retainerCount}</p>
                 </CardContent>
               </Card>
               <Card className="shadow-none">
                 <CardContent className="p-3">
                   <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {t("Invoice ke", "Invoice To")}
+                    {t("Invoice", "Invoice")}
                   </p>
                   <p className="mt-1 text-xl font-semibold">
                     {dueInvoiceCount}
@@ -919,6 +920,7 @@ export default async function ClientPortalPage({
                 projects: clientProjects.length,
                 files: portalFilesList.length,
                 invoices: clientInvoices.length,
+                requests: pendingClientRequests.length,
               }}
               projects={
                 <section>
@@ -931,8 +933,8 @@ export default async function ClientPortalPage({
                         <FolderOpen className="h-12 w-12 mx-auto mb-3 opacity-30" />
                         <p>
                           {t(
-                            "Belum ada proyek yang dibagikan.",
-                            "No projects have been shared yet.",
+                            "Belum ada proyek yang dibagikan. Hubungi pengelola workspace jika kamu membutuhkan akses.",
+                            "No projects have been shared yet. Contact the workspace manager if you need access.",
                           )}
                         </p>
                       </CardContent>
@@ -1059,6 +1061,23 @@ export default async function ClientPortalPage({
                     projects={clientProjects.map((p) => ({
                       id: p.id,
                       name: p.name,
+                    }))}
+                    token={portalCredential}
+                  />
+                </section>
+              }
+              requests={
+                <section>
+                  <h2 className="mb-4 text-xl font-semibold">
+                    {t("Permintaan", "Requests")}
+                  </h2>
+                  <PortalRequestList
+                    requests={clientPortalRequests.map((request) => ({
+                      ...request,
+                      dueDate: request.dueDate ? String(request.dueDate) : null,
+                      meetingStartTime: request.meetingStartTime
+                        ? String(request.meetingStartTime)
+                        : null,
                     }))}
                     token={portalCredential}
                   />

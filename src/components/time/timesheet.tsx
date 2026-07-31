@@ -87,6 +87,7 @@ interface TimesheetProps {
   projects: Project[];
   tasks?: Task[];
   activities?: Activity[];
+  compact?: boolean;
 }
 
 function toDateInputValue(value: Date | string | null | undefined): string {
@@ -99,7 +100,7 @@ function toDateInputValue(value: Date | string | null | undefined): string {
   return `${year}-${month}-${day}`;
 }
 
-export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetProps) {
+export function Timesheet({ entries, clients, projects, tasks = [], activities = [], compact = false }: TimesheetProps) {
   const { t, locale } = useT();
   const router = useRouter();
 
@@ -191,6 +192,11 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
     return tasks.filter((tk) => tk.projectId === editProjectId);
   }, [editProjectId, tasks]);
 
+  const editActivities = useMemo(() => {
+    if (!editProjectId) return [];
+    return activities.filter((a) => a.projectId === editProjectId);
+  }, [editProjectId, activities]);
+
   const filterProjects = useMemo(() => {
     if (clientFilter === "all") return projects;
     return projects.filter((project) => project.clientId === clientFilter);
@@ -240,9 +246,13 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
     }
   }
 
+  function canEditEntry(entry: TimeEntry) {
+    return entry.status !== "invoiced" && entry.projectTimeTrackingMode !== "off";
+  }
+
   function openEdit(entry: TimeEntry) {
-    if (entry.status === "invoiced") {
-      toast.error(t("Entri sudah di-invoice", "Entry already invoiced"));
+    if (!canEditEntry(entry)) {
+      toast.error(t("Entri hanya dapat dibaca", "Entry is read only"));
       return;
     }
     setEditEntry(entry);
@@ -323,7 +333,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {!compact && <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">{t("Total Waktu", "Total Time")}</p>
@@ -342,9 +352,9 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
             <p className="text-xl font-bold">{filteredEntries.length}</p>
           </CardContent>
         </Card>
-      </div>
+      </div>}
 
-      <Card className="rounded-lg border bg-card">
+      {!compact && <Card className="rounded-lg border bg-card">
         <CardContent className="p-3">
           <div className="flex items-center gap-2 mb-3">
             <Filter className="h-4 w-4 text-muted-foreground" />
@@ -387,7 +397,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-[10px]">{t("Activity", "Activity")}</Label>
+              <Label className="text-[10px]">{t("Aktivitas", "Activity")}</Label>
               <Select value={activityFilter} onValueChange={setActivityFilter}>
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue placeholder={t("Semua", "All")} />
@@ -460,7 +470,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card>}
 
       {filteredEntries.length === 0 ? (
         <EmptyState
@@ -492,25 +502,42 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
           {pageEntries.map((entry, index) => (
             <Card key={entry.id} className="rounded-none border-0 shadow-none">
               <CardContent
+                role={canEditEntry(entry) ? "button" : undefined}
+                tabIndex={canEditEntry(entry) ? 0 : undefined}
+                aria-label={canEditEntry(entry) ? t("Edit entri waktu", "Edit time entry") : undefined}
+                onClick={() => canEditEntry(entry) && openEdit(entry)}
+                onKeyDown={(event) => {
+                  if (canEditEntry(entry) && (event.key === "Enter" || event.key === " ")) {
+                    event.preventDefault();
+                    openEdit(entry);
+                  }
+                }}
                 className={`flex flex-col gap-3 !border-b border-slate-200 p-3 hover:!bg-slate-100/70 sm:flex-row sm:items-center sm:justify-between ${
                   index % 2 === 0 ? "!bg-white" : "!bg-slate-50"
-                }`}
+                } ${canEditEntry(entry) ? "cursor-pointer outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset" : ""}`}
               >
                 <div className="flex min-w-0 items-start gap-3 sm:items-center">
                   <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   <div className="min-w-0">
-                    {(() => {
-                      const historyPrimaryTitle = [entry.projectName, entry.taskTitle].filter(Boolean).join(" · ") || t("Tanpa proyek / task", "No project / task");
-                      const historyDescription = entry.description?.trim();
-                      return (
-                        <>
-                          <p className="text-sm font-medium truncate">{historyPrimaryTitle}</p>
-                          {historyDescription ? <p className="mt-0.5 truncate text-xs text-muted-foreground">{historyDescription}</p> : null}
-                        </>
-                      );
-                    })()}
+                    <p className={`text-sm font-medium truncate ${!entry.projectId && !entry.taskId && !entry.description ? "italic text-muted-foreground" : ""}`}>
+                      {entry.projectId || entry.taskId || entry.description
+                        ? entry.description || entry.taskTitle || entry.projectName || t("Tanpa judul", "Untitled")
+                        : t("Tambah proyek, task, dan detail lainnya", "Add project, task, and other details")}
+                    </p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
                       {entry.clientName && <span>{entry.clientName}</span>}
+                      {entry.projectName && (
+                        <>
+                          <span>·</span>
+                          <span>{entry.projectName}</span>
+                        </>
+                      )}
+                      {entry.taskTitle && (
+                        <>
+                          <span>·</span>
+                          <span>{entry.taskTitle}</span>
+                        </>
+                      )}
                       <span>·</span>
                       <span>{entry.userName || t("Tidak diketahui", "Unknown")}</span>
                       <span>·</span>
@@ -569,7 +596,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                           variant="ghost"
                           size="icon"
                           className="h-11 w-11 rounded-lg border border-transparent hover:border-border hover:bg-background sm:h-9 sm:w-9"
-                          onClick={() => openEdit(entry)}
+                          onClick={(event) => { event.stopPropagation(); openEdit(entry); }}
                           aria-label={t("Edit entri", "Edit entry")}
                           title={t("Edit entri", "Edit entry")}
                         >
@@ -580,7 +607,7 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
                         variant="ghost"
                         size="icon"
                         className="h-11 w-11 rounded-lg border border-transparent text-destructive hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive sm:h-9 sm:w-9"
-                        onClick={() => setDeleteEntry(entry)}
+                        onClick={(event) => { event.stopPropagation(); setDeleteEntry(entry); }}
                         disabled={entry.status === "invoiced"}
                         aria-label={t("Hapus entri", "Delete entry")}
                         title={t("Hapus entri", "Delete entry")}
@@ -718,7 +745,27 @@ export function Timesheet({ entries, clients, projects, tasks = [] }: TimesheetP
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">{t("Tugas", "Task")}</Label>
+              <Label className="text-xs">{t("Aktivitas", "Activity")}</Label>
+              <Select
+                value={editActivityId || "__none__"}
+                onValueChange={(v) => setEditActivityId(v === "__none__" ? "" : v)}
+                disabled={!editProjectId}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder={t("Opsional", "Optional")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
+                  {editActivities.map((activity) => (
+                    <SelectItem key={activity.id} value={activity.id}>
+                      {activity.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">{t("Tugas terkait", "Related Task")}</Label>
               <Select
                 value={editTaskId}
                 onValueChange={handleEditTaskChange}

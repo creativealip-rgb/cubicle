@@ -12,13 +12,13 @@ import {
   projects,
   packages,
 } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, ne, sql } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Share2, Download } from "lucide-react";
+import { ArrowLeft, Share2 } from "lucide-react";
 import { InvoiceItemManager } from "./add-item-button";
 import { DeleteItemButton } from "./delete-item-button";
 import { PaymentSection } from "./payment-section";
@@ -32,6 +32,8 @@ import { invoiceStatusVariant } from "@/lib/status-badge";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { billingTypeLabel } from "@/lib/feature-access";
 import { buildDefaultInvoiceMessage } from "@/lib/invoice-message";
+import { decryptSecret } from "@/lib/google-calendar";
+import { resolveFixedPriceInvoiceAmount } from "@/lib/invoice-project-items";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -75,6 +77,19 @@ export default async function InvoiceDetailPage({
     .from(clients)
     .where(eq(clients.id, inv.clientId))
     .limit(1);
+
+  const sameClientProjects = await db.select({ id: projects.id, name: projects.name, billingType: projects.billingType, billingModel: projects.billingModel, budget: projects.budget, currency: projects.currency })
+    .from(projects)
+    .where(and(eq(projects.workspaceId, workspaceId), eq(projects.clientId, inv.clientId), ne(projects.status, "cancelled"), ne(projects.status, "archived")));
+  const eligibleProjectItems = [] as Array<{ id: string; name: string; amount: number; currency: string }>;
+  for (const project of sameClientProjects) {
+    if ((project.billingModel ?? project.billingType) !== "fixed_price" && project.billingType !== "project") continue;
+    const [prior] = await db.select({ amount: sql<string>`coalesce(sum(${invoiceItems.originalAmount}), '0')` }).from(invoiceItems)
+      .innerJoin(invoices, eq(invoices.id, invoiceItems.invoiceId))
+      .where(and(eq(invoiceItems.sourceType, "project"), eq(invoiceItems.sourceId, project.id), eq(invoices.workspaceId, workspaceId), ne(invoices.status, "cancelled"), ne(invoices.status, "archived")));
+    const amount = resolveFixedPriceInvoiceAmount(Number(project.budget ?? 0), Number(prior?.amount ?? 0));
+    if (amount > 0 && !items.some((item) => item.sourceType === "project" && item.sourceId === project.id)) eligibleProjectItems.push({ id: project.id, name: project.name, amount, currency: project.currency });
+  }
 
   // Project + package context (invoice created with a project)
   let invoiceProject: {
@@ -122,6 +137,14 @@ export default async function InvoiceDetailPage({
   const shareExpired = inv.sharedTokenExpiresAt
     ? new Date(inv.sharedTokenExpiresAt) < new Date()
     : false;
+  let existingShareToken: string | null = null;
+  if (hasShareToken && !shareExpired && inv.sharedTokenEnc) {
+    try {
+      existingShareToken = decryptSecret(inv.sharedTokenEnc);
+    } catch {
+      existingShareToken = null;
+    }
+  }
 
   const isPaid = Number(inv.total) > 0 && totalPaid >= Number(inv.total);
   const displayStatus = isPaid
@@ -170,12 +193,6 @@ export default async function InvoiceDetailPage({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" variant="outline" className="gap-2" asChild>
-            <Link href={`/api/invoices/${invoiceId}/pdf`} target="_blank">
-              <Download className="h-4 w-4" />
-              {t("Unduh Invoice", "Download Invoice")}
-            </Link>
-          </Button>
           <SendInvoiceButton
             invoiceId={invoiceId}
             defaultMessage={defaultInvoiceMessage}
@@ -252,7 +269,7 @@ export default async function InvoiceDetailPage({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>{t("Rincian Item", "Line Items")}</CardTitle>
-          <InvoiceItemManager invoiceId={invoiceId} />
+          <InvoiceItemManager invoiceId={invoiceId} projectOptions={eligibleProjectItems} />
         </CardHeader>
         <CardContent>
           {items.length === 0 ? (
@@ -376,6 +393,7 @@ export default async function InvoiceDetailPage({
             invoiceId={invoiceId}
             hasToken={!!hasShareToken}
             isExpired={shareExpired}
+            initialToken={existingShareToken}
           />
         </CardContent>
       </Card>

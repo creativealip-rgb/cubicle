@@ -17,6 +17,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
+import type { PersonalSiteLink, PersonalSiteSection } from "@/lib/personal-site/model";
 
 // ─── Better-Auth tables ───
 
@@ -90,6 +91,7 @@ export const workspaces = pgTable("workspaces", {
   replyToEmail: text("reply_to_email"),
   invoiceEmailBody: text("invoice_email_body"),
   bookingSlug: text("booking_slug").unique(),
+  timezone: text("timezone").notNull().default("UTC"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -170,7 +172,14 @@ export const projects = pgTable("projects", {
   name: text("name").notNull(),
   description: text("description"),
   status: text("status", { enum: ["draft", "active", "on_hold", "completed", "cancelled", "archived"] }).notNull().default("active"),
-  billingType: text("billing_type", { enum: ["project", "hours", "package"] }).notNull().default("project"),
+  billingType: text("billing_type", { enum: ["fixed_price", "hourly", "retainer", "package", "project", "hours"] }).notNull().default("fixed_price"),
+  billingModel: text("billing_model", { enum: ["fixed_price", "hourly", "retainer", "legacy_package"] }),
+  retainerFee: numeric("retainer_fee", { precision: 12, scale: 2 }),
+  retainerIncludedMinutes: integer("retainer_included_minutes"),
+  retainerPeriodUnit: text("retainer_period_unit", { enum: ["month"] }),
+  retainerResetDay: integer("retainer_reset_day"),
+  retainerOveragePolicy: text("retainer_overage_policy", { enum: ["none", "warn", "bill"] }),
+  retainerOverageRate: numeric("retainer_overage_rate", { precision: 12, scale: 2 }),
   timeTrackingMode: text("time_tracking_mode", { enum: ["off", "internal", "billable"] }).notNull().default("internal"),
   activityRequired: boolean("activity_required").notNull().default(false),
   rate: numeric("rate", { precision: 12, scale: 2 }),
@@ -362,6 +371,8 @@ export const projectServices = pgTable("project_services", {
   currencySnapshot: text("currency_snapshot").notNull().default("IDR"),
   amount: numeric("amount", { precision: 12, scale: 2 }),
   includedAllowance: numeric("included_allowance", { precision: 12, scale: 2 }),
+  estimatedMinutes: integer("estimated_minutes"),
+  costRateSnapshot: numeric("cost_rate_snapshot", { precision: 12, scale: 2 }),
   sortOrder: integer("sort_order").notNull().default(0),
   status: text("status", { enum: ["active", "archived"] }).notNull().default("active"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -406,6 +417,8 @@ export const tasks = pgTable("tasks", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  behavior: text("behavior", { enum: ["one_time", "recurring"] }),
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
   projectServiceId: uuid("project_service_id").references(() => projectServices.id, { onDelete: "set null" }),
   title: text("title").notNull(),
   description: text("description"),
@@ -599,6 +612,66 @@ export const projectActivities = pgTable("project_activities", {
   ),
 ]);
 
+export const clientServiceRateCards = pgTable("client_service_rate_cards", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  serviceId: uuid("service_id").notNull(),
+  hourlyRate: numeric("hourly_rate", { precision: 12, scale: 2 }).notNull(),
+  currency: text("currency").notNull().default("IDR"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique("client_service_rate_cards_client_service_unique").on(table.clientId, table.serviceId),
+  foreignKey({ columns: [table.serviceId, table.workspaceId], foreignColumns: [services.id, services.workspaceId], name: "client_service_rate_cards_service_workspace_fk" }).onDelete("cascade"),
+]);
+
+export const timesheetSubmissions = pgTable("timesheet_submissions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  weekStart: date("week_start").notNull(),
+  status: text("status", { enum: ["submitted", "approved", "rejected"] }).notNull().default("submitted"),
+  submitterNote: text("submitter_note"),
+  reviewNote: text("review_note"),
+  totalMinutes: integer("total_minutes").notNull().default(0),
+  billableMinutes: integer("billable_minutes").notNull().default(0),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  reviewedBy: text("reviewed_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique("timesheet_submissions_workspace_user_week_unique").on(table.workspaceId, table.userId, table.weekStart),
+  index("timesheet_submissions_workspace_status_week_idx").on(table.workspaceId, table.status, table.weekStart),
+]);
+
+export const retainerPeriods = pgTable("retainer_periods", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "restrict" }),
+  projectId: uuid("project_id").notNull(),
+  periodStart: date("period_start").notNull(),
+  periodEnd: date("period_end").notNull(),
+  timezoneSnapshot: text("timezone_snapshot").notNull(),
+  feeSnapshot: numeric("fee_snapshot", { precision: 12, scale: 2 }).notNull(),
+  currencySnapshot: text("currency_snapshot").notNull(),
+  includedMinutesSnapshot: integer("included_minutes_snapshot").notNull(),
+  overagePolicySnapshot: text("overage_policy_snapshot", { enum: ["none", "warn", "bill"] }).notNull(),
+  overageRateSnapshot: numeric("overage_rate_snapshot", { precision: 12, scale: 2 }),
+  approvedMinutes: integer("approved_minutes").notNull().default(0),
+  overageMinutes: integer("overage_minutes").notNull().default(0),
+  status: text("status", { enum: ["open", "locked", "invoiced"] }).notNull().default("open"),
+  invoiceGeneration: integer("invoice_generation").notNull().default(0),
+  lockedAt: timestamp("locked_at", { withTimezone: true }),
+  invoicedAt: timestamp("invoiced_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique("retainer_periods_id_workspace_unique").on(t.id, t.workspaceId),
+  unique().on(t.projectId, t.periodStart, t.periodEnd),
+  foreignKey({ columns: [t.projectId, t.workspaceId], foreignColumns: [projects.id, projects.workspaceId] }).onDelete("restrict"),
+]);
+
 export const timeEntries = pgTable("time_entries", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
@@ -608,6 +681,7 @@ export const timeEntries = pgTable("time_entries", {
   activityId: uuid("activity_id"),
   projectServiceId: uuid("project_service_id").references(() => projectServices.id, { onDelete: "set null" }),
   taskId: uuid("task_id").references(() => tasks.id, { onDelete: "set null" }),
+  retainerPeriodId: uuid("retainer_period_id"),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   description: text("description"),
   tags: text("tags"),
@@ -616,12 +690,20 @@ export const timeEntries = pgTable("time_entries", {
   // When set, timer is paused on the same open entry (endTime still null).
   pausedAt: timestamp("paused_at", { withTimezone: true }),
   manualMinutes: integer("manual_minutes"),
+  entryType: text("entry_type", { enum: ["timer", "duration"] }).notNull().default("timer"),
+  workDate: date("work_date"),
+  timezoneSnapshot: text("timezone_snapshot").notNull().default("UTC"),
   durationMinutes: integer("duration_minutes").generatedAlwaysAs(
     sql`case when start_time is not null and end_time is not null then greatest(0, floor(extract(epoch from (end_time - start_time)) / 60)::integer) else coalesce(manual_minutes, 0) end`,
   ),
   billable: boolean("billable").notNull().default(true),
   hourlyRate: numeric("hourly_rate", { precision: 12, scale: 2 }),
-  status: text("status", { enum: ["draft", "approved", "invoiced"] }).notNull().default("draft"),
+  currencySnapshot: text("currency_snapshot").notNull().default("IDR"),
+  status: text("status", { enum: ["draft", "submitted", "approved", "rejected", "invoiced"] }).notNull().default("draft"),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }),
+  approvedAt: timestamp("approved_at", { withTimezone: true }),
+  rejectedAt: timestamp("rejected_at", { withTimezone: true }),
+  reviewedBy: text("reviewed_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
@@ -640,6 +722,20 @@ export const timeEntries = pgTable("time_entries", {
   ),
 ]);
 
+export const timerSegments = pgTable("timer_segments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  timeEntryId: uuid("time_entry_id").notNull().references(() => timeEntries.id, { onDelete: "cascade" }),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+  endedAt: timestamp("ended_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("timer_segments_entry_started_idx").on(table.timeEntryId, table.startedAt),
+  uniqueIndex("timer_segments_one_open_per_entry_uidx")
+    .on(table.timeEntryId)
+    .where(sql`${table.endedAt} is null`),
+]);
+
 // ─── Invoices ───
 
 export const invoices = pgTable("invoices", {
@@ -647,6 +743,10 @@ export const invoices = pgTable("invoices", {
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
   projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
+  billingSource: text("billing_source"),
+  billingPeriodStart: date("billing_period_start"),
+  billingPeriodEnd: date("billing_period_end"),
+  retainerPeriodId: uuid("retainer_period_id"),
   invoiceNumber: text("invoice_number").notNull(),
   issueDate: date("issue_date").notNull(),
   dueDate: date("due_date"),
@@ -659,12 +759,15 @@ export const invoices = pgTable("invoices", {
   notes: text("notes"),
   terms: text("terms"),
   sharedTokenHash: text("shared_token_hash").unique(),
+  sharedTokenEnc: text("shared_token_enc"),
   sharedTokenExpiresAt: timestamp("shared_token_expires_at", { withTimezone: true }),
   sharedTokenRevokedAt: timestamp("shared_token_revoked_at", { withTimezone: true }),
   clientFirstViewedAt: timestamp("client_first_viewed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [unique().on(table.workspaceId, table.invoiceNumber)]);
+
+export const legacyProjectBillingClassifications = pgTable("legacy_project_billing_classifications", { projectId: uuid("project_id").primaryKey(), workspaceId: uuid("workspace_id").notNull(), legacyBillingType: text("legacy_billing_type").notNull(), targetBillingModel: text("target_billing_model"), confidence: text("confidence").notNull().default("unreviewed"), evidence: jsonb("evidence").notNull().default(sql`'{}'::jsonb`), reviewedBy: text("reviewed_by"), reviewedAt: timestamp("reviewed_at", {withTimezone:true}), notes: text("notes") });
 
 export const invoiceItems = pgTable("invoice_items", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -1315,6 +1418,31 @@ export const personalNotes = pgTable("personal_notes", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// One public personal/studio landing page per workspace owner.
+export const personalSites = pgTable("personal_sites", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  slug: text("slug").notNull(),
+  published: boolean("published").notNull().default(false),
+  title: text("title").notNull(),
+  subtitle: text("subtitle"),
+  hero: text("hero").notNull(),
+  about: text("about"),
+  ctaLabel: text("cta_label"),
+  ctaUrl: text("cta_url"),
+  theme: text("theme", { enum: ["midnight", "paper", "studio"] }).notNull().default("midnight"),
+  accent: text("accent").notNull().default("#6647F0"),
+  sections: jsonb("sections").$type<PersonalSiteSection[]>().notNull().default(sql`'[]'::jsonb`),
+  links: jsonb("links").$type<PersonalSiteLink[]>().notNull().default(sql`'[]'::jsonb`),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("personal_sites_owner_workspace_uidx").on(table.workspaceId, table.userId),
+  uniqueIndex("personal_sites_slug_uidx").on(table.slug),
+  index("personal_sites_public_slug_idx").on(table.slug, table.published),
+]);
 
 // ─── Portal visit audit ───
 

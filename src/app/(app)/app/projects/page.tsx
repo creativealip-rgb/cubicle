@@ -8,17 +8,15 @@ import { requireUser } from "@/lib/access";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ProjectCreateDialog } from "@/components/projects/project-create-dialog";
-import { ProjectFilters } from "@/components/projects/project-filters";
 import { ProjectsListTable } from "@/components/projects/projects-list-table";
 import { getCurrentLang, createT } from "@/lib/i18n";
-import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
-import { Suspense } from "react";
 import {
   PROJECT_STATUS_TABS,
   buildProjectsHref,
   parseBillingType,
   type ProjectStatusTab,
 } from "@/lib/project-list-filters";
+import { ActiveFilterSummary } from "@/components/ui/active-filter-summary";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -97,7 +95,8 @@ export default async function ProjectsPage({
   // Counts per status (respect client filter)
   const statusCountWhere: SQL[] = [eq(projects.workspaceId, workspaceId)];
   if (clientId) statusCountWhere.push(eq(projects.clientId, clientId));
-  if (billingType) statusCountWhere.push(eq(projects.billingType, billingType));
+  if (billingType === "package") statusCountWhere.push(eq(projects.billingType, "package"));
+  else if (billingType) statusCountWhere.push(eq(projects.billingModel, billingType));
 
   const statusCountRows = await db
     .select({
@@ -116,7 +115,8 @@ export default async function ProjectsPage({
   const whereClauses: SQL[] = [eq(projects.workspaceId, workspaceId)];
   whereClauses.push(eq(projects.status, statusTab));
   if (clientId) whereClauses.push(eq(projects.clientId, clientId));
-  if (billingType) whereClauses.push(eq(projects.billingType, billingType));
+  if (billingType === "package") whereClauses.push(eq(projects.billingType, "package"));
+  else if (billingType) whereClauses.push(eq(projects.billingModel, billingType));
 
   const projectsList = await db
     .select({
@@ -126,6 +126,7 @@ export default async function ProjectsPage({
       dueDate: projects.dueDate,
       clientVisible: projects.clientVisible,
       billingType: projects.billingType,
+      billingModel: projects.billingModel,
       clientId: projects.clientId,
       clientName: clients.name,
       totalTasks: sql<number>`count(distinct ${tasks.id})::int`,
@@ -194,56 +195,24 @@ export default async function ProjectsPage({
         </div>
       )}
 
-      <div className="space-y-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <StatusFilterTabs
-            activeValue={statusTab}
-            tabs={PROJECT_STATUS_TABS.map((tab) => ({
-              value: tab,
-              label: tabLabel(tab),
-              href: buildProjectsHref({ ...filtersForHref, status: tab }),
-              count: tabCount(tab),
-              alwaysShow: tab === "active" || tab === "draft",
-            }))}
-          />
-
-          <Suspense fallback={null}>
-            <ProjectFilters
-              clients={clientOptions}
-              current={{
-                status: statusTab,
-                clientId,
-              }}
-            />
-          </Suspense>
-        </div>
-        </div>
-
-      {hasExtraFilters && (
-        <p className="-mt-2 text-xs text-muted-foreground">
-          {t("Filter aktif:", "Active filters:")}{" "}
-          {[
-            selectedClient?.name,
-            billingType === "project"
-              ? t("Per Project", "Per Project")
-              : billingType === "hours"
-                ? t("Per Jam", "Hourly")
-                : billingType === "package"
-                  ? t("Service", "Service")
-                  : null,
-          ].filter(Boolean).join(" · ")}
-        </p>
-      )}
+      <ActiveFilterSummary basePath="/app/projects" filters={[
+        { key: "clientId", label: t("Klien", "Client"), value: selectedClient?.name },
+        { key: "status", label: t("Status", "Status"), value: statusTab === "active" ? undefined : tabLabel(statusTab) },
+        { key: "billingType", label: t("Model", "Model"), value: billingType === "fixed_price" ? "Fixed Price" : billingType === "hourly" ? t("Per Jam", "Hourly") : billingType === "retainer" ? "Retainer" : billingType === "package" ? t("Paket", "Package") : undefined },
+      ]} />
 
       <ProjectsListTable
         projects={projectsList}
+        clients={clientOptions}
+        currentClientId={clientId}
         hasExtraFilters={hasExtraFilters}
         statusTab={statusTab}
         billingType={billingType}
         billingTypeHrefs={{
           all: buildProjectsHref({ ...filtersForHref, billingType: undefined }),
-          project: buildProjectsHref({ ...filtersForHref, billingType: "project" }),
-          hours: buildProjectsHref({ ...filtersForHref, billingType: "hours" }),
+          fixed_price: buildProjectsHref({ ...filtersForHref, billingType: "fixed_price" }),
+          hourly: buildProjectsHref({ ...filtersForHref, billingType: "hourly" }),
+          retainer: buildProjectsHref({ ...filtersForHref, billingType: "retainer" }),
           package: buildProjectsHref({ ...filtersForHref, billingType: "package" }),
         }}
       />

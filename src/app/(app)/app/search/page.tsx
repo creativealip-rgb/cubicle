@@ -111,6 +111,7 @@ export default async function SearchPage({
               <Input
                 name="q"
                 defaultValue={q}
+                aria-label={t("Cari workspace", "Search workspace")}
                 placeholder={t("Ketik nama, email, nomor invoice…", "Type name, email, invoice number…")}
                 className="h-10 pl-9"
                 autoFocus
@@ -126,7 +127,7 @@ export default async function SearchPage({
             <StatusFilterTabs
               activeValue={kindFilter}
               hideEmpty={false}
-              listClassName="w-full"
+              listClassName="w-full [&_[role=tab]]:px-2 [&_[role=tab]]:text-xs"
               tabs={filters.map((f) => ({
                 value: f.key,
                 label: f.label,

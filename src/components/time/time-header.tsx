@@ -1,0 +1,58 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+
+const primaryTabs = [
+  { href: "/app/time?view=daily", label: "Harian", mobileLabel: "Harian" },
+  { href: "/app/time?view=weekly", label: "Mingguan", mobileLabel: "Mingguan" },
+] as const;
+
+export function TimeHeader() {
+  const pathname = usePathname();
+
+  return (
+    <header className="space-y-3 sm:space-y-4">
+      <div>
+        <h1 className="app-page-title">Waktu</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Catat waktu dan isi timesheet mingguan.
+        </p>
+      </div>
+
+      <div className="border-b">
+        <nav aria-label="Navigasi waktu" className="flex min-w-0 gap-0.5 sm:gap-1">
+          {primaryTabs.map((tab) => {
+            const active = pathname === tab.href;
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "shrink-0 border-b-2 px-2.5 py-2 text-sm font-medium transition-colors sm:px-3",
+                  active
+                    ? "border-primary text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <span className="sm:hidden">{tab.mobileLabel}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+    </header>
+  );
+}
+
+export function TimePageShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-w-0 space-y-4 sm:space-y-6">
+      <TimeHeader />
+      {children}
+    </div>
+  );
+}

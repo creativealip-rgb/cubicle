@@ -23,9 +23,10 @@ interface TaskFormProps {
     assigneeId?: string;
     dueDate?: string;
     clientVisible?: boolean;
+    behavior?: "one_time" | "recurring";
   };
   members?: Array<{ id: string; name: string | null; email: string | null }>;
-  projects?: Array<{ id: string; name: string }>;
+  projects?: Array<{ id: string; name: string; defaultBehavior?: "one_time" | "recurring" }>;
   onSuccess?: () => void;
 }
 
@@ -42,6 +43,7 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], project
     assigneeId: defaultValues?.assigneeId ?? "",
     dueDate: defaultValues?.dueDate ?? "",
     clientVisible: defaultValues?.clientVisible ?? false,
+    behavior: defaultValues?.behavior ?? projects.find((p) => p.id === (defaultValues?.projectId ?? projectId))?.defaultBehavior ?? "one_time",
   });
 
   async function handleSubmit(e: React.FormEvent) {
@@ -57,6 +59,7 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], project
         assigneeId: form.assigneeId || undefined,
         dueDate: form.dueDate || undefined,
         clientVisible: form.clientVisible,
+        behavior: form.behavior,
       };
 
       if (mode === "create") {
@@ -71,6 +74,7 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], project
         if (data.assigneeId !== undefined) updateData.assigneeId = data.assigneeId;
         if (data.dueDate !== undefined) updateData.dueDate = data.dueDate;
         if (data.clientVisible !== undefined) updateData.clientVisible = data.clientVisible;
+        if (data.behavior !== undefined) updateData.behavior = data.behavior;
         await updateTask(defaultValues.id, updateData);
         toast.success(t("Tugas diperbarui", "Task updated"));
       }
@@ -86,6 +90,7 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], project
           assigneeId: defaultValues?.assigneeId ?? "",
           dueDate: defaultValues?.dueDate ?? "",
           clientVisible: defaultValues?.clientVisible ?? false,
+          behavior: projects.find((p) => p.id === (defaultValues?.projectId ?? projectId))?.defaultBehavior ?? "one_time",
         });
       }
       router.refresh();
@@ -110,7 +115,7 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], project
       {!projectId && (
         <div className="space-y-2">
           <Label>{t("Proyek", "Project")} *</Label>
-          <Select value={form.projectId} onValueChange={(v) => setForm((p) => ({ ...p, projectId: v }))} required>
+          <Select value={form.projectId} onValueChange={(v) => setForm((p) => ({ ...p, projectId: v, behavior: projects.find((candidate) => candidate.id === v)?.defaultBehavior ?? "one_time" }))} required>
             <SelectTrigger><SelectValue placeholder={t("Pilih proyek", "Select project")} /></SelectTrigger>
             <SelectContent>
               {projects.map((p) => (
@@ -120,6 +125,17 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], project
           </Select>
         </div>
       )}
+      <div className="space-y-2">
+        <Label>{t("Jenis tugas", "Task type")}</Label>
+        <Select value={form.behavior} onValueChange={(value: "one_time" | "recurring") => setForm((previous) => ({ ...previous, behavior: value }))}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="one_time">{t("Sekali selesai", "One-time")}</SelectItem>
+            <SelectItem value="recurring">{t("Aktivitas berulang", "Recurring activity")}</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">{t("Model billing memberi pilihan awal. Ubah bila pola pekerjaannya berbeda.", "Billing model provides the default. Change it when the work pattern differs.")}</p>
+      </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>{t("Status", "Status")}</Label>

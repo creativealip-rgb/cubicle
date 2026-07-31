@@ -108,7 +108,7 @@ export function PdfExportButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1">
+        <Button variant="outline" size="sm" className="h-11 w-full gap-1 sm:h-8 sm:w-auto">
           <Download className="h-3 w-3" /> Ekspor PDF
         </Button>
       </DialogTrigger>

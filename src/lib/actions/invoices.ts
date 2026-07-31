@@ -14,9 +14,10 @@ import {
   clients,
   projects,
   packages,
+  projectServices,
   workspaceCurrencyRates,
 } from "@/db/schema";
-import { eq, and, desc, sql, inArray, lt, isNotNull } from "drizzle-orm";
+import { eq, and, desc, sql, inArray, lt, isNotNull, ne } from "drizzle-orm";
 import { z } from "zod";
 import { createHash, randomBytes } from "crypto";
 import { requireUser, assertWorkspaceWritable, assertWorkspaceMember } from "@/lib/access";
@@ -33,7 +34,10 @@ import { validateInvoiceMessage } from "@/lib/invoice-message";
 import { buildInvoiceReportUrl, normalizeInvoiceReportRange, signInvoiceReportRange } from "@/lib/invoice-report-options";
 import { resolveWorkspaceReplyTo } from "@/lib/workspace-reply-to";
 import { buildRateMap } from "@/lib/currency-base";
-import { convertCurrency, resolveProjectAmount } from "@/lib/invoice-project-items";
+import { convertCurrency, resolveFixedPriceInvoiceAmount, resolveProjectAmount } from "@/lib/invoice-project-items";
+import { buildProjectServiceDocumentLines } from "@/lib/project-service-lines";
+import { assertBillingModelAllowsTimeInvoice, resolveBillingModel } from "@/lib/billing-model";
+import { encryptSecret } from "@/lib/google-calendar";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -76,6 +80,11 @@ const addItemSchema = z.object({
   description: z.string().min(1),
   quantity: z.number().positive().default(1),
   unitPrice: z.number().min(0).default(0),
+});
+
+const addProjectItemSchema = z.object({
+  invoiceId: z.string().uuid(),
+  projectId: z.string().uuid(),
 });
 
 const updateItemSchema = z.object({
@@ -151,11 +160,62 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
   const rateRows = await db.select({ fromCurrency: workspaceCurrencyRates.fromCurrency, rate: workspaceCurrencyRates.rate }).from(workspaceCurrencyRates).where(eq(workspaceCurrencyRates.workspaceId, workspaceId));
   const rateMap = buildRateMap(rateRows);
   const projectItemValues: Array<{ description: string; quantity: number; unitPrice: number; sourceId: string; originalCurrency: string; originalAmount: number; conversionRate: number }> = [];
+  const projectServiceItemValues: Array<{ description: string; quantity: number; unitPrice: number; sourceId: string; originalCurrency: string; originalAmount: number; conversionRate: number }> = [];
   for (const projectId of projectIds) {
-    const [project] = await db.select({ id: projects.id, name: projects.name, billingType: projects.billingType, budget: projects.budget, rate: projects.rate, currency: projects.currency, packagePrice: packages.price, packageCustomPrice: packages.customPrice }).from(projects).leftJoin(packages, eq(projects.selectedPackageId, packages.id)).where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId), eq(projects.clientId, parsed.clientId))).limit(1);
+    const [project] = await db.select({ id: projects.id, name: projects.name, billingModel: projects.billingModel, billingType: projects.billingType, budget: projects.budget, rate: projects.rate, currency: projects.currency, packagePrice: packages.price, packageCustomPrice: packages.customPrice }).from(projects).leftJoin(packages, eq(projects.selectedPackageId, packages.id)).where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId), eq(projects.clientId, parsed.clientId))).limit(1);
     if (!project) throw new Error("Ada proyek yang tidak sesuai dengan klien");
-    const originalAmount = resolveProjectAmount({ billingType: project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packageCustomPrice ?? project.packagePrice ?? 0) || null });
+    let originalAmount = resolveProjectAmount({ billingType: project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packageCustomPrice ?? project.packagePrice ?? 0) || null });
+    if (resolveBillingModel(project) === "fixed_price") {
+      const [prior] = await db
+        .select({ amount: sql<string>`coalesce(sum(${invoiceItems.originalAmount}), '0')` })
+        .from(invoiceItems)
+        .innerJoin(invoices, eq(invoices.id, invoiceItems.invoiceId))
+        .where(and(
+          eq(invoiceItems.sourceType, "project"),
+          eq(invoiceItems.sourceId, project.id),
+          eq(invoices.workspaceId, workspaceId),
+          ne(invoices.status, "cancelled"),
+          ne(invoices.status, "archived"),
+        ));
+      const previouslyInvoicedAmount = Number(prior?.amount ?? 0);
+      originalAmount = resolveFixedPriceInvoiceAmount(originalAmount, previouslyInvoicedAmount);
+      if (originalAmount <= 0) throw new Error("Nilai Fixed Price Project sudah seluruhnya ditagihkan");
+    }
     if (project.billingType === "hours") continue;
+    const serviceRows = await db
+      .select({
+        id: projectServices.id,
+        nameSnapshot: projectServices.nameSnapshot,
+        descriptionSnapshot: projectServices.descriptionSnapshot,
+        quantity: projectServices.quantity,
+        unitPrice: projectServices.unitPrice,
+        amount: projectServices.amount,
+        currencySnapshot: projectServices.currencySnapshot,
+        status: projectServices.status,
+      })
+      .from(projectServices)
+      .where(and(
+        eq(projectServices.workspaceId, workspaceId),
+        eq(projectServices.projectId, projectId),
+        eq(projectServices.status, "active"),
+      ));
+    if (serviceRows.length) {
+      for (const row of serviceRows) {
+        const [line] = buildProjectServiceDocumentLines([row], row.currencySnapshot);
+        const converted = convertCurrency(line.amount, line.originalCurrency, parsed.currency || ws?.defaultCurrency || "IDR", ws?.defaultCurrency || "IDR", rateMap);
+        if (!converted) throw new Error(`Kurs ${line.originalCurrency} ke ${parsed.currency} belum tersedia`);
+        projectServiceItemValues.push({
+          description: line.description,
+          quantity: line.quantity,
+          unitPrice: converted.amount / line.quantity,
+          sourceId: line.sourceId,
+          originalCurrency: line.originalCurrency,
+          originalAmount: line.amount,
+          conversionRate: converted.rate,
+        });
+      }
+      continue;
+    }
     const converted = convertCurrency(originalAmount, project.currency, parsed.currency || ws?.defaultCurrency || "IDR", ws?.defaultCurrency || "IDR", rateMap);
     if (!converted) throw new Error(`Kurs ${project.currency} ke ${parsed.currency} belum tersedia`);
     projectItemValues.push({ description: project.name, quantity: 1, unitPrice: converted.amount, sourceId: project.id, originalCurrency: project.currency, originalAmount, conversionRate: converted.rate });
@@ -203,6 +263,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
           workspaceId,
           clientId: parsed.clientId,
           projectId: parsed.projectId || null,
+          billingSource: projectItemValues.length ? "fixed_price" : null,
           invoiceNumber,
           issueDate: parsed.issueDate,
           dueDate: parsed.dueDate || null,
@@ -217,7 +278,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
         })
         .returning();
 
-      if ((parsed.items?.length || projectItemValues.length) && inv) {
+      if ((parsed.items?.length || projectItemValues.length || projectServiceItemValues.length) && inv) {
         const sourceIds = parsed.items?.flatMap((item) => item.sourceId ? [item.sourceId] : []) ?? [];
         if (sourceIds.length) {
           const eligible = await tx.select({ id: timeEntries.id }).from(timeEntries).where(and(
@@ -231,6 +292,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
         }
         const values = [
           ...projectItemValues.map((item) => ({ invoiceId: inv.id, description: item.description, quantity: "1", unitPrice: String(item.unitPrice), amount: String(item.unitPrice), sourceType: "project" as const, sourceId: item.sourceId, originalCurrency: item.originalCurrency, originalAmount: String(item.originalAmount), conversionRate: String(item.conversionRate) })),
+          ...projectServiceItemValues.map((item) => ({ invoiceId: inv.id, description: item.description, quantity: String(item.quantity), unitPrice: String(item.unitPrice), amount: String(item.quantity * item.unitPrice), sourceType: "project" as const, sourceId: item.sourceId, originalCurrency: item.originalCurrency, originalAmount: String(item.originalAmount), conversionRate: String(item.conversionRate) })),
           ...(parsed.items ?? []).map((item) => ({
           invoiceId: inv.id,
           description: item.description,
@@ -394,12 +456,53 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
     .where(eq(invoices.id, invoiceId))
     .returning();
 
+  if (parsed.status === "cancelled" && currentInvoice.status === "draft") {
+    await revertInvoiceTimeEntrySources(workspaceId, invoiceId);
+  }
+
   await writeActivityLog(workspaceId, user.id, "updated_invoice", "invoice", invoiceId);
 
   return inv;
 }
+async function revertInvoiceTimeEntrySources(workspaceId: string, invoiceId: string) {
+  const linkedTimeEntryIds = await db
+    .select({ sourceId: invoiceItems.sourceId })
+    .from(invoiceItems)
+    .where(and(eq(invoiceItems.invoiceId, invoiceId), eq(invoiceItems.sourceType, "time_entry")));
 
-// ─── Line Items ───
+  for (const row of linkedTimeEntryIds) {
+    if (!row.sourceId) continue;
+    const [sourceItem] = await db
+      .select({ previousTimeEntryStatus: invoiceItems.previousTimeEntryStatus })
+      .from(invoiceItems)
+      .where(and(eq(invoiceItems.invoiceId, invoiceId), eq(invoiceItems.sourceType, "time_entry"), eq(invoiceItems.sourceId, row.sourceId)))
+      .limit(1);
+    await db
+      .update(timeEntries)
+      .set({ status: sourceItem?.previousTimeEntryStatus ?? "approved", updatedAt: new Date() })
+      .where(and(eq(timeEntries.id, row.sourceId), eq(timeEntries.workspaceId, workspaceId)));
+  }
+}
+
+export async function cancelDraftInvoice(invoiceId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const inv = await assertInvoiceInWorkspace(invoiceId, workspaceId);
+  if (inv.status !== "draft") throw new Error("Hanya draft invoice yang bisa dibatalkan dari aksi ini");
+
+  await db.transaction(async (tx) => {
+    await revertInvoiceTimeEntrySources(workspaceId, invoiceId);
+    await tx.delete(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId));
+    await tx.update(invoices).set({ status: "cancelled", updatedAt: new Date() }).where(eq(invoices.id, invoiceId));
+  });
+
+  await writeActivityLog(workspaceId, user.id, "cancelled_draft_invoice", "invoice", invoiceId);
+  return { success: true };
+}
+
 
 export async function recalculateInvoice(invoiceId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -465,6 +568,41 @@ export async function addInvoiceItem(input: z.infer<typeof addItemSchema>) {
 
   await recalculateInvoice(parsed.invoiceId);
   await writeActivityLog(workspaceId, user.id, "added_invoice_item", "invoice_item", item.id);
+  return item;
+}
+
+export async function addProjectInvoiceItem(input: z.infer<typeof addProjectItemSchema>) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  const parsed = addProjectItemSchema.parse(input);
+  const invoice = await assertInvoiceInWorkspace(parsed.invoiceId, workspaceId);
+  assertInvoiceFinancialsMutable(invoice.status);
+
+  const [project] = await db.select({ id: projects.id, name: projects.name, clientId: projects.clientId, billingType: projects.billingType, billingModel: projects.billingModel, budget: projects.budget, currency: projects.currency })
+    .from(projects).where(and(eq(projects.id, parsed.projectId), eq(projects.workspaceId, workspaceId))).limit(1);
+  if (!project) throw new Error("Proyek tidak ditemukan");
+  if (project.clientId !== invoice.clientId) throw new Error("Proyek tidak sesuai dengan klien invoice");
+  if ((project.billingModel ?? project.billingType) !== "fixed_price" && project.billingType !== "project") throw new Error("Hanya Fixed Price Project yang bisa ditambahkan langsung");
+
+  const [duplicate] = await db.select({ id: invoiceItems.id }).from(invoiceItems).where(and(eq(invoiceItems.invoiceId, parsed.invoiceId), eq(invoiceItems.sourceType, "project"), eq(invoiceItems.sourceId, parsed.projectId))).limit(1);
+  if (duplicate) throw new Error("Proyek ini sudah ada di invoice");
+
+  const [prior] = await db.select({ amount: sql<string>`coalesce(sum(${invoiceItems.originalAmount}), '0')` }).from(invoiceItems)
+    .innerJoin(invoices, eq(invoices.id, invoiceItems.invoiceId))
+    .where(and(eq(invoiceItems.sourceType, "project"), eq(invoiceItems.sourceId, project.id), eq(invoices.workspaceId, workspaceId), ne(invoices.status, "cancelled"), ne(invoices.status, "archived")));
+  const originalAmount = resolveFixedPriceInvoiceAmount(Number(project.budget ?? 0), Number(prior?.amount ?? 0));
+  if (originalAmount <= 0) throw new Error("Nilai Fixed Price Project sudah seluruhnya ditagihkan");
+
+  const [workspace] = await db.select({ defaultCurrency: workspaces.defaultCurrency }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  const rateRows = await db.select({ fromCurrency: workspaceCurrencyRates.fromCurrency, rate: workspaceCurrencyRates.rate }).from(workspaceCurrencyRates).where(eq(workspaceCurrencyRates.workspaceId, workspaceId));
+  const converted = convertCurrency(originalAmount, project.currency, invoice.currency, workspace?.defaultCurrency ?? "IDR", buildRateMap(rateRows));
+  if (!converted) throw new Error(`Kurs ${project.currency} ke ${invoice.currency} belum tersedia`);
+
+  const [item] = await db.insert(invoiceItems).values({ invoiceId: parsed.invoiceId, description: project.name, quantity: "1", unitPrice: String(converted.amount), amount: String(converted.amount), sourceType: "project", sourceId: project.id, originalCurrency: project.currency, originalAmount: String(originalAmount), conversionRate: String(converted.rate) }).returning();
+  await recalculateInvoice(parsed.invoiceId);
+  await writeActivityLog(workspaceId, user.id, "added_project_invoice_item", "invoice_item", item.id);
   return item;
 }
 
@@ -586,6 +724,8 @@ export async function importTimeEntries(input: z.infer<typeof importTimeSchema>)
         durationMinutes: timeEntries.durationMinutes,
         hourlyRate: timeEntries.hourlyRate,
         projectName: projects.name,
+        billingModel: projects.billingModel,
+        billingType: projects.billingType,
       })
       .from(timeEntries)
       .leftJoin(
@@ -614,6 +754,9 @@ export async function importTimeEntries(input: z.infer<typeof importTimeSchema>)
     }
     if (entries.some((entry) => !entry.hourlyRate || Number(entry.hourlyRate) <= 0)) {
       throw new Error("Time Entry belum memiliki billing rate snapshot");
+    }
+    for (const entry of entries) {
+      assertBillingModelAllowsTimeInvoice(resolveBillingModel(entry));
     }
 
     const existingLinks = await tx
@@ -862,6 +1005,7 @@ export async function generateInvoiceShareToken(invoiceId: string, expiresAt?: s
     .update(invoices)
     .set({
       sharedTokenHash: tokenHash,
+      sharedTokenEnc: encryptSecret(rawToken),
       sharedTokenExpiresAt: expiry,
       sharedTokenRevokedAt: null,
       updatedAt: new Date(),
@@ -883,6 +1027,7 @@ export async function revokeInvoiceShareToken(invoiceId: string) {
     .update(invoices)
     .set({
       sharedTokenRevokedAt: new Date(),
+      sharedTokenEnc: null,
       updatedAt: new Date(),
     })
     .where(eq(invoices.id, invoiceId));

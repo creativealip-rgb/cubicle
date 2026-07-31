@@ -17,10 +17,10 @@ describe("Phase 6A team timesheet wiring", () => {
     expect(view).toContain("lg:grid-cols-7");
   });
 
-  it("wires closed entries and active timer from time page", () => {
-    const page = read("src/app/(app)/app/time/page.tsx");
-    expect(page).toContain("TeamTimesheetView");
-    expect(page).toContain("teamEntries");
+  it("keeps team timesheet implementation available without duplicating it on the focused time page", () => {
+    const page = read("src/components/time/time-route-content.tsx");
+    expect(page).not.toContain("TeamTimesheetView");
+    expect(page).not.toContain("teamEntries");
     expect(page).toContain("pausedAt: timeEntries.pausedAt");
     expect(page).toContain("activeTimer");
   });

@@ -27,7 +27,7 @@ describe("Phase 1 project time tracking wiring", () => {
     expect(time).toContain("assertProjectTimeTrackingEnabled(db, workspaceId, nextProjectId)");
     expect(time).toContain("assertHistoricalTimeEntryMutable(db, workspaceId, entry.projectId)");
     expect(time).toContain("await assertProjectTimeTrackingEnabled(db, workspaceId, entry.projectId)");
-    expect(time).toContain("Project wajib dipilih sebelum timer dihentikan");
+    expect(time).not.toContain("Project wajib dipilih sebelum timer dihentikan");
     expect(time).toContain("timeEntryBillableForMode");
 
     const projectsAction = read("src/lib/actions/projects.ts");
@@ -50,7 +50,7 @@ describe("Phase 1 project time tracking wiring", () => {
   });
 
   it("filters off projects from write UI but keeps historical entries visible", () => {
-    const page = read("src/app/(app)/app/time/page.tsx");
+    const page = read("src/components/time/time-route-content.tsx");
     const projectPage = read("src/app/(app)/app/projects/[projectId]/page.tsx");
     const taskSheet = read("src/components/tasks/task-detail-sheet.tsx");
 
@@ -67,17 +67,24 @@ describe("Phase 1 project time tracking wiring", () => {
     expect(timesheet).toContain('t("Hanya baca", "Read only")');
   });
 
-  it("keeps create-form defaults and empty-timer completion aligned with server policy", () => {
+  it("keeps canonical billing defaults and empty timers aligned with direct controls", () => {
     const projectForm = read("src/components/forms/project-form.tsx");
     const timerWidget = read("src/components/time/timer-widget.tsx");
     const topbar = read("src/components/app-topbar.tsx");
 
-    expect(projectForm).toContain("selectedPackage?.hours");
-    expect(projectForm).toContain('timeTrackingMode: selectedPackage?.hours && selectedPackage.hours > 0 ? "billable" : "internal"');
-    expect(timerWidget).toContain("<StopTimerDialog");
-    expect(timerWidget).toContain("open={stopDialogOpen}");
-    expect(topbar).toContain('if (!activeTimer.projectId)');
-    expect(topbar).toContain('router.push("/app/time")');
+    expect(projectForm).toContain('defaultValues?.billingType==="hours"?"hourly":"fixed_price"');
+    expect(projectForm).toContain('<SelectItem value="fixed_price">Harga Tetap</SelectItem>');
+    expect(projectForm).toContain('<SelectItem value="hourly">Per Jam</SelectItem>');
+    expect(projectForm).toContain('<SelectItem value="retainer">Retainer</SelectItem>');
+    const projectsAction = read("src/lib/actions/projects.ts");
+    expect(projectsAction).toContain("retainerFee: parsed.retainerFee != null ? String(parsed.retainerFee) : null");
+    expect(projectsAction).toContain('retainerPeriodUnit: parsed.billingModel === "retainer" ? "month" : null');
+    expect(projectForm).not.toContain("selectedPackage?.hours");
+    expect(timerWidget).toContain("startTimer({ workspaceId })");
+    expect(timerWidget).not.toContain("setStopDialogOpen(true)");
+    expect(topbar).toContain("await startTimer({ workspaceId })");
+    expect(topbar).toContain("await stopTimer(activeTimer.id)");
+    expect(topbar).not.toContain('if (!activeTimer.projectId)');
   });
 
   it("keeps project dialogs reachable on mobile", () => {
@@ -89,8 +96,8 @@ describe("Phase 1 project time tracking wiring", () => {
     expect(createDialog).toContain('overflow-y-auto');
     expect(projectPage).toContain('max-h-[90dvh]');
     expect(projectPage).toContain('overflow-y-auto');
-    expect(projectForm).toContain('grid-cols-1 sm:grid-cols-3');
+    expect(projectForm).toContain('sm:grid-cols-2');
     expect(projectForm).toContain('<DialogClose asChild>');
-    expect(projectForm).toContain('t("Batal", "Cancel")');
+    expect(projectForm).toContain('>Batal</Button>');
   });
 });

@@ -28,3 +28,13 @@ export function resolveProjectAmount(project: {
   if (project.billingType === "package") return project.packagePrice ?? project.budget ?? 0;
   return project.budget ?? 0;
 }
+
+export function resolveFixedPriceInvoiceAmount(
+  agreedAmount: number,
+  previouslyInvoicedAmount: number,
+): number {
+  if (!Number.isFinite(agreedAmount) || !Number.isFinite(previouslyInvoicedAmount)) {
+    throw new Error("Nilai Fixed Price tidak valid");
+  }
+  return Math.max(0, agreedAmount - previouslyInvoicedAmount);
+}

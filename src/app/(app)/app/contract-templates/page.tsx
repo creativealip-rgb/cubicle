@@ -1,6 +1,12 @@
-import { redirect } from "next/navigation";
+"use client";
 
-/** List page redundant with Template Center contract tab. Keep deep editor routes. */
-export default function ContractTemplatesPage() {
-  redirect("/app/templates?tab=contract");
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
+export default function RedirectPage() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace("/app/templates?tab=contract");
+  }, [router]);
+  return null;
 }

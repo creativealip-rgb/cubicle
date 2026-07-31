@@ -14,11 +14,13 @@ import { StopTimerDialog } from "@/components/time/stop-timer-dialog";
 import {
   Play,
   Square,
+  Star,
   Clock,
   Loader2,
   Pause,
 } from "lucide-react";
 import { useT } from "@/lib/i18n-client";
+import { timerCombinationKey, toggleFavoriteKey, type TimerCombination } from "@/lib/timer-combinations";
 
 interface Client {
   id: string;
@@ -73,9 +75,8 @@ interface TimerWidgetProps {
   projects: Project[];
   tasks: Task[];
   activities?: Activity[];
+  recentCombinations?: TimerCombination[];
   initialTimer: ActiveTimer | null;
-  variant?: "panel" | "header";
-  onTimerStarted?: (entry: { startTime?: Date | string | null }) => void;
 }
 
 function formatElapsed(
@@ -112,9 +113,8 @@ export function TimerWidget({
   projects: allProjects,
   tasks: allTasks,
   activities: allActivities = [],
+  recentCombinations = [],
   initialTimer,
-  variant = "panel",
-  onTimerStarted,
 }: TimerWidgetProps) {
   const router = useRouter();
   const { t } = useT();
@@ -133,6 +133,30 @@ export function TimerWidget({
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [hourlyRate, setHourlyRate] = useState("");
+  const [favoriteKeys, setFavoriteKeys] = useState<string[]>([]);
+
+  useEffect(() => {
+    try { setFavoriteKeys(JSON.parse(localStorage.getItem("cubicle:timer-favorites") || "[]")); } catch { setFavoriteKeys([]); }
+  }, []);
+
+  const applyCombination = useCallback((item: TimerCombination) => {
+    setSelectedClientId(item.clientId ?? "");
+    setTimeout(() => {
+      setSelectedProjectId(item.projectId);
+      setTimeout(() => {
+        setSelectedActivityId(item.activityId ?? "");
+        setSelectedTaskId(item.taskId ?? "__none__");
+        setDescription(item.description ?? "");
+        setTags(item.tags ?? "");
+      }, 0);
+    }, 0);
+  }, []);
+
+  function toggleFavorite(item: TimerCombination) {
+    const next = toggleFavoriteKey(favoriteKeys, timerCombinationKey(item));
+    setFavoriteKeys(next);
+    localStorage.setItem("cubicle:timer-favorites", JSON.stringify(next));
+  }
 
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
@@ -214,8 +238,8 @@ export function TimerWidget({
   }, [activeTimer]);
 
   const handleStart = useCallback(async () => {
-    if (!selectedClientId || !selectedProjectId) {
-      toast.error(t("Pilih klien dan proyek", "Select a client and project"));
+    if (!selectedClientId || !selectedProjectId || !selectedTaskId || selectedTaskId === "__none__") {
+      toast.error(t("Pilih klien, proyek, dan task", "Select a client, project, and task"));
       return;
     }
     setLoading(true);
@@ -225,7 +249,7 @@ export function TimerWidget({
         clientId: selectedClientId,
         projectId: selectedProjectId,
         activityId: selectedActivityId || null,
-        taskId: selectedTaskId && selectedTaskId !== "__none__" ? selectedTaskId : undefined,
+        taskId: selectedTaskId,
         description: description || undefined,
         tags: tags || undefined,
         hourlyRate: hourlyRate ? Number(hourlyRate) : undefined,
@@ -251,9 +275,7 @@ export function TimerWidget({
         activityName: activity?.name ?? null,
         taskTitle: task?.title ?? null,
       });
-      onTimerStarted?.({ startTime: entry.startTime });
       selfDispatched.current = true;
-      window.dispatchEvent(new CustomEvent("cubiqlo:time-entry-started", { detail: { startTime: entry.startTime } }));
       window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
       toast.success(t("Timer dimulai", "Timer started"));
       router.refresh();
@@ -275,12 +297,12 @@ export function TimerWidget({
     allProjects,
     allActivities,
     allTasks,
-    onTimerStarted,
     router,
     t,
   ]);
 
   const handleStartEmpty = useCallback(async () => {
+    if (loading) return;
     setLoading(true);
     try {
       const entry = await startTimer({ workspaceId });
@@ -299,18 +321,16 @@ export function TimerWidget({
         activityName: null,
         taskTitle: null,
       });
-      onTimerStarted?.({ startTime: entry.startTime });
       selfDispatched.current = true;
-      window.dispatchEvent(new CustomEvent("cubiqlo:time-entry-started", { detail: { startTime: entry.startTime } }));
       window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
-      toast.success(t("Timer kosong dimulai", "Empty timer started"));
+      toast.success(t("Timer dimulai. Detail bisa diisi nanti lewat timesheet.", "Timer started. Details can be filled later from the timesheet."));
       router.refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal memulai timer", "Failed to start timer"));
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, router, t, onTimerStarted]);
+  }, [loading, router, t, workspaceId]);
 
   const handlePause = useCallback(async () => {
     if (!activeTimer || loading) return;
@@ -388,10 +408,6 @@ export function TimerWidget({
 
   const handleStop = useCallback(async () => {
     if (!activeTimer || loading) return;
-    if (isEmptyTimer) {
-      setStopDialogOpen(true);
-      return;
-    }
     setLoading(true);
     try {
       await stopTimer(activeTimer.id);
@@ -486,15 +502,6 @@ export function TimerWidget({
     t,
   ]);
 
-  if (variant === "header" && !activeTimer) {
-    return (
-      <Button variant="outline" size="sm" className="gap-2" onClick={handleStartEmpty} disabled={loading}>
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-        {t("Mulai Timer", "Start Timer")}
-      </Button>
-    );
-  }
-
   return (
     <>
       <Card className="rounded-lg border bg-card">
@@ -579,14 +586,14 @@ export function TimerWidget({
                       </Select>
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs">{t("Activity", "Activity")}</Label>
+                      <Label className="text-xs">{t("Aktivitas", "Activity")}</Label>
                       <Select
                         value={selectedActivityId || "__none__"}
                         onValueChange={(value) => setSelectedActivityId(value === "__none__" ? "" : value)}
                         disabled={!selectedProjectId}
                       >
                         <SelectTrigger className="h-9 text-sm">
-                          <SelectValue placeholder={t("Pilih activity", "Select activity")} />
+                          <SelectValue placeholder={t("Pilih aktivitas", "Select activity")} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
@@ -668,7 +675,7 @@ export function TimerWidget({
                   )}
                   {activeTimer.activityName && (
                     <p>
-                      {t("Activity", "Activity")}: {activeTimer.activityName}
+                      {t("Aktivitas", "Activity")}: {activeTimer.activityName}
                     </p>
                   )}
                   {activeTimer.taskTitle && (
@@ -742,9 +749,39 @@ export function TimerWidget({
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Clock className="h-5 w-5 text-muted-foreground" />
-                <h3 className="text-sm font-semibold">{t("Mulai Timer", "Start Timer")}</h3>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-sm font-semibold">{t("Mulai Timer", "Start Timer")}</h3>
+                </div>
+                <span className="font-mono text-2xl font-semibold tabular-nums">00:00:00</span>
+              </div>
+
+              {recentCombinations.length > 0 && (
+                <div className="flex gap-2 overflow-x-auto pb-1" aria-label={t("Timer terbaru dan favorit", "Recent and favorite timers")}>
+                  {[...recentCombinations].sort((a, b) => Number(favoriteKeys.includes(timerCombinationKey(b))) - Number(favoriteKeys.includes(timerCombinationKey(a)))).slice(0, 3).map((item) => {
+                    const key = timerCombinationKey(item);
+                    const project = allProjects.find((value) => value.id === item.projectId);
+                    const activity = allActivities.find((value) => value.id === item.activityId);
+                    const favorite = favoriteKeys.includes(key);
+                    return (
+                      <div key={key} className="flex shrink-0 items-center rounded-md border bg-muted/30">
+                        <button type="button" className="px-3 py-2 text-left text-xs" onClick={() => applyCombination(item)}>
+                          <span className="block font-medium">{project?.name ?? t("Proyek", "Project")}</span>
+                          <span className="text-muted-foreground">{activity?.name ?? item.description ?? t("Tanpa aktivitas", "No activity")}</span>
+                        </button>
+                        <button type="button" className="p-2" aria-label={favorite ? t("Hapus favorit", "Remove favorite") : t("Jadikan favorit", "Add favorite")} onClick={() => toggleFavorite(item)}>
+                          <Star className={`h-4 w-4 ${favorite ? "fill-amber-400 text-amber-500" : "text-muted-foreground"}`} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
+                <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("Apa yang sedang dikerjakan?", "What are you working on?")} className="h-11 text-base" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -783,14 +820,14 @@ export function TimerWidget({
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">{t("Activity", "Activity")}</Label>
+                  <Label className="text-xs">{t("Aktivitas", "Activity")}</Label>
                   <Select
                     value={selectedActivityId || "__none__"}
                     onValueChange={(value) => setSelectedActivityId(value === "__none__" ? "" : value)}
                     disabled={!selectedProjectId}
                   >
                     <SelectTrigger className="h-9 text-sm">
-                      <SelectValue placeholder={t("Pilih activity", "Select activity")} />
+                      <SelectValue placeholder={t("Pilih aktivitas", "Select activity")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
@@ -824,23 +861,9 @@ export function TimerWidget({
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
-                <Input
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder={t("Lagi ngerjain apa?", "What are you working on?")}
-                  className="h-9"
-                />
-                <p className="text-[11px] text-muted-foreground">
-                  {t(
-                    "Task sebagai konteks; deskripsi pekerjaan tetap terpisah",
-                    "Task is context; work description stays separate",
-                  )}
-                </p>
-              </div>
-
-              <div className="space-y-1.5">
+              <details className="rounded-lg border bg-muted/20 p-3">
+                <summary className="cursor-pointer text-sm font-medium">{t("Opsi lainnya", "More options")}</summary>
+                <div className="mt-3 space-y-1.5">
                 <Label className="text-xs">{t("Tag (opsional)", "Tags (optional)")}</Label>
                 <Input
                   value={tags}
@@ -872,46 +895,18 @@ export function TimerWidget({
               {isHourly && (
                 <div className="space-y-1.5">
                   <Label className="text-xs">{t("Tarif per jam", "Hourly rate")}</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="1000"
-                    value={hourlyRate}
-                    onChange={(e) => setHourlyRate(e.target.value)}
-                    placeholder={selectedProject?.rate ? String(selectedProject.rate) : "e.g. 150000"}
-                    className="h-9"
-                  />
-                  <p className="text-[11px] text-muted-foreground">
-                    {t("Kosongkan untuk pakai tarif proyek.", "Leave empty to use the project rate.")}
-                  </p>
+                  <Input type="number" min="0" step="1000" value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} placeholder={selectedProject?.rate ? String(selectedProject.rate) : "e.g. 150000"} className="h-9" />
+                  <p className="text-[11px] text-muted-foreground">{t("Kosongkan untuk pakai tarif proyek.", "Leave empty to use the project rate.")}</p>
                 </div>
               )}
+              </details>
 
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button
-                  className="flex-1 gap-2"
-                  onClick={handleStart}
-                  disabled={loading || !selectedClientId || !selectedProjectId}
-                >
+              <div className="flex">
+                <Button className="w-full gap-2 sm:w-auto sm:min-w-48" onClick={selectedClientId && selectedProjectId ? handleStart : handleStartEmpty} disabled={loading}>
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                  {t("Mulai dengan detail", "Start with details")}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1 gap-2"
-                  onClick={handleStartEmpty}
-                  disabled={loading}
-                >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                  {t("Mulai kosong", "Start empty")}
+                  {t("Mulai Timer", "Start Timer")}
                 </Button>
               </div>
-              <p className="text-[11px] text-muted-foreground">
-                {t(
-                  "Mulai kosong sekarang. Pilih client/project saat menghentikan.",
-                  "Start empty now. Choose client/project when stopping.",
-                )}
-              </p>
             </div>
           )}
         </CardContent>

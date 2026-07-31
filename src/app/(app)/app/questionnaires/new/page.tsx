@@ -1,22 +1,13 @@
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
-import { db } from "@/db";
-import { requireUser, assertWorkspaceWritable } from "@/lib/access";
+
+import { requireWorkspaceWritableOrRedirect } from "@/lib/require-workspace-owner";
 import { QuestionnaireBuilder } from "@/components/questionnaires/questionnaire-builder";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 
-async function getWorkspace() {
-  return getWorkspaceFullForCurrentUser();
-}
 
 export default async function NewQuestionnairePage() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const user = requireUser(session?.user);
-  const ws = await getWorkspace();
-  await assertWorkspaceWritable(db, user.id, ws.id);
+  const { workspaceId } = await requireWorkspaceWritableOrRedirect("/app/questionnaires");
 
   return (
     <div className="space-y-6 p-6 max-w-4xl">
@@ -33,7 +24,7 @@ export default async function NewQuestionnairePage() {
         <p className="text-sm text-slate-500 mt-1">Buat form. Kirim ke klien. Dapatkan brief yang terstruktur.</p>
       </div>
       <QuestionnaireBuilder
-        workspaceId={ws.id}
+        workspaceId={workspaceId}
       />
     </div>
   );

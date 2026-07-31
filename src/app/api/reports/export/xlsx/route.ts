@@ -8,6 +8,10 @@ import {
   expenses,
   invoices,
   payments,
+  timeEntries,
+  projects,
+  tasks,
+  users,
   workspaceCurrencyRates,
 } from "@/db/schema";
 import { auth } from "@/lib/auth";
@@ -23,6 +27,7 @@ import {
   reportPeriodLabel,
 } from "@/lib/report-period";
 import { styleWorksheet, xlsxResponse } from "@/lib/excel";
+import { buildTimeReport } from "@/lib/time-reporting";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export async function GET(request: Request) {
@@ -166,6 +171,8 @@ export async function GET(request: Request) {
         };
       })
       .filter((r) => r.Sisa > 0);
+    const timeRows = await db.select({ projectId: timeEntries.projectId, projectName: projects.name, taskId: timeEntries.taskId, taskTitle: tasks.title, userId: timeEntries.userId, userName: users.name, durationMinutes: timeEntries.durationMinutes, billable: timeEntries.billable, hourlyRate: timeEntries.hourlyRate }).from(timeEntries).leftJoin(projects, eq(projects.id, timeEntries.projectId)).leftJoin(tasks, eq(tasks.id, timeEntries.taskId)).leftJoin(users, eq(users.id, timeEntries.userId)).where(and(eq(timeEntries.workspaceId, ws.id), gte(sql`(${timeEntries.startTime})::date`, period.start), lte(sql`(${timeEntries.startTime})::date`, period.end)));
+    const timeReport = buildTimeReport(timeRows);
     const wb = new ExcelJS.Workbook();
     wb.creator = "Cubiqlo";
     wb.created = new Date();
@@ -248,6 +255,7 @@ export async function GET(request: Request) {
       ],
       receivables,
     );
+    add("Time Tracking", [{header:"Group",key:"Group",width:16},{header:"Name",key:"Name",width:30},{header:"Hours",key:"Hours",width:14},{header:"Billable Hours",key:"BillableHours",width:16},{header:"Value",key:"Value",width:20}], [...timeReport.byProject.map(r=>({Group:"Project",Name:r.name,Hours:r.minutes/60,BillableHours:r.billableMinutes/60,Value:r.value})),...timeReport.byTask.map(r=>({Group:"Task",Name:r.name,Hours:r.minutes/60,BillableHours:r.billableMinutes/60,Value:r.value})),...timeReport.byMember.map(r=>({Group:"Member",Name:r.name,Hours:r.minutes/60,BillableHours:r.billableMinutes/60,Value:r.value}))]);
     const buffer = Buffer.from(await wb.xlsx.writeBuffer());
     return xlsxResponse(buffer, `laporan-${period.start}-${period.end}.xlsx`);
   } catch (error) {

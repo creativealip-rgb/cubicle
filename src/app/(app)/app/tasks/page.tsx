@@ -6,11 +6,14 @@ import { tasks, projects, clients, users, workspaceMembers } from "@/db/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { TaskCreateDialog } from "@/components/tasks/task-create-dialog";
-import { TaskFilters } from "@/components/tasks/task-filters";
+
 import { TaskViewToggle } from "@/components/tasks/task-view-toggle";
 import { TasksBoardView } from "@/components/tasks/tasks-board-view";
 import { TasksListTable } from "@/components/tasks/tasks-list-table";
 import { getCurrentLang, createT } from "@/lib/i18n";
+import { TaskBehaviorTabs } from "@/components/tasks/task-behavior-tabs";
+import { defaultTaskBehavior, resolveBillingModel } from "@/lib/billing-model";
+import { ActiveFilterSummary } from "@/components/ui/active-filter-summary";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -26,6 +29,7 @@ export default async function TasksPage({
     assignee?: string;
     view?: string;
     focus?: string;
+    behavior?: string;
   }>;
 }) {
   const lang = await getCurrentLang();
@@ -39,6 +43,9 @@ export default async function TasksPage({
   const focusId = params.focus || null;
 
   const whereClauses = [eq(tasks.workspaceId, workspaceId)];
+
+  if (params.behavior === "one_time") whereClauses.push(eq(tasks.behavior, "one_time"));
+  else if (params.behavior === "recurring") whereClauses.push(eq(tasks.behavior, "recurring"));
 
   if (params.status && params.status !== "all") {
     whereClauses.push(eq(tasks.status, params.status as typeof tasks.status.enumValues[number]));
@@ -76,6 +83,7 @@ export default async function TasksPage({
       assigneeId: tasks.assigneeId,
       assigneeName: users.name,
       sourceNoteId: tasks.sourceNoteId,
+      behavior: tasks.behavior,
     })
     .from(tasks)
     .leftJoin(projects, eq(projects.id, tasks.projectId))
@@ -86,9 +94,10 @@ export default async function TasksPage({
 
   // Get projects for filter
   const projectList = await db
-    .select({ id: projects.id, name: projects.name })
+    .select({ id: projects.id, name: projects.name, billingModel: projects.billingModel, billingType: projects.billingType })
     .from(projects)
     .where(eq(projects.workspaceId, workspaceId));
+  const taskProjects = projectList.map((project) => ({ id: project.id, name: project.name, defaultBehavior: defaultTaskBehavior(resolveBillingModel(project)) }));
 
   // Get workspace members for filter + assignee selector
   const memberList = await db
@@ -112,48 +121,27 @@ export default async function TasksPage({
             {t("Pantau pekerjaan di semua proyek", "Track work across all projects")}
           </p>
         </div>
-        <TaskCreateDialog projectId={params.projectId} members={memberList} projects={projectList} />
+        <TaskCreateDialog projectId={params.projectId} members={memberList} projects={taskProjects} />
       </div>
 
-      <div className="rounded-lg border border-blue-200 bg-blue-50/60 px-3 py-2.5 text-sm text-blue-950 sm:px-4 sm:py-3">
-        <p className="font-medium">
-          {t("Tugas dan Timer terpisah", "Tasks and Timer are separate")}
-        </p>
-        <p className="mt-1 text-xs text-blue-900/80">
-          {t(
-            "Tugas buat status kerja. Timer buat jam billable. Buka tugas lalu mulai timer kalau mau catat waktu.",
-            "Tasks track work status. Timer tracks billable hours. Open a task, then start timer when you want to log time.",
-          )}{" "}
-          <a href="/app/time" className="font-medium underline underline-offset-2">
-            {t("Buka Time Tracking", "Open Time Tracking")}
-          </a>
-        </p>
-      </div>
-
-      {/* Filters + view toggle */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <TaskFilters
-            projects={projectList}
-            members={memberList}
-            currentUserId={currentUserId}
-            current={{
-              status: params.status,
-              priority: params.priority,
-              projectId: params.projectId,
-              assignee: params.assignee === currentUserId ? "me" : params.assignee,
-            }}
-          />
-        </div>
+        <TaskBehaviorTabs current={params.behavior} />
         <TaskViewToggle current={view} />
       </div>
+
+      <ActiveFilterSummary basePath="/app/tasks" filters={[
+        { key: "projectId", label: t("Proyek", "Project"), value: taskProjects.find((project) => project.id === params.projectId)?.name },
+        { key: "assignee", label: t("Petugas", "Assignee"), value: params.assignee === "me" ? t("Saya", "Me") : params.assignee === "unassigned" ? t("Belum ditugaskan", "Unassigned") : memberList.find((member) => member.id === params.assignee)?.name },
+        { key: "priority", label: t("Prioritas", "Priority"), value: params.priority },
+        { key: "status", label: t("Status", "Status"), value: params.status },
+      ]} />
 
       {/* Board view */}
       {view === "board" && <TasksBoardView tasks={taskList} members={memberList} />}
 
       {/* Task List */}
       {view === "list" && (
-        <TasksListTable tasks={taskList} members={memberList} focusId={focusId} />
+        <TasksListTable tasks={taskList} members={memberList} projects={taskProjects} currentUserId={currentUserId} currentFilters={{ status: params.status, priority: params.priority, projectId: params.projectId, assignee: params.assignee }} focusId={focusId} />
       )}
     </div>
   );

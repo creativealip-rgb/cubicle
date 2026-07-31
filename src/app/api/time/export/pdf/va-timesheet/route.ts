@@ -122,7 +122,7 @@ function renderDuties(description: string | null, dutiesLabel: string): string {
   return `<tr class="duties-row"><td colspan="7"><div class="duties"><span class="duties-label">${escapeHtml(dutiesLabel)}</span>${items}</div></td></tr>`;
 }
 
-type BillingType = "project" | "hours" | "package";
+type BillingType = "fixed_price" | "hourly" | "retainer" | "package" | "project" | "hours";
 
 type Entry = {
   date: Date | null;

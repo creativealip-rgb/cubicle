@@ -27,7 +27,6 @@ import {
   Trash2,
   FileText,
   FileSignature,
-  Sparkles,
   ExternalLink,
   Star,
   Copy,
@@ -87,7 +86,7 @@ interface ProposalTpl {
   isDefault: boolean;
 }
 
-type TabKey = "invoice" | "contract" | "proposal" | "prompt";
+export type TemplateTabKey = "proposal" | "contract" | "invoice";
 type EditableType = "invoice" | "contract" | "proposal";
 
 const DEFAULT_CONTRACT_BODY = `# Perjanjian Jasa
@@ -147,24 +146,24 @@ Lihat rincian item di bawah. DP **{{dp}}%** di muka, sisanya sesuai milestone.
 Proposal berlaku sampai **{{valid_until}}**.
 `;
 
-function normalizeTab(tab?: string | null): TabKey {
-  if (tab === "contract" || tab === "proposal" || tab === "prompt" || tab === "invoice") {
+export function normalizeTemplateTab(tab?: string | null): TemplateTabKey {
+  if (tab === "contract" || tab === "proposal" || tab === "invoice") {
     return tab;
   }
-  return "invoice";
+  return "proposal";
 }
 
 export function TemplateCenterClient({
-  initialTab = "invoice",
+  initialTab = "proposal",
 }: {
-  initialTab?: TabKey;
+  initialTab?: TemplateTabKey;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const urlTab = normalizeTab(searchParams.get("tab") ?? initialTab);
+  const urlTab = normalizeTemplateTab(searchParams.get("tab") ?? initialTab);
 
-  const [activeTab, setActiveTab] = useState<TabKey>(urlTab);
+  const [activeTab, setActiveTab] = useState<TemplateTabKey>(urlTab);
   const [invoiceTpls, setInvoiceTpls] = useState<InvoiceTpl[]>([]);
   const [contractTpls, setContractTpls] = useState<ContractTpl[]>([]);
   const [proposalTpls, setProposalTpls] = useState<ProposalTpl[]>([]);
@@ -191,10 +190,10 @@ export function TemplateCenterClient({
 
   const changeTab = useCallback(
     (tab: string) => {
-      const next = normalizeTab(tab);
+      const next = normalizeTemplateTab(tab);
       setActiveTab(next);
       const params = new URLSearchParams(searchParams.toString());
-      if (next === "invoice") params.delete("tab");
+      if (next === "proposal") params.delete("tab");
       else params.set("tab", next);
       const qs = params.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
@@ -428,7 +427,7 @@ export function TemplateCenterClient({
         <div className="min-w-0">
           <h1 className="app-page-title">Pusat Template</h1>
           <p className="app-page-description">
-            Simpan sekali, pakai ulang di invoice, proposal & kontrak.
+            Simpan sekali, pakai ulang di proposal, kontrak, dan invoice.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -454,18 +453,15 @@ export function TemplateCenterClient({
       </div>
 
       <Tabs value={activeTab} onValueChange={changeTab}>
-        <TabsList className="inline-flex h-auto w-auto max-w-full flex-wrap justify-start gap-1">
-          <TabsTrigger value="invoice" className="gap-1.5">
-            <FileText className="h-4 w-4" /> Invoice ({invoiceTpls.length})
-          </TabsTrigger>
+        <TabsList className="inline-flex h-auto max-w-full justify-start gap-1 overflow-x-auto">
           <TabsTrigger value="proposal" className="gap-1.5">
             <ScrollText className="h-4 w-4" /> Proposal ({proposalTpls.length})
           </TabsTrigger>
           <TabsTrigger value="contract" className="gap-1.5">
             <FileSignature className="h-4 w-4" /> Kontrak ({contractTpls.length})
           </TabsTrigger>
-          <TabsTrigger value="prompt" className="gap-1.5" disabled>
-            <Sparkles className="h-4 w-4" /> Prompt AI
+          <TabsTrigger value="invoice" className="gap-1.5">
+            <FileText className="h-4 w-4" /> Invoice ({invoiceTpls.length})
           </TabsTrigger>
         </TabsList>
 
@@ -615,18 +611,7 @@ export function TemplateCenterClient({
           )}
         </TabsContent>
 
-        <TabsContent value="prompt" className="mt-4">
-          <div className="rounded-2xl border border-dashed p-8 text-center">
-            <Sparkles className="mx-auto h-8 w-8 text-muted-foreground/50" />
-            <p className="mt-2 text-sm font-medium">Segera hadir</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Prompt AI workspace tetap di menu Prompt dulu.
-            </p>
-            <Button asChild size="sm" variant="outline" className="mt-4">
-              <Link href="/app/prompts">Buka Prompt</Link>
-            </Button>
-          </div>
-        </TabsContent>
+
       </Tabs>
 
       <Dialog

@@ -1,8 +1,9 @@
 # Cubiqlo Full Feature Status
 
-Last updated: 2026-07-25
-Live app: https://app.cubiqlo.com
-Latest verified branch: `fix/navbar-notification-dashboard-reminders`
+Last updated: 2026-07-30
+Production app: https://app.cubiqlo.com
+Dev app: https://dev.cubiqlo.com
+Latest verified dev branch: `dev/integration` at `bccc2d7`
 
 ## Status legend
 
@@ -21,12 +22,13 @@ Latest verified branch: `fix/navbar-notification-dashboard-reminders`
 | Health endpoint | DONE | `/api/health` returns `{"status":"ok","db":"ok"}`. |
 | Protected app routing | DONE | `/app/*` redirects unauthenticated users to `/login?redirect=...`. |
 | Git checkpoint | DONE | Client Portal audit fixes pushed through `b84e801 perf: finish client portal audit fixes` on `fix/navbar-notification-dashboard-reminders`. |
+| Dev integration checkpoint | DONE | `dev/integration` revision `bccc2d7` deployed healthy to `dev.cubiqlo.com`; production container unchanged. |
 
 ## Core app shell
 
 | Feature | Route/File | Status | Notes |
 | --- | --- | --- | --- |
-| App shell sidebar/topbar | `/app/*` | DONE | Grouped sidebar, workspace dropdown, global search entry, compact create button on dense pages, timer, notifications. Penjualan hidden; Paket labeled Service. |
+| App shell sidebar/topbar | `/app/*` | DONE | Grouped sidebar, workspace dropdown, global search entry, compact create button, timer, and notifications. Dev v0.1.118 automatically opens Pekerjaan/Keuangan/Personal/AI flyouts for active child routes while preserving hover preview, manual close, collapsed mode, mobile accordion, badges, and keyboard navigation. |
 | Auth login/signup/reset | `/login`, `/signup`, `/forgot-password`, `/reset-password` | DONE | Basic auth flow live. |
 | Workspace context | `active_workspace_id` cookie + workspace helpers | DONE | Auto-bootstrap and membership checks exist. |
 | Dashboard | `/app/dashboard` | DONE | `Perlu ditangani` action queue groups urgent, waiting-action, and scheduled reminders. Greeting date-only. Due/timer not duplicated (dashboard + topbar). |
@@ -51,7 +53,7 @@ Latest verified branch: `fix/navbar-notification-dashboard-reminders`
 | Projects list | `/app/projects` | DONE | v0.1.114: compact zebra list, Review status, due-date context, client link, simplified client-only filter, progress % inside bar. |
 | Project billing type + dates | project form/schema | DONE | Supports `by project` / `by hours`, start date, finish date. |
 | Project detail | `/app/projects/[projectId]` | DONE | Detail page with related data. |
-| Tasks | `/app/tasks` | DONE | v0.1.114: compact list, Review status, tenggat context, status as dropdown, assignee filter uses Saya, list/board toggle retained. |
+| Tasks | `/app/tasks` | DONE | Compact list/board plus separate Semua, Sekali selesai, and Aktivitas berulang views; task behavior remains independent from project billing model. |
 | Project timeline | Project detail + portal | DONE | Internal timeline and client-safe visibility shipped earlier. |
 | Nodes/reminder center | `/app/nodes` | REMOVED | Removed from sidebar and route because meeting clarified this should be Notes/reminders. |
 
@@ -59,7 +61,7 @@ Latest verified branch: `fix/navbar-notification-dashboard-reminders`
 
 | Feature | Route/API | Status | Notes |
 | --- | --- | --- | --- |
-| Time tracking | `/app/time` | DONE | v0.1.114: clarified Tasks vs Timer split, compact timer card, mobile-safe manual-entry dialog, timesheet list matches shared density/zebra pattern. |
+| Time tracking | `/app/time` | DONE | Dev v0.1.118 restores editable daily rows, compact history without legacy summary/filter cards, max 10/page, compact weekly grid, and active timer live duration with pause/resume/stop plus safe empty metadata fallbacks. |
 | Time tags | time entry forms/table | DONE | Project > Task > Tag detail added with default/custom tag support. |
 | Time CSV export | Existing time export | DONE | Existing export supported. |
 | Time PDF export | `/api/time/export/pdf` | DONE | PDF dashboard/detailed report options added; unauthenticated returns `401` instead of `500`. |

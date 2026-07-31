@@ -43,6 +43,10 @@ function revalidateActivitySurfaces(projectId?: string) {
   if (projectId) revalidatePath(`/app/projects/${projectId}`);
 }
 
+function assertLegacyActivityCleanupWriteBlocked() {
+  throw new Error("Aktivitas legacy sudah masuk fase cleanup; data historis hanya bisa dibaca");
+}
+
 export async function getWorkspaceActivities(options?: {
   includeArchived?: boolean;
 }) {
@@ -66,6 +70,7 @@ export async function getWorkspaceActivities(options?: {
 export async function createActivity(
   input: z.infer<typeof activityInputSchema>,
 ) {
+  await assertLegacyActivityCleanupWriteBlocked();
   const { user, workspaceId } = await actor();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   const parsed = activityInputSchema.parse(input);
@@ -100,6 +105,7 @@ export async function updateActivity(
   activityId: string,
   input: z.infer<typeof activityUpdateSchema>,
 ) {
+  await assertLegacyActivityCleanupWriteBlocked();
   const { user, workspaceId } = await actor();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   const parsed = activityUpdateSchema.parse(input);
@@ -137,6 +143,7 @@ export async function updateActivity(
 }
 
 export async function archiveActivity(activityId: string) {
+  await assertLegacyActivityCleanupWriteBlocked();
   const { user, workspaceId } = await actor();
   await assertWorkspaceWritable(db, user.id, workspaceId);
 
@@ -223,6 +230,7 @@ export async function setProjectActivities(
   projectId: string,
   input: z.infer<typeof projectActivitySchema>[],
 ) {
+  await assertLegacyActivityCleanupWriteBlocked();
   const { user, workspaceId } = await actor();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   const parsed = z.array(projectActivitySchema).max(500).parse(input);

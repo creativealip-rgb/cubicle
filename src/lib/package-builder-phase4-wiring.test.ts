@@ -86,9 +86,12 @@ describe("Phase 4 Package builder wiring", () => {
     expect(packageActions).toContain("syncProjectPackageAssignment");
     expect(packageActions).toContain("assertProjectInWorkspace");
 
-    expect(projectForm).toContain("includedServices");
-    expect(projectForm).toContain("Layanan dalam paket");
-    expect(projectForm).toContain("getWorkspacePackageBuilderData");
+    // Billing-aware simplification keeps legacy snapshot writes server-side,
+    // but removes Package and Service controls from the canonical Project form.
+    expect(projectForm).not.toContain("includedServices");
+    expect(projectForm).not.toContain("Layanan dalam paket");
+    expect(projectForm).not.toContain("getWorkspacePackageBuilderData");
+    expect(projectForm).not.toContain("Pilih paket");
     expect(packageActions).toContain("buildProjectServiceSnapshotsFromPackage(items, createdAssignment.id)");
     expect(packageActions).toContain("projectPackageAssignmentId: assignment.id");
   });

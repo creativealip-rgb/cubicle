@@ -1,5 +1,64 @@
 # Changelog
 
+## v0.1.120-dev — 2026-07-30 — Navigation, compact filters, billing QA, and portal polish
+
+- Sidebar navigation: replace covering desktop flyouts with route-active inline child menus for Pekerjaan, Keuangan, Personal, and AI; keep mobile accordions and collapsed desktop behavior compact
+- Project/Task lists: move status, client, billing model, project, assignee, and priority filters into their table headers; remove redundant filter rows while preserving Task behavior tabs and List/Board controls
+- Active-filter UX: align Task behavior tabs with List/Board controls, show active filters as labeled chips, and add one-click Hapus filter without clearing behavior or view state
+- Task detail: remove the duplicate Mulai timer dari task action; timer remains available from the dedicated Waktu/topbar flow
+- Billing project QA: create isolated Hourly and Retainer projects through browser UI, persist Retainer fee/included minutes/reset configuration correctly, and log five manual time entries per project
+- Client Portal: replace legacy Per proyek/Per jam/Per paket labels with Fixed Price/Hourly/Retainer, rename Invoice ke to Invoice, localize Request to Permintaan, add a lock icon to Akses aman, make Ajukan Pertemuan primary, and improve the no-shared-project guidance
+- Verification: focused Vitest wiring suites, TypeScript, and Next.js Docker production builds passed; authenticated desktop/mobile browser QA reported zero console errors and zero horizontal overflow
+- Commits: `ebd1523`, `33ca5ac`, `e1900af`, `a5520a2`, `cb02d39`, `6b861c1`, `12812c8`
+- Dev deployment: `dev.cubiqlo.com` runs revision `12812c8a3d2a5048eaf2e7f988983174be193bee`, image `sha256:b08e3e181a6fbf13e9f3c1925550b50427907fe401fd42387658c3397f08876c`, app/DB health `ok`, and production container was unchanged
+
+## v0.1.119-dev — 2026-07-30 — Dev UI/UX audit hardening
+
+- App shell accessibility: label global desktop/mobile search inputs and enlarge menu, sidebar, language, and onboarding controls to 44 px touch targets
+- Dashboard mobile: show at most three incomplete onboarding actions by default, add expand/collapse for remaining steps, and preserve the five fixed Reminder cards
+- Reports mobile: compact financial KPIs into a two-column layout, keep Net full-width, neutralize zero-value color, and hide empty prior-period comparison noise
+- Personal Site: split the long builder into Identity, Content, Links, and Appearance stages while preserving sticky preview, save/publish actions, and URL/slug behavior
+- Settings mobile: replace the crowded horizontal tab strip with an accessible section selector; retain URL-synced state and full 44 px desktop tabs
+- Prompt Studio mobile: replace dense category/type card lists with compact accessible selectors, preserve visual cards on desktop, and tighten mobile form spacing
+- Per-page accessibility: label task status/priority/project/assignee filters, expense month/category/search/reset controls, and workspace search; keep all five Search tabs readable at 390 px
+- Workspace-owned detail fixtures: make the reusable QA seed collision-safe, populate client/project/invoice/proposal/contract/questionnaire/template details, and harden Project/Template mobile tabs
+- Authenticated interaction QA: verify client create/search/keyboard-open/edit/reload persistence, Tasks/Expenses filters, and Expenses/Invoices pagination; harden client-list invalidation and add visible fade affordances to both Invoice tab rows
+- Existing-invoice project items: add Manual / Dari Proyek Klien source selection, same-client Fixed Price eligibility, remaining-value calculation, currency conversion, duplicate prevention, and mobile-safe dialog behavior
+- Final route sweep: verify all 44 app routes at desktop and mobile, connect visible form labels on Clients, Personal Notes, Journal, Questionnaire Builder, and Invoice metadata, and distinguish hidden Radix selects from visible controls
+- Waktu mobile actions: balance Catat Waktu / Mulai Timer into a two-column 44 px mobile row, move Ekspor PDF to a full-width 44 px secondary row, and preserve compact desktop sizing
+- Empty-user E2E: verify signup → email verification → empty dashboard → client → project → task → manual time → draft invoice through real browser forms, with reload persistence and desktop/mobile checks
+- Project billing transition: normalize empty due dates to `NULL` and synchronize Fixed Price/Hourly/Retainer transitions with canonical time-tracking modes
+- Manual time history: render duration-only entries with `manual_minutes` even when `end_time` is null, and associate all Catat Waktu labels with their controls
+- TDD evidence: each batch was implemented through focused RED → GREEN wiring tests; latest tracked suite passed 126/126 test files and 547/547 tests
+- Quality: ESLint reported 0 errors and one pre-existing timer dependency warning; TypeScript/Next.js production builds passed for every batch
+- Git/PR ledger: PR #6 `93a0660` global accessibility, #7 `1114753` dashboard, #8 `6166679` reports, #9 `c4ecee9` Personal Site, #10 `fef1927` Settings, #12 `f1366e4` Prompt Studio
+- Per-page accessibility PR: #13 / `ba01d56`; Search mobile follow-up `d5985b9`
+- Detail fixtures PR: #14 / `413cfe9`
+- Interaction QA PR: #15 / `5768cde`; create-navigation follow-up `7b1ce55`; Invoice tab affordance follow-up `2e49a7c`
+- Invoice project-item PR: #16 / `ca8b9c3`
+- Final route accessibility commit: `2e25e77`
+- Waktu mobile action commit: `1eb316d`; billing transition commit: `ee69b6d`; manual-time visibility commit: `3a543a0`
+- Dev deployment: `dev.cubiqlo.com` runs revision `3a543a08ce56e4d4c7c6bc0fafb2f1d1515a1a9b`, image `sha256:c0b79bfc6e6181a977e2b753f6261f93944661773c1747815565bb94c47e9e10`, app/DB health `ok`, restart count `0`, and `dokploy-traefik` remains sole owner of public ports 80/443
+- Authenticated mobile QA: Prompt Studio selectors visible and operable at 390×844, category switch updated type options, no horizontal overflow, no browser-console errors, and desktop card controls remained hidden on mobile
+- Final authenticated sweep: 88/88 renders, 0 navigation failures, 0 error boundaries, 0 console-error pages, 0 horizontal-overflow pages, 0 broken-image pages, and 0 visible unlabeled controls; scanner-only residuals are hidden Radix selects (`aria-hidden`, `tabindex=-1`, 1×1)
+- Empty-user E2E evidence: isolated dev workspace contains exactly one client, project, task, 120-minute time entry, and draft `INV-0001`; invoice item persisted at 2 × IDR 250,000 = IDR 500,000; final desktop/mobile routes had HTTP 200, no overflow, no error boundary, and no console errors
+- Detailed evidence: `docs/e2e-empty-user-client-to-invoice-2026-07-30.md`
+- Scope: production application/container was not changed; UI/UX dev audit is complete
+
+## v0.1.118-dev — 2026-07-30 — Dev integration recovery, Waktu UX, and route-aware sidebar
+
+- Waktu Harian: restore the complete editable Timesheet instead of the read-only history component; keep row click/keyboard editing, deletion, empty-row guidance, filtering internals, and max 10 entries per page
+- Waktu compact UX: hide legacy summary/filter cards on the daily route, restore the compact weekly wrapper, and move weekly add-row controls below the grid
+- Active timer: show live elapsed time, safe no-project/no-task fallbacks, pause/resume/stop controls, and synchronize timer changes without rendering the broken `null · null` label
+- Sidebar: automatically open the Pekerjaan, Keuangan, Personal, or AI flyout for active child routes; preserve temporary hover previews, manual close/open overrides, collapsed flyouts, mobile accordion behavior, badges, and keyboard navigation
+- Task workflow: preserve separate Semua/Sekali selesai/Aktivitas berulang views with task behavior independent from billing model
+- Invoice sharing: restore persisted shared-invoice links across refresh and retain the editable daily-time integration baseline
+- Cron security: centralize four cron-route authorization checks with constant-time bearer-token comparison while preserving recurring-note rollover, 7/3/1-day reminder windows, deduplication, and system-note exclusion
+- Recovery discipline: move previously container-only Waktu hotpatch behavior into Git-backed source and regression tests so future clean image rebuilds no longer overwrite it
+- Verification: 112/112 Vitest files and 507/507 tests passed; ESLint reported 0 errors and one pre-existing timer dependency warning; Next.js production build passed
+- Dev deployment: `dev/integration` revision `bccc2d7bc1856560cd5c0389c671cb1176dfb9df`, image `sha256:338e12d312f42a5dcd88f36e6529e00aecd83396a2923367ff013b836efe1e86`, app/DB health `ok`, and `dokploy-traefik` remained sole owner of public ports 80/443
+- Scope: deployed to `dev.cubiqlo.com`; production application/container was not changed
+
 ## Unreleased — 2026-07-26 — Production full-feature QA and schema recovery
 
 - Production database: apply ledger migrations `0043_persist_portal_token_encrypted.sql`, `0044_portal_password.sql`, and `0045_meeting_request_workflow.sql` after client and invoice creation exposed schema drift

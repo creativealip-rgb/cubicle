@@ -210,7 +210,7 @@ export function StopTimerDialog({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs">{t("Activity", "Activity")}</Label>
+            <Label className="text-xs">{t("Aktivitas", "Activity")}</Label>
             <Select
               value={activityId || "__none__"}
               onValueChange={(value) => setActivityId(value === "__none__" ? "" : value)}

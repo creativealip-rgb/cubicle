@@ -54,7 +54,7 @@ describe("Phase 2 Activity catalog wiring", () => {
     ]) {
       const source = read(path);
       const project = source.indexOf('t("Proyek", "Project")');
-      const activity = source.indexOf('t("Activity", "Activity")');
+      const activity = source.indexOf('t("Aktivitas", "Activity")');
       const task = source.indexOf('t("Tugas terkait", "Related Task")');
       const description = source.indexOf('t("Deskripsi", "Description")');
       expect(project, `${path}: Project label`).toBeGreaterThan(-1);
@@ -82,7 +82,7 @@ describe("Phase 2 Activity catalog wiring", () => {
 
   it("filters and groups by Activity while labeling legacy null rows", () => {
     const timesheet = read("src/components/time/timesheet.tsx");
-    const timePage = read("src/app/(app)/app/time/page.tsx");
+    const timePage = read("src/components/time/time-route-content.tsx");
     const reports = read("src/app/(app)/app/reports/page.tsx");
 
     expect(timePage).toContain("activityName:");
@@ -95,11 +95,14 @@ describe("Phase 2 Activity catalog wiring", () => {
     expect(reports).toContain('t("Tanpa aktivitas", "No activity")');
   });
 
-  it("exposes workspace Activity catalog from app navigation", () => {
-    const page = read("src/app/(app)/app/activities/page.tsx");
+  it("exposes workspace Activity catalog under Time and preserves compatibility", () => {
+    const page = read("src/app/(app)/app/time/activities/page.tsx");
+    const compatibilityPage = read("src/app/(app)/app/activities/page.tsx");
     const navigation = read("src/lib/navigation/app-navigation.ts");
 
     expect(page).toContain("ActivityCatalog");
-    expect(navigation).toContain('direct("activities", "/app/activities"');
+    expect(compatibilityPage).toContain('router.replace("/app/time/activities")');
+    expect(navigation).toContain('direct("time", "/app/time"');
+    expect(navigation).toContain('["/app/activities"]');
   });
 });

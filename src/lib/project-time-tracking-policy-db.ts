@@ -3,13 +3,15 @@ import type { Db } from "@/db";
 import { projects } from "@/db/schema";
 import {
   assertProjectAllowsTimeEntry,
-  canMutateHistoricalTimeEntry,
 } from "@/lib/project-time-tracking-policy";
+import { assertBillingModelAllowsTime, resolveBillingModel } from "@/lib/billing-model";
 
 async function getProjectPolicy(database: Db, workspaceId: string, projectId: string) {
   const [project] = await database
     .select({
       id: projects.id,
+      billingModel: projects.billingModel,
+      billingType: projects.billingType,
       timeTrackingMode: projects.timeTrackingMode,
     })
     .from(projects)
@@ -26,6 +28,7 @@ export async function assertProjectTimeTrackingEnabled(
   projectId: string,
 ) {
   const project = await getProjectPolicy(database, workspaceId, projectId);
+  assertBillingModelAllowsTime(resolveBillingModel(project));
   assertProjectAllowsTimeEntry(project);
   return project.timeTrackingMode;
 }
@@ -46,7 +49,10 @@ export async function assertHistoricalTimeEntryMutable(
 ): Promise<void> {
   if (!projectId) return;
   const project = await getProjectPolicy(database, workspaceId, projectId);
-  if (!canMutateHistoricalTimeEntry(project)) {
-    throw new Error("Histori waktu Project nonaktif hanya dapat dibaca");
+  try {
+    assertBillingModelAllowsTime(resolveBillingModel(project));
+    assertProjectAllowsTimeEntry(project);
+  } catch {
+    throw new Error("Histori waktu Project Harga Tetap/Paket legacy hanya dapat dibaca");
   }
 }

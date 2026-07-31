@@ -225,7 +225,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
     setTimerBusy(true);
     try {
       await startTimer({ workspaceId });
-      toast.success(t("Timer dimulai", "Timer started"));
+      toast.success(t("Timer dimulai. Detail bisa diisi nanti lewat timesheet.", "Timer started. Details can be filled later from the timesheet."));
       await loadActiveTimer();
       window.dispatchEvent(new Event("cubicle:timer-changed"));
       router.refresh();
@@ -282,11 +282,6 @@ export function AppTopbar({ user }: AppTopbarProps) {
 
   async function handleStopTimer() {
     if (!activeTimer || timerBusy) return;
-    if (!activeTimer.projectId) {
-      toast.info(t("Lengkapi Project di halaman timer", "Complete Project on timer page"));
-      router.push("/app/time");
-      return;
-    }
     setTimerBusy(true);
     try {
       await stopTimer(activeTimer.id);
@@ -317,7 +312,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
       <Button
         variant="ghost"
         size="icon"
-        className="h-9 w-9 shrink-0 lg:hidden"
+        className="h-11 w-11 shrink-0 lg:hidden"
         onClick={() => setMobileOpen(true)}
         aria-label="Buka menu"
       >
@@ -331,16 +326,17 @@ export function AppTopbar({ user }: AppTopbarProps) {
           <Input
             autoFocus
             type="search"
+            aria-label={t("Cari", "Search")}
             placeholder={t("Cari…", "Search…")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-9 pl-9 pr-9 text-sm"
+            className="h-11 pl-9 pr-11 text-sm"
           />
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            className="absolute right-0.5 h-8 w-8"
+            className="absolute right-0 h-11 w-11"
             onClick={() => {
               setSearchOpen(false);
               setSearch("");
@@ -357,6 +353,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
+              aria-label={t("Cari", "Search")}
               placeholder={t("Cari…", "Search…")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -369,7 +366,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
             type="button"
             variant="ghost"
             size="icon"
-            className="h-9 w-9 shrink-0 sm:hidden"
+            className="h-11 w-11 shrink-0 sm:hidden"
             onClick={() => setSearchOpen(true)}
             aria-label={t("Cari", "Search")}
           >
@@ -399,6 +396,13 @@ export function AppTopbar({ user }: AppTopbarProps) {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/app/clients/new">{t("Klien", "Client")}</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/app/proposals/new">{t("Proposal", "Proposal")}</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/app/questionnaires/new">{t("Kuesioner", "Questionnaire")}</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/app/invoices/new">{t("Invoice", "Invoice")}</Link>

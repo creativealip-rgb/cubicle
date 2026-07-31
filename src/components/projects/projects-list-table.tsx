@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { ProjectBillingType } from "@/lib/project-list-filters";
+import { TableHeaderFilter } from "@/components/ui/table-header-filter";
 
 export type ProjectListItem = {
   id: string;
@@ -28,6 +29,7 @@ export type ProjectListItem = {
   totalTasks: number;
   doneTasks: number;
   billingType: string;
+  billingModel?: string | null;
   trackedMinutes: number;
   packageHours: number | null;
 };
@@ -94,12 +96,16 @@ function ProgressBar({ project }: { project: ProjectListItem }) {
 
 export function ProjectsListTable({
   projects,
+  clients,
+  currentClientId,
   hasExtraFilters,
   statusTab,
   billingType,
   billingTypeHrefs,
 }: {
   projects: ProjectListItem[];
+  clients: Array<{ id: string; name: string }>;
+  currentClientId?: string;
   hasExtraFilters: boolean;
   statusTab: string;
   billingType?: ProjectBillingType;
@@ -167,45 +173,21 @@ export function ProjectsListTable({
           />
         </div>
         <div className="col-span-2">
-          <SortableHeader
-            as="div"
-            label={t("Klien", "Client")}
-            dir={dirFor("client")}
-            onClick={() => toggle("client")}
-            className="text-xs"
-          />
+          <TableHeaderFilter label={t("Klien", "Client")} queryKey="clientId" value={currentClientId} basePath="/app/projects" options={[{ value: "all", label: t("Semua klien", "All clients") }, ...clients.map((client) => ({ value: client.id, label: client.name }))]} className="text-xs" />
         </div>
         <div className="col-span-2">
-          <SortableHeader
-            as="div"
-            label={t("Status", "Status")}
-            dir={dirFor("status")}
-            onClick={() => toggle("status")}
-            className="text-xs"
-          />
+          <TableHeaderFilter label={t("Status", "Status")} queryKey="status" value={statusTab} basePath="/app/projects" options={[
+            { value: "all", label: t("Semua status", "All statuses") },
+            { value: "active", label: t("Aktif", "Active") }, { value: "draft", label: t("Draf", "Draft") },
+            { value: "on_hold", label: t("Ditunda", "On Hold") }, { value: "completed", label: t("Selesai", "Completed") },
+            { value: "cancelled", label: t("Dibatalkan", "Cancelled") }, { value: "archived", label: t("Diarsipkan", "Archived") },
+          ]} className="text-xs" />
         </div>
         <div className="col-span-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-1 rounded-sm text-xs font-medium hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              {t("Progres", "Progress")}
-              <ChevronDown className="h-3 w-3" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              {([
-                ["all", t("Semua jenis", "All types")],
-                ["project", t("Per Project", "Per Project")],
-                ["hours", t("Per Jam", "Hourly")],
-                ["package", t("Service", "Service")],
-              ] as const).map(([value, label]) => (
-                <DropdownMenuItem key={value} asChild>
-                  <Link href={billingTypeHrefs[value]} className="flex items-center justify-between gap-4">
-                    {label}
-                    {(billingType ?? "all") === value && <Check className="h-4 w-4" />}
-                  </Link>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <TableHeaderFilter label={t("Progres", "Progress")} queryKey="billingType" value={billingType} basePath="/app/projects" options={[
+            { value: "all", label: t("Semua jenis", "All types") }, { value: "fixed_price", label: "Fixed Price" },
+            { value: "hourly", label: t("Per Jam", "Hourly") }, { value: "retainer", label: "Retainer" }, { value: "package", label: t("Paket", "Package") },
+          ]} className="text-xs" />
         </div>
         <div className="col-span-2">
           <SortableHeader

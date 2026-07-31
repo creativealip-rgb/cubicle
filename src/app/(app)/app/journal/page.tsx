@@ -178,19 +178,21 @@ export default async function JournalPage({
             <CardContent>
               <form action={createEntry} className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">
+                  <label htmlFor="journal-title" className="text-sm font-medium">
                     {t("Judul", "Title")}
                   </label>
                   <Input
+                    id="journal-title"
                     name="title"
                     placeholder={t("Judul hari ini", "Today's title")}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">
+                  <label htmlFor="journal-tags" className="text-sm font-medium">
                     {t("Tag", "Tags")}
                   </label>
                   <Input
+                    id="journal-tags"
                     name="tags"
                     placeholder={t(
                       "kerja, rapat, blocker",
@@ -200,10 +202,11 @@ export default async function JournalPage({
                 </div>
                 <MoodPicker name="mood" lang={lang} />
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">
+                  <label htmlFor="journal-body" className="text-sm font-medium">
                     {t("Isi", "Content")}
                   </label>
                   <Textarea
+                    id="journal-body"
                     name="body"
                     rows={10}
                     placeholder={t(
