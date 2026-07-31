@@ -29,7 +29,6 @@ import {
   EyeOff,
   AlertTriangle,
   StickyNote,
-  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { useT } from "@/lib/i18n-client";

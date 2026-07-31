@@ -18,10 +18,12 @@ describe("billing-aware Phase 9 cleanup gate", () => {
     expect(activitiesAction).toContain("Aktivitas legacy sudah masuk fase cleanup");
   });
 
-  it("registers destructive cleanup migration with backup and dry-run notes", () => {
+  it("keeps destructive cleanup retired while runtime still uses legacy schema", () => {
     const registry = read("docs/migration-registry.md");
     const audit = read("docs/audits/BILLING_AWARE_PHASE9_DESTRUCTIVE_CLEANUP_20260729.md");
     const migration = read("drizzle/0062_billing_aware_phase9_cleanup.sql");
+    const runner = read("scripts/migrate-ledger.sh");
+    const schema = read("src/db/schema.ts");
 
     expect(registry).toContain("0062");
     expect(registry).toContain("Billing-aware Phase 9 destructive cleanup");
@@ -38,5 +40,11 @@ describe("billing-aware Phase 9 cleanup gate", () => {
     expect(migration).toContain("DROP TABLE IF EXISTS packages");
     expect(migration).not.toContain("DROP TABLE IF EXISTS services");
     expect(migration).not.toContain("DROP TABLE IF EXISTS project_services");
+    expect(runner).toContain("RETIRED_MIGRATIONS");
+    expect(runner).toContain("0062_billing_aware_phase9_cleanup.sql");
+    expect(schema).toContain('export const activities = pgTable("activities"');
+    expect(schema).toContain('export const packages = pgTable("packages"');
+    expect(schema).toContain('activityId: uuid("activity_id")');
+    expect(schema).toContain('selectedPackageId: uuid("selected_package_id")');
   });
 });

@@ -12,6 +12,7 @@ MIGRATION_ROLE=${MIGRATION_ROLE:-}
 BASELINE_ID=${BASELINE_ID:-baseline-2026-07-25}
 BASELINE_CHECKSUM=${BASELINE_CHECKSUM:-1a4fb3403575a0f69429243bcc16bce1ada4be2ab62eda8b5232223a482350a2}
 START_MIGRATION=${START_MIGRATION:-0040}
+RETIRED_MIGRATIONS=${RETIRED_MIGRATIONS:-0062_billing_aware_phase9_cleanup.sql}
 
 if [[ -z "$DB_NAME" ]]; then
   echo "DB_NAME is required; pass the exact target database explicitly" >&2
@@ -71,6 +72,10 @@ while IFS= read -r file; do
   [[ -n "$file" ]] || continue
   found=1
   filename=$(basename "$file")
+  if [[ " $RETIRED_MIGRATIONS " == *" $filename "* ]]; then
+    echo "$filename ... retired (source still depends on legacy Package/Activity schema)"
+    continue
+  fi
   checksum=$(sha256sum "$file" | awk '{print $1}')
   recorded=$(psql_value "SELECT checksum FROM public.cubiqlo_migrations WHERE id='$filename'")
 

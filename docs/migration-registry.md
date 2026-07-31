@@ -32,3 +32,7 @@ Reserve a number here before creating SQL. Recheck remote refs and every worktre
 6. Apply through `scripts/migrate-ledger.sh` with explicit `DB_NAME`; production keeps its separate approval guard.
 
 Status vocabulary: `reserved`, `committed`, `integrated`, `applied-dev`, `applied-production`.
+
+> **0062 retired:** `0062_billing_aware_phase9_cleanup.sql` must not run. Current runtime and
+> `src/db/schema.ts` still depend on Package/Activity tables and columns. The migration runner
+> skips it explicitly until a future code-first removal ships with behavioral compatibility gates.

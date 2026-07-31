@@ -323,6 +323,7 @@ export function TimerWidget({
       });
       selfDispatched.current = true;
       window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
+      window.dispatchEvent(new CustomEvent("cubicle:time-entry-started", { detail: { startTime: entry.startTime } }));
       toast.success(t("Timer dimulai. Detail bisa diisi nanti lewat timesheet.", "Timer started. Details can be filled later from the timesheet."));
       router.refresh();
     } catch (err: unknown) {
@@ -422,7 +423,7 @@ export function TimerWidget({
     } finally {
       setLoading(false);
     }
-  }, [activeTimer, isEmptyTimer, loading, router, t]);
+  }, [activeTimer, loading, router, t]);
 
   const startEditingActiveTimer = useCallback(() => {
     if (!activeTimer) return;

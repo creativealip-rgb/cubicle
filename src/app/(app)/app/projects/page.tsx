@@ -92,25 +92,6 @@ export default async function ProjectsPage({
     .where(eq(clients.workspaceId, workspaceId))
     .orderBy(clients.name);
 
-  // Counts per status (respect client filter)
-  const statusCountWhere: SQL[] = [eq(projects.workspaceId, workspaceId)];
-  if (clientId) statusCountWhere.push(eq(projects.clientId, clientId));
-  if (billingType === "package") statusCountWhere.push(eq(projects.billingType, "package"));
-  else if (billingType) statusCountWhere.push(eq(projects.billingModel, billingType));
-
-  const statusCountRows = await db
-    .select({
-      status: projects.status,
-      total: sql<number>`count(*)::int`,
-    })
-    .from(projects)
-    .where(and(...statusCountWhere))
-    .groupBy(projects.status);
-
-  const countsByStatus = Object.fromEntries(
-    statusCountRows.map((row) => [row.status, Number(row.total) || 0]),
-  ) as Record<string, number>;
-  const tabCount = (tab: ProjectStatusTab) => countsByStatus[tab] ?? 0;
 
   const whereClauses: SQL[] = [eq(projects.workspaceId, workspaceId)];
   whereClauses.push(eq(projects.status, statusTab));

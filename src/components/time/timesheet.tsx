@@ -100,7 +100,7 @@ function toDateInputValue(value: Date | string | null | undefined): string {
   return `${year}-${month}-${day}`;
 }
 
-export function Timesheet({ entries, clients, projects, tasks = [], activities = [], compact = false }: TimesheetProps) {
+export function Timesheet({ entries, clients, projects, tasks = [], activities: _activities = [], compact = false }: TimesheetProps) {
   const { t, locale } = useT();
   const router = useRouter();
 
@@ -192,10 +192,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
     return tasks.filter((tk) => tk.projectId === editProjectId);
   }, [editProjectId, tasks]);
 
-  const editActivities = useMemo(() => {
-    if (!editProjectId) return [];
-    return activities.filter((a) => a.projectId === editProjectId);
-  }, [editProjectId, activities]);
 
   const filterProjects = useMemo(() => {
     if (clientFilter === "all") return projects;
@@ -499,7 +495,10 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
             ) : null}
           </div>
 
-          {pageEntries.map((entry, index) => (
+          {pageEntries.map((entry, index) => {
+            const historyPrimaryTitle = [entry.projectName, entry.taskTitle].filter(Boolean).join(" · ") || t("Tanpa proyek / task", "No project / task");
+            const historyDescription = entry.description?.trim();
+            return (
             <Card key={entry.id} className="rounded-none border-0 shadow-none">
               <CardContent
                 role={canEditEntry(entry) ? "button" : undefined}
@@ -519,25 +518,10 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
                 <div className="flex min-w-0 items-start gap-3 sm:items-center">
                   <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   <div className="min-w-0">
-                    <p className={`text-sm font-medium truncate ${!entry.projectId && !entry.taskId && !entry.description ? "italic text-muted-foreground" : ""}`}>
-                      {entry.projectId || entry.taskId || entry.description
-                        ? entry.description || entry.taskTitle || entry.projectName || t("Tanpa judul", "Untitled")
-                        : t("Tambah proyek, task, dan detail lainnya", "Add project, task, and other details")}
-                    </p>
+                    <p className="truncate text-sm font-medium">{historyPrimaryTitle}</p>
+                    {historyDescription ? <p className="mt-0.5 truncate text-xs text-muted-foreground">{historyDescription}</p> : null}
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
                       {entry.clientName && <span>{entry.clientName}</span>}
-                      {entry.projectName && (
-                        <>
-                          <span>·</span>
-                          <span>{entry.projectName}</span>
-                        </>
-                      )}
-                      {entry.taskTitle && (
-                        <>
-                          <span>·</span>
-                          <span>{entry.taskTitle}</span>
-                        </>
-                      )}
                       <span>·</span>
                       <span>{entry.userName || t("Tidak diketahui", "Unknown")}</span>
                       <span>·</span>
@@ -619,7 +603,8 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
 
           {totalPages > 1 ? (
             <div className="flex items-center justify-between gap-2 border-t px-3 py-3">
@@ -745,27 +730,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">{t("Aktivitas", "Activity")}</Label>
-              <Select
-                value={editActivityId || "__none__"}
-                onValueChange={(v) => setEditActivityId(v === "__none__" ? "" : v)}
-                disabled={!editProjectId}
-              >
-                <SelectTrigger className="h-9 text-sm">
-                  <SelectValue placeholder={t("Opsional", "Optional")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
-                  {editActivities.map((activity) => (
-                    <SelectItem key={activity.id} value={activity.id}>
-                      {activity.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">{t("Tugas terkait", "Related Task")}</Label>
+              <Label className="text-xs">{t("Tugas", "Task")}</Label>
               <Select
                 value={editTaskId}
                 onValueChange={handleEditTaskChange}
