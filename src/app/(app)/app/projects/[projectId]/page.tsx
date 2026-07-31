@@ -16,9 +16,8 @@ import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { billingTypeHint, billingTypeLabel } from "@/lib/feature-access";
 import { ProjectTasksTab } from "@/components/tasks/project-tasks-tab";
-import { ProjectActivitySettings } from "@/components/projects/project-activity-settings";
-import { ProjectServiceSettings } from "@/components/projects/project-service-settings";
 import { ProjectForm } from "@/components/forms/project-form";
+import { Timesheet } from "@/components/time/timesheet";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -26,7 +25,6 @@ import {
   Clock,
   FileText,
   CheckSquare,
-  Wallet,
 } from "lucide-react";
 
 async function getWorkspaceId(): Promise<string> {
@@ -140,13 +138,30 @@ export default async function ProjectDetailPage({
       userId: timeEntries.userId,
       userName: users.name,
       startTime: timeEntries.startTime,
+      endTime: timeEntries.endTime,
+      manualMinutes: timeEntries.manualMinutes,
+      billable: timeEntries.billable,
+      hourlyRate: timeEntries.hourlyRate,
+      status: timeEntries.status,
+      clientId: timeEntries.clientId,
+      projectId: timeEntries.projectId,
+      taskId: timeEntries.taskId,
+      tags: timeEntries.tags,
+      clientName: clients.name,
+      projectName: projects.name,
+      projectCurrency: projects.currency,
+      projectTimeTrackingMode: projects.timeTrackingMode,
+      taskTitle: tasks.title,
       createdAt: timeEntries.createdAt,
     })
     .from(timeEntries)
     .leftJoin(users, eq(users.id, timeEntries.userId))
+    .leftJoin(clients, eq(clients.id, timeEntries.clientId))
+    .leftJoin(projects, eq(projects.id, timeEntries.projectId))
+    .leftJoin(tasks, eq(tasks.id, timeEntries.taskId))
     .where(eq(timeEntries.projectId, projectId))
     .orderBy(desc(timeEntries.createdAt))
-    .limit(20);
+    .limit(200);
 
   const projectServiceRows = await db
     .select({ serviceId: projectServices.serviceId, projectPackageAssignmentId: projectServices.projectPackageAssignmentId })
@@ -180,6 +195,16 @@ export default async function ProjectDetailPage({
     : t("Kembali ke Proyek", "Back to Projects");
   const showTimeTab = project.timeTrackingMode !== "off" || projectTimeEntries.length > 0;
   const billingDisplayType = project.billingModel ?? project.billingType;
+  const projectOptions = project.clientId
+    ? [
+        {
+          id: project.id,
+          name: project.name,
+          clientId: project.clientId,
+          timeTrackingMode: project.timeTrackingMode,
+        },
+      ]
+    : [];
 
   return (
     <div className="space-y-6">
@@ -206,7 +231,6 @@ export default async function ProjectDetailPage({
           )}
           <div className="flex flex-wrap items-center gap-2 pt-1">
             <Badge variant="outline" className="gap-1 font-normal">
-              <Wallet className="h-3 w-3" />
               {billingTypeLabel(billingDisplayType, lang)}
             </Badge>
             {project.billingType === "hours" && project.rate && (
@@ -302,12 +326,6 @@ export default async function ProjectDetailPage({
           <TabsTrigger value="tasks" className="gap-1">
             <CheckSquare className="h-3 w-3" /> {t("Tugas", "Tasks")} ({projectTasks.length})
           </TabsTrigger>
-          <TabsTrigger value="services" className="gap-1">
-            <Wallet className="h-3 w-3" /> {t("Layanan", "Services")}
-          </TabsTrigger>
-          <TabsTrigger value="activities" className="gap-1">
-            <Clock className="h-3 w-3" /> {t("Activity", "Activities")}
-          </TabsTrigger>
           <TabsTrigger value="files" className="gap-1">
             <FileText className="h-3 w-3" /> {t("Berkas", "Files")} ({projectFiles.length})
           </TabsTrigger>
@@ -320,14 +338,6 @@ export default async function ProjectDetailPage({
 
         <TabsContent value="tasks" className="pt-4">
           <ProjectTasksTab projectId={projectId} tasks={projectTasks} members={projectMembers} />
-        </TabsContent>
-
-        <TabsContent value="services" className="pt-4">
-          <ProjectServiceSettings projectId={projectId} />
-        </TabsContent>
-
-        <TabsContent value="activities" className="pt-4">
-          <ProjectActivitySettings projectId={projectId} />
         </TabsContent>
 
         <TabsContent value="files" className="pt-4 space-y-3">
@@ -350,28 +360,37 @@ export default async function ProjectDetailPage({
           ))}
         </TabsContent>
 
-        {showTimeTab ? <TabsContent value="time" className="pt-4 space-y-3">
-          {projectTimeEntries.length === 0 && (
-            <p className="text-sm text-muted-foreground py-8 text-center">Belum ada catatan waktu</p>
-          )}
-          {projectTimeEntries.map((entry) => (
-            <Card key={entry.id}>
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Clock className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">{entry.description || t("Tanpa judul", "Untitled")}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {entry.userName || t("Tidak diketahui", "Unknown")} · {entry.durationMinutes} {t("mnt", "min")}
-                    </p>
-                  </div>
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(entry.createdAt).toLocaleDateString()}
-                </span>
-              </CardContent>
-            </Card>
-          ))}
+        {showTimeTab ? <TabsContent value="time" className="pt-4">
+          <Timesheet
+            compact
+            entries={projectTimeEntries.map((entry) => ({
+              id: entry.id,
+              description: entry.description,
+              tags: entry.tags,
+              durationMinutes: entry.durationMinutes,
+              manualMinutes: entry.manualMinutes,
+              billable: entry.billable ?? false,
+              hourlyRate: entry.hourlyRate,
+              startTime: entry.startTime,
+              endTime: entry.endTime,
+              status: entry.status,
+              clientId: entry.clientId,
+              projectId: entry.projectId,
+              activityId: null,
+              taskId: entry.taskId,
+              clientName: entry.clientName,
+              projectName: entry.projectName,
+              activityName: null,
+              projectCurrency: entry.projectCurrency,
+              projectTimeTrackingMode: entry.projectTimeTrackingMode,
+              taskTitle: entry.taskTitle,
+              userName: entry.userName,
+              createdAt: entry.createdAt,
+            }))}
+            clients={project.clientId && project.clientName ? [{ id: project.clientId, name: project.clientName }] : []}
+            projects={projectOptions}
+            tasks={projectTasks.map((task) => ({ id: task.id, title: task.title, projectId }))}
+          />
         </TabsContent> : null}
 
       </Tabs>
