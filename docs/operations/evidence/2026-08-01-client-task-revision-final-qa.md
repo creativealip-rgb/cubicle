@@ -30,7 +30,8 @@ Playwright `e2e/client-task-revision.spec.ts`, Chromium, retries disabled:
 - Desktop 1440×1000 Task page/navigation/template rendering: passed.
 - Mobile 390×844 Task page/navigation/template rendering: passed.
 - Client Project and Portal control reachability: passed.
-- Horizontal overflow and browser console/page errors checked by suite: passed.
+- Task desktop/mobile cases checked horizontal overflow and browser console/page errors: passed.
+- Client/Portal case checked control reachability only; overflow, browser errors, and fresh server errors remain in full Task 19 matrix.
 - Result: 3 passed in 6.4 seconds.
 
 ## Browser QA still required
@@ -39,7 +40,7 @@ This smoke does not complete the full Task 19 matrix. Still required before hand
 
 ## Runtime defect found and fixed
 
-Initial browser run exposed PostgreSQL error `42809: WITHIN GROUP is required for ordered-set aggregate mode` from pagination query `count(*)::int`. The generated SQL was parsed incorrectly in this runtime. Pagination now counts the canonical primary key with `count(${tasks.id})::int`; regression test rejects `count(*)::int`. Fresh runtime/browser QA passed afterward.
+Initial browser run exposed PostgreSQL error `42809: WITHIN GROUP is required for ordered-set aggregate mode` while loading the Task page with pagination query `count(*)::int`. Pagination now counts the canonical primary key with `count(${tasks.id})::int`; source-contract test rejects reintroducing `count(*)::int`. Fresh production-shape runtime and browser smoke passed afterward. Initial failure log remains `/tmp/cubiqlo-client-task-revision-final/playwright.log`; fresh bounded logs include build and smoke output.
 
 ## Release state
 
