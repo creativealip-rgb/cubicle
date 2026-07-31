@@ -407,7 +407,7 @@ export default async function ClientDetailPage({
 
         <TabsContent value="portal" className="space-y-4 pt-4">
           <PortalTokenSection
-            client={client}
+            client={{ ...client, portalPasswordCiphertext: client.portalPasswordCiphertext }}
             existingPortalToken={existingPortalToken}
           />
         </TabsContent>
