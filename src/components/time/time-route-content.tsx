@@ -8,7 +8,6 @@ import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { TimerWidget } from "@/components/time/timer-widget";
 import { Timesheet } from "@/components/time/timesheet";
 import { WeeklyTimeGrid } from "@/components/time/weekly-time-grid";
-import { ManualEntryForm } from "@/components/time/manual-entry-form";
 import { PdfExportButton } from "@/components/time/pdf-export-button";
 import Link from "next/link";
 
@@ -189,13 +188,17 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
   const currentApproval = approvalRows.find((item) => item.userId === user.id && item.weekStart === currentWeekStart) ?? null;
   const pendingApprovals = member.role === "owner" ? approvalRows.filter((item) => item.status === "submitted") : [];
 
+  const primaryActions = canWrite ? (
+    <>
+      <AddTimeLogDialog workspaceId={workspaceId} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId }))} />
+      <NewTimerDialog initialOpen={action === "timer"} workspaceId={workspaceId} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId }))} />
+    </>
+  ) : null;
+
   return (
-    <TimePageShell>
+    <TimePageShell actions={primaryActions}>
       {mode === "timer" && (
         <>
-          <div className="flex justify-end">
-            {canWrite && <ManualEntryForm workspaceId={workspaceId} clients={clientList} projects={writableProjectList} tasks={writableTaskList} activities={activityList} />}
-          </div>
           {canWrite && <TimerWidget workspaceId={workspaceId} userId={user.id} clients={clientList} projects={writableProjectList} tasks={writableTaskList} activities={activityList} recentCombinations={recentTimerCombinations} initialTimer={activeTimer ? { id: activeTimer.id, clientId: activeTimer.clientId, projectId: activeTimer.projectId, activityId: activeTimer.activityId, taskId: activeTimer.taskId, description: activeTimer.description, tags: activeTimer.tags, startTime: activeTimer.startTime!, pausedAt: activeTimer.pausedAt, clientName: activeTimer.clientName, projectName: activeTimer.projectName, activityName: activeTimer.activityName, taskTitle: activeTimer.taskTitle } : null} />}
           <section aria-labelledby="recent-time-heading">
             <div className="mb-3 flex items-center justify-between"><h2 id="recent-time-heading" className="text-base font-semibold">Hari ini</h2><Link href="/app/time/history" className="text-sm font-medium text-primary hover:underline">Lihat semua di Riwayat</Link></div>
@@ -210,7 +213,7 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
       )}
       {mode === "history" && (
         <>
-          <WaktuNavigation view="daily" selectedDate={selectedDate} actions={<>{canWrite && <AddTimeLogDialog workspaceId={workspaceId} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId }))} />}{canWrite && <NewTimerDialog initialOpen={action === "timer"} workspaceId={workspaceId} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId }))} />}<PdfExportButton clients={clientList} projects={projectList} /></>} />
+          <WaktuNavigation view="daily" selectedDate={selectedDate} actions={<PdfExportButton clients={clientList} projects={projectList} />} />
           <ActiveTimerCard initialTimer={activeTimer ? { id: activeTimer.id, projectName: activeTimer.projectName, taskTitle: activeTimer.taskTitle, description: activeTimer.description, startTime: activeTimer.startTime!, pausedAt: activeTimer.pausedAt } : null} />
           <Timesheet compact entries={entries.map((e) => ({ id: e.id, description: e.description, tags: e.tags, durationMinutes: e.durationMinutes, manualMinutes: e.manualMinutes, billable: e.billable ?? false, hourlyRate: e.hourlyRate, startTime: e.startTime, endTime: e.endTime, status: e.status, clientId: e.clientId, projectId: e.projectId, activityId: e.activityId, taskId: e.taskId, clientName: e.clientName, projectName: e.projectName, activityName: e.activityName, projectCurrency: e.projectCurrency, projectTimeTrackingMode: e.projectTimeTrackingMode, taskTitle: e.taskTitle, userName: e.userName, createdAt: e.createdAt }))} clients={clientList} projects={projectList} tasks={taskList} activities={activityList} />
         </>
