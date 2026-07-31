@@ -34,6 +34,7 @@ import { billingTypeLabel } from "@/lib/feature-access";
 import { buildDefaultInvoiceMessage } from "@/lib/invoice-message";
 import { decryptSecret } from "@/lib/google-calendar";
 import { resolveFixedPriceInvoiceAmount } from "@/lib/invoice-project-items";
+import { isInvoiceFinancialsMutable } from "@/lib/invoice-finance-rules";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -132,6 +133,7 @@ export default async function InvoiceDetailPage({
   }
 
   const totalPaid = pays.reduce((sum, p) => sum + Number(p.amount), 0);
+  const financialsMutable = isInvoiceFinancialsMutable(inv.status);
 
   const hasShareToken = inv.sharedTokenHash && !inv.sharedTokenRevokedAt;
   const shareExpired = inv.sharedTokenExpiresAt
@@ -269,7 +271,13 @@ export default async function InvoiceDetailPage({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>{t("Rincian Item", "Line Items")}</CardTitle>
-          <InvoiceItemManager invoiceId={invoiceId} projectOptions={eligibleProjectItems} />
+          {financialsMutable ? (
+            <InvoiceItemManager invoiceId={invoiceId} projectOptions={eligibleProjectItems} />
+          ) : (
+            <span className="text-xs font-normal text-muted-foreground">
+              {t("Invoice final. Rincian item tidak dapat diubah.", "Final invoice. Line items cannot be changed.")}
+            </span>
+          )}
         </CardHeader>
         <CardContent>
           {items.length === 0 ? (
@@ -308,7 +316,7 @@ export default async function InvoiceDetailPage({
                     {formatMoney(item.amount, inv.currency)}
                   </div>
                   <div className="w-6 text-right sm:w-10">
-                    <DeleteItemButton itemId={item.id} />
+                    {financialsMutable ? <DeleteItemButton itemId={item.id} /> : null}
                   </div>
                 </div>
               ))}
