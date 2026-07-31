@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import Link from "next/link";
-import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import {
   AlertCircle,
   BarChart3,
@@ -12,7 +12,6 @@ import {
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import {
-  activities,
   clients,
   expenseCategories,
   expenses,
@@ -388,34 +387,9 @@ export default async function ReportsPage({
     .sort((a, b) => b.total - a.total)
     .slice(0, 10);
 
-  const activityTimeRows = await db
-    .select({
-      activityId: timeEntries.activityId,
-      activityName: activities.name,
-      minutes: sql<number>`coalesce(sum(${timeEntries.durationMinutes}), 0)::int`,
-      entries: sql<number>`count(*)::int`,
-    })
-    .from(timeEntries)
-    .leftJoin(activities, eq(activities.id, timeEntries.activityId))
-    .where(
-      and(
-        eq(timeEntries.workspaceId, ws.id),
-        gte(effectiveWorkDateSql(timeEntries), period.start),
-        lte(effectiveWorkDateSql(timeEntries), period.end),
-      ),
-    )
-    .groupBy(timeEntries.activityId, activities.name)
-    .orderBy(desc(sql`sum(${timeEntries.durationMinutes})`));
-
   const detailedTimeRows = await db.select({ clientId: timeEntries.clientId, clientName: clients.name, projectId: timeEntries.projectId, projectName: projects.name, taskId: timeEntries.taskId, taskTitle: tasks.title, userId: timeEntries.userId, userName: users.name, durationMinutes: timeEntries.durationMinutes, billable: timeEntries.billable, hourlyRate: timeEntries.hourlyRate }).from(timeEntries).leftJoin(clients, eq(clients.id, timeEntries.clientId)).leftJoin(projects, eq(projects.id, timeEntries.projectId)).leftJoin(tasks, eq(tasks.id, timeEntries.taskId)).leftJoin(users, eq(users.id, timeEntries.userId)).where(and(eq(timeEntries.workspaceId, ws.id), gte(effectiveWorkDateSql(timeEntries), period.start), lte(effectiveWorkDateSql(timeEntries), period.end)));
   const timeReport = buildTimeReport(detailedTimeRows);
 
-  const activityTime = activityTimeRows.map((row) => ({
-    id: row.activityId ?? "none",
-    name: row.activityName ?? t("Tanpa aktivitas", "No activity"),
-    minutes: Number(row.minutes ?? 0),
-    entries: Number(row.entries ?? 0),
-  }));
   const missingFxList = Array.from(missingFx).sort();
   const reportHref = (tab: "finance" | "time") => withQuery("/app/reports", {
     period: query.period,
@@ -442,7 +416,6 @@ export default async function ReportsPage({
           <div><p className="text-xs text-muted-foreground">{t("Estimasi nilai", "Estimated value")}</p><p className="text-xl font-semibold tabular-nums">{formatMoney(timeReport.summary.billableValue, baseCurrency)}</p></div>
         </CardContent></Card>
         <div className="grid gap-4 md:grid-cols-2">{sections.map(([title, rows]) => <Card key={title}><CardHeader><CardTitle className="text-base">{title}</CardTitle></CardHeader><CardContent>{rows.length === 0 ? <p className="text-sm text-muted-foreground">{t("Belum ada waktu tercatat.", "No tracked time yet.")}</p> : <div className="divide-y">{rows.slice(0, 10).map(row => <div key={row.id} className="flex justify-between gap-3 py-2 text-sm"><span className="truncate">{row.name}</span><span className="tabular-nums">{(row.minutes / 60).toFixed(1)}h</span></div>)}</div>}</CardContent></Card>)}</div>
-        <Card><CardHeader><CardTitle className="text-base">{t("Per Aktivitas", "By activity")}</CardTitle></CardHeader><CardContent>{activityTime.length === 0 ? <p className="text-sm text-muted-foreground">{t("Belum ada waktu tercatat.", "No tracked time yet.")}</p> : <div className="divide-y">{activityTime.slice(0, 10).map(row => <div key={row.id} className="flex justify-between py-2 text-sm"><span>{row.name}</span><span>{(row.minutes / 60).toFixed(1)}h</span></div>)}</div>}</CardContent></Card>
         <div className="flex flex-wrap gap-2"><Button asChild variant="outline"><Link href="/app/time/history">{t("Riwayat dan ekspor PDF", "History and PDF export")}</Link></Button><Button asChild><Link href="/app/invoices?tab=uninvoiced">{t("Buat invoice dari waktu", "Invoice tracked time")}</Link></Button></div>
       </div>
     );
@@ -832,38 +805,6 @@ export default async function ReportsPage({
                     ))}
                   </TableBody>
                 </Table>
-              </div>
-            )}
-          </section>
-          <section>
-            <h2 className="mb-1 font-semibold">
-              {t("Waktu per Activity", "Time by Activity")}
-            </h2>
-            <p className="mb-3 text-xs text-slate-500">
-              {reportPeriodLabel(period, lang)}
-            </p>
-            {activityTime.length === 0 ? (
-              <p className="text-sm text-slate-500">
-                {t("Belum ada waktu tercatat.", "No tracked time yet.")}
-              </p>
-            ) : (
-              <div className="divide-y rounded-lg border">
-                {activityTime.slice(0, 10).map((activity) => (
-                  <div
-                    key={activity.id}
-                    className="flex items-center justify-between gap-3 p-3"
-                  >
-                    <div>
-                      <p className="font-medium">{activity.name}</p>
-                      <p className="text-xs text-slate-500">
-                        {activity.entries} {t("entri", "entries")}
-                      </p>
-                    </div>
-                    <span className="font-medium tabular-nums">
-                      {Math.round((activity.minutes / 60) * 10) / 10}h
-                    </span>
-                  </div>
-                ))}
               </div>
             )}
           </section>

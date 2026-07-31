@@ -53,8 +53,8 @@ Latest verified production commit: `9381be5`
 | --- | --- | --- | --- |
 | Projects list | `/app/projects` | DONE | v0.1.114: compact zebra list, Review status, due-date context, client link, simplified client-only filter, progress % inside bar. |
 | Project billing type + dates | project form/schema | DONE | Supports `by project` / `by hours`, start date, finish date. |
-| Project detail | `/app/projects/[projectId]` | DONE | Detail page with Tasks, Files, Layanan, and Time tabs. Layanan uses `ProjectServiceSettings` outside the simplified Project form to preserve per-project service snapshots. |
-| Tasks | `/app/tasks` | DONE | Compact list/board plus separate Semua, Sekali selesai, and Aktivitas berulang views; task behavior remains independent from project billing model. |
+| Project detail | `/app/projects/[projectId]` | DONE | Billing-aware `Pekerjaan`, conditional `Waktu`, File, and consolidated Billing tabs. Standalone Layanan UI retired; compatibility data remains. |
+| Tasks | `/app/tasks` | DONE | `Tugas Proyek` and `Template Tugas`; Fixed Price defaults workflow List/Board, Hourly/Retainer use reusable flat Tasks, and template imports create independent flat copies. |
 | Project timeline | Project detail + portal | DONE | Internal timeline and client-safe visibility shipped earlier. |
 | Nodes/reminder center | `/app/nodes` | REMOVED | Removed from sidebar and route because meeting clarified this should be Notes/reminders. |
 

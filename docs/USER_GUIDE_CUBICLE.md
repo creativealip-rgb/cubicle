@@ -264,10 +264,10 @@ Tab:
 
 | Tab | Fungsi |
 |---|---|
-| **Tasks** | Kanban/list task proyek |
-| **Files** | File proyek |
-| **Layanan** | Pengaturan layanan katalog per proyek; menyimpan snapshot qty, unit, harga override, dan allowance tanpa memasukkan field layanan ke form Project utama |
-| **Time** | Jam tercatat di proyek |
+| **Pekerjaan** | Editor Task billing-aware: workflow List/Board untuk Fixed Price, reusable flat list untuk Hourly/Retainer |
+| **Waktu** | Jam tercatat; tampil bila tracking aktif atau ada riwayat |
+| **File** | File proyek |
+| **Billing** | Model/rate/budget/retainer allowance dan invoice terkait |
 | **Comments** | Diskusi internal + notifikasi email |
 | **Timeline** | Timeline aktivitas/status |
 
@@ -275,7 +275,7 @@ Aksi:
 
 - Edit meta proyek  
 - Lihat progress otomatis (bergantung billing type)  
-- Kelola **Layanan Project** di tab terpisah; ini sengaja di luar form Project supaya service snapshot historis tidak ikut tersederhanakan saat edit meta proyek
+- Layanan Project tidak lagi tampil di UI aktif; snapshot Service historis tetap tersimpan untuk kompatibilitas sampai audit produksi terpisah
 - Navigasi cepat ke invoice / time  
 
 ### 4.3 Tugas — `/app/tasks`

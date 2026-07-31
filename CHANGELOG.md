@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — Billing-aware Tasks, Templates, and Time cutover
+
+- Tasks: add billing-aware workflow/reusable modes, flat Task Templates, atomic import, complete global/project editors, and mobile/keyboard ordering controls.
+- Project detail: replace standalone Tasks/Layanan tabs with `Pekerjaan` and consolidated Billing; preserve Service compatibility storage.
+- Time: require eligible active reusable Tasks for new Hourly/Retainer manual, weekly, and timer-completion writes while keeping empty timer start and historical taskless reads.
+- Reports: aggregate current Time by client, project, Task, and member; historical rows without Tasks remain under `Tanpa tugas`.
+- Activity/Service: retire active catalog routes via redirects; migration `0062` remains retired and unauthorized.
+- Production: not deployed; additive migration `0064` remains behind backup, restore, rehearsal, and explicit approval gates.
+
 ## v0.1.122-dev — 2026-07-31 — Repo safety docs and guard restoration
 
 - Project detail: restored the **Layanan** tab and `ProjectServiceSettings` so per-project service snapshots stay editable outside the simplified Project form.
