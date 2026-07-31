@@ -16,9 +16,9 @@
 
 **Current branch:** `main`
 
-**Current HEAD:** `dd52839` (`feat(tasks): redesign global task page`)
+**Current HEAD:** `9e98997` (`test: align legacy wiring with task cutover`)
 
-**Remote state:** local `main` is 14 commits ahead of `origin/main`; nothing from this feature has been pushed or deployed.
+**Remote state:** local `main` is 24 commits ahead of `origin/main`; nothing from this feature has been pushed or deployed.
 **Working tree at checkpoint:** clean.
 
 ### Completed
@@ -34,29 +34,30 @@
 | 6 — Shared task workspace | Complete | `d76a2a2`; targeted test and TypeScript passed |
 | 7 — Import dialog | Complete | `78ec29c`; targeted test and TypeScript passed |
 | 8 — Global Tasks page | Complete | `dd52839`; affected tests 10/10 and TypeScript passed |
+| 9 — Project-detail Pekerjaan/Billing | Complete | `5339382`; shared workspace, conditional Waktu, consolidated Billing, Layanan hidden |
+| 10 — Server Time task eligibility | Complete | `7fb0a62`; eligible active reusable Task guard for completion/manual/weekly/context changes |
+| 11 — Timer UI task selection | Complete | `c8d9b47`; completion dialog used by timer surfaces; failed stop keeps timer visible |
+| 12 — Manual Time/timesheet UI | Complete | `c5deca0`; active reusable Task selectors and Activity write/filter retirement |
+| 13 — Retire Activity/Service UI | Complete | `342a5f3`; legacy routes redirect, compatibility schema/actions retained, `0062` retired |
+| 14 — Reports/docs | Complete | `9a225f5`; Task-first reports, historical `Tanpa tugas`, reconciliation docs |
+| 15 — Real PostgreSQL integration matrix | Complete | `83326bb`; disposable PostgreSQL 16 matrix passed tenant/atomicity/reorder/history/failed-stop probes |
+| 16 — Full automated verification | Complete; browser QA in progress | `9e98997`; ESLint passed, Vitest 162 files / 689 tests passed, production build passed |
 
 ### Remaining
 
-Resume from **Task 9**. Do not repeat Tasks 0–8 unless verification exposes a regression.
+Resume from **Task 16 browser QA**. Do not repeat Tasks 0–15 unless verification exposes a regression.
 
 | Task | Status | Next action |
 |---|---|---|
-| 9 — Project-detail Pekerjaan/Billing | Not started | Add `ProjectTaskWorkspace`, conditional `Waktu`, consolidated Billing tab, hide standalone Layanan |
-| 10 — Server Time task eligibility | Not started | Add completion/manual guards while preserving historical reads and empty timer start |
-| 11 — Timer UI task selection | Not started | Replace active Activity selection with Task for timer completion |
-| 12 — Manual Time/timesheet UI | Not started | Require eligible Task in manual and weekly flows |
-| 13 — Retire Activity/Service UI | Not started | Redirect legacy routes; keep compatibility schema/actions |
-| 14 — Reports/docs | Not started | Aggregate by Task; document reconciliation boundaries |
-| 15 — Real PostgreSQL integration matrix | Not started | Tenant, atomicity, reorder, delete, historical Time probes |
-| 16 — Full verification/browser QA | Not started | Full lint/test/build plus desktop and 390×844 authenticated QA |
+| 16 — Full verification/browser QA | In progress | Automated gates green; finish authenticated desktop and 390×844 QA, evidence, cleanup |
 | 17 — Production deployment gate | Blocked on explicit approval | Backup/restore proof, `0064` only, immutable image, deploy and live QA |
 
 ### Next-session startup
 
 1. Open `/root/projects/cubicle` and verify `git status --short --branch` plus `git log -15 --oneline`.
-2. Read this checkpoint, Task 9, canonical spec, and current project-detail page.
-3. Continue direct TDD from Task 9.
-4. Before any completion claim, rerun full Vitest, TypeScript, lint, and production build because Tasks 5–8 were only verified with affected suites after their latest edits.
+2. Read this checkpoint, Task 16, canonical spec, and browser QA evidence.
+3. Finish authenticated desktop/mobile QA and clean temporary QA container/account artifacts.
+4. Preserve fresh automated evidence: ESLint exit 0, 162/162 Vitest files and 689/689 tests, production build exit 0.
 5. Do not push or deploy until Task 16 is green and Alip explicitly approves Task 17.
 
 ---

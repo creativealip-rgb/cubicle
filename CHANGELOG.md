@@ -8,6 +8,8 @@
 - Reports: aggregate current Time by client, project, Task, and member; historical rows without Tasks remain under `Tanpa tugas`.
 - Activity/Service: retire active catalog routes via redirects; migration `0062` remains retired and unauthorized.
 - Production: not deployed; additive migration `0064` remains behind backup, restore, rehearsal, and explicit approval gates.
+- Verification checkpoint: disposable PostgreSQL 16 integration matrix passed; full ESLint passed; Vitest passed 162/162 files and 689/689 tests; production build passed. Authenticated desktop/mobile browser QA remains in progress.
+- Local commits through `9e98997`; branch remains unpushed and production remains unchanged.
 
 ## v0.1.122-dev — 2026-07-31 — Repo safety docs and guard restoration
 

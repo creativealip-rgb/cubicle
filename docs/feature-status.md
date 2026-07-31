@@ -53,8 +53,9 @@ Latest verified production commit: `9381be5`
 | --- | --- | --- | --- |
 | Projects list | `/app/projects` | DONE | v0.1.114: compact zebra list, Review status, due-date context, client link, simplified client-only filter, progress % inside bar. |
 | Project billing type + dates | project form/schema | DONE | Supports `by project` / `by hours`, start date, finish date. |
-| Project detail | `/app/projects/[projectId]` | DONE | Billing-aware `Pekerjaan`, conditional `Waktu`, File, and consolidated Billing tabs. Standalone Layanan UI retired; compatibility data remains. |
+| Project detail | `/app/projects/[projectId]` | DONE | Billing-aware `Pekerjaan`, conditional `Waktu`, File, and consolidated Billing tabs. Standalone Layanan UI retired; compatibility data remains. Full automated gate: 689/689 tests. |
 | Tasks | `/app/tasks` | DONE | `Tugas Proyek` and `Template Tugas`; Fixed Price defaults workflow List/Board, Hourly/Retainer use reusable flat Tasks, and template imports create independent flat copies. |
+| Billing-aware Time cutover | `/app/time` | QA | Server/Timer/manual/weekly Task eligibility shipped locally; PostgreSQL 16 integration matrix and full automated suite green. Authenticated desktop/mobile browser QA still in progress; not pushed/deployed. |
 | Project timeline | Project detail + portal | DONE | Internal timeline and client-safe visibility shipped earlier. |
 | Nodes/reminder center | `/app/nodes` | REMOVED | Removed from sidebar and route because meeting clarified this should be Notes/reminders. |
 
