@@ -125,17 +125,6 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", defaultValues
           </Select>
         </div>
       )}
-      <div className="space-y-2">
-        <Label>{t("Jenis tugas", "Task type")}</Label>
-        <Select value={form.behavior} onValueChange={(value: "one_time" | "recurring") => setForm((previous) => ({ ...previous, behavior: value }))}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="one_time">{t("Sekali selesai", "One-time")}</SelectItem>
-            <SelectItem value="recurring">{t("Aktivitas berulang", "Recurring activity")}</SelectItem>
-          </SelectContent>
-        </Select>
-        <p className="text-xs text-muted-foreground">{t("Model billing memberi pilihan awal. Ubah bila pola pekerjaannya berbeda.", "Billing model provides the default. Change it when the work pattern differs.")}</p>
-      </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>{t("Status", "Status")}</Label>

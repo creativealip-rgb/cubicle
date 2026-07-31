@@ -33,6 +33,7 @@ export type TasksListItem = {
   assigneeName: string | null;
   sourceNoteId?: string | null;
   behavior: "one_time" | "recurring" | null;
+  mode?: "workflow" | "reusable";
 };
 
 type Member = { id: string; name: string | null; email: string | null };
@@ -195,7 +196,7 @@ export function TasksListTable({
                     </p>
                   ) : null}
                   <Badge variant="outline" className="mt-1 text-[10px] font-normal">
-                    {task.behavior === "recurring" ? t("Aktivitas berulang", "Recurring activity") : t("Sekali selesai", "One-time")}
+                    {task.mode === "reusable" ? "Reusable" : "Workflow"}
                   </Badge>
                 </div>
                 <div className="text-xs text-muted-foreground md:w-44">
