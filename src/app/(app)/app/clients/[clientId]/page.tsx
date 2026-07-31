@@ -8,7 +8,6 @@ import {
   tasks,
   invoices,
   appointments,
-  portalRequests,
   packages,
   timeEntries,
 } from "@/db/schema";
@@ -30,7 +29,6 @@ import {
   Wallet,
 } from "lucide-react";
 import { PortalTokenSection } from "./portal-section";
-import { PortalRequestAdmin } from "@/components/portal/portal-request-admin";
 import { ClientEditDialog } from "@/components/clients/client-edit-dialog";
 import { ClientGoogleCalendarPanel } from "@/components/clients/client-google-calendar-panel";
 import { billingTypeLabel } from "@/lib/feature-access";
@@ -218,20 +216,6 @@ export default async function ClientDetailPage({
     .where(eq(appointments.clientId, clientId))
     .orderBy(desc(appointments.startTime));
 
-  const clientPortalRequests = await db
-    .select({
-      id: portalRequests.id,
-      title: portalRequests.title,
-      description: portalRequests.description,
-      type: portalRequests.type,
-      status: portalRequests.status,
-      dueDate: portalRequests.dueDate,
-      projectId: portalRequests.projectId,
-    })
-    .from(portalRequests)
-    .where(eq(portalRequests.clientId, clientId))
-    .orderBy(desc(portalRequests.createdAt));
-
   // Notes — use internal notes field + comments on visible projects
   // (no direct client comments in schema)
 
@@ -392,11 +376,6 @@ export default async function ClientDetailPage({
           <PortalTokenSection
             client={client}
             existingPortalToken={existingPortalToken}
-          />
-          <PortalRequestAdmin
-            clientId={client.id}
-            initialRequests={clientPortalRequests}
-            projects={clientProjects.map((project) => ({ id: project.id, name: project.name }))}
           />
         </TabsContent>
 
