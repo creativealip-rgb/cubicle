@@ -423,7 +423,7 @@ export const taskTemplates = pgTable("task_templates", {
   description: text("description"),
   target: text("target", { enum: ["fixed_price", "hourly_retainer", "all"] }).notNull().default("all"),
   status: text("status", { enum: ["active", "archived"] }).notNull().default("active"),
-  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdBy: text("created_by").notNull().references(() => users.id, { onDelete: "restrict" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [

@@ -1,6 +1,17 @@
 ALTER TABLE "projects" ADD COLUMN IF NOT EXISTS "task_mode_policy" text NOT NULL DEFAULT 'billing_default';
 ALTER TABLE "projects" ADD CONSTRAINT "projects_task_mode_policy_check" CHECK ("task_mode_policy" IN ('billing_default', 'workflow', 'reusable', 'mixed'));
 
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'projects_id_workspace_unique'
+      AND conrelid = 'projects'::regclass
+  ) THEN
+    ALTER TABLE "projects"
+      ADD CONSTRAINT "projects_id_workspace_unique" UNIQUE ("id", "workspace_id");
+  END IF;
+END $$;
+
 ALTER TABLE "tasks" ADD COLUMN IF NOT EXISTS "mode" text;
 ALTER TABLE "tasks" ADD COLUMN IF NOT EXISTS "lifecycle" text NOT NULL DEFAULT 'active';
 ALTER TABLE "tasks" ADD COLUMN IF NOT EXISTS "template_item_source_id" uuid;
@@ -15,7 +26,7 @@ CREATE TABLE IF NOT EXISTS "task_templates" (
   "description" text,
   "target" text NOT NULL DEFAULT 'all',
   "status" text NOT NULL DEFAULT 'active',
-  "created_by" text REFERENCES "users"("id") ON DELETE SET NULL,
+  "created_by" text NOT NULL REFERENCES "users"("id") ON DELETE RESTRICT,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT "task_templates_id_workspace_unique" UNIQUE ("id", "workspace_id"),
@@ -70,6 +81,9 @@ DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM "tasks" WHERE "mode" IS NULL) THEN
     RAISE EXCEPTION 'tasks.mode backfill left null rows';
   END IF;
+  RAISE NOTICE '0064 task mode reconciliation: workflow=%, reusable=%',
+    (SELECT count(*) FROM "tasks" WHERE "mode" = 'workflow'),
+    (SELECT count(*) FROM "tasks" WHERE "mode" = 'reusable');
 END $$;
 
 ALTER TABLE "tasks" ALTER COLUMN "mode" SET DEFAULT 'workflow';
