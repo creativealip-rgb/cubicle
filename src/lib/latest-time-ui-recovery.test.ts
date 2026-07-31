@@ -18,7 +18,8 @@ describe("latest Waktu UI recovery", () => {
     expect(active).toContain("formatElapsed");
     expect(active).toContain("pauseTimer");
     expect(active).toContain("resumeTimer");
-    expect(active).toContain("stopTimer");
+    expect(active).toContain("StopTimerDialog");
+    expect(active).toContain("setStopDialogOpen(true)");
     expect(active).toContain("Tanpa proyek");
     expect(active).not.toContain("{timer.projectName} · {timer.taskTitle}");
   });

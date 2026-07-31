@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { startTimer, pauseTimer, resumeTimer, discardTimer, stopTimer, updateActiveTimerMetadata } from "@/lib/actions/time";
+import { startTimer, pauseTimer, resumeTimer, discardTimer, updateActiveTimerMetadata } from "@/lib/actions/time";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -407,24 +407,6 @@ export function TimerWidget({
     }
   }, [activeTimer, router, t]);
 
-  const handleStop = useCallback(async () => {
-    if (!activeTimer || loading) return;
-    setLoading(true);
-    try {
-      await stopTimer(activeTimer.id);
-      setActiveTimer(null);
-      setElapsed("00:00:00");
-      selfDispatched.current = true;
-      window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
-      toast.success(t("Timer dihentikan", "Timer stopped"));
-      router.refresh();
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : t("Gagal hentikan timer", "Failed to stop timer"));
-    } finally {
-      setLoading(false);
-    }
-  }, [activeTimer, loading, router, t]);
-
   const startEditingActiveTimer = useCallback(() => {
     if (!activeTimer) return;
     setSelectedClientId(activeTimer.clientId || "");
@@ -729,7 +711,7 @@ export function TimerWidget({
                   variant="destructive"
                   size="lg"
                   className="flex-1 gap-2 min-w-[140px]"
-                  onClick={() => void handleStop()}
+                  onClick={() => setStopDialogOpen(true)}
                   disabled={loading}
                 >
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
@@ -927,7 +909,6 @@ export function TimerWidget({
         clients={clients}
         projects={allProjects}
         tasks={allTasks}
-        activities={allActivities}
         onStopped={() => {
           setActiveTimer(null);
           setElapsed("00:00:00");
