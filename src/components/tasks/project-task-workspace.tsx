@@ -6,6 +6,10 @@ import { WorkflowTaskWorkspace } from "@/components/tasks/workflow-task-workspac
 import { ReusableTaskWorkspace, type ReusableTaskRow } from "@/components/tasks/reusable-task-workspace";
 import type { TasksListItem } from "@/components/tasks/tasks-list-table";
 import { archiveTask, restoreTask } from "@/lib/actions/tasks";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Plus } from "lucide-react";
+import { useT } from "@/lib/i18n-client";
 
 export const PAGE_SIZE = 10;
 type Member = { id: string; name: string | null; email: string | null };
@@ -20,11 +24,27 @@ export function ProjectTaskWorkspace({ projectId, mode, workflowTasks, reusableT
   currentUserId: string;
 }) {
   const [page, setPage] = useState(1);
+  const [createOpen, setCreateOpen] = useState(false);
+  const { t } = useT();
   const visibleWorkflow = useMemo(() => projectId ? workflowTasks : workflowTasks.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [workflowTasks, projectId, page]);
   const visibleReusable = useMemo(() => projectId ? reusableTasks : reusableTasks.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [reusableTasks, projectId, page]);
   return (
     <section className="space-y-4">
-      <TaskForm mode="create" projectId={projectId} members={members} projects={projects} taskMode={mode} />
+      <div className="flex justify-end">
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogTrigger asChild>
+            <Button className="w-full gap-2 sm:w-auto">
+              <Plus className="h-4 w-4" /> {t("Tambah Tugas", "Add Task")}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-h-[90dvh] w-[calc(100%-1rem)] overflow-y-auto sm:max-w-[520px]">
+            <DialogHeader>
+              <DialogTitle>{t("Tambah Tugas", "Add Task")}</DialogTitle>
+            </DialogHeader>
+            <TaskForm mode="create" projectId={projectId} members={members} projects={projects} taskMode={mode} onSuccess={() => setCreateOpen(false)} />
+          </DialogContent>
+        </Dialog>
+      </div>
       {mode === "workflow" ? (
         <WorkflowTaskWorkspace tasks={visibleWorkflow} members={members} projects={projects} currentUserId={currentUserId} />
       ) : (

@@ -344,7 +344,7 @@ export default async function ProjectDetailPage({
       <Tabs defaultValue="work">
         <TabsList className="max-w-full justify-start overflow-x-auto">
           <TabsTrigger value="work" className="gap-1">
-            <CheckSquare className="h-3 w-3" /> {t("Pekerjaan", "Work")} ({projectTasks.length})
+            <CheckSquare className="h-3 w-3" /> {t("Tugas", "Tasks")} ({projectTasks.length})
           </TabsTrigger>
           <TabsTrigger value="files" className="gap-1">
             <FileText className="h-3 w-3" /> {t("Berkas", "Files")} ({projectFiles.length})

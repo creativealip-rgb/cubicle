@@ -5,10 +5,10 @@ const read = (path: string) => readFileSync(path, "utf8");
 const page = read("src/app/(app)/app/projects/[projectId]/page.tsx");
 
 describe("project detail billing-aware work tabs", () => {
-  it("uses shared project task workspace under canonical Pekerjaan tab", () => {
+  it("uses shared project task workspace under canonical Tugas tab", () => {
     expect(page).toContain('ProjectTaskWorkspace');
     expect(page).toContain('<TabsTrigger value="work"');
-    expect(page).toContain('t("Pekerjaan", "Work")');
+    expect(page).toContain('t("Tugas", "Tasks")');
     expect(page).toContain('<TabsContent value="work"');
   });
 

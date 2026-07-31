@@ -125,7 +125,9 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", defaultValues
           </Select>
         </div>
       )}
-      <div className="grid grid-cols-2 gap-4">
+      {taskMode === "workflow" ? (
+      <>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label>{t("Status", "Status")}</Label>
           <Select value={form.status} onValueChange={(v) => setForm((p) => ({ ...p, status: v }))}>
@@ -182,6 +184,8 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", defaultValues
         />
         <Label htmlFor="clientVisible">{t("Terlihat oleh klien", "Visible to client")}</Label>
       </div>
+      </>
+      ) : null}
       <Button type="submit" disabled={loading} className="w-full">
         {loading ? t("Menyimpan...", "Saving...") : mode === "create" ? t("Buat Tugas", "Create Task") : t("Simpan Perubahan", "Save Changes")}
       </Button>
