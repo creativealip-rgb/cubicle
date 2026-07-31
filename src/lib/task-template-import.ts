@@ -46,8 +46,11 @@ export function previewTemplateImport(input: {
         .map((item) => ({ template, templatePosition, item })),
     )
     .map(({ template, templatePosition, item }) => {
-      const duplicate = existingTitles.has(normalizeTaskTitle(item.title));
-      const duplicateAction = item.duplicateAction ?? (duplicate ? "skip" : "keep");
+      const normalizedTitle = normalizeTaskTitle(item.title);
+      const duplicate = existingTitles.has(normalizedTitle);
+      const duplicateAction = duplicate ? (item.duplicateAction ?? "skip") : "keep";
+      const included = !duplicate || duplicateAction === "keep";
+      if (included) existingTitles.add(normalizedTitle);
       return {
         templateId: template.id,
         itemId: item.id,
@@ -56,7 +59,7 @@ export function previewTemplateImport(input: {
         itemPosition: item.position,
         duplicate,
         duplicateAction,
-        included: !duplicate || duplicateAction === "keep",
+        included,
         defaults: projectTaskDefaults(input.mode),
       };
     });

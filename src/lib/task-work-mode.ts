@@ -42,7 +42,7 @@ export function resolveProjectTaskMode(
   policy: ProjectTaskModePolicy,
   model: BillingModel,
   explicitMode?: TaskWorkMode,
-): TaskWorkMode | undefined {
+): TaskWorkMode {
   assertSupportedBillingModel(model);
   if (explicitMode !== undefined) assertTaskWorkMode(explicitMode);
 

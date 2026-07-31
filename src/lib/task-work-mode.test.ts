@@ -4,7 +4,6 @@ import {
   projectTaskDefaults,
   resolveProjectTaskMode,
   resolveTaskWorkMode,
-  type ProjectTaskModePolicy,
   type TaskWorkMode,
 } from "@/lib/task-work-mode";
 
@@ -27,8 +26,6 @@ describe("task work mode policy", () => {
   });
 
   it("supports every canonical project policy across billing transitions", () => {
-    const policies: ProjectTaskModePolicy[] = ["billing_default", "workflow", "reusable", "mixed"];
-    expect(policies).toEqual(["billing_default", "workflow", "reusable", "mixed"]);
     expect(resolveProjectTaskMode("billing_default", "fixed_price")).toBe("workflow");
     expect(resolveProjectTaskMode("billing_default", "hourly")).toBe("reusable");
     expect(resolveProjectTaskMode("billing_default", "retainer")).toBe("reusable");
