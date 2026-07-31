@@ -15,8 +15,8 @@ describe("legacy Activity and Service UI retirement", () => {
   });
 
   it("redirects bookmarked catalog routes to canonical destinations", () => {
-    expect(activityRoute).toContain('redirect("/app/time")');
-    expect(serviceRoute).toContain('redirect("/app/tasks")');
+    expect(activityRoute).toContain('router.replace("/app/time")');
+    expect(serviceRoute).toContain('router.replace("/app/tasks")');
     expect(activityRoute).not.toContain("ActivityCatalog");
     expect(serviceRoute).not.toContain("ServiceCatalog");
   });

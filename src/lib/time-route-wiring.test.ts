@@ -30,7 +30,7 @@ describe("Billing-aware Waktu route wiring", () => {
   });
 
   it("retires Activity catalog routes through canonical Time redirects", () => {
-    expect(read("src/app/(app)/app/time/activities/page.tsx")).toContain('redirect("/app/time")');
+    expect(read("src/app/(app)/app/time/activities/page.tsx")).toContain('router.replace("/app/time")');
     expect(read("src/app/(app)/app/time/activities/page.tsx")).not.toContain("ActivityCatalog");
     expect(read("src/app/(app)/app/activities/page.tsx")).toContain('router.replace("/app/time/activities")');
   });

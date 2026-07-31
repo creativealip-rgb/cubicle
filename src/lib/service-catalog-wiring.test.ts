@@ -78,7 +78,7 @@ describe("Phase 3 Service catalog wiring", () => {
     const packageCatalog = read("src/components/packages/package-catalog.tsx");
     const navigation = read("src/lib/navigation/app-navigation.ts");
 
-    expect(servicePage).toContain('redirect("/app/tasks")');
+    expect(servicePage).toContain('router.replace("/app/tasks")');
     expect(servicePage).not.toContain("ServiceCatalog");
     expect(serviceCatalog).toContain("createService");
     expect(serviceCatalog).toContain("archiveService");

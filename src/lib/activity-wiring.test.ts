@@ -90,7 +90,7 @@ describe("Phase 2 Activity catalog wiring", () => {
     const compatibilityPage = read("src/app/(app)/app/activities/page.tsx");
     const navigation = read("src/lib/navigation/app-navigation.ts");
 
-    expect(page).toContain('redirect("/app/time")');
+    expect(page).toContain('router.replace("/app/time")');
     expect(page).not.toContain("ActivityCatalog");
     expect(compatibilityPage).toContain('router.replace("/app/time/activities")');
     expect(navigation).toContain('direct("time", "/app/time"');
