@@ -23,6 +23,7 @@ Reserve a number here before creating SQL. Recheck remote refs and every worktre
 - `0062` — Billing-aware Phase 9 destructive cleanup — retired; unauthorized to apply; production untouched.
 - `0063` — Encrypted invoice share token — reconciled existing migration on `main` — committed.
 - `0064` — Billing-aware project tasks and templates — Coder — `main` — committed.
+- `0065` — Encrypted Portal password display — Coder — `feat/client-project-invoice-task-revision` — reserved.
 
 ## Reservation protocol
 
