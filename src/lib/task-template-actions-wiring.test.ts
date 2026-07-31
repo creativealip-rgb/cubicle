@@ -2,8 +2,10 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   nextDuplicateTemplateName,
+  parseGetTaskTemplatesOptions,
   parseTaskTemplateInput,
   parseTaskTemplateItemInput,
+  parseTaskTemplateUpdateInput,
   planTaskTemplateItemReorder,
 } from "@/lib/actions/task-templates";
 
@@ -39,14 +41,36 @@ describe("task template action domain rules", () => {
     await expect(nextDuplicateTemplateName("Nama", [" nama (salinan) ", "NAMA (SALINAN 2)"])).resolves.toBe("Nama (Salinan 3)");
   });
 
-  it("requires a complete unique reorder and plans collision-safe two-phase positions", async () => {
-    await expect(planTaskTemplateItemReorder(["a", "b", "c"], ["c", "a", "b"])).resolves.toEqual({
-      temporary: [{ id: "c", position: 3 }, { id: "a", position: 4 }, { id: "b", position: 5 }],
+  it("keeps absent update status absent instead of applying create default", async () => {
+    await expect(parseTaskTemplateUpdateInput({ name: "  Baru  " })).resolves.toEqual({ name: "Baru" });
+    await expect(parseTaskTemplateUpdateInput({})).rejects.toThrow("No changes supplied");
+  });
+
+  it("strictly validates task template query options and applies defaults", async () => {
+    const id = "9f3b82a1-3a6d-4ec3-b3ab-92f72db5e88f";
+    await expect(parseGetTaskTemplatesOptions(undefined)).resolves.toEqual({ includeArchived: false });
+    await expect(parseGetTaskTemplatesOptions({ includeArchived: true, templateId: id })).resolves.toEqual({ includeArchived: true, templateId: id });
+    await expect(parseGetTaskTemplatesOptions({ includeArchived: "yes" })).rejects.toThrow();
+    await expect(parseGetTaskTemplatesOptions({ templateId: "not-a-uuid" })).rejects.toThrow();
+    await expect(parseGetTaskTemplatesOptions({ unknown: true })).rejects.toThrow();
+  });
+
+  it("requires complete unique reorder and puts temporary positions above sparse current max", async () => {
+    await expect(planTaskTemplateItemReorder([
+      { id: "a", position: 0 },
+      { id: "b", position: 2 },
+      { id: "c", position: 3 },
+    ], ["c", "a", "b"])).resolves.toEqual({
+      temporary: [{ id: "c", position: 4 }, { id: "a", position: 5 }, { id: "b", position: 6 }],
       final: [{ id: "c", position: 0 }, { id: "a", position: 1 }, { id: "b", position: 2 }],
     });
-    await expect(planTaskTemplateItemReorder(["a", "b"], ["a"])).rejects.toThrow("complete");
-    await expect(planTaskTemplateItemReorder(["a", "b"], ["a", "a"])).rejects.toThrow("unique");
-    await expect(planTaskTemplateItemReorder(["a", "b"], ["a", "x"])).rejects.toThrow("same template");
+    await expect(planTaskTemplateItemReorder([{ id: "a", position: 7 }, { id: "b", position: 20 }], ["b", "a"])).resolves.toEqual({
+      temporary: [{ id: "b", position: 21 }, { id: "a", position: 22 }],
+      final: [{ id: "b", position: 0 }, { id: "a", position: 1 }],
+    });
+    await expect(planTaskTemplateItemReorder([{ id: "a", position: 0 }, { id: "b", position: 1 }], ["a"])).rejects.toThrow("complete");
+    await expect(planTaskTemplateItemReorder([{ id: "a", position: 0 }, { id: "b", position: 1 }], ["a", "a"])).rejects.toThrow("unique");
+    await expect(planTaskTemplateItemReorder([{ id: "a", position: 0 }, { id: "b", position: 1 }], ["a", "x"])).rejects.toThrow("same template");
   });
 });
 
@@ -90,9 +114,17 @@ describe("tenant-safe task template action wiring", () => {
     expect(source).toMatch(/status:\s*"archived"/);
   });
 
+  it("serializes duplicate-name allocation on stable workspace namespace before reading names", () => {
+    expect(source).toContain("pg_advisory_xact_lock");
+    expect(source).toContain("hashtextextended");
+    expect(source).toContain("task-template-duplicate-name:");
+    expect(source.indexOf("pg_advisory_xact_lock")).toBeLessThan(source.indexOf("const existing = await tx.select"));
+  });
+
   it("duplicates and reorders transactionally without writing generated normalized_name", () => {
     expect(source.match(/db\.transaction/g)?.length).toBeGreaterThanOrEqual(3);
     expect(source).toContain("planTaskTemplateItemReorder");
+    expect(source).toContain("position: taskTemplateItems.position");
     expect(source).not.toMatch(/normalizedName\s*:/);
   });
 });

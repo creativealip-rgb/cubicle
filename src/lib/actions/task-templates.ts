@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { taskTemplateItems, taskTemplates, workspaceMembers } from "@/db/schema";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
@@ -16,7 +16,12 @@ const templateSchema = z.object({
   status: z.enum(["active", "archived"]).default("active"),
 });
 
-const templateUpdateSchema = templateSchema.partial().refine((value) => Object.keys(value).length > 0, "No changes supplied");
+const templateUpdateSchema = z.object({
+  name: z.string().trim().min(1).max(200).optional(),
+  description: z.string().trim().max(8000).nullable().optional(),
+  target: z.enum(["fixed_price", "hourly_retainer", "all"]).optional(),
+  status: z.enum(["active", "archived"]).optional(),
+}).strict().refine((value) => Object.keys(value).length > 0, "No changes supplied");
 const itemSchema = z.object({
   title: z.string().trim().min(1).max(500),
   description: z.string().trim().max(8000).nullable().optional(),
@@ -25,9 +30,21 @@ const itemSchema = z.object({
 });
 const itemUpdateSchema = itemSchema.partial().refine((value) => Object.keys(value).length > 0, "No changes supplied");
 const idSchema = z.string().uuid();
+const getTaskTemplatesOptionsSchema = z.object({
+  includeArchived: z.boolean().default(false),
+  templateId: idSchema.optional(),
+}).strict().default({ includeArchived: false });
 
 export async function parseTaskTemplateInput(input: unknown) {
   return templateSchema.parse(input);
+}
+
+export async function parseTaskTemplateUpdateInput(input: unknown) {
+  return templateUpdateSchema.parse(input);
+}
+
+export async function parseGetTaskTemplatesOptions(input: unknown) {
+  return getTaskTemplatesOptionsSchema.parse(input);
 }
 
 export async function parseTaskTemplateItemInput(input: unknown) {
@@ -49,12 +66,12 @@ export async function nextDuplicateTemplateName(sourceName: string, existingName
   }
 }
 
-export async function planTaskTemplateItemReorder(currentIds: readonly string[], orderedIds: readonly string[]) {
-  if (orderedIds.length !== currentIds.length) throw new Error("Reorder must contain complete item IDs");
+export async function planTaskTemplateItemReorder(currentRows: readonly { id: string; position: number }[], orderedIds: readonly string[]) {
+  if (orderedIds.length !== currentRows.length) throw new Error("Reorder must contain complete item IDs");
   if (new Set(orderedIds).size !== orderedIds.length) throw new Error("Reorder item IDs must be unique");
-  const current = new Set(currentIds);
+  const current = new Set(currentRows.map((row) => row.id));
   if (orderedIds.some((id) => !current.has(id))) throw new Error("Reorder items must belong to same template");
-  const offset = currentIds.length;
+  const offset = currentRows.reduce((max, row) => Math.max(max, row.position), -1) + 1;
   return {
     temporary: orderedIds.map((id, position) => ({ id, position: offset + position })),
     final: orderedIds.map((id, position) => ({ id, position })),
@@ -96,10 +113,11 @@ async function assertAssigneeMembership(database: typeof db | Transaction, works
   if (!member) throw new Error("Assignee bukan anggota workspace");
 }
 
-export async function getTaskTemplates(options: { includeArchived?: boolean; templateId?: string } = {}) {
+export async function getTaskTemplates(optionsInput: unknown = undefined) {
   const { workspaceId } = await actionContext(false);
+  const options = await parseGetTaskTemplatesOptions(optionsInput);
   if (options.templateId) {
-    const templateId = idSchema.parse(options.templateId);
+    const templateId = options.templateId;
     const template = await findTemplate(db, workspaceId, templateId);
     const items = await db.select().from(taskTemplateItems).where(and(
       eq(taskTemplateItems.workspaceId, workspaceId),
@@ -166,6 +184,7 @@ export async function duplicateTaskTemplate(templateIdInput: string) {
   const templateId = idSchema.parse(templateIdInput);
   return db.transaction(async (tx) => {
     const source = await findTemplate(tx, workspaceId, templateId);
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`task-template-duplicate-name:${workspaceId}`}, 0))`);
     const existing = await tx.select({ name: taskTemplates.name }).from(taskTemplates).where(and(
       eq(taskTemplates.workspaceId, workspaceId), eq(taskTemplates.status, "active"),
     ));
@@ -235,10 +254,10 @@ export async function reorderTaskTemplateItems(templateIdInput: string, orderedI
   const orderedIds = z.array(idSchema).parse(orderedIdInputs);
   return db.transaction(async (tx) => {
     await assertActiveTemplate(tx, workspaceId, templateId);
-    const current = await tx.select({ id: taskTemplateItems.id }).from(taskTemplateItems).where(and(
+    const current = await tx.select({ id: taskTemplateItems.id, position: taskTemplateItems.position }).from(taskTemplateItems).where(and(
       eq(taskTemplateItems.workspaceId, workspaceId), eq(taskTemplateItems.templateId, templateId),
     )).orderBy(asc(taskTemplateItems.position));
-    const plan = await planTaskTemplateItemReorder(current.map((item) => item.id), orderedIds);
+    const plan = await planTaskTemplateItemReorder(current, orderedIds);
     for (const item of plan.temporary) await tx.update(taskTemplateItems).set({ position: item.position, updatedAt: new Date() }).where(and(
       eq(taskTemplateItems.id, item.id), eq(taskTemplateItems.workspaceId, workspaceId), eq(taskTemplateItems.templateId, templateId),
     ));
