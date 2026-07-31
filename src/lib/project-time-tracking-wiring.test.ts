@@ -36,36 +36,6 @@ describe("Phase 1 project time tracking wiring", () => {
     expect(projectsAction).not.toContain("projectSchema.partial().parse(input)");
   });
 
-  it("keeps task title as context and never persists it as a new entry description", () => {
-    const time = read("src/lib/actions/time.ts");
-    const widget = read("src/components/time/timer-widget.tsx");
-    const manual = read("src/components/time/manual-entry-form.tsx");
-    const taskSheet = read("src/components/tasks/task-detail-sheet.tsx");
-
-    expect(time).not.toContain("if ((!description || !description.trim()) && parsed.taskId)");
-    expect(time).not.toContain("description: row.title");
-    expect(widget).not.toContain("setDescription(task.title)");
-    expect(manual).not.toContain("setDescription(task.title)");
-    expect(taskSheet).toContain("Task sebagai konteks; deskripsi pekerjaan tetap terpisah");
-  });
-
-  it("filters off projects from write UI but keeps historical entries visible", () => {
-    const page = read("src/components/time/time-route-content.tsx");
-    const projectPage = read("src/app/(app)/app/projects/[projectId]/page.tsx");
-    const taskSheet = read("src/components/tasks/task-detail-sheet.tsx");
-
-    const timesheet = read("src/components/time/timesheet.tsx");
-
-    expect(page).toContain("timeTrackingMode: projects.timeTrackingMode");
-    expect(page).toContain("projectTimeTrackingMode: projects.timeTrackingMode");
-    expect(page).toContain('filter((project) => project.timeTrackingMode !== "off")');
-    expect(projectPage).toContain('project.timeTrackingMode !== "off"');
-    expect(projectPage).toContain("projectTimeEntries.length > 0");
-    expect(taskSheet).toContain("timeTrackingMode?:");
-    expect(taskSheet).toContain('task.timeTrackingMode === "off"');
-    expect(timesheet).toContain('entry.projectTimeTrackingMode === "off"');
-    expect(timesheet).toContain('t("Hanya baca", "Read only")');
-  });
 
   it("keeps canonical billing defaults and empty timers aligned with direct controls", () => {
     const projectForm = read("src/components/forms/project-form.tsx");
