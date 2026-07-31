@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { tasks, timeEntries, users, workspaceMembers, projects } from "@/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceWritable, assertTaskInWorkspace, assertProjectInWorkspace } from "@/lib/access";
 import { assertWorkspaceUserReference } from "@/lib/tenant-reference-rules";
@@ -262,6 +262,23 @@ export async function reorderTask(taskId: string, newPosition: number, newStatus
     .set(updateData)
     .where(eq(tasks.id, taskId));
 
+  return { success: true };
+}
+
+export async function reorderProjectTasks(projectId: string, mode: "workflow" | "reusable", orderedTaskIds: string[]) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertProjectInWorkspace(db, user.id, workspaceId, projectId);
+  const rows = await db.select({ id: tasks.id }).from(tasks).where(and(eq(tasks.workspaceId, workspaceId), eq(tasks.projectId, projectId), eq(tasks.mode, mode), eq(tasks.lifecycle, "active")));
+  const existing = rows.map((row) => row.id).sort();
+  const requested = [...new Set(orderedTaskIds)].sort();
+  if (existing.length !== requested.length || existing.some((id, index) => id !== requested[index])) throw new Error("Daftar Task tidak lengkap");
+  await db.transaction(async (tx) => {
+    await tx.update(tasks).set({ position: sql`${tasks.position} + 1000000` }).where(and(eq(tasks.workspaceId, workspaceId), eq(tasks.projectId, projectId), eq(tasks.mode, mode), inArray(tasks.id, orderedTaskIds)));
+    for (const [position, id] of orderedTaskIds.entries()) await tx.update(tasks).set({ position, updatedAt: new Date() }).where(and(eq(tasks.id, id), eq(tasks.workspaceId, workspaceId)));
+  });
   return { success: true };
 }
 

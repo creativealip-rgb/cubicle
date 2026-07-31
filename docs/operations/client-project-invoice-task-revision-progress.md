@@ -16,11 +16,12 @@ Plan: `docs/plans/2026-08-01-client-project-invoice-task-workspace-revision.md`
 - Task 8 — truthful Client Portal password states with masked owner reveal/copy UX. Commit `d239692`. 10 tests, TypeScript, and ESLint passed.
 - Task 9 — combined Project Task presentation model preserving stored mode. Commit `a7faeb6`. 3 tests and TypeScript passed.
 - Task 10 — editable reusable Task surface with locked mode and no no-op controls. Commit `b030c8e`. 9 tests and TypeScript passed.
-- Task 11 — unified historical Project Tasks showing stored workflow and reusable rows together. 9 tests and TypeScript passed.
+- Task 11 — unified historical Project Tasks showing stored workflow and reusable rows together. Commit `8e2d537`. 9 tests and TypeScript passed.
+- Task 12 — collision-safe Project reusable Task reorder with complete-ID validation. 12 tests and TypeScript passed.
 
 ## Current
 
-- Task 12 — real Project Task reorder controls.
+- Task 13 — global Task pagination.
 
 ## Release state
 

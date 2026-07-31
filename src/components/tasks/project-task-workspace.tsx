@@ -5,7 +5,7 @@ import { TaskForm } from "@/components/forms/task-form";
 import { WorkflowTaskWorkspace } from "@/components/tasks/workflow-task-workspace";
 import { ReusableTaskWorkspace, type ReusableTaskRow } from "@/components/tasks/reusable-task-workspace";
 import type { TasksListItem } from "@/components/tasks/tasks-list-table";
-import { archiveTask, restoreTask } from "@/lib/actions/tasks";
+import { archiveTask, reorderProjectTasks, restoreTask } from "@/lib/actions/tasks";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
@@ -28,6 +28,16 @@ export function ProjectTaskWorkspace({ projectId, mode, workflowTasks, reusableT
   const { t } = useT();
   const visibleWorkflow = useMemo(() => projectId ? workflowTasks : workflowTasks.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [workflowTasks, projectId, page]);
   const visibleReusable = useMemo(() => projectId ? reusableTasks : reusableTasks.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [reusableTasks, projectId, page]);
+  async function moveReusable(id: string, direction: "up" | "down") {
+    if (!projectId) return;
+    const orderedTaskIds = reusableTasks.map((task) => task.id);
+    const index = orderedTaskIds.indexOf(id);
+    const target = direction === "up" ? index - 1 : index + 1;
+    if (index < 0 || target < 0 || target >= orderedTaskIds.length) return;
+    [orderedTaskIds[index], orderedTaskIds[target]] = [orderedTaskIds[target], orderedTaskIds[index]];
+    await reorderProjectTasks(projectId, "reusable", orderedTaskIds);
+    window.location.reload();
+  }
   return (
     <section className="space-y-4">
       <div className="flex justify-end">
@@ -46,7 +56,7 @@ export function ProjectTaskWorkspace({ projectId, mode, workflowTasks, reusableT
         </Dialog>
       </div>
       {visibleWorkflow.length > 0 && <div className="space-y-2"><h3 className="text-sm font-semibold">Tugas Workflow</h3><WorkflowTaskWorkspace tasks={visibleWorkflow} members={members} projects={projects} currentUserId={currentUserId} /></div>}
-      {visibleReusable.length > 0 && <div className="space-y-2"><h3 className="text-sm font-semibold">Tugas Berulang</h3><ReusableTaskWorkspace tasks={visibleReusable} members={members} /></div>}
+      {visibleReusable.length > 0 && <div className="space-y-2"><h3 className="text-sm font-semibold">Tugas Berulang</h3><ReusableTaskWorkspace tasks={visibleReusable} members={members} onMove={projectId ? moveReusable : undefined} /></div>}
       {visibleWorkflow.length === 0 && visibleReusable.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">Belum ada tugas.</p>}
       {!projectId && Math.max(workflowTasks.length, reusableTasks.length) > PAGE_SIZE ? (
         <div className="flex justify-end gap-2">
