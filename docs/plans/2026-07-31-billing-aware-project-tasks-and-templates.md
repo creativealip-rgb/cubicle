@@ -16,9 +16,9 @@
 
 **Current branch:** `main`
 
-**Current HEAD:** `9e98997` (`test: align legacy wiring with task cutover`)
+**Current HEAD:** `e5c06ee` (`fix(navigation): use browser-safe legacy redirects`)
 
-**Remote state:** local `main` is 24 commits ahead of `origin/main`; nothing from this feature has been pushed or deployed.
+**Remote state:** local `main` is 28 commits ahead of `origin/main`; nothing from this feature has been pushed or deployed.
 **Working tree at checkpoint:** clean.
 
 ### Completed
@@ -41,24 +41,22 @@
 | 13 — Retire Activity/Service UI | Complete | `342a5f3`; legacy routes redirect, compatibility schema/actions retained, `0062` retired |
 | 14 — Reports/docs | Complete | `9a225f5`; Task-first reports, historical `Tanpa tugas`, reconciliation docs |
 | 15 — Real PostgreSQL integration matrix | Complete | `83326bb`; disposable PostgreSQL 16 matrix passed tenant/atomicity/reorder/history/failed-stop probes |
-| 16 — Full automated verification | Complete; browser QA in progress | `9e98997`; ESLint passed, Vitest 162 files / 689 tests passed, production build passed |
+| 16 — Full verification/browser QA | Complete | `e5c06ee`; ESLint passed, Vitest 164 files / 691 tests passed, production build passed; authenticated desktop + 390×844 route regression QA passed with zero overflow/console errors; evidence: `docs/operations/evidence/2026-08-01-billing-aware-task16-final-qa.md` |
 
 ### Remaining
 
-Resume from **Task 16 browser QA**. Do not repeat Tasks 0–15 unless verification exposes a regression.
+Resume from **Task 17 production deployment gate** only after Alip gives explicit production approval. Do not repeat Tasks 0–16 unless verification exposes a regression.
 
 | Task | Status | Next action |
 |---|---|---|
-| 16 — Full verification/browser QA | In progress | Automated gates green; finish authenticated desktop and 390×844 QA, evidence, cleanup |
 | 17 — Production deployment gate | Blocked on explicit approval | Backup/restore proof, `0064` only, immutable image, deploy and live QA |
 
 ### Next-session startup
 
 1. Open `/root/projects/cubicle` and verify `git status --short --branch` plus `git log -15 --oneline`.
-2. Read this checkpoint, Task 16, canonical spec, and browser QA evidence.
-3. Finish authenticated desktop/mobile QA and clean temporary QA container/account artifacts.
-4. Preserve fresh automated evidence: ESLint exit 0, 162/162 Vitest files and 689/689 tests, production build exit 0.
-5. Do not push or deploy until Task 16 is green and Alip explicitly approves Task 17.
+2. Read this checkpoint, Task 17, canonical spec, and `docs/operations/evidence/2026-08-01-billing-aware-task16-final-qa.md`.
+3. Do not push or deploy until Alip explicitly approves Task 17.
+4. At approval time, refresh remote-divergence, backup/restore, migration, proxy/port, and full live-QA evidence before completion claims.
 
 ---
 
