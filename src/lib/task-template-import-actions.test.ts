@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   canonicalTaskTemplateImportFingerprint,
   isTaskTemplateTargetCompatible,
-} from "@/lib/actions/task-templates";
+} from "@/lib/task-template-import-policies";
 
 describe("task template import action policies", () => {
   it("matches template targets to project billing", () => {

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const source = readFileSync("src/lib/actions/tasks.ts", "utf8");
+const policies = readFileSync("src/lib/task-action-policies.ts", "utf8");
 
 describe("billing-aware task action invariants", () => {
   it("uses canonical task mode and project policy", () => {
@@ -12,7 +13,7 @@ describe("billing-aware task action invariants", () => {
 
   it("rejects workflow-only fields for reusable tasks", () => {
     expect(source).toContain("assertTaskModeMutationAllowed");
-    expect(source).toContain("Reusable task tidak mendukung field workflow");
+    expect(policies).toContain("Reusable task tidak mendukung field workflow");
   });
 
   it("archives and restores tasks tenant-safely", () => {

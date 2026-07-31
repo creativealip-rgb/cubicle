@@ -13,7 +13,8 @@ import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyTaskAssigned } from "@/lib/notifications";
 import { createNotification, notifyWorkspaceMembers } from "@/lib/in-app-notifications";
 import { resolveBillingModel } from "@/lib/billing-model";
-import { resolveProjectTaskMode, type TaskWorkMode } from "@/lib/task-work-mode";
+import { resolveProjectTaskMode } from "@/lib/task-work-mode";
+import { assertTaskModeMutationAllowed } from "@/lib/task-action-policies";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -97,15 +98,6 @@ const updateTaskSchema = z.object({
   dueDate: z.string().nullable().optional(),
   clientVisible: z.boolean().optional(),
 });
-
-export function assertTaskModeMutationAllowed(
-  mode: TaskWorkMode,
-  input: { status?: unknown; priority?: unknown; dueDate?: unknown; clientVisible?: unknown },
-) {
-  if (mode === "reusable" && [input.status, input.priority, input.dueDate, input.clientVisible].some((value) => value !== undefined)) {
-    throw new Error("Reusable task tidak mendukung field workflow");
-  }
-}
 
 async function assertAssigneeInWorkspace(workspaceId: string, assigneeId: string | null | undefined) {
   if (!assigneeId) return;

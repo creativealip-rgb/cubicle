@@ -6,12 +6,12 @@ import { db } from "@/db";
 import { projects, taskTemplateImports, taskTemplateItems, taskTemplates, tasks, workspaceMembers } from "@/db/schema";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
-import { createHash } from "node:crypto";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
-import { resolveBillingModel, type BillingModel } from "@/lib/billing-model";
+import { resolveBillingModel } from "@/lib/billing-model";
 import { resolveProjectTaskMode } from "@/lib/task-work-mode";
 import { previewTemplateImport, type DuplicateAction } from "@/lib/task-template-import";
+import { canonicalTaskTemplateImportFingerprint, isTaskTemplateTargetCompatible } from "@/lib/task-template-import-policies";
 
 const templateSchema = z.object({
   name: z.string().trim().min(1).max(200),
@@ -281,29 +281,6 @@ export async function reorderTaskTemplateItems(templateIdInput: string, orderedI
     ));
     return { success: true };
   });
-}
-
-type TemplateTarget = "fixed_price" | "hourly_retainer" | "all";
-
-export function isTaskTemplateTargetCompatible(target: TemplateTarget, model: BillingModel) {
-  if (target === "all") return model !== "legacy_package";
-  if (target === "fixed_price") return model === "fixed_price";
-  return model === "hourly" || model === "retainer";
-}
-
-function canonicalJson(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
-  if (value && typeof value === "object") {
-    return `{${Object.entries(value as Record<string, unknown>)
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([key, entry]) => `${JSON.stringify(key)}:${canonicalJson(entry)}`)
-      .join(",")}}`;
-  }
-  return JSON.stringify(value);
-}
-
-export function canonicalTaskTemplateImportFingerprint(value: unknown) {
-  return createHash("sha256").update(canonicalJson(value)).digest("hex");
 }
 
 async function loadTaskTemplateImportContext(database: typeof db | Transaction, workspaceId: string, input: z.infer<typeof taskTemplateImportSchema>) {
