@@ -16,6 +16,7 @@ import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { billingTypeHint, billingTypeLabel } from "@/lib/feature-access";
 import { ProjectTaskWorkspace } from "@/components/tasks/project-task-workspace";
+import { WorkflowTaskWorkspace } from "@/components/tasks/workflow-task-workspace";
 import { ProjectBillingTab } from "@/components/projects/project-billing-tab";
 import { resolveBillingModel } from "@/lib/billing-model";
 import { resolveProjectTaskMode } from "@/lib/task-work-mode";
@@ -209,8 +210,11 @@ export default async function ProjectDetailPage({
     : t("Kembali ke Proyek", "Back to Projects");
   const showTimeTab = project.timeTrackingMode !== "off" || projectTimeEntries.length > 0;
   const billingModel = resolveBillingModel(project);
+  const legacyPackageReadOnly = billingModel === "legacy_package";
   const billingDisplayType = project.billingModel ?? project.billingType;
-  const taskMode = resolveProjectTaskMode(project.taskModePolicy, billingModel);
+  const taskMode = legacyPackageReadOnly
+    ? "workflow"
+    : resolveProjectTaskMode(project.taskModePolicy, billingModel);
   const projectOptions = project.clientId
     ? [
         {
@@ -356,7 +360,10 @@ export default async function ProjectDetailPage({
         </TabsList>
 
         <TabsContent value="work" className="pt-4">
-          <ProjectTaskWorkspace projectId={projectId} mode={taskMode} workflowTasks={projectTasks.filter((task) => task.mode === "workflow")} reusableTasks={projectTasks.filter((task) => task.mode === "reusable").map((task) => ({ id: task.id, title: task.title, projectName: task.projectName, clientName: task.clientName, assigneeName: task.assigneeName, lifecycle: task.lifecycle }))} members={projectMembers} projects={[{ id: project.id, name: project.name }]} currentUserId={user.id} />
+          {legacyPackageReadOnly ? <div className="space-y-3">
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">Project Paket legacy bersifat hanya baca sampai model billing diklasifikasikan.</p>
+            <WorkflowTaskWorkspace tasks={projectTasks.filter((task) => task.mode === "workflow")} members={projectMembers} projects={[{ id: project.id, name: project.name }]} currentUserId={user.id} />
+          </div> : <ProjectTaskWorkspace projectId={projectId} mode={taskMode} workflowTasks={projectTasks.filter((task) => task.mode === "workflow")} reusableTasks={projectTasks.filter((task) => task.mode === "reusable").map((task) => ({ id: task.id, title: task.title, projectName: task.projectName, clientName: task.clientName, assigneeName: task.assigneeName, lifecycle: task.lifecycle }))} members={projectMembers} projects={[{ id: project.id, name: project.name }]} currentUserId={user.id} />}
         </TabsContent>
 
         <TabsContent value="files" className="pt-4 space-y-3">
