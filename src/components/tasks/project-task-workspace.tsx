@@ -48,7 +48,7 @@ export function ProjectTaskWorkspace({ projectId, mode, workflowTasks, reusableT
       {mode === "workflow" ? (
         <WorkflowTaskWorkspace tasks={visibleWorkflow} members={members} projects={projects} currentUserId={currentUserId} />
       ) : (
-        <ReusableTaskWorkspace tasks={visibleReusable} />
+        <ReusableTaskWorkspace tasks={visibleReusable} members={members} />
       )}
       {!projectId && Math.max(workflowTasks.length, reusableTasks.length) > PAGE_SIZE ? (
         <div className="flex justify-end gap-2">

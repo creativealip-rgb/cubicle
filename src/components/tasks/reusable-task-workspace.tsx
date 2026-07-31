@@ -4,10 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { archiveTask, restoreTask } from "@/lib/actions/tasks";
 import { useRouter } from "next/navigation";
+import { TaskForm } from "@/components/forms/task-form";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export type ReusableTaskRow = {
   id: string;
   title: string;
+  description?: string | null;
+  assigneeId?: string | null;
   projectName?: string | null;
   clientName?: string | null;
   assigneeName?: string | null;
@@ -16,8 +20,9 @@ export type ReusableTaskRow = {
   lifecycle: "active" | "archived";
 };
 
-export function ReusableTaskWorkspace({ tasks, onMove }: {
+export function ReusableTaskWorkspace({ tasks, members = [], onMove }: {
   tasks: ReusableTaskRow[];
+  members?: Array<{ id: string; name: string | null; email: string | null }>;
   onMove?: (id: string, direction: "up" | "down") => void;
 }) {
   const router = useRouter();
@@ -39,8 +44,9 @@ export function ReusableTaskWorkspace({ tasks, onMove }: {
           <span className="text-xs">{((row.monthMinutes ?? 0) / 60).toFixed(1)} jam</span>
           <span className="text-xs text-muted-foreground">{row.lastUsedAt ? new Date(row.lastUsedAt).toLocaleDateString("id-ID") : "Belum pernah"}</span>
           <div className="flex flex-wrap gap-1">
-            <Button size="sm" variant="ghost" aria-label="Move Up" disabled={index === 0} onClick={() => onMove?.(row.id, "up")}>↑</Button>
-            <Button size="sm" variant="ghost" aria-label="Move Down" disabled={index === tasks.length - 1} onClick={() => onMove?.(row.id, "down")}>↓</Button>
+            {onMove && <><Button size="sm" variant="ghost" aria-label="Move Up" disabled={index === 0} onClick={() => onMove(row.id, "up")}>↑</Button>
+            <Button size="sm" variant="ghost" aria-label="Move Down" disabled={index === tasks.length - 1} onClick={() => onMove(row.id, "down")}>↓</Button></>}
+            <Dialog><DialogTrigger asChild><Button size="sm" variant="outline">Ubah</Button></DialogTrigger><DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg"><DialogHeader><DialogTitle>Ubah Tugas Berulang</DialogTitle></DialogHeader><TaskForm mode="edit" taskMode="reusable" members={members} defaultValues={{ id: row.id, title: row.title, description: row.description ?? "", assigneeId: row.assigneeId ?? "" }} /></DialogContent></Dialog>
             <Button size="sm" variant="outline" onClick={() => toggle(row)}>{row.lifecycle === "active" ? "Arsipkan" : "Pulihkan"}</Button>
           </div>
         </div>

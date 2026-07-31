@@ -14,11 +14,12 @@ Plan: `docs/plans/2026-08-01-client-project-invoice-task-workspace-revision.md`
 - Task 6 — additive Portal password ciphertext schema. Commit `cad7643`. 2 tests and TypeScript passed; PostgreSQL 16 clone apply, legacy-null check, encrypted fixture, replay, and cleanup passed.
 - Task 7 — atomic Portal password mutation and owner-only guarded reveal. Commit `0201762`. 14 tests and TypeScript passed.
 - Task 8 — truthful Client Portal password states with masked owner reveal/copy UX. Commit `d239692`. 10 tests, TypeScript, and ESLint passed.
-- Task 9 — combined Project Task presentation model preserving stored mode. 3 tests and TypeScript passed.
+- Task 9 — combined Project Task presentation model preserving stored mode. Commit `a7faeb6`. 3 tests and TypeScript passed.
+- Task 10 — editable reusable Task surface with locked mode and no no-op controls. 9 tests and TypeScript passed.
 
 ## Current
 
-- Task 10 — editable reusable Task surface.
+- Task 11 — unified historical Project Tasks.
 
 ## Release state
 
