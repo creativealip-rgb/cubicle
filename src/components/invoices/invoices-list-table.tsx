@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
+import { buildInvoiceDetailUrl } from "@/lib/invoice-origin";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -219,7 +220,7 @@ export function InvoicesListTable({
                   className={`border-b border-slate-200 hover:bg-slate-100/70 ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"}`}
                 >
                   <TableCell className="font-mono text-sm font-medium">
-                    <Link href={`/app/invoices/${inv.id}`} className="hover:underline">
+                    <Link href={buildInvoiceDetailUrl(inv.id, { type: "global" })} className="hover:underline">
                       {formatInvoiceId(inv.invoiceNumber)}
                     </Link>
                   </TableCell>
@@ -272,7 +273,7 @@ export function InvoicesListTable({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <Link
-                    href={`/app/invoices/${inv.id}`}
+                    href={buildInvoiceDetailUrl(inv.id, { type: "global" })}
                     className="font-mono text-sm font-medium hover:underline"
                   >
                     {formatInvoiceId(inv.invoiceNumber)}

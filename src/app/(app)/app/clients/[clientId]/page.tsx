@@ -40,6 +40,7 @@ import {
   getClientGoogleConnectionStatus,
   listClientGoogleEvents,
 } from "@/lib/client-google-calendar";
+import { buildInvoiceDetailUrl } from "@/lib/invoice-origin";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -503,7 +504,7 @@ export default async function ClientDetailPage({
             <Card key={inv.id}>
               <CardContent className="p-0">
                 <Link
-                  href={`/app/invoices/${inv.id}`}
+                  href={buildInvoiceDetailUrl(inv.id, { type: "client", resourceId: clientId })}
                   className="flex items-center justify-between p-4 transition-colors hover:bg-muted/50"
                 >
                 <div>

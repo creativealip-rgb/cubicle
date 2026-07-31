@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatMoney } from "@/lib/utils";
+import { buildInvoiceDetailUrl } from "@/lib/invoice-origin";
 
 export type ProjectBillingInvoice = {
   id: string;
@@ -52,7 +53,7 @@ export function ProjectBillingTab({ projectId, summary, invoices }: {
       <Button asChild size="sm"><Link href={`/app/invoices/new?projectId=${projectId}`}>Buat Invoice</Link></Button>
     </div>
     <div className="overflow-hidden rounded-lg border bg-card">
-      {invoices.length === 0 ? <p className="p-6 text-center text-sm text-muted-foreground">Belum ada invoice untuk proyek ini.</p> : invoices.map((invoice) => <Link key={invoice.id} href={`/app/invoices/${invoice.id}`} className="grid gap-2 border-b p-4 last:border-b-0 hover:bg-muted/30 sm:grid-cols-[1fr_auto_auto] sm:items-center">
+      {invoices.length === 0 ? <p className="p-6 text-center text-sm text-muted-foreground">Belum ada invoice untuk proyek ini.</p> : invoices.map((invoice) => <Link key={invoice.id} href={buildInvoiceDetailUrl(invoice.id, { type: "project", resourceId: projectId })} className="grid gap-2 border-b p-4 last:border-b-0 hover:bg-muted/30 sm:grid-cols-[1fr_auto_auto] sm:items-center">
         <div><p className="text-sm font-medium">{invoice.invoiceNumber}</p><p className="text-xs text-muted-foreground">{invoice.issueDate}{invoice.dueDate ? ` · jatuh tempo ${invoice.dueDate}` : ""}</p></div>
         <Badge variant="outline">{invoice.status}</Badge>
         <span className="text-sm font-semibold tabular-nums">{formatMoney(invoice.total, invoice.currency)}</span>

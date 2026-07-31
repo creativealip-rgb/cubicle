@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import Link from "next/link";
+import { buildInvoiceDetailUrl } from "@/lib/invoice-origin";
 import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import {
   AlertCircle,
@@ -708,7 +709,7 @@ export default async function ReportsPage({
                 >
                   <div className="min-w-0">
                     <Link
-                      href={`/app/invoices/${item.id}`}
+                      href={buildInvoiceDetailUrl(item.id, { type: "global" })}
                       className="font-medium hover:underline"
                     >
                       {item.invoiceNumber} · {item.client}
@@ -779,7 +780,7 @@ export default async function ReportsPage({
                       <TableRow key={item.id}>
                         <TableCell>
                           <Link
-                            href={`/app/invoices/${item.id}`}
+                            href={buildInvoiceDetailUrl(item.id, { type: "global" })}
                             className="font-medium hover:underline"
                           >
                             {item.invoiceNumber}

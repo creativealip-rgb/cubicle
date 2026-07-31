@@ -35,6 +35,11 @@ import { buildDefaultInvoiceMessage } from "@/lib/invoice-message";
 import { decryptSecret } from "@/lib/google-calendar";
 import { resolveFixedPriceInvoiceAmount } from "@/lib/invoice-project-items";
 import { isInvoiceFinancialsMutable } from "@/lib/invoice-finance-rules";
+import {
+  buildInvoiceBackUrl,
+  parseInvoiceOrigin,
+  type InvoiceOrigin,
+} from "@/lib/invoice-origin";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -42,8 +47,10 @@ async function getWorkspaceId(): Promise<string> {
 
 export default async function InvoiceDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ invoiceId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { invoiceId } = await params;
   const lang = await getCurrentLang();
@@ -62,6 +69,37 @@ export default async function InvoiceDetailPage({
     .limit(1);
 
   if (!inv) notFound();
+
+  const requestedOrigin = parseInvoiceOrigin(await searchParams);
+  let validatedOrigin: InvoiceOrigin | null =
+    requestedOrigin?.type === "global" ? requestedOrigin : null;
+  if (requestedOrigin?.type === "project") {
+    const [originProject] = await db
+      .select({ id: projects.id })
+      .from(projects)
+      .where(
+        and(
+          eq(projects.id, requestedOrigin.resourceId),
+          eq(projects.workspaceId, workspaceId),
+        ),
+      )
+      .limit(1);
+    if (originProject) validatedOrigin = requestedOrigin;
+  }
+  if (requestedOrigin?.type === "client") {
+    const [originClient] = await db
+      .select({ id: clients.id })
+      .from(clients)
+      .where(
+        and(
+          eq(clients.id, requestedOrigin.resourceId),
+          eq(clients.workspaceId, workspaceId),
+        ),
+      )
+      .limit(1);
+    if (originClient) validatedOrigin = requestedOrigin;
+  }
+  const backUrl = buildInvoiceBackUrl(validatedOrigin);
 
   const items = await db
     .select()
@@ -166,7 +204,7 @@ export default async function InvoiceDetailPage({
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3 min-w-0">
-          <Link href="/app/invoices">
+          <Link href={backUrl}>
             <Button variant="ghost" size="icon" className="h-8 w-8">
               <ArrowLeft className="h-4 w-4" />
             </Button>

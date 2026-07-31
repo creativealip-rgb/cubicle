@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { buildInvoiceDetailUrl } from "@/lib/invoice-origin";
 import { createInvoice, updateInvoice } from "@/lib/actions/invoices";
 import { addDaysToIsoDate, calculateDraftItemsSubtotal } from "@/lib/invoice-create-form";
 import { buildRateMap } from "@/lib/currency-base";
@@ -131,7 +132,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         }
         toast.success("Invoice dibuat");
         // Hard navigate so mobile always leaves the form even if soft router stalls.
-        window.location.assign(`/app/invoices/${invoice.id}`);
+        window.location.assign(buildInvoiceDetailUrl(invoice.id, { type: "global" }));
         return;
       }
 
