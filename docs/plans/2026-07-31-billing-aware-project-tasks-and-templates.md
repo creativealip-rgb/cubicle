@@ -16,10 +16,11 @@
 
 **Current branch:** `main`
 
-**Current HEAD:** `e5c06ee` (`fix(navigation): use browser-safe legacy redirects`)
+**Current HEAD:** `9a40a7d` (`test: close billing-aware task browser QA`)
 
-**Remote state:** local `main` is 28 commits ahead of `origin/main`; nothing from this feature has been pushed or deployed.
-**Working tree at checkpoint:** clean.
+**Remote state:** local `main` equals `origin/main`; feature source and Task 16 evidence pushed.
+**Production state:** Task 17 deployed from immutable image `cubiqlo-prod:sha-9a40a7d93b76`; migration `0064` applied to canonical DB `cubicle`; live desktop/mobile QA passed. Evidence: `docs/operations/evidence/2026-08-01-billing-aware-task17-production-deploy.md`.
+**Working tree at checkpoint:** production evidence update pending commit.
 
 ### Completed
 
@@ -42,21 +43,19 @@
 | 14 — Reports/docs | Complete | `9a225f5`; Task-first reports, historical `Tanpa tugas`, reconciliation docs |
 | 15 — Real PostgreSQL integration matrix | Complete | `83326bb`; disposable PostgreSQL 16 matrix passed tenant/atomicity/reorder/history/failed-stop probes |
 | 16 — Full verification/browser QA | Complete | `e5c06ee`; ESLint passed, Vitest 164 files / 691 tests passed, production build passed; authenticated desktop + 390×844 route regression QA passed with zero overflow/console errors; evidence: `docs/operations/evidence/2026-08-01-billing-aware-task16-final-qa.md` |
+| 17 — Production deployment gate | Complete | `9a40a7d`; verified backup/restore, additive `0064`, immutable image, health/proxy checks, authenticated desktop + 390×844 live QA, QA cleanup; evidence: `docs/operations/evidence/2026-08-01-billing-aware-task17-production-deploy.md` |
 
 ### Remaining
 
-Resume from **Task 17 production deployment gate** only after Alip gives explicit production approval. Do not repeat Tasks 0–16 unless verification exposes a regression.
+Tasks 0–17 are complete. Do not repeat migration/deployment work unless verification exposes a regression or a new approved phase requires it.
 
-| Task | Status | Next action |
-|---|---|---|
-| 17 — Production deployment gate | Blocked on explicit approval | Backup/restore proof, `0064` only, immutable image, deploy and live QA |
+No remaining implementation or deployment task in this plan.
 
 ### Next-session startup
 
 1. Open `/root/projects/cubicle` and verify `git status --short --branch` plus `git log -15 --oneline`.
-2. Read this checkpoint, Task 17, canonical spec, and `docs/operations/evidence/2026-08-01-billing-aware-task16-final-qa.md`.
-3. Do not push or deploy until Alip explicitly approves Task 17.
-4. At approval time, refresh remote-divergence, backup/restore, migration, proxy/port, and full live-QA evidence before completion claims.
+2. Read Task 16 and Task 17 evidence before investigating any reported regression.
+3. Preserve `0062` as retired; destructive Activity/Service schema cleanup still requires a separate plan and approval.
 
 ---
 
