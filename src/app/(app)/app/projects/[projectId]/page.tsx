@@ -2,7 +2,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { projects, clients, tasks, files, timeEntries, workspaceMembers, users, projectServices } from "@/db/schema";
+import { projects, clients, tasks, files, timeEntries, workspaceMembers, users, projectServices, invoices } from "@/db/schema";
 import { and, eq, desc } from "drizzle-orm";
 import { requireUser, assertProjectInWorkspace } from "@/lib/access";
 import { notFound } from "next/navigation";
@@ -15,9 +15,11 @@ import { getProjectProgress } from "@/lib/actions/projects";
 import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { billingTypeHint, billingTypeLabel } from "@/lib/feature-access";
-import { ProjectTasksTab } from "@/components/tasks/project-tasks-tab";
+import { ProjectTaskWorkspace } from "@/components/tasks/project-task-workspace";
+import { ProjectBillingTab } from "@/components/projects/project-billing-tab";
+import { resolveBillingModel } from "@/lib/billing-model";
+import { resolveProjectTaskMode } from "@/lib/task-work-mode";
 import { ProjectForm } from "@/components/forms/project-form";
-import { ProjectServiceSettings } from "@/components/projects/project-service-settings";
 import { Timesheet } from "@/components/time/timesheet";
 import Link from "next/link";
 import {
@@ -26,7 +28,7 @@ import {
   Clock,
   FileText,
   CheckSquare,
-  Wrench,
+  Wallet,
 } from "lucide-react";
 
 async function getWorkspaceId(): Promise<string> {
@@ -77,6 +79,9 @@ export default async function ProjectDetailPage({
       clientPhone: clients.phone,
       createdAt: projects.createdAt,
       selectedPackageId: projects.selectedPackageId,
+      taskModePolicy: projects.taskModePolicy,
+      retainerFee: projects.retainerFee,
+      retainerIncludedMinutes: projects.retainerIncludedMinutes,
     })
     .from(projects)
     .leftJoin(clients, eq(clients.id, projects.clientId))
@@ -114,11 +119,16 @@ export default async function ProjectDetailPage({
       projectId: tasks.projectId,
       projectName: projects.name,
       timeTrackingMode: projects.timeTrackingMode,
+      clientName: clients.name,
+      mode: tasks.mode,
+      lifecycle: tasks.lifecycle,
+      behavior: tasks.behavior,
     })
     .from(tasks)
     .leftJoin(users, eq(users.id, tasks.assigneeId))
     .leftJoin(projects, eq(projects.id, tasks.projectId))
-    .where(eq(tasks.projectId, projectId))
+    .leftJoin(clients, eq(clients.id, projects.clientId))
+    .where(and(eq(tasks.projectId, projectId), eq(tasks.workspaceId, workspaceId)))
     .orderBy(tasks.position);
 
 
@@ -165,6 +175,8 @@ export default async function ProjectDetailPage({
     .orderBy(desc(timeEntries.createdAt))
     .limit(200);
 
+  const projectInvoices = await db.select({ id: invoices.id, invoiceNumber: invoices.invoiceNumber, issueDate: invoices.issueDate, dueDate: invoices.dueDate, currency: invoices.currency, total: invoices.total, status: invoices.status }).from(invoices).where(and(eq(invoices.workspaceId, workspaceId), eq(invoices.projectId, projectId))).orderBy(desc(invoices.issueDate));
+
   const projectServiceRows = await db
     .select({ serviceId: projectServices.serviceId, projectPackageAssignmentId: projectServices.projectPackageAssignmentId })
     .from(projectServices)
@@ -196,7 +208,9 @@ export default async function ProjectDetailPage({
       )
     : t("Kembali ke Proyek", "Back to Projects");
   const showTimeTab = project.timeTrackingMode !== "off" || projectTimeEntries.length > 0;
+  const billingModel = resolveBillingModel(project);
   const billingDisplayType = project.billingModel ?? project.billingType;
+  const taskMode = resolveProjectTaskMode(project.taskModePolicy, billingModel);
   const projectOptions = project.clientId
     ? [
         {
@@ -323,26 +337,26 @@ export default async function ProjectDetailPage({
       </Card>
 
       {/* Tabs */}
-      <Tabs defaultValue="tasks">
+      <Tabs defaultValue="work">
         <TabsList className="max-w-full justify-start overflow-x-auto">
-          <TabsTrigger value="tasks" className="gap-1">
-            <CheckSquare className="h-3 w-3" /> {t("Tugas", "Tasks")} ({projectTasks.length})
+          <TabsTrigger value="work" className="gap-1">
+            <CheckSquare className="h-3 w-3" /> {t("Pekerjaan", "Work")} ({projectTasks.length})
           </TabsTrigger>
           <TabsTrigger value="files" className="gap-1">
             <FileText className="h-3 w-3" /> {t("Berkas", "Files")} ({projectFiles.length})
-          </TabsTrigger>
-          <TabsTrigger value="services" className="gap-1">
-            <Wrench className="h-3 w-3" /> {t("Layanan", "Services")} ({projectServiceRows.length})
           </TabsTrigger>
           {showTimeTab ? (
             <TabsTrigger value="time" className="gap-1">
               <Clock className="h-3 w-3" /> {t("Waktu", "Time")} ({projectTimeEntries.length})
             </TabsTrigger>
           ) : null}
+          <TabsTrigger value="billing" className="gap-1">
+            <Wallet className="h-3 w-3" /> Billing ({projectInvoices.length})
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="tasks" className="pt-4">
-          <ProjectTasksTab projectId={projectId} tasks={projectTasks} members={projectMembers} />
+        <TabsContent value="work" className="pt-4">
+          <ProjectTaskWorkspace projectId={projectId} mode={taskMode} workflowTasks={projectTasks.filter((task) => task.mode === "workflow")} reusableTasks={projectTasks.filter((task) => task.mode === "reusable").map((task) => ({ id: task.id, title: task.title, projectName: task.projectName, clientName: task.clientName, assigneeName: task.assigneeName, lifecycle: task.lifecycle }))} members={projectMembers} projects={[{ id: project.id, name: project.name }]} currentUserId={user.id} />
         </TabsContent>
 
         <TabsContent value="files" className="pt-4 space-y-3">
@@ -365,9 +379,7 @@ export default async function ProjectDetailPage({
           ))}
         </TabsContent>
 
-        <TabsContent value="services" className="pt-4">
-          <ProjectServiceSettings projectId={projectId} />
-        </TabsContent>
+        <TabsContent value="billing" className="pt-4"><ProjectBillingTab projectId={projectId} summary={{ model: billingModel, label: billingTypeLabel(billingDisplayType, lang), currency: project.currency, budget: project.budget, hourlyRate: project.rate, retainerFee: project.retainerFee, retainerIncludedMinutes: project.retainerIncludedMinutes }} invoices={projectInvoices} /></TabsContent>
 
         {showTimeTab ? <TabsContent value="time" className="pt-4">
           <Timesheet

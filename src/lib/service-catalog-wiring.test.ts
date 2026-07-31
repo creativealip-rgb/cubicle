@@ -105,9 +105,9 @@ describe("Phase 3 Service catalog wiring", () => {
     expect(projectForm).not.toContain('<Label>Service</Label>');
     expect(projectForm).not.toContain('href="/app/services"');
     expect(projectForm).not.toContain("Layanan Project");
-    expect(projectPage).toContain("ProjectServiceSettings");
-    expect(projectPage).toContain("projectServiceRows");
-    expect(projectPage).toContain('TabsTrigger value="services"');
+    expect(projectPage).not.toContain("ProjectServiceSettings");
+    expect(projectPage).not.toContain('TabsTrigger value="services"');
+    expect(projectPage).not.toContain('TabsContent value="services"');
     expect(projectServiceSettings).toContain("setProjectServices");
     expect(projectServiceSettings).toContain("getWorkspaceServices");
     expect(projectServiceSettings).toContain("unitPriceOverride");
