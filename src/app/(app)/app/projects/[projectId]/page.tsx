@@ -17,6 +17,7 @@ import { projectStatusVariant } from "@/lib/status-badge";
 import { billingTypeHint, billingTypeLabel } from "@/lib/feature-access";
 import { ProjectTasksTab } from "@/components/tasks/project-tasks-tab";
 import { ProjectForm } from "@/components/forms/project-form";
+import { ProjectServiceSettings } from "@/components/projects/project-service-settings";
 import { Timesheet } from "@/components/time/timesheet";
 import Link from "next/link";
 import {
@@ -25,6 +26,7 @@ import {
   Clock,
   FileText,
   CheckSquare,
+  Wrench,
 } from "lucide-react";
 
 async function getWorkspaceId(): Promise<string> {
@@ -329,6 +331,9 @@ export default async function ProjectDetailPage({
           <TabsTrigger value="files" className="gap-1">
             <FileText className="h-3 w-3" /> {t("Berkas", "Files")} ({projectFiles.length})
           </TabsTrigger>
+          <TabsTrigger value="services" className="gap-1">
+            <Wrench className="h-3 w-3" /> {t("Layanan", "Services")} ({projectServiceRows.length})
+          </TabsTrigger>
           {showTimeTab ? (
             <TabsTrigger value="time" className="gap-1">
               <Clock className="h-3 w-3" /> {t("Waktu", "Time")} ({projectTimeEntries.length})
@@ -358,6 +363,10 @@ export default async function ProjectDetailPage({
               </CardContent>
             </Card>
           ))}
+        </TabsContent>
+
+        <TabsContent value="services" className="pt-4">
+          <ProjectServiceSettings projectId={projectId} />
         </TabsContent>
 
         {showTimeTab ? <TabsContent value="time" className="pt-4">

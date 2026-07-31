@@ -59,7 +59,7 @@ export function AddTimeLogDialog({ workspaceId, projects, tasks }: { workspaceId
   }
 
   return <Dialog open={open} onOpenChange={setOpen}>
-    <DialogTrigger asChild><Button className="h-9 w-full gap-2 sm:w-auto"><Plus className="h-4 w-4" />Catat Waktu</Button></DialogTrigger>
+    <DialogTrigger asChild><Button className="h-11 w-full gap-2 sm:h-9 sm:w-auto"><Plus className="h-4 w-4" />Catat Waktu</Button></DialogTrigger>
     <DialogContent className="flex max-h-[min(90dvh,720px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
       <DialogHeader className="shrink-0 border-b px-5 py-4 pr-12"><DialogTitle>Catat Waktu</DialogTitle></DialogHeader>
       <form onSubmit={submit} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
