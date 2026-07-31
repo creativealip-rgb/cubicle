@@ -18,6 +18,7 @@ import {
 
 } from "@/components/ui/card";
 import { authClient } from "@/lib/auth-client";
+import { GoogleAuthButton } from "@/components/auth/google-auth-button";
 
 export function LoginForm() {
   const router = useRouter();
@@ -159,6 +160,7 @@ export function LoginForm() {
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {loading ? "Sedang masuk…" : "Masuk"}
           </Button>
+          <GoogleAuthButton callbackURL={redirect} />
         </CardContent>
       </form>
       <CardFooter className="flex justify-center">

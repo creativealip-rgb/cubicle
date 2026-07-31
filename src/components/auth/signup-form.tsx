@@ -18,6 +18,7 @@ import {
 
 } from "@/components/ui/card";
 import { authClient } from "@/lib/auth-client";
+import { GoogleAuthButton } from "@/components/auth/google-auth-button";
 
 export function SignupForm() {
   const router = useRouter();
@@ -111,6 +112,7 @@ export function SignupForm() {
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {loading ? "Sedang membuat akun…" : "Buat akun"}
           </Button>
+          <GoogleAuthButton callbackURL="/onboarding" />
           <p className="text-center text-xs text-muted-foreground">
             Dengan membuat akun, kamu menyetujui{" "}
             <Link

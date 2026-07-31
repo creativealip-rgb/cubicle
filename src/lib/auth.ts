@@ -1,9 +1,16 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db";
+import { sessions } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { sendNotification } from "@/lib/notifications";
 import { resolveBetterAuthSecret } from "@/lib/auth-secret";
 import { getAuthEnvironmentOptions } from "@/lib/auth-environment";
+import {
+  IDLE_SESSION_SECONDS,
+  SESSION_UPDATE_AGE_SECONDS,
+  capSessionExpiry,
+} from "@/lib/auth-policy";
 
 const authEnvironment = getAuthEnvironmentOptions(
   process.env.BETTER_AUTH_URL,
@@ -15,6 +22,56 @@ export const auth = betterAuth({
     provider: "pg",
     usePlural: true,
   }),
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+    },
+  },
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ["google"],
+      allowDifferentEmails: false,
+      requireLocalEmailVerified: true,
+    },
+  },
+  session: {
+    expiresIn: IDLE_SESSION_SECONDS,
+    updateAge: SESSION_UPDATE_AGE_SECONDS,
+  },
+  databaseHooks: {
+    session: {
+      create: {
+        before: async (session) => ({
+          data: {
+            ...session,
+            expiresAt: capSessionExpiry(session.createdAt, session.expiresAt),
+          },
+        }),
+      },
+      update: {
+        before: async (session) => {
+          if (!session.expiresAt) return;
+          const token = typeof session.token === "string" ? session.token : null;
+          const createdAt = session.createdAt ?? (token
+            ? (await db
+                .select({ createdAt: sessions.createdAt })
+                .from(sessions)
+                .where(eq(sessions.token, token))
+                .limit(1))[0]?.createdAt
+            : null);
+          if (!createdAt) return;
+          return {
+            data: {
+              ...session,
+              expiresAt: capSessionExpiry(createdAt, session.expiresAt),
+            },
+          };
+        },
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
