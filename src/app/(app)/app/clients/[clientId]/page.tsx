@@ -240,131 +240,128 @@ export default async function ClientDetailPage({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-2">
-          <Link href="/app/clients" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-3 w-3" /> Kembali ke Klien
-          </Link>
-          <div className="flex items-center gap-3">
-            <h1 className="app-page-title">{client.name}</h1>
-            <Badge variant={client.status === "active" ? "default" : "secondary"}>
-              {client.status === "active" ? "Aktif" : client.status === "inactive" ? "Tidak aktif" : client.status === "archived" ? "Arsip" : client.status}
-            </Badge>
+      <div className="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[400px_minmax(0,1fr)]">
+        {/* Client profile */}
+        <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Link href="/app/clients" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="h-3 w-3" /> Kembali ke Klien
+            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" className="gap-1" asChild>
+                <a href={`/api/clients/${client.id}/export/xlsx`} download>
+                  <Download className="h-3 w-3" /> Excel
+                </a>
+              </Button>
+              <ClientEditDialog
+                defaultValues={{
+                  id: client.id,
+                  clientNumber: client.clientNumber,
+                  name: client.name,
+                  companyName: client.companyName ?? "",
+                  email: client.email ?? "",
+                  phone: client.phone ?? "",
+                  website: client.website ?? "",
+                  address: client.address ?? "",
+                  tags: client.tags ?? [],
+                  internalNotes: client.internalNotes ?? "",
+                  portalSlug: client.portalSlug ?? "",
+                  portalSlugEnabled: client.portalSlugEnabled ?? true,
+                }}
+              />
+            </div>
           </div>
-          {client.companyName && (
-            <p className="text-sm text-muted-foreground">{client.companyName}</p>
-          )}
-          {(client.email || client.phone) && (
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-              {client.email && (
-                <a href={`mailto:${client.email}`} className="hover:text-foreground hover:underline">
-                  {client.email}
-                </a>
-              )}
-              {client.email && client.phone && <span>·</span>}
-              {client.phone && (
-                <a href={`tel:${client.phone}`} className="hover:text-foreground hover:underline">
-                  {client.phone}
-                </a>
-              )}
-            </div>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-2 justify-end">
-          <Button size="sm" variant="outline" className="gap-1" asChild>
-            <a href={`/api/clients/${client.id}/export/xlsx`} download>
-              <Download className="h-3 w-3" /> Excel
-            </a>
-          </Button>
-          <ClientEditDialog
-            defaultValues={{
-              id: client.id,
-              clientNumber: client.clientNumber,
-              name: client.name,
-              companyName: client.companyName ?? "",
-              email: client.email ?? "",
-              phone: client.phone ?? "",
-              website: client.website ?? "",
-              address: client.address ?? "",
-              tags: client.tags ?? [],
-              internalNotes: client.internalNotes ?? "",
-              portalSlug: client.portalSlug ?? "",
-              portalSlugEnabled: client.portalSlugEnabled ?? true,
-            }}
-          />
-        </div>
-      </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Proyek Aktif</p>
-            <p className="text-2xl font-bold">{activeProjects}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Invoice Belum Lunas</p>
-            <p className="text-2xl font-bold">
-              {clientInvoices.filter((i) => i.status !== "paid" && i.status !== "cancelled").length}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Portal</p>
-            <p className="text-2xl font-bold">
-              {client.portalEnabled ? (
-                <span className="flex items-center gap-1 text-green-600 text-base">
-                  <Globe className="h-4 w-4" /> Aktif
-                </span>
-              ) : (
-                <span className="text-muted-foreground text-base">Nonaktif</span>
-              )}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Contact Info Row */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-            {client.website && (
-              <div>
-                <p className="text-xs text-muted-foreground">Website</p>
-                <a href={client.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                  {client.website}
-                </a>
+          <Card>
+            <CardContent className="space-y-4 p-4">
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="app-page-title leading-tight">{client.name}</h1>
+                  <Badge variant={client.status === "active" ? "default" : "secondary"}>
+                    {client.status === "active" ? "Aktif" : client.status === "inactive" ? "Tidak aktif" : client.status === "archived" ? "Arsip" : client.status}
+                  </Badge>
+                </div>
+                {client.companyName && (
+                  <p className="text-sm text-muted-foreground">{client.companyName}</p>
+                )}
+                {(client.email || client.phone) && (
+                  <div className="space-y-1 text-sm text-muted-foreground">
+                    {client.email && (
+                      <a href={`mailto:${client.email}`} className="block break-all hover:text-foreground hover:underline">
+                        {client.email}
+                      </a>
+                    )}
+                    {client.phone && (
+                      <a href={`tel:${client.phone}`} className="block hover:text-foreground hover:underline">
+                        {client.phone}
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
-            {client.address && (
-              <div>
-                <p className="text-xs text-muted-foreground">Alamat</p>
-                <p className="truncate">{client.address}</p>
-              </div>
-            )}
-          </div>
-          {client.tags && client.tags.length > 0 && (
-            <div className="flex gap-1 mt-3 flex-wrap">
-              {client.tags.map((tag) => (
-                <Badge key={tag} variant="outline" className="text-[10px]">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
-          {client.internalNotes && (
-            <div className="mt-3 pt-3 border-t">
-              <p className="text-xs text-muted-foreground">Catatan Internal</p>
-              <p className="text-sm mt-1">{client.internalNotes}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <p className="text-[11px] text-muted-foreground">Proyek Aktif</p>
+                  <p className="mt-1 text-xl font-bold">{activeProjects}</p>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <p className="text-[11px] text-muted-foreground">Invoice Belum Lunas</p>
+                  <p className="mt-1 text-xl font-bold">
+                    {clientInvoices.filter((i) => i.status !== "paid" && i.status !== "cancelled").length}
+                  </p>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <p className="text-[11px] text-muted-foreground">Portal</p>
+                  {client.portalEnabled ? (
+                    <p className="mt-1 flex items-center gap-1 text-sm font-semibold text-green-600">
+                      <Globe className="h-4 w-4" /> Aktif
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-sm font-semibold text-muted-foreground">Nonaktif</p>
+                  )}
+                </div>
+              </div>
+
+              {(client.website || client.address || (client.tags && client.tags.length > 0) || client.internalNotes) && (
+                <div className="space-y-3 border-t pt-3 text-sm">
+                  {client.website && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Website</p>
+                      <a href={client.website} target="_blank" rel="noopener noreferrer" className="break-all text-blue-600 hover:underline">
+                        {client.website}
+                      </a>
+                    </div>
+                  )}
+                  {client.address && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Alamat</p>
+                      <p className="mt-1 break-words">{client.address}</p>
+                    </div>
+                  )}
+                  {client.tags && client.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {client.tags.map((tag) => (
+                        <Badge key={tag} variant="outline" className="text-[10px]">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  {client.internalNotes && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Catatan Internal</p>
+                      <p className="mt-1 leading-relaxed">{client.internalNotes}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </aside>
+
+        {/* Work tabs */}
+        <section className="min-w-0">
       {/* Tabs — Ringkasan di-hide, Portal tetap; wrap di mobile */}
       <Tabs defaultValue={initialTab}>
         <div className="overflow-x-auto -mx-1 px-1">
@@ -544,6 +541,8 @@ export default async function ClientDetailPage({
         </TabsContent>
 
       </Tabs>
+        </section>
+      </div>
     </div>
   );
 }
