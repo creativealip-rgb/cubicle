@@ -17,11 +17,12 @@ Plan: `docs/plans/2026-08-01-client-project-invoice-task-workspace-revision.md`
 - Task 9 — combined Project Task presentation model preserving stored mode. Commit `a7faeb6`. 3 tests and TypeScript passed.
 - Task 10 — editable reusable Task surface with locked mode and no no-op controls. Commit `b030c8e`. 9 tests and TypeScript passed.
 - Task 11 — unified historical Project Tasks showing stored workflow and reusable rows together. Commit `8e2d537`. 9 tests and TypeScript passed.
-- Task 12 — collision-safe Project reusable Task reorder with complete-ID validation. 12 tests and TypeScript passed.
+- Task 12 — collision-safe Project reusable Task reorder with complete-ID validation. Commit `12bff28`. 12 tests and TypeScript passed.
+- Task 13 — global Task pagination: filtered count, clamp, 10-row shared List/Board batch, preserved params. 6 tests and TypeScript passed.
 
 ## Current
 
-- Task 13 — global Task pagination.
+- Task 14 — Invoice-style global Task tabs.
 
 ## Release state
 

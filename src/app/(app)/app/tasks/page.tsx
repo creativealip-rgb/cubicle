@@ -13,8 +13,16 @@ import { TaskTemplateWorkspace } from "@/components/tasks/task-template-workspac
 import { ActiveFilterSummary } from "@/components/ui/active-filter-summary";
 import { resolveBillingModel } from "@/lib/billing-model";
 import { defaultTaskWorkMode } from "@/lib/task-work-mode";
+import Link from "next/link";
 
 export const PAGE_SIZE = 10;
+
+function buildTaskPageHref(params: Record<string, string | undefined>, page: number) {
+  const next = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) if (value && key !== "page") next.set(key, value);
+  next.set("page", String(page));
+  return `/app/tasks?${next.toString()}`;
+}
 
 export default async function TasksPage({ searchParams }: { searchParams: Promise<{ tab?: string; status?: string; priority?: string; projectId?: string; assignee?: string; view?: string; focus?: string; mode?: string; page?: string }> }) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -23,7 +31,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const params = await searchParams;
   const tab = params.tab === "templates" ? "templates" : "tasks";
   const view = params.view === "board" ? "board" : "list";
-  const page = Math.max(1, Number(params.page) || 1);
+  const requestedPage = Math.max(1, Number(params.page) || 1);
   const whereClauses = [eq(tasks.workspaceId, workspaceId)];
   if (params.mode === "workflow" || params.mode === "reusable") whereClauses.push(eq(tasks.mode, params.mode));
   if (params.status && params.status !== "all") whereClauses.push(eq(tasks.status, params.status as typeof tasks.status.enumValues[number]));
@@ -33,6 +41,9 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   else if (params.assignee === "unassigned") whereClauses.push(sql`${tasks.assigneeId} IS NULL`);
   else if (params.assignee && params.assignee !== "all") whereClauses.push(eq(tasks.assigneeId, params.assignee));
 
+  const [{ filteredTaskCount }] = await db.select({ filteredTaskCount: sql<number>`count(*)::int` }).from(tasks).where(and(...whereClauses));
+  const totalPages = Math.max(1, Math.ceil(filteredTaskCount / PAGE_SIZE));
+  const page = Math.min(requestedPage, totalPages);
   const taskList = await db.select({ id: tasks.id, title: tasks.title, description: tasks.description, status: tasks.status, priority: tasks.priority, dueDate: tasks.dueDate, position: tasks.position, clientVisible: tasks.clientVisible, projectId: tasks.projectId, projectName: projects.name, timeTrackingMode: projects.timeTrackingMode, clientName: clients.name, assigneeId: tasks.assigneeId, assigneeName: users.name, sourceNoteId: tasks.sourceNoteId, behavior: tasks.behavior, mode: tasks.mode, lifecycle: tasks.lifecycle }).from(tasks).leftJoin(projects, eq(projects.id, tasks.projectId)).leftJoin(clients, eq(clients.id, projects.clientId)).leftJoin(users, eq(users.id, tasks.assigneeId)).where(and(...whereClauses)).orderBy(desc(tasks.createdAt)).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE);
   const projectRows = await db.select({ id: projects.id, name: projects.name, billingModel: projects.billingModel, billingType: projects.billingType }).from(projects).where(eq(projects.workspaceId, workspaceId));
   const writableProjectRows = projectRows.filter((project) => resolveBillingModel(project) !== "legacy_package");
@@ -48,6 +59,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
     {tab === "templates" ? <TaskTemplateWorkspace templates={templates} projects={taskProjects} /> : <>
       <ActiveFilterSummary basePath="/app/tasks" filters={[{ key: "projectId", label: "Proyek", value: taskProjects.find((project) => project.id === params.projectId)?.name }, { key: "assignee", label: "Petugas", value: params.assignee }, { key: "priority", label: "Prioritas", value: params.priority }, { key: "status", label: "Status", value: params.status }]} />
       {view === "board" ? <TasksBoardView tasks={taskList.map((task) => ({ ...task, projectId: task.projectId ?? undefined }))} members={members} /> : <TasksListTable tasks={taskList} members={members} projects={taskProjects} currentUserId={user.id} currentFilters={{ status: params.status, priority: params.priority, projectId: params.projectId, assignee: params.assignee }} focusId={params.focus ?? null} />}
+      {totalPages > 1 && <nav className="flex flex-wrap items-center justify-between gap-3" aria-label="Paginasi tugas"><span className="text-sm text-muted-foreground">Halaman {page} dari {totalPages}</span><div className="flex gap-2"><Link className={`rounded border px-3 py-2 text-sm ${page===1?"pointer-events-none opacity-50":""}`} href={buildTaskPageHref(params,page-1)}>Sebelumnya</Link><Link className={`rounded border px-3 py-2 text-sm ${page===totalPages?"pointer-events-none opacity-50":""}`} href={buildTaskPageHref(params,page+1)}>Berikutnya</Link></div></nav>}
     </>}
   </div>;
 }
