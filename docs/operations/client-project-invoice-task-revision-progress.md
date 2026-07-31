@@ -22,15 +22,17 @@ Plan: `docs/plans/2026-08-01-client-project-invoice-task-workspace-revision.md`
 - Task 14 — global Task tabs use shared Invoice-style query-backed navigation and preserve filters. Commit `c9f81c0`. 3 tests and TypeScript passed.
 - Task 15 — full Task Template create/edit/lifecycle dialogs with human labels and empty state. Commit `15ee513`. 3 tests and TypeScript passed.
 - Task 16 — full Task Template item editing, remove, and one-step reorder with archived write guards. Commit `7ede10c`. 6 tests and TypeScript passed.
-- Task 17 — hardened Task Template import preview: zero selection, reset state, preview fingerprint, stale rejection. 20 tests and TypeScript passed.
+- Task 17 — hardened Task Template import preview: zero selection, reset state, preview fingerprint, stale rejection. Commit `ffa77cf`; 20 tests and TypeScript passed.
+- Task 18 — full automated and PostgreSQL verification. ESLint, TypeScript, production-shape Docker build, 181 files/758 tests, and targeted PostgreSQL/Portal verification passed.
+- Task 19 — browser smoke partial. Desktop/mobile Task navigation and Client Project/Portal control reachability passed 3/3; full mutation matrix from plan remains pending. Evidence: `docs/operations/evidence/2026-08-01-client-task-revision-final-qa.md`.
 
 ## Current
 
-- Task 18 — full automated and PostgreSQL verification.
+- Task 19 — complete authenticated desktop/mobile mutation matrix, negative cases, and cleanup before feature-branch handoff.
 
 ## Release state
 
-- Pushed: pending first feature-branch sync.
+- Pushed: feature commits through `ffa77cf`; final QA fix/evidence awaiting commit and push.
 - Integrated shared dev: no.
 - Migrated dev: no.
 - Deployed dev: no.

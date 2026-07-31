@@ -41,7 +41,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   else if (params.assignee === "unassigned") whereClauses.push(sql`${tasks.assigneeId} IS NULL`);
   else if (params.assignee && params.assignee !== "all") whereClauses.push(eq(tasks.assigneeId, params.assignee));
 
-  const [{ filteredTaskCount }] = await db.select({ filteredTaskCount: sql<number>`count(*)::int` }).from(tasks).where(and(...whereClauses));
+  const [{ filteredTaskCount }] = await db.select({ filteredTaskCount: sql<number>`count(${tasks.id})::int` }).from(tasks).where(and(...whereClauses));
   const totalPages = Math.max(1, Math.ceil(filteredTaskCount / PAGE_SIZE));
   const page = Math.min(requestedPage, totalPages);
   const taskList = await db.select({ id: tasks.id, title: tasks.title, description: tasks.description, status: tasks.status, priority: tasks.priority, dueDate: tasks.dueDate, position: tasks.position, clientVisible: tasks.clientVisible, projectId: tasks.projectId, projectName: projects.name, timeTrackingMode: projects.timeTrackingMode, clientName: clients.name, assigneeId: tasks.assigneeId, assigneeName: users.name, sourceNoteId: tasks.sourceNoteId, behavior: tasks.behavior, mode: tasks.mode, lifecycle: tasks.lifecycle }).from(tasks).leftJoin(projects, eq(projects.id, tasks.projectId)).leftJoin(clients, eq(clients.id, projects.clientId)).leftJoin(users, eq(users.id, tasks.assigneeId)).where(and(...whereClauses)).orderBy(desc(tasks.createdAt)).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE);
