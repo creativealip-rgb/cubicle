@@ -20,7 +20,7 @@ Reserve a number here before creating SQL. Recheck remote refs and every worktre
 - `0059` — Retainer invoice source integrity — Coder — `feat/billing-aware-phase1` — committed.
 - `0060` — Task behavior + archive metadata — Coder — `feat/billing-aware-phase1` — committed.
 - `0061` — Legacy billing classification table — Coder — `feat/billing-aware-phase1` — committed.
-- `0062` — Billing-aware Phase 9 destructive cleanup — Coder — `feat/billing-aware-phase1` — reserved; dry-run only, production untouched.
+- `0062` — Billing-aware Phase 9 destructive cleanup — retired; unauthorized to apply; production untouched.
 - `0063` — Encrypted invoice share token — reconciled existing migration on `main` — committed.
 - `0064` — Billing-aware project tasks and templates — Coder — `main` — committed.
 
