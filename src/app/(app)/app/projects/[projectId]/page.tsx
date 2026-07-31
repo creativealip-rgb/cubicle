@@ -2,7 +2,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { projects, clients, tasks, files, timeEntries, workspaceMembers, users, projectServices, invoices } from "@/db/schema";
+import { projects, clients, tasks, files, timeEntries, workspaceMembers, users, projectServices, invoices, workspaces, workspaceCurrencyRates, packages } from "@/db/schema";
 import { and, eq, desc } from "drizzle-orm";
 import { requireUser, assertProjectInWorkspace } from "@/lib/access";
 import { notFound } from "next/navigation";
@@ -177,6 +177,9 @@ export default async function ProjectDetailPage({
     .limit(200);
 
   const projectInvoices = await db.select({ id: invoices.id, invoiceNumber: invoices.invoiceNumber, issueDate: invoices.issueDate, dueDate: invoices.dueDate, currency: invoices.currency, total: invoices.total, status: invoices.status }).from(invoices).where(and(eq(invoices.workspaceId, workspaceId), eq(invoices.projectId, projectId))).orderBy(desc(invoices.issueDate));
+  const [workspace] = await db.select({ defaultCurrency: workspaces.defaultCurrency }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  const currencyRates = await db.select({ fromCurrency: workspaceCurrencyRates.fromCurrency, rate: workspaceCurrencyRates.rate }).from(workspaceCurrencyRates).where(eq(workspaceCurrencyRates.workspaceId, workspaceId));
+  const [selectedPackage] = project.selectedPackageId ? await db.select({ price: packages.price, customPrice: packages.customPrice }).from(packages).where(eq(packages.id, project.selectedPackageId)).limit(1) : [];
 
   const projectServiceRows = await db
     .select({ serviceId: projectServices.serviceId, projectPackageAssignmentId: projectServices.projectPackageAssignmentId })
@@ -355,7 +358,7 @@ export default async function ProjectDetailPage({
             </TabsTrigger>
           ) : null}
           <TabsTrigger value="billing" className="gap-1">
-            <Wallet className="h-3 w-3" /> Billing ({projectInvoices.length})
+            <Wallet className="h-3 w-3" /> Invoice ({projectInvoices.length})
           </TabsTrigger>
         </TabsList>
 
@@ -386,7 +389,7 @@ export default async function ProjectDetailPage({
           ))}
         </TabsContent>
 
-        <TabsContent value="billing" className="pt-4"><ProjectBillingTab projectId={projectId} summary={{ model: billingModel, label: billingTypeLabel(billingDisplayType, lang), currency: project.currency, budget: project.budget, hourlyRate: project.rate, retainerFee: project.retainerFee, retainerIncludedMinutes: project.retainerIncludedMinutes }} invoices={projectInvoices} /></TabsContent>
+        <TabsContent value="billing" className="pt-4">{project.clientId ? <ProjectBillingTab project={{ id: project.id, name: project.name, clientId: project.clientId, billingType: project.billingType, currency: project.currency, budget: project.budget, rate: project.rate, packagePrice: selectedPackage?.price ?? null, packageCustomPrice: selectedPackage?.customPrice ?? null }} client={{ id: project.clientId, name: project.clientName ?? "Klien", companyName: null }} invoices={projectInvoices} baseCurrency={workspace?.defaultCurrency ?? "IDR"} currencyRates={currencyRates} /> : null}</TabsContent>
 
         {showTimeTab ? <TabsContent value="time" className="pt-4">
           <Timesheet

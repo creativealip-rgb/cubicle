@@ -27,7 +27,7 @@ describe("invoice origin wiring", () => {
     const client = read("src/app/(app)/app/clients/[clientId]/page.tsx");
     const globalList = read("src/components/invoices/invoices-list-table.tsx");
 
-    expect(project).toContain('type: "project", resourceId: projectId');
+    expect(project).toMatch(/type: "project", resourceId: (?:projectId|project\.id)/);
     expect(client).toContain('type: "client", resourceId: clientId');
     expect(globalList).toContain('type: "global"');
   });
