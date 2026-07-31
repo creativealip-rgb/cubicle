@@ -79,6 +79,15 @@ async function assertCanCreateClient(workspaceId: string, userId: string) {
   return { ok: true as const };
 }
 
+async function assertCanUseClientPortal(userId: string) {
+  const { getUserPlan, getPlanLimits } = await import("@/lib/plan");
+  const plan = await getUserPlan(userId);
+  const limits = getPlanLimits(plan);
+  if (!limits.hasClientPortal) {
+    throw new Error("Client portal tersedia di paket Solo dan Team.");
+  }
+}
+
 async function insertClient(workspaceId: string, userId: string, input: z.infer<typeof clientSchema>) {
   const parsed = clientSchema.parse(input);
 
@@ -92,6 +101,7 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
   } = {};
   let rawPortalToken: string | null = null;
   if (parsed.portalEnabled) {
+    await assertCanUseClientPortal(userId);
     rawPortalToken = randomBytes(32).toString("hex");
     portalFields = {
       portalEnabled: true,
@@ -177,6 +187,10 @@ export async function updateClient(clientId: string, input: Partial<z.infer<type
 
   const parsed = clientSchema.partial().parse(input);
 
+  if (parsed.portalEnabled || parsed.portalSlugEnabled) {
+    await assertCanUseClientPortal(user.id);
+  }
+
   const updateData: Record<string, unknown> = {};
   if (parsed.name !== undefined) updateData.name = parsed.name;
   if (parsed.companyName !== undefined) updateData.companyName = parsed.companyName;
@@ -224,6 +238,7 @@ export async function generatePortalToken(clientId: string) {
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   await assertClientInWorkspace(db, user.id, workspaceId, clientId);
+  await assertCanUseClientPortal(user.id);
 
   const rawToken = randomBytes(32).toString("hex");
   const tokenHash = createHash("sha256").update(rawToken).digest("hex");
@@ -270,6 +285,7 @@ export async function setClientPortalPassword(clientId: string, password: string
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   await assertClientInWorkspace(db, user.id, workspaceId, clientId);
+  await assertCanUseClientPortal(user.id);
   const value = z.string().min(8, "Password minimal 8 karakter").max(128).parse(password);
   const [current] = await db.select({ slug: clients.portalSlug }).from(clients)
     .where(and(eq(clients.id, clientId), eq(clients.workspaceId, workspaceId)));

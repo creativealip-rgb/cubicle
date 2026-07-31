@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useTransition } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -13,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SortableHeader } from "@/components/ui/sortable-header";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { formatDateID, formatMoney } from "@/lib/utils";
@@ -58,6 +60,15 @@ type SortKey =
   | "total"
   | "status";
 
+type FilterOption = { id: string; name: string };
+
+type CurrentFilters = {
+  status?: string;
+  clientId?: string;
+  projectId?: string;
+  billing?: string;
+};
+
 function formatInvoiceId(num: string): string {
   if (/^INV-\d{4}-\d{4}$/.test(num)) return num;
   const match = num.match(/^INV-(\d{1,4})$/);
@@ -66,13 +77,57 @@ function formatInvoiceId(num: string): string {
   return `INV-${year}-${match[1].padStart(4, "0")}`;
 }
 
+function InvoiceTableHeaderFilter({
+  filterKey,
+  value,
+  options,
+  placeholder,
+}: {
+  filterKey: "clientId" | "projectId" | "billing";
+  value?: string;
+  options: FilterOption[];
+  placeholder: string;
+}) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [pending, startTransition] = useTransition();
+
+  function apply(nextValue: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("page");
+    if (!nextValue || nextValue === "all") params.delete(filterKey);
+    else params.set(filterKey, nextValue);
+    startTransition(() => router.push(`/app/invoices${params.toString() ? `?${params.toString()}` : ""}`));
+  }
+
+  return (
+    <Select value={value ?? "all"} onValueChange={apply} disabled={pending}>
+      <SelectTrigger className="mt-1 h-8 w-full min-w-[9rem] text-xs font-normal">
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">{placeholder}</SelectItem>
+        {options.map((option) => (
+          <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 export function InvoicesListTable({
   invoices,
   baseCurrency,
+  clientOptions = [],
+  projectOptions = [],
+  currentFilters = {},
 }: {
   invoices: InvoiceListItem[];
   /** Workspace base currency for secondary ≈ line. */
   baseCurrency?: string;
+  clientOptions?: Array<{ id: string; name: string }>;
+  projectOptions?: Array<{ id: string; name: string }>;
+  currentFilters?: CurrentFilters;
 }) {
   const { t, lang } = useT();
   const base = (baseCurrency || "IDR").toUpperCase();
@@ -105,6 +160,16 @@ export function InvoicesListTable({
     orders,
   );
 
+  const billingOptions = useMemo(
+    () => [
+      { id: "hours", name: billingTypeLabel("hours", lang) },
+      { id: "package", name: billingTypeLabel("package", lang) },
+      { id: "project", name: billingTypeLabel("project", lang) },
+      { id: "none", name: t("Tanpa proyek", "No project") },
+    ],
+    [lang, t],
+  );
+
   return (
     <>
       <div className="hidden overflow-hidden rounded-lg border bg-card md:block">
@@ -124,6 +189,12 @@ export function InvoicesListTable({
                   dir={dirFor("client")}
                   onClick={() => toggle("client")}
                 />
+                <InvoiceTableHeaderFilter
+                  filterKey="clientId"
+                  value={currentFilters.clientId}
+                  options={clientOptions}
+                  placeholder={t("Semua klien", "All clients")}
+                />
               </TableHead>
               <TableHead>
                 <SortableHeader
@@ -131,12 +202,24 @@ export function InvoicesListTable({
                   dir={dirFor("project")}
                   onClick={() => toggle("project")}
                 />
+                <InvoiceTableHeaderFilter
+                  filterKey="projectId"
+                  value={currentFilters.projectId}
+                  options={projectOptions}
+                  placeholder={t("Semua proyek", "All projects")}
+                />
               </TableHead>
               <TableHead>
                 <SortableHeader
                   label={t("Jenis", "Type")}
                   dir={dirFor("type")}
                   onClick={() => toggle("type")}
+                />
+                <InvoiceTableHeaderFilter
+                  filterKey="billing"
+                  value={currentFilters.billing}
+                  options={billingOptions}
+                  placeholder={t("Semua jenis", "All types")}
                 />
               </TableHead>
               <TableHead>

@@ -552,9 +552,7 @@ export default async function ReportsPage({
               </div>
             )}
             <Button asChild variant="link" className="mt-2 h-auto px-0">
-              <Link
-                href={`/app/invoices?from=${period.start}&to=${period.end}`}
-              >
+              <Link href="/app/invoices">
                 {t("Lihat semua pemasukan", "View all income")}
               </Link>
             </Button>

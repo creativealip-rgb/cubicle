@@ -194,12 +194,12 @@ export default async function TimePage() {
 
   return (
     <div className="min-w-0 space-y-4 sm:space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="app-page-header">
         <div className="min-w-0">
-          <h1 className="app-page-title">{t("Pelacakan Waktu", "Time Tracking")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("Pantau waktu di semua project", "Track time across all projects")}</p>
+          <h1 className="app-page-title">{t("Waktu", "Time")}</h1>
+          <p className="text-sm text-muted-foreground">{t("Catat waktu dan isi timesheet mingguan.", "Log time and fill weekly timesheets.")}</p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="time-header-actions flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
           {canWrite && (
             <ManualEntryForm
               workspaceId={workspaceId}
@@ -207,6 +207,18 @@ export default async function TimePage() {
               projects={writableProjectList}
               tasks={writableTaskList}
               activities={activityList}
+            />
+          )}
+          {canWrite && (
+            <TimerWidget
+              variant="header"
+              workspaceId={workspaceId}
+              userId={user.id}
+              clients={clientList}
+              projects={writableProjectList}
+              tasks={writableTaskList}
+              activities={activityList}
+              initialTimer={activeTimer ? { id: activeTimer.id, clientId: activeTimer.clientId, projectId: activeTimer.projectId, activityId: activeTimer.activityId, taskId: activeTimer.taskId, description: activeTimer.description, tags: activeTimer.tags, startTime: activeTimer.startTime!, pausedAt: activeTimer.pausedAt, clientName: activeTimer.clientName, projectName: activeTimer.projectName, activityName: activeTimer.activityName, taskTitle: activeTimer.taskTitle } : null}
             />
           )}
           <PdfExportButton clients={clientList} projects={projectList} />
@@ -229,8 +241,9 @@ export default async function TimePage() {
       </div>
 
       {/* Timer */}
-      {canWrite && (
+      {canWrite && activeTimer ? (
         <TimerWidget
+          variant="panel"
           workspaceId={workspaceId}
           userId={user.id}
           clients={clientList}
@@ -257,7 +270,7 @@ export default async function TimePage() {
             : null
           }
         />
-      )}
+      ) : null}
 
       <TeamTimesheetView entries={teamEntries} />
 

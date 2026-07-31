@@ -74,6 +74,8 @@ interface TimerWidgetProps {
   tasks: Task[];
   activities?: Activity[];
   initialTimer: ActiveTimer | null;
+  variant?: "panel" | "header";
+  onTimerStarted?: (entry: { startTime?: Date | string | null }) => void;
 }
 
 function formatElapsed(
@@ -111,6 +113,8 @@ export function TimerWidget({
   tasks: allTasks,
   activities: allActivities = [],
   initialTimer,
+  variant = "panel",
+  onTimerStarted,
 }: TimerWidgetProps) {
   const router = useRouter();
   const { t } = useT();
@@ -247,7 +251,9 @@ export function TimerWidget({
         activityName: activity?.name ?? null,
         taskTitle: task?.title ?? null,
       });
+      onTimerStarted?.({ startTime: entry.startTime });
       selfDispatched.current = true;
+      window.dispatchEvent(new CustomEvent("cubiqlo:time-entry-started", { detail: { startTime: entry.startTime } }));
       window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
       toast.success(t("Timer dimulai", "Timer started"));
       router.refresh();
@@ -269,6 +275,7 @@ export function TimerWidget({
     allProjects,
     allActivities,
     allTasks,
+    onTimerStarted,
     router,
     t,
   ]);
@@ -292,7 +299,9 @@ export function TimerWidget({
         activityName: null,
         taskTitle: null,
       });
+      onTimerStarted?.({ startTime: entry.startTime });
       selfDispatched.current = true;
+      window.dispatchEvent(new CustomEvent("cubiqlo:time-entry-started", { detail: { startTime: entry.startTime } }));
       window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
       toast.success(t("Timer kosong dimulai", "Empty timer started"));
       router.refresh();
@@ -301,7 +310,7 @@ export function TimerWidget({
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, router, t]);
+  }, [workspaceId, router, t, onTimerStarted]);
 
   const handlePause = useCallback(async () => {
     if (!activeTimer || loading) return;
@@ -476,6 +485,15 @@ export function TimerWidget({
     router,
     t,
   ]);
+
+  if (variant === "header" && !activeTimer) {
+    return (
+      <Button variant="outline" size="sm" className="gap-2" onClick={handleStartEmpty} disabled={loading}>
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+        {t("Mulai Timer", "Start Timer")}
+      </Button>
+    );
+  }
 
   return (
     <>

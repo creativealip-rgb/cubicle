@@ -61,8 +61,34 @@ const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
   },
 };
 
+const PLAN_GRACE_DAYS = 3;
+
+export function getEffectivePlan(
+  plan: string | null | undefined,
+  planExpiresAt: Date | string | null | undefined,
+  now: Date = new Date(),
+): PlanTier {
+  const tier = ((plan as PlanTier) in PLAN_LIMITS ? plan : "free") as PlanTier;
+  if (tier === "free") return "free";
+  if (!planExpiresAt) return tier;
+
+  const expires = planExpiresAt instanceof Date ? planExpiresAt : new Date(planExpiresAt);
+  if (Number.isNaN(expires.getTime())) return "free";
+
+  const graceUntil = new Date(expires.getTime() + PLAN_GRACE_DAYS * 24 * 60 * 60 * 1000);
+  return now <= graceUntil ? tier : "free";
+}
+
 export function getPlanLimits(plan: string): PlanLimits {
   return PLAN_LIMITS[(plan as PlanTier)] ?? PLAN_LIMITS.free;
+}
+
+export function getAiEntitlementFailure(plan: string): { status: number; error: string } | null {
+  const limits = getPlanLimits(plan);
+  if (!limits.hasAiAssistant) {
+    return { status: 403, error: "AI Assistant tersedia di paket Solo dan Team." };
+  }
+  return null;
 }
 
 // ─── Workspace-level rate limiter (in-memory, per plan) ───
@@ -258,12 +284,12 @@ export async function canCreateWorkspace(userId: string): Promise<{ allowed: boo
     .where(eq(workspaceMembers.userId, userId));
 
   const [user] = await db
-    .select({ plan: users.plan })
+    .select({ plan: users.plan, planExpiresAt: users.planExpiresAt })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
 
-  const plan = user?.plan ?? "free";
+  const plan = getEffectivePlan(user?.plan, user?.planExpiresAt);
   const limits = getPlanLimits(plan);
 
   if (limits.maxWorkspaces > 0 && count >= limits.maxWorkspaces) {
@@ -280,12 +306,12 @@ export async function canCreateWorkspace(userId: string): Promise<{ allowed: boo
 
 export async function canInviteMember(userId: string): Promise<{ allowed: boolean; reason?: string }> {
   const [user] = await db
-    .select({ plan: users.plan })
+    .select({ plan: users.plan, planExpiresAt: users.planExpiresAt })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
 
-  const plan = user?.plan ?? "free";
+  const plan = getEffectivePlan(user?.plan, user?.planExpiresAt);
   const limits = getPlanLimits(plan);
 
   if (!limits.canInviteMembers) {
@@ -300,14 +326,53 @@ export async function canInviteMember(userId: string): Promise<{ allowed: boolea
   return { allowed: true };
 }
 
+export async function canAddWorkspaceMember(
+  userId: string,
+  workspaceId: string,
+): Promise<{ allowed: boolean; reason?: string; current?: number; limit?: number }> {
+  const [user] = await db
+    .select({ plan: users.plan, planExpiresAt: users.planExpiresAt })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  const plan = getEffectivePlan(user?.plan, user?.planExpiresAt);
+  const limits = getPlanLimits(plan);
+
+  if (!limits.canInviteMembers) {
+    return {
+      allowed: false,
+      reason: plan === "free"
+        ? "Free plan tidak bisa mengundang anggota. Upgrade ke Team untuk kolaborasi."
+        : "Upgrade ke Team untuk mengundang anggota.",
+    };
+  }
+
+  if (limits.maxMembers > 0) {
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(workspaceMembers)
+      .where(eq(workspaceMembers.workspaceId, workspaceId));
+    if (count >= limits.maxMembers) {
+      return {
+        allowed: false,
+        reason: `Plan ${plan.toUpperCase()} maksimal ${limits.maxMembers} anggota.`,
+        current: count,
+        limit: limits.maxMembers,
+      };
+    }
+  }
+
+  return { allowed: true };
+}
+
 /**
  * Get user plan from user ID.
  */
 export async function getUserPlan(userId: string): Promise<string> {
   const [user] = await db
-    .select({ plan: users.plan })
+    .select({ plan: users.plan, planExpiresAt: users.planExpiresAt })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
-  return user?.plan ?? "free";
+  return getEffectivePlan(user?.plan, user?.planExpiresAt);
 }

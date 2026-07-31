@@ -21,6 +21,9 @@ import { eq, and, asc } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { aiConversations, aiMessages } from "@/db/schema";
+import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
+import { enforcePlanApiRateLimit } from "@/lib/plan-api-rate-limit";
+import { getAiEntitlementFailure, getUserPlan } from "@/lib/plan";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -35,6 +38,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const wsId = await getWorkspaceId();
+  const limited = await enforceRateLimitResponse(req, "ai:conversations:export", { limit: 20, windowSec: 60 }, { identity: session.user.id });
+  if (limited) return limited;
+  const plan = await getUserPlan(session.user.id);
+  const entitlementFailure = getAiEntitlementFailure(plan);
+  if (entitlementFailure) {
+    return NextResponse.json({ error: entitlementFailure.error }, { status: entitlementFailure.status });
+  }
+  const apiLimited = await enforcePlanApiRateLimit(req, { userId: session.user.id, workspaceId: wsId });
+  if (apiLimited) return apiLimited;
   const id = req.nextUrl.searchParams.get("id");
   if (!id) {
     return NextResponse.json({ error: "id required" }, { status: 400 });

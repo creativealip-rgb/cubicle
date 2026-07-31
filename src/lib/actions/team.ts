@@ -10,7 +10,7 @@ import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceOwner } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
-import { canInviteMember } from "@/lib/plan";
+import { canAddWorkspaceMember } from "@/lib/plan";
 import { notifyWorkspaceInvite } from "@/lib/notifications";
 import { resolveWorkspaceReplyTo } from "@/lib/workspace-reply-to";
 
@@ -31,7 +31,7 @@ export async function addWorkspaceMember(input: z.infer<typeof addMemberSchema>)
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceOwner(db, user.id, workspaceId);
 
-  const inviteCheck = await canInviteMember(user.id);
+  const inviteCheck = await canAddWorkspaceMember(user.id, workspaceId);
   if (!inviteCheck.allowed) {
     throw new Error(inviteCheck.reason || "Plan tidak mengizinkan undangan anggota.");
   }
