@@ -31,6 +31,12 @@ describe("client-scoped Project creation", () => {
     expect(clientPageSource).toContain('href={`?tab=projects`}');
   });
 
+  it("hides Project creation from read-only workspace roles", () => {
+    expect(clientPageSource).toContain("workspaceMembers.role");
+    expect(clientPageSource).toMatch(/const canWrite\s*=\s*[^;]*"owner"[^;]*"member"/);
+    expect(clientPageSource).toMatch(/\{canWrite\s*&&\s*\([\s\S]*<ProjectCreateDialog/);
+  });
+
   it("keeps plan-limit state and explanation on Client detail", () => {
     expect(clientPageSource).toMatch(/checkEntityLimit\([\s\S]*workspaceId,[\s\S]*"projects",/);
     expect(clientPageSource).toMatch(/isAtLimit=\{[^}]+\}/);

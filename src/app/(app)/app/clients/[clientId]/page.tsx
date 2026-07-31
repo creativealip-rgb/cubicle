@@ -10,6 +10,7 @@ import {
   appointments,
   packages,
   timeEntries,
+  workspaceMembers,
 } from "@/db/schema";
 import { eq, desc, sql, inArray, and } from "drizzle-orm";
 import { requireUser, assertClientInWorkspace } from "@/lib/access";
@@ -81,6 +82,18 @@ export default async function ClientDetailPage({
 
   const [client] = await db.select().from(clients).where(eq(clients.id, clientId));
   if (!client) notFound();
+
+  const [member] = await db
+    .select({ role: workspaceMembers.role })
+    .from(workspaceMembers)
+    .where(
+      and(
+        eq(workspaceMembers.workspaceId, workspaceId),
+        eq(workspaceMembers.userId, user.id),
+      ),
+    )
+    .limit(1);
+  const canWrite = member?.role === "owner" || member?.role === "member";
 
   const projectLimitState = await checkEntityLimit(
     workspaceId,
@@ -388,15 +401,17 @@ export default async function ClientDetailPage({
         </TabsContent>
 
         <TabsContent value="projects" className="space-y-4 pt-4">
-          <div className="flex justify-end">
-            <ProjectCreateDialog
-              clients={[]}
-              clientId={clientId}
-              isAtLimit={!projectLimitState.allowed}
-              projectCount={projectLimitState.current}
-              projectLimit={projectLimitState.limit}
-            />
-          </div>
+          {canWrite && (
+            <div className="flex justify-end">
+              <ProjectCreateDialog
+                clients={[]}
+                clientId={clientId}
+                isAtLimit={!projectLimitState.allowed}
+                projectCount={projectLimitState.current}
+                projectLimit={projectLimitState.limit}
+              />
+            </div>
+          )}
           {clientProjects.length === 0 && (
             <p className="text-sm text-muted-foreground py-8 text-center">Belum ada proyek</p>
           )}
