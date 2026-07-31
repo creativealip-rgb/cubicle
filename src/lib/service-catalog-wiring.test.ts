@@ -71,15 +71,15 @@ describe("Phase 3 Service catalog wiring", () => {
     expect(helper).toContain("normalizeCatalogName");
   });
 
-  it("exposes canonical /app/services and keeps /app/packages as Package surface", () => {
+  it("retires /app/services UI while preserving Service and Package compatibility components", () => {
     const servicePage = readExisting("src/app/(app)/app/services/page.tsx");
     const serviceCatalog = readExisting("src/components/services/service-catalog.tsx");
     const packagePage = read("src/app/(app)/app/packages/page.tsx");
     const packageCatalog = read("src/components/packages/package-catalog.tsx");
     const navigation = read("src/lib/navigation/app-navigation.ts");
 
-    expect(servicePage).toContain("getWorkspaceServices");
-    expect(servicePage).toContain("ServiceCatalog");
+    expect(servicePage).toContain('redirect("/app/tasks")');
+    expect(servicePage).not.toContain("ServiceCatalog");
     expect(serviceCatalog).toContain("createService");
     expect(serviceCatalog).toContain("archiveService");
     expect(serviceCatalog).toContain("pricingModel");
