@@ -1,73 +1,73 @@
 # Migration 0064 Disposable PostgreSQL Rehearsal Evidence
 
-**Date:** 2026-07-31  
-**Migration:** `drizzle/0064_billing_aware_task_templates.sql`  
-**Source:** `cubicle_dev` copied with `pg_dump -Fc` and restored into disposable PostgreSQL 16 database.  
-**Safety:** Production database `cubicle` was not accessed. Retired migration `0062_billing_aware_phase9_cleanup.sql` was not executed.
+**Date:** 2026-07-31
+
+**Migration:** `drizzle/0064_billing_aware_task_templates.sql`
+
+**Source:** `cubicle_dev` copied with `pg_dump -Fc` and restored into disposable PostgreSQL 16.14 database.
+
+**Safety:** Production database `cubicle` was not accessed. No development sessions were terminated. Retired migration `0062_billing_aware_phase9_cleanup.sql` was not executed.
 
 ## Procedure
 
-1. `pg_dump -Fc` from `cubicle_dev` inside `cubiqlo-new-pg`.
-2. Create disposable database `rehearsal_0064_1785508324`.
-3. Restore dump into disposable database.
-4. Apply only `0064_billing_aware_task_templates.sql` with `ON_ERROR_STOP=1`.
-5. Query tables, task backfill, tenant/provenance constraints, and import-ledger rollback.
-6. Drop disposable database and dump.
+1. Dump `cubicle_dev` from `cubiqlo-new-pg` with `pg_dump -Fc`.
+2. Restore into disposable database `rehearsal_0064_quality_1785508835`.
+3. Apply `0064_billing_aware_task_templates.sql` twice with `ON_ERROR_STOP=1`.
+4. Probe generated normalization, blank checks, same-workspace provenance, item deletion, and cross-tenant rejection.
+5. Drop disposable database and dump.
 
-Direct `CREATE DATABASE ... TEMPLATE cubicle_dev` was attempted first but PostgreSQL rejected it because one active development connection existed. No connection was terminated; dump/restore was used instead.
+## Observed replay output
 
-## Observed migration output
+First apply:
 
 ```text
 UPDATE 103
 NOTICE: 0064 task mode reconciliation: workflow=76, reusable=27
 ```
 
-## Tables
+Second apply:
 
 ```text
-task_template_imports
-task_template_items
-task_templates
+NOTICE: column "task_mode_policy" of relation "projects" already exists, skipping
+NOTICE: column "mode" of relation "tasks" already exists, skipping
+NOTICE: column "lifecycle" of relation "tasks" already exists, skipping
+NOTICE: column "template_item_source_id" of relation "tasks" already exists, skipping
+NOTICE: relation "task_templates" already exists, skipping
+NOTICE: relation "task_templates_workspace_active_normalized_name_uidx" already exists, skipping
+NOTICE: relation "task_template_items" already exists, skipping
+NOTICE: relation "task_template_imports" already exists, skipping
+UPDATE 0
+NOTICE: 0064 task mode reconciliation: workflow=76, reusable=27
+NOTICE: relation "tasks_workspace_mode_lifecycle_idx" already exists, skipping
+NOTICE: relation "tasks_project_mode_lifecycle_position_idx" already exists, skipping
+NOTICE: relation "task_template_imports_workspace_project_created_idx" already exists, skipping
 ```
 
-## Backfill
+Both applies exited `0`. Guarded `ADD CONSTRAINT` statements did not recreate existing constraints.
+
+## Integrity probes
 
 ```text
-reusable|27
-workflow|76
-null_modes=0
+NOTICE: normalized_name=mixed case template
+NOTICE: same_workspace_provenance=accepted
+NOTICE: delete_probe=template_item_source_id:null,workspace_id:intact
+NOTICE: cross_tenant_template_item=rejected
+NOTICE: cross_tenant_task_linkage=rejected
+NOTICE: blank_template_name=rejected
+NOTICE: blank_item_title=rejected
+DO
 ```
 
-Legacy/unclassified rows use the migration's conservative workflow fallback. No historical Time Log relationship was rewritten.
-
-## Validated constraints
+Only composite provenance FK remains and validates:
 
 ```text
-projects_id_workspace_unique=true
-task_template_imports_project_workspace_fk=true
-task_template_items_assignee_workspace_fk=true
-task_template_items_template_workspace_fk=true
-tasks_project_workspace_fk=true
-tasks_template_item_source_fk=true
 tasks_template_item_source_workspace_fk=true
 ```
 
-## Import-ledger rollback probe
-
-Inside one transaction, one ledger row was inserted using an existing disposable project, then rolled back.
-
-```text
-BEGIN
-INSERT 0 1
-ROLLBACK
-probe_rows=0
-```
-
-This proves a failed transaction does not leave the probe ledger row. Retry/conflict behavior remains action-layer scope and is tested when import actions are implemented.
+PostgreSQL 16 accepted `ON DELETE SET NULL ("template_item_source_id")` on composite FK. Deleting source item cleared nullable provenance column while preserving non-null `workspace_id`.
 
 ## Cleanup
 
 ```text
-dropped=rehearsal_0064_1785508324
+dropped=rehearsal_0064_quality_1785508835
 ```

@@ -19,9 +19,20 @@ describe("billing-aware task template schema", () => {
     expect(schema).toMatch(/createdBy: text\("created_by"\)\.notNull\(\)\.references\(\(\) => users\.id, \{ onDelete: "restrict" \}\)/);
     expect(schema).toContain('export const taskTemplateItems = pgTable("task_template_items"');
     expect(schema).toContain('enum: ["fixed_price", "hourly_retainer", "all"]');
+    expect(schema).toContain('normalizedName: text("normalized_name").generatedAlwaysAs(sql`lower(btrim(name))`)');
     expect(schema).toContain('task_templates_workspace_active_normalized_name_uidx');
     expect(schema).toContain('unique("task_templates_id_workspace_unique")');
+    expect(schema).toContain('check("task_templates_name_not_blank_check"');
     expect(schema).toContain('unique("task_template_items_template_position_unique")');
+    expect(schema).toContain('check("task_template_items_title_not_blank_check"');
+
+    expect(migration).toMatch(/"normalized_name" text GENERATED ALWAYS AS \(lower\(btrim\("name"\)\)\) STORED/);
+    expect(migration).toMatch(/task_templates_name_not_blank_check[\s\S]*length\(btrim\("name"\)\) > 0/);
+    expect(migration).toMatch(/task_template_items_title_not_blank_check[\s\S]*length\(btrim\("title"\)\) > 0/);
+    expect(migration).not.toMatch(/"normalized_name" text NOT NULL/);
+    expect(migration).not.toMatch(/tasks_template_item_source_fk/);
+    expect(migration).toMatch(/tasks_template_item_source_workspace_fk[\s\S]*ON DELETE SET NULL \("template_item_source_id"\)/);
+    expect(schema).not.toMatch(/templateItemSourceId: uuid\("template_item_source_id"\)\.references/);
     expect(schema).toContain('name: "task_template_items_template_workspace_fk"');
     expect(schema).toContain('name: "task_template_items_assignee_workspace_fk"');
     expect(schema).toContain('check("task_template_items_position_check"');
@@ -56,6 +67,16 @@ describe("billing-aware task template schema", () => {
     expect(migration).toContain('CREATE TABLE IF NOT EXISTS "task_templates"');
     expect(migration).toContain('CREATE TABLE IF NOT EXISTS "task_template_items"');
     expect(migration).toContain('CREATE TABLE IF NOT EXISTS "task_template_imports"');
+    for (const constraint of [
+      "projects_task_mode_policy_check",
+      "tasks_mode_check",
+      "tasks_lifecycle_check",
+      "projects_id_workspace_unique",
+      "tasks_project_workspace_fk",
+      "tasks_template_item_source_workspace_fk",
+    ]) {
+      expect(migration).toMatch(new RegExp(`IF NOT EXISTS \\([\\s\\S]*conname = '${constraint}'[\\s\\S]*ADD CONSTRAINT "${constraint}"`));
+    }
     expect(migration).not.toMatch(/DROP\s+(TABLE|COLUMN)\b/i);
     expect(migration).not.toMatch(/DROP[^;]*(activities|services)/i);
   });
