@@ -154,6 +154,22 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", defaultValues
         </div>
       </div>
       <div className="space-y-2">
+        <Label htmlFor="dueDate">{t("Jatuh Tempo", "Due Date")}</Label>
+        <Input id="dueDate" type="date" value={form.dueDate} onChange={(e) => setForm((p) => ({ ...p, dueDate: e.target.value }))} />
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="clientVisible"
+          checked={form.clientVisible}
+          onChange={(e) => setForm((p) => ({ ...p, clientVisible: e.target.checked }))}
+          className="h-4 w-4 rounded border-gray-300"
+        />
+        <Label htmlFor="clientVisible">{t("Terlihat oleh klien", "Visible to client")}</Label>
+      </div>
+      </>
+      ) : null}
+      <div className="space-y-2">
         <Label>{t("Penanggung Jawab", "Assignee")}</Label>
         <Select
           value={form.assigneeId || "unassigned"}
@@ -170,22 +186,6 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", defaultValues
           </SelectContent>
         </Select>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="dueDate">{t("Jatuh Tempo", "Due Date")}</Label>
-        <Input id="dueDate" type="date" value={form.dueDate} onChange={(e) => setForm((p) => ({ ...p, dueDate: e.target.value }))} />
-      </div>
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="clientVisible"
-          checked={form.clientVisible}
-          onChange={(e) => setForm((p) => ({ ...p, clientVisible: e.target.checked }))}
-          className="h-4 w-4 rounded border-gray-300"
-        />
-        <Label htmlFor="clientVisible">{t("Terlihat oleh klien", "Visible to client")}</Label>
-      </div>
-      </>
-      ) : null}
       <Button type="submit" disabled={loading} className="w-full">
         {loading ? t("Menyimpan...", "Saving...") : mode === "create" ? t("Buat Tugas", "Create Task") : t("Simpan Perubahan", "Save Changes")}
       </Button>
