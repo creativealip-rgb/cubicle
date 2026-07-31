@@ -9,11 +9,12 @@ Plan: `docs/plans/2026-08-01-client-project-invoice-task-workspace-revision.md`
 - Task 1 — Client-scoped Project dialog. Commits `d34ab45`, `45553dc`. Targeted tests, TypeScript, ESLint passed.
 - Task 2 — tenant-safe Invoice origin policy. Commit `8e1989b`. 15 targeted tests passed.
 - Task 3 — Project-scoped Invoice dialog. Commit `9c749e0`. 32 targeted tests and TypeScript passed.
-- Task 4 — Client Invoice formatting and Portal control accessibility. 11 targeted tests, TypeScript, and ESLint passed.
+- Task 4 — Client Invoice formatting and Portal control accessibility. Commit `63203e5`. 11 targeted tests, TypeScript, and ESLint passed.
+- Task 5 — authenticated Portal password encryption primitive. 8 tests, TypeScript, and ESLint passed.
 
 ## Current
 
-- Task 5 — authenticated Portal password encryption primitive.
+- Task 6 — additive Portal password ciphertext schema.
 
 ## Release state
 
