@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo, useTransition } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -14,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SortableHeader } from "@/components/ui/sortable-header";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TableHeaderFilter } from "@/components/ui/table-header-filter";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { formatDateID, formatMoney } from "@/lib/utils";
@@ -60,8 +59,6 @@ type SortKey =
   | "total"
   | "status";
 
-type FilterOption = { id: string; name: string };
-
 type CurrentFilters = {
   status?: string;
   clientId?: string;
@@ -75,44 +72,6 @@ function formatInvoiceId(num: string): string {
   if (!match) return num;
   const year = new Date().getFullYear();
   return `INV-${year}-${match[1].padStart(4, "0")}`;
-}
-
-function InvoiceTableHeaderFilter({
-  filterKey,
-  value,
-  options,
-  placeholder,
-}: {
-  filterKey: "clientId" | "projectId" | "billing";
-  value?: string;
-  options: FilterOption[];
-  placeholder: string;
-}) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [pending, startTransition] = useTransition();
-
-  function apply(nextValue: string) {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("page");
-    if (!nextValue || nextValue === "all") params.delete(filterKey);
-    else params.set(filterKey, nextValue);
-    startTransition(() => router.push(`/app/invoices${params.toString() ? `?${params.toString()}` : ""}`));
-  }
-
-  return (
-    <Select value={value ?? "all"} onValueChange={apply} disabled={pending}>
-      <SelectTrigger className="mt-1 h-8 w-full min-w-[9rem] text-xs font-normal">
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="all">{placeholder}</SelectItem>
-        {options.map((option) => (
-          <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
 }
 
 export function InvoicesListTable({
@@ -184,42 +143,39 @@ export function InvoicesListTable({
                 />
               </TableHead>
               <TableHead>
-                <SortableHeader
+                <TableHeaderFilter
                   label={t("Klien", "Client")}
-                  dir={dirFor("client")}
-                  onClick={() => toggle("client")}
-                />
-                <InvoiceTableHeaderFilter
-                  filterKey="clientId"
+                  queryKey="clientId"
                   value={currentFilters.clientId}
-                  options={clientOptions}
-                  placeholder={t("Semua klien", "All clients")}
+                  basePath="/app/invoices"
+                  options={[
+                    { value: "all", label: t("Semua klien", "All clients") },
+                    ...clientOptions.map((client) => ({ value: client.id, label: client.name })),
+                  ]}
                 />
               </TableHead>
               <TableHead>
-                <SortableHeader
+                <TableHeaderFilter
                   label={t("Proyek", "Project")}
-                  dir={dirFor("project")}
-                  onClick={() => toggle("project")}
-                />
-                <InvoiceTableHeaderFilter
-                  filterKey="projectId"
+                  queryKey="projectId"
                   value={currentFilters.projectId}
-                  options={projectOptions}
-                  placeholder={t("Semua proyek", "All projects")}
+                  basePath="/app/invoices"
+                  options={[
+                    { value: "all", label: t("Semua proyek", "All projects") },
+                    ...projectOptions.map((project) => ({ value: project.id, label: project.name })),
+                  ]}
                 />
               </TableHead>
               <TableHead>
-                <SortableHeader
+                <TableHeaderFilter
                   label={t("Jenis", "Type")}
-                  dir={dirFor("type")}
-                  onClick={() => toggle("type")}
-                />
-                <InvoiceTableHeaderFilter
-                  filterKey="billing"
+                  queryKey="billing"
                   value={currentFilters.billing}
-                  options={billingOptions}
-                  placeholder={t("Semua jenis", "All types")}
+                  basePath="/app/invoices"
+                  options={[
+                    { value: "all", label: t("Semua jenis", "All types") },
+                    ...billingOptions.map((option) => ({ value: option.id, label: option.name })),
+                  ]}
                 />
               </TableHead>
               <TableHead>

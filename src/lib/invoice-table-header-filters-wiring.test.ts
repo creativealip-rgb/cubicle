@@ -11,16 +11,18 @@ describe("invoice table header filters", () => {
     expect(page).toContain("currentFilters={{");
   });
 
-  it("renders header filters for client, project, and type columns", () => {
-    expect(table).toContain("InvoiceTableHeaderFilter");
-    expect(table).toContain("filterKey=\"clientId\"");
-    expect(table).toContain("filterKey=\"projectId\"");
-    expect(table).toContain("filterKey=\"billing\"");
+  it("uses shared compact table header filters for client, project, and type columns", () => {
+    expect(table).toContain("TableHeaderFilter");
+    expect(table).not.toContain("InvoiceTableHeaderFilter");
+    expect(table).not.toContain("SelectTrigger");
+    expect(table).toContain("queryKey=\"clientId\"");
+    expect(table).toContain("queryKey=\"projectId\"");
+    expect(table).toContain("queryKey=\"billing\"");
   });
 
-  it("keeps sortable headers on filtered columns", () => {
-    expect(table).toMatch(/label=\{t\(\"Klien\", \"Client\"\)\}[\s\S]*filterKey=\"clientId\"/);
-    expect(table).toMatch(/label=\{t\(\"Proyek\", \"Project\"\)\}[\s\S]*filterKey=\"projectId\"/);
-    expect(table).toMatch(/label=\{t\(\"Jenis\", \"Type\"\)\}[\s\S]*filterKey=\"billing\"/);
+  it("keeps filter labels on matching columns", () => {
+    expect(table).toMatch(/label=\{t\(\"Klien\", \"Client\"\)\}[\s\S]*queryKey=\"clientId\"/);
+    expect(table).toMatch(/label=\{t\(\"Proyek\", \"Project\"\)\}[\s\S]*queryKey=\"projectId\"/);
+    expect(table).toMatch(/label=\{t\(\"Jenis\", \"Type\"\)\}[\s\S]*queryKey=\"billing\"/);
   });
 });
