@@ -13,6 +13,7 @@ import { useT } from "@/lib/i18n-client";
 interface TaskFormProps {
   mode: "create" | "edit";
   projectId?: string;
+  taskMode?: "workflow" | "reusable";
   defaultValues?: {
     id?: string;
     title?: string;
@@ -30,7 +31,7 @@ interface TaskFormProps {
   onSuccess?: () => void;
 }
 
-export function TaskForm({ mode, projectId, defaultValues, members = [], projects = [], onSuccess }: TaskFormProps) {
+export function TaskForm({ mode, projectId, taskMode = "workflow", defaultValues, members = [], projects = [], onSuccess }: TaskFormProps) {
   const { t } = useT();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -54,12 +55,12 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], project
         title: form.title,
         description: form.description || undefined,
         projectId: form.projectId,
-        status: form.status as "todo" | "in_progress" | "review" | "done",
-        priority: form.priority as "low" | "medium" | "high" | "urgent",
         assigneeId: form.assigneeId || undefined,
-        dueDate: form.dueDate || undefined,
-        clientVisible: form.clientVisible,
-        behavior: form.behavior,
+        clientVisible: taskMode === "workflow" ? form.clientVisible : undefined,
+        status: taskMode === "workflow" ? form.status as "todo" | "in_progress" | "review" | "done" : undefined,
+        priority: taskMode === "workflow" ? form.priority as "low" | "medium" | "high" | "urgent" : undefined,
+        dueDate: taskMode === "workflow" ? form.dueDate || undefined : undefined,
+        mode: taskMode,
       };
 
       if (mode === "create") {
@@ -74,7 +75,6 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], project
         if (data.assigneeId !== undefined) updateData.assigneeId = data.assigneeId;
         if (data.dueDate !== undefined) updateData.dueDate = data.dueDate;
         if (data.clientVisible !== undefined) updateData.clientVisible = data.clientVisible;
-        if (data.behavior !== undefined) updateData.behavior = data.behavior;
         await updateTask(defaultValues.id, updateData);
         toast.success(t("Tugas diperbarui", "Task updated"));
       }
