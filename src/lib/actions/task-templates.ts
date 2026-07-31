@@ -314,7 +314,7 @@ async function loadTaskTemplateImportContext(database: typeof db | Transaction, 
       id: template.id,
       items: items.map((item) => ({
         id: item.id, title: item.title, position: item.position,
-        selected: selected.size === 0 || selected.has(item.id),
+        selected: selected.has(item.id),
         duplicateAction: decisions.get(item.id) as DuplicateAction | undefined,
       })),
     })),
@@ -325,12 +325,13 @@ async function loadTaskTemplateImportContext(database: typeof db | Transaction, 
 export async function previewTaskTemplateImport(inputValue: unknown) {
   const { workspaceId } = await actionContext(false);
   const input = taskTemplateImportSchema.parse(inputValue);
-  return loadTaskTemplateImportContext(db, workspaceId, input);
+  const context = await loadTaskTemplateImportContext(db, workspaceId, input);
+  return { ...context, payloadFingerprint: canonicalTaskTemplateImportFingerprint(input) };
 }
 
 export async function importTaskTemplates(inputValue: unknown) {
   const { user, workspaceId } = await actionContext(true);
-  const input = taskTemplateImportSchema.extend({ idempotencyKey: z.string().uuid() }).parse(inputValue);
+  const input = taskTemplateImportSchema.extend({ idempotencyKey: z.string().uuid(), previewFingerprint: z.string().min(1) }).parse(inputValue);
   const fingerprintPayload = {
     projectId: input.projectId,
     templateIds: input.templateIds,
@@ -338,6 +339,7 @@ export async function importTaskTemplates(inputValue: unknown) {
     allowIncompatibleTarget: input.allowIncompatibleTarget,
   };
   const payloadFingerprint = canonicalTaskTemplateImportFingerprint(fingerprintPayload);
+  if (input.previewFingerprint !== payloadFingerprint) throw new Error("STALE_PREVIEW: Preview import sudah berubah");
   return db.transaction(async (tx) => {
     await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`task-template-import:${workspaceId}:${input.projectId}:${input.idempotencyKey}`}, 0))`);
     const [existingLedger] = await tx.select().from(taskTemplateImports).where(and(

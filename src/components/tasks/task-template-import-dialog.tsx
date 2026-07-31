@@ -27,6 +27,7 @@ export function TaskTemplateImportDialog({ projectId, templates }: { projectId: 
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
   const [selectedItems, setSelectedItems] = useState<Array<{ itemId: string; duplicateAction?: "skip" | "keep" }>>([]);
   const [preview, setPreview] = useState<PreviewItem[]>([]);
+  const [previewFingerprint, setPreviewFingerprint] = useState("");
   const [allowIncompatibleTarget, setAllowIncompatibleTarget] = useState(false);
   const idempotencyKeyRef = useRef<string>(crypto.randomUUID());
 
@@ -35,7 +36,7 @@ export function TaskTemplateImportDialog({ projectId, templates }: { projectId: 
     try {
       const result = await previewTaskTemplateImport({ projectId, templateIds: selectedTemplateIds, selectedItems, allowIncompatibleTarget });
       setPreview(result.preview);
-      setSelectedItems(result.preview.map((item) => ({ itemId: item.itemId, duplicateAction: item.duplicate ? "skip" : "keep" })));
+      setPreviewFingerprint(result.payloadFingerprint);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Preview gagal");
     } finally { setLoading(false); }
@@ -43,7 +44,7 @@ export function TaskTemplateImportDialog({ projectId, templates }: { projectId: 
 
   function toggleTemplate(id: string) {
     setSelectedTemplateIds((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current, id]);
-    setPreview([]);
+    setPreview([]); setSelectedItems([]); setPreviewFingerprint("");
   }
 
   function toggleItem(itemId: string, checked: boolean) {
@@ -60,7 +61,7 @@ export function TaskTemplateImportDialog({ projectId, templates }: { projectId: 
     setLoading(true);
     try {
       const result = await importTaskTemplates({
-        projectId, templateIds: selectedTemplateIds, selectedItems, allowIncompatibleTarget,
+        projectId, templateIds: selectedTemplateIds, selectedItems, allowIncompatibleTarget, previewFingerprint,
         idempotencyKey: idempotencyKeyRef.current,
       }) as { created?: unknown[] };
       toast.success(`Tugas berhasil ditambahkan: ${result.created?.length ?? 0}`);
@@ -86,7 +87,7 @@ export function TaskTemplateImportDialog({ projectId, templates }: { projectId: 
               </label>
             ))}
           </div>
-          <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={allowIncompatibleTarget} onChange={(event) => setAllowIncompatibleTarget(event.target.checked)} /><span>Tampilkan dan adaptasikan template yang target billing-nya berbeda.</span></label>
+          <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={allowIncompatibleTarget} onChange={(event) => {setAllowIncompatibleTarget(event.target.checked);setPreview([]);setSelectedItems([]);setPreviewFingerprint("");}} /><span>Izinkan template tidak cocok</span></label>
           <Button onClick={loadPreview} disabled={loading || selectedTemplateIds.length === 0}>Lihat Preview</Button>
           {preview.length ? <div className="overflow-hidden rounded-md border">
             {preview.map((item) => {
@@ -98,7 +99,7 @@ export function TaskTemplateImportDialog({ projectId, templates }: { projectId: 
               </div>;
             })}
           </div> : null}
-          <Button className="w-full" onClick={submit} disabled={loading || preview.length === 0}>Import Tugas Terpilih</Button>
+          <Button className="w-full" onClick={submit} disabled={loading || preview.length === 0 || selectedItems.length === 0 || !previewFingerprint}>Import Tugas Terpilih</Button>
         </div>
       </DialogContent>
     </Dialog>
