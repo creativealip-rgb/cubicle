@@ -45,11 +45,9 @@ export function ProjectTaskWorkspace({ projectId, mode, workflowTasks, reusableT
           </DialogContent>
         </Dialog>
       </div>
-      {mode === "workflow" ? (
-        <WorkflowTaskWorkspace tasks={visibleWorkflow} members={members} projects={projects} currentUserId={currentUserId} />
-      ) : (
-        <ReusableTaskWorkspace tasks={visibleReusable} members={members} />
-      )}
+      {visibleWorkflow.length > 0 && <div className="space-y-2"><h3 className="text-sm font-semibold">Tugas Workflow</h3><WorkflowTaskWorkspace tasks={visibleWorkflow} members={members} projects={projects} currentUserId={currentUserId} /></div>}
+      {visibleReusable.length > 0 && <div className="space-y-2"><h3 className="text-sm font-semibold">Tugas Berulang</h3><ReusableTaskWorkspace tasks={visibleReusable} members={members} /></div>}
+      {visibleWorkflow.length === 0 && visibleReusable.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">Belum ada tugas.</p>}
       {!projectId && Math.max(workflowTasks.length, reusableTasks.length) > PAGE_SIZE ? (
         <div className="flex justify-end gap-2">
           <button disabled={page === 1} onClick={() => setPage((value) => value - 1)}>Sebelumnya</button>
