@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.121-dev — 2026-07-31 — Invoice editing fix for sent, viewed, and overdue statuses
+
+- Invoices: Allow editing, adding, and deleting line items for invoices that are in `sent`, `viewed`, or `overdue` status. Only `paid`, `cancelled`, and `archived` statuses are now locked as final.
+- Error prevention: Fixed generic "Server Components render" errors caused by `addProjectInvoiceItem` action throwing on `sent/viewed/overdue` checks.
+- Commits: `f4f703a`
+- Deployment: Live app container `cubiqlo-new-app` updated to `cubiqlo-prod:sha-f4f703a-invoice-fix-20260731104731` with DB health `ok`.
+
 ## v0.1.120-dev — 2026-07-30 — Navigation, compact filters, billing QA, and portal polish
 
 - Sidebar navigation: replace covering desktop flyouts with route-active inline child menus for Pekerjaan, Keuangan, Personal, and AI; keep mobile accordions and collapsed desktop behavior compact
