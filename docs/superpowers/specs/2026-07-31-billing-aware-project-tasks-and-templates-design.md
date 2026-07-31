@@ -88,9 +88,9 @@ Defaults:
 | Retainer | Reusable |
 | Legacy Package | Read-only until classified |
 
-A project may explicitly switch or add the other work mode when its real workflow requires it. Mixed mode must be enabled by a deliberate user action; both editors are not shown by default.
+Store canonical `projects.task_mode_policy` as `billing_default`, `workflow`, `reusable`, or `mixed`. `billing_default` derives new-task default from current billing model; explicit policies do not change when billing changes. `mixed` must be enabled deliberately and requires explicit mode for each new task; both editors are not shown by default otherwise.
 
-Transitions must preserve historical tasks and Time Logs. No transition may silently reinterpret an existing task’s lifecycle.
+Billing transitions affect only future defaults/editor availability. Every existing task keeps stored `tasks.mode`, workflow status, lifecycle, and Time Log relationships. No project-policy or billing-model transition bulk-reinterprets historical tasks.
 
 ## 4. Flat project task structure
 
@@ -151,7 +151,7 @@ After import:
 - Project tasks are independent copies.
 - Template edits never mutate existing project tasks.
 - Project edits never mutate templates.
-- Template name and template ID are not required in active project UX. Optional provenance may be stored for audit only.
+- Store nullable `template_item_source_id` as audit-only provenance with no synchronization contract; hide it from active project UX. Template deletion may set it null. This is sole provenance strategy in scope.
 
 ### 5.3 Billing adaptation
 
@@ -230,7 +230,7 @@ Project → Task → Description → Date/Duration → Approval
 
 Rules:
 
-- Task is required for new Hourly / Retainer timer completion and manual Time Logs.
+- Timer may start without project/task context. Hourly / Retainer timer completion and manual Time Logs require an eligible active task. Failed stop is atomic and leaves timer active.
 - Historical Time Logs without a task remain readable.
 - Members with project/workspace write access may log time against a reusable Task even when they are not its default assignee.
 - Default assignee represents responsibility, not exclusive logging permission.
@@ -307,25 +307,29 @@ All reads/writes require workspace membership and project scoping.
 Required invariants:
 
 - task and template rows belong to one workspace
+- composite tenant FKs enforce tasks/project and template/item/default-assignee relations, not app checks alone
+- template `created_by` is a non-null text FK to `users.id`; restore with normalized active-name conflict fails and requires rename
+- archived templates are hidden by default; workflow status/priority defaults are derived on import, never persisted as reusable-item semantics
 - project tasks must match project workspace
 - template import validates destination project and every default assignee
 - archived templates cannot be newly imported without explicit restore
 - task hard delete is forbidden when referenced by Time Logs
 - duplicate detection is advisory and previewed; server repeats it inside transaction
-- imports are atomic and idempotency-protected against accidental double submit
+- imports use a persisted ledger keyed by workspace/project/idempotency key: same payload fingerprint returns prior result, different fingerprint conflicts, and any failure atomically rolls back ledger plus tasks
 - tenant IDs are never trusted directly from client payload
 
 ## 12. Migration strategy
 
 Additive first:
 
-1. Add Template Tugas tables and target/status constraints.
-2. Add fields needed to distinguish workflow and reusable task lifecycle without destroying existing rows.
-3. Classify existing `behavior=recurring` tasks as reusable candidates.
-4. Reconcile edge cases and legacy billing projects.
-5. Switch UI/actions to canonical modes.
-6. Retire Activity/Service UI.
-7. Perform destructive cleanup only through separately approved migrations.
+1. Reserve migration number after fetching refs and inspecting every worktree/untracked migration; reconcile existing `0063` registry omission, reserve `0064`, update `ACTIVE_BOARD.md` when present or create it, and never authorize retired `0062`.
+2. Add Template Tugas tables, import idempotency ledger, target/status constraints, and composite tenant FKs.
+3. Add fields needed to distinguish workflow and reusable task lifecycle without destroying existing rows.
+4. Classify existing `behavior=recurring` tasks as reusable candidates.
+5. Reconcile edge cases and legacy billing projects.
+6. Switch UI/actions to canonical modes.
+7. Retire Activity/Service UI.
+8. Perform destructive cleanup only through separately approved migrations.
 
 Existing task/time relationships must remain stable. No migration may rewrite historical Time Logs to a different task automatically.
 
@@ -339,6 +343,7 @@ Existing task/time relationships must remain stable. No migration may rewrite hi
 - multi-template flat import
 - order preservation
 - duplicate preview and server transaction checks
+- import ledger retry/conflict/atomic rollback
 - import idempotency
 - workspace/project/assignee tenant boundaries
 - archived task selection rejection
@@ -372,6 +377,7 @@ Desktop and 390×844 mobile:
 - full Vitest suite passes
 - ESLint passes
 - TypeScript and Next.js production build pass
+- real disposable PostgreSQL 16 integration matrix passes for tenant FKs, import atomicity/idempotency, reorder, delete, failed timer stop, and historical Time reads; wiring tests are supplementary only
 - migration dry-run passes on disposable clone
 - authenticated live/mobile QA passes
 - `dokploy-traefik` remains sole public 80/443 owner

@@ -30,7 +30,8 @@
 Add:
 
 ```text
-mode: workflow | reusable
+projects.task_mode_policy: billing_default | workflow | reusable | mixed (NOT NULL DEFAULT billing_default)
+tasks.mode: workflow | reusable
 lifecycle: active | archived
 template_item_source_id: nullable UUID (audit only; no synchronization)
 ```
@@ -53,7 +54,19 @@ behavior=recurring -> mode=reusable
 null behavior      -> resolve from project billing model
 ```
 
-`mode` becomes canonical after backfill. `behavior` remains compatibility-read until a later cleanup.
+`mode` becomes canonical after backfill. `behavior` remains compatibility-read until a later cleanup. `projects.task_mode_policy` is canonical project policy; billing model is only consulted when policy is `billing_default`.
+
+Transition matrix:
+
+| Existing policy | Billing-model change | Result for new tasks/editors | Historical tasks |
+|---|---|---|---|
+| `billing_default` | Fixed Price | new default `workflow` | keep stored `tasks.mode` unchanged |
+| `billing_default` | Hourly/Retainer | new default `reusable` | keep stored `tasks.mode` unchanged |
+| `workflow` | any | workflow only | unchanged |
+| `reusable` | any | reusable only | unchanged |
+| `mixed` | any | both modes enabled; user chooses explicit mode | unchanged |
+
+Changing policy never bulk-reclassifies tasks. Switching from `mixed` or an explicit policy changes creation/editor availability only. Existing tasks retain stored mode/lifecycle/status semantics; any per-task conversion is a separate explicit action outside this scope.
 
 ### New template tables
 
@@ -65,7 +78,7 @@ task_templates
 - description TEXT NULL
 - target TEXT: fixed_price | hourly_retainer | all
 - status TEXT: active | archived
-- created_by TEXT NULL
+- created_by TEXT NOT NULL REFERENCES users(id) ON DELETE RESTRICT
 - timestamps
 - unique active normalized name per workspace
 
@@ -78,11 +91,55 @@ task_template_items
 - default_assignee_id TEXT NULL
 - position INTEGER NOT NULL
 - timestamps
-- composite tenant FKs
+- FK (template_id, workspace_id) -> task_templates(id, workspace_id)
+- FK (default_assignee_id, workspace_id) -> workspace_members(user_id, workspace_id), matching actual key types/order
 - unique(template_id, position)
 ```
 
 No persistent Task List/group table. No subtask table.
+
+---
+
+### Task 0: Reserve migration number and freeze execution baseline
+
+**Objective:** Prevent migration-number collision before schema work starts.
+
+**Files:**
+- Modify: `docs/migration-registry.md`
+- Modify if present, otherwise create: `ACTIVE_BOARD.md`
+- Inspect only: `drizzle/*.sql`, all Git refs, and every active worktree
+
+**Step 1: Synchronize prerequisite refs**
+
+Before implementation, run `git fetch --all --prune`. Fetch is mandatory at execution time because reservation depends on current remote refs; this documentation-only revision does not fetch or push.
+
+**Step 2: Reconcile ledger reality**
+
+Run:
+
+```bash
+git worktree list --porcelain
+git for-each-ref --format='%(refname)' refs/heads refs/remotes | sort
+for wt in $(git worktree list --porcelain | sed -n 's/^worktree //p'); do
+  git -C "$wt" status --short --untracked-files=all -- 'drizzle/*.sql' docs/migration-registry.md ACTIVE_BOARD.md
+done
+```
+
+Confirm `drizzle/0063_invoice_share_token_encrypted.sql` exists but `0063` is absent from current registry. Add `0063` as a reconciled existing allocation; do not rename or regenerate it. Search fetched refs and every worktree, including untracked migration files, for any `0064` claim.
+
+**Step 3: Reserve `0064`**
+
+Only when no collision exists:
+
+- add registry row for `0064` with owner, feature, branch, and `reserved` status;
+- update existing root `ACTIVE_BOARD.md`, or create it when absent, with same reservation;
+- commit reservation before creating migration SQL.
+
+If any `0064` candidate exists, stop. Reconcile ownership and choose next free number; never overwrite another migration. `0062` stays retired and unauthorized.
+
+**Step 4: Verify reservation**
+
+Run `git diff --check` and repeat worktree/ref scan. Expected: one canonical `0064` reservation, reconciled `0063`, no SQL created yet.
 
 ---
 
@@ -103,7 +160,8 @@ Cover:
 ```text
 fixed_price -> workflow
 hourly/retainer -> reusable
-explicit override wins
+canonical project policy supports billing_default/workflow/reusable/mixed
+billing-model transitions follow the policy matrix without mutating existing task modes
 legacy_package rejects new writes
 normalized duplicate compares trim + lowercase
 preview defaults duplicate to skip
@@ -131,6 +189,7 @@ Exports:
 ```ts
 export type TaskWorkMode = "workflow" | "reusable";
 export type TaskLifecycle = "active" | "archived";
+export type ProjectTaskModePolicy = "billing_default" | "workflow" | "reusable" | "mixed";
 export function defaultTaskWorkMode(model: BillingModel): TaskWorkMode;
 export function resolveTaskWorkMode(model: BillingModel, override?: TaskWorkMode): TaskWorkMode;
 export function normalizeTaskTitle(value: string): string;
@@ -172,10 +231,13 @@ tasks.mode enum workflow/reusable
 tasks.lifecycle enum active/archived
 taskTemplates export
 taskTemplateItems export
-workspace composite FKs
+projects.task_mode_policy check/default
+unique(projects.id, projects.workspace_id) and FK tasks(project_id, workspace_id) -> projects(id, workspace_id)
+unique(task_templates.id, task_templates.workspace_id) and composite template-item/assignee tenant FKs
 normalized active-name unique index
 template target/status checks
 position non-negative check
+task_template_imports ledger stores workspace/project/idempotency key, payload fingerprint, completed result JSON, and timestamps
 migration contains additive ALTER/CREATE only
 migration does not DROP Activity/Service objects
 ```
@@ -188,19 +250,24 @@ Run the new test. Expected: FAIL on missing schema exports/migration.
 
 Migration order:
 
-1. Add nullable `tasks.mode`.
-2. Add non-null `tasks.lifecycle DEFAULT 'active'`.
-3. Add nullable `tasks.template_item_source_id` without FK to allow template deletion/archive independence, or use `ON DELETE SET NULL` if FK retained.
-4. Create template tables and constraints.
-5. Backfill task mode from `behavior`, then project billing model/type.
-6. Make `tasks.mode` non-null after reconciliation query confirms no nulls.
-7. Add indexes for global/project mode/lifecycle/order queries.
+1. Add non-null `projects.task_mode_policy DEFAULT 'billing_default'` with check constraint and tenant-safe project unique key.
+2. Add nullable `tasks.mode`.
+3. Add non-null `tasks.lifecycle DEFAULT 'active'`.
+4. Add nullable `tasks.template_item_source_id` FK to `task_template_items.id ON DELETE SET NULL`; audit provenance only, never synchronization.
+5. Add composite task/project and template tenant FKs; use `NOT VALID` then validate after orphan checks if existing task data requires it.
+6. Create template tables and constraints, including `created_by` text FK matching `users.id`.
+7. Create `task_template_imports` with unique `(workspace_id, project_id, idempotency_key)`, payload fingerprint, nullable result JSON, and composite destination-project tenant FK.
+8. Backfill task mode from `behavior`, then project billing model/type.
+9. Make `tasks.mode` non-null after reconciliation query confirms no nulls.
+10. Add indexes for global/project mode/lifecycle/order queries.
 
-Backfill must map legacy package tasks conservatively and document result.
+Backfill must map legacy package tasks conservatively and document result. No backfill changes historical task meaning after mode is stored.
+
+Import ledger contract is decided here, not deferred: canonicalize validated import input, hash it as payload fingerprint, insert/lock ledger row inside same transaction as task inserts, persist completed result JSON before commit. Retry with same key + same fingerprint returns prior result without new tasks. Same key + different fingerprint returns conflict. Any validation/insert/result failure rolls back ledger and tasks atomically, allowing clean retry.
 
 **Step 4: Verify migration statically and on disposable DB**
 
-Use a disposable PostgreSQL database/container. Apply baseline migrations/schema then `0064`. Verify tables, columns, constraints, and backfill. Do not touch production.
+Use real disposable PostgreSQL 16, not mocks. Apply baseline ledger through `0063`, then reserved `0064`; runner must skip retired `0062`. Verify tables, columns, constraints, tenant FKs, policy backfill, import ledger, and rollback behavior. Do not touch production.
 
 **Step 5: Run schema test and build**
 
@@ -261,6 +328,8 @@ Rules:
 - Archive, do not hard-delete template.
 - Item removal allowed because templates are import sources, not historical project relations; still scope transactionally.
 - Duplicate copies items and creates collision-safe name such as `Nama (Salinan)`.
+- Restore computes normalized active-name availability in transaction; conflict returns explicit rename-required error and leaves template archived.
+- Archived templates/items remain hidden from default selectors but readable in archive management. Template item defaults do not persist workflow status/priority; imports derive `todo`/`medium` only for workflow mode and omit them for reusable mode.
 - Reorder accepts complete ordered IDs, validates same template/workspace, and updates in one transaction.
 
 **Step 4: Verify GREEN and build**
@@ -318,7 +387,7 @@ previewTaskTemplateImport(input)
 importTaskTemplates(input)
 ```
 
-Server repeats all preview validations inside import transaction. Store idempotency in a small import ledger table only if current infrastructure lacks reusable idempotency storage; if added, update Task 2 migration before continuing.
+Server repeats all preview validations inside import transaction. Use canonical `task_template_imports` ledger created in Task 2. Lock by workspace + project + key. Same key/fingerprint returns stored result; different fingerprint conflicts. All ledger and task writes share one transaction; any failure rolls back everything.
 
 **Step 4: Verify GREEN**
 
@@ -389,7 +458,7 @@ git commit -m "feat(tasks): enforce billing-aware task modes"
 
 ---
 
-### Task 6: Build shared billing-aware project task workspace
+### Task 6: Build shared workflow and reusable task editors
 
 **Objective:** Create one complete editor component reusable globally and inside project detail.
 
@@ -397,7 +466,6 @@ git commit -m "feat(tasks): enforce billing-aware task modes"
 - Create: `src/components/tasks/project-task-workspace.tsx`
 - Create: `src/components/tasks/workflow-task-workspace.tsx`
 - Create: `src/components/tasks/reusable-task-workspace.tsx`
-- Create: `src/components/tasks/task-template-import-dialog.tsx`
 - Modify: existing `tasks-list-table.tsx`, `tasks-board-view.tsx`, `task-form.tsx` as shared children
 - Create: `src/lib/project-task-workspace-wiring.test.ts`
 
@@ -412,7 +480,6 @@ workflow renders List/Board
 reusable renders flat list only
 reusable fields exclude status/due/priority
 create/edit/archive/reorder actions wired
-import dialog wired
 10/page global pagination
 full editor available in both contexts
 ```
@@ -446,7 +513,19 @@ git commit -m "feat(tasks): add shared project task workspace"
 
 ---
 
-### Task 7: Replace global Tasks page UX
+### Task 7: Build task-template import dialog
+
+**Objective:** Add preview, selection, duplicate override, compatibility warning, idempotency-key reuse, and result handling without page integration.
+
+**Files:**
+- Create: `src/components/tasks/task-template-import-dialog.tsx`
+- Create: `src/lib/task-template-import-dialog-wiring.test.ts`
+
+**Steps:** Write failing component/wiring tests; run `npm run test -- src/lib/task-template-import-dialog-wiring.test.ts`; implement dialog against Task 4 actions; rerun targeted test, `npm run lint -- src/components/tasks/task-template-import-dialog.tsx`, and `npm run build`; commit only listed files.
+
+---
+
+### Task 8: Replace global Tasks page UX
 
 **Objective:** Change `/app/tasks` to `Tugas Proyek | Template Tugas` with complete editors.
 
@@ -485,7 +564,7 @@ git commit -m "feat(tasks): redesign global task page"
 
 ---
 
-### Task 8: Replace project-detail work tab and consolidate Billing
+### Task 9: Replace project-detail work tab and consolidate Billing
 
 **Objective:** Render billing-aware `Pekerjaan`, conditionally show `Waktu`, hide standalone `Layanan`, and provide one Billing tab.
 
@@ -533,72 +612,52 @@ git commit -m "feat(projects): add billing-aware work and billing tabs"
 
 ---
 
-### Task 9: Require Tasks for new Hourly/Retainer Time Logs
+### Task 10: Enforce task eligibility in Time server actions
 
-**Objective:** Remove Activity from active Time UI and require an active project Task for new Hourly/Retainer logs while preserving historical reads.
+**Objective:** Enforce Hourly/Retainer completion and manual-write invariants while preserving historical reads.
 
 **Files:**
 - Modify: `src/lib/actions/time.ts`
-- Modify: `src/components/time/time-route-content.tsx`
-- Modify: `src/components/time/timer-widget.tsx`
-- Modify: `src/components/time/timesheet.tsx`
 - Modify: `src/app/api/time/active/route.ts`
-- Modify relevant manual/timer dialogs
-- Update time wiring and policy tests
 - Create: `src/lib/time-task-requirement.test.ts`
 
-**Step 1: Write failing tests**
+**Steps:** Write failing tests for manual create/update and timer stop; run `npm run test -- src/lib/time-task-requirement.test.ts`; implement `assertTimeTaskEligible`; rerun test and build.
 
-Matrix:
-
-```text
-Hourly manual without task -> reject
-Retainer manual without task -> reject
-Hourly timer completion without task -> reject
-Retainer timer completion without task -> reject
-active reusable task -> allow
-archived task -> reject
-foreign-project task -> reject
-foreign-workspace task -> reject
-non-assignee authorized member -> allow
-historical taskless read -> allow
-historical Activity-linked read -> allow
-Fixed Price active time write -> existing billing guard remains
-```
-
-**Step 2: Verify RED**
-
-Current schemas permit optional `taskId`; expected failures.
-
-**Step 3: Implement server guard first**
-
-Create/reuse `assertTimeTaskEligible`:
-
-- resolve project billing model
-- require task for Hourly/Retainer new writes/completion
-- validate task workspace/project/mode/lifecycle
-- do not require assignee equality
-- preserve update/read compatibility for historical rows unless changing project/task context
-
-**Step 4: Remove Activity from active UI**
-
-- no Activity selector/options
-- no Activity route link
-- do not pass `activities` into new editors
-- historical `activityName` may remain in compatibility display only until DB cleanup
-
-**Step 5: Verify targeted matrix and build**
-
-**Step 6: Commit**
-
-```bash
-git add src/lib/actions/time.ts src/components/time 'src/app/api/time/active/route.ts' src/lib/*time*.test.ts
-git commit -m "feat(time): require project tasks for billable logs"
-```
+Rules: timer may start with empty project/task context. At stop, Hourly/Retainer requires eligible active task from same workspace/project; failed stop must roll back all stop mutations and leave timer/segment active. Fixed Price guard remains. Historical taskless/Activity-linked reads remain valid, and edits not changing project/task context remain compatible.
 
 ---
 
-### Task 10: Hide Activity and Service active navigation without destructive cleanup
+### Task 11: Update timer UI for completion-time task selection
+
+**Objective:** Let timer start empty, then require eligible task before Hourly/Retainer completion.
+
+**Files:**
+- Modify: `src/components/time/timer-widget.tsx`
+- Modify: `src/components/time/new-timer-dialog.tsx`
+- Modify: `src/components/time/active-timer-card.tsx`
+- Modify: `src/components/time/stop-timer-dialog.tsx`
+- Create: `src/lib/time-timer-task-ui-wiring.test.ts`
+
+**Steps:** Write failing wiring/component tests; run `npm run test -- src/lib/time-timer-task-ui-wiring.test.ts`; implement start-empty and stop-selection UX; verify failed stop keeps timer visible/running; run targeted test, ESLint on listed components, and build.
+
+---
+
+### Task 12: Update manual Time Log and timesheet UI
+
+**Objective:** Remove active Activity inputs and require eligible Task in manual Hourly/Retainer editors.
+
+**Files:**
+- Modify: `src/components/time/add-time-log-dialog.tsx`
+- Modify: `src/components/time/time-route-content.tsx`
+- Modify: `src/components/time/timesheet.tsx`
+- Modify: `src/components/time/weekly-time-grid.tsx`
+- Create: `src/lib/time-manual-task-ui-wiring.test.ts`
+
+**Steps:** Write failing tests; run `npm run test -- src/lib/time-manual-task-ui-wiring.test.ts`; remove Activity selector/options while retaining historical labels; implement eligible-task selector; rerun targeted test, ESLint on listed files, and build.
+
+---
+
+### Task 13: Hide Activity and Service active navigation without destructive cleanup
 
 **Objective:** Retire confusing active UI while retaining backend/schema compatibility.
 
@@ -644,7 +703,7 @@ git commit -m "refactor: retire activity and service catalog UI"
 
 ---
 
-### Task 11: Update reports and documentation
+### Task 14: Update reports and documentation
 
 **Objective:** Make Task the active Time classification and document final UX/migration boundaries.
 
@@ -692,7 +751,27 @@ git commit -m "docs: finalize billing-aware task workflow"
 
 ---
 
-### Task 12: Full verification and browser QA
+### Task 15: Real PostgreSQL integration matrix
+
+**Objective:** Prove DB constraints and transactional behavior against disposable PostgreSQL 16; source/wiring tests are supplementary only and cannot satisfy this gate.
+
+**Files:**
+- Create: `src/lib/integration/billing-aware-tasks.postgres.test.ts`
+- Create/modify: `scripts/test-postgres-integration.sh`
+
+**Matrix:** cross-workspace task/project insert rejected; cross-workspace template/item and assignee relation rejected; import same key/same fingerprint returns prior result; changed fingerprint conflicts; invalid item causes zero ledger/task rows; reorder is collision-safe/atomic; template item removal commits only inside owner tenant; referenced task delete rejected; archive preserves Time history; Hourly/Retainer failed stop keeps active timer; historical taskless/Activity rows remain readable.
+
+Run:
+
+```bash
+scripts/test-postgres-integration.sh src/lib/integration/billing-aware-tasks.postgres.test.ts
+```
+
+Script must create disposable PostgreSQL 16 DB/container, apply baseline through `0063` plus `0064` while skipping `0062`, run tests through real driver, and destroy DB on success/failure. Expected: all matrix cases pass; no mock DB.
+
+---
+
+### Task 16: Full verification and browser QA
 
 **Objective:** Prove behavior, build integrity, responsive UX, and migration safety before any deployment.
 
@@ -762,7 +841,7 @@ git commit -m "test: verify billing-aware task workflow"
 
 ---
 
-### Task 13: Production deployment gate
+### Task 17: Production deployment gate
 
 **Objective:** Deploy code and additive migration safely only after explicit production approval.
 
@@ -816,12 +895,14 @@ Record image, SHA, migration, backup, health, QA, and rollback handle in deploym
 - [ ] Duplicate preview defaults to skip and supports keep.
 - [ ] Template/project copies remain independent.
 - [ ] No subtask or persistent Task List hierarchy exists.
-- [ ] Task required for new Hourly/Retainer Time Logs.
+- [ ] Timer may start empty; Hourly/Retainer completion requires eligible Task, and failed stop leaves timer active.
+- [ ] Manual Hourly/Retainer Time Logs require eligible Task.
 - [ ] Authorized non-assignee members can log time.
 - [ ] Historical taskless/Activity-linked logs remain readable.
 - [ ] Activity and Service active UI are retired non-destructively.
 - [ ] Billing tab combines commercial summary and invoices.
 - [ ] Desktop drag plus mobile/keyboard move controls work.
 - [ ] Global pagination is max 10/page.
+- [ ] Real disposable PostgreSQL tenant/atomicity/reorder/delete/time-history matrix passes.
 - [ ] Full automated and browser verification passes.
 - [ ] No destructive cleanup runs without separate approval.
