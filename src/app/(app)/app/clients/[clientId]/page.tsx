@@ -41,6 +41,17 @@ import {
   listClientGoogleEvents,
 } from "@/lib/client-google-calendar";
 import { buildInvoiceDetailUrl } from "@/lib/invoice-origin";
+import { formatMoney } from "@/lib/utils";
+
+const invoiceStatusLabel: Record<string, string> = {
+  draft: "Draf",
+  sent: "Terkirim",
+  viewed: "Dilihat",
+  paid: "Lunas",
+  overdue: "Jatuh tempo",
+  cancelled: "Dibatalkan",
+  archived: "Diarsipkan",
+};
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -518,9 +529,9 @@ export default async function ClientDetailPage({
                     variant={inv.status === "overdue" ? "destructive" : inv.status === "paid" ? "default" : "secondary"}
                     className="text-[10px]"
                   >
-                    {inv.status}
+                    {invoiceStatusLabel[inv.status] ?? inv.status}
                   </Badge>
-                  <span className="text-sm font-semibold">{inv.currency} {inv.total}</span>
+                  <span className="text-sm font-semibold">{formatMoney(inv.total, inv.currency)}</span>
                 </div>
                 </Link>
               </CardContent>

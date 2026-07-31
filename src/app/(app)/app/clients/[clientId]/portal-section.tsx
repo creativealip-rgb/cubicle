@@ -43,8 +43,8 @@ export function PortalTokenSection({ client }: Props) {
       <div className="rounded-lg border bg-muted/30 p-3">
         <p className="mb-2 text-xs font-medium">Link portal</p>
         <div className="flex items-center gap-2"><code className="min-w-0 flex-1 break-all rounded bg-background px-2 py-2 text-xs">{portalUrl}</code>
-          <Button variant="outline" size="icon" onClick={copy}>{copied?<Check className="h-4 w-4"/>:<Copy className="h-4 w-4"/>}</Button>
-          <Button variant="outline" size="icon" asChild><a href={portalUrl} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4"/></a></Button>
+          <Button variant="outline" size="icon" onClick={copy} aria-label="Salin link portal" title="Salin link portal">{copied?<Check className="h-4 w-4"/>:<Copy className="h-4 w-4"/>}</Button>
+          <Button variant="outline" size="icon" asChild><a href={portalUrl} target="_blank" rel="noreferrer" aria-label="Buka portal klien" title="Buka portal klien"><ExternalLink className="h-4 w-4"/></a></Button>
         </div>
       </div>
       <div className="space-y-2"><label htmlFor="portal-password" className="text-sm font-medium">{client.portalPasswordHash?"Ganti password":"Atur password"}</label>
