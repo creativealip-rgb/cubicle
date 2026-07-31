@@ -3,11 +3,15 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { taskTemplateItems, taskTemplates, workspaceMembers } from "@/db/schema";
+import { projects, taskTemplateImports, taskTemplateItems, taskTemplates, tasks, workspaceMembers } from "@/db/schema";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
+import { createHash } from "node:crypto";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
+import { resolveBillingModel, type BillingModel } from "@/lib/billing-model";
+import { resolveProjectTaskMode } from "@/lib/task-work-mode";
+import { previewTemplateImport, type DuplicateAction } from "@/lib/task-template-import";
 
 const templateSchema = z.object({
   name: z.string().trim().min(1).max(200),
@@ -34,6 +38,17 @@ const getTaskTemplatesOptionsSchema = z.object({
   includeArchived: z.boolean().default(false),
   templateId: idSchema.optional(),
 }).strict().default({ includeArchived: false });
+const importSelectionSchema = z.object({
+  itemId: idSchema,
+  duplicateAction: z.enum(["skip", "keep"]).optional(),
+}).strict();
+const taskTemplateImportSchema = z.object({
+  projectId: idSchema,
+  templateIds: z.array(idSchema).min(1),
+  selectedItems: z.array(importSelectionSchema).default([]),
+  allowIncompatibleTarget: z.boolean().default(false),
+  idempotencyKey: z.string().uuid().optional(),
+}).strict();
 
 export async function parseTaskTemplateInput(input: unknown) {
   return templateSchema.parse(input);
@@ -265,5 +280,120 @@ export async function reorderTaskTemplateItems(templateIdInput: string, orderedI
       eq(taskTemplateItems.id, item.id), eq(taskTemplateItems.workspaceId, workspaceId), eq(taskTemplateItems.templateId, templateId),
     ));
     return { success: true };
+  });
+}
+
+type TemplateTarget = "fixed_price" | "hourly_retainer" | "all";
+
+export function isTaskTemplateTargetCompatible(target: TemplateTarget, model: BillingModel) {
+  if (target === "all") return model !== "legacy_package";
+  if (target === "fixed_price") return model === "fixed_price";
+  return model === "hourly" || model === "retainer";
+}
+
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.entries(value as Record<string, unknown>)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, entry]) => `${JSON.stringify(key)}:${canonicalJson(entry)}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+export function canonicalTaskTemplateImportFingerprint(value: unknown) {
+  return createHash("sha256").update(canonicalJson(value)).digest("hex");
+}
+
+async function loadTaskTemplateImportContext(database: typeof db | Transaction, workspaceId: string, input: z.infer<typeof taskTemplateImportSchema>) {
+  const [project] = await database.select().from(projects).where(and(
+    eq(projects.id, input.projectId), eq(projects.workspaceId, workspaceId),
+  )).limit(1);
+  if (!project) throw new Error("Project tidak ditemukan");
+  const model = resolveBillingModel(project);
+  const mode = resolveProjectTaskMode(project.taskModePolicy, model);
+  const templatesWithItems = [];
+  for (const templateId of input.templateIds) {
+    const template = await assertActiveTemplate(database, workspaceId, templateId);
+    if (!input.allowIncompatibleTarget && !isTaskTemplateTargetCompatible(template.target, model)) {
+      throw new Error("TARGET_INCOMPATIBLE: Template tidak sesuai model billing Project");
+    }
+    const items = await database.select().from(taskTemplateItems).where(and(
+      eq(taskTemplateItems.workspaceId, workspaceId), eq(taskTemplateItems.templateId, templateId),
+    )).orderBy(asc(taskTemplateItems.position));
+    for (const item of items) await assertAssigneeMembership(database, workspaceId, item.defaultAssigneeId);
+    templatesWithItems.push({ template, items });
+  }
+  const existing = await database.select({ title: tasks.title }).from(tasks).where(and(
+    eq(tasks.workspaceId, workspaceId), eq(tasks.projectId, input.projectId),
+  ));
+  const decisions = new Map(input.selectedItems.map((item) => [item.itemId, item.duplicateAction]));
+  const selected = new Set(input.selectedItems.map((item) => item.itemId));
+  const preview = previewTemplateImport({
+    mode,
+    existingProjectTitles: existing.map((item) => item.title),
+    templates: templatesWithItems.map(({ template, items }) => ({
+      id: template.id,
+      items: items.map((item) => ({
+        id: item.id, title: item.title, position: item.position,
+        selected: selected.size === 0 || selected.has(item.id),
+        duplicateAction: decisions.get(item.id) as DuplicateAction | undefined,
+      })),
+    })),
+  });
+  return { project, model, mode, templatesWithItems, preview };
+}
+
+export async function previewTaskTemplateImport(inputValue: unknown) {
+  const { workspaceId } = await actionContext(false);
+  const input = taskTemplateImportSchema.parse(inputValue);
+  return loadTaskTemplateImportContext(db, workspaceId, input);
+}
+
+export async function importTaskTemplates(inputValue: unknown) {
+  const { user, workspaceId } = await actionContext(true);
+  const input = taskTemplateImportSchema.extend({ idempotencyKey: z.string().uuid() }).parse(inputValue);
+  const fingerprintPayload = {
+    projectId: input.projectId,
+    templateIds: input.templateIds,
+    selectedItems: input.selectedItems,
+    allowIncompatibleTarget: input.allowIncompatibleTarget,
+  };
+  const payloadFingerprint = canonicalTaskTemplateImportFingerprint(fingerprintPayload);
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`task-template-import:${workspaceId}:${input.projectId}:${input.idempotencyKey}`}, 0))`);
+    const [existingLedger] = await tx.select().from(taskTemplateImports).where(and(
+      eq(taskTemplateImports.workspaceId, workspaceId), eq(taskTemplateImports.projectId, input.projectId), eq(taskTemplateImports.idempotencyKey, input.idempotencyKey),
+    )).limit(1);
+    if (existingLedger) {
+      if (existingLedger.payloadFingerprint !== payloadFingerprint) throw new Error("IDEMPOTENCY_CONFLICT: Kunci import digunakan untuk payload berbeda");
+      if (existingLedger.completedAt && existingLedger.result) return existingLedger.result;
+      throw new Error("IMPORT_IN_PROGRESS: Import sebelumnya belum selesai");
+    }
+    await tx.insert(taskTemplateImports).values({
+      workspaceId, projectId: input.projectId, idempotencyKey: input.idempotencyKey, payloadFingerprint,
+    });
+    const context = await loadTaskTemplateImportContext(tx, workspaceId, input);
+    const included = context.preview.filter((item) => item.included);
+    const [{ maxPosition }] = await tx.select({ maxPosition: sql<number>`coalesce(max(${tasks.position}), -1)` }).from(tasks).where(and(
+      eq(tasks.workspaceId, workspaceId), eq(tasks.projectId, input.projectId),
+    ));
+    const sourceItems = new Map(context.templatesWithItems.flatMap(({ items }) => items.map((item) => [item.id, item] as const)));
+    const inserted = included.length ? await tx.insert(tasks).values(included.map((item, index) => {
+      const source = sourceItems.get(item.itemId)!;
+      return {
+        workspaceId, projectId: input.projectId, title: source.title, description: source.description,
+        assigneeId: source.defaultAssigneeId, mode: context.mode, lifecycle: "active" as const,
+        status: "todo" as const, priority: "medium" as const, position: Number(maxPosition) + 1 + index,
+        templateItemSourceId: source.id, createdBy: user.id,
+        behavior: context.mode === "workflow" ? "one_time" as const : "recurring" as const,
+      };
+    })).returning({ id: tasks.id, title: tasks.title, position: tasks.position }) : [];
+    const result = { projectId: input.projectId, created: inserted, skipped: context.preview.filter((item) => !item.included).map((item) => item.itemId) };
+    await tx.update(taskTemplateImports).set({ result, completedAt: new Date(), updatedAt: new Date() }).where(and(
+      eq(taskTemplateImports.workspaceId, workspaceId), eq(taskTemplateImports.projectId, input.projectId), eq(taskTemplateImports.idempotencyKey, input.idempotencyKey),
+    ));
+    return result;
   });
 }
