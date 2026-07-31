@@ -31,7 +31,9 @@ import {
 import { PortalTokenSection } from "./portal-section";
 import { ClientEditDialog } from "@/components/clients/client-edit-dialog";
 import { ClientGoogleCalendarPanel } from "@/components/clients/client-google-calendar-panel";
+import { ProjectCreateDialog } from "@/components/projects/project-create-dialog";
 import { billingTypeLabel } from "@/lib/feature-access";
+import { checkEntityLimit, getUserPlan } from "@/lib/plan";
 import { decryptSecret } from "@/lib/google-calendar";
 import {
   getClientGoogleConnectionStatus,
@@ -79,6 +81,12 @@ export default async function ClientDetailPage({
 
   const [client] = await db.select().from(clients).where(eq(clients.id, clientId));
   if (!client) notFound();
+
+  const projectLimitState = await checkEntityLimit(
+    workspaceId,
+    "projects",
+    await getUserPlan(user.id),
+  );
 
   let existingPortalToken: string | null = null;
   if (
@@ -380,6 +388,15 @@ export default async function ClientDetailPage({
         </TabsContent>
 
         <TabsContent value="projects" className="space-y-4 pt-4">
+          <div className="flex justify-end">
+            <ProjectCreateDialog
+              clients={[]}
+              clientId={clientId}
+              isAtLimit={!projectLimitState.allowed}
+              projectCount={projectLimitState.current}
+              projectLimit={projectLimitState.limit}
+            />
+          </div>
           {clientProjects.length === 0 && (
             <p className="text-sm text-muted-foreground py-8 text-center">Belum ada proyek</p>
           )}

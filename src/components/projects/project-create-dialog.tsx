@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,17 +17,25 @@ import { useT } from "@/lib/i18n-client";
 
 export function ProjectCreateDialog({
   clients,
+  clientId,
   isAtLimit = false,
   projectCount = 0,
   projectLimit = 5,
 }: {
   clients: Array<{ id: string; name: string }>;
+  clientId?: string;
   isAtLimit?: boolean;
   projectCount?: number;
   projectLimit?: number;
 }) {
   const { t } = useT();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+
+  function handleSuccess() {
+    setOpen(false);
+    router.refresh();
+  }
 
   if (isAtLimit) {
     return (
@@ -44,14 +53,21 @@ export function ProjectCreateDialog({
       <DialogTrigger asChild>
         <Button size="sm" className="gap-1 w-full sm:w-auto">
           <Plus className="h-4 w-4" />
-          {t("Proyek Baru", "New Project")}
+          {clientId
+            ? t("Tambah Proyek", "Add Project")
+            : t("Proyek Baru", "New Project")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90dvh] w-[calc(100%-1rem)] overflow-y-auto p-4 sm:max-w-[500px] sm:p-6">
         <DialogHeader>
           <DialogTitle>{t("Proyek Baru", "New Project")}</DialogTitle>
         </DialogHeader>
-        <ProjectForm mode="create" clients={clients} onSuccess={() => setOpen(false)} />
+        <ProjectForm
+          mode="create"
+          clientId={clientId}
+          clients={clients}
+          onSuccess={handleSuccess}
+        />
         {projectLimit > 0 && projectCount > 0 ? (
           <p className="text-[11px] text-muted-foreground">
             {t(
