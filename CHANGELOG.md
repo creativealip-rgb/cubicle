@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.1.122-dev — 2026-07-31 — Repo safety docs and guard restoration
+
+- Project detail: restored the **Layanan** tab and `ProjectServiceSettings` so per-project service snapshots stay editable outside the simplified Project form.
+- Invoices: restored final-status financial guards for `sent`, `viewed`, and `overdue` after the temporary edit hotfix; financial line-item mutations are now locked for `sent`, `viewed`, `paid`, `overdue`, `cancelled`, and `archived`, while `draft` remains editable.
+- Waktu mobile actions: restored 44 px mobile height for `Catat Waktu` while preserving compact desktop sizing.
+- Repo hygiene: moved the local dummy-client manual note into ignored `.hermes/tmp/` so the Git worktree is clean.
+- Documentation: clarified Project Services, invoice editability, current production image, feature status, schema snapshot, and email status.
+- Verification: ESLint passed, 145/145 Vitest files passed with 599/599 tests, and Next.js production build compiled successfully.
+- Commit: `9381be5`
+- Deployment: Live app container `cubiqlo-new-app` updated to `cubiqlo-prod:sha-9381be5-repo-safe-fix-20260731202341`; `dokploy-traefik` remains the only public 80/443 owner.
+
 ## v0.1.121-dev — 2026-07-31 — Invoice editing fix for sent, viewed, and overdue statuses
 
 - Invoices: Allow editing, adding, and deleting line items for invoices that are in `sent`, `viewed`, or `overdue` status. Only `paid`, `cancelled`, and `archived` statuses are now locked as final.

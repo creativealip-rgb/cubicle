@@ -193,7 +193,7 @@ create table if not exists invoices (
   discount numeric(12,2) not null default 0,
   tax numeric(12,2) not null default 0,
   total numeric(12,2) not null default 0,
-  status text not null default 'draft' check (status in ('draft','sent','viewed','paid','overdue','cancelled')),
+  status text not null default 'draft' check (status in ('draft','sent','viewed','paid','overdue','cancelled','archived')),
   notes text,
   terms text,
   shared_token_hash text unique,
