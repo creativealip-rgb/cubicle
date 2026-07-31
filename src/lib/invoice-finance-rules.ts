@@ -1,4 +1,4 @@
-const FINAL_INVOICE_STATUSES = new Set(["sent", "viewed", "paid", "overdue", "cancelled", "archived"]);
+const FINAL_INVOICE_STATUSES = new Set(["paid", "cancelled", "archived"]);
 
 function safeMoney(value: number) {
   return Number.isFinite(value) ? Math.max(0, value) : 0;
