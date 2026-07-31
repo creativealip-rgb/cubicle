@@ -4,7 +4,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { tasks, users, workspaceMembers, projects } from "@/db/schema";
+import { tasks, timeEntries, users, workspaceMembers, projects } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceWritable, assertTaskInWorkspace, assertProjectInWorkspace } from "@/lib/access";
@@ -12,7 +12,8 @@ import { assertWorkspaceUserReference } from "@/lib/tenant-reference-rules";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyTaskAssigned } from "@/lib/notifications";
 import { createNotification, notifyWorkspaceMembers } from "@/lib/in-app-notifications";
-import { defaultTaskBehavior, resolveBillingModel } from "@/lib/billing-model";
+import { resolveBillingModel } from "@/lib/billing-model";
+import { resolveProjectTaskMode, type TaskWorkMode } from "@/lib/task-work-mode";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -79,12 +80,12 @@ const taskSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   projectId: z.string().uuid("Valid project required"),
-  status: z.enum(["todo", "in_progress", "review", "done"]).default("todo"),
-  priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
+  status: z.enum(["todo", "in_progress", "review", "done"]).optional(),
+  priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
   assigneeId: z.string().optional(),
   dueDate: z.string().optional(),
-  clientVisible: z.boolean().default(false),
-  behavior: z.enum(["one_time", "recurring"]).optional(),
+  clientVisible: z.boolean().optional(),
+  mode: z.enum(["workflow", "reusable"]).optional(),
 });
 
 const updateTaskSchema = z.object({
@@ -95,8 +96,16 @@ const updateTaskSchema = z.object({
   assigneeId: z.string().nullable().optional(),
   dueDate: z.string().nullable().optional(),
   clientVisible: z.boolean().optional(),
-  behavior: z.enum(["one_time", "recurring"]).optional(),
 });
+
+export function assertTaskModeMutationAllowed(
+  mode: TaskWorkMode,
+  input: { status?: unknown; priority?: unknown; dueDate?: unknown; clientVisible?: unknown },
+) {
+  if (mode === "reusable" && [input.status, input.priority, input.dueDate, input.clientVisible].some((value) => value !== undefined)) {
+    throw new Error("Reusable task tidak mendukung field workflow");
+  }
+}
 
 async function assertAssigneeInWorkspace(workspaceId: string, assigneeId: string | null | undefined) {
   if (!assigneeId) return;
@@ -117,27 +126,34 @@ export async function createTask(input: z.infer<typeof taskSchema>) {
   const parsed = taskSchema.parse(input);
   await assertProjectInWorkspace(db, user.id, workspaceId, parsed.projectId);
   await assertAssigneeInWorkspace(workspaceId, parsed.assigneeId);
-  const [project] = await db.select({ billingModel: projects.billingModel, billingType: projects.billingType }).from(projects).where(eq(projects.id, parsed.projectId)).limit(1);
+  const [project] = await db.select({
+    billingModel: projects.billingModel,
+    billingType: projects.billingType,
+    taskModePolicy: projects.taskModePolicy,
+  }).from(projects).where(and(eq(projects.id, parsed.projectId), eq(projects.workspaceId, workspaceId))).limit(1);
   if (!project) throw new Error("Project tidak ditemukan");
-  const projectBehavior = parsed.behavior ?? defaultTaskBehavior(resolveBillingModel(project));
+  const projectMode = resolveProjectTaskMode(project.taskModePolicy, resolveBillingModel(project), parsed.mode);
+  assertTaskModeMutationAllowed(projectMode, parsed);
 
   // Get max position for the project+status
   const [maxPos] = await db
     .select({ max: sql<number>`coalesce(max(${tasks.position}), -1)::int` })
     .from(tasks)
-    .where(and(eq(tasks.projectId, parsed.projectId), eq(tasks.status, parsed.status)));
+    .where(and(eq(tasks.workspaceId, workspaceId), eq(tasks.projectId, parsed.projectId), eq(tasks.mode, projectMode)));
 
   const [task] = await db.insert(tasks).values({
     workspaceId,
     projectId: parsed.projectId,
-    behavior: projectBehavior,
+    mode: projectMode,
+    lifecycle: "active",
+    behavior: projectMode === "workflow" ? "one_time" : "recurring",
     title: parsed.title,
     description: parsed.description || null,
-    status: parsed.status,
-    priority: parsed.priority,
+    status: parsed.status ?? "todo",
+    priority: parsed.priority ?? "medium",
     assigneeId: parsed.assigneeId || null,
     dueDate: parsed.dueDate || null,
-    clientVisible: parsed.clientVisible,
+    clientVisible: parsed.clientVisible ?? false,
     position: (maxPos?.max ?? -1) + 1,
     createdBy: user.id,
   }).returning();
@@ -164,6 +180,11 @@ export async function updateTask(taskId: string, input: z.infer<typeof updateTas
   await assertTaskInWorkspace(db, user.id, workspaceId, taskId);
 
   const parsed = updateTaskSchema.parse(input);
+  const [currentTask] = await db.select().from(tasks).where(and(
+    eq(tasks.id, taskId), eq(tasks.workspaceId, workspaceId),
+  )).limit(1);
+  if (!currentTask) throw new Error("Task tidak ditemukan");
+  assertTaskModeMutationAllowed(currentTask.mode, parsed);
   if (parsed.assigneeId !== undefined) {
     await assertAssigneeInWorkspace(workspaceId, parsed.assigneeId);
   }
@@ -176,11 +197,10 @@ export async function updateTask(taskId: string, input: z.infer<typeof updateTas
   if (parsed.assigneeId !== undefined) updateData.assigneeId = parsed.assigneeId;
   if (parsed.dueDate !== undefined) updateData.dueDate = parsed.dueDate;
   if (parsed.clientVisible !== undefined) updateData.clientVisible = parsed.clientVisible;
-  if (parsed.behavior !== undefined) updateData.behavior = parsed.behavior;
 
   const [task] = await db.update(tasks)
     .set(updateData as typeof tasks.$inferInsert)
-    .where(eq(tasks.id, taskId))
+    .where(and(eq(tasks.id, taskId), eq(tasks.workspaceId, workspaceId)))
     .returning();
 
   await writeActivityLog(workspaceId, user.id, "updated_task", "task", taskId);
@@ -280,14 +300,41 @@ export async function assignTask(taskId: string, assigneeId: string | null) {
   return { success: true };
 }
 
+export async function archiveTask(taskId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertTaskInWorkspace(db, user.id, workspaceId, taskId);
+  const [task] = await db.update(tasks).set({ lifecycle: "archived", archivedAt: new Date(), updatedAt: new Date() }).where(and(
+    eq(tasks.id, taskId), eq(tasks.workspaceId, workspaceId),
+  )).returning();
+  return task;
+}
+
+export async function restoreTask(taskId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertTaskInWorkspace(db, user.id, workspaceId, taskId);
+  const [task] = await db.update(tasks).set({ lifecycle: "active", archivedAt: null, updatedAt: new Date() }).where(and(
+    eq(tasks.id, taskId), eq(tasks.workspaceId, workspaceId),
+  )).returning();
+  return task;
+}
+
 export async function deleteTask(taskId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   await assertTaskInWorkspace(db, user.id, workspaceId, taskId);
-
-  await db.delete(tasks).where(eq(tasks.id, taskId));
+  const [reference] = await db.select({ id: timeEntries.id }).from(timeEntries).where(and(
+    eq(timeEntries.taskId, taskId), eq(timeEntries.workspaceId, workspaceId),
+  )).limit(1);
+  if (reference) throw new Error("TASK_REFERENCED_BY_TIME: Task dengan Time Log harus diarsipkan");
+  await db.delete(tasks).where(and(eq(tasks.id, taskId), eq(tasks.workspaceId, workspaceId)));
   await writeActivityLog(workspaceId, user.id, "deleted_task", "task", taskId);
   return { success: true };
 }
@@ -311,6 +358,7 @@ export async function respondPortalTask(input: z.infer<typeof respondPortalTaskS
   const [row] = await db
     .select({
       id: tasks.id,
+      mode: tasks.mode,
       title: tasks.title,
       status: tasks.status,
       description: tasks.description,
@@ -331,6 +379,7 @@ export async function respondPortalTask(input: z.infer<typeof respondPortalTaskS
     .limit(1);
 
   if (!row) throw new Error("Task not found");
+  if (row.mode !== "workflow") throw new Error("Only workflow tasks support portal review");
   if (row.projectClientId !== client.id) throw new Error("Task not in your portal");
   if (!row.clientVisible) throw new Error("Task is not client-visible");
   if (row.status !== "review") throw new Error("Task is not awaiting review");

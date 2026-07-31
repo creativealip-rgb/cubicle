@@ -26,12 +26,13 @@ describe("task behavior views", () => {
     }
   });
 
-  it("allows an explicit task behavior while retaining project defaults", () => {
+  it("uses canonical task mode in actions while legacy form copy remains until page replacement", () => {
     const actions = read("src/lib/actions/tasks.ts");
     const form = read("src/components/forms/task-form.tsx");
 
-    expect(actions).toContain('behavior: z.enum(["one_time", "recurring"]).optional()');
-    expect(actions).toContain("parsed.behavior ?? defaultTaskBehavior");
+    expect(actions).toContain('mode: z.enum(["workflow", "reusable"]).optional()');
+    expect(actions).toContain("resolveProjectTaskMode");
+    expect(actions).toContain("mode: projectMode");
     expect(form).toContain("Jenis tugas");
     expect(form).toContain("Sekali selesai");
     expect(form).toContain("Aktivitas berulang");
