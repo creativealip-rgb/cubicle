@@ -97,6 +97,10 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
     <div className="hidden space-y-1 lg:block">
       {entries.map((entry) => {
         if (entry.kind === "direct") return directLink(entry, collapsed);
+        if (entry.id === "work") return <div key={entry.id} aria-label={t("Pekerjaan", "Work")} className="space-y-1">
+          {!collapsed && <p className="px-3 pb-1 pt-3 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">{t(entry.label.id, entry.label.en)}</p>}
+          {entry.children.map((item) => directLink(item, collapsed))}
+        </div>;
         const Icon = entry.icon; const isActive = active.groupId === entry.id; const expanded = openGroup === entry.id;
         const hasDot = groupHasNotification(entry.id, badgeCounts);
         return <div key={entry.id} onPointerEnter={() => scheduleOpen(entry.id)} onPointerLeave={scheduleClose}>
@@ -111,7 +115,7 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
           </button>
         </div>;
       })}
-      {openEntry && <div id={`sidebar-flyout-${openEntry.id}`} role="navigation" aria-label={t(openEntry.label.id, openEntry.label.en)}
+      {openEntry?.id !== "work" && openEntry && <div id={`sidebar-flyout-${openEntry.id}`} role="navigation" aria-label={t(openEntry.label.id, openEntry.label.en)}
         style={{ top: position.top, left: position.left }} onPointerEnter={() => { clearTimers(); setHovered(openEntry.id); }} onPointerLeave={scheduleClose}
         onKeyDown={(event) => {
           const links = [...event.currentTarget.querySelectorAll<HTMLAnchorElement>("a")]; const index = links.indexOf(document.activeElement as HTMLAnchorElement);
