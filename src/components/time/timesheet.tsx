@@ -106,7 +106,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
 
   const [clientFilter, setClientFilter] = useState<string>("all");
   const [projectFilter, setProjectFilter] = useState<string>("all");
-  const [activityFilter, setActivityFilter] = useState<string>("all");
   const [billableFilter, setBillableFilter] = useState<string>("all");
   const [tagFilter, setTagFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState("");
@@ -120,7 +119,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
   const [editTags, setEditTags] = useState("");
   const [editClientId, setEditClientId] = useState("");
   const [editProjectId, setEditProjectId] = useState("");
-  const [editActivityId, setEditActivityId] = useState("");
   const [editTaskId, setEditTaskId] = useState("__none__");
   const [editDate, setEditDate] = useState("");
   const [editMinutes, setEditMinutes] = useState("");
@@ -133,8 +131,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
     return entries.filter((e) => {
       if (clientFilter !== "all" && e.clientId !== clientFilter) return false;
       if (projectFilter !== "all" && e.projectId !== projectFilter) return false;
-      if (activityFilter === "none" && e.activityId) return false;
-      if (activityFilter !== "all" && activityFilter !== "none" && e.activityId !== activityFilter) return false;
       if (billableFilter === "billable" && !e.billable) return false;
       if (billableFilter === "non-billable" && e.billable) return false;
       if (
@@ -155,11 +151,11 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
       }
       return true;
     });
-  }, [entries, clientFilter, projectFilter, activityFilter, billableFilter, tagFilter, dateFrom, dateTo]);
+  }, [entries, clientFilter, projectFilter, billableFilter, tagFilter, dateFrom, dateTo]);
 
   useEffect(() => {
     setPage(1);
-  }, [clientFilter, projectFilter, activityFilter, billableFilter, tagFilter, dateFrom, dateTo, entries.length]);
+  }, [clientFilter, projectFilter, billableFilter, tagFilter, dateFrom, dateTo, entries.length]);
 
   const totalPages = Math.max(1, Math.ceil(filteredEntries.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -256,7 +252,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
     setEditTags(entry.tags || "");
     setEditClientId(entry.clientId || "");
     setEditProjectId(entry.projectId || "");
-    setEditActivityId(entry.activityId || "");
     setEditTaskId(entry.taskId || "__none__");
     setEditDate(toDateInputValue(entry.startTime));
     setEditMinutes(String(entry.durationMinutes ?? entry.manualMinutes ?? 0));
@@ -295,7 +290,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
         tags: editTags || null,
         clientId: editClientId,
         projectId: editProjectId,
-        activityId: editActivityId || null,
         taskId: editTaskId && editTaskId !== "__none__" ? editTaskId : null,
         startTime: startIso,
         endTime: endIso,
@@ -387,29 +381,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                   {filterProjects.map((project) => (
                     <SelectItem key={project.id} value={project.id}>
                       {project.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-[10px]">{t("Aktivitas", "Activity")}</Label>
-              <Select value={activityFilter} onValueChange={setActivityFilter}>
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder={t("Semua", "All")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("Semua Activity", "All Activities")}</SelectItem>
-                  <SelectItem value="none">{t("Tanpa aktivitas", "No activity")}</SelectItem>
-                  {Array.from(
-                    new Map(
-                      entries
-                        .filter((e) => e.activityId && e.activityName)
-                        .map((e) => [e.activityId!, e.activityName!]),
-                    ),
-                  ).map(([id, name]) => (
-                    <SelectItem key={id} value={id}>
-                      {name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -687,7 +658,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                   onValueChange={(v) => {
                     setEditClientId(v);
                     setEditProjectId("");
-                    setEditActivityId("");
                     setEditTaskId("__none__");
                   }}
                 >
@@ -710,7 +680,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                   value={editProjectId}
                   onValueChange={(v) => {
                     setEditProjectId(v);
-                    setEditActivityId("");
                     setEditTaskId("__none__");
                   }}
                   disabled={!editClientId}

@@ -136,7 +136,7 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
   const taskList = await db
     .select({ id: tasks.id, title: tasks.title, projectId: tasks.projectId })
     .from(tasks)
-    .where(eq(tasks.workspaceId, workspaceId))
+    .where(and(eq(tasks.workspaceId, workspaceId), eq(tasks.mode, "reusable"), eq(tasks.lifecycle, "active")))
     .orderBy(tasks.title)
     .limit(200);
 
