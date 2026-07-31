@@ -19,11 +19,12 @@ Plan: `docs/plans/2026-08-01-client-project-invoice-task-workspace-revision.md`
 - Task 11 — unified historical Project Tasks showing stored workflow and reusable rows together. Commit `8e2d537`. 9 tests and TypeScript passed.
 - Task 12 — collision-safe Project reusable Task reorder with complete-ID validation. Commit `12bff28`. 12 tests and TypeScript passed.
 - Task 13 — global Task pagination: filtered count, clamp, 10-row shared List/Board batch, preserved params. Commit `cfbd0a7`. 6 tests and TypeScript passed.
-- Task 14 — global Task tabs use shared Invoice-style query-backed navigation and preserve filters. 3 tests and TypeScript passed.
+- Task 14 — global Task tabs use shared Invoice-style query-backed navigation and preserve filters. Commit `c9f81c0`. 3 tests and TypeScript passed.
+- Task 15 — full Task Template create/edit/lifecycle dialogs with human labels and empty state. 3 tests and TypeScript passed.
 
 ## Current
 
-- Task 15 — full Task Template dialogs.
+- Task 16 — full Task Template item editing and reorder.
 
 ## Release state
 
