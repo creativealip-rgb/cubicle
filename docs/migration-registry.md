@@ -22,7 +22,7 @@ Reserve a number here before creating SQL. Recheck remote refs and every worktre
 - `0061` — Legacy billing classification table — Coder — `feat/billing-aware-phase1` — committed.
 - `0062` — Billing-aware Phase 9 destructive cleanup — Coder — `feat/billing-aware-phase1` — reserved; dry-run only, production untouched.
 - `0063` — Encrypted invoice share token — reconciled existing migration on `main` — committed.
-- `0064` — Billing-aware project tasks and templates — Coder — `main` — reserved.
+- `0064` — Billing-aware project tasks and templates — Coder — `main` — committed.
 
 ## Reservation protocol
 
