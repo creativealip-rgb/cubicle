@@ -12,6 +12,53 @@
 
 **Baseline:** `main` at `7d2ee26d42cf9eba153026e14d0882f2ae329260` or newer fast-forward descendant.
 
+## Execution checkpoint — 2026-07-31
+
+**Current branch:** `main`
+
+**Current HEAD:** `dd52839` (`feat(tasks): redesign global task page`)
+
+**Remote state:** local `main` is 14 commits ahead of `origin/main`; nothing from this feature has been pushed or deployed.
+**Working tree at checkpoint:** clean.
+
+### Completed
+
+| Task | Status | Evidence / commit |
+|---|---|---|
+| 0 — Reserve migration number | Complete | `d0adc50`; `0063` reconciled, `0064` reserved, `ACTIVE_BOARD.md` created |
+| 1 — Pure task-mode/import policies | Complete and reviewed | `c28a96f`, `c205a1f`; 19 targeted tests passed |
+| 2 — Additive schema/migration | Complete and reviewed | `f9efa58`, `4d5fc0c`, `516e8c7`; PostgreSQL 16 apply/replay and tenant probes documented in `docs/operations/evidence/2026-07-31-task-template-0064-rehearsal.md` |
+| 3 — Tenant-safe template CRUD | Complete | `77b69c5`, `f4a8301`; full suite at that checkpoint 645/645 and build passed |
+| 4 — Atomic preview/import | Complete | `9eb8728`; full suite and production build passed at that checkpoint |
+| 5 — Billing-aware task actions | Complete, final integration rerun pending | `b489d24`; targeted canonical/legacy compatibility tests 12/12 passed. A later full-suite run initially exposed two superseded wiring tests; both were updated and targeted tests passed |
+| 6 — Shared task workspace | Complete | `d76a2a2`; targeted test and TypeScript passed |
+| 7 — Import dialog | Complete | `78ec29c`; targeted test and TypeScript passed |
+| 8 — Global Tasks page | Complete | `dd52839`; affected tests 10/10 and TypeScript passed |
+
+### Remaining
+
+Resume from **Task 9**. Do not repeat Tasks 0–8 unless verification exposes a regression.
+
+| Task | Status | Next action |
+|---|---|---|
+| 9 — Project-detail Pekerjaan/Billing | Not started | Add `ProjectTaskWorkspace`, conditional `Waktu`, consolidated Billing tab, hide standalone Layanan |
+| 10 — Server Time task eligibility | Not started | Add completion/manual guards while preserving historical reads and empty timer start |
+| 11 — Timer UI task selection | Not started | Replace active Activity selection with Task for timer completion |
+| 12 — Manual Time/timesheet UI | Not started | Require eligible Task in manual and weekly flows |
+| 13 — Retire Activity/Service UI | Not started | Redirect legacy routes; keep compatibility schema/actions |
+| 14 — Reports/docs | Not started | Aggregate by Task; document reconciliation boundaries |
+| 15 — Real PostgreSQL integration matrix | Not started | Tenant, atomicity, reorder, delete, historical Time probes |
+| 16 — Full verification/browser QA | Not started | Full lint/test/build plus desktop and 390×844 authenticated QA |
+| 17 — Production deployment gate | Blocked on explicit approval | Backup/restore proof, `0064` only, immutable image, deploy and live QA |
+
+### Next-session startup
+
+1. Open `/root/projects/cubicle` and verify `git status --short --branch` plus `git log -15 --oneline`.
+2. Read this checkpoint, Task 9, canonical spec, and current project-detail page.
+3. Continue direct TDD from Task 9.
+4. Before any completion claim, rerun full Vitest, TypeScript, lint, and production build because Tasks 5–8 were only verified with affected suites after their latest edits.
+5. Do not push or deploy until Task 16 is green and Alip explicitly approves Task 17.
+
 ---
 
 ## Safety boundaries
