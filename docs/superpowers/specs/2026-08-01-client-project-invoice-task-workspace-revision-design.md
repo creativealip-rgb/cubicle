@@ -1,7 +1,7 @@
 # Client, Project, Invoice, Portal, and Task Workspace Revision Design
 
 **Date:** 2026-08-01
-**Status:** Approved product design; awaiting written-spec review before implementation plan
+**Status:** Implemented on feature branch; isolated automated/browser QA complete; release pending approval
 **Scope:** Cubiqlo authenticated Client, Project, Invoice, Portal, global Tasks, and Task Templates UX
 
 ## 1. Goals

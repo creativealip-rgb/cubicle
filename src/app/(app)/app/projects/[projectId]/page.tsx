@@ -366,7 +366,7 @@ export default async function ProjectDetailPage({
           {legacyPackageReadOnly ? <div className="space-y-3">
             <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">Project Paket legacy bersifat hanya baca sampai model billing diklasifikasikan.</p>
             <WorkflowTaskWorkspace tasks={projectTasks.filter((task) => task.mode === "workflow")} members={projectMembers} projects={[{ id: project.id, name: project.name }]} currentUserId={user.id} />
-          </div> : <ProjectTaskWorkspace projectId={projectId} mode={taskMode} workflowTasks={projectTasks.filter((task) => task.mode === "workflow")} reusableTasks={projectTasks.filter((task) => task.mode === "reusable").map((task) => ({ id: task.id, title: task.title, description: task.description, assigneeId: task.assigneeId, projectName: task.projectName, clientName: task.clientName, assigneeName: task.assigneeName, lifecycle: task.lifecycle }))} members={projectMembers} projects={[{ id: project.id, name: project.name }]} currentUserId={user.id} />}
+          </div> : <ProjectTaskWorkspace projectId={projectId} mode={taskMode} workflowTasks={projectTasks.filter((task) => task.mode === "workflow")} reusableTasks={projectTasks.filter((task) => task.mode === "reusable").map((task) => ({ id: task.id, projectId, title: task.title, description: task.description, assigneeId: task.assigneeId, projectName: task.projectName, clientName: task.clientName, assigneeName: task.assigneeName, lifecycle: task.lifecycle }))} members={projectMembers} projects={[{ id: project.id, name: project.name }]} currentUserId={user.id} />}
         </TabsContent>
 
         <TabsContent value="files" className="pt-4 space-y-3">

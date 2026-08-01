@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { updateTask } from "@/lib/actions/tasks";
+import { TaskForm } from "@/components/forms/task-form";
 
 import {
   Sheet,
@@ -191,14 +192,26 @@ export function TaskDetailSheet({
             </div>
           </div>
 
-          {/* Description */}
           <div className="space-y-2">
-            <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
-            <p className="text-sm text-muted-foreground">
-              {task.description || t("Tidak ada deskripsi", "No description")}
-            </p>
+            <Label className="text-xs">{t("Ubah tugas", "Edit task")}</Label>
+            <TaskForm
+              mode="edit"
+              projectId={task.projectId}
+              taskMode="workflow"
+              members={members}
+              defaultValues={{
+                id: task.id,
+                title: task.title,
+                description: task.description ?? "",
+                status: task.status,
+                priority: task.priority,
+                assigneeId: task.assigneeId ?? "",
+                dueDate: task.dueDate ?? "",
+                clientVisible: task.clientVisible,
+              }}
+              onSuccess={() => setOpen(false)}
+            />
           </div>
-
 
           <Separator />
 

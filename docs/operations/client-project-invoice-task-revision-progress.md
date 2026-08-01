@@ -24,15 +24,15 @@ Plan: `docs/plans/2026-08-01-client-project-invoice-task-workspace-revision.md`
 - Task 16 — full Task Template item editing, remove, and one-step reorder with archived write guards. Commit `7ede10c`. 6 tests and TypeScript passed.
 - Task 17 — hardened Task Template import preview: zero selection, reset state, preview fingerprint, stale rejection. Commit `ffa77cf`; 20 tests and TypeScript passed.
 - Task 18 — full automated and PostgreSQL verification. ESLint, TypeScript, production-shape Docker build, 181 files/758 tests, and targeted PostgreSQL/Portal verification passed.
-- Task 19 — browser QA partial. Desktop/mobile pagination 10/2, scoped Project/Invoice persistence, Portal owner lifecycle, full Template/item lifecycle/reorder, zero-selection import guard, Invoice Back origins, and localized formatting passed 5/5; remaining legacy/unauthorized Portal, Task edits, and stale import pending. Evidence: `docs/operations/evidence/2026-08-01-client-task-revision-final-qa.md`.
+- Task 19 — browser QA complete locally. All 8 Playwright cases passed, including Portal legacy/unauthorized denial, workflow/reusable Task edit persistence, List/Board mutation persistence, and stale-preview invalidation. QA workspace/client counts returned to zero; QA user plan restored to Free. Evidence: `docs/operations/evidence/2026-08-01-client-task-revision-final-qa.md`.
 
 ## Current
 
-- Task 19 — complete authenticated desktop/mobile mutation matrix, negative cases, and cleanup before feature-branch handoff.
+- Task 20 — await explicit approval before shared-dev integration or production release work.
 
 ## Release state
 
-- Pushed: feature commits through `ffa77cf`; final QA fix/evidence awaiting commit and push.
+- Pushed checkpoint: `3af949d`; final Task 19 code/evidence awaiting commit and push.
 - Integrated shared dev: no.
 - Migrated dev: no.
 - Deployed dev: no.

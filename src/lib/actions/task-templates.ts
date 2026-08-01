@@ -283,7 +283,7 @@ export async function reorderTaskTemplateItems(templateIdInput: string, orderedI
   });
 }
 
-async function loadTaskTemplateImportContext(database: typeof db | Transaction, workspaceId: string, input: z.infer<typeof taskTemplateImportSchema>) {
+async function loadTaskTemplateImportContext(database: typeof db | Transaction, workspaceId: string, input: z.infer<typeof taskTemplateImportSchema>, previewAllWhenUnselected = false) {
   const [project] = await database.select().from(projects).where(and(
     eq(projects.id, input.projectId), eq(projects.workspaceId, workspaceId),
   )).limit(1);
@@ -314,7 +314,7 @@ async function loadTaskTemplateImportContext(database: typeof db | Transaction, 
       id: template.id,
       items: items.map((item) => ({
         id: item.id, title: item.title, position: item.position,
-        selected: selected.has(item.id),
+        selected: previewAllWhenUnselected && selected.size === 0 ? undefined : selected.has(item.id),
         duplicateAction: decisions.get(item.id) as DuplicateAction | undefined,
       })),
     })),
@@ -325,7 +325,7 @@ async function loadTaskTemplateImportContext(database: typeof db | Transaction, 
 export async function previewTaskTemplateImport(inputValue: unknown) {
   const { workspaceId } = await actionContext(false);
   const input = taskTemplateImportSchema.parse(inputValue);
-  const context = await loadTaskTemplateImportContext(db, workspaceId, input);
+  const context = await loadTaskTemplateImportContext(db, workspaceId, input, true);
   return { ...context, payloadFingerprint: canonicalTaskTemplateImportFingerprint(input) };
 }
 

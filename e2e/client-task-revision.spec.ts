@@ -54,6 +54,46 @@ async function templateItemTitles(templateName: string) {
   }
 }
 
+async function taskState(title: string) {
+  const db = new pg.Client({ connectionString: databaseUrl });
+  await db.connect();
+  try {
+    const { rows } = await db.query<{ title: string; description: string | null; status: string; lifecycle: string; mode: string }>(
+      "select title,description,status,lifecycle,mode from tasks where title=$1",
+      [title],
+    );
+    return rows[0] ?? null;
+  } finally {
+    await db.end();
+  }
+}
+
+async function setPortalLegacyState(clientId: string) {
+  const db = new pg.Client({ connectionString: databaseUrl });
+  await db.connect();
+  try {
+    await db.query(
+      "update clients set portal_password_hash='legacy-hash-fixture', portal_password_ciphertext=null, portal_password_nonce=null, portal_password_encryption_version=null, portal_password_encrypted_at=null where id=$1",
+      [clientId],
+    );
+  } finally {
+    await db.end();
+  }
+}
+
+async function setWorkspaceRole(workspaceId: string, role: "owner" | "member") {
+  const db = new pg.Client({ connectionString: databaseUrl });
+  await db.connect();
+  try {
+    await db.query(
+      "update workspace_members set role=$1 where workspace_id=$2 and user_id=(select id from users where email=$3)",
+      [role, workspaceId, email],
+    );
+  } finally {
+    await db.end();
+  }
+}
+
 async function seedRevisionFixture() {
   const db = new pg.Client({ connectionString: databaseUrl });
   await db.connect();
@@ -169,6 +209,8 @@ test("Template CRUD, item reorder, and zero-selection import guard persist", asy
   await dialog.getByRole("button", { name: "Simpan" }).click();
   await expect(templateRow().getByText("Item B Edited", { exact: true })).toBeVisible();
   await templateRow().getByText("Item A", { exact: true }).locator("xpath=ancestor::div[contains(@class,'flex')][1]").getByRole("button", { name: "Hapus" }).click();
+  await expect.poll(() => templateItemTitles(templateName)).not.toContain("Item A");
+  await page.reload({ waitUntil: "networkidle" });
   await expect(templateRow().getByText("Item A", { exact: true })).toHaveCount(0);
 
   await templateRow().getByRole("button", { name: "Ubah Template" }).click();
@@ -198,6 +240,86 @@ test("Template CRUD, item reorder, and zero-selection import guard persist", asy
   const importDialog = page.getByRole("dialog", { name: "Import Template Tugas" });
   await expect(importDialog.getByRole("button", { name: "Lihat Preview" })).toBeDisabled();
   await expect(importDialog.getByRole("button", { name: "Import Tugas Terpilih" })).toBeDisabled();
+});
+
+test("Portal legacy state renders truthfully and stale owner reveal is denied", async ({ page }) => {
+  const { workspaceId, clientId } = await seedRevisionFixture();
+  await setPortalLegacyState(clientId);
+  await login(page, workspaceId);
+  await page.goto(`/app/clients/${clientId}?tab=portal`, { waitUntil: "networkidle" });
+  await expect(page.getByText("Password lama tidak dapat ditampilkan.", { exact: false })).toBeVisible();
+  await expect(page.locator('button[aria-label="Tampilkan password"]:visible')).toHaveCount(0);
+
+  const portalPassword = "PortalAuthQA2026!";
+  await page.getByLabel("Ganti password").fill(portalPassword);
+  await page.getByRole("button", { name: "Simpan & aktifkan" }).click();
+  const revealButton = page.locator('button[aria-label="Tampilkan password"]:visible');
+  await expect(revealButton).toBeVisible();
+  await setWorkspaceRole(workspaceId, "member");
+  try {
+    await revealButton.click();
+    await expect(page.locator("code:visible", { hasText: portalPassword })).toHaveCount(0);
+  } finally {
+    await setWorkspaceRole(workspaceId, "owner");
+  }
+});
+
+test("Mixed workflow and reusable Task edits persist and List/Board keep mutations", async ({ page }) => {
+  const { workspaceId, projectId } = await seedRevisionFixture();
+  await login(page, workspaceId);
+  await page.goto(`/app/projects/${projectId}?tab=work`, { waitUntil: "networkidle" });
+
+  const workflowTitle = "Task QA 01";
+  const workflowEdited = `Workflow Edited ${Date.now()}`;
+  await page.getByText(workflowTitle, { exact: true }).click();
+  const sheet = page.getByRole("dialog");
+  await sheet.getByLabel("Judul").fill(workflowEdited);
+  await sheet.getByLabel("Deskripsi").fill("Workflow persisted QA");
+  await sheet.getByRole("button", { name: "Simpan Perubahan" }).click();
+  await expect.poll(() => taskState(workflowEdited)).toMatchObject({ description: "Workflow persisted QA", mode: "workflow" });
+  await page.reload({ waitUntil: "networkidle" });
+  await expect(page.getByText(workflowEdited, { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Board", exact: true }).click();
+  await page.getByText(workflowEdited, { exact: true }).click();
+  const boardSheet = page.getByRole("dialog");
+  await boardSheet.getByRole("combobox").first().click();
+  await page.getByRole("option", { name: "Dikerjakan" }).click();
+  await expect.poll(() => taskState(workflowEdited)).toMatchObject({ status: "in_progress" });
+  await boardSheet.getByRole("button", { name: "Close" }).click();
+  await page.getByRole("button", { name: "List", exact: true }).click();
+  await page.reload({ waitUntil: "networkidle" });
+  await expect(page.getByText(workflowEdited, { exact: true })).toBeVisible();
+
+  const reusableTitle = "Task QA 02";
+  const reusableEdited = `Reusable Edited ${Date.now()}`;
+  const reusableRow = page.getByText(reusableTitle, { exact: true }).locator("xpath=ancestor::div[contains(@class,'border-b')][1]");
+  await reusableRow.getByRole("button", { name: "Ubah" }).click();
+  const reusableDialog = page.getByRole("dialog", { name: "Ubah Tugas Berulang" });
+  await reusableDialog.getByLabel("Judul").fill(reusableEdited);
+  await reusableDialog.getByLabel("Deskripsi").fill("Reusable persisted QA");
+  await reusableDialog.getByRole("button", { name: "Simpan Perubahan" }).click();
+  await expect.poll(() => taskState(reusableEdited)).toMatchObject({ description: "Reusable persisted QA", mode: "reusable" });
+  await page.reload({ waitUntil: "networkidle" });
+  await expect(page.getByText(reusableEdited, { exact: true })).toBeVisible();
+});
+
+test("Import preview becomes unusable after selection changes", async ({ page }) => {
+  const { workspaceId, projectId } = await seedRevisionFixture();
+  await login(page, workspaceId);
+  await page.goto(`/app/tasks?tab=templates`, { waitUntil: "networkidle" });
+  await page.locator("select").first().selectOption(projectId);
+  await page.getByRole("button", { name: "Import Template" }).click();
+  const dialog = page.getByRole("dialog", { name: "Import Template Tugas" });
+  const templateCheckbox = dialog.getByText("Template QA", { exact: true }).locator("xpath=parent::label").locator('input[type="checkbox"]');
+  await templateCheckbox.check();
+  await dialog.getByRole("button", { name: "Lihat Preview" }).click();
+  await expect(dialog.getByText("Item Template QA", { exact: true })).toBeVisible();
+  await dialog.getByText("Item Template QA", { exact: true }).locator("xpath=parent::div").locator('input[type="checkbox"]').check();
+  await expect(dialog.getByRole("button", { name: "Import Tugas Terpilih" })).toBeEnabled();
+  await templateCheckbox.uncheck();
+  await expect(dialog.getByText("Item Template QA", { exact: true })).toHaveCount(0);
+  await expect(dialog.getByRole("button", { name: "Import Tugas Terpilih" })).toBeDisabled();
 });
 
 test("Client scoped Project and Invoice persist with Portal password owner lifecycle", async ({ page }) => {

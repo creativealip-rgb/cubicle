@@ -2,7 +2,7 @@
 
 Date: 2026-08-01
 Branch: `feat/client-project-invoice-task-revision`
-Baseline feature tip: `ffa77cffd4d8e01fbd404ee6e94ef2baab3429e9`
+Baseline feature tip before final Task 19 changes: `3af949ddd58a3a96efe3784e580bf31fcc98baa5`
 Environment: isolated PostgreSQL database and isolated QA app on loopback port `3201`; shared dev and production untouched.
 
 ## Automated gates
@@ -32,20 +32,30 @@ Playwright `e2e/client-task-revision.spec.ts`, Chromium, retries disabled:
 - Client Project and Portal control reachability: passed.
 - Task desktop/mobile cases checked horizontal overflow and browser console/page errors: passed.
 - Client/Portal case checked control reachability only; dedicated overflow/browser-error assertions remain in full Task 19 matrix.
-- Expanded origins/formatting/Template/Portal run: 5 passed in 24.8 seconds.
+- Final expanded Chromium run: 8 passed in 42.6 seconds.
 - Verified 12-row fixture paginates 10/2 across page 1/2; mixed workflow/reusable rows render; Template route renders template/item/import controls.
 - Client-scoped Project creation persisted, stayed on `?tab=projects`, and hid Client selector.
 - Project-scoped Invoice creation persisted, increased Project Invoice count from 1 to 2, stayed on Project detail, and hid Client selector.
 - Portal owner lifecycle passed: set password, masked default, reveal plaintext on demand, copy control, then hide again.
 - Task Template create/edit/duplicate/archive/restore passed; item create/edit/remove and DB-confirmed one-step reorder passed; archived write controls disappeared.
 - Import negative guard passed: zero Template selection disables Preview and zero selected preview items disables Import.
+- Legacy hash-only Portal state rendered unrecoverable without reveal control; a stale owner UI could not reveal after role downgrade.
+- Workflow and reusable Task title/description edits persisted in PostgreSQL and after reload. Workflow status changed through Board and remained visible after returning to List.
+- Changing Template selection after preview removed preview rows and disabled import, proving stale preview became unusable.
 - Template server actions persist correctly, but reorder/duplicate/archive/restore need explicit reload before UI reflects DB state; this refresh lag remains a UX follow-up.
 - Invoice Back destinations passed for validated Project, Client, global, and malformed-origin fallback. Invoice status rendered `Draf`, amount rendered `Rp 1.500.000`, and raw `draft` was absent from visible body copy.
 - Fresh post-success server log window found no app query/error markers. One expected pre-fix plan-entitlement denial was retained in older iterative logs. Temporary QA workspaces were cascade-deleted after each run; remaining fixture count is zero; QA user plan restored to Free.
 
-## Browser QA still required
+## Browser QA completion
 
-This expanded smoke still does not complete the full Task 19 mutation matrix. Still required before final handoff: Portal legacy hash-only and unauthorized reveal denial; mixed-mode Task edit persistence and List/Board mutation behavior; stale-preview import rejection.
+Task 19 isolated browser matrix is complete. Final cleanup deleted all 46 accumulated isolated QA workspaces from iterative runs, verified matching QA Client count zero, and restored QA user plan to Free. Shared dev and production remained untouched.
+
+Final artifacts:
+
+- `/tmp/cubiqlo-client-task-revision-final/fresh/playwright-task19-final-4.log`
+- `/tmp/cubiqlo-client-task-revision-final/fresh/verify-task19-code-final.log`
+- `/tmp/cubiqlo-client-task-revision-final/fresh/build-task19-final-3.log`
+- `/tmp/cubiqlo-client-task-revision-final/fresh/server-task19-final.log`
 
 ## Runtime defect found and fixed
 

@@ -30,7 +30,7 @@
 
 - Plan authored from `main` at `e669fcd`; historical authoring state retained below.
 - Active implementation branch: `feat/client-project-invoice-task-revision`.
-- Latest verified/pushed checkpoint: `d03de3c`.
+- Latest pushed checkpoint before final Task 19 changes: `3af949d`.
 - Migration `0065` reserved and implemented additively; `0062` remains retired.
 - Feature branch is not integrated to `dev/integration`; shared dev and production remain untouched.
 
@@ -38,8 +38,8 @@
 
 - Tasks 0–17: **complete, committed, and pushed**.
 - Task 18: **complete** — ESLint, TypeScript, production-shape build, 181 test files / 758 tests, targeted PostgreSQL/Portal verification, and migration rehearsal passed.
-- Task 19: **in progress** — 5/5 current Playwright cases pass across desktop/mobile and isolated QA data. Verified: pagination 10/2, mixed-mode visibility, scoped Project/Invoice persistence, Invoice Back origins, localized Invoice status/currency, Portal owner password lifecycle, Template/item CRUD/reorder/archive/restore/duplicate, and zero-selection import guard.
-- Task 19 remaining: Portal legacy hash-only state, unauthorized reveal denial, mixed-mode Task edit persistence, List/Board mutation behavior, and stale-preview import rejection.
+- Task 19: **complete locally; final commit/push pending** — 8/8 Playwright cases pass across desktop/mobile and isolated QA data. Verified: pagination 10/2, mixed-mode visibility/edit persistence, List/Board mutation persistence, scoped Project/Invoice persistence, Invoice Back origins, localized Invoice status/currency, Portal owner/legacy/unauthorized lifecycle, Template/item CRUD/reorder/archive/restore/duplicate, zero-selection guard, and stale-preview invalidation.
+- Task 19 cleanup passed: isolated QA workspaces/clients returned to zero and QA user plan restored to Free.
 - Task 20: **not started**; production approval and full release gates still required.
 - Progress ledger: `docs/operations/client-project-invoice-task-revision-progress.md`.
 - QA evidence: `docs/operations/evidence/2026-08-01-client-task-revision-final-qa.md`.
@@ -495,14 +495,14 @@ Create reusable Playwright coverage where stable. Clean QA records and ciphertex
 - [x] Project detail uses Invoice tab and scoped Invoice Dialog.
 - [x] Project-scoped Invoice cannot switch Client/Project or include another Project.
 - [x] Invoice Back respects validated Project/Client/global origin.
-- [ ] Portal states are truthful; owner reveal lifecycle passed, but legacy hash-only and unauthorized denial browser cases remain.
-- [ ] Existing hash-only Portal passwords remain valid and unrecoverable until changed; automated coverage passed, browser state remains.
+- [x] Portal states are truthful; owner reveal, legacy hash-only, and unauthorized denial browser cases passed.
+- [x] Existing hash-only Portal passwords remain valid and unrecoverable until changed.
 - [x] All stored Project Tasks display in one list with mode badges.
-- [ ] Workflow and reusable Tasks edit according to stored mode; implementation tests passed, browser persistence remains.
+- [x] Workflow and reusable Tasks edit according to stored mode; browser and DB persistence passed.
 - [x] Reorder controls work or are absent; no no-op controls.
 - [x] Global Tasks paginate 10 per page with preserved filters.
 - [x] Task tabs match canonical Invoice-style navigation.
 - [x] Template and item CRUD/reorder/archive/restore are complete.
-- [ ] Import zero-selection guard passed; stale-preview browser rejection remains.
+- [x] Import zero-selection guard and stale-preview invalidation passed.
 - [x] Client Invoice formatting and Portal accessibility are consistent for verified owner flow.
-- [ ] Full automated/DB/build gates pass; complete browser matrix, shared-dev integration, proxy/rollback, and production release gates remain.
+- [ ] Automated/DB/build and isolated browser gates pass; shared-dev integration, proxy/rollback, and production release gates remain.

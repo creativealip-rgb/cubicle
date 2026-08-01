@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 
 export type ReusableTaskRow = {
   id: string;
+  projectId?: string;
   title: string;
   description?: string | null;
   assigneeId?: string | null;
@@ -46,7 +47,7 @@ export function ReusableTaskWorkspace({ tasks, members = [], onMove }: {
           <div className="flex flex-wrap gap-1">
             {onMove && <><Button size="sm" variant="ghost" aria-label="Move Up" disabled={index === 0} onClick={() => onMove(row.id, "up")}>↑</Button>
             <Button size="sm" variant="ghost" aria-label="Move Down" disabled={index === tasks.length - 1} onClick={() => onMove(row.id, "down")}>↓</Button></>}
-            <Dialog><DialogTrigger asChild><Button size="sm" variant="outline">Ubah</Button></DialogTrigger><DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg"><DialogHeader><DialogTitle>Ubah Tugas Berulang</DialogTitle></DialogHeader><TaskForm mode="edit" taskMode="reusable" members={members} defaultValues={{ id: row.id, title: row.title, description: row.description ?? "", assigneeId: row.assigneeId ?? "" }} /></DialogContent></Dialog>
+            <Dialog><DialogTrigger asChild><Button size="sm" variant="outline">Ubah</Button></DialogTrigger><DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg"><DialogHeader><DialogTitle>Ubah Tugas Berulang</DialogTitle></DialogHeader><TaskForm mode="edit" projectId={row.projectId} taskMode="reusable" members={members} defaultValues={{ id: row.id, title: row.title, description: row.description ?? "", assigneeId: row.assigneeId ?? "" }} /></DialogContent></Dialog>
             <Button size="sm" variant="outline" onClick={() => toggle(row)}>{row.lifecycle === "active" ? "Arsipkan" : "Pulihkan"}</Button>
           </div>
         </div>
