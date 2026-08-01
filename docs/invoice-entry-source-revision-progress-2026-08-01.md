@@ -4,9 +4,9 @@
 
 **Branch:** `main`
 
-**Implementation commits:** `d3d4438`, `0c96988`
+**Implementation commits:** `d3d4438`, `0c96988`, `2efcc9b`
 
-**Release status:** Source committed/pushed; production migration and deployment pending.
+**Release status:** Source committed/pushed; production migration and deployment complete.
 
 ## Implemented
 
@@ -43,13 +43,21 @@
 - DB reconciliation: 57 Time Entry links, 57 distinct sources, zero duplicates.
 - Existing project pages for Hourly/Retainer emit React hydration error `#418`; invoice surfaces remain usable. Track separately before broad project-page polish claim.
 
+## Production release evidence
+
+- Backup: `/root/backups/cubiqlo/cubicle_pre0066_20260801T215616.dump`; SHA-256 `fcbfdd3d0bb6ea353ebe3de78471e6051f05ca54f4f695f34679150a404c5aab`.
+- Disposable restore parity: tables `71/71`, invoices `50/50`, invoice items `111/111`; restore DB removed.
+- Migration `0066` applied to production `cubicle`; columns/index verified; duplicate Time Entry sources `0`.
+- Production image: `cubiqlo-prod:2efcc9b4365ccf5c1d3602b0a407edae8e3747da-invoice-source-20260801`.
+- Recreated only `cubiqlo-new-app`; health reports app/database `ok`; fresh filtered logs contain no errors.
+- Live authenticated `/app/invoices/new` renders successfully.
+- Production DB reconciliation: Time Entry links `57`, distinct sources `57`, duplicates `0`.
+- `dokploy-traefik` remains sole public 80/443 owner; Cubiqlo domains and unrelated 9Router domain route independently.
+
 ## Pending canonical-plan work
 
-1. Production backup + checksum + disposable restore test.
-2. Apply migration ledger `0066` to production with explicit target acknowledgment.
-3. Rebuild/recreate only `cubiqlo-new-app` through guarded deploy path.
-4. Production health, desktop/mobile live QA, DB reconciliation, fresh logs, and unrelated-domain routing verification.
+None for this revision. React hydration `#418` on existing Hourly/Retainer project pages remains a separate follow-up and does not block invoice source workflows.
 
 ## Deployment boundary
 
-Production is not migrated or deployed. Before release, follow shared VPS guardrails: `dokploy-traefik` remains sole public 80/443 owner; create and restore-test a `cubicle` backup; apply `0066` with explicit production acknowledgment; recreate only `cubiqlo-new-app`; verify target and unrelated-domain routing.
+Production migrated and deployed following shared VPS guardrails. Rollback image: `cubiqlo-prod:sha-107e79b14a3b-portal-delete-20260801065247`.
