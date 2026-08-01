@@ -38,7 +38,7 @@ import { convertCurrency, resolveFixedPriceInvoiceAmount, resolveProjectAmount }
 import { buildProjectServiceDocumentLines } from "@/lib/project-service-lines";
 import { assertBillingModelAllowsTimeInvoice, resolveBillingModel } from "@/lib/billing-model";
 import { encryptSecret } from "@/lib/google-calendar";
-import { ProjectInvoiceSourceSchema, resolveFixedSourceAmount } from "@/lib/project-invoice-sources";
+import { billingDateInTimezone, ProjectInvoiceSourceSchema, resolveFixedSourceAmount } from "@/lib/project-invoice-sources";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -157,7 +157,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
   }
 
   const [ws] = await db
-    .select({ defaultCurrency: workspaces.defaultCurrency, defaultTaxRate: workspaces.defaultTaxRate, defaultInvoiceTerms: workspaces.defaultInvoiceTerms })
+    .select({ defaultCurrency: workspaces.defaultCurrency, defaultTaxRate: workspaces.defaultTaxRate, defaultInvoiceTerms: workspaces.defaultInvoiceTerms, timezone: workspaces.timezone })
     .from(workspaces)
     .where(eq(workspaces.id, workspaceId))
     .limit(1);
@@ -167,6 +167,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
   if (new Set(sourceProjectIds).size !== sourceProjectIds.length) throw new Error("Satu proyek hanya boleh memiliki satu source invoice");
   const projectIds = Array.from(new Set(sourceProjectIds.length ? sourceProjectIds : parsed.projectIds ?? (parsed.projectId ? [parsed.projectId] : [])));
   if ((parsed.projectIds?.length ?? 0) !== projectIds.length) throw new Error("Proyek duplikat tidak diizinkan");
+  if (!(parsed.items?.length || explicitSources.length || projectIds.length)) throw new Error("Tambahkan minimal satu item atau sumber tagihan");
   const rateRows = await db.select({ fromCurrency: workspaceCurrencyRates.fromCurrency, rate: workspaceCurrencyRates.rate }).from(workspaceCurrencyRates).where(eq(workspaceCurrencyRates.workspaceId, workspaceId));
   const rateMap = buildRateMap(rateRows);
   const projectItemValues: Array<{ description: string; quantity: number; unitPrice: number; sourceId: string; sourceMode: "fixed_full" | "fixed_dp" | "fixed_milestone" | "fixed_final" | "hourly_deposit"; sourceMetadata: { milestoneName?: string; requestedPercent?: string } | null; originalCurrency: string; originalAmount: number; conversionRate: number }> = [];
@@ -245,6 +246,28 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
   }
 
   const invoice = await db.transaction(async (tx) => {
+    // Serialize invoice creation per project. This closes stale Fixed remaining races
+    // and also keeps mixed-source project resolution deterministic.
+    for (const projectId of [...projectIds].sort()) {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`invoice-source:${workspaceId}:${projectId}`}))`);
+    }
+    // Revalidate every precomputed Fixed amount under the project lock.
+    for (const item of projectItemValues.filter((value) => value.sourceMode.startsWith("fixed_"))) {
+      const [lockedProject] = await tx.select({ billingType: projects.billingType, budget: projects.budget, rate: projects.rate, packagePrice: packages.price, packageCustomPrice: packages.customPrice }).from(projects).leftJoin(packages, eq(projects.selectedPackageId, packages.id)).where(and(eq(projects.id, item.sourceId), eq(projects.workspaceId, workspaceId), eq(projects.clientId, parsed.clientId))).limit(1);
+      if (!lockedProject) throw new Error("Proyek Fixed Price tidak ditemukan saat invoice dibuat");
+      const agreedAmount = resolveProjectAmount({ billingType: lockedProject.billingType, budget: lockedProject.budget ? Number(lockedProject.budget) : null, rate: lockedProject.rate ? Number(lockedProject.rate) : null, packagePrice: Number(lockedProject.packageCustomPrice ?? lockedProject.packagePrice ?? 0) || null });
+      const priorRows = await tx.select({ amount: invoiceItems.originalAmount }).from(invoiceItems).innerJoin(invoices, eq(invoices.id, invoiceItems.invoiceId)).where(and(eq(invoiceItems.sourceType, "project"), eq(invoiceItems.sourceId, item.sourceId), eq(invoices.workspaceId, workspaceId), inArray(invoices.status, ["draft", "sent", "viewed", "paid", "overdue"]), inArray(invoiceItems.sourceMode, ["fixed_full", "fixed_dp", "fixed_milestone", "fixed_final"])));
+      const selectedSource = explicitSources.find((source) => source.projectId === item.sourceId && source.mode.startsWith("fixed_"));
+      const fixedSource = selectedSource && selectedSource.mode.startsWith("fixed_")
+        ? selectedSource as Extract<typeof selectedSource, { mode: "fixed_full" | "fixed_dp" | "fixed_milestone" | "fixed_final" }>
+        : { mode: "fixed_final" as const, projectId: item.sourceId };
+      const lockedOriginalAmount = Number(resolveFixedSourceAmount(fixedSource, { agreedAmount, priorActiveOriginalAmounts: priorRows.flatMap((row) => row.amount == null ? [] : [row.amount]) }));
+      const converted = convertCurrency(lockedOriginalAmount, item.originalCurrency, parsed.currency || ws?.defaultCurrency || "IDR", ws?.defaultCurrency || "IDR", rateMap);
+      if (!converted) throw new Error(`Kurs ${item.originalCurrency} ke ${parsed.currency} belum tersedia`);
+      item.originalAmount = lockedOriginalAmount;
+      item.unitPrice = converted.amount;
+      item.conversionRate = converted.rate;
+    }
     // Generate invoice number inside transaction.
     // Counter is authoritative, but always bump above MAX(existing INV-####)
     // so seed data / manual inserts cannot collide with the unique constraint.
@@ -321,7 +344,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
         const selected = hourlyEntries.filter((entry) => source.timeEntryIds.includes(entry.id));
         if (selected.length !== source.timeEntryIds.length || selected.some((entry) => entry.projectId !== source.projectId)) throw new Error("Time Entry tidak sesuai proyek Hourly");
         if (selected.some((entry) => {
-          const billingDate = entry.workDate ?? entry.startTime?.toISOString().slice(0, 10);
+          const billingDate = billingDateInTimezone(entry.workDate, entry.startTime, ws?.timezone ?? "UTC");
           return !billingDate || billingDate < source.periodStart || billingDate >= source.periodEnd;
         })) throw new Error("Time Entry berada di luar periode invoice");
       }

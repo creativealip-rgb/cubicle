@@ -2,17 +2,24 @@ import { z } from "zod";
 
 const projectId = z.string().uuid();
 const positiveNumber = z.number().finite().positive();
-const fixedValueVariants = (mode: "fixed_dp" | "fixed_milestone") => [
-  z.object({ mode: z.literal(mode), projectId, amountType: z.literal("percent"), value: positiveNumber.max(100), milestoneName: z.string().trim().min(1).optional() }).strict(),
-  z.object({ mode: z.literal(mode), projectId, amountType: z.literal("amount"), value: positiveNumber, milestoneName: z.string().trim().min(1).optional() }).strict(),
-  z.object({ mode: z.literal(mode), projectId, percentage: positiveNumber.max(100), milestoneName: z.string().trim().min(1).optional() }).strict(),
-  z.object({ mode: z.literal(mode), projectId, amount: positiveNumber, milestoneName: z.string().trim().min(1).optional() }).strict(),
+const fixedDpVariants = [
+  z.object({ mode: z.literal("fixed_dp"), projectId, amountType: z.literal("percent"), value: positiveNumber.max(100) }).strict(),
+  z.object({ mode: z.literal("fixed_dp"), projectId, amountType: z.literal("amount"), value: positiveNumber }).strict(),
+  z.object({ mode: z.literal("fixed_dp"), projectId, percentage: positiveNumber.max(100) }).strict(),
+  z.object({ mode: z.literal("fixed_dp"), projectId, amount: positiveNumber }).strict(),
+] as const;
+const milestoneName = z.string().trim().min(1);
+const fixedMilestoneVariants = [
+  z.object({ mode: z.literal("fixed_milestone"), projectId, milestoneName, amountType: z.literal("percent"), value: positiveNumber.max(100) }).strict(),
+  z.object({ mode: z.literal("fixed_milestone"), projectId, milestoneName, amountType: z.literal("amount"), value: positiveNumber }).strict(),
+  z.object({ mode: z.literal("fixed_milestone"), projectId, milestoneName, percentage: positiveNumber.max(100) }).strict(),
+  z.object({ mode: z.literal("fixed_milestone"), projectId, milestoneName, amount: positiveNumber }).strict(),
 ] as const;
 
 export const ProjectInvoiceSourceSchema = z.union([
   z.object({ mode: z.literal("fixed_full"), projectId }).strict(),
-  ...fixedValueVariants("fixed_dp"),
-  ...fixedValueVariants("fixed_milestone"),
+  ...fixedDpVariants,
+  ...fixedMilestoneVariants,
   z.object({ mode: z.literal("fixed_final"), projectId }).strict(),
   z.object({
     mode: z.literal("hourly_timesheet"), projectId,
@@ -23,6 +30,14 @@ export const ProjectInvoiceSourceSchema = z.union([
 ]);
 
 export type ProjectInvoiceSource = z.infer<typeof ProjectInvoiceSourceSchema>;
+
+export function billingDateInTimezone(workDate: string | null, startTime: Date | null, timezone: string): string | null {
+  if (workDate) return workDate;
+  if (!startTime) return null;
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: timezone || "UTC", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(startTime);
+  const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${value.year}-${value.month}-${value.day}`;
+}
 
 function toMinor(value: string | number): number {
   const parsed = Number(value);

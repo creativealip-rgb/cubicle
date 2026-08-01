@@ -78,7 +78,8 @@ interface InvoiceFormProps {
 export function InvoiceForm({ mode, defaultValues, clients, projects, templates, baseCurrency = "IDR", currencyRates = [], initialItems = [], onSuccess, scopedClientId, scopedProjectId }: InvoiceFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [items, setItems] = useState(initialItems.length ? initialItems : [{ description: "", quantity: 1, unitPrice: 0 }]);
+  const startsSourceBacked = Boolean(scopedProjectId || defaultValues?.projectId || initialItems.some((item) => item.sourceId));
+  const [items, setItems] = useState(initialItems.length ? initialItems : startsSourceBacked ? [] : [{ description: "", quantity: 1, unitPrice: 0 }]);
   const [projectSources, setProjectSources] = useState<Record<string, InvoiceSourceDraft>>({});
   const [dueDateTouched, setDueDateTouched] = useState(Boolean(defaultValues?.dueDate));
 
