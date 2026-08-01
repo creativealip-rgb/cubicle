@@ -1,6 +1,6 @@
 # Cubiqlo Full Feature Status
 
-Last updated: 2026-07-31
+Last updated: 2026-08-01
 Production app: https://app.cubiqlo.com
 Dev app: https://dev.cubiqlo.com
 Latest verified dev branch: `dev/integration` at `bccc2d7`
@@ -41,7 +41,7 @@ Latest verified production commit: `9381be5`
 | --- | --- | --- | --- |
 | Clients list | `/app/clients` | DONE | v0.1.114: compact zebra list, portal status/action, no redundant row actions, Excel export. |
 | Client create | `/app/clients/new`, `/api/clients/create` | DONE | Dedicated non-modal fallback created. |
-| Client detail | `/app/clients/[clientId]` | DONE | v0.1.114: Ringkasan removed, Portal kept, default tab Proyek, invoice/project cards actionable. |
+| Client detail | `/app/clients/[clientId]` | DONE | v0.1.124-dev: summary and Portal tab share one access-status rule; client-scoped Project create defaults visible in Portal; permanent Client deletion uses typed confirmation and removes related data transactionally. |
 | Client Excel export | `/api/clients/[clientId]/export/xlsx`, `/api/clients/export/xlsx` | DONE | v0.1.114: workspace resolve hardened; list/detail export XLSX. PDF buttons hidden from client UI. |
 | Client portal token route | `/client-portal/[token]` | DONE | Tabs Ringkasan/Proyek/File/Invoice/Kontak; workspace branding; mobile-safe tab navigation; File upload via `POST /api/client-portal/files/upload`; audit closure documented in `docs/client-portal-audit-2026-07-25.md`. |
 | Short client portal slug UX | Client form / portal fields | DONE | Auto slug generation and cleanup in client form. |
@@ -53,8 +53,8 @@ Latest verified production commit: `9381be5`
 | --- | --- | --- | --- |
 | Projects list | `/app/projects` | DONE | v0.1.114: compact zebra list, Review status, due-date context, client link, simplified client-only filter, progress % inside bar. |
 | Project billing type + dates | project form/schema | DONE | Supports `by project` / `by hours`, start date, finish date. |
-| Project detail | `/app/projects/[projectId]` | DONE | Billing-aware `Pekerjaan`, conditional `Waktu`, File, and consolidated Billing tabs. Standalone Layanan UI retired; compatibility data remains. Full automated gate: 689/689 tests. |
-| Tasks | `/app/tasks` | DONE | `Tugas Proyek` and `Template Tugas`; Fixed Price defaults workflow List/Board, Hourly/Retainer use reusable flat Tasks, and template imports create independent flat copies. |
+| Project detail | `/app/projects/[projectId]` | DONE | v0.1.124-dev adds persisted Portal visibility control and typed permanent deletion. Billing-aware `Pekerjaan`, conditional `Waktu`, File, and consolidated Billing tabs remain. |
+| Tasks | `/app/tasks` | DONE | Fixed Price uses workflow List/Board; Hourly/Retainer use reusable flat Tasks. v0.1.124-dev adds typed permanent deletion that removes linked Time Logs, comments, and notifications. |
 | Billing-aware Time cutover | `/app/time` | QA | Server/Timer/manual/weekly Task eligibility shipped locally; PostgreSQL 16 integration matrix and full automated suite green. Authenticated desktop/mobile browser QA still in progress; not pushed/deployed. |
 | Project timeline | Project detail + portal | DONE | Internal timeline and client-safe visibility shipped earlier. |
 | Nodes/reminder center | `/app/nodes` | REMOVED | Removed from sidebar and route because meeting clarified this should be Notes/reminders. |

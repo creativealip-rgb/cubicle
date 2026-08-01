@@ -22,6 +22,11 @@ describe("task template import dialog", () => {
     expect(source).toContain("crypto.randomUUID");
   });
 
+  it("refreshes preview fingerprint from exact submit decisions", () => {
+    expect(source).toContain("const freshPreview = await previewTaskTemplateImport(importPayload)");
+    expect(source).toContain("previewFingerprint: freshPreview.payloadFingerprint");
+  });
+
   it("shows flat result without project groups", () => {
     expect(source).toContain("Tugas berhasil ditambahkan");
     expect(source).not.toMatch(/create(Group|TaskList)|parentId/);

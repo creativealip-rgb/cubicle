@@ -6,6 +6,14 @@ export type RetainerInvoiceLine = {
   unitPrice: number;
   amount: number;
 };
+export type RetainerPeriodUsageSummary = {
+  period: string;
+  fee: number;
+  includedHours: number;
+  approvedUsedHours: number;
+  overageHours: number;
+  overageValue: number | null;
+};
 
 function parseIsoDate(input: string): Date {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input);
@@ -38,6 +46,21 @@ export function calculateRetainerUsage(input: { approvedMinutes: number[]; inclu
   const approvedMinutes = input.approvedMinutes.reduce((sum, minutes) => sum + Math.max(0, Math.trunc(minutes)), 0);
   const includedMinutes = Math.max(0, Math.trunc(input.includedMinutes));
   return { approvedMinutes, overageMinutes: Math.max(0, approvedMinutes - includedMinutes) };
+}
+
+export function getRetainerPeriodUsageSummary(input: {
+  periodStart: string; periodEnd: string; fee: number; includedMinutes: number;
+  approvedMinutes: number; overageMinutes: number; overagePolicy: string; overageRate?: number | null;
+}): RetainerPeriodUsageSummary {
+  const rate = input.overageRate ?? 0;
+  return {
+    period: `${input.periodStart}–${input.periodEnd}`,
+    fee: input.fee,
+    includedHours: input.includedMinutes / 60,
+    approvedUsedHours: input.approvedMinutes / 60,
+    overageHours: input.overageMinutes / 60,
+    overageValue: input.overagePolicy === "bill" && rate > 0 ? (input.overageMinutes / 60) * rate : null,
+  };
 }
 
 export function buildRetainerInvoiceLines(input: {

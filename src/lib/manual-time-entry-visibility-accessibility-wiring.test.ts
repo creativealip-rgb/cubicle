@@ -10,7 +10,7 @@ describe("manual time entry visibility and accessibility", () => {
   });
 
   it("associates every manual-time label with its control", () => {
-    for (const id of ["manual-time-project", "manual-time-task", "manual-time-description", "manual-time-date", "manual-time-hours", "manual-time-minutes"]) {
+    for (const id of ["manual-time-client", "manual-time-project", "manual-time-task", "manual-time-description", "manual-time-date", "manual-time-duration", "manual-time-tags"]) {
       expect(form).toContain(`htmlFor="${id}"`);
       expect(form).toContain(`id="${id}"`);
     }

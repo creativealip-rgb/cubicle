@@ -2,8 +2,8 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { projects, clients, tasks, files, timeEntries, workspaceMembers, users, projectServices, invoices, workspaces, workspaceCurrencyRates, packages } from "@/db/schema";
-import { and, eq, desc } from "drizzle-orm";
+import { projects, clients, tasks, files, timeEntries, workspaceMembers, users, projectServices, invoices, workspaces, workspaceCurrencyRates, packages, retainerPeriods } from "@/db/schema";
+import { and, eq, desc, inArray } from "drizzle-orm";
 import { requireUser, assertProjectInWorkspace } from "@/lib/access";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,9 @@ import { WorkflowTaskWorkspace } from "@/components/tasks/workflow-task-workspac
 import { ProjectBillingTab } from "@/components/projects/project-billing-tab";
 import { resolveBillingModel } from "@/lib/billing-model";
 import { resolveProjectTaskMode } from "@/lib/task-work-mode";
+import { loadInvoiceSourceProjectOptions } from "@/lib/invoice-source-options";
+import { resolveProjectAmount } from "@/lib/invoice-project-items";
+import { PermanentDeleteButton } from "@/components/shared/permanent-delete-button";
 import { ProjectForm } from "@/components/forms/project-form";
 import { Timesheet } from "@/components/time/timesheet";
 import Link from "next/link";
@@ -176,10 +179,18 @@ export default async function ProjectDetailPage({
     .orderBy(desc(timeEntries.createdAt))
     .limit(200);
 
+  const sourceOptions = await loadInvoiceSourceProjectOptions({ workspaceId, clientId: project.clientId ?? undefined, projectIds: [projectId] });
   const projectInvoices = await db.select({ id: invoices.id, invoiceNumber: invoices.invoiceNumber, issueDate: invoices.issueDate, dueDate: invoices.dueDate, currency: invoices.currency, total: invoices.total, status: invoices.status }).from(invoices).where(and(eq(invoices.workspaceId, workspaceId), eq(invoices.projectId, projectId))).orderBy(desc(invoices.issueDate));
   const [workspace] = await db.select({ defaultCurrency: workspaces.defaultCurrency }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
   const currencyRates = await db.select({ fromCurrency: workspaceCurrencyRates.fromCurrency, rate: workspaceCurrencyRates.rate }).from(workspaceCurrencyRates).where(eq(workspaceCurrencyRates.workspaceId, workspaceId));
   const [selectedPackage] = project.selectedPackageId ? await db.select({ price: packages.price, customPrice: packages.customPrice }).from(packages).where(eq(packages.id, project.selectedPackageId)).limit(1) : [];
+  const [retainerPeriod] = project.billingModel === "retainer" ? await db.select({
+    id: retainerPeriods.id, periodStart: retainerPeriods.periodStart, periodEnd: retainerPeriods.periodEnd,
+    feeSnapshot: retainerPeriods.feeSnapshot, currencySnapshot: retainerPeriods.currencySnapshot,
+    includedMinutesSnapshot: retainerPeriods.includedMinutesSnapshot, approvedMinutes: retainerPeriods.approvedMinutes,
+    overageMinutes: retainerPeriods.overageMinutes, overagePolicySnapshot: retainerPeriods.overagePolicySnapshot,
+    overageRateSnapshot: retainerPeriods.overageRateSnapshot, status: retainerPeriods.status,
+  }).from(retainerPeriods).where(and(eq(retainerPeriods.workspaceId, workspaceId), eq(retainerPeriods.projectId, projectId), inArray(retainerPeriods.status, ["open", "locked"]))).orderBy(desc(retainerPeriods.periodStart)).limit(1) : [];
 
   const projectServiceRows = await db
     .select({ serviceId: projectServices.serviceId, projectPackageAssignmentId: projectServices.projectPackageAssignmentId })
@@ -279,7 +290,7 @@ export default async function ProjectDetailPage({
             {billingTypeHint(billingDisplayType, lang)}
           </p>
         </div>
-        <Dialog>
+        <div className="flex flex-wrap gap-2"><Dialog>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm" className="gap-1">
               <Pencil className="h-3 w-3" /> {t("Ubah", "Edit")}
@@ -314,7 +325,7 @@ export default async function ProjectDetailPage({
               }}
             />
           </DialogContent>
-        </Dialog>
+        </Dialog><PermanentDeleteButton entityType="project" entityId={project.id} entityName={project.name} redirectTo={`/app/clients/${project.clientId}?tab=projects`} /></div>
       </div>
 
       {/* Progress bar */}
@@ -389,7 +400,7 @@ export default async function ProjectDetailPage({
           ))}
         </TabsContent>
 
-        <TabsContent value="billing" className="pt-4">{project.clientId ? <ProjectBillingTab project={{ id: project.id, name: project.name, clientId: project.clientId, billingType: project.billingType, currency: project.currency, budget: project.budget, rate: project.rate, packagePrice: selectedPackage?.price ?? null, packageCustomPrice: selectedPackage?.customPrice ?? null }} client={{ id: project.clientId, name: project.clientName ?? "Klien", companyName: null }} invoices={projectInvoices} baseCurrency={workspace?.defaultCurrency ?? "IDR"} currencyRates={currencyRates} /> : null}</TabsContent>
+        <TabsContent value="billing" className="pt-4">{project.clientId ? <ProjectBillingTab project={{ id: project.id, name: project.name, clientId: project.clientId, billingType: project.billingModel ?? project.billingType, currency: project.currency, budget: project.budget, rate: project.rate, packagePrice: selectedPackage?.price ?? null, packageCustomPrice: selectedPackage?.customPrice ?? null, agreedAmount: resolveProjectAmount({ billingType: project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(selectedPackage?.customPrice ?? selectedPackage?.price ?? 0) || null }), priorActiveFixedBilledAmount: sourceOptions.get(project.id)?.priorActiveFixedBilledAmount ?? 0, eligibleTimeEntries: sourceOptions.get(project.id)?.eligibleTimeEntries ?? [] }} client={{ id: project.clientId, name: project.clientName ?? "Klien", companyName: null }} invoices={projectInvoices} baseCurrency={workspace?.defaultCurrency ?? "IDR"} currencyRates={currencyRates} retainerPeriod={retainerPeriod ?? null} /> : null}</TabsContent>
 
         {showTimeTab ? <TabsContent value="time" className="pt-4">
           <Timesheet

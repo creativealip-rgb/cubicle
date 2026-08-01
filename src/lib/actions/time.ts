@@ -82,13 +82,14 @@ const createManualEntrySchema = z.object({
   clientId: z.string().uuid(),
   projectId: z.string().uuid(),
   activityId: z.string().uuid().optional().nullable(),
-  taskId: z.string().uuid(),
+  taskId: z.string().uuid().optional().nullable(),
   description: z.string().trim().min(1, "Deskripsi pekerjaan wajib diisi"),
   tags: z.string().optional(),
   date: z.string().min(1),
   durationMinutes: z.number().positive(),
   billable: z.boolean().default(true),
   hourlyRate: z.number().nonnegative().optional(),
+  status: z.enum(["draft", "approved"]).default("draft"),
 });
 
 const weeklyTimeCellSchema = z.object({
@@ -502,7 +503,7 @@ export async function createManualEntry(input: z.infer<typeof createManualEntryS
     timezoneSnapshot: "UTC",
     billable,
     hourlyRate: resolvedRate,
-    status: "draft",
+    status: parsed.status,
   }).returning();
 
   await writeActivityLog(parsed.workspaceId, user.id, "created_time_entry", "time_entry", entry.id);

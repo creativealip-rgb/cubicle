@@ -348,6 +348,22 @@ export async function deleteTask(taskId: string) {
   return { success: true };
 }
 
+export async function permanentlyDeleteTask(taskId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertTaskInWorkspace(db, user.id, workspaceId, taskId);
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`DELETE FROM comments WHERE workspace_id=${workspaceId} AND entity_type='task' AND entity_id=${taskId}`);
+    await tx.execute(sql`DELETE FROM notifications WHERE workspace_id=${workspaceId} AND entity_type='task' AND entity_id=${taskId}`);
+    await tx.delete(timeEntries).where(and(eq(timeEntries.taskId, taskId), eq(timeEntries.workspaceId, workspaceId)));
+    const [deleted] = await tx.delete(tasks).where(and(eq(tasks.id, taskId), eq(tasks.workspaceId, workspaceId))).returning({ id: tasks.id });
+    if (!deleted) throw new Error("Task tidak ditemukan");
+    return { success: true };
+  });
+}
+
 const respondPortalTaskSchema = z.object({
   token: z.string().min(1),
   taskId: z.string().uuid(),

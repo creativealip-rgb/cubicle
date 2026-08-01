@@ -8,10 +8,17 @@ const timesheet = read("src/components/time/timesheet.tsx");
 const weekly = read("src/components/time/weekly-time-grid.tsx");
 
 describe("manual Time task UI", () => {
-  it("requires Project and Task in manual entry", () => {
-    expect(manual).toContain("Project, Task, deskripsi, dan durasi wajib diisi");
+  it("requires Project and Task and exposes complete manual billing metadata", () => {
+    expect(manual).toContain("Task wajib dipilih untuk project ini");
     expect(manual).toContain('Label htmlFor="manual-time-task"');
     expect(manual).not.toContain("activityId");
+    expect(manual).toContain(">Tag</Label>");
+    expect(manual).toContain("Bisa ditagih");
+    expect(manual).toContain("Durasi (menit)");
+    expect(manual).toContain("billingType");
+    expect(manual).toContain("status,");
+    expect(manual).toContain("tags:");
+    expect(manual).toContain("billable,");
   });
 
   it("loads only active reusable Tasks for new Time selectors", () => {

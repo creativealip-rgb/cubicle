@@ -25,7 +25,7 @@ describe("billing-aware Waktu Phase 1", () => {
     expect(manual).toContain("projectId");
     expect(manual).toContain("taskId");
     expect(manual).not.toContain("activityId");
-    expect(manual).not.toContain("clientId");
+    expect(manual).toContain("clientId");
     expect(manual).toContain("description.trim()");
     expect(timer).toContain("startTimer");
     expect(timer).toContain("startTimer({ workspaceId })");

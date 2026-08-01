@@ -27,10 +27,11 @@ describe("Phase 5 fixed-price portal privacy", () => {
     expect(page).not.toContain("inArray(timeEntries.projectId, visibleProjectIds)");
   });
 
-  it("marks project invoice lines as fixed-price sources", () => {
+  it("marks project invoice lines with explicit fixed source intent", () => {
     const actions = read("src/lib/actions/invoices.ts");
     expect(actions).toContain('billingSource: projectItemValues.length ? "fixed_price" : null');
-    expect(actions).toContain("resolveFixedPriceInvoiceAmount");
-    expect(actions).toContain("previouslyInvoicedAmount");
+    expect(actions).toContain("resolveFixedSourceAmount");
+    expect(actions).toContain('inArray(invoiceItems.sourceMode, ["fixed_full", "fixed_dp", "fixed_milestone", "fixed_final"])');
+    expect(actions).toContain("priorActiveOriginalAmounts");
   });
 });

@@ -51,7 +51,8 @@ describe("Phase 1 project time tracking wiring", () => {
     expect(projectsAction).toContain('retainerPeriodUnit: parsed.billingModel === "retainer" ? "month" : null');
     expect(projectForm).not.toContain("selectedPackage?.hours");
     expect(timerWidget).toContain("startTimer({ workspaceId })");
-    expect(timerWidget).toContain("setStopDialogOpen(true)");
+    expect(timerWidget).toContain("await stopTimer(activeTimer.id)");
+    expect(timerWidget).not.toContain("setStopDialogOpen(true)");
     expect(topbar).toContain("await startTimer({ workspaceId })");
     expect(topbar).toContain("await stopTimer(activeTimer.id)");
     expect(topbar).not.toContain('if (!activeTimer.projectId)');

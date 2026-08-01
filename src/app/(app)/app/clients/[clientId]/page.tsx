@@ -11,6 +11,8 @@ import {
   packages,
   timeEntries,
   workspaceMembers,
+  workspaceCurrencyRates,
+  workspaces,
 } from "@/db/schema";
 import { eq, desc, sql, inArray, and } from "drizzle-orm";
 import { requireUser, assertClientInWorkspace } from "@/lib/access";
@@ -42,6 +44,11 @@ import {
 } from "@/lib/client-google-calendar";
 import { buildInvoiceDetailUrl } from "@/lib/invoice-origin";
 import { formatMoney } from "@/lib/utils";
+import { resolveClientPortalActive } from "@/lib/client-portal-status";
+import { PermanentDeleteButton } from "@/components/shared/permanent-delete-button";
+import { ClientInvoiceCreateDialog } from "@/components/invoices/client-invoice-create-dialog";
+import { loadInvoiceSourceProjectOptions } from "@/lib/invoice-source-options";
+import { resolveProjectAmount } from "@/lib/invoice-project-items";
 
 const invoiceStatusLabel: Record<string, string> = {
   draft: "Draf",
@@ -236,6 +243,10 @@ export default async function ClientDetailPage({
   });
 
   // Invoices
+  const sourceOptions = await loadInvoiceSourceProjectOptions({ workspaceId, clientId, projectIds });
+  const [workspace] = await db.select({ defaultCurrency: workspaces.defaultCurrency }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  const currencyRates = await db.select({ fromCurrency: workspaceCurrencyRates.fromCurrency, rate: workspaceCurrencyRates.rate }).from(workspaceCurrencyRates).where(eq(workspaceCurrencyRates.workspaceId, workspaceId));
+
   const clientInvoices = await db
     .select()
     .from(invoices)
@@ -254,6 +265,16 @@ export default async function ClientDetailPage({
 
   // Active projects count
   const activeProjects = clientProjects.filter((p) => p.status === "active").length;
+  const portalActive = resolveClientPortalActive(client);
+  const projectStatusLabels: Record<string, string> = {
+    draft: "Draf",
+    active: "Aktif",
+    review: "Review",
+    on_hold: "Ditunda",
+    completed: "Selesai",
+    cancelled: "Dibatalkan",
+    archived: "Diarsipkan",
+  };
 
   return (
     <div className="space-y-6">
@@ -286,6 +307,7 @@ export default async function ClientDetailPage({
                   portalSlugEnabled: client.portalSlugEnabled ?? true,
                 }}
               />
+              <PermanentDeleteButton entityType="client" entityId={client.id} entityName={client.name} redirectTo="/app/clients" />
             </div>
           </div>
 
@@ -328,7 +350,16 @@ export default async function ClientDetailPage({
                     {clientInvoices.filter((i) => i.status !== "paid" && i.status !== "cancelled").length}
                   </p>
                 </div>
-
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <p className="text-[11px] text-muted-foreground">Portal</p>
+                  {portalActive ? (
+                    <p className="mt-1 flex items-center gap-1 text-sm font-semibold text-green-600">
+                      <Globe className="h-4 w-4" /> Aktif
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-sm font-semibold text-muted-foreground">Nonaktif</p>
+                  )}
+                </div>
               </div>
 
               {(client.website || client.address || (client.tags && client.tags.length > 0) || client.internalNotes) && (
@@ -389,7 +420,7 @@ export default async function ClientDetailPage({
             </TabsTrigger>
             <TabsTrigger value="calendar" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm" asChild>
               <Link href={`?tab=calendar`}>
-                <Calendar className="h-3 w-3 shrink-0" /> Calendar
+                <Calendar className="h-3 w-3 shrink-0" /> Kalender
               </Link>
             </TabsTrigger>
 
@@ -463,7 +494,7 @@ export default async function ClientDetailPage({
                       {project.name}
                     </Link>
                     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <Badge variant="outline" className="text-[10px]">{project.status}</Badge>
+                      <Badge variant="outline" className="text-[10px]">{projectStatusLabels[project.status] ?? project.status}</Badge>
                       <Badge variant="secondary" className="gap-1 text-[10px] font-normal">
                         <Wallet className="h-3 w-3" />
                         {billingTypeLabel(billingDisplayType, "id")}
@@ -499,6 +530,7 @@ export default async function ClientDetailPage({
         </TabsContent>
 
         <TabsContent value="invoices" className="space-y-4 pt-4">
+          {canWrite && <div className="flex justify-end"><ClientInvoiceCreateDialog client={{ id: client.id, name: client.name, companyName: client.companyName }} projects={clientProjects.map((project) => ({ id: project.id, name: project.name, clientId: client.id, billingType: project.billingModel ?? project.billingType, currency: project.currency, budget: project.budget, rate: project.rate, packagePrice: project.packagePrice, packageCustomPrice: null, agreedAmount: resolveProjectAmount({ billingType: project.billingModel ?? project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packagePrice ?? 0) || null }), priorActiveFixedBilledAmount: sourceOptions.get(project.id)?.priorActiveFixedBilledAmount ?? 0, eligibleTimeEntries: sourceOptions.get(project.id)?.eligibleTimeEntries ?? [] }))} baseCurrency={workspace?.defaultCurrency ?? "IDR"} currencyRates={currencyRates} /></div>}
           {clientInvoices.length === 0 && (
             <p className="text-sm text-muted-foreground py-8 text-center">Belum ada invoice</p>
           )}

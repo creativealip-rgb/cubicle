@@ -59,6 +59,7 @@ const clientSchema = z.object({
   /** When true on create: generate portal token + set portalEnabled */
   portalEnabled: z.boolean().optional(),
 });
+const clientStatusSchema = z.enum(["active", "inactive", "archived"]);
 
 // ─── CRUD Actions ───
 
@@ -217,6 +218,21 @@ export async function updateClient(clientId: string, input: Partial<z.infer<type
   return client;
 }
 
+export async function updateClientStatus(clientId: string, status: z.infer<typeof clientStatusSchema>) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertClientInWorkspace(db, user.id, workspaceId, clientId);
+  const parsed = clientStatusSchema.parse(status);
+  const [client] = await db.update(clients)
+    .set({ status: parsed, updatedAt: new Date() })
+    .where(and(eq(clients.id, clientId), eq(clients.workspaceId, workspaceId)))
+    .returning();
+  revalidatePath("/app/clients");
+  return client;
+}
+
 export async function archiveClient(clientId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
@@ -231,6 +247,30 @@ export async function archiveClient(clientId: string) {
 
   await writeActivityLog(workspaceId, user.id, "archived_client", "client", clientId);
   return client;
+}
+
+export async function permanentlyDeleteClient(clientId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertClientInWorkspace(db, user.id, workspaceId, clientId);
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`DELETE FROM time_entries WHERE workspace_id=${workspaceId} AND client_id=${clientId}`);
+    await tx.execute(sql`DELETE FROM custom_package_requests WHERE workspace_id=${workspaceId} AND client_id=${clientId}`);
+    await tx.execute(sql`DELETE FROM package_orders WHERE workspace_id=${workspaceId} AND client_id=${clientId}`);
+    await tx.execute(sql`DELETE FROM retainer_periods WHERE workspace_id=${workspaceId} AND project_id IN (SELECT id FROM projects WHERE workspace_id=${workspaceId} AND client_id=${clientId})`);
+    await tx.execute(sql`DELETE FROM appointments WHERE workspace_id=${workspaceId} AND client_id=${clientId}`);
+    await tx.execute(sql`DELETE FROM expenses WHERE workspace_id=${workspaceId} AND client_id=${clientId}`);
+    await tx.execute(sql`DELETE FROM prompt_generations WHERE workspace_id=${workspaceId} AND client_id=${clientId}`);
+    await tx.execute(sql`DELETE FROM portal_access_logs WHERE workspace_id=${workspaceId} AND client_id=${clientId}`);
+    await tx.execute(sql`DELETE FROM questionnaire_responses WHERE workspace_id=${workspaceId} AND client_id=${clientId}`);
+    await tx.execute(sql`DELETE FROM email_messages WHERE workspace_id=${workspaceId} AND client_id=${clientId}`);
+    await tx.execute(sql`DELETE FROM support_tickets WHERE workspace_id=${workspaceId} AND client_id=${clientId}`);
+    const deleted = await tx.execute(sql`DELETE FROM clients WHERE workspace_id=${workspaceId} AND id=${clientId} RETURNING id`);
+    if (deleted.rows.length === 0) throw new Error("Klien tidak ditemukan");
+    return { success: true };
+  });
 }
 
 // ─── Portal Token ───

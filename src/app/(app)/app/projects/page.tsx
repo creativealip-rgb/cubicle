@@ -196,6 +196,7 @@ export default async function ProjectsPage({
           retainer: buildProjectsHref({ ...filtersForHref, billingType: "retainer" }),
           package: buildProjectsHref({ ...filtersForHref, billingType: "package" }),
         }}
+        canWrite={canWrite}
       />
     </div>
   );

@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InvoiceForm } from "@/components/forms/invoice-form";
 import { parseUuidList } from "@/lib/finance-tabs";
+import { loadInvoiceSourceProjectOptions } from "@/lib/invoice-source-options";
+import { resolveProjectAmount } from "@/lib/invoice-project-items";
 
 export default async function NewInvoicePage({ searchParams }: { searchParams: Promise<{ timeEntryIds?: string | string[] }> }) {
   const { workspaceId } = await requireWorkspaceWritableOrRedirect("/app/invoices");
@@ -56,6 +58,7 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: P
     .where(eq(projects.workspaceId, workspaceId))
     .orderBy(asc(projects.name));
 
+  const sourceOptions = await loadInvoiceSourceProjectOptions({ workspaceId });
   const [workspace] = await db.select({ defaultCurrency: workspaces.defaultCurrency }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
   const currencyRates = await db.select({ fromCurrency: workspaceCurrencyRates.fromCurrency, rate: workspaceCurrencyRates.rate }).from(workspaceCurrencyRates).where(eq(workspaceCurrencyRates.workspaceId, workspaceId));
 
@@ -91,7 +94,7 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: P
               </Link>
             </div>
           ) : (
-            <InvoiceForm mode="create" defaultValues={{ clientId: selectedClientId ?? undefined, projectId: selectedProjectIds.length === 1 ? selectedProjectIds[0] : undefined }} clients={clientOptions} projects={projectOptions} templates={templateOptions} baseCurrency={workspace?.defaultCurrency || "IDR"} currencyRates={currencyRates} initialItems={selectedTimeEntries.map(row => ({ description: row.description || "Waktu proyek", quantity: Number(row.durationMinutes) / 60, unitPrice: Number(row.hourlyRate ?? 0), sourceId: row.id }))} />
+            <InvoiceForm mode="create" defaultValues={{ clientId: selectedClientId ?? undefined, projectId: selectedProjectIds.length === 1 ? selectedProjectIds[0] : undefined }} clients={clientOptions} projects={projectOptions.map((project) => ({ ...project, agreedAmount: resolveProjectAmount({ billingType: project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packageCustomPrice ?? project.packagePrice ?? 0) || null }), priorActiveFixedBilledAmount: sourceOptions.get(project.id)?.priorActiveFixedBilledAmount ?? 0, eligibleTimeEntries: sourceOptions.get(project.id)?.eligibleTimeEntries ?? [], initialTimeEntryIds: selectedTimeEntries.filter((entry) => entry.projectId === project.id).map((entry) => entry.id) }))} templates={templateOptions} baseCurrency={workspace?.defaultCurrency || "IDR"} currencyRates={currencyRates} initialItems={selectedTimeEntries.map(row => ({ description: row.description || "Waktu proyek", quantity: Number(row.durationMinutes) / 60, unitPrice: Number(row.hourlyRate ?? 0), sourceId: row.id }))} />
           )}
         </CardContent>
       </Card>

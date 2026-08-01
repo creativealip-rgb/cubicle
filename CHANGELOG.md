@@ -1,5 +1,34 @@
 # Changelog
 
+## Unreleased — Explicit invoice entry sources
+
+- Invoice entry: add explicit Fixed full/DP/milestone/final, Hourly timesheet/deposit, manual adjustment, and Retainer base/overage source intent.
+- Scope: global creation remains workspace-wide; Client Invoice tab adds client-locked create; Project Invoice entry remains project-locked; multi-project invoices retain item-level project linkage.
+- Integrity: add migration `0066` for `invoice_items.source_mode/source_metadata`, retain unique Time Entry linkage, validate Hourly eligibility/period/rate, transition selected entries conditionally, and restore sources atomically on draft cancellation.
+- Fixed Price: calculate active progress only from Fixed source modes, require milestone names, reject overbilling/empty invoices, and serialize per-project creation before locked remaining recalculation.
+- Timezone: Hourly fallback dates now use workspace timezone when `workDate` is absent.
+- Verification: focused invoice suite passed 24/24 before concurrency hardening; latest targeted invoice suite, ESLint, production build, and disposable PostgreSQL migration apply/replay are release gates. Full suite still contains four unrelated stale Task ordering assertions expecting English labels.
+- Commits: `d3d4438`, `0c96988` pushed to `main`. Production migration/deployment not applied.
+- Pending plan work: Fixed progress preview/default from history, in-form eligible timesheet picker, Retainer project entry/usage summary, behavioral DB concurrency matrix, desktop/mobile browser QA, reconciliation, and production release evidence.
+
+## v0.1.124-dev — 2026-08-01 — Portal visibility and permanent deletion
+
+- Project create/edit: add **Tampilkan di Portal Klien** with persisted visibility; projects created from Client detail default visible while the known Client field remains hidden.
+- Permanent deletion: add typed-name confirmation dialogs for Client, Project, and Task. These actions delete related operational, time, finance, portal, request, comment, and notification rows transactionally instead of archiving.
+- Tenant safety: every destructive action checks writable workspace access and scopes manual deletes by `workspace_id`.
+- Task deletion: removes linked Time Logs, comments, and notifications before deleting the Task.
+- Verification: focused regression tests, ESLint, TypeScript, Next.js production build, and diff checks passed before deployment.
+- Known limitation: DB file rows are removed, but physical R2 objects still require durable post-commit cleanup.
+
+## v0.1.123-dev — 2026-08-01 — Live QA polish and template import stability
+
+- Task Template import: refresh preview fingerprint from final selected items and duplicate decisions before atomic submit, fixing production `STALE_PREVIEW` Server Component errors while retaining stale-payload protection.
+- Client detail: use one portal-active rule in summary and Portal tab so incomplete/revoked portal access no longer shows conflicting status.
+- Client project UX: localize `Calendar` to `Kalender` and raw project states such as `on_hold` to human labels.
+- Reusable Tasks: localize lifecycle/order controls and widen desktop table with safe horizontal scrolling so Task, Project/Client, and actions do not overlap.
+- Verification: focused import/portal/live-QA suites passed 22/22 tests; ESLint, TypeScript, and Next.js production build passed.
+- Scope: source, docs, tests, commit, and push only; production not deployed.
+
 ## Unreleased — Billing-aware Tasks, Templates, and Time cutover
 
 - Tasks: add billing-aware workflow/reusable modes, flat Task Templates, atomic import, complete global/project editors, and mobile/keyboard ordering controls.
