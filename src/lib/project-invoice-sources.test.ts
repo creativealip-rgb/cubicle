@@ -1,10 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { billingDateInTimezone, ProjectInvoiceSourceSchema, resolveFixedSourceAmount } from "./project-invoice-sources";
+import { billingDateInTimezone, isFixedInvoiceBillingModel, ProjectInvoiceSourceSchema, resolveFixedSourceAmount } from "./project-invoice-sources";
 
 const projectId = "11111111-1111-4111-8111-111111111111";
 const entryId = "22222222-2222-4222-8222-222222222222";
 
 describe("ProjectInvoiceSource contract", () => {
+  it("treats canonical Fixed and legacy package projects as Fixed invoice sources", () => {
+    expect(isFixedInvoiceBillingModel("fixed_price")).toBe(true);
+    expect(isFixedInvoiceBillingModel("legacy_package")).toBe(true);
+    expect(isFixedInvoiceBillingModel("hourly")).toBe(false);
+    expect(isFixedInvoiceBillingModel("retainer")).toBe(false);
+  });
+
   it("accepts generic fixed, hourly, and deposit sources", () => {
     expect(ProjectInvoiceSourceSchema.parse({ mode: "fixed_full", projectId })).toEqual({ mode: "fixed_full", projectId });
     expect(ProjectInvoiceSourceSchema.parse({ mode: "fixed_dp", projectId, percentage: 25 })).toMatchObject({ mode: "fixed_dp", percentage: 25 });

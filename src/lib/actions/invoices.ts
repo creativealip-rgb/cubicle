@@ -38,7 +38,7 @@ import { convertCurrency, resolveFixedPriceInvoiceAmount, resolveProjectAmount }
 import { buildProjectServiceDocumentLines } from "@/lib/project-service-lines";
 import { assertBillingModelAllowsTimeInvoice, resolveBillingModel } from "@/lib/billing-model";
 import { encryptSecret } from "@/lib/google-calendar";
-import { billingDateInTimezone, ProjectInvoiceSourceSchema, resolveFixedSourceAmount } from "@/lib/project-invoice-sources";
+import { ProjectInvoiceSourceSchema, billingDateInTimezone, isFixedInvoiceBillingModel, resolveFixedSourceAmount } from "@/lib/project-invoice-sources";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -184,7 +184,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
       if (resolveBillingModel(project) !== "hourly") throw new Error("Deposit Hourly hanya tersedia untuk proyek Hourly");
       originalAmount = source.amount;
       sourceMode = "hourly_deposit";
-    } else if (resolveBillingModel(project) === "fixed_price") {
+    } else if (isFixedInvoiceBillingModel(resolveBillingModel(project))) {
       const priorRows = await db
         .select({ amount: invoiceItems.originalAmount })
         .from(invoiceItems)
