@@ -53,18 +53,23 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", defaultValues
     try {
       const data = {
         title: form.title,
-        description: form.description || undefined,
+        description: mode === "edit" ? form.description || null : form.description || undefined,
         projectId: form.projectId,
-        assigneeId: form.assigneeId || undefined,
+        assigneeId: mode === "edit" ? form.assigneeId || null : form.assigneeId || undefined,
         clientVisible: taskMode === "workflow" ? form.clientVisible : undefined,
         status: taskMode === "workflow" ? form.status as "todo" | "in_progress" | "review" | "done" : undefined,
         priority: taskMode === "workflow" ? form.priority as "low" | "medium" | "high" | "urgent" : undefined,
-        dueDate: taskMode === "workflow" ? form.dueDate || undefined : undefined,
+        dueDate: taskMode === "workflow" ? (mode === "edit" ? form.dueDate || null : form.dueDate || undefined) : undefined,
         mode: taskMode,
       };
 
       if (mode === "create") {
-        await createTask(data);
+        await createTask({
+          ...data,
+          description: data.description ?? undefined,
+          assigneeId: data.assigneeId ?? undefined,
+          dueDate: data.dueDate ?? undefined,
+        });
         toast.success(t("Tugas dibuat", "Task created"));
       } else if (defaultValues?.id) {
         const updateData: Record<string, unknown> = {};

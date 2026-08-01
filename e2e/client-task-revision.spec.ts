@@ -58,8 +58,8 @@ async function taskState(title: string) {
   const db = new pg.Client({ connectionString: databaseUrl });
   await db.connect();
   try {
-    const { rows } = await db.query<{ title: string; description: string | null; status: string; lifecycle: string; mode: string }>(
-      "select title,description,status,lifecycle,mode from tasks where title=$1",
+    const { rows } = await db.query<{ title: string; description: string | null; status: string; priority: string; lifecycle: string; mode: string }>(
+      "select title,description,status,priority,lifecycle,mode from tasks where title=$1",
       [title],
     );
     return rows[0] ?? null;
@@ -279,14 +279,20 @@ test("Mixed workflow and reusable Task edits persist and List/Board keep mutatio
   await expect.poll(() => taskState(workflowEdited)).toMatchObject({ description: "Workflow persisted QA", mode: "workflow" });
   await page.reload({ waitUntil: "networkidle" });
   await expect(page.getByText(workflowEdited, { exact: true })).toBeVisible();
+  await page.getByText(workflowEdited, { exact: true }).click();
+  const listSheet = page.getByRole("dialog");
+  await listSheet.getByRole("combobox").nth(1).click();
+  await page.getByRole("option", { name: "Tinggi" }).click();
+  await listSheet.getByRole("button", { name: "Simpan Perubahan" }).click();
+  await expect.poll(() => taskState(workflowEdited)).toMatchObject({ priority: "high" });
 
   await page.getByRole("button", { name: "Board", exact: true }).click();
   await page.getByText(workflowEdited, { exact: true }).click();
   const boardSheet = page.getByRole("dialog");
   await boardSheet.getByRole("combobox").first().click();
   await page.getByRole("option", { name: "Dikerjakan" }).click();
+  await boardSheet.getByRole("button", { name: "Simpan Perubahan" }).click();
   await expect.poll(() => taskState(workflowEdited)).toMatchObject({ status: "in_progress" });
-  await boardSheet.getByRole("button", { name: "Close" }).click();
   await page.getByRole("button", { name: "List", exact: true }).click();
   await page.reload({ waitUntil: "networkidle" });
   await expect(page.getByText(workflowEdited, { exact: true })).toBeVisible();
