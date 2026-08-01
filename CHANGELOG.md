@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.123-dev — 2026-08-01 — Live QA polish and template import stability
+
+- Task Template import: refresh preview fingerprint from final selected items and duplicate decisions before atomic submit, fixing production `STALE_PREVIEW` Server Component errors while retaining stale-payload protection.
+- Client detail: use one portal-active rule in summary and Portal tab so incomplete/revoked portal access no longer shows conflicting status.
+- Client project UX: localize `Calendar` to `Kalender` and raw project states such as `on_hold` to human labels.
+- Reusable Tasks: localize lifecycle/order controls and widen desktop table with safe horizontal scrolling so Task, Project/Client, and actions do not overlap.
+- Verification: focused import/portal/live-QA suites passed 22/22 tests; ESLint, TypeScript, and Next.js production build passed.
+- Scope: source, docs, tests, commit, and push only; production not deployed.
+
 ## Unreleased — Billing-aware Tasks, Templates, and Time cutover
 
 - Tasks: add billing-aware workflow/reusable modes, flat Task Templates, atomic import, complete global/project editors, and mobile/keyboard ordering controls.

@@ -42,6 +42,7 @@ import {
 } from "@/lib/client-google-calendar";
 import { buildInvoiceDetailUrl } from "@/lib/invoice-origin";
 import { formatMoney } from "@/lib/utils";
+import { resolveClientPortalActive } from "@/lib/client-portal-status";
 
 const invoiceStatusLabel: Record<string, string> = {
   draft: "Draf",
@@ -254,6 +255,16 @@ export default async function ClientDetailPage({
 
   // Active projects count
   const activeProjects = clientProjects.filter((p) => p.status === "active").length;
+  const portalActive = resolveClientPortalActive(client);
+  const projectStatusLabels: Record<string, string> = {
+    draft: "Draf",
+    active: "Aktif",
+    review: "Review",
+    on_hold: "Ditunda",
+    completed: "Selesai",
+    cancelled: "Dibatalkan",
+    archived: "Diarsipkan",
+  };
 
   return (
     <div className="space-y-6">
@@ -330,7 +341,7 @@ export default async function ClientDetailPage({
                 </div>
                 <div className="rounded-lg border bg-muted/30 p-3">
                   <p className="text-[11px] text-muted-foreground">Portal</p>
-                  {client.portalEnabled ? (
+                  {portalActive ? (
                     <p className="mt-1 flex items-center gap-1 text-sm font-semibold text-green-600">
                       <Globe className="h-4 w-4" /> Aktif
                     </p>
@@ -398,7 +409,7 @@ export default async function ClientDetailPage({
             </TabsTrigger>
             <TabsTrigger value="calendar" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm" asChild>
               <Link href={`?tab=calendar`}>
-                <Calendar className="h-3 w-3 shrink-0" /> Calendar
+                <Calendar className="h-3 w-3 shrink-0" /> Kalender
               </Link>
             </TabsTrigger>
 
@@ -472,7 +483,7 @@ export default async function ClientDetailPage({
                       {project.name}
                     </Link>
                     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <Badge variant="outline" className="text-[10px]">{project.status}</Badge>
+                      <Badge variant="outline" className="text-[10px]">{projectStatusLabels[project.status] ?? project.status}</Badge>
                       <Badge variant="secondary" className="gap-1 text-[10px] font-normal">
                         <Wallet className="h-3 w-3" />
                         {billingTypeLabel(billingDisplayType, "id")}

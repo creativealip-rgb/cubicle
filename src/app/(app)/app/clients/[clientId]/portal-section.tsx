@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { generatePortalToken, revealClientPortalPassword, revokePortalToken, setClientPortalPassword } from "@/lib/actions/clients";
-import { resolveClientPortalPasswordState } from "@/lib/client-portal-status";
+import { resolveClientPortalActive, resolveClientPortalPasswordState } from "@/lib/client-portal-status";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +25,7 @@ export function PortalTokenSection({ client }: Props) {
   const fallbackSlug=`client-${client.id.slice(0,8)}`;
   const slug=client.portalSlug || fallbackSlug;
   const portalUrl=`${origin}/client-portal/${slug}`;
-  const active=client.portalEnabled && !!client.portalPasswordHash && !client.portalTokenRevokedAt;
+  const active=resolveClientPortalActive(client);
   const passwordState=resolveClientPortalPasswordState(client);
 
   async function savePassword(){

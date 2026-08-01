@@ -60,8 +60,14 @@ export function TaskTemplateImportDialog({ projectId, templates }: { projectId: 
   async function submit() {
     setLoading(true);
     try {
+      const importPayload = { projectId, templateIds: selectedTemplateIds, selectedItems, allowIncompatibleTarget };
+      // Item/duplicate decisions change after preview. Refresh fingerprint from exact
+      // submit payload so server compares identical canonical data.
+      const freshPreview = await previewTaskTemplateImport(importPayload);
+      setPreviewFingerprint(freshPreview.payloadFingerprint);
       const result = await importTaskTemplates({
-        projectId, templateIds: selectedTemplateIds, selectedItems, allowIncompatibleTarget, previewFingerprint,
+        ...importPayload,
+        previewFingerprint: freshPreview.payloadFingerprint,
         idempotencyKey: idempotencyKeyRef.current,
       }) as { created?: unknown[] };
       toast.success(`Tugas berhasil ditambahkan: ${result.created?.length ?? 0}`);
