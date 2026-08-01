@@ -216,6 +216,35 @@ export async function archiveProject(projectId: string) {
   return project;
 }
 
+export async function permanentlyDeleteProject(projectId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertProjectInWorkspace(db, user.id, workspaceId, projectId);
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`DELETE FROM time_entries WHERE workspace_id=${workspaceId} AND project_id=${projectId}`);
+    await tx.execute(sql`DELETE FROM custom_package_requests WHERE workspace_id=${workspaceId} AND project_id=${projectId}`);
+    await tx.execute(sql`DELETE FROM package_orders WHERE workspace_id=${workspaceId} AND project_id=${projectId}`);
+    await tx.execute(sql`DELETE FROM retainer_periods WHERE workspace_id=${workspaceId} AND project_id=${projectId}`);
+    await tx.execute(sql`DELETE FROM comments WHERE workspace_id=${workspaceId} AND entity_type='invoice' AND entity_id IN (SELECT id FROM invoices WHERE workspace_id=${workspaceId} AND project_id=${projectId})`);
+    await tx.execute(sql`DELETE FROM invoices WHERE workspace_id=${workspaceId} AND project_id=${projectId}`);
+    await tx.execute(sql`DELETE FROM expenses WHERE workspace_id=${workspaceId} AND project_id=${projectId}`);
+    await tx.execute(sql`DELETE FROM expense_recurring WHERE workspace_id=${workspaceId} AND project_id=${projectId}`);
+    await tx.execute(sql`DELETE FROM proposals WHERE workspace_id=${workspaceId} AND project_id=${projectId}`);
+    await tx.execute(sql`DELETE FROM questionnaire_responses WHERE workspace_id=${workspaceId} AND project_id=${projectId}`);
+    await tx.execute(sql`DELETE FROM contracts WHERE workspace_id=${workspaceId} AND project_id=${projectId}`);
+    await tx.execute(sql`DELETE FROM email_messages WHERE workspace_id=${workspaceId} AND project_id=${projectId}`);
+    await tx.execute(sql`DELETE FROM prompt_generations WHERE workspace_id=${workspaceId} AND project_id=${projectId}`);
+    await tx.execute(sql`DELETE FROM support_tickets WHERE workspace_id=${workspaceId} AND project_id=${projectId}`);
+    await tx.execute(sql`DELETE FROM comments WHERE workspace_id=${workspaceId} AND ((entity_type='project' AND entity_id=${projectId}) OR (entity_type='task' AND entity_id IN (SELECT id FROM tasks WHERE workspace_id=${workspaceId} AND project_id=${projectId})) OR (entity_type='file' AND entity_id IN (SELECT id FROM files WHERE workspace_id=${workspaceId} AND project_id=${projectId})))`);
+    await tx.execute(sql`DELETE FROM notifications WHERE workspace_id=${workspaceId} AND ((entity_type='project' AND entity_id=${projectId}) OR (entity_type='task' AND entity_id IN (SELECT id FROM tasks WHERE workspace_id=${workspaceId} AND project_id=${projectId})))`);
+    const deleted = await tx.execute(sql`DELETE FROM projects WHERE workspace_id=${workspaceId} AND id=${projectId} RETURNING id`);
+    if (deleted.rows.length === 0) throw new Error("Project tidak ditemukan");
+    return { success: true };
+  });
+}
+
 export async function updateProjectListStatus(projectId: string, status: z.infer<typeof projectListStatusSchema>) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);

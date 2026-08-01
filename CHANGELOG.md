@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.124-dev — 2026-08-01 — Portal visibility and permanent deletion
+
+- Project create/edit: add **Tampilkan di Portal Klien** with persisted visibility; projects created from Client detail default visible while the known Client field remains hidden.
+- Permanent deletion: add typed-name confirmation dialogs for Client, Project, and Task. These actions delete related operational, time, finance, portal, request, comment, and notification rows transactionally instead of archiving.
+- Tenant safety: every destructive action checks writable workspace access and scopes manual deletes by `workspace_id`.
+- Task deletion: removes linked Time Logs, comments, and notifications before deleting the Task.
+- Verification: focused regression tests, ESLint, TypeScript, Next.js production build, and diff checks passed before deployment.
+- Known limitation: DB file rows are removed, but physical R2 objects still require durable post-commit cleanup.
+
 ## v0.1.123-dev — 2026-08-01 — Live QA polish and template import stability
 
 - Task Template import: refresh preview fingerprint from final selected items and duplicate decisions before atomic submit, fixing production `STALE_PREVIEW` Server Component errors while retaining stale-payload protection.

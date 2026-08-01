@@ -15,6 +15,7 @@ import { StickyNote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useT } from "@/lib/i18n-client";
+import { PermanentDeleteButton } from "@/components/shared/permanent-delete-button";
 
 interface Task {
   id: string;
@@ -85,6 +86,8 @@ export function TaskDetailSheet({
           </div>
 
           <Separator />
+
+          <PermanentDeleteButton entityType="task" entityId={task.id} entityName={task.title} />
 
 
           {task.sourceNoteId ? (

@@ -249,6 +249,30 @@ export async function archiveClient(clientId: string) {
   return client;
 }
 
+export async function permanentlyDeleteClient(clientId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertClientInWorkspace(db, user.id, workspaceId, clientId);
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`DELETE FROM time_entries WHERE workspace_id=${workspaceId} AND client_id=${clientId}`);
+    await tx.execute(sql`DELETE FROM custom_package_requests WHERE workspace_id=${workspaceId} AND client_id=${clientId}`);
+    await tx.execute(sql`DELETE FROM package_orders WHERE workspace_id=${workspaceId} AND client_id=${clientId}`);
+    await tx.execute(sql`DELETE FROM retainer_periods WHERE workspace_id=${workspaceId} AND project_id IN (SELECT id FROM projects WHERE workspace_id=${workspaceId} AND client_id=${clientId})`);
+    await tx.execute(sql`DELETE FROM appointments WHERE workspace_id=${workspaceId} AND client_id=${clientId}`);
+    await tx.execute(sql`DELETE FROM expenses WHERE workspace_id=${workspaceId} AND client_id=${clientId}`);
+    await tx.execute(sql`DELETE FROM prompt_generations WHERE workspace_id=${workspaceId} AND client_id=${clientId}`);
+    await tx.execute(sql`DELETE FROM portal_access_logs WHERE workspace_id=${workspaceId} AND client_id=${clientId}`);
+    await tx.execute(sql`DELETE FROM questionnaire_responses WHERE workspace_id=${workspaceId} AND client_id=${clientId}`);
+    await tx.execute(sql`DELETE FROM email_messages WHERE workspace_id=${workspaceId} AND client_id=${clientId}`);
+    await tx.execute(sql`DELETE FROM support_tickets WHERE workspace_id=${workspaceId} AND client_id=${clientId}`);
+    const deleted = await tx.execute(sql`DELETE FROM clients WHERE workspace_id=${workspaceId} AND id=${clientId} RETURNING id`);
+    if (deleted.rows.length === 0) throw new Error("Klien tidak ditemukan");
+    return { success: true };
+  });
+}
+
 // ─── Portal Token ───
 
 export async function generatePortalToken(clientId: string) {

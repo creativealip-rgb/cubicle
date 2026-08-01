@@ -43,6 +43,7 @@ import {
 import { buildInvoiceDetailUrl } from "@/lib/invoice-origin";
 import { formatMoney } from "@/lib/utils";
 import { resolveClientPortalActive } from "@/lib/client-portal-status";
+import { PermanentDeleteButton } from "@/components/shared/permanent-delete-button";
 
 const invoiceStatusLabel: Record<string, string> = {
   draft: "Draf",
@@ -297,6 +298,7 @@ export default async function ClientDetailPage({
                   portalSlugEnabled: client.portalSlugEnabled ?? true,
                 }}
               />
+              <PermanentDeleteButton entityType="client" entityId={client.id} entityName={client.name} redirectTo="/app/clients" />
             </div>
           </div>
 

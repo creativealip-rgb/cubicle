@@ -6,6 +6,7 @@ import { archiveTask, restoreTask } from "@/lib/actions/tasks";
 import { useRouter } from "next/navigation";
 import { TaskForm } from "@/components/forms/task-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { PermanentDeleteButton } from "@/components/shared/permanent-delete-button";
 
 export type ReusableTaskRow = {
   id: string;
@@ -49,6 +50,7 @@ export function ReusableTaskWorkspace({ tasks, members = [], onMove }: {
             <Button size="sm" variant="ghost" aria-label="Turunkan urutan" disabled={index === tasks.length - 1} onClick={() => onMove(row.id, "down")}>↓</Button></>}
             <Dialog><DialogTrigger asChild><Button size="sm" variant="outline">Ubah</Button></DialogTrigger><DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg"><DialogHeader><DialogTitle>Ubah Tugas Berulang</DialogTitle></DialogHeader><TaskForm mode="edit" projectId={row.projectId} taskMode="reusable" members={members} defaultValues={{ id: row.id, title: row.title, description: row.description ?? "", assigneeId: row.assigneeId ?? "" }} /></DialogContent></Dialog>
             <Button size="sm" variant="outline" onClick={() => toggle(row)}>{row.lifecycle === "active" ? "Arsipkan" : "Pulihkan"}</Button>
+            <PermanentDeleteButton entityType="task" entityId={row.id} entityName={row.title} />
           </div>
         </div>
       ))}

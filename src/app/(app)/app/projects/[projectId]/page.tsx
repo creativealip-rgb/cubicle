@@ -20,6 +20,7 @@ import { WorkflowTaskWorkspace } from "@/components/tasks/workflow-task-workspac
 import { ProjectBillingTab } from "@/components/projects/project-billing-tab";
 import { resolveBillingModel } from "@/lib/billing-model";
 import { resolveProjectTaskMode } from "@/lib/task-work-mode";
+import { PermanentDeleteButton } from "@/components/shared/permanent-delete-button";
 import { ProjectForm } from "@/components/forms/project-form";
 import { Timesheet } from "@/components/time/timesheet";
 import Link from "next/link";
@@ -279,7 +280,7 @@ export default async function ProjectDetailPage({
             {billingTypeHint(billingDisplayType, lang)}
           </p>
         </div>
-        <Dialog>
+        <div className="flex flex-wrap gap-2"><Dialog>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm" className="gap-1">
               <Pencil className="h-3 w-3" /> {t("Ubah", "Edit")}
@@ -314,7 +315,7 @@ export default async function ProjectDetailPage({
               }}
             />
           </DialogContent>
-        </Dialog>
+        </Dialog><PermanentDeleteButton entityType="project" entityId={project.id} entityName={project.name} redirectTo={`/app/clients/${project.clientId}?tab=projects`} /></div>
       </div>
 
       {/* Progress bar */}
