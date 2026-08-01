@@ -24,7 +24,7 @@ Plan: `docs/plans/2026-08-01-client-project-invoice-task-workspace-revision.md`
 - Task 16 — full Task Template item editing, remove, and one-step reorder with archived write guards. Commit `7ede10c`. 6 tests and TypeScript passed.
 - Task 17 — hardened Task Template import preview: zero selection, reset state, preview fingerprint, stale rejection. Commit `ffa77cf`; 20 tests and TypeScript passed.
 - Task 18 — full automated and PostgreSQL verification. ESLint, TypeScript, production-shape Docker build, 181 files/758 tests, and targeted PostgreSQL/Portal verification passed.
-- Task 19 — browser QA partial. Desktop/mobile pagination 10/2, mixed-mode rendering, Template controls, scoped Client Project/Invoice dialogs, and Portal controls passed 3/3; full mutation/negative matrix remains pending. Evidence: `docs/operations/evidence/2026-08-01-client-task-revision-final-qa.md`.
+- Task 19 — browser QA partial. Desktop/mobile pagination 10/2, mixed-mode rendering, Template controls, scoped Client Project creation persistence, scoped Project Invoice creation persistence, and Portal controls passed 3/3; remaining Portal/Task/Template negative matrix pending. Evidence: `docs/operations/evidence/2026-08-01-client-task-revision-final-qa.md`.
 
 ## Current
 

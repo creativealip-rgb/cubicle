@@ -89,23 +89,35 @@ for (const viewport of [{ name: "desktop", width: 1440, height: 1000 }, { name: 
   });
 }
 
-test("Client scoped Project, Invoice, and Portal controls stay reachable", async ({ page }) => {
+test("Client scoped Project and Invoice persist while Portal controls stay reachable", async ({ page }) => {
   const { workspaceId, clientId, projectId } = await seedRevisionFixture();
   await login(page, workspaceId);
   await page.goto(`/app/clients/${clientId}?tab=projects`, { waitUntil: "networkidle" });
   await expect(page.getByRole("tab", { name: /Proyek/ })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("button", { name: "Tambah Proyek" })).toBeVisible();
   await page.getByRole("button", { name: "Tambah Proyek" }).click();
-  await expect(page.getByRole("dialog")).toBeVisible();
+  const projectDialog = page.getByRole("dialog");
+  await expect(projectDialog).toBeVisible();
   await expect(page.getByText("Klien *")).not.toBeVisible();
-  await page.keyboard.press("Escape");
+  const projectName = `Project Created ${Date.now()}`;
+  await projectDialog.locator("input").nth(0).fill(projectName);
+  await projectDialog.locator("input").nth(2).fill("750000");
+  await projectDialog.getByRole("button", { name: "Simpan" }).click();
+  await expect(projectDialog).not.toBeVisible();
+  await expect(page.getByText(projectName, { exact: true })).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`/app/clients/${clientId}\\?tab=projects`));
   await page.goto(`/app/projects/${projectId}`, { waitUntil: "networkidle" });
   await page.getByRole("tab", { name: /Invoice/ }).click();
   await expect(page.getByRole("button", { name: "Buat Invoice" })).toBeVisible();
   await page.getByRole("button", { name: "Buat Invoice" }).click();
-  await expect(page.getByRole("dialog", { name: "Buat Invoice Proyek" })).toBeVisible();
+  const invoiceDialog = page.getByRole("dialog", { name: "Buat Invoice Proyek" });
+  await expect(invoiceDialog).toBeVisible();
   await expect(page.getByText("Pilih klien")).not.toBeVisible();
-  await page.keyboard.press("Escape");
+  await invoiceDialog.getByLabel("Deskripsi item 1").fill("Invoice QA Item");
+  await invoiceDialog.getByLabel("Harga item 1").fill("250000");
+  await invoiceDialog.getByRole("button", { name: "Buat Invoice", exact: true }).click();
+  await expect(invoiceDialog).not.toBeVisible();
+  await expect(page.getByRole("tab", { name: "Invoice (2)" })).toBeVisible();
   await page.goto(`/app/clients/${clientId}?tab=portal`, { waitUntil: "networkidle" });
   await expect(page.getByLabel("Salin link portal")).toBeVisible();
   await expect(page.getByLabel("Buka portal klien")).toBeVisible();
