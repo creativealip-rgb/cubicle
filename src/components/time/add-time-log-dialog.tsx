@@ -13,7 +13,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { localDateIso } from "@/lib/effective-work-date";
 
-type Project = { id: string; name: string; customerRef: string | null };
+type Project = {
+  id: string;
+  name: string;
+  customerRef: string | null;
+  billingType?: string | null;
+  rate?: string | null;
+};
 type Task = { id: string; title: string; projectRef: string | null };
 
 export function AddTimeLogDialog({ workspaceId, projects, tasks }: { workspaceId: string; projects: Project[]; tasks: Task[] }) {
@@ -23,10 +29,15 @@ export function AddTimeLogDialog({ workspaceId, projects, tasks }: { workspaceId
   const [projectId, setProjectId] = useState("");
   const [taskId, setTaskId] = useState("");
   const [description, setDescription] = useState("");
+  const [tags, setTags] = useState("");
   const [date, setDate] = useState(() => localDateIso(new Date()));
   const [hours, setHours] = useState("0");
   const [minutes, setMinutes] = useState("0");
+  const [billable, setBillable] = useState(true);
+  const [hourlyRate, setHourlyRate] = useState("");
   const projectTasks = useMemo(() => tasks.filter((task) => task.projectRef === projectId), [projectId, tasks]);
+  const selectedProject = projects.find((project) => project.id === projectId);
+  const isHourly = selectedProject?.billingType === "hours" || selectedProject?.billingType === "hourly";
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -45,17 +56,28 @@ export function AddTimeLogDialog({ workspaceId, projects, tasks }: { workspaceId
         projectId,
         taskId,
         description: description.trim(),
+        tags: tags.trim() || undefined,
         date,
         durationMinutes,
-        billable: true,
+        billable,
+        hourlyRate: billable && isHourly && hourlyRate ? Number(hourlyRate) : undefined,
       } as Parameters<typeof createManualEntry>[0]);
       setOpen(false);
-      setProjectId(""); setTaskId(""); setDescription(""); setHours("0"); setMinutes("0");
+      setProjectId("");
+      setTaskId("");
+      setDescription("");
+      setTags("");
+      setHours("0");
+      setMinutes("0");
+      setBillable(true);
+      setHourlyRate("");
       toast.success("Waktu tercatat");
       router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Gagal mencatat waktu");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   }
 
   return <Dialog open={open} onOpenChange={setOpen}>
@@ -66,7 +88,7 @@ export function AddTimeLogDialog({ workspaceId, projects, tasks }: { workspaceId
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="manual-time-project" className="text-xs">Project *</Label>
-            <Select value={projectId} onValueChange={(value) => { setProjectId(value); setTaskId(""); }}>
+            <Select value={projectId} onValueChange={(value) => { setProjectId(value); setTaskId(""); setHourlyRate(""); }}>
               <SelectTrigger id="manual-time-project" className="h-9 text-sm"><SelectValue placeholder="Pilih project" /></SelectTrigger>
               <SelectContent>{projects.map((project) => <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>)}</SelectContent>
             </Select>
@@ -83,10 +105,26 @@ export function AddTimeLogDialog({ workspaceId, projects, tasks }: { workspaceId
           <Label htmlFor="manual-time-description" className="text-xs">Deskripsi *</Label>
           <Textarea id="manual-time-description" value={description} onChange={(event) => setDescription(event.target.value)} required className="min-h-24 resize-none" placeholder="Ngerjain apa aja?" />
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="manual-time-tags" className="text-xs">Tag (opsional)</Label>
+          <Input id="manual-time-tags" className="h-9 text-sm" value={tags} onChange={(event) => setTags(event.target.value)} placeholder="Riset, Follow Up" />
+          <p className="text-[11px] text-muted-foreground">Pisahkan beberapa tag dengan koma.</p>
+        </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_88px_88px]">
           <div className="space-y-2"><Label htmlFor="manual-time-date" className="text-xs">Tanggal</Label><Input id="manual-time-date" className="h-9 text-sm" type="date" value={date} onChange={(event) => setDate(event.target.value)} required /></div>
           <div className="space-y-2"><Label htmlFor="manual-time-hours" className="text-xs">Jam</Label><Input id="manual-time-hours" className="h-9 text-sm" type="number" min="0" value={hours} onChange={(event) => setHours(event.target.value)} /></div>
           <div className="space-y-2"><Label htmlFor="manual-time-minutes" className="text-xs">Menit</Label><Input id="manual-time-minutes" className="h-9 text-sm" type="number" min="0" max="59" value={minutes} onChange={(event) => setMinutes(event.target.value)} /></div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-[auto_1fr] sm:items-end">
+          <div className="flex items-center gap-2 pb-2">
+            <input id="manual-time-billable" type="checkbox" checked={billable} onChange={(event) => setBillable(event.target.checked)} className="h-4 w-4 rounded border-gray-300" />
+            <Label htmlFor="manual-time-billable" className="text-sm">Bisa Ditagih</Label>
+          </div>
+          {billable && isHourly ? <div className="space-y-2">
+            <Label htmlFor="manual-time-rate" className="text-xs">Tarif per jam</Label>
+            <Input id="manual-time-rate" className="h-9 text-sm" type="number" min="0" step="1000" value={hourlyRate} onChange={(event) => setHourlyRate(event.target.value)} placeholder={selectedProject?.rate ? String(selectedProject.rate) : "mis. 150000"} />
+            <p className="text-[11px] text-muted-foreground">Kosongkan untuk pakai tarif project.</p>
+          </div> : null}
         </div>
         <div className="flex justify-end gap-2 border-t pt-4">
           <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>Batal</Button>

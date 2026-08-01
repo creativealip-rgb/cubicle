@@ -13,26 +13,20 @@ describe("timer completion task selection", () => {
     expect(widget).toContain("handleStartEmpty");
   });
 
-  it("opens completion dialog instead of quick-stopping from main timer widget", () => {
-    expect(widget).toContain("setStopDialogOpen(true)");
-    expect(widget).not.toContain("await stopTimer(activeTimer.id)");
-    expect(widget).toContain("<StopTimerDialog");
+  it("stops immediately from main timer widget without opening a form", () => {
+    expect(widget).toContain("await stopTimer(activeTimer.id)");
+    expect(widget).not.toContain("setStopDialogOpen(true)");
+    expect(widget).not.toContain("<StopTimerDialog");
   });
 
-  it("requires Task in completion dialog and keeps dialog open on failure", () => {
-    expect(dialog).toContain("taskRequired && !taskId");
-    expect(dialog).toContain("Klien, Project, dan Task wajib dipilih");
-    expect(dialog).not.toContain('t("Aktivitas", "Activity")');
-    expect(dialog).toContain('!taskRequired ? <SelectItem value="__none__"');
-    const close = dialog.indexOf("onOpenChange(false)");
-    const catchBlock = dialog.indexOf("} catch (err: unknown)");
-    expect(close).toBeGreaterThan(-1);
-    expect(catchBlock).toBeGreaterThan(close);
+  it("stops immediately from active timer card and keeps timer visible on failure", () => {
+    expect(activeCard).toContain("stopTimer(timer.id)");
+    expect(activeCard).not.toContain("<StopTimerDialog");
+    expect(activeCard).not.toContain("setStopDialogOpen(true)");
+    expect(activeCard).toContain("catch (error)");
   });
 
-  it("keeps failed quick-stop surfaces visible through server error handling", () => {
-    expect(activeCard).toContain("<StopTimerDialog");
-    expect(activeCard).toContain("setStopDialogOpen(true)");
-    expect(activeCard).not.toContain("stopTimer(timer.id)");
+  it("keeps optional completion metadata supported by server action", () => {
+    expect(dialog).toContain("description.trim() || null");
   });
 });
