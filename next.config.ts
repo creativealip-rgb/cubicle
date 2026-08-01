@@ -11,6 +11,7 @@ const runtimeEnvironment = (process.env.NODE_ENV ||
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  deploymentId: process.env.NEXT_DEPLOYMENT_ID,
   poweredByHeader: false,
   allowedDevOrigins: developmentOrigins(runtimeEnvironment),
 
