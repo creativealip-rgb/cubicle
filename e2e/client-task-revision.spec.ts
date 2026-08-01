@@ -32,6 +32,28 @@ async function login(page: Page, workspaceId?: string) {
   await expect(page.getByRole("heading", { name: "Tugas", exact: true })).toBeVisible();
 }
 
+async function templateState(templateName: string) {
+  const db = new pg.Client({ connectionString: databaseUrl });
+  await db.connect();
+  try {
+    const { rows } = await db.query<{ status: string; target: string }>("select status,target from task_templates where name=$1", [templateName]);
+    return rows[0] ?? null;
+  } finally {
+    await db.end();
+  }
+}
+
+async function templateItemTitles(templateName: string) {
+  const db = new pg.Client({ connectionString: databaseUrl });
+  await db.connect();
+  try {
+    const { rows } = await db.query<{ title: string }>("select i.title from task_template_items i join task_templates t on t.id=i.template_id where t.name=$1 order by i.position", [templateName]);
+    return rows.map(row => row.title);
+  } finally {
+    await db.end();
+  }
+}
+
 async function seedRevisionFixture() {
   const db = new pg.Client({ connectionString: databaseUrl });
   await db.connect();
@@ -90,6 +112,75 @@ for (const viewport of [{ name: "desktop", width: 1440, height: 1000 }, { name: 
   });
 }
 
+test("Template CRUD, item reorder, and zero-selection import guard persist", async ({ page }) => {
+  const { workspaceId } = await seedRevisionFixture();
+  await login(page, workspaceId);
+  await page.goto("/app/tasks?tab=templates", { waitUntil: "networkidle" });
+
+  const templateName = `Template Mutation ${Date.now()}`;
+  await page.getByRole("button", { name: "Buat Template" }).click();
+  let dialog = page.getByRole("dialog", { name: "Buat Template" });
+  await dialog.locator("input").nth(0).fill(templateName);
+  await dialog.locator("input").nth(1).fill("Template mutation QA");
+  await dialog.locator("select").selectOption("fixed_price");
+  await dialog.getByRole("button", { name: "Simpan" }).click();
+  await expect(page.getByText(templateName, { exact: true })).toBeVisible();
+
+  const templateRow = () => page.getByText(templateName, { exact: true }).locator("xpath=ancestor::div[contains(@class,'border-b')][1]");
+  await templateRow().getByRole("button", { name: "Tambah item" }).click();
+  dialog = page.getByRole("dialog", { name: "Tambah Item" });
+  await dialog.getByPlaceholder("Judul").fill("Item A");
+  await dialog.getByPlaceholder("Deskripsi").fill("Desc A");
+  await dialog.getByRole("button", { name: "Simpan" }).click();
+  await templateRow().getByRole("button", { name: "Tambah item" }).click();
+  dialog = page.getByRole("dialog", { name: "Tambah Item" });
+  await dialog.getByPlaceholder("Judul").fill("Item B");
+  await dialog.getByRole("button", { name: "Simpan" }).click();
+  await expect(templateRow().getByText("Item A", { exact: true })).toBeVisible();
+  await expect(templateRow().getByText("Item B", { exact: true })).toBeVisible();
+
+  const itemBRow = templateRow().getByText("Item B", { exact: true }).locator("xpath=ancestor::div[contains(@class,'flex')][1]");
+  await itemBRow.getByRole("button", { name: "↑" }).click();
+  await expect.poll(() => templateItemTitles(templateName)).toEqual(["Item B", "Item A"]);
+  await page.reload({ waitUntil: "networkidle" });
+  await expect(templateRow().locator(".mt-3 > div").nth(0)).toContainText("Item B");
+  await templateRow().getByText("Item B", { exact: true }).locator("xpath=ancestor::div[contains(@class,'flex')][1]").getByRole("button", { name: "Ubah" }).click();
+  dialog = page.getByRole("dialog", { name: "Ubah Item" });
+  await dialog.getByPlaceholder("Judul").fill("Item B Edited");
+  await dialog.getByRole("button", { name: "Simpan" }).click();
+  await expect(templateRow().getByText("Item B Edited", { exact: true })).toBeVisible();
+  await templateRow().getByText("Item A", { exact: true }).locator("xpath=ancestor::div[contains(@class,'flex')][1]").getByRole("button", { name: "Hapus" }).click();
+  await expect(templateRow().getByText("Item A", { exact: true })).toHaveCount(0);
+
+  await templateRow().getByRole("button", { name: "Ubah Template" }).click();
+  dialog = page.getByRole("dialog", { name: "Ubah Template" });
+  await dialog.locator("input").nth(1).fill("Template edited QA");
+  await dialog.locator("select").selectOption("all");
+  await dialog.getByRole("button", { name: "Simpan" }).click();
+  await expect.poll(() => templateState(templateName)).toMatchObject({ target: "all" });
+  await page.reload({ waitUntil: "networkidle" });
+  await expect(templateRow()).toContainText("Semua Project");
+
+  await templateRow().getByRole("button", { name: "Duplikat" }).click();
+  await expect.poll(() => templateState(`${templateName} (Salinan)`)).toMatchObject({ status: "active" });
+  await page.reload({ waitUntil: "networkidle" });
+  await expect(page.getByText(`${templateName} (Salinan)`, { exact: true })).toBeVisible();
+  await templateRow().getByRole("button", { name: "Arsipkan" }).click();
+  await expect.poll(() => templateState(templateName)).toMatchObject({ status: "archived" });
+  await page.reload({ waitUntil: "networkidle" });
+  await expect(templateRow()).toContainText("archived");
+  await expect(templateRow().getByRole("button", { name: "Tambah item" })).toHaveCount(0);
+  await templateRow().getByRole("button", { name: "Pulihkan" }).click();
+  await expect.poll(() => templateState(templateName)).toMatchObject({ status: "active" });
+  await page.reload({ waitUntil: "networkidle" });
+  await expect(templateRow()).toContainText("active");
+
+  await page.getByRole("button", { name: "Import Template" }).click();
+  const importDialog = page.getByRole("dialog", { name: "Import Template Tugas" });
+  await expect(importDialog.getByRole("button", { name: "Lihat Preview" })).toBeDisabled();
+  await expect(importDialog.getByRole("button", { name: "Import Tugas Terpilih" })).toBeDisabled();
+});
+
 test("Client scoped Project and Invoice persist with Portal password owner lifecycle", async ({ page }) => {
   const { workspaceId, clientId, projectId } = await seedRevisionFixture();
   await login(page, workspaceId);
@@ -126,11 +217,13 @@ test("Client scoped Project and Invoice persist with Portal password owner lifec
   const portalPassword = "PortalQA2026!";
   await page.getByLabel("Atur password").fill(portalPassword);
   await page.getByRole("button", { name: "Simpan & aktifkan" }).click();
-  await expect(page.getByLabel("Tampilkan password")).toBeVisible();
-  await expect(page.getByText("••••••••", { exact: true })).toBeVisible();
-  await page.getByLabel("Tampilkan password").click();
-  await expect(page.getByText(portalPassword, { exact: true })).toBeVisible();
-  await expect(page.getByLabel("Salin password")).toBeVisible();
-  await page.getByLabel("Sembunyikan password").click();
-  await expect(page.getByText("••••••••", { exact: true })).toBeVisible();
+  const revealButton = page.locator('button[aria-label="Tampilkan password"]:visible');
+  await expect(revealButton).toBeVisible();
+  const maskedPassword = page.locator("code:visible", { hasText: "••••••••" });
+  await expect(maskedPassword).toBeVisible();
+  await revealButton.click();
+  await expect(page.locator("code:visible", { hasText: portalPassword })).toBeVisible();
+  await expect(page.locator('button[aria-label="Salin password"]:visible')).toBeVisible();
+  await page.locator('button[aria-label="Sembunyikan password"]:visible').click();
+  await expect(maskedPassword).toBeVisible();
 });
