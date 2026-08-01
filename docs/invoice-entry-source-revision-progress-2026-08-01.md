@@ -6,6 +6,8 @@
 
 **Implementation commits:** `d3d4438`, `0c96988`, `2efcc9b`
 
+**Documentation/release commit:** `ae1f4f8`
+
 **Release status:** Source committed/pushed; production migration and deployment complete.
 
 ## Implemented
