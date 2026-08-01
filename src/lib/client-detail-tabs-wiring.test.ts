@@ -8,8 +8,9 @@ const page = readFileSync(
 
 describe("client detail tabs", () => {
   it("uses navigable links so tabs work without client hydration", () => {
-    for (const tab of ["projects", "invoices", "calendar", "portal", "notes"]) {
+    for (const tab of ["projects", "invoices", "calendar", "portal"]) {
       expect(page).toContain(`href={\`?tab=${tab}\`}`);
     }
+    expect(page).not.toContain("?tab=notes");
   });
 });

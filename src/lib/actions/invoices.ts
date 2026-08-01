@@ -49,6 +49,7 @@ const createInvoiceSchema = z.object({
   clientId: z.string().uuid(),
   projectId: z.string().uuid().optional(),
   projectIds: z.array(z.string().uuid()).optional(),
+  scopedProjectId: z.string().uuid().optional(),
   issueDate: z.string().min(1, "Issue date required"),
   dueDate: z.string().optional(),
   currency: z.string().default("USD"),
@@ -133,6 +134,10 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
   }
 
   const parsed = createInvoiceSchema.parse(input);
+
+  if (parsed.scopedProjectId && (parsed.projectId !== parsed.scopedProjectId || parsed.projectIds?.some((id) => id !== parsed.scopedProjectId))) {
+    throw new Error("Project scope tidak sesuai");
+  }
 
   const [validClient] = await db.select({ id: clients.id }).from(clients).where(and(
     eq(clients.id, parsed.clientId),
@@ -286,7 +291,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
             eq(timeEntries.clientId, parsed.clientId), eq(timeEntries.billable, true),
             eq(timeEntries.status, "approved"), isNotNull(timeEntries.endTime),
             sql`${timeEntries.durationMinutes} > 0`,
-            projectIds.length ? inArray(timeEntries.projectId, projectIds) : sql`true`,
+            parsed.scopedProjectId ? eq(timeEntries.projectId, parsed.scopedProjectId) : projectIds.length ? inArray(timeEntries.projectId, projectIds) : sql`true`,
           ));
           if (eligible.length !== new Set(sourceIds).size) throw new Error("Ada timesheet yang tidak valid atau sudah ditagihkan");
         }

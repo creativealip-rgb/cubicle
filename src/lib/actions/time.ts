@@ -20,6 +20,7 @@ import { resolveActivityHourlyRate } from "@/lib/activity-policy";
 import { assertActivityWriteAllowed } from "@/lib/activity-policy-db";
 import { WEEKLY_GRID_TAG } from "@/lib/weekly-time-grid";
 import { assertTimesheetWeekMutable } from "@/lib/timesheet-approval";
+import { assertTimeTaskEligible } from "@/lib/time-task-eligibility-db";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -407,6 +408,9 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
       ? await getProjectTimeTrackingMode(db, workspaceId, nextProjectId)
       : await assertProjectTimeTrackingEnabled(db, workspaceId, nextProjectId)
     : null;
+  if (nextProjectId) {
+    await assertTimeTaskEligible(db, { workspaceId, projectId: nextProjectId, taskId: nextTaskId, stage: "completion" });
+  }
   const activityPolicy = await assertActivityWriteAllowed(db, {
     workspaceId,
     projectId: nextProjectId,
@@ -456,6 +460,7 @@ export async function createManualEntry(input: z.infer<typeof createManualEntryS
   const parsed = createManualEntrySchema.parse(input);
   await assertTimeEntryContext(db, parsed.workspaceId, parsed);
   const projectMode = await assertProjectTimeTrackingEnabled(db, parsed.workspaceId, parsed.projectId);
+  await assertTimeTaskEligible(db, { workspaceId: parsed.workspaceId, projectId: parsed.projectId, taskId: parsed.taskId, stage: "manual" });
   const activityPolicy = await assertActivityWriteAllowed(db, {
     workspaceId: parsed.workspaceId,
     projectId: parsed.projectId,
@@ -516,6 +521,7 @@ export async function setWeeklyTimeCell(input: z.infer<typeof weeklyTimeCellSche
   if (!project?.clientId) throw new Error("Project wajib punya klien");
   await assertTimeEntryContext(db, workspaceId, { clientId: project.clientId, projectId: parsed.projectId, taskId: parsed.taskId });
   const projectMode = await assertProjectTimeTrackingEnabled(db, workspaceId, parsed.projectId);
+  await assertTimeTaskEligible(db, { workspaceId, projectId: parsed.projectId, taskId: parsed.taskId, stage: "weekly" });
   const start = new Date(`${parsed.date}T00:00:00.000Z`);
 
   const result = await db.transaction(async (tx) => {
@@ -660,6 +666,7 @@ export async function updateTimeEntry(entryId: string, input: z.infer<typeof upd
   const nextActivityId =
     parsed.activityId !== undefined ? parsed.activityId : entry.activityId;
   const nextTaskId = parsed.taskId !== undefined ? parsed.taskId : entry.taskId;
+  const timeContextChanged = nextProjectId !== entry.projectId || nextTaskId !== entry.taskId;
   await assertTimeEntryContext(db, workspaceId, {
     clientId: nextClientId,
     projectId: nextProjectId,
@@ -667,6 +674,9 @@ export async function updateTimeEntry(entryId: string, input: z.infer<typeof upd
   });
   if (!nextProjectId) throw new Error("Project wajib dipilih untuk entri waktu");
   const projectMode = await assertProjectTimeTrackingEnabled(db, workspaceId, nextProjectId);
+  if (timeContextChanged) {
+    await assertTimeTaskEligible(db, { workspaceId, projectId: nextProjectId, taskId: nextTaskId, stage: "edit" });
+  }
   const activityPolicy = parsed.status === "approved"
     ? await assertActivityWriteAllowed(db, {
         workspaceId,

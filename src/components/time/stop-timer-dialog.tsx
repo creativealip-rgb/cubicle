@@ -31,12 +31,6 @@ export type TimerFormTask = {
   projectId?: string | null;
 };
 
-export type TimerFormActivity = {
-  id: string;
-  name: string;
-  projectId?: string | null;
-};
-
 export type StopTimerPrefill = {
   entryId: string;
   clientId?: string | null;
@@ -54,7 +48,6 @@ interface StopTimerDialogProps {
   clients: TimerFormClient[];
   projects: TimerFormProject[];
   tasks: TimerFormTask[];
-  activities?: TimerFormActivity[];
   onStopped?: () => void;
 }
 
@@ -65,14 +58,12 @@ export function StopTimerDialog({
   clients,
   projects,
   tasks,
-  activities = [],
   onStopped,
 }: StopTimerDialogProps) {
   const { t } = useT();
   const [loading, setLoading] = useState(false);
   const [clientId, setClientId] = useState("");
   const [projectId, setProjectId] = useState("");
-  const [activityId, setActivityId] = useState("");
   const [taskId, setTaskId] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
@@ -82,7 +73,6 @@ export function StopTimerDialog({
     if (!open || !prefill) return;
     setClientId(prefill.clientId || "");
     setProjectId(prefill.projectId || "");
-    setActivityId(prefill.activityId || "");
     setTaskId(prefill.taskId || "");
     setDescription(prefill.description || "");
     setTags(prefill.tags || "");
@@ -94,11 +84,6 @@ export function StopTimerDialog({
     return projects.filter((p) => p.clientId === clientId);
   }, [clientId, projects]);
 
-  const filteredActivities = useMemo(() => {
-    if (!projectId) return [];
-    return activities.filter((a) => a.projectId === projectId);
-  }, [projectId, activities]);
-
   const filteredTasks = useMemo(() => {
     if (!projectId) return [];
     return tasks.filter((tk) => tk.projectId === projectId);
@@ -106,18 +91,19 @@ export function StopTimerDialog({
 
   const selectedProject = projects.find((p) => p.id === projectId);
   const isHourly = selectedProject?.billingType === "hours";
+  const taskRequired = selectedProject?.billingType === "hours"
+    || selectedProject?.billingType === "hourly"
+    || selectedProject?.billingType === "retainer";
 
   function handleClientChange(value: string) {
     setClientId(value);
     setProjectId("");
-    setActivityId("");
     setTaskId("");
     setHourlyRate("");
   }
 
   function handleProjectChange(value: string) {
     setProjectId(value);
-    setActivityId("");
     setTaskId("");
     setHourlyRate("");
   }
@@ -125,8 +111,8 @@ export function StopTimerDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!prefill?.entryId) return;
-    if (!clientId || !projectId) {
-      toast.error(t("Klien dan Project wajib dipilih", "Client and Project are required"));
+    if (!clientId || !projectId || (taskRequired && !taskId)) {
+      toast.error(t("Klien, Project, dan Task wajib dipilih", "Client, Project, and Task are required"));
       return;
     }
     setLoading(true);
@@ -135,8 +121,8 @@ export function StopTimerDialog({
         entryId: prefill.entryId,
         clientId: clientId || null,
         projectId: projectId || null,
-        activityId: activityId || null,
-        taskId: taskId || null,
+        activityId: null,
+        taskId,
         description: description.trim() || null,
         tags: tags || null,
         hourlyRate: isHourly && hourlyRate ? Number(hourlyRate) : undefined,
@@ -210,46 +196,19 @@ export function StopTimerDialog({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs">{t("Aktivitas", "Activity")}</Label>
-            <Select
-              value={activityId || "__none__"}
-              onValueChange={(value) => setActivityId(value === "__none__" ? "" : value)}
-              disabled={!projectId}
-            >
+            <Label className="text-xs">{taskRequired ? t("Task *", "Task *") : t("Task", "Task")}</Label>
+            <Select value={taskId || "__none__"} onValueChange={(value) => setTaskId(value === "__none__" ? "" : value)} disabled={!projectId}>
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue
                   placeholder={
                     projectId
-                      ? t("Opsional", "Optional")
+                      ? t("Wajib dipilih", "Required")
                       : t("Pilih proyek dulu", "Select project first")
                   }
                 />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
-                {filteredActivities.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {a.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs">{t("Tugas terkait", "Related Task")}</Label>
-            <Select value={taskId || "__none__"} onValueChange={(v) => setTaskId(v === "__none__" ? "" : v)} disabled={!projectId}>
-              <SelectTrigger className="h-9 text-sm">
-                <SelectValue
-                  placeholder={
-                    projectId
-                      ? t("Opsional", "Optional")
-                      : t("Pilih proyek dulu", "Select project first")
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
+                {!taskRequired ? <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem> : null}
                 {filteredTasks.map((tk) => (
                   <SelectItem key={tk.id} value={tk.id}>
                     {tk.title}
@@ -298,7 +257,7 @@ export function StopTimerDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
               {t("Batal", "Cancel")}
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || !clientId || !projectId || (taskRequired && !taskId)}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("Simpan & Hentikan", "Save & Stop")}
             </Button>
           </DialogFooter>

@@ -21,6 +21,14 @@ describe("invoice detail actions", () => {
     expect(share).toContain('target="_blank"');
   });
 
+  it("hides financial item mutation controls for final invoices", () => {
+    const page = read("src/app/(app)/app/invoices/[invoiceId]/page.tsx");
+
+    expect(page).toContain("isInvoiceFinancialsMutable(inv.status)");
+    expect(page).toContain("Invoice final. Rincian item tidak dapat diubah.");
+    expect(page).toContain("financialsMutable ? <DeleteItemButton");
+  });
+
   it("persists an encrypted share token across refresh", () => {
     const schema = read("src/db/schema.ts");
     const actions = read("src/lib/actions/invoices.ts");

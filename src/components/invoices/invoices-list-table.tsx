@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
+import { buildInvoiceDetailUrl } from "@/lib/invoice-origin";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -13,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SortableHeader } from "@/components/ui/sortable-header";
+import { TableHeaderFilter } from "@/components/ui/table-header-filter";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { formatDateID, formatMoney } from "@/lib/utils";
@@ -58,6 +60,13 @@ type SortKey =
   | "total"
   | "status";
 
+type CurrentFilters = {
+  status?: string;
+  clientId?: string;
+  projectId?: string;
+  billing?: string;
+};
+
 function formatInvoiceId(num: string): string {
   if (/^INV-\d{4}-\d{4}$/.test(num)) return num;
   const match = num.match(/^INV-(\d{1,4})$/);
@@ -69,10 +78,16 @@ function formatInvoiceId(num: string): string {
 export function InvoicesListTable({
   invoices,
   baseCurrency,
+  clientOptions = [],
+  projectOptions = [],
+  currentFilters = {},
 }: {
   invoices: InvoiceListItem[];
   /** Workspace base currency for secondary ≈ line. */
   baseCurrency?: string;
+  clientOptions?: Array<{ id: string; name: string }>;
+  projectOptions?: Array<{ id: string; name: string }>;
+  currentFilters?: CurrentFilters;
 }) {
   const { t, lang } = useT();
   const base = (baseCurrency || "IDR").toUpperCase();
@@ -105,6 +120,16 @@ export function InvoicesListTable({
     orders,
   );
 
+  const billingOptions = useMemo(
+    () => [
+      { id: "hours", name: billingTypeLabel("hours", lang) },
+      { id: "package", name: billingTypeLabel("package", lang) },
+      { id: "project", name: billingTypeLabel("project", lang) },
+      { id: "none", name: t("Tanpa proyek", "No project") },
+    ],
+    [lang, t],
+  );
+
   return (
     <>
       <div className="hidden overflow-hidden rounded-lg border bg-card md:block">
@@ -119,24 +144,39 @@ export function InvoicesListTable({
                 />
               </TableHead>
               <TableHead>
-                <SortableHeader
+                <TableHeaderFilter
                   label={t("Klien", "Client")}
-                  dir={dirFor("client")}
-                  onClick={() => toggle("client")}
+                  queryKey="clientId"
+                  value={currentFilters.clientId}
+                  basePath="/app/invoices"
+                  options={[
+                    { value: "all", label: t("Semua klien", "All clients") },
+                    ...clientOptions.map((client) => ({ value: client.id, label: client.name })),
+                  ]}
                 />
               </TableHead>
               <TableHead>
-                <SortableHeader
+                <TableHeaderFilter
                   label={t("Proyek", "Project")}
-                  dir={dirFor("project")}
-                  onClick={() => toggle("project")}
+                  queryKey="projectId"
+                  value={currentFilters.projectId}
+                  basePath="/app/invoices"
+                  options={[
+                    { value: "all", label: t("Semua proyek", "All projects") },
+                    ...projectOptions.map((project) => ({ value: project.id, label: project.name })),
+                  ]}
                 />
               </TableHead>
               <TableHead>
-                <SortableHeader
+                <TableHeaderFilter
                   label={t("Jenis", "Type")}
-                  dir={dirFor("type")}
-                  onClick={() => toggle("type")}
+                  queryKey="billing"
+                  value={currentFilters.billing}
+                  basePath="/app/invoices"
+                  options={[
+                    { value: "all", label: t("Semua jenis", "All types") },
+                    ...billingOptions.map((option) => ({ value: option.id, label: option.name })),
+                  ]}
                 />
               </TableHead>
               <TableHead>
@@ -180,7 +220,7 @@ export function InvoicesListTable({
                   className={`border-b border-slate-200 hover:bg-slate-100/70 ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"}`}
                 >
                   <TableCell className="font-mono text-sm font-medium">
-                    <Link href={`/app/invoices/${inv.id}`} className="hover:underline">
+                    <Link href={buildInvoiceDetailUrl(inv.id, { type: "global" })} className="hover:underline">
                       {formatInvoiceId(inv.invoiceNumber)}
                     </Link>
                   </TableCell>
@@ -233,7 +273,7 @@ export function InvoicesListTable({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <Link
-                    href={`/app/invoices/${inv.id}`}
+                    href={buildInvoiceDetailUrl(inv.id, { type: "global" })}
                     className="font-mono text-sm font-medium hover:underline"
                   >
                     {formatInvoiceId(inv.invoiceNumber)}

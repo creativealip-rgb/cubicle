@@ -9,16 +9,23 @@ const primaryTabs = [
   { href: "/app/time?view=weekly", label: "Mingguan", mobileLabel: "Mingguan" },
 ] as const;
 
-export function TimeHeader() {
+export function TimeHeader({ actions }: { actions?: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
     <header className="space-y-3 sm:space-y-4">
-      <div>
-        <h1 className="app-page-title">Waktu</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Catat waktu dan isi timesheet mingguan.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="app-page-title">Waktu</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Catat waktu dan isi timesheet mingguan.
+          </p>
+        </div>
+        {actions && (
+          <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
+            {actions}
+          </div>
+        )}
       </div>
 
       <div className="border-b">
@@ -48,10 +55,10 @@ export function TimeHeader() {
   );
 }
 
-export function TimePageShell({ children }: { children: React.ReactNode }) {
+export function TimePageShell({ children, actions }: { children: React.ReactNode; actions?: React.ReactNode }) {
   return (
     <div className="min-w-0 space-y-4 sm:space-y-6">
-      <TimeHeader />
+      <TimeHeader actions={actions} />
       {children}
     </div>
   );

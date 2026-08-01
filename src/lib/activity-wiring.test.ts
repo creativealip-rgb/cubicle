@@ -46,23 +46,12 @@ describe("Phase 2 Activity catalog wiring", () => {
     expect(time).toContain("activityId: activityPolicy.activityId");
   });
 
-  it("keeps timer form order Project, Activity, Related Task, Description", () => {
-    for (const path of [
-      "src/components/time/timer-widget.tsx",
-      "src/components/time/manual-entry-form.tsx",
-      "src/components/time/stop-timer-dialog.tsx",
-    ]) {
-      const source = read(path);
-      const project = source.indexOf('t("Proyek", "Project")');
-      const activity = source.indexOf('t("Aktivitas", "Activity")');
-      const task = source.indexOf('t("Tugas terkait", "Related Task")');
-      const description = source.indexOf('t("Deskripsi", "Description")');
-      expect(project, `${path}: Project label`).toBeGreaterThan(-1);
-      expect(activity, `${path}: Activity label`).toBeGreaterThan(project);
-      expect(task, `${path}: Related Task label`).toBeGreaterThan(activity);
-      expect(description, `${path}: Description label`).toBeGreaterThan(task);
-      expect(source).toContain("activityId");
-    }
+  it("uses Project and Task in active timer completion UI", () => {
+    const stop = read("src/components/time/stop-timer-dialog.tsx");
+    expect(stop).toContain('t("Proyek", "Project")');
+    expect(stop).toContain('t("Task *", "Task *")');
+    expect(stop).not.toContain('t("Aktivitas", "Activity")');
+    expect(stop).toContain("activityId: null");
   });
 
   it("supports Project Activity enablement and clears invalid child selections", () => {
@@ -74,13 +63,15 @@ describe("Phase 2 Activity catalog wiring", () => {
     expect(settings).toContain("setProjectActivities");
     expect(settings).toContain("billableOverride");
     expect(settings).toContain("rateOverride");
-    for (const source of [timer, manual, stop]) {
+    for (const source of [timer, manual]) {
       expect(source).toContain("setActivityId(\"\")");
       expect(source).toContain("projectId");
     }
+    expect(stop).not.toContain("setActivityId");
+    expect(stop).toContain("projectId");
   });
 
-  it("filters and groups by Activity while labeling legacy null rows", () => {
+  it("preserves historical Activity reads without active filters or reports", () => {
     const timesheet = read("src/components/time/timesheet.tsx");
     const timePage = read("src/components/time/time-route-content.tsx");
     const reports = read("src/app/(app)/app/reports/page.tsx");
@@ -88,21 +79,22 @@ describe("Phase 2 Activity catalog wiring", () => {
     expect(timePage).toContain("activityName:");
     expect(timePage).toContain("activities.name");
     expect(timePage).toContain("activities={activityList}");
-    expect(timesheet).toContain("activityFilter");
-    expect(timesheet).toContain('t("Tanpa aktivitas", "No activity")');
-    expect(reports).toContain("timeEntries.activityId");
-    expect(reports).toContain("activities.name");
-    expect(reports).toContain('t("Tanpa aktivitas", "No activity")');
+    expect(timesheet).not.toContain("activityFilter");
+    expect(timesheet).toContain("activityName");
+    expect(reports).not.toContain("activityTimeRows");
+    expect(reports).toContain('t("Per Tugas", "By task")');
   });
 
-  it("exposes workspace Activity catalog under Time and preserves compatibility", () => {
+  it("redirects retired Activity catalog while preserving compatibility schema/actions", () => {
     const page = read("src/app/(app)/app/time/activities/page.tsx");
     const compatibilityPage = read("src/app/(app)/app/activities/page.tsx");
     const navigation = read("src/lib/navigation/app-navigation.ts");
 
-    expect(page).toContain("ActivityCatalog");
+    expect(page).toContain('router.replace("/app/time")');
+    expect(page).not.toContain("ActivityCatalog");
     expect(compatibilityPage).toContain('router.replace("/app/time/activities")');
     expect(navigation).toContain('direct("time", "/app/time"');
     expect(navigation).toContain('["/app/activities"]');
+    expect(read("src/lib/actions/activities.ts")).toContain("getWorkspaceActivities");
   });
 });

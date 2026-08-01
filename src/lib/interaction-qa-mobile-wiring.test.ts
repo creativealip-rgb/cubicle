@@ -13,11 +13,11 @@ describe("authenticated interaction mobile polish", () => {
     expect(actions).toContain('revalidatePath("/app/clients")');
   });
 
-  it("adds mobile scroll affordances to both invoice tab rows", () => {
+  it("keeps one mobile-scrollable canonical invoice status row", () => {
     const source = read("src/app/(app)/app/invoices/page.tsx");
-    expect(source).toContain('className="relative overflow-hidden after:pointer-events-none after:absolute after:inset-y-0 after:right-0 after:w-8 after:bg-gradient-to-l after:from-background after:to-transparent lg:after:hidden"');
-    expect(source).toContain('className="flex gap-1 overflow-x-auto border-b pr-8"');
-    expect(source).toContain('className="relative -mx-1 overflow-hidden px-1 after:pointer-events-none after:absolute after:inset-y-0 after:right-0 after:w-8 after:bg-gradient-to-l after:from-background after:to-transparent lg:after:hidden"');
-    expect(source).toContain('listClassName="max-w-full pr-8 lg:pr-1"');
+    expect(source).not.toContain("InvoiceAreaTabs");
+    expect(source).not.toContain("Semua Invoice");
+    expect(source).toContain("<StatusFilterTabs");
+    expect(source).toContain("activeValue={statusTab}");
   });
 });

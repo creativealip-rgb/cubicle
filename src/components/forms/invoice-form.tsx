@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { buildInvoiceDetailUrl } from "@/lib/invoice-origin";
 import { createInvoice, updateInvoice } from "@/lib/actions/invoices";
 import { addDaysToIsoDate, calculateDraftItemsSubtotal } from "@/lib/invoice-create-form";
 import { buildRateMap } from "@/lib/currency-base";
@@ -67,17 +68,19 @@ interface InvoiceFormProps {
   currencyRates?: Array<{ fromCurrency: string; rate: string }>;
   initialItems?: Array<{ description: string; quantity: number; unitPrice: number; sourceId?: string }>;
   onSuccess?: () => void;
+  scopedClientId?: string;
+  scopedProjectId?: string;
 }
 
-export function InvoiceForm({ mode, defaultValues, clients, projects, templates, baseCurrency = "IDR", currencyRates = [], initialItems = [], onSuccess }: InvoiceFormProps) {
+export function InvoiceForm({ mode, defaultValues, clients, projects, templates, baseCurrency = "IDR", currencyRates = [], initialItems = [], onSuccess, scopedClientId, scopedProjectId }: InvoiceFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState(initialItems.length ? initialItems : [{ description: "", quantity: 1, unitPrice: 0 }]);
   const [dueDateTouched, setDueDateTouched] = useState(Boolean(defaultValues?.dueDate));
 
-  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>(defaultValues?.projectId ? [defaultValues.projectId] : []);
+  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>(scopedProjectId ? [scopedProjectId] : defaultValues?.projectId ? [defaultValues.projectId] : []);
   const [form, setForm] = useState({
-    clientId: defaultValues?.clientId ?? "",
+    clientId: scopedClientId ?? defaultValues?.clientId ?? "",
     projectId: "",
     issueDate: defaultValues?.issueDate ?? new Date().toISOString().split("T")[0],
     dueDate: defaultValues?.dueDate ?? addDaysToIsoDate(defaultValues?.issueDate ?? new Date().toISOString().split("T")[0], 14),
@@ -121,6 +124,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         currency: form.currency,
         notes: form.notes || undefined,
         terms: form.terms || undefined,
+        scopedProjectId,
         items: mode === "create" ? validItems : undefined,
       };
 
@@ -130,8 +134,8 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
           throw new Error("Invoice dibuat tapi ID tidak diterima. Coba refresh daftar invoice.");
         }
         toast.success("Invoice dibuat");
-        // Hard navigate so mobile always leaves the form even if soft router stalls.
-        window.location.assign(`/app/invoices/${invoice.id}`);
+        if (onSuccess) onSuccess();
+        else window.location.assign(buildInvoiceDetailUrl(invoice.id, { type: "global" }));
         return;
       }
 
@@ -192,7 +196,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         </div>
       )}
 
-      <div className="space-y-2">
+      {!scopedClientId && <div className="space-y-2">
         <Label htmlFor="clientId">Klien *</Label>
         <Select
           value={form.clientId}
@@ -211,9 +215,9 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </div>}
 
-      {clientProjects.length > 0 && mode === "create" && (
+      {!scopedProjectId && clientProjects.length > 0 && mode === "create" && (
         <div className="space-y-2">
           <Label>Proyek (bisa pilih beberapa)</Label>
           <div className="space-y-2 rounded-lg border p-2">

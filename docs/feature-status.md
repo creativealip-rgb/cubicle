@@ -1,9 +1,10 @@
 # Cubiqlo Full Feature Status
 
-Last updated: 2026-07-30
+Last updated: 2026-07-31
 Production app: https://app.cubiqlo.com
 Dev app: https://dev.cubiqlo.com
 Latest verified dev branch: `dev/integration` at `bccc2d7`
+Latest verified production commit: `9381be5`
 
 ## Status legend
 
@@ -17,11 +18,11 @@ Latest verified dev branch: `dev/integration` at `bccc2d7`
 | Area | Status | Notes |
 | --- | --- | --- |
 | Production domain | DONE | `https://app.cubiqlo.com` live over HTTPS; apex keeps public/redirect behavior. |
-| Docker deploy | DONE | `cubicle-cubicle-1` rebuild/recreate flow works. |
+| Docker deploy | DONE | Production uses `cubiqlo-new-app` on `dokploy-network`; current image `cubiqlo-prod:sha-9381be5-repo-safe-fix-20260731202341`. |
 | Database | DONE | Postgres container healthy. |
 | Health endpoint | DONE | `/api/health` returns `{"status":"ok","db":"ok"}`. |
 | Protected app routing | DONE | `/app/*` redirects unauthenticated users to `/login?redirect=...`. |
-| Git checkpoint | DONE | Client Portal audit fixes pushed through `b84e801 perf: finish client portal audit fixes` on `fix/navbar-notification-dashboard-reminders`. |
+| Git checkpoint | DONE | Production `main` verified at `9381be5 fix: restore project service and invoice guards`; `HEAD` and `origin/main` match. |
 | Dev integration checkpoint | DONE | `dev/integration` revision `bccc2d7` deployed healthy to `dev.cubiqlo.com`; production container unchanged. |
 
 ## Core app shell
@@ -52,8 +53,9 @@ Latest verified dev branch: `dev/integration` at `bccc2d7`
 | --- | --- | --- | --- |
 | Projects list | `/app/projects` | DONE | v0.1.114: compact zebra list, Review status, due-date context, client link, simplified client-only filter, progress % inside bar. |
 | Project billing type + dates | project form/schema | DONE | Supports `by project` / `by hours`, start date, finish date. |
-| Project detail | `/app/projects/[projectId]` | DONE | Detail page with related data. |
-| Tasks | `/app/tasks` | DONE | Compact list/board plus separate Semua, Sekali selesai, and Aktivitas berulang views; task behavior remains independent from project billing model. |
+| Project detail | `/app/projects/[projectId]` | DONE | Billing-aware `Pekerjaan`, conditional `Waktu`, File, and consolidated Billing tabs. Standalone Layanan UI retired; compatibility data remains. Full automated gate: 689/689 tests. |
+| Tasks | `/app/tasks` | DONE | `Tugas Proyek` and `Template Tugas`; Fixed Price defaults workflow List/Board, Hourly/Retainer use reusable flat Tasks, and template imports create independent flat copies. |
+| Billing-aware Time cutover | `/app/time` | QA | Server/Timer/manual/weekly Task eligibility shipped locally; PostgreSQL 16 integration matrix and full automated suite green. Authenticated desktop/mobile browser QA still in progress; not pushed/deployed. |
 | Project timeline | Project detail + portal | DONE | Internal timeline and client-safe visibility shipped earlier. |
 | Nodes/reminder center | `/app/nodes` | REMOVED | Removed from sidebar and route because meeting clarified this should be Notes/reminders. |
 
@@ -73,7 +75,7 @@ Latest verified dev branch: `dev/integration` at `bccc2d7`
 | --- | --- | --- | --- |
 | Invoices list | `/app/invoices` | DONE | v0.1.114: compact shared list density with visible separators/zebra. |
 | Invoice create | `/app/invoices/new` | DONE | New invoice route exists. |
-| Invoice detail | `/app/invoices/[invoiceId]` | DONE | Detail route exists. |
+| Invoice detail | `/app/invoices/[invoiceId]` | DONE | Detail route exists. Draft invoices remain financially editable; financial line-item mutations are locked for `sent`, `viewed`, `paid`, `overdue`, `cancelled`, and `archived`. |
 | Public invoice link | `/invoice/[token]` | DONE | Public invoice page and view marking exists. |
 | Invoice PDF | `/api/invoices/[id]/pdf` | DONE | Existing PDF generation route. |
 | Invoice overdue reminders | cron/manual/email/activity | DONE | Shipped earlier: auto-overdue, manual remind, email, fresh links, notifications. |

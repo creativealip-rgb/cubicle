@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Check, ChevronDown, Clock, Plus } from "lucide-react";
+import { Clock, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/empty-state";
 import { SortableHeader } from "@/components/ui/sortable-header";
@@ -10,12 +10,7 @@ import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { cn } from "@/lib/utils";
 import { getProjectProgress, progressColor } from "@/lib/project-progress";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import type { ProjectBillingType } from "@/lib/project-list-filters";
 import { TableHeaderFilter } from "@/components/ui/table-header-filter";
 
@@ -101,7 +96,7 @@ export function ProjectsListTable({
   hasExtraFilters,
   statusTab,
   billingType,
-  billingTypeHrefs,
+  billingTypeHrefs: _billingTypeHrefs,
 }: {
   projects: ProjectListItem[];
   clients: Array<{ id: string; name: string }>;

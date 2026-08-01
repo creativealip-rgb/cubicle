@@ -4,11 +4,15 @@ import { useCallback, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Clock, Pause, Play, Square } from "lucide-react";
 import { toast } from "sonner";
-import { pauseTimer, resumeTimer, stopTimer } from "@/lib/actions/time";
+import { pauseTimer, resumeTimer } from "@/lib/actions/time";
 import { Button } from "@/components/ui/button";
+import { StopTimerDialog, type TimerFormClient, type TimerFormProject, type TimerFormTask } from "@/components/time/stop-timer-dialog";
 
 type ActiveTimer = {
   id: string;
+  clientId: string | null;
+  projectId: string | null;
+  taskId: string | null;
   projectName: string | null;
   taskTitle: string | null;
   description: string | null;
@@ -25,9 +29,15 @@ function formatElapsed(startTime: string | Date, pausedAt?: string | Date | null
   return [hours, minutes, rest].map((value) => String(value).padStart(2, "0")).join(":");
 }
 
-export function ActiveTimerCard({ initialTimer }: { initialTimer: ActiveTimer | null }) {
+export function ActiveTimerCard({ initialTimer, clients, projects, tasks }: {
+  initialTimer: ActiveTimer | null;
+  clients: TimerFormClient[];
+  projects: TimerFormProject[];
+  tasks: TimerFormTask[];
+}) {
   const router = useRouter();
   const [timer, setTimer] = useState(initialTimer);
+  const [stopDialogOpen, setStopDialogOpen] = useState(false);
   const [, setTick] = useState(0);
   const [pending, startTransition] = useTransition();
 
@@ -65,7 +75,7 @@ export function ActiveTimerCard({ initialTimer }: { initialTimer: ActiveTimer | 
   }
 
   const paused = Boolean(timer.pausedAt);
-  return (
+  return <>
     <section className="rounded-lg border bg-card p-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
@@ -76,9 +86,10 @@ export function ActiveTimerCard({ initialTimer }: { initialTimer: ActiveTimer | 
         <div className="flex items-center gap-2">
           <strong className="min-w-24 font-mono text-lg tabular-nums">{formatElapsed(timer.startTime, timer.pausedAt)}</strong>
           {paused ? <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => resumeTimer(timer.id), "Timer dilanjutkan")}><Play className="mr-1 h-4 w-4" />Lanjutkan</Button> : <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => pauseTimer(timer.id), "Timer dijeda")}><Pause className="mr-1 h-4 w-4" />Jeda</Button>}
-          <Button size="sm" variant="destructive" disabled={pending} onClick={() => run(() => stopTimer(timer.id), "Timer dihentikan")}><Square className="mr-1 h-4 w-4" />Hentikan</Button>
+          <Button size="sm" variant="destructive" disabled={pending} onClick={() => setStopDialogOpen(true)}><Square className="mr-1 h-4 w-4" />Hentikan</Button>
         </div>
       </div>
     </section>
-  );
+    <StopTimerDialog open={stopDialogOpen} onOpenChange={setStopDialogOpen} prefill={{ entryId: timer.id, clientId: timer.clientId, projectId: timer.projectId, taskId: timer.taskId, description: timer.description }} clients={clients} projects={projects} tasks={tasks} onStopped={() => { setTimer(null); window.dispatchEvent(new CustomEvent("cubicle:timer-changed")); router.refresh(); }} />
+  </>;
 }

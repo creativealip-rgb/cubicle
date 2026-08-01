@@ -23,6 +23,7 @@ interface Task {
   assigneeName: string | null;
   sourceNoteId?: string | null;
   behavior: "one_time" | "recurring" | null;
+  mode?: "workflow" | "reusable";
 }
 
 interface TasksBoardViewProps {
@@ -94,7 +95,7 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
                     <CardContent className="space-y-2 p-3">
                       <p className="text-sm font-medium leading-snug">{task.title}</p>
                       <Badge variant="outline" className="text-[10px] font-normal">
-                        {task.behavior === "recurring" ? t("Aktivitas berulang", "Recurring activity") : t("Sekali selesai", "One-time")}
+                        {task.mode === "reusable" ? "Reusable" : "Workflow"}
                       </Badge>
                       {task.projectName && (
                         <p className="truncate text-[11px] text-muted-foreground">{task.projectName}</p>

@@ -14,6 +14,9 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { aiConversations } from "@/db/schema";
 import { listConversations, listMessages, getOrCreateConv } from "@/lib/ai/conv-store";
+import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
+import { enforcePlanApiRateLimit } from "@/lib/plan-api-rate-limit";
+import { getAiEntitlementFailure, getUserPlan } from "@/lib/plan";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -24,6 +27,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const wsId = await getWorkspaceForCurrentUser();
+  const limited = await enforceRateLimitResponse(req, "ai:conversations", { limit: 60, windowSec: 60 }, { identity: session.user.id });
+  if (limited) return limited;
+  const plan = await getUserPlan(session.user.id);
+  const entitlementFailure = getAiEntitlementFailure(plan);
+  if (entitlementFailure) {
+    return NextResponse.json({ error: entitlementFailure.error }, { status: entitlementFailure.status });
+  }
+  const apiLimited = await enforcePlanApiRateLimit(req, { userId: session.user.id, workspaceId: wsId });
+  if (apiLimited) return apiLimited;
   const id = req.nextUrl.searchParams.get("id");
 
   if (id) {
@@ -45,6 +57,15 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "id required" }, { status: 400 });
   }
   const wsId = await getWorkspaceForCurrentUser();
+  const limited = await enforceRateLimitResponse(req, "ai:conversations", { limit: 60, windowSec: 60 }, { identity: session.user.id });
+  if (limited) return limited;
+  const plan = await getUserPlan(session.user.id);
+  const entitlementFailure = getAiEntitlementFailure(plan);
+  if (entitlementFailure) {
+    return NextResponse.json({ error: entitlementFailure.error }, { status: entitlementFailure.status });
+  }
+  const apiLimited = await enforcePlanApiRateLimit(req, { userId: session.user.id, workspaceId: wsId });
+  if (apiLimited) return apiLimited;
   await db
     .delete(aiConversations)
     .where(
@@ -64,6 +85,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const wsId = await getWorkspaceForCurrentUser();
+  const limited = await enforceRateLimitResponse(req, "ai:conversations", { limit: 60, windowSec: 60 }, { identity: session.user.id });
+  if (limited) return limited;
+  const plan = await getUserPlan(session.user.id);
+  const entitlementFailure = getAiEntitlementFailure(plan);
+  if (entitlementFailure) {
+    return NextResponse.json({ error: entitlementFailure.error }, { status: entitlementFailure.status });
+  }
+  const apiLimited = await enforcePlanApiRateLimit(req, { userId: session.user.id, workspaceId: wsId });
+  if (apiLimited) return apiLimited;
   const body = (await req.json().catch(() => ({}))) as { id?: string };
   const id = await getOrCreateConv(wsId, session.user.id, body.id);
   return NextResponse.json({ id });

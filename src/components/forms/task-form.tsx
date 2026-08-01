@@ -13,6 +13,7 @@ import { useT } from "@/lib/i18n-client";
 interface TaskFormProps {
   mode: "create" | "edit";
   projectId?: string;
+  taskMode?: "workflow" | "reusable";
   defaultValues?: {
     id?: string;
     title?: string;
@@ -30,7 +31,7 @@ interface TaskFormProps {
   onSuccess?: () => void;
 }
 
-export function TaskForm({ mode, projectId, defaultValues, members = [], projects = [], onSuccess }: TaskFormProps) {
+export function TaskForm({ mode, projectId, taskMode = "workflow", defaultValues, members = [], projects = [], onSuccess }: TaskFormProps) {
   const { t } = useT();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -52,18 +53,23 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], project
     try {
       const data = {
         title: form.title,
-        description: form.description || undefined,
+        description: mode === "edit" ? form.description || null : form.description || undefined,
         projectId: form.projectId,
-        status: form.status as "todo" | "in_progress" | "review" | "done",
-        priority: form.priority as "low" | "medium" | "high" | "urgent",
-        assigneeId: form.assigneeId || undefined,
-        dueDate: form.dueDate || undefined,
-        clientVisible: form.clientVisible,
-        behavior: form.behavior,
+        assigneeId: mode === "edit" ? form.assigneeId || null : form.assigneeId || undefined,
+        clientVisible: taskMode === "workflow" ? form.clientVisible : undefined,
+        status: taskMode === "workflow" ? form.status as "todo" | "in_progress" | "review" | "done" : undefined,
+        priority: taskMode === "workflow" ? form.priority as "low" | "medium" | "high" | "urgent" : undefined,
+        dueDate: taskMode === "workflow" ? (mode === "edit" ? form.dueDate || null : form.dueDate || undefined) : undefined,
+        mode: taskMode,
       };
 
       if (mode === "create") {
-        await createTask(data);
+        await createTask({
+          ...data,
+          description: data.description ?? undefined,
+          assigneeId: data.assigneeId ?? undefined,
+          dueDate: data.dueDate ?? undefined,
+        });
         toast.success(t("Tugas dibuat", "Task created"));
       } else if (defaultValues?.id) {
         const updateData: Record<string, unknown> = {};
@@ -74,7 +80,6 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], project
         if (data.assigneeId !== undefined) updateData.assigneeId = data.assigneeId;
         if (data.dueDate !== undefined) updateData.dueDate = data.dueDate;
         if (data.clientVisible !== undefined) updateData.clientVisible = data.clientVisible;
-        if (data.behavior !== undefined) updateData.behavior = data.behavior;
         await updateTask(defaultValues.id, updateData);
         toast.success(t("Tugas diperbarui", "Task updated"));
       }
@@ -125,18 +130,9 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], project
           </Select>
         </div>
       )}
-      <div className="space-y-2">
-        <Label>{t("Jenis tugas", "Task type")}</Label>
-        <Select value={form.behavior} onValueChange={(value: "one_time" | "recurring") => setForm((previous) => ({ ...previous, behavior: value }))}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="one_time">{t("Sekali selesai", "One-time")}</SelectItem>
-            <SelectItem value="recurring">{t("Aktivitas berulang", "Recurring activity")}</SelectItem>
-          </SelectContent>
-        </Select>
-        <p className="text-xs text-muted-foreground">{t("Model billing memberi pilihan awal. Ubah bila pola pekerjaannya berbeda.", "Billing model provides the default. Change it when the work pattern differs.")}</p>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
+      {taskMode === "workflow" ? (
+      <>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label>{t("Status", "Status")}</Label>
           <Select value={form.status} onValueChange={(v) => setForm((p) => ({ ...p, status: v }))}>
@@ -163,6 +159,22 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], project
         </div>
       </div>
       <div className="space-y-2">
+        <Label htmlFor="dueDate">{t("Jatuh Tempo", "Due Date")}</Label>
+        <Input id="dueDate" type="date" value={form.dueDate} onChange={(e) => setForm((p) => ({ ...p, dueDate: e.target.value }))} />
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="clientVisible"
+          checked={form.clientVisible}
+          onChange={(e) => setForm((p) => ({ ...p, clientVisible: e.target.checked }))}
+          className="h-4 w-4 rounded border-gray-300"
+        />
+        <Label htmlFor="clientVisible">{t("Terlihat oleh klien", "Visible to client")}</Label>
+      </div>
+      </>
+      ) : null}
+      <div className="space-y-2">
         <Label>{t("Penanggung Jawab", "Assignee")}</Label>
         <Select
           value={form.assigneeId || "unassigned"}
@@ -178,20 +190,6 @@ export function TaskForm({ mode, projectId, defaultValues, members = [], project
             ))}
           </SelectContent>
         </Select>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="dueDate">{t("Jatuh Tempo", "Due Date")}</Label>
-        <Input id="dueDate" type="date" value={form.dueDate} onChange={(e) => setForm((p) => ({ ...p, dueDate: e.target.value }))} />
-      </div>
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="clientVisible"
-          checked={form.clientVisible}
-          onChange={(e) => setForm((p) => ({ ...p, clientVisible: e.target.checked }))}
-          className="h-4 w-4 rounded border-gray-300"
-        />
-        <Label htmlFor="clientVisible">{t("Terlihat oleh klien", "Visible to client")}</Label>
       </div>
       <Button type="submit" disabled={loading} className="w-full">
         {loading ? t("Menyimpan...", "Saving...") : mode === "create" ? t("Buat Tugas", "Create Task") : t("Simpan Perubahan", "Save Changes")}

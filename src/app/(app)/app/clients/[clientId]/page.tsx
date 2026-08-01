@@ -8,9 +8,9 @@ import {
   tasks,
   invoices,
   appointments,
-  portalRequests,
   packages,
   timeEntries,
+  workspaceMembers,
 } from "@/db/schema";
 import { eq, desc, sql, inArray, and } from "drizzle-orm";
 import { requireUser, assertClientInWorkspace } from "@/lib/access";
@@ -26,20 +26,32 @@ import {
   Calendar,
   ArrowLeft,
   Receipt,
-  MessageSquare,
   Download,
   Wallet,
 } from "lucide-react";
 import { PortalTokenSection } from "./portal-section";
-import { PortalRequestAdmin } from "@/components/portal/portal-request-admin";
 import { ClientEditDialog } from "@/components/clients/client-edit-dialog";
 import { ClientGoogleCalendarPanel } from "@/components/clients/client-google-calendar-panel";
+import { ProjectCreateDialog } from "@/components/projects/project-create-dialog";
 import { billingTypeLabel } from "@/lib/feature-access";
+import { checkEntityLimit, getUserPlan } from "@/lib/plan";
 import { decryptSecret } from "@/lib/google-calendar";
 import {
   getClientGoogleConnectionStatus,
   listClientGoogleEvents,
 } from "@/lib/client-google-calendar";
+import { buildInvoiceDetailUrl } from "@/lib/invoice-origin";
+import { formatMoney } from "@/lib/utils";
+
+const invoiceStatusLabel: Record<string, string> = {
+  draft: "Draf",
+  sent: "Terkirim",
+  viewed: "Dilihat",
+  paid: "Lunas",
+  overdue: "Jatuh tempo",
+  cancelled: "Dibatalkan",
+  archived: "Diarsipkan",
+};
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -62,7 +74,6 @@ export default async function ClientDetailPage({
     "invoices",
     "calendar",
     "portal",
-    "notes",
   ]);
   // Legacy deep-link ?tab=appointments → Calendar
   // Ringkasan (overview) di-hide; deep-link lama fallback ke projects
@@ -83,6 +94,24 @@ export default async function ClientDetailPage({
 
   const [client] = await db.select().from(clients).where(eq(clients.id, clientId));
   if (!client) notFound();
+
+  const [member] = await db
+    .select({ role: workspaceMembers.role })
+    .from(workspaceMembers)
+    .where(
+      and(
+        eq(workspaceMembers.workspaceId, workspaceId),
+        eq(workspaceMembers.userId, user.id),
+      ),
+    )
+    .limit(1);
+  const canWrite = member?.role === "owner" || member?.role === "member";
+
+  const projectLimitState = await checkEntityLimit(
+    workspaceId,
+    "projects",
+    await getUserPlan(user.id),
+  );
 
   let existingPortalToken: string | null = null;
   if (
@@ -220,20 +249,6 @@ export default async function ClientDetailPage({
     .where(eq(appointments.clientId, clientId))
     .orderBy(desc(appointments.startTime));
 
-  const clientPortalRequests = await db
-    .select({
-      id: portalRequests.id,
-      title: portalRequests.title,
-      description: portalRequests.description,
-      type: portalRequests.type,
-      status: portalRequests.status,
-      dueDate: portalRequests.dueDate,
-      projectId: portalRequests.projectId,
-    })
-    .from(portalRequests)
-    .where(eq(portalRequests.clientId, clientId))
-    .orderBy(desc(portalRequests.createdAt));
-
   // Notes — use internal notes field + comments on visible projects
   // (no direct client comments in schema)
 
@@ -242,118 +257,119 @@ export default async function ClientDetailPage({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-2">
-          <Link href="/app/clients" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-3 w-3" /> Kembali ke Klien
-          </Link>
-          <div className="flex items-center gap-3">
-            <h1 className="app-page-title">{client.name}</h1>
-            <Badge variant={client.status === "active" ? "default" : "secondary"}>
-              {client.status === "active" ? "Aktif" : client.status === "inactive" ? "Tidak aktif" : client.status === "archived" ? "Arsip" : client.status}
-            </Badge>
+      <div className="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[400px_minmax(0,1fr)]">
+        {/* Client profile */}
+        <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Link href="/app/clients" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="h-3 w-3" /> Kembali ke Klien
+            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" className="gap-1" asChild>
+                <a href={`/api/clients/${client.id}/export/xlsx`} download>
+                  <Download className="h-3 w-3" /> Excel
+                </a>
+              </Button>
+              <ClientEditDialog
+                defaultValues={{
+                  id: client.id,
+                  clientNumber: client.clientNumber,
+                  name: client.name,
+                  companyName: client.companyName ?? "",
+                  email: client.email ?? "",
+                  phone: client.phone ?? "",
+                  website: client.website ?? "",
+                  address: client.address ?? "",
+                  tags: client.tags ?? [],
+                  internalNotes: client.internalNotes ?? "",
+                  portalSlug: client.portalSlug ?? "",
+                  portalSlugEnabled: client.portalSlugEnabled ?? true,
+                }}
+              />
+            </div>
           </div>
-          {client.companyName && (
-            <p className="text-sm text-muted-foreground">{client.companyName}</p>
-          )}
-          {(client.email || client.phone) && (
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-              {client.email && (
-                <a href={`mailto:${client.email}`} className="hover:text-foreground hover:underline">
-                  {client.email}
-                </a>
-              )}
-              {client.email && client.phone && <span>·</span>}
-              {client.phone && (
-                <a href={`tel:${client.phone}`} className="hover:text-foreground hover:underline">
-                  {client.phone}
-                </a>
-              )}
-            </div>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-2 justify-end">
-          <Button size="sm" variant="outline" className="gap-1" asChild>
-            <a href={`/api/clients/${client.id}/export/xlsx`} download>
-              <Download className="h-3 w-3" /> Excel
-            </a>
-          </Button>
-          <ClientEditDialog
-            defaultValues={{
-              id: client.id,
-              clientNumber: client.clientNumber,
-              name: client.name,
-              companyName: client.companyName ?? "",
-              email: client.email ?? "",
-              phone: client.phone ?? "",
-              website: client.website ?? "",
-              address: client.address ?? "",
-              tags: client.tags ?? [],
-              internalNotes: client.internalNotes ?? "",
-              portalSlug: client.portalSlug ?? "",
-              portalSlugEnabled: client.portalSlugEnabled ?? true,
-            }}
-          />
-        </div>
-      </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Proyek Aktif</p>
-            <p className="text-2xl font-bold">{activeProjects}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Invoice Belum Lunas</p>
-            <p className="text-2xl font-bold">
-              {clientInvoices.filter((i) => i.status !== "paid" && i.status !== "cancelled").length}
-            </p>
-          </CardContent>
-        </Card>
-
-      </div>
-
-      {/* Contact Info Row */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-            {client.website && (
-              <div>
-                <p className="text-xs text-muted-foreground">Website</p>
-                <a href={client.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                  {client.website}
-                </a>
+          <Card>
+            <CardContent className="space-y-4 p-4">
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="app-page-title leading-tight">{client.name}</h1>
+                  <Badge variant={client.status === "active" ? "default" : "secondary"}>
+                    {client.status === "active" ? "Aktif" : client.status === "inactive" ? "Tidak aktif" : client.status === "archived" ? "Arsip" : client.status}
+                  </Badge>
+                </div>
+                {client.companyName && (
+                  <p className="text-sm text-muted-foreground">{client.companyName}</p>
+                )}
+                {(client.email || client.phone) && (
+                  <div className="space-y-1 text-sm text-muted-foreground">
+                    {client.email && (
+                      <a href={`mailto:${client.email}`} className="block break-all hover:text-foreground hover:underline">
+                        {client.email}
+                      </a>
+                    )}
+                    {client.phone && (
+                      <a href={`tel:${client.phone}`} className="block hover:text-foreground hover:underline">
+                        {client.phone}
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
-            {client.address && (
-              <div>
-                <p className="text-xs text-muted-foreground">Alamat</p>
-                <p className="truncate">{client.address}</p>
-              </div>
-            )}
-          </div>
-          {client.tags && client.tags.length > 0 && (
-            <div className="flex gap-1 mt-3 flex-wrap">
-              {client.tags.map((tag) => (
-                <Badge key={tag} variant="outline" className="text-[10px]">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
-          {client.internalNotes && (
-            <div className="mt-3 pt-3 border-t">
-              <p className="text-xs text-muted-foreground">Catatan Internal</p>
-              <p className="text-sm mt-1">{client.internalNotes}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <p className="text-[11px] text-muted-foreground">Proyek Aktif</p>
+                  <p className="mt-1 text-xl font-bold">{activeProjects}</p>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <p className="text-[11px] text-muted-foreground">Invoice Belum Lunas</p>
+                  <p className="mt-1 text-xl font-bold">
+                    {clientInvoices.filter((i) => i.status !== "paid" && i.status !== "cancelled").length}
+                  </p>
+                </div>
+
+              </div>
+
+              {(client.website || client.address || (client.tags && client.tags.length > 0) || client.internalNotes) && (
+                <div className="space-y-3 border-t pt-3 text-sm">
+                  {client.website && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Website</p>
+                      <a href={client.website} target="_blank" rel="noopener noreferrer" className="break-all text-blue-600 hover:underline">
+                        {client.website}
+                      </a>
+                    </div>
+                  )}
+                  {client.address && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Alamat</p>
+                      <p className="mt-1 break-words">{client.address}</p>
+                    </div>
+                  )}
+                  {client.tags && client.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {client.tags.map((tag) => (
+                        <Badge key={tag} variant="outline" className="text-[10px]">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  {client.internalNotes && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Catatan Internal</p>
+                      <p className="mt-1 leading-relaxed">{client.internalNotes}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </aside>
+
+        {/* Work tabs */}
+        <section className="min-w-0">
       {/* Tabs — Ringkasan di-hide, Portal tetap; wrap di mobile */}
       <Tabs defaultValue={initialTab}>
         <div className="overflow-x-auto -mx-1 px-1">
@@ -377,27 +393,28 @@ export default async function ClientDetailPage({
               </Link>
             </TabsTrigger>
 
-            <TabsTrigger value="notes" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm" asChild>
-              <Link href={`?tab=notes`}>
-                <MessageSquare className="h-3 w-3 shrink-0" /> Catatan
-              </Link>
-            </TabsTrigger>
           </TabsList>
         </div>
 
         <TabsContent value="portal" className="space-y-4 pt-4">
           <PortalTokenSection
-            client={client}
+            client={{ ...client, portalPasswordCiphertext: client.portalPasswordCiphertext }}
             existingPortalToken={existingPortalToken}
-          />
-          <PortalRequestAdmin
-            clientId={client.id}
-            initialRequests={clientPortalRequests}
-            projects={clientProjects.map((project) => ({ id: project.id, name: project.name }))}
           />
         </TabsContent>
 
         <TabsContent value="projects" className="space-y-4 pt-4">
+          {canWrite && (
+            <div className="flex justify-end">
+              <ProjectCreateDialog
+                clients={[]}
+                clientId={clientId}
+                isAtLimit={!projectLimitState.allowed}
+                projectCount={projectLimitState.current}
+                projectLimit={projectLimitState.limit}
+              />
+            </div>
+          )}
           {clientProjects.length === 0 && (
             <p className="text-sm text-muted-foreground py-8 text-center">Belum ada proyek</p>
           )}
@@ -489,7 +506,7 @@ export default async function ClientDetailPage({
             <Card key={inv.id}>
               <CardContent className="p-0">
                 <Link
-                  href={`/app/invoices/${inv.id}`}
+                  href={buildInvoiceDetailUrl(inv.id, { type: "client", resourceId: clientId })}
                   className="flex items-center justify-between p-4 transition-colors hover:bg-muted/50"
                 >
                 <div>
@@ -503,9 +520,9 @@ export default async function ClientDetailPage({
                     variant={inv.status === "overdue" ? "destructive" : inv.status === "paid" ? "default" : "secondary"}
                     className="text-[10px]"
                   >
-                    {inv.status}
+                    {invoiceStatusLabel[inv.status] ?? inv.status}
                   </Badge>
-                  <span className="text-sm font-semibold">{inv.currency} {inv.total}</span>
+                  <span className="text-sm font-semibold">{formatMoney(inv.total, inv.currency)}</span>
                 </div>
                 </Link>
               </CardContent>
@@ -537,17 +554,9 @@ export default async function ClientDetailPage({
           />
         </TabsContent>
 
-        <TabsContent value="notes" className="space-y-4 pt-4">
-          <div className="space-y-4">
-            <div>
-              <h4 className="text-sm font-medium">Catatan Internal</h4>
-              <p className="text-sm text-muted-foreground mt-1">
-                {client.internalNotes || "Belum ada catatan internal."}
-              </p>
-            </div>
-          </div>
-        </TabsContent>
       </Tabs>
+        </section>
+      </div>
     </div>
   );
 }

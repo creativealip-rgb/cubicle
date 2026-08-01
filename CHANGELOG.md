@@ -1,5 +1,34 @@
 # Changelog
 
+## Unreleased — Billing-aware Tasks, Templates, and Time cutover
+
+- Tasks: add billing-aware workflow/reusable modes, flat Task Templates, atomic import, complete global/project editors, and mobile/keyboard ordering controls.
+- Project detail: replace standalone Tasks/Layanan tabs with `Pekerjaan` and consolidated Billing; preserve Service compatibility storage.
+- Time: require eligible active reusable Tasks for new Hourly/Retainer manual, weekly, and timer-completion writes while keeping empty timer start and historical taskless reads.
+- Reports: aggregate current Time by client, project, Task, and member; historical rows without Tasks remain under `Tanpa tugas`.
+- Activity/Service: retire active catalog routes via redirects; migration `0062` remains retired and unauthorized.
+- Production: not deployed; additive migration `0064` remains behind backup, restore, rehearsal, and explicit approval gates.
+- Verification checkpoint: disposable PostgreSQL 16 integration matrix passed; full ESLint passed; Vitest passed 162/162 files and 689/689 tests; production build passed. Authenticated desktop/mobile browser QA remains in progress.
+- Local commits through `9e98997`; branch remains unpushed and production remains unchanged.
+
+## v0.1.122-dev — 2026-07-31 — Repo safety docs and guard restoration
+
+- Project detail: restored the **Layanan** tab and `ProjectServiceSettings` so per-project service snapshots stay editable outside the simplified Project form.
+- Invoices: restored final-status financial guards for `sent`, `viewed`, and `overdue` after the temporary edit hotfix; financial line-item mutations are now locked for `sent`, `viewed`, `paid`, `overdue`, `cancelled`, and `archived`, while `draft` remains editable.
+- Waktu mobile actions: restored 44 px mobile height for `Catat Waktu` while preserving compact desktop sizing.
+- Repo hygiene: moved the local dummy-client manual note into ignored `.hermes/tmp/` so the Git worktree is clean.
+- Documentation: clarified Project Services, invoice editability, current production image, feature status, schema snapshot, and email status.
+- Verification: ESLint passed, 145/145 Vitest files passed with 599/599 tests, and Next.js production build compiled successfully.
+- Commit: `9381be5`
+- Deployment: Live app container `cubiqlo-new-app` updated to `cubiqlo-prod:sha-9381be5-repo-safe-fix-20260731202341`; `dokploy-traefik` remains the only public 80/443 owner.
+
+## v0.1.121-dev — 2026-07-31 — Invoice editing fix for sent, viewed, and overdue statuses
+
+- Invoices: Allow editing, adding, and deleting line items for invoices that are in `sent`, `viewed`, or `overdue` status. Only `paid`, `cancelled`, and `archived` statuses are now locked as final.
+- Error prevention: Fixed generic "Server Components render" errors caused by `addProjectInvoiceItem` action throwing on `sent/viewed/overdue` checks.
+- Commits: `f4f703a`
+- Deployment: Live app container `cubiqlo-new-app` updated to `cubiqlo-prod:sha-f4f703a-invoice-fix-20260731104731` with DB health `ok`.
+
 ## v0.1.120-dev — 2026-07-30 — Navigation, compact filters, billing QA, and portal polish
 
 - Sidebar navigation: replace covering desktop flyouts with route-active inline child menus for Pekerjaan, Keuangan, Personal, and AI; keep mobile accordions and collapsed desktop behavior compact

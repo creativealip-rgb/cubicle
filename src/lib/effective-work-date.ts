@@ -1,3 +1,15 @@
+import { sql, type SQLWrapper } from "drizzle-orm";
+
+export type EffectiveTimeEntryColumns = {
+  workDate: SQLWrapper;
+  startTime: SQLWrapper;
+  createdAt: SQLWrapper;
+};
+
+export function effectiveWorkDateSql(entry: EffectiveTimeEntryColumns) {
+  return sql`coalesce(${entry.workDate}, (${entry.startTime})::date, (${entry.createdAt})::date)`;
+}
+
 export type EffectiveTimeEntry = {
   workDate?: string | null;
   startTime?: Date | string | null;

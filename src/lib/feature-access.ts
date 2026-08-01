@@ -27,9 +27,10 @@ export function billingTypeLabel(
       return lang === "id" ? "Fixed Price" : "Fixed Price";
     case "hourly":
     case "hours":
-      return lang === "id" ? "Per Jam" : "By Hours";
+      return lang === "id" ? "Per Jam" : "Hourly";
     case "retainer":
       return "Retainer";
+    case "legacy_package":
     case "package":
       return lang === "id" ? "Per Paket" : "By Package";
     default:
@@ -54,8 +55,9 @@ export function billingTypeHint(
         : "Billed by tracked hours (timer / time entries).";
     case "retainer":
       return lang === "id"
-        ? "Ditagih sebagai biaya retainer berkala."
-        : "Billed as a recurring retainer fee.";
+        ? "Ditagih sebagai retainer berkala."
+        : "Billed as a recurring retainer.";
+    case "legacy_package":
     case "package":
       return lang === "id"
         ? "Ditagih lewat paket jam / deliverable yang dipilih."

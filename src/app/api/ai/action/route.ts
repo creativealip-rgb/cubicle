@@ -7,6 +7,8 @@ import { db } from "@/db";
 import { activityLogs, invoices, tasks } from "@/db/schema";
 import { assertWorkspaceWritable } from "@/lib/access";
 import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
+import { enforcePlanApiRateLimit } from "@/lib/plan-api-rate-limit";
+import { checkAiRateLimitDb, getAiEntitlementFailure, getUserPlan } from "@/lib/plan";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -29,6 +31,11 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const limited = await enforceRateLimitResponse(req, "ai:action", { limit: 30, windowSec: 60 }, { identity: session.user.id });
   if (limited) return limited;
+  const plan = await getUserPlan(session.user.id);
+  const entitlementFailure = getAiEntitlementFailure(plan);
+  if (entitlementFailure) {
+    return NextResponse.json({ error: entitlementFailure.error }, { status: entitlementFailure.status });
+  }
 
   let request: { kind: string; payload: unknown };
   try {
@@ -47,6 +54,15 @@ export async function POST(req: NextRequest) {
         .from(tasks).where(eq(tasks.id, p.taskId)).limit(1);
       if (!task) return NextResponse.json({ error: "Task not found" }, { status: 404 });
       await assertWorkspaceWritable(db, session.user.id, task.workspaceId);
+      const apiLimited = await enforcePlanApiRateLimit(req, { userId: session.user.id, workspaceId: task.workspaceId });
+      if (apiLimited) return apiLimited;
+      const aiRate = await checkAiRateLimitDb(task.workspaceId, plan);
+      if (!aiRate.allowed) {
+        return NextResponse.json(
+          { error: `Batas AI harian tercapai (${aiRate.limit}/hari). Reset ${new Date(aiRate.resetAt).toISOString()}.` },
+          { status: 429 },
+        );
+      }
 
       const [updated] = await db.update(tasks)
         .set({ status: p.newStatus, updatedAt: new Date() })
@@ -74,6 +90,15 @@ export async function POST(req: NextRequest) {
         .from(invoices).where(eq(invoices.id, p.invoiceId)).limit(1);
       if (!invoice) return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
       await assertWorkspaceWritable(db, session.user.id, invoice.workspaceId);
+      const apiLimited = await enforcePlanApiRateLimit(req, { userId: session.user.id, workspaceId: invoice.workspaceId });
+      if (apiLimited) return apiLimited;
+      const aiRate = await checkAiRateLimitDb(invoice.workspaceId, plan);
+      if (!aiRate.allowed) {
+        return NextResponse.json(
+          { error: `Batas AI harian tercapai (${aiRate.limit}/hari). Reset ${new Date(aiRate.resetAt).toISOString()}.` },
+          { status: 429 },
+        );
+      }
       await db.insert(activityLogs).values({
         workspaceId: invoice.workspaceId,
         actorId: session.user.id,

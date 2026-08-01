@@ -1,25 +1,11 @@
-import { getWorkspaceActivities } from "@/lib/actions/activities";
-import {
-  ActivityCatalog,
-  type CatalogActivity,
-} from "@/components/activities/activity-catalog";
-import { TimePageShell } from "@/components/time/time-header";
+"use client";
 
-export const dynamic = "force-dynamic";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-export default async function TimeActivitiesPage() {
-  const rows = await getWorkspaceActivities({ includeArchived: true });
-  const activities: CatalogActivity[] = rows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    defaultBillable: row.defaultBillable,
-    defaultHourlyRate: row.defaultHourlyRate,
-    status: row.status,
-  }));
-
-  return (
-    <TimePageShell>
-      <ActivityCatalog activities={activities} />
-    </TimePageShell>
-  );
+export default function TimeActivitiesPage() {
+  const router = useRouter();
+  useEffect(() => { router.replace("/app/time"); }, [router]);
+  return <p className="p-6 text-sm text-muted-foreground">Katalog Aktivitas sudah dipindahkan. <Link className="underline" href="/app/time">Buka Waktu</Link>.</p>;
 }

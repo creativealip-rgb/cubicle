@@ -6,7 +6,7 @@ import { eq, and } from "drizzle-orm";
 import { db } from "@/db";
 import { workspaceMembers, users } from "@/db/schema";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
-import { canInviteMember } from "@/lib/plan";
+import { canAddWorkspaceMember } from "@/lib/plan";
 
 /**
  * Invite a user to the current workspace by email.
@@ -27,7 +27,7 @@ export async function inviteMember(email: string, role: "member" | "viewer" = "m
   const workspaceId = await getWorkspaceForCurrentUser();
 
   // Check plan (plan is per-user)
-  const inviteCheck = await canInviteMember(userId);
+  const inviteCheck = await canAddWorkspaceMember(userId, workspaceId);
   if (!inviteCheck.allowed) return { ok: false, error: inviteCheck.reason };
 
   // Check inviter is owner or member

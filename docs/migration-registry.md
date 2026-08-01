@@ -20,7 +20,10 @@ Reserve a number here before creating SQL. Recheck remote refs and every worktre
 - `0059` — Retainer invoice source integrity — Coder — `feat/billing-aware-phase1` — committed.
 - `0060` — Task behavior + archive metadata — Coder — `feat/billing-aware-phase1` — committed.
 - `0061` — Legacy billing classification table — Coder — `feat/billing-aware-phase1` — committed.
-- `0062` — Billing-aware Phase 9 destructive cleanup — Coder — `feat/billing-aware-phase1` — reserved; dry-run only, production untouched.
+- `0062` — Billing-aware Phase 9 destructive cleanup — retired; unauthorized to apply; production untouched.
+- `0063` — Encrypted invoice share token — reconciled existing migration on `main` — committed.
+- `0064` — Billing-aware project tasks and templates — Coder — `main` — committed.
+- `0065` — Encrypted Portal password display — Coder — `feat/client-project-invoice-task-revision` — reserved.
 
 ## Reservation protocol
 
@@ -32,3 +35,7 @@ Reserve a number here before creating SQL. Recheck remote refs and every worktre
 6. Apply through `scripts/migrate-ledger.sh` with explicit `DB_NAME`; production keeps its separate approval guard.
 
 Status vocabulary: `reserved`, `committed`, `integrated`, `applied-dev`, `applied-production`.
+
+> **0062 retired:** `0062_billing_aware_phase9_cleanup.sql` must not run. Current runtime and
+> `src/db/schema.ts` still depend on Package/Activity tables and columns. The migration runner
+> skips it explicitly until a future code-first removal ships with behavioral compatibility gates.

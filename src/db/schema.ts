@@ -158,6 +158,10 @@ export const clients = pgTable("clients", {
   portalSlug: text("portal_slug").unique(),
   portalSlugEnabled: boolean("portal_slug_enabled").notNull().default(false),
   portalPasswordHash: text("portal_password_hash"),
+  portalPasswordCiphertext: text("portal_password_ciphertext"),
+  portalPasswordNonce: text("portal_password_nonce"),
+  portalPasswordEncryptionVersion: integer("portal_password_encryption_version"),
+  portalPasswordEncryptedAt: timestamp("portal_password_encrypted_at", { withTimezone: true }),
   portalSessionVersion: text("portal_session_version").notNull().default("1"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -174,6 +178,7 @@ export const projects = pgTable("projects", {
   status: text("status", { enum: ["draft", "active", "on_hold", "completed", "cancelled", "archived"] }).notNull().default("active"),
   billingType: text("billing_type", { enum: ["fixed_price", "hourly", "retainer", "package", "project", "hours"] }).notNull().default("fixed_price"),
   billingModel: text("billing_model", { enum: ["fixed_price", "hourly", "retainer", "legacy_package"] }),
+  taskModePolicy: text("task_mode_policy", { enum: ["billing_default", "workflow", "reusable", "mixed"] }).notNull().default("billing_default"),
   retainerFee: numeric("retainer_fee", { precision: 12, scale: 2 }),
   retainerIncludedMinutes: integer("retainer_included_minutes"),
   retainerPeriodUnit: text("retainer_period_unit", { enum: ["month"] }),
@@ -195,6 +200,7 @@ export const projects = pgTable("projects", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   unique("projects_id_workspace_unique").on(table.id, table.workspaceId),
+  check("projects_task_mode_policy_check", sql`${table.taskModePolicy} in ('billing_default', 'workflow', 'reusable', 'mixed')`),
 ]);
 
 export const projectMembers = pgTable("project_members", {
@@ -413,11 +419,67 @@ export const projectServices = pgTable("project_services", {
 
 // ─── Tasks ───
 
+export const taskTemplates = pgTable("task_templates", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  normalizedName: text("normalized_name").generatedAlwaysAs(sql`lower(btrim(name))`),
+  description: text("description"),
+  target: text("target", { enum: ["fixed_price", "hourly_retainer", "all"] }).notNull().default("all"),
+  status: text("status", { enum: ["active", "archived"] }).notNull().default("active"),
+  createdBy: text("created_by").notNull().references(() => users.id, { onDelete: "restrict" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique("task_templates_id_workspace_unique").on(table.id, table.workspaceId),
+  uniqueIndex("task_templates_workspace_active_normalized_name_uidx").on(table.workspaceId, table.normalizedName).where(sql`${table.status} = 'active'`),
+  check("task_templates_target_check", sql`${table.target} in ('fixed_price', 'hourly_retainer', 'all')`),
+  check("task_templates_status_check", sql`${table.status} in ('active', 'archived')`),
+  check("task_templates_name_not_blank_check", sql`length(btrim(${table.name})) > 0`),
+]);
+
+export const taskTemplateItems = pgTable("task_template_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  templateId: uuid("template_id").notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  defaultAssigneeId: text("default_assignee_id"),
+  position: integer("position").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique("task_template_items_id_workspace_unique").on(table.id, table.workspaceId),
+  unique("task_template_items_template_position_unique").on(table.templateId, table.position),
+  foreignKey({ columns: [table.templateId, table.workspaceId], foreignColumns: [taskTemplates.id, taskTemplates.workspaceId], name: "task_template_items_template_workspace_fk" }).onDelete("cascade"),
+  foreignKey({ columns: [table.workspaceId, table.defaultAssigneeId], foreignColumns: [workspaceMembers.workspaceId, workspaceMembers.userId], name: "task_template_items_assignee_workspace_fk" }),
+  check("task_template_items_position_check", sql`${table.position} >= 0`),
+  check("task_template_items_title_not_blank_check", sql`length(btrim(${table.title})) > 0`),
+]);
+
+export const taskTemplateImports = pgTable("task_template_imports", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id").notNull(),
+  idempotencyKey: text("idempotency_key").notNull(),
+  payloadFingerprint: text("payload_fingerprint").notNull(),
+  result: jsonb("result"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+}, (table) => [
+  unique("task_template_imports_idempotency_unique").on(table.workspaceId, table.projectId, table.idempotencyKey),
+  foreignKey({ columns: [table.projectId, table.workspaceId], foreignColumns: [projects.id, projects.workspaceId], name: "task_template_imports_project_workspace_fk" }).onDelete("cascade"),
+]);
+
 export const tasks = pgTable("tasks", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
   behavior: text("behavior", { enum: ["one_time", "recurring"] }),
+  mode: text("mode", { enum: ["workflow", "reusable"] }).notNull().default("workflow"),
+  lifecycle: text("lifecycle", { enum: ["active", "archived"] }).notNull().default("active"),
+  templateItemSourceId: uuid("template_item_source_id"),
   archivedAt: timestamp("archived_at", { withTimezone: true }),
   projectServiceId: uuid("project_service_id").references(() => projectServices.id, { onDelete: "set null" }),
   title: text("title").notNull(),
@@ -433,7 +495,14 @@ export const tasks = pgTable("tasks", {
   createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [
+  foreignKey({ columns: [table.projectId, table.workspaceId], foreignColumns: [projects.id, projects.workspaceId], name: "tasks_project_workspace_fk" }).onDelete("cascade"),
+  // Migration adds ON DELETE SET NULL (template_item_source_id); Drizzle 0.45
+  // cannot represent a column-list SET NULL action on a composite foreign key.
+  foreignKey({ columns: [table.templateItemSourceId, table.workspaceId], foreignColumns: [taskTemplateItems.id, taskTemplateItems.workspaceId], name: "tasks_template_item_source_workspace_fk" }),
+  index("tasks_workspace_mode_lifecycle_idx").on(table.workspaceId, table.mode, table.lifecycle),
+  index("tasks_project_mode_lifecycle_position_idx").on(table.projectId, table.mode, table.lifecycle, table.position),
+]);
 
 
 export const portalRequests = pgTable("portal_requests", {

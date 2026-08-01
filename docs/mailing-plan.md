@@ -1,8 +1,10 @@
 # Mailing Plan: PremiAcc + Cubicle pakai mail.nggawe.web.id
 
+> Historical planning note. Cubiqlo production now sends app/invoice email through Resend using the Cubiqlo domain/mailbox setup. The BLOCKED status below applies to the old shared `mail.nggawe.web.id` plan and PremiAcc-era outbound gap, not to current Cubiqlo invoice/reminder email.
+
 **Tanggal:** 2026-06-16
 **Author:** Coder
-**Status:** Draft — menunggu approval Alip
+**Status:** Historical draft — superseded for Cubiqlo outbound by Resend/Cubiqlo mail setup
 
 ---
 

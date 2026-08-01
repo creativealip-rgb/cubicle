@@ -1,7 +1,7 @@
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { clients, projects, tasks, workspaces } from "@/db/schema";
@@ -48,7 +48,7 @@ export async function GET() {
     db
       .select({ id: tasks.id, title: tasks.title, projectId: tasks.projectId })
       .from(tasks)
-      .where(eq(tasks.workspaceId, workspace.id))
+      .where(and(eq(tasks.workspaceId, workspace.id), eq(tasks.mode, "reusable"), eq(tasks.lifecycle, "active")))
       .orderBy(asc(tasks.title))
       .limit(300),
   ]);

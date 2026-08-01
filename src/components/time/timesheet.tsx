@@ -100,13 +100,12 @@ function toDateInputValue(value: Date | string | null | undefined): string {
   return `${year}-${month}-${day}`;
 }
 
-export function Timesheet({ entries, clients, projects, tasks = [], activities = [], compact = false }: TimesheetProps) {
+export function Timesheet({ entries, clients, projects, tasks = [], activities: _activities = [], compact = false }: TimesheetProps) {
   const { t, locale } = useT();
   const router = useRouter();
 
   const [clientFilter, setClientFilter] = useState<string>("all");
   const [projectFilter, setProjectFilter] = useState<string>("all");
-  const [activityFilter, setActivityFilter] = useState<string>("all");
   const [billableFilter, setBillableFilter] = useState<string>("all");
   const [tagFilter, setTagFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState("");
@@ -120,7 +119,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
   const [editTags, setEditTags] = useState("");
   const [editClientId, setEditClientId] = useState("");
   const [editProjectId, setEditProjectId] = useState("");
-  const [editActivityId, setEditActivityId] = useState("");
   const [editTaskId, setEditTaskId] = useState("__none__");
   const [editDate, setEditDate] = useState("");
   const [editMinutes, setEditMinutes] = useState("");
@@ -133,8 +131,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
     return entries.filter((e) => {
       if (clientFilter !== "all" && e.clientId !== clientFilter) return false;
       if (projectFilter !== "all" && e.projectId !== projectFilter) return false;
-      if (activityFilter === "none" && e.activityId) return false;
-      if (activityFilter !== "all" && activityFilter !== "none" && e.activityId !== activityFilter) return false;
       if (billableFilter === "billable" && !e.billable) return false;
       if (billableFilter === "non-billable" && e.billable) return false;
       if (
@@ -155,11 +151,11 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
       }
       return true;
     });
-  }, [entries, clientFilter, projectFilter, activityFilter, billableFilter, tagFilter, dateFrom, dateTo]);
+  }, [entries, clientFilter, projectFilter, billableFilter, tagFilter, dateFrom, dateTo]);
 
   useEffect(() => {
     setPage(1);
-  }, [clientFilter, projectFilter, activityFilter, billableFilter, tagFilter, dateFrom, dateTo, entries.length]);
+  }, [clientFilter, projectFilter, billableFilter, tagFilter, dateFrom, dateTo, entries.length]);
 
   const totalPages = Math.max(1, Math.ceil(filteredEntries.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -192,10 +188,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
     return tasks.filter((tk) => tk.projectId === editProjectId);
   }, [editProjectId, tasks]);
 
-  const editActivities = useMemo(() => {
-    if (!editProjectId) return [];
-    return activities.filter((a) => a.projectId === editProjectId);
-  }, [editProjectId, activities]);
 
   const filterProjects = useMemo(() => {
     if (clientFilter === "all") return projects;
@@ -260,7 +252,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
     setEditTags(entry.tags || "");
     setEditClientId(entry.clientId || "");
     setEditProjectId(entry.projectId || "");
-    setEditActivityId(entry.activityId || "");
     setEditTaskId(entry.taskId || "__none__");
     setEditDate(toDateInputValue(entry.startTime));
     setEditMinutes(String(entry.durationMinutes ?? entry.manualMinutes ?? 0));
@@ -299,7 +290,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
         tags: editTags || null,
         clientId: editClientId,
         projectId: editProjectId,
-        activityId: editActivityId || null,
         taskId: editTaskId && editTaskId !== "__none__" ? editTaskId : null,
         startTime: startIso,
         endTime: endIso,
@@ -397,29 +387,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-[10px]">{t("Aktivitas", "Activity")}</Label>
-              <Select value={activityFilter} onValueChange={setActivityFilter}>
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder={t("Semua", "All")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("Semua Activity", "All Activities")}</SelectItem>
-                  <SelectItem value="none">{t("Tanpa aktivitas", "No activity")}</SelectItem>
-                  {Array.from(
-                    new Map(
-                      entries
-                        .filter((e) => e.activityId && e.activityName)
-                        .map((e) => [e.activityId!, e.activityName!]),
-                    ),
-                  ).map(([id, name]) => (
-                    <SelectItem key={id} value={id}>
-                      {name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
               <Label className="text-[10px]">{t("Bisa Ditagih", "Billable")}</Label>
               <Select value={billableFilter} onValueChange={setBillableFilter}>
                 <SelectTrigger className="h-8 text-xs">
@@ -499,7 +466,10 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
             ) : null}
           </div>
 
-          {pageEntries.map((entry, index) => (
+          {pageEntries.map((entry, index) => {
+            const historyPrimaryTitle = [entry.projectName, entry.taskTitle].filter(Boolean).join(" · ") || t("Tanpa proyek / task", "No project / task");
+            const historyDescription = entry.description?.trim();
+            return (
             <Card key={entry.id} className="rounded-none border-0 shadow-none">
               <CardContent
                 role={canEditEntry(entry) ? "button" : undefined}
@@ -519,25 +489,10 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
                 <div className="flex min-w-0 items-start gap-3 sm:items-center">
                   <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   <div className="min-w-0">
-                    <p className={`text-sm font-medium truncate ${!entry.projectId && !entry.taskId && !entry.description ? "italic text-muted-foreground" : ""}`}>
-                      {entry.projectId || entry.taskId || entry.description
-                        ? entry.description || entry.taskTitle || entry.projectName || t("Tanpa judul", "Untitled")
-                        : t("Tambah proyek, task, dan detail lainnya", "Add project, task, and other details")}
-                    </p>
+                    <p className="truncate text-sm font-medium">{historyPrimaryTitle}</p>
+                    {historyDescription ? <p className="mt-0.5 truncate text-xs text-muted-foreground">{historyDescription}</p> : null}
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 flex-wrap">
                       {entry.clientName && <span>{entry.clientName}</span>}
-                      {entry.projectName && (
-                        <>
-                          <span>·</span>
-                          <span>{entry.projectName}</span>
-                        </>
-                      )}
-                      {entry.taskTitle && (
-                        <>
-                          <span>·</span>
-                          <span>{entry.taskTitle}</span>
-                        </>
-                      )}
                       <span>·</span>
                       <span>{entry.userName || t("Tidak diketahui", "Unknown")}</span>
                       <span>·</span>
@@ -619,7 +574,8 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
 
           {totalPages > 1 ? (
             <div className="flex items-center justify-between gap-2 border-t px-3 py-3">
@@ -702,7 +658,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
                   onValueChange={(v) => {
                     setEditClientId(v);
                     setEditProjectId("");
-                    setEditActivityId("");
                     setEditTaskId("__none__");
                   }}
                 >
@@ -725,7 +680,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
                   value={editProjectId}
                   onValueChange={(v) => {
                     setEditProjectId(v);
-                    setEditActivityId("");
                     setEditTaskId("__none__");
                   }}
                   disabled={!editClientId}
@@ -745,27 +699,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities =
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">{t("Aktivitas", "Activity")}</Label>
-              <Select
-                value={editActivityId || "__none__"}
-                onValueChange={(v) => setEditActivityId(v === "__none__" ? "" : v)}
-                disabled={!editProjectId}
-              >
-                <SelectTrigger className="h-9 text-sm">
-                  <SelectValue placeholder={t("Opsional", "Optional")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
-                  {editActivities.map((activity) => (
-                    <SelectItem key={activity.id} value={activity.id}>
-                      {activity.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">{t("Tugas terkait", "Related Task")}</Label>
+              <Label className="text-xs">{t("Tugas", "Task")}</Label>
               <Select
                 value={editTaskId}
                 onValueChange={handleEditTaskChange}

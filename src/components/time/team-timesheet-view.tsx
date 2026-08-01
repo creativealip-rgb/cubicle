@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Clock3, Pause, Play } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/empty-state";
@@ -24,6 +23,7 @@ export function TeamTimesheetView({ entries }: { entries: TeamTimeEntry[] }) {
   const { t, locale } = useT();
   const [mode, setMode] = useState<"today" | "week">("today");
   const [weekOffset, setWeekOffset] = useState(0);
+  // selectedDate resets to today through cubiqlo:time-entry-started event owner when daily filter exists.
   const now = useMemo(() => new Date(), []);
   const today = useMemo(() => buildTodayTimeline(entries, now), [entries, now]);
   const week = useMemo(() => buildWeekDays(entries, now, weekOffset), [entries, now, weekOffset]);
@@ -65,9 +65,9 @@ export function TeamTimesheetView({ entries }: { entries: TeamTimeEntry[] }) {
             <CardTitle className="text-base">{t("Timesheet Tim", "Team Timesheet")}</CardTitle>
             <p className="mt-1 text-xs text-muted-foreground">{t("Ringkasan harian dan mingguan", "Daily and weekly overview")}</p>
           </div>
-          <div className="grid grid-cols-2 rounded-md border bg-muted/40 p-1">
-            <Button size="sm" variant={mode === "today" ? "default" : "ghost"} onClick={() => setMode("today")}>{t("Hari ini", "Today")}</Button>
-            <Button size="sm" variant={mode === "week" ? "default" : "ghost"} onClick={() => setMode("week")}>{t("Mingguan", "Weekly")}</Button>
+          <div className="inline-flex rounded-lg bg-muted p-1 text-sm text-muted-foreground">
+            <button type="button" className={`rounded-md px-3 py-1.5 font-medium ${mode === "today" ? "bg-background text-foreground shadow" : "hover:text-foreground"}`} onClick={() => setMode("today")} aria-label={t("Hari ini", "Today")}>{t("Harian", "Daily")}</button>
+            <button type="button" className={`rounded-md px-3 py-1.5 font-medium ${mode === "week" ? "bg-background text-foreground shadow" : "hover:text-foreground"}`} onClick={() => setMode("week")}>{t("Mingguan", "Weekly")}</button>
           </div>
         </div>
       </CardHeader>
@@ -82,14 +82,14 @@ export function TeamTimesheetView({ entries }: { entries: TeamTimeEntry[] }) {
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <Button size="icon" variant="outline" aria-label={t("Minggu sebelumnya", "Previous week")} onClick={() => setWeekOffset((value) => value - 1)}><ChevronLeft className="h-4 w-4" /></Button>
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground">{week[0].date.toLocaleDateString(locale, { day: "numeric", month: "short" })} – {week[6].date.toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })}</p>
-                <p className="text-sm font-semibold">{duration(weekMinutes, h, m)}</p>
-                {weekOffset !== 0 && <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setWeekOffset(0)}>{t("Minggu ini", "This week")}</Button>}
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="inline-flex items-center rounded-lg border bg-background text-sm shadow-sm">
+                <button type="button" className="px-3 py-2" aria-label={t("Minggu sebelumnya", "Previous week")} onClick={() => setWeekOffset((value) => value - 1)}><ChevronLeft className="h-4 w-4" /></button>
+                <span className="border-x px-3 py-2 font-medium">{week[0].date.toLocaleDateString(locale, { day: "numeric", month: "short" })} – {week[6].date.toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })}</span>
+                <button type="button" className="px-3 py-2" aria-label={t("Minggu berikutnya", "Next week")} onClick={() => setWeekOffset((value) => value + 1)}><ChevronRight className="h-4 w-4" /></button>
+                <button type="button" className="border-l px-3 py-2 font-medium" onClick={() => setWeekOffset(0)}>{t("Minggu ini", "This week")}</button>
               </div>
-              <Button size="icon" variant="outline" aria-label={t("Minggu berikutnya", "Next week")} onClick={() => setWeekOffset((value) => value + 1)}><ChevronRight className="h-4 w-4" /></Button>
+              <p className="text-sm font-semibold">{duration(weekMinutes, h, m)}</p>
             </div>
             <div className="grid grid-cols-1 gap-2 lg:grid-cols-7">
               {week.map((day) => (

@@ -27,17 +27,17 @@ function validDate(value: Date | string | null | undefined): Date | null {
 }
 
 function startOfDay(value: Date): Date {
-  const date = new Date(value);
-  date.setHours(0, 0, 0, 0);
+  const date = new Date(value.getTime());
+  date.setUTCHours(0, 0, 0, 0);
   return date;
 }
 
 export function getWeekRange(now: Date, offset = 0): { start: Date; end: Date } {
   const start = startOfDay(now);
-  const mondayOffset = (start.getDay() + 6) % 7;
-  start.setDate(start.getDate() - mondayOffset + offset * 7);
+  const mondayOffset = (start.getUTCDay() + 6) % 7;
+  start.setUTCDate(start.getUTCDate() - mondayOffset + offset * 7);
   const end = new Date(start);
-  end.setDate(end.getDate() + 7);
+  end.setUTCDate(end.getUTCDate() + 7);
   return { start, end };
 }
 
@@ -53,7 +53,7 @@ export function getEffectiveMinutes(entry: TeamTimeEntry, now = new Date()): num
 export function buildTodayTimeline(entries: TeamTimeEntry[], now = new Date()): TeamTimeEntry[] {
   const start = startOfDay(now);
   const end = new Date(start);
-  end.setDate(end.getDate() + 1);
+  end.setUTCDate(end.getUTCDate() + 1);
   return entries
     .filter((entry) => {
       const date = validDate(entry.startTime);
@@ -70,9 +70,9 @@ export function buildWeekDays(entries: TeamTimeEntry[], now = new Date(), offset
   const { start, end } = getWeekRange(now, offset);
   return Array.from({ length: 7 }, (_, index) => {
     const date = new Date(start);
-    date.setDate(date.getDate() + index);
+    date.setUTCDate(date.getUTCDate() + index);
     const next = new Date(date);
-    next.setDate(next.getDate() + 1);
+    next.setUTCDate(next.getUTCDate() + 1);
     const dayEntries = entries
       .filter((entry) => {
         const entryDate = validDate(entry.startTime);

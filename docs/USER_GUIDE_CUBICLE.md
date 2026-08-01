@@ -264,9 +264,10 @@ Tab:
 
 | Tab | Fungsi |
 |---|---|
-| **Tasks** | Kanban/list task proyek |
-| **Files** | File proyek |
-| **Time** | Jam tercatat di proyek |
+| **Pekerjaan** | Editor Task billing-aware: workflow List/Board untuk Fixed Price, reusable flat list untuk Hourly/Retainer |
+| **Waktu** | Jam tercatat; tampil bila tracking aktif atau ada riwayat |
+| **File** | File proyek |
+| **Billing** | Model/rate/budget/retainer allowance dan invoice terkait |
 | **Comments** | Diskusi internal + notifikasi email |
 | **Timeline** | Timeline aktivitas/status |
 
@@ -274,6 +275,7 @@ Aksi:
 
 - Edit meta proyek  
 - Lihat progress otomatis (bergantung billing type)  
+- Layanan Project tidak lagi tampil di UI aktif; snapshot Service historis tetap tersimpan untuk kompatibilitas sampai audit produksi terpisah
 - Navigasi cepat ke invoice / time  
 
 ### 4.3 Tugas — `/app/tasks`
@@ -455,6 +457,7 @@ Kolom:
 - Status: `draft | sent | viewed | paid | overdue | cancelled | archived`  
 - Dates, tax, notes, currency, dsb.  
 - **Arsip** = status `archived` (hilang dari tab Semua, masuk tab Arsip)
+- Mutasi finansial line item hanya untuk `draft`. Status `sent`, `viewed`, `paid`, `overdue`, `cancelled`, dan `archived` terkunci agar invoice yang sudah dikirim/dilihat/overdue tidak berubah nominal diam-diam.
 
 #### Line items
 
