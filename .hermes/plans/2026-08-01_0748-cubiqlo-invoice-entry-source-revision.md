@@ -8,7 +8,7 @@
 
 **Production release:** Image `cubiqlo-prod:2efcc9b4365ccf5c1d3602b0a407edae8e3747da-invoice-source-20260801` runs as `cubiqlo-new-app`. Migration `0066` is applied to `cubicle`. Backup `/root/backups/cubiqlo/cubicle_pre0066_20260801T215616.dump` has SHA-256 `fcbfdd3d0bb6ea353ebe3de78471e6051f05ca54f4f695f34679150a404c5aab`; disposable restore parity passed. Targeted suite is 24/24, browser matrix 25/25, production Time Entry source reconciliation 57/57 with zero duplicates, app/database health is `ok`, and `dokploy-traefik` remains sole public 80/443 owner.
 
-**Separate follow-up:** Existing Hourly/Retainer project pages can emit React hydration error `#418`; invoice source workflows remain functional and this does not reopen this revision.
+**Separate follow-up:** React hydration `#418` on existing Hourly/Retainer project pages has been resolved.
 
 **Goal:** Make invoice creation support global, client-scoped, and project-scoped entry points while preserving accounting integrity for Fixed Price, Hourly, and Retainer billing.
 
