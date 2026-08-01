@@ -11,10 +11,43 @@ export type InvoiceSourceDraft = {
   timeEntryIds?: string[];
 };
 
-export function defaultInvoiceSource(billingType: string, hasInitialTimeEntries = false): InvoiceSourceDraft | null {
-  if (["fixed_price", "project", "package"].includes(billingType)) return { mode: "fixed_final" };
-  if (["hourly", "hours"].includes(billingType) && hasInitialTimeEntries) return { mode: "hourly_timesheet", timeEntryIds: [] };
+export type EligibleInvoiceTimeEntry = {
+  id: string;
+  workDate: string;
+  description: string | null;
+  durationMinutes: number;
+  hourlyRate: number;
+};
+
+export function defaultInvoiceSource(
+  billingType: string,
+  options: { hasActiveFixedHistory?: boolean; hasInitialTimeEntries?: boolean } | boolean = {},
+): InvoiceSourceDraft | null {
+  const normalized = typeof options === "boolean" ? { hasInitialTimeEntries: options } : options;
+  if (["fixed_price", "project", "package"].includes(billingType)) {
+    return { mode: normalized.hasActiveFixedHistory ? "fixed_final" : "fixed_full" };
+  }
+  if (["hourly", "hours"].includes(billingType) && normalized.hasInitialTimeEntries) return { mode: "hourly_timesheet", timeEntryIds: [] };
   return null;
+}
+
+export function fixedSourcePreview(agreedAmount: number, previouslyInvoiced: number) {
+  return {
+    agreedAmount,
+    previouslyInvoiced,
+    remainingAmount: Math.max(0, agreedAmount - previouslyInvoiced),
+  };
+}
+
+export function eligibleTimeEntriesInPeriod(entries: EligibleInvoiceTimeEntry[], periodStart?: string, periodEnd?: string) {
+  const filtered = periodStart && periodEnd && periodStart < periodEnd
+    ? entries.filter((entry) => entry.workDate >= periodStart && entry.workDate < periodEnd)
+    : [];
+  return {
+    entries: filtered,
+    totalMinutes: filtered.reduce((sum, entry) => sum + entry.durationMinutes, 0),
+    totalAmount: filtered.reduce((sum, entry) => sum + entry.durationMinutes / 60 * entry.hourlyRate, 0),
+  };
 }
 
 export function sourceDraftComplete(source: InvoiceSourceDraft | null): boolean {

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildRetainerInvoiceLines,
   calculateRetainerUsage,
+  getRetainerPeriodUsageSummary,
   getRetainerPeriodRange,
 } from "./retainer-period";
 
@@ -31,6 +32,19 @@ describe("retainer period Phase 7", () => {
     ]);
   });
 
+  it("formats period usage and bills overage value only for bill policy with valid rate", () => {
+    const base = {
+      periodStart: "2026-07-10", periodEnd: "2026-08-10", fee: 5_000_000,
+      includedMinutes: 1200, approvedMinutes: 1350, overageMinutes: 150,
+    };
+    expect(getRetainerPeriodUsageSummary({ ...base, overagePolicy: "bill", overageRate: 300_000 })).toEqual({
+      period: "2026-07-10–2026-08-10", fee: 5_000_000, includedHours: 20,
+      approvedUsedHours: 22.5, overageHours: 2.5, overageValue: 750_000,
+    });
+    expect(getRetainerPeriodUsageSummary({ ...base, overagePolicy: "warn", overageRate: 300_000 }).overageValue).toBeNull();
+    expect(getRetainerPeriodUsageSummary({ ...base, overagePolicy: "bill", overageRate: 0 }).overageValue).toBeNull();
+  });
+
   it("wires tenant-safe retainer actions with lock, invoice idempotency, and cancellation retry", () => {
     const actions = read("src/lib/actions/retainers.ts");
     expect(actions).toContain("export async function createOrGetRetainerPeriod");
@@ -45,5 +59,23 @@ describe("retainer period Phase 7", () => {
     expect(actions).toContain("eq(invoices.retainerPeriodId, period.id)");
     expect(actions).toContain("ne(invoices.status, \"cancelled\")");
     expect(actions).toContain("invoiceGeneration: sql`${retainerPeriods.invoiceGeneration} + 1`");
+  });
+
+  it("wires canonical Retainer project invoice controls and period loader", () => {
+    const page = read("src/app/(app)/app/projects/[projectId]/page.tsx");
+    const billing = read("src/components/projects/project-billing-tab.tsx");
+    const controls = read("src/components/invoices/retainer-project-invoice-actions.tsx");
+    expect(page).toContain("retainerPeriods");
+    expect(page).toContain("retainerPeriod=");
+    expect(billing).toContain("RetainerProjectInvoiceActions");
+    expect(billing).toContain("Buat Deposit/Item Manual");
+    expect(controls).toContain("Buat Invoice Periode Retainer");
+    expect(controls).toContain("createOrGetRetainerPeriod");
+    expect(controls).toContain("lockRetainerPeriod");
+    expect(controls).toContain("generateRetainerInvoice");
+    expect(controls).toContain("Ringkasan penggunaan periode");
+    expect(controls).not.toContain('sourceMode: "retainer_period"');
+    expect(controls).not.toContain('sourceMode: "retainer_overage"');
+    expect(controls).not.toContain('sourceMode: "summary"');
   });
 });

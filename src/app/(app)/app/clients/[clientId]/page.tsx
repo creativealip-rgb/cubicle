@@ -47,6 +47,8 @@ import { formatMoney } from "@/lib/utils";
 import { resolveClientPortalActive } from "@/lib/client-portal-status";
 import { PermanentDeleteButton } from "@/components/shared/permanent-delete-button";
 import { ClientInvoiceCreateDialog } from "@/components/invoices/client-invoice-create-dialog";
+import { loadInvoiceSourceProjectOptions } from "@/lib/invoice-source-options";
+import { resolveProjectAmount } from "@/lib/invoice-project-items";
 
 const invoiceStatusLabel: Record<string, string> = {
   draft: "Draf",
@@ -241,6 +243,7 @@ export default async function ClientDetailPage({
   });
 
   // Invoices
+  const sourceOptions = await loadInvoiceSourceProjectOptions({ workspaceId, clientId, projectIds });
   const [workspace] = await db.select({ defaultCurrency: workspaces.defaultCurrency }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
   const currencyRates = await db.select({ fromCurrency: workspaceCurrencyRates.fromCurrency, rate: workspaceCurrencyRates.rate }).from(workspaceCurrencyRates).where(eq(workspaceCurrencyRates.workspaceId, workspaceId));
 
@@ -527,7 +530,7 @@ export default async function ClientDetailPage({
         </TabsContent>
 
         <TabsContent value="invoices" className="space-y-4 pt-4">
-          {canWrite && <div className="flex justify-end"><ClientInvoiceCreateDialog client={{ id: client.id, name: client.name, companyName: client.companyName }} projects={clientProjects.map((project) => ({ id: project.id, name: project.name, clientId: client.id, billingType: project.billingModel ?? project.billingType, currency: project.currency, budget: project.budget, rate: project.rate, packagePrice: project.packagePrice, packageCustomPrice: null }))} baseCurrency={workspace?.defaultCurrency ?? "IDR"} currencyRates={currencyRates} /></div>}
+          {canWrite && <div className="flex justify-end"><ClientInvoiceCreateDialog client={{ id: client.id, name: client.name, companyName: client.companyName }} projects={clientProjects.map((project) => ({ id: project.id, name: project.name, clientId: client.id, billingType: project.billingModel ?? project.billingType, currency: project.currency, budget: project.budget, rate: project.rate, packagePrice: project.packagePrice, packageCustomPrice: null, agreedAmount: resolveProjectAmount({ billingType: project.billingModel ?? project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packagePrice ?? 0) || null }), priorActiveFixedBilledAmount: sourceOptions.get(project.id)?.priorActiveFixedBilledAmount ?? 0, eligibleTimeEntries: sourceOptions.get(project.id)?.eligibleTimeEntries ?? [] }))} baseCurrency={workspace?.defaultCurrency ?? "IDR"} currencyRates={currencyRates} /></div>}
           {clientInvoices.length === 0 && (
             <p className="text-sm text-muted-foreground py-8 text-center">Belum ada invoice</p>
           )}

@@ -8,7 +8,7 @@ import { createInvoice, updateInvoice } from "@/lib/actions/invoices";
 import { addDaysToIsoDate, calculateDraftItemsSubtotal } from "@/lib/invoice-create-form";
 import { buildRateMap } from "@/lib/currency-base";
 import { convertCurrency, resolveProjectAmount } from "@/lib/invoice-project-items";
-import { defaultInvoiceSource, sourceDraftComplete, type InvoiceSourceDraft, type InvoiceSourceMode } from "@/lib/invoice-source-ui";
+import { defaultInvoiceSource, eligibleTimeEntriesInPeriod, fixedSourcePreview, sourceDraftComplete, type EligibleInvoiceTimeEntry, type InvoiceSourceDraft, type InvoiceSourceMode } from "@/lib/invoice-source-ui";
 import { ProjectInvoiceSourceSchema } from "@/lib/project-invoice-sources";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,9 @@ interface ProjectOption {
   packagePrice: string | null;
   packageCustomPrice: string | null;
   initialTimeEntryIds?: string[];
+  agreedAmount: number;
+  priorActiveFixedBilledAmount: number;
+  eligibleTimeEntries: EligibleInvoiceTimeEntry[];
 }
 
 interface TemplateOption {
@@ -101,7 +104,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
   function updateSource(projectId: string, next: Partial<InvoiceSourceDraft> & { mode?: InvoiceSourceMode }) {
     setProjectSources((current) => {
       const project = clientProjects.find((candidate) => candidate.id === projectId);
-      const existing = current[projectId] ?? defaultInvoiceSource(project?.billingType ?? "") ?? { mode: "fixed_final" };
+      const existing = current[projectId] ?? defaultInvoiceSource(project?.billingType ?? "", { hasActiveFixedHistory: Boolean(project?.priorActiveFixedBilledAmount), hasInitialTimeEntries: Boolean(project?.initialTimeEntryIds?.length) }) ?? { mode: "fixed_final" };
       return { ...current, [projectId]: { ...existing, ...next } };
     });
   }
@@ -121,7 +124,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
     }
     const validItems = items.filter((item) => item.description.trim());
     if (missingRateProjects.length) { toast.error("Lengkapi kurs workspace sebelum membuat invoice"); return; }
-    const sourcePayload = selectedProjects.map((project) => ({ project, source: projectSources[project.id] ?? defaultInvoiceSource(project.billingType, Boolean(project.initialTimeEntryIds?.length)) }));
+    const sourcePayload = selectedProjects.map((project) => ({ project, source: projectSources[project.id] ?? defaultInvoiceSource(project.billingType, { hasActiveFixedHistory: Boolean(project.priorActiveFixedBilledAmount), hasInitialTimeEntries: Boolean(project.initialTimeEntryIds?.length) }) }));
     if (sourcePayload.some(({ source }) => !sourceDraftComplete(source))) { toast.error("Lengkapi sumber tagihan setiap proyek"); return; }
     if (mode === "create" && validItems.length === 0 && sourcePayload.length === 0) {
       toast.error("Tambahkan minimal satu item tagihan");
@@ -215,7 +218,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         <Label htmlFor="clientId">Klien *</Label>
         <Select
           value={form.clientId}
-          onValueChange={(v) => { setSelectedProjectIds([]); setForm((prev) => ({ ...prev, clientId: v, projectId: "" })); }}
+          onValueChange={(v) => { setSelectedProjectIds([]); setProjectSources({}); setForm((prev) => ({ ...prev, clientId: v, projectId: "" })); }}
           disabled={mode === "edit"}
           required
         >
@@ -261,7 +264,11 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
       )}
 
       {mode === "create" && selectedProjects.map((project) => {
-        const source = projectSources[project.id] ?? defaultInvoiceSource(project.billingType, Boolean(project.initialTimeEntryIds?.length));
+        const source = projectSources[project.id] ?? defaultInvoiceSource(project.billingType, { hasActiveFixedHistory: Boolean(project.priorActiveFixedBilledAmount), hasInitialTimeEntries: Boolean(project.initialTimeEntryIds?.length) });
+        const fixedPreview = fixedSourcePreview(project.agreedAmount, project.priorActiveFixedBilledAmount);
+        const periodEntries = eligibleTimeEntriesInPeriod(project.eligibleTimeEntries, source?.periodStart, source?.periodEnd);
+        const selectedEntries = periodEntries.entries.filter((entry) => source?.timeEntryIds?.includes(entry.id));
+        const selectedTotal = selectedEntries.reduce((sum, entry) => sum + entry.durationMinutes / 60 * entry.hourlyRate, 0);
         const isFixed = ["fixed_price", "project", "package"].includes(project.billingType);
         const isHourly = ["hourly", "hours"].includes(project.billingType);
         if (!isFixed && !isHourly) return <div key={project.id} className="rounded-lg border p-3 text-sm"><p className="font-medium">{project.name}</p><p className="text-muted-foreground">Invoice periode Retainer dibuat lewat alur periode Retainer. Gunakan item manual untuk deposit.</p></div>;
@@ -274,13 +281,14 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
               {isHourly && <><SelectItem value="hourly_timesheet">Timesheet disetujui</SelectItem><SelectItem value="hourly_deposit">Deposit</SelectItem></>}
             </SelectContent>
           </Select>
+          {isFixed && <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/40 p-2 text-xs"><span>Nilai disepakati<br/><b>{fixedPreview.agreedAmount.toLocaleString("id-ID")}</b></span><span>Sudah ditagih<br/><b>{fixedPreview.previouslyInvoiced.toLocaleString("id-ID")}</b></span><span>Sisa nilai<br/><b>{fixedPreview.remainingAmount.toLocaleString("id-ID")}</b></span></div>}
           {(source?.mode === "fixed_dp" || source?.mode === "fixed_milestone") && <div className="grid gap-2 sm:grid-cols-2">
             {source.mode === "fixed_milestone" && <Input placeholder="Nama milestone" value={source.milestoneName ?? ""} onChange={(e) => updateSource(project.id, { milestoneName: e.target.value })} />}
             <Select value={source.amountType} onValueChange={(value) => updateSource(project.id, { amountType: value as "percent" | "amount" })}><SelectTrigger><SelectValue placeholder="Jenis nilai" /></SelectTrigger><SelectContent><SelectItem value="percent">Persen</SelectItem><SelectItem value="amount">Nominal</SelectItem></SelectContent></Select>
             <Input type="number" min="0.01" step="0.01" placeholder={source.amountType === "percent" ? "Persen" : "Nominal"} value={source.value ?? ""} onChange={(e) => updateSource(project.id, { value: Number(e.target.value) })} />
           </div>}
           {source?.mode === "hourly_deposit" && <div className="grid gap-2 sm:grid-cols-2"><Input placeholder="Deskripsi deposit" value={source.description ?? ""} onChange={(e) => updateSource(project.id, { description: e.target.value })} /><Input type="number" min="0.01" placeholder="Nominal deposit" value={source.value ?? ""} onChange={(e) => updateSource(project.id, { value: Number(e.target.value) })} /></div>}
-          {source?.mode === "hourly_timesheet" && <div className="grid gap-2 sm:grid-cols-2"><Input type="date" value={source.periodStart ?? ""} onChange={(e) => updateSource(project.id, { periodStart: e.target.value })} /><Input type="date" value={source.periodEnd ?? ""} onChange={(e) => updateSource(project.id, { periodEnd: e.target.value })} /><p className="text-xs text-muted-foreground sm:col-span-2">{source.timeEntryIds?.length ?? 0} Time Entry dipilih dari alur Waktu.</p></div>}
+          {source?.mode === "hourly_timesheet" && <div className="grid gap-2 sm:grid-cols-2"><Input aria-label="Awal periode" type="date" value={source.periodStart ?? ""} onChange={(e) => updateSource(project.id, { periodStart: e.target.value, timeEntryIds: [] })} /><Input aria-label="Akhir periode" type="date" value={source.periodEnd ?? ""} onChange={(e) => updateSource(project.id, { periodEnd: e.target.value, timeEntryIds: [] })} /><div className="space-y-1 sm:col-span-2">{periodEntries.entries.map((entry) => <label key={entry.id} className="flex items-center gap-2 rounded border p-2 text-sm"><input type="checkbox" checked={source.timeEntryIds?.includes(entry.id) ?? false} onChange={(event) => updateSource(project.id, { timeEntryIds: event.target.checked ? [...(source.timeEntryIds ?? []), entry.id] : (source.timeEntryIds ?? []).filter((id) => id !== entry.id) })}/><span className="flex-1">{entry.workDate} · {entry.description || "Waktu proyek"}</span><span>{entry.durationMinutes} menit</span></label>)}<p className="text-xs text-muted-foreground">Total terpilih: {selectedEntries.reduce((sum, entry) => sum + entry.durationMinutes, 0)} menit · {selectedTotal.toLocaleString("id-ID")}</p></div></div>}
         </div>;
       })}
 

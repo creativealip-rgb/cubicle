@@ -29,16 +29,26 @@
 - Full suite has four unrelated stale Task wiring failures caused by tests expecting `Move Up`/`Move Down` while UI labels are localized.
 - `git diff --check` passed before implementation commits.
 
+## Completed continuation evidence
+
+- Fixed progress preview loads agreed/prior/remaining in original project currency; defaults `fixed_full` without active history and `fixed_final` with history.
+- Hourly source includes `[start,end)` eligible Time Entry picker, selected minutes/value preview, and stale-selection resets.
+- Retainer Project Invoice exposes period lifecycle action, manual/deposit action, and period usage/overage summary.
+- Targeted invoice/Retainer/concurrency tests pass: 24/24.
+- Behavioral PostgreSQL concurrency proof on disposable `cubicle_invoice_test`: Hourly 1 success/1 failure/1 link/status invoiced; parallel Fixed Final `[100000,0]`, active total `100000` equals agreed amount. Disposable DB removed.
+- Full suite: 800/803 pass; three stale unrelated Task wiring assertions remain. Full ESLint and production build pass.
+- Isolated QA image `cubiqlo-invoice-source-qa:20260801` runs on localhost `3201` against `cubicle_dev`; production app/DB untouched.
+- `cubicle_dev` backup `/tmp/cubicle_dev_pre0066_20260801T213934.dump` checksum `5e6f105f6ff789e0675261fbc27c7cb37d0460c5f3c34e6e6960d46050e6e8d9`; migration `0066` applied and columns/index verified.
+- Desktop/global/client/project Fixed/Hourly/Retainer and mobile `390x844` matrix: 25/25 assertions pass; screenshots stored under `docs/qa-screenshots/invoice-source-revision/`.
+- DB reconciliation: 57 Time Entry links, 57 distinct sources, zero duplicates.
+- Existing project pages for Hourly/Retainer emit React hydration error `#418`; invoice surfaces remain usable. Track separately before broad project-page polish claim.
+
 ## Pending canonical-plan work
 
-1. Fixed progress preview and safe default based on server-loaded prior history.
-2. Eligible Time Entry picker/preview directly inside invoice form.
-3. Retainer Project Invoice actions and period usage summary.
-4. Behavioral PostgreSQL concurrency matrix for duplicate Hourly and parallel Fixed Final requests.
-5. Desktop browser matrix across global/client/project entry points and cancellation flows.
-6. Mobile QA at `390x844` with overflow, dialog reachability, and readable-error assertions.
-7. DB reconciliation, fresh server logs, and bounded screenshots/evidence.
-8. Production backup + checksum + restore test, migration ledger apply, image rebuild, guarded deployment, health/live QA.
+1. Production backup + checksum + disposable restore test.
+2. Apply migration ledger `0066` to production with explicit target acknowledgment.
+3. Rebuild/recreate only `cubiqlo-new-app` through guarded deploy path.
+4. Production health, desktop/mobile live QA, DB reconciliation, fresh logs, and unrelated-domain routing verification.
 
 ## Deployment boundary
 
