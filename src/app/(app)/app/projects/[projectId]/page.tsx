@@ -269,14 +269,14 @@ export default async function ProjectDetailPage({
             </Badge>
             {project.billingType === "hours" && project.rate && (
               <span className="text-xs text-muted-foreground">
-                {t("Rate", "Rate")}: {project.currency} {Number(project.rate).toLocaleString(locale)}
+                {t("Rate", "Rate")}: {project.currency} {Number(project.rate).toLocaleString("id-ID")}
                 /{t("jam", "hr")}
               </span>
             )}
             {billingDisplayType === "fixed_price" && project.budget && (
               <span className="text-xs text-muted-foreground">
                 {t("Fixed rate", "Fixed rate")}: {project.currency}{" "}
-                {Number(project.budget).toLocaleString(locale)}
+                {Number(project.budget).toLocaleString("id-ID")}
               </span>
             )}
             {billingDisplayType === "package" && (
@@ -340,7 +340,7 @@ export default async function ProjectDetailPage({
               {project.dueDate && (
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  {t("Jatuh tempo", "Due")}: {new Date(project.dueDate).toLocaleDateString(locale)}
+                  {t("Jatuh tempo", "Due")}: {new Date(project.dueDate).toLocaleDateString("id-ID")}
                 </span>
               )}
             </div>
