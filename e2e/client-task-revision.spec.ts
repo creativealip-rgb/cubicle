@@ -39,6 +39,7 @@ async function seedRevisionFixture() {
     const { rows: users } = await db.query<{ id: string }>("select id from users where email=$1", [email]);
     const userId = users[0]?.id;
     if (!userId) throw new Error(`Missing QA user ${email}`);
+    await db.query("update users set plan='team', plan_expires_at=null where id=$1", [userId]);
     const slug = `client-task-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const { rows: workspaces } = await db.query<{ id: string }>("insert into workspaces(name,slug,owner_id,plan) values($1,$2,$3,'team') returning id", ["Client Task Revision QA", slug, userId]);
     const workspaceId = workspaces[0].id;
@@ -89,7 +90,7 @@ for (const viewport of [{ name: "desktop", width: 1440, height: 1000 }, { name: 
   });
 }
 
-test("Client scoped Project and Invoice persist while Portal controls stay reachable", async ({ page }) => {
+test("Client scoped Project and Invoice persist with Portal password owner lifecycle", async ({ page }) => {
   const { workspaceId, clientId, projectId } = await seedRevisionFixture();
   await login(page, workspaceId);
   await page.goto(`/app/clients/${clientId}?tab=projects`, { waitUntil: "networkidle" });
@@ -122,4 +123,14 @@ test("Client scoped Project and Invoice persist while Portal controls stay reach
   await expect(page.getByLabel("Salin link portal")).toBeVisible();
   await expect(page.getByLabel("Buka portal klien")).toBeVisible();
   await expect(page.getByLabel("Salin link portal")).toBeEnabled();
+  const portalPassword = "PortalQA2026!";
+  await page.getByLabel("Atur password").fill(portalPassword);
+  await page.getByRole("button", { name: "Simpan & aktifkan" }).click();
+  await expect(page.getByLabel("Tampilkan password")).toBeVisible();
+  await expect(page.getByText("••••••••", { exact: true })).toBeVisible();
+  await page.getByLabel("Tampilkan password").click();
+  await expect(page.getByText(portalPassword, { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Salin password")).toBeVisible();
+  await page.getByLabel("Sembunyikan password").click();
+  await expect(page.getByText("••••••••", { exact: true })).toBeVisible();
 });

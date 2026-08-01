@@ -32,16 +32,16 @@ Playwright `e2e/client-task-revision.spec.ts`, Chromium, retries disabled:
 - Client Project and Portal control reachability: passed.
 - Task desktop/mobile cases checked horizontal overflow and browser console/page errors: passed.
 - Client/Portal case checked control reachability only; dedicated overflow/browser-error assertions remain in full Task 19 matrix.
-- Expanded mutation run: 3 passed in 10.5 seconds.
+- Expanded owner lifecycle run: 3 passed in 15.3 seconds.
 - Verified 12-row fixture paginates 10/2 across page 1/2; mixed workflow/reusable rows render; Template route renders template/item/import controls.
 - Client-scoped Project creation persisted, stayed on `?tab=projects`, and hid Client selector.
 - Project-scoped Invoice creation persisted, increased Project Invoice count from 1 to 2, stayed on Project detail, and hid Client selector.
-- Portal link controls render.
-- Fresh server log scan found no app query/error markers. Temporary QA workspaces were cascade-deleted after each run; remaining fixture count is zero.
+- Portal owner lifecycle passed: set password, masked default, reveal plaintext on demand, copy control, then hide again.
+- Fresh post-success server log window found no app query/error markers. One expected pre-fix plan-entitlement denial was retained in older iterative logs. Temporary QA workspaces were cascade-deleted after each run; remaining fixture count is zero; QA user plan restored to Free.
 
 ## Browser QA still required
 
-This expanded smoke still does not complete the full Task 19 mutation matrix. Still required before final handoff: Invoice Back origins; Portal no-password/legacy/reveal/change/unauthorized flows; mixed-mode Task edit persistence and List/Board mutation behavior; Template CRUD/reorder/import negative mutations; localized Invoice formatting; ciphertext fixture-specific cleanup.
+This expanded smoke still does not complete the full Task 19 mutation matrix. Still required before final handoff: Invoice Back origins; Portal legacy hash-only and unauthorized reveal denial; mixed-mode Task edit persistence and List/Board mutation behavior; Template CRUD/reorder/import negative mutations; localized Invoice formatting.
 
 ## Runtime defect found and fixed
 
