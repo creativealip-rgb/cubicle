@@ -11,6 +11,8 @@ import {
   packages,
   timeEntries,
   workspaceMembers,
+  workspaceCurrencyRates,
+  workspaces,
 } from "@/db/schema";
 import { eq, desc, sql, inArray, and } from "drizzle-orm";
 import { requireUser, assertClientInWorkspace } from "@/lib/access";
@@ -44,6 +46,7 @@ import { buildInvoiceDetailUrl } from "@/lib/invoice-origin";
 import { formatMoney } from "@/lib/utils";
 import { resolveClientPortalActive } from "@/lib/client-portal-status";
 import { PermanentDeleteButton } from "@/components/shared/permanent-delete-button";
+import { ClientInvoiceCreateDialog } from "@/components/invoices/client-invoice-create-dialog";
 
 const invoiceStatusLabel: Record<string, string> = {
   draft: "Draf",
@@ -238,6 +241,9 @@ export default async function ClientDetailPage({
   });
 
   // Invoices
+  const [workspace] = await db.select({ defaultCurrency: workspaces.defaultCurrency }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  const currencyRates = await db.select({ fromCurrency: workspaceCurrencyRates.fromCurrency, rate: workspaceCurrencyRates.rate }).from(workspaceCurrencyRates).where(eq(workspaceCurrencyRates.workspaceId, workspaceId));
+
   const clientInvoices = await db
     .select()
     .from(invoices)
@@ -521,6 +527,7 @@ export default async function ClientDetailPage({
         </TabsContent>
 
         <TabsContent value="invoices" className="space-y-4 pt-4">
+          {canWrite && <div className="flex justify-end"><ClientInvoiceCreateDialog client={{ id: client.id, name: client.name, companyName: client.companyName }} projects={clientProjects.map((project) => ({ id: project.id, name: project.name, clientId: client.id, billingType: project.billingModel ?? project.billingType, currency: project.currency, budget: project.budget, rate: project.rate, packagePrice: project.packagePrice, packageCustomPrice: null }))} baseCurrency={workspace?.defaultCurrency ?? "IDR"} currencyRates={currencyRates} /></div>}
           {clientInvoices.length === 0 && (
             <p className="text-sm text-muted-foreground py-8 text-center">Belum ada invoice</p>
           )}

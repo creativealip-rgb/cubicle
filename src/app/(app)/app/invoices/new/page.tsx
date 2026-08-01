@@ -91,7 +91,7 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: P
               </Link>
             </div>
           ) : (
-            <InvoiceForm mode="create" defaultValues={{ clientId: selectedClientId ?? undefined, projectId: selectedProjectIds.length === 1 ? selectedProjectIds[0] : undefined }} clients={clientOptions} projects={projectOptions} templates={templateOptions} baseCurrency={workspace?.defaultCurrency || "IDR"} currencyRates={currencyRates} initialItems={selectedTimeEntries.map(row => ({ description: row.description || "Waktu proyek", quantity: Number(row.durationMinutes) / 60, unitPrice: Number(row.hourlyRate ?? 0), sourceId: row.id }))} />
+            <InvoiceForm mode="create" defaultValues={{ clientId: selectedClientId ?? undefined, projectId: selectedProjectIds.length === 1 ? selectedProjectIds[0] : undefined }} clients={clientOptions} projects={projectOptions.map((project) => ({ ...project, initialTimeEntryIds: selectedTimeEntries.filter((entry) => entry.projectId === project.id).map((entry) => entry.id) }))} templates={templateOptions} baseCurrency={workspace?.defaultCurrency || "IDR"} currencyRates={currencyRates} initialItems={selectedTimeEntries.map(row => ({ description: row.description || "Waktu proyek", quantity: Number(row.durationMinutes) / 60, unitPrice: Number(row.hourlyRate ?? 0), sourceId: row.id }))} />
           )}
         </CardContent>
       </Card>

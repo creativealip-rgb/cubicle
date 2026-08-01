@@ -848,6 +848,17 @@ export const invoiceItems = pgTable("invoice_items", {
   sourceType: text("source_type", { enum: ["manual", "time_entry", "project"] }),
   sourceId: uuid("source_id"),
   previousTimeEntryStatus: text("previous_time_entry_status", { enum: ["draft", "approved"] }),
+  sourceMode: text("source_mode", { enum: [
+    "fixed_full", "fixed_dp", "fixed_milestone", "fixed_final",
+    "hourly_timesheet", "hourly_deposit", "manual_adjustment",
+    "retainer_base", "retainer_overage",
+  ] }),
+  sourceMetadata: jsonb("source_metadata").$type<{
+    milestoneName?: string;
+    requestedPercent?: string;
+    periodStart?: string;
+    periodEnd?: string;
+  }>(),
   originalCurrency: text("original_currency"),
   originalAmount: numeric("original_amount", { precision: 12, scale: 2 }),
   conversionRate: numeric("conversion_rate", { precision: 18, scale: 8 }),

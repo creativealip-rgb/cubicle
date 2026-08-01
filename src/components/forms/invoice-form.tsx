@@ -8,6 +8,8 @@ import { createInvoice, updateInvoice } from "@/lib/actions/invoices";
 import { addDaysToIsoDate, calculateDraftItemsSubtotal } from "@/lib/invoice-create-form";
 import { buildRateMap } from "@/lib/currency-base";
 import { convertCurrency, resolveProjectAmount } from "@/lib/invoice-project-items";
+import { defaultInvoiceSource, sourceDraftComplete, type InvoiceSourceDraft, type InvoiceSourceMode } from "@/lib/invoice-source-ui";
+import { ProjectInvoiceSourceSchema } from "@/lib/project-invoice-sources";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +38,7 @@ interface ProjectOption {
   rate: string | null;
   packagePrice: string | null;
   packageCustomPrice: string | null;
+  initialTimeEntryIds?: string[];
 }
 
 interface TemplateOption {
@@ -76,6 +79,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState(initialItems.length ? initialItems : [{ description: "", quantity: 1, unitPrice: 0 }]);
+  const [projectSources, setProjectSources] = useState<Record<string, InvoiceSourceDraft>>({});
   const [dueDateTouched, setDueDateTouched] = useState(Boolean(defaultValues?.dueDate));
 
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>(scopedProjectId ? [scopedProjectId] : defaultValues?.projectId ? [defaultValues.projectId] : []);
@@ -93,6 +97,13 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
   const clientProjects = projects?.filter(p => p.clientId === form.clientId) ?? [];
   const rateMap = buildRateMap(currencyRates);
   const selectedProjects = clientProjects.filter((project) => selectedProjectIds.includes(project.id));
+  function updateSource(projectId: string, next: Partial<InvoiceSourceDraft> & { mode?: InvoiceSourceMode }) {
+    setProjectSources((current) => {
+      const project = clientProjects.find((candidate) => candidate.id === projectId);
+      const existing = current[projectId] ?? defaultInvoiceSource(project?.billingType ?? "") ?? { mode: "fixed_final" };
+      return { ...current, [projectId]: { ...existing, ...next } };
+    });
+  }
   const projectItems = selectedProjects.map((project) => {
     const originalAmount = resolveProjectAmount({ billingType: project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packageCustomPrice ?? project.packagePrice ?? 0) || null });
     const converted = convertCurrency(originalAmount, project.currency, form.currency, baseCurrency, rateMap);
@@ -109,7 +120,9 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
     }
     const validItems = items.filter((item) => item.description.trim());
     if (missingRateProjects.length) { toast.error("Lengkapi kurs workspace sebelum membuat invoice"); return; }
-    if (mode === "create" && validItems.length === 0 && projectItems.length === 0) {
+    const sourcePayload = selectedProjects.map((project) => ({ project, source: projectSources[project.id] ?? defaultInvoiceSource(project.billingType, Boolean(project.initialTimeEntryIds?.length)) }));
+    if (sourcePayload.some(({ source }) => !sourceDraftComplete(source))) { toast.error("Lengkapi sumber tagihan setiap proyek"); return; }
+    if (mode === "create" && validItems.length === 0 && sourcePayload.length === 0) {
       toast.error("Tambahkan minimal satu item tagihan");
       return;
     }
@@ -119,6 +132,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         clientId: form.clientId,
         projectId: selectedProjectIds.length === 1 ? selectedProjectIds[0] : undefined,
         projectIds: selectedProjectIds,
+        projectSources: sourcePayload.map(({ project, source }) => ProjectInvoiceSourceSchema.parse({ projectId: project.id, ...source!, ...(source?.mode === "hourly_timesheet" ? { timeEntryIds: source.timeEntryIds?.length ? source.timeEntryIds : project.initialTimeEntryIds ?? [] } : {}) })),
         issueDate: form.issueDate,
         dueDate: form.dueDate || undefined,
         currency: form.currency,
@@ -244,6 +258,30 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
           )}
         </div>
       )}
+
+      {mode === "create" && selectedProjects.map((project) => {
+        const source = projectSources[project.id] ?? defaultInvoiceSource(project.billingType, Boolean(project.initialTimeEntryIds?.length));
+        const isFixed = ["fixed_price", "project", "package"].includes(project.billingType);
+        const isHourly = ["hourly", "hours"].includes(project.billingType);
+        if (!isFixed && !isHourly) return <div key={project.id} className="rounded-lg border p-3 text-sm"><p className="font-medium">{project.name}</p><p className="text-muted-foreground">Invoice periode Retainer dibuat lewat alur periode Retainer. Gunakan item manual untuk deposit.</p></div>;
+        return <div key={project.id} className="space-y-3 rounded-lg border p-3">
+          <div><p className="font-medium">{project.name}</p><p className="text-xs text-muted-foreground">Pilih sumber tagihan</p></div>
+          <Select value={source?.mode ?? ""} onValueChange={(value) => updateSource(project.id, { mode: value as InvoiceSourceMode, amountType: undefined, value: undefined, milestoneName: undefined, description: undefined, periodStart: undefined, periodEnd: undefined, timeEntryIds: value === "hourly_timesheet" ? project.initialTimeEntryIds ?? [] : undefined })}>
+            <SelectTrigger><SelectValue placeholder="Pilih sumber" /></SelectTrigger>
+            <SelectContent>
+              {isFixed && <><SelectItem value="fixed_full">Nilai penuh</SelectItem><SelectItem value="fixed_dp">DP</SelectItem><SelectItem value="fixed_milestone">Milestone</SelectItem><SelectItem value="fixed_final">Pelunasan sisa</SelectItem></>}
+              {isHourly && <><SelectItem value="hourly_timesheet">Timesheet disetujui</SelectItem><SelectItem value="hourly_deposit">Deposit</SelectItem></>}
+            </SelectContent>
+          </Select>
+          {(source?.mode === "fixed_dp" || source?.mode === "fixed_milestone") && <div className="grid gap-2 sm:grid-cols-2">
+            {source.mode === "fixed_milestone" && <Input placeholder="Nama milestone" value={source.milestoneName ?? ""} onChange={(e) => updateSource(project.id, { milestoneName: e.target.value })} />}
+            <Select value={source.amountType} onValueChange={(value) => updateSource(project.id, { amountType: value as "percent" | "amount" })}><SelectTrigger><SelectValue placeholder="Jenis nilai" /></SelectTrigger><SelectContent><SelectItem value="percent">Persen</SelectItem><SelectItem value="amount">Nominal</SelectItem></SelectContent></Select>
+            <Input type="number" min="0.01" step="0.01" placeholder={source.amountType === "percent" ? "Persen" : "Nominal"} value={source.value ?? ""} onChange={(e) => updateSource(project.id, { value: Number(e.target.value) })} />
+          </div>}
+          {source?.mode === "hourly_deposit" && <div className="grid gap-2 sm:grid-cols-2"><Input placeholder="Deskripsi deposit" value={source.description ?? ""} onChange={(e) => updateSource(project.id, { description: e.target.value })} /><Input type="number" min="0.01" placeholder="Nominal deposit" value={source.value ?? ""} onChange={(e) => updateSource(project.id, { value: Number(e.target.value) })} /></div>}
+          {source?.mode === "hourly_timesheet" && <div className="grid gap-2 sm:grid-cols-2"><Input type="date" value={source.periodStart ?? ""} onChange={(e) => updateSource(project.id, { periodStart: e.target.value })} /><Input type="date" value={source.periodEnd ?? ""} onChange={(e) => updateSource(project.id, { periodEnd: e.target.value })} /><p className="text-xs text-muted-foreground sm:col-span-2">{source.timeEntryIds?.length ?? 0} Time Entry dipilih dari alur Waktu.</p></div>}
+        </div>;
+      })}
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">

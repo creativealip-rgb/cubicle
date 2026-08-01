@@ -129,7 +129,19 @@ export async function generateRetainerInvoice(input: z.infer<typeof invoiceInput
       total: String(subtotal),
       status: "draft",
     }).returning();
-    await tx.insert(invoiceItems).values(lines.map((line) => ({ invoiceId: inv.id, description: line.description, quantity: String(line.quantity), unitPrice: String(line.unitPrice), amount: String(line.amount), sourceType: "manual" as const })));
+    await tx.insert(invoiceItems).values(lines.map((line, index) => ({
+      invoiceId: inv.id,
+      description: line.description,
+      quantity: String(line.quantity),
+      unitPrice: String(line.unitPrice),
+      amount: String(line.amount),
+      sourceType: "manual" as const,
+      sourceMode: index === 0 ? "retainer_base" as const : "retainer_overage" as const,
+      sourceMetadata: { periodStart: period.periodStart, periodEnd: period.periodEnd },
+      originalCurrency: period.currencySnapshot,
+      originalAmount: String(line.amount),
+      conversionRate: "1",
+    })));
     await tx.update(retainerPeriods).set({ status: "invoiced", invoicedAt: new Date(), updatedAt: new Date() }).where(and(eq(retainerPeriods.id, period.id), eq(retainerPeriods.workspaceId, workspaceId), eq(retainerPeriods.status, "locked")));
     return inv;
   });
