@@ -28,10 +28,21 @@
 
 ## Execution checkpoint
 
-- Current branch: `main`
-- Current HEAD: `e669fcd`
-- Local state at plan authoring: clean; one commit ahead of `origin/main` (design commit not pushed yet).
-- Migration registry currently ends at committed `0064`; reserve the next free number only after fresh ref/worktree scan during execution.
+- Plan authored from `main` at `e669fcd`; historical authoring state retained below.
+- Active implementation branch: `feat/client-project-invoice-task-revision`.
+- Latest verified/pushed checkpoint: `d03de3c`.
+- Migration `0065` reserved and implemented additively; `0062` remains retired.
+- Feature branch is not integrated to `dev/integration`; shared dev and production remain untouched.
+
+## Implementation status — updated 2026-08-01
+
+- Tasks 0–17: **complete, committed, and pushed**.
+- Task 18: **complete** — ESLint, TypeScript, production-shape build, 181 test files / 758 tests, targeted PostgreSQL/Portal verification, and migration rehearsal passed.
+- Task 19: **in progress** — 5/5 current Playwright cases pass across desktop/mobile and isolated QA data. Verified: pagination 10/2, mixed-mode visibility, scoped Project/Invoice persistence, Invoice Back origins, localized Invoice status/currency, Portal owner password lifecycle, Template/item CRUD/reorder/archive/restore/duplicate, and zero-selection import guard.
+- Task 19 remaining: Portal legacy hash-only state, unauthorized reveal denial, mixed-mode Task edit persistence, List/Board mutation behavior, and stale-preview import rejection.
+- Task 20: **not started**; production approval and full release gates still required.
+- Progress ledger: `docs/operations/client-project-invoice-task-revision-progress.md`.
+- QA evidence: `docs/operations/evidence/2026-08-01-client-task-revision-final-qa.md`.
 
 ---
 
@@ -480,18 +491,18 @@ Create reusable Playwright coverage where stable. Clean QA records and ciphertex
 
 ## Final acceptance checklist
 
-- [ ] Client-scoped Project Dialog works and stays in Client Projects tab.
-- [ ] Project detail uses Invoice tab and scoped Invoice Dialog.
-- [ ] Project-scoped Invoice cannot switch Client/Project or include another Project.
-- [ ] Invoice Back respects validated Project/Client/global origin.
-- [ ] Portal states are truthful; new passwords reveal from encrypted storage only to owner/admin.
-- [ ] Existing hash-only Portal passwords remain valid and unrecoverable until changed.
-- [ ] All stored Project Tasks display in one list with mode badges.
-- [ ] Workflow and reusable Tasks edit according to stored mode.
-- [ ] Reorder controls work or are absent; no no-op controls.
-- [ ] Global Tasks paginate 10 per page with preserved filters.
-- [ ] Task tabs match canonical Invoice-style navigation.
-- [ ] Template and item CRUD/reorder/archive/restore are complete.
-- [ ] Import cannot turn zero selection into all or submit stale preview state.
-- [ ] Client Invoice formatting and Portal accessibility are consistent.
-- [ ] Full automated, DB, desktop/mobile, health, proxy, rollback, and cleanup gates pass.
+- [x] Client-scoped Project Dialog works and stays in Client Projects tab.
+- [x] Project detail uses Invoice tab and scoped Invoice Dialog.
+- [x] Project-scoped Invoice cannot switch Client/Project or include another Project.
+- [x] Invoice Back respects validated Project/Client/global origin.
+- [ ] Portal states are truthful; owner reveal lifecycle passed, but legacy hash-only and unauthorized denial browser cases remain.
+- [ ] Existing hash-only Portal passwords remain valid and unrecoverable until changed; automated coverage passed, browser state remains.
+- [x] All stored Project Tasks display in one list with mode badges.
+- [ ] Workflow and reusable Tasks edit according to stored mode; implementation tests passed, browser persistence remains.
+- [x] Reorder controls work or are absent; no no-op controls.
+- [x] Global Tasks paginate 10 per page with preserved filters.
+- [x] Task tabs match canonical Invoice-style navigation.
+- [x] Template and item CRUD/reorder/archive/restore are complete.
+- [ ] Import zero-selection guard passed; stale-preview browser rejection remains.
+- [x] Client Invoice formatting and Portal accessibility are consistent for verified owner flow.
+- [ ] Full automated/DB/build gates pass; complete browser matrix, shared-dev integration, proxy/rollback, and production release gates remain.
