@@ -136,6 +136,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks, activit
         durationMinutes,
         billable,
         hourlyRate: billable && hourlyRate ? Number(hourlyRate) : undefined,
+        status: "draft",
       });
       toast.success(t("Entri waktu ditambahkan", "Time entry added"));
       setOpen(false);

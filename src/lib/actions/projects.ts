@@ -12,6 +12,7 @@ import { requireUser, assertWorkspaceWritable, assertProjectInWorkspace, assertC
 import { writeActivityLog } from "@/lib/actions/activity";
 import { TIME_TRACKING_MODES } from "@/lib/project-time-tracking-policy";
 import { syncProjectServiceSnapshots } from "@/lib/actions/services";
+import { revalidatePath } from "next/cache";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -63,6 +64,7 @@ const projectCreateSchema = projectInputSchema.extend({
   clientVisible: projectInputSchema.shape.clientVisible.default(false),
 });
 const projectUpdateSchema = projectInputSchema.partial();
+const projectListStatusSchema = z.enum(["active", "on_hold", "completed"]);
 
 type ProjectBillingType = "fixed_price" | "hourly" | "retainer" | "package" | "project" | "hours";
 
@@ -211,6 +213,21 @@ export async function archiveProject(projectId: string) {
     .returning();
 
   await writeActivityLog(workspaceId, user.id, "archived_project", "project", projectId);
+  return project;
+}
+
+export async function updateProjectListStatus(projectId: string, status: z.infer<typeof projectListStatusSchema>) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertProjectInWorkspace(db, user.id, workspaceId, projectId);
+  const parsed = projectListStatusSchema.parse(status);
+  const [project] = await db.update(projects)
+    .set({ status: parsed, updatedAt: new Date() })
+    .where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId)))
+    .returning();
+  revalidatePath("/app/projects");
   return project;
 }
 

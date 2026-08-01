@@ -190,7 +190,7 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
 
   const primaryActions = canWrite ? (
     <>
-      <AddTimeLogDialog workspaceId={workspaceId} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId, billingType: p.billingType, rate: p.rate }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId }))} />
+      <AddTimeLogDialog workspaceId={workspaceId} clients={clientList} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId, billingType: p.billingType, rate: p.rate }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId }))} />
       <NewTimerDialog initialOpen={action === "timer"} workspaceId={workspaceId} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId }))} />
     </>
   ) : null;

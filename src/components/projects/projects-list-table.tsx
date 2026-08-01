@@ -13,6 +13,7 @@ import { getProjectProgress, progressColor } from "@/lib/project-progress";
 
 import type { ProjectBillingType } from "@/lib/project-list-filters";
 import { TableHeaderFilter } from "@/components/ui/table-header-filter";
+import { ProjectStatusEditDialog } from "@/components/projects/project-status-edit-dialog";
 
 export type ProjectListItem = {
   id: string;
@@ -97,6 +98,7 @@ export function ProjectsListTable({
   statusTab,
   billingType,
   billingTypeHrefs: _billingTypeHrefs,
+  canWrite,
 }: {
   projects: ProjectListItem[];
   clients: Array<{ id: string; name: string }>;
@@ -105,6 +107,7 @@ export function ProjectsListTable({
   statusTab: string;
   billingType?: ProjectBillingType;
   billingTypeHrefs: Record<"all" | ProjectBillingType, string>;
+  canWrite: boolean;
 }) {
   const { t, locale } = useT();
 
@@ -158,7 +161,7 @@ export function ProjectsListTable({
   return (
     <div className="rounded-lg border bg-card">
       <div className="hidden md:grid grid-cols-12 gap-4 p-3 text-xs font-medium text-muted-foreground border-b">
-        <div className="col-span-4">
+        <div className="col-span-3">
           <SortableHeader
             as="div"
             label={t("Proyek", "Project")}
@@ -193,6 +196,7 @@ export function ProjectsListTable({
             className="text-xs"
           />
         </div>
+        <div className="col-span-1 text-right">{t("Aksi", "Action")}</div>
       </div>
 
       {projects.length === 0 && (
@@ -247,6 +251,7 @@ export function ProjectsListTable({
               <Clock className="h-3 w-3" />
               {formatDue(project)}
             </div>
+            {canWrite ? <ProjectStatusEditDialog projectId={project.id} projectName={project.name} currentStatus={project.status} /> : null}
           </div>
         ))}
       </div>
@@ -256,7 +261,7 @@ export function ProjectsListTable({
           key={project.id}
           className={`hidden md:grid grid-cols-12 gap-4 p-3 items-center border-b border-slate-200 last:border-0 hover:bg-slate-100/70 transition-colors ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"}`}
         >
-          <div className="col-span-4">
+          <div className="col-span-3">
             <Link
               href={`/app/projects/${project.id}`}
               className="font-medium hover:underline"
@@ -284,6 +289,7 @@ export function ProjectsListTable({
               {formatDue(project)}
             </span>
           </div>
+          <div className="col-span-1 flex justify-end">{canWrite ? <ProjectStatusEditDialog projectId={project.id} projectName={project.name} currentStatus={project.status} /> : null}</div>
         </div>
       ))}
     </div>

@@ -636,20 +636,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
             <DialogTitle>{t("Edit entri waktu", "Edit time entry")}</DialogTitle>
           </DialogHeader>
           <div className="grid min-h-0 gap-4 overflow-y-auto px-5 py-5">
-            <div className="space-y-1.5">
-              <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
-              <Input
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-                className="h-9"
-              />
-              <p className="text-[11px] text-muted-foreground">
-                {t(
-                  "Task sebagai konteks; deskripsi pekerjaan tetap terpisah",
-                  "Task is context; work description stays separate",
-                )}
-              </p>
-            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">{t("Klien", "Client")}</Label>
@@ -740,6 +726,20 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                 />
                 {editMinutesError ? <p className="text-xs text-destructive">{t("Minimal 1 menit", "Minimum 1 minute")}</p> : null}
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
+              <Input
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                className="h-9"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                {t(
+                  "Task sebagai konteks; deskripsi pekerjaan tetap terpisah",
+                  "Task is context; work description stays separate",
+                )}
+              </p>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">{t("Tag", "Tags")}</Label>

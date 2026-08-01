@@ -59,6 +59,7 @@ const clientSchema = z.object({
   /** When true on create: generate portal token + set portalEnabled */
   portalEnabled: z.boolean().optional(),
 });
+const clientStatusSchema = z.enum(["active", "inactive", "archived"]);
 
 // ─── CRUD Actions ───
 
@@ -214,6 +215,21 @@ export async function updateClient(clientId: string, input: Partial<z.infer<type
     .returning();
 
   await writeActivityLog(workspaceId, user.id, "updated_client", "client", clientId);
+  return client;
+}
+
+export async function updateClientStatus(clientId: string, status: z.infer<typeof clientStatusSchema>) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertClientInWorkspace(db, user.id, workspaceId, clientId);
+  const parsed = clientStatusSchema.parse(status);
+  const [client] = await db.update(clients)
+    .set({ status: parsed, updatedAt: new Date() })
+    .where(and(eq(clients.id, clientId), eq(clients.workspaceId, workspaceId)))
+    .returning();
+  revalidatePath("/app/clients");
   return client;
 }
 

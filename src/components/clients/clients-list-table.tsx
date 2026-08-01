@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { SortableHeader } from "@/components/ui/sortable-header";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
+import { ClientStatusEditDialog } from "@/components/clients/client-status-edit-dialog";
 
 export type ClientListItem = {
   id: string;
@@ -101,7 +102,7 @@ export function ClientsListTable({
   return (
     <>
       <div className="hidden md:block rounded-lg border bg-card">
-        <div className="grid grid-cols-6 gap-4 p-3 text-xs font-medium text-muted-foreground border-b">
+        <div className="grid grid-cols-7 gap-4 p-3 text-xs font-medium text-muted-foreground border-b">
           <div className="col-span-2">
             <SortableHeader
               as="div"
@@ -147,12 +148,13 @@ export function ClientsListTable({
               className="text-xs"
             />
           </div>
+          <div className="text-right">{t("Aksi", "Action")}</div>
         </div>
         {clients.length === 0 && emptyDesktop}
         {sorted.map((client, index) => (
           <div
             key={client.id}
-            className={`grid grid-cols-6 gap-4 p-3 items-center border-b border-slate-200 last:border-0 hover:bg-slate-100/70 transition-colors ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"}`}
+            className={`grid grid-cols-7 gap-4 p-3 items-center border-b border-slate-200 last:border-0 hover:bg-slate-100/70 transition-colors ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"}`}
           >
             <div className="col-span-2">
               <Link
@@ -199,6 +201,7 @@ export function ClientsListTable({
                 {statusLabel(client.status)}
               </Badge>
             </div>
+            <div className="flex justify-end">{canWrite ? <ClientStatusEditDialog clientId={client.id} clientName={client.name} currentStatus={client.status} /> : null}</div>
           </div>
         ))}
       </div>
@@ -262,6 +265,7 @@ export function ClientsListTable({
                     {statusLabel(client.status)}
                   </Badge>
                 </div>
+                {canWrite ? <div className="pt-2"><ClientStatusEditDialog clientId={client.id} clientName={client.name} currentStatus={client.status} /></div> : null}
               </div>
             </CardContent>
           </Card>
