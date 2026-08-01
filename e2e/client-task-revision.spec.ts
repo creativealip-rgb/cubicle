@@ -75,8 +75,8 @@ async function seedRevisionFixture() {
     }
     const { rows: templates } = await db.query<{ id: string }>("insert into task_templates(workspace_id,name,description,target,status,created_by) values($1,'Template QA','Template QA','all','active',$2) returning id", [workspaceId, userId]);
     await db.query("insert into task_template_items(workspace_id,template_id,title,description,position) values($1,$2,'Item Template QA','Item desc',0)", [workspaceId, templates[0].id]);
-    await db.query("insert into invoices(workspace_id,client_id,project_id,invoice_number,status,issue_date,due_date,currency,subtotal,total) values($1,$2,$3,$4,'draft',current_date,current_date + interval '14 days','IDR',1500000,1500000)", [workspaceId, clientId, projectId, `QA-${Date.now()}`]);
-    return { workspaceId, clientId, projectId };
+    const { rows: invoices } = await db.query<{ id: string }>("insert into invoices(workspace_id,client_id,project_id,invoice_number,status,issue_date,due_date,currency,subtotal,total) values($1,$2,$3,$4,'draft',current_date,current_date + interval '14 days','IDR',1500000,1500000) returning id", [workspaceId, clientId, projectId, `QA-${Date.now()}`]);
+    return { workspaceId, clientId, projectId, invoiceId: invoices[0].id };
   } finally {
     await db.end();
   }
@@ -111,6 +111,25 @@ for (const viewport of [{ name: "desktop", width: 1440, height: 1000 }, { name: 
     });
   });
 }
+
+test("Invoice Back origins validate and localized formatting renders", async ({ page }) => {
+  const { workspaceId, clientId, projectId, invoiceId } = await seedRevisionFixture();
+  await login(page, workspaceId);
+
+  const cases = [
+    { query: `origin=project&projectId=${projectId}`, back: `/app/projects/${projectId}?tab=billing` },
+    { query: `origin=client&clientId=${clientId}`, back: `/app/clients/${clientId}?tab=invoices` },
+    { query: "origin=global", back: "/app/invoices" },
+    { query: "origin=project&projectId=not-a-uuid", back: "/app/invoices" },
+  ];
+  for (const item of cases) {
+    await page.goto(`/app/invoices/${invoiceId}?${item.query}`, { waitUntil: "networkidle" });
+    await expect(page.locator(`a[href="${item.back}"]`).first()).toBeVisible();
+  }
+  await expect(page.locator("div:visible").filter({ hasText: /^Draf$/ }).first()).toBeVisible();
+  await expect(page.getByText("Rp 1.500.000", { exact: true }).first()).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(/\bdraft\b/);
+});
 
 test("Template CRUD, item reorder, and zero-selection import guard persist", async ({ page }) => {
   const { workspaceId } = await seedRevisionFixture();

@@ -32,7 +32,7 @@ Playwright `e2e/client-task-revision.spec.ts`, Chromium, retries disabled:
 - Client Project and Portal control reachability: passed.
 - Task desktop/mobile cases checked horizontal overflow and browser console/page errors: passed.
 - Client/Portal case checked control reachability only; dedicated overflow/browser-error assertions remain in full Task 19 matrix.
-- Expanded Template/Portal mutation run: 4 passed in 20.0 seconds.
+- Expanded origins/formatting/Template/Portal run: 5 passed in 24.8 seconds.
 - Verified 12-row fixture paginates 10/2 across page 1/2; mixed workflow/reusable rows render; Template route renders template/item/import controls.
 - Client-scoped Project creation persisted, stayed on `?tab=projects`, and hid Client selector.
 - Project-scoped Invoice creation persisted, increased Project Invoice count from 1 to 2, stayed on Project detail, and hid Client selector.
@@ -40,11 +40,12 @@ Playwright `e2e/client-task-revision.spec.ts`, Chromium, retries disabled:
 - Task Template create/edit/duplicate/archive/restore passed; item create/edit/remove and DB-confirmed one-step reorder passed; archived write controls disappeared.
 - Import negative guard passed: zero Template selection disables Preview and zero selected preview items disables Import.
 - Template server actions persist correctly, but reorder/duplicate/archive/restore need explicit reload before UI reflects DB state; this refresh lag remains a UX follow-up.
+- Invoice Back destinations passed for validated Project, Client, global, and malformed-origin fallback. Invoice status rendered `Draf`, amount rendered `Rp 1.500.000`, and raw `draft` was absent from visible body copy.
 - Fresh post-success server log window found no app query/error markers. One expected pre-fix plan-entitlement denial was retained in older iterative logs. Temporary QA workspaces were cascade-deleted after each run; remaining fixture count is zero; QA user plan restored to Free.
 
 ## Browser QA still required
 
-This expanded smoke still does not complete the full Task 19 mutation matrix. Still required before final handoff: Invoice Back origins; Portal legacy hash-only and unauthorized reveal denial; mixed-mode Task edit persistence and List/Board mutation behavior; stale-preview import rejection; localized Invoice formatting.
+This expanded smoke still does not complete the full Task 19 mutation matrix. Still required before final handoff: Portal legacy hash-only and unauthorized reveal denial; mixed-mode Task edit persistence and List/Board mutation behavior; stale-preview import rejection.
 
 ## Runtime defect found and fixed
 
