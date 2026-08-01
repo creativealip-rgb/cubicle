@@ -38,9 +38,9 @@
 
 - Tasks 0–17: **complete, committed, and pushed**.
 - Task 18: **complete** — ESLint, TypeScript, production-shape build, 181 test files / 758 tests, targeted PostgreSQL/Portal verification, and migration rehearsal passed.
-- Task 19: **complete locally; final commit/push pending** — 8/8 Playwright cases pass across desktop/mobile and isolated QA data. Verified: pagination 10/2, mixed-mode visibility/edit persistence, List/Board mutation persistence, scoped Project/Invoice persistence, Invoice Back origins, localized Invoice status/currency, Portal owner/legacy/unauthorized lifecycle, Template/item CRUD/reorder/archive/restore/duplicate, zero-selection guard, and stale-preview invalidation.
+- Task 19: **complete, committed, and released** — 8/8 Playwright cases pass across desktop/mobile and isolated QA data. Verified: pagination 10/2, mixed-mode visibility/edit persistence, List/Board mutation persistence, scoped Project/Invoice persistence, Invoice Back origins, localized Invoice status/currency, Portal owner/legacy/unauthorized lifecycle, Template/item CRUD/reorder/archive/restore/duplicate, zero-selection guard, and stale-preview invalidation.
 - Task 19 cleanup passed: isolated QA workspaces/clients returned to zero and QA user plan restored to Free.
-- Task 20: **not started**; production approval and full release gates still required.
+- Task 20: **complete** — approved direct-main release deployed at `b4a0eb6`; backup/restore, migration `0065`, immutable image, proxy/health checks, authenticated desktop/mobile live QA, and cleanup passed.
 - Progress ledger: `docs/operations/client-project-invoice-task-revision-progress.md`.
 - QA evidence: `docs/operations/evidence/2026-08-01-client-task-revision-final-qa.md`.
 
@@ -505,4 +505,4 @@ Create reusable Playwright coverage where stable. Clean QA records and ciphertex
 - [x] Template and item CRUD/reorder/archive/restore are complete.
 - [x] Import zero-selection guard and stale-preview invalidation passed.
 - [x] Client Invoice formatting and Portal accessibility are consistent for verified owner flow.
-- [ ] Automated/DB/build and isolated browser gates pass; shared-dev integration, proxy/rollback, and production release gates remain.
+- [x] Automated/DB/build, isolated browser, production backup/restore, proxy/rollback, and authenticated live QA gates pass. Shared dev remains intentionally untouched by direct-main approval.

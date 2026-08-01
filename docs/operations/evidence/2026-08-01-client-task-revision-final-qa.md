@@ -63,8 +63,21 @@ Initial browser run exposed PostgreSQL error `42809: WITHIN GROUP is required fo
 
 ## Release state
 
-- Implemented and tested on feature branch.
+- Main and production revision: `b4a0eb6fcf8c0fd2342badf85daab2a6e60211f8`.
 - Shared `dev/integration`: not integrated.
 - `cubicle_dev`: not migrated by feature agent.
 - `dev.cubiqlo.com`: not deployed by feature agent.
-- Production: untouched; explicit approval still required.
+- Production: deployed with image `cubiqlo-prod:sha-b4a0eb6fcf8c` (`sha256:6add99214db3615641f5047699927901ac4c4ad7d27c86b1df89a80fd0edbad5`).
+
+## Production release evidence
+
+- Production DB backup: `/root/backups/cubiqlo-direct-main-20260801T040508Z/cubicle-before-0065.dump`.
+- SHA-256: `2ed98448502dfb41fa39c0df8c4e3a285f18d0c39183db8498c0e50af5a2916b`.
+- Disposable restore succeeded with 23 Client rows; migration `0065` rehearsal produced four columns and a validated completeness constraint.
+- Production migration `0065` applied to canonical `cubicle`; four columns and validated constraint verified; migration `0062` was not run.
+- `cubiqlo-new-app` recreated with preserved `unless-stopped` policy and `dokploy-network`; no host port binding.
+- Internal/public health returned `{"status":"ok","db":"ok"}`. `cubiqlo.com` returned 200; `app.cubiqlo.com` routed correctly; unrelated 9Router route returned its own `/dashboard` redirect.
+- `dokploy-traefik` remained sole public owner of ports 80/443 before and after deploy.
+- Authenticated live QA passed on 1440×1000 and 390×844 for Tasks, Task Templates, Clients, Projects, and Invoices: 10/10 routes returned 200, zero app error cards, zero horizontal overflow, and zero app-origin console errors.
+- Fresh production logs contained no application error markers. Temporary live QA user was deleted and verified absent.
+- Rollback image retained: `cubiqlo-prod:sha-9dadf0ffa557`.

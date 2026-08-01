@@ -32,8 +32,8 @@ Plan: `docs/plans/2026-08-01-client-project-invoice-task-workspace-revision.md`
 
 ## Release state
 
-- Pushed checkpoint: `3af949d`; final Task 19 code/evidence awaiting commit and push.
+- Main/production release: deployed from `b4a0eb6` on 2026-08-01.
 - Integrated shared dev: no.
 - Migrated dev: no.
 - Deployed dev: no.
-- Deployed production: no; explicit approval required.
+- Deployed production: yes; migration `0065`, immutable image, health/proxy checks, and authenticated desktop/mobile route QA passed.
