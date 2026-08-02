@@ -13,7 +13,7 @@ export function ProjectBillingTab({ project, client, invoices, baseCurrency, cur
   return <div className="space-y-4">
     <div className="flex items-center justify-between gap-3">
       <h3 className="font-semibold">Invoice terkait</h3>
-      {project.billingType === "retainer" ? <ProjectInvoiceCreateDialog project={project} client={client} baseCurrency={baseCurrency} currencyRates={currencyRates} triggerLabel="Buat Deposit/Item Manual" /> : <ProjectInvoiceCreateDialog project={project} client={client} baseCurrency={baseCurrency} currencyRates={currencyRates} />}
+      {project.billingType === "retainer" ? null : <ProjectInvoiceCreateDialog project={project} client={client} baseCurrency={baseCurrency} currencyRates={currencyRates} />}
     </div>
     {project.billingType === "retainer" ? <RetainerProjectInvoiceActions projectId={project.id} period={retainerPeriod} /> : null}
     <div className="overflow-hidden rounded-lg border bg-card">
