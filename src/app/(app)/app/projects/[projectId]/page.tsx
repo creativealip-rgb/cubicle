@@ -335,7 +335,9 @@ export default async function ProjectDetailPage({
             <span className="text-sm font-medium">{t("Progres", "Progress")}</span>
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <span>
-                {progress.done}/{progress.total} {t("tugas", "tasks")} · {progress.percent}%
+                {billingModel === "retainer" && retainerPeriod
+                  ? `${(retainerPeriod.approvedMinutes / 60).toFixed(0)}/${(retainerPeriod.includedMinutesSnapshot / 60).toFixed(0)} ${t("jam", "hr")} · ${retainerPeriod.includedMinutesSnapshot > 0 ? Math.round((retainerPeriod.approvedMinutes / retainerPeriod.includedMinutesSnapshot) * 100) : 0}%`
+                  : `${progress.done}/${progress.total} ${t("tugas", "tasks")} · ${progress.percent}%`}
               </span>
               {project.dueDate && (
                 <span className="flex items-center gap-1">
@@ -348,7 +350,7 @@ export default async function ProjectDetailPage({
           <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${statusColors[project.status] ?? "bg-slate-400"}`}
-              style={{ width: `${progress.percent}%` }}
+              style={{ width: `${billingModel === "retainer" && retainerPeriod && retainerPeriod.includedMinutesSnapshot > 0 ? Math.min(100, Math.round((retainerPeriod.approvedMinutes / retainerPeriod.includedMinutesSnapshot) * 100)) : progress.percent}%` }}
             />
           </div>
         </CardContent>
