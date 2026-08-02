@@ -19,6 +19,7 @@ export type PromptOptionValue = string | number | boolean;
 export type PromptFieldDefinition = {
   key: string;
   label: string;
+  labelEn?: string;
   type: "text" | "number" | "select" | "textarea";
   required?: boolean;
   options?: readonly string[];
@@ -30,7 +31,9 @@ export type PromptCatalogEntry = {
   id: PromptTypeId;
   category: PromptCategory;
   name: string;
+  nameEn?: string;
   description: string;
+  descriptionEn?: string;
   iconKey: string;
   defaults: Record<string, PromptOptionValue>;
   fields: PromptFieldDefinition[];
@@ -43,109 +46,109 @@ const entry = (id: PromptTypeId, category: PromptCategory, name: string, descrip
 export const launchPromptCatalog: PromptCatalogEntry[] = [
   entry("instagram-feed", "social-media", "Feed", "Konsep visual, caption, CTA, dan hashtag siap posting.", "instagram", [
     field("platform", "Platform", "select", { options: [...platformOptions] }),
-    field("ratio", "Rasio", "select", { options: [...ratioOptions] }),
+    field("ratio", "Rasio", "select", { options: [...ratioOptions], labelEn: "Ratio" }),
     field("tone", "Tone", "select", { options: [...toneOptions] }),
   ], ["Konsep visual", "Prompt gambar", "Overlay", "Caption", "CTA", "Hashtag"], { ratio: "4:5 (Portrait Feed)" }),
 
   entry("carousel", "social-media", "Carousel", "Konten 3–10 slide dengan copy dan arahan visual.", "panels-top-left", [
-    field("slideCount", "Jumlah slide", "number", { required: true, min: 3, max: 10 }),
+    field("slideCount", "Jumlah slide", "number", { required: true, min: 3, max: 10, labelEn: "Slide count" }),
     field("intent", "Intent", "select", { required: true, options: ["educational", "promotional"] }),
   ], ["Struktur slide", "Copy per slide", "Arahan visual", "Caption", "CTA"], { slideCount: 5, intent: "educational" }),
 
   entry("story", "social-media", "Story", "Story 1–5 frame dengan interaksi dan CTA.", "smartphone", [
-    field("frameCount", "Jumlah frame", "number", { required: true, min: 1, max: 5 }),
-    field("interactionType", "Interaksi", "select", { required: true, options: ["poll", "question", "quiz", "none"] }),
+    field("frameCount", "Jumlah frame", "number", { required: true, min: 1, max: 5, labelEn: "Frame count" }),
+    field("interactionType", "Interaksi", "select", { required: true, options: ["poll", "question", "quiz", "none"], labelEn: "Interaction" }),
   ], ["Frame", "Headline", "Arahan visual", "Interaksi", "CTA"], { frameCount: 3, interactionType: "poll", ratio: "9:16 (Story/Reels/TikTok)" }),
 
   entry("content-series", "social-media", "Content Series", "Campaign 3, 6, atau 9 post yang konsisten.", "layout-grid", [
-    field("postCount", "Jumlah post", "select", { required: true, options: ["3", "6", "9"] }),
-    field("cadence", "Jadwal terbit", "select", { required: true, options: [...cadenceOptions] }),
+    field("postCount", "Jumlah post", "select", { required: true, options: ["3", "6", "9"], labelEn: "Post count" }),
+    field("cadence", "Jadwal terbit", "select", { required: true, options: [...cadenceOptions], labelEn: "Publish schedule" }),
   ], ["Peran setiap post", "Sistem visual", "Caption", "Saran jadwal"], { postCount: 3, cadence: "weekly" }),
 
   entry("product-ad", "ads-promotion", "Iklan Produk", "Materi iklan produk fokus konversi.", "badge-megaphone", [
-    field("offer", "Penawaran"),
+    field("offer", "Penawaran", "text", { labelEn: "Offer" }),
     field("placement", "Placement", "select", { required: true, options: [...platformOptions] }),
-    field("ratio", "Rasio", "select", { required: true, options: [...ratioOptions] }),
+    field("ratio", "Rasio", "select", { required: true, options: [...ratioOptions], labelEn: "Ratio" }),
   ], ["Headline", "Subheadline", "Prompt visual", "Offer", "CTA", "Negative prompt"]),
 
   entry("promo-discount", "ads-promotion", "Promo & Diskon", "Promo dengan hierarki harga dan urgensi jelas.", "badge-percent", [
-    field("normalPrice", "Harga normal"),
-    field("promoPrice", "Harga promo"),
-    field("period", "Periode"),
-    field("terms", "Syarat"),
+    field("normalPrice", "Harga normal", "text", { labelEn: "Normal price" }),
+    field("promoPrice", "Harga promo", "text", { labelEn: "Promo price" }),
+    field("period", "Periode", "text", { labelEn: "Period" }),
+    field("terms", "Syarat", "text", { labelEn: "Terms" }),
   ], ["Hierarki harga", "Badge promo", "Urgency copy", "CTA", "Layout"]),
 
   entry("testimonial-review", "ads-promotion", "Testimonial & Review", "Ubah bukti nyata menjadi materi review kredibel.", "message-square-quote", [
-    field("proofSource", "Kutipan / sumber bukti", "textarea"),
+    field("proofSource", "Kutipan / sumber bukti", "textarea", { labelEn: "Quote / proof source" }),
     field("rating", "Rating"),
-    field("context", "Konteks produk / layanan", "textarea", { required: true }),
+    field("context", "Konteks produk / layanan", "textarea", { required: true, labelEn: "Product / service context" }),
   ], ["Proof angle", "Hierarki kutipan", "Layout review", "Supporting copy", "CTA"]),
 
   entry("product-photography", "product", "Product Photography", "Brief foto produk dengan kamera dan lighting terarah.", "camera", [
     field("scene", "Scene", "select", { required: true, options: [...sceneOptions] }),
-    field("cameraAngle", "Sudut kamera", "select", { required: true, options: [...cameraAngleOptions] }),
+    field("cameraAngle", "Sudut kamera", "select", { required: true, options: [...cameraAngleOptions], labelEn: "Camera angle" }),
     field("lighting", "Lighting", "select", { required: true, options: [...lightingOptions] }),
     field("background", "Background", "select", { required: true, options: [...backgroundOptions] }),
   ], ["Scene", "Camera", "Lighting", "Background", "Product treatment", "Negative prompt"]),
 
   entry("product-try-on", "product", "Product Try-On", "Visual model memakai produk secara konsisten.", "shirt", [
-    field("productCategory", "Kategori produk", "text", { required: true }),
-    field("modelProfile", "Profil model", "textarea", { required: true }),
+    field("productCategory", "Kategori produk", "text", { required: true, labelEn: "Product category" }),
+    field("modelProfile", "Profil model", "textarea", { required: true, labelEn: "Model profile" }),
     field("pose", "Pose", "select", { required: true, options: ["Standing / Berdiri", "Sitting / Duduk", "Walking / Jalan", "Action / Aktivitas", "Close-Up Detail", "Lifestyle / Natural"] }),
     field("styling", "Styling", "textarea", { required: true }),
   ], ["Profil model", "Pose", "Styling", "Product placement", "Camera", "Consistency notes"]),
 
   entry("fnb-menu", "product", "Menu F&B", "Menu dengan foto makanan dan hierarki harga.", "utensils", [
-    field("menuName", "Nama item / menu", "text", { required: true }),
-    field("showPrice", "Tampilkan harga", "select", { required: true, options: ["yes", "no"] }),
+    field("menuName", "Nama item / menu", "text", { required: true, labelEn: "Item / menu name" }),
+    field("showPrice", "Tampilkan harga", "select", { required: true, options: ["yes", "no"], labelEn: "Show price" }),
     field("mood", "Cuisine / venue mood", "select", { required: true, options: ["Casual & Fun", "Elegant & Premium", "Rustic & Warm", "Modern & Minimal", "Traditional / Heritage", "Street Food / Urban"] }),
   ], ["Hierarki menu", "Prompt foto", "Copy item", "Harga", "CTA"]),
 
   entry("short-video-script", "video", "Short Video Script", "Script video pendek lengkap dengan shot dan overlay.", "clapperboard", [
     field("platform", "Platform", "select", { required: true, options: [...platformOptions] }),
-    field("duration", "Durasi", "select", { required: true, options: [...durationOptions] }),
-    field("presentation", "Format presenter", "select", { required: true, options: ["presenter", "faceless"] }),
+    field("duration", "Durasi", "select", { required: true, options: [...durationOptions], labelEn: "Duration" }),
+    field("presentation", "Format presenter", "select", { required: true, options: ["presenter", "faceless"], labelEn: "Presenter format" }),
     field("tone", "Tone", "select", { required: true, options: [...toneOptions] }),
   ], ["Hook", "Script", "Shot list", "Overlay", "B-roll", "CTA"]),
 
   entry("video-storyboard", "video", "Video Storyboard", "Storyboard scene-by-scene siap produksi.", "film", [
-    field("duration", "Durasi", "select", { required: true, options: [...durationOptions] }),
-    field("sceneCount", "Jumlah scene", "number", { required: true, min: 1, max: 20 }),
-    field("orientation", "Orientasi", "select", { required: true, options: [...orientationOptions] }),
-    field("voiceLanguage", "Bahasa VO", "select", { required: true, options: [...voiceLanguageOptions] }),
+    field("duration", "Durasi", "select", { required: true, options: [...durationOptions], labelEn: "Duration" }),
+    field("sceneCount", "Jumlah scene", "number", { required: true, min: 1, max: 20, labelEn: "Scene count" }),
+    field("orientation", "Orientasi", "select", { required: true, options: [...orientationOptions], labelEn: "Orientation" }),
+    field("voiceLanguage", "Bahasa VO", "select", { required: true, options: [...voiceLanguageOptions], labelEn: "VO Language" }),
   ], ["Durasi scene", "Visual", "Camera", "VO", "Overlay", "Transition", "Audio mood"]),
 
   entry("ugc-ad", "video", "UGC Ad", "Script UGC natural dari masalah sampai CTA.", "user-round", [
     field("platform", "Platform", "select", { required: true, options: [...platformOptions] }),
-    field("duration", "Durasi", "select", { required: true, options: [...durationOptions] }),
-    field("creatorProfile", "Profil kreator", "textarea", { required: true }),
-    field("objection", "Keberatan audiens", "textarea"),
-    field("proofAvailable", "Bukti tersedia", "textarea"),
+    field("duration", "Durasi", "select", { required: true, options: [...durationOptions], labelEn: "Duration" }),
+    field("creatorProfile", "Profil kreator", "textarea", { required: true, labelEn: "Creator profile" }),
+    field("objection", "Keberatan audiens", "textarea", { labelEn: "Audience objection" }),
+    field("proofAvailable", "Bukti tersedia", "textarea", { labelEn: "Available proof" }),
   ], ["Natural hook", "Problem", "Demo", "Proof", "Objection handling", "CTA"]),
 
   entry("youtube-thumbnail", "video", "YouTube Thumbnail", "Thumbnail kuat dengan teks singkat dan kontras.", "youtube", [
-    field("videoTopic", "Topik / judul video", "textarea", { required: true }),
-    field("subject", "Subjek", "text", { required: true }),
-    field("face", "Wajah", "select", { required: true, options: ["face", "no-face"] }),
-    field("textPreference", "Preferensi teks"),
+    field("videoTopic", "Topik / judul video", "textarea", { required: true, labelEn: "Topic / video title" }),
+    field("subject", "Subjek", "text", { required: true, labelEn: "Subject" }),
+    field("face", "Wajah", "select", { required: true, options: ["face", "no-face"], labelEn: "Face" }),
+    field("textPreference", "Preferensi teks", "text", { labelEn: "Text preference" }),
   ], ["Subject", "Expression", "Composition", "Teks 3–5 kata", "Contrast", "Negative prompt"]),
 
   entry("marketing-copy", "brand-copy", "Marketing Copy", "Satu format copy yang fokus dan siap dipakai.", "type", [
-    field("copyFormat", "Format copy", "select", { required: true, options: ["caption", "ad-copy", "product-description", "headline-set", "cta-set", "broadcast-message"] }),
-    field("length", "Panjang", "select", { required: true, options: ["short", "medium", "long"] }),
+    field("copyFormat", "Format copy", "select", { required: true, options: ["caption", "ad-copy", "product-description", "headline-set", "cta-set", "broadcast-message"], labelEn: "Copy format" }),
+    field("length", "Panjang", "select", { required: true, options: ["short", "medium", "long"], labelEn: "Length" }),
     field("channel", "Channel", "select", { required: true, options: [...platformOptions] }),
     field("tone", "Tone", "select", { options: [...toneOptions] }),
   ], ["Copy final", "CTA"]),
 
   entry("article", "brand-copy", "Artikel", "Artikel terstruktur dengan judul, isi, dan CTA siap edit.", "file-text", [
-    field("topic", "Topik", "text", { required: true }),
-    field("length", "Panjang", "select", { required: true, options: ["short", "medium", "long"] }),
-    field("keywords", "Kata kunci", "text"),
+    field("topic", "Topik", "text", { required: true, labelEn: "Topic" }),
+    field("length", "Panjang", "select", { required: true, options: ["short", "medium", "long"], labelEn: "Length" }),
+    field("keywords", "Kata kunci", "text", { labelEn: "Keywords" }),
     field("tone", "Tone", "select", { options: [...toneOptions] }),
   ], ["Judul", "Artikel", "CTA"]),
 
   entry("face-card", "brand-copy", "Face Card", "Analisis wajah dan rekomendasi styling untuk portrait profesional.", "scan-face", [
-    field("analysisType", "Tipe analisis", "select", { required: true, options: ["Face Features", "Spectacles", "Style", "Color", "Makeup"] }),
+    field("analysisType", "Tipe analisis", "select", { required: true, options: ["Face Features", "Spectacles", "Style", "Color", "Makeup"], labelEn: "Analysis type" }),
     field("aesthetic", "Aesthetic", "select", { required: true, options: ["Editorial Magazine", "Natural Beauty", "High Fashion", "Commercial Clean", "Artistic Dramatic", "Soft Romantic"] }),
     field("backgroundTone", "Background Tone", "select", { required: true, options: ["Beige Ivory", "Cool Gray", "Warm Earth", "Pure White", "Deep Dark", "Pastel Soft"] }),
     field("typography", "Typography", "select", { options: ["Serif + Sans Hybrid", "Modern Sans", "Classic Serif", "Handwritten Script", "Bold Display"] }),
@@ -153,10 +156,10 @@ export const launchPromptCatalog: PromptCatalogEntry[] = [
   ], ["Analisis", "Rekomendasi styling", "Prompt visual", "Arahan fotografi", "Color palette"]),
 
   entry("logo", "brand-copy", "Logo", "Desain logo dan brand mockup siap pakai.", "hexagon", [
-    field("logoStyle", "Gaya logo", "select", { required: true, options: ["Minimalist", "Vintage / Retro", "Modern Geometric", "Handwritten / Organic", "3D / Isometric", "Mascot / Character", "Lettermark / Monogram"] }),
-    field("colorScheme", "Skema warna", "select", { required: true, options: ["Monochrome", "Two-Tone", "Vibrant Multi", "Pastel Soft", "Dark Premium", "Gradient"] }),
-    field("mockupType", "Tipe mockup", "select", { options: ["Business Card", "Letterhead", "Social Media Profile", "Packaging", "Merchandise", "Website Header", "Signage"] }),
-    field("industry", "Industri", "text"),
+    field("logoStyle", "Gaya logo", "select", { required: true, options: ["Minimalist", "Vintage / Retro", "Modern Geometric", "Handwritten / Organic", "3D / Isometric", "Mascot / Character", "Lettermark / Monogram"], labelEn: "Logo style" }),
+    field("colorScheme", "Skema warna", "select", { required: true, options: ["Monochrome", "Two-Tone", "Vibrant Multi", "Pastel Soft", "Dark Premium", "Gradient"], labelEn: "Color scheme" }),
+    field("mockupType", "Tipe mockup", "select", { options: ["Business Card", "Letterhead", "Social Media Profile", "Packaging", "Merchandise", "Website Header", "Signage"], labelEn: "Mockup type" }),
+    field("industry", "Industri", "text", { labelEn: "Industry" }),
   ], ["Konsep logo", "Prompt visual", "Variasi warna", "Mockup arahan", "Tipografi"]),
 ];
 
