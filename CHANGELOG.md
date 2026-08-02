@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-02 — Calendar date picker for time navigation
+
+- Time page navigation: date label is now clickable, opens a calendar dropdown (react-day-picker v10). Users can pick any date directly instead of clicking `<` / `>` arrows one by one. Week starts on Monday (Senin). Arrows and "Hari ini" button preserved.
+- New deps: `react-day-picker@10.0.1`, `date-fns@4.4.0`.
+- New UI components: `calendar.tsx` (react-day-picker v10 wrapper), `popover.tsx` (radix popover).
+- Commit: `729f72f` pushed to `main`. Deployed to dev (`dev.cubiqlo.com`).
+
 ## 2026-08-02 — UI polish: empty state buttons, unified invoice
 
 - Empty state: remove "Tambah Klien" button from client list empty state (2 instances). Remove "Buat Invoice" action from invoice list empty state (2 instances). Match tasks page pattern — empty state shows message only, users create from header "+ Baru" button.
