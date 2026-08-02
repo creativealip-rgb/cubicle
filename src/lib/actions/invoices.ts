@@ -62,7 +62,7 @@ const createInvoiceSchema = z.object({
     quantity: z.number().positive(),
     unitPrice: z.number().min(0),
     sourceId: z.string().uuid().optional(),
-  })).optional(),
+  })).default([]),
 });
 
 const updateInvoiceSchema = z.object({
@@ -206,39 +206,43 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
       throw new Error("Source invoice tidak sesuai model billing proyek");
     }
     if (project.billingType === "hours" && !source) continue;
-    const serviceRows = await db
-      .select({
-        id: projectServices.id,
-        nameSnapshot: projectServices.nameSnapshot,
-        descriptionSnapshot: projectServices.descriptionSnapshot,
-        quantity: projectServices.quantity,
-        unitPrice: projectServices.unitPrice,
-        amount: projectServices.amount,
-        currencySnapshot: projectServices.currencySnapshot,
-        status: projectServices.status,
-      })
-      .from(projectServices)
-      .where(and(
-        eq(projectServices.workspaceId, workspaceId),
-        eq(projectServices.projectId, projectId),
-        eq(projectServices.status, "active"),
-      ));
-    if (serviceRows.length) {
-      for (const row of serviceRows) {
-        const [line] = buildProjectServiceDocumentLines([row], row.currencySnapshot);
-        const converted = convertCurrency(line.amount, line.originalCurrency, parsed.currency || ws?.defaultCurrency || "IDR", ws?.defaultCurrency || "IDR", rateMap);
-        if (!converted) throw new Error(`Kurs ${line.originalCurrency} ke ${parsed.currency} belum tersedia`);
-        projectServiceItemValues.push({
-          description: line.description,
-          quantity: line.quantity,
-          unitPrice: converted.amount / line.quantity,
-          sourceId: line.sourceId,
-          originalCurrency: line.originalCurrency,
-          originalAmount: line.amount,
-          conversionRate: converted.rate,
-        });
+    // For fixed-price projects with an explicit source (DP/milestone/full),
+    // skip service rows — the source amount IS the invoice line, not the services.
+    const skipServices = source && source.mode.startsWith("fixed_");
+    if (!skipServices) {
+      const serviceRows = await db
+        .select({
+          id: projectServices.id,
+          nameSnapshot: projectServices.nameSnapshot,
+          descriptionSnapshot: sql<string | null>`COALESCE(${projectServices.descriptionSnapshot}, '')`,
+          quantity: projectServices.quantity,
+          unitPrice: projectServices.unitPrice,
+          amount: projectServices.amount,
+          currencySnapshot: projectServices.currencySnapshot,
+          status: projectServices.status,
+        })
+        .from(projectServices)
+        .where(and(
+          eq(projectServices.workspaceId, workspaceId),
+          eq(projectServices.projectId, projectId),
+          eq(projectServices.status, "active"),
+        ));
+      if (serviceRows.length) {
+        for (const row of serviceRows) {
+          const [line] = buildProjectServiceDocumentLines([row], row.currencySnapshot);
+          const converted = convertCurrency(line.amount, line.originalCurrency, parsed.currency || ws?.defaultCurrency || "IDR", ws?.defaultCurrency || "IDR", rateMap);
+          if (!converted) throw new Error(`Kurs ${line.originalCurrency} ke ${parsed.currency} belum tersedia`);
+          projectServiceItemValues.push({
+            description: line.description,
+            quantity: line.quantity,
+            unitPrice: converted.amount / line.quantity,
+            sourceId: line.sourceId,
+            originalCurrency: line.originalCurrency,
+            originalAmount: line.amount,
+            conversionRate: converted.rate,
+          });
+        }
       }
-      continue;
     }
     const converted = convertCurrency(originalAmount, project.currency, parsed.currency || ws?.defaultCurrency || "IDR", ws?.defaultCurrency || "IDR", rateMap);
     if (!converted) throw new Error(`Kurs ${project.currency} ke ${parsed.currency} belum tersedia`);

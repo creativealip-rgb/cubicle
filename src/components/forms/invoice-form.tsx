@@ -8,6 +8,7 @@ import { createInvoice, updateInvoice } from "@/lib/actions/invoices";
 import { addDaysToIsoDate, calculateDraftItemsSubtotal } from "@/lib/invoice-create-form";
 import { buildRateMap } from "@/lib/currency-base";
 import { convertCurrency, resolveProjectAmount } from "@/lib/invoice-project-items";
+import { resolveFixedSourceAmount } from "@/lib/project-invoice-sources";
 import { defaultInvoiceSource, eligibleTimeEntriesInPeriod, fixedSourcePreview, sourceDraftComplete, type EligibleInvoiceTimeEntry, type InvoiceSourceDraft, type InvoiceSourceMode } from "@/lib/invoice-source-ui";
 import { ProjectInvoiceSourceSchema } from "@/lib/project-invoice-sources";
 import { Button } from "@/components/ui/button";
@@ -110,8 +111,26 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
   }
   const projectItems = selectedProjects.map((project) => {
     const originalAmount = resolveProjectAmount({ billingType: project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packageCustomPrice ?? project.packagePrice ?? 0) || null });
-    const converted = convertCurrency(originalAmount, project.currency, form.currency, baseCurrency, rateMap);
-    return { description: project.name, quantity: 1, unitPrice: converted?.amount ?? 0, projectId: project.id, originalAmount, originalCurrency: project.currency, conversionRate: converted?.rate ?? null };
+    const source = projectSources[project.id];
+    const isFixed = ["fixed_price", "project", "package"].includes(project.billingType);
+    // For fixed-price sources, compute preview amount from source, not full value
+    let previewAmount: number | string = originalAmount;
+    if (isFixed && source) {
+      if (["fixed_dp", "fixed_milestone"].includes(source.mode) && source.amountType && source.value) {
+        previewAmount = resolveFixedSourceAmount(
+          { mode: source.mode as "fixed_dp" | "fixed_milestone", amountType: source.amountType, value: source.value },
+          { agreedAmount: originalAmount, priorActiveOriginalAmounts: [] }
+        );
+      } else if (source.mode === "fixed_full") {
+        previewAmount = originalAmount;
+      } else if (source.mode === "fixed_final") {
+        // Pelunasan sisa = agreed - previously invoiced
+        previewAmount = Math.max(0, originalAmount - (project.priorActiveFixedBilledAmount || 0));
+      }
+    }
+    const numericPreview = Number(previewAmount);
+    const converted = convertCurrency(numericPreview, project.currency, form.currency, baseCurrency, rateMap);
+    return { description: project.name, quantity: 1, unitPrice: converted?.amount ?? 0, projectId: project.id, originalAmount: numericPreview, originalCurrency: project.currency, conversionRate: converted?.rate ?? null };
   });
   const missingRateProjects = projectItems.filter((item) => item.conversionRate === null);
 
@@ -132,11 +151,19 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
     }
     setLoading(true);
     try {
-      const data = {
+      const data: any = {
         clientId: form.clientId,
         projectId: selectedProjectIds.length === 1 ? selectedProjectIds[0] : undefined,
         projectIds: selectedProjectIds,
-        projectSources: sourcePayload.map(({ project, source }) => ProjectInvoiceSourceSchema.parse({ projectId: project.id, ...source!, ...(source?.mode === "hourly_timesheet" ? { timeEntryIds: source.timeEntryIds?.length ? source.timeEntryIds : project.initialTimeEntryIds ?? [] } : {}) })),
+        projectSources: sourcePayload.map(({ project, source }) => {
+          const raw = { projectId: project.id, ...source!, ...(source?.mode === "hourly_timesheet" ? { timeEntryIds: source.timeEntryIds?.length ? source.timeEntryIds : project.initialTimeEntryIds ?? [] } : {}) };
+          // Strip undefined/null keys — Zod .strict() rejects unknown keys even if undefined
+          const clean: Record<string, unknown> = {};
+          for (const [k, v] of Object.entries(raw)) {
+            if (v !== undefined && v !== null) clean[k] = v;
+          }
+          return ProjectInvoiceSourceSchema.parse(clean);
+        }),
         issueDate: form.issueDate,
         dueDate: form.dueDate || undefined,
         currency: form.currency,
