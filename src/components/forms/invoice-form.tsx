@@ -109,7 +109,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
       return { ...current, [projectId]: { ...existing, ...next } };
     });
   }
-  const projectItems = selectedProjects.map((project) => {
+  const projectItems = selectedProjects.filter((project) => ["fixed_price", "project", "package", "hourly", "hours"].includes(project.billingType)).map((project) => {
     const originalAmount = resolveProjectAmount({ billingType: project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packageCustomPrice ?? project.packagePrice ?? 0) || null });
     const source = projectSources[project.id] ?? defaultInvoiceSource(project.billingType, { hasActiveFixedHistory: Boolean(project.priorActiveFixedBilledAmount), hasInitialTimeEntries: Boolean(project.initialTimeEntryIds?.length) });
     const isFixed = ["fixed_price", "project", "package"].includes(project.billingType);
