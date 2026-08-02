@@ -1,5 +1,21 @@
 # Deployment Log
 
+## 2 August 2026 — Site builder, Prompt Studio i18n, calendar picker, auth i18n fix
+
+- Source revision: `ff531bd`
+- Image: `cubicle:latest` (`sha256:efba7d18affc`)
+- Container: `cubiqlo-new-app` (`ad1f80b4ba6a`)
+- Features deployed:
+  - Site builder: 6 new section types (gallery, embed, social, cta, divider, collapsible)
+  - Prompt Studio: English translations, Face Card + Logo prompt types, compact selector redesign, text→dropdown conversion
+  - Time navigation: calendar date picker
+  - Auth pages: LangProvider root layout fix for i18n
+- Deploy method: `docker compose build --no-cache`, tag `cubicle:latest`, `docker run` with production env
+- Health check: `{"status":"ok","db":"ok"}` at `https://app.cubiqlo.com/api/health`
+- Smoke: login page HTTP 200, landing page accessible
+- Proxy safety: `dokploy-traefik` remains sole public 80/443 owner
+- Note: old `cubiqlo-new-app` container accidentally removed during verification testing; recreated from backup env (`/root/backups/cubiqlo-task17-20260731T172019Z/production-app.env`)
+
 ## 26 July 2026 — Full-feature QA fixes and production schema recovery
 
 - Source revision: `d953e0f05da19244f879d992cedd0b543b9be5ce`
