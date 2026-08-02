@@ -111,7 +111,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
   }
   const projectItems = selectedProjects.map((project) => {
     const originalAmount = resolveProjectAmount({ billingType: project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packageCustomPrice ?? project.packagePrice ?? 0) || null });
-    const source = projectSources[project.id];
+    const source = projectSources[project.id] ?? defaultInvoiceSource(project.billingType, { hasActiveFixedHistory: Boolean(project.priorActiveFixedBilledAmount), hasInitialTimeEntries: Boolean(project.initialTimeEntryIds?.length) });
     const isFixed = ["fixed_price", "project", "package"].includes(project.billingType);
     // For fixed-price sources, compute preview amount from source, not full value
     let previewAmount: number | string = originalAmount;
