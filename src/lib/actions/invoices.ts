@@ -533,6 +533,28 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
     .where(eq(invoices.id, invoiceId))
     .returning();
 
+  // When status is manually set to "paid" but no payment rows cover the
+  // full total, auto-create a payment row for the remaining amount so the
+  // invoice appears in reports (which aggregate from payments, not invoice
+  // status). This mirrors the "mark as paid" intent.
+  if (parsed.status === "paid") {
+    const [paidResult] = await db
+      .select({ total: sql<string>`coalesce(sum(${payments.amount}), '0')` })
+      .from(payments)
+      .where(eq(payments.invoiceId, invoiceId));
+    const paidSoFar = Number(paidResult?.total ?? 0);
+    const invoiceTotal = Number(inv.total ?? 0);
+    const remaining = invoiceTotal - paidSoFar;
+    if (remaining > 0) {
+      await db.insert(payments).values({
+        invoiceId,
+        amount: String(remaining),
+        paidAt: new Date().toISOString().slice(0, 10),
+        method: null,
+        notes: "Penandaan lunas otomatis",
+      });
+    }
+  }
 
   await writeActivityLog(workspaceId, user.id, "updated_invoice", "invoice", invoiceId);
 

@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { deleteInvoice } from "@/lib/actions/invoices";
 
-export function DeleteInvoiceButton({ invoiceId, disabled }: { invoiceId: string; disabled?: boolean }) {
+export function DeleteInvoiceButton({ invoiceId, disabled, backUrl = "/app/invoices" }: { invoiceId: string; disabled?: boolean; backUrl?: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -26,7 +26,8 @@ export function DeleteInvoiceButton({ invoiceId, disabled }: { invoiceId: string
     try {
       await deleteInvoice(invoiceId);
       toast.success("Invoice dihapus");
-      router.push("/app/invoices");
+      setOpen(false);
+      router.push(backUrl);
       router.refresh();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Gagal menghapus invoice";

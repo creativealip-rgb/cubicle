@@ -255,6 +255,7 @@ export default async function InvoiceDetailPage({
           <DeleteInvoiceButton
             invoiceId={invoiceId}
             disabled={!["draft", "cancelled"].includes(inv.status)}
+            backUrl={backUrl}
           />
           <Badge
             variant={invoiceStatusVariant(displayStatus, lang).variant}
