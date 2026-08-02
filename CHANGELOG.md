@@ -1,15 +1,10 @@
 # Changelog
 
-## 2026-08-02 — Unified invoice creation for all billing types
+## 2026-08-02 — UI polish: empty state buttons, unified invoice
 
-- Project form: hourly now shows "Budget Disepakati" field alongside "Rate per Jam" for agreed billing amount.
-- Invoice form: source selector (Nilai penuh/DP/Milestone/Pelunasan sisa) and preview card (Nilai disepakati/Sudah ditagih/Sisa nilai) now appear for ALL billing types (fixed, hourly, retainer). No more special-casing per billing model.
-- `defaultInvoiceSource`: hourly and retainer now use same fixed source modes (fixed_full/fixed_final) instead of hourly_timesheet/hourly_deposit.
-- `resolveProjectAmount`: hourly no longer returns 0 — uses budget field (Budget Disepakati).
-- `createInvoice`: all billing types use fixed source resolution. Retainer fee used as agreedAmount for retainer projects. Retainer fee queried in action.
-- Removed hourly_timesheet and hourly_deposit from UI (kept in schema for backward compat with existing invoices).
-- Time entries remain for internal tracking only — independent from invoice billing.
-- Commit: `5b74187` pushed to `main`. Deployed via image `cubicle:sha-5b74187` (container `cubiqlo-new-app`).
+- Empty state: remove "Tambah Klien" button from client list empty state (2 instances). Remove "Buat Invoice" action from invoice list empty state (2 instances). Match tasks page pattern — empty state shows message only, users create from header "+ Baru" button.
+- Unified invoice creation: source selector (full/DP/milestone/final) and preview card now appear for ALL billing types (fixed, hourly, retainer). Hourly project form adds "Budget Disepakati" field. Retainer uses fee as agreedAmount.
+- Commits: `5b74187`, `af865d8` pushed to `main`. Deployed via image `cubicle:sha-af865d8`.
 
 ## 2026-08-02 — Retainer progress, task seeding, project currency selector
 
