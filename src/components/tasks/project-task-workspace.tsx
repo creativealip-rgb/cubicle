@@ -55,13 +55,13 @@ export function ProjectTaskWorkspace({ projectId, mode, workflowTasks, reusableT
           </DialogContent>
         </Dialog>
       </div>
-      {visibleWorkflow.length > 0 && <div className="space-y-2"><h3 className="text-sm font-semibold">Tugas Workflow</h3><WorkflowTaskWorkspace tasks={visibleWorkflow} members={members} projects={projects} currentUserId={currentUserId} /></div>}
-      {visibleReusable.length > 0 && <div className="space-y-2"><h3 className="text-sm font-semibold">Tugas Berulang</h3><ReusableTaskWorkspace tasks={visibleReusable} members={members} onMove={projectId ? moveReusable : undefined} /></div>}
-      {visibleWorkflow.length === 0 && visibleReusable.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">Belum ada tugas.</p>}
+      {visibleWorkflow.length > 0 && <div className="space-y-2"><h3 className="text-sm font-semibold">{t("Tugas Workflow", "Workflow Tasks")}</h3><WorkflowTaskWorkspace tasks={visibleWorkflow} members={members} projects={projects} currentUserId={currentUserId} /></div>}
+      {visibleReusable.length > 0 && <div className="space-y-2"><h3 className="text-sm font-semibold">{t("Tugas Berulang", "Recurring Tasks")}</h3><ReusableTaskWorkspace tasks={visibleReusable} members={members} onMove={projectId ? moveReusable : undefined} /></div>}
+      {visibleWorkflow.length === 0 && visibleReusable.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">{t("Belum ada tugas.", "No tasks yet.")}</p>}
       {!projectId && Math.max(workflowTasks.length, reusableTasks.length) > PAGE_SIZE ? (
         <div className="flex justify-end gap-2">
-          <button disabled={page === 1} onClick={() => setPage((value) => value - 1)}>Sebelumnya</button>
-          <button disabled={page * PAGE_SIZE >= Math.max(workflowTasks.length, reusableTasks.length)} onClick={() => setPage((value) => value + 1)}>Berikutnya</button>
+          <button disabled={page === 1} onClick={() => setPage((value) => value - 1)}>{t("Sebelumnya", "Previous")}</button>
+          <button disabled={page * PAGE_SIZE >= Math.max(workflowTasks.length, reusableTasks.length)} onClick={() => setPage((value) => value + 1)}>{t("Berikutnya", "Next")}</button>
         </div>
       ) : null}
       <span className="hidden">{String(archiveTask)}{String(restoreTask)}</span>

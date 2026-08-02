@@ -6,6 +6,7 @@ import { Loader2, Play } from "lucide-react";
 import { toast } from "sonner";
 import { startTimer } from "@/lib/actions/time";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n-client";
 
 type Project = { id: string; name: string; customerRef: string | null };
 type Task = { id: string; title: string; projectRef: string | null };
@@ -23,6 +24,7 @@ export function NewTimerDialog({
   initialOpen?: boolean;
 }) {
   const router = useRouter();
+  const { t } = useT();
   const [loading, setLoading] = useState(initialOpen);
 
   async function startEmptyTimer() {
@@ -43,7 +45,7 @@ export function NewTimerDialog({
   return (
     <Button variant="outline" className="h-11 w-full gap-2 sm:h-9 sm:w-auto" onClick={startEmptyTimer} disabled={loading}>
       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-      Mulai Timer
+      {t("Mulai Timer", "Start Timer")}
     </Button>
   );
 }

@@ -18,6 +18,13 @@ import { TableHeaderFilter } from "@/components/ui/table-header-filter";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { formatDateID, formatMoney } from "@/lib/utils";
+
+function formatDate(date: string | Date | null | undefined, locale: string): string {
+  if (!date) return "—";
+  const d = typeof date === "string" ? new Date(date + "T00:00:00") : date;
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" });
+}
 import { invoiceStatusVariant } from "@/lib/status-badge";
 import { billingTypeLabel } from "@/lib/feature-access";
 
@@ -90,6 +97,7 @@ export function InvoicesListTable({
   currentFilters?: CurrentFilters;
 }) {
   const { t, lang } = useT();
+  const locale = lang === "en" ? "en-US" : "id-ID";
   const base = (baseCurrency || "IDR").toUpperCase();
 
   const getters = useMemo(
@@ -243,8 +251,8 @@ export function InvoicesListTable({
                       <span className="text-xs text-muted-foreground">—</span>
                     )}
                   </TableCell>
-                  <TableCell>{formatDateID(inv.issueDate)}</TableCell>
-                  <TableCell>{formatDateID(inv.dueDate)}</TableCell>
+                  <TableCell>{formatDate(inv.issueDate, locale)}</TableCell>
+                  <TableCell>{formatDate(inv.dueDate, locale)}</TableCell>
                   <TableCell className="text-right tabular-nums font-medium">
                     <div>{formatMoney(inv.total, inv.currency)}</div>
                     {inv.totalBase != null &&
@@ -314,7 +322,7 @@ export function InvoicesListTable({
                 <span className="text-xs text-muted-foreground">
                   {t("Jatuh Tempo", "Due Date")}
                 </span>
-                <span className="text-sm">{formatDateID(inv.dueDate)}</span>
+                <span className="text-sm">{formatDate(inv.dueDate, locale)}</span>
               </div>
             </div>
           );

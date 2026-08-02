@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n-client";
 import {
   Card,
   CardContent,
@@ -17,6 +18,7 @@ import {
 
 export function VerifyEmailSuccess() {
   const router = useRouter();
+  const { t } = useT();
   const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {

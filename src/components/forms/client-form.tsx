@@ -8,6 +8,7 @@ import { isStaleServerActionError } from "@/lib/client-errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/lib/i18n-client";
 import { Textarea } from "@/components/ui/textarea";
 
 interface ClientFormProps {
@@ -41,6 +42,7 @@ function slugify(value: string) {
 
 export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: ClientFormProps) {
   const router = useRouter();
+  const { t } = useT();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: defaultValues?.name ?? "",
@@ -81,13 +83,13 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
       if (mode === "create") {
         const result = await createClient(data);
         if (result && typeof result === "object" && "ok" in result && result.ok === false) {
-          toast.error(result.error || "Limit plan tercapai");
+          toast.error(result.error || t("Limit plan tercapai", "Plan limit reached"));
           return;
         }
-        toast.success("Klien dibuat");
+        toast.success(t("Klien dibuat", "Client created"));
       } else if (defaultValues?.id) {
         await updateClient(defaultValues.id, data);
-        toast.success("Klien diperbarui");
+        toast.success(t("Klien diperbarui", "Client updated"));
       }
 
       onSuccess?.();
@@ -127,26 +129,26 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
       <section className="space-y-3">
         <div>
           <h3 className="text-sm font-medium">Identitas</h3>
-          <p className="text-xs text-muted-foreground">Nama kontak & perusahaan klien.</p>
+          <p className="text-xs text-muted-foreground">{t("Nama kontak & perusahaan klien.", "Client contact name & company.")}</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="name">Nama *</Label>
+            <Label htmlFor="name">{t("Nama *", "Name *")}</Label>
             <Input
               id="name"
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
               required
-              placeholder="Nama kontak klien"
+              placeholder={t("Nama kontak klien", "Client contact name")}
             />
           </div>
           <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="companyName">Perusahaan</Label>
+            <Label htmlFor="companyName">{t("Perusahaan", "Company")}</Label>
             <Input
               id="companyName"
               value={form.companyName}
               onChange={(e) => set("companyName", e.target.value)}
-              placeholder="Nama perusahaan"
+              placeholder={t("Nama perusahaan", "Company name")}
             />
           </div>
         </div>
@@ -159,7 +161,7 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("Email", "Email")}</Label>
             <Input
               id="email"
               type="email"
@@ -169,7 +171,7 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="phone">Telepon</Label>
+            <Label htmlFor="phone">{t("Telepon", "Phone")}</Label>
             <Input
               id="phone"
               value={form.phone}
@@ -178,7 +180,7 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="website">Website</Label>
+            <Label htmlFor="website">{t("Website", "Website")}</Label>
             <Input
               id="website"
               value={form.website}
@@ -187,7 +189,7 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="tags">Tag</Label>
+            <Label htmlFor="tags">{t("Tag", "Tags")}</Label>
             <Input
               id="tags"
               value={form.tags}
@@ -197,12 +199,12 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
             <p className="text-[11px] text-muted-foreground">Pisahkan dengan koma.</p>
           </div>
           <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="address">Alamat</Label>
+            <Label htmlFor="address">{t("Alamat", "Address")}</Label>
             <Textarea
               id="address"
               value={form.address}
               onChange={(e) => set("address", e.target.value)}
-              placeholder="Alamat lengkap"
+              placeholder={t("Alamat lengkap", "Full address")}
               rows={2}
               className="min-h-[72px] resize-y"
             />
@@ -212,11 +214,11 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
 
       <section className="space-y-3 border-t pt-4">
         <div>
-          <h3 className="text-sm font-medium">Catatan internal</h3>
+          <h3 className="text-sm font-medium">{t("Catatan internal", "Internal notes")}</h3>
           <p className="text-xs text-muted-foreground">Hanya terlihat di workspace, tidak ke portal klien.</p>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="internalNotes">Catatan</Label>
+          <Label htmlFor="internalNotes">{t("Catatan", "Notes")}</Label>
           <Textarea
             id="internalNotes"
             value={form.internalNotes}
@@ -264,7 +266,7 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
 
       <div className="sticky bottom-0 -mx-1 border-t bg-background/95 px-1 pt-3 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <Button type="submit" disabled={loading} className="w-full sm:w-auto sm:min-w-40">
-          {loading ? "Menyimpan..." : mode === "create" ? "Buat Klien" : "Simpan Perubahan"}
+          {loading ? t("Menyimpan...", "Saving...") : mode === "create" ? t("Buat Klien", "Create Client") : t("Simpan Perubahan", "Save Changes")}
         </Button>
       </div>
     </form>

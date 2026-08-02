@@ -15,9 +15,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { deleteInvoice } from "@/lib/actions/invoices";
+import { useT } from "@/lib/i18n-client";
 
 export function DeleteInvoiceButton({ invoiceId, disabled, backUrl = "/app/invoices" }: { invoiceId: string; disabled?: boolean; backUrl?: string }) {
   const router = useRouter();
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -25,12 +27,12 @@ export function DeleteInvoiceButton({ invoiceId, disabled, backUrl = "/app/invoi
     setLoading(true);
     try {
       await deleteInvoice(invoiceId);
-      toast.success("Invoice dihapus");
+      toast.success(t("Invoice dihapus", "Invoice deleted"));
       setOpen(false);
       router.push(backUrl);
       router.refresh();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Gagal menghapus invoice";
+      const msg = err instanceof Error ? err.message : t("Gagal menghapus invoice", "Failed to delete invoice");
       toast.error(msg);
       setLoading(false);
       setOpen(false);
@@ -42,20 +44,20 @@ export function DeleteInvoiceButton({ invoiceId, disabled, backUrl = "/app/invoi
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" disabled={disabled} className="gap-1 text-destructive hover:text-destructive">
           <Trash2 className="h-4 w-4" />
-          Hapus
+          {t("Hapus", "Delete")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Hapus invoice ini?</DialogTitle>
+          <DialogTitle>{t("Hapus invoice ini?", "Delete this invoice?")}</DialogTitle>
           <DialogDescription>
-            Invoice akan dihapus permanen bersama semua item dan pembayaran terkait. Aksi ini tidak bisa dibatalkan.
+            {t("Invoice akan dihapus permanen bersama semua item dan pembayaran terkait. Aksi ini tidak bisa dibatalkan.", "Invoice will be permanently deleted along with all related items and payments. This action cannot be undone.")}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>Batal</Button>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>{t("Batal", "Cancel")}</Button>
           <Button variant="destructive" onClick={handleDelete} disabled={loading}>
-            {loading ? "Menghapus…" : "Hapus Permanen"}
+            {loading ? t("Menghapus…", "Deleting…") : t("Hapus Permanen", "Delete Permanently")}
           </Button>
         </DialogFooter>
       </DialogContent>

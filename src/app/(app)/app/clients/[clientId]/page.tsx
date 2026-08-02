@@ -44,6 +44,7 @@ import {
 } from "@/lib/client-google-calendar";
 import { buildInvoiceDetailUrl } from "@/lib/invoice-origin";
 import { formatMoney } from "@/lib/utils";
+import { getCurrentLang, createT } from "@/lib/i18n";
 import { resolveClientPortalActive } from "@/lib/client-portal-status";
 import { PermanentDeleteButton } from "@/components/shared/permanent-delete-button";
 import { ClientInvoiceCreateDialog } from "@/components/invoices/client-invoice-create-dialog";
@@ -71,6 +72,8 @@ export default async function ClientDetailPage({
   params: Promise<{ clientId: string }>;
   searchParams: Promise<{ tab?: string }>;
 }) {
+  const lang = await getCurrentLang();
+  const t = createT(lang);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -285,7 +288,7 @@ export default async function ClientDetailPage({
         <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <Link href="/app/clients" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="h-3 w-3" /> Kembali ke Klien
+              <ArrowLeft className="h-3 w-3" /> {t("Kembali ke Klien", "Back to Clients")}
             </Link>
             <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="outline" className="gap-1" asChild>
@@ -343,11 +346,11 @@ export default async function ClientDetailPage({
 
               <div className="grid grid-cols-3 gap-2">
                 <div className="rounded-lg border bg-muted/30 p-3">
-                  <p className="text-[11px] text-muted-foreground">Proyek Aktif</p>
+                  <p className="text-[11px] text-muted-foreground"> {t("Proyek Aktif","Active Projects")}</p>
                   <p className="mt-1 text-xl font-bold">{activeProjects}</p>
                 </div>
                 <div className="rounded-lg border bg-muted/30 p-3">
-                  <p className="text-[11px] text-muted-foreground">Invoice Belum Lunas</p>
+                  <p className="text-[11px] text-muted-foreground"> {t("Invoice Belum Lunas","Outstanding Invoices")}</p>
                   <p className="mt-1 text-xl font-bold">
                     {clientInvoices.filter((i) => i.status !== "paid" && i.status !== "cancelled").length}
                   </p>
@@ -356,10 +359,10 @@ export default async function ClientDetailPage({
                   <p className="text-[11px] text-muted-foreground">Portal</p>
                   {portalActive ? (
                     <p className="mt-1 flex items-center gap-1 text-sm font-semibold text-green-600">
-                      <Globe className="h-4 w-4" /> Aktif
+                      <Globe className="h-4 w-4" /> {t("Aktif","Active")}
                     </p>
                   ) : (
-                    <p className="mt-1 text-sm font-semibold text-muted-foreground">Nonaktif</p>
+                    <p className="mt-1 text-sm font-semibold text-muted-foreground"> {t("Nonaktif","Inactive")}</p>
                   )}
                 </div>
               </div>
@@ -376,7 +379,7 @@ export default async function ClientDetailPage({
                   )}
                   {client.address && (
                     <div>
-                      <p className="text-xs text-muted-foreground">Alamat</p>
+                      <p className="text-xs text-muted-foreground"> {t("Alamat","Address")}</p>
                       <p className="mt-1 break-words">{client.address}</p>
                     </div>
                   )}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useT } from "@/lib/i18n-client";
 import { toast } from "sonner";
 import { buildInvoiceDetailUrl } from "@/lib/invoice-origin";
 import { createInvoice, updateInvoice } from "@/lib/actions/invoices";
@@ -81,6 +82,7 @@ interface InvoiceFormProps {
 
 export function InvoiceForm({ mode, defaultValues, clients, projects, templates, baseCurrency = "IDR", currencyRates = [], initialItems = [], onSuccess, scopedClientId, scopedProjectId }: InvoiceFormProps) {
   const router = useRouter();
+  const { t } = useT();
   const [loading, setLoading] = useState(false);
   const startsSourceBacked = Boolean(scopedProjectId || defaultValues?.projectId || initialItems.some((item) => item.sourceId));
   const [items, setItems] = useState(initialItems.length ? initialItems : startsSourceBacked ? [] : [{ description: "", quantity: 1, unitPrice: 0 }]);
@@ -306,7 +308,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
           <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/40 p-2 text-xs"><span>Nilai disepakati<br/><b>{fixedPreview.agreedAmount.toLocaleString("id-ID")}</b></span><span>Sudah ditagih<br/><b>{fixedPreview.previouslyInvoiced.toLocaleString("id-ID")}</b></span><span>Sisa nilai<br/><b>{fixedPreview.remainingAmount.toLocaleString("id-ID")}</b></span></div>
           {(source?.mode === "fixed_dp" || source?.mode === "fixed_milestone") && <div className="grid gap-2 sm:grid-cols-2">
             {source.mode === "fixed_milestone" && <Input placeholder="Nama milestone" value={source.milestoneName ?? ""} onChange={(e) => updateSource(project.id, { milestoneName: e.target.value })} />}
-            <Select value={source.amountType} onValueChange={(value) => updateSource(project.id, { amountType: value as "percent" | "amount" })}><SelectTrigger><SelectValue placeholder="Jenis nilai" /></SelectTrigger><SelectContent><SelectItem value="percent">Persen</SelectItem><SelectItem value="amount">Nominal</SelectItem></SelectContent></Select>
+            <Select value={source.amountType} onValueChange={(value) => updateSource(project.id, { amountType: value as "percent" | "amount" })}><SelectTrigger><SelectValue placeholder={t("Jenis nilai", "Value type")} /></SelectTrigger><SelectContent><SelectItem value="percent">Persen</SelectItem><SelectItem value="amount">Nominal</SelectItem></SelectContent></Select>
             <Input type="number" min="0.01" step="0.01" placeholder={source.amountType === "percent" ? "Persen" : "Nominal"} value={source.value ?? ""} onChange={(e) => updateSource(project.id, { value: Number(e.target.value) })} />
           </div>}
         </div>;

@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Loader2, ArrowLeft, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n-client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -20,6 +21,7 @@ import { authClient } from "@/lib/auth-client";
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const { t } = useT();
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 

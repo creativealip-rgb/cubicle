@@ -3,22 +3,24 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-
-const primaryTabs = [
-  { href: "/app/time?view=daily", label: "Harian", mobileLabel: "Harian" },
-  { href: "/app/time?view=weekly", label: "Mingguan", mobileLabel: "Mingguan" },
-] as const;
+import { useT } from "@/lib/i18n-client";
 
 export function TimeHeader({ actions }: { actions?: React.ReactNode }) {
   const pathname = usePathname();
+  const { t } = useT();
+
+  const primaryTabs = [
+    { href: "/app/time?view=daily", label: t("Harian", "Daily"), mobileLabel: t("Harian", "Daily") },
+    { href: "/app/time?view=weekly", label: t("Mingguan", "Weekly"), mobileLabel: t("Mingguan", "Weekly") },
+  ] as const;
 
   return (
     <header className="space-y-3 sm:space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="app-page-title">Waktu</h1>
+          <h1 className="app-page-title">{t("Waktu", "Time")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Catat waktu dan isi timesheet mingguan.
+            {t("Catat waktu dan isi timesheet mingguan.", "Log time and fill weekly timesheets.")}
           </p>
         </div>
         {actions && (
@@ -29,7 +31,7 @@ export function TimeHeader({ actions }: { actions?: React.ReactNode }) {
       </div>
 
       <div className="border-b">
-        <nav aria-label="Navigasi waktu" className="flex min-w-0 gap-0.5 sm:gap-1">
+        <nav aria-label={t("Navigasi waktu", "Time navigation")} className="flex min-w-0 gap-0.5 sm:gap-1">
           {primaryTabs.map((tab) => {
             const active = pathname === tab.href;
             return (
