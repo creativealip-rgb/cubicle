@@ -1,6 +1,13 @@
 # Changelog
 
-## 2026-08-02 — Prompt Studio dropdowns, universal Feed name
+## 2026-08-02 — Face Card & Logo prompt types
+
+- New prompt type: **Face Card** — portrait analysis & styling recommendations. Dropdowns: Tipe analisis (Face Features, Spectacles, Style, Color, Makeup), Aesthetic (6), Background Tone (6), Typography (5), Color Mood (6).
+- New prompt type: **Logo** — brand logo design & mockup. Dropdowns: Gaya logo (7), Skema warna (6), Tipe mockup (7), Industri (text).
+- Both in "Brand & Copy" category. Total catalog: 16 → 18 types.
+- Commit: `8e181fb` pushed to `main`.
+
+## 2026-08-02 — Prompt Studio redesign: compact selector, section labels, preview
 
 - Prompt Studio: rename "Feed Instagram" → "Feed" (universal, platform-agnostic). Remove Instagram-specific defaults.
 - Shared dropdown options: `field-options.ts` with tone (10), style (10), platform (10), ratio (5), scene (10), camera angle (7), lighting (8), background (7), orientation (3), voice language (3), duration (6), cadence (4).
