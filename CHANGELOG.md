@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-08-02 — Invoice badge, delete, task, report, and fixed-price preview fixes
+
+- Invoice detail badge: `displayStatus` no longer downgrades DB `status="paid"` to `"payment due"` when payment rows are empty. DB status is the source of truth; payment rows only upgrade upward to `paid`. Invoice marked paid manually now shows "Lunas".
+- Delete invoice: add `DeleteInvoiceButton` + `deleteInvoice` server action (draft/cancelled only; cascades items + payments in transaction). Dialog closes before redirect; redirect uses origin-aware `backUrl` (project/client/global) instead of hardcoded `/app/invoices`, preventing 404 after delete.
+- Task edit: `description` field in `taskSchema` and `updateTaskSchema` now `z.string().nullable().optional()` — form sends `null` when description cleared, previously ZodError.
+- Report income: `updateInvoice` auto-creates a payment row for the remaining amount when status is set to `paid` and no payment covers the total. Reports aggregate from `payments` table, so marked-paid invoices without payment rows previously showed 0 income. Backfilled 7 existing paid invoices with missing payments.
+- Fixed-price invoice preview: `projectItems` computation in `InvoiceForm` now falls back to `defaultInvoiceSource` when `projectSources` state is empty (initial render). `fixed_final` mode correctly shows `agreedAmount - priorActiveFixedBilledAmount` immediately without needing to switch modes first.
+- Fixed-price source skip: `createInvoice` action skips service rows when an explicit fixed source (DP/milestone/full/final) is provided — the source amount IS the invoice line.
+- Commits: `3542b7a`, `e670f09`, `ee5761d`, `664fa8f` pushed to `main`. Migrations 0064–0066 applied to production. Deployed via immutable image `cubicle:sha-664fa8f` (container `cubiqlo-new-app`).
+
 ## Unreleased — Explicit invoice entry sources
 
 - Invoice entry: add explicit Fixed full/DP/milestone/final, Hourly timesheet/deposit, manual adjustment, and Retainer base/overage source intent.
