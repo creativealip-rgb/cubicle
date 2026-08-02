@@ -25,10 +25,10 @@ export function defaultInvoiceSource(
   options: { hasActiveFixedHistory?: boolean; hasInitialTimeEntries?: boolean } | boolean = {},
 ): InvoiceSourceDraft | null {
   const normalized = typeof options === "boolean" ? { hasInitialTimeEntries: options } : options;
-  if (["fixed_price", "project", "package"].includes(billingType)) {
+  // All billing types use the same source modes
+  if (["fixed_price", "project", "package", "hourly", "hours", "retainer"].includes(billingType)) {
     return { mode: normalized.hasActiveFixedHistory ? "fixed_final" : "fixed_full" };
   }
-  if (["hourly", "hours"].includes(billingType) && normalized.hasInitialTimeEntries) return { mode: "hourly_timesheet", timeEntryIds: [] };
   return null;
 }
 

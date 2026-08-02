@@ -173,18 +173,20 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
   const projectItemValues: Array<{ description: string; quantity: number; unitPrice: number; sourceId: string; sourceMode: "fixed_full" | "fixed_dp" | "fixed_milestone" | "fixed_final" | "hourly_deposit"; sourceMetadata: { milestoneName?: string; requestedPercent?: string } | null; originalCurrency: string; originalAmount: number; conversionRate: number }> = [];
   const projectServiceItemValues: Array<{ description: string; quantity: number; unitPrice: number; sourceId: string; originalCurrency: string; originalAmount: number; conversionRate: number }> = [];
   for (const projectId of projectIds) {
-    const [project] = await db.select({ id: projects.id, name: projects.name, billingModel: projects.billingModel, billingType: projects.billingType, budget: projects.budget, rate: projects.rate, currency: projects.currency, packagePrice: packages.price, packageCustomPrice: packages.customPrice }).from(projects).leftJoin(packages, eq(projects.selectedPackageId, packages.id)).where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId), eq(projects.clientId, parsed.clientId))).limit(1);
+    const [project] = await db.select({ id: projects.id, name: projects.name, billingModel: projects.billingModel, billingType: projects.billingType, budget: projects.budget, rate: projects.rate, currency: projects.currency, retainerFee: projects.retainerFee, packagePrice: packages.price, packageCustomPrice: packages.customPrice }).from(projects).leftJoin(packages, eq(projects.selectedPackageId, packages.id)).where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId), eq(projects.clientId, parsed.clientId))).limit(1);
     if (!project) throw new Error("Ada proyek yang tidak sesuai dengan klien");
     const source = explicitSources.find((candidate) => candidate.projectId === project.id);
-    let originalAmount = resolveProjectAmount({ billingType: project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packageCustomPrice ?? project.packagePrice ?? 0) || null });
+    const effectiveBudget = project.billingModel === "retainer" && project.retainerFee ? Number(project.retainerFee) : project.budget ? Number(project.budget) : null;
+    let originalAmount = resolveProjectAmount({ billingType: project.billingType, budget: effectiveBudget, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packageCustomPrice ?? project.packagePrice ?? 0) || null });
     let sourceMode: "fixed_full" | "fixed_dp" | "fixed_milestone" | "fixed_final" | "hourly_deposit" = "fixed_final";
     let sourceMetadata: { milestoneName?: string; requestedPercent?: string } | null = null;
     if (source?.mode === "hourly_timesheet") continue;
     if (source?.mode === "hourly_deposit") {
-      if (resolveBillingModel(project) !== "hourly") throw new Error("Deposit Hourly hanya tersedia untuk proyek Hourly");
+      // Backward compat: old hourly deposit flow
       originalAmount = source.amount;
       sourceMode = "hourly_deposit";
-    } else if (resolveBillingModel(project) === "fixed_price") {
+    } else if (source?.mode?.startsWith("fixed_") || !source) {
+      // All billing types (fixed, hourly, retainer) use fixed source modes
       const priorRows = await db
         .select({ amount: invoiceItems.originalAmount })
         .from(invoiceItems)
@@ -194,7 +196,6 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
           inArray(invoices.status, ["draft", "sent", "viewed", "paid", "overdue"]),
           inArray(invoiceItems.sourceMode, ["fixed_full", "fixed_dp", "fixed_milestone", "fixed_final"]),
         ));
-      if (source && !source.mode.startsWith("fixed_")) throw new Error("Source invoice tidak sesuai model Fixed Price");
       const fixedSource = source && source.mode.startsWith("fixed_") ? source : { mode: "fixed_final" as const, projectId: project.id };
       originalAmount = Number(resolveFixedSourceAmount(fixedSource, { agreedAmount: originalAmount, priorActiveOriginalAmounts: priorRows.flatMap((row) => row.amount == null ? [] : [row.amount]) }));
       sourceMode = fixedSource.mode;
