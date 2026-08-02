@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { localDateIso, shiftDateIso, weekStartDate } from "@/lib/effective-work-date";
 import { useT } from "@/lib/i18n-client";
 
@@ -16,6 +19,7 @@ export function WaktuNavigation({
   actions?: React.ReactNode;
 }) {
   const { t, lang } = useT();
+  const router = useRouter();
   const locale = lang === "en" ? "en-US" : "id-ID";
   const step = view === "weekly" ? 7 : 1;
   const today = localDateIso(new Date());
@@ -28,10 +32,38 @@ export function WaktuNavigation({
     : dates[0].toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
   const href = (date: string) => `/app/time?view=${view}&date=${date}`;
 
+  const selectedDateObj = new Date(`${selectedDate}T12:00:00`);
+
+  const handleCalendarSelect = (date: Date | undefined) => {
+    if (!date) return;
+    const iso = localDateIso(date);
+    router.push(href(iso));
+  };
+
   return <div className="flex flex-wrap items-center justify-between gap-2">
     <div className="flex items-center gap-1 rounded-full border bg-muted/40 p-1 text-xs">
       <Button asChild variant="ghost" size="icon" className="h-7 w-7 rounded-full" aria-label={t("Periode sebelumnya", "Previous period")}><Link href={href(shiftDateIso(selectedDate, -step))}><ChevronLeft className="h-3.5 w-3.5" /></Link></Button>
-      <span className="min-w-28 px-1 text-center font-medium text-muted-foreground">{label}</span>
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="flex min-w-28 items-center justify-center gap-1.5 px-2 py-1 text-center font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-md hover:bg-muted/60"
+            aria-label={t("Pilih tanggal", "Pick a date")}
+          >
+            <CalendarDays className="h-3.5 w-3.5 shrink-0" />
+            <span>{label}</span>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="center">
+          <Calendar
+            mode="single"
+            selected={selectedDateObj}
+            onSelect={handleCalendarSelect}
+            locale={lang === "en" ? undefined : undefined}
+            weekStartsOn={1}
+          />
+        </PopoverContent>
+      </Popover>
       <Button asChild variant="ghost" size="icon" className="h-7 w-7 rounded-full" aria-label={t("Periode berikutnya", "Next period")}><Link href={href(shiftDateIso(selectedDate, step))}><ChevronRight className="h-3.5 w-3.5" /></Link></Button>
       <Button asChild variant="ghost" size="sm" className="h-7 rounded-full px-2 text-xs"><Link href={href(today)}>{view === "weekly" ? t("Minggu ini", "This week") : t("Hari ini", "Today")}</Link></Button>
     </div>
