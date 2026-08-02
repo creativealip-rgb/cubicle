@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-02 — Site Builder: 6 new section types (Google Sites parity)
+
+- New section types: `gallery` (image grid), `embed` (YouTube/maps/iframe), `social` (social media links with platform selector), `cta` (call-to-action block), `divider` (separator), `collapsible` (accordion/expandable group).
+- Total section types: 8 → 14.
+- Editor: each type has dedicated form (gallery: URL + alt, embed: URL + height, social: platform dropdown + URL, cta: text + button, collapsible: title + content rows).
+- Renderer: all 6 types render on public page with theme-consistent styling.
+- Commit: `1f71062` pushed to `main`. Deployed to dev.
+
 ## 2026-08-02 — Prompt Studio i18n: full English translation
 
 - Catalog: `labelEn` added to 30+ Indonesian field labels (e.g. "Jumlah slide" → "Slide count", "Sudut kamera" → "Camera angle", "Gaya logo" → "Logo style").
