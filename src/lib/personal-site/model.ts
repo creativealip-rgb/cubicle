@@ -10,6 +10,12 @@ export const PERSONAL_SITE_SECTION_TYPES = [
   "faq",
   "contact",
   "custom",
+  "gallery",
+  "embed",
+  "social",
+  "cta",
+  "divider",
+  "collapsible",
 ] as const;
 
 export const RESERVED_PERSONAL_SITE_SLUGS = new Set([
@@ -124,6 +130,56 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     type: z.literal("custom"),
     heading: headingSchema,
     content: z.string().trim().max(4_000),
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("gallery"),
+    heading: headingSchema,
+    images: z.array(z.object({
+      id: idSchema,
+      url: z.string().trim().max(2_000),
+      alt: z.string().trim().max(200).optional(),
+    })).max(12),
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("embed"),
+    heading: headingSchema,
+    url: z.string().trim().max(2_000),
+    height: z.number().min(100).max(800).optional(),
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("social"),
+    heading: headingSchema,
+    links: z.array(z.object({
+      id: idSchema,
+      platform: z.string().trim().max(40),
+      url: z.string().trim().max(2_000),
+    })).max(10),
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("cta"),
+    heading: headingSchema,
+    text: z.string().trim().max(500),
+    buttonLabel: z.string().trim().max(60),
+    buttonUrl: optionalPublicHrefSchema,
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("divider"),
+    heading: headingSchema,
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("collapsible"),
+    heading: headingSchema,
+    items: z.array(z.object({
+      id: idSchema,
+      title: z.string().trim().min(1).max(200),
+      content: z.string().trim().min(1).max(2_000),
+    })).max(12),
   }),
 ]);
 
@@ -353,5 +409,11 @@ export function sectionHasContent(section: PersonalSiteSection) {
     case "faq": return section.items.some((item) => item.question && item.answer);
     case "contact": return section.methods.some((item) => item.label && (item.value || item.url));
     case "custom": return Boolean(section.content.trim());
+    case "gallery": return section.images.some((img) => img.url);
+    case "embed": return Boolean(section.url.trim());
+    case "social": return section.links.some((link) => link.url);
+    case "cta": return Boolean(section.text.trim()) || Boolean(section.buttonLabel.trim());
+    case "divider": return true;
+    case "collapsible": return section.items.some((item) => item.title && item.content);
   }
 }

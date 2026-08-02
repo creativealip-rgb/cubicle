@@ -87,6 +87,24 @@ function SectionBody({ section, accent, panel }: { section: PersonalSiteSection;
       ) : <span key={item.id} className={`rounded-xl px-4 py-3 text-sm ${panel}`}><strong>{item.label}</strong>{item.value ? ` · ${item.value}` : ""}</span>)}</div>;
     case "custom":
       return <div className={`rounded-2xl p-6 ${panel}`}><p className="max-w-3xl whitespace-pre-wrap text-base leading-8 opacity-75">{section.content}</p></div>;
+    case "gallery":
+      return <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{section.images.filter((img) => img.url).map((img) => (
+        <div key={img.id} className="overflow-hidden rounded-2xl"><img src={img.url} alt={img.alt || ""} className="aspect-[4/3] w-full object-cover" loading="lazy" /></div>
+      ))}</div>;
+    case "embed":
+      return section.url ? <iframe src={section.url} className="w-full rounded-2xl" style={{ height: section.height || 400 }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen loading="lazy" /> : null;
+    case "social":
+      return <div className="flex flex-wrap gap-3">{section.links.filter((link) => link.url).map((link) => (
+        <a key={link.id} className={`inline-flex min-h-11 items-center rounded-xl px-5 py-3 text-sm font-semibold ${panel}`} href={safePublicHref(link.url)} target="_blank" rel="noreferrer">{link.platform}</a>
+      ))}</div>;
+    case "cta":
+      return <div className={`rounded-2xl p-8 text-center ${panel}`}>{section.text && <p className="mx-auto max-w-xl text-lg leading-8 opacity-75">{section.text}</p>}{section.buttonLabel && section.buttonUrl && safePublicHref(section.buttonUrl) !== "#" && <a className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold shadow-lg" style={{ backgroundColor: accent, color: accentForeground(accent) }} href={safePublicHref(section.buttonUrl)}>{section.buttonLabel}</a>}</div>;
+    case "divider":
+      return <hr className="border-t border-current opacity-15" />;
+    case "collapsible":
+      return <div className="space-y-3">{section.items.filter((item) => item.title && item.content).map((item) => (
+        <details key={item.id} className={`group rounded-2xl px-5 py-4 ${panel}`}><summary className="cursor-pointer list-none pr-8 font-semibold">{item.title}<span aria-hidden className="float-right text-xl group-open:rotate-45">+</span></summary><p className="mt-3 whitespace-pre-wrap text-sm leading-7 opacity-70">{item.content}</p></details>
+      ))}</div>;
   }
 }
 
