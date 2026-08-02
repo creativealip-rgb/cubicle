@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Geist_Mono, Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { LangProvider, type Lang } from "@/lib/i18n-client";
+import { cookies } from "next/headers";
 import "./globals.css";
 
 // ClickUp spec: Plus Jakarta Sans (display/headings), Inter (body/meta), Geist Mono (technical/code)
@@ -78,18 +80,22 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const langCookie = (await cookies()).get("cubiqlo_lang")?.value;
+  const lang: Lang = langCookie === "en" ? "en" : "id";
   return (
     <html
-      lang="en"
+      lang={lang}
       className={`${jakarta.variable} ${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
+        <LangProvider lang={lang}>
+          {children}
+        </LangProvider>
         <Toaster />
       </body>
     </html>
