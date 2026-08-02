@@ -4,6 +4,7 @@ export type InvoiceSourceDraft = {
   mode: InvoiceSourceMode;
   amountType?: "percent" | "amount";
   value?: number;
+  amount?: number;
   milestoneName?: string;
   description?: string;
   periodStart?: string;
@@ -54,6 +55,6 @@ export function sourceDraftComplete(source: InvoiceSourceDraft | null): boolean 
   if (!source) return false;
   if (["fixed_full", "fixed_final"].includes(source.mode)) return true;
   if (["fixed_dp", "fixed_milestone"].includes(source.mode)) return Boolean(source.amountType && source.value && source.value > 0 && (source.mode !== "fixed_milestone" || source.milestoneName?.trim()));
-  if (source.mode === "hourly_deposit") return Boolean(source.value && source.value > 0);
+  if (source.mode === "hourly_deposit") return Boolean(source.amount && source.amount > 0);
   return Boolean(source.periodStart && source.periodEnd && source.periodStart < source.periodEnd && source.timeEntryIds?.length);
 }

@@ -128,6 +128,9 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         previewAmount = Math.max(0, originalAmount - (project.priorActiveFixedBilledAmount || 0));
       }
     }
+    if (source?.mode === "hourly_deposit") {
+      previewAmount = source.amount ?? 0;
+    }
     const numericPreview = Number(previewAmount);
     const converted = convertCurrency(numericPreview, project.currency, form.currency, baseCurrency, rateMap);
     return { description: project.name, quantity: 1, unitPrice: converted?.amount ?? 0, projectId: project.id, originalAmount: numericPreview, originalCurrency: project.currency, conversionRate: converted?.rate ?? null };
@@ -314,7 +317,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
             <Select value={source.amountType} onValueChange={(value) => updateSource(project.id, { amountType: value as "percent" | "amount" })}><SelectTrigger><SelectValue placeholder="Jenis nilai" /></SelectTrigger><SelectContent><SelectItem value="percent">Persen</SelectItem><SelectItem value="amount">Nominal</SelectItem></SelectContent></Select>
             <Input type="number" min="0.01" step="0.01" placeholder={source.amountType === "percent" ? "Persen" : "Nominal"} value={source.value ?? ""} onChange={(e) => updateSource(project.id, { value: Number(e.target.value) })} />
           </div>}
-          {source?.mode === "hourly_deposit" && <div className="grid gap-2 sm:grid-cols-2"><Input placeholder="Deskripsi deposit" value={source.description ?? ""} onChange={(e) => updateSource(project.id, { description: e.target.value })} /><Input type="number" min="0.01" placeholder="Nominal deposit" value={source.value ?? ""} onChange={(e) => updateSource(project.id, { value: Number(e.target.value) })} /></div>}
+          {source?.mode === "hourly_deposit" && <div className="grid gap-2 sm:grid-cols-2"><Input placeholder="Deskripsi deposit" value={source.description ?? ""} onChange={(e) => updateSource(project.id, { description: e.target.value })} /><Input type="number" min="0.01" placeholder="Nominal deposit" value={source.amount ?? ""} onChange={(e) => updateSource(project.id, { amount: Number(e.target.value) })} /></div>}
           {source?.mode === "hourly_timesheet" && <div className="grid gap-2 sm:grid-cols-2"><Input aria-label="Awal periode" type="date" value={source.periodStart ?? ""} onChange={(e) => updateSource(project.id, { periodStart: e.target.value, timeEntryIds: [] })} /><Input aria-label="Akhir periode" type="date" value={source.periodEnd ?? ""} onChange={(e) => updateSource(project.id, { periodEnd: e.target.value, timeEntryIds: [] })} /><div className="space-y-1 sm:col-span-2">{periodEntries.entries.map((entry) => <label key={entry.id} className="flex items-center gap-2 rounded border p-2 text-sm"><input type="checkbox" checked={source.timeEntryIds?.includes(entry.id) ?? false} onChange={(event) => updateSource(project.id, { timeEntryIds: event.target.checked ? [...(source.timeEntryIds ?? []), entry.id] : (source.timeEntryIds ?? []).filter((id) => id !== entry.id) })}/><span className="flex-1">{entry.workDate} · {entry.description || "Waktu proyek"}</span><span>{entry.durationMinutes} menit</span></label>)}<p className="text-xs text-muted-foreground">Total terpilih: {selectedEntries.reduce((sum, entry) => sum + entry.durationMinutes, 0)} menit · {selectedTotal.toLocaleString("id-ID")}</p></div></div>}
         </div>;
       })}
