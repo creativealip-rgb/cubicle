@@ -1,9 +1,11 @@
 # Changelog
 
-## 2026-08-02 — Project currency selector
+## 2026-08-02 — Retainer progress, task seeding, project currency selector
 
-- Project form: add currency selector dropdown (IDR/USD/EUR/SGD/AUD/GBP/MYR/JPY) below billing model. Previously `form.currency` existed in state but had no UI — label hardcoded "Nilai Project (IDR)". Now label updates dynamically with selected currency.
-- Commit: `f3df57b` pushed to `main`. Deployed via image `cubicle:sha-f3df57b` (container `cubiqlo-new-app`).
+- Retainer progress: project detail header, project list, and client detail page all show approved hours / included hours (e.g. "40/40 jam") instead of task count for retainer projects. `getProjectProgress` handles retainer billingType. Added `retainerIncludedMinutes` + `trackedMinutes` to queries.
+- Retainer dummy data: seeded 4 tasks + 8 approved time entries (300 min each = 40 jam) for "Contoh Retainer" project (Sep 01–Oct 01 periode).
+- Project currency selector: added dropdown (IDR/USD/EUR/SGD/AUD/GBP/MYR/JPY) to project form. Labels update dynamically.
+- Commits: `dd335e2`, `87ea61b`, `6c6c6d8` pushed to `main`. Deployed via image `cubicle:sha-6c6c6d8`.
 
 ## 2026-08-02 — Invoice hourly deposit, retainer simplification, input fixes
 
@@ -12,7 +14,7 @@
 - Hourly deposit input step: `min="0.01" step="0.01"` → `min="1" step="1"` for IDR. Browser HTML5 validation was rejecting whole numbers like 7250000.
 - Retainer manual deposit removed: retainer project billing tab no longer shows "Buat Deposit/Item Manual" dialog. Retainer has single invoice flow via "Buat Invoice Periode Retainer" (auto-generate from fee + overage). Manual deposit was redundant and confusing.
 - Retainer projectItems filter: retainer projects no longer render non-editable "Rp 0" item row in invoice form. Retainer billingType filtered out of `projectItems` computation.
-- Commits: `2c3bab0`, `5110bc0`, `53168ea`, `d718f00` pushed to `main`. Deployed via image `cubicle:sha-d718f00` (container `cubiqlo-new-app`).
+- Commits: `2c3bab0`, `5110bc0`, `53168ea`, `d718f00` pushed to `main`. Deployed via image `cubicle:sha-d718f00`.
 
 ## 2026-08-02 — Invoice badge, delete, task, report, and fixed-price preview fixes
 
