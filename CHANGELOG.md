@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-02 — Prompt Studio i18n: full English translation
+
+- Catalog: `labelEn` added to 30+ Indonesian field labels (e.g. "Jumlah slide" → "Slide count", "Sudut kamera" → "Camera angle", "Gaya logo" → "Logo style").
+- prompt-studio.tsx: `useT()` added for full i18n. All UI strings translated: category labels, section headers, placeholders, button text, dialog text, style/lighting refs (bilingual), preview panel labels.
+- Categories: "Iklan & Promosi" → "Ads & Promotion", "Produk" → "Product".
+- Commit: `850abc0` pushed to `main`. Deployed to dev.
+
 ## 2026-08-02 — Face Card & Logo prompt types
 
 - New prompt type: **Face Card** — portrait analysis & styling recommendations. Dropdowns: Tipe analisis (Face Features, Spectacles, Style, Color, Makeup), Aesthetic (6), Background Tone (6), Typography (5), Color Mood (6).
