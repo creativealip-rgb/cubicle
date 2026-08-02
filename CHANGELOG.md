@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-02 — Project currency selector
+
+- Project form: add currency selector dropdown (IDR/USD/EUR/SGD/AUD/GBP/MYR/JPY) below billing model. Previously `form.currency` existed in state but had no UI — label hardcoded "Nilai Project (IDR)". Now label updates dynamically with selected currency.
+- Commit: `f3df57b` pushed to `main`. Deployed via image `cubicle:sha-f3df57b` (container `cubiqlo-new-app`).
+
 ## 2026-08-02 — Invoice hourly deposit, retainer simplification, input fixes
 
 - Hourly deposit subtotal: `projectItems` now handles `hourly_deposit` mode → `previewAmount = source.amount`. Previously skipped (originalAmount=0 for hourly), subtotal showed Rp 0.
