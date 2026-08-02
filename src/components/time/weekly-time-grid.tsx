@@ -1,8 +1,6 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import Link from "next/link";
-import { ChevronLeft, ChevronRight, Copy, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { setWeeklyTimeCell } from "@/lib/actions/time";
@@ -10,7 +8,8 @@ import { buildWeeklyGrid, formatDurationInput, getWeekDates, parseDurationInput,
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { localDateIso, shiftDateIso, weekStartDate } from "@/lib/effective-work-date";
+import { Plus, Copy } from "lucide-react";
+import { localDateIso, weekStartDate } from "@/lib/effective-work-date";
 
 type ProjectOption = { id: string; name: string };
 type TaskOption = { id: string; title: string; projectId: string };
@@ -24,12 +23,6 @@ function minutesLabel(minutes: number) {
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
   return rest ? `${hours}j ${rest}m` : `${hours}j`;
-}
-
-function compactWeekLabel(dates: Date[]) {
-  const start = dates[0].toLocaleDateString("id-ID", { day: "numeric", month: "short", timeZone: "UTC" });
-  const end = dates[6].toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
-  return `${start} – ${end}`;
 }
 
 export function WeeklyTimeGrid({
@@ -59,9 +52,6 @@ export function WeeklyTimeGrid({
     return value;
   }, [dates]);
   const previousGrid = useMemo(() => buildWeeklyGrid(entries, previousAnchor), [entries, previousAnchor]);
-  const previousHref = `/app/time?view=weekly&date=${shiftDateIso(anchor, -7)}`;
-  const nextHref = `/app/time?view=weekly&date=${shiftDateIso(anchor, 7)}`;
-  const todayHref = `/app/time?view=weekly&date=${localDateIso(new Date())}`;
 
   const rows = useMemo(() => {
     const map = new Map(grid.rows.map((row) => [row.key, row]));
@@ -122,14 +112,6 @@ export function WeeklyTimeGrid({
 
   return (
     <section className="rounded-lg border bg-card">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2">
-        <span className="text-sm font-medium">{compactWeekLabel(dates)}</span>
-        <div className="flex items-center gap-1 text-xs">
-          <Button asChild size="icon" variant="ghost" className="h-7 w-7 rounded-full" aria-label="Minggu sebelumnya"><Link href={previousHref}><ChevronLeft className="h-3.5 w-3.5" /></Link></Button>
-          <Button asChild size="icon" variant="ghost" className="h-7 w-7 rounded-full" aria-label="Minggu berikutnya"><Link href={nextHref}><ChevronRight className="h-3.5 w-3.5" /></Link></Button>
-          <Button asChild size="sm" variant="ghost" className="h-7 rounded-full px-2 text-xs"><Link href={todayHref}>Minggu ini</Link></Button>
-        </div>
-      </div>
       <div className="p-3">
         {!rows.length ? <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">Belum ada baris minggu ini. Tambah Project/Task atau salin struktur minggu lalu.</div> : <>
           <div className="hidden overflow-x-auto lg:block"><div className="min-w-[900px]">
