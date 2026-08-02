@@ -160,6 +160,8 @@ export default async function ClientDetailPage({
       selectedPackageId: projects.selectedPackageId,
       taskCount: sql<number>`count(${tasks.id})::int`,
       doneCount: sql<number>`count(case when ${tasks.status} = 'done' then 1 end)::int`,
+      trackedMinutes: sql<number>`coalesce((select sum(te.duration_minutes) from time_entries te where te.project_id = ${projects.id}), 0)::int`,
+      retainerIncludedMinutes: projects.retainerIncludedMinutes,
     })
     .from(projects)
     .leftJoin(tasks, eq(tasks.projectId, projects.id))
@@ -455,11 +457,19 @@ export default async function ClientDetailPage({
             const billingDisplayType = project.billingModel ?? project.billingType;
             const isPackage = billingDisplayType === "package";
             const isHours = billingDisplayType === "hourly" || billingDisplayType === "hours";
+            const isRetainer = billingDisplayType === "retainer";
+            const retainerIncluded = project.retainerIncludedMinutes && project.retainerIncludedMinutes > 0 ? project.retainerIncludedMinutes : null;
             const progressPercent = isPackage
               ? project.packageUsedPercent
-              : project.taskCount > 0
-                ? Math.round((project.doneCount / project.taskCount) * 100)
-                : null;
+              : isRetainer
+                ? retainerIncluded
+                  ? Math.min(100, Math.round((project.trackedMinutes / retainerIncluded) * 100))
+                  : project.taskCount > 0
+                    ? Math.round((project.doneCount / project.taskCount) * 100)
+                    : null
+                : project.taskCount > 0
+                  ? Math.round((project.doneCount / project.taskCount) * 100)
+                  : null;
             const progressLabel = isPackage
               ? packageHours != null
                 ? `${usedHours.toFixed(1)}/${packageHours} jam terpakai`
@@ -468,7 +478,11 @@ export default async function ClientDetailPage({
                   : "Paket belum dipilih"
               : isHours
                 ? `${usedHours.toFixed(1)} jam tercatat`
-                : `${project.doneCount}/${project.taskCount} tugas selesai`;
+                : isRetainer
+                  ? retainerIncluded
+                    ? `${usedHours.toFixed(0)} / ${(retainerIncluded / 60).toFixed(0)} jam terpakai`
+                    : `${usedHours.toFixed(1)} jam tercatat`
+                  : `${project.doneCount}/${project.taskCount} tugas selesai`;
             const billingMeta = isHours && project.rate
               ? `Rate ${project.currency} ${Number(project.rate).toLocaleString("id-ID")}/jam`
               : billingDisplayType === "fixed_price" && project.budget
