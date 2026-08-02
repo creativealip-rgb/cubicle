@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-08-02 — Invoice hourly deposit, retainer simplification, input fixes
+
+- Hourly deposit subtotal: `projectItems` now handles `hourly_deposit` mode → `previewAmount = source.amount`. Previously skipped (originalAmount=0 for hourly), subtotal showed Rp 0.
+- Hourly deposit field name: form input changed from `source.value` → `source.amount` to match `ProjectInvoiceSourceSchema` (`.strict()` would reject on submit). `InvoiceSourceDraft` type and `sourceDraftComplete` updated accordingly.
+- Hourly deposit input step: `min="0.01" step="0.01"` → `min="1" step="1"` for IDR. Browser HTML5 validation was rejecting whole numbers like 7250000.
+- Retainer manual deposit removed: retainer project billing tab no longer shows "Buat Deposit/Item Manual" dialog. Retainer has single invoice flow via "Buat Invoice Periode Retainer" (auto-generate from fee + overage). Manual deposit was redundant and confusing.
+- Retainer projectItems filter: retainer projects no longer render non-editable "Rp 0" item row in invoice form. Retainer billingType filtered out of `projectItems` computation.
+- Commits: `2c3bab0`, `5110bc0`, `53168ea`, `d718f00` pushed to `main`. Deployed via image `cubicle:sha-d718f00` (container `cubiqlo-new-app`).
+
 ## 2026-08-02 — Invoice badge, delete, task, report, and fixed-price preview fixes
 
 - Invoice detail badge: `displayStatus` no longer downgrades DB `status="paid"` to `"payment due"` when payment rows are empty. DB status is the source of truth; payment rows only upgrade upward to `paid`. Invoice marked paid manually now shows "Lunas".
