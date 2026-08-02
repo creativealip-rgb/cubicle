@@ -4,6 +4,7 @@ export type ProjectProgressInput = {
   doneTasks: number;
   trackedMinutes: number;
   packageHours: number | null;
+  retainerIncludedMinutes?: number | null;
 };
 
 function taskPct(totalTasks: number, doneTasks: number) {
@@ -17,6 +18,16 @@ function formatHours(minutes: number) {
 }
 
 export function getProjectProgress(input: ProjectProgressInput) {
+  if (input.billingType === "retainer") {
+    const included = input.retainerIncludedMinutes && input.retainerIncludedMinutes > 0 ? input.retainerIncludedMinutes : null;
+    return {
+      pct: included ? Math.min(100, Math.max(0, Math.round((input.trackedMinutes / included) * 100))) : taskPct(input.totalTasks, input.doneTasks),
+      label: included
+        ? `${formatHours(input.trackedMinutes)} / ${formatHours(included)} jam`
+        : `${formatHours(input.trackedMinutes)} jam`,
+    };
+  }
+
   if (input.billingType === "hours") {
     return {
       pct: taskPct(input.totalTasks, input.doneTasks),
