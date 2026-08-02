@@ -1320,3 +1320,27 @@ export async function getInvoiceBySharedToken(rawToken: string) {
 
   return { ...inv, items, client: client || null, workspace: ws || null };
 }
+
+export async function deleteInvoice(invoiceId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  const inv = await assertInvoiceInWorkspace(invoiceId, workspaceId);
+
+  // Only allow deletion for draft invoices — sent/paid invoices must be cancelled first
+  if (!["draft", "cancelled"].includes(inv.status)) {
+    throw new Error("Hanya invoice draf atau dibatalkan yang bisa dihapus");
+  }
+
+  await db.transaction(async (tx) => {
+    // Delete invoice items first
+    await tx.delete(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId));
+    // Delete payments if any
+    await tx.delete(payments).where(eq(payments.invoiceId, invoiceId));
+    // Delete the invoice
+    await tx.delete(invoices).where(eq(invoices.id, invoiceId));
+  });
+
+  await writeActivityLog(workspaceId, user.id, "deleted_invoice", "invoice", invoiceId);
+  return { success: true };
+}
