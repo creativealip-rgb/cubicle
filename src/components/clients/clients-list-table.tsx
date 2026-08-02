@@ -79,14 +79,6 @@ export function ClientsListTable({
               "Add your first client to start managing their projects, invoices, and portal.",
             )}
           </p>
-          {canWrite && !isAtLimit && (
-            <Button asChild className="mt-4">
-              <Link href="/app/clients/new">
-                <Plus className="h-4 w-4 mr-1" />
-                {t("Tambah Klien", "Add Client")}
-              </Link>
-            </Button>
-          )}
         </>
       ) : (
         <p className="text-sm text-muted-foreground">
@@ -218,14 +210,6 @@ export function ClientsListTable({
                     "Add your first client to start managing projects & invoices.",
                   )}
                 </p>
-                {canWrite && !isAtLimit && (
-                  <Button asChild className="mt-4">
-                    <Link href="/app/clients/new">
-                      <Plus className="h-4 w-4 mr-1" />
-                      {t("Tambah Klien", "Add Client")}
-                    </Link>
-                  </Button>
-                )}
               </>
             ) : (
               <p className="text-sm text-muted-foreground">
