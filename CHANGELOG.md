@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-02 — Prompt Studio dropdowns, universal Feed name
+
+- Prompt Studio: rename "Feed Instagram" → "Feed" (universal, platform-agnostic). Remove Instagram-specific defaults.
+- Shared dropdown options: `field-options.ts` with tone (10), style (10), platform (10), ratio (5), scene (10), camera angle (7), lighting (8), background (7), orientation (3), voice language (3), duration (6), cadence (4).
+- Catalog: convert 15+ text fields to dropdowns across product-photography, product-try-on, fnb-menu, short-video-script, video-storyboard, ugc-ad, marketing-copy, content-series, product-ad.
+- Advanced options: tone, style, platform, ratio now dropdowns instead of free text inputs.
+- Commit: `d2c6696` pushed to `main`.
+
 ## 2026-08-02 — Calendar date picker for time navigation
 
 - Time page navigation: date label is now clickable, opens a calendar dropdown (react-day-picker v10). Users can pick any date directly instead of clicking `<` / `>` arrows one by one. Week starts on Monday (Senin). Arrows and "Hari ini" button preserved.
