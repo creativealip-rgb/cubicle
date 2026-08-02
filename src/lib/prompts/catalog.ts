@@ -9,7 +9,7 @@ export const promptTypeIds = [
   "instagram-feed", "carousel", "story", "content-series", "product-ad",
   "promo-discount", "testimonial-review", "product-photography", "product-try-on",
   "fnb-menu", "short-video-script", "video-storyboard", "ugc-ad",
-  "youtube-thumbnail", "marketing-copy", "article",
+  "youtube-thumbnail", "marketing-copy", "article", "face-card", "logo",
 ] as const;
 
 export type PromptTypeId = (typeof promptTypeIds)[number];
@@ -143,6 +143,21 @@ export const launchPromptCatalog: PromptCatalogEntry[] = [
     field("keywords", "Kata kunci", "text"),
     field("tone", "Tone", "select", { options: [...toneOptions] }),
   ], ["Judul", "Artikel", "CTA"]),
+
+  entry("face-card", "brand-copy", "Face Card", "Analisis wajah dan rekomendasi styling untuk portrait profesional.", "scan-face", [
+    field("analysisType", "Tipe analisis", "select", { required: true, options: ["Face Features", "Spectacles", "Style", "Color", "Makeup"] }),
+    field("aesthetic", "Aesthetic", "select", { required: true, options: ["Editorial Magazine", "Natural Beauty", "High Fashion", "Commercial Clean", "Artistic Dramatic", "Soft Romantic"] }),
+    field("backgroundTone", "Background Tone", "select", { required: true, options: ["Beige Ivory", "Cool Gray", "Warm Earth", "Pure White", "Deep Dark", "Pastel Soft"] }),
+    field("typography", "Typography", "select", { options: ["Serif + Sans Hybrid", "Modern Sans", "Classic Serif", "Handwritten Script", "Bold Display"] }),
+    field("colorMood", "Color Mood", "select", { options: ["Warm Tones", "Cool Tones", "Neutral Mono", "Vibrant Pop", "Muted Pastel", "High Contrast"] }),
+  ], ["Analisis", "Rekomendasi styling", "Prompt visual", "Arahan fotografi", "Color palette"]),
+
+  entry("logo", "brand-copy", "Logo", "Desain logo dan brand mockup siap pakai.", "hexagon", [
+    field("logoStyle", "Gaya logo", "select", { required: true, options: ["Minimalist", "Vintage / Retro", "Modern Geometric", "Handwritten / Organic", "3D / Isometric", "Mascot / Character", "Lettermark / Monogram"] }),
+    field("colorScheme", "Skema warna", "select", { required: true, options: ["Monochrome", "Two-Tone", "Vibrant Multi", "Pastel Soft", "Dark Premium", "Gradient"] }),
+    field("mockupType", "Tipe mockup", "select", { options: ["Business Card", "Letterhead", "Social Media Profile", "Packaging", "Merchandise", "Website Header", "Signage"] }),
+    field("industry", "Industri", "text"),
+  ], ["Konsep logo", "Prompt visual", "Variasi warna", "Mockup arahan", "Tipografi"]),
 ];
 
 const baseSchema = z.object({

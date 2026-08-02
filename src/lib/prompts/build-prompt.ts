@@ -4,7 +4,7 @@ import { getPromptType, promptBriefSchema, type PromptBrief, type PromptTypeId }
 const outputItemSchema = z.object({ label: z.string().min(1), content: z.string().min(1) });
 export const promptGenerationResultSchema = z.object({
   version: z.literal(1),
-  promptType: z.enum(["instagram-feed","carousel","story","content-series","product-ad","promo-discount","testimonial-review","product-photography","product-try-on","fnb-menu","short-video-script","video-storyboard","ugc-ad","youtube-thumbnail","marketing-copy","article"]),
+  promptType: z.enum(["instagram-feed","carousel","story","content-series","product-ad","promo-discount","testimonial-review","product-photography","product-try-on","fnb-menu","short-video-script","video-storyboard","ugc-ad","youtube-thumbnail","marketing-copy","article","face-card","logo"]),
   title: z.string().min(1),
   readyOutput: z.array(outputItemSchema).min(1),
   technicalPrompt: z.string().optional(),
