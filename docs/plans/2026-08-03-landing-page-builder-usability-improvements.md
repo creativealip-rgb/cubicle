@@ -2,9 +2,9 @@
 
 > **For Hermes:** Use subagent-driven-development skill to implement this plan task-by-task.
 
-**Goal:** Make Cubiqlo landing page creation faster for non-technical users by adding ready-made templates, guided editing, AI-assisted copy, preview tools, and publish readiness checks.
+**Goal:** Make Cubiqlo landing page creation faster for non-technical users by adding ready-made templates, guided editing, preview tools, publish readiness checks, SEO/share settings, and optional AI-assisted copy.
 
-**Architecture:** Extend the existing canvas builder instead of replacing it. Keep the canvas as the main editor, add reusable template catalogs and helper panels around it, then wire public/preview validation through existing `PersonalSiteInput`, `savePersonalSite`, and `/site/*` routes.
+**Architecture:** Extend the existing canvas builder instead of replacing it. Keep the canvas as the main editor, add reusable template catalogs and helper panels around it, then wire public/preview validation through existing `PersonalSiteInput`, `savePersonalSite`, and `/site/*` routes. Current baseline already includes multi-page editor state, nested public subpage route, renderer page navigation, and themeConfig-aware public rendering; preserve that work.
 
 **Tech Stack:** Next.js 16 App Router, React 19, Tailwind CSS, existing canvas components, existing personal-site model/actions, existing AI provider abstraction where available.
 
@@ -12,7 +12,7 @@
 
 ## Current Baseline
 
-Existing files and behavior verified on dev:
+Existing files and behavior verified locally before plan revision:
 
 - Builder route: `src/app/(app)/app/personal-site/page.tsx`
 - Main editor: `src/components/site/canvas/canvas-editor.tsx`
@@ -24,11 +24,31 @@ Existing files and behavior verified on dev:
   - `src/app/site/[slug]/page.tsx`
   - `src/app/site/[slug]/[pageSlug]/page.tsx`
 - Image upload: `src/components/site/canvas/image-upload.tsx`
-- Current builder supports Insert, Pages, Theme, multi-page public route, theme persistence, section reorder, hero image, auto-save.
+- Current builder supports Insert, Pages, Theme, multi-page public route, theme persistence, section reorder, hero image, auto-save. Checkpoint commit `82e94f0` pushed to `main` before this plan revision.
 
 Known gap to preserve/verify:
 
 - Existing lint warning in `src/components/site/personal-site-renderer.tsx` for `<img>` is accepted for now unless image optimization becomes part of a later pass.
+
+---
+
+## Pre-Implementation Safety Gate
+
+Before touching implementation files, run and read:
+
+```bash
+git status --short
+git fetch origin
+git log --oneline HEAD..origin/main
+git diff --stat
+git diff -- src/components/site/canvas/canvas-editor.tsx src/components/site/canvas/canvas-renderer.tsx src/components/site/personal-site-renderer.tsx src/lib/personal-site/model.ts src/app/site/[slug]/[pageSlug]/page.tsx
+```
+
+Expected:
+
+- No remote-only commits before pushing. If `HEAD..origin/main` is non-empty, rebase/merge first.
+- Preserve existing multi-page editor/public-route work from commit `82e94f0`.
+- Do not overwrite unrelated dirty work. If new dirty files appear, inspect before staging.
 
 ---
 
@@ -181,11 +201,14 @@ Expected: exit 0.
 - Create: `src/lib/personal-site/page-templates.ts`
 - Reuse builders from `src/lib/personal-site/section-templates.ts` where possible.
 
-**Template types:**
+**Template types for first ship:**
 
 - `Freelancer Profile`
 - `Agency Website`
 - `Service Offer`
+
+**Deferred templates:**
+
 - `Portfolio`
 - `Lead Generation`
 
@@ -258,7 +281,7 @@ Expected: exit 0.
 
 **Acceptance criteria:**
 
-- User can apply `Freelancer Profile` template.
+- User can apply `Freelancer Profile`, `Agency Website`, and `Service Offer` templates.
 - Home page sections replaced by template sections.
 - Existing theme colors remain unchanged.
 - Save/refresh keeps template content.
@@ -369,7 +392,8 @@ Expected: exit 0.
 **Files:**
 
 - Create: `src/lib/actions/personal-site-ai.ts`
-- Modify only if needed: existing AI provider helpers under `src/lib/*ai*` after inspection.
+- Prefer create: `src/lib/ai/openai-compatible.ts` for shared `getApiKey`, API base, and response parsing.
+- Inspect and reuse patterns from `src/lib/actions/visual-prompts.ts`; do not blindly duplicate large helper blocks.
 
 **Inputs:**
 
@@ -389,6 +413,7 @@ type GenerateLandingCopyInput = {
 - Return structured JSON matching section type.
 - Validate with Zod before returning to client.
 - If AI env missing, return clear error: `AI belum dikonfigurasi di environment ini.`
+- Default model should come from env when available; otherwise use the same OpenAI-compatible base fallback pattern as `visual-prompts.ts`.
 - Never overwrite existing section without user click.
 
 **Acceptance criteria:**
@@ -603,6 +628,7 @@ seo: z.object({
 - Existing records with no `seo` still parse.
 - Save action preserves `seo`.
 - Public metadata uses `seo.title ?? site.title` and `seo.description ?? site.hero`.
+- Public metadata includes `openGraph.title`, `openGraph.description`, and `openGraph.images` when `seo.ogImage` exists.
 
 **Verification:**
 
@@ -738,7 +764,7 @@ docker compose -f docker-compose.dev.yml up -d --build cubicle-dev
 If time is limited, implement in this order:
 
 1. Phase 1 — Section starter templates
-2. Phase 2 — Full page templates
+2. Phase 2 — Full page templates (3 templates first)
 3. Phase 3 — Quick edit properties panel
 4. Phase 5 — Preview device switcher
 5. Phase 6 — Publish readiness checklist
@@ -747,12 +773,14 @@ If time is limited, implement in this order:
 
 Reason: templates + quick edit deliver immediate usability wins even without AI.
 
+Implementation note: if using `subagent-driven-development`, split each task above into smaller subtasks before dispatching when it would touch more than two files or take more than one focused pass. Commit after each phase, not after unrelated batches.
+
 ---
 
 ## Definition of Done
 
 - Starter blocks available and usable.
-- At least 3 full page templates available.
+- 3 full page templates available: Freelancer Profile, Agency Website, Service Offer.
 - Properties panel edits common section types.
 - Device preview switcher works.
 - Publish checklist visible and live-updating.
