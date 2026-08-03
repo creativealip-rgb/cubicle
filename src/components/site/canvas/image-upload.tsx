@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Upload, Loader2, X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
 type Props = {
@@ -17,25 +18,25 @@ export function ImageUpload({ value, onChange, label = "Upload gambar" }: Props)
   async function handleUpload(file: File | undefined) {
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      alert("Max 5MB");
+      toast.error("Max 5MB");
       return;
     }
     if (!["image/png", "image/jpeg", "image/webp", "image/gif"].includes(file.type)) {
-      alert("Format: PNG, JPG, WebP, GIF");
+      toast.error("Format: PNG, JPG, WebP, GIF");
       return;
     }
     setUploading(true);
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch("/api/workspace/logo", { method: "POST", body: fd });
-      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; logoUrl?: string; error?: string };
-      if (!res.ok || !data.ok || !data.logoUrl) {
+      const res = await fetch("/api/site/upload", { method: "POST", body: fd });
+      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; url?: string; error?: string };
+      if (!res.ok || !data.ok || !data.url) {
         throw new Error(data.error || "Upload gagal");
       }
-      onChange(data.logoUrl);
+      onChange(data.url);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Upload gagal");
+      toast.error(err instanceof Error ? err.message : "Upload gagal");
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
