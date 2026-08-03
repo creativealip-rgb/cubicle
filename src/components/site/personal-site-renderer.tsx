@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import {
   accentForeground,
@@ -92,7 +93,7 @@ function ItemCard({ children, panel }: { children: ReactNode; panel: string }) {
   return <article className={`rounded-2xl p-5 sm:p-6 ${panel}`}>{children}</article>;
 }
 
-function SectionBody({ section, accent, panel }: { section: PersonalSiteSection; accent: string; panel: string }) {
+function SectionBody({ section, accent, panel, buttonRadius }: { section: PersonalSiteSection; accent: string; panel: string; buttonRadius: string }) {
   const marker = <span aria-hidden className="mb-4 block h-1 w-10 rounded-full" style={{ backgroundColor: accent }} />;
 
   switch (section.type) {
@@ -140,7 +141,7 @@ function SectionBody({ section, accent, panel }: { section: PersonalSiteSection;
         <a key={link.id} className={`inline-flex min-h-11 items-center rounded-xl px-5 py-3 text-sm font-semibold ${panel}`} href={safePublicHref(link.url)} target="_blank" rel="noreferrer">{link.platform}</a>
       ))}</div>;
     case "cta":
-      return <div className={`rounded-2xl p-8 text-center ${panel}`}>{section.text && <p className="mx-auto max-w-xl text-lg leading-8 opacity-75">{section.text}</p>}{section.buttonLabel && section.buttonUrl && safePublicHref(section.buttonUrl) !== "#" && <a className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold shadow-lg" style={{ backgroundColor: accent, color: accentForeground(accent) }} href={safePublicHref(section.buttonUrl)}>{section.buttonLabel}</a>}</div>;
+      return <div className={`rounded-2xl p-8 text-center ${panel}`}>{section.text && <p className="mx-auto max-w-xl text-lg leading-8 opacity-75">{section.text}</p>}{section.buttonLabel && section.buttonUrl && safePublicHref(section.buttonUrl) !== "#" && <a className="mt-6 inline-flex min-h-11 items-center justify-center px-6 py-3 text-sm font-semibold shadow-lg" style={{ backgroundColor: accent, color: accentForeground(accent), borderRadius: buttonRadius }} href={safePublicHref(section.buttonUrl)}>{section.buttonLabel}</a>}</div>;
     case "divider":
       return <hr className="border-t border-current opacity-15" />;
     case "collapsible":
@@ -162,50 +163,78 @@ export function PersonalSiteRenderer({
   site,
   labels = defaultLabels,
   embedded = false,
+  activePageSlug = "",
 }: {
   site: PersonalSiteInput;
   labels?: PersonalSiteRendererLabels;
   embedded?: boolean;
+  activePageSlug?: string;
 }) {
   const styles = themeStyles[site.theme];
-  const visibleSections = site.sections.filter(sectionHasContent);
+  const pages = site.pages?.length ? site.pages : [{ id: "home", slug: "", title: "Home", isHome: true, sections: site.sections }];
+  const activePage = pages.find((page) => page.slug === activePageSlug) ?? pages.find((page) => page.isHome) ?? pages[0];
+  const visiblePages = pages.filter((page) => page.title);
+  const visibleSections = (activePage?.sections?.length ? activePage.sections : site.sections).filter(sectionHasContent);
   const visibleLinks = site.links.filter((link) => link.label && safePublicHref(link.url) !== "#");
   const themeConfig = site.themeConfig;
   const accent = themeConfig?.primaryColor ?? site.accent;
+  const buttonRadius = themeConfig?.buttonStyle === "pill" ? "999px" : themeConfig?.buttonStyle === "square" ? "0.25rem" : "0.75rem";
+  const heroShellClass = themeConfig?.headerStyle === "contained" ? "mx-auto my-6 max-w-6xl rounded-[2rem]" : themeConfig?.headerStyle === "minimal" ? "bg-transparent" : "";
   const accentStyle = {
     "--site-accent": accent,
+    "--site-button-radius": buttonRadius,
     ...(themeConfig?.backgroundColor ? { "--site-bg": themeConfig.backgroundColor, backgroundColor: themeConfig.backgroundColor } : {}),
     ...(themeConfig?.textColor ? { "--site-text": themeConfig.textColor, color: themeConfig.textColor } : {}),
+    ...(themeConfig?.fontBody ? { fontFamily: themeConfig.fontBody } : {}),
   } as CSSProperties;
+  const headingStyle = themeConfig?.fontHeading ? { fontFamily: themeConfig.fontHeading } : undefined;
 
   return (
     <main data-testid="personal-site-renderer" data-theme={site.theme} style={accentStyle} className={`${embedded ? "min-h-0" : "min-h-screen"} overflow-hidden ${styles.page}`}>
-      <section className={`relative ${styles.hero} px-6 py-14 sm:px-10 sm:py-20 lg:px-16 lg:py-24`} style={{ backgroundColor: accent }}>
+      <section className={`relative ${styles.hero} ${heroShellClass} px-6 py-14 sm:px-10 sm:py-20 lg:px-16 lg:py-24`} style={{ backgroundColor: themeConfig?.headerStyle === "minimal" ? "transparent" : accent }}>
         {site.heroImage && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={site.heroImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20" />
         )}
         <div className="relative z-10 mx-auto max-w-6xl">
           {site.subtitle && <p className={`text-xs font-semibold uppercase tracking-[0.2em] sm:text-sm ${styles.eyebrow}`}>{site.subtitle}</p>}
-          <h1 className={`${site.subtitle ? "mt-5" : ""} max-w-4xl text-4xl font-bold leading-[1.05] tracking-[-0.02em] sm:text-6xl lg:text-7xl`}>{site.title}</h1>
+          <h1 className={`${site.subtitle ? "mt-5" : ""} max-w-4xl text-4xl font-bold leading-[1.05] tracking-[-0.02em] sm:text-6xl lg:text-7xl`} style={headingStyle}>{site.title}</h1>
           <p className={`mt-6 max-w-2xl text-base leading-7 sm:text-xl sm:leading-8 ${styles.heroMuted}`}>{site.hero}</p>
           {site.ctaLabel && site.ctaUrl && safePublicHref(site.ctaUrl) !== "#" && (
-            <a className="mt-8 inline-flex min-h-11 items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold shadow-lg transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" style={{ backgroundColor: accent, color: accentForeground(accent) }} href={safePublicHref(site.ctaUrl)}>{site.ctaLabel}</a>
+            <a className="mt-8 inline-flex min-h-11 items-center justify-center px-6 py-3 text-sm font-semibold shadow-lg transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" style={{ backgroundColor: accent, color: accentForeground(accent), borderRadius: buttonRadius }} href={safePublicHref(site.ctaUrl)}>{site.ctaLabel}</a>
           )}
+        {visiblePages.length > 1 && (
+          <nav className="mt-8 flex flex-wrap gap-2" aria-label="Site pages">
+            {visiblePages.map((page) => {
+              const href = page.slug ? `/site/${site.slug}/${page.slug}` : `/site/${site.slug}`;
+              const active = page.id === activePage?.id;
+              return (
+                <Link
+                  key={page.id}
+                  href={href}
+                  className={`inline-flex min-h-10 items-center rounded-full border px-4 py-2 text-sm font-semibold transition ${active ? "bg-white text-slate-950" : "border-white/30 text-white hover:bg-white/10"}`}
+                >
+                  {page.title}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
+
         </div>
       </section>
 
-      {site.about && <section className="px-6 py-14 sm:px-10 lg:px-16 lg:py-20"><div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.65fr_1.35fr]"><div><p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: accent }}>{labels.about}</p><h2 className="mt-3 text-3xl font-bold tracking-[-0.01em]">{site.title}</h2></div><p className="whitespace-pre-wrap text-base leading-8 opacity-70">{site.about}</p></div></section>}
+      {site.about && <section className="px-6 py-14 sm:px-10 lg:px-16 lg:py-20"><div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.65fr_1.35fr]"><div><p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: accent }}>{labels.about}</p><h2 className="mt-3 text-3xl font-bold tracking-[-0.01em]" style={headingStyle}>{site.title}</h2></div><p className="whitespace-pre-wrap text-base leading-8 opacity-70">{site.about}</p></div></section>}
 
       {visibleSections.map((section, index) => (
         <AnimateOnScroll key={section.id} animation={section.animation}>
           <section data-section-type={section.type} className={`${index % 2 === 0 ? styles.sectionAlt : ""} px-6 py-14 sm:px-10 lg:px-16 lg:py-20`}>
-            <div className="mx-auto max-w-6xl"><h2 className="mb-7 text-2xl font-bold tracking-[-0.01em] sm:text-3xl">{section.heading}</h2><SectionBody section={section} accent={accent} panel={styles.panel} /></div>
+            <div className="mx-auto max-w-6xl"><h2 className="mb-7 text-2xl font-bold tracking-[-0.01em] sm:text-3xl" style={headingStyle}>{section.heading}</h2><SectionBody section={section} accent={accent} panel={styles.panel} buttonRadius={buttonRadius} /></div>
           </section>
         </AnimateOnScroll>
       ))}
 
-      {visibleLinks.length > 0 && <section className="px-6 py-14 sm:px-10 lg:px-16 lg:py-20"><div className={`mx-auto max-w-6xl rounded-3xl p-7 text-center sm:p-10 ${styles.panel}`}><h2 className="text-2xl font-bold sm:text-3xl">{labels.workWithMe}</h2><p className="mx-auto mt-3 max-w-xl text-sm leading-6 opacity-65">{labels.contactHint}</p><div className="mt-6 flex flex-wrap justify-center gap-3">{visibleLinks.map((link) => <a key={link.id} className="inline-flex min-h-11 items-center rounded-xl px-5 py-3 text-sm font-semibold" style={{ backgroundColor: accent, color: accentForeground(accent) }} href={safePublicHref(link.url)} target={/^https?:/i.test(link.url) ? "_blank" : undefined} rel={/^https?:/i.test(link.url) ? "noreferrer" : undefined}>{link.label}</a>)}</div></div></section>}
+      {visibleLinks.length > 0 && <section className="px-6 py-14 sm:px-10 lg:px-16 lg:py-20"><div className={`mx-auto max-w-6xl rounded-3xl p-7 text-center sm:p-10 ${styles.panel}`}><h2 className="text-2xl font-bold sm:text-3xl">{labels.workWithMe}</h2><p className="mx-auto mt-3 max-w-xl text-sm leading-6 opacity-65">{labels.contactHint}</p><div className="mt-6 flex flex-wrap justify-center gap-3">{visibleLinks.map((link) => <a key={link.id} className="inline-flex min-h-11 items-center rounded-xl px-5 py-3 text-sm font-semibold" style={{ backgroundColor: accent, color: accentForeground(accent), borderRadius: buttonRadius }} href={safePublicHref(link.url)} target={/^https?:/i.test(link.url) ? "_blank" : undefined} rel={/^https?:/i.test(link.url) ? "noreferrer" : undefined}>{link.label}</a>)}</div></div></section>}
     </main>
   );
 }

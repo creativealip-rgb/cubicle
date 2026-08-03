@@ -279,7 +279,7 @@ export const personalSiteInputSchema = z.object({
   title: z.string().trim().min(1).max(100),
   subtitle: shortTextSchema,
   hero: z.string().trim().min(1).max(500),
-  heroImage: z.string().trim().max(2_000).optional(),
+  heroImage: z.string().trim().max(2_000).nullish(),
   about: z.string().trim().max(2_000),
   ctaLabel: z.string().trim().max(60),
   ctaUrl: optionalPublicHrefSchema,
@@ -288,7 +288,7 @@ export const personalSiteInputSchema = z.object({
   sections: z.array(personalSiteSectionSchema).max(12),
   links: z.array(personalSiteLinkSchema).max(8),
   pages: z.array(personalSitePageSchema).max(10).optional(),
-  themeConfig: themeConfigSchema.optional(),
+  themeConfig: themeConfigSchema.nullish(),
 });
 
 export type PersonalSiteInput = z.infer<typeof personalSiteInputSchema>;

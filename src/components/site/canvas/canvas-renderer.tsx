@@ -1,18 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Type, Briefcase, ListOrdered, DollarSign, FolderOpen, MessageSquareQuote, HelpCircle, Mail, Images, Code, Share2, MousePointerClick, Minus, ArrowUpDown, ChevronDown, ChevronUp, List, Columns, GripVertical, Copy, Trash2 } from "lucide-react";
+import { Plus, ChevronDown, ChevronUp, GripVertical, Copy, Trash2 } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { InlineText } from "./inline-text";
 import { ImageUpload } from "./image-upload";
 import type { PersonalSiteInput, PersonalSiteSection, ThemeConfig } from "@/lib/personal-site/model";
-import { PERSONAL_SITE_SECTION_TYPES, PERSONAL_SITE_ANIMATIONS } from "@/lib/personal-site/model";
+import { PERSONAL_SITE_ANIMATIONS } from "@/lib/personal-site/model";
 
 type Props = {
   site: PersonalSiteInput;
@@ -24,26 +22,6 @@ type Props = {
   onMoveSection: (id: string, direction: -1 | 1) => void;
   onDuplicateSection: (id: string) => void;
   onDeleteSection: (id: string) => void;
-};
-
-const WIDGET_ICONS: Record<string, React.ElementType> = {
-  services: Briefcase,
-  process: ListOrdered,
-  pricing: DollarSign,
-  portfolio: FolderOpen,
-  testimonials: MessageSquareQuote,
-  faq: HelpCircle,
-  contact: Mail,
-  custom: Type,
-  gallery: Images,
-  embed: Code,
-  social: Share2,
-  cta: MousePointerClick,
-  divider: Minus,
-  spacer: ArrowUpDown,
-  collapsible: ChevronDown,
-  tableOfContents: List,
-  contentBlock: Columns,
 };
 
 export function CanvasRenderer({
@@ -58,7 +36,7 @@ export function CanvasRenderer({
   onDeleteSection,
   onReorderSections,
 }: Props & { onReorderSections?: (sections: PersonalSiteSection[]) => void }) {
-  const theme = site.themeConfig;
+  const theme = site.themeConfig ?? undefined;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -140,11 +118,10 @@ export function CanvasRenderer({
       <div className="px-8 py-4 space-y-6">
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={site.sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-            {site.sections.map((section, index) => (
+            {site.sections.map((section) => (
               <SortableCanvasSection
                 key={section.id}
                 section={section}
-                index={index}
                 selected={selectedSectionId === section.id}
                 onSelect={() => onSelectSection(section.id)}
                 onMoveUp={() => onMoveSection(section.id, -1)}
@@ -199,9 +176,8 @@ export function CanvasRenderer({
   );
 }
 
-function SortableCanvasSection({ section, index, selected, onSelect, onMoveUp, onMoveDown, onDuplicate, onDelete, onUpdate, theme }: {
+function SortableCanvasSection({ section, selected, onSelect, onMoveUp, onMoveDown, onDuplicate, onDelete, onUpdate, theme }: {
   section: PersonalSiteSection;
-  index: number;
   selected: boolean;
   onSelect: () => void;
   onMoveUp: () => void;

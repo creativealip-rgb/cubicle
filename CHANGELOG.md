@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-03 — Landing page builder multi-page checkpoint + usability plan
+
+- Builder: current worktree checkpoint adds multi-page editing in canvas, active-page section sync, page add/rename/reorder/home controls, undo/redo preservation across pages, and mobile sidebar support for page operations.
+- Public site: adds nested public route `/site/[slug]/[pageSlug]`, renderer page navigation, and active-page rendering while preserving the home route `/site/[slug]`.
+- Theme: keeps `themeConfig` nullish-safe and applies header style, button style, hero image, font config, and accent color consistently in public renderer.
+- Plan: adds `docs/plans/2026-08-03-landing-page-builder-usability-improvements.md` for next usability pass: starter blocks, page templates, properties panel, device preview, publish readiness, SEO/share settings, and AI copy generation.
+- Verification: targeted ESLint passed with 0 errors and accepted existing warnings (`canvas-page-client.tsx` unused arg and renderer `<img>`), TypeScript passed, and `git diff --check` passed. Production untouched.
+
 ## 2026-08-02 — Site Builder: 6 new section types (Google Sites parity)
 
 - New section types: `gallery` (image grid), `embed` (YouTube/maps/iframe), `social` (social media links with platform selector), `cta` (call-to-action block), `divider` (separator), `collapsible` (accordion/expandable group).

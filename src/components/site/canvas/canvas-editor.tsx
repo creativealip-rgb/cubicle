@@ -3,15 +3,14 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Palette, FileText, Layers, Save, Eye, Loader2, Check, Circle, PanelLeft, Undo2, Redo2, Trash2 } from "lucide-react";
+import { Plus, Palette, FileText, Layers, Save, Eye, Loader2, Check, Circle, PanelLeft, Undo2, Redo2, Trash2, Home, ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CanvasRenderer } from "./canvas-renderer";
 import { useT } from "@/lib/i18n-client";
-import type { PersonalSiteInput, PersonalSiteSection, PersonalSitePage } from "@/lib/personal-site/model";
-import { PERSONAL_SITE_SECTION_TYPES } from "@/lib/personal-site/model";
+import type { PersonalSiteInput, PersonalSiteSection, PersonalSitePage, ThemeConfig } from "@/lib/personal-site/model";
 
 type Props = {
   initialSite: PersonalSiteInput;
@@ -21,6 +20,48 @@ type Props = {
 
 function makeId() {
   return `s_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+
+const DEFAULT_THEME_CONFIG: ThemeConfig = {
+  primaryColor: "#6647F0",
+  secondaryColor: "#1e293b",
+  backgroundColor: "#ffffff",
+  textColor: "#111827",
+  headerStyle: "full-width",
+  buttonStyle: "rounded",
+};
+
+function slugifyPageTitle(title: string, fallback: string) {
+  const slug = title
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
+  return slug || fallback;
+}
+
+function normalizePages(site: PersonalSiteInput): PersonalSitePage[] {
+  const pages = site.pages?.length ? site.pages : [{ id: "home", slug: "", title: "Home", isHome: true, sections: site.sections }];
+  return pages.map((page, index) => ({ ...page, isHome: page.isHome || index === 0 && !pages.some((p) => p.isHome) }));
+}
+
+function pageSections(site: PersonalSiteInput, activePageId: string) {
+  const pages = normalizePages(site);
+  return pages.find((page) => page.id === activePageId)?.sections ?? site.sections;
+}
+
+function syncSiteSections(site: PersonalSiteInput, activePageId: string, sections: PersonalSiteSection[]): PersonalSiteInput {
+  const pages = normalizePages(site);
+  const nextPages = pages.map((page) => page.id === activePageId ? { ...page, sections } : page);
+  return { ...site, sections: nextPages.find((page) => page.isHome)?.sections ?? sections, pages: nextPages };
+}
+
+function withThemeConfig(site: PersonalSiteInput, patch: Partial<ThemeConfig>): Partial<PersonalSiteInput> {
+  const themeConfig = { ...DEFAULT_THEME_CONFIG, ...(site.themeConfig ?? {}), ...patch };
+  return { themeConfig, accent: themeConfig.primaryColor };
 }
 
 function emptySection(type: PersonalSiteSection["type"]): PersonalSiteSection {
@@ -69,16 +110,19 @@ const WIDGET_LIST: Array<{ type: PersonalSiteSection["type"]; label: string; ico
 export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
   const { t } = useT();
   const router = useRouter();
-  const [site, setSite] = useState<PersonalSiteInput>(initialSite);
+  const [site, setSite] = useState<PersonalSiteInput>(() => ({ ...initialSite, pages: normalizePages(initialSite) }));
+  const [activePageId, setActivePageId] = useState(() => normalizePages(initialSite).find((page) => page.isHome)?.id ?? normalizePages(initialSite)[0]?.id ?? "home");
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [sidebarTab, setSidebarTab] = useState("insert");
   const [mobileSidebar, setMobileSidebar] = useState(false);
-  const [lastSaved, setLastSaved] = useState<string>(JSON.stringify(initialSite));
+  const [lastSaved, setLastSaved] = useState<string>(() => JSON.stringify({ ...initialSite, pages: normalizePages(initialSite) }));
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [history, setHistory] = useState<string[]>([JSON.stringify(initialSite)]);
+  const [history, setHistory] = useState<string[]>(() => [JSON.stringify({ ...initialSite, pages: normalizePages(initialSite) })]);
   const [historyIndex, setHistoryIndex] = useState(0);
 
+  const activeSections = useMemo(() => pageSections(site, activePageId), [site, activePageId]);
+  const activePage = useMemo(() => normalizePages(site).find((page) => page.id === activePageId) ?? normalizePages(site)[0], [site, activePageId]);
   const isDirty = useMemo(() => JSON.stringify(site) !== lastSaved, [site, lastSaved]);
 
   // Push to history on site change (debounced)
@@ -95,20 +139,24 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
       setHistoryIndex((prev) => Math.min(prev + 1, 49));
     }, 500);
     return () => { if (historyTimer.current) clearTimeout(historyTimer.current); };
-  }, [site]);
+  }, [site, historyIndex]);
 
   const undo = useCallback(() => {
     if (historyIndex <= 0) return;
     const newIndex = historyIndex - 1;
+    const next = JSON.parse(history[newIndex]) as PersonalSiteInput;
     setHistoryIndex(newIndex);
-    setSite(JSON.parse(history[newIndex]));
+    setSite(next);
+    setActivePageId((current) => normalizePages(next).some((page) => page.id === current) ? current : normalizePages(next)[0]?.id ?? "home");
   }, [historyIndex, history]);
 
   const redo = useCallback(() => {
     if (historyIndex >= history.length - 1) return;
     const newIndex = historyIndex + 1;
+    const next = JSON.parse(history[newIndex]) as PersonalSiteInput;
     setHistoryIndex(newIndex);
-    setSite(JSON.parse(history[newIndex]));
+    setSite(next);
+    setActivePageId((current) => normalizePages(next).some((page) => page.id === current) ? current : normalizePages(next)[0]?.id ?? "home");
   }, [historyIndex, history]);
 
   // Auto-save after 2s of inactivity
@@ -128,6 +176,78 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
     }, 2000);
     return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
   }, [site, isDirty, onSave]);
+
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      if (isDirty) {
+        e.preventDefault();
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isDirty]);
+
+  const updateSite = useCallback((patch: Partial<PersonalSiteInput>) => {
+    setSite((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  const updateSection = useCallback((sectionId: string, patch: Partial<PersonalSiteSection>) => {
+    setSite((prev) => syncSiteSections(prev, activePageId, pageSections(prev, activePageId).map((s) => s.id === sectionId ? { ...s, ...patch } as PersonalSiteSection : s)));
+  }, [activePageId]);
+
+  const addSection = useCallback((type: PersonalSiteSection["type"]) => {
+    setSite((prev) => syncSiteSections(prev, activePageId, [...pageSections(prev, activePageId), emptySection(type)]));
+  }, [activePageId]);
+
+  const moveSection = useCallback((id: string, direction: -1 | 1) => {
+    setSite((prev) => {
+      const sections = pageSections(prev, activePageId);
+      const idx = sections.findIndex((s) => s.id === id);
+      if (idx < 0) return prev;
+      const target = idx + direction;
+      if (target < 0 || target >= sections.length) return prev;
+      const next = [...sections];
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return syncSiteSections(prev, activePageId, next);
+    });
+  }, [activePageId]);
+
+  const duplicateSection = useCallback((id: string) => {
+    setSite((prev) => {
+      const sections = pageSections(prev, activePageId);
+      const idx = sections.findIndex((s) => s.id === id);
+      if (idx < 0) return prev;
+      const original = sections[idx];
+      const copy = { ...structuredClone(original), id: makeId(), heading: `${original.heading} (copy)` };
+      const next = [...sections];
+      next.splice(idx + 1, 0, copy);
+      return syncSiteSections(prev, activePageId, next);
+    });
+  }, [activePageId]);
+
+  const deleteSection = useCallback((id: string) => {
+    setSite((prev) => syncSiteSections(prev, activePageId, pageSections(prev, activePageId).filter((s) => s.id !== id)));
+    setSelectedSectionId(null);
+  }, [activePageId]);
+
+  const reorderSections = useCallback((sections: PersonalSiteSection[]) => {
+    setSite((prev) => syncSiteSections(prev, activePageId, sections));
+  }, [activePageId]);
+
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    try {
+      await onSave(site);
+      setLastSaved(JSON.stringify(site));
+      toast.success(t("Tersimpan", "Saved"));
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Gagal simpan", "Save failed"));
+    } finally {
+      setSaving(false);
+    }
+  }, [onSave, router, site, t]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -172,85 +292,7 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedSectionId]);
-
-  // Warn before leaving with unsaved changes
-  useEffect(() => {
-    function handleBeforeUnload(e: BeforeUnloadEvent) {
-      if (isDirty) {
-        e.preventDefault();
-      }
-    }
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isDirty]);
-
-  const updateSite = useCallback((patch: Partial<PersonalSiteInput>) => {
-    setSite((prev) => ({ ...prev, ...patch }));
-  }, []);
-
-  const updateSection = useCallback((sectionId: string, patch: Partial<PersonalSiteSection>) => {
-    setSite((prev) => ({
-      ...prev,
-      sections: prev.sections.map((s) => s.id === sectionId ? { ...s, ...patch } as PersonalSiteSection : s),
-    }));
-  }, []);
-
-  const addSection = useCallback((type: PersonalSiteSection["type"]) => {
-    setSite((prev) => ({
-      ...prev,
-      sections: [...prev.sections, emptySection(type)],
-    }));
-  }, []);
-
-  const moveSection = useCallback((id: string, direction: -1 | 1) => {
-    setSite((prev) => {
-      const idx = prev.sections.findIndex((s) => s.id === id);
-      if (idx < 0) return prev;
-      const target = idx + direction;
-      if (target < 0 || target >= prev.sections.length) return prev;
-      const next = [...prev.sections];
-      [next[idx], next[target]] = [next[target], next[idx]];
-      return { ...prev, sections: next };
-    });
-  }, []);
-
-  const duplicateSection = useCallback((id: string) => {
-    setSite((prev) => {
-      const idx = prev.sections.findIndex((s) => s.id === id);
-      if (idx < 0) return prev;
-      const original = prev.sections[idx];
-      const copy = { ...structuredClone(original), id: makeId(), heading: `${original.heading} (copy)` };
-      const next = [...prev.sections];
-      next.splice(idx + 1, 0, copy);
-      return { ...prev, sections: next };
-    });
-  }, []);
-
-  const deleteSection = useCallback((id: string) => {
-    setSite((prev) => ({
-      ...prev,
-      sections: prev.sections.filter((s) => s.id !== id),
-    }));
-    setSelectedSectionId(null);
-  }, []);
-
-  const reorderSections = useCallback((sections: PersonalSiteSection[]) => {
-    setSite((prev) => ({ ...prev, sections }));
-  }, []);
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await onSave(site);
-      toast.success(t("Tersimpan", "Saved"));
-      router.refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("Gagal simpan", "Save failed"));
-    } finally {
-      setSaving(false);
-    }
-  };
+  }, [selectedSectionId, deleteSection, duplicateSection, handleSave, undo, redo]);
 
   const groupedWidgets = WIDGET_LIST.reduce<Record<string, typeof WIDGET_LIST>>((acc, w) => {
     (acc[w.category] ??= []).push(w);
@@ -280,7 +322,9 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
               setSidebarTab={setSidebarTab}
               groupedWidgets={groupedWidgets}
               addSection={(type) => { addSection(type); setMobileSidebar(false); }}
-              site={site}
+              site={{ ...site, sections: activeSections }}
+              activePageId={activePageId}
+              setActivePageId={setActivePageId}
               updateSite={updateSite}
             />
           </aside>
@@ -294,7 +338,9 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
           setSidebarTab={setSidebarTab}
           groupedWidgets={groupedWidgets}
           addSection={addSection}
-          site={site}
+          site={{ ...site, sections: activeSections }}
+          activePageId={activePageId}
+          setActivePageId={setActivePageId}
           updateSite={updateSite}
         />
       </aside>
@@ -302,7 +348,7 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
       {/* Canvas area */}
       <main className="flex-1 overflow-y-auto bg-muted/30 p-6">
         <CanvasRenderer
-          site={site}
+          site={{ ...site, sections: activeSections }}
           selectedSectionId={selectedSectionId}
           onSelectSection={setSelectedSectionId}
           onUpdateSite={updateSite}
@@ -318,7 +364,7 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
       {/* Bottom bar */}
       <div className="fixed bottom-0 left-0 md:left-64 right-0 z-30 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-2 backdrop-blur">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="hidden sm:inline">{site.sections.length} sections</span>
+          <span className="hidden sm:inline">{activePage?.title ?? "Page"} · {activeSections.length} sections</span>
           <span className="hidden sm:inline text-muted-foreground/50">·</span>
           {saving ? (
             <span className="flex items-center gap-1 text-primary"><Loader2 className="h-3 w-3 animate-spin" /> {t("Menyimpan...", "Saving...")}</span>
@@ -351,30 +397,58 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
   );
 }
 
-function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection, site, updateSite }: {
+function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection, site, activePageId, setActivePageId, updateSite }: {
   sidebarTab: string;
   setSidebarTab: (tab: string) => void;
   groupedWidgets: Record<string, Array<{ type: PersonalSiteSection["type"]; label: string; icon: React.ElementType; category: string }>>;
   addSection: (type: PersonalSiteSection["type"]) => void;
   site: PersonalSiteInput;
+  activePageId: string;
+  setActivePageId: (id: string) => void;
   updateSite: (patch: Partial<PersonalSiteInput>) => void;
 }) {
+  const pages = normalizePages(site);
+
+  function updatePages(nextPages: PersonalSitePage[]) {
+    const normalized = nextPages.map((page, index) => ({ ...page, isHome: page.isHome || index === 0 && !nextPages.some((p) => p.isHome) }));
+    updateSite({ pages: normalized, sections: normalized.find((page) => page.isHome)?.sections ?? normalized[0]?.sections ?? [] });
+  }
+
   function addPage() {
-    const id = `p_${Math.random().toString(36).slice(2, 8)}`;
-    const pages = site.pages ?? [];
-    updateSite({ pages: [...pages, { id, slug: `page-${pages.length + 1}`, title: `Page ${pages.length + 1}`, isHome: false, sections: [] }] });
+    const id = makeId().replace(/^s_/, "p_");
+    const title = `Page ${pages.length + 1}`;
+    const page = { id, slug: slugifyPageTitle(title, `page-${pages.length + 1}`), title, isHome: false, sections: [] };
+    updatePages([...pages, page]);
+    setActivePageId(id);
   }
 
   function deletePage(id: string) {
-    const pages = (site.pages ?? []).filter((p) => p.id !== id);
-    if (pages.length === 0) return; // can't delete last page
-    // If deleted page was home, make first page home
-    if (!pages.some((p) => p.isHome)) pages[0].isHome = true;
-    updateSite({ pages });
+    const nextPages = pages.filter((p) => p.id !== id);
+    if (nextPages.length === 0) return;
+    if (!nextPages.some((p) => p.isHome)) nextPages[0] = { ...nextPages[0], isHome: true, slug: "" };
+    updatePages(nextPages);
+    if (activePageId === id) setActivePageId(nextPages[0].id);
   }
 
   function renamePage(id: string, title: string) {
-    updateSite({ pages: (site.pages ?? []).map((p) => p.id === id ? { ...p, title } : p) });
+    updatePages(pages.map((p) => p.id === id ? { ...p, title, slug: p.isHome ? "" : slugifyPageTitle(title, p.slug || "page") } : p));
+  }
+
+  function setHomePage(id: string) {
+    updatePages(pages.map((p) => ({ ...p, isHome: p.id === id, slug: p.id === id ? "" : p.slug || slugifyPageTitle(p.title, "page") })));
+  }
+
+  function movePage(id: string, direction: -1 | 1) {
+    const index = pages.findIndex((page) => page.id === id);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= pages.length) return;
+    const next = [...pages];
+    [next[index], next[target]] = [next[target], next[index]];
+    updatePages(next);
+  }
+
+  function updateTheme(patch: Partial<ThemeConfig>) {
+    updateSite(withThemeConfig(site, patch));
   }
 
   return (
@@ -413,8 +487,9 @@ function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection,
       </TabsContent>
 
       <TabsContent value="pages" className="m-0 p-3 space-y-2">
-        {(site.pages ?? []).map((page) => (
-          <div key={page.id} className="flex items-center gap-2 rounded-lg border p-2 text-sm group">
+        {pages.map((page, index) => (
+          <div key={page.id} className={`space-y-2 rounded-lg border p-2 text-sm group ${page.id === activePageId ? "border-primary/60 bg-primary/5" : ""}`}>
+            <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
             <input
               type="text"
@@ -423,11 +498,18 @@ function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection,
               className="flex-1 min-w-0 bg-transparent border-none text-sm focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1"
             />
             {page.isHome && <span className="text-[10px] text-primary font-medium shrink-0">Home</span>}
-            {(site.pages ?? []).length > 1 && (
-              <button type="button" onClick={() => deletePage(page.id)} className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-muted rounded text-muted-foreground hover:text-destructive transition-opacity" aria-label="Delete page">
-                <Trash2 className="h-3 w-3" />
-              </button>
-            )}
+            </div>
+            <div className="flex items-center justify-between gap-1 pl-6">
+              <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-[11px]" onClick={() => setActivePageId(page.id)}>Edit</Button>
+              <div className="flex items-center gap-1">
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => movePage(page.id, -1)} disabled={index === 0} aria-label="Move page up"><ChevronUp className="h-3 w-3" /></Button>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => movePage(page.id, 1)} disabled={index === pages.length - 1} aria-label="Move page down"><ChevronDown className="h-3 w-3" /></Button>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setHomePage(page.id)} disabled={page.isHome} aria-label="Set as home"><Home className="h-3 w-3" /></Button>
+                {pages.length > 1 && (
+                  <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deletePage(page.id)} aria-label="Delete page"><Trash2 className="h-3 w-3" /></Button>
+                )}
+              </div>
+            </div>
           </div>
         ))}
         <Button type="button" variant="outline" size="sm" className="w-full gap-1" onClick={addPage}>
@@ -444,7 +526,7 @@ function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection,
               <button
                 key={preset.name}
                 type="button"
-                onClick={() => updateSite({ theme: preset.theme as PersonalSiteInput["theme"], accent: preset.accent, themeConfig: { ...site.themeConfig!, ...preset.config } })}
+                onClick={() => updateSite({ theme: preset.theme as PersonalSiteInput["theme"], accent: preset.accent, themeConfig: { ...DEFAULT_THEME_CONFIG, ...(site.themeConfig ?? {}), ...preset.config } })}
                 className="flex items-center gap-2 rounded-lg border p-2 text-xs hover:bg-muted transition-colors text-left"
               >
                 <div className="flex shrink-0">
@@ -465,29 +547,53 @@ function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection,
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">Primary Color</Label>
             <div className="flex gap-2">
-              <input type="color" value={site.themeConfig?.primaryColor ?? "#6647F0"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, primaryColor: e.target.value } })} className="h-8 w-8 rounded border cursor-pointer" />
-              <Input value={site.themeConfig?.primaryColor ?? "#6647F0"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, primaryColor: e.target.value } })} className="h-8 text-xs font-mono" />
+              <input type="color" value={site.themeConfig?.primaryColor ?? "#6647F0"} onChange={(e) => updateTheme({ primaryColor: e.target.value })} className="h-8 w-8 rounded border cursor-pointer" />
+              <Input value={site.themeConfig?.primaryColor ?? "#6647F0"} onChange={(e) => updateTheme({ primaryColor: e.target.value })} className="h-8 text-xs font-mono" />
             </div>
           </div>
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">Background Color</Label>
             <div className="flex gap-2">
-              <input type="color" value={site.themeConfig?.backgroundColor ?? "#ffffff"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, backgroundColor: e.target.value } })} className="h-8 w-8 rounded border cursor-pointer" />
-              <Input value={site.themeConfig?.backgroundColor ?? "#ffffff"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, backgroundColor: e.target.value } })} className="h-8 text-xs font-mono" />
+              <input type="color" value={site.themeConfig?.backgroundColor ?? "#ffffff"} onChange={(e) => updateTheme({ backgroundColor: e.target.value })} className="h-8 w-8 rounded border cursor-pointer" />
+              <Input value={site.themeConfig?.backgroundColor ?? "#ffffff"} onChange={(e) => updateTheme({ backgroundColor: e.target.value })} className="h-8 text-xs font-mono" />
             </div>
           </div>
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">Text Color</Label>
             <div className="flex gap-2">
-              <input type="color" value={site.themeConfig?.textColor ?? "#111827"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, textColor: e.target.value } })} className="h-8 w-8 rounded border cursor-pointer" />
-              <Input value={site.themeConfig?.textColor ?? "#111827"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, textColor: e.target.value } })} className="h-8 text-xs font-mono" />
+              <input type="color" value={site.themeConfig?.textColor ?? "#111827"} onChange={(e) => updateTheme({ textColor: e.target.value })} className="h-8 w-8 rounded border cursor-pointer" />
+              <Input value={site.themeConfig?.textColor ?? "#111827"} onChange={(e) => updateTheme({ textColor: e.target.value })} className="h-8 text-xs font-mono" />
             </div>
           </div>
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">Secondary Color</Label>
             <div className="flex gap-2">
-              <input type="color" value={site.themeConfig?.secondaryColor ?? "#1e293b"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, secondaryColor: e.target.value } })} className="h-8 w-8 rounded border cursor-pointer" />
-              <Input value={site.themeConfig?.secondaryColor ?? "#1e293b"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, secondaryColor: e.target.value } })} className="h-8 text-xs font-mono" />
+              <input type="color" value={site.themeConfig?.secondaryColor ?? "#1e293b"} onChange={(e) => updateTheme({ secondaryColor: e.target.value })} className="h-8 w-8 rounded border cursor-pointer" />
+              <Input value={site.themeConfig?.secondaryColor ?? "#1e293b"} onChange={(e) => updateTheme({ secondaryColor: e.target.value })} className="h-8 text-xs font-mono" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Heading Font</Label>
+            <Input value={site.themeConfig?.fontHeading ?? ""} placeholder="Inter, ui-sans-serif" onChange={(e) => updateTheme({ fontHeading: e.target.value || undefined })} className="h-8 text-xs" />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Body Font</Label>
+            <Input value={site.themeConfig?.fontBody ?? ""} placeholder="Inter, ui-sans-serif" onChange={(e) => updateTheme({ fontBody: e.target.value || undefined })} className="h-8 text-xs" />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Header Style</Label>
+            <div className="grid grid-cols-3 gap-1">
+              {["full-width", "contained", "minimal"].map((style) => (
+                <button key={style} type="button" onClick={() => updateTheme({ headerStyle: style as ThemeConfig["headerStyle"] })} className={`rounded border px-2 py-1 text-[10px] ${site.themeConfig?.headerStyle === style ? "border-primary bg-primary/10" : ""}`}>{style}</button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Button Style</Label>
+            <div className="grid grid-cols-3 gap-1">
+              {["rounded", "pill", "square"].map((style) => (
+                <button key={style} type="button" onClick={() => updateTheme({ buttonStyle: style as ThemeConfig["buttonStyle"] })} className={`rounded border px-2 py-1 text-[10px] ${site.themeConfig?.buttonStyle === style ? "border-primary bg-primary/10" : ""}`}>{style}</button>
+              ))}
             </div>
           </div>
         </div>

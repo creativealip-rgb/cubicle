@@ -1,9 +1,9 @@
 # Cubiqlo Full Feature Status
 
-Last updated: 2026-08-01
+Last updated: 2026-08-03
 Production app: https://app.cubiqlo.com
 Dev app: https://dev.cubiqlo.com
-Latest verified dev branch: `dev/integration` at `bccc2d7`
+Latest verified dev branch: `main` at `ac931fc` before landing-builder checkpoint commit
 Latest verified production commit: `9381be5`
 
 ## Status legend
@@ -139,13 +139,13 @@ Latest verified production commit: `9381be5`
 | --- | --- | --- | --- |
 | Personal notes | `/app/personal` | DONE | v0.1.28–0.1.30: tabs open/done/archived/all, pin, overdue, recurrence select + auto-roll, cron 7d/3d/1d dedupe, convert→task (priority), reverse link, infinite load-more, hide `[journal]`/`[site]`. |
 | Journal | `/app/journal` | DONE | v0.1.31: tabs Aktif/Arsip, create+edit+archive+restore+delete, mood/tag i18n, search/filter/export; uses `[journal]` prefix notes. |
-| Personal landing builder | `/app/personal-site` | PARTIAL | Builder controls, sections, links, theme/accent, dashboard preview. |
+| Personal landing builder | `/app/personal-site` | PARTIAL | Builder controls, sections, links, theme/accent, dashboard preview. 2026-08-03 checkpoint adds multi-page canvas editing, page reorder/home controls, themeConfig-aware public rendering, and plan for starter templates/properties/readiness/SEO/AI. |
 | Standalone preview | `/site/preview` | DONE | Private full-page preview route exists. |
-| Public landing page | `/site/[slug]` | DONE | Public published route exists; default `/site/alip` verified `HTTP/2 200`. |
-| Publish controls | `/app/personal-site` | PARTIAL | Slug + published checkbox exist; slug uniqueness/polished validation pending. |
-| Section manager UI | n/a | PROCESS | Current sections use `Heading|Content`; next should be add/duplicate/delete/drag UI. |
-| Template picker | n/a | TODO | Freelancer/agency/consultant templates pending. |
-| Mobile preview | n/a | TODO | Dedicated mobile frame toggle pending. |
+| Public landing page | `/site/[slug]`, `/site/[slug]/[pageSlug]` | DONE | Public published home route exists; subpage route now has nested renderer support in checkpoint worktree. |
+| Publish controls | `/app/personal-site` | PARTIAL | Slug + published checkbox exist; publish readiness checklist planned in `docs/plans/2026-08-03-landing-page-builder-usability-improvements.md`. |
+| Section manager UI | canvas builder | PROCESS | Add/duplicate/delete/drag UI exists; starter block templates and structured properties panel planned next. |
+| Template picker | n/a | TODO | Freelancer/agency/service/portfolio/lead templates planned; implementation not started. |
+| Mobile preview | n/a | TODO | Dedicated desktop/tablet/mobile frame toggle planned. |
 
 ## Settings + ops
 
