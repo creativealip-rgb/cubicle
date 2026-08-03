@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Palette, FileText, Layers, Save, Eye, Loader2 } from "lucide-react";
+import { Plus, Palette, FileText, Layers, Save, Eye, Loader2, Check, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,6 +73,72 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [sidebarTab, setSidebarTab] = useState("insert");
+  const [lastSaved, setLastSaved] = useState<string>(JSON.stringify(initialSite));
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const isDirty = useMemo(() => JSON.stringify(site) !== lastSaved, [site, lastSaved]);
+
+  // Auto-save after 2s of inactivity
+  useEffect(() => {
+    if (!isDirty) return;
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(async () => {
+      setSaving(true);
+      try {
+        await onSave(site);
+        setLastSaved(JSON.stringify(site));
+      } catch {
+        // silent fail for auto-save
+      } finally {
+        setSaving(false);
+      }
+    }, 2000);
+    return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
+  }, [site, isDirty, onSave]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      // Escape — deselect
+      if (e.key === "Escape") {
+        setSelectedSectionId(null);
+        return;
+      }
+      // Delete — delete selected section
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedSectionId) {
+        const target = e.target as HTMLElement;
+        if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
+        e.preventDefault();
+        deleteSection(selectedSectionId);
+        return;
+      }
+      // Ctrl+D / Cmd+D — duplicate selected section
+      if ((e.ctrlKey || e.metaKey) && e.key === "d" && selectedSectionId) {
+        e.preventDefault();
+        duplicateSection(selectedSectionId);
+        return;
+      }
+      // Ctrl+S / Cmd+S — manual save
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        handleSave();
+        return;
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedSectionId]);
+
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      if (isDirty) {
+        e.preventDefault();
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isDirty]);
 
   const updateSite = useCallback((patch: Partial<PersonalSiteInput>) => {
     setSite((prev) => ({ ...prev, ...patch }));
@@ -243,8 +309,16 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
 
       {/* Bottom bar */}
       <div className="fixed bottom-0 left-64 right-0 z-30 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-2 backdrop-blur">
-        <div className="text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {site.sections.length} sections
+          <span className="text-muted-foreground/50">·</span>
+          {saving ? (
+            <span className="flex items-center gap-1 text-primary"><Loader2 className="h-3 w-3 animate-spin" /> {t("Menyimpan...", "Saving...")}</span>
+          ) : isDirty ? (
+            <span className="flex items-center gap-1 text-amber-600"><Circle className="h-2 w-2 fill-current" /> {t("Belum tersimpan", "Unsaved")}</span>
+          ) : (
+            <span className="flex items-center gap-1 text-emerald-600"><Check className="h-3 w-3" /> {t("Tersimpan", "Saved")}</span>
+          )}
         </div>
         <div className="flex gap-2">
           <Button type="button" variant="outline" size="sm" asChild>
@@ -252,7 +326,7 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
               <Eye className="h-4 w-4 mr-1" /> Preview
             </a>
           </Button>
-          <Button type="button" size="sm" onClick={handleSave} disabled={saving}>
+          <Button type="button" size="sm" onClick={handleSave} disabled={saving || !isDirty}>
             {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
             {saving ? t("Menyimpan...", "Saving...") : t("Simpan", "Save")}
           </Button>
