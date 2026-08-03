@@ -34,6 +34,46 @@ const themeStyles = {
     sectionAlt: "bg-[#f8f7fc]",
     panel: "bg-white shadow-[0_10px_34px_rgba(68,54,124,0.10)] ring-1 ring-[#6647F0]/10",
   },
+  ocean: {
+    page: "bg-[#f0f9ff] text-[#0c4a6e]",
+    hero: "bg-[#0c4a6e] text-white",
+    heroMuted: "text-[#bae6fd]",
+    eyebrow: "text-[#7dd3fc]",
+    sectionAlt: "bg-[#e0f2fe]",
+    panel: "bg-white shadow-[0_12px_40px_rgba(14,165,233,0.10)] ring-1 ring-[#0ea5e9]/10",
+  },
+  forest: {
+    page: "bg-[#f0fdf4] text-[#14532d]",
+    hero: "bg-[#14532d] text-white",
+    heroMuted: "text-[#bbf7d0]",
+    eyebrow: "text-[#86efac]",
+    sectionAlt: "bg-[#dcfce7]",
+    panel: "bg-white shadow-[0_12px_40px_rgba(22,163,74,0.10)] ring-1 ring-[#16a34a]/10",
+  },
+  sunset: {
+    page: "bg-[#fff7ed] text-[#7c2d12]",
+    hero: "bg-[#7c2d12] text-white",
+    heroMuted: "text-[#fed7aa]",
+    eyebrow: "text-[#fdba74]",
+    sectionAlt: "bg-[#ffedd5]",
+    panel: "bg-white shadow-[0_12px_40px_rgba(234,88,12,0.10)] ring-1 ring-[#ea580c]/10",
+  },
+  rose: {
+    page: "bg-[#fff1f2] text-[#881337]",
+    hero: "bg-[#881337] text-white",
+    heroMuted: "text-[#fecdd3]",
+    eyebrow: "text-[#fda4af]",
+    sectionAlt: "bg-[#ffe4e6]",
+    panel: "bg-white shadow-[0_12px_40px_rgba(225,29,72,0.10)] ring-1 ring-[#e11d48]/10",
+  },
+  dark: {
+    page: "bg-[#030712] text-[#e2e8f0]",
+    hero: "bg-[#1e1b4b] text-white",
+    heroMuted: "text-[#c4b5fd]",
+    eyebrow: "text-[#a78bfa]",
+    sectionAlt: "bg-[#0f172a]",
+    panel: "bg-[#1e293b] shadow-[0_12px_40px_rgba(0,0,0,0.3)] ring-1 ring-[#a78bfa]/10",
+  },
 } as const;
 
 export type PersonalSiteRendererLabels = {

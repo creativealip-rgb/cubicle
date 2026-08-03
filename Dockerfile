@@ -17,7 +17,7 @@ ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV NEXT_DEPLOYMENT_ID=$VCS_REF
 # Cap Node heap so next build does not thrash swap on 8GB VPS
 ENV NODE_OPTIONS="--max-old-space-size=2048"
-RUN --mount=type=cache,target=/app/.next/cache \
+RUN \
   npm run build
 
 FROM base AS runner

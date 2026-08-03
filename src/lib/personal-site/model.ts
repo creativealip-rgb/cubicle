@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const PERSONAL_SITE_THEMES = ["midnight", "paper", "studio"] as const;
+export const PERSONAL_SITE_THEMES = ["midnight", "paper", "studio", "ocean", "forest", "sunset", "rose", "dark"] as const;
 export const PERSONAL_SITE_HEADER_STYLES = ["full-width", "contained", "minimal"] as const;
 export const PERSONAL_SITE_BUTTON_STYLES = ["rounded", "pill", "square"] as const;
 export const PERSONAL_SITE_SECTION_TYPES = [
