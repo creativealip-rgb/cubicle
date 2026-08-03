@@ -35,6 +35,8 @@ const idSchema = z.string().trim().min(1).max(80);
 const headingSchema = z.string().trim().min(1).max(80);
 const shortTextSchema = z.string().trim().max(160);
 const descriptionSchema = z.string().trim().max(1_000);
+export const PERSONAL_SITE_ANIMATIONS = ["none", "fade-up", "fade-in", "slide-left", "slide-right", "zoom-in", "bounce"] as const;
+const animationSchema = z.enum(PERSONAL_SITE_ANIMATIONS).optional();
 const optionalPublicHrefSchema = z
   .string()
   .trim()
@@ -92,54 +94,63 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     id: idSchema,
     type: z.literal("services"),
     heading: headingSchema,
+    animation: animationSchema,
     items: z.array(serviceItemSchema).max(12),
   }),
   z.object({
     id: idSchema,
     type: z.literal("process"),
     heading: headingSchema,
+    animation: animationSchema,
     steps: z.array(processStepSchema).max(12),
   }),
   z.object({
     id: idSchema,
     type: z.literal("pricing"),
     heading: headingSchema,
+    animation: animationSchema,
     offers: z.array(pricingOfferSchema).max(8),
   }),
   z.object({
     id: idSchema,
     type: z.literal("portfolio"),
     heading: headingSchema,
+    animation: animationSchema,
     projects: z.array(portfolioProjectSchema).max(12),
   }),
   z.object({
     id: idSchema,
     type: z.literal("testimonials"),
     heading: headingSchema,
+    animation: animationSchema,
     testimonials: z.array(testimonialSchema).max(8),
   }),
   z.object({
     id: idSchema,
     type: z.literal("faq"),
     heading: headingSchema,
+    animation: animationSchema,
     items: z.array(faqItemSchema).max(12),
   }),
   z.object({
     id: idSchema,
     type: z.literal("contact"),
     heading: headingSchema,
+    animation: animationSchema,
     methods: z.array(contactMethodSchema).max(8),
   }),
   z.object({
     id: idSchema,
     type: z.literal("custom"),
     heading: headingSchema,
+    animation: animationSchema,
     content: z.string().trim().max(4_000),
   }),
   z.object({
     id: idSchema,
     type: z.literal("gallery"),
     heading: headingSchema,
+    animation: animationSchema,
     images: z.array(z.object({
       id: idSchema,
       url: z.string().trim().max(2_000),
@@ -150,6 +161,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     id: idSchema,
     type: z.literal("embed"),
     heading: headingSchema,
+    animation: animationSchema,
     url: z.string().trim().max(2_000),
     height: z.number().min(100).max(800).optional(),
   }),
@@ -157,6 +169,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     id: idSchema,
     type: z.literal("social"),
     heading: headingSchema,
+    animation: animationSchema,
     links: z.array(z.object({
       id: idSchema,
       platform: z.string().trim().max(40),
@@ -167,6 +180,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     id: idSchema,
     type: z.literal("cta"),
     heading: headingSchema,
+    animation: animationSchema,
     text: z.string().trim().max(500),
     buttonLabel: z.string().trim().max(60),
     buttonUrl: optionalPublicHrefSchema,
@@ -175,11 +189,13 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     id: idSchema,
     type: z.literal("divider"),
     heading: headingSchema,
+    animation: animationSchema,
   }),
   z.object({
     id: idSchema,
     type: z.literal("collapsible"),
     heading: headingSchema,
+    animation: animationSchema,
     items: z.array(z.object({
       id: idSchema,
       title: z.string().trim().min(1).max(200),
@@ -190,17 +206,20 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     id: idSchema,
     type: z.literal("spacer"),
     heading: headingSchema,
+    animation: animationSchema,
     height: z.number().min(16).max(200).optional(),
   }),
   z.object({
     id: idSchema,
     type: z.literal("tableOfContents"),
     heading: headingSchema,
+    animation: animationSchema,
   }),
   z.object({
     id: idSchema,
     type: z.literal("contentBlock"),
     heading: headingSchema,
+    animation: animationSchema,
     columns: z.number().min(2).max(4),
     layout: z.enum(["equal", "left-heavy", "right-heavy", "thirds"]),
     items: z.array(z.object({
@@ -260,6 +279,7 @@ export const personalSiteInputSchema = z.object({
   title: z.string().trim().min(1).max(100),
   subtitle: shortTextSchema,
   hero: z.string().trim().min(1).max(500),
+  heroImage: z.string().trim().max(2_000).optional(),
   about: z.string().trim().max(2_000),
   ctaLabel: z.string().trim().max(60),
   ctaUrl: optionalPublicHrefSchema,

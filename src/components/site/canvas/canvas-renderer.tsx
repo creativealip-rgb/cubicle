@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { InlineText } from "./inline-text";
 import { ImageUpload } from "./image-upload";
 import type { PersonalSiteInput, PersonalSiteSection, ThemeConfig } from "@/lib/personal-site/model";
-import { PERSONAL_SITE_SECTION_TYPES } from "@/lib/personal-site/model";
+import { PERSONAL_SITE_SECTION_TYPES, PERSONAL_SITE_ANIMATIONS } from "@/lib/personal-site/model";
 
 type Props = {
   site: PersonalSiteInput;
@@ -87,27 +87,40 @@ export function CanvasRenderer({
     >
       {/* Hero section */}
       <div className="relative px-8 pt-16 pb-12 text-center" style={{ backgroundColor: theme?.primaryColor ?? "#6647F0" }}>
-        <InlineText
-          value={site.title}
-          onChange={(v) => onUpdateSite({ title: v })}
-          tag="h1"
-          className="text-3xl font-bold text-white mb-2"
-          placeholder="Judul..."
-        />
-        <InlineText
-          value={site.subtitle}
-          onChange={(v) => onUpdateSite({ subtitle: v })}
-          tag="p"
-          className="text-lg text-white/80 mb-4"
-          placeholder="Subtitle..."
-        />
-        <InlineText
-          value={site.hero}
-          onChange={(v) => onUpdateSite({ hero: v })}
-          tag="p"
-          className="text-white/90 max-w-2xl mx-auto"
-          placeholder="Deskripsi hero..."
-        />
+        {site.heroImage && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={site.heroImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20" />
+        )}
+        <div className="relative z-10">
+          <InlineText
+            value={site.title}
+            onChange={(v) => onUpdateSite({ title: v })}
+            tag="h1"
+            className="text-3xl font-bold text-white mb-2"
+            placeholder="Judul..."
+          />
+          <InlineText
+            value={site.subtitle}
+            onChange={(v) => onUpdateSite({ subtitle: v })}
+            tag="p"
+            className="text-lg text-white/80 mb-4"
+            placeholder="Subtitle..."
+          />
+          <InlineText
+            value={site.hero}
+            onChange={(v) => onUpdateSite({ hero: v })}
+            tag="p"
+            className="text-white/90 max-w-2xl mx-auto"
+            placeholder="Deskripsi hero..."
+          />
+          <div className="mt-4 flex justify-center">
+            <ImageUpload
+              value={site.heroImage ?? ""}
+              onChange={(url) => onUpdateSite({ heroImage: url || undefined })}
+              label="Upload hero image"
+            />
+          </div>
+        </div>
       </div>
 
       {/* About */}
@@ -216,6 +229,8 @@ function SortableCanvasSection({ section, index, selected, onSelect, onMoveUp, o
         onMoveDown={onMoveDown}
         onDuplicate={onDuplicate}
         onDelete={onDelete}
+        animation={"animation" in section ? section.animation : undefined}
+        onAnimationChange={(anim) => onUpdate({ animation: anim } as Partial<PersonalSiteSection>)}
         dragHandleProps={listeners}
       >
         <SectionRenderer section={section} onUpdate={onUpdate} theme={theme} />
@@ -224,7 +239,7 @@ function SortableCanvasSection({ section, index, selected, onSelect, onMoveUp, o
   );
 }
 
-function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, onDuplicate, onDelete, dragHandleProps, children }: {
+function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, onDuplicate, onDelete, animation, onAnimationChange, dragHandleProps, children }: {
   id: string;
   selected: boolean;
   onSelect: () => void;
@@ -232,6 +247,8 @@ function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, on
   onMoveDown: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  animation?: string;
+  onAnimationChange?: (animation: string) => void;
   dragHandleProps?: Record<string, unknown>;
   children: React.ReactNode;
 }) {
@@ -257,6 +274,20 @@ function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, on
           <button type="button" onClick={(e) => { e.stopPropagation(); onMoveDown(); }} className="p-1 hover:bg-muted rounded" aria-label="Move down">
             <ChevronDown className="h-3 w-3" />
           </button>
+          <div className="w-px h-3 bg-border mx-0.5" />
+          {onAnimationChange && (
+            <select
+              value={animation || "none"}
+              onChange={(e) => { e.stopPropagation(); onAnimationChange(e.target.value); }}
+              onClick={(e) => e.stopPropagation()}
+              className="h-6 text-[10px] bg-transparent border-none cursor-pointer hover:bg-muted rounded px-0.5"
+              title="Animation"
+            >
+              {PERSONAL_SITE_ANIMATIONS.map((a) => (
+                <option key={a} value={a}>{a === "none" ? "✦ None" : `✦ ${a}`}</option>
+              ))}
+            </select>
+          )}
           <div className="w-px h-3 bg-border mx-0.5" />
           <button type="button" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="p-1 hover:bg-muted rounded" aria-label="Duplicate">
             <Copy className="h-3 w-3" />
