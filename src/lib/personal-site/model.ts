@@ -482,9 +482,12 @@ export function normalizeStoredPersonalSite(value: unknown): PersonalSiteInput {
     sections: normalizeLegacySections(raw.sections),
     links: normalizeLegacyLinks(raw.links),
     pages: Array.isArray(raw.pages) ? raw.pages : DEFAULT_PERSONAL_SITE.pages,
-    themeConfig: raw.themeConfig && typeof raw.themeConfig === "object" ? raw.themeConfig : DEFAULT_PERSONAL_SITE.themeConfig,
+    themeConfig: raw.themeConfig && typeof raw.themeConfig === "object" ? raw.themeConfig : undefined,
   };
   const parsed = personalSiteInputSchema.safeParse(candidate);
+  if (!parsed.success) {
+    console.error("normalizeStoredPersonalSite FAILED:", JSON.stringify(parsed.error.issues.slice(0,3)));
+  }
   return parsed.success ? parsed.data : DEFAULT_PERSONAL_SITE;
 }
 

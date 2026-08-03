@@ -180,7 +180,7 @@ export function PersonalSiteRenderer({
 
   return (
     <main data-testid="personal-site-renderer" data-theme={site.theme} style={accentStyle} className={`${embedded ? "min-h-0" : "min-h-screen"} overflow-hidden ${styles.page}`}>
-      <section className={`relative ${styles.hero} px-6 py-14 sm:px-10 sm:py-20 lg:px-16 lg:py-24`} style={themeConfig?.primaryColor ? { backgroundColor: themeConfig.primaryColor } : undefined}>
+      <section className={`relative ${styles.hero} px-6 py-14 sm:px-10 sm:py-20 lg:px-16 lg:py-24`} style={{ backgroundColor: accent }}>
         {site.heroImage && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={site.heroImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20" />
