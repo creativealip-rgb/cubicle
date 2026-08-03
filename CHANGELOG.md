@@ -1,5 +1,36 @@
 # Changelog
 
+## 2026-08-03 — Landing builder Phase 4 AI copy + Phase 7 SEO/share + prod deploy
+
+**Phase 7 SEO/share settings:**
+- Model: added `seoMetadataSchema` (title max 80, description max 180, ogImage max 2000 with safe URL refine) to `personalSiteInputSchema`; `normalizeStoredPersonalSite` handles null/absent `seo`.
+- DB: additive migration `0067_personal_site_seo.sql` — `ALTER TABLE ADD COLUMN IF NOT EXISTS seo jsonb`.
+- Created `src/lib/personal-site/metadata.ts` with `generatePersonalSiteMetadata()` and `generatePersonalSiteSubPageMetadata()` — OG + Twitter cards with title/description fallback and dynamic `og:image`.
+- Created `src/app/api/og/personal-site/[slug]/route.tsx` — dynamic Open Graph image with theme colors.
+- Created `src/components/site/canvas/seo-panel.tsx` — editable SEO title/description/OG image, WhatsApp share preview card, copy public link.
+- Wired SEO tab into canvas sidebar alongside Insert/Pages/Templates/Theme.
+
+**Phase 4 AI copy generator:**
+- Created `src/lib/actions/personal-site-ai.ts` — server action with auth + workspace writable guard, Zod strict input/output, 9Router OpenAI-compatible fallback (Gemini), supported types: services/faq/cta, exact counts (services 3, FAQ 5), clean error messages.
+- Created `src/lib/ai/copy.ts` — schemas, prompt builder, JSON parser (raw/fenced/prose), SSE extractor, section patch builder with fresh IDs.
+- Created `src/lib/ai/copy.test.ts` — 16 focused tests covering schema, parsing, SSE, and error cases.
+- Updated `src/components/site/canvas/properties-panel.tsx` — Generate Copy UI with businessName/niche/targetAudience/offer/tone fields, loading state, preview-before-apply with explicit Apply/Discard.
+
+**Fixes:**
+- `seo-panel.tsx`: added `Partial<SeoMetadata>` type annotation to fix TSC type inference (site.seo resolved as `{}`).
+- `canvas-editor.tsx`: wired real `publicUrl` (computed from `publicSiteBaseUrl` + slug) to SEOPanel instead of `previewUrl`.
+- `OG route`: removed unused `isEnglish` variable.
+- `readiness-badge.tsx`: replaced all `t("readiness.*", ...)` keys with actual Indonesian text (\"Siap publikasi\", \"perlu diperbaiki\", etc.) matching the i18n-client pattern where `t(id, en)` returns `id` for Indonesian.
+- `personal-site.ts`: replaced `personalSiteInputSchema.parse()` with `normalizeStoredPersonalSite()` in `getPersonalSiteForCurrentOwner()` to gracefully handle null columns (pages, themeConfig, heroImage) from new migrations.
+
+**Prod deploy:**
+- Migration 0067 + missing columns (pages, theme_config, hero_image) applied to production DB.
+- Container rebuilt with commit `c0f6bbc`, deployed to `cubiqlo-new-app`.
+- Verified: `/site/alip` HTTP 200 with full OG metadata including `og:image`, landing builder loads without ZodError.
+
+**Commits:** `5f0ebc3` → `c8bfd9c` → `c0f6bbc` pushed to `main`.
+**Verification:** 113 focused tests pass, TSC clean, ESLint clean, Docker build passes, zero browser console errors.
+
 ## 2026-08-03 — Landing page builder multi-page checkpoint + usability plan
 
 **Phase 6 Readiness UI** (closes `docs/plans/2026-08-03-landing-page-builder-usability-improvements.md` Phase 6):

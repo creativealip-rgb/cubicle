@@ -2,7 +2,7 @@
 
 > **For Hermes:** Use subagent-driven-development skill to implement this plan task-by-task.
 
-**Goal:** Make Cubiqlo landing page creation faster for non-technical users by adding ready-made templates, guided editing, preview tools, publish readiness checks, SEO/share settings, and optional AI-assisted copy.
+**Goal:** Make Cubiqlo landing page creation faster for non-technical users by adding ready-made templates, guided editing, preview tools, publish readiness checks, SEO/share settings, and optional AI-assisted copy. **ALL PHASES COMPLETE — deployed to dev + prod 2026-08-03.**
 
 **Architecture:** Extend the existing canvas builder instead of replacing it. Keep the canvas as the main editor, add reusable template catalogs and helper panels around it, then wire public/preview validation through existing `PersonalSiteInput`, `savePersonalSite`, and `/site/*` routes. Current baseline already includes multi-page editor state, nested public subpage route, renderer page navigation, and themeConfig-aware public rendering; preserve that work.
 
