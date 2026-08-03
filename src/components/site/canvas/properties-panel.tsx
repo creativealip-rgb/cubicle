@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, X, Sparkles, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "./image-upload";
 import type { PersonalSiteSection } from "@/lib/personal-site/model";
 import { PERSONAL_SITE_ANIMATIONS } from "@/lib/personal-site/model";
+import { generatePersonalSiteCopy } from "@/lib/actions/personal-site-ai";
+import { toast } from "sonner";
 
 type PropertiesPanelProps = {
   section: PersonalSiteSection | null;
@@ -43,10 +46,76 @@ export function removeItemAt<T>(items: readonly T[], index: number): T[] {
   return items.filter((_, i) => i !== index);
 }
 
+/**
+ * AI copy generation state for preview-before-apply UX.
+ */
+interface AiGenerationState {
+  isGenerating: boolean;
+  preview: PersonalSiteSection | null;
+  pendingPatch: PersonalSiteSection | null; // what to apply after user clicks Apply
+}
+
 export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelProps) {
+  const [aiState, setAiState] = useState<AiGenerationState>({
+    isGenerating: false,
+    preview: null,
+    pendingPatch: null,
+  });
+
+  // Reset AI preview when section changes
+  useEffect(() => {
+    setAiState({ isGenerating: false, preview: null, pendingPatch: null });
+  }, [section?.id]);
+
   if (!section) return null;
 
-  const animation = "animation" in section ? section.animation : undefined;
+  const handleGenerateCopy = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+
+    const businessName = formData.get("businessName") as string;
+    const niche = formData.get("niche") as string;
+    const targetAudience = formData.get("targetAudience") as string;
+    const offer = formData.get("offer") as string;
+    const tone = formData.get("tone") as "professional" | "friendly" | "bold" | "minimal";
+
+    try {
+      setAiState(s => ({ ...s, isGenerating: true }));
+
+      const result = await generatePersonalSiteCopy({
+        sectionType: section.type,
+        businessName,
+        niche,
+        targetAudience,
+        offer,
+        tone,
+      });
+
+      // Store preview for explicit Apply
+      setAiState({
+        isGenerating: false,
+        preview: result.patch,
+        pendingPatch: result.patch,
+      });
+
+      toast.success("Copy berhasil dibuat — klik Apply untuk menerapkannya.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal membuat copy.";
+      toast.error(msg);
+      setAiState({ isGenerating: false, preview: null, pendingPatch: null });
+    }
+  };
+
+  const handleApplyPreview = () => {
+    if (!aiState.pendingPatch) return;
+    onUpdate(aiState.pendingPatch);
+    setAiState({ isGenerating: false, preview: null, pendingPatch: null });
+    toast.success("Copy diterapkan ke section.");
+  };
+
+  const handleDiscardPreview = () => {
+    setAiState({ isGenerating: false, preview: null, pendingPatch: null });
+  };
 
   return (
     <aside className="hidden md:flex w-80 shrink-0 flex-col border-l bg-background">
@@ -61,6 +130,121 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
       </div>
 
       <div className="flex-1 space-y-6 overflow-y-auto p-4">
+        {/* AI Copy Generation */}
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <Label className="text-xs font-medium uppercase text-muted-foreground">AI Copy Generator</Label>
+          </div>
+
+          {section.type === "services" && (
+            <form onSubmit={handleGenerateCopy} className="space-y-3">
+              <Input name="businessName" placeholder="Nama bisnis" defaultValue="" required maxLength={80} />
+              <Textarea name="niche" placeholder="Niche/spesialisasi (mis: digital marketing)" required maxLength={160} className="min-h-10 resize-none text-xs" />
+              <Textarea name="targetAudience" placeholder="Target audiens (mis: UMKM Jakarta)" required maxLength={240} className="min-h-10 resize-none text-xs" />
+              <Textarea name="offer" placeholder="Penawaran utama (mis: website landing page siap launch)" required maxLength={500} className="min-h-12 resize-none text-xs" />
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Tone</Label>
+                <select name="tone" className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary">
+                  <option value="professional">Professional</option>
+                  <option value="friendly">Friendly</option>
+                  <option value="bold">Bold</option>
+                  <option value="minimal">Minimal</option>
+                </select>
+              </div>
+              <Button type="submit" disabled={aiState.isGenerating} className="w-full gap-1 text-xs">
+                {aiState.isGenerating ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" /> Generate...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-3 w-3" /> Generate copy
+                  </>
+                )}
+              </Button>
+            </form>
+          )}
+
+          {section.type === "faq" && (
+            <form onSubmit={handleGenerateCopy} className="space-y-3">
+              <Input name="businessName" placeholder="Nama bisnis" defaultValue="" required maxLength={80} />
+              <Textarea name="niche" placeholder="Niche/spesialisasi (mis: web development)" required maxLength={160} className="min-h-10 resize-none text-xs" />
+              <Textarea name="targetAudience" placeholder="Target audiens (mis: startup Indonesia)" required maxLength={240} className="min-h-10 resize-none text-xs" />
+              <Textarea name="offer" placeholder="Penawaran utama (mis: jasa pembuatan website custom)" required maxLength={500} className="min-h-12 resize-none text-xs" />
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Tone</Label>
+                <select name="tone" className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary">
+                  <option value="professional">Professional</option>
+                  <option value="friendly">Friendly</option>
+                  <option value="bold">Bold</option>
+                  <option value="minimal">Minimal</option>
+                </select>
+              </div>
+              <Button type="submit" disabled={aiState.isGenerating} className="w-full gap-1 text-xs">
+                {aiState.isGenerating ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" /> Generate...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-3 w-3" /> Generate FAQ
+                  </>
+                )}
+              </Button>
+            </form>
+          )}
+
+          {section.type === "cta" && (
+            <form onSubmit={handleGenerateCopy} className="space-y-3">
+              <Input name="businessName" placeholder="Nama bisnis" defaultValue="" required maxLength={80} />
+              <Textarea name="niche" placeholder="Niche/spesialisasi (mis: design consultancy)" required maxLength={160} className="min-h-10 resize-none text-xs" />
+              <Textarea name="targetAudience" placeholder="Target audiens (mis: product teams)" required maxLength={240} className="min-h-10 resize-none text-xs" />
+              <Textarea name="offer" placeholder="Penawaran utama (mis: konsultasi UX/UI & design system)" required maxLength={500} className="min-h-12 resize-none text-xs" />
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Tone</Label>
+                <select name="tone" className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary">
+                  <option value="professional">Professional</option>
+                  <option value="friendly">Friendly</option>
+                  <option value="bold">Bold</option>
+                  <option value="minimal">Minimal</option>
+                </select>
+              </div>
+              <Button type="submit" disabled={aiState.isGenerating} className="w-full gap-1 text-xs">
+                {aiState.isGenerating ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" /> Generate CTA...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-3 w-3" /> Generate CTA
+                  </>
+                )}
+              </Button>
+            </form>
+          )}
+        </div>
+
+        {/* Preview before apply */}
+        {aiState.preview && (
+          <div className="rounded-lg border bg-accent p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <Label className="text-xs font-medium">Preview</Label>
+              <div className="flex gap-1">
+                <Button type="button" variant="outline" size="sm" className="h-6 text-xs" onClick={handleDiscardPreview}>
+                  <X className="h-3 w-3" /> Discard
+                </Button>
+                <Button type="button" variant="default" size="sm" className="h-6 gap-1 text-xs" onClick={handleApplyPreview}>
+                  <Check className="h-3 w-3" /> Apply
+                </Button>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Klik <strong>Apply</strong> untuk menerapkan copy ke section ini. Existing content tidak akan hilang sebelum Anda konfirmasi.
+            </p>
+          </div>
+        )}
+
         {/* Shared fields */}
         <div className="space-y-3">
           <div className="space-y-1">
@@ -76,7 +260,7 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Animation</Label>
             <select
-              value={animation ?? "none"}
+              value={("animation" in section ? section.animation : undefined) ?? "none"}
               onChange={(e) => onUpdate({ animation: e.target.value as (typeof PERSONAL_SITE_ANIMATIONS)[number] })}
               className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
             >

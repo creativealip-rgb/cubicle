@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { PersonalSiteRenderer } from "@/components/site/personal-site-renderer";
 import { getPublishedPersonalSiteBySlug } from "@/lib/actions/personal-site";
 import { createT, getCurrentLang } from "@/lib/i18n";
+import { generatePersonalSiteMetadata } from "@/lib/personal-site/metadata";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -10,7 +11,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const site = await getPublishedPersonalSiteBySlug(slug);
   if (!site) return { title: "Site not found" };
-  return { title: site.title, description: site.hero };
+  return generatePersonalSiteMetadata(site);
 }
 
 export default async function PublicPersonalSitePage({ params }: Props) {

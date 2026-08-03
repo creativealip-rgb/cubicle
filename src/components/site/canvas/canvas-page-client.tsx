@@ -29,6 +29,7 @@ export function CanvasPageClient({ initialSite, action, publicSiteBaseUrl, previ
     <CanvasEditor
       initialSite={initialSite}
       previewUrl={previewUrl}
+      publicSiteBaseUrl={publicSiteBaseUrl}
       onSave={handleSave}
     />
   );

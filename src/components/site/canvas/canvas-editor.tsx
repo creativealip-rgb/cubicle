@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Palette, FileText, Layers, Save, Eye, Loader2, Check, Circle, PanelLeft, Undo2, Redo2, Trash2, Home, ChevronUp, ChevronDown, Sparkles, LayoutTemplate, Monitor, Tablet, Smartphone } from "lucide-react";
+import { Plus, Palette, FileText, Layers, Save, Eye, Loader2, Check, Circle, PanelLeft, Undo2, Redo2, Trash2, Home, ChevronUp, ChevronDown, Sparkles, LayoutTemplate, Monitor, Tablet, Smartphone, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,21 +11,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CanvasRenderer, CANVAS_DEVICES, type CanvasDevice } from "./canvas-renderer";
 import { PropertiesPanel } from "./properties-panel";
 import { ReadinessBadge } from "../readiness-badge";
+import { SEOPanel } from "./seo-panel";
 import { useT } from "@/lib/i18n-client";
 import type { PersonalSiteInput, PersonalSiteSection, PersonalSitePage, ThemeConfig } from "@/lib/personal-site/model";
+import { normalizePersonalSiteSlug } from "@/lib/personal-site/model";
 import { PAGE_TEMPLATES, getPageTemplatesByCategory, getPageTemplateCategories, type PageTemplate } from "@/lib/personal-site/page-templates";
 import { SECTION_TEMPLATES, type SectionTemplate } from "@/lib/personal-site/section-templates";
 
 type Props = {
   initialSite: PersonalSiteInput;
   previewUrl: string;
+  publicSiteBaseUrl: string;
   onSave: (site: PersonalSiteInput) => Promise<void>;
 };
 
 function makeId() {
   return `s_${Math.random().toString(36).slice(2, 10)}`;
 }
-
 
 const DEFAULT_THEME_CONFIG: ThemeConfig = {
   primaryColor: "#6647F0",
@@ -118,7 +120,7 @@ const WIDGET_LIST: Array<{ type: PersonalSiteSection["type"]; label: string; ico
   { type: "contentBlock", label: "Multi-Kolom", icon: Layers, category: "layout" },
 ];
 
-export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
+export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSave }: Props) {
   const { t } = useT();
   const router = useRouter();
   const [site, setSite] = useState<PersonalSiteInput>(() => ({ ...initialSite, pages: normalizePages(initialSite) }));
@@ -139,6 +141,9 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
   const activePage = useMemo(() => normalizePages(site).find((page) => page.id === activePageId) ?? normalizePages(site)[0], [site, activePageId]);
   const selectedSection = useMemo(() => activeSections.find((s) => s.id === selectedSectionId) ?? null, [activeSections, selectedSectionId]);
   const isDirty = useMemo(() => JSON.stringify(site) !== lastSaved, [site, lastSaved]);
+  // Phase 7: real public URL (derived from the live slug) for the SEO panel's
+  // share preview + copy button — not the draft preview URL.
+  const publicUrl = useMemo(() => `${publicSiteBaseUrl}/${normalizePersonalSiteSlug(site.slug)}`, [publicSiteBaseUrl, site.slug]);
 
   // Deselect when switching pages so the properties panel never points at a section from another page.
   useEffect(() => {
@@ -351,6 +356,7 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
               activePageId={activePageId}
               setActivePageId={setActivePageId}
               updateSite={updateSite}
+              publicUrl={publicUrl}
             />
           </aside>
         </div>
@@ -368,6 +374,7 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
           activePageId={activePageId}
           setActivePageId={setActivePageId}
           updateSite={updateSite}
+          publicUrl={publicUrl}
         />
       </aside>
 
@@ -464,7 +471,7 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
   );
 }
 
-function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection, addSectionTemplate, site, activePageId, setActivePageId, updateSite }: {
+function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection, addSectionTemplate, site, activePageId, setActivePageId, updateSite, publicUrl }: {
   sidebarTab: string;
   setSidebarTab: (tab: string) => void;
   groupedWidgets: Record<string, Array<{ type: PersonalSiteSection["type"]; label: string; icon: React.ElementType; category: string }>>;
@@ -474,6 +481,7 @@ function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection,
   activePageId: string;
   setActivePageId: (id: string) => void;
   updateSite: (patch: Partial<PersonalSiteInput>) => void;
+  publicUrl: string;
 }) {
   const pages = normalizePages(site);
 
@@ -539,6 +547,9 @@ function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection,
         </TabsTrigger>
         <TabsTrigger value="theme" className="flex-1 text-xs gap-1">
           <Palette className="h-3 w-3" /> Theme
+        </TabsTrigger>
+        <TabsTrigger value="seo" className="flex-1 text-xs gap-1">
+          <Search className="h-3 w-3" /> SEO
         </TabsTrigger>
       </TabsList>
 
@@ -703,6 +714,14 @@ function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection,
             </div>
           </div>
         </div>
+      </TabsContent>
+
+      <TabsContent value="seo" className="m-0 p-4">
+        <SEOPanel
+          site={site}
+          updateSite={updateSite}
+          publicUrl={publicUrl}
+        />
       </TabsContent>
     </Tabs>
   );

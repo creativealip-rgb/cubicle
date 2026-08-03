@@ -267,6 +267,24 @@ export const personalSitePageSchema = z.object({
 
 export type PersonalSitePage = z.infer<typeof personalSitePageSchema>;
 
+const seoTitleSchema = z.string().trim().max(80).optional().default("");
+const seoDescriptionSchema = z.string().trim().max(180).optional().default("");
+const seoOgImageSchema = z
+  .string()
+  .trim()
+  .max(2_000)
+  .refine((value) => !value || isSafePublicHref(value), "Gunakan URL publik yang aman")
+  .optional()
+  .nullish();
+
+export const seoMetadataSchema = z.object({
+  title: seoTitleSchema,
+  description: seoDescriptionSchema,
+  ogImage: seoOgImageSchema,
+});
+
+export type SeoMetadata = z.infer<typeof seoMetadataSchema>;
+
 export const personalSiteInputSchema = z.object({
   slug: z
     .string()
@@ -289,6 +307,7 @@ export const personalSiteInputSchema = z.object({
   links: z.array(personalSiteLinkSchema).max(8),
   pages: z.array(personalSitePageSchema).max(10).optional(),
   themeConfig: themeConfigSchema.nullish(),
+  seo: seoMetadataSchema.optional().nullish(),
 });
 
 export type PersonalSiteInput = z.infer<typeof personalSiteInputSchema>;
@@ -339,6 +358,7 @@ export const DEFAULT_PERSONAL_SITE: PersonalSiteInput = {
     headerStyle: "full-width",
     buttonStyle: "rounded",
   },
+  seo: undefined,
 };
 
 export function normalizePersonalSiteSlug(value: string) {
@@ -470,19 +490,27 @@ export function normalizeLegacyLinks(value: unknown): PersonalSiteLink[] {
 }
 
 export function normalizeStoredPersonalSite(value: unknown): PersonalSiteInput {
-  const raw = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
-  const candidate = {
+  const raw: Record<string, unknown> = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  const rawSeo: Record<string, unknown> | null = raw.seo && typeof raw.seo === "object" ? (raw.seo as Record<string, unknown>) : null;
+  const candidate: Partial<PersonalSiteInput> & { background?: string } = {
     ...DEFAULT_PERSONAL_SITE,
     ...raw,
     slug: normalizePersonalSiteSlug(String(raw.slug || DEFAULT_PERSONAL_SITE.slug)),
     published: Boolean(raw.published),
     theme: PERSONAL_SITE_THEMES.includes(raw.theme as (typeof PERSONAL_SITE_THEMES)[number])
-      ? raw.theme
-      : raw.background === "Paper" ? "paper" : "midnight",
+      ? (raw.theme as PersonalSiteInput["theme"])
+      : (raw.background as string | undefined) === "Paper" ? "paper" : "midnight",
     sections: normalizeLegacySections(raw.sections),
     links: normalizeLegacyLinks(raw.links),
-    pages: Array.isArray(raw.pages) ? raw.pages : DEFAULT_PERSONAL_SITE.pages,
-    themeConfig: raw.themeConfig && typeof raw.themeConfig === "object" ? raw.themeConfig : undefined,
+    pages: Array.isArray(raw.pages) ? (raw.pages as PersonalSiteInput["pages"]) : DEFAULT_PERSONAL_SITE.pages,
+    themeConfig: raw.themeConfig && typeof raw.themeConfig === "object" ? (raw.themeConfig as PersonalSiteInput["themeConfig"]) : undefined,
+    seo: rawSeo
+      ? {
+          title: String(rawSeo.title ?? ""),
+          description: String(rawSeo.description ?? ""),
+          ogImage: rawSeo.ogImage ? String(rawSeo.ogImage) : null,
+        }
+      : DEFAULT_PERSONAL_SITE.seo,
   };
   const parsed = personalSiteInputSchema.safeParse(candidate);
   if (!parsed.success) {
