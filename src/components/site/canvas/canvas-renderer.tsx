@@ -12,9 +12,28 @@ import { ImageUpload } from "./image-upload";
 import type { PersonalSiteInput, PersonalSiteSection, ThemeConfig } from "@/lib/personal-site/model";
 import { PERSONAL_SITE_ANIMATIONS } from "@/lib/personal-site/model";
 
+// --- Device preview (Phase 5) ---------------------------------------------
+// Preview-only viewport widths for the editor canvas. This state never touches
+// the site model, so switching devices cannot dirty the document or lose edits.
+export type CanvasDevice = "desktop" | "tablet" | "mobile";
+
+export const CANVAS_DEVICES: CanvasDevice[] = ["desktop", "tablet", "mobile"];
+
+/** Map a preview device to the canvas max-width class. Pure helper — exported for tests. */
+export function getCanvasMaxWidthClass(device: CanvasDevice): string {
+  switch (device) {
+    case "tablet": return "max-w-3xl";
+    case "mobile": return "max-w-[390px]";
+    case "desktop": return "max-w-5xl";
+    default: return "max-w-5xl";
+  }
+}
+
 type Props = {
   site: PersonalSiteInput;
   selectedSectionId: string | null;
+  /** Preview-only viewport width; defaults to desktop. Never persisted. */
+  device?: CanvasDevice;
   onSelectSection: (id: string | null) => void;
   onUpdateSite: (patch: Partial<PersonalSiteInput>) => void;
   onUpdateSection: (sectionId: string, patch: Partial<PersonalSiteSection>) => void;
@@ -27,6 +46,7 @@ type Props = {
 export function CanvasRenderer({
   site,
   selectedSectionId,
+  device = "desktop",
   onSelectSection,
   onUpdateSite,
   onUpdateSection,
@@ -56,7 +76,8 @@ export function CanvasRenderer({
 
   return (
     <div
-      className="mx-auto max-w-5xl bg-background shadow-sm rounded-xl overflow-hidden"
+      data-preview-device={device}
+      className={cn("mx-auto w-full min-w-0 bg-background shadow-sm rounded-xl overflow-hidden", getCanvasMaxWidthClass(device))}
       style={{
         backgroundColor: theme?.backgroundColor ?? "#ffffff",
         color: theme?.textColor ?? "#111827",

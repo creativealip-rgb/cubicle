@@ -17,7 +17,7 @@ const MONTHLY_CAP_USD = 50;
 
 const visualPromptSchema = promptBriefSchema.transform((input) => ({
   ...input,
-  model: input.model || "ag/gemini-pro-agent",
+  model: input.model || (process.env.AI_MODEL ?? "ag/gemini-3.6-flash-low"),
 }));
 
 function getApiKey() {
@@ -128,6 +128,11 @@ export async function generateVisualPrompt(rawInput: unknown) {
     );
   const currentCost = Number(usage?.totalCost ?? "0");
   const currentGenerations = Number(usage?.totalGenerations ?? 0);
+
+  if (!apiKey) {
+    throw new Error(`AI belum dikonfigurasi di environment ini.`);
+  }
+
   if (generationLimit !== null && currentGenerations >= generationLimit) {
     throw new Error(`Jatah generate bulanan ${generationLimit} sudah habis.`);
   }
@@ -142,49 +147,36 @@ export async function generateVisualPrompt(rawInput: unknown) {
   let outputTokens = 0;
   let costUsd = "0.0000";
 
-  if (!apiKey) {
-    generatedOutput = serializePromptResult({
-      version: 1,
-      promptType: input.promptType,
-      title: `${input.campaign} — draft`,
-      readyOutput: [{ label: "Draft materi", content: "Konfigurasi AI belum tersedia di environment ini." }],
-      technicalPrompt: generatedPrompt,
-    });
-    inputTokens = Math.ceil(generatedPrompt.length / 4);
-    outputTokens = Math.ceil(generatedOutput.length / 4);
-    costUsd = estimateCost(input.model, inputTokens, outputTokens).toFixed(4);
-  } else {
-    const response = await fetch(`${apiBase}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: input.model,
-        messages: [
-          { role: "system", content: request.systemPrompt },
-          { role: "user", content: generatedPrompt },
-        ],
-        temperature: 0.7,
-        max_tokens: 3500,
-      }),
-    });
+  const response = await fetch(`${apiBase}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: input.model,
+      messages: [
+        { role: "system", content: request.systemPrompt },
+        { role: "user", content: generatedPrompt },
+      ],
+      temperature: 0.7,
+      max_tokens: 3500,
+    }),
+  });
 
-    if (!response.ok) {
-      await response.text();
-      throw new Error("Layanan AI sedang bermasalah. Coba lagi beberapa saat.");
-    }
-
-    const rawText = await response.text();
-    const parsed = parseAiResponse(rawText);
-    const normalized = parsePromptResult(parsed.content, input.promptType);
-    generatedOutput = serializePromptResult(normalized.result);
-    inputTokens =
-      parsed.promptTokens || Math.ceil((request.systemPrompt.length + generatedPrompt.length) / 4);
-    outputTokens = parsed.completionTokens || Math.ceil(generatedOutput.length / 4);
-    costUsd = estimateCost(input.model, inputTokens, outputTokens).toFixed(4);
+  if (!response.ok) {
+    await response.text();
+    throw new Error("Layanan AI sedang bermasalah. Coba lagi beberapa saat.");
   }
+
+  const rawText = await response.text();
+  const parsed = parseAiResponse(rawText);
+  const normalized = parsePromptResult(parsed.content, input.promptType);
+  generatedOutput = serializePromptResult(normalized.result);
+  inputTokens =
+    parsed.promptTokens || Math.ceil((request.systemPrompt.length + generatedPrompt.length) / 4);
+  outputTokens = parsed.completionTokens || Math.ceil(generatedOutput.length / 4);
+  costUsd = estimateCost(input.model, inputTokens, outputTokens).toFixed(4);
 
   const [generation] = await db
     .insert(promptGenerations)

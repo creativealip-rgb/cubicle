@@ -129,7 +129,7 @@ Latest verified production commit: `9381be5`
 | Feature | Route/API | Status | Notes |
 | --- | --- | --- | --- |
 | AI chat/action | `/api/ai/chat`, `/api/ai/action` | PARTIAL | AI endpoints and conversations exist; role guard hardened. |
-| Prompts | `/app/prompts` | DONE | Prompt center exists. |
+| Prompts | `/app/prompts` | DONE | Prompt Studio uses one source of truth for Platform/Ratio/Tone/Offer, eliminating duplicate required fields. Dev AI routes through 9Router model `ag/gemini-3.6-flash-low`; production deployment unchanged. |
 | Brain | `/app/brain` | PARTIAL | Route exists; knowledge/automation maturity pending. |
 | Unified Template Center | `/app/templates` | DONE | Invoice+proposal+contract hub; apply-template on create form still TODO; prompt tab soon. |
 
@@ -139,13 +139,13 @@ Latest verified production commit: `9381be5`
 | --- | --- | --- | --- |
 | Personal notes | `/app/personal` | DONE | v0.1.28–0.1.30: tabs open/done/archived/all, pin, overdue, recurrence select + auto-roll, cron 7d/3d/1d dedupe, convert→task (priority), reverse link, infinite load-more, hide `[journal]`/`[site]`. |
 | Journal | `/app/journal` | DONE | v0.1.31: tabs Aktif/Arsip, create+edit+archive+restore+delete, mood/tag i18n, search/filter/export; uses `[journal]` prefix notes. |
-| Personal landing builder | `/app/personal-site` | PARTIAL | Builder controls, sections, links, theme/accent, dashboard preview. 2026-08-03 checkpoint adds multi-page canvas editing, page reorder/home controls, themeConfig-aware public rendering, and plan for starter templates/properties/readiness/SEO/AI. |
+| Personal landing builder | `/app/personal-site` | PARTIAL | Worktree checkpoint completes multi-page canvas editing, 16 starter blocks, 3 full-page templates, structured properties panel, themeConfig-aware rendering, and live readiness checklist. SEO/share and landing-specific AI copy remain pending. |
 | Standalone preview | `/site/preview` | DONE | Private full-page preview route exists. |
-| Public landing page | `/site/[slug]`, `/site/[slug]/[pageSlug]` | DONE | Public published home route exists; subpage route now has nested renderer support in checkpoint worktree. |
-| Publish controls | `/app/personal-site` | PARTIAL | Slug + published checkbox exist; publish readiness checklist planned in `docs/plans/2026-08-03-landing-page-builder-usability-improvements.md`. |
-| Section manager UI | canvas builder | PROCESS | Add/duplicate/delete/drag UI exists; starter block templates and structured properties panel planned next. |
-| Template picker | n/a | TODO | Freelancer/agency/service/portfolio/lead templates planned; implementation not started. |
-| Mobile preview | n/a | TODO | Dedicated desktop/tablet/mobile frame toggle planned. |
+| Public landing page | `/site/[slug]`, `/site/[slug]/[pageSlug]` | DONE | Public home and nested subpage routes render page-specific sections with navigation. |
+| Publish controls | `/app/personal-site` | PARTIAL | Slug + published state exist; live readiness badge/checklist now flags slug, title, hero, CTA/contact, content, and theme issues. Production not deployed. |
+| Section manager UI | canvas builder | DONE | Add/duplicate/delete/drag plus structured Properties Panel for Services, Pricing, FAQ, CTA, and Gallery. |
+| Template picker | canvas Insert/Templates tabs | DONE | 15 schema-valid starter blocks and 3 first-ship page templates: Freelancer Profile, Agency Website, Service Offer. |
+| Device preview | canvas bottom bar | DONE | Local-only Desktop/Tablet/Mobile widths; switching does not dirty or autosave site data. |
 
 ## Settings + ops
 

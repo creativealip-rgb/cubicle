@@ -3,14 +3,18 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Palette, FileText, Layers, Save, Eye, Loader2, Check, Circle, PanelLeft, Undo2, Redo2, Trash2, Home, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, Palette, FileText, Layers, Save, Eye, Loader2, Check, Circle, PanelLeft, Undo2, Redo2, Trash2, Home, ChevronUp, ChevronDown, Sparkles, LayoutTemplate, Monitor, Tablet, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CanvasRenderer } from "./canvas-renderer";
+import { CanvasRenderer, CANVAS_DEVICES, type CanvasDevice } from "./canvas-renderer";
+import { PropertiesPanel } from "./properties-panel";
+import { ReadinessBadge } from "../readiness-badge";
 import { useT } from "@/lib/i18n-client";
 import type { PersonalSiteInput, PersonalSiteSection, PersonalSitePage, ThemeConfig } from "@/lib/personal-site/model";
+import { PAGE_TEMPLATES, getPageTemplatesByCategory, getPageTemplateCategories, type PageTemplate } from "@/lib/personal-site/page-templates";
+import { SECTION_TEMPLATES, type SectionTemplate } from "@/lib/personal-site/section-templates";
 
 type Props = {
   initialSite: PersonalSiteInput;
@@ -30,6 +34,13 @@ const DEFAULT_THEME_CONFIG: ThemeConfig = {
   textColor: "#111827",
   headerStyle: "full-width",
   buttonStyle: "rounded",
+};
+
+// Device preview (Phase 5) — local state only, never persists or dirties the site document.
+const CANVAS_DEVICE_LABELS: Record<CanvasDevice, string> = {
+  desktop: "Desktop",
+  tablet: "Tablet",
+  mobile: "Mobile",
 };
 
 function slugifyPageTitle(title: string, fallback: string) {
@@ -113,6 +124,9 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
   const [site, setSite] = useState<PersonalSiteInput>(() => ({ ...initialSite, pages: normalizePages(initialSite) }));
   const [activePageId, setActivePageId] = useState(() => normalizePages(initialSite).find((page) => page.isHome)?.id ?? normalizePages(initialSite)[0]?.id ?? "home");
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+  // Phase 5: preview-only viewport width. Deliberately kept outside `site` so
+  // switching devices cannot dirty the document, enter history, or lose edits.
+  const [previewDevice, setPreviewDevice] = useState<CanvasDevice>("desktop");
   const [saving, setSaving] = useState(false);
   const [sidebarTab, setSidebarTab] = useState("insert");
   const [mobileSidebar, setMobileSidebar] = useState(false);
@@ -123,7 +137,13 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
 
   const activeSections = useMemo(() => pageSections(site, activePageId), [site, activePageId]);
   const activePage = useMemo(() => normalizePages(site).find((page) => page.id === activePageId) ?? normalizePages(site)[0], [site, activePageId]);
+  const selectedSection = useMemo(() => activeSections.find((s) => s.id === selectedSectionId) ?? null, [activeSections, selectedSectionId]);
   const isDirty = useMemo(() => JSON.stringify(site) !== lastSaved, [site, lastSaved]);
+
+  // Deselect when switching pages so the properties panel never points at a section from another page.
+  useEffect(() => {
+    setSelectedSectionId(null);
+  }, [activePageId]);
 
   // Push to history on site change (debounced)
   const historyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -198,6 +218,10 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
 
   const addSection = useCallback((type: PersonalSiteSection["type"]) => {
     setSite((prev) => syncSiteSections(prev, activePageId, [...pageSections(prev, activePageId), emptySection(type)]));
+  }, [activePageId]);
+
+  const addSectionTemplate = useCallback((template: SectionTemplate) => {
+    setSite((prev) => syncSiteSections(prev, activePageId, [...pageSections(prev, activePageId), template.build()]));
   }, [activePageId]);
 
   const moveSection = useCallback((id: string, direction: -1 | 1) => {
@@ -322,6 +346,7 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
               setSidebarTab={setSidebarTab}
               groupedWidgets={groupedWidgets}
               addSection={(type) => { addSection(type); setMobileSidebar(false); }}
+              addSectionTemplate={(template) => { addSectionTemplate(template); setMobileSidebar(false); }}
               site={{ ...site, sections: activeSections }}
               activePageId={activePageId}
               setActivePageId={setActivePageId}
@@ -338,6 +363,7 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
           setSidebarTab={setSidebarTab}
           groupedWidgets={groupedWidgets}
           addSection={addSection}
+          addSectionTemplate={addSectionTemplate}
           site={{ ...site, sections: activeSections }}
           activePageId={activePageId}
           setActivePageId={setActivePageId}
@@ -345,10 +371,12 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
         />
       </aside>
 
-      {/* Canvas area */}
-      <main className="flex-1 overflow-y-auto bg-muted/30 p-6">
+      {/* Canvas area — centers the preview frame, scrolls vertically only; the
+          frame never exceeds the area width so no horizontal overflow appears. */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden bg-muted/30 p-6 pb-16">
         <CanvasRenderer
           site={{ ...site, sections: activeSections }}
+          device={previewDevice}
           selectedSectionId={selectedSectionId}
           onSelectSection={setSelectedSectionId}
           onUpdateSite={updateSite}
@@ -361,9 +389,16 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
         />
       </main>
 
+      {/* Properties panel — desktop only, opens when a section is selected */}
+      <PropertiesPanel
+        section={selectedSection}
+        onUpdate={(patch) => { if (selectedSectionId) updateSection(selectedSectionId, patch); }}
+        onClose={() => setSelectedSectionId(null)}
+      />
+
       {/* Bottom bar */}
-      <div className="fixed bottom-0 left-0 md:left-64 right-0 z-30 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-2 backdrop-blur">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <div className={`fixed bottom-0 left-0 md:left-64 right-0 z-30 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-2 backdrop-blur ${selectedSection ? "md:right-80" : ""}`} role="status" aria-live="polite">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-1 min-w-0">
           <span className="hidden sm:inline">{activePage?.title ?? "Page"} · {activeSections.length} sections</span>
           <span className="hidden sm:inline text-muted-foreground/50">·</span>
           {saving ? (
@@ -374,7 +409,39 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
             <span className="flex items-center gap-1 text-emerald-600"><Check className="h-3 w-3" /> {t("Tersimpan", "Saved")}</span>
           )}
         </div>
+
+        {/* Phase 6: Readiness status badge — clicks toggle accessible issue list */}
+        <ReadinessBadge site={site} t={(id, fallback) => t(id, fallback)} />
+
         <div className="flex items-center gap-1">
+          {/* Phase 5: device preview switcher — local state only, does not touch site data. */}
+          <div
+            role="group"
+            aria-label={t("Pratinjau perangkat", "Preview device")}
+            className="flex items-center rounded-md border bg-muted/40 p-0.5"
+          >
+            {CANVAS_DEVICES.map((device) => {
+              const DeviceIcon = device === "desktop" ? Monitor : device === "tablet" ? Tablet : Smartphone;
+              const active = previewDevice === device;
+              const label = CANVAS_DEVICE_LABELS[device];
+              return (
+                <Button
+                  key={device}
+                  type="button"
+                  variant={active ? "default" : "ghost"}
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setPreviewDevice(device)}
+                  aria-label={t(`Pratinjau ${label}`, `${label} preview`)}
+                  aria-pressed={active}
+                  title={t(`Pratinjau ${label}`, `${label} preview`)}
+                >
+                  <DeviceIcon className="h-3.5 w-3.5" />
+                </Button>
+              );
+            })}
+          </div>
+          <div className="w-px h-5 bg-border mx-1" />
           <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={undo} disabled={historyIndex <= 0} title="Undo (Ctrl+Z)">
             <Undo2 className="h-4 w-4" />
           </Button>
@@ -397,17 +464,24 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
   );
 }
 
-function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection, site, activePageId, setActivePageId, updateSite }: {
+function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection, addSectionTemplate, site, activePageId, setActivePageId, updateSite }: {
   sidebarTab: string;
   setSidebarTab: (tab: string) => void;
   groupedWidgets: Record<string, Array<{ type: PersonalSiteSection["type"]; label: string; icon: React.ElementType; category: string }>>;
   addSection: (type: PersonalSiteSection["type"]) => void;
+  addSectionTemplate: (template: SectionTemplate) => void;
   site: PersonalSiteInput;
   activePageId: string;
   setActivePageId: (id: string) => void;
   updateSite: (patch: Partial<PersonalSiteInput>) => void;
 }) {
   const pages = normalizePages(site);
+
+  // Group section templates by category for the Starter Blocks panel
+  const groupedSectionTemplates = SECTION_TEMPLATES.reduce<Record<string, SectionTemplate[]>>((acc, template) => {
+    (acc[template.category] ??= []).push(template);
+    return acc;
+  }, {});
 
   function updatePages(nextPages: PersonalSitePage[]) {
     const normalized = nextPages.map((page, index) => ({ ...page, isHome: page.isHome || index === 0 && !nextPages.some((p) => p.isHome) }));
@@ -460,12 +534,40 @@ function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection,
         <TabsTrigger value="pages" className="flex-1 text-xs gap-1">
           <FileText className="h-3 w-3" /> Pages
         </TabsTrigger>
+        <TabsTrigger value="templates" className="flex-1 text-xs gap-1">
+          <Sparkles className="h-3 w-3" /> Templates
+        </TabsTrigger>
         <TabsTrigger value="theme" className="flex-1 text-xs gap-1">
           <Palette className="h-3 w-3" /> Theme
         </TabsTrigger>
       </TabsList>
 
       <TabsContent value="insert" className="m-0 p-3 space-y-4">
+        {/* Starter Blocks - SECTION_TEMPLATES */}
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground uppercase mb-2">Starter Blocks</p>
+          {Object.entries(groupedSectionTemplates).map(([category, templates]) => (
+            <div key={category}>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">{category}</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {templates.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => addSectionTemplate(t)}
+                    className="flex flex-col items-center gap-1 rounded-lg border p-2 text-[10px] hover:bg-muted transition-colors text-left"
+                    title={t.description}
+                  >
+                    <Layers className="h-3 w-3 text-muted-foreground shrink-0" />
+                    <span className="line-clamp-2">{t.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Widgets */}
         {Object.entries(groupedWidgets).map(([category, widgets]) => (
           <div key={category}>
             <p className="text-xs font-medium text-muted-foreground uppercase mb-2">{category}</p>
@@ -515,6 +617,10 @@ function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection,
         <Button type="button" variant="outline" size="sm" className="w-full gap-1" onClick={addPage}>
           <Plus className="h-3 w-3" /> Tambah Page
         </Button>
+      </TabsContent>
+
+      <TabsContent value="templates" className="m-0 p-3 space-y-4">
+        <TemplateTabContent site={site} updateSite={updateSite} setActivePageId={setActivePageId} />
       </TabsContent>
 
       <TabsContent value="theme" className="m-0 p-3 space-y-5">
@@ -652,3 +758,99 @@ const PRESET_THEMES = [
     config: { primaryColor: "#a78bfa", secondaryColor: "#312e81", backgroundColor: "#030712", textColor: "#e5e7eb" },
   },
 ];
+
+// Template tab sub-component
+function TemplateTabContent({ site, updateSite, setActivePageId }: { site: PersonalSiteInput; updateSite: (patch: Partial<PersonalSiteInput>) => void; setActivePageId: (id: string) => void }) {
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [showConfirm, setShowConfirm] = useState<string | null>(null);
+
+  const categories = [{ value: "all", label: "Semua" }, ...getPageTemplateCategories()];
+  const templates = getPageTemplatesByCategory(selectedCategory !== "all" ? selectedCategory : undefined);
+
+  function handleApplyTemplate(template: PageTemplate) {
+    // Show confirmation if current site has existing content (sections on any page)
+    const hasExistingContent = (site.pages?.some((p) => p.sections.length > 0) ?? false) || site.sections.length > 0;
+    if (hasExistingContent) {
+      setShowConfirm(template.id);
+      return;
+    }
+    applyTemplate(template);
+  }
+
+  function applyTemplate(template: PageTemplate) {
+    const patch = template.build(site);
+    const nextPages = patch.pages ?? [];
+    const homePage = nextPages.find((p) => p.isHome) ?? nextPages[0];
+    // Top-level sections must mirror the new home page sections; slug/published/links/theme/accent/themeConfig are untouched by the patch merge.
+    const nextPatch: Partial<PersonalSiteInput> = {
+      ...patch,
+      pages: homePage ? nextPages.map((page) => ({ ...page, isHome: page.id === homePage.id })) : nextPages,
+      sections: homePage?.sections ?? [],
+    };
+    updateSite(nextPatch);
+    if (homePage) setActivePageId(homePage.id);
+    setShowConfirm(null);
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Category filter */}
+      <div className="flex gap-2 overflow-x-auto pb-2">
+        {categories.map((cat) => (
+          <button
+            key={cat.value}
+            type="button"
+            onClick={() => setSelectedCategory(cat.value)}
+            className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
+              selectedCategory === cat.value
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-muted hover:bg-muted"
+            }`}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Template cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {templates.map((template) => (
+          <div key={template.id} className="rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md">
+            <div className="flex items-start justify-between mb-2">
+              <h3 className="font-semibold text-sm">{template.label}</h3>
+              <LayoutTemplate className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{template.description}</p>
+            <Button
+              type="button"
+              size="sm"
+              variant="default"
+              className="w-full"
+              onClick={() => handleApplyTemplate(template)}
+            >
+              Apply Template
+            </Button>
+          </div>
+        ))}
+      </div>
+
+      {/* Confirmation dialog for overwrite warning */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-background rounded-lg p-6 max-w-sm mx-4 shadow-xl border">
+            <h3 className="font-semibold mb-2">Ganti template?</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Halaman ini sudah berisi konten. Apakah Anda yakin ingin mengganti dengan template ini? Konten saat ini akan hilang.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowConfirm(null)} className="flex-1">Batal</Button>
+              <Button onClick={() => applyTemplate(PAGE_TEMPLATES.find((t) => t.id === showConfirm)!)} className="flex-1">
+                Ganti Saja
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

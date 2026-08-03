@@ -43,7 +43,8 @@ services:
       R2_PUBLIC_ENDPOINT: ""
       PAKASIR_PROJECT: ""
       PAKASIR_API_KEY: ""
-      AI_API_KEY: ""
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-ag/gemini-3.6-flash-low}
       OPENAI_API_KEY: ""
       CRON_SECRET: ""
       GOOGLE_CLIENT_ID: ""

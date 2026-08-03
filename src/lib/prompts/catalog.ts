@@ -1,6 +1,6 @@
 import { z } from "zod";
 import {
-  toneOptions, styleOptions, platformOptions, ratioOptions,
+  toneOptions, platformOptions, ratioOptions,
   sceneOptions, cameraAngleOptions, lightingOptions, backgroundOptions,
   orientationOptions, voiceLanguageOptions, durationOptions, cadenceOptions,
 } from "./field-options";
@@ -42,6 +42,61 @@ export type PromptCatalogEntry = {
 
 const field = (key: string, label: string, type: PromptFieldDefinition["type"] = "text", extra: Partial<PromptFieldDefinition> = {}): PromptFieldDefinition => ({ key, label, type, ...extra });
 const entry = (id: PromptTypeId, category: PromptCategory, name: string, description: string, iconKey: string, fields: PromptFieldDefinition[], outputContract: string[], defaults: Record<string, PromptOptionValue> = {}): PromptCatalogEntry => ({ id, category, name, description, iconKey, fields, outputContract, defaults });
+
+/**
+ * Keys that exist both as global form fields (prompt-studio sections C/D)
+ * and as type-specific options inside catalog entries. The global form field
+ * is the single source of truth for these keys; type entries must not render
+ * or require a duplicate input for them.
+ */
+export const OVERLAP_KEYS = ["platform", "ratio", "tone", "offer"] as const;
+export type OverlapKey = (typeof OVERLAP_KEYS)[number];
+export type OverlapValues = Partial<Record<OverlapKey, PromptOptionValue | null | undefined>>;
+
+export function isOverlapKey(key: string): key is OverlapKey {
+  return (OVERLAP_KEYS as readonly string[]).includes(key);
+}
+
+/** Fields that are not covered by the global form sections. */
+export function nonOverlapFields(fields: PromptFieldDefinition[]): PromptFieldDefinition[] {
+  return fields.filter((item) => !isOverlapKey(item.key));
+}
+
+/**
+ * Resolves the effective value of a catalog field, treating global form values
+ * as the source of truth for overlap keys. Returns undefined when absent.
+ */
+export function resolveOverlapValue(
+  key: string,
+  options: Record<string, PromptOptionValue>,
+  globals: OverlapValues,
+): PromptOptionValue | undefined {
+  const direct = options[key];
+  if (direct !== undefined && direct !== null && direct !== "") return direct;
+  if (isOverlapKey(key)) {
+    const global = globals[key];
+    if (global !== undefined && global !== null && global !== "") return global;
+  }
+  return direct === "" ? undefined : direct;
+}
+
+/**
+ * Splits type defaults into global form values (overlap keys) and option
+ * values, so switching type can seed the global fields instead of a hidden
+ * duplicate in options.
+ */
+export function splitOverlapDefaults(defaults: Record<string, PromptOptionValue>): {
+  globals: OverlapValues;
+  options: Record<string, PromptOptionValue>;
+} {
+  const globals: OverlapValues = {};
+  const options: Record<string, PromptOptionValue> = {};
+  for (const [key, value] of Object.entries(defaults)) {
+    if (isOverlapKey(key)) globals[key] = value;
+    else options[key] = value;
+  }
+  return { globals, options };
+}
 
 export const launchPromptCatalog: PromptCatalogEntry[] = [
   entry("instagram-feed", "social-media", "Feed", "Konsep visual, caption, CTA, dan hashtag siap posting.", "instagram", [
@@ -177,12 +232,30 @@ const baseSchema = z.object({
 
 export const promptBriefSchema = baseSchema.superRefine((value, ctx) => {
   const definition = launchPromptCatalog.find((item) => item.id === value.promptType)!;
+  // Build global form state for overlap resolution
+  const globals: OverlapValues = {
+    platform: value.platform || null,
+    ratio: value.ratio || null,
+    tone: value.tone || null,
+    offer: value.offer || null,
+  };
+
   for (const spec of definition.fields.filter((item) => item.required)) {
-    const candidate = value.options[spec.key];
-    if (candidate === undefined || candidate === null || candidate === "") ctx.addIssue({ code: "custom", path: ["options", spec.key], message: `${spec.label} wajib diisi` });
-    if (typeof candidate === "number" && spec.min !== undefined && candidate < spec.min) ctx.addIssue({ code: "custom", path: ["options", spec.key], message: `Minimal ${spec.min}` });
-    if (typeof candidate === "number" && spec.max !== undefined && candidate > spec.max) ctx.addIssue({ code: "custom", path: ["options", spec.key], message: `Maksimal ${spec.max}` });
-    if (spec.options && candidate !== undefined && !spec.options.includes(String(candidate))) ctx.addIssue({ code: "custom", path: ["options", spec.key], message: "Pilihan tidak valid" });
+    // Resolve value accounting for overlap with global form fields
+    const candidate = resolveOverlapValue(spec.key, value.options, globals);
+
+    if (candidate === undefined || candidate === null || candidate === "") {
+      ctx.addIssue({ code: "custom", path: ["options", spec.key], message: `${spec.label} wajib diisi` });
+    }
+    if (typeof candidate === "number" && spec.min !== undefined && candidate < spec.min) {
+      ctx.addIssue({ code: "custom", path: ["options", spec.key], message: `Minimal ${spec.min}` });
+    }
+    if (typeof candidate === "number" && spec.max !== undefined && candidate > spec.max) {
+      ctx.addIssue({ code: "custom", path: ["options", spec.key], message: `Maksimal ${spec.max}` });
+    }
+    if (spec.options && candidate !== undefined && !spec.options.includes(String(candidate))) {
+      ctx.addIssue({ code: "custom", path: ["options", spec.key], message: "Pilihan tidak valid" });
+    }
   }
 });
 

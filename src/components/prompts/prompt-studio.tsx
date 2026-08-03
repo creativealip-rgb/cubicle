@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Check, ChevronDown, ChevronRight, Info, Loader2, Monitor, Palette, Smartphone, Sparkles, Terminal } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, Info, Loader2, Monitor, Smartphone, Sparkles, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { generateVisualPrompt } from "@/lib/actions/visual-prompts";
-import { launchPromptCatalog, type PromptCategory, type PromptOptionValue, type PromptTypeId } from "@/lib/prompts/catalog";
+import { launchPromptCatalog, resolveOverlapValue, type PromptCategory, type PromptOptionValue, type PromptTypeId, splitOverlapDefaults, nonOverlapFields } from "@/lib/prompts/catalog";
 import { parsePromptResult, type PromptGenerationResult } from "@/lib/prompts/build-prompt";
 import { toneOptions, styleOptions, platformOptions, ratioOptions } from "@/lib/prompts/field-options";
 import { PromptResult } from "./prompt-result";
@@ -49,17 +49,6 @@ const styleRefs: Record<string, { id: string; en: string }> = {
   "Futuristic Tech": { id: "Gradien holografik, bentuk geometris, efek glassmorphism. Cocok: AI, blockchain, startup.", en: "Holographic gradients, geometric shapes, glassmorphism. Fits: AI, blockchain, startup." },
   "Retro Vintage": { id: "Warna muted/sepia, tipografi klasik, tekstur kertas. Cocok: heritage, artisan, vinyl.", en: "Muted/sepia colors, classic typography, paper texture. Fits: heritage, artisan, vinyl." },
   "Playful Fun": { id: "Bentuk rounded, warna pop, ilustrasi kartun. Cocok: kids, casual food, social app.", en: "Rounded shapes, pop colors, cartoon illustrations. Fits: kids, casual food, social app." },
-};
-
-const lightingRefs: Record<string, { id: string; en: string }> = {
-  "Soft Lighting": { id: "Cahaya lembut merata, bayangan tipis. Kesan profesional dan clean.", en: "Even soft light, subtle shadows. Professional and clean feel." },
-  "Neon Glow": { id: "Cahaya neon warna-warni, efek glow. Kesan modern dan energik.", en: "Colorful neon light, glow effect. Modern and energetic feel." },
-  "Dramatic Shadow": { id: "Kontras tinggi, bayangan tajam. Kesan misterius dan premium.", en: "High contrast, sharp shadows. Mysterious and premium feel." },
-  "Studio Light": { id: "Cahaya studio terkontrol, highlight merata. Kesan commercial dan polished.", en: "Controlled studio light, even highlights. Commercial and polished feel." },
-  "Natural Sunlight": { id: "Cahaya matahari alami, warm tone. Kesan natural dan trustworthy.", en: "Natural sunlight, warm tone. Natural and trustworthy feel." },
-  "Ring Light": { id: "Cahaya merata di wajah, catchlight bulat. Kesan beauty dan influencer.", en: "Even facial light, circular catchlight. Beauty and influencer feel." },
-  "Golden Hour": { id: "Cahaya keemasan sore hari, warm gradient. Kesan aspirasional dan cinematic.", en: "Golden hour light, warm gradient. Aspirational and cinematic feel." },
-  "Backlit / Silhouette": { id: "Cahaya dari belakang, subjek gelap. Kesan dramatis dan artistic.", en: "Backlight, dark subject. Dramatic and artistic feel." },
 };
 
 function InfoTip({ text }: { text: string }) {
@@ -132,11 +121,25 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
 
   const selected = launchPromptCatalog.find((item) => item.id === typeId)!;
   const types = launchPromptCatalog.filter((item) => item.category === category);
+  const detailFields = nonOverlapFields(selected.fields);
 
-  const valid = useMemo(() => Boolean(
+  // Global form values are the single source of truth for overlap keys
+  // (platform, ratio, tone, offer); validation and prompt building resolve
+  // type-specific fields from them instead of duplicate inputs.
+  const globals = {
+    platform: form.platform,
+    ratio: form.ratio,
+    tone: form.tone,
+    offer: form.offer,
+  };
+
+  const valid = Boolean(
     form.brand.trim() && form.campaign.trim() && form.goal.trim() && form.audience.trim() &&
-    selected.fields.filter((f) => f.required).every((f) => form.options[f.key] !== undefined && form.options[f.key] !== "")
-  ), [form, selected]);
+    selected.fields.filter((f) => f.required).every((f) => {
+      const value = resolveOverlapValue(f.key, form.options, globals);
+      return value !== undefined && value !== "";
+    })
+  );
 
   function patchField(key: keyof Omit<FormState, "options">, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -145,7 +148,16 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
     const item = launchPromptCatalog.find((entry) => entry.id === next)!;
     setCategory(item.category);
     setTypeId(next);
-    setForm((current) => ({ ...current, options: { ...item.defaults } }));
+    const { globals, options } = splitOverlapDefaults(item.defaults);
+    // Initialize global form fields from overlap defaults (cast string values for FormState)
+    setForm((current) => ({
+      ...current,
+      platform: String(globals.platform ?? current.platform),
+      ratio: String(globals.ratio ?? current.ratio),
+      tone: String(globals.tone ?? current.tone),
+      offer: String(globals.offer ?? current.offer),
+      options: { ...options },
+    }));
     setResult(null);
     setPendingType(null);
   }
@@ -272,14 +284,14 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
             </div>
 
             {/* B. Type-specific fields */}
-            {selected.fields.length > 0 && (
+            {detailFields.length > 0 && (
               <div>
                 <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-[10px] font-bold text-primary">B</span>
                   {t("Detail", "Details")} {selected.name}
                 </p>
                 <div className="space-y-3">
-                  {selected.fields.map((field) => (
+                  {detailFields.map((field) => (
                     <div className="space-y-1.5" key={field.key}>
                       <Label htmlFor={`option-${field.key}`}>{getFieldName(field)}{field.required ? " *" : ""}</Label>
                       {field.type === "select" ? (

@@ -2,6 +2,25 @@
 
 ## 2026-08-03 — Landing page builder multi-page checkpoint + usability plan
 
+**Phase 6 Readiness UI** (closes `docs/plans/2026-08-03-landing-page-builder-usability-improvements.md` Phase 6):
+- Added `src/lib/personal-site/readiness.ts` with `getPersonalSiteReadiness()`, `isReadyToPublish()`, and `countReadinessIssues()` helpers to evaluate landing pages for publish readiness. Checks: slug validity, title/hero filled, CTA paired when published, contact link exists, content sections present, themeConfig set.
+- Created `src/components/site/readiness-badge.tsx` as a live-updating badge/component showing "Ready to publish" or "<N> things to fix". Clicking toggles an accessible issue list/popover with severity labels (errors first, then warnings). Never dirties site state; reads directly from live site form state on every render.
+- Integrated into canvas editor (`src/components/site/canvas/canvas-editor.tsx`) near bottom bar next to device switcher; respects existing layout and does not conflict with properties panel or mobile controls.
+- Focused unit tests added: `src/components/site/readiness-badge.test.tsx` (pure function tests) + `src/lib/personal-site/readiness.test.ts` (25 tests). All green.
+- No prod deployment; dev-only work pending explicit approval.
+
+**Prompt Studio duplicate-field fix**:
+- Implemented overlap-key resolution to eliminate duplicate inputs between global form fields (platform, ratio, tone, offer) and type-specific fields in catalog entries. New utilities in `src/lib/prompts/catalog.ts`: `OVERLAP_KEYS`, `isOverlapKey()`, `nonOverlapFields()`, `resolveOverlapValue()`, `splitOverlapDefaults()`.
+- Updated `prompt-studio.tsx` to use global form state as source of truth for overlap keys and only show non-overlap fields in detail section. Validation now resolves values correctly and prevents missing required fields due to duplication.
+- Fixed validation path errors in prompt schema checks using resolved values instead of direct lookups in options.
+
+**Dev AI model config**:
+- Added `AI_MODEL: ${AI_MODEL:-ag/gemini-3.6-flash-low}` environment variable in `docker-compose.dev.yml` to support local development AI model selection alongside the existing API key configuration.
+
+**Other uncommitted work preserved**:
+- Canvas editor multi-page editing, page operations, undo/redo, device preview switcher (Phase 5), and all template files continue in worktree.
+- Starter block templates (`section-templates.ts`, `page-templates.ts`) and their tests are fully wired to the canvas Insert/Templates tabs.
+
 - Builder: current worktree checkpoint adds multi-page editing in canvas, active-page section sync, page add/rename/reorder/home controls, undo/redo preservation across pages, and mobile sidebar support for page operations.
 - Public site: adds nested public route `/site/[slug]/[pageSlug]`, renderer page navigation, and active-page rendering while preserving the home route `/site/[slug]`.
 - Theme: keeps `themeConfig` nullish-safe and applies header style, button style, hero image, font config, and accent color consistently in public renderer.
