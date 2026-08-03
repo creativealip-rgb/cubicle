@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { toast } from "sonner";
 import { deleteContract } from "@/lib/actions/contracts";
 
@@ -37,16 +38,17 @@ export function DeleteContractButton({
   }
 
   return (
-    <Button
+    <LoadingButton
       type="button"
       variant="outline"
       size="sm"
       onClick={onDelete}
-      disabled={loading}
+      loading={loading}
+      loadingText="..."
       className="text-destructive hover:text-destructive"
     >
       <Trash2 className="h-3.5 w-3.5 mr-1" />
-      {loading ? "..." : label}
-    </Button>
+      {label}
+    </LoadingButton>
   );
 }

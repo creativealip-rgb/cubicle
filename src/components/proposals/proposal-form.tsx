@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -198,7 +199,7 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
       </Card>
 
       <div className="flex gap-2">
-        <Button type="submit" disabled={loading}>{loading ? "Membuat..." : "Buat draft"}</Button>
+        <LoadingButton type="submit" loading={loading} loadingText="Membuat...">{"Buat draft"}</LoadingButton>
         <Button type="button" variant="ghost" onClick={() => router.back()}>Batal</Button>
       </div>
     </form>

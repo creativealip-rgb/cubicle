@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { createClient, updateClient } from "@/lib/actions/clients";
 import { isStaleServerActionError } from "@/lib/client-errors";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useT } from "@/lib/i18n-client";
@@ -265,9 +266,9 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
       </section>
 
       <div className="sticky bottom-0 -mx-1 border-t bg-background/95 px-1 pt-3 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <Button type="submit" disabled={loading} className="w-full sm:w-auto sm:min-w-40">
-          {loading ? t("Menyimpan...", "Saving...") : mode === "create" ? t("Buat Klien", "Create Client") : t("Simpan Perubahan", "Save Changes")}
-        </Button>
+        <LoadingButton type="submit" loading={loading} loadingText={t("Menyimpan...", "Saving...")} className="w-full sm:w-auto sm:min-w-40">
+          {mode === "create" ? t("Buat Klien", "Create Client") : t("Simpan Perubahan", "Save Changes")}
+        </LoadingButton>
       </div>
     </form>
   );

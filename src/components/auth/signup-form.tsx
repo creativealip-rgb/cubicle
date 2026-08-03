@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
@@ -108,10 +109,9 @@ export function SignupForm() {
               Minimal 8 karakter
             </p>
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {loading ? "Sedang membuat akun…" : "Buat akun"}
-          </Button>
+          <LoadingButton type="submit" className="w-full" loading={loading}>
+            {"Buat akun"}
+          </LoadingButton>
           <GoogleAuthButton callbackURL="/onboarding" />
           <p className="text-center text-xs text-muted-foreground">
             Dengan membuat akun, kamu menyetujui{" "}

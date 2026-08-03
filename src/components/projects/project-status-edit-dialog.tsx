@@ -6,6 +6,7 @@ import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { updateProjectListStatus } from "@/lib/actions/projects";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -27,7 +28,7 @@ export function ProjectStatusEditDialog({ projectId, projectName, currentStatus 
     <DialogContent className="sm:max-w-sm"><DialogHeader><DialogTitle>Edit status proyek</DialogTitle></DialogHeader>
       <p className="text-sm text-muted-foreground">{projectName}</p>
       <div className="space-y-2"><Label>Status</Label><Select value={status} onValueChange={(value) => setStatus(value as typeof status)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="active">Aktif</SelectItem><SelectItem value="on_hold">Ditunda</SelectItem><SelectItem value="completed">Selesai</SelectItem></SelectContent></Select></div>
-      <DialogFooter><Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>Batal</Button><Button onClick={save} disabled={loading}>{loading ? "Menyimpan..." : "Simpan"}</Button></DialogFooter>
+      <DialogFooter><Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>Batal</Button><LoadingButton onClick={save} loading={loading} loadingText="Menyimpan...">{"Simpan"}</LoadingButton></DialogFooter>
     </DialogContent>
   </Dialog>;
 }

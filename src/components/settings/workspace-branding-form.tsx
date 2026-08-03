@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { ImagePlus, Trash2, Link2 } from "lucide-react";
 import { updateWorkspaceBranding } from "@/lib/actions/workspace";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -117,7 +118,13 @@ export function WorkspaceBrandingForm({
   }
 
   async function onRemoveLogo() {
-    if (!window.confirm(t("Hapus logo workspace?", "Remove workspace logo?"))) return;
+    const ok = await confirm({
+      title: t("Hapus logo?", "Remove logo?"),
+      description: t("Hapus logo workspace?", "Remove workspace logo?"),
+      confirmLabel: t("Hapus", "Remove"),
+      destructive: true,
+    });
+    if (!ok) return;
     setUploading(true);
     try {
       const res = await fetch("/api/workspace/logo", { method: "DELETE" });
@@ -136,6 +143,8 @@ export function WorkspaceBrandingForm({
   }
 
   return (
+    <>
+    {dialog}
     <form onSubmit={onSubmit} className="space-y-4">
       <fieldset disabled={!canEdit} className="space-y-4">
       <div className="space-y-3 rounded-lg border p-4">
@@ -358,8 +367,8 @@ export function WorkspaceBrandingForm({
 
       </div>
 
-      <Button type="submit" disabled={loading || uploading || !canEdit}>
-        {loading ? t("Menyimpan…", "Saving…") : t("Simpan branding", "Save branding")}
+      <LoadingButton type="submit" loading={loading} loadingText={t("Menyimpan…", "Saving…")} disabled={uploading || !canEdit}>
+        {t("Simpan branding", "Save branding")}
       </Button>
       </fieldset>
     </form>

@@ -157,7 +157,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
       if (result.ok) {
         router.refresh();
       } else {
-        alert(result.error);
+        toast.error(result.error);
       }
     } finally {
       setCreating(false);

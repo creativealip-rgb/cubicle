@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { addWorkspaceMember, removeWorkspaceMember, updateWorkspaceMemberRole } from "@/lib/actions/team";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -129,8 +130,8 @@ export function TeamManager({
               </SelectContent>
             </Select>
           </div>
-          <Button type="submit" disabled={loading || !canInvite} className="gap-2">
-            <UserPlus className="h-4 w-4" /> {loading ? "Mengirim..." : "Undang"}
+          <LoadingButton type="submit" loading={loading} loadingText="Mengirim..." disabled={!canInvite} className="gap-2">
+            <UserPlus className="h-4 w-4" /> {"Undang"}
           </Button>
         </div>
         <p className="text-xs text-muted-foreground flex items-start gap-1.5">

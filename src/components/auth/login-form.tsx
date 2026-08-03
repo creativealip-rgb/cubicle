@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import { Loader2, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
@@ -158,10 +159,9 @@ export function LoginForm() {
               autoComplete="current-password"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {loading ? t("Sedang masuk…", "Signing in…") : t("Masuk", "Sign in")}
-          </Button>
+          <LoadingButton type="submit" className="w-full" loading={loading}>
+            {t("Masuk", "Sign in")}
+          </LoadingButton>
           <GoogleAuthButton callbackURL={redirect} />
         </CardContent>
       </form>

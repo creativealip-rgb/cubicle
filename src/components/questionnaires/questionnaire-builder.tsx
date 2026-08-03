@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Trash2, Save, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { createQuestionnaire } from "@/lib/actions/questionnaires";
 import Link from "next/link";
 
@@ -89,11 +90,11 @@ export function QuestionnaireBuilder({
 
   function handleSave() {
     if (!name.trim()) {
-      alert("Please give the questionnaire a name");
+      toast.error("Please give the questionnaire a name");
       return;
     }
     if (fields.length === 0) {
-      alert("Please add at least one field");
+      toast.error("Please add at least one field");
       return;
     }
     const cleanFields = fields.map(f => ({
@@ -116,7 +117,7 @@ export function QuestionnaireBuilder({
         router.push(`/app/questionnaires/${q.id}`);
         router.refresh();
       } catch (err: any) {
-        alert(err?.message || "Save failed");
+        toast.error(err?.message || "Save failed");
       }
     });
   }

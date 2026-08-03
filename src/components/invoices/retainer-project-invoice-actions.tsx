@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { createOrGetRetainerPeriod, generateRetainerInvoice, lockRetainerPeriod } from "@/lib/actions/retainers";
 import { getRetainerPeriodUsageSummary } from "@/lib/retainer-period";
 import { formatMoney } from "@/lib/utils";
@@ -55,6 +56,6 @@ export function RetainerProjectInvoiceActions({ projectId, period }: { projectId
         {summary.overageValue !== null ? <div><dt className="text-muted-foreground">{t("Nilai overage", "Overage value")}</dt><dd className="font-medium">{formatMoney(summary.overageValue, periodCurrency)}</dd></div> : null}
       </dl>
     </div> : null}
-    {period?.status !== "invoiced" ? <Button size="sm" disabled={pending} onClick={createInvoice}>{pending ? t("Memproses…", "Processing…") : t("Buat Invoice Periode Retainer", "Create Retainer Period Invoice")}</Button> : null}
+    {period?.status !== "invoiced" ? <LoadingButton size="sm" loading={pending} loadingText={t("Memproses…", "Processing…")} onClick={createInvoice}>{t("Buat Invoice Periode Retainer", "Create Retainer Period Invoice")}</LoadingButton> : null}
   </div>;
 }

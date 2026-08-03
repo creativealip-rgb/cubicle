@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { updateWorkspaceName } from "@/lib/actions/workspace";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useT } from "@/lib/i18n-client";
@@ -72,9 +73,9 @@ export function WorkspaceNameForm({
           )}
         </p>
       </div>
-      <Button type="submit" size="sm" disabled={loading || name.trim() === defaultName}>
-        {loading ? t("Menyimpan…", "Saving…") : t("Simpan nama", "Save name")}
-      </Button>
+      <LoadingButton type="submit" size="sm" loading={loading} loadingText={t("Menyimpan…", "Saving…")} disabled={name.trim() === defaultName}>
+        {t("Simpan nama", "Save name")}
+      </LoadingButton>
     </form>
   );
 }

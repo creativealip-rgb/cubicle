@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -169,7 +170,7 @@ export function PortalRequestAdmin({
           <Label htmlFor="request-description">Description</Label>
           <Textarea id="request-description" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="Detail instruksi untuk klien..." />
         </div>
-        <Button type="submit" disabled={loading}>{loading ? "Saving..." : "Add request"}</Button>
+        <LoadingButton type="submit" loading={loading} loadingText="Saving...">{"Add request"}</LoadingButton>
       </form>
 
       <div className="space-y-2">

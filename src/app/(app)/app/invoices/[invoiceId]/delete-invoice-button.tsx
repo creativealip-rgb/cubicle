@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import {
   Dialog,
   DialogContent,
@@ -56,9 +57,9 @@ export function DeleteInvoiceButton({ invoiceId, disabled, backUrl = "/app/invoi
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>{t("Batal", "Cancel")}</Button>
-          <Button variant="destructive" onClick={handleDelete} disabled={loading}>
-            {loading ? t("Menghapus…", "Deleting…") : t("Hapus Permanen", "Delete Permanently")}
-          </Button>
+          <LoadingButton variant="destructive" onClick={handleDelete} loading={loading} loadingText={t("Menghapus…", "Deleting…")}>
+            {t("Hapus Permanen", "Delete Permanently")}
+          </LoadingButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

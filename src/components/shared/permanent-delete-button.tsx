@@ -8,6 +8,7 @@ import { permanentlyDeleteClient } from "@/lib/actions/clients";
 import { permanentlyDeleteProject } from "@/lib/actions/projects";
 import { permanentlyDeleteTask } from "@/lib/actions/tasks";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useT } from "@/lib/i18n-client";
@@ -64,9 +65,9 @@ export function PermanentDeleteButton({ entityType, entityId, entityName, redire
       </div>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>{t("Batal", "Cancel")}</Button>
-        <Button type="button" variant="destructive" onClick={remove} disabled={loading || confirmation !== entityName}>
-          {loading ? t("Menghapus...", "Deleting...") : t("Hapus Permanen", "Delete Permanently")}
-        </Button>
+        <LoadingButton type="button" variant="destructive" onClick={remove} loading={loading} loadingText={t("Menghapus...", "Deleting...")} disabled={confirmation !== entityName}>
+          {t("Hapus Permanen", "Delete Permanently")}
+        </LoadingButton>
       </DialogFooter>
     </DialogContent>
   </Dialog>;

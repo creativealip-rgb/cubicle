@@ -99,13 +99,16 @@ export function CurrencyRatesForm({
 
   async function onDelete(code: string) {
     if (!canEdit) return;
-    const confirmed = window.confirm(
-      t(
+    const ok = await confirm({
+      title: t(`Hapus rate ${code}?`, `Remove ${code} rate?`),
+      description: t(
         `Hapus rate ${code}? Ringkasan ${code} tidak akan dikonversi sampai rate baru ditambahkan.`,
         `Remove the ${code} rate? ${code} totals will not be converted until a new rate is added.`,
       ),
-    );
-    if (!confirmed) return;
+      confirmLabel: t("Hapus", "Remove"),
+      destructive: true,
+    });
+    if (!ok) return;
     setDeleting(code);
     try {
       await deleteWorkspaceCurrencyRate({ fromCurrency: code });
@@ -119,6 +122,8 @@ export function CurrencyRatesForm({
   }
 
   return (
+    <>
+    {dialog}
     <div className="space-y-4">
       <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
         <p>

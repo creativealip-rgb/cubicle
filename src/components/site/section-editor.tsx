@@ -85,6 +85,7 @@ function AddRow({ label, onClick }: { label: string; onClick: () => void }) {
 
 export function SectionEditor({ sections, onChange }: { sections: PersonalSiteSection[]; onChange: (sections: PersonalSiteSection[]) => void }) {
   const { t } = useT();
+  const { confirm, dialog } = useConfirm();
   const update = (idValue: string, next: PersonalSiteSection) => onChange(sections.map((section) => section.id === idValue ? next : section));
   const move = (index: number, delta: number) => {
     const target = index + delta;
@@ -94,8 +95,19 @@ export function SectionEditor({ sections, onChange }: { sections: PersonalSiteSe
     onChange(next);
   };
   const remove = (section: PersonalSiteSection) => {
-    if (JSON.stringify(section).length > 160 && !window.confirm(t("Hapus section beserta isinya?", "Delete this section and its content?"))) return;
-    onChange(sections.filter((item) => item.id !== section.id));
+    const run = async () => {
+      if (JSON.stringify(section).length > 160) {
+        const ok = await confirm({
+          title: t("Hapus section?", "Delete section?"),
+          description: t("Hapus section beserta isinya?", "Delete this section and its content?"),
+          confirmLabel: t("Hapus", "Delete"),
+          destructive: true,
+        });
+        if (!ok) return;
+      }
+      onChange(sections.filter((item) => item.id !== section.id));
+    };
+    run();
   };
   const duplicate = (section: PersonalSiteSection) => onChange([...sections.slice(0, sections.indexOf(section) + 1), { ...structuredClone(section), id: id(), heading: `${section.heading} (${t("salinan", "copy")})` }, ...sections.slice(sections.indexOf(section) + 1)]);
   const add = () => onChange([...sections, emptySection("custom")]);
@@ -105,9 +117,17 @@ export function SectionEditor({ sections, onChange }: { sections: PersonalSiteSe
     {sections.map((section, index) => <div key={section.id} className="space-y-3 rounded-xl bg-muted/35 p-3 sm:p-4">
       <div className="grid gap-2 sm:grid-cols-[150px_1fr_auto]">
         <Select value={section.type} onValueChange={(value) => {
-          if (!window.confirm(t("Ganti tipe akan mereset isi section ini. Lanjut?", "Changing type resets this section. Continue?"))) return;
-          const replacement = emptySection(value as PersonalSiteSection["type"]);
-          update(section.id, { ...replacement, id: section.id, heading: section.heading } as PersonalSiteSection);
+          const run = async () => {
+            const ok = await confirm({
+              title: t("Ganti tipe section?", "Change section type?"),
+              description: t("Ganti tipe akan mereset isi section ini. Lanjut?", "Changing type resets this section. Continue?"),
+              confirmLabel: t("Lanjut", "Continue"),
+            });
+            if (!ok) return;
+            const replacement = emptySection(value as PersonalSiteSection["type"]);
+            update(section.id, { ...replacement, id: section.id, heading: section.heading } as PersonalSiteSection);
+          };
+          run();
         }}><SelectTrigger className="min-h-10"><SelectValue /></SelectTrigger><SelectContent>{PERSONAL_SITE_SECTION_TYPES.map((type) => <SelectItem key={type} value={type}>{type[0].toUpperCase() + type.slice(1)}</SelectItem>)}</SelectContent></Select>
         <Input aria-label={t("Judul section", "Section heading")} placeholder={t("Judul section", "Section heading")} value={section.heading} onChange={(e) => update(section.id, { ...section, heading: e.target.value })} />
         <div className="flex gap-1">
