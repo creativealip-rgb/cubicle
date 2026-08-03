@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useT } from "@/lib/i18n-client";
+import { useConfirm } from "@/lib/hooks/use-confirm";
 
 interface WorkspaceBrandingFormProps {
   canEdit?: boolean;
@@ -39,6 +40,7 @@ export function WorkspaceBrandingForm({
 }: WorkspaceBrandingFormProps) {
   const { t } = useT();
   const router = useRouter();
+  const { confirm, dialog } = useConfirm();
   const fileRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);

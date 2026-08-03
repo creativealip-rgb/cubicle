@@ -21,6 +21,7 @@ import {
   type PersonalSiteInput,
 } from "@/lib/personal-site/model";
 import { useT } from "@/lib/i18n-client";
+import { useConfirm } from "@/lib/hooks/use-confirm";
 
 type EditorSection = "identity" | "content" | "links" | "appearance";
 
@@ -36,6 +37,7 @@ export function BuilderClient({
   previewUrl: string;
 }) {
   const { t } = useT();
+  const { confirm, dialog } = useConfirm();
   const [state, formAction, pending] = useActionState(
     action,
     { status: "idle" } satisfies PersonalSiteActionState,

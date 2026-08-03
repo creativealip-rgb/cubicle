@@ -10,6 +10,7 @@ import {
   type PersonalSiteSection,
 } from "@/lib/personal-site/model";
 import { useT } from "@/lib/i18n-client";
+import { useConfirm } from "@/lib/hooks/use-confirm";
 
 function id() {
   return crypto.randomUUID();
