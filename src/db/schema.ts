@@ -17,7 +17,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
-import type { PersonalSiteLink, PersonalSiteSection } from "@/lib/personal-site/model";
+import type { PersonalSiteLink, PersonalSiteSection, PersonalSitePage, ThemeConfig } from "@/lib/personal-site/model";
 
 // ─── Better-Auth tables ───
 
@@ -1516,6 +1516,9 @@ export const personalSites = pgTable("personal_sites", {
   accent: text("accent").notNull().default("#6647F0"),
   sections: jsonb("sections").$type<PersonalSiteSection[]>().notNull().default(sql`'[]'::jsonb`),
   links: jsonb("links").$type<PersonalSiteLink[]>().notNull().default(sql`'[]'::jsonb`),
+  pages: jsonb("pages").$type<PersonalSitePage[]>().default(sql`'[]'::jsonb`),
+  themeConfig: jsonb("theme_config").$type<ThemeConfig>(),
+  heroImage: text("hero_image"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [

@@ -444,7 +444,7 @@ function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection,
               <button
                 key={preset.name}
                 type="button"
-                onClick={() => updateSite({ themeConfig: { ...site.themeConfig!, ...preset.config } })}
+                onClick={() => updateSite({ theme: preset.theme as PersonalSiteInput["theme"], accent: preset.accent, themeConfig: { ...site.themeConfig!, ...preset.config } })}
                 className="flex items-center gap-2 rounded-lg border p-2 text-xs hover:bg-muted transition-colors text-left"
               >
                 <div className="flex shrink-0">
@@ -499,34 +499,50 @@ function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection,
 const PRESET_THEMES = [
   {
     name: "Midnight",
+    theme: "midnight",
+    accent: "#6647F0",
     config: { primaryColor: "#6647F0", secondaryColor: "#1e293b", backgroundColor: "#0f172a", textColor: "#e2e8f0" },
   },
   {
     name: "Paper",
+    theme: "paper",
+    accent: "#404040",
     config: { primaryColor: "#404040", secondaryColor: "#737373", backgroundColor: "#ffffff", textColor: "#171717" },
   },
   {
     name: "Studio",
+    theme: "studio",
+    accent: "#6647F0",
     config: { primaryColor: "#6647F0", secondaryColor: "#1e293b", backgroundColor: "#fafafa", textColor: "#111827" },
   },
   {
     name: "Ocean",
+    theme: "ocean",
+    accent: "#0ea5e9",
     config: { primaryColor: "#0ea5e9", secondaryColor: "#0c4a6e", backgroundColor: "#f0f9ff", textColor: "#0c4a6e" },
   },
   {
     name: "Forest",
+    theme: "forest",
+    accent: "#16a34a",
     config: { primaryColor: "#16a34a", secondaryColor: "#14532d", backgroundColor: "#f0fdf4", textColor: "#14532d" },
   },
   {
     name: "Sunset",
+    theme: "sunset",
+    accent: "#ea580c",
     config: { primaryColor: "#ea580c", secondaryColor: "#7c2d12", backgroundColor: "#fff7ed", textColor: "#7c2d12" },
   },
   {
     name: "Rose",
+    theme: "rose",
+    accent: "#e11d48",
     config: { primaryColor: "#e11d48", secondaryColor: "#881337", backgroundColor: "#fff1f2", textColor: "#881337" },
   },
   {
     name: "Dark",
+    theme: "dark",
+    accent: "#a78bfa",
     config: { primaryColor: "#a78bfa", secondaryColor: "#312e81", backgroundColor: "#030712", textColor: "#e5e7eb" },
   },
 ];
