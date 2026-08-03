@@ -4,6 +4,8 @@ import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Plus, Palette, FileText, Layers, Save, Eye, Loader2, Check, Circle, PanelLeft, Undo2, Redo2, Trash2, Home, ChevronUp, ChevronDown, Sparkles, LayoutTemplate, Monitor, Tablet, Smartphone, Search } from "lucide-react";
+import { DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, useDraggable, type DragStartEvent, type DragEndEvent } from "@dnd-kit/core";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +14,10 @@ import { CanvasRenderer, CANVAS_DEVICES, type CanvasDevice } from "./canvas-rend
 import { PropertiesPanel } from "./properties-panel";
 import { ReadinessBadge } from "../readiness-badge";
 import { SEOPanel } from "./seo-panel";
+import { StructurePanel } from "./structure-panel";
+import { MobileStepEditor } from "./mobile-step-editor";
 import { useT } from "@/lib/i18n-client";
+import { isReadyToPublish, getPersonalSiteReadiness } from "@/lib/personal-site/readiness";
 import type { PersonalSiteInput, PersonalSiteSection, PersonalSitePage, ThemeConfig } from "@/lib/personal-site/model";
 import { normalizePersonalSiteSlug } from "@/lib/personal-site/model";
 import { PAGE_TEMPLATES, getPageTemplatesByCategory, getPageTemplateCategories, type PageTemplate } from "@/lib/personal-site/page-templates";
@@ -136,6 +141,61 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [history, setHistory] = useState<string[]>(() => [JSON.stringify({ ...initialSite, pages: normalizePages(initialSite) })]);
   const [historyIndex, setHistoryIndex] = useState(0);
+
+  // Drag state - track currently dragged item for preview
+  const [activeDrag, setActiveDrag] = useState<{ id: string; label: string } | null>(null);
+
+  const [showPublishConfirm, setShowPublishConfirm] = useState<boolean | null>(null); // null=hidden, true=publish, false=unpublish
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  function handleDragStart(event: DragStartEvent) {
+    const { active } = event;
+    const data = active.data.current;
+    if (data?.type === "template") {
+      setActiveDrag({ id: String(active.id), label: data.label as string ?? "" });
+    }
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    setActiveDrag(null);
+
+    const data = active.data.current;
+
+    // Template drag from sidebar → insert at drop position or append
+    if (data?.type === "template" && data.template) {
+      const template = data.template as SectionTemplate;
+      setSite((prev) => {
+        const sections = pageSections(prev, activePageId);
+        if (over && typeof over.id === "string" && over.id.startsWith("s_")) {
+          const idx = sections.findIndex((s) => s.id === over.id);
+          if (idx >= 0) {
+            const next = [...sections];
+            next.splice(idx, 0, template.build());
+            return syncSiteSections(prev, activePageId, next);
+          }
+        }
+        // Append to end if no section target
+        return syncSiteSections(prev, activePageId, [...sections, template.build()]);
+      });
+      return;
+    }
+
+    // Section reorder (existing behavior from canvas-renderer)
+    if (!over || typeof active.id !== "string" || !active.id.startsWith("s_")) return;
+    const sections = pageSections(site, activePageId);
+    const oldIndex = sections.findIndex((s) => s.id === active.id);
+    const newIndex = sections.findIndex((s) => s.id === over.id);
+    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
+    const next = [...sections];
+    const [moved] = next.splice(oldIndex, 1);
+    next.splice(newIndex, 0, moved);
+    reorderSections(next);
+  }
 
   const activeSections = useMemo(() => pageSections(site, activePageId), [site, activePageId]);
   const activePage = useMemo(() => normalizePages(site).find((page) => page.id === activePageId) ?? normalizePages(site)[0], [site, activePageId]);
@@ -329,149 +389,268 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   }, {});
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
-      {/* Mobile sidebar toggle */}
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        className="fixed bottom-16 left-3 z-40 md:hidden shadow-lg"
-        onClick={() => setMobileSidebar(!mobileSidebar)}
-      >
-        <PanelLeft className="h-4 w-4" />
-      </Button>
-
-      {/* Sidebar overlay (mobile) */}
-      {mobileSidebar && (
-        <div className="fixed inset-0 z-50 md:hidden" onClick={() => setMobileSidebar(false)}>
-          <div className="absolute inset-0 bg-black/50" />
-          <aside className="absolute left-0 top-0 bottom-0 w-72 bg-background overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <SidebarContent
-              sidebarTab={sidebarTab}
-              setSidebarTab={setSidebarTab}
-              groupedWidgets={groupedWidgets}
-              addSection={(type) => { addSection(type); setMobileSidebar(false); }}
-              addSectionTemplate={(template) => { addSectionTemplate(template); setMobileSidebar(false); }}
-              site={{ ...site, sections: activeSections }}
-              activePageId={activePageId}
-              setActivePageId={setActivePageId}
-              updateSite={updateSite}
-              publicUrl={publicUrl}
-            />
-          </aside>
-        </div>
-      )}
-
-      {/* Left sidebar (desktop) */}
-      <aside className="hidden md:block w-64 shrink-0 border-r bg-background overflow-y-auto">
-        <SidebarContent
-          sidebarTab={sidebarTab}
-          setSidebarTab={setSidebarTab}
-          groupedWidgets={groupedWidgets}
-          addSection={addSection}
-          addSectionTemplate={addSectionTemplate}
-          site={{ ...site, sections: activeSections }}
+    <>
+      {/* Mobile: step-based editor (md breakpoint) */}
+      <div className="md:hidden h-[calc(100vh-3.5rem)] overflow-hidden">
+        <MobileStepEditor
+          site={site}
           activePageId={activePageId}
-          setActivePageId={setActivePageId}
-          updateSite={updateSite}
-          publicUrl={publicUrl}
-        />
-      </aside>
-
-      {/* Canvas area — centers the preview frame, scrolls vertically only; the
-          frame never exceeds the area width so no horizontal overflow appears. */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden bg-muted/30 p-6 pb-16">
-        <CanvasRenderer
-          site={{ ...site, sections: activeSections }}
-          device={previewDevice}
           selectedSectionId={selectedSectionId}
-          onSelectSection={setSelectedSectionId}
+          publicSiteBaseUrl={publicSiteBaseUrl}
+          previewUrl={previewUrl}
           onUpdateSite={updateSite}
-          onUpdateSection={updateSection}
-          onAddSection={addSection}
-          onMoveSection={moveSection}
-          onDuplicateSection={duplicateSection}
-          onDeleteSection={deleteSection}
-          onReorderSections={reorderSections}
+          onSetActivePageId={setActivePageId}
+          onSelectSection={setSelectedSectionId}
         />
-      </main>
+      </div>
 
-      {/* Properties panel — desktop only, opens when a section is selected */}
-      <PropertiesPanel
-        section={selectedSection}
-        onUpdate={(patch) => { if (selectedSectionId) updateSection(selectedSectionId, patch); }}
-        onClose={() => setSelectedSectionId(null)}
-      />
+      {/* Desktop: DnD canvas + sidebar */}
+      <div className="hidden md:block">
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
+        {/* Mobile sidebar toggle */}
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="fixed bottom-16 left-3 z-40 md:hidden shadow-lg"
+          onClick={() => setMobileSidebar(!mobileSidebar)}
+        >
+          <PanelLeft className="h-4 w-4" />
+        </Button>
 
-      {/* Bottom bar */}
-      <div className={`fixed bottom-0 left-0 md:left-64 right-0 z-30 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-2 backdrop-blur ${selectedSection ? "md:right-80" : ""}`} role="status" aria-live="polite">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-1 min-w-0">
-          <span className="hidden sm:inline">{activePage?.title ?? "Page"} · {activeSections.length} sections</span>
-          <span className="hidden sm:inline text-muted-foreground/50">·</span>
-          {saving ? (
-            <span className="flex items-center gap-1 text-primary"><Loader2 className="h-3 w-3 animate-spin" /> {t("Menyimpan...", "Saving...")}</span>
-          ) : isDirty ? (
-            <span className="flex items-center gap-1 text-amber-600"><Circle className="h-2 w-2 fill-current" /> {t("Belum tersimpan", "Unsaved")}</span>
-          ) : (
-            <span className="flex items-center gap-1 text-emerald-600"><Check className="h-3 w-3" /> {t("Tersimpan", "Saved")}</span>
-          )}
-        </div>
-
-        {/* Phase 6: Readiness status badge — clicks toggle accessible issue list */}
-        <ReadinessBadge site={site} t={(id, fallback) => t(id, fallback)} />
-
-        <div className="flex items-center gap-1">
-          {/* Phase 5: device preview switcher — local state only, does not touch site data. */}
-          <div
-            role="group"
-            aria-label={t("Pratinjau perangkat", "Preview device")}
-            className="flex items-center rounded-md border bg-muted/40 p-0.5"
-          >
-            {CANVAS_DEVICES.map((device) => {
-              const DeviceIcon = device === "desktop" ? Monitor : device === "tablet" ? Tablet : Smartphone;
-              const active = previewDevice === device;
-              const label = CANVAS_DEVICE_LABELS[device];
-              return (
-                <Button
-                  key={device}
-                  type="button"
-                  variant={active ? "default" : "ghost"}
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => setPreviewDevice(device)}
-                  aria-label={t(`Pratinjau ${label}`, `${label} preview`)}
-                  aria-pressed={active}
-                  title={t(`Pratinjau ${label}`, `${label} preview`)}
-                >
-                  <DeviceIcon className="h-3.5 w-3.5" />
-                </Button>
-              );
-            })}
+        {/* Sidebar overlay (mobile) */}
+        {mobileSidebar && (
+          <div className="fixed inset-0 z-50 md:hidden" onClick={() => setMobileSidebar(false)}>
+            <div className="absolute inset-0 bg-black/50" />
+            <aside className="absolute left-0 top-0 bottom-0 w-72 bg-background overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <SidebarContent
+                sidebarTab={sidebarTab}
+                setSidebarTab={setSidebarTab}
+                groupedWidgets={groupedWidgets}
+                addSection={(type) => { addSection(type); setMobileSidebar(false); }}
+                addSectionTemplate={(template) => { addSectionTemplate(template); setMobileSidebar(false); }}
+                site={{ ...site, sections: activeSections }}
+                activePageId={activePageId}
+                setActivePageId={setActivePageId}
+                updateSite={updateSite}
+                publicUrl={publicUrl}
+                onSelectSection={setSelectedSectionId}
+                selectedSectionId={selectedSectionId}
+              />
+            </aside>
           </div>
-          <div className="w-px h-5 bg-border mx-1" />
-          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={undo} disabled={historyIndex <= 0} title="Undo (Ctrl+Z)">
-            <Undo2 className="h-4 w-4" />
-          </Button>
-          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={redo} disabled={historyIndex >= history.length - 1} title="Redo (Ctrl+Shift+Z)">
-            <Redo2 className="h-4 w-4" />
-          </Button>
-          <div className="w-px h-5 bg-border mx-1" />
-          <Button type="button" variant="outline" size="sm" asChild>
-            <a href={previewUrl} target="_blank" rel="noopener noreferrer">
-              <Eye className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Preview</span>
-            </a>
-          </Button>
-          <Button type="button" size="sm" onClick={handleSave} disabled={saving || !isDirty}>
-            {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
-            {saving ? t("Menyimpan...", "Saving...") : t("Simpan", "Save")}
-          </Button>
+        )}
+
+        {/* Left sidebar (desktop) */}
+        <aside className="hidden md:block w-64 shrink-0 border-r bg-background overflow-y-auto">
+          <SidebarContent
+            sidebarTab={sidebarTab}
+            setSidebarTab={setSidebarTab}
+            groupedWidgets={groupedWidgets}
+            addSection={addSection}
+            addSectionTemplate={addSectionTemplate}
+            site={{ ...site, sections: activeSections }}
+            activePageId={activePageId}
+            setActivePageId={setActivePageId}
+            updateSite={updateSite}
+            publicUrl={publicUrl}
+            onSelectSection={setSelectedSectionId}
+            selectedSectionId={selectedSectionId}
+          />
+        </aside>
+
+        {/* Canvas area — centers the preview frame, scrolls vertically only; the
+            frame never exceeds the area width so no horizontal overflow appears. */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-muted/30 p-6 pb-16">
+          <CanvasRenderer
+            site={{ ...site, sections: activeSections }}
+            device={previewDevice}
+            selectedSectionId={selectedSectionId}
+            onSelectSection={setSelectedSectionId}
+            onUpdateSite={updateSite}
+            onUpdateSection={updateSection}
+            onAddSection={addSection}
+            onMoveSection={moveSection}
+            onDuplicateSection={duplicateSection}
+            onDeleteSection={deleteSection}
+            onReorderSections={reorderSections}
+          />
+        </main>
+
+        {/* Properties panel — desktop only, opens when a section is selected */}
+        <PropertiesPanel
+          section={selectedSection}
+          onUpdate={(patch) => { if (selectedSectionId) updateSection(selectedSectionId, patch); }}
+          onClose={() => setSelectedSectionId(null)}
+        />
+
+        {/* Bottom bar */}
+        <div className={`fixed bottom-0 left-0 md:left-64 right-0 z-30 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-2 backdrop-blur ${selectedSection ? "md:right-80" : ""}`} role="status" aria-live="polite">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground flex-1 min-w-0">
+            <span className="hidden sm:inline">{activePage?.title ?? "Page"} · {activeSections.length} sections</span>
+            <span className="hidden sm:inline text-muted-foreground/50">·</span>
+            {saving ? (
+              <span className="flex items-center gap-1 text-primary"><Loader2 className="h-3 w-3 animate-spin" /> {t("Menyimpan...", "Saving...")}</span>
+            ) : isDirty ? (
+              <span className="flex items-center gap-1 text-amber-600"><Circle className="h-2 w-2 fill-current" /> {t("Belum tersimpan", "Unsaved")}</span>
+            ) : (
+              <span className="flex items-center gap-1 text-emerald-600"><Check className="h-3 w-3" /> {t("Tersimpan", "Saved")}</span>
+            )}
+          </div>
+
+          {/* Phase 6: Readiness status badge — clicks toggle accessible issue list */}
+          <ReadinessBadge site={site} t={(id, fallback) => t(id, fallback)} />
+
+          {/* Publish toggle */}
+          <button
+            type="button"
+            onClick={() => {
+              if (site.published) {
+                setShowPublishConfirm(false);
+              } else {
+                if (!isReadyToPublish(getPersonalSiteReadiness(site))) return;
+                setShowPublishConfirm(true);
+              }
+            }}
+            className={`flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition-colors ${
+              site.published
+                ? "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                : isReadyToPublish(getPersonalSiteReadiness(site))
+                  ? "border-muted text-muted-foreground hover:border-primary/40 hover:text-primary"
+                  : "border-muted text-muted-foreground/50 cursor-not-allowed"
+            }`}
+            disabled={!site.published && !isReadyToPublish(getPersonalSiteReadiness(site))}
+            title={site.published ? t("Klik untuk unpublish", "Click to unpublish") : t("Belum siap publikasi", "Not ready to publish")}
+          >
+            <span className={`h-2 w-2 rounded-full ${site.published ? "bg-emerald-500" : "bg-muted-foreground/30"}`} />
+            {site.published ? t("Live", "Live") : t("Draft", "Draft")}
+          </button>
+
+          <div className="flex items-center gap-1">
+            {/* Phase 5: device preview switcher — local state only, does not touch site data. */}
+            <div
+              role="group"
+              aria-label={t("Pratinjau perangkat", "Preview device")}
+              className="flex items-center rounded-md border bg-muted/40 p-0.5"
+            >
+              {CANVAS_DEVICES.map((device) => {
+                const DeviceIcon = device === "desktop" ? Monitor : device === "tablet" ? Tablet : Smartphone;
+                const active = previewDevice === device;
+                const label = CANVAS_DEVICE_LABELS[device];
+                return (
+                  <Button
+                    key={device}
+                    type="button"
+                    variant={active ? "default" : "ghost"}
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setPreviewDevice(device)}
+                    aria-label={t(`Pratinjau ${label}`, `${label} preview`)}
+                    aria-pressed={active}
+                    title={t(`Pratinjau ${label}`, `${label} preview`)}
+                  >
+                    <DeviceIcon className="h-3.5 w-3.5" />
+                  </Button>
+                );
+              })}
+            </div>
+            <div className="w-px h-5 bg-border mx-1" />
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={undo} disabled={historyIndex <= 0} title="Undo (Ctrl+Z)">
+              <Undo2 className="h-4 w-4" />
+            </Button>
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={redo} disabled={historyIndex >= history.length - 1} title="Redo (Ctrl+Shift+Z)">
+              <Redo2 className="h-4 w-4" />
+            </Button>
+            <div className="w-px h-5 bg-border mx-1" />
+            <Button type="button" variant="outline" size="sm" asChild>
+              <a href={previewUrl} target="_blank" rel="noopener noreferrer">
+                <Eye className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Preview</span>
+              </a>
+            </Button>
+            <Button type="button" size="sm" onClick={handleSave} disabled={saving || !isDirty}>
+              {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+              {saving ? t("Menyimpan...", "Saving...") : t("Simpan", "Save")}
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+
+      <DragOverlay dropAnimation={null}>
+        {activeDrag ? (
+          <div className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2 shadow-lg text-sm font-medium">
+            <Layers className="h-4 w-4 text-muted-foreground" />
+            {activeDrag.label}
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
+      </div>
+
+    {/* Publish / Unpublish confirmation dialog */}
+    {showPublishConfirm !== null && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="bg-background rounded-lg p-6 max-w-sm mx-4 shadow-xl border">
+          <h3 className="font-semibold mb-2">
+            {showPublishConfirm
+              ? t("Publikasikan halaman ini?", "Publish this page?")
+              : t("Sembunyikan halaman dari publik?", "Unpublish this page?")}
+          </h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            {showPublishConfirm
+              ? t("Halaman akan bisa diakses publik melalui URL di atas.", "The page will be publicly accessible at the URL above.")
+              : t("Halaman akan disembunyikan dan tidak bisa diakses publik.", "The page will be hidden and not publicly accessible.")}
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowPublishConfirm(null)} className="flex-1">
+              {t("Batal", "Cancel")}
+            </Button>
+            <Button
+              onClick={() => {
+                updateSite({ published: showPublishConfirm });
+                setShowPublishConfirm(null);
+              }}
+              className="flex-1"
+            >
+              {showPublishConfirm ? t("Publikasikan", "Publish") : t("Sembunyikan", "Unpublish")}
+            </Button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 
-function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection, addSectionTemplate, site, activePageId, setActivePageId, updateSite, publicUrl }: {
+function DraggableTemplateButton({ template, onClick }: { template: SectionTemplate; onClick: () => void }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `template-${template.id}`,
+    data: { type: "template", template, label: template.label },
+  });
+
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    opacity: isDragging ? 0.5 : 1,
+  } : undefined;
+
+  return (
+    <button
+      ref={setNodeRef}
+      type="button"
+      {...listeners}
+      {...attributes}
+      onClick={onClick}
+      style={style}
+      className="flex flex-col items-center gap-1 rounded-lg border p-2 text-[10px] hover:bg-muted transition-colors text-left cursor-grab active:cursor-grabbing"
+      title={template.description}
+    >
+      <Layers className="h-3 w-3 text-muted-foreground shrink-0" />
+      <span className="line-clamp-2">{template.label}</span>
+    </button>
+  );
+}
+
+export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection, addSectionTemplate, site, activePageId, setActivePageId, updateSite, publicUrl, onSelectSection, selectedSectionId }: {
   sidebarTab: string;
   setSidebarTab: (tab: string) => void;
   groupedWidgets: Record<string, Array<{ type: PersonalSiteSection["type"]; label: string; icon: React.ElementType; category: string }>>;
@@ -482,6 +661,8 @@ function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection,
   setActivePageId: (id: string) => void;
   updateSite: (patch: Partial<PersonalSiteInput>) => void;
   publicUrl: string;
+  onSelectSection?: (id: string | null) => void;
+  selectedSectionId?: string | null;
 }) {
   const pages = normalizePages(site);
 
@@ -548,6 +729,9 @@ function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection,
         <TabsTrigger value="theme" className="flex-1 text-xs gap-1">
           <Palette className="h-3 w-3" /> Theme
         </TabsTrigger>
+        <TabsTrigger value="structure" className="flex-1 text-xs gap-1">
+          <Layers className="h-3 w-3" /> Structure
+        </TabsTrigger>
         <TabsTrigger value="seo" className="flex-1 text-xs gap-1">
           <Search className="h-3 w-3" /> SEO
         </TabsTrigger>
@@ -562,16 +746,7 @@ function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection,
               <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">{category}</p>
               <div className="grid grid-cols-2 gap-1.5">
                 {templates.map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => addSectionTemplate(t)}
-                    className="flex flex-col items-center gap-1 rounded-lg border p-2 text-[10px] hover:bg-muted transition-colors text-left"
-                    title={t.description}
-                  >
-                    <Layers className="h-3 w-3 text-muted-foreground shrink-0" />
-                    <span className="line-clamp-2">{t.label}</span>
-                  </button>
+                  <DraggableTemplateButton key={t.id} template={t} onClick={() => addSectionTemplate(t)} />
                 ))}
               </div>
             </div>
@@ -721,6 +896,14 @@ function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection,
           site={site}
           updateSite={updateSite}
           publicUrl={publicUrl}
+        />
+      </TabsContent>
+
+      <TabsContent value="structure" className="m-0 p-0">
+        <StructurePanel
+          sections={site.sections}
+          selectedSectionId={selectedSectionId ?? null}
+          onSelectSection={(id) => onSelectSection?.(id)}
         />
       </TabsContent>
     </Tabs>

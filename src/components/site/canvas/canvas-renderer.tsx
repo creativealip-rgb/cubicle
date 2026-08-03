@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { Plus, ChevronDown, ChevronUp, GripVertical, Copy, Trash2 } from "lucide-react";
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
-import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -57,22 +56,6 @@ export function CanvasRenderer({
   onReorderSections,
 }: Props & { onReorderSections?: (sections: PersonalSiteSection[]) => void }) {
   const theme = site.themeConfig ?? undefined;
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
-
-  function handleDragEnd(event: DragEndEvent) {
-    if (!event.over || !onReorderSections) return;
-    const oldIndex = site.sections.findIndex((s) => s.id === event.active.id);
-    const newIndex = site.sections.findIndex((s) => s.id === event.over!.id);
-    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
-    const next = [...site.sections];
-    const [moved] = next.splice(oldIndex, 1);
-    next.splice(newIndex, 0, moved);
-    onReorderSections(next);
-  }
 
   return (
     <div
@@ -137,24 +120,22 @@ export function CanvasRenderer({
 
       {/* Sections */}
       <div className="px-8 py-4 space-y-6">
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={site.sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-            {site.sections.map((section) => (
-              <SortableCanvasSection
-                key={section.id}
-                section={section}
-                selected={selectedSectionId === section.id}
-                onSelect={() => onSelectSection(section.id)}
-                onMoveUp={() => onMoveSection(section.id, -1)}
-                onMoveDown={() => onMoveSection(section.id, 1)}
-                onDuplicate={() => onDuplicateSection(section.id)}
-                onDelete={() => onDeleteSection(section.id)}
-                onUpdate={(patch) => onUpdateSection(section.id, patch)}
-                theme={theme}
-              />
-            ))}
-          </SortableContext>
-        </DndContext>
+        <SortableContext items={site.sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+          {site.sections.map((section) => (
+            <SortableCanvasSection
+              key={section.id}
+              section={section}
+              selected={selectedSectionId === section.id}
+              onSelect={() => onSelectSection(section.id)}
+              onMoveUp={() => onMoveSection(section.id, -1)}
+              onMoveDown={() => onMoveSection(section.id, 1)}
+              onDuplicate={() => onDuplicateSection(section.id)}
+              onDelete={() => onDeleteSection(section.id)}
+              onUpdate={(patch) => onUpdateSection(section.id, patch)}
+              theme={theme}
+            />
+          ))}
+        </SortableContext>
 
         {/* Add section button */}
         <div className="flex justify-center py-4">
@@ -217,7 +198,7 @@ function SortableCanvasSection({ section, selected, onSelect, onMoveUp, onMoveDo
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes}>
+    <div ref={setNodeRef} style={style} {...attributes} data-section-id={section.id}>
       <CanvasSectionWrapper
         id={section.id}
         selected={selected}
