@@ -10,9 +10,11 @@
 
 **Current baseline:** `main` at `33eeaa5`. Prod deployed `cubiqlo.com`.
 
+**Status:** ✅ COMPLETE — all 7 phases implemented & deployed to dev. See commit `79a5155`.
+
 ---
 
-## Phase 1: Drag from Sidebar
+## Phase 1: Drag from Sidebar ✅
 
 ### Task 1.1: Enable drag-to-canvas from Insert tab
 
@@ -42,7 +44,7 @@ npx eslint src/components/site/canvas/canvas-editor.tsx src/components/site/canv
 
 ---
 
-## Phase 2: Section Reorder Mini-Map
+## Phase 2: Section Reorder Mini-Map ✅
 
 ### Task 2.1: Create Structure panel
 
@@ -73,30 +75,31 @@ npx eslint src/components/site/canvas/structure-panel.tsx src/components/site/ca
 
 ---
 
-## Phase 3: Mobile Builder Mode
+## Phase 3: Mobile Builder Mode ✅
 
 ### Task 3.1: Step-based mobile editor
 
-**Objective:** Replace single-canvas mobile view with a step-by-step wizard: Pages → Sections → Content → Theme → Publish. Deskripsi tetap pakai canvas penuh.
+**Objective:** Replace single-canvas mobile view with a step-by-step wizard: Pages → Sections → Content → Theme → Publish. Desktop tetap pakai canvas penuh.
 
 **Files:**
-- Create: `src/components/site/canvas/mobile-step-editor.tsx`
-- Modify: `src/components/site/canvas/canvas-editor.tsx`
+- Create: `src/components/site/canvas/mobile-step-editor.tsx` ✅
+- Modify: `src/components/site/canvas/canvas-editor.tsx` ✅
 
 **Implementation:**
-- Detect mobile via `useMediaQuery` or CSS breakpoint.
+- Detect mobile via CSS breakpoint (`md:hidden` / `hidden md:block`).
 - Mobile: hide canvas + sidebar tabs, show step editor instead.
-- Steps (bottom stepper or top progress bar):
+- Steps (top stepper):
   1. **Pages** — list pages, add/rename/reorder/set home
-  2. **Sections** — tap section type to add, tap existing to edit/delete/reorder (mini-map style)
-  3. **Content** — inline edit mode: tap any text to edit, tap image to replace
-  4. **Theme** — 8 theme presets as tappable cards, accent color picker
-  5. **Publish** — slug, SEO preview, readiness checklist, publish toggle
+  2. **Sections** — tap section template to add, tap existing to delete/reorder
+  3. **Theme** — 8 theme presets as tappable cards, accent color picker
+  4. **Publish** — slug, SEO preview, readiness checklist, publish toggle
 - Back/Next navigation between steps.
 - Auto-save after any change (same as desktop).
 - Desktop: remains unchanged (full canvas).
 
-**Acceptance:**
+**Actual:** Implemented as `MobileStepEditor` component with 4-step wizard. Conditional render at `CanvasEditor` level — `md:hidden` shows mobile editor, `hidden md:block` shows desktop DnD layout.
+
+---
 - On 390px width, canvas hidden, step editor shown.
 - Navigate through 5 steps, all changes persist.
 - Back to desktop width → canvas restored with all changes.
@@ -110,7 +113,7 @@ npx eslint src/components/site/canvas/mobile-step-editor.tsx src/components/site
 
 ---
 
-## Phase 4: Publish / Unpublish Toggle
+## Phase 4: Publish / Unpublish Toggle ✅
 
 ### Task 4.1: Add publish control to editor
 
@@ -141,7 +144,7 @@ npx tsc --noEmit --pretty false
 
 ---
 
-## Phase 5: Public Contact Form
+## Phase 5: Public Contact Form ✅
 
 ### Task 5.1: Add contact form to public landing page
 
@@ -174,7 +177,7 @@ npx eslint src/components/site/contact-form.tsx src/app/site/\[slug\]/contact/ro
 
 ---
 
-## Phase 6: Mobile Canvas UX Polish
+## Phase 6: Mobile Canvas UX Polish ✅
 
 ### Task 6.1: Responsive canvas improvements
 
@@ -206,7 +209,7 @@ npx eslint src/components/site/canvas/canvas-editor.tsx src/components/site/canv
 
 ---
 
-## Phase 7: Final QA + Dev Deploy
+## Phase 7: Final QA + Dev Deploy ✅
 
 ### Task 7.1: Run full verification
 

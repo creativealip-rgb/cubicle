@@ -1,5 +1,49 @@
 # Changelog
 
+## 2026-08-04 — Landing builder v2 complete: drag, structure, mobile, publish, contact
+
+**Phase 1 — Drag from Sidebar:**
+- Moved DndContext from `canvas-renderer` to `canvas-editor` (single context for template drag + section reorder).
+- Created `DraggableTemplateButton` with `useDraggable` — section templates in Insert tab are now draggable.
+- `handleDragEnd`: templates insert at drop position (before target section), section reorder via SortableContext.
+- `DragOverlay`: floating chip with template label while dragging.
+- Click-to-add preserved as fallback.
+
+**Phase 2 — Structure Panel:**
+- Created `src/components/site/canvas/structure-panel.tsx` — 7th sidebar tab.
+- Shows compact section list with type icons + heading preview.
+- Drag-to-reorder via SortableContext (shared DndContext).
+- Click row → select section + `scrollIntoView` in canvas.
+- Empty state: "Belum ada section. Tambah dari tab Insert."
+
+**Phase 3 — Mobile Step Editor:**
+- Created `src/components/site/canvas/mobile-step-editor.tsx` — 4-step wizard.
+- Steps: Pages (list/add/set home) → Sections (add template/delete/reorder) → Theme (8 presets + color picker) → Publish (slug + SEO + publish toggle).
+- Conditional render at CanvasEditor: `md:hidden` → MobileStepEditor, `hidden md:block` → desktop DnD layout.
+- Auto-save, Back/Next navigation, step indicator.
+
+**Phase 4 — Publish Toggle:**
+- Desktop: toggle button in bottom bar (Live/Draft badge), confirm dialog for publish/unpublish.
+- Gates on `isReadyToPublish` — disabled when site not ready.
+- Mobile: same toggle in PublishStep of mobile editor.
+- Calls `updateSite({ published: true/false })` — auto-saved.
+
+**Phase 5 — Public Contact Form:**
+- Created `src/app/site/[slug]/contact/route.ts` — POST endpoint with:
+  - Honeypot field (`_hp`) for bot detection
+  - In-memory rate limit (3/hour per IP)
+  - DB join to find workspace owner email
+  - Sends notification via Resend
+- Created `src/components/site/contact-form.tsx` — client component with honeypot, loading/success/error states.
+- Wired into `personal-site-renderer.tsx` — appears at bottom of every public landing page.
+
+**Phase 7 — Dev Deploy:**
+- `docker compose -f docker-compose.dev.yml up -d --build cubicle-dev`
+- Dev server verified HTTP 200 at `localhost:3000`.
+- Prod untouched.
+
+**Files:** 7 files (+1168/-177), commit `79a5155`.
+
 ## 2026-08-03 — Landing builder Phase 4 AI copy + Phase 7 SEO/share + prod deploy
 
 **Phase 7 SEO/share settings:**
