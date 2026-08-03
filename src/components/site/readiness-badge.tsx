@@ -86,8 +86,8 @@ export function ReadinessBadge({ site, t = (_id, fallback) => fallback }: Readin
 
   const statusLabel = readinessStatusLabel(
     preview,
-    t("readiness.ready", "Ready to publish"),
-    t("readiness.thingsToFix", "things to fix"),
+    t("Siap publikasi", "Ready to publish"),
+    t("perlu diperbaiki", "things to fix"),
   );
 
   return (
@@ -119,20 +119,20 @@ export function ReadinessBadge({ site, t = (_id, fallback) => fallback }: Readin
         <div
           id="readiness-issues-panel"
           role="dialog"
-          aria-label={t("readiness.panelTitle", "Publish readiness")}
+          aria-label={t("Kesiapan publikasi", "Publish readiness")}
           className="absolute bottom-full left-1/2 z-40 mb-2 w-72 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-lg border bg-popover p-3 text-popover-foreground shadow-lg"
         >
           <div className="mb-2 flex items-center justify-between gap-2">
             <p className="text-sm font-semibold">
               {preview.ready
-                ? t("readiness.ready", "Ready to publish")
-                : `${preview.total} ${t("readiness.thingsToFix", "things to fix")}`}
+                ? t("Siap publikasi", "Ready to publish")
+                : `${preview.total} ${t("perlu diperbaiki", "things to fix")}`}
             </p>
             <button
               type="button"
               onClick={() => setOpen(false)}
               className="rounded p-0.5 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-              aria-label={t("readiness.close", "Close readiness panel")}
+              aria-label={t("Tutup panel kesiapan", "Close readiness panel")}
             >
               <X className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
@@ -140,19 +140,19 @@ export function ReadinessBadge({ site, t = (_id, fallback) => fallback }: Readin
 
           {preview.ready ? (
             <p className="text-xs text-emerald-700">
-              {t("readiness.noIssues", "Tidak ada masalah — halaman siap dipublikasikan.")}
+              {t("Tidak ada masalah — halaman siap dipublikasikan.", "No issues found — page is ready to publish.")}
             </p>
           ) : (
             <div className="max-h-64 space-y-2 overflow-y-auto">
               {grouped.errors.length > 0 && (
                 <div>
                   <p className="mb-1 text-xs font-bold text-red-700" role="heading" aria-level={3}>
-                    {grouped.errors.length} {t("readiness.errors", "errors")}
+                    {grouped.errors.length} {t("error", "errors")}
                   </p>
-                  <ul aria-label={t("readiness.errorList", "Errors to fix before publishing")} className="space-y-1">
+                  <ul aria-label={t("Error yang harus diperbaiki sebelum publikasi", "Errors to fix before publishing")} className="space-y-1">
                     {grouped.errors.map((issue) => (
                       <li key={issue.id} className="rounded border border-red-200 bg-red-50 p-1.5 text-xs text-red-700">
-                        <span className="font-medium" aria-label={t("readiness.severityError", "Error")}>
+                        <span className="font-medium" aria-label={t("Error", "Error")}>
                           [ERROR]
                         </span>{" "}
                         {issue.label}
@@ -165,12 +165,12 @@ export function ReadinessBadge({ site, t = (_id, fallback) => fallback }: Readin
               {grouped.warnings.length > 0 && (
                 <div>
                   <p className="mb-1 text-xs font-bold text-amber-700" role="heading" aria-level={3}>
-                    {grouped.warnings.length} {t("readiness.warnings", "warnings")}
+                    {grouped.warnings.length} {t("peringatan", "warnings")}
                   </p>
-                  <ul aria-label={t("readiness.warningList", "Warnings — recommended fixes")} className="space-y-1">
+                  <ul aria-label={t("Peringatan — perbaikan yang disarankan", "Warnings — recommended fixes")} className="space-y-1">
                     {grouped.warnings.map((issue) => (
                       <li key={issue.id} className="rounded border border-amber-200 bg-amber-50 p-1.5 text-xs text-amber-800">
-                        <span className="font-medium" aria-label={t("readiness.severityWarning", "Warning")}>
+                        <span className="font-medium" aria-label={t("Peringatan", "Warning")}>
                           [WARN]
                         </span>{" "}
                         {issue.label}
