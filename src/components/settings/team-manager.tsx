@@ -132,7 +132,7 @@ export function TeamManager({
           </div>
           <LoadingButton type="submit" loading={loading} loadingText="Mengirim..." disabled={!canInvite} className="gap-2">
             <UserPlus className="h-4 w-4" /> {"Undang"}
-          </Button>
+          </LoadingButton>
         </div>
         <p className="text-xs text-muted-foreground flex items-start gap-1.5">
           <Mail className="h-3.5 w-3.5 mt-0.5 shrink-0" />

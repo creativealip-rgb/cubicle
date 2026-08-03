@@ -244,5 +244,6 @@ export function CurrencyRatesForm({
         </form>
       )}
     </div>
+    </>
   );
 }

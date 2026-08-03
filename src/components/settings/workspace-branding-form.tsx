@@ -369,7 +369,7 @@ export function WorkspaceBrandingForm({
 
       <LoadingButton type="submit" loading={loading} loadingText={t("Menyimpan…", "Saving…")} disabled={uploading || !canEdit}>
         {t("Simpan branding", "Save branding")}
-      </Button>
+      </LoadingButton>
       </fieldset>
     </form>
   );

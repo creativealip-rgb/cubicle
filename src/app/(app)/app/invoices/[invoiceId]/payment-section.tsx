@@ -194,7 +194,7 @@ export function PaymentSection({
             </div>
             <LoadingButton type="submit" loading={loading} loadingText="Mencatat..." className="w-full">
               {"Catat Pembayaran"}
-            </Button>
+              </LoadingButton>
           </form>
         </DialogContent>
       </Dialog>
