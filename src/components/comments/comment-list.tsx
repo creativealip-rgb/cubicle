@@ -135,7 +135,7 @@ export function CommentList({ entityType, entityId, initialComments, clientPhone
           </div>
           <LoadingButton type="submit" size="sm" loading={loading} loadingText="Posting..." disabled={!body.trim()} className="gap-1">
             <Send className="h-3 w-3" /> {"Post"}
-          </Button>
+          </LoadingButton>
         </div>
       </form>
 
