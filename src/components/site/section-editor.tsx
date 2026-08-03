@@ -33,6 +33,9 @@ function emptySection(type: PersonalSiteSection["type"]): PersonalSiteSection {
     case "cta": return { ...base, type, text: "", buttonLabel: "", buttonUrl: "" };
     case "divider": return { ...base, type };
     case "collapsible": return { ...base, type, items: [{ id: id(), title: "", content: "" }] };
+    case "spacer": return { ...base, type, height: 40 };
+    case "tableOfContents": return { ...base, type };
+    case "contentBlock": return { ...base, type, columns: 2, layout: "equal", items: [{ id: id(), content: "" }, { id: id(), content: "" }] };
   }
 }
 

@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 export const PERSONAL_SITE_THEMES = ["midnight", "paper", "studio"] as const;
+export const PERSONAL_SITE_HEADER_STYLES = ["full-width", "contained", "minimal"] as const;
+export const PERSONAL_SITE_BUTTON_STYLES = ["rounded", "pill", "square"] as const;
 export const PERSONAL_SITE_SECTION_TYPES = [
   "services",
   "process",
@@ -16,6 +18,9 @@ export const PERSONAL_SITE_SECTION_TYPES = [
   "cta",
   "divider",
   "collapsible",
+  "spacer",
+  "tableOfContents",
+  "contentBlock",
 ] as const;
 
 export const RESERVED_PERSONAL_SITE_SLUGS = new Set([
@@ -181,6 +186,28 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
       content: z.string().trim().min(1).max(2_000),
     })).max(12),
   }),
+  z.object({
+    id: idSchema,
+    type: z.literal("spacer"),
+    heading: headingSchema,
+    height: z.number().min(16).max(200).optional(),
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("tableOfContents"),
+    heading: headingSchema,
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("contentBlock"),
+    heading: headingSchema,
+    columns: z.number().min(2).max(4),
+    layout: z.enum(["equal", "left-heavy", "right-heavy", "thirds"]),
+    items: z.array(z.object({
+      id: idSchema,
+      content: z.string().trim().max(2_000),
+    })).max(4),
+  }),
 ]);
 
 export type PersonalSiteSection = z.infer<typeof personalSiteSectionSchema>;
@@ -197,6 +224,29 @@ export const personalSiteLinkSchema = z.object({
 });
 
 export type PersonalSiteLink = z.infer<typeof personalSiteLinkSchema>;
+
+export const themeConfigSchema = z.object({
+  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  backgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  textColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  fontHeading: z.string().max(60).optional(),
+  fontBody: z.string().max(60).optional(),
+  headerStyle: z.enum(PERSONAL_SITE_HEADER_STYLES).optional(),
+  buttonStyle: z.enum(PERSONAL_SITE_BUTTON_STYLES).optional(),
+});
+
+export type ThemeConfig = z.infer<typeof themeConfigSchema>;
+
+export const personalSitePageSchema = z.object({
+  id: idSchema,
+  slug: z.string().trim().min(1).max(48).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  title: z.string().trim().min(1).max(100),
+  isHome: z.boolean(),
+  sections: z.array(personalSiteSectionSchema).max(12),
+});
+
+export type PersonalSitePage = z.infer<typeof personalSitePageSchema>;
 
 export const personalSiteInputSchema = z.object({
   slug: z
@@ -217,6 +267,8 @@ export const personalSiteInputSchema = z.object({
   accent: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, "Gunakan warna hex enam digit"),
   sections: z.array(personalSiteSectionSchema).max(12),
   links: z.array(personalSiteLinkSchema).max(8),
+  pages: z.array(personalSitePageSchema).max(10).optional(),
+  themeConfig: themeConfigSchema.optional(),
 });
 
 export type PersonalSiteInput = z.infer<typeof personalSiteInputSchema>;
@@ -252,6 +304,21 @@ export const DEFAULT_PERSONAL_SITE: PersonalSiteInput = {
     },
   ],
   links: [],
+  pages: [{
+    id: "home",
+    slug: "",
+    title: "Home",
+    isHome: true,
+    sections: [],
+  }],
+  themeConfig: {
+    primaryColor: "#6647F0",
+    secondaryColor: "#1e293b",
+    backgroundColor: "#ffffff",
+    textColor: "#111827",
+    headerStyle: "full-width",
+    buttonStyle: "rounded",
+  },
 };
 
 export function normalizePersonalSiteSlug(value: string) {
@@ -394,6 +461,8 @@ export function normalizeStoredPersonalSite(value: unknown): PersonalSiteInput {
       : raw.background === "Paper" ? "paper" : "midnight",
     sections: normalizeLegacySections(raw.sections),
     links: normalizeLegacyLinks(raw.links),
+    pages: Array.isArray(raw.pages) ? raw.pages : DEFAULT_PERSONAL_SITE.pages,
+    themeConfig: raw.themeConfig && typeof raw.themeConfig === "object" ? raw.themeConfig : DEFAULT_PERSONAL_SITE.themeConfig,
   };
   const parsed = personalSiteInputSchema.safeParse(candidate);
   return parsed.success ? parsed.data : DEFAULT_PERSONAL_SITE;
@@ -415,5 +484,8 @@ export function sectionHasContent(section: PersonalSiteSection) {
     case "cta": return Boolean(section.text.trim()) || Boolean(section.buttonLabel.trim());
     case "divider": return true;
     case "collapsible": return section.items.some((item) => item.title && item.content);
+    case "spacer": return true;
+    case "tableOfContents": return true;
+    case "contentBlock": return section.items.some((item) => item.content.trim());
   }
 }
