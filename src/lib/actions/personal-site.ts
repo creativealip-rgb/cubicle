@@ -10,6 +10,7 @@ import { auth } from "@/lib/auth";
 import {
   DEFAULT_PERSONAL_SITE,
   normalizePersonalSiteSlug,
+  normalizeStoredPersonalSite,
   personalSiteInputSchema,
   type PersonalSiteInput,
 } from "@/lib/personal-site/model";
@@ -203,12 +204,11 @@ export async function getPublishedPersonalSiteBySlug(slug: string): Promise<Pers
     .where(and(eq(personalSites.slug, clean), eq(personalSites.published, true)))
     .limit(1);
   if (!site) return null;
-  const parsed = personalSiteInputSchema.safeParse({
+  return normalizeStoredPersonalSite({
     ...site,
     subtitle: site.subtitle ?? "",
     about: site.about ?? "",
     ctaLabel: site.ctaLabel ?? "",
     ctaUrl: site.ctaUrl ?? "",
   });
-  return parsed.success ? parsed.data : null;
 }
