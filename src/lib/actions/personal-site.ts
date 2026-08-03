@@ -40,7 +40,7 @@ export async function getPersonalSiteForCurrentOwner(): Promise<PersonalSiteInpu
     .where(and(eq(personalSites.workspaceId, workspaceId), eq(personalSites.userId, userId)))
     .limit(1);
   if (!site) return null;
-  return personalSiteInputSchema.parse({
+  return normalizeStoredPersonalSite({
     ...site,
     subtitle: site.subtitle ?? "",
     about: site.about ?? "",
