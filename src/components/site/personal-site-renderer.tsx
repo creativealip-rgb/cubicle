@@ -131,10 +131,11 @@ export function PersonalSiteRenderer({
   const visibleSections = site.sections.filter(sectionHasContent);
   const visibleLinks = site.links.filter((link) => link.label && safePublicHref(link.url) !== "#");
   const themeConfig = site.themeConfig;
+  const accent = themeConfig?.primaryColor ?? site.accent;
   const accentStyle = {
-    "--site-accent": themeConfig?.primaryColor ?? site.accent,
-    ...(themeConfig?.backgroundColor ? { "--site-bg": themeConfig.backgroundColor } : {}),
-    ...(themeConfig?.textColor ? { "--site-text": themeConfig.textColor } : {}),
+    "--site-accent": accent,
+    ...(themeConfig?.backgroundColor ? { "--site-bg": themeConfig.backgroundColor, backgroundColor: themeConfig.backgroundColor } : {}),
+    ...(themeConfig?.textColor ? { "--site-text": themeConfig.textColor, color: themeConfig.textColor } : {}),
   } as CSSProperties;
 
   return (
@@ -149,22 +150,22 @@ export function PersonalSiteRenderer({
           <h1 className={`${site.subtitle ? "mt-5" : ""} max-w-4xl text-4xl font-bold leading-[1.05] tracking-[-0.02em] sm:text-6xl lg:text-7xl`}>{site.title}</h1>
           <p className={`mt-6 max-w-2xl text-base leading-7 sm:text-xl sm:leading-8 ${styles.heroMuted}`}>{site.hero}</p>
           {site.ctaLabel && site.ctaUrl && safePublicHref(site.ctaUrl) !== "#" && (
-            <a className="mt-8 inline-flex min-h-11 items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold shadow-lg transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" style={{ backgroundColor: site.accent, color: accentForeground(site.accent) }} href={safePublicHref(site.ctaUrl)}>{site.ctaLabel}</a>
+            <a className="mt-8 inline-flex min-h-11 items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold shadow-lg transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" style={{ backgroundColor: accent, color: accentForeground(accent) }} href={safePublicHref(site.ctaUrl)}>{site.ctaLabel}</a>
           )}
         </div>
       </section>
 
-      {site.about && <section className="px-6 py-14 sm:px-10 lg:px-16 lg:py-20"><div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.65fr_1.35fr]"><div><p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: site.accent }}>{labels.about}</p><h2 className="mt-3 text-3xl font-bold tracking-[-0.01em]">{site.title}</h2></div><p className="whitespace-pre-wrap text-base leading-8 opacity-70">{site.about}</p></div></section>}
+      {site.about && <section className="px-6 py-14 sm:px-10 lg:px-16 lg:py-20"><div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.65fr_1.35fr]"><div><p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: accent }}>{labels.about}</p><h2 className="mt-3 text-3xl font-bold tracking-[-0.01em]">{site.title}</h2></div><p className="whitespace-pre-wrap text-base leading-8 opacity-70">{site.about}</p></div></section>}
 
       {visibleSections.map((section, index) => (
         <AnimateOnScroll key={section.id} animation={section.animation}>
           <section data-section-type={section.type} className={`${index % 2 === 0 ? styles.sectionAlt : ""} px-6 py-14 sm:px-10 lg:px-16 lg:py-20`}>
-            <div className="mx-auto max-w-6xl"><h2 className="mb-7 text-2xl font-bold tracking-[-0.01em] sm:text-3xl">{section.heading}</h2><SectionBody section={section} accent={site.accent} panel={styles.panel} /></div>
+            <div className="mx-auto max-w-6xl"><h2 className="mb-7 text-2xl font-bold tracking-[-0.01em] sm:text-3xl">{section.heading}</h2><SectionBody section={section} accent={accent} panel={styles.panel} /></div>
           </section>
         </AnimateOnScroll>
       ))}
 
-      {visibleLinks.length > 0 && <section className="px-6 py-14 sm:px-10 lg:px-16 lg:py-20"><div className={`mx-auto max-w-6xl rounded-3xl p-7 text-center sm:p-10 ${styles.panel}`}><h2 className="text-2xl font-bold sm:text-3xl">{labels.workWithMe}</h2><p className="mx-auto mt-3 max-w-xl text-sm leading-6 opacity-65">{labels.contactHint}</p><div className="mt-6 flex flex-wrap justify-center gap-3">{visibleLinks.map((link) => <a key={link.id} className="inline-flex min-h-11 items-center rounded-xl px-5 py-3 text-sm font-semibold" style={{ backgroundColor: site.accent, color: accentForeground(site.accent) }} href={safePublicHref(link.url)} target={/^https?:/i.test(link.url) ? "_blank" : undefined} rel={/^https?:/i.test(link.url) ? "noreferrer" : undefined}>{link.label}</a>)}</div></div></section>}
+      {visibleLinks.length > 0 && <section className="px-6 py-14 sm:px-10 lg:px-16 lg:py-20"><div className={`mx-auto max-w-6xl rounded-3xl p-7 text-center sm:p-10 ${styles.panel}`}><h2 className="text-2xl font-bold sm:text-3xl">{labels.workWithMe}</h2><p className="mx-auto mt-3 max-w-xl text-sm leading-6 opacity-65">{labels.contactHint}</p><div className="mt-6 flex flex-wrap justify-center gap-3">{visibleLinks.map((link) => <a key={link.id} className="inline-flex min-h-11 items-center rounded-xl px-5 py-3 text-sm font-semibold" style={{ backgroundColor: accent, color: accentForeground(accent) }} href={safePublicHref(link.url)} target={/^https?:/i.test(link.url) ? "_blank" : undefined} rel={/^https?:/i.test(link.url) ? "noreferrer" : undefined}>{link.label}</a>)}</div></div></section>}
     </main>
   );
 }

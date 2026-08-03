@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     const filepath = join(uploadDir, filename);
     await writeFile(filepath, body);
 
-    return NextResponse.json({ ok: true, url: `/uploads/site-images/${filename}` });
+    return NextResponse.json({ ok: true, url: `/api/site/image/${filename}` });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Upload failed";
     return NextResponse.json({ error: message }, { status: 500 });
