@@ -124,6 +124,10 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
     setSelectedSectionId(null);
   }, []);
 
+  const reorderSections = useCallback((sections: PersonalSiteSection[]) => {
+    setSite((prev) => ({ ...prev, sections }));
+  }, []);
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -233,6 +237,7 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
           onMoveSection={moveSection}
           onDuplicateSection={duplicateSection}
           onDeleteSection={deleteSection}
+          onReorderSections={reorderSections}
         />
       </main>
 

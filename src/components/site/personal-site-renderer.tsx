@@ -105,6 +105,14 @@ function SectionBody({ section, accent, panel }: { section: PersonalSiteSection;
       return <div className="space-y-3">{section.items.filter((item) => item.title && item.content).map((item) => (
         <details key={item.id} className={`group rounded-2xl px-5 py-4 ${panel}`}><summary className="cursor-pointer list-none pr-8 font-semibold">{item.title}<span aria-hidden className="float-right text-xl group-open:rotate-45">+</span></summary><p className="mt-3 whitespace-pre-wrap text-sm leading-7 opacity-70">{item.content}</p></details>
       ))}</div>;
+    case "spacer":
+      return <div style={{ height: section.height ?? 40 }} />;
+    case "tableOfContents":
+      return null; // Auto-generated, skip in public render
+    case "contentBlock":
+      return <div className={`grid gap-4 ${section.columns === 2 ? "sm:grid-cols-2" : section.columns === 3 ? "sm:grid-cols-3" : "sm:grid-cols-4"}`}>{section.items.filter((item) => item.content.trim()).map((item) => (
+        <div key={item.id} className={`rounded-2xl p-6 ${panel}`}><p className="whitespace-pre-wrap text-sm leading-7 opacity-75">{item.content}</p></div>
+      ))}</div>;
   }
 }
 
@@ -120,7 +128,12 @@ export function PersonalSiteRenderer({
   const styles = themeStyles[site.theme];
   const visibleSections = site.sections.filter(sectionHasContent);
   const visibleLinks = site.links.filter((link) => link.label && safePublicHref(link.url) !== "#");
-  const accentStyle = { "--site-accent": site.accent } as CSSProperties;
+  const themeConfig = site.themeConfig;
+  const accentStyle = {
+    "--site-accent": themeConfig?.primaryColor ?? site.accent,
+    ...(themeConfig?.backgroundColor ? { "--site-bg": themeConfig.backgroundColor } : {}),
+    ...(themeConfig?.textColor ? { "--site-text": themeConfig.textColor } : {}),
+  } as CSSProperties;
 
   return (
     <main data-testid="personal-site-renderer" data-theme={site.theme} style={accentStyle} className={`${embedded ? "min-h-0" : "min-h-screen"} overflow-hidden ${styles.page}`}>

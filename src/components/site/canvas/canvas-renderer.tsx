@@ -1,10 +1,14 @@
 "use client";
 
-import { Plus, Type, Briefcase, ListOrdered, DollarSign, FolderOpen, MessageSquareQuote, HelpCircle, Mail, Images, Code, Share2, MousePointerClick, Minus, ArrowUpDown, ChevronDown, List, Columns } from "lucide-react";
+import { useState } from "react";
+import { Plus, Type, Briefcase, ListOrdered, DollarSign, FolderOpen, MessageSquareQuote, HelpCircle, Mail, Images, Code, Share2, MousePointerClick, Minus, ArrowUpDown, ChevronDown, ChevronUp, List, Columns, GripVertical, Copy, Trash2 } from "lucide-react";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CanvasSection } from "./canvas-section";
 import { InlineText } from "./inline-text";
 import type { PersonalSiteInput, PersonalSiteSection, ThemeConfig } from "@/lib/personal-site/model";
 import { PERSONAL_SITE_SECTION_TYPES } from "@/lib/personal-site/model";
@@ -51,8 +55,25 @@ export function CanvasRenderer({
   onMoveSection,
   onDuplicateSection,
   onDeleteSection,
-}: Props) {
+  onReorderSections,
+}: Props & { onReorderSections?: (sections: PersonalSiteSection[]) => void }) {
   const theme = site.themeConfig;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    if (!event.over || !onReorderSections) return;
+    const oldIndex = site.sections.findIndex((s) => s.id === event.active.id);
+    const newIndex = site.sections.findIndex((s) => s.id === event.over!.id);
+    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
+    const next = [...site.sections];
+    const [moved] = next.splice(oldIndex, 1);
+    next.splice(newIndex, 0, moved);
+    onReorderSections(next);
+  }
 
   return (
     <div
@@ -103,24 +124,25 @@ export function CanvasRenderer({
 
       {/* Sections */}
       <div className="px-8 py-4 space-y-6">
-        {site.sections.map((section, index) => (
-          <CanvasSection
-            key={section.id}
-            id={section.id}
-            selected={selectedSectionId === section.id}
-            onSelect={() => onSelectSection(section.id)}
-            onMoveUp={() => onMoveSection(section.id, -1)}
-            onMoveDown={() => onMoveSection(section.id, 1)}
-            onDuplicate={() => onDuplicateSection(section.id)}
-            onDelete={() => onDeleteSection(section.id)}
-          >
-            <SectionRenderer
-              section={section}
-              onUpdate={(patch) => onUpdateSection(section.id, patch)}
-              theme={theme}
-            />
-          </CanvasSection>
-        ))}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={site.sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+            {site.sections.map((section, index) => (
+              <SortableCanvasSection
+                key={section.id}
+                section={section}
+                index={index}
+                selected={selectedSectionId === section.id}
+                onSelect={() => onSelectSection(section.id)}
+                onMoveUp={() => onMoveSection(section.id, -1)}
+                onMoveDown={() => onMoveSection(section.id, 1)}
+                onDuplicate={() => onDuplicateSection(section.id)}
+                onDelete={() => onDeleteSection(section.id)}
+                onUpdate={(patch) => onUpdateSection(section.id, patch)}
+                theme={theme}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
 
         {/* Add section button */}
         <div className="flex justify-center py-4">
@@ -159,6 +181,94 @@ export function CanvasRenderer({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function SortableCanvasSection({ section, index, selected, onSelect, onMoveUp, onMoveDown, onDuplicate, onDelete, onUpdate, theme }: {
+  section: PersonalSiteSection;
+  index: number;
+  selected: boolean;
+  onSelect: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+  onUpdate: (patch: Partial<PersonalSiteSection>) => void;
+  theme?: ThemeConfig;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: section.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <CanvasSectionWrapper
+        id={section.id}
+        selected={selected}
+        onSelect={onSelect}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        dragHandleProps={listeners}
+      >
+        <SectionRenderer section={section} onUpdate={onUpdate} theme={theme} />
+      </CanvasSectionWrapper>
+    </div>
+  );
+}
+
+function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, onDuplicate, onDelete, dragHandleProps, children }: {
+  id: string;
+  selected: boolean;
+  onSelect: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+  dragHandleProps?: Record<string, unknown>;
+  children: React.ReactNode;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      data-section-id={id}
+      onClick={(e) => { e.stopPropagation(); onSelect(); }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className={cn(
+        "relative group transition-[outline] rounded-lg",
+        selected ? "outline-2 outline-primary outline-offset-2" : "outline-transparent",
+        hovered && !selected && "outline-1 outline-muted-foreground/20 outline-offset-2",
+      )}
+    >
+      {(hovered || selected) && (
+        <div className="absolute -top-3 right-2 z-20 flex items-center gap-0.5 rounded-lg border bg-background px-1 py-0.5 shadow-sm">
+          <button type="button" onClick={(e) => { e.stopPropagation(); onMoveUp(); }} className="p-1 hover:bg-muted rounded" aria-label="Move up">
+            <ChevronUp className="h-3 w-3" />
+          </button>
+          <button type="button" onClick={(e) => { e.stopPropagation(); onMoveDown(); }} className="p-1 hover:bg-muted rounded" aria-label="Move down">
+            <ChevronDown className="h-3 w-3" />
+          </button>
+          <div className="w-px h-3 bg-border mx-0.5" />
+          <button type="button" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="p-1 hover:bg-muted rounded" aria-label="Duplicate">
+            <Copy className="h-3 w-3" />
+          </button>
+          <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1 hover:bg-muted rounded text-destructive" aria-label="Delete">
+            <Trash2 className="h-3 w-3" />
+          </button>
+          <div {...dragHandleProps} className="cursor-grab p-1 hover:bg-muted rounded" aria-label="Drag to reorder">
+            <GripVertical className="h-3 w-3" />
+          </div>
+        </div>
+      )}
+      {children}
     </div>
   );
 }
