@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Palette, FileText, Layers, Save, Eye, Loader2, Check, Circle, PanelLeft, Undo2, Redo2 } from "lucide-react";
+import { Plus, Palette, FileText, Layers, Save, Eye, Loader2, Check, Circle, PanelLeft, Undo2, Redo2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -359,6 +359,24 @@ function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection,
   site: PersonalSiteInput;
   updateSite: (patch: Partial<PersonalSiteInput>) => void;
 }) {
+  function addPage() {
+    const id = `p_${Math.random().toString(36).slice(2, 8)}`;
+    const pages = site.pages ?? [];
+    updateSite({ pages: [...pages, { id, slug: `page-${pages.length + 1}`, title: `Page ${pages.length + 1}`, isHome: false, sections: [] }] });
+  }
+
+  function deletePage(id: string) {
+    const pages = (site.pages ?? []).filter((p) => p.id !== id);
+    if (pages.length === 0) return; // can't delete last page
+    // If deleted page was home, make first page home
+    if (!pages.some((p) => p.isHome)) pages[0].isHome = true;
+    updateSite({ pages });
+  }
+
+  function renamePage(id: string, title: string) {
+    updateSite({ pages: (site.pages ?? []).map((p) => p.id === id ? { ...p, title } : p) });
+  }
+
   return (
     <Tabs value={sidebarTab} onValueChange={setSidebarTab} className="w-full">
       <TabsList className="w-full h-10 rounded-none">
@@ -395,43 +413,120 @@ function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection,
       </TabsContent>
 
       <TabsContent value="pages" className="m-0 p-3 space-y-2">
-        {site.pages?.map((page) => (
-          <div key={page.id} className="flex items-center gap-2 rounded-lg border p-2 text-sm">
-            <FileText className="h-4 w-4 text-muted-foreground" />
-            <span className="flex-1 truncate">{page.title}</span>
-            {page.isHome && <span className="text-xs text-primary">Home</span>}
+        {(site.pages ?? []).map((page) => (
+          <div key={page.id} className="flex items-center gap-2 rounded-lg border p-2 text-sm group">
+            <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+            <input
+              type="text"
+              value={page.title}
+              onChange={(e) => renamePage(page.id, e.target.value)}
+              className="flex-1 min-w-0 bg-transparent border-none text-sm focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1"
+            />
+            {page.isHome && <span className="text-[10px] text-primary font-medium shrink-0">Home</span>}
+            {(site.pages ?? []).length > 1 && (
+              <button type="button" onClick={() => deletePage(page.id)} className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-muted rounded text-muted-foreground hover:text-destructive transition-opacity" aria-label="Delete page">
+                <Trash2 className="h-3 w-3" />
+              </button>
+            )}
           </div>
-        )) ?? (
-          <p className="text-xs text-muted-foreground">Single page mode</p>
-        )}
-        <Button type="button" variant="outline" size="sm" className="w-full gap-1" disabled>
-          <Plus className="h-3 w-3" /> Tambah Page (soon)
+        ))}
+        <Button type="button" variant="outline" size="sm" className="w-full gap-1" onClick={addPage}>
+          <Plus className="h-3 w-3" /> Tambah Page
         </Button>
       </TabsContent>
 
-      <TabsContent value="theme" className="m-0 p-3 space-y-4">
+      <TabsContent value="theme" className="m-0 p-3 space-y-5">
+        {/* Preset themes */}
         <div className="space-y-2">
-          <Label className="text-xs">Primary Color</Label>
-          <div className="flex gap-2">
-            <input type="color" value={site.themeConfig?.primaryColor ?? "#6647F0"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, primaryColor: e.target.value } })} className="h-8 w-8 rounded border" />
-            <Input value={site.themeConfig?.primaryColor ?? "#6647F0"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, primaryColor: e.target.value } })} className="h-8 text-xs" />
+          <Label className="text-xs font-medium">Theme Siap Pakai</Label>
+          <div className="grid grid-cols-2 gap-2">
+            {PRESET_THEMES.map((preset) => (
+              <button
+                key={preset.name}
+                type="button"
+                onClick={() => updateSite({ themeConfig: { ...site.themeConfig!, ...preset.config } })}
+                className="flex items-center gap-2 rounded-lg border p-2 text-xs hover:bg-muted transition-colors text-left"
+              >
+                <div className="flex shrink-0">
+                  <div className="h-4 w-4 rounded-l" style={{ backgroundColor: preset.config.primaryColor }} />
+                  <div className="h-4 w-4 rounded-r" style={{ backgroundColor: preset.config.backgroundColor, border: "1px solid #e5e7eb" }} />
+                </div>
+                <span className="truncate">{preset.name}</span>
+              </button>
+            ))}
           </div>
         </div>
-        <div className="space-y-2">
-          <Label className="text-xs">Background Color</Label>
-          <div className="flex gap-2">
-            <input type="color" value={site.themeConfig?.backgroundColor ?? "#ffffff"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, backgroundColor: e.target.value } })} className="h-8 w-8 rounded border" />
-            <Input value={site.themeConfig?.backgroundColor ?? "#ffffff"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, backgroundColor: e.target.value } })} className="h-8 text-xs" />
+
+        <div className="h-px bg-border" />
+
+        {/* Custom colors */}
+        <div className="space-y-3">
+          <Label className="text-xs font-medium">Custom Colors</Label>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Primary Color</Label>
+            <div className="flex gap-2">
+              <input type="color" value={site.themeConfig?.primaryColor ?? "#6647F0"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, primaryColor: e.target.value } })} className="h-8 w-8 rounded border cursor-pointer" />
+              <Input value={site.themeConfig?.primaryColor ?? "#6647F0"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, primaryColor: e.target.value } })} className="h-8 text-xs font-mono" />
+            </div>
           </div>
-        </div>
-        <div className="space-y-2">
-          <Label className="text-xs">Text Color</Label>
-          <div className="flex gap-2">
-            <input type="color" value={site.themeConfig?.textColor ?? "#111827"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, textColor: e.target.value } })} className="h-8 w-8 rounded border" />
-            <Input value={site.themeConfig?.textColor ?? "#111827"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, textColor: e.target.value } })} className="h-8 text-xs" />
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Background Color</Label>
+            <div className="flex gap-2">
+              <input type="color" value={site.themeConfig?.backgroundColor ?? "#ffffff"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, backgroundColor: e.target.value } })} className="h-8 w-8 rounded border cursor-pointer" />
+              <Input value={site.themeConfig?.backgroundColor ?? "#ffffff"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, backgroundColor: e.target.value } })} className="h-8 text-xs font-mono" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Text Color</Label>
+            <div className="flex gap-2">
+              <input type="color" value={site.themeConfig?.textColor ?? "#111827"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, textColor: e.target.value } })} className="h-8 w-8 rounded border cursor-pointer" />
+              <Input value={site.themeConfig?.textColor ?? "#111827"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, textColor: e.target.value } })} className="h-8 text-xs font-mono" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Secondary Color</Label>
+            <div className="flex gap-2">
+              <input type="color" value={site.themeConfig?.secondaryColor ?? "#1e293b"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, secondaryColor: e.target.value } })} className="h-8 w-8 rounded border cursor-pointer" />
+              <Input value={site.themeConfig?.secondaryColor ?? "#1e293b"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, secondaryColor: e.target.value } })} className="h-8 text-xs font-mono" />
+            </div>
           </div>
         </div>
       </TabsContent>
     </Tabs>
   );
 }
+
+const PRESET_THEMES = [
+  {
+    name: "Midnight",
+    config: { primaryColor: "#6647F0", secondaryColor: "#1e293b", backgroundColor: "#0f172a", textColor: "#e2e8f0" },
+  },
+  {
+    name: "Paper",
+    config: { primaryColor: "#404040", secondaryColor: "#737373", backgroundColor: "#ffffff", textColor: "#171717" },
+  },
+  {
+    name: "Studio",
+    config: { primaryColor: "#6647F0", secondaryColor: "#1e293b", backgroundColor: "#fafafa", textColor: "#111827" },
+  },
+  {
+    name: "Ocean",
+    config: { primaryColor: "#0ea5e9", secondaryColor: "#0c4a6e", backgroundColor: "#f0f9ff", textColor: "#0c4a6e" },
+  },
+  {
+    name: "Forest",
+    config: { primaryColor: "#16a34a", secondaryColor: "#14532d", backgroundColor: "#f0fdf4", textColor: "#14532d" },
+  },
+  {
+    name: "Sunset",
+    config: { primaryColor: "#ea580c", secondaryColor: "#7c2d12", backgroundColor: "#fff7ed", textColor: "#7c2d12" },
+  },
+  {
+    name: "Rose",
+    config: { primaryColor: "#e11d48", secondaryColor: "#881337", backgroundColor: "#fff1f2", textColor: "#881337" },
+  },
+  {
+    name: "Dark",
+    config: { primaryColor: "#a78bfa", secondaryColor: "#312e81", backgroundColor: "#030712", textColor: "#e5e7eb" },
+  },
+];
