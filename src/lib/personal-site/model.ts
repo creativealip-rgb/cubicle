@@ -240,7 +240,7 @@ export type ThemeConfig = z.infer<typeof themeConfigSchema>;
 
 export const personalSitePageSchema = z.object({
   id: idSchema,
-  slug: z.string().trim().max(48).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  slug: z.string().trim().max(48).regex(/^$|^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   title: z.string().trim().min(1).max(100),
   isHome: z.boolean(),
   sections: z.array(personalSiteSectionSchema).max(12),
