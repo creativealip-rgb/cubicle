@@ -12,6 +12,8 @@
 
 **Status:** ✅ COMPLETE — all 7 phases implemented & deployed to dev. See commit `79a5155`.
 
+**Mobile Audit (2026-08-04):** Projects & Invoices already have mobile cards (`md:hidden divide-y`). Tasks was missing — fixed in Phase 8.
+
 ---
 
 ## Phase 1: Drag from Sidebar ✅
