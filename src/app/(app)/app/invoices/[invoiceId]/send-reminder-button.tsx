@@ -29,7 +29,7 @@ export function SendReminderButton({ invoiceId, disabled }: { invoiceId: string;
 
   return (
     <LoadingButton size="sm" variant="outline" className="gap-2" onClick={handleSend} loading={loading} disabled={disabled}>
-      <Mail className="h-3.5 w-3.5" />
+      <BellRing className="h-4 w-4" />
       {t("Ingatkan", "Remind")}
     </LoadingButton>
   );
