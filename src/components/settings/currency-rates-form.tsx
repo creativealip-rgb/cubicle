@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useT } from "@/lib/i18n-client";
+import { useConfirm } from "@/lib/hooks/use-confirm";
 
 const COMMON = ["USD", "EUR", "SGD", "AUD", "GBP", "MYR", "JPY", "IDR"];
 
@@ -38,6 +39,7 @@ export function CurrencyRatesForm({
 }: Props) {
   const { t } = useT();
   const router = useRouter();
+  const { confirm, dialog } = useConfirm();
   const [fromCurrency, setFromCurrency] = useState("USD");
   const [rate, setRate] = useState("");
   const [busy, setBusy] = useState(false);
