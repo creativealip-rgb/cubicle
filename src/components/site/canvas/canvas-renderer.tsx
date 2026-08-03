@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { InlineText } from "./inline-text";
+import { ImageUpload } from "./image-upload";
 import type { PersonalSiteInput, PersonalSiteSection, ThemeConfig } from "@/lib/personal-site/model";
 import { PERSONAL_SITE_SECTION_TYPES } from "@/lib/personal-site/model";
 
@@ -401,14 +402,21 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
         <div className="py-6">
           <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {section.images.map((img) => (
-              <div key={img.id} className="aspect-square rounded-lg bg-muted overflow-hidden">
-                {img.url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={img.url} alt={img.alt ?? ""} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No image</div>
-                )}
+            {section.images.map((img, i) => (
+              <div key={img.id} className="space-y-1">
+                <div className="aspect-square rounded-lg bg-muted overflow-hidden">
+                  {img.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={img.url} alt={img.alt ?? ""} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No image</div>
+                  )}
+                </div>
+                <ImageUpload
+                  value={img.url}
+                  onChange={(url) => onUpdate({ images: section.images.map((im, j) => j === i ? { ...im, url } : im) })}
+                  label="Upload"
+                />
               </div>
             ))}
           </div>

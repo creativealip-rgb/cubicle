@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Palette, FileText, Layers, Save, Eye, Loader2, Check, Circle } from "lucide-react";
+import { Plus, Palette, FileText, Layers, Save, Eye, Loader2, Check, Circle, PanelLeft, Undo2, Redo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,10 +73,43 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [sidebarTab, setSidebarTab] = useState("insert");
+  const [mobileSidebar, setMobileSidebar] = useState(false);
   const [lastSaved, setLastSaved] = useState<string>(JSON.stringify(initialSite));
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [history, setHistory] = useState<string[]>([JSON.stringify(initialSite)]);
+  const [historyIndex, setHistoryIndex] = useState(0);
 
   const isDirty = useMemo(() => JSON.stringify(site) !== lastSaved, [site, lastSaved]);
+
+  // Push to history on site change (debounced)
+  const historyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (historyTimer.current) clearTimeout(historyTimer.current);
+    historyTimer.current = setTimeout(() => {
+      const serialized = JSON.stringify(site);
+      setHistory((prev) => {
+        const truncated = prev.slice(0, historyIndex + 1);
+        if (truncated[truncated.length - 1] === serialized) return prev;
+        return [...truncated, serialized].slice(-50); // max 50 states
+      });
+      setHistoryIndex((prev) => Math.min(prev + 1, 49));
+    }, 500);
+    return () => { if (historyTimer.current) clearTimeout(historyTimer.current); };
+  }, [site]);
+
+  const undo = useCallback(() => {
+    if (historyIndex <= 0) return;
+    const newIndex = historyIndex - 1;
+    setHistoryIndex(newIndex);
+    setSite(JSON.parse(history[newIndex]));
+  }, [historyIndex, history]);
+
+  const redo = useCallback(() => {
+    if (historyIndex >= history.length - 1) return;
+    const newIndex = historyIndex + 1;
+    setHistoryIndex(newIndex);
+    setSite(JSON.parse(history[newIndex]));
+  }, [historyIndex, history]);
 
   // Auto-save after 2s of inactivity
   useEffect(() => {
@@ -122,6 +155,18 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
       if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
         handleSave();
+        return;
+      }
+      // Ctrl+Z / Cmd+Z — undo
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+        return;
+      }
+      // Ctrl+Shift+Z / Cmd+Shift+Z or Ctrl+Y — redo
+      if ((e.ctrlKey || e.metaKey) && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
+        e.preventDefault();
+        redo();
         return;
       }
     }
@@ -214,81 +259,44 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
-      {/* Left sidebar */}
-      <aside className="w-64 shrink-0 border-r bg-background overflow-y-auto">
-        <Tabs value={sidebarTab} onValueChange={setSidebarTab} className="w-full">
-          <TabsList className="w-full h-10 rounded-none">
-            <TabsTrigger value="insert" className="flex-1 text-xs gap-1">
-              <Plus className="h-3 w-3" /> Insert
-            </TabsTrigger>
-            <TabsTrigger value="pages" className="flex-1 text-xs gap-1">
-              <FileText className="h-3 w-3" /> Pages
-            </TabsTrigger>
-            <TabsTrigger value="theme" className="flex-1 text-xs gap-1">
-              <Palette className="h-3 w-3" /> Theme
-            </TabsTrigger>
-          </TabsList>
+      {/* Mobile sidebar toggle */}
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="fixed bottom-16 left-3 z-40 md:hidden shadow-lg"
+        onClick={() => setMobileSidebar(!mobileSidebar)}
+      >
+        <PanelLeft className="h-4 w-4" />
+      </Button>
 
-          <TabsContent value="insert" className="m-0 p-3 space-y-4">
-            {Object.entries(groupedWidgets).map(([category, widgets]) => (
-              <div key={category}>
-                <p className="text-xs font-medium text-muted-foreground uppercase mb-2">{category}</p>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {widgets.map((w) => (
-                    <button
-                      key={w.type}
-                      type="button"
-                      onClick={() => addSection(w.type)}
-                      className="flex flex-col items-center gap-1 rounded-lg border p-2 text-xs hover:bg-muted transition-colors"
-                    >
-                      <w.icon className="h-4 w-4 text-muted-foreground" />
-                      {w.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </TabsContent>
+      {/* Sidebar overlay (mobile) */}
+      {mobileSidebar && (
+        <div className="fixed inset-0 z-50 md:hidden" onClick={() => setMobileSidebar(false)}>
+          <div className="absolute inset-0 bg-black/50" />
+          <aside className="absolute left-0 top-0 bottom-0 w-72 bg-background overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <SidebarContent
+              sidebarTab={sidebarTab}
+              setSidebarTab={setSidebarTab}
+              groupedWidgets={groupedWidgets}
+              addSection={(type) => { addSection(type); setMobileSidebar(false); }}
+              site={site}
+              updateSite={updateSite}
+            />
+          </aside>
+        </div>
+      )}
 
-          <TabsContent value="pages" className="m-0 p-3 space-y-2">
-            {site.pages?.map((page) => (
-              <div key={page.id} className="flex items-center gap-2 rounded-lg border p-2 text-sm">
-                <FileText className="h-4 w-4 text-muted-foreground" />
-                <span className="flex-1 truncate">{page.title}</span>
-                {page.isHome && <span className="text-xs text-primary">Home</span>}
-              </div>
-            )) ?? (
-              <p className="text-xs text-muted-foreground">Single page mode</p>
-            )}
-            <Button type="button" variant="outline" size="sm" className="w-full gap-1" disabled>
-              <Plus className="h-3 w-3" /> Tambah Page (soon)
-            </Button>
-          </TabsContent>
-
-          <TabsContent value="theme" className="m-0 p-3 space-y-4">
-            <div className="space-y-2">
-              <Label className="text-xs">Primary Color</Label>
-              <div className="flex gap-2">
-                <input type="color" value={site.themeConfig?.primaryColor ?? "#6647F0"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, primaryColor: e.target.value } })} className="h-8 w-8 rounded border" />
-                <Input value={site.themeConfig?.primaryColor ?? "#6647F0"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, primaryColor: e.target.value } })} className="h-8 text-xs" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs">Background Color</Label>
-              <div className="flex gap-2">
-                <input type="color" value={site.themeConfig?.backgroundColor ?? "#ffffff"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, backgroundColor: e.target.value } })} className="h-8 w-8 rounded border" />
-                <Input value={site.themeConfig?.backgroundColor ?? "#ffffff"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, backgroundColor: e.target.value } })} className="h-8 text-xs" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs">Text Color</Label>
-              <div className="flex gap-2">
-                <input type="color" value={site.themeConfig?.textColor ?? "#111827"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, textColor: e.target.value } })} className="h-8 w-8 rounded border" />
-                <Input value={site.themeConfig?.textColor ?? "#111827"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, textColor: e.target.value } })} className="h-8 text-xs" />
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+      {/* Left sidebar (desktop) */}
+      <aside className="hidden md:block w-64 shrink-0 border-r bg-background overflow-y-auto">
+        <SidebarContent
+          sidebarTab={sidebarTab}
+          setSidebarTab={setSidebarTab}
+          groupedWidgets={groupedWidgets}
+          addSection={addSection}
+          site={site}
+          updateSite={updateSite}
+        />
       </aside>
 
       {/* Canvas area */}
@@ -308,10 +316,10 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
       </main>
 
       {/* Bottom bar */}
-      <div className="fixed bottom-0 left-64 right-0 z-30 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-2 backdrop-blur">
+      <div className="fixed bottom-0 left-0 md:left-64 right-0 z-30 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-2 backdrop-blur">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          {site.sections.length} sections
-          <span className="text-muted-foreground/50">·</span>
+          <span className="hidden sm:inline">{site.sections.length} sections</span>
+          <span className="hidden sm:inline text-muted-foreground/50">·</span>
           {saving ? (
             <span className="flex items-center gap-1 text-primary"><Loader2 className="h-3 w-3 animate-spin" /> {t("Menyimpan...", "Saving...")}</span>
           ) : isDirty ? (
@@ -320,10 +328,17 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
             <span className="flex items-center gap-1 text-emerald-600"><Check className="h-3 w-3" /> {t("Tersimpan", "Saved")}</span>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-1">
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={undo} disabled={historyIndex <= 0} title="Undo (Ctrl+Z)">
+            <Undo2 className="h-4 w-4" />
+          </Button>
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={redo} disabled={historyIndex >= history.length - 1} title="Redo (Ctrl+Shift+Z)">
+            <Redo2 className="h-4 w-4" />
+          </Button>
+          <div className="w-px h-5 bg-border mx-1" />
           <Button type="button" variant="outline" size="sm" asChild>
             <a href={previewUrl} target="_blank" rel="noopener noreferrer">
-              <Eye className="h-4 w-4 mr-1" /> Preview
+              <Eye className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Preview</span>
             </a>
           </Button>
           <Button type="button" size="sm" onClick={handleSave} disabled={saving || !isDirty}>
@@ -333,5 +348,90 @@ export function CanvasEditor({ initialSite, previewUrl, onSave }: Props) {
         </div>
       </div>
     </div>
+  );
+}
+
+function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection, site, updateSite }: {
+  sidebarTab: string;
+  setSidebarTab: (tab: string) => void;
+  groupedWidgets: Record<string, Array<{ type: PersonalSiteSection["type"]; label: string; icon: React.ElementType; category: string }>>;
+  addSection: (type: PersonalSiteSection["type"]) => void;
+  site: PersonalSiteInput;
+  updateSite: (patch: Partial<PersonalSiteInput>) => void;
+}) {
+  return (
+    <Tabs value={sidebarTab} onValueChange={setSidebarTab} className="w-full">
+      <TabsList className="w-full h-10 rounded-none">
+        <TabsTrigger value="insert" className="flex-1 text-xs gap-1">
+          <Plus className="h-3 w-3" /> Insert
+        </TabsTrigger>
+        <TabsTrigger value="pages" className="flex-1 text-xs gap-1">
+          <FileText className="h-3 w-3" /> Pages
+        </TabsTrigger>
+        <TabsTrigger value="theme" className="flex-1 text-xs gap-1">
+          <Palette className="h-3 w-3" /> Theme
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="insert" className="m-0 p-3 space-y-4">
+        {Object.entries(groupedWidgets).map(([category, widgets]) => (
+          <div key={category}>
+            <p className="text-xs font-medium text-muted-foreground uppercase mb-2">{category}</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {widgets.map((w) => (
+                <button
+                  key={w.type}
+                  type="button"
+                  onClick={() => addSection(w.type)}
+                  className="flex flex-col items-center gap-1 rounded-lg border p-2 text-xs hover:bg-muted transition-colors"
+                >
+                  <w.icon className="h-4 w-4 text-muted-foreground" />
+                  {w.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </TabsContent>
+
+      <TabsContent value="pages" className="m-0 p-3 space-y-2">
+        {site.pages?.map((page) => (
+          <div key={page.id} className="flex items-center gap-2 rounded-lg border p-2 text-sm">
+            <FileText className="h-4 w-4 text-muted-foreground" />
+            <span className="flex-1 truncate">{page.title}</span>
+            {page.isHome && <span className="text-xs text-primary">Home</span>}
+          </div>
+        )) ?? (
+          <p className="text-xs text-muted-foreground">Single page mode</p>
+        )}
+        <Button type="button" variant="outline" size="sm" className="w-full gap-1" disabled>
+          <Plus className="h-3 w-3" /> Tambah Page (soon)
+        </Button>
+      </TabsContent>
+
+      <TabsContent value="theme" className="m-0 p-3 space-y-4">
+        <div className="space-y-2">
+          <Label className="text-xs">Primary Color</Label>
+          <div className="flex gap-2">
+            <input type="color" value={site.themeConfig?.primaryColor ?? "#6647F0"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, primaryColor: e.target.value } })} className="h-8 w-8 rounded border" />
+            <Input value={site.themeConfig?.primaryColor ?? "#6647F0"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, primaryColor: e.target.value } })} className="h-8 text-xs" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label className="text-xs">Background Color</Label>
+          <div className="flex gap-2">
+            <input type="color" value={site.themeConfig?.backgroundColor ?? "#ffffff"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, backgroundColor: e.target.value } })} className="h-8 w-8 rounded border" />
+            <Input value={site.themeConfig?.backgroundColor ?? "#ffffff"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, backgroundColor: e.target.value } })} className="h-8 text-xs" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label className="text-xs">Text Color</Label>
+          <div className="flex gap-2">
+            <input type="color" value={site.themeConfig?.textColor ?? "#111827"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, textColor: e.target.value } })} className="h-8 w-8 rounded border" />
+            <Input value={site.themeConfig?.textColor ?? "#111827"} onChange={(e) => updateSite({ themeConfig: { ...site.themeConfig!, textColor: e.target.value } })} className="h-8 text-xs" />
+          </div>
+        </div>
+      </TabsContent>
+    </Tabs>
   );
 }
