@@ -372,5 +372,6 @@ export function WorkspaceBrandingForm({
       </LoadingButton>
       </fieldset>
     </form>
+    </>
   );
 }
