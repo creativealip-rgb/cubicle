@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "@/app/api/cron/plan-reminders/route";
 import { getExpiringUsers } from "@/lib/subscription";
 import { verifyCronRequest } from "@/lib/cron-auth";
@@ -27,10 +27,11 @@ describe("POST /api/cron/plan-reminders", () => {
 
   it("should return success when authenticated and users found", async () => {
     mockVerifyCronRequest.mockReturnValue(null);
+    vi.spyOn(console, "log").mockImplementation(() => {});
     
     const mockUsers = [
-      { id: "user-1", name: "Test User", plan: "free", daysUntilExpiry: 3 },
-      { id: "user-2", name: "Another User", plan: "pro", daysUntilExpiry: 7 },
+      { id: "user-1", name: "Test User", plan: "pro", planExpiresAt: new Date(), daysUntilExpiry: 3 },
+      { id: "user-2", name: "Another User", plan: "team", planExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), daysUntilExpiry: 7 },
     ];
     
     mockGetExpiringUsers.mockResolvedValue(mockUsers);
