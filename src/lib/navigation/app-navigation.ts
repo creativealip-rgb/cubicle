@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  BarChart3, BookOpen, Brain, Briefcase, Calendar, CheckSquare, Clock,
+  BarChart3, Brain, Briefcase, Calendar, CheckSquare, Clock,
   FileText, FolderOpen, LayoutDashboard, NotebookPen,
   Sparkles, Users, Wallet,
 } from "lucide-react";
@@ -51,7 +51,6 @@ export const appNavigation: NavigationEntry[] = [
     direct("notes", "/app/personal", NotebookPen, { id: "Catatan", en: "Notes" }, { id: "Simpan catatan pribadi", en: "Keep private notes" }),
     direct("journal", "/app/journal", NotebookPen, { id: "Jurnal", en: "Journal" }, { id: "Tulis jurnal pekerjaan", en: "Write your work journal" }),
     direct("personal-site", "/app/personal-site", FileText, { id: "Landing Page", en: "Landing Page" }, { id: "Kelola halaman personal", en: "Manage your personal page" }),
-    direct("docs", "/app/docs", BookOpen, { id: "Dokumentasi", en: "Documentation" }, { id: "Panduan penggunaan", en: "User guides" }),
   ]},
   { kind: "group", id: "ai", icon: Sparkles, label: { id: "AI", en: "AI" }, children: [
     direct("assistant", "/app/brain", Brain, { id: "Asisten", en: "Assistant" }, { id: "Tanya dan cek data workspace", en: "Ask questions about workspace data" }),
