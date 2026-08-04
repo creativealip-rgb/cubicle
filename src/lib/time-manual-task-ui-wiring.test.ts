@@ -9,12 +9,12 @@ const weekly = read("src/components/time/weekly-time-grid.tsx");
 
 describe("manual Time task UI", () => {
   it("requires Project and Task and exposes complete manual billing metadata", () => {
-    expect(manual).toContain("Task wajib dipilih untuk project ini");
+    expect(manual).toContain('t("Task wajib dipilih untuk project ini", "Task is required for this project")');
     expect(manual).toContain('Label htmlFor="manual-time-task"');
     expect(manual).not.toContain("activityId");
-    expect(manual).toContain(">Tag</Label>");
-    expect(manual).toContain("Bisa ditagih");
-    expect(manual).toContain("Durasi (menit)");
+    expect(manual).toContain('>Tag</Label>');
+    expect(manual).toContain('t("Bisa ditagih", "Billable")');
+    expect(manual).toContain('t("Durasi (menit)", "Duration (minutes)")');
     expect(manual).toContain("billingType");
     expect(manual).toContain("status,");
     expect(manual).toContain("tags:");
