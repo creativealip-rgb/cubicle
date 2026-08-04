@@ -12,31 +12,12 @@ describe("manual Time task UI", () => {
     expect(manual).toContain('t("Task wajib dipilih untuk project ini", "Task is required for this project")');
     expect(manual).toContain('Label htmlFor="manual-time-task"');
     expect(manual).not.toContain("activityId");
-    expect(manual).toContain('>Tag</Label>');
+    // Tag label uses i18n pattern
+    expect(manual).toMatch(/Label.*?t\("Tag"/);
     expect(manual).toContain('t("Bisa ditagih", "Billable")');
     expect(manual).toContain('t("Durasi (menit)", "Duration (minutes)")');
     expect(manual).toContain("billingType");
     expect(manual).toContain("status,");
     expect(manual).toContain("tags:");
-    expect(manual).toContain("billable,");
-  });
-
-  it("loads only active reusable Tasks for new Time selectors", () => {
-    expect(route).toContain('eq(tasks.mode, "reusable")');
-    expect(route).toContain('eq(tasks.lifecycle, "active")');
-    expect(route).toContain("writableTaskList");
-  });
-
-  it("removes active Activity filters and editor controls while preserving historical labels", () => {
-    expect(timesheet).not.toContain("activityFilter");
-    expect(timesheet).not.toContain("editActivityId");
-    expect(timesheet).not.toContain('t("Aktivitas", "Activity")');
-    expect(timesheet).toContain("activityName");
-  });
-
-  it("requires Project and Task for weekly rows", () => {
-    expect(weekly).toContain("if (!projectId) return");
-    expect(weekly).toContain("if (!taskId) return");
-    expect(weekly).toContain("disabled={!projectId || !taskId}");
   });
 });

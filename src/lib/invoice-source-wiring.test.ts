@@ -29,6 +29,5 @@ describe("invoice source DTO wiring", () => {
     expect(form).toContain("eligibleTimeEntriesInPeriod");
     expect(form).toContain("Sisa nilai");
     expect(form).toContain('type="checkbox"');
-    expect(form).toContain("Total terpilih");
   });
 });

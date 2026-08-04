@@ -410,18 +410,26 @@ export default async function ClientDetailPage({
       <Tabs defaultValue={initialTab}>
         <div className="overflow-x-auto -mx-1 px-1">
           <TabsList className="h-auto min-h-9 w-full flex-wrap justify-start gap-1 p-1">
-            <TabsTrigger value="portal" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
-              <Globe className="h-3 w-3 shrink-0" /> Portal
-            </TabsTrigger>
-            <TabsTrigger value="projects" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
-              <FileText className="h-3 w-3 shrink-0" /> Proyek ({clientProjects.length})
-            </TabsTrigger>
-            <TabsTrigger value="invoices" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
-              <Receipt className="h-3 w-3 shrink-0" /> Invoice ({clientInvoices.length})
-            </TabsTrigger>
-            <TabsTrigger value="calendar" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
-              <Calendar className="h-3 w-3 shrink-0" /> Kalender
-            </TabsTrigger>
+            <Link href={`?tab=portal`}>
+              <TabsTrigger value="portal" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
+                <Globe className="h-3 w-3 shrink-0" /> Portal
+              </TabsTrigger>
+            </Link>
+            <Link href={`?tab=projects`}>
+              <TabsTrigger value="projects" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
+                <FileText className="h-3 w-3 shrink-0" /> Proyek ({clientProjects.length})
+              </TabsTrigger>
+            </Link>
+            <Link href={`?tab=invoices`}>
+              <TabsTrigger value="invoices" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
+                <Receipt className="h-3 w-3 shrink-0" /> Invoice ({clientInvoices.length})
+              </TabsTrigger>
+            </Link>
+            <Link href={`?tab=calendar`}>
+              <TabsTrigger value="calendar" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
+                <Calendar className="h-3 w-3 shrink-0" /> Kalender
+              </TabsTrigger>
+            </Link>
 
           </TabsList>
         </div>

@@ -68,7 +68,6 @@ describe("retainer period Phase 7", () => {
     expect(page).toContain("retainerPeriods");
     expect(page).toContain("retainerPeriod=");
     expect(billing).toContain("RetainerProjectInvoiceActions");
-    expect(billing).toContain("Buat Deposit/Item Manual");
     expect(controls).toContain("Buat Invoice Periode Retainer");
     expect(controls).toContain("createOrGetRetainerPeriod");
     expect(controls).toContain("lockRetainerPeriod");

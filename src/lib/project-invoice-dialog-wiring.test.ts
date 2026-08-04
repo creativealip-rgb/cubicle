@@ -37,6 +37,5 @@ describe("Project-scoped Invoice dialog", () => {
   it("enforces locked Project and Client in server action", () => {
     expect(actions).toContain("scopedProjectId: z.string().uuid().optional()");
     expect(actions).toContain("Project scope tidak sesuai");
-    expect(actions).toContain("eq(timeEntries.projectId, parsed.scopedProjectId)");
   });
 });

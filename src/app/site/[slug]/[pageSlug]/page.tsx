@@ -7,6 +7,8 @@ import { generatePersonalSiteSubPageMetadata } from "@/lib/personal-site/metadat
 
 type Props = { params: Promise<{ slug: string; pageSlug: string }> };
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, pageSlug } = await params;
   const site = await getPublishedPersonalSiteBySlug(slug);

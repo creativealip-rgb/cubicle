@@ -6,6 +6,8 @@ import { createT, getCurrentLang } from "@/lib/i18n";
 import { requireAppSession } from "@/lib/app-auth";
 import { requireWorkspaceOwnerOrRedirect } from "@/lib/require-workspace-owner";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Landing Page Preview",
   robots: { index: false, follow: false },

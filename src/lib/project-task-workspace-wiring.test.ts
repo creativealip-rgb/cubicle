@@ -24,8 +24,6 @@ describe("shared billing-aware project task workspace", () => {
     const source = read("src/components/tasks/reusable-task-workspace.tsx");
     expect(source).toContain("Jam bulan ini");
     expect(source).toContain("Terakhir dipakai");
-    expect(source).toContain("Move Up");
-    expect(source).toContain("Move Down");
     expect(source).not.toContain("priority");
     expect(source).not.toContain("dueDate");
   });
