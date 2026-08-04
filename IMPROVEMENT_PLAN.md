@@ -109,13 +109,13 @@
 #### Core Requirements Audit
 | # | Feature | Check Method | Status | Effort |
 |---|---------|--------------|--------|--------|
-| 4.1 | Icon-only buttons have `aria-label` | Screen reader testing / DOM inspection | ❌ Not audited | ~30 min |
-| 4.2 | Color contrast ratio ≥ 4.5:1 | axe DevTools / Color contrast checkers | ❌ Not audited | ~45 min |
-| 4.3 | Focus visible states for keyboard nav | Tab key navigation test | ❌ Not audited | ~30 min |
-| 4.4 | Skip-to-content link exists | Keyboard flow test from top of page | ❌ Not audited | ~15 min |
-| 4.5 | Form inputs have associated labels | `<label htmlFor>` validation | ⏸️ Pending | ~30 min |
-| 4.6 | Heading hierarchy semantic (H1→H6) | Document outline inspection | ⏸️ Pending | ~20 min |
-| 4.7 | Landmark regions (main, nav, header) | ARIA landmark check | ⏸️ Pending | ~15 min |
+| 4.1 | Icon-only buttons have `aria-label` | Screen reader testing / DOM inspection | ✅ Audited & Fixed | ~30 min |
+| 4.2 | Color contrast ratio ≥ 4.5:1 | axe DevTools / Color contrast checkers | ✅ Verified | ~45 min |
+| 4.3 | Focus visible states for keyboard nav | Tab key navigation test | ✅ Verified | ~30 min |
+| 4.4 | Skip-to-content link exists | Keyboard flow test from top of page | ✅ Added (`#main-content`) | ~15 min |
+| 4.5 | Form inputs have associated labels | `<label htmlFor>` validation | ✅ Verified | ~30 min |
+| 4.6 | Heading hierarchy semantic (H1→H6) | Document outline inspection | ✅ Verified | ~20 min |
+| 4.7 | Landmark regions (main, nav, header) | ARIA landmark check | ✅ Verified | ~15 min |
 
 #### Test Failures Correlating to A11y Gaps
 | # | Test File | Failing Assertion | Related To |

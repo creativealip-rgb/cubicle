@@ -68,6 +68,13 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
   return (
     <LangProvider lang={lang}>
     <SidebarContext.Provider value={{ collapsed, setCollapsed, mobileOpen, setMobileOpen }}>
+      {/* Skip-to-content accessibility link */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground focus:shadow-lg focus:outline-none"
+      >
+        Lompati ke konten utama
+      </a>
       <div className="flex min-h-screen">
         {/* Mobile overlay backdrop */}
         {mobileOpen && (
@@ -94,7 +101,7 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
           )}
         >
           <AppTopbar user={user} />
-          <main className="min-w-0 flex-1 p-3 pb-24 sm:p-4 md:p-6 md:pb-28">{children}</main>
+          <main id="main-content" className="min-w-0 flex-1 p-3 pb-24 sm:p-4 md:p-6 md:pb-28">{children}</main>
         </div>
         {!onBrainPage && <AIChatPanel variant="floating" />}
       </div>
