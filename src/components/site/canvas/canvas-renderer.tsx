@@ -64,6 +64,7 @@ export function CanvasRenderer({
       style={{
         backgroundColor: theme?.backgroundColor ?? "#ffffff",
         color: theme?.textColor ?? "#111827",
+        ...(theme?.fontBody ? { fontFamily: theme.fontBody } : {}),
       }}
       onClick={() => onSelectSection(null)}
     >
@@ -291,7 +292,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
           <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
           <div className="grid gap-4 sm:grid-cols-2">
             {section.items.map((item, i) => (
-              <div key={item.id} className="rounded-lg border p-4">
+              <div key={item.id} className="rounded-lg border bg-card p-4 shadow-sm">
                 <InlineText value={item.title} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, title: v } : it) })} tag="h3" className="font-medium mb-1" />
                 <InlineText value={item.description} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, description: v } : it) })} tag="p" className="text-sm text-muted-foreground" />
               </div>
@@ -324,7 +325,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
           <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {section.offers.map((offer, i) => (
-              <div key={offer.id} className="rounded-lg border p-4 text-center">
+              <div key={offer.id} className="rounded-lg border bg-card p-4 shadow-sm text-center">
                 <InlineText value={offer.name} onChange={(v) => onUpdate({ offers: section.offers.map((o, j) => j === i ? { ...o, name: v } : o) })} tag="h3" className="font-medium mb-1" />
                 <InlineText value={offer.price} onChange={(v) => onUpdate({ offers: section.offers.map((o, j) => j === i ? { ...o, price: v } : o) })} tag="p" className="text-lg font-bold text-primary" />
                 <InlineText value={offer.description} onChange={(v) => onUpdate({ offers: section.offers.map((o, j) => j === i ? { ...o, description: v } : o) })} tag="p" className="text-sm text-muted-foreground mt-2" />
@@ -340,7 +341,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
           <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
           <div className="grid gap-4 sm:grid-cols-2">
             {section.projects.map((project, i) => (
-              <div key={project.id} className="rounded-lg border p-4">
+              <div key={project.id} className="rounded-lg border bg-card p-4 shadow-sm">
                 <InlineText value={project.title} onChange={(v) => onUpdate({ projects: section.projects.map((p, j) => j === i ? { ...p, title: v } : p) })} tag="h3" className="font-medium mb-1" />
                 <InlineText value={project.description} onChange={(v) => onUpdate({ projects: section.projects.map((p, j) => j === i ? { ...p, description: v } : p) })} tag="p" className="text-sm text-muted-foreground" />
               </div>
@@ -355,7 +356,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
           <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
           <div className="space-y-4">
             {section.testimonials.map((t, i) => (
-              <div key={t.id} className="rounded-lg border p-4 italic">
+              <div key={t.id} className="rounded-lg border bg-card p-4 shadow-sm italic">
                 <InlineText value={t.quote} onChange={(v) => onUpdate({ testimonials: section.testimonials.map((tt, j) => j === i ? { ...tt, quote: v } : tt) })} tag="p" className="mb-2" />
                 <div className="text-sm text-muted-foreground not-italic">
                   <InlineText value={t.author} onChange={(v) => onUpdate({ testimonials: section.testimonials.map((tt, j) => j === i ? { ...tt, author: v } : tt) })} tag="span" className="font-medium" />
@@ -373,7 +374,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
           <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
           <div className="space-y-3">
             {section.items.map((item, i) => (
-              <div key={item.id} className="rounded-lg border p-4">
+              <div key={item.id} className="rounded-lg border bg-card p-4 shadow-sm">
                 <InlineText value={item.question} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, question: v } : it) })} tag="h3" className="font-medium mb-1" />
                 <InlineText value={item.answer} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, answer: v } : it) })} tag="p" className="text-sm text-muted-foreground" />
               </div>
@@ -481,7 +482,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
           <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
           <div className="space-y-2">
             {section.items.map((item) => (
-              <details key={item.id} className="rounded-lg border">
+              <details key={item.id} className="rounded-lg border bg-card shadow-sm">
                 <summary className="px-4 py-3 cursor-pointer font-medium">{item.title}</summary>
                 <div className="px-4 pb-3 text-sm text-muted-foreground">{item.content}</div>
               </details>
@@ -509,7 +510,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
           <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
           <div className={`grid gap-4 ${section.columns === 2 ? "sm:grid-cols-2" : section.columns === 3 ? "sm:grid-cols-3" : "sm:grid-cols-4"}`}>
             {section.items.map((item, i) => (
-              <div key={item.id} className="rounded-lg border p-4">
+              <div key={item.id} className="rounded-lg border bg-card p-4 shadow-sm">
                 <InlineText value={item.content} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, content: v } : it) })} tag="p" className="text-sm" />
               </div>
             ))}
