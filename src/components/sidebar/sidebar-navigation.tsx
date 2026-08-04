@@ -14,6 +14,7 @@ import {
   groupHasNotification,
   type NavGroup,
   type SidebarBadgeCounts,
+  type SidebarBadgeKey,
   type SidebarGroupId,
   type WorkspaceRole,
 } from "@/lib/navigation/app-navigation";
@@ -74,7 +75,7 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
     setFlyoutGroup((current) => current === groupId ? null : groupId);
   }
 
-  function badgeFor(key?: "myOpenTasks" | "unpaidInvoices") {
+  function badgeFor(key?: SidebarBadgeKey) {
     return key ? (badgeCounts[key] ?? 0) : 0;
   }
 

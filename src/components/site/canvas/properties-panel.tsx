@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Plus, X, Sparkles, Check, Loader2 } from "lucide-react";
+import { useT } from "@/lib/i18n-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,6 +58,7 @@ interface AiGenerationState {
 }
 
 export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelProps) {
+  const { t } = useT();
   const [aiState, setAiState] = useState<AiGenerationState>({
     isGenerating: false,
     preview: null,

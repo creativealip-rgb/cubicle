@@ -41,13 +41,13 @@ export function WaktuNavigation({
   };
 
   return <div className="flex flex-wrap items-center justify-between gap-2">
-    <div className="flex items-center gap-1 rounded-full border bg-muted/40 p-1 text-xs">
-      <Button asChild variant="ghost" size="icon" className="h-7 w-7 rounded-full" aria-label={t("Periode sebelumnya", "Previous period")}><Link href={href(shiftDateIso(selectedDate, -step))}><ChevronLeft className="h-3.5 w-3.5" /></Link></Button>
+    <div className="flex items-center gap-2 sm:gap-2.5 rounded-full border bg-muted/40 p-1 text-xs">
+      <Button asChild variant="ghost" size="icon" className="h-7 w-7 rounded-full shrink-0" aria-label={t("Periode sebelumnya", "Previous period")}><Link href={href(shiftDateIso(selectedDate, -step))}><ChevronLeft className="h-3.5 w-3.5" /></Link></Button>
       <Popover>
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="flex min-w-28 items-center justify-center gap-1.5 px-2 py-1 text-center font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-md hover:bg-muted/60"
+            className="flex min-w-32 items-center justify-center gap-2 px-3 py-1 text-center font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-md hover:bg-muted/60 mx-1"
             aria-label={t("Pilih tanggal", "Pick a date")}
           >
             <CalendarDays className="h-3.5 w-3.5 shrink-0" />

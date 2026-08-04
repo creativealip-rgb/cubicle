@@ -24,17 +24,17 @@ function Calendar({
       classNames={{
         months: cn("flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0", classNames?.months),
         month: cn("space-y-4", classNames?.month),
-        month_caption: cn("flex justify-center pt-1 relative items-center", classNames?.month_caption),
-        caption_label: cn("text-sm font-medium", classNames?.caption_label),
-        nav: cn("space-x-1 flex items-center", classNames?.nav),
+        month_caption: cn("flex justify-center pt-2 pb-2 relative items-center px-8", classNames?.month_caption),
+        caption_label: cn("text-sm font-semibold tracking-wide", classNames?.caption_label),
+        nav: cn("space-x-2 flex items-center", classNames?.nav),
         button_previous: cn(
           buttonVariants({ variant: "outline" }),
-          "absolute left-1 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+          "absolute left-2 h-7 w-7 bg-transparent p-0 opacity-70 hover:opacity-100",
           classNames?.button_previous
         ),
         button_next: cn(
           buttonVariants({ variant: "outline" }),
-          "absolute right-1 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+          "absolute right-2 h-7 w-7 bg-transparent p-0 opacity-70 hover:opacity-100",
           classNames?.button_next
         ),
         month_grid: cn("w-full border-collapse space-y-1", classNames?.month_grid),
