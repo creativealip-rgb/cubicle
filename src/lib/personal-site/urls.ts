@@ -18,7 +18,11 @@ export function personalSitePublicUrl(slug: string) {
   return `${personalSitePublicBaseUrl()}/${normalizePersonalSiteSlug(slug)}`;
 }
 
-export function personalSitePreviewUrl() {
+export function personalSitePreviewUrl(slug?: string) {
   const appOrigin = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "");
-  return `${appOrigin || configuredPublicOrigin()}/site/preview`;
+  const base = appOrigin || configuredPublicOrigin();
+  if (slug) {
+    return `${base}/site/${normalizePersonalSiteSlug(slug)}?preview=1`;
+  }
+  return `${base}/site/preview`;
 }

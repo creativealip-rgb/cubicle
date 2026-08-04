@@ -16,6 +16,6 @@ export default async function PersonalSiteBuilderPage() {
     initialSite={site}
     action={savePersonalSite}
     publicSiteBaseUrl={personalSitePublicBaseUrl()}
-    previewUrl={personalSitePreviewUrl()}
+    previewUrl={personalSitePreviewUrl(site.slug)}
   />;
 }
