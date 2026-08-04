@@ -804,6 +804,32 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
               <Input value={site.themeConfig?.primaryColor ?? "#6647F0"} onChange={(e) => updateTheme({ primaryColor: e.target.value })} className="h-8 text-xs font-mono" />
             </div>
           </div>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Text Color</Label>
+            <div className="flex gap-2">
+              <input type="color" value={site.themeConfig?.textColor ?? "#111827"} onChange={(e) => updateTheme({ textColor: e.target.value })} className="h-8 w-8 rounded border cursor-pointer" />
+              <Input value={site.themeConfig?.textColor ?? "#111827"} onChange={(e) => updateTheme({ textColor: e.target.value })} className="h-8 text-xs font-mono" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Background Color</Label>
+            <div className="flex gap-2">
+              <input type="color" value={site.themeConfig?.backgroundColor ?? "#ffffff"} onChange={(e) => updateTheme({ backgroundColor: e.target.value })} className="h-8 w-8 rounded border cursor-pointer" />
+              <Input value={site.themeConfig?.backgroundColor ?? "#ffffff"} onChange={(e) => updateTheme({ backgroundColor: e.target.value })} className="h-8 text-xs font-mono" />
+            </div>
+          </div>
+
+          <div className="h-px bg-border my-4" />
+
+          <p className="text-xs font-medium text-muted-foreground uppercase mb-3">Font</p>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Heading Font</Label>
+            <Input value={site.themeConfig?.fontHeading ?? ""} placeholder="Inter, ui-sans-serif" onChange={(e) => updateTheme({ fontHeading: e.target.value || undefined })} className="h-8 text-xs" />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Body Font</Label>
+            <Input value={site.themeConfig?.fontBody ?? ""} placeholder="Inter, ui-sans-serif" onChange={(e) => updateTheme({ fontBody: e.target.value || undefined })} className="h-8 text-xs" />
+          </div>
         </div>
       </TabsContent>
 
