@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
 import {
   accentForeground,
@@ -133,7 +134,7 @@ function SectionBody({ section, accent, panel, buttonRadius }: { section: Person
       return <div className={`rounded-2xl p-6 ${panel}`}><p className="max-w-3xl whitespace-pre-wrap text-base leading-8 opacity-75">{section.content}</p></div>;
     case "gallery":
       return <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{section.images.filter((img) => img.url).map((img) => (
-        <div key={img.id} className="overflow-hidden rounded-2xl"><img src={img.url} alt={img.alt || ""} className="aspect-[4/3] w-full object-cover" loading="lazy" /></div>
+        <div key={img.id} className="overflow-hidden rounded-2xl"><Image src={img.url.startsWith("http") ? img.url : `/${img.url}`} alt={img.alt || ""} width={600} height={450} className="aspect-[4/3] w-full object-cover" loading="lazy" /></div>
       ))}</div>;
     case "embed":
       return section.url ? <iframe src={section.url} className="w-full rounded-2xl" style={{ height: section.height || 400 }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen loading="lazy" /> : null;

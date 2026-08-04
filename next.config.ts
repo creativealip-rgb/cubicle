@@ -27,6 +27,20 @@ const nextConfig: NextConfig = {
     },
   },
 
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.cubiqlo.com",
+      },
+      {
+        protocol: "https",
+        hostname: "*.r2.cloudflarestorage.com",
+      },
+    ],
+    minimumCacheTTL: 31536000, // 1 year cache for optimized images
+  },
+
   async headers() {
     return [
       {
