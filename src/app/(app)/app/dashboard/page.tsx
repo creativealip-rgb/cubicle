@@ -321,7 +321,7 @@ export default async function DashboardPage() {
           <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Reminder</h2>
           <Badge variant="secondary">{reminderItems.length}</Badge>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-5">
           {reminderItems.map((item) => (
             <Link key={item.key} href={item.href} className="group">
               <Card className={`h-full border-l-4 ${reminderToneBorder[item.tone]} transition hover:-translate-y-0.5 hover:shadow-md`}>
