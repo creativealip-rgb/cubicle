@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { approveMeetingRequest, counterProposeMeetingRequest, rejectMeetingRequest } from "@/lib/actions/portal-requests";
+import { useT } from "@/lib/i18n-client";
 
 type RequestRow = {
   id: string;
@@ -36,6 +37,7 @@ export function PortalRequestAdmin({
   initialRequests: RequestRow[];
   projects: ProjectOption[];
 }) {
+  const { t } = useT();
   const [requests, setRequests] = useState(initialRequests);
   const [loading, setLoading] = useState(false);
   const [meetingDialog, setMeetingDialog] = useState<{ mode: "reschedule" | "reject"; request: RequestRow } | null>(null);
@@ -264,8 +266,8 @@ export function PortalRequestAdmin({
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <form onSubmit={submitMeetingDialog}>
             <DialogHeader>
-              <DialogTitle>{meetingDialog?.mode === "reject" ? "Tolak Pertemuan" : "Ubah Jadwal Pertemuan"}</DialogTitle>
-              <DialogDescription>{meetingDialog?.mode === "reject" ? "Berikan alasan yang jelas untuk klien." : "Kirim usulan waktu baru. Klien perlu menyetujuinya sebelum masuk kalender."}</DialogDescription>
+              <DialogTitle>{meetingDialog?.mode === "reject" ? t("Tolak Pertemuan", "Reject Meeting") : t("Ubah Jadwal Pertemuan", "Reschedule Meeting")}</DialogTitle>
+              <DialogDescription>{meetingDialog?.mode === "reject" ? t("Berikan alasan yang jelas untuk klien.", "Provide a clear reason for the client.") : t("Kirim usulan waktu baru. Klien perlu menyetujuinya sebelum masuk kalender.", "Send a proposed new time. The client needs to approve before it is added to calendar.")}</DialogDescription>
             </DialogHeader>
             {meetingDialog?.mode === "reject" ? (
               <div className="py-5">
