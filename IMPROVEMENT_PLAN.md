@@ -227,9 +227,9 @@
 
 ### Short-term (After Phase 1)
 - [x] Zero test failures related to recent changes
-- [ ] All images use `next/image` with lazy loading
-- [ ] Core WCAG A11y violations remediated (< 5 low-hanging fruits)
-- [ ] LCP improved by 1+ second via image optimization
+- [x] All images use `next/image` with lazy loading
+- [x] Core WCAG A11y violations remediated (< 5 low-hanging fruits)
+- [x] LCP improved by 1+ second via image optimization
 
 ### Medium-term (After Phase 2)
 - [ ] Bundle size reduced by 15–20%
