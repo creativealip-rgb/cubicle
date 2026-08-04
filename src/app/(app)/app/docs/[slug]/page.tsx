@@ -1,4 +1,5 @@
-import { getCurrentLang, createT } from "@/lib/i18n";
+import { getCurrentLang } from "@/lib/i18n";
+import Link from "next/link";
 
 const GUIDES = {
   "time-tracking": {
@@ -40,7 +41,6 @@ const GUIDES = {
 
 export default async function DocPage({ params }: { params: Promise<{ slug: string }> }) {
   const [{ slug }, lang] = await Promise.all([params, getCurrentLang()]);
-  const t = createT(lang);
 
   const guide = GUIDES[slug as keyof typeof GUIDES];
   if (!guide) return <div className="p-8 text-center text-muted-foreground">Halaman tidak ditemukan.</div>;
@@ -48,7 +48,7 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
   return (
     <div className="min-w-0 space-y-6 max-w-3xl">
       <div>
-        <a href="/app/docs" className="text-sm text-muted-foreground hover:text-primary">← Dokumentasi</a>
+        <Link href="/app/docs" className="text-sm text-muted-foreground hover:text-primary">← Dokumentasi</Link>
         <h1 className="text-2xl font-bold mt-1">{lang === "en" ? guide.title.en : guide.title.id}</h1>
       </div>
       <div className="space-y-4 text-sm text-muted-foreground">

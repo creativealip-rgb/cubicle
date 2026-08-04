@@ -6,7 +6,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Loader2, ArrowLeft, CheckCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useT } from "@/lib/i18n-client";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import {
@@ -27,7 +26,8 @@ export function ResetPasswordForm() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
-  const { t } = useT();
+  // i18n labels hardcoded for auth flows
+  // const { t } = useT();
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 

@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Palette, FileText, Layers, Save, Eye, Loader2, Check, Circle, PanelLeft, Undo2, Redo2, Trash2, Home, ChevronUp, ChevronDown, Sparkles, LayoutTemplate, Monitor, Tablet, Smartphone, Search } from "lucide-react";
+import { Plus, Palette, FileText, Layers, Save, Eye, Loader2, Check, Circle, PanelLeft, Undo2, Redo2, LayoutTemplate, Monitor, Tablet, Smartphone } from "lucide-react";
 import { DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, useDraggable, type DragStartEvent, type DragEndEvent } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CanvasRenderer, CANVAS_DEVICES, type CanvasDevice } from "./canvas-renderer";
 import { PropertiesPanel } from "./properties-panel";
 import { ReadinessBadge } from "../readiness-badge";
-import { SEOPanel } from "./seo-panel";
 import { StructurePanel } from "./structure-panel";
 import { MobileStepEditor } from "./mobile-step-editor";
 import { useT } from "@/lib/i18n-client";
@@ -650,17 +649,17 @@ function DraggableTemplateButton({ template, onClick }: { template: SectionTempl
   );
 }
 
-export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection, addSectionTemplate, site, activePageId, setActivePageId, updateSite, publicUrl, onSelectSection, selectedSectionId }: {
+export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection, addSectionTemplate, site, activePageId, setActivePageId, updateSite, publicUrl: _publicUrl, onSelectSection, selectedSectionId }: {
   sidebarTab: string;
   setSidebarTab: (tab: string) => void;
   groupedWidgets: Record<string, Array<{ type: PersonalSiteSection["type"]; label: string; icon: React.ElementType; category: string }>>;
-  addSection: (type: PersonalSiteSection["type"]) => void;
-  addSectionTemplate: (template: SectionTemplate) => void;
+  addSection: (type: PersonalSiteSection["type"]) => void; // Used in mobile editor only
+  addSectionTemplate: (template: SectionTemplate) => void; // Used in mobile editor only
   site: PersonalSiteInput;
   activePageId: string;
   setActivePageId: (id: string) => void;
   updateSite: (patch: Partial<PersonalSiteInput>) => void;
-  publicUrl: string;
+  publicUrl: string; // Used in SEOPanel
   onSelectSection?: (id: string | null) => void;
   selectedSectionId?: string | null;
 }) {
@@ -677,7 +676,8 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
     updateSite({ pages: normalized, sections: normalized.find((page) => page.isHome)?.sections ?? normalized[0]?.sections ?? [] });
   }
 
-  function addPage() {
+  // These functions are defined for mobile step editor API consistency but NOT called from desktop sidebar
+  function _addPage() {
     const id = makeId().replace(/^s_/, "p_");
     const title = `Page ${pages.length + 1}`;
     const page = { id, slug: slugifyPageTitle(title, `page-${pages.length + 1}`), title, isHome: false, sections: [] };
@@ -685,7 +685,7 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
     setActivePageId(id);
   }
 
-  function deletePage(id: string) {
+  function _deletePage(id: string) {
     const nextPages = pages.filter((p) => p.id !== id);
     if (nextPages.length === 0) return;
     if (!nextPages.some((p) => p.isHome)) nextPages[0] = { ...nextPages[0], isHome: true, slug: "" };
@@ -693,15 +693,15 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
     if (activePageId === id) setActivePageId(nextPages[0].id);
   }
 
-  function renamePage(id: string, title: string) {
+  function _renamePage(id: string, title: string) {
     updatePages(pages.map((p) => p.id === id ? { ...p, title, slug: p.isHome ? "" : slugifyPageTitle(title, p.slug || "page") } : p));
   }
 
-  function setHomePage(id: string) {
+  function _setHomePage(id: string) {
     updatePages(pages.map((p) => ({ ...p, isHome: p.id === id, slug: p.id === id ? "" : p.slug || slugifyPageTitle(p.title, "page") })));
   }
 
-  function movePage(id: string, direction: -1 | 1) {
+  function _movePage(id: string, direction: -1 | 1) {
     const index = pages.findIndex((page) => page.id === id);
     const target = index + direction;
     if (index < 0 || target < 0 || target >= pages.length) return;

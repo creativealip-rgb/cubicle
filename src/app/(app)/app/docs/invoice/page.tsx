@@ -1,4 +1,5 @@
 import { getCurrentLang, createT } from "@/lib/i18n";
+import Link from "next/link";
 
 export default async function DocInvoice() {
   const lang = await getCurrentLang();
@@ -7,7 +8,7 @@ export default async function DocInvoice() {
   return (
     <div className="min-w-0 space-y-6 max-w-3xl">
       <div>
-        <a href="/app/docs" className="text-sm text-muted-foreground hover:text-primary">← Dokumentasi</a>
+        <Link href="/app/docs" className="text-sm text-muted-foreground hover:text-primary">← Dokumentasi</Link>
         <h1 className="text-2xl font-bold mt-1">{t("Invoice & Pembayaran", "Invoice & Payments")}</h1>
       </div>
 

@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { getProjectProgress } from "@/lib/actions/projects";
-import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
+import { getCurrentLang, createT } from "@/lib/i18n";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { billingTypeHint, billingTypeLabel } from "@/lib/feature-access";
 import { ProjectTaskWorkspace } from "@/components/tasks/project-task-workspace";
@@ -48,7 +48,6 @@ export default async function ProjectDetailPage({
 }) {
   const lang = await getCurrentLang();
   const t = createT(lang);
-  const locale = getLocale(lang);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();

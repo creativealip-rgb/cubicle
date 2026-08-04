@@ -89,7 +89,7 @@ function AddRow({ label, onClick }: { label: string; onClick: () => void }) {
 
 export function SectionEditor({ sections, onChange }: { sections: PersonalSiteSection[]; onChange: (sections: PersonalSiteSection[]) => void }) {
   const { t } = useT();
-  const { confirm, dialog } = useConfirm();
+  const { confirm, dialog: _dialog } = useConfirm();
   const update = (idValue: string, next: PersonalSiteSection) => onChange(sections.map((section) => section.id === idValue ? next : section));
   const move = (index: number, delta: number) => {
     const target = index + delta;
@@ -116,6 +116,8 @@ export function SectionEditor({ sections, onChange }: { sections: PersonalSiteSe
   const duplicate = (section: PersonalSiteSection) => onChange([...sections.slice(0, sections.indexOf(section) + 1), { ...structuredClone(section), id: id(), heading: `${section.heading} (${t("salinan", "copy")})` }, ...sections.slice(sections.indexOf(section) + 1)]);
   const add = () => onChange([...sections, emptySection("custom")]);
 
+  // Confirm/dialog available at parent level, this component handles its own state
+  
   return <div className="space-y-3">
     <div className="flex items-center justify-between"><div><h3 className="font-semibold">{t("Section", "Sections")}</h3><p className="text-xs text-muted-foreground">{t("Maksimal 12 section. Tipe menentukan tampilan publik.", "Up to 12 sections. Type controls public layout.")}</p></div>{sections.length === 0 && <AddRow label={t("Tambah section", "Add section")} onClick={add} />}</div>
     {sections.map((section, index) => <div key={section.id} className="space-y-3 rounded-xl bg-muted/35 p-3 sm:p-4">

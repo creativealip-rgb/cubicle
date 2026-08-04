@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { BellRing } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { sendInvoicePaymentReminder } from "@/lib/actions/invoices";
 import { useT } from "@/lib/i18n-client";

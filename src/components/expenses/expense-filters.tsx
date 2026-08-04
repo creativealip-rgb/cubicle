@@ -12,7 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { LoadingButton } from "@/components/ui/loading-button";
 import { useT } from "@/lib/i18n-client";
 import type { CategoryOption } from "./expense-form";
 

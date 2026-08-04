@@ -53,8 +53,8 @@ export function CanvasRenderer({
   onMoveSection,
   onDuplicateSection,
   onDeleteSection,
-  onReorderSections,
-}: Props & { onReorderSections?: (sections: PersonalSiteSection[]) => void }) {
+  onReorderSections: _onReorderSections,
+}: Props & { onReorderSections?: (sections: PersonalSiteSection[]) => void }) { // reserved for future use
   const theme = site.themeConfig ?? undefined;
 
   return (

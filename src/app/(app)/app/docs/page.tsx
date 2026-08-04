@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Globe, FileText, Clock, Briefcase, Users, Palette } from "lucide-react";
+import { BookOpen, Globe, FileText, Clock, Briefcase, Users } from "lucide-react";
 import { getCurrentLang, createT } from "@/lib/i18n";
 
 const GUIDES = [

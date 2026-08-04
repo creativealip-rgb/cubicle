@@ -59,7 +59,8 @@ export async function GET(request: Request, { params }: Props) {
   }
 
   // Accept-Language is forwarded by Next on the request object; fall back to id.
-  const acceptLanguage = request.headers.get("Accept-Language") ?? "id";
+  // Accept-Language is forwarded by Next on the request object; fall back to id (reserved for future use)
+  const _acceptLanguage = request.headers.get("Accept-Language") ?? "id";
 
   const title = site.seo?.title?.trim() || site.title;
   const subtitle = site.subtitle?.trim() || site.hero.slice(0, 120);

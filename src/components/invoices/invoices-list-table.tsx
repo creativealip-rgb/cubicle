@@ -17,7 +17,7 @@ import { SortableHeader } from "@/components/ui/sortable-header";
 import { TableHeaderFilter } from "@/components/ui/table-header-filter";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
-import { formatDateID, formatMoney } from "@/lib/utils";
+import { formatMoney } from "@/lib/utils";
 
 function formatDate(date: string | Date | null | undefined, locale: string): string {
   if (!date) return "—";

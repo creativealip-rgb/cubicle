@@ -1,4 +1,5 @@
 import { getCurrentLang, createT } from "@/lib/i18n";
+import Link from "next/link";
 
 export default async function DocLandingPage() {
   const lang = await getCurrentLang();
@@ -7,7 +8,6 @@ export default async function DocLandingPage() {
   return (
     <div className="min-w-0 space-y-6 max-w-3xl">
       <DocHeader title={t("Landing Page Builder", "Landing Page Builder")} />
-
       <Section title="1. Akses Builder">
         <p>Login ke <a href="https://app.cubiqlo.com" className="underline">app.cubiqlo.com</a> → Sidebar → <strong>Personal</strong> → <strong>Landing Page</strong></p>
       </Section>
@@ -73,7 +73,7 @@ export default async function DocLandingPage() {
 function DocHeader({ title }: { title: string }) {
   return (
     <div>
-      <a href="/app/docs" className="text-sm text-muted-foreground hover:text-primary transition-colors">← Dokumentasi</a>
+      <Link href="/app/docs" className="text-sm text-muted-foreground hover:text-primary transition-colors">← Dokumentasi</Link>
       <h1 className="text-2xl font-bold tracking-tight mt-1">{title}</h1>
     </div>
   );

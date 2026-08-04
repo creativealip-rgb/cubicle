@@ -240,6 +240,9 @@ export function BuilderClient({
       </section>
     </div>
 
+    {/* Confirm dialog MUST be rendered for useConfirm to work */}
+    {dialog}
+
     <div className={`${mode === "preview" ? "hidden" : "fixed"} inset-x-0 bottom-0 z-40 flex items-center justify-between gap-2 border-t bg-background/95 p-3 backdrop-blur xl:hidden`}>
       <Button type="button" variant="ghost" size="sm" disabled={!dirty || pending} onClick={reset}><Undo2 className="h-4 w-4" /><span className="sr-only">{t("Batalkan", "Discard")}</span></Button>
       <div className="flex flex-1 justify-end gap-2">
@@ -247,7 +250,7 @@ export function BuilderClient({
         <form id="mobile-site-save" action={formAction} onSubmit={() => { submittedSnapshotRef.current = serialized; }} className="contents"><input type="hidden" name="site" value={serialized} /><Button name="intent" value="draft" type="submit" variant="outline" size="sm" disabled={pending || slugStatus === "taken"}><Save className="h-4 w-4" />{t("Draft", "Draft")}</Button><Button name="intent" value="publish" type="submit" size="sm" disabled={pending || slugStatus === "taken"}><Send className="h-4 w-4" />{t("Publish", "Publish")}</Button></form>
       </div>
     </div>
-  </div>;
+    </div>;
 }
 
 function Field({ label, children, hint, error }: { label: string; children: React.ReactNode; hint?: string; error?: string }) {
