@@ -716,23 +716,23 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
 
   return (
     <Tabs value={sidebarTab} onValueChange={setSidebarTab} className="w-full">
-      <TabsList className="w-full h-10 rounded-none">
-        <TabsTrigger value="insert" className="flex-1 text-xs gap-1">
+      <TabsList className="w-full h-10 rounded-none overflow-x-auto flex-nowrap">
+        <TabsTrigger value="insert" className="shrink-0 text-xs gap-1 px-2.5">
           <Plus className="h-3 w-3" /> Insert
         </TabsTrigger>
-        <TabsTrigger value="pages" className="flex-1 text-xs gap-1">
+        <TabsTrigger value="pages" className="shrink-0 text-xs gap-1 px-2.5">
           <FileText className="h-3 w-3" /> Pages
         </TabsTrigger>
-        <TabsTrigger value="templates" className="flex-1 text-xs gap-1">
+        <TabsTrigger value="templates" className="shrink-0 text-xs gap-1 px-2.5">
           <Sparkles className="h-3 w-3" /> Templates
         </TabsTrigger>
-        <TabsTrigger value="theme" className="flex-1 text-xs gap-1">
+        <TabsTrigger value="theme" className="shrink-0 text-xs gap-1 px-2.5">
           <Palette className="h-3 w-3" /> Theme
         </TabsTrigger>
-        <TabsTrigger value="structure" className="flex-1 text-xs gap-1">
+        <TabsTrigger value="structure" className="shrink-0 text-xs gap-1 px-2.5">
           <Layers className="h-3 w-3" /> Structure
         </TabsTrigger>
-        <TabsTrigger value="seo" className="flex-1 text-xs gap-1">
+        <TabsTrigger value="seo" className="shrink-0 text-xs gap-1 px-2.5">
           <Search className="h-3 w-3" /> SEO
         </TabsTrigger>
       </TabsList>
