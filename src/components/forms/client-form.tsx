@@ -219,7 +219,6 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
           <p className="text-xs text-muted-foreground">Hanya terlihat di workspace, tidak ke portal klien.</p>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="internalNotes">{t("Catatan", "Notes")}</Label>
           <Textarea
             id="internalNotes"
             value={form.internalNotes}

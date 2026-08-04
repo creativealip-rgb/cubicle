@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { TaskForm } from "@/components/forms/task-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PermanentDeleteButton } from "@/components/shared/permanent-delete-button";
+import { useT } from "@/lib/i18n-client";
 
 export type ReusableTaskRow = {
   id: string;
@@ -27,6 +28,7 @@ export function ReusableTaskWorkspace({ tasks, members = [], onMove }: {
   members?: Array<{ id: string; name: string | null; email: string | null }>;
   onMove?: (id: string, direction: "up" | "down") => void;
 }) {
+  const { t } = useT();
   const router = useRouter();
   async function toggle(row: ReusableTaskRow) {
     if (row.lifecycle === "active") await archiveTask(row.id);
@@ -48,8 +50,8 @@ export function ReusableTaskWorkspace({ tasks, members = [], onMove }: {
           <div className="flex flex-wrap gap-1">
             {onMove && <><Button size="sm" variant="ghost" aria-label="Naikkan urutan" disabled={index === 0} onClick={() => onMove(row.id, "up")}>↑</Button>
             <Button size="sm" variant="ghost" aria-label="Turunkan urutan" disabled={index === tasks.length - 1} onClick={() => onMove(row.id, "down")}>↓</Button></>}
-            <Dialog><DialogTrigger asChild><Button size="sm" variant="outline">Ubah</Button></DialogTrigger><DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg"><DialogHeader><DialogTitle>Ubah Tugas Berulang</DialogTitle></DialogHeader><TaskForm mode="edit" projectId={row.projectId} taskMode="reusable" members={members} defaultValues={{ id: row.id, title: row.title, description: row.description ?? "", assigneeId: row.assigneeId ?? "" }} /></DialogContent></Dialog>
-            <Button size="sm" variant="outline" onClick={() => toggle(row)}>{row.lifecycle === "active" ? "Arsipkan" : "Pulihkan"}</Button>
+            <Dialog><DialogTrigger asChild><Button size="sm" variant="outline">{t("Ubah", "Edit")}</Button></DialogTrigger><DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg"><DialogHeader><DialogTitle>{t("Ubah Tugas Berulang", "Edit Reusable Task")}</DialogTitle></DialogHeader><TaskForm mode="edit" projectId={row.projectId} taskMode="reusable" members={members} defaultValues={{ id: row.id, title: row.title, description: row.description ?? "", assigneeId: row.assigneeId ?? "" }} /></DialogContent></Dialog>
+            <Button size="sm" variant="outline" onClick={() => toggle(row)}>{row.lifecycle === "active" ? t("Arsipkan", "Archive") : t("Pulihkan", "Restore")}</Button>
             <PermanentDeleteButton entityType="task" entityId={row.id} entityName={row.title} />
           </div>
         </div>

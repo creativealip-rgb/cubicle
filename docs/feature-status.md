@@ -1,10 +1,10 @@
 # Cubiqlo Full Feature Status
 
-Last updated: 2026-08-03
+Last updated: 2026-08-05
 Production app: https://app.cubiqlo.com
 Dev app: https://dev.cubiqlo.com
-Latest verified dev branch: `main` at `c0f6bbc`
-Latest verified production commit: `c0f6bbc`
+Latest verified dev branch: `main` at `fea68df`
+Latest verified production commit: `fea68df`
 
 ## Status legend
 

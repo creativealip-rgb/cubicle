@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { importTaskTemplates, previewTaskTemplateImport } from "@/lib/actions/task-templates";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useT } from "@/lib/i18n-client";
 
 type TemplateOption = {
   id: string;
@@ -21,6 +22,7 @@ type PreviewItem = {
 };
 
 export function TaskTemplateImportDialog({ projectId, templates }: { projectId: string; templates: TemplateOption[] }) {
+  const { t } = useT();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -81,9 +83,9 @@ export function TaskTemplateImportDialog({ projectId, templates }: { projectId: 
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button variant="outline">Import Template</Button></DialogTrigger>
+      <DialogTrigger asChild><Button variant="outline">{t("Import Template", "Import Template")}</Button></DialogTrigger>
       <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
-        <DialogHeader><DialogTitle>Import Template Tugas</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("Import Template Tugas", "Import Task Template")}</DialogTitle></DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
             {templates.map((template) => (
@@ -93,8 +95,8 @@ export function TaskTemplateImportDialog({ projectId, templates }: { projectId: 
               </label>
             ))}
           </div>
-          <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={allowIncompatibleTarget} onChange={(event) => {setAllowIncompatibleTarget(event.target.checked);setPreview([]);setSelectedItems([]);setPreviewFingerprint("");}} /><span>Izinkan template tidak cocok</span></label>
-          <Button onClick={loadPreview} disabled={loading || selectedTemplateIds.length === 0}>Lihat Preview</Button>
+          <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={allowIncompatibleTarget} onChange={(event) => {setAllowIncompatibleTarget(event.target.checked);setPreview([]);setSelectedItems([]);setPreviewFingerprint("");}} /><span>{t("Izinkan template tidak cocok", "Allow incompatible template")}</span></label>
+          <Button onClick={loadPreview} disabled={loading || selectedTemplateIds.length === 0}>{t("Lihat Preview", "View Preview")}</Button>
           {preview.length ? <div className="overflow-hidden rounded-md border">
             {preview.map((item) => {
               const decision = selectedItems.find((candidate) => candidate.itemId === item.itemId);

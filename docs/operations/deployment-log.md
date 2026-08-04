@@ -1,5 +1,17 @@
 # Deployment Log
 
+## 5 August 2026 — Dev deploy with Business sidebar navigation & i18n dialogs
+
+- Source revision: `fea68df` (with local i18n + form polish)
+- Dev container: `cubicle-dev` (`dev.cubiqlo.com`)
+- Features in Dev:
+  - Business sidebar group (Services, Proposals, Contracts sub-menus)
+  - English translations `t()` added to all pop-up New/Edit dialogs (Client edit/status, Client invoice create, Project status edit, Contract create, Proposal decline, Task template import/workspace, Reusable task workspace)
+  - Client New/Edit form cleanup: removed redundant "Catatan" label while preserving internal notes textarea
+- Production container: `cubiqlo-new-app` (`app.cubiqlo.com`)
+  - Running clean main commit without experimental features
+  - Full env file verified & rate-limiter connected; login status verified HTTP 200.
+
 ## 2 August 2026 — Site builder, Prompt Studio i18n, calendar picker, auth i18n fix
 
 - Source revision: `ff531bd`
