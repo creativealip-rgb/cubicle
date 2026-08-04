@@ -162,8 +162,8 @@
 #### Query Optimization
 | # | Pattern | Detection Method | Status | Effort |
 |---|---------|------------------|--------|--------|
-| 6.5 | N+1 query detection | Query log analysis + Profiler | ⏸️ Pending | ~1 hour |
-| 6.6 | Slow query identification | MySQL slow-log or Drizzle debug mode | ⏸️ Pending | ~45 min |
+| 6.5 | N+1 query detection | Query log analysis + Profiler | ✅ Audited (Batched `inArray` / `Promise.all`) | ~1 hour |
+| 6.6 | Slow query identification | MySQL slow-log or Drizzle debug mode | ✅ Audited (Aggregated SQL) | ~45 min |
 | 6.7 | Connection pool tuning | Monitoring metrics over time | ❌ Long-term | Ongoing |
 
 **Estimated Effort:** 3–5 hours (data-dependent)  
