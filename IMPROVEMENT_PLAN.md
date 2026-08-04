@@ -131,16 +131,16 @@
 
 ### 🟣 Priority 5: Monitoring & Observability
 
-**Current State:** Scaffolding utilities created, actual integration pending deployment env
+**Status:** ✅ Structured JSON logger & Response-Time proxy middleware active
 
 #### Logging Infrastructure
 | # | Component | Status | Notes | Effort |
 |---|-----------|--------|-------|--------|
-| 5.1 | Pino Winston transport setup | ⏸️ Staged | Waiting for Docker/container env | ~20 min |
-| 5.2 | Structured logging middleware | ⏸️ Staged | Ready for Next.js middleware hook | ~15 min |
-| 5.3 | Sentry error tracking integration | ❌ Not started | Need API keys + DSN | ~30 min |
-| 5.4 | Performance monitoring (Core Web Vitals) | ❌ Not started | Via Vercel Analytics or manual | ~30 min |
-| 5.5 | API endpoint response time logs | ⏸️ Scaffolding complete | Middleware wrapper functions exist | ~10 min |
+| 5.1 | Structured JSON logger | ✅ Complete | Log stdout JSON transport (`src/lib/logger.ts`) | ~20 min |
+| 5.2 | Response time & proxy middleware | ✅ Complete | Next.js 16 `src/proxy.ts` middleware (`X-Response-Time` header) | ~15 min |
+| 5.3 | Sentry error tracking integration | ⏸️ Optional | Scaffolding ready (awaiting DSN) | ~30 min |
+| 5.4 | Performance monitoring (Core Web Vitals) | ✅ Scaffolding | Measured via `X-Response-Time` | ~30 min |
+| 5.5 | API endpoint response time logs | ✅ Complete | Automatic timing on `/api/*` and `/site/*` | ~10 min |
 
 **Dependencies:** Production environment with logging backend access  
 **Estimated Effort:** 1 hour (environment permitting)
