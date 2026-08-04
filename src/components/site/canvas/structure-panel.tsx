@@ -1,24 +1,50 @@
 "use client";
 
-import { FileText, Layers, Image, Type, LayoutGrid, GripVertical } from "lucide-react";
+import {
+  FileText,
+  Layers,
+  Image,
+  Type,
+  LayoutGrid,
+  GripVertical,
+  Briefcase,
+  ListOrdered,
+  Tag,
+  FolderGit2,
+  Quote,
+  HelpCircle,
+  Mail,
+  Code,
+  Share2,
+  MousePointerClick,
+  Minus,
+  MoveVertical,
+  ListCollapse,
+  BookOpen,
+  Columns3,
+} from "lucide-react";
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { PersonalSiteSection } from "@/lib/personal-site/model";
 
 const SECTION_ICONS: Record<string, typeof FileText> = {
   custom: Type,
-  services: Layers,
-  process: Layers,
-  pricing: Layers,
-  portfolio: Layers,
-  testimonials: Layers,
-  faq: Layers,
-  contact: Layers,
-  cta: Layers,
+  services: Briefcase,
+  process: ListOrdered,
+  pricing: Tag,
+  portfolio: FolderGit2,
+  testimonials: Quote,
+  faq: HelpCircle,
+  contact: Mail,
+  cta: MousePointerClick,
   gallery: Image,
-  embed: Layers,
-  social: Layers,
-  contentBlock: LayoutGrid,
+  embed: Code,
+  social: Share2,
+  divider: Minus,
+  spacer: MoveVertical,
+  collapsible: ListCollapse,
+  tableOfContents: BookOpen,
+  contentBlock: Columns3,
 };
 
 function getSectionPreview(section: PersonalSiteSection): string {

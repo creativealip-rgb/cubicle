@@ -3,7 +3,40 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Palette, FileText, Layers, Save, Eye, Loader2, Check, Circle, PanelLeft, Undo2, Redo2, LayoutTemplate, Monitor, Tablet, Smartphone } from "lucide-react";
+import {
+  Plus,
+  Palette,
+  FileText,
+  Layers,
+  Save,
+  Eye,
+  Loader2,
+  Check,
+  Circle,
+  PanelLeft,
+  Undo2,
+  Redo2,
+  LayoutTemplate,
+  Monitor,
+  Tablet,
+  Smartphone,
+  Briefcase,
+  ListOrdered,
+  Tag,
+  FolderGit2,
+  Quote,
+  HelpCircle,
+  Mail,
+  Image as ImageIcon,
+  Code,
+  Share2,
+  MousePointerClick,
+  Minus,
+  MoveVertical,
+  ListCollapse,
+  BookOpen,
+  Columns3,
+} from "lucide-react";
 import { DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, useDraggable, type DragStartEvent, type DragEndEvent } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
@@ -106,22 +139,22 @@ function emptySection(type: PersonalSiteSection["type"]): PersonalSiteSection {
 
 const WIDGET_LIST: Array<{ type: PersonalSiteSection["type"]; label: string; icon: React.ElementType; category: string }> = [
   { type: "custom", label: "Teks", icon: FileText, category: "basic" },
-  { type: "services", label: "Layanan", icon: Layers, category: "content" },
-  { type: "process", label: "Proses", icon: Layers, category: "content" },
-  { type: "pricing", label: "Harga", icon: Layers, category: "content" },
-  { type: "portfolio", label: "Portofolio", icon: Layers, category: "content" },
-  { type: "testimonials", label: "Testimoni", icon: Layers, category: "content" },
-  { type: "faq", label: "FAQ", icon: Layers, category: "content" },
-  { type: "contact", label: "Kontak", icon: Layers, category: "content" },
-  { type: "gallery", label: "Galeri", icon: Layers, category: "media" },
-  { type: "embed", label: "Embed", icon: Layers, category: "media" },
-  { type: "social", label: "Sosial", icon: Layers, category: "basic" },
-  { type: "cta", label: "Tombol CTA", icon: Layers, category: "basic" },
-  { type: "divider", label: "Pemisah", icon: Layers, category: "basic" },
-  { type: "spacer", label: "Spasi", icon: Layers, category: "basic" },
-  { type: "collapsible", label: "Accordion", icon: Layers, category: "content" },
-  { type: "tableOfContents", label: "Daftar Isi", icon: Layers, category: "navigation" },
-  { type: "contentBlock", label: "Multi-Kolom", icon: Layers, category: "layout" },
+  { type: "services", label: "Layanan", icon: Briefcase, category: "content" },
+  { type: "process", label: "Proses", icon: ListOrdered, category: "content" },
+  { type: "pricing", label: "Harga", icon: Tag, category: "content" },
+  { type: "portfolio", label: "Portofolio", icon: FolderGit2, category: "content" },
+  { type: "testimonials", label: "Testimoni", icon: Quote, category: "content" },
+  { type: "faq", label: "FAQ", icon: HelpCircle, category: "content" },
+  { type: "contact", label: "Kontak", icon: Mail, category: "content" },
+  { type: "gallery", label: "Galeri", icon: ImageIcon, category: "media" },
+  { type: "embed", label: "Embed", icon: Code, category: "media" },
+  { type: "social", label: "Sosial", icon: Share2, category: "basic" },
+  { type: "cta", label: "Tombol CTA", icon: MousePointerClick, category: "basic" },
+  { type: "divider", label: "Pemisah", icon: Minus, category: "basic" },
+  { type: "spacer", label: "Spasi", icon: MoveVertical, category: "basic" },
+  { type: "collapsible", label: "Accordion", icon: ListCollapse, category: "content" },
+  { type: "tableOfContents", label: "Daftar Isi", icon: BookOpen, category: "navigation" },
+  { type: "contentBlock", label: "Multi-Kolom", icon: Columns3, category: "layout" },
 ];
 
 export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSave }: Props) {
