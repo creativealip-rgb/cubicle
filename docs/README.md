@@ -8,9 +8,9 @@ Panduan lengkap semua fitur Cubiqlo — Client Operations Hub.
 
 1. [Landing Page Builder](./panduan-landing-page-builder.md) — Bikin landing page profesional tanpa coding
 2. [Invoice & Pembayaran](./panduan-invoice.md) — Dari catat waktu sampai terima bayaran
-3. [Time Tracking](./panduan-time-tracking.md) — Timer, input manual, timesheet (coming soon)
-4. [Proyek & Task](./panduan-proyek-task.md) — Kelola pipeline kerja (coming soon)
-5. [Client Portal](./panduan-client-portal.md) — Share progres ke klien (coming soon)
+3. [Time Tracking](./panduan-time-tracking.md) — Timer, input manual, timesheet
+4. [Proyek & Task](./panduan-proyek-task.md) — Kelola pipeline kerja
+5. [Client Portal](./panduan-client-portal.md) — Share progres ke klien
 
 ---
 
