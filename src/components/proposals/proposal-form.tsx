@@ -181,7 +181,7 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
               </div>
               <div className="col-span-1">
                 {items.length > 1 && (
-                  <Button type="button" variant="ghost" size="icon" onClick={() => setItems(items.filter((_, idx) => idx !== i))} className="h-9 w-9 text-slate-500 hover:text-red-600">
+                  <Button type="button" variant="ghost" size="icon" onClick={() => setItems(items.filter((_, idx) => idx !== i))} className="h-9 w-9 text-slate-500 hover:text-red-600" aria-label="Hapus item">
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 )}
