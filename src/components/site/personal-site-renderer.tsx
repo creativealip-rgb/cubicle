@@ -196,7 +196,12 @@ export function PersonalSiteRenderer({
       <section className={`relative ${styles.hero} ${heroShellClass} px-6 py-14 sm:px-10 sm:py-20 lg:px-16 lg:py-24`} style={{ backgroundColor: themeConfig?.headerStyle === "minimal" ? "transparent" : accent }}>
         {site.heroImage && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={site.heroImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20" />
+          <img
+            src={site.heroImage}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-cover opacity-20"
+          />
         )}
         <div className="relative z-10 mx-auto max-w-6xl">
           {site.subtitle && <p className={`text-xs font-semibold uppercase tracking-[0.2em] sm:text-sm ${styles.eyebrow}`}>{site.subtitle}</p>}

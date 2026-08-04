@@ -72,7 +72,12 @@ export function CanvasRenderer({
       <div className="relative px-8 pt-16 pb-12 text-center" style={{ backgroundColor: theme?.primaryColor ?? "#6647F0" }}>
         {site.heroImage && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={site.heroImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20" />
+          <img
+            src={site.heroImage}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-cover opacity-20"
+          />
         )}
         <div className="relative z-10">
           <InlineText
