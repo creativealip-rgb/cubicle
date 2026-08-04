@@ -6,7 +6,7 @@ import {
 } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
-import { ArrowUpRight, TrendingUp } from "lucide-react";
+import { ArrowUpRight, BookOpen, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -315,6 +315,19 @@ export default async function DashboardPage() {
           { key: "portal", done: portalActive > 0, href: "/app/clients" },
         ]}
       />
+
+      <Link
+        href="/app/docs"
+        className="flex items-center gap-3 rounded-lg border bg-gradient-to-r from-blue-50 to-violet-50 p-4 transition-all hover:shadow-md"
+      >
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <BookOpen className="h-5 w-5" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">{t("Dokumentasi Cubiqlo", "Cubiqlo Documentation")}</p>
+          <p className="text-xs text-muted-foreground">{t("Panduan lengkap semua fitur: landing page, invoice, time tracking, proyek, client portal.", "Complete guides: landing page, invoice, time tracking, projects, client portal.")}</p>
+        </div>
+      </Link>
 
       <section className="space-y-3">
         <div className="flex items-center justify-between">
