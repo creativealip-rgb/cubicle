@@ -149,15 +149,15 @@
 
 ### 🟤 Priority 6: Database Performance
 
-**Trigger:** After monitoring data collection reveals slow queries
+**Status:** ✅ Compound indexes added for time_entries & invoices (Migration `0069`)
 
 #### Index Review
 | # | Table | Potential Issues | Status | Effort |
 |---|-------|------------------|--------|--------|
-| 6.1 | `users` table | Plan expiry date queries may lack indexes | ⏸️ Pending | ~30 min |
-| 6.2 | `personal_sites` | Slug lookup optimization | ⏸️ Pending | ~20 min |
-| 6.3 | `time_entries` | Date range + status filtering | ⏸️ Pending | ~45 min |
-| 6.4 | `invoices` | Project/Client join performance | ⏸️ Pending | ~30 min |
+| 6.1 | `users` | Plan expiry date queries may lack indexes | ✅ Indexed | ~30 min |
+| 6.2 | `personal_sites` | Slug lookup optimization | ✅ Indexed | ~20 min |
+| 6.3 | `time_entries` | Date range + status filtering | ✅ Indexed (`workspace_user_work_date_idx`, `workspace_project_status_idx`) | ~45 min |
+| 6.4 | `invoices` | Project/Client join performance | ✅ Indexed (`workspace_client_status_idx`, `workspace_status_issue_date_idx`) | ~30 min |
 
 #### Query Optimization
 | # | Pattern | Detection Method | Status | Effort |
