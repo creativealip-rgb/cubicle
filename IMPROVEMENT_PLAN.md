@@ -50,14 +50,14 @@
 
 ### 🔵 Priority 2: Bundle Optimization (Next.js)
 
-**Blocked Issue:** `@next/bundle-analyzer` package causes TypeScript compilation errors due to conflicting module resolution settings.
+**Status:** ✅ Bundle analyzer setup configured & operational (`npm run analyze`)
 
 #### Phase 1: Analyzer Setup
 | # | Task | Blocker | Status | Effort |
 |---|------|---------|--------|--------|
-| 2.1 | Configure proper `moduleResolution: "bundler"` in `tsconfig.json` | — | ❌ Not started | ~30 min |
-| 2.2 | Set up analysis script: `npm run build && npm run analyze` | — | ❌ Not started | ~15 min |
-| 2.3 | Generate initial bundle profile report | — | ❌ Not started | ~5 min |
+| 2.1 | Configure proper `moduleResolution: "bundler"` in `tsconfig.json` | — | ✅ Complete | ~30 min |
+| 2.2 | Set up analysis script: `npm run build && npm run analyze` | — | ✅ Complete | ~15 min |
+| 2.3 | Generate initial bundle profile report | — | ✅ Complete | ~5 min |
 
 #### Phase 2: Optimization Targeting
 | # | Task | Data Required | Status | Effort |
@@ -75,20 +75,20 @@
 
 ### 🟡 Priority 3: Image Migration Completion
 
-**Current State:** 2 of 11 files successfully migrated to `next/image`
+**Current State:** ✅ All target components migrated to `next/image`
 
 | # | File | Status | Notes | Effort |
 |---|------|--------|-------|--------|
-| 3.1 | `canvas-renderer.tsx` | ❌ Not migrated | Hero background image with `eslint-disable` | ~10 min |
-| 3.2 | `personal-site-renderer.tsx` | ❌ Not migrated | Hero section image | ~10 min |
-| 3.3 | `image-upload.tsx` | ❌ Not migrated | Upload thumbnail preview | ~5 min |
-| 3.4 | `seo-panel.tsx` | ❌ Not migrated | OG preview image | ~5 min |
-| 3.5 | `properties-panel.tsx` | ❌ Not migrated | Style preview thumbnails | ~5 min |
-| 3.6 | `invoice/[token]/page.tsx` | ❌ Not migrated | Public invoice page (static export) | ~10 min |
-| 3.7 | `client-portal/[token]/page.tsx` | ❌ Not migrated | Client-facing portal (SSG) | ~10 min |
-| 3.8 | `booking/[slug]/page.tsx` | ❌ Not migrated | Booking landing page (SSG) | ~10 min |
-| 3.9 | `contracts/[contractId]/page.tsx` | ❌ Not migrated | Contract PDF viewer page | ~10 min |
-| 3.10 | `workspace-branding-form.tsx` | ❌ Not migrated | Logo upload form | ~5 min |
+| 3.1 | `canvas-renderer.tsx` | ✅ Migrated | Hero background & gallery grid | ~10 min |
+| 3.2 | `personal-site-renderer.tsx` | ✅ Migrated | Hero section image | ~10 min |
+| 3.3 | `image-upload.tsx` | ✅ Migrated | Upload thumbnail preview | ~5 min |
+| 3.4 | `seo-panel.tsx` | ✅ Migrated | OG preview image | ~5 min |
+| 3.5 | `properties-panel.tsx` | ✅ Migrated | Style preview thumbnails | ~5 min |
+| 3.6 | `invoice/[token]/page.tsx` | ✅ Migrated | Public invoice page logo | ~10 min |
+| 3.7 | `client-portal/[token]/page.tsx` | ✅ Migrated | Client-facing portal branding logo | ~10 min |
+| 3.8 | `booking/[slug]/page.tsx` | ✅ Migrated | Booking landing page workspace logo | ~10 min |
+| 3.9 | `contracts/[contractId]/page.tsx` | ✅ Retained | Data URL signature (canvas-generated) | ~10 min |
+| 3.10 | `workspace-branding-form.tsx` | ✅ Migrated | Logo upload form | ~5 min |
 | 3.11 | `builder-client.tsx` | ✅ Migrated | Already using `next/image` | ✅ Complete |
 | 3.12 | `section-editor.tsx` | ✅ Migrated | Already using `next/image` | ✅ Complete |
 
