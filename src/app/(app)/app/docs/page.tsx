@@ -95,18 +95,9 @@ export default async function DocsPage() {
         </div>
         <p className="text-sm text-muted-foreground">
           {t(
-            "Dokumentasi lengkap juga tersedia di",
-            "Full documentation is also available at"
-          )}{" "}
-          <a
-            href="https://github.com/creativealip-rgb/cubicle/tree/main/docs"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline underline-offset-2 hover:text-primary"
-          >
-            GitHub
-          </a>
-          .
+            "Jelajahi panduan di atas untuk mempelajari setiap fitur Cubiqlo.",
+            "Explore the guides above to learn each Cubiqlo feature."
+          )}
         </p>
       </div>
     </div>

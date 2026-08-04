@@ -717,23 +717,14 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
   return (
     <Tabs value={sidebarTab} onValueChange={setSidebarTab} className="w-full">
       <TabsList className="w-full h-auto rounded-none grid grid-cols-3">
-        <TabsTrigger value="insert" className="text-[11px] gap-1 px-1.5 py-1.5">
-          <Plus className="h-3 w-3" /> Insert
+        <TabsTrigger value="insert" className="text-xs gap-1 px-2 py-2">
+          <Plus className="h-3.5 w-3.5" /> Insert
         </TabsTrigger>
-        <TabsTrigger value="pages" className="text-[11px] gap-1 px-1.5 py-1.5">
-          <FileText className="h-3 w-3" /> Pages
+        <TabsTrigger value="style" className="text-xs gap-1 px-2 py-2">
+          <Palette className="h-3.5 w-3.5" /> Style
         </TabsTrigger>
-        <TabsTrigger value="templates" className="text-[11px] gap-1 px-1.5 py-1.5">
-          <Sparkles className="h-3 w-3" /> Templates
-        </TabsTrigger>
-        <TabsTrigger value="theme" className="text-[11px] gap-1 px-1.5 py-1.5">
-          <Palette className="h-3 w-3" /> Theme
-        </TabsTrigger>
-        <TabsTrigger value="structure" className="text-[11px] gap-1 px-1.5 py-1.5">
-          <Layers className="h-3 w-3" /> Structure
-        </TabsTrigger>
-        <TabsTrigger value="seo" className="text-[11px] gap-1 px-1.5 py-1.5">
-          <Search className="h-3 w-3" /> SEO
+        <TabsTrigger value="structure" className="text-xs gap-1 px-2 py-2">
+          <Layers className="h-3.5 w-3.5" /> Structure
         </TabsTrigger>
       </TabsList>
 
@@ -774,52 +765,25 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
         ))}
       </TabsContent>
 
-      <TabsContent value="pages" className="m-0 p-3 space-y-2">
-        {pages.map((page, index) => (
-          <div key={page.id} className={`space-y-2 rounded-lg border p-2 text-sm group ${page.id === activePageId ? "border-primary/60 bg-primary/5" : ""}`}>
-            <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-            <input
-              type="text"
-              value={page.title}
-              onChange={(e) => renamePage(page.id, e.target.value)}
-              className="flex-1 min-w-0 bg-transparent border-none text-sm focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1"
-            />
-            {page.isHome && <span className="text-[10px] text-primary font-medium shrink-0">Home</span>}
-            </div>
-            <div className="flex items-center justify-between gap-1 pl-6">
-              <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-[11px]" onClick={() => setActivePageId(page.id)}>Edit</Button>
-              <div className="flex items-center gap-1">
-                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => movePage(page.id, -1)} disabled={index === 0} aria-label="Move page up"><ChevronUp className="h-3 w-3" /></Button>
-                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => movePage(page.id, 1)} disabled={index === pages.length - 1} aria-label="Move page down"><ChevronDown className="h-3 w-3" /></Button>
-                <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setHomePage(page.id)} disabled={page.isHome} aria-label="Set as home"><Home className="h-3 w-3" /></Button>
-                {pages.length > 1 && (
-                  <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deletePage(page.id)} aria-label="Delete page"><Trash2 className="h-3 w-3" /></Button>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-        <Button type="button" variant="outline" size="sm" className="w-full gap-1" onClick={addPage}>
-          <Plus className="h-3 w-3" /> Tambah Page
-        </Button>
-      </TabsContent>
+      <TabsContent value="style" className="m-0 p-3 space-y-5">
+        {/* Templates section */}
+        <div>
+          <p className="text-xs font-medium text-muted-foreground uppercase mb-2">Template Halaman</p>
+          <TemplateTabContent site={site} updateSite={updateSite} setActivePageId={setActivePageId} />
+        </div>
 
-      <TabsContent value="templates" className="m-0 p-3 space-y-4">
-        <TemplateTabContent site={site} updateSite={updateSite} setActivePageId={setActivePageId} />
-      </TabsContent>
+        <div className="h-px bg-border" />
 
-      <TabsContent value="theme" className="m-0 p-3 space-y-5">
-        {/* Preset themes */}
-        <div className="space-y-2">
-          <Label className="text-xs font-medium">Theme Siap Pakai</Label>
+        {/* Theme section */}
+        <div>
+          <p className="text-xs font-medium text-muted-foreground uppercase mb-3">Theme Siap Pakai</p>
           <div className="grid grid-cols-2 gap-2">
             {PRESET_THEMES.map((preset) => (
               <button
                 key={preset.name}
                 type="button"
                 onClick={() => updateSite({ theme: preset.theme as PersonalSiteInput["theme"], accent: preset.accent, themeConfig: { ...DEFAULT_THEME_CONFIG, ...(site.themeConfig ?? {}), ...preset.config } })}
-                className="flex items-center gap-2 rounded-lg border p-2 text-xs hover:bg-muted transition-colors text-left"
+                className={`flex items-center gap-2 rounded-lg border p-2 text-xs transition-colors ${site.theme === preset.theme ? "border-primary bg-primary/5" : "hover:bg-muted"}`}
               >
                 <div className="flex shrink-0">
                   <div className="h-4 w-4 rounded-l" style={{ backgroundColor: preset.config.primaryColor }} />
@@ -829,13 +793,10 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
               </button>
             ))}
           </div>
-        </div>
 
-        <div className="h-px bg-border" />
+          <div className="h-px bg-border my-4" />
 
-        {/* Custom colors */}
-        <div className="space-y-3">
-          <Label className="text-xs font-medium">Custom Colors</Label>
+          <p className="text-xs font-medium text-muted-foreground uppercase mb-3">Custom Colors</p>
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">Primary Color</Label>
             <div className="flex gap-2">
@@ -843,60 +804,7 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
               <Input value={site.themeConfig?.primaryColor ?? "#6647F0"} onChange={(e) => updateTheme({ primaryColor: e.target.value })} className="h-8 text-xs font-mono" />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Background Color</Label>
-            <div className="flex gap-2">
-              <input type="color" value={site.themeConfig?.backgroundColor ?? "#ffffff"} onChange={(e) => updateTheme({ backgroundColor: e.target.value })} className="h-8 w-8 rounded border cursor-pointer" />
-              <Input value={site.themeConfig?.backgroundColor ?? "#ffffff"} onChange={(e) => updateTheme({ backgroundColor: e.target.value })} className="h-8 text-xs font-mono" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Text Color</Label>
-            <div className="flex gap-2">
-              <input type="color" value={site.themeConfig?.textColor ?? "#111827"} onChange={(e) => updateTheme({ textColor: e.target.value })} className="h-8 w-8 rounded border cursor-pointer" />
-              <Input value={site.themeConfig?.textColor ?? "#111827"} onChange={(e) => updateTheme({ textColor: e.target.value })} className="h-8 text-xs font-mono" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Secondary Color</Label>
-            <div className="flex gap-2">
-              <input type="color" value={site.themeConfig?.secondaryColor ?? "#1e293b"} onChange={(e) => updateTheme({ secondaryColor: e.target.value })} className="h-8 w-8 rounded border cursor-pointer" />
-              <Input value={site.themeConfig?.secondaryColor ?? "#1e293b"} onChange={(e) => updateTheme({ secondaryColor: e.target.value })} className="h-8 text-xs font-mono" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Heading Font</Label>
-            <Input value={site.themeConfig?.fontHeading ?? ""} placeholder="Inter, ui-sans-serif" onChange={(e) => updateTheme({ fontHeading: e.target.value || undefined })} className="h-8 text-xs" />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Body Font</Label>
-            <Input value={site.themeConfig?.fontBody ?? ""} placeholder="Inter, ui-sans-serif" onChange={(e) => updateTheme({ fontBody: e.target.value || undefined })} className="h-8 text-xs" />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Header Style</Label>
-            <div className="grid grid-cols-3 gap-1">
-              {["full-width", "contained", "minimal"].map((style) => (
-                <button key={style} type="button" onClick={() => updateTheme({ headerStyle: style as ThemeConfig["headerStyle"] })} className={`rounded border px-2 py-1 text-[10px] ${site.themeConfig?.headerStyle === style ? "border-primary bg-primary/10" : ""}`}>{style}</button>
-              ))}
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Button Style</Label>
-            <div className="grid grid-cols-3 gap-1">
-              {["rounded", "pill", "square"].map((style) => (
-                <button key={style} type="button" onClick={() => updateTheme({ buttonStyle: style as ThemeConfig["buttonStyle"] })} className={`rounded border px-2 py-1 text-[10px] ${site.themeConfig?.buttonStyle === style ? "border-primary bg-primary/10" : ""}`}>{style}</button>
-              ))}
-            </div>
-          </div>
         </div>
-      </TabsContent>
-
-      <TabsContent value="seo" className="m-0 p-4">
-        <SEOPanel
-          site={site}
-          updateSite={updateSite}
-          publicUrl={publicUrl}
-        />
       </TabsContent>
 
       <TabsContent value="structure" className="m-0 p-0">
