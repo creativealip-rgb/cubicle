@@ -27,6 +27,7 @@ export function CanvasPageClient({ initialSite, action, publicSiteBaseUrl, previ
 
   return (
     <CanvasEditor
+      key={initialSite.slug}
       initialSite={initialSite}
       previewUrl={previewUrl}
       publicSiteBaseUrl={publicSiteBaseUrl}
