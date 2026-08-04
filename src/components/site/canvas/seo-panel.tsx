@@ -2,6 +2,7 @@
 
 import { Share2, Search, MessageCircle, Copy, Check } from "lucide-react";
 import { useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -126,8 +127,9 @@ export function SEOPanel({ site, updateSite, publicUrl }: SEOPanelProps) {
         </Label>
         <div className="overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm">
           {ogImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={ogImage} alt="" className="aspect-[1.91/1] w-full object-cover" />
+            <div className="relative aspect-[1.91/1] w-full">
+              <Image src={ogImage} alt="" fill sizes="400px" className="object-cover" />
+            </div>
           ) : (
             <div className="flex aspect-[1.91/1] w-full items-center justify-center bg-muted text-muted-foreground">
               <MessageCircle className="h-6 w-6" />

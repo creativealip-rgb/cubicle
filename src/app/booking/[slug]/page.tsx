@@ -1,4 +1,5 @@
 import { db } from "@/db";
+import Image from "next/image";
 import { availabilityRules, workspaces } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
@@ -61,12 +62,15 @@ export default async function PublicBookingPage({ params, searchParams }: Props)
         {/* Branding */}
         <div className="mb-8 text-center">
           {ws.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={ws.logoUrl}
-              alt={ws.name}
-              className="mx-auto mb-4 h-12 w-12 rounded-lg object-cover"
-            />
+            <div className="relative mx-auto mb-4 h-12 w-12 rounded-lg overflow-hidden shrink-0">
+              <Image
+                src={ws.logoUrl}
+                alt={ws.name}
+                fill
+                sizes="48px"
+                className="object-cover"
+              />
+            </div>
           ) : (
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <span className="text-lg font-bold">{ws.name.charAt(0)}</span>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Image from "next/image";
 import { Upload, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -54,8 +55,9 @@ export function ImageUpload({ value, onChange, label = "Upload gambar" }: Props)
       />
       {value ? (
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={value} alt="" className="h-8 w-8 rounded object-cover shrink-0" />
+          <div className="relative h-8 w-8 rounded overflow-hidden shrink-0">
+            <Image src={value} alt="" fill sizes="32px" className="object-cover" />
+          </div>
           <span className="text-xs text-muted-foreground truncate flex-1">{value.split("/").pop()}</span>
           <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => onChange("")}>
             <X className="h-3 w-3" />

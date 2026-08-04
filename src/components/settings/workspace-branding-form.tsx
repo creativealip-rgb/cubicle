@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ImagePlus, Trash2, Link2 } from "lucide-react";
@@ -161,12 +162,15 @@ export function WorkspaceBrandingForm({
             </p>
           </div>
           {form.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={form.logoUrl}
-              alt="Logo preview"
-              className="h-14 w-14 rounded-lg border bg-muted object-contain"
-            />
+            <div className="relative h-14 w-14 rounded-lg border bg-muted overflow-hidden shrink-0">
+              <Image
+                src={form.logoUrl}
+                alt="Logo preview"
+                fill
+                sizes="56px"
+                className="object-contain"
+              />
+            </div>
           ) : (
             <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-dashed bg-muted/40 text-xs text-muted-foreground">
               —

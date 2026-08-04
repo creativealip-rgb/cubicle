@@ -195,12 +195,13 @@ export function PersonalSiteRenderer({
     <main data-testid="personal-site-renderer" data-theme={site.theme} style={accentStyle} className={`${embedded ? "min-h-0" : "min-h-screen"} overflow-hidden ${styles.page}`}>
       <section className={`relative ${styles.hero} ${heroShellClass} px-6 py-14 sm:px-10 sm:py-20 lg:px-16 lg:py-24`} style={{ backgroundColor: themeConfig?.headerStyle === "minimal" ? "transparent" : accent }}>
         {site.heroImage && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={site.heroImage}
             alt=""
+            fill
+            sizes="100vw"
             aria-hidden="true"
-            className="absolute inset-0 w-full h-full object-cover opacity-20"
+            className="object-cover opacity-20"
           />
         )}
         <div className="relative z-10 mx-auto max-w-6xl">

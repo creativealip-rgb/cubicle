@@ -1,5 +1,6 @@
 import { cookies, headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
+import Image from "next/image";
 import { db } from "@/db";
 import {
   projects,
@@ -798,16 +799,19 @@ export default async function ClientPortalPage({
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-3 min-w-0">
               {workspaceContact?.logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element -- remote branding URL, same pattern as invoice share
-                <img
-                  src={workspaceContact.logoUrl}
-                  alt={
-                    workspaceContact.billingName ||
-                    workspaceContact.name ||
-                    "Workspace logo"
-                  }
-                  className="h-14 w-14 shrink-0 rounded-xl border bg-white object-contain p-1 shadow-sm"
-                />
+                <div className="relative h-14 w-14 rounded-lg overflow-hidden bg-white border shrink-0">
+                  <Image
+                    src={workspaceContact.logoUrl}
+                    alt={
+                      workspaceContact.billingName ||
+                      workspaceContact.name ||
+                      "Workspace logo"
+                    }
+                    fill
+                    sizes="56px"
+                    className="object-contain"
+                  />
+                </div>
               ) : (
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border bg-primary/10 text-lg font-bold text-primary">
                   {(

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Plus, ChevronDown, ChevronUp, GripVertical, Copy, Trash2 } from "lucide-react";
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -71,12 +72,13 @@ export function CanvasRenderer({
       {/* Hero section */}
       <div className="relative px-8 pt-16 pb-12 text-center" style={{ backgroundColor: theme?.primaryColor ?? "#6647F0" }}>
         {site.heroImage && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={site.heroImage}
             alt=""
+            fill
+            sizes="100vw"
             aria-hidden="true"
-            className="absolute inset-0 w-full h-full object-cover opacity-20"
+            className="object-cover opacity-20"
           />
         )}
         <div className="relative z-10">
@@ -419,10 +421,15 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {section.images.map((img, i) => (
               <div key={img.id} className="space-y-1">
-                <div className="aspect-square rounded-lg bg-muted overflow-hidden">
+                <div className="relative aspect-square rounded-lg bg-muted overflow-hidden">
                   {img.url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={img.url} alt={img.alt ?? ""} className="w-full h-full object-cover" />
+                    <Image
+                      src={img.url}
+                      alt={img.alt ?? ""}
+                      fill
+                      sizes="(max-width: 640px) 100vw, 33vw"
+                      className="object-cover"
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No image</div>
                   )}

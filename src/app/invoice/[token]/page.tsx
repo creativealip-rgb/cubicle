@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import { db } from "@/db";
 import { invoices } from "@/db/schema";
 import { getInvoiceBySharedToken } from "@/lib/actions/invoices";
@@ -106,12 +107,15 @@ export default async function SharedInvoicePage({
         <div className="flex items-start justify-between mb-8 gap-4">
           <div className="flex items-start gap-3 min-w-0">
             {workspace?.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={workspace.logoUrl}
-                alt={workspace.billingName || "Logo"}
-                className="h-14 w-14 rounded-lg object-contain bg-white border"
-              />
+              <div className="relative h-14 w-14 rounded-lg overflow-hidden bg-white border shrink-0">
+                <Image
+                  src={workspace.logoUrl}
+                  alt={workspace.billingName || "Logo"}
+                  fill
+                  sizes="56px"
+                  className="object-contain"
+                />
+              </div>
             ) : null}
             <div className="min-w-0">
               {workspace && (

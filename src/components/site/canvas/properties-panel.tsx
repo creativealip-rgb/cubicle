@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Plus, X, Sparkles, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -500,8 +501,9 @@ function GalleryEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSe
         <div key={image.id} className="relative space-y-2 rounded-lg border p-3">
           <RemoveItemButton label={`Remove image ${i + 1}`} onClick={() => onUpdate({ images: removeItemAt(section.images, i) })} />
           {image.url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={image.url} alt={image.alt ?? ""} className="aspect-video w-full rounded object-cover" />
+            <div className="relative aspect-video w-full rounded overflow-hidden">
+              <Image src={image.url} alt={image.alt ?? ""} fill sizes="300px" className="object-cover" />
+            </div>
           )}
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Image</Label>
