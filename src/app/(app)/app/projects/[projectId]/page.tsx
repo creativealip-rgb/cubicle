@@ -23,7 +23,8 @@ import { resolveProjectTaskMode } from "@/lib/task-work-mode";
 import { loadInvoiceSourceProjectOptions } from "@/lib/invoice-source-options";
 import { resolveProjectAmount } from "@/lib/invoice-project-items";
 import { PermanentDeleteButton } from "@/components/shared/permanent-delete-button";
-import { ProjectForm } from "@/components/forms/project-form";
+import { ProjectTabsNav } from "@/components/projects/project-tabs-nav";
+import { ProjectEditDialog } from "@/components/projects/project-edit-dialog";
 import { Timesheet } from "@/components/time/timesheet";
 import Link from "next/link";
 import {
@@ -44,7 +45,7 @@ export default async function ProjectDetailPage({
   searchParams,
 }: {
   params: Promise<{ projectId: string }>;
-  searchParams: Promise<{ from?: string }>;
+  searchParams: Promise<{ from?: string; tab?: string }>;
 }) {
   const lang = await getCurrentLang();
   const t = createT(lang);
@@ -52,7 +53,9 @@ export default async function ProjectDetailPage({
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   const { projectId } = await params;
-  const { from } = await searchParams;
+  const { from, tab: tabParam } = await searchParams;
+  const allowedTabs = new Set(["work", "files", "time", "billing"]);
+  const initialTab = tabParam && allowedTabs.has(tabParam) ? tabParam : "work";
 
   try {
     await assertProjectInWorkspace(db, user.id, workspaceId, projectId);
@@ -289,42 +292,10 @@ export default async function ProjectDetailPage({
             {billingTypeHint(billingDisplayType, lang)}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2"><Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1">
-              <Pencil className="h-3 w-3" /> {t("Ubah", "Edit")}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-h-[90dvh] w-[calc(100%-1rem)] overflow-y-auto p-4 sm:max-w-[500px] sm:p-6">
-            <DialogHeader>
-              <DialogTitle>{t("Ubah Proyek", "Edit Project")}</DialogTitle>
-            </DialogHeader>
-            {/* Edit form not imported for brevity — but ProjectForm would work */}
-            <ProjectForm
-              mode="edit"
-              clients={[]}
-              defaultValues={{
-                id: project.id,
-                name: project.name,
-                description: project.description ?? "",
-                clientId: project.clientId,
-                status: project.status,
-                billingType: project.billingType,
-                timeTrackingMode: project.timeTrackingMode,
-                activityRequired: project.activityRequired,
-                currency: project.currency,
-                rate: project.rate ?? "",
-                budget: project.budget ?? "",
-                startDate: project.startDate ?? "",
-                finishDate: project.finishDate ?? "",
-                dueDate: project.dueDate ?? "",
-                clientVisible: project.clientVisible,
-                selectedPackageId: project.selectedPackageId,
-                serviceIds: activeProjectServiceIds,
-              }}
-            />
-          </DialogContent>
-        </Dialog><PermanentDeleteButton entityType="project" entityId={project.id} entityName={project.name} redirectTo={`/app/clients/${project.clientId}?tab=projects`} /></div>
+        <div className="flex flex-wrap gap-2">
+          <ProjectEditDialog project={project} activeProjectServiceIds={activeProjectServiceIds} />
+          <PermanentDeleteButton entityType="project" entityId={project.id} entityName={project.name} redirectTo={`/app/clients/${project.clientId}?tab=projects`} />
+        </div>
       </div>
 
       {/* Progress bar */}
@@ -356,54 +327,122 @@ export default async function ProjectDetailPage({
       </Card>
 
       {/* Tabs */}
-      <Tabs defaultValue="work">
-        <TabsList className="max-w-full justify-start overflow-x-auto">
-          <TabsTrigger value="work" className="gap-1">
-            <CheckSquare className="h-3 w-3" /> {t("Tugas", "Tasks")} ({projectTasks.length})
-          </TabsTrigger>
-          <TabsTrigger value="files" className="gap-1">
-            <FileText className="h-3 w-3" /> {t("Berkas", "Files")} ({projectFiles.length})
-          </TabsTrigger>
-          {showTimeTab ? (
-            <TabsTrigger value="time" className="gap-1">
-              <Clock className="h-3 w-3" /> {t("Waktu", "Time")} ({projectTimeEntries.length})
-            </TabsTrigger>
-          ) : null}
-          <TabsTrigger value="billing" className="gap-1">
-            <Wallet className="h-3 w-3" /> Invoice ({projectInvoices.length})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="work" className="pt-4">
-          {legacyPackageReadOnly ? <div className="space-y-3">
-            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">Project Paket legacy bersifat hanya baca sampai model billing diklasifikasikan.</p>
-            <WorkflowTaskWorkspace tasks={projectTasks.filter((task) => task.mode === "workflow")} members={projectMembers} projects={[{ id: project.id, name: project.name }]} currentUserId={user.id} />
-          </div> : <ProjectTaskWorkspace projectId={projectId} mode={taskMode} workflowTasks={projectTasks.filter((task) => task.mode === "workflow")} reusableTasks={projectTasks.filter((task) => task.mode === "reusable").map((task) => ({ id: task.id, projectId, title: task.title, description: task.description, assigneeId: task.assigneeId, projectName: task.projectName, clientName: task.clientName, assigneeName: task.assigneeName, lifecycle: task.lifecycle }))} members={projectMembers} projects={[{ id: project.id, name: project.name }]} currentUserId={user.id} />}
-        </TabsContent>
-
-        <TabsContent value="files" className="pt-4 space-y-3">
-          {projectFiles.length === 0 && (
-            <p className="text-sm text-muted-foreground py-8 text-center">Belum ada berkas</p>
-          )}
-          {projectFiles.map((file: { id: string; name: string; mimeType: string | null; visibility: string }) => (
-            <Card key={file.id}>
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <FileText className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">{file.name}</p>
-                    <p className="text-xs text-muted-foreground">{file.mimeType}</p>
-                  </div>
-                </div>
-                <Badge variant="outline" className="text-[10px]">{file.visibility}</Badge>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="billing" className="pt-4">{project.clientId ? <ProjectBillingTab project={{ id: project.id, name: project.name, clientId: project.clientId, billingType: project.billingModel ?? project.billingType, currency: project.currency, budget: project.billingModel === "retainer" ? project.retainerFee : project.budget, rate: project.rate, packagePrice: selectedPackage?.price ?? null, packageCustomPrice: selectedPackage?.customPrice ?? null, agreedAmount: resolveProjectAmount({ billingType: project.billingType, budget: project.billingModel === "retainer" && project.retainerFee ? Number(project.retainerFee) : project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(selectedPackage?.customPrice ?? selectedPackage?.price ?? 0) || null }), priorActiveFixedBilledAmount: sourceOptions.get(project.id)?.priorActiveFixedBilledAmount ?? 0, eligibleTimeEntries: sourceOptions.get(project.id)?.eligibleTimeEntries ?? [] }} client={{ id: project.clientId, name: project.clientName ?? "Klien", companyName: null }} invoices={projectInvoices} baseCurrency={workspace?.defaultCurrency ?? "IDR"} currencyRates={currencyRates} retainerPeriod={retainerPeriod ?? null} /> : null}</TabsContent>
-
-        {showTimeTab ? <TabsContent value="time" className="pt-4">
+      <ProjectTabsNav
+        initialTab={initialTab}
+        tasksCount={projectTasks.length}
+        filesCount={projectFiles.length}
+        timeCount={projectTimeEntries.length}
+        invoicesCount={projectInvoices.length}
+        showTimeTab={showTimeTab}
+        tasksContent={
+          legacyPackageReadOnly ? (
+            <div className="space-y-3">
+              <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                {t(
+                  "Project Paket legacy bersifat hanya baca sampai model billing diklasifikasikan.",
+                  "Legacy package projects are read-only until the billing model is classified."
+                )}
+              </p>
+              <WorkflowTaskWorkspace
+                tasks={projectTasks.filter((task) => task.mode === "workflow")}
+                members={projectMembers}
+                projects={[{ id: project.id, name: project.name }]}
+                currentUserId={user.id}
+              />
+            </div>
+          ) : (
+            <ProjectTaskWorkspace
+              projectId={projectId}
+              mode={taskMode}
+              workflowTasks={projectTasks.filter((task) => task.mode === "workflow")}
+              reusableTasks={projectTasks
+                .filter((task) => task.mode === "reusable")
+                .map((task) => ({
+                  id: task.id,
+                  projectId,
+                  title: task.title,
+                  description: task.description,
+                  assigneeId: task.assigneeId,
+                  projectName: task.projectName,
+                  clientName: task.clientName,
+                  assigneeName: task.assigneeName,
+                  lifecycle: task.lifecycle,
+                }))}
+              members={projectMembers}
+              projects={[{ id: project.id, name: project.name }]}
+              currentUserId={user.id}
+            />
+          )
+        }
+        filesContent={
+          <div className="space-y-3">
+            {projectFiles.length === 0 && (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                {t("Belum ada berkas", "No files yet")}
+              </p>
+            )}
+            {projectFiles.map(
+              (file: { id: string; name: string; mimeType: string | null; visibility: string }) => (
+                <Card key={file.id}>
+                  <CardContent className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-medium">{file.name}</p>
+                        <p className="text-xs text-muted-foreground">{file.mimeType}</p>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-[10px]">
+                      {file.visibility}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              )
+            )}
+          </div>
+        }
+        billingContent={
+          project.clientId ? (
+            <ProjectBillingTab
+              project={{
+                id: project.id,
+                name: project.name,
+                clientId: project.clientId,
+                billingType: project.billingModel ?? project.billingType,
+                currency: project.currency,
+                budget: project.billingModel === "retainer" ? project.retainerFee : project.budget,
+                rate: project.rate,
+                packagePrice: selectedPackage?.price ?? null,
+                packageCustomPrice: selectedPackage?.customPrice ?? null,
+                agreedAmount: resolveProjectAmount({
+                  billingType: project.billingType,
+                  budget:
+                    project.billingModel === "retainer" && project.retainerFee
+                      ? Number(project.retainerFee)
+                      : project.budget
+                        ? Number(project.budget)
+                        : null,
+                  rate: project.rate ? Number(project.rate) : null,
+                  packagePrice:
+                    Number(selectedPackage?.customPrice ?? selectedPackage?.price ?? 0) || null,
+                }),
+                priorActiveFixedBilledAmount:
+                  sourceOptions.get(project.id)?.priorActiveFixedBilledAmount ?? 0,
+                eligibleTimeEntries: sourceOptions.get(project.id)?.eligibleTimeEntries ?? [],
+              }}
+              client={{
+                id: project.clientId,
+                name: project.clientName ?? "Klien",
+                companyName: null,
+              }}
+              invoices={projectInvoices}
+              baseCurrency={workspace?.defaultCurrency ?? "IDR"}
+              currencyRates={currencyRates}
+              retainerPeriod={retainerPeriod ?? null}
+            />
+          ) : null
+        }
+        timeContent={
           <Timesheet
             compact
             entries={projectTimeEntries.map((entry) => ({
@@ -430,13 +469,16 @@ export default async function ProjectDetailPage({
               userName: entry.userName,
               createdAt: entry.createdAt,
             }))}
-            clients={project.clientId && project.clientName ? [{ id: project.clientId, name: project.clientName }] : []}
+            clients={
+              project.clientId && project.clientName
+                ? [{ id: project.clientId, name: project.clientName }]
+                : []
+            }
             projects={projectOptions}
             tasks={projectTasks.map((task) => ({ id: task.id, title: task.title, projectId }))}
           />
-        </TabsContent> : null}
-
-      </Tabs>
+        }
+      />
     </div>
   );
 }

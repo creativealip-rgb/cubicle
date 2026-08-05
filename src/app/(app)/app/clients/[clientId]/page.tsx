@@ -20,7 +20,7 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ClientTabsNav } from "@/components/clients/client-tabs-nav";
 import Link from "next/link";
 import {
   Globe,
@@ -407,181 +407,209 @@ export default async function ClientDetailPage({
         {/* Work tabs */}
         <section className="min-w-0">
       {/* Tabs — Ringkasan di-hide, Portal tetap; wrap di mobile */}
-      <Tabs defaultValue={initialTab}>
-        <div className="overflow-x-auto -mx-1 px-1">
-          <TabsList className="h-auto min-h-9 w-full flex-wrap justify-start gap-1 p-1">
-            <Link href={`?tab=portal`}>
-              <TabsTrigger value="portal" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
-                <Globe className="h-3 w-3 shrink-0" /> Portal
-              </TabsTrigger>
-            </Link>
-            <Link href={`?tab=projects`}>
-              <TabsTrigger value="projects" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
-                <FileText className="h-3 w-3 shrink-0" /> Proyek ({clientProjects.length})
-              </TabsTrigger>
-            </Link>
-            <Link href={`?tab=invoices`}>
-              <TabsTrigger value="invoices" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
-                <Receipt className="h-3 w-3 shrink-0" /> Invoice ({clientInvoices.length})
-              </TabsTrigger>
-            </Link>
-            <Link href={`?tab=calendar`}>
-              <TabsTrigger value="calendar" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
-                <Calendar className="h-3 w-3 shrink-0" /> Kalender
-              </TabsTrigger>
-            </Link>
-
-          </TabsList>
-        </div>
-
-        <TabsContent value="portal" className="space-y-4 pt-4">
+      <ClientTabsNav
+        initialTab={initialTab}
+        projectsCount={clientProjects.length}
+        invoicesCount={clientInvoices.length}
+        portalContent={
           <PortalTokenSection
             client={{ ...client, portalPasswordCiphertext: client.portalPasswordCiphertext }}
             existingPortalToken={existingPortalToken}
           />
-        </TabsContent>
-
-        <TabsContent value="projects" className="space-y-4 pt-4">
-          {canWrite && (
-            <div className="flex justify-end">
-              <ProjectCreateDialog
-                clients={[]}
-                clientId={clientId}
-                isAtLimit={!projectLimitState.allowed}
-                projectCount={projectLimitState.current}
-                projectLimit={projectLimitState.limit}
-              />
-            </div>
-          )}
-          {clientProjects.length === 0 && (
-            <p className="text-sm text-muted-foreground py-8 text-center">Belum ada proyek</p>
-          )}
-          {clientProjects.map((project) => {
-            const usedHours = project.usedMinutes / 60;
-            const packageHours = project.packageHours;
-            const billingDisplayType = project.billingModel ?? project.billingType;
-            const isPackage = billingDisplayType === "package";
-            const isHours = billingDisplayType === "hourly" || billingDisplayType === "hours";
-            const isRetainer = billingDisplayType === "retainer";
-            const retainerIncluded = project.retainerIncludedMinutes && project.retainerIncludedMinutes > 0 ? project.retainerIncludedMinutes : null;
-            const progressPercent = isPackage
-              ? project.packageUsedPercent
-              : isRetainer
-                ? retainerIncluded
-                  ? Math.min(100, Math.round((project.trackedMinutes / retainerIncluded) * 100))
-                  : project.taskCount > 0
-                    ? Math.round((project.doneCount / project.taskCount) * 100)
-                    : null
-                : project.taskCount > 0
-                  ? Math.round((project.doneCount / project.taskCount) * 100)
+        }
+        projectsContent={
+          <div className="space-y-4">
+            {canWrite && (
+              <div className="flex justify-end">
+                <ProjectCreateDialog
+                  clients={[]}
+                  clientId={clientId}
+                  isAtLimit={!projectLimitState.allowed}
+                  projectCount={projectLimitState.current}
+                  projectLimit={projectLimitState.limit}
+                />
+              </div>
+            )}
+            {clientProjects.length === 0 && (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                {t("Belum ada proyek", "No projects yet")}
+              </p>
+            )}
+            {clientProjects.map((project) => {
+              const usedHours = project.usedMinutes / 60;
+              const packageHours = project.packageHours;
+              const billingDisplayType = project.billingModel ?? project.billingType;
+              const isPackage = billingDisplayType === "package";
+              const isHours = billingDisplayType === "hourly" || billingDisplayType === "hours";
+              const isRetainer = billingDisplayType === "retainer";
+              const retainerIncluded =
+                project.retainerIncludedMinutes && project.retainerIncludedMinutes > 0
+                  ? project.retainerIncludedMinutes
                   : null;
-            const progressLabel = isPackage
-              ? packageHours != null
-                ? `${usedHours.toFixed(1)}/${packageHours} jam terpakai`
-                : project.selectedPackageId
-                  ? `${usedHours.toFixed(1)} jam terpakai`
-                  : "Paket belum dipilih"
-              : isHours
-                ? `${usedHours.toFixed(1)} jam tercatat`
+              const progressPercent = isPackage
+                ? project.packageUsedPercent
                 : isRetainer
                   ? retainerIncluded
-                    ? `${usedHours.toFixed(0)} / ${(retainerIncluded / 60).toFixed(0)} jam terpakai`
-                    : `${usedHours.toFixed(1)} jam tercatat`
-                  : `${project.doneCount}/${project.taskCount} tugas selesai`;
-            const billingMeta = isHours && project.rate
-              ? `Rate ${project.currency} ${Number(project.rate).toLocaleString("id-ID")}/jam`
-              : billingDisplayType === "fixed_price" && project.budget
-                ? `Fixed rate ${project.currency} ${Number(project.budget).toLocaleString("id-ID")}`
-                : isPackage
-                  ? project.packageName
-                    ? `${project.packageName}${
-                        packageHours != null ? ` · ${packageHours} jam` : ""
-                      }`
-                    : "Billing paket · paket belum dipilih"
-                  : billingDisplayType === "retainer"
-                    ? "Retainer"
-                    : "Fixed Price";
+                    ? Math.min(100, Math.round((project.trackedMinutes / retainerIncluded) * 100))
+                    : project.taskCount > 0
+                      ? Math.round((project.doneCount / project.taskCount) * 100)
+                      : null
+                  : project.taskCount > 0
+                    ? Math.round((project.doneCount / project.taskCount) * 100)
+                    : null;
+              const progressLabel = isPackage
+                ? packageHours != null
+                  ? `${usedHours.toFixed(1)}/${packageHours} ${t("jam terpakai", "hrs used")}`
+                  : project.selectedPackageId
+                    ? `${usedHours.toFixed(1)} ${t("jam terpakai", "hrs used")}`
+                    : t("Paket belum dipilih", "Package not selected")
+                : isHours
+                  ? `${usedHours.toFixed(1)} ${t("jam tercatat", "hrs logged")}`
+                  : isRetainer
+                    ? retainerIncluded
+                      ? `${usedHours.toFixed(0)} / ${(retainerIncluded / 60).toFixed(0)} ${t("jam terpakai", "hrs used")}`
+                      : `${usedHours.toFixed(1)} ${t("jam tercatat", "hrs logged")}`
+                    : `${project.doneCount}/${project.taskCount} ${t("tugas selesai", "tasks done")}`;
+              const billingMeta =
+                isHours && project.rate
+                  ? `Rate ${project.currency} ${Number(project.rate).toLocaleString("id-ID")}/${t("jam", "hr")}`
+                  : billingDisplayType === "fixed_price" && project.budget
+                    ? `Fixed rate ${project.currency} ${Number(project.budget).toLocaleString("id-ID")}`
+                    : isPackage
+                      ? project.packageName
+                        ? `${project.packageName}${
+                            packageHours != null ? ` · ${packageHours} ${t("jam", "hr")}` : ""
+                          }`
+                        : t("Billing paket · paket belum dipilih", "Package billing · package not selected")
+                      : billingDisplayType === "retainer"
+                        ? "Retainer"
+                        : "Fixed Price";
 
-            return (
-              <Card key={project.id}>
-                <CardContent className="flex items-center justify-between gap-3 p-4">
-                  <div className="min-w-0 space-y-1">
-                    <Link
-                      href={`/app/projects/${project.id}?from=client`}
-                      className="font-medium hover:underline"
-                    >
-                      {project.name}
-                    </Link>
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <Badge variant="outline" className="text-[10px]">{projectStatusLabels[project.status] ?? project.status}</Badge>
-                      <Badge variant="secondary" className="gap-1 text-[10px] font-normal">
-                        <Wallet className="h-3 w-3" />
-                        {billingTypeLabel(billingDisplayType, "id")}
-                      </Badge>
-                      <span>{progressLabel}</span>
-                      {project.dueDate && <span>Tenggat: {project.dueDate}</span>}
-                    </div>
-                    <p className="text-[11px] text-muted-foreground">{billingMeta}</p>
-                  </div>
-                  {progressPercent != null && (
-                    <div className="flex shrink-0 flex-col items-end gap-1">
-                      <span className="text-[10px] tabular-nums text-muted-foreground">
-                        {progressPercent}%
-                      </span>
-                      <div className="h-2 w-24 overflow-hidden rounded-full bg-muted">
-                        <div
-                          className={`h-full rounded-full ${
-                            progressPercent >= 100
-                              ? "bg-amber-500"
-                              : progressPercent >= 80
-                                ? "bg-orange-500"
-                                : "bg-emerald-500"
-                          }`}
-                          style={{ width: `${progressPercent}%` }}
-                        />
+              return (
+                <Card key={project.id}>
+                  <CardContent className="flex items-center justify-between gap-3 p-4">
+                    <div className="min-w-0 space-y-1">
+                      <Link
+                        href={`/app/projects/${project.id}?from=client`}
+                        className="font-medium hover:underline"
+                      >
+                        {project.name}
+                      </Link>
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <Badge variant="outline" className="text-[10px]">
+                          {projectStatusLabels[project.status] ?? project.status}
+                        </Badge>
+                        <Badge variant="secondary" className="gap-1 text-[10px] font-normal">
+                          <Wallet className="h-3 w-3" />
+                          {billingTypeLabel(billingDisplayType, lang)}
+                        </Badge>
+                        <span>{progressLabel}</span>
+                        {project.dueDate && (
+                          <span>
+                            {t("Tenggat", "Due")}: {project.dueDate}
+                          </span>
+                        )}
                       </div>
+                      <p className="text-[11px] text-muted-foreground">{billingMeta}</p>
                     </div>
-                  )}
+                    {progressPercent != null && (
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <span className="text-[10px] tabular-nums text-muted-foreground">
+                          {progressPercent}%
+                        </span>
+                        <div className="h-2 w-24 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className={`h-full rounded-full ${
+                              progressPercent >= 100
+                                ? "bg-amber-500"
+                                : progressPercent >= 80
+                                  ? "bg-orange-500"
+                                  : "bg-emerald-500"
+                            }`}
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        }
+        invoicesContent={
+          <div className="space-y-4">
+            {canWrite && (
+              <div className="flex justify-end">
+                <ClientInvoiceCreateDialog
+                  client={{ id: client.id, name: client.name, companyName: client.companyName }}
+                  projects={clientProjects.map((project) => ({
+                    id: project.id,
+                    name: project.name,
+                    clientId: client.id,
+                    billingType: project.billingModel ?? project.billingType,
+                    currency: project.currency,
+                    budget: project.budget,
+                    rate: project.rate,
+                    packagePrice: project.packagePrice,
+                    packageCustomPrice: null,
+                    agreedAmount: resolveProjectAmount({
+                      billingType: project.billingModel ?? project.billingType,
+                      budget: project.budget ? Number(project.budget) : null,
+                      rate: project.rate ? Number(project.rate) : null,
+                      packagePrice: Number(project.packagePrice ?? 0) || null,
+                    }),
+                    priorActiveFixedBilledAmount:
+                      sourceOptions.get(project.id)?.priorActiveFixedBilledAmount ?? 0,
+                    eligibleTimeEntries: sourceOptions.get(project.id)?.eligibleTimeEntries ?? [],
+                  }))}
+                  baseCurrency={workspace?.defaultCurrency ?? "IDR"}
+                  currencyRates={currencyRates}
+                />
+              </div>
+            )}
+            {clientInvoices.length === 0 && (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                {t("Belum ada invoice", "No invoices yet")}
+              </p>
+            )}
+            {clientInvoices.map((inv) => (
+              <Card key={inv.id}>
+                <CardContent className="p-0">
+                  <Link
+                    href={buildInvoiceDetailUrl(inv.id, { type: "client", resourceId: clientId })}
+                    className="flex items-center justify-between p-4 transition-colors hover:bg-muted/50"
+                  >
+                    <div>
+                      <p className="text-sm font-medium hover:underline">{inv.invoiceNumber}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {inv.issueDate} · {t("Tenggat", "Due")}: {inv.dueDate ?? "—"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant={
+                          inv.status === "overdue"
+                            ? "destructive"
+                            : inv.status === "paid"
+                              ? "default"
+                              : "secondary"
+                        }
+                        className="text-[10px]"
+                      >
+                        {invoiceStatusLabel[inv.status] ?? inv.status}
+                      </Badge>
+                      <span className="text-sm font-semibold">
+                        {formatMoney(inv.total, inv.currency)}
+                      </span>
+                    </div>
+                  </Link>
                 </CardContent>
               </Card>
-            );
-          })}
-        </TabsContent>
-
-        <TabsContent value="invoices" className="space-y-4 pt-4">
-          {canWrite && <div className="flex justify-end"><ClientInvoiceCreateDialog client={{ id: client.id, name: client.name, companyName: client.companyName }} projects={clientProjects.map((project) => ({ id: project.id, name: project.name, clientId: client.id, billingType: project.billingModel ?? project.billingType, currency: project.currency, budget: project.budget, rate: project.rate, packagePrice: project.packagePrice, packageCustomPrice: null, agreedAmount: resolveProjectAmount({ billingType: project.billingModel ?? project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packagePrice ?? 0) || null }), priorActiveFixedBilledAmount: sourceOptions.get(project.id)?.priorActiveFixedBilledAmount ?? 0, eligibleTimeEntries: sourceOptions.get(project.id)?.eligibleTimeEntries ?? [] }))} baseCurrency={workspace?.defaultCurrency ?? "IDR"} currencyRates={currencyRates} /></div>}
-          {clientInvoices.length === 0 && (
-            <p className="text-sm text-muted-foreground py-8 text-center">Belum ada invoice</p>
-          )}
-          {clientInvoices.map((inv) => (
-            <Card key={inv.id}>
-              <CardContent className="p-0">
-                <Link
-                  href={buildInvoiceDetailUrl(inv.id, { type: "client", resourceId: clientId })}
-                  className="flex items-center justify-between p-4 transition-colors hover:bg-muted/50"
-                >
-                <div>
-                  <p className="text-sm font-medium hover:underline">{inv.invoiceNumber}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {inv.issueDate} · Tenggat: {inv.dueDate ?? "—"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant={inv.status === "overdue" ? "destructive" : inv.status === "paid" ? "default" : "secondary"}
-                    className="text-[10px]"
-                  >
-                    {invoiceStatusLabel[inv.status] ?? inv.status}
-                  </Badge>
-                  <span className="text-sm font-semibold">{formatMoney(inv.total, inv.currency)}</span>
-                </div>
-                </Link>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="calendar" className="space-y-4 pt-4">
+            ))}
+          </div>
+        }
+        calendarContent={
           <ClientGoogleCalendarPanel
             clientId={client.id}
             configured={clientGcalStatus.configured}
@@ -603,9 +631,8 @@ export default async function ClientDetailPage({
               attendeeEmail: apt.attendeeEmail,
             }))}
           />
-        </TabsContent>
-
-      </Tabs>
+        }
+      />
         </section>
       </div>
     </div>

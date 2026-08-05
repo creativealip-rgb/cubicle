@@ -453,9 +453,10 @@ export async function signContract(input: {
     .where(eq(contracts.id, c.id))
     .returning();
 
-  await writeActivityLog(c.workspaceId, input.signedEmail, "signed_contract", "contract", c.id, {
+  await writeActivityLog(c.workspaceId, null, "signed_contract", "contract", c.id, {
     title: c.title,
     signedName: input.signedName,
+    signedEmail: input.signedEmail,
     signedFromIp: ip,
   });
 

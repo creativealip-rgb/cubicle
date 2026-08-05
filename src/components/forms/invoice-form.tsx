@@ -82,7 +82,7 @@ interface InvoiceFormProps {
 
 export function InvoiceForm({ mode, defaultValues, clients, projects, templates, baseCurrency = "IDR", currencyRates = [], initialItems = [], onSuccess, scopedClientId, scopedProjectId }: InvoiceFormProps) {
   const router = useRouter();
-  const { t } = useT();
+  const { t, lang } = useT();
   const [loading, setLoading] = useState(false);
   const startsSourceBacked = Boolean(scopedProjectId || defaultValues?.projectId || initialItems.some((item) => item.sourceId));
   const [items, setItems] = useState(initialItems.length ? initialItems : startsSourceBacked ? [] : [{ description: "", quantity: 1, unitPrice: 0 }]);
@@ -139,7 +139,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.clientId) {
-      toast.error("Pilih klien dulu");
+      toast.error(t("Pilih klien dulu", "Please select a client first"));
       return;
     }
     const validItems = items.filter((item) => item.description.trim());
@@ -297,19 +297,19 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         return <div key={project.id} className="space-y-3 rounded-lg border p-3">
           <div><p className="font-medium">{project.name}</p><p className="text-xs text-muted-foreground">Pilih sumber tagihan</p></div>
           <Select value={source?.mode ?? ""} onValueChange={(value) => updateSource(project.id, { mode: value as InvoiceSourceMode, amountType: undefined, value: undefined, milestoneName: undefined, description: undefined, periodStart: undefined, periodEnd: undefined, timeEntryIds: undefined })}>
-            <SelectTrigger><SelectValue placeholder="Pilih sumber" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={t("Pilih sumber", "Select source")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="fixed_full">Nilai penuh</SelectItem>
-              <SelectItem value="fixed_dp">DP</SelectItem>
-              <SelectItem value="fixed_milestone">Milestone</SelectItem>
-              <SelectItem value="fixed_final">Pelunasan sisa</SelectItem>
+              <SelectItem value="fixed_full">{t("Nilai penuh", "Full amount")}</SelectItem>
+              <SelectItem value="fixed_dp">{t("DP", "Down payment")}</SelectItem>
+              <SelectItem value="fixed_milestone">{t("Milestone", "Milestone")}</SelectItem>
+              <SelectItem value="fixed_final">{t("Pelunasan sisa", "Remaining balance")}</SelectItem>
             </SelectContent>
           </Select>
-          <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/40 p-2 text-xs"><span>Nilai disepakati<br/><b>{fixedPreview.agreedAmount.toLocaleString("id-ID")}</b></span><span>Sudah ditagih<br/><b>{fixedPreview.previouslyInvoiced.toLocaleString("id-ID")}</b></span><span>Sisa nilai<br/><b>{fixedPreview.remainingAmount.toLocaleString("id-ID")}</b></span></div>
+          <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/40 p-2 text-xs"><span>{t("Nilai disepakati", "Agreed value")}<br/><b>{fixedPreview.agreedAmount.toLocaleString(lang === "en" ? "en-US" : "id-ID")}</b></span><span>{t("Sudah ditagih", "Already invoiced")}<br/><b>{fixedPreview.previouslyInvoiced.toLocaleString(lang === "en" ? "en-US" : "id-ID")}</b></span><span>{t("Sisa nilai", "Remaining value")}<br/><b>{fixedPreview.remainingAmount.toLocaleString(lang === "en" ? "en-US" : "id-ID")}</b></span></div>
           {(source?.mode === "fixed_dp" || source?.mode === "fixed_milestone") && <div className="grid gap-2 sm:grid-cols-2">
-            {source.mode === "fixed_milestone" && <Input placeholder="Nama milestone" value={source.milestoneName ?? ""} onChange={(e) => updateSource(project.id, { milestoneName: e.target.value })} />}
-            <Select value={source.amountType} onValueChange={(value) => updateSource(project.id, { amountType: value as "percent" | "amount" })}><SelectTrigger><SelectValue placeholder={t("Jenis nilai", "Value type")} /></SelectTrigger><SelectContent><SelectItem value="percent">Persen</SelectItem><SelectItem value="amount">Nominal</SelectItem></SelectContent></Select>
-            <Input type="number" min="0.01" step="0.01" placeholder={source.amountType === "percent" ? "Persen" : "Nominal"} value={source.value ?? ""} onChange={(e) => updateSource(project.id, { value: Number(e.target.value) })} />
+            {source.mode === "fixed_milestone" && <Input placeholder={t("Nama milestone", "Milestone name")} value={source.milestoneName ?? ""} onChange={(e) => updateSource(project.id, { milestoneName: e.target.value })} />}
+            <Select value={source.amountType} onValueChange={(value) => updateSource(project.id, { amountType: value as "percent" | "amount" })}><SelectTrigger><SelectValue placeholder={t("Jenis nilai", "Value type")} /></SelectTrigger><SelectContent><SelectItem value="percent">{t("Persen", "Percent")}</SelectItem><SelectItem value="amount">{t("Nominal", "Amount")}</SelectItem></SelectContent></Select>
+            <Input type="number" min="0.01" step="0.01" placeholder={source.amountType === "percent" ? t("Persen", "Percent") : t("Nominal", "Amount")} value={source.value ?? ""} onChange={(e) => updateSource(project.id, { value: Number(e.target.value) })} />
           </div>}
         </div>;
       })}
