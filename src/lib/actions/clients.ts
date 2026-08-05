@@ -16,6 +16,13 @@ import { hashPassword } from "@better-auth/utils/password";
 import { encryptSecret } from "@/lib/google-calendar";
 import { decryptPortalPassword, encryptPortalPassword } from "@/lib/portal-password-encryption";
 
+import { getCurrentLang, createT } from "@/lib/i18n";
+
+async function getT() {
+  const lang = await getCurrentLang();
+  return createT(lang);
+}
+
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
 }
@@ -104,6 +111,7 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
   } = {};
   let rawPortalToken: string | null = null;
   if (parsed.portalEnabled) {
+    const t = await getT();
     await assertCanUseClientPortal(userId);
     rawPortalToken = randomBytes(32).toString("hex");
     portalFields = {
@@ -117,28 +125,39 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
 
   const clientNumber = await nextClientNumber(workspaceId);
 
-  const [client] = await db.insert(clients).values({
-    workspaceId,
-    name: parsed.name,
-    companyName: parsed.companyName || null,
-    email: parsed.email || null,
-    phone: parsed.phone || null,
-    website: parsed.website || null,
-    address: parsed.address || null,
-    tags: parsed.tags,
-    internalNotes: parsed.internalNotes || null,
-    portalSlug: parsed.portalSlug || null,
-    portalSlugEnabled: false,
-    clientNumber,
-    status: "active",
-    ...portalFields,
-  }).returning();
+  try {
+    const [client] = await db.insert(clients).values({
+      workspaceId,
+      name: parsed.name,
+      companyName: parsed.companyName || null,
+      email: parsed.email || null,
+      phone: parsed.phone || null,
+      website: parsed.website || null,
+      address: parsed.address || null,
+      tags: parsed.tags,
+      internalNotes: parsed.internalNotes || null,
+      portalSlug: parsed.portalSlug || null,
+      portalSlugEnabled: false,
+      clientNumber,
+      status: "active",
+      ...portalFields,
+    }).returning();
 
-  await writeActivityLog(workspaceId, userId, "created_client", "client", client.id);
-  if (rawPortalToken) {
-    await writeActivityLog(workspaceId, userId, "generated_portal_token", "client", client.id);
+    await writeActivityLog(workspaceId, userId, "created_client", "client", client.id);
+    if (rawPortalToken) {
+      await writeActivityLog(workspaceId, userId, "generated_portal_token", "client", client.id);
+    }
+    return client;
+  } catch (err: unknown) {
+    const t = await getT();
+    if (typeof err === "object" && err !== null && "code" in err && err.code === "23505") {
+      const detail = "detail" in err ? String(err.detail) : "";
+      if (detail.includes("portal_slug") || ("constraint" in err && err.constraint === "clients_portal_slug_unique")) {
+        throw new Error(t("Slug URL portal sudah digunakan oleh klien lain. Silakan ubah URL portal.", "Portal URL slug is already in use by another client. Please change the portal URL."));
+      }
+    }
+    throw err;
   }
-  return client;
 }
 
 export async function createClient(input: z.infer<typeof clientSchema>) {
@@ -209,13 +228,23 @@ export async function updateClient(clientId: string, input: Partial<z.infer<type
   if (input.status !== undefined) updateData.status = input.status;
   updateData.updatedAt = new Date();
 
-  const [client] = await db.update(clients)
-    .set(updateData)
-    .where(eq(clients.id, clientId))
-    .returning();
+  try {
+    const [client] = await db.update(clients)
+      .set(updateData)
+      .where(eq(clients.id, clientId))
+      .returning();
 
-  await writeActivityLog(workspaceId, user.id, "updated_client", "client", clientId);
-  return client;
+    await writeActivityLog(workspaceId, user.id, "updated_client", "client", clientId);
+    return client;
+  } catch (err: unknown) {
+    if (typeof err === "object" && err !== null && "code" in err && err.code === "23505") {
+      const detail = "detail" in err ? String(err.detail) : "";
+      if (detail.includes("portal_slug") || ("constraint" in err && err.constraint === "clients_portal_slug_unique")) {
+        throw new Error("Slug URL portal sudah digunakan oleh klien lain. Silakan ubah URL portal.");
+      }
+    }
+    throw err;
+  }
 }
 
 export async function updateClientStatus(clientId: string, status: z.infer<typeof clientStatusSchema>) {

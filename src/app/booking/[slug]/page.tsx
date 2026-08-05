@@ -112,11 +112,11 @@ export default async function PublicBookingPage({ params, searchParams }: Props)
                   const slot = formData.get("slot") as string;
 
                   if (!title || !attendeeName || !attendeeEmail || !slot) {
-                    throw new Error("All required fields must be filled");
+                    redirect(`/booking/${slug}?error=missing_fields`);
                   }
 
                   const [startTime, endTime] = slot.split("|");
-                  if (!startTime || !endTime) throw new Error("Invalid slot");
+                  if (!startTime || !endTime) redirect(`/booking/${slug}?error=invalid_slot`);
 
                   await createPublicAppointment({
                     workspaceId: ws.id,

@@ -17,7 +17,7 @@ export default async function ContractTemplateDetailPage({
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const [ws] = await db.select().from(workspaces).where(eq(workspaces.id, await getWorkspaceForCurrentUser())).limit(1);
-  if (!ws) throw new Error("Workspace not found");
+  if (!ws) notFound();
   await assertWorkspaceMember(db, user.id, ws.id);
   await assertWorkspaceWritable(db, user.id, ws.id);
 

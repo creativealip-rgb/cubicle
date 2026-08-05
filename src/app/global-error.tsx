@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
+import { useT } from "@/lib/i18n-client";
 
 export default function GlobalError({
   error,
@@ -12,8 +13,9 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useT();
+
   useEffect(() => {
-    // Log to console for now; wire to Sentry/PostHog later
     console.error("Cubiqlo global error:", error);
   }, [error]);
 
@@ -25,9 +27,11 @@ export default function GlobalError({
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
               <AlertTriangle className="h-6 w-6 text-red-600" />
             </div>
-            <h1 className="text-xl font-semibold text-slate-950">Something went wrong</h1>
+            <h1 className="text-xl font-semibold text-slate-950">
+              {t("Ada masalah pada sistem", "Something went wrong")}
+            </h1>
             <p className="mt-2 text-sm text-slate-600">
-              We hit an unexpected error. You can try again, or come back to the dashboard.
+              {t("Terjadi error tak terduga. Kamu bisa mencoba lagi atau kembali ke dashboard.", "We hit an unexpected error. You can try again, or come back to the dashboard.")}
             </p>
             {error.digest && (
               <p className="mt-3 font-mono text-xs text-slate-400">
@@ -36,10 +40,10 @@ export default function GlobalError({
             )}
             <div className="mt-6 flex justify-center gap-2">
               <Button onClick={reset} variant="outline">
-                Try again
+                {t("Coba lagi", "Try again")}
               </Button>
               <Button asChild>
-                <Link href="/app/dashboard">Back to dashboard</Link>
+                <Link href="/app/dashboard">{t("Kembali ke dashboard", "Back to dashboard")}</Link>
               </Button>
             </div>
           </div>

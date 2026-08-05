@@ -403,11 +403,11 @@ export async function respondPortalTask(input: z.infer<typeof respondPortalTaskS
     )
     .limit(1);
 
-  if (!row) throw new Error("Task not found");
-  if (row.mode !== "workflow") throw new Error("Only workflow tasks support portal review");
-  if (row.projectClientId !== client.id) throw new Error("Task not in your portal");
-  if (!row.clientVisible) throw new Error("Task is not client-visible");
-  if (row.status !== "review") throw new Error("Task is not awaiting review");
+  if (!row) throw new Error("Task tidak ditemukan");
+  if (row.mode !== "workflow") throw new Error("Hanya task mode workflow yang mendukung portal review");
+  if (row.projectClientId !== client.id) throw new Error("Task tidak ada di portal Anda");
+  if (!row.clientVisible) throw new Error("Task tidak ditampilkan ke klien");
+  if (row.status !== "review") throw new Error("Task tidak sedang menunggu review");
 
   const nextStatus = parsed.decision === "approved" ? "done" : "in_progress";
   const stamp = new Date().toISOString();

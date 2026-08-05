@@ -1,5 +1,19 @@
 # Deployment Log
 
+## 5 August 2026 — Project start/finish date fields, portal password fix, and bilingual error handling
+
+- Source revision: `main` (updated)
+- Containers deployed:
+  - Dev: `cubicle-dev` (`dev.cubiqlo.com`)
+  - Prod: `cubiqlo-new-app` (`app.cubiqlo.com`)
+- Features & Fixes:
+  - Project form: Added `startDate` (Tanggal Mulai) & `finishDate` (Tanggal Selesai / Target Finish Date) input fields to Create & Edit Project dialogs.
+  - Portal Password Encryption: Added missing `PORTAL_PASSWORD_ENCRYPTION_KEY` environment variable to `.env.production` & `.env.development.local` and restarted both dev & prod containers to fix decryption/encryption crashes on "Tampilkan password" & "Ganti password".
+  - Client Portal Slug Collision: Added friendly bilingual error message (`getT()`) for unique constraint violations (`clients_portal_slug_unique`) when creating/editing clients.
+  - Bilingual Server Action Errors: Converted server action error messages in `clients.ts`, `invoices.ts`, `expenses.ts`, and `tasks.ts` to use `getT()` for dynamic ID/EN locale support.
+  - Boundary Error Cleanups: Replaced unhandled `throw new Error("Workspace not found")` in contract-templates & proposals page routes with `notFound()`, preventing raw Next.js production error screens.
+  - Global Error Boundary: Added i18n support (`useT()`) to `global-error.tsx`.
+
 ## 5 August 2026 — Dev deploy with Business sidebar navigation & i18n dialogs
 
 - Source revision: `fea68df` (with local i18n + form polish)

@@ -1,4 +1,10 @@
 "use server";
+import { getCurrentLang, createT } from "@/lib/i18n";
+
+async function getT() {
+  const lang = await getCurrentLang();
+  return createT(lang);
+}
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 
 import { auth } from "@/lib/auth";
@@ -115,7 +121,8 @@ async function assertInvoiceInWorkspace(invoiceId: string, workspaceId: string) 
     .from(invoices)
     .where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId)))
     .limit(1);
-  if (!inv) throw new Error("Invoice not found");
+  const t = await getT();
+  if (!inv) throw new Error(t("Invoice tidak ditemukan", "Invoice not found"));
   return inv;
 }
 
@@ -625,7 +632,8 @@ export async function recalculateInvoice(invoiceId: string) {
   const subtotal = result?.sum || "0";
 
   const [inv] = await db.select().from(invoices).where(eq(invoices.id, invoiceId)).limit(1);
-  if (!inv) throw new Error("Invoice not found");
+  const t = await getT();
+  if (!inv) throw new Error(t("Invoice tidak ditemukan", "Invoice not found"));
 
   const totals = calculateInvoiceTotals(
     Number(subtotal),
@@ -723,7 +731,8 @@ export async function updateInvoiceItem(itemId: string, input: z.infer<typeof up
     .from(invoiceItems)
     .where(eq(invoiceItems.id, itemId))
     .limit(1);
-  if (!item) throw new Error("Invoice item not found");
+  const t = await getT();
+  if (!item) throw new Error(t("Item invoice tidak ditemukan", "Invoice item not found"));
 
   const invoice = await assertInvoiceInWorkspace(item.invoiceId, workspaceId);
   assertInvoiceFinancialsMutable(invoice.status);
@@ -759,7 +768,8 @@ export async function deleteInvoiceItem(itemId: string) {
     .from(invoiceItems)
     .where(eq(invoiceItems.id, itemId))
     .limit(1);
-  if (!item) throw new Error("Invoice item not found");
+  const t = await getT();
+  if (!item) throw new Error(t("Item invoice tidak ditemukan", "Invoice item not found"));
 
   const invoice = await assertInvoiceInWorkspace(item.invoiceId, workspaceId);
   assertInvoiceFinancialsMutable(invoice.status);
@@ -940,7 +950,8 @@ export async function recordPayment(input: z.infer<typeof recordPaymentSchema>) 
     .from(invoices)
     .where(eq(invoices.id, parsed.invoiceId))
     .limit(1);
-  if (!inv) throw new Error("Invoice not found");
+  const t = await getT();
+  if (!inv) throw new Error(t("Invoice tidak ditemukan", "Invoice not found"));
 
   const [paidResult] = await db
     .select({
@@ -984,14 +995,15 @@ async function sendInvoiceEmailForInvoice(
     .from(invoices)
     .where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId)))
     .limit(1);
-  if (!inv) throw new Error("Invoice not found");
+  const t = await getT();
+  if (!inv) throw new Error(t("Invoice tidak ditemukan", "Invoice not found"));
 
   const [client] = await db
     .select({ name: clients.name, email: clients.email })
     .from(clients)
     .where(eq(clients.id, inv.clientId))
     .limit(1);
-  if (!client?.email) throw new Error("Client email is missing");
+  if (!client?.email) throw new Error(t("Email klien belum diisi", "Client email is missing"));
 
   const [ws] = await db
     .select({ name: workspaces.name })
@@ -1188,7 +1200,8 @@ export async function sendInvoicePaymentReminder(invoiceId: string) {
     .from(clients)
     .where(eq(clients.id, inv.clientId))
     .limit(1);
-  if (!client?.email) throw new Error("Client email is missing");
+  const t = await getT();
+  if (!client?.email) throw new Error(t("Email klien belum diisi", "Client email is missing"));
 
   const [ws] = await db
     .select({ name: workspaces.name })
@@ -1291,7 +1304,8 @@ export async function getInvoice(invoiceId: string) {
     .where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId)))
     .limit(1);
 
-  if (!inv) throw new Error("Invoice not found");
+  const t = await getT();
+  if (!inv) throw new Error(t("Invoice tidak ditemukan", "Invoice not found"));
 
   const items = await db
     .select()

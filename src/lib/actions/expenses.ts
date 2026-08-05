@@ -1,4 +1,10 @@
 "use server";
+import { getCurrentLang, createT } from "@/lib/i18n";
+
+async function getT() {
+  const lang = await getCurrentLang();
+  return createT(lang);
+}
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 
 import { auth } from "@/lib/auth";
@@ -134,7 +140,8 @@ export async function updateExpense(expenseId: string, input: z.infer<typeof upd
     .from(expenses)
     .where(and(eq(expenses.id, expenseId), eq(expenses.workspaceId, workspaceId)))
     .limit(1);
-  if (!existing) throw new Error("Expense not found");
+  const t = await getT();
+  if (!existing) throw new Error(t("Pengeluaran tidak ditemukan", "Expense not found"));
 
   const nextClientId = parsed.clientId !== undefined ? parsed.clientId : existing.clientId;
   const nextProjectId = parsed.projectId !== undefined ? parsed.projectId : existing.projectId;
@@ -166,7 +173,7 @@ export async function updateExpense(expenseId: string, input: z.infer<typeof upd
     .where(and(eq(expenses.id, expenseId), eq(expenses.workspaceId, workspaceId)))
     .returning();
 
-  if (!expense) throw new Error("Expense not found");
+  if (!expense) throw new Error(t("Pengeluaran tidak ditemukan", "Expense not found"));
   await writeActivityLog(workspaceId, user.id, "updated_expense", "expense", expense.id);
   return expense;
 }
@@ -181,7 +188,8 @@ export async function deleteExpense(expenseId: string) {
     .where(and(eq(expenses.id, expenseId), eq(expenses.workspaceId, workspaceId)))
     .returning();
 
-  if (!expense) throw new Error("Expense not found");
+  const t = await getT();
+  if (!expense) throw new Error(t("Pengeluaran tidak ditemukan", "Expense not found"));
   await writeActivityLog(workspaceId, user.id, "deleted_expense", "expense", expenseId);
   return { id: expenseId };
 }
@@ -220,7 +228,8 @@ export async function updateCategory(categoryId: string, input: z.infer<typeof u
     .set(update)
     .where(and(eq(expenseCategories.id, categoryId), eq(expenseCategories.workspaceId, workspaceId)))
     .returning();
-  if (!cat) throw new Error("Category not found");
+  const t = await getT();
+  if (!cat) throw new Error(t("Kategori tidak ditemukan", "Category not found"));
   await writeActivityLog(workspaceId, user.id, "updated_expense_category", "expense_category", categoryId);
   return cat;
 }
@@ -234,7 +243,8 @@ export async function deleteCategory(categoryId: string) {
   const [cat] = await db.delete(expenseCategories)
     .where(and(eq(expenseCategories.id, categoryId), eq(expenseCategories.workspaceId, workspaceId)))
     .returning();
-  if (!cat) throw new Error("Category not found");
+  const t = await getT();
+  if (!cat) throw new Error(t("Kategori tidak ditemukan", "Category not found"));
   return { id: categoryId };
 }
 
