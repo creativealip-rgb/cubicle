@@ -133,7 +133,7 @@ export default async function ContractsPage({
       {rows.length === 0 ? (
         <div className="bg-white rounded-2xl border p-12 text-center">
           <FileSignature className="h-10 w-10 mx-auto text-slate-300 mb-3" />
-          <p className="text-sm text-slate-500 mb-4">
+          <p className="text-sm text-slate-500">
             {statusFilter === "all"
               ? t(
                   "Belum ada kontrak. Buat kontrak pertama untuk mulai tanda tangan elektronik.",
@@ -144,9 +144,6 @@ export default async function ContractsPage({
                   "No contracts with this status.",
                 )}
           </p>
-          {canWrite && statusFilter === "all" && (
-            <CreateContractButton clients={clientsList} workspaceId={workspaceId} />
-          )}
         </div>
       ) : (
         <ContractsListTable rows={rows} canWrite={canWrite} />
