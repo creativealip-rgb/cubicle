@@ -1,5 +1,17 @@
 # Deployment Log
 
+## 5 August 2026 — Approved time entries editability, Asia/Jakarta UTC+7 timezone fix, and Global Stale Server Action Auto-Reload Interceptor
+
+- Source revision: `8f884b2` / `main`
+- Containers deployed:
+  - Dev: `cubicle-dev` (`dev.cubiqlo.com`)
+  - Prod: `cubiqlo-new-app` (`app.cubiqlo.com`)
+- Features & Fixes:
+  - Time Entries Edit Lock: Allowed editing approved time entries by removing restrictive status locks in `updateTimeEntry` server action (`src/lib/actions/time.ts`).
+  - Timezone Fix (UTC+7): Preserved Asia/Jakarta timezone (`T12:00:00+07:00`) during time entry creation and editing (`timesheet.tsx`), preventing date shifts to the previous day in UTC.
+  - Global Stale Server Action Auto-Reload Interceptor: Integrated global window error and unhandled rejection listeners in `AppShell` (`src/components/app-shell.tsx`) to catch `isStaleServerActionError` after deployments and automatically trigger `window.location.reload()` with user notification.
+  - Form Level Stale Error Catching: Added stale action detection to `CurrencyRatesForm` (`currency-rates-form.tsx`) for instant auto-reloads.
+
 ## 5 August 2026 — Project start/finish date fields, portal password fix, and bilingual error handling
 
 - Source revision: `main` (updated)
