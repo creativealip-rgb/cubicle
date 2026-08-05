@@ -60,7 +60,7 @@ const CURRENCIES = ["IDR", "USD", "EUR", "GBP", "SGD"];
 const pricingModelLabels: Record<ServicePricingModel, { id: string; en: string }> = {
   fixed: { id: "Fixed Price", en: "Fixed Price" },
   hourly: { id: "Per jam", en: "Hourly" },
-  unit: { id: "Per unit / Paket", en: "Per unit / Package" },
+  unit: { id: "Retainer", en: "Retainer" },
 };
 
 type FormState = {
@@ -310,7 +310,7 @@ export function ServiceCatalog({
                   <SelectContent>
                     <SelectItem value="fixed">{t("Fixed Price", "Fixed Price")}</SelectItem>
                     <SelectItem value="hourly">{t("Per jam", "Hourly")}</SelectItem>
-                    <SelectItem value="unit">{t("Per unit / Paket", "Per unit / Package")}</SelectItem>
+                    <SelectItem value="unit">{t("Retainer", "Retainer")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
