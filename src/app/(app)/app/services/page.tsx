@@ -54,17 +54,6 @@ export default async function ServicesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="app-page-header">
-        <div>
-          <h1 className="app-page-title">{t("Katalog Layanan", "Service Catalog")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t(
-              "Kelola daftar layanan murni yang dapat Anda tawarkan dan sertakan pada proposal bisnis.",
-              "Manage your pure service catalog to include in client proposals.",
-            )}
-          </p>
-        </div>
-      </div>
       <ServiceCatalog services={catalogServices} categories={categories} />
     </div>
   );
