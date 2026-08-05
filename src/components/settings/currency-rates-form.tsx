@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useT } from "@/lib/i18n-client";
 import { useConfirm } from "@/lib/hooks/use-confirm";
+import { isStaleServerActionError } from "@/lib/client-errors";
 
 const COMMON = ["USD", "EUR", "SGD", "AUD", "GBP", "MYR", "JPY", "IDR"];
 
@@ -93,6 +94,11 @@ export function CurrencyRatesForm({
       setRate("");
       router.refresh();
     } catch (err) {
+      if (isStaleServerActionError(err)) {
+        toast.info(t("Versi aplikasi baru terdeteksi. Memuat ulang...", "App updated. Reloading..."));
+        setTimeout(() => window.location.reload(), 600);
+        return;
+      }
       toast.error(err instanceof Error ? err.message : t("Gagal simpan", "Save failed"));
     } finally {
       setBusy(false);

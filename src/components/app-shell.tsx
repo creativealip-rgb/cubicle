@@ -7,6 +7,8 @@ import { AppSidebar, type SidebarBadgeCounts } from "@/components/app-sidebar";
 import { AppTopbar } from "@/components/app-topbar";
 import { AIChatPanel } from "@/components/ai/chat-panel";
 import { LangProvider, type Lang } from "@/lib/i18n-client";
+import { isStaleServerActionError } from "@/lib/client-errors";
+import { toast } from "sonner";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -53,6 +55,22 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
       // ignore (e.g. SSR or storage disabled)
     }
     setHydrated(true);
+
+    // Global Auto-Reload Interceptor for Stale Server Action Errors
+    function handleGlobalError(event: ErrorEvent | PromiseRejectionEvent) {
+      const err = "reason" in event ? event.reason : event.error;
+      if (isStaleServerActionError(err)) {
+        toast.info("Versi aplikasi baru terdeteksi. Memuat ulang halaman...");
+        setTimeout(() => window.location.reload(), 600);
+      }
+    }
+
+    window.addEventListener("error", handleGlobalError);
+    window.addEventListener("unhandledrejection", handleGlobalError);
+    return () => {
+      window.removeEventListener("error", handleGlobalError);
+      window.removeEventListener("unhandledrejection", handleGlobalError);
+    };
   }, []);
 
   // Persist collapsed state
