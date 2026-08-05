@@ -16,21 +16,21 @@ const plans = [
     name: "Free",
     price: "Rp 0",
     description: "Coba dulu buat client work kecil.",
-    features: ["1 pengguna", "1 workspace", "3 klien", "5 proyek", "10 invoice/bulan", "Tanpa client portal dan AI", "5 MB/file"],
+    features: ["1 pengguna", "1 workspace", "3 klien", "5 proyek", "10 invoice/bulan", "Client portal + AI", "10 AI request/bulan", "5 MB/file"],
   },
   {
     key: "solo",
     name: "Solo",
     price: "Rp 588rb/tahun",
     description: "Untuk freelancer yang butuh unlimited clients.",
-    features: ["1 pengguna", "3 workspace", "Klien/proyek/invoice unlimited", "Client portal + AI", "15 AI request/hari", "25 MB/file"],
+    features: ["1 pengguna", "3 workspace", "Klien/proyek/invoice unlimited", "Client portal + AI", "100 AI request/bulan", "25 MB/file"],
   },
   {
     key: "team",
     name: "Team",
     price: "Rp 1,188jt/tahun",
     description: "Untuk team kecil yang handle banyak client bareng.",
-    features: ["Unlimited users", "Workspace unlimited", "Klien/proyek/invoice unlimited", "Peran tim", "500 AI request/hari", "50 MB/file"],
+    features: ["Unlimited users", "Workspace unlimited", "Klien/proyek/invoice unlimited", "Peran tim", "1.000 AI request/bulan", "50 MB/file"],
   },
 ] as const;
 

@@ -109,7 +109,7 @@ function PreviewPanel({ selected, form }: { selected: { name: string; descriptio
   );
 }
 
-export function PromptStudio({ generations, usage }: { generations: PromptHistoryItem[]; usage: { totalInputTokens: number; totalOutputTokens: number; totalCost: number; monthlyCap: number; totalGenerations: number; generationLimit: number | null } }) {
+export function PromptStudio({ generations, usage }: { generations: PromptHistoryItem[]; usage: { totalInputTokens: number; totalOutputTokens: number; totalCost: number; monthlyCap: number; totalGenerations: number; generationLimit: number } }) {
   const { t, lang } = useT();
   const [category, setCategory] = useState<PromptCategory>("social-media");
   const [typeId, setTypeId] = useState<PromptTypeId>("instagram-feed");
@@ -199,7 +199,7 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
           <p className="mt-1 text-sm text-muted-foreground">{t("Buat materi campaign dari brief sederhana.", "Create campaign material from a simple brief.")}</p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground">Generate {usage.totalGenerations}/{usage.generationLimit ?? "Unlimited"}</span>
+          <span className="text-xs text-muted-foreground">{t("Generate", "Generated")} {usage.totalGenerations}/{usage.generationLimit}</span>
           <PromptHistoryDrawer items={generations} onSelect={setResult} />
         </div>
       </div>

@@ -8,6 +8,8 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
+import { getPlanLimits } from "@/lib/plan";
+
 export default async function PromptsPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
@@ -18,6 +20,7 @@ export default async function PromptsPage() {
   ]);
 
   const [account] = await db.select({ plan: users.plan }).from(users).where(eq(users.id, user.id)).limit(1);
-  const generationLimit = account?.plan === "team" ? null : account?.plan === "solo" ? 100 : 10;
+  const limits = getPlanLimits(account?.plan ?? "free");
+  const generationLimit = limits.aiRequestsPerMonth;
   return <PromptStudio generations={generations} usage={{ ...usage, generationLimit }} />;
 }

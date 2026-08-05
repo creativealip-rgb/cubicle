@@ -156,7 +156,7 @@ export async function POST(req: NextRequest) {
     const resetDate = new Date(aiRate.resetAt).toISOString();
     return new Response(
       JSON.stringify({
-        error: `Batas ${aiRate.limit} request AI/hari tercapai. Reset setelah ${resetDate}.`,
+        error: `Batas ${aiRate.limit} request AI/bulan tercapai. Reset setelah ${resetDate}.`,
         limit: aiRate.limit,
         resetAt: aiRate.resetAt,
       }),

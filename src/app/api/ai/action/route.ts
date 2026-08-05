@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       const aiRate = await checkAiRateLimitDb(task.workspaceId, plan);
       if (!aiRate.allowed) {
         return NextResponse.json(
-          { error: `Batas AI harian tercapai (${aiRate.limit}/hari). Reset ${new Date(aiRate.resetAt).toISOString()}.` },
+          { error: `Batas AI bulanan tercapai (${aiRate.limit}/bulan). Reset ${new Date(aiRate.resetAt).toISOString()}.` },
           { status: 429 },
         );
       }
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
       const aiRate = await checkAiRateLimitDb(invoice.workspaceId, plan);
       if (!aiRate.allowed) {
         return NextResponse.json(
-          { error: `Batas AI harian tercapai (${aiRate.limit}/hari). Reset ${new Date(aiRate.resetAt).toISOString()}.` },
+          { error: `Batas AI bulanan tercapai (${aiRate.limit}/bulan). Reset ${new Date(aiRate.resetAt).toISOString()}.` },
           { status: 429 },
         );
       }

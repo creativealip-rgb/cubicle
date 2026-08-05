@@ -113,7 +113,9 @@ export async function generateVisualPrompt(rawInput: unknown) {
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
   const [account] = await db.select({ plan: users.plan }).from(users).where(eq(users.id, user.id)).limit(1);
-  const generationLimit = account?.plan === "team" ? null : account?.plan === "solo" ? 100 : 10;
+  const { getPlanLimits } = await import("@/lib/plan");
+  const limits = getPlanLimits(account?.plan ?? "free");
+  const generationLimit = limits.aiRequestsPerMonth;
   const [usage] = await db
     .select({
       totalCost: sql<string>`coalesce(sum(${promptGenerations.costUsd}), '0')`,
@@ -133,7 +135,7 @@ export async function generateVisualPrompt(rawInput: unknown) {
     throw new Error(`AI belum dikonfigurasi di environment ini.`);
   }
 
-  if (generationLimit !== null && currentGenerations >= generationLimit) {
+  if (generationLimit > 0 && currentGenerations >= generationLimit) {
     throw new Error(`Jatah generate bulanan ${generationLimit} sudah habis.`);
   }
   if (currentCost >= MONTHLY_CAP_USD) {
