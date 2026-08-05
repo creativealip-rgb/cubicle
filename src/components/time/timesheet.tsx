@@ -279,7 +279,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
     setEditLoading(true);
     try {
       const startIso = editDate
-        ? new Date(`${editDate}T00:00:00`).toISOString()
+        ? new Date(`${editDate}T12:00:00+07:00`).toISOString()
         : editEntry.startTime
           ? new Date(editEntry.startTime).toISOString()
           : new Date().toISOString();
@@ -763,21 +763,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                   <SelectContent>
                     <SelectItem value="yes">{t("Ya", "Yes")}</SelectItem>
                     <SelectItem value="no">{t("Tidak", "No")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Status</Label>
-                <Select
-                  value={editStatus}
-                  onValueChange={(v) => setEditStatus(v as "draft" | "approved")}
-                >
-                  <SelectTrigger className="h-9 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="approved">Approved</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
