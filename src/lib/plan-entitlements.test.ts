@@ -23,9 +23,9 @@ describe("plan entitlements", () => {
       maxWorkspaces: 1,
       maxMembers: 1,
       canInviteMembers: false,
-      hasClientPortal: false,
-      hasAiAssistant: false,
-      aiRequestsPerDay: 0,
+      hasClientPortal: true,
+      hasAiAssistant: true,
+      aiRequestsPerMonth: 10,
       apiRequestsPerMinute: 30,
       maxClients: 3,
       maxProjects: 5,
@@ -38,7 +38,7 @@ describe("plan entitlements", () => {
       canInviteMembers: false,
       hasClientPortal: true,
       hasAiAssistant: true,
-      aiRequestsPerDay: 15,
+      aiRequestsPerMonth: 100,
       apiRequestsPerMinute: 120,
       maxFileSizeMb: 25,
     });
@@ -48,20 +48,14 @@ describe("plan entitlements", () => {
       canInviteMembers: true,
       hasClientPortal: true,
       hasAiAssistant: true,
-      aiRequestsPerDay: 500,
+      aiRequestsPerMonth: 1000,
       apiRequestsPerMinute: 0,
       maxFileSizeMb: 50,
     });
   });
 
-  it("returns AI entitlement failure for Free", () => {
-    expect(getAiEntitlementFailure("free")).toEqual({
-      status: 403,
-      error: "AI Assistant tersedia di paket Solo dan Team.",
-    });
-  });
-
-  it("allows AI entitlement for Solo and Team", () => {
+  it("allows AI entitlement for all tiers", () => {
+    expect(getAiEntitlementFailure("free")).toBeNull();
     expect(getAiEntitlementFailure("solo")).toBeNull();
     expect(getAiEntitlementFailure("team")).toBeNull();
   });

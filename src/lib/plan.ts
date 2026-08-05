@@ -11,7 +11,7 @@ export interface PlanLimits {
   hasClientPortal: boolean;
   hasAiAssistant: boolean;
   // Rate limits
-  aiRequestsPerDay: number;   // 0 = unlimited
+  aiRequestsPerMonth: number; // 0 = unlimited
   apiRequestsPerMinute: number; // 0 = unlimited
   maxClients: number;         // 0 = unlimited
   maxProjects: number;        // 0 = unlimited
@@ -24,9 +24,9 @@ const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxWorkspaces: 1,
     canInviteMembers: false,
     maxMembers: 1,
-    hasClientPortal: false,
-    hasAiAssistant: false,
-    aiRequestsPerDay: 0,       // no AI
+    hasClientPortal: true,
+    hasAiAssistant: true,
+    aiRequestsPerMonth: 10,
     apiRequestsPerMinute: 30,
     maxClients: 3,
     maxProjects: 5,
@@ -39,7 +39,7 @@ const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxMembers: 1,
     hasClientPortal: true,
     hasAiAssistant: true,
-    aiRequestsPerDay: 15,      // was 50 — unit economics: gemini-flash ~$0.04/req
+    aiRequestsPerMonth: 100,
     apiRequestsPerMinute: 120,
     maxClients: 0, // unlimited
     maxProjects: 0,
@@ -52,7 +52,7 @@ const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxMembers: 0,
     hasClientPortal: true,
     hasAiAssistant: true,
-    aiRequestsPerDay: 500,     // soft-cap (abuse guard) — was 0/unlimited
+    aiRequestsPerMonth: 1000,
     apiRequestsPerMinute: 0,   // unlimited
     maxClients: 0,
     maxProjects: 0,
@@ -124,8 +124,8 @@ export function checkWorkspaceRateLimit(
 
   switch (action) {
     case "ai":
-      limit = limits.aiRequestsPerDay;
-      windowSec = 86400; // 24h
+      limit = limits.aiRequestsPerMonth;
+      windowSec = 30 * 86400; // 30 days
       break;
     case "api":
       limit = limits.apiRequestsPerMinute;
@@ -177,42 +177,42 @@ export async function checkAiRateLimitDb(
   workspaceId: string,
   plan: string,
 ): Promise<{ allowed: boolean; count: number; limit: number; resetAt: number }> {
-  const limit = getPlanLimits(plan).aiRequestsPerDay;
+  const limit = getPlanLimits(plan).aiRequestsPerMonth;
 
-  // Next UTC midnight = reset boundary (usage_date is a UTC date).
+  // Next UTC month 1st = reset boundary
   const now = new Date();
-  const reset = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+  const reset = Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1);
 
   if (limit === 0) {
     return { allowed: true, count: -1, limit: 0, resetAt: reset };
   }
 
-  // Atomic UPSERT: only increment when we're still under the cap. If the row is
-  // already at the cap, the WHERE clause on the update prevents a further bump.
-  const rows = await db
+  // Current month total usage
+  const [usageRow] = await db
+    .select({
+      total: sql<number>`COALESCE(SUM(${aiUsageDaily.count}), 0)::int`,
+    })
+    .from(aiUsageDaily)
+    .where(
+      sql`${aiUsageDaily.workspaceId} = ${workspaceId} AND ${aiUsageDaily.usageDate} >= date_trunc('month', current_date)`,
+    );
+
+  const currentTotal = usageRow?.total ?? 0;
+
+  if (currentTotal >= limit) {
+    return { allowed: false, count: currentTotal, limit, resetAt: reset };
+  }
+
+  // Under cap: increment today's row count
+  await db
     .insert(aiUsageDaily)
     .values({ workspaceId, usageDate: sql`current_date`, count: 1 })
     .onConflictDoUpdate({
       target: [aiUsageDaily.workspaceId, aiUsageDaily.usageDate],
       set: { count: sql`${aiUsageDaily.count} + 1`, updatedAt: new Date() },
-      setWhere: sql`${aiUsageDaily.count} < ${limit}`,
-    })
-    .returning({ count: aiUsageDaily.count });
+    });
 
-  if (rows.length > 0) {
-    return { allowed: true, count: rows[0].count, limit, resetAt: reset };
-  }
-
-  // No row returned = conflict hit but setWhere blocked the update = at cap.
-  const [current] = await db
-    .select({ count: aiUsageDaily.count })
-    .from(aiUsageDaily)
-    .where(
-      sql`${aiUsageDaily.workspaceId} = ${workspaceId} AND ${aiUsageDaily.usageDate} = current_date`,
-    )
-    .limit(1);
-
-  return { allowed: false, count: current?.count ?? limit, limit, resetAt: reset };
+  return { allowed: true, count: currentTotal + 1, limit, resetAt: reset };
 }
 
 // ─── Entity count checks (DB-backed) ───
