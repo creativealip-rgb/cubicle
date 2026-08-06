@@ -117,7 +117,9 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
     // Compute preview amount from source mode for all billing types
     let previewAmount: number | string = originalAmount;
     if (source) {
-      if (["fixed_dp", "fixed_milestone"].includes(source.mode) && source.amountType && source.value) {
+      if (source.mode === "hourly_deposit") {
+        previewAmount = source.amount ?? source.value ?? 0;
+      } else if (["fixed_dp", "fixed_milestone"].includes(source.mode) && source.amountType && source.value) {
         previewAmount = resolveFixedSourceAmount(
           { mode: source.mode as "fixed_dp" | "fixed_milestone", amountType: source.amountType, value: source.value },
           { agreedAmount: originalAmount, priorActiveOriginalAmounts: [] }
@@ -145,7 +147,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
     const validItems = items.filter((item) => item.description.trim());
     if (missingRateProjects.length) { toast.error("Lengkapi kurs workspace sebelum membuat invoice"); return; }
     const sourcePayload = selectedProjects.map((project) => ({ project, source: projectSources[project.id] ?? defaultInvoiceSource(project.billingType, { hasActiveFixedHistory: Boolean(project.priorActiveFixedBilledAmount), hasInitialTimeEntries: Boolean(project.initialTimeEntryIds?.length) }) }));
-    if (sourcePayload.some(({ source }) => !sourceDraftComplete(source))) { toast.error("Lengkapi sumber tagihan setiap proyek"); return; }
+    if (selectedProjects.length > 0 && sourcePayload.some(({ source }) => !sourceDraftComplete(source))) { toast.error("Lengkapi sumber tagihan setiap proyek"); return; }
     if (mode === "create" && validItems.length === 0 && sourcePayload.length === 0) {
       toast.error("Tambahkan minimal satu item tagihan");
       return;
@@ -156,14 +158,15 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         clientId: form.clientId,
         projectId: selectedProjectIds.length === 1 ? selectedProjectIds[0] : undefined,
         projectIds: selectedProjectIds,
-        projectSources: sourcePayload.map(({ project, source }) => {
-          const raw = { projectId: project.id, ...source!, ...(source?.mode === "hourly_timesheet" ? { timeEntryIds: source.timeEntryIds?.length ? source.timeEntryIds : project.initialTimeEntryIds ?? [] } : {}) };
-          // Strip undefined/null keys — Zod .strict() rejects unknown keys even if undefined
+        projectSources: sourcePayload.flatMap(({ project, source }) => {
+          if (!source) return [];
+          const raw = { projectId: project.id, ...source, ...(source.mode === "hourly_timesheet" ? { timeEntryIds: source.timeEntryIds?.length ? source.timeEntryIds : project.initialTimeEntryIds ?? [] } : {}) };
           const clean: Record<string, unknown> = {};
           for (const [k, v] of Object.entries(raw)) {
-            if (v !== undefined && v !== null) clean[k] = v;
+            if (v !== undefined && v !== null && v !== "") clean[k] = v;
           }
-          return ProjectInvoiceSourceSchema.parse(clean);
+          const parsed = ProjectInvoiceSourceSchema.safeParse(clean);
+          return parsed.success ? [parsed.data] : [];
         }),
         issueDate: form.issueDate,
         dueDate: form.dueDate || undefined,
@@ -180,6 +183,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
           throw new Error("Invoice dibuat tapi ID tidak diterima. Coba refresh daftar invoice.");
         }
         toast.success("Invoice dibuat");
+        setLoading(false);
         if (onSuccess) onSuccess();
         else window.location.assign(buildInvoiceDetailUrl(invoice.id, { type: "global" }));
         return;
@@ -299,18 +303,71 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
           <Select value={source?.mode ?? ""} onValueChange={(value) => updateSource(project.id, { mode: value as InvoiceSourceMode, amountType: undefined, value: undefined, milestoneName: undefined, description: undefined, periodStart: undefined, periodEnd: undefined, timeEntryIds: undefined })}>
             <SelectTrigger><SelectValue placeholder={t("Pilih sumber", "Select source")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="fixed_full">{t("Nilai penuh", "Full amount")}</SelectItem>
-              <SelectItem value="fixed_dp">{t("DP", "Down payment")}</SelectItem>
-              <SelectItem value="fixed_milestone">{t("Milestone", "Milestone")}</SelectItem>
-              <SelectItem value="fixed_final">{t("Pelunasan sisa", "Remaining balance")}</SelectItem>
+              {["hourly", "hours"].includes(project.billingType) ? (
+                <>
+                  <SelectItem value="hourly_deposit">{t("Deposit / Down Payment", "Deposit / Down Payment")}</SelectItem>
+                  <SelectItem value="hourly_timesheet">{t("Log Jam Kerja (Timesheet)", "Time Entries (Timesheet)")}</SelectItem>
+                </>
+              ) : (
+                <>
+                  <SelectItem value="fixed_full">{t("Nilai penuh", "Full amount")}</SelectItem>
+                  <SelectItem value="fixed_dp">{t("DP", "Down payment")}</SelectItem>
+                  <SelectItem value="fixed_milestone">{t("Milestone", "Milestone")}</SelectItem>
+                  <SelectItem value="fixed_final">{t("Pelunasan sisa", "Remaining balance")}</SelectItem>
+                </>
+              )}
             </SelectContent>
           </Select>
-          <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/40 p-2 text-xs"><span>{t("Nilai disepakati", "Agreed value")}<br/><b>{fixedPreview.agreedAmount.toLocaleString(lang === "en" ? "en-US" : "id-ID")}</b></span><span>{t("Sudah ditagih", "Already invoiced")}<br/><b>{fixedPreview.previouslyInvoiced.toLocaleString(lang === "en" ? "en-US" : "id-ID")}</b></span><span>{t("Sisa nilai", "Remaining value")}<br/><b>{fixedPreview.remainingAmount.toLocaleString(lang === "en" ? "en-US" : "id-ID")}</b></span></div>
-          {(source?.mode === "fixed_dp" || source?.mode === "fixed_milestone") && <div className="grid gap-2 sm:grid-cols-2">
-            {source.mode === "fixed_milestone" && <Input placeholder={t("Nama milestone", "Milestone name")} value={source.milestoneName ?? ""} onChange={(e) => updateSource(project.id, { milestoneName: e.target.value })} />}
-            <Select value={source.amountType} onValueChange={(value) => updateSource(project.id, { amountType: value as "percent" | "amount" })}><SelectTrigger><SelectValue placeholder={t("Jenis nilai", "Value type")} /></SelectTrigger><SelectContent><SelectItem value="percent">{t("Persen", "Percent")}</SelectItem><SelectItem value="amount">{t("Nominal", "Amount")}</SelectItem></SelectContent></Select>
-            <Input type="number" min="0.01" step="0.01" placeholder={source.amountType === "percent" ? t("Persen", "Percent") : t("Nominal", "Amount")} value={source.value ?? ""} onChange={(e) => updateSource(project.id, { value: Number(e.target.value) })} />
-          </div>}
+          {["hourly", "hours"].includes(project.billingType) ? (
+            source?.mode === "hourly_deposit" ? (
+              <div className="space-y-2">
+                <Input
+                  placeholder={t("Keterangan deposit (opsional)", "Deposit description (optional)")}
+                  value={source.description ?? ""}
+                  onChange={(e) => updateSource(project.id, { description: e.target.value })}
+                />
+                <Input
+                  type="number"
+                  min="1"
+                  step="1"
+                  placeholder={t("Nominal deposit", "Deposit amount")}
+                  value={source.value ?? source.amount ?? ""}
+                  onChange={(e) => updateSource(project.id, { value: Number(e.target.value), amount: Number(e.target.value) })}
+                />
+              </div>
+            ) : source?.mode === "hourly_timesheet" ? (
+              <div className="space-y-2 text-xs text-muted-foreground">
+                <p>{t("Semua log jam kerja yang belum ditagih untuk proyek ini akan otomatis ditagihkan.", "All unbilled time entries for this project will be billed automatically.")}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">{t("Periode Mulai", "Period Start")}</Label>
+                    <Input
+                      type="date"
+                      value={source.periodStart ?? ""}
+                      onChange={(e) => updateSource(project.id, { periodStart: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">{t("Periode Selesai", "Period End")}</Label>
+                    <Input
+                      type="date"
+                      value={source.periodEnd ?? ""}
+                      onChange={(e) => updateSource(project.id, { periodEnd: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : null
+          ) : (
+            <>
+              <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/40 p-2 text-xs"><span>{t("Nilai disepakati", "Agreed value")}<br/><b>{fixedPreview.agreedAmount.toLocaleString(lang === "en" ? "en-US" : "id-ID")}</b></span><span>{t("Sudah ditagih", "Already invoiced")}<br/><b>{fixedPreview.previouslyInvoiced.toLocaleString(lang === "en" ? "en-US" : "id-ID")}</b></span><span>{t("Sisa nilai", "Remaining value")}<br/><b>{fixedPreview.remainingAmount.toLocaleString(lang === "en" ? "en-US" : "id-ID")}</b></span></div>
+              {(source?.mode === "fixed_dp" || source?.mode === "fixed_milestone") && <div className="grid gap-2 sm:grid-cols-2">
+                {source.mode === "fixed_milestone" && <Input placeholder={t("Nama milestone", "Milestone name")} value={source.milestoneName ?? ""} onChange={(e) => updateSource(project.id, { milestoneName: e.target.value })} />}
+                <Select value={source.amountType} onValueChange={(value) => updateSource(project.id, { amountType: value as "percent" | "amount" })}><SelectTrigger><SelectValue placeholder={t("Jenis nilai", "Value type")} /></SelectTrigger><SelectContent><SelectItem value="percent">{t("Persen", "Percent")}</SelectItem><SelectItem value="amount">{t("Nominal", "Amount")}</SelectItem></SelectContent></Select>
+                <Input type="number" min="0.01" step="0.01" placeholder={source.amountType === "percent" ? t("Persen", "Percent") : t("Nominal", "Amount")} value={source.value ?? ""} onChange={(e) => updateSource(project.id, { value: Number(e.target.value) })} />
+              </div>}
+            </>
+          )}
         </div>;
       })}
 

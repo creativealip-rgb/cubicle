@@ -22,6 +22,7 @@ type ProjectEditDialogProps = {
     clientId: string;
     status: string;
     billingType: string;
+    billingModel?: string | null;
     timeTrackingMode: string;
     activityRequired: boolean;
     currency: string;
@@ -57,6 +58,7 @@ export function ProjectEditDialog({
         </DialogHeader>
         <ProjectForm
           mode="edit"
+          clientId={project.clientId}
           clients={[]}
           defaultValues={{
             id: project.id,
@@ -65,6 +67,7 @@ export function ProjectEditDialog({
             clientId: project.clientId,
             status: project.status,
             billingType: project.billingType,
+            billingModel: (project.billingModel ?? undefined) as any,
             timeTrackingMode: project.timeTrackingMode,
             activityRequired: project.activityRequired,
             currency: project.currency,

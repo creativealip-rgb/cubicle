@@ -53,11 +53,11 @@ async function getWorkspaceId(): Promise<string> {
 // ─── Schemas ───
 
 const createInvoiceSchema = z.object({
-  clientId: z.string().uuid(),
-  projectId: z.string().uuid().optional(),
-  projectIds: z.array(z.string().uuid()).optional(),
+  clientId: z.string(),
+  projectId: z.string().optional(),
+  projectIds: z.array(z.string()).optional(),
   projectSources: z.array(ProjectInvoiceSourceSchema).optional(),
-  scopedProjectId: z.string().uuid().optional(),
+  scopedProjectId: z.string().optional(),
   issueDate: z.string().min(1, "Issue date required"),
   dueDate: z.string().optional(),
   currency: z.string().default("USD"),
@@ -67,7 +67,7 @@ const createInvoiceSchema = z.object({
     description: z.string().min(1),
     quantity: z.number().positive(),
     unitPrice: z.number().min(0),
-    sourceId: z.string().uuid().optional(),
+    sourceId: z.string().optional(),
   })).default([]),
 });
 
@@ -129,6 +129,7 @@ async function assertInvoiceInWorkspace(invoiceId: string, workspaceId: string) 
 // ─── CRUD ───
 
 export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) {
+  console.log("--> SERVER ACTION RECEIVED INPUT:", input);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();

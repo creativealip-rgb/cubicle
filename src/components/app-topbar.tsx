@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -195,12 +195,27 @@ export function AppTopbar({ user }: AppTopbarProps) {
   }, [loadActiveTimer, loadWorkspaces]);
 
   useEffect(() => {
-    setElapsed(formatElapsed(activeTimer?.startTime, activeTimer?.pausedAt));
-    if (!activeTimer?.startTime || activeTimer.pausedAt) return;
-    const tick = window.setInterval(() => {
-      setElapsed(formatElapsed(activeTimer.startTime, activeTimer.pausedAt));
-    }, 1000);
-    return () => window.clearInterval(tick);
+    if (!activeTimer?.startTime || activeTimer.pausedAt) {
+      document.title = document.title.replace(/^(?:⏱️\s*\[[^\]]+\]\s*)+/, "");
+      return;
+    }
+
+    // Clean any existing timer prefixes to extract clean base title
+    const baseTitle = document.title.replace(/^(?:⏱️\s*\[[^\]]+\]\s*)+/, "");
+
+    const updateTitle = () => {
+      const formatted = formatElapsed(activeTimer.startTime, activeTimer.pausedAt);
+      setElapsed(formatted);
+      document.title = `⏱️ [${formatted}] ${baseTitle}`;
+    };
+
+    updateTitle();
+    const tick = window.setInterval(updateTitle, 1000);
+
+    return () => {
+      window.clearInterval(tick);
+      document.title = baseTitle;
+    };
   }, [activeTimer]);
 
   const canWrite = user.role === "owner" || user.role === "member";

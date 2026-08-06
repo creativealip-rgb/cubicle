@@ -7,6 +7,7 @@ import { LoadingButton } from "@/components/ui/loading-button";
 import { createOrGetRetainerPeriod, generateRetainerInvoice, lockRetainerPeriod } from "@/lib/actions/retainers";
 import { getRetainerPeriodUsageSummary } from "@/lib/retainer-period";
 import { formatMoney } from "@/lib/utils";
+import { Plus } from "lucide-react";
 import { useT } from "@/lib/i18n-client";
 
 export type RetainerPeriodView = {
@@ -18,7 +19,7 @@ export type RetainerPeriodView = {
 
 const hours = (value: number) => new Intl.NumberFormat("id-ID", { maximumFractionDigits: 2 }).format(value);
 
-export function RetainerProjectInvoiceActions({ projectId, period }: { projectId: string; period: RetainerPeriodView | null }) {
+export function RetainerProjectInvoiceActions({ projectId, period, renderSummaryOnly }: { projectId: string; period: RetainerPeriodView | null; renderSummaryOnly?: boolean }) {
   const router = useRouter();
   const { t } = useT();
   const [pending, setPending] = useState(false);
@@ -43,18 +44,25 @@ export function RetainerProjectInvoiceActions({ projectId, period }: { projectId
     } finally { setPending(false); }
   }
 
-  return <div className="space-y-3">
-    {summary ? <div className="rounded-lg border bg-muted/20 p-4">
-      <p className="mb-3 text-sm font-semibold">{t("Ringkasan penggunaan periode", "Period usage summary")}</p>
-      <dl className="grid gap-3 text-sm sm:grid-cols-3">
-        <div><dt className="text-muted-foreground">{t("Periode", "Period")}</dt><dd className="font-medium">{summary.period}</dd></div>
-        <div><dt className="text-muted-foreground">Fee</dt><dd className="font-medium">{formatMoney(summary.fee, periodCurrency)}</dd></div>
-        <div><dt className="text-muted-foreground">{t("Jam termasuk", "Included hours")}</dt><dd className="font-medium">{hours(summary.includedHours)} jam</dd></div>
-        <div><dt className="text-muted-foreground">{t("Terpakai disetujui", "Approved used")}</dt><dd className="font-medium">{hours(summary.approvedUsedHours)} jam</dd></div>
-        <div><dt className="text-muted-foreground">Overage</dt><dd className="font-medium">{hours(summary.overageHours)} jam</dd></div>
-        {summary.overageValue !== null ? <div><dt className="text-muted-foreground">{t("Nilai overage", "Overage value")}</dt><dd className="font-medium">{formatMoney(summary.overageValue, periodCurrency)}</dd></div> : null}
-      </dl>
-    </div> : null}
-    {period?.status !== "invoiced" ? <LoadingButton size="sm" loading={pending} loadingText={t("Memproses…", "Processing…")} onClick={createInvoice}>{t("Buat Invoice Periode Retainer", "Create Retainer Period Invoice")}</LoadingButton> : null}
-  </div>;
+  if (renderSummaryOnly) {
+    return summary ? (
+      <div className="rounded-lg border bg-muted/20 p-4">
+        <p className="mb-3 text-sm font-semibold">{t("Ringkasan penggunaan periode", "Period usage summary")}</p>
+        <dl className="grid gap-3 text-sm sm:grid-cols-3">
+          <div><dt className="text-muted-foreground">{t("Periode", "Period")}</dt><dd className="font-medium">{summary.period}</dd></div>
+          <div><dt className="text-muted-foreground">Fee</dt><dd className="font-medium">{formatMoney(summary.fee, periodCurrency)}</dd></div>
+          <div><dt className="text-muted-foreground">{t("Jam termasuk", "Included hours")}</dt><dd className="font-medium">{hours(summary.includedHours)} jam</dd></div>
+          <div><dt className="text-muted-foreground">{t("Terpakai disetujui", "Approved used")}</dt><dd className="font-medium">{hours(summary.approvedUsedHours)} jam</dd></div>
+          <div><dt className="text-muted-foreground">Overage</dt><dd className="font-medium">{hours(summary.overageHours)} jam</dd></div>
+          {summary.overageValue !== null ? <div><dt className="text-muted-foreground">{t("Nilai overage", "Overage value")}</dt><dd className="font-medium">{formatMoney(summary.overageValue, periodCurrency)}</dd></div> : null}
+        </dl>
+      </div>
+    ) : null;
+  }
+
+  return period?.status !== "invoiced" ? (
+    <LoadingButton size="sm" loading={pending} loadingText={t("Memproses…", "Processing…")} onClick={createInvoice} className="gap-1">
+      <Plus className="h-4 w-4" /> {t("Buat Invoice", "Create Invoice")}
+    </LoadingButton>
+  ) : null;
 }

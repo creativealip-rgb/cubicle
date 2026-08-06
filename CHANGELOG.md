@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-08-06 — Project hourly billing UX, edit dialog polish, retainer actions & live timer browser tab title
+
+**Project Hourly & Invoice Form Fixes:**
+- Fixed `ProjectForm` fallback for `billingModel`: correctly resolves `hourly` when `billingType` is `"hours"` or `"hourly"`.
+- Removed `Client` selector from project edit dialog (scoped to active project's client).
+- Removed `Budget Disepakati` field from project creation/editing when `billingModel === "hourly"`.
+- Added `hourly_deposit` (Deposit / Down Payment) and `hourly_timesheet` (Log Jam Kerja) source mode options in `InvoiceForm` for hourly projects.
+- Fixed subtotal calculation for `hourly_deposit` in draft invoice preview.
+
+**Project Workspace UI Alignment:**
+- Aligned `+ Tambah Tugas` button in `ProjectTaskWorkspace` with `+ Buat Invoice` in `ProjectBillingTab` (`size="sm"`, `variant="default"`, `gap-1`).
+- Aligned header layout in `ProjectTaskWorkspace`: `flex items-center justify-between` with `Tugas Berulang` / `Tugas Workflow` heading on the left and button on the right.
+- Aligned `Buat Invoice` button in retainer project actions (`+ Buat Invoice` `size="sm"` at top-right of `ProjectBillingTab`).
+
+**Live Timer Browser Tab Title:**
+- Live active timer updates document title dynamically: `⏱️ [00:01:13] Cubiqlo — Client Operations Hub`.
+- Handled clean title stripping and `useRef` base title retention to prevent duplicate emoji/timer text accumulation on tab hover/update.
+- Auto-resets document title when timer is paused or stopped.
+
+**Production Deploy:**
+- Rebuilt production image `cubicle-cubicle:latest` and recreated container `cubiqlo-new-app`. Verified live on `app.cubiqlo.com`.
+
 ## 2026-08-04 — Landing builder v2 complete: drag, structure, mobile, publish, contact
 
 **Phase 1 — Drag from Sidebar:**

@@ -42,7 +42,9 @@ describe("Phase 1 project time tracking wiring", () => {
     const timerWidget = read("src/components/time/timer-widget.tsx");
     const topbar = read("src/components/app-topbar.tsx");
 
-    expect(projectForm).toContain('defaultValues?.billingType==="hours"?"hourly":"fixed_price"');
+    expect(projectForm).toContain(
+      'defaultValues?.billingType === "hours" || defaultValues?.billingType === "hourly"'
+    );
     expect(projectForm).toMatch(/t\("Harga Tetap".*?Fixed Price/);
     expect(projectForm).toMatch(/t\("Per Jam".*?Hourly/);
     expect(projectForm).toContain("Retainer");
@@ -60,7 +62,7 @@ describe("Phase 1 project time tracking wiring", () => {
 
   it("keeps project dialogs reachable on mobile", () => {
     const createDialog = read("src/components/projects/project-create-dialog.tsx");
-    const projectPage = read("src/app/(app)/app/projects/[projectId]/page.tsx");
+    const projectPage = read("src/components/projects/project-edit-dialog.tsx");
     const projectForm = read("src/components/forms/project-form.tsx");
 
     expect(createDialog).toContain('max-h-[90dvh]');
@@ -69,6 +71,6 @@ describe("Phase 1 project time tracking wiring", () => {
     expect(projectPage).toContain('overflow-y-auto');
     expect(projectForm).toContain('sm:grid-cols-2');
     expect(projectForm).toContain('<DialogClose asChild>');
-    expect(projectForm).toContain('>Batal</Button>');
+    expect(projectForm).toContain('t("Batal", "Cancel")');
   });
 });

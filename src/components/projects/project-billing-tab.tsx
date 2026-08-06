@@ -16,9 +16,15 @@ export async function ProjectBillingTab({ project, client, invoices, baseCurrenc
   return <div className="space-y-4">
     <div className="flex items-center justify-between gap-3">
       <h3 className="font-semibold">{t("Invoice terkait", "Related Invoices")}</h3>
-      {project.billingType === "retainer" ? null : <ProjectInvoiceCreateDialog project={project} client={client} baseCurrency={baseCurrency} currencyRates={currencyRates} />}
+      {project.billingType === "retainer" ? (
+        <RetainerProjectInvoiceActions projectId={project.id} period={retainerPeriod} />
+      ) : (
+        <ProjectInvoiceCreateDialog project={project} client={client} baseCurrency={baseCurrency} currencyRates={currencyRates} />
+      )}
     </div>
-    {project.billingType === "retainer" ? <RetainerProjectInvoiceActions projectId={project.id} period={retainerPeriod} /> : null}
+    {project.billingType === "retainer" && retainerPeriod ? (
+      <RetainerProjectInvoiceActions projectId={project.id} period={retainerPeriod} renderSummaryOnly />
+    ) : null}
     <div className="overflow-hidden rounded-lg border bg-card">
       {invoices.length === 0 ? <p className="p-6 text-center text-sm text-muted-foreground">{t("Belum ada invoice untuk proyek ini.", "No invoices for this project yet.")}</p> : invoices.map((invoice) => <Link key={invoice.id} href={buildInvoiceDetailUrl(invoice.id, { type: "project", resourceId: project.id })} className="grid gap-2 border-b p-4 last:border-b-0 hover:bg-muted/30 sm:grid-cols-[1fr_auto_auto] sm:items-center">
         <div><p className="text-sm font-medium">{invoice.invoiceNumber}</p><p className="text-xs text-muted-foreground">{invoice.issueDate}{invoice.dueDate ? ` · ${t("jatuh tempo", "due")} ${invoice.dueDate}` : ""}</p></div>
