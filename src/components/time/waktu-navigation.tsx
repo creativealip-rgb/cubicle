@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { id } from "react-day-picker/locale";
 import { localDateIso, shiftDateIso, weekStartDate } from "@/lib/effective-work-date";
 import { useT } from "@/lib/i18n-client";
 
@@ -59,7 +60,7 @@ export function WaktuNavigation({
             mode="single"
             selected={selectedDateObj}
             onSelect={handleCalendarSelect}
-            locale={lang === "en" ? undefined : undefined}
+            locale={lang === "en" ? undefined : id}
             weekStartsOn={1}
           />
         </PopoverContent>

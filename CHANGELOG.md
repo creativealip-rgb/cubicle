@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-08-06 — Searchable Client/Project/Task combobox, multi-line description textarea, and compact Indonesian calendar popover
+
+**Searchable Combobox for Time Logs & Edit Dialog:**
+- Combined `Client` and `Project` into a single searchable `Klien & Proyek *` input in both `AddTimeLogDialog` (+ Catat Waktu) and `Timesheet` (Edit Entri Waktu).
+- Filters client name and project name in real-time as the user types.
+- Popover dropdown only appears when user inputs a search keyword (prevents popup clutter on empty focus).
+- Made `Tugas (Opsional)` searchable as well in both modal dialogs.
+
+**Multi-Line Description Textarea:**
+- Replaced single-line `Input` for `Deskripsi` with multi-line `Textarea` (`rows={3}`, `min-h-[80px]`) in both `AddTimeLogDialog` and `Timesheet` edit modal for more comfortable work description editing.
+
+**Compact Indonesian Calendar Popover:**
+- Updated datepicker `Calendar` popover to use Indonesian locale (`id` from `react-day-picker/locale`): Month name in Indonesian (e.g. `Agustus 2026`) and weekdays in Indonesian (`Sen, Sel, Rab, Kam, Jum, Sab, Min`).
+- Made grid layout compact with clean borders below month caption and weekday headers.
+- Fixed month navigation arrow positioning to sit cleanly at top-left and top-right with spacious padding (`px-8` caption, `px-2` nav buttons), preventing cramped/overlapping numbers.
+
+**Production Deploy:**
+- Rebuilt production image `cubicle-cubicle:latest` and recreated container `cubiqlo-new-app`. Verified live on `app.cubiqlo.com`.
+
 ## 2026-08-06 — Project hourly billing UX, edit dialog polish, retainer actions & live timer browser tab title
 
 **Project Hourly & Invoice Form Fixes:**
