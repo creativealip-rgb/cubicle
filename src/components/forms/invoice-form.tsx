@@ -233,7 +233,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
           <Label>Apply Template (opsional)</Label>
           <Select onValueChange={applyTemplate}>
             <SelectTrigger>
-              <SelectValue placeholder="Pilih template..." />
+              <SelectValue placeholder={t("Pilih template...", "Select template...")} />
             </SelectTrigger>
             <SelectContent>
               {templates.map((t) => (
@@ -255,7 +255,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
           required
         >
           <SelectTrigger>
-            <SelectValue placeholder="Pilih klien" />
+            <SelectValue placeholder={t("Pilih klien", "Select client")} />
           </SelectTrigger>
           <SelectContent>
             {clients.map((c) => (

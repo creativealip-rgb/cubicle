@@ -1,7 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { logRequest } from "@/lib/logger";
+import { getCanonicalRedirect } from "@/lib/host-routing";
 
 export function proxy(request: NextRequest) {
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
+  const { pathname, search } = request.nextUrl;
+
+  const target = getCanonicalRedirect(host, pathname, search, false);
+  if (target) {
+    return NextResponse.redirect(target, 308);
+  }
+
   const start = Date.now();
   const response = NextResponse.next();
   const duration = Date.now() - start;
@@ -9,9 +18,8 @@ export function proxy(request: NextRequest) {
   response.headers.set("X-Response-Time", `${duration}ms`);
 
   // Log API and site requests
-  const path = request.nextUrl.pathname;
-  if (path.startsWith("/api") || path.startsWith("/site")) {
-    logRequest(request.method, path, response.status, duration);
+  if (pathname.startsWith("/api") || pathname.startsWith("/site")) {
+    logRequest(request.method, pathname, response.status, duration);
   }
 
   return response;
@@ -19,7 +27,7 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/api/:path*",
-    "/site/:path*",
+    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
   ],
 };
+

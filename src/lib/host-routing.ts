@@ -27,14 +27,16 @@ export function getCanonicalRedirect(
     return "https://app.cubiqlo.com/app/dashboard";
   }
 
-  if (normalizedHost !== "cubiqlo.com") return null;
+  if (normalizedHost === "cubiqlo.com") {
+    const belongsToApp =
+      pathname.startsWith("/app") ||
+      pathname.startsWith("/onboarding") ||
+      AUTH_PATHS.some((path) => pathname === path);
 
-  const belongsToApp =
-    pathname.startsWith("/app") ||
-    pathname.startsWith("/onboarding") ||
-    AUTH_PATHS.some((path) => pathname === path);
+    if (belongsToApp) {
+      return withQuery("https://app.cubiqlo.com", pathname, search);
+    }
+  }
 
-  return belongsToApp
-    ? withQuery("https://app.cubiqlo.com", pathname, search)
-    : null;
+  return null;
 }

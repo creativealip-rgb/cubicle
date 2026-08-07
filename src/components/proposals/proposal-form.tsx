@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createProposal } from "@/lib/actions/proposals";
+import { useT } from "@/lib/i18n-client";
 
 interface ClientOption {
   id: string;
@@ -51,6 +52,7 @@ const defaultValidUntil = () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).
 
 export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, clients, services = [] }: ProposalFormProps) {
   const router = useRouter();
+  const { t } = useT();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(() => ({
     clientId: clients[0]?.id ?? "",
@@ -119,7 +121,7 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
             <div className="space-y-1">
               <Label htmlFor="client">Klien</Label>
               <Select value={form.clientId} onValueChange={(v) => setForm({ ...form, clientId: v })}>
-                <SelectTrigger id="client"><SelectValue placeholder="Pilih klien" /></SelectTrigger>
+                <SelectTrigger id="client"><SelectValue placeholder={t("Pilih klien", "Select client")} /></SelectTrigger>
                 <SelectContent>
                   {clients.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -191,7 +193,7 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
                     }}
                   >
                     <SelectTrigger id={`service-${i}`} className="bg-white text-xs h-8 mt-1">
-                      <SelectValue placeholder="Pilih layanan katalog..." />
+                      <SelectValue placeholder={t("Pilih layanan katalog...", "Select catalog service...")} />
                     </SelectTrigger>
                     <SelectContent>
                       {services.map((srv) => (
