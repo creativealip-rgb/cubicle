@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db } from "@/db";
-import { clients } from "@/db/schema";
+import { clients, services } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { requireWorkspaceWritableOrRedirect } from "@/lib/require-workspace-owner";
 import { ProposalForm } from "@/components/proposals/proposal-form";
@@ -20,6 +20,18 @@ export default async function NewProposalPage() {
     .from(clients)
     .where(and(eq(clients.workspaceId, workspaceId), eq(clients.status, "active")))
     .orderBy(clients.name);
+
+  const serviceRows = await db
+    .select({
+      id: services.id,
+      name: services.name,
+      description: services.description,
+      defaultPrice: services.defaultPrice,
+      defaultUnit: services.defaultUnit,
+    })
+    .from(services)
+    .where(and(eq(services.workspaceId, workspaceId), eq(services.status, "active")))
+    .orderBy(services.name);
 
   return (
     <div className="space-y-6 p-6 max-w-4xl">
@@ -58,6 +70,13 @@ export default async function NewProposalPage() {
           defaultCurrency={ws.defaultCurrency}
           defaultTaxRate={ws.defaultTaxRate ?? "0"}
           clients={clientRows}
+          services={serviceRows.map((s) => ({
+            id: s.id,
+            name: s.name,
+            description: s.description ?? "",
+            defaultPrice: s.defaultPrice ? Number(s.defaultPrice) : 0,
+            defaultUnit: s.defaultUnit ?? "service",
+          }))}
         />
       )}
     </div>

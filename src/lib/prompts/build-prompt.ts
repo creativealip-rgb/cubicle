@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { getPromptType, promptBriefSchema, type PromptBrief, type PromptTypeId } from "./catalog";
+import { getPromptType, nonOverlapFields, promptBriefSchema, resolveOverlapValue, type PromptBrief, type PromptTypeId } from "./catalog";
 
 const outputItemSchema = z.object({ label: z.string().min(1), content: z.string().min(1) });
 export const promptGenerationResultSchema = z.object({
   version: z.literal(1),
-  promptType: z.enum(["instagram-feed","carousel","story","content-series","product-ad","promo-discount","testimonial-review","product-photography","product-try-on","fnb-menu","short-video-script","video-storyboard","ugc-ad","youtube-thumbnail","marketing-copy","article"]),
+  promptType: z.enum(["instagram-feed","carousel","story","content-series","product-ad","promo-discount","testimonial-review","product-photography","product-try-on","fnb-menu","short-video-script","video-storyboard","ugc-ad","youtube-thumbnail","marketing-copy","article","face-card","logo"]),
   title: z.string().min(1),
   readyOutput: z.array(outputItemSchema).min(1),
   technicalPrompt: z.string().optional(),
@@ -20,7 +20,14 @@ function valueOrMissing(value: unknown) {
 export function buildPromptRequest(raw: PromptBrief) {
   const brief = promptBriefSchema.parse(raw);
   const type = getPromptType(brief.promptType);
-  const relevantOptions = type.fields.map((item) => `${item.label}: ${valueOrMissing(brief.options[item.key])}`).join("\n");
+  const globals = {
+    platform: brief.platform,
+    ratio: brief.ratio,
+    tone: brief.tone,
+    offer: brief.offer,
+  };
+  // Only show type-specific non-overlap options here; overlap keys come from global form fields above
+  const relevantOptions = nonOverlapFields(type.fields).map((item) => `${item.label}: ${valueOrMissing(resolveOverlapValue(item.key, brief.options, globals))}`).join("\n");
   const optional = [
     ["Penawaran", brief.offer], ["Tone", brief.tone], ["Style", brief.style],
     ["Platform", brief.platform], ["Rasio", brief.ratio], ["Palet warna", brief.colorPalette], ["Catatan", brief.notes],

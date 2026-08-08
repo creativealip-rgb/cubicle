@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,10 +18,19 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createProposal } from "@/lib/actions/proposals";
+import { useT } from "@/lib/i18n-client";
 
 interface ClientOption {
   id: string;
   name: string;
+}
+
+export interface ServiceOption {
+  id: string;
+  name: string;
+  description: string;
+  defaultPrice: number;
+  defaultUnit: string;
 }
 
 interface ProposalFormProps {
@@ -28,6 +38,7 @@ interface ProposalFormProps {
   defaultCurrency: string;
   defaultTaxRate: string;
   clients: ClientOption[];
+  services?: ServiceOption[];
 }
 
 interface LineItemDraft {
@@ -39,8 +50,9 @@ interface LineItemDraft {
 const blankItem = (): LineItemDraft => ({ description: "", quantity: 1, unitPrice: 0 });
 const defaultValidUntil = () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, clients }: ProposalFormProps) {
+export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, clients, services = [] }: ProposalFormProps) {
   const router = useRouter();
+  const { t } = useT();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(() => ({
     clientId: clients[0]?.id ?? "",
@@ -109,7 +121,7 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
             <div className="space-y-1">
               <Label htmlFor="client">Klien</Label>
               <Select value={form.clientId} onValueChange={(v) => setForm({ ...form, clientId: v })}>
-                <SelectTrigger id="client"><SelectValue placeholder="Pilih klien" /></SelectTrigger>
+                <SelectTrigger id="client"><SelectValue placeholder={t("Pilih klien", "Select client")} /></SelectTrigger>
                 <SelectContent>
                   {clients.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -163,27 +175,56 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
             </Button>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-3">
           {items.map((li, i) => (
-            <div key={i} className="grid grid-cols-12 gap-2 items-end">
-              <div className="col-span-6">
-                <Label htmlFor={`desc-${i}`} className="text-xs">Deskripsi</Label>
-                <Input id={`desc-${i}`} value={li.description} onChange={(e) => updateItem(i, { description: e.target.value })} placeholder="contoh: Desain logo" />
-              </div>
-              <div className="col-span-2">
-                <Label htmlFor={`qty-${i}`} className="text-xs">Qty</Label>
-                <Input id={`qty-${i}`} type="number" min="0" step="0.5" value={li.quantity} onChange={(e) => updateItem(i, { quantity: parseFloat(e.target.value) || 0 })} />
-              </div>
-              <div className="col-span-3">
-                <Label htmlFor={`price-${i}`} className="text-xs">Harga satuan</Label>
-                <Input id={`price-${i}`} type="number" min="0" step="0.01" value={li.unitPrice} onChange={(e) => updateItem(i, { unitPrice: parseFloat(e.target.value) || 0 })} />
-              </div>
-              <div className="col-span-1">
-                {items.length > 1 && (
-                  <Button type="button" variant="ghost" size="icon" onClick={() => setItems(items.filter((_, idx) => idx !== i))} className="h-9 w-9 text-slate-500 hover:text-red-600">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                )}
+            <div key={i} className="space-y-2 rounded-lg border p-3 bg-slate-50/50">
+              {services.length > 0 && (
+                <div>
+                  <Label htmlFor={`service-${i}`} className="text-xs">Impor dari Katalog Layanan</Label>
+                  <Select
+                    onValueChange={(serviceId) => {
+                      const s = services.find((srv) => srv.id === serviceId);
+                      if (s) {
+                        updateItem(i, {
+                          description: s.description ? `${s.name} — ${s.description}` : s.name,
+                          unitPrice: s.defaultPrice || li.unitPrice,
+                        });
+                      }
+                    }}
+                  >
+                    <SelectTrigger id={`service-${i}`} className="bg-white text-xs h-8 mt-1">
+                      <SelectValue placeholder={t("Pilih layanan katalog...", "Select catalog service...")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {services.map((srv) => (
+                        <SelectItem key={srv.id} value={srv.id} className="text-xs">
+                          {srv.name} {srv.defaultPrice > 0 ? `(${form.currency === "IDR" ? "Rp" : form.currency} ${srv.defaultPrice.toLocaleString()})` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="grid grid-cols-12 gap-2 items-end">
+                <div className="col-span-12 sm:col-span-6">
+                  <Label htmlFor={`desc-${i}`} className="text-xs">Deskripsi Item</Label>
+                  <Input id={`desc-${i}`} className="bg-white text-xs" value={li.description} onChange={(e) => updateItem(i, { description: e.target.value })} placeholder="contoh: Desain logo / Landing page" />
+                </div>
+                <div className="col-span-4 sm:col-span-2">
+                  <Label htmlFor={`qty-${i}`} className="text-xs">Qty</Label>
+                  <Input id={`qty-${i}`} className="bg-white text-xs" type="number" min="0" step="0.5" value={li.quantity} onChange={(e) => updateItem(i, { quantity: parseFloat(e.target.value) || 0 })} />
+                </div>
+                <div className="col-span-6 sm:col-span-3">
+                  <Label htmlFor={`price-${i}`} className="text-xs">Harga Satuan</Label>
+                  <Input id={`price-${i}`} className="bg-white text-xs" type="number" min="0" step="0.01" value={li.unitPrice} onChange={(e) => updateItem(i, { unitPrice: parseFloat(e.target.value) || 0 })} />
+                </div>
+                <div className="col-span-2 sm:col-span-1 flex justify-end">
+                  {items.length > 1 && (
+                    <Button type="button" variant="ghost" size="icon" onClick={() => setItems(items.filter((_, idx) => idx !== i))} className="h-8 w-8 text-slate-500 hover:text-red-600" aria-label="Hapus item">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -198,7 +239,7 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
       </Card>
 
       <div className="flex gap-2">
-        <Button type="submit" disabled={loading}>{loading ? "Membuat..." : "Buat draft"}</Button>
+        <LoadingButton type="submit" loading={loading} loadingText="Membuat...">{"Buat draft"}</LoadingButton>
         <Button type="button" variant="ghost" onClick={() => router.back()}>Batal</Button>
       </div>
     </form>

@@ -1,5 +1,243 @@
 # Changelog
 
+## 2026-08-08 — Questionnaire editing, AI quota integrity, invoice lifecycle hardening, docs and UX cleanup
+
+**Questionnaire workflow:**
+- Added questionnaire create dialog, owner/editor edit route, shared runtime field schema, corrupt JSONB fallback, and validation for 1–50 fields.
+- Added focused action, schema, authorization, and wiring regression coverage.
+
+**AI quota and provider integrity:**
+- Replaced read-then-write monthly usage accounting with an atomic PostgreSQL upsert guarded by the plan limit.
+- Added best-effort quota release when the upstream provider never succeeds; successful provider responses remain charged even if later parsing or persistence fails.
+- Applied effective-plan checks to Prompt Studio, visual prompts, and Personal Site AI.
+- Removed fixed internal 9Router IP handling; endpoint resolution now uses environment configuration or Docker service DNS.
+
+**Invoice, plan, and navigation hardening:**
+- Added server-side invoice status transition rules so paid, cancelled, and archived invoices cannot be reopened through the generic edit action.
+- Removed dead Project/Task quick-create links and synchronized Free-plan Client Portal/AI copy with actual entitlement constants.
+- Added accessible IDs and labels to manual time Project/Task search controls.
+
+**Prompt Studio, docs, and UI:**
+- Added bilingual catalog names/descriptions, compact duration values with backward compatibility for legacy Indonesian values, loading skeletons, and updated docs/config examples.
+- Synchronized R2 public URL aliases, OpenAI-compatible environment names, and default AI model configuration.
+
+**Verification:**
+- 214 test files / 1,012 tests passed.
+- ESLint, TypeScript, Next.js production build, Compose config validation, and `git diff --check` passed.
+- Production deployment remains approval-gated; this batch targets `dev.cubiqlo.com` first.
+
+## 2026-08-06 — Searchable Client/Project/Task combobox, multi-line description textarea, and compact Indonesian calendar popover
+
+**Searchable Combobox for Time Logs & Edit Dialog:**
+- Combined `Client` and `Project` into a single searchable `Klien & Proyek *` input in both `AddTimeLogDialog` (+ Catat Waktu) and `Timesheet` (Edit Entri Waktu).
+- Filters client name and project name in real-time as the user types.
+- Popover dropdown only appears when user inputs a search keyword (prevents popup clutter on empty focus).
+- Made `Tugas (Opsional)` searchable as well in both modal dialogs.
+
+**Multi-Line Description Textarea:**
+- Replaced single-line `Input` for `Deskripsi` with multi-line `Textarea` (`rows={3}`, `min-h-[80px]`) in both `AddTimeLogDialog` and `Timesheet` edit modal for more comfortable work description editing.
+
+**Compact Indonesian Calendar Popover:**
+- Updated datepicker `Calendar` popover to use Indonesian locale (`id` from `react-day-picker/locale`): Month name in Indonesian (e.g. `Agustus 2026`) and weekdays in Indonesian (`Sen, Sel, Rab, Kam, Jum, Sab, Min`).
+- Made grid layout compact with clean borders below month caption and weekday headers.
+- Fixed month navigation arrow positioning to sit cleanly at top-left and top-right with spacious padding (`px-8` caption, `px-2` nav buttons), preventing cramped/overlapping numbers.
+
+**Production Deploy:**
+- Rebuilt production image `cubicle-cubicle:latest` and recreated container `cubiqlo-new-app`. Verified live on `app.cubiqlo.com`.
+
+## 2026-08-06 — Project hourly billing UX, edit dialog polish, retainer actions & live timer browser tab title
+
+**Project Hourly & Invoice Form Fixes:**
+- Fixed `ProjectForm` fallback for `billingModel`: correctly resolves `hourly` when `billingType` is `"hours"` or `"hourly"`.
+- Removed `Client` selector from project edit dialog (scoped to active project's client).
+- Removed `Budget Disepakati` field from project creation/editing when `billingModel === "hourly"`.
+- Added `hourly_deposit` (Deposit / Down Payment) and `hourly_timesheet` (Log Jam Kerja) source mode options in `InvoiceForm` for hourly projects.
+- Fixed subtotal calculation for `hourly_deposit` in draft invoice preview.
+
+**Project Workspace UI Alignment:**
+- Aligned `+ Tambah Tugas` button in `ProjectTaskWorkspace` with `+ Buat Invoice` in `ProjectBillingTab` (`size="sm"`, `variant="default"`, `gap-1`).
+- Aligned header layout in `ProjectTaskWorkspace`: `flex items-center justify-between` with `Tugas Berulang` / `Tugas Workflow` heading on the left and button on the right.
+- Aligned `Buat Invoice` button in retainer project actions (`+ Buat Invoice` `size="sm"` at top-right of `ProjectBillingTab`).
+
+**Live Timer Browser Tab Title:**
+- Live active timer updates document title dynamically: `⏱️ [00:01:13] Cubiqlo — Client Operations Hub`.
+- Handled clean title stripping and `useRef` base title retention to prevent duplicate emoji/timer text accumulation on tab hover/update.
+- Auto-resets document title when timer is paused or stopped.
+
+**Production Deploy:**
+- Rebuilt production image `cubicle-cubicle:latest` and recreated container `cubiqlo-new-app`. Verified live on `app.cubiqlo.com`.
+
+## 2026-08-04 — Landing builder v2 complete: drag, structure, mobile, publish, contact
+
+**Phase 1 — Drag from Sidebar:**
+- Moved DndContext from `canvas-renderer` to `canvas-editor` (single context for template drag + section reorder).
+- Created `DraggableTemplateButton` with `useDraggable` — section templates in Insert tab are now draggable.
+- `handleDragEnd`: templates insert at drop position (before target section), section reorder via SortableContext.
+- `DragOverlay`: floating chip with template label while dragging.
+- Click-to-add preserved as fallback.
+
+**Phase 2 — Structure Panel:**
+- Created `src/components/site/canvas/structure-panel.tsx` — 7th sidebar tab.
+- Shows compact section list with type icons + heading preview.
+- Drag-to-reorder via SortableContext (shared DndContext).
+- Click row → select section + `scrollIntoView` in canvas.
+- Empty state: "Belum ada section. Tambah dari tab Insert."
+
+**Phase 3 — Mobile Step Editor:**
+- Created `src/components/site/canvas/mobile-step-editor.tsx` — 4-step wizard.
+- Steps: Pages (list/add/set home) → Sections (add template/delete/reorder) → Theme (8 presets + color picker) → Publish (slug + SEO + publish toggle).
+- Conditional render at CanvasEditor: `md:hidden` → MobileStepEditor, `hidden md:block` → desktop DnD layout.
+- Auto-save, Back/Next navigation, step indicator.
+
+**Phase 4 — Publish Toggle:**
+- Desktop: toggle button in bottom bar (Live/Draft badge), confirm dialog for publish/unpublish.
+- Gates on `isReadyToPublish` — disabled when site not ready.
+- Mobile: same toggle in PublishStep of mobile editor.
+- Calls `updateSite({ published: true/false })` — auto-saved.
+
+**Phase 5 — Public Contact Form:**
+- Created `src/app/site/[slug]/contact/route.ts` — POST endpoint with:
+  - Honeypot field (`_hp`) for bot detection
+  - In-memory rate limit (3/hour per IP)
+  - DB join to find workspace owner email
+  - Sends notification via Resend
+- Created `src/components/site/contact-form.tsx` — client component with honeypot, loading/success/error states.
+- Wired into `personal-site-renderer.tsx` — appears at bottom of every public landing page.
+
+**Phase 7 — Dev Deploy:**
+- `docker compose -f docker-compose.dev.yml up -d --build cubicle-dev`
+- Dev server verified HTTP 200 at `localhost:3000`.
+- Prod untouched.
+
+**Files:** 7 files (+1168/-177), commit `79a5155`.
+
+## 2026-08-03 — Landing builder Phase 4 AI copy + Phase 7 SEO/share + prod deploy
+
+**Phase 7 SEO/share settings:**
+- Model: added `seoMetadataSchema` (title max 80, description max 180, ogImage max 2000 with safe URL refine) to `personalSiteInputSchema`; `normalizeStoredPersonalSite` handles null/absent `seo`.
+- DB: additive migration `0067_personal_site_seo.sql` — `ALTER TABLE ADD COLUMN IF NOT EXISTS seo jsonb`.
+- Created `src/lib/personal-site/metadata.ts` with `generatePersonalSiteMetadata()` and `generatePersonalSiteSubPageMetadata()` — OG + Twitter cards with title/description fallback and dynamic `og:image`.
+- Created `src/app/api/og/personal-site/[slug]/route.tsx` — dynamic Open Graph image with theme colors.
+- Created `src/components/site/canvas/seo-panel.tsx` — editable SEO title/description/OG image, WhatsApp share preview card, copy public link.
+- Wired SEO tab into canvas sidebar alongside Insert/Pages/Templates/Theme.
+
+**Phase 4 AI copy generator:**
+- Created `src/lib/actions/personal-site-ai.ts` — server action with auth + workspace writable guard, Zod strict input/output, 9Router OpenAI-compatible fallback (Gemini), supported types: services/faq/cta, exact counts (services 3, FAQ 5), clean error messages.
+- Created `src/lib/ai/copy.ts` — schemas, prompt builder, JSON parser (raw/fenced/prose), SSE extractor, section patch builder with fresh IDs.
+- Created `src/lib/ai/copy.test.ts` — 16 focused tests covering schema, parsing, SSE, and error cases.
+- Updated `src/components/site/canvas/properties-panel.tsx` — Generate Copy UI with businessName/niche/targetAudience/offer/tone fields, loading state, preview-before-apply with explicit Apply/Discard.
+
+**Fixes:**
+- `seo-panel.tsx`: added `Partial<SeoMetadata>` type annotation to fix TSC type inference (site.seo resolved as `{}`).
+- `canvas-editor.tsx`: wired real `publicUrl` (computed from `publicSiteBaseUrl` + slug) to SEOPanel instead of `previewUrl`.
+- `OG route`: removed unused `isEnglish` variable.
+- `readiness-badge.tsx`: replaced all `t("readiness.*", ...)` keys with actual Indonesian text (\"Siap publikasi\", \"perlu diperbaiki\", etc.) matching the i18n-client pattern where `t(id, en)` returns `id` for Indonesian.
+- `personal-site.ts`: replaced `personalSiteInputSchema.parse()` with `normalizeStoredPersonalSite()` in `getPersonalSiteForCurrentOwner()` to gracefully handle null columns (pages, themeConfig, heroImage) from new migrations.
+
+**Prod deploy:**
+- Migration 0067 + missing columns (pages, theme_config, hero_image) applied to production DB.
+- Container rebuilt with commit `c0f6bbc`, deployed to `cubiqlo-new-app`.
+- Verified: `/site/alip` HTTP 200 with full OG metadata including `og:image`, landing builder loads without ZodError.
+
+**Commits:** `5f0ebc3` → `c8bfd9c` → `c0f6bbc` pushed to `main`.
+**Verification:** 113 focused tests pass, TSC clean, ESLint clean, Docker build passes, zero browser console errors.
+
+## 2026-08-03 — Landing page builder multi-page checkpoint + usability plan
+
+**Phase 6 Readiness UI** (closes `docs/plans/2026-08-03-landing-page-builder-usability-improvements.md` Phase 6):
+- Added `src/lib/personal-site/readiness.ts` with `getPersonalSiteReadiness()`, `isReadyToPublish()`, and `countReadinessIssues()` helpers to evaluate landing pages for publish readiness. Checks: slug validity, title/hero filled, CTA paired when published, contact link exists, content sections present, themeConfig set.
+- Created `src/components/site/readiness-badge.tsx` as a live-updating badge/component showing "Ready to publish" or "<N> things to fix". Clicking toggles an accessible issue list/popover with severity labels (errors first, then warnings). Never dirties site state; reads directly from live site form state on every render.
+- Integrated into canvas editor (`src/components/site/canvas/canvas-editor.tsx`) near bottom bar next to device switcher; respects existing layout and does not conflict with properties panel or mobile controls.
+- Focused unit tests added: `src/components/site/readiness-badge.test.tsx` (pure function tests) + `src/lib/personal-site/readiness.test.ts` (25 tests). All green.
+- No prod deployment; dev-only work pending explicit approval.
+
+**Prompt Studio duplicate-field fix**:
+- Implemented overlap-key resolution to eliminate duplicate inputs between global form fields (platform, ratio, tone, offer) and type-specific fields in catalog entries. New utilities in `src/lib/prompts/catalog.ts`: `OVERLAP_KEYS`, `isOverlapKey()`, `nonOverlapFields()`, `resolveOverlapValue()`, `splitOverlapDefaults()`.
+- Updated `prompt-studio.tsx` to use global form state as source of truth for overlap keys and only show non-overlap fields in detail section. Validation now resolves values correctly and prevents missing required fields due to duplication.
+- Fixed validation path errors in prompt schema checks using resolved values instead of direct lookups in options.
+
+**Dev AI model config**:
+- Added `AI_MODEL: ${AI_MODEL:-ag/gemini-3.6-flash-low}` environment variable in `docker-compose.dev.yml` to support local development AI model selection alongside the existing API key configuration.
+
+**Other uncommitted work preserved**:
+- Canvas editor multi-page editing, page operations, undo/redo, device preview switcher (Phase 5), and all template files continue in worktree.
+- Starter block templates (`section-templates.ts`, `page-templates.ts`) and their tests are fully wired to the canvas Insert/Templates tabs.
+
+- Builder: current worktree checkpoint adds multi-page editing in canvas, active-page section sync, page add/rename/reorder/home controls, undo/redo preservation across pages, and mobile sidebar support for page operations.
+- Public site: adds nested public route `/site/[slug]/[pageSlug]`, renderer page navigation, and active-page rendering while preserving the home route `/site/[slug]`.
+- Theme: keeps `themeConfig` nullish-safe and applies header style, button style, hero image, font config, and accent color consistently in public renderer.
+- Plan: adds `docs/plans/2026-08-03-landing-page-builder-usability-improvements.md` for next usability pass: starter blocks, page templates, properties panel, device preview, publish readiness, SEO/share settings, and AI copy generation.
+- Verification: targeted ESLint passed with 0 errors and accepted existing warnings (`canvas-page-client.tsx` unused arg and renderer `<img>`), TypeScript passed, and `git diff --check` passed. Production untouched.
+
+## 2026-08-02 — Site Builder: 6 new section types (Google Sites parity)
+
+- New section types: `gallery` (image grid), `embed` (YouTube/maps/iframe), `social` (social media links with platform selector), `cta` (call-to-action block), `divider` (separator), `collapsible` (accordion/expandable group).
+- Total section types: 8 → 14.
+- Editor: each type has dedicated form (gallery: URL + alt, embed: URL + height, social: platform dropdown + URL, cta: text + button, collapsible: title + content rows).
+- Renderer: all 6 types render on public page with theme-consistent styling.
+- Commit: `1f71062` pushed to `main`. Deployed to dev.
+
+## 2026-08-02 — Prompt Studio i18n: full English translation
+
+- Catalog: `labelEn` added to 30+ Indonesian field labels (e.g. "Jumlah slide" → "Slide count", "Sudut kamera" → "Camera angle", "Gaya logo" → "Logo style").
+- prompt-studio.tsx: `useT()` added for full i18n. All UI strings translated: category labels, section headers, placeholders, button text, dialog text, style/lighting refs (bilingual), preview panel labels.
+- Categories: "Iklan & Promosi" → "Ads & Promotion", "Produk" → "Product".
+- Commit: `850abc0` pushed to `main`. Deployed to dev.
+
+## 2026-08-02 — Face Card & Logo prompt types
+
+- New prompt type: **Face Card** — portrait analysis & styling recommendations. Dropdowns: Tipe analisis (Face Features, Spectacles, Style, Color, Makeup), Aesthetic (6), Background Tone (6), Typography (5), Color Mood (6).
+- New prompt type: **Logo** — brand logo design & mockup. Dropdowns: Gaya logo (7), Skema warna (6), Tipe mockup (7), Industri (text).
+- Both in "Brand & Copy" category. Total catalog: 16 → 18 types.
+- Commit: `8e181fb` pushed to `main`.
+
+## 2026-08-02 — Prompt Studio redesign: compact selector, section labels, preview
+
+- Prompt Studio: rename "Feed Instagram" → "Feed" (universal, platform-agnostic). Remove Instagram-specific defaults.
+- Shared dropdown options: `field-options.ts` with tone (10), style (10), platform (10), ratio (5), scene (10), camera angle (7), lighting (8), background (7), orientation (3), voice language (3), duration (6), cadence (4).
+- Catalog: convert 15+ text fields to dropdowns across product-photography, product-try-on, fnb-menu, short-video-script, video-storyboard, ugc-ad, marketing-copy, content-series, product-ad.
+- Advanced options: tone, style, platform, ratio now dropdowns instead of free text inputs.
+- Commit: `d2c6696` pushed to `main`.
+
+## 2026-08-02 — Calendar date picker for time navigation
+
+- Time page navigation: date label is now clickable, opens a calendar dropdown (react-day-picker v10). Users can pick any date directly instead of clicking `<` / `>` arrows one by one. Week starts on Monday (Senin). Arrows and "Hari ini" button preserved.
+- New deps: `react-day-picker@10.0.1`, `date-fns@4.4.0`.
+- New UI components: `calendar.tsx` (react-day-picker v10 wrapper), `popover.tsx` (radix popover).
+- Commit: `729f72f` pushed to `main`. Deployed to dev (`dev.cubiqlo.com`).
+
+## 2026-08-02 — UI polish: empty state buttons, unified invoice
+
+- Empty state: remove "Tambah Klien" button from client list empty state (2 instances). Remove "Buat Invoice" action from invoice list empty state (2 instances). Match tasks page pattern — empty state shows message only, users create from header "+ Baru" button.
+- Unified invoice creation: source selector (full/DP/milestone/final) and preview card now appear for ALL billing types (fixed, hourly, retainer). Hourly project form adds "Budget Disepakati" field. Retainer uses fee as agreedAmount.
+- Commits: `5b74187`, `af865d8` pushed to `main`. Deployed via image `cubicle:sha-af865d8`.
+
+## 2026-08-02 — Retainer progress, task seeding, project currency selector
+
+- Retainer progress: project detail header, project list, and client detail page all show approved hours / included hours (e.g. "40/40 jam") instead of task count for retainer projects. `getProjectProgress` handles retainer billingType. Added `retainerIncludedMinutes` + `trackedMinutes` to queries.
+- Retainer dummy data: seeded 4 tasks + 8 approved time entries (300 min each = 40 jam) for "Contoh Retainer" project (Sep 01–Oct 01 periode).
+- Project currency selector: added dropdown (IDR/USD/EUR/SGD/AUD/GBP/MYR/JPY) to project form. Labels update dynamically.
+- Commits: `dd335e2`, `87ea61b`, `6c6c6d8` pushed to `main`. Deployed via image `cubicle:sha-6c6c6d8`.
+
+## 2026-08-02 — Invoice hourly deposit, retainer simplification, input fixes
+
+- Hourly deposit subtotal: `projectItems` now handles `hourly_deposit` mode → `previewAmount = source.amount`. Previously skipped (originalAmount=0 for hourly), subtotal showed Rp 0.
+- Hourly deposit field name: form input changed from `source.value` → `source.amount` to match `ProjectInvoiceSourceSchema` (`.strict()` would reject on submit). `InvoiceSourceDraft` type and `sourceDraftComplete` updated accordingly.
+- Hourly deposit input step: `min="0.01" step="0.01"` → `min="1" step="1"` for IDR. Browser HTML5 validation was rejecting whole numbers like 7250000.
+- Retainer manual deposit removed: retainer project billing tab no longer shows "Buat Deposit/Item Manual" dialog. Retainer has single invoice flow via "Buat Invoice Periode Retainer" (auto-generate from fee + overage). Manual deposit was redundant and confusing.
+- Retainer projectItems filter: retainer projects no longer render non-editable "Rp 0" item row in invoice form. Retainer billingType filtered out of `projectItems` computation.
+- Commits: `2c3bab0`, `5110bc0`, `53168ea`, `d718f00` pushed to `main`. Deployed via image `cubicle:sha-d718f00`.
+
+## 2026-08-02 — Invoice badge, delete, task, report, and fixed-price preview fixes
+
+- Invoice detail badge: `displayStatus` no longer downgrades DB `status="paid"` to `"payment due"` when payment rows are empty. DB status is the source of truth; payment rows only upgrade upward to `paid`. Invoice marked paid manually now shows "Lunas".
+- Delete invoice: add `DeleteInvoiceButton` + `deleteInvoice` server action (draft/cancelled only; cascades items + payments in transaction). Dialog closes before redirect; redirect uses origin-aware `backUrl` (project/client/global) instead of hardcoded `/app/invoices`, preventing 404 after delete.
+- Task edit: `description` field in `taskSchema` and `updateTaskSchema` now `z.string().nullable().optional()` — form sends `null` when description cleared, previously ZodError.
+- Report income: `updateInvoice` auto-creates a payment row for the remaining amount when status is set to `paid` and no payment covers the total. Reports aggregate from `payments` table, so marked-paid invoices without payment rows previously showed 0 income. Backfilled 7 existing paid invoices with missing payments.
+- Fixed-price invoice preview: `projectItems` computation in `InvoiceForm` now falls back to `defaultInvoiceSource` when `projectSources` state is empty (initial render). `fixed_final` mode correctly shows `agreedAmount - priorActiveFixedBilledAmount` immediately without needing to switch modes first.
+- Fixed-price source skip: `createInvoice` action skips service rows when an explicit fixed source (DP/milestone/full/final) is provided — the source amount IS the invoice line.
+- Commits: `3542b7a`, `e670f09`, `ee5761d`, `664fa8f` pushed to `main`. Migrations 0064–0066 applied to production. Deployed via immutable image `cubicle:sha-664fa8f` (container `cubiqlo-new-app`).
+
 ## Unreleased — Explicit invoice entry sources
 
 - Invoice entry: add explicit Fixed full/DP/milestone/final, Hourly timesheet/deposit, manual adjustment, and Retainer base/overage source intent.

@@ -5,7 +5,7 @@ export function isFixedInvoiceBillingModel(model: BillingModel): boolean {
   return model === "fixed_price" || model === "legacy_package";
 }
 
-const projectId = z.string().uuid();
+const projectId = z.string();
 const positiveNumber = z.number().finite().positive();
 const fixedDpVariants = [
   z.object({ mode: z.literal("fixed_dp"), projectId, amountType: z.literal("percent"), value: positiveNumber.max(100) }).strict(),
@@ -29,7 +29,7 @@ export const ProjectInvoiceSourceSchema = z.union([
   z.object({
     mode: z.literal("hourly_timesheet"), projectId,
     periodStart: z.iso.date(), periodEnd: z.iso.date(),
-    timeEntryIds: z.array(z.string().uuid()).min(1),
+    timeEntryIds: z.array(z.string()).min(1),
   }).strict().refine((value) => value.periodStart < value.periodEnd, { message: "periodEnd harus setelah periodStart", path: ["periodEnd"] }),
   z.object({ mode: z.literal("hourly_deposit"), projectId, description: z.string().trim().min(1).optional(), amount: positiveNumber }).strict(),
 ]);

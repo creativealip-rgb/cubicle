@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useT } from "@/lib/i18n-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,6 +87,7 @@ const PRIORITY_LABELS: Record<string, string> = {
 };
 
 export function SupportPageClient({ tickets, counts, clients, projects, members, createAction }: Props) {
+  const { t } = useT();
   const router = useRouter();
   const [showCreate, setShowCreate] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -182,7 +184,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium">Ditugaskan ke</label>
                   <Select name="assigneeId" defaultValue="">
-                    <SelectTrigger><SelectValue placeholder="Belum ditugaskan" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("Belum ditugaskan", "Unassigned")} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">Belum ditugaskan</SelectItem>
                       {members.map((m) => (
@@ -194,7 +196,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium">Klien</label>
                   <Select name="clientId" defaultValue="">
-                    <SelectTrigger><SelectValue placeholder="Tidak ada" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("Tidak ada", "None")} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">Tidak ada</SelectItem>
                       {clients.map((c) => (
@@ -206,7 +208,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium">Proyek</label>
                   <Select name="projectId" defaultValue="">
-                    <SelectTrigger><SelectValue placeholder="Tidak ada" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("Tidak ada", "None")} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">Tidak ada</SelectItem>
                       {projects.map((p) => (
@@ -229,7 +231,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
       <div className="flex items-center gap-3">
         <Filter className="h-4 w-4 text-muted-foreground" />
         <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue placeholder="Prioritas" /></SelectTrigger>
+          <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue placeholder={t("Prioritas", "Priority")} /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Semua prioritas</SelectItem>
             <SelectItem value="low">Rendah</SelectItem>

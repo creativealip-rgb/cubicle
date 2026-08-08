@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import { deleteExpense } from "@/lib/actions/expenses";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import {
   Dialog,
   DialogContent,
@@ -68,14 +69,15 @@ export function DeleteExpenseButton({ expenseId, description }: DeleteExpenseBut
           <Button variant="ghost" size="sm" onClick={() => setOpen(false)} disabled={loading}>
             {t("Batal", "Cancel")}
           </Button>
-          <Button
+          <LoadingButton
             onClick={handleDelete}
-            disabled={loading}
+            loading={loading}
+            loadingText={t("Menghapus...", "Deleting...")}
             size="sm"
             className="bg-red-600 hover:bg-red-700"
           >
-            {loading ? t("Menghapus...", "Deleting...") : t("Hapus", "Delete")}
-          </Button>
+            {t("Hapus", "Delete")}
+          </LoadingButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

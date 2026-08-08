@@ -7,7 +7,7 @@ describe("personal site builder URL wiring", () => {
     const client = readFileSync("src/components/site/builder-client.tsx", "utf8");
 
     expect(page).toContain("publicSiteBaseUrl={personalSitePublicBaseUrl()}");
-    expect(page).toContain("previewUrl={personalSitePreviewUrl()}");
+    expect(page).toContain("previewUrl={personalSitePreviewUrl(site.slug)}");
     expect(client).not.toContain('from "@/lib/personal-site/urls"');
     expect(client).toContain("const publicUrl = `${publicSiteBaseUrl}/${normalizedSlug}`");
   });

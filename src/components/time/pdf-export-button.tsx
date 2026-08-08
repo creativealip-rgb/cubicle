@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n-client";
 import {
   Dialog,
   DialogContent,
@@ -56,6 +57,7 @@ export function PdfExportButton({
   clients?: ClientOpt[];
   projects?: ProjectOpt[];
 }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const [report, setReport] = useState<ReportType>("full");
   const [from, setFrom] = useState("");
@@ -114,7 +116,7 @@ export function PdfExportButton({
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Ekspor PDF Lembar Waktu</DialogTitle>
+          <DialogTitle>{t("Ekspor PDF Lembar Waktu", "Export Timesheet PDF")}</DialogTitle>
           <DialogDescription>
             Pilih jenis laporan, periode, dan filter klien/project.
           </DialogDescription>

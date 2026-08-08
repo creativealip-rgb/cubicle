@@ -10,6 +10,7 @@ import { getCurrentLang, createT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { QuestionnairesListTable } from "@/components/questionnaires/questionnaires-list-table";
+import { QuestionnaireCreateDialog } from "@/components/calendar/questionnaire-create-dialog";
 import { Plus, ClipboardList, ChevronRight } from "lucide-react";
 
 async function getWorkspaceId(): Promise<string> {
@@ -63,12 +64,14 @@ export default async function QuestionnairesPage() {
           </p>
         </div>
         {canWrite && (
-          <Button asChild className="w-full sm:w-auto">
-            <Link href="/app/questionnaires/new">
-              <Plus className="mr-1 h-4 w-4" />
-              {t("Kuesioner baru", "New questionnaire")}
-            </Link>
-          </Button>
+          <QuestionnaireCreateDialog
+            trigger={
+              <Button className="w-full sm:w-auto">
+                <Plus className="mr-1 h-4 w-4" />
+                {t("Kuesioner baru", "New questionnaire")}
+              </Button>
+            }
+          />
         )}
       </div>
 
@@ -82,12 +85,14 @@ export default async function QuestionnairesPage() {
             )}
           </p>
           {canWrite && (
-            <Button asChild>
-              <Link href="/app/questionnaires/new">
-                <Plus className="mr-1 h-4 w-4" />
-                {t("Buat kuesioner pertama", "Create first questionnaire")}
-              </Link>
-            </Button>
+            <QuestionnaireCreateDialog
+              trigger={
+                <Button size="sm">
+                  <Plus className="mr-1.5 h-4 w-4" />
+                  {t("Kuesioner baru", "New questionnaire")}
+                </Button>
+              }
+            />
           )}
         </div>
       ) : (

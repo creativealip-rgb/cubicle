@@ -28,7 +28,10 @@ describe("client-scoped Project creation", () => {
     expect(dialogSource).toContain('import { useRouter } from "next/navigation"');
     expect(dialogSource).toMatch(/setOpen\(false\)[\s\S]*router\.refresh\(\)/);
     expect(dialogSource).not.toMatch(/router\.(?:push|replace)\(/);
-    expect(clientPageSource).toContain('href={`?tab=projects`}');
+    // Back link from project detail returns to the client's Projects tab
+    const projectPage = read("src/app/(app)/app/projects/[projectId]/page.tsx");
+    expect(projectPage).toContain('`/app/clients/${project.clientId}?tab=projects`');
+    expect(clientPageSource).not.toContain('href={`?tab=projects`}');
   });
 
   it("hides Project creation from read-only workspace roles", () => {

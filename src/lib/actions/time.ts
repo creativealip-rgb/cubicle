@@ -1,4 +1,10 @@
 "use server";
+import { getCurrentLang, createT } from "@/lib/i18n";
+
+async function getT() {
+  const lang = await getCurrentLang();
+  return createT(lang);
+}
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 
 import { auth } from "@/lib/auth";
@@ -654,10 +660,9 @@ export async function updateTimeEntry(entryId: string, input: z.infer<typeof upd
 
   if (!entry) throw new Error("Time entry not found");
   if (entry.status === "invoiced") {
-    throw new Error("Entri sudah di-invoice, tidak bisa diedit");
+    const t = await getT();
+    throw new Error(t("Entri sudah di-invoice, tidak bisa diedit", "Entry is invoiced and cannot be edited"));
   }
-  if (entry.status === "submitted") throw new Error("Entri sedang menunggu persetujuan dan terkunci");
-  if (entry.status === "approved") throw new Error("Entri sudah disetujui dan terkunci");
   await assertTimesheetWeekMutable(db, workspaceId, entry.userId, entry.startTime ?? entry.createdAt);
   await assertHistoricalTimeEntryMutable(db, workspaceId, entry.projectId);
 

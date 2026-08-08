@@ -4,9 +4,11 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n-client";
 import { authClient } from "@/lib/auth-client";
 
 export function GoogleAuthButton({ callbackURL }: { callbackURL: string }) {
+  const { t } = useT();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -32,7 +34,7 @@ export function GoogleAuthButton({ callbackURL }: { callbackURL: string }) {
       </div>
       <Button type="button" variant="outline" className="w-full bg-white" onClick={continueWithGoogle} disabled={loading}>
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleMark />}
-        {loading ? "Menghubungkan…" : "Lanjutkan dengan Google"}
+        {loading ? t("Menghubungkan…", "Connecting…") : t("Lanjutkan dengan Google", "Continue with Google")}
       </Button>
       {error ? <p role="alert" className="text-center text-xs text-destructive">{error}</p> : null}
     </div>

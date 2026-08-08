@@ -1,4 +1,5 @@
 import { getPublicQuestionnaire } from "@/lib/actions/questionnaires";
+import { safeParseQuestionnaireSchema } from "@/lib/questionnaire-schema";
 import { IntakeForm } from "@/components/questionnaires/intake-form";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
@@ -32,14 +33,7 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
   }
 
   const { questionnaire } = result;
-  const fields = (questionnaire.schema as Array<{
-    id: string;
-    type: "text" | "textarea" | "select" | "multiselect" | "number" | "date" | "email" | "url";
-    label: string;
-    required: boolean;
-    options?: string[];
-    placeholder?: string;
-  }>) || [];
+  const fields = safeParseQuestionnaireSchema(questionnaire.schema);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 via-white to-white">

@@ -17,6 +17,8 @@ import {
 
 export function VerifyEmailSuccess() {
   const router = useRouter();
+  // i18n labels hardcoded for verification flow
+  // const { t } = useT();
   const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {

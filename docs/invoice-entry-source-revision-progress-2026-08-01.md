@@ -43,7 +43,7 @@
 - `cubicle_dev` backup `/tmp/cubicle_dev_pre0066_20260801T213934.dump` checksum `5e6f105f6ff789e0675261fbc27c7cb37d0460c5f3c34e6e6960d46050e6e8d9`; migration `0066` applied and columns/index verified.
 - Desktop/global/client/project Fixed/Hourly/Retainer and mobile `390x844` matrix: 25/25 assertions pass; screenshots stored under `docs/qa-screenshots/invoice-source-revision/`.
 - DB reconciliation: 57 Time Entry links, 57 distinct sources, zero duplicates.
-- Existing project pages for Hourly/Retainer emit React hydration error `#418`; invoice surfaces remain usable. Track separately before broad project-page polish claim.
+- React hydration `#418` on existing Hourly/Retainer project pages resolved (locale mismatch).
 
 ## Production release evidence
 
@@ -58,7 +58,7 @@
 
 ## Pending canonical-plan work
 
-None for this revision. React hydration `#418` on existing Hourly/Retainer project pages remains a separate follow-up and does not block invoice source workflows.
+None for this revision. React hydration `#418` on existing Hourly/Retainer project pages has been resolved.
 
 ## Deployment boundary
 

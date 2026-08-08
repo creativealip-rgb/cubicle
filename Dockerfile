@@ -17,7 +17,7 @@ ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV NEXT_DEPLOYMENT_ID=$VCS_REF
 # Cap Node heap so next build does not thrash swap on 8GB VPS
 ENV NODE_OPTIONS="--max-old-space-size=2048"
-RUN --mount=type=cache,target=/app/.next/cache \
+RUN \
   npm run build
 
 FROM base AS runner
@@ -36,6 +36,8 @@ RUN addgroup --system --gid 1001 nodejs \
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+RUN mkdir -p ./public/uploads/site-images && chown -R nextjs:nodejs ./public/uploads
 
 USER nextjs
 EXPOSE 3000

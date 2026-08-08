@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { recordPayment } from "@/lib/actions/invoices";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -191,9 +192,9 @@ export function PaymentSection({
                 placeholder="Referensi pembayaran..."
               />
             </div>
-            <Button type="submit" disabled={loading} className="w-full">
-              {loading ? "Mencatat..." : "Catat Pembayaran"}
-            </Button>
+            <LoadingButton type="submit" loading={loading} loadingText="Mencatat..." className="w-full">
+              {"Catat Pembayaran"}
+              </LoadingButton>
           </form>
         </DialogContent>
       </Dialog>

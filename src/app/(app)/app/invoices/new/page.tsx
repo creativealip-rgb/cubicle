@@ -1,3 +1,4 @@
+import { getCurrentLang, createT } from "@/lib/i18n";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { db } from "@/db";
@@ -12,6 +13,8 @@ import { loadInvoiceSourceProjectOptions } from "@/lib/invoice-source-options";
 import { resolveProjectAmount } from "@/lib/invoice-project-items";
 
 export default async function NewInvoicePage({ searchParams }: { searchParams: Promise<{ timeEntryIds?: string | string[] }> }) {
+  const lang = await getCurrentLang();
+  const t = createT(lang);
   const { workspaceId } = await requireWorkspaceWritableOrRedirect("/app/invoices");
   const requestedIds = parseUuidList((await searchParams).timeEntryIds);
   const selectedTimeEntries = requestedIds.length ? await db.select({ id: timeEntries.id, clientId: timeEntries.clientId, projectId: timeEntries.projectId, description: timeEntries.description, durationMinutes: timeEntries.durationMinutes, hourlyRate: timeEntries.hourlyRate }).from(timeEntries).where(and(inArray(timeEntries.id, requestedIds), eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.status, "approved"), eq(timeEntries.billable, true), isNotNull(timeEntries.endTime), sql`${timeEntries.durationMinutes} > 0`)) : [];
@@ -72,29 +75,29 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: P
           </Button>
         </Link>
         <div>
-          <h1 className="app-page-title">Invoice Baru</h1>
+          <h1 className="app-page-title">{t("Invoice Baru", "New Invoice")}</h1>
           <p className="text-sm text-muted-foreground">
-            Lengkapi detail dan item tagihan dalam satu langkah.
+            {t("Lengkapi detail dan item tagihan dalam satu langkah.", "Complete invoice details and items in one step.")}
           </p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Detail invoice</CardTitle>
+          <CardTitle>{t("Detail invoice", "Invoice details")}</CardTitle>
         </CardHeader>
         <CardContent>
           {clientOptions.length === 0 ? (
             <div className="space-y-3 rounded-lg border border-dashed p-6 text-center">
               <p className="text-sm text-muted-foreground">
-                Tambahkan klien sebelum membuat invoice.
+                {t("Tambahkan klien sebelum membuat invoice.", "Add a client before creating an invoice.")}
               </p>
               <Link href="/app/clients/new">
-                <Button>Tambah Klien</Button>
+                <Button>{t("Tambah Klien", "Add Client")}</Button>
               </Link>
             </div>
           ) : (
-            <InvoiceForm mode="create" defaultValues={{ clientId: selectedClientId ?? undefined, projectId: selectedProjectIds.length === 1 ? selectedProjectIds[0] : undefined }} clients={clientOptions} projects={projectOptions.map((project) => ({ ...project, agreedAmount: resolveProjectAmount({ billingType: project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packageCustomPrice ?? project.packagePrice ?? 0) || null }), priorActiveFixedBilledAmount: sourceOptions.get(project.id)?.priorActiveFixedBilledAmount ?? 0, eligibleTimeEntries: sourceOptions.get(project.id)?.eligibleTimeEntries ?? [], initialTimeEntryIds: selectedTimeEntries.filter((entry) => entry.projectId === project.id).map((entry) => entry.id) }))} templates={templateOptions} baseCurrency={workspace?.defaultCurrency || "IDR"} currencyRates={currencyRates} initialItems={selectedTimeEntries.map(row => ({ description: row.description || "Waktu proyek", quantity: Number(row.durationMinutes) / 60, unitPrice: Number(row.hourlyRate ?? 0), sourceId: row.id }))} />
+            <InvoiceForm mode="create" defaultValues={{ clientId: selectedClientId ?? undefined, projectId: selectedProjectIds.length === 1 ? selectedProjectIds[0] : undefined }} clients={clientOptions} projects={projectOptions.map((project) => ({ ...project, agreedAmount: resolveProjectAmount({ billingType: project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packageCustomPrice ?? project.packagePrice ?? 0) || null }), priorActiveFixedBilledAmount: sourceOptions.get(project.id)?.priorActiveFixedBilledAmount ?? 0, eligibleTimeEntries: sourceOptions.get(project.id)?.eligibleTimeEntries ?? [], initialTimeEntryIds: selectedTimeEntries.filter((entry) => entry.projectId === project.id).map((entry) => entry.id) }))} templates={templateOptions} baseCurrency={workspace?.defaultCurrency || "IDR"} currencyRates={currencyRates} initialItems={selectedTimeEntries.map(row => ({ description: row.description || t("Waktu proyek", "Project time"), quantity: Number(row.durationMinutes) / 60, unitPrice: Number(row.hourlyRate ?? 0), sourceId: row.id }))} />
           )}
         </CardContent>
       </Card>

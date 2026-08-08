@@ -1,14 +1,14 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  BarChart3, Brain, Briefcase, Calendar, CheckSquare, Clock,
-  FileText, FolderOpen, LayoutDashboard, NotebookPen,
-  Sparkles, Users, Wallet,
+  BarChart3, Brain, Briefcase, BriefcaseBusiness, Calendar, CheckSquare, Clock,
+  FileCheck2, FileSpreadsheet, FileText, FolderOpen, LayoutDashboard, NotebookPen,
+  Sparkles, Users, Wallet, Wrench, ClipboardList,
 } from "lucide-react";
 
 export type LocalizedText = { id: string; en: string };
-export type SidebarBadgeKey = "myOpenTasks" | "unpaidInvoices";
+export type SidebarBadgeKey = "myOpenTasks" | "unpaidInvoices" | "draftProposals" | "draftContracts";
 export type SidebarBadgeCounts = Partial<Record<SidebarBadgeKey, number>>;
-export type SidebarGroupId = "work" | "finance" | "personal" | "ai";
+export type SidebarGroupId = "work" | "business" | "finance" | "personal" | "ai";
 export type WorkspaceRole = "owner" | "member" | "viewer";
 
 export type DirectNavItem = {
@@ -39,6 +39,12 @@ export const appNavigation: NavigationEntry[] = [
     direct("tasks", "/app/tasks", CheckSquare, { id: "Tugas", en: "Tasks" }, { id: "Kelola pekerjaan konkret, assignee, dan deadline", en: "Manage concrete work, assignees, and deadlines" }, "myOpenTasks"),
   ]},
   direct("time", "/app/time", Clock, { id: "Waktu", en: "Time" }, undefined, undefined, ["/app/activities"]),
+  { kind: "group", id: "business", icon: BriefcaseBusiness, label: { id: "Bisnis", en: "Business" }, children: [
+    direct("services", "/app/services", Wrench, { id: "Layanan", en: "Services" }, { id: "Kelola katalog layanan milik Anda", en: "Manage your pure service catalog" }),
+    direct("proposals", "/app/proposals", FileSpreadsheet, { id: "Proposal", en: "Proposals" }, { id: "Kelola penawaran dan proposal", en: "Manage client proposals and estimates" }, "draftProposals"),
+    direct("contracts", "/app/contracts", FileCheck2, { id: "Kontrak", en: "Contracts" }, { id: "Kelola kontrak dan kesepakatan", en: "Manage client contracts and agreements" }, "draftContracts"),
+    direct("questionnaires", "/app/questionnaires", ClipboardList, { id: "Kuesioner", en: "Questionnaires" }, { id: "Form intake & brief klien", en: "Client intake forms & briefs" }),
+  ]},
   direct("calendar", "/app/calendar", Calendar, { id: "Kalender", en: "Calendar" }),
   direct("files", "/app/files", FolderOpen, { id: "File", en: "Files" }),
 

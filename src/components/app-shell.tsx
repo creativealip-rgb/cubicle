@@ -7,6 +7,8 @@ import { AppSidebar, type SidebarBadgeCounts } from "@/components/app-sidebar";
 import { AppTopbar } from "@/components/app-topbar";
 import { AIChatPanel } from "@/components/ai/chat-panel";
 import { LangProvider, type Lang } from "@/lib/i18n-client";
+import { isStaleServerActionError } from "@/lib/client-errors";
+import { toast } from "sonner";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -53,6 +55,22 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
       // ignore (e.g. SSR or storage disabled)
     }
     setHydrated(true);
+
+    // Global Auto-Reload Interceptor for Stale Server Action Errors
+    function handleGlobalError(event: ErrorEvent | PromiseRejectionEvent) {
+      const err = "reason" in event ? event.reason : event.error;
+      if (isStaleServerActionError(err)) {
+        toast.info("Versi aplikasi baru terdeteksi. Memuat ulang halaman...");
+        setTimeout(() => window.location.reload(), 600);
+      }
+    }
+
+    window.addEventListener("error", handleGlobalError);
+    window.addEventListener("unhandledrejection", handleGlobalError);
+    return () => {
+      window.removeEventListener("error", handleGlobalError);
+      window.removeEventListener("unhandledrejection", handleGlobalError);
+    };
   }, []);
 
   // Persist collapsed state
@@ -68,6 +86,13 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
   return (
     <LangProvider lang={lang}>
     <SidebarContext.Provider value={{ collapsed, setCollapsed, mobileOpen, setMobileOpen }}>
+      {/* Skip-to-content accessibility link */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground focus:shadow-lg focus:outline-none"
+      >
+        Lompati ke konten utama
+      </a>
       <div className="flex min-h-screen">
         {/* Mobile overlay backdrop */}
         {mobileOpen && (
@@ -94,7 +119,7 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
           )}
         >
           <AppTopbar user={user} />
-          <main className="min-w-0 flex-1 p-3 pb-24 sm:p-4 md:p-6 md:pb-28">{children}</main>
+          <main id="main-content" className="min-w-0 flex-1 p-3 pb-24 sm:p-4 md:p-6 md:pb-28">{children}</main>
         </div>
         {!onBrainPage && <AIChatPanel variant="floating" />}
       </div>

@@ -25,6 +25,7 @@ import { PaymentSection } from "./payment-section";
 import { ShareTokenSection } from "./share-token-section";
 import { SendInvoiceButton } from "./send-invoice-button";
 import { SendReminderButton } from "./send-reminder-button";
+import { DeleteInvoiceButton } from "./delete-invoice-button";
 
 import { InvoiceMetaForm } from "@/components/invoices/invoice-meta-form";
 import { formatDateID, formatMoney } from "@/lib/utils";
@@ -187,11 +188,17 @@ export default async function InvoiceDetailPage({
   }
 
   const isPaid = Number(inv.total) > 0 && totalPaid >= Number(inv.total);
-  const displayStatus = isPaid
-    ? "paid"
-    : inv.status === "paid"
-      ? "payment due"
-      : inv.status;
+  // DB status is the source of truth for the badge. A manually marked "paid"
+  // invoice (without a recorded payment row) must still show "Lunas".
+  // Only override upward to "paid" when payments cover the total but the DB
+  // status hasn't been updated yet — never downgrade a "paid" status to
+  // "payment due" based on payment rows.
+  const displayStatus =
+    inv.status === "paid"
+      ? "paid"
+      : isPaid
+        ? "paid"
+        : inv.status;
   const defaultInvoiceMessage = buildDefaultInvoiceMessage({
     clientName: client?.companyName || client?.name || t("Klien", "Client"),
     invoiceNumber: inv.invoiceNumber,
@@ -244,6 +251,11 @@ export default async function InvoiceDetailPage({
           <SendReminderButton
             invoiceId={invoiceId}
             disabled={!client?.email || items.length === 0 || ["draft", "paid", "cancelled"].includes(inv.status)}
+          />
+          <DeleteInvoiceButton
+            invoiceId={invoiceId}
+            disabled={!["draft", "cancelled"].includes(inv.status)}
+            backUrl={backUrl}
           />
           <Badge
             variant={invoiceStatusVariant(displayStatus, lang).variant}

@@ -1,10 +1,10 @@
 # Cubiqlo Full Feature Status
 
-Last updated: 2026-08-01
+Last updated: 2026-08-05
 Production app: https://app.cubiqlo.com
 Dev app: https://dev.cubiqlo.com
-Latest verified dev branch: `dev/integration` at `bccc2d7`
-Latest verified production commit: `9381be5`
+Latest verified dev branch: `main` at `fea68df`
+Latest verified production commit: `fea68df`
 
 ## Status legend
 
@@ -18,12 +18,12 @@ Latest verified production commit: `9381be5`
 | Area | Status | Notes |
 | --- | --- | --- |
 | Production domain | DONE | `https://app.cubiqlo.com` live over HTTPS; apex keeps public/redirect behavior. |
-| Docker deploy | DONE | Production uses `cubiqlo-new-app` on `dokploy-network`; current image `cubiqlo-prod:sha-9381be5-repo-safe-fix-20260731202341`. |
-| Database | DONE | Postgres container healthy. |
+| Docker deploy | DONE | Production uses `cubiqlo-new-app` on `dokploy-network`; current image `cubicle:latest` at `c0f6bbc`. |
+| Database | DONE | Postgres container healthy; all 21 personal_sites columns present including `seo`, `pages`, `theme_config`, `hero_image`. |
 | Health endpoint | DONE | `/api/health` returns `{"status":"ok","db":"ok"}`. |
 | Protected app routing | DONE | `/app/*` redirects unauthenticated users to `/login?redirect=...`. |
-| Git checkpoint | DONE | Production `main` verified at `9381be5 fix: restore project service and invoice guards`; `HEAD` and `origin/main` match. |
-| Dev integration checkpoint | DONE | `dev/integration` revision `bccc2d7` deployed healthy to `dev.cubiqlo.com`; production container unchanged. |
+| Git checkpoint | DONE | Production `main` verified at `c0f6bbc fix(site): use normalizeStoredPersonalSite`; `HEAD` and `origin/main` match. |
+| Dev integration checkpoint | DONE | `dev.cubiqlo.com` runs latest `main`; production container in sync. |
 
 ## Core app shell
 
@@ -129,7 +129,7 @@ Latest verified production commit: `9381be5`
 | Feature | Route/API | Status | Notes |
 | --- | --- | --- | --- |
 | AI chat/action | `/api/ai/chat`, `/api/ai/action` | PARTIAL | AI endpoints and conversations exist; role guard hardened. |
-| Prompts | `/app/prompts` | DONE | Prompt center exists. |
+| Prompts | `/app/prompts` | DONE | Prompt Studio uses one source of truth for Platform/Ratio/Tone/Offer, eliminating duplicate required fields. Dev AI routes through 9Router model `ag/gemini-3.6-flash-low`; production deployment unchanged. |
 | Brain | `/app/brain` | PARTIAL | Route exists; knowledge/automation maturity pending. |
 | Unified Template Center | `/app/templates` | DONE | Invoice+proposal+contract hub; apply-template on create form still TODO; prompt tab soon. |
 
@@ -139,13 +139,13 @@ Latest verified production commit: `9381be5`
 | --- | --- | --- | --- |
 | Personal notes | `/app/personal` | DONE | v0.1.28–0.1.30: tabs open/done/archived/all, pin, overdue, recurrence select + auto-roll, cron 7d/3d/1d dedupe, convert→task (priority), reverse link, infinite load-more, hide `[journal]`/`[site]`. |
 | Journal | `/app/journal` | DONE | v0.1.31: tabs Aktif/Arsip, create+edit+archive+restore+delete, mood/tag i18n, search/filter/export; uses `[journal]` prefix notes. |
-| Personal landing builder | `/app/personal-site` | PARTIAL | Builder controls, sections, links, theme/accent, dashboard preview. |
+| Personal landing builder | `/app/personal-site` | DONE | Full canvas editor with 16 starter blocks, 3 page templates (Freelancer Profile, Agency Website, Service Offer), structured properties panel, 5-tab sidebar (Insert/Pages/Templates/Theme/SEO), device preview switcher, live readiness checklist with Indonesian labels, SEO/share panel with OG metadata+image, AI copy generator (server action + UI), multi-page public route. Prod deployed `c0f6bbc`. |
 | Standalone preview | `/site/preview` | DONE | Private full-page preview route exists. |
-| Public landing page | `/site/[slug]` | DONE | Public published route exists; default `/site/alip` verified `HTTP/2 200`. |
-| Publish controls | `/app/personal-site` | PARTIAL | Slug + published checkbox exist; slug uniqueness/polished validation pending. |
-| Section manager UI | n/a | PROCESS | Current sections use `Heading|Content`; next should be add/duplicate/delete/drag UI. |
-| Template picker | n/a | TODO | Freelancer/agency/consultant templates pending. |
-| Mobile preview | n/a | TODO | Dedicated mobile frame toggle pending. |
+| Public landing page | `/site/[slug]`, `/site/[slug]/[pageSlug]` | DONE | Public home and nested subpage routes render page-specific sections with navigation. |
+| Publish controls | `/app/personal-site` | DONE | Slug + published state; live readiness badge with Indonesian labels; SEO/share panel; preview device switcher. Prod deployed `c0f6bbc`. |
+| Section manager UI | canvas builder | DONE | Add/duplicate/delete/drag plus structured Properties Panel for Services, Pricing, FAQ, CTA, and Gallery. |
+| Template picker | canvas Insert/Templates tabs | DONE | 15 schema-valid starter blocks and 3 first-ship page templates: Freelancer Profile, Agency Website, Service Offer. |
+| Device preview | canvas bottom bar | DONE | Local-only Desktop/Tablet/Mobile widths; switching does not dirty or autosave site data. |
 
 ## Settings + ops
 

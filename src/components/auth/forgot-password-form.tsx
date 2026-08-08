@@ -20,6 +20,8 @@ import { authClient } from "@/lib/auth-client";
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  // i18n labels hardcoded for auth flows
+  // const { t } = useT();
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 

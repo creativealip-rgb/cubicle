@@ -42,10 +42,12 @@ describe("Phase 1 project time tracking wiring", () => {
     const timerWidget = read("src/components/time/timer-widget.tsx");
     const topbar = read("src/components/app-topbar.tsx");
 
-    expect(projectForm).toContain('defaultValues?.billingType==="hours"?"hourly":"fixed_price"');
-    expect(projectForm).toContain('<SelectItem value="fixed_price">Harga Tetap</SelectItem>');
-    expect(projectForm).toContain('<SelectItem value="hourly">Per Jam</SelectItem>');
-    expect(projectForm).toContain('<SelectItem value="retainer">Retainer</SelectItem>');
+    expect(projectForm).toContain(
+      'defaultValues?.billingType === "hours" || defaultValues?.billingType === "hourly"'
+    );
+    expect(projectForm).toMatch(/t\("Harga Tetap".*?Fixed Price/);
+    expect(projectForm).toMatch(/t\("Per Jam".*?Hourly/);
+    expect(projectForm).toContain("Retainer");
     const projectsAction = read("src/lib/actions/projects.ts");
     expect(projectsAction).toContain("retainerFee: parsed.retainerFee != null ? String(parsed.retainerFee) : null");
     expect(projectsAction).toContain('retainerPeriodUnit: parsed.billingModel === "retainer" ? "month" : null');
@@ -53,14 +55,14 @@ describe("Phase 1 project time tracking wiring", () => {
     expect(timerWidget).toContain("startTimer({ workspaceId })");
     expect(timerWidget).toContain("await stopTimer(activeTimer.id)");
     expect(timerWidget).not.toContain("setStopDialogOpen(true)");
-    expect(topbar).toContain("await startTimer({ workspaceId })");
+    expect(topbar).not.toContain("await startTimer({ workspaceId })");
     expect(topbar).toContain("await stopTimer(activeTimer.id)");
     expect(topbar).not.toContain('if (!activeTimer.projectId)');
   });
 
   it("keeps project dialogs reachable on mobile", () => {
     const createDialog = read("src/components/projects/project-create-dialog.tsx");
-    const projectPage = read("src/app/(app)/app/projects/[projectId]/page.tsx");
+    const projectPage = read("src/components/projects/project-edit-dialog.tsx");
     const projectForm = read("src/components/forms/project-form.tsx");
 
     expect(createDialog).toContain('max-h-[90dvh]');
@@ -69,6 +71,6 @@ describe("Phase 1 project time tracking wiring", () => {
     expect(projectPage).toContain('overflow-y-auto');
     expect(projectForm).toContain('sm:grid-cols-2');
     expect(projectForm).toContain('<DialogClose asChild>');
-    expect(projectForm).toContain('>Batal</Button>');
+    expect(projectForm).toContain('t("Batal", "Cancel")');
   });
 });

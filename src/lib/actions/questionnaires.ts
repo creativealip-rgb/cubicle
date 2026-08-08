@@ -7,32 +7,26 @@ import { db } from "@/db";
 import { questionnaires, questionnaireResponses, clients } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { z } from "zod";
-import crypto from "crypto";
+import * as crypto from "node:crypto";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
-
-// Field schema for the form builder
-const fieldSchema = z.object({
-  id: z.string().min(1).max(100),
-  type: z.enum(["text", "textarea", "select", "multiselect", "number", "date", "email", "url"]),
-  label: z.string().min(1).max(200),
-  required: z.boolean().default(false),
-  options: z.array(z.string()).optional(),
-  placeholder: z.string().optional(),
-});
+import {
+  questionnaireSchemaInput,
+  safeParseQuestionnaireSchema,
+} from "@/lib/questionnaire-schema";
 
 const createQuestionnaireSchema = z.object({
   workspaceId: z.string().uuid(),
   name: z.string().min(1).max(200),
   description: z.string().max(2000).optional().nullable(),
-  schema: z.array(fieldSchema).max(50),
+  schema: questionnaireSchemaInput,
 });
 
 const updateQuestionnaireSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   description: z.string().max(2000).optional().nullable(),
-  schema: z.array(fieldSchema).max(50).optional(),
+  schema: questionnaireSchemaInput.optional(),
 });
 
 async function getWorkspaceId(): Promise<string> {
@@ -49,11 +43,13 @@ function hashToken(token: string) {
 
 // ─── Authenticated: Manage Questionnaires ───
 
-export async function createQuestionnaire(input: z.infer<typeof createQuestionnaireSchema>) {
+export async function createQuestionnaire(input: Omit<z.infer<typeof createQuestionnaireSchema>, "workspaceId"> & { workspaceId?: string }) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
-  await assertWorkspaceWritable(db, user.id, input.workspaceId);
-  const parsed = createQuestionnaireSchema.parse(input);
+  const targetWorkspaceId = input.workspaceId || (await getWorkspaceId());
+  await assertWorkspaceWritable(db, user.id, targetWorkspaceId);
+
+  const parsed = createQuestionnaireSchema.parse({ ...input, workspaceId: targetWorkspaceId });
 
   const [q] = await db.insert(questionnaires).values({
     workspaceId: parsed.workspaceId,
@@ -238,7 +234,7 @@ export async function submitQuestionnaire(input: {
     .limit(1);
   if (!q) throw new Error("Questionnaire not found");
 
-  const fields = (q.schema as Array<z.infer<typeof fieldSchema>>) || [];
+  const fields = safeParseQuestionnaireSchema(q.schema);
   for (const field of fields) {
     if (field.required) {
       const val = input.answers[field.id];

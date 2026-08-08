@@ -16,11 +16,11 @@ describe("app navigation registry", () => {
     const routes = allRoutes();
     expect(new Set(routes).size).toBe(routes.length);
     expect(appNavigation.map((entry) => entry.id)).toEqual([
-      "dashboard", "work", "time", "calendar", "files", "finance", "personal", "ai",
+      "dashboard", "work", "time", "business", "calendar", "files", "finance", "personal", "ai",
     ]);
-    expect(routes).not.toContain("/app/services");
+    expect(routes).toContain("/app/services");
+    expect(routes).toContain("/app/proposals");
     expect(routes).not.toContain("/app/packages");
-    expect(routes).not.toContain("/app/proposals");
   });
 
   it("keeps only delivery entities in Work", () => {
@@ -49,9 +49,10 @@ describe("app navigation registry", () => {
     expect(getActiveNavigation(path)).toEqual({ groupId, itemId });
   });
 
-  it("maps hidden sales routes to no sidebar item", () => {
-    expect(getActiveNavigation("/app/services")).toEqual({ groupId: null, itemId: null });
-    expect(getActiveNavigation("/app/proposals/abc")).toEqual({ groupId: null, itemId: null });
+  it("maps business routes to active navigation", () => {
+    expect(getActiveNavigation("/app/services")).toEqual({ groupId: "business", itemId: "services" });
+    expect(getActiveNavigation("/app/proposals/abc")).toEqual({ groupId: "business", itemId: "proposals" });
+    expect(getActiveNavigation("/app/contracts/abc")).toEqual({ groupId: "business", itemId: "contracts" });
     expect(getActiveNavigation("/app/templates")).toEqual({ groupId: null, itemId: null });
   });
 

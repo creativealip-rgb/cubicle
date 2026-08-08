@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { isStaleServerActionError } from "@/lib/client-errors";
+import { useT } from "@/lib/i18n-client";
 
 export default function AppError({
   error,
@@ -14,13 +15,13 @@ export default function AppError({
   reset: () => void;
 }) {
   const stale = isStaleServerActionError(error);
+  const { t } = useT();
 
   useEffect(() => {
     console.error("Cubiqlo app error:", error);
     if (stale) {
-      // Auto-recover after deploy: hard reload picks new Server Action IDs
-      const t = setTimeout(() => window.location.reload(), 1200);
-      return () => clearTimeout(t);
+      const timer = setTimeout(() => window.location.reload(), 1200);
+      return () => clearTimeout(timer);
     }
   }, [error, stale]);
 
@@ -31,12 +32,12 @@ export default function AppError({
           <AlertTriangle className="h-6 w-6 text-amber-600" />
         </div>
         <h1 className="text-xl font-semibold text-slate-950">
-          {stale ? "App baru di-update" : "Ada yang error"}
+          {stale ? t("App baru di-update", "App just updated") : t("Ada yang error", "Something went wrong")}
         </h1>
         <p className="mt-2 text-sm text-slate-600">
           {stale
-            ? "Browser masih pakai versi lama. Halaman akan di-refresh otomatis…"
-            : "Terjadi error tak terduga. Coba lagi, atau kembali ke dashboard."}
+            ? t("Browser masih pakai versi lama. Halaman akan di-refresh otomatis…", "Browser still using old version. Page will auto-refresh…")
+            : t("Terjadi error tak terduga. Coba lagi, atau kembali ke dashboard.", "An unexpected error occurred. Try again, or return to dashboard.")}
         </p>
         {error.digest && (
           <p className="mt-3 font-mono text-xs text-slate-400">Ref: {error.digest}</p>
@@ -51,7 +52,7 @@ export default function AppError({
             className="gap-1.5"
           >
             <RefreshCw className="h-4 w-4" />
-            {stale ? "Refresh sekarang" : "Coba lagi"}
+            {stale ? t("Refresh sekarang", "Refresh now") : t("Coba lagi", "Try again")}
           </Button>
           <Button asChild>
             <Link href="/app/dashboard">Dashboard</Link>

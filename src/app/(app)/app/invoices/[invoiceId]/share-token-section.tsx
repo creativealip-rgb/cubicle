@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { generateInvoiceShareToken, revokeInvoiceShareToken } from "@/lib/actions/invoices";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Copy, Check, ExternalLink, RefreshCw, X } from "lucide-react";
 
 function shareInvoiceUrl(token: string) {
@@ -117,17 +118,17 @@ export function ShareTokenSection({
             </a>
           </Button>
         )}
-        <Button
+        <LoadingButton
           type="button"
           variant="outline"
           size="sm"
           className="gap-1"
           onClick={handleGenerate}
-          disabled={loading}
+          loading={loading}
         >
           <RefreshCw className="h-3 w-3" />
-          {loading ? "Membuat..." : "Buat Link Invoice"}
-        </Button>
+          {"Buat Link Invoice"}
+        </LoadingButton>
         {hasToken && !isExpired && (
           <Button
             type="button"

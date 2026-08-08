@@ -1,4 +1,10 @@
 "use server";
+import { getCurrentLang, createT } from "@/lib/i18n";
+
+async function getT() {
+  const lang = await getCurrentLang();
+  return createT(lang);
+}
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 
 import { auth } from "@/lib/auth";
@@ -29,6 +35,7 @@ import { assertPaymentWithinRemaining } from "@/lib/invoice-payment-rules";
 import {
   assertInvoiceFinancialsMutable,
   calculateInvoiceTotals,
+  isInvoiceStatusTransitionAllowed,
 } from "@/lib/invoice-finance-rules";
 import { validateInvoiceMessage } from "@/lib/invoice-message";
 import { buildInvoiceReportUrl, normalizeInvoiceReportRange, signInvoiceReportRange } from "@/lib/invoice-report-options";
@@ -47,9 +54,9 @@ async function getWorkspaceId(): Promise<string> {
 // ─── Schemas ───
 
 const createInvoiceSchema = z.object({
-  clientId: z.string().uuid(),
-  projectId: z.string().uuid().optional(),
-  projectIds: z.array(z.string().uuid()).optional(),
+  clientId: z.string(),
+  projectId: z.string().optional(),
+  projectIds: z.array(z.string()).optional(),
   projectSources: z.array(ProjectInvoiceSourceSchema).optional(),
   scopedProjectId: z.string().uuid().optional(),
   issueDate: z.string().min(1, "Issue date required"),
@@ -61,8 +68,8 @@ const createInvoiceSchema = z.object({
     description: z.string().min(1),
     quantity: z.number().positive(),
     unitPrice: z.number().min(0),
-    sourceId: z.string().uuid().optional(),
-  })).optional(),
+    sourceId: z.string().optional(),
+  })).default([]),
 });
 
 const updateInvoiceSchema = z.object({
@@ -115,13 +122,15 @@ async function assertInvoiceInWorkspace(invoiceId: string, workspaceId: string) 
     .from(invoices)
     .where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId)))
     .limit(1);
-  if (!inv) throw new Error("Invoice not found");
+  const t = await getT();
+  if (!inv) throw new Error(t("Invoice tidak ditemukan", "Invoice not found"));
   return inv;
 }
 
 // ─── CRUD ───
 
 export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) {
+  console.log("--> SERVER ACTION RECEIVED INPUT:", input);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -173,15 +182,16 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
   const projectItemValues: Array<{ description: string; quantity: number; unitPrice: number; sourceId: string; sourceMode: "fixed_full" | "fixed_dp" | "fixed_milestone" | "fixed_final" | "hourly_deposit"; sourceMetadata: { milestoneName?: string; requestedPercent?: string } | null; originalCurrency: string; originalAmount: number; conversionRate: number }> = [];
   const projectServiceItemValues: Array<{ description: string; quantity: number; unitPrice: number; sourceId: string; originalCurrency: string; originalAmount: number; conversionRate: number }> = [];
   for (const projectId of projectIds) {
-    const [project] = await db.select({ id: projects.id, name: projects.name, billingModel: projects.billingModel, billingType: projects.billingType, budget: projects.budget, rate: projects.rate, currency: projects.currency, packagePrice: packages.price, packageCustomPrice: packages.customPrice }).from(projects).leftJoin(packages, eq(projects.selectedPackageId, packages.id)).where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId), eq(projects.clientId, parsed.clientId))).limit(1);
+    const [project] = await db.select({ id: projects.id, name: projects.name, billingModel: projects.billingModel, billingType: projects.billingType, budget: projects.budget, rate: projects.rate, currency: projects.currency, retainerFee: projects.retainerFee, packagePrice: packages.price, packageCustomPrice: packages.customPrice }).from(projects).leftJoin(packages, eq(projects.selectedPackageId, packages.id)).where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId), eq(projects.clientId, parsed.clientId))).limit(1);
     if (!project) throw new Error("Ada proyek yang tidak sesuai dengan klien");
     const source = explicitSources.find((candidate) => candidate.projectId === project.id);
-    let originalAmount = resolveProjectAmount({ billingType: project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packageCustomPrice ?? project.packagePrice ?? 0) || null });
+    const effectiveBudget = project.billingModel === "retainer" && project.retainerFee ? Number(project.retainerFee) : project.budget ? Number(project.budget) : null;
+    let originalAmount = resolveProjectAmount({ billingType: project.billingType, budget: effectiveBudget, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packageCustomPrice ?? project.packagePrice ?? 0) || null });
     let sourceMode: "fixed_full" | "fixed_dp" | "fixed_milestone" | "fixed_final" | "hourly_deposit" = "fixed_final";
     let sourceMetadata: { milestoneName?: string; requestedPercent?: string } | null = null;
     if (source?.mode === "hourly_timesheet") continue;
     if (source?.mode === "hourly_deposit") {
-      if (resolveBillingModel(project) !== "hourly") throw new Error("Deposit Hourly hanya tersedia untuk proyek Hourly");
+      // Backward compat: old hourly deposit flow
       originalAmount = source.amount;
       sourceMode = "hourly_deposit";
     } else if (isFixedInvoiceBillingModel(resolveBillingModel(project))) {
@@ -194,7 +204,6 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
           inArray(invoices.status, ["draft", "sent", "viewed", "paid", "overdue"]),
           inArray(invoiceItems.sourceMode, ["fixed_full", "fixed_dp", "fixed_milestone", "fixed_final"]),
         ));
-      if (source && !source.mode.startsWith("fixed_")) throw new Error("Source invoice tidak sesuai model Fixed Price");
       const fixedSource = source && source.mode.startsWith("fixed_") ? source : { mode: "fixed_final" as const, projectId: project.id };
       originalAmount = Number(resolveFixedSourceAmount(fixedSource, { agreedAmount: originalAmount, priorActiveOriginalAmounts: priorRows.flatMap((row) => row.amount == null ? [] : [row.amount]) }));
       sourceMode = fixedSource.mode;
@@ -206,39 +215,43 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
       throw new Error("Source invoice tidak sesuai model billing proyek");
     }
     if (project.billingType === "hours" && !source) continue;
-    const serviceRows = await db
-      .select({
-        id: projectServices.id,
-        nameSnapshot: projectServices.nameSnapshot,
-        descriptionSnapshot: projectServices.descriptionSnapshot,
-        quantity: projectServices.quantity,
-        unitPrice: projectServices.unitPrice,
-        amount: projectServices.amount,
-        currencySnapshot: projectServices.currencySnapshot,
-        status: projectServices.status,
-      })
-      .from(projectServices)
-      .where(and(
-        eq(projectServices.workspaceId, workspaceId),
-        eq(projectServices.projectId, projectId),
-        eq(projectServices.status, "active"),
-      ));
-    if (serviceRows.length) {
-      for (const row of serviceRows) {
-        const [line] = buildProjectServiceDocumentLines([row], row.currencySnapshot);
-        const converted = convertCurrency(line.amount, line.originalCurrency, parsed.currency || ws?.defaultCurrency || "IDR", ws?.defaultCurrency || "IDR", rateMap);
-        if (!converted) throw new Error(`Kurs ${line.originalCurrency} ke ${parsed.currency} belum tersedia`);
-        projectServiceItemValues.push({
-          description: line.description,
-          quantity: line.quantity,
-          unitPrice: converted.amount / line.quantity,
-          sourceId: line.sourceId,
-          originalCurrency: line.originalCurrency,
-          originalAmount: line.amount,
-          conversionRate: converted.rate,
-        });
+    // For fixed-price projects with an explicit source (DP/milestone/full),
+    // skip service rows — the source amount IS the invoice line, not the services.
+    const skipServices = source && source.mode.startsWith("fixed_");
+    if (!skipServices) {
+      const serviceRows = await db
+        .select({
+          id: projectServices.id,
+          nameSnapshot: projectServices.nameSnapshot,
+          descriptionSnapshot: sql<string | null>`COALESCE(${projectServices.descriptionSnapshot}, '')`,
+          quantity: projectServices.quantity,
+          unitPrice: projectServices.unitPrice,
+          amount: projectServices.amount,
+          currencySnapshot: projectServices.currencySnapshot,
+          status: projectServices.status,
+        })
+        .from(projectServices)
+        .where(and(
+          eq(projectServices.workspaceId, workspaceId),
+          eq(projectServices.projectId, projectId),
+          eq(projectServices.status, "active"),
+        ));
+      if (serviceRows.length) {
+        for (const row of serviceRows) {
+          const [line] = buildProjectServiceDocumentLines([row], row.currencySnapshot);
+          const converted = convertCurrency(line.amount, line.originalCurrency, parsed.currency || ws?.defaultCurrency || "IDR", ws?.defaultCurrency || "IDR", rateMap);
+          if (!converted) throw new Error(`Kurs ${line.originalCurrency} ke ${parsed.currency} belum tersedia`);
+          projectServiceItemValues.push({
+            description: line.description,
+            quantity: line.quantity,
+            unitPrice: converted.amount / line.quantity,
+            sourceId: line.sourceId,
+            originalCurrency: line.originalCurrency,
+            originalAmount: line.amount,
+            conversionRate: converted.rate,
+          });
+        }
       }
-      continue;
     }
     const converted = convertCurrency(originalAmount, project.currency, parsed.currency || ws?.defaultCurrency || "IDR", ws?.defaultCurrency || "IDR", rateMap);
     if (!converted) throw new Error(`Kurs ${project.currency} ke ${parsed.currency} belum tersedia`);
@@ -504,6 +517,15 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
   if (parsed.status === "cancelled" && currentInvoice.status === "draft") {
     throw new Error("Gunakan aksi Batalkan Invoice untuk membatalkan draft");
   }
+  // Guard invoice status transitions: paid/cancelled/archived are terminal and
+  // invalid backwards transitions (e.g. sent -> draft) are rejected. External
+  // flows (send email -> sent, portal -> viewed, cron -> overdue, payments ->
+  // paid) mutate status outside this action and are unaffected.
+  if (parsed.status !== undefined && parsed.status !== currentInvoice.status) {
+    if (!isInvoiceStatusTransitionAllowed(currentInvoice.status, parsed.status)) {
+      throw new Error("Status invoice tidak dapat diubah dari status saat ini");
+    }
+  }
   const changesFinancials =
     (parsed.currency !== undefined && parsed.currency !== currentInvoice.currency) ||
     (parsed.tax !== undefined && parsed.tax !== Number(currentInvoice.tax)) ||
@@ -529,6 +551,28 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
     .where(eq(invoices.id, invoiceId))
     .returning();
 
+  // When status is manually set to "paid" but no payment rows cover the
+  // full total, auto-create a payment row for the remaining amount so the
+  // invoice appears in reports (which aggregate from payments, not invoice
+  // status). This mirrors the "mark as paid" intent.
+  if (parsed.status === "paid") {
+    const [paidResult] = await db
+      .select({ total: sql<string>`coalesce(sum(${payments.amount}), '0')` })
+      .from(payments)
+      .where(eq(payments.invoiceId, invoiceId));
+    const paidSoFar = Number(paidResult?.total ?? 0);
+    const invoiceTotal = Number(inv.total ?? 0);
+    const remaining = invoiceTotal - paidSoFar;
+    if (remaining > 0) {
+      await db.insert(payments).values({
+        invoiceId,
+        amount: String(remaining),
+        paidAt: new Date().toISOString().slice(0, 10),
+        method: null,
+        notes: "Penandaan lunas otomatis",
+      });
+    }
+  }
 
   await writeActivityLog(workspaceId, user.id, "updated_invoice", "invoice", invoiceId);
 
@@ -598,7 +642,8 @@ export async function recalculateInvoice(invoiceId: string) {
   const subtotal = result?.sum || "0";
 
   const [inv] = await db.select().from(invoices).where(eq(invoices.id, invoiceId)).limit(1);
-  if (!inv) throw new Error("Invoice not found");
+  const t = await getT();
+  if (!inv) throw new Error(t("Invoice tidak ditemukan", "Invoice not found"));
 
   const totals = calculateInvoiceTotals(
     Number(subtotal),
@@ -696,7 +741,8 @@ export async function updateInvoiceItem(itemId: string, input: z.infer<typeof up
     .from(invoiceItems)
     .where(eq(invoiceItems.id, itemId))
     .limit(1);
-  if (!item) throw new Error("Invoice item not found");
+  const t = await getT();
+  if (!item) throw new Error(t("Item invoice tidak ditemukan", "Invoice item not found"));
 
   const invoice = await assertInvoiceInWorkspace(item.invoiceId, workspaceId);
   assertInvoiceFinancialsMutable(invoice.status);
@@ -732,7 +778,8 @@ export async function deleteInvoiceItem(itemId: string) {
     .from(invoiceItems)
     .where(eq(invoiceItems.id, itemId))
     .limit(1);
-  if (!item) throw new Error("Invoice item not found");
+  const t = await getT();
+  if (!item) throw new Error(t("Item invoice tidak ditemukan", "Invoice item not found"));
 
   const invoice = await assertInvoiceInWorkspace(item.invoiceId, workspaceId);
   assertInvoiceFinancialsMutable(invoice.status);
@@ -913,7 +960,8 @@ export async function recordPayment(input: z.infer<typeof recordPaymentSchema>) 
     .from(invoices)
     .where(eq(invoices.id, parsed.invoiceId))
     .limit(1);
-  if (!inv) throw new Error("Invoice not found");
+  const t = await getT();
+  if (!inv) throw new Error(t("Invoice tidak ditemukan", "Invoice not found"));
 
   const [paidResult] = await db
     .select({
@@ -957,14 +1005,15 @@ async function sendInvoiceEmailForInvoice(
     .from(invoices)
     .where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId)))
     .limit(1);
-  if (!inv) throw new Error("Invoice not found");
+  const t = await getT();
+  if (!inv) throw new Error(t("Invoice tidak ditemukan", "Invoice not found"));
 
   const [client] = await db
     .select({ name: clients.name, email: clients.email })
     .from(clients)
     .where(eq(clients.id, inv.clientId))
     .limit(1);
-  if (!client?.email) throw new Error("Client email is missing");
+  if (!client?.email) throw new Error(t("Email klien belum diisi", "Client email is missing"));
 
   const [ws] = await db
     .select({ name: workspaces.name })
@@ -1161,7 +1210,8 @@ export async function sendInvoicePaymentReminder(invoiceId: string) {
     .from(clients)
     .where(eq(clients.id, inv.clientId))
     .limit(1);
-  if (!client?.email) throw new Error("Client email is missing");
+  const t = await getT();
+  if (!client?.email) throw new Error(t("Email klien belum diisi", "Client email is missing"));
 
   const [ws] = await db
     .select({ name: workspaces.name })
@@ -1264,7 +1314,8 @@ export async function getInvoice(invoiceId: string) {
     .where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId)))
     .limit(1);
 
-  if (!inv) throw new Error("Invoice not found");
+  const t = await getT();
+  if (!inv) throw new Error(t("Invoice tidak ditemukan", "Invoice not found"));
 
   const items = await db
     .select()
@@ -1319,4 +1370,28 @@ export async function getInvoiceBySharedToken(rawToken: string) {
     .limit(1);
 
   return { ...inv, items, client: client || null, workspace: ws || null };
+}
+
+export async function deleteInvoice(invoiceId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  const inv = await assertInvoiceInWorkspace(invoiceId, workspaceId);
+
+  // Only allow deletion for draft invoices — sent/paid invoices must be cancelled first
+  if (!["draft", "cancelled"].includes(inv.status)) {
+    throw new Error("Hanya invoice draf atau dibatalkan yang bisa dihapus");
+  }
+
+  await db.transaction(async (tx) => {
+    // Delete invoice items first
+    await tx.delete(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId));
+    // Delete payments if any
+    await tx.delete(payments).where(eq(payments.invoiceId, invoiceId));
+    // Delete the invoice
+    await tx.delete(invoices).where(eq(invoices.id, invoiceId));
+  });
+
+  await writeActivityLog(workspaceId, user.id, "deleted_invoice", "invoice", invoiceId);
+  return { success: true };
 }

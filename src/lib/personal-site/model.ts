@@ -1,6 +1,8 @@
 import { z } from "zod";
 
-export const PERSONAL_SITE_THEMES = ["midnight", "paper", "studio"] as const;
+export const PERSONAL_SITE_THEMES = ["midnight", "paper", "studio", "ocean", "forest", "sunset", "rose", "dark"] as const;
+export const PERSONAL_SITE_HEADER_STYLES = ["full-width", "contained", "minimal"] as const;
+export const PERSONAL_SITE_BUTTON_STYLES = ["rounded", "pill", "square"] as const;
 export const PERSONAL_SITE_SECTION_TYPES = [
   "services",
   "process",
@@ -10,6 +12,15 @@ export const PERSONAL_SITE_SECTION_TYPES = [
   "faq",
   "contact",
   "custom",
+  "gallery",
+  "embed",
+  "social",
+  "cta",
+  "divider",
+  "collapsible",
+  "spacer",
+  "tableOfContents",
+  "contentBlock",
 ] as const;
 
 export const RESERVED_PERSONAL_SITE_SLUGS = new Set([
@@ -24,6 +35,8 @@ const idSchema = z.string().trim().min(1).max(80);
 const headingSchema = z.string().trim().min(1).max(80);
 const shortTextSchema = z.string().trim().max(160);
 const descriptionSchema = z.string().trim().max(1_000);
+export const PERSONAL_SITE_ANIMATIONS = ["none", "fade-up", "fade-in", "slide-left", "slide-right", "zoom-in", "bounce"] as const;
+const animationSchema = z.enum(PERSONAL_SITE_ANIMATIONS).optional();
 const optionalPublicHrefSchema = z
   .string()
   .trim()
@@ -81,49 +94,138 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     id: idSchema,
     type: z.literal("services"),
     heading: headingSchema,
+    animation: animationSchema,
     items: z.array(serviceItemSchema).max(12),
   }),
   z.object({
     id: idSchema,
     type: z.literal("process"),
     heading: headingSchema,
+    animation: animationSchema,
     steps: z.array(processStepSchema).max(12),
   }),
   z.object({
     id: idSchema,
     type: z.literal("pricing"),
     heading: headingSchema,
+    animation: animationSchema,
     offers: z.array(pricingOfferSchema).max(8),
   }),
   z.object({
     id: idSchema,
     type: z.literal("portfolio"),
     heading: headingSchema,
+    animation: animationSchema,
     projects: z.array(portfolioProjectSchema).max(12),
   }),
   z.object({
     id: idSchema,
     type: z.literal("testimonials"),
     heading: headingSchema,
+    animation: animationSchema,
     testimonials: z.array(testimonialSchema).max(8),
   }),
   z.object({
     id: idSchema,
     type: z.literal("faq"),
     heading: headingSchema,
+    animation: animationSchema,
     items: z.array(faqItemSchema).max(12),
   }),
   z.object({
     id: idSchema,
     type: z.literal("contact"),
     heading: headingSchema,
+    animation: animationSchema,
     methods: z.array(contactMethodSchema).max(8),
   }),
   z.object({
     id: idSchema,
     type: z.literal("custom"),
     heading: headingSchema,
+    animation: animationSchema,
     content: z.string().trim().max(4_000),
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("gallery"),
+    heading: headingSchema,
+    animation: animationSchema,
+    images: z.array(z.object({
+      id: idSchema,
+      url: z.string().trim().max(2_000),
+      alt: z.string().trim().max(200).optional(),
+    })).max(12),
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("embed"),
+    heading: headingSchema,
+    animation: animationSchema,
+    url: z.string().trim().max(2_000),
+    height: z.number().min(100).max(800).optional(),
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("social"),
+    heading: headingSchema,
+    animation: animationSchema,
+    links: z.array(z.object({
+      id: idSchema,
+      platform: z.string().trim().max(40),
+      url: z.string().trim().max(2_000),
+    })).max(10),
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("cta"),
+    heading: headingSchema,
+    animation: animationSchema,
+    text: z.string().trim().max(500),
+    buttonLabel: z.string().trim().max(60),
+    buttonUrl: optionalPublicHrefSchema,
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("divider"),
+    heading: headingSchema,
+    animation: animationSchema,
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("collapsible"),
+    heading: headingSchema,
+    animation: animationSchema,
+    items: z.array(z.object({
+      id: idSchema,
+      title: z.string().trim().min(1).max(200),
+      content: z.string().trim().min(1).max(2_000),
+    })).max(12),
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("spacer"),
+    heading: headingSchema,
+    animation: animationSchema,
+    height: z.number().min(16).max(200).optional(),
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("tableOfContents"),
+    heading: headingSchema,
+    animation: animationSchema,
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("contentBlock"),
+    heading: headingSchema,
+    animation: animationSchema,
+    columns: z.number().min(2).max(4),
+    layout: z.enum(["equal", "left-heavy", "right-heavy", "thirds"]),
+    items: z.array(z.object({
+      id: idSchema,
+      content: z.string().trim().max(2_000),
+    })).max(4),
   }),
 ]);
 
@@ -142,6 +244,47 @@ export const personalSiteLinkSchema = z.object({
 
 export type PersonalSiteLink = z.infer<typeof personalSiteLinkSchema>;
 
+export const themeConfigSchema = z.object({
+  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  backgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  textColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  fontHeading: z.string().max(60).optional(),
+  fontBody: z.string().max(60).optional(),
+  headerStyle: z.enum(PERSONAL_SITE_HEADER_STYLES).optional(),
+  buttonStyle: z.enum(PERSONAL_SITE_BUTTON_STYLES).optional(),
+});
+
+export type ThemeConfig = z.infer<typeof themeConfigSchema>;
+
+export const personalSitePageSchema = z.object({
+  id: idSchema,
+  slug: z.string().trim().max(48).regex(/^$|^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  title: z.string().trim().min(1).max(100),
+  isHome: z.boolean(),
+  sections: z.array(personalSiteSectionSchema).max(12),
+});
+
+export type PersonalSitePage = z.infer<typeof personalSitePageSchema>;
+
+const seoTitleSchema = z.string().trim().max(80).optional().default("");
+const seoDescriptionSchema = z.string().trim().max(180).optional().default("");
+const seoOgImageSchema = z
+  .string()
+  .trim()
+  .max(2_000)
+  .refine((value) => !value || isSafePublicHref(value), "Gunakan URL publik yang aman")
+  .optional()
+  .nullish();
+
+export const seoMetadataSchema = z.object({
+  title: seoTitleSchema,
+  description: seoDescriptionSchema,
+  ogImage: seoOgImageSchema,
+});
+
+export type SeoMetadata = z.infer<typeof seoMetadataSchema>;
+
 export const personalSiteInputSchema = z.object({
   slug: z
     .string()
@@ -154,6 +297,7 @@ export const personalSiteInputSchema = z.object({
   title: z.string().trim().min(1).max(100),
   subtitle: shortTextSchema,
   hero: z.string().trim().min(1).max(500),
+  heroImage: z.string().trim().max(2_000).nullish(),
   about: z.string().trim().max(2_000),
   ctaLabel: z.string().trim().max(60),
   ctaUrl: optionalPublicHrefSchema,
@@ -161,6 +305,9 @@ export const personalSiteInputSchema = z.object({
   accent: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, "Gunakan warna hex enam digit"),
   sections: z.array(personalSiteSectionSchema).max(12),
   links: z.array(personalSiteLinkSchema).max(8),
+  pages: z.array(personalSitePageSchema).max(10).optional(),
+  themeConfig: themeConfigSchema.nullish(),
+  seo: seoMetadataSchema.optional().nullish(),
 });
 
 export type PersonalSiteInput = z.infer<typeof personalSiteInputSchema>;
@@ -196,6 +343,22 @@ export const DEFAULT_PERSONAL_SITE: PersonalSiteInput = {
     },
   ],
   links: [],
+  pages: [{
+    id: "home",
+    slug: "",
+    title: "Home",
+    isHome: true,
+    sections: [],
+  }],
+  themeConfig: {
+    primaryColor: "#6647F0",
+    secondaryColor: "#1e293b",
+    backgroundColor: "#ffffff",
+    textColor: "#111827",
+    headerStyle: "full-width",
+    buttonStyle: "rounded",
+  },
+  seo: undefined,
 };
 
 export function normalizePersonalSiteSlug(value: string) {
@@ -327,19 +490,32 @@ export function normalizeLegacyLinks(value: unknown): PersonalSiteLink[] {
 }
 
 export function normalizeStoredPersonalSite(value: unknown): PersonalSiteInput {
-  const raw = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
-  const candidate = {
+  const raw: Record<string, unknown> = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  const rawSeo: Record<string, unknown> | null = raw.seo && typeof raw.seo === "object" ? (raw.seo as Record<string, unknown>) : null;
+  const candidate: Partial<PersonalSiteInput> & { background?: string } = {
     ...DEFAULT_PERSONAL_SITE,
     ...raw,
     slug: normalizePersonalSiteSlug(String(raw.slug || DEFAULT_PERSONAL_SITE.slug)),
     published: Boolean(raw.published),
     theme: PERSONAL_SITE_THEMES.includes(raw.theme as (typeof PERSONAL_SITE_THEMES)[number])
-      ? raw.theme
-      : raw.background === "Paper" ? "paper" : "midnight",
+      ? (raw.theme as PersonalSiteInput["theme"])
+      : (raw.background as string | undefined) === "Paper" ? "paper" : "midnight",
     sections: normalizeLegacySections(raw.sections),
     links: normalizeLegacyLinks(raw.links),
+    pages: Array.isArray(raw.pages) ? (raw.pages as PersonalSiteInput["pages"]) : DEFAULT_PERSONAL_SITE.pages,
+    themeConfig: raw.themeConfig && typeof raw.themeConfig === "object" ? (raw.themeConfig as PersonalSiteInput["themeConfig"]) : undefined,
+    seo: rawSeo
+      ? {
+          title: String(rawSeo.title ?? ""),
+          description: String(rawSeo.description ?? ""),
+          ogImage: rawSeo.ogImage ? String(rawSeo.ogImage) : null,
+        }
+      : DEFAULT_PERSONAL_SITE.seo,
   };
   const parsed = personalSiteInputSchema.safeParse(candidate);
+  if (!parsed.success) {
+    console.error("normalizeStoredPersonalSite FAILED:", JSON.stringify(parsed.error.issues.slice(0,3)));
+  }
   return parsed.success ? parsed.data : DEFAULT_PERSONAL_SITE;
 }
 
@@ -353,5 +529,14 @@ export function sectionHasContent(section: PersonalSiteSection) {
     case "faq": return section.items.some((item) => item.question && item.answer);
     case "contact": return section.methods.some((item) => item.label && (item.value || item.url));
     case "custom": return Boolean(section.content.trim());
+    case "gallery": return section.images.some((img) => img.url);
+    case "embed": return Boolean(section.url.trim());
+    case "social": return section.links.some((link) => link.url);
+    case "cta": return Boolean(section.text.trim()) || Boolean(section.buttonLabel.trim());
+    case "divider": return true;
+    case "collapsible": return section.items.some((item) => item.title && item.content);
+    case "spacer": return true;
+    case "tableOfContents": return true;
+    case "contentBlock": return section.items.some((item) => item.content.trim());
   }
 }

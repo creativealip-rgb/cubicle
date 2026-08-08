@@ -4,6 +4,7 @@ export type InvoiceSourceDraft = {
   mode: InvoiceSourceMode;
   amountType?: "percent" | "amount";
   value?: number;
+  amount?: number;
   milestoneName?: string;
   description?: string;
   periodStart?: string;
@@ -24,10 +25,14 @@ export function defaultInvoiceSource(
   options: { hasActiveFixedHistory?: boolean; hasInitialTimeEntries?: boolean } | boolean = {},
 ): InvoiceSourceDraft | null {
   const normalized = typeof options === "boolean" ? { hasInitialTimeEntries: options } : options;
-  if (["fixed_price", "project", "package"].includes(billingType)) {
+  // All billing types use the same source modes
+  if (["fixed_price", "project", "package", "retainer"].includes(billingType)) {
     return { mode: normalized.hasActiveFixedHistory ? "fixed_final" : "fixed_full" };
   }
-  if (["hourly", "hours"].includes(billingType) && normalized.hasInitialTimeEntries) return { mode: "hourly_timesheet", timeEntryIds: [] };
+  // Hourly invoices need manual source selection
+  if (["hourly", "hours"].includes(billingType)) {
+    return null;
+  }
   return null;
 }
 
@@ -54,6 +59,6 @@ export function sourceDraftComplete(source: InvoiceSourceDraft | null): boolean 
   if (!source) return false;
   if (["fixed_full", "fixed_final"].includes(source.mode)) return true;
   if (["fixed_dp", "fixed_milestone"].includes(source.mode)) return Boolean(source.amountType && source.value && source.value > 0 && (source.mode !== "fixed_milestone" || source.milestoneName?.trim()));
-  if (source.mode === "hourly_deposit") return Boolean(source.value && source.value > 0);
+  if (source.mode === "hourly_deposit") return Boolean((source.amount || source.value) && (source.amount || source.value)! > 0);
   return Boolean(source.periodStart && source.periodEnd && source.periodStart < source.periodEnd && source.timeEntryIds?.length);
 }

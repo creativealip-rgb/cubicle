@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Copy, ExternalLink } from "lucide-react";
 import { updateWorkspaceBookingSlug } from "@/lib/actions/workspace";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useT } from "@/lib/i18n-client";
@@ -110,14 +111,15 @@ export function BookingSlugForm({
             placeholder="alip-meeting"
             className="font-mono text-sm"
           />
-          <Button
+          <LoadingButton
             type="submit"
             size="sm"
-            disabled={loading || normalizeSlug(slug) === (defaultSlug ?? "")}
+            loading={loading}
+            disabled={normalizeSlug(slug) === (defaultSlug ?? "")}
             className="sm:shrink-0"
           >
-            {loading ? t("Menyimpan…", "Saving…") : t("Simpan slug", "Save slug")}
-          </Button>
+            {t("Simpan slug", "Save slug")}
+          </LoadingButton>
         </div>
         <p className="text-xs text-muted-foreground">
           {t(

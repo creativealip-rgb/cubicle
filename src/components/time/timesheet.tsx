@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -177,16 +178,42 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
     [filteredEntries],
   );
 
-  const editProjects = useMemo(() => {
+  const [editProjectSearch, setEditProjectSearch] = useState("");
+  const [editProjectSearchOpen, setEditProjectSearchOpen] = useState(false);
+  const [editTaskSearch, setEditTaskSearch] = useState("");
+  const [editTaskSearchOpen, setEditTaskSearchOpen] = useState(false);
+
+  const allEditProjectOptions = useMemo(() => {
     const writableProjects = projects.filter((p) => p.timeTrackingMode !== "off");
-    if (!editClientId) return writableProjects;
-    return writableProjects.filter((p) => p.clientId === editClientId);
-  }, [editClientId, projects]);
+    return writableProjects.map((p) => {
+      const client = clients.find((c) => c.id === p.clientId);
+      return {
+        projectId: p.id,
+        projectName: p.name,
+        clientId: p.clientId || "",
+        clientName: client?.name || t("Tanpa Klien", "No Client"),
+      };
+    });
+  }, [projects, clients, t]);
+
+  const filteredEditProjectOptions = useMemo(() => {
+    const term = editProjectSearch.toLowerCase().trim();
+    if (!term) return allEditProjectOptions;
+    return allEditProjectOptions.filter(
+      (opt) => opt.projectName.toLowerCase().includes(term) || opt.clientName.toLowerCase().includes(term),
+    );
+  }, [allEditProjectOptions, editProjectSearch]);
 
   const editTasks = useMemo(() => {
     if (!editProjectId) return [];
     return tasks.filter((tk) => tk.projectId === editProjectId);
   }, [editProjectId, tasks]);
+
+  const filteredEditTaskOptions = useMemo(() => {
+    const term = editTaskSearch.toLowerCase().trim();
+    if (!term) return editTasks;
+    return editTasks.filter((tk) => tk.title.toLowerCase().includes(term));
+  }, [editTasks, editTaskSearch]);
 
 
   const filterProjects = useMemo(() => {
@@ -253,6 +280,15 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
     setEditClientId(entry.clientId || "");
     setEditProjectId(entry.projectId || "");
     setEditTaskId(entry.taskId || "__none__");
+
+    const clientName = entry.clientName || clients.find((c) => c.id === entry.clientId)?.name || "";
+    const projectName = entry.projectName || projects.find((p) => p.id === entry.projectId)?.name || "";
+    setEditProjectSearch(clientName && projectName ? `${clientName} — ${projectName}` : projectName || clientName);
+    setEditProjectSearchOpen(false);
+
+    const taskTitle = entry.taskTitle || tasks.find((t) => t.id === entry.taskId)?.title || "";
+    setEditTaskSearch(taskTitle);
+    setEditTaskSearchOpen(false);
     setEditDate(toDateInputValue(entry.startTime));
     setEditMinutes(String(entry.durationMinutes ?? entry.manualMinutes ?? 0));
     setEditBillable(entry.billable);
@@ -279,7 +315,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
     setEditLoading(true);
     try {
       const startIso = editDate
-        ? new Date(`${editDate}T00:00:00`).toISOString()
+        ? new Date(`${editDate}T12:00:00+07:00`).toISOString()
         : editEntry.startTime
           ? new Date(editEntry.startTime).toISOString()
           : new Date().toISOString();
@@ -636,73 +672,103 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
             <DialogTitle>{t("Edit entri waktu", "Edit time entry")}</DialogTitle>
           </DialogHeader>
           <div className="grid min-h-0 gap-4 overflow-y-auto px-5 py-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">{t("Klien", "Client")}</Label>
-                <Select
-                  value={editClientId}
-                  onValueChange={(v) => {
-                    setEditClientId(v);
-                    setEditProjectId("");
-                    setEditTaskId("__none__");
-                  }}
-                >
-                  <SelectTrigger className={`h-10 text-sm ${editClientError ? "border-destructive" : ""}`}>
-                    <SelectValue placeholder={t("Pilih klien", "Select client")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clients.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {editClientError ? <p className="text-xs text-destructive">{t("Klien wajib dipilih", "Client is required")}</p> : null}
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">{t("Proyek", "Project")}</Label>
-                <Select
-                  value={editProjectId}
-                  onValueChange={(v) => {
-                    setEditProjectId(v);
-                    setEditTaskId("__none__");
-                  }}
-                  disabled={!editClientId}
-                >
-                  <SelectTrigger className={`h-10 text-sm ${editProjectError ? "border-destructive" : ""}`}>
-                    <SelectValue placeholder={t("Pilih proyek", "Select project")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {editProjects.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {editProjectError ? <p className="text-xs text-destructive">{t("Proyek wajib dipilih", "Project is required")}</p> : null}
-              </div>
-            </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">{t("Tugas", "Task")}</Label>
-              <Select
-                value={editTaskId}
-                onValueChange={handleEditTaskChange}
-                disabled={!editProjectId}
-              >
-                <SelectTrigger className="h-9 text-sm">
-                  <SelectValue placeholder={t("Opsional", "Optional")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">{t("Tidak ada", "None")}</SelectItem>
-                  {editTasks.map((tk) => (
-                    <SelectItem key={tk.id} value={tk.id}>
-                      {tk.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="text-xs">{t("Klien & Proyek *", "Client & Project *")}</Label>
+              <div className="relative">
+                <Input
+                  placeholder={t("Cari klien atau proyek...", "Search client or project...")}
+                  value={editProjectSearch}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setEditProjectSearch(val);
+                    setEditProjectSearchOpen(Boolean(val.trim()));
+                  }}
+                  onFocus={() => {
+                    if (editProjectSearch.trim()) setEditProjectSearchOpen(true);
+                  }}
+                  className={`h-10 text-sm ${editProjectError || editClientError ? "border-destructive" : ""}`}
+                />
+                {editProjectSearchOpen && (
+                  <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                    {filteredEditProjectOptions.length === 0 ? (
+                      <p className="p-2 text-xs text-muted-foreground">{t("Klien atau proyek tidak ditemukan", "No client or project found")}</p>
+                    ) : (
+                      filteredEditProjectOptions.map((opt) => (
+                        <button
+                          key={opt.projectId}
+                          type="button"
+                          className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${editProjectId === opt.projectId ? "bg-accent font-medium" : ""}`}
+                          onClick={() => {
+                            setEditClientId(opt.clientId);
+                            setEditProjectId(opt.projectId);
+                            setEditProjectSearch(`${opt.clientName} — ${opt.projectName}`);
+                            setEditProjectSearchOpen(false);
+                            setEditTaskId("__none__");
+                            setEditTaskSearch("");
+                          }}
+                        >
+                          <span>{opt.projectName}</span>
+                          <span className="text-[10px] text-muted-foreground">{opt.clientName}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+              {editClientError || editProjectError ? <p className="text-xs text-destructive">{t("Klien & Proyek wajib dipilih", "Client & Project is required")}</p> : null}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">{t("Tugas (Opsional)", "Task (Optional)")}</Label>
+              <div className="relative">
+                <Input
+                  placeholder={editProjectId ? t("Cari tugas...", "Search task...") : t("Pilih klien & proyek dulu", "Select client & project first")}
+                  value={editTaskSearch}
+                  disabled={!editProjectId}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setEditTaskSearch(val);
+                    setEditTaskSearchOpen(Boolean(val.trim()));
+                  }}
+                  onFocus={() => {
+                    if (editTaskSearch.trim() && editProjectId) setEditTaskSearchOpen(true);
+                  }}
+                  className="h-10 text-sm"
+                />
+                {editTaskSearchOpen && editProjectId && (
+                  <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                    <button
+                      type="button"
+                      className={`w-full rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${editTaskId === "__none__" ? "bg-accent font-medium" : ""}`}
+                      onClick={() => {
+                        setEditTaskId("__none__");
+                        setEditTaskSearch("");
+                        setEditTaskSearchOpen(false);
+                      }}
+                    >
+                      {t("Tidak ada", "None")}
+                    </button>
+                    {filteredEditTaskOptions.length === 0 ? (
+                      <p className="p-2 text-xs text-muted-foreground">{t("Tugas tidak ditemukan", "No task found")}</p>
+                    ) : (
+                      filteredEditTaskOptions.map((tk) => (
+                        <button
+                          key={tk.id}
+                          type="button"
+                          className={`w-full rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${editTaskId === tk.id ? "bg-accent font-medium" : ""}`}
+                          onClick={() => {
+                            handleEditTaskChange(tk.id);
+                            setEditTaskSearch(tk.title);
+                            setEditTaskSearchOpen(false);
+                          }}
+                        >
+                          {tk.title}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
@@ -729,10 +795,11 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">{t("Deskripsi", "Description")}</Label>
-              <Input
+              <Textarea
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
-                className="h-9"
+                rows={3}
+                className="min-h-[80px]"
               />
               <p className="text-[11px] text-muted-foreground">
                 {t(
@@ -763,21 +830,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                   <SelectContent>
                     <SelectItem value="yes">{t("Ya", "Yes")}</SelectItem>
                     <SelectItem value="no">{t("Tidak", "No")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Status</Label>
-                <Select
-                  value={editStatus}
-                  onValueChange={(v) => setEditStatus(v as "draft" | "approved")}
-                >
-                  <SelectTrigger className="h-9 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="approved">Approved</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

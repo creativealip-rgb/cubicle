@@ -91,8 +91,9 @@ function deltaText(current: number, previous: number, lang: string) {
   return `${percent > 0 ? "+" : "−"}${Math.abs(percent)}% ${lang === "en" ? "vs previous period" : "dari periode lalu"}`;
 }
 
-function ReportTabs({ active, financeHref, timeHref, financeLabel, timeLabel }: { active: "finance" | "time"; financeHref: string; timeHref: string; financeLabel: string; timeLabel: string }) {
-  return <nav aria-label="Jenis laporan" className="flex gap-1 border-b">
+function ReportTabs({ active, financeHref, timeHref, financeLabel, timeLabel, lang }: { active: "finance" | "time"; financeHref: string; timeHref: string; financeLabel: string; timeLabel: string; lang: "id" | "en" }) {
+  const ariaLabel = lang === "en" ? "Report type" : "Jenis laporan";
+  return <nav aria-label={ariaLabel} className="flex gap-1 border-b">
     <Link href={financeHref} aria-current={active === "finance" ? "page" : undefined} className={`border-b-2 px-3 py-2 text-sm font-medium ${active === "finance" ? "border-primary" : "border-transparent text-muted-foreground"}`}>{financeLabel}</Link>
     <Link href={timeHref} aria-current={active === "time" ? "page" : undefined} className={`border-b-2 px-3 py-2 text-sm font-medium ${active === "time" ? "border-primary" : "border-transparent text-muted-foreground"}`}>{timeLabel}</Link>
   </nav>;
@@ -411,7 +412,7 @@ export default async function ReportsPage({
           <div><h1 className="app-page-title">{t("Laporan", "Reports")}</h1><p className="mt-1 text-sm text-muted-foreground">{t("Analisis waktu lintas proyek dan anggota.", "Time analysis across projects and members.")}</p></div>
           <ReportControls lang={lang} preset={period.preset} from={period.start} to={period.end} />
         </div>
-        <ReportTabs active="time" financeHref={reportHref("finance")} timeHref={reportHref("time")} financeLabel={t("Keuangan", "Finance")} timeLabel={t("Waktu", "Time")} />
+        <ReportTabs active="time" financeHref={reportHref("finance")} timeHref={reportHref("time")} financeLabel={t("Keuangan", "Finance")} timeLabel={t("Waktu", "Time")} lang={lang} />
         <Card><CardHeader><CardTitle>{t("Kinerja Waktu", "Time performance")}</CardTitle><CardDescription>{reportPeriodLabel(period, lang)}</CardDescription></CardHeader><CardContent className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {[[t("Total", "Total"), timeReport.summary.totalMinutes], ["Billable", timeReport.summary.billableMinutes], ["Non-billable", timeReport.summary.nonBillableMinutes]].map(([label, minutes]) => <div key={String(label)}><p className="text-xs text-muted-foreground">{label}</p><p className="text-xl font-semibold tabular-nums">{(Number(minutes) / 60).toFixed(1)}h</p></div>)}
           <div><p className="text-xs text-muted-foreground">{t("Estimasi nilai", "Estimated value")}</p><p className="text-xl font-semibold tabular-nums">{formatMoney(timeReport.summary.billableValue, baseCurrency)}</p></div>
@@ -444,7 +445,7 @@ export default async function ReportsPage({
         </div>
       </div>
 
-      <ReportTabs active="finance" financeHref={reportHref("finance")} timeHref={reportHref("time")} financeLabel={t("Keuangan", "Finance")} timeLabel={t("Waktu", "Time")} />
+      <ReportTabs active="finance" financeHref={reportHref("finance")} timeHref={reportHref("time")} financeLabel={t("Keuangan", "Finance")} timeLabel={t("Waktu", "Time")} lang={lang} />
 
       {missingFxList.length > 0 && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">

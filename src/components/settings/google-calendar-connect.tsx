@@ -7,6 +7,7 @@ import { Calendar, CheckCircle2, Link2Off, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n-client";
+import { useConfirm } from "@/lib/hooks/use-confirm";
 
 type Props = {
   configured: boolean;
@@ -29,6 +30,7 @@ export function GoogleCalendarConnect({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
+  const { confirm, dialog } = useConfirm();
 
   useEffect(() => {
     const gcal = searchParams.get("gcal");
@@ -55,7 +57,13 @@ export function GoogleCalendarConnect({
   }, [searchParams, router, t]);
 
   async function disconnect() {
-    if (!window.confirm(t("Putuskan Google Calendar dari akun ini?", "Disconnect Google Calendar from this account?"))) return;
+    const ok = await confirm({
+      title: t("Putuskan Google Calendar?", "Disconnect Google Calendar?"),
+      description: t("Putuskan Google Calendar dari akun ini?", "Disconnect Google Calendar from this account?"),
+      confirmLabel: t("Putuskan", "Disconnect"),
+      destructive: true,
+    });
+    if (!ok) return;
     setLoading(true);
     try {
       const res = await fetch("/api/integrations/google-calendar/disconnect", {
@@ -72,6 +80,8 @@ export function GoogleCalendarConnect({
   }
 
   return (
+    <>
+    {dialog}
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant={connected ? "default" : "secondary"}>
@@ -149,5 +159,6 @@ export function GoogleCalendarConnect({
         )}
       </div>
     </div>
+    </>
   );
 }

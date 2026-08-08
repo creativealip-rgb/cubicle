@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useT } from "@/lib/i18n-client";
+import { useConfirm } from "@/lib/hooks/use-confirm";
+import { isStaleServerActionError } from "@/lib/client-errors";
 
 const COMMON = ["USD", "EUR", "SGD", "AUD", "GBP", "MYR", "JPY", "IDR"];
 
@@ -38,6 +40,7 @@ export function CurrencyRatesForm({
 }: Props) {
   const { t } = useT();
   const router = useRouter();
+  const { confirm, dialog } = useConfirm();
   const [fromCurrency, setFromCurrency] = useState("USD");
   const [rate, setRate] = useState("");
   const [busy, setBusy] = useState(false);
@@ -91,6 +94,11 @@ export function CurrencyRatesForm({
       setRate("");
       router.refresh();
     } catch (err) {
+      if (isStaleServerActionError(err)) {
+        toast.info(t("Versi aplikasi baru terdeteksi. Memuat ulang...", "App updated. Reloading..."));
+        setTimeout(() => window.location.reload(), 600);
+        return;
+      }
       toast.error(err instanceof Error ? err.message : t("Gagal simpan", "Save failed"));
     } finally {
       setBusy(false);
@@ -99,13 +107,16 @@ export function CurrencyRatesForm({
 
   async function onDelete(code: string) {
     if (!canEdit) return;
-    const confirmed = window.confirm(
-      t(
+    const ok = await confirm({
+      title: t(`Hapus rate ${code}?`, `Remove ${code} rate?`),
+      description: t(
         `Hapus rate ${code}? Ringkasan ${code} tidak akan dikonversi sampai rate baru ditambahkan.`,
         `Remove the ${code} rate? ${code} totals will not be converted until a new rate is added.`,
       ),
-    );
-    if (!confirmed) return;
+      confirmLabel: t("Hapus", "Remove"),
+      destructive: true,
+    });
+    if (!ok) return;
     setDeleting(code);
     try {
       await deleteWorkspaceCurrencyRate({ fromCurrency: code });
@@ -119,6 +130,8 @@ export function CurrencyRatesForm({
   }
 
   return (
+    <>
+    {dialog}
     <div className="space-y-4">
       <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
         <p>
@@ -239,5 +252,6 @@ export function CurrencyRatesForm({
         </form>
       )}
     </div>
+    </>
   );
 }

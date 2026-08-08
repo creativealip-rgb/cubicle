@@ -38,30 +38,36 @@ export function ProjectTaskWorkspace({ projectId, mode, workflowTasks, reusableT
     await reorderProjectTasks(projectId, "reusable", orderedTaskIds);
     window.location.reload();
   }
+  const titleText = mode === "reusable" ? t("Tugas Berulang", "Recurring Tasks") : t("Tugas Workflow", "Workflow Tasks");
+  const createButton = (
+    <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="default" className="gap-1">
+          <Plus className="h-4 w-4" /> {t("Tambah Tugas", "Add Task")}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90dvh] w-[calc(100%-1rem)] overflow-y-auto sm:max-w-[520px]">
+        <DialogHeader>
+          <DialogTitle>{t("Tambah Tugas", "Add Task")}</DialogTitle>
+        </DialogHeader>
+        <TaskForm mode="create" projectId={projectId} members={members} projects={projects} taskMode={mode} onSuccess={() => setCreateOpen(false)} />
+      </DialogContent>
+    </Dialog>
+  );
+
   return (
     <section className="space-y-4">
-      <div className="flex justify-end">
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger asChild>
-            <Button className="w-full gap-2 sm:w-auto">
-              <Plus className="h-4 w-4" /> {t("Tambah Tugas", "Add Task")}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-h-[90dvh] w-[calc(100%-1rem)] overflow-y-auto sm:max-w-[520px]">
-            <DialogHeader>
-              <DialogTitle>{t("Tambah Tugas", "Add Task")}</DialogTitle>
-            </DialogHeader>
-            <TaskForm mode="create" projectId={projectId} members={members} projects={projects} taskMode={mode} onSuccess={() => setCreateOpen(false)} />
-          </DialogContent>
-        </Dialog>
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="font-semibold">{titleText}</h3>
+        {createButton}
       </div>
-      {visibleWorkflow.length > 0 && <div className="space-y-2"><h3 className="text-sm font-semibold">Tugas Workflow</h3><WorkflowTaskWorkspace tasks={visibleWorkflow} members={members} projects={projects} currentUserId={currentUserId} /></div>}
-      {visibleReusable.length > 0 && <div className="space-y-2"><h3 className="text-sm font-semibold">Tugas Berulang</h3><ReusableTaskWorkspace tasks={visibleReusable} members={members} onMove={projectId ? moveReusable : undefined} /></div>}
-      {visibleWorkflow.length === 0 && visibleReusable.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">Belum ada tugas.</p>}
+      {visibleWorkflow.length > 0 && mode === "workflow" && <WorkflowTaskWorkspace tasks={visibleWorkflow} members={members} projects={projects} currentUserId={currentUserId} />}
+      {visibleReusable.length > 0 && mode === "reusable" && <ReusableTaskWorkspace tasks={visibleReusable} members={members} onMove={projectId ? moveReusable : undefined} />}
+      {visibleWorkflow.length === 0 && visibleReusable.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">{t("Belum ada tugas.", "No tasks yet.")}</p>}
       {!projectId && Math.max(workflowTasks.length, reusableTasks.length) > PAGE_SIZE ? (
         <div className="flex justify-end gap-2">
-          <button disabled={page === 1} onClick={() => setPage((value) => value - 1)}>Sebelumnya</button>
-          <button disabled={page * PAGE_SIZE >= Math.max(workflowTasks.length, reusableTasks.length)} onClick={() => setPage((value) => value + 1)}>Berikutnya</button>
+          <button disabled={page === 1} onClick={() => setPage((value) => value - 1)}>{t("Sebelumnya", "Previous")}</button>
+          <button disabled={page * PAGE_SIZE >= Math.max(workflowTasks.length, reusableTasks.length)} onClick={() => setPage((value) => value + 1)}>{t("Berikutnya", "Next")}</button>
         </div>
       ) : null}
       <span className="hidden">{String(archiveTask)}{String(restoreTask)}</span>

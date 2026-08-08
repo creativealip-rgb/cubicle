@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import {
   Dialog,
   DialogContent,
@@ -141,10 +142,10 @@ export function SendInvoiceButton({
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>{t("Batal", "Cancel")}</Button>
-          <Button type="button" onClick={handleSend} disabled={loading || !message.trim() || (attachReport && (!from || !to || from > to))} className="gap-2">
+          <LoadingButton type="button" onClick={handleSend} loading={loading} loadingText={t("Mengirim...", "Sending...")} disabled={!message.trim() || (attachReport && (!from || !to || from > to))} className="gap-2">
             <Send className="h-4 w-4" />
-            {loading ? t("Mengirim...", "Sending...") : t("Kirim", "Send")}
-          </Button>
+            {t("Kirim", "Send")}
+          </LoadingButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

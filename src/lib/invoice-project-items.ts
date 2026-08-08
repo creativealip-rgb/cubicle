@@ -24,8 +24,8 @@ export function resolveProjectAmount(project: {
   rate: number | null;
   packagePrice: number | null;
 }): number {
-  if (project.billingType === "hours") return 0;
   if (project.billingType === "package") return project.packagePrice ?? project.budget ?? 0;
+  if (project.billingType === "hours" || project.billingType === "hourly") return 0;
   return project.budget ?? 0;
 }
 

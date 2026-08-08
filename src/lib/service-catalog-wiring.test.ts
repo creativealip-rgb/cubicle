@@ -71,19 +71,18 @@ describe("Phase 3 Service catalog wiring", () => {
     expect(helper).toContain("normalizeCatalogName");
   });
 
-  it("retires /app/services UI while preserving Service and Package compatibility components", () => {
+  it("exposes /app/services UI under Business while preserving Service and Package compatibility components", () => {
     const servicePage = readExisting("src/app/(app)/app/services/page.tsx");
     const serviceCatalog = readExisting("src/components/services/service-catalog.tsx");
     const packagePage = read("src/app/(app)/app/packages/page.tsx");
     const packageCatalog = read("src/components/packages/package-catalog.tsx");
     const navigation = read("src/lib/navigation/app-navigation.ts");
 
-    expect(servicePage).toContain('router.replace("/app/tasks")');
-    expect(servicePage).not.toContain("ServiceCatalog");
+    expect(servicePage).toContain("ServiceCatalog");
     expect(serviceCatalog).toContain("createService");
     expect(serviceCatalog).toContain("archiveService");
-    expect(serviceCatalog).toContain("pricingModel");
-    expect(navigation).not.toContain('direct("services", "/app/services"');
+    expect(serviceCatalog).toContain("defaultPricingModel");
+    expect(navigation).toContain('direct("services", "/app/services"');
     expect(navigation).not.toContain('direct("packages", "/app/packages"');
 
     expect(packagePage).toContain("PackageCatalog");

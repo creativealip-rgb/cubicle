@@ -112,6 +112,7 @@ export function PromptHistory({
               variant="ghost"
               size="icon"
               className="h-6 w-6 shrink-0 ml-2"
+              aria-label="Hapus riwayat"
               onClick={(e) => {
                 e.stopPropagation();
                 handleDelete(gen.id);

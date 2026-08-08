@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Send, Copy, ExternalLink, Loader2, Check } from "lucide-react";
+import { toast } from "sonner";
 import { sendQuestionnaire } from "@/lib/actions/questionnaires";
 
 export function SendQuestionnaireButton({
@@ -33,7 +34,7 @@ export function SendQuestionnaireButton({
 
   function handleSend() {
     if (!clientId) {
-      alert("Pick a client first");
+      toast.error("Pick a client first");
       return;
     }
     startTransition(async () => {
@@ -47,7 +48,7 @@ export function SendQuestionnaireButton({
         setLink(url);
         router.refresh();
       } catch (err: any) {
-        alert(err?.message || "Send failed");
+        toast.error(err?.message || "Send failed");
       }
     });
   }

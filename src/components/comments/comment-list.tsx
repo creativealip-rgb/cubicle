@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createComment, deleteComment } from "@/lib/actions/comments";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -132,9 +133,9 @@ export function CommentList({ entityType, entityId, initialComments, clientPhone
               <Eye className="h-3 w-3" /> Client
             </Button>
           </div>
-          <Button type="submit" size="sm" disabled={loading || !body.trim()} className="gap-1">
-            <Send className="h-3 w-3" /> {loading ? "Posting..." : "Post"}
-          </Button>
+          <LoadingButton type="submit" size="sm" loading={loading} loadingText="Posting..." disabled={!body.trim()} className="gap-1">
+            <Send className="h-3 w-3" /> {"Post"}
+          </LoadingButton>
         </div>
       </form>
 

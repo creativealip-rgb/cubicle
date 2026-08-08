@@ -30,12 +30,16 @@ describe("timer phase 5 wiring", () => {
     expect(widget).toContain("setSelectedProjectId(activeTimer.projectId || \"\")");
   });
 
-  it("starts and stops empty timers directly from navbar", () => {
+  it("starts and stops empty timers directly from navbar and Timer widget", () => {
     const topbar = read("src/components/app-topbar.tsx");
+    const widget = read("src/components/time/timer-widget.tsx");
 
-    expect(topbar).toContain("await startTimer({ workspaceId })");
-    expect(topbar).toContain("await stopTimer(activeTimer.id)");
-    expect(topbar).not.toContain('if (!activeTimer.projectId)');
+    // Navbar only displays the running timer; start/stop live in the Timer widget
+    expect(topbar).not.toContain("await startTimer({ workspaceId })");
+    expect(topbar).not.toContain("if (!activeTimer.projectId)");
     expect(topbar).not.toContain("updateActiveTimerMetadata");
+    expect(widget).toContain("await startTimer({ workspaceId })");
+    expect(widget).toContain("await stopTimer(activeTimer.id)");
+    expect(widget).not.toContain("setStopDialogOpen(true)");
   });
 });

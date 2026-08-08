@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { BellRing } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { sendInvoicePaymentReminder } from "@/lib/actions/invoices";
 import { useT } from "@/lib/i18n-client";
 
@@ -27,9 +27,9 @@ export function SendReminderButton({ invoiceId, disabled }: { invoiceId: string;
   }
 
   return (
-    <Button size="sm" variant="outline" className="gap-2" onClick={handleSend} disabled={loading || disabled}>
+    <LoadingButton size="sm" variant="outline" className="gap-2" onClick={handleSend} loading={loading} disabled={disabled}>
       <BellRing className="h-4 w-4" />
-      {loading ? t("Mengirim...", "Sending...") : t("Ingatkan", "Remind")}
-    </Button>
+      {t("Ingatkan", "Remind")}
+    </LoadingButton>
   );
 }

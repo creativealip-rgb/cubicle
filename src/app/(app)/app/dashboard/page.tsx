@@ -6,7 +6,7 @@ import {
 } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
-import { ArrowUpRight, TrendingUp } from "lucide-react";
+import { ArrowUpRight, BookOpen, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -321,7 +321,7 @@ export default async function DashboardPage() {
           <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Reminder</h2>
           <Badge variant="secondary">{reminderItems.length}</Badge>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-5">
           {reminderItems.map((item) => (
             <Link key={item.key} href={item.href} className="group">
               <Card className={`h-full border-l-4 ${reminderToneBorder[item.tone]} transition hover:-translate-y-0.5 hover:shadow-md`}>
@@ -468,6 +468,19 @@ export default async function DashboardPage() {
               </div>
             </CardContent>
           </Card>
+
+          <Link
+            href="/app/docs"
+            className="mt-4 flex items-center gap-3 rounded-lg border bg-gradient-to-r from-blue-50 to-violet-50 p-4 transition-all hover:shadow-md"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <BookOpen className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">{t("Dokumentasi Cubiqlo", "Cubiqlo Documentation")}</p>
+              <p className="text-xs text-muted-foreground">{t("Panduan lengkap semua fitur: landing page, invoice, time tracking, proyek, client portal.", "Complete guides: landing page, invoice, time tracking, projects, client portal.")}</p>
+            </div>
+          </Link>
         </div>
       </div>
     </div>

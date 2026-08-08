@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { updateInvoice } from "@/lib/actions/invoices";
-import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -215,9 +215,9 @@ export function InvoiceMetaForm({ invoiceId, defaults, project }: InvoiceMetaFor
           />
         </div>
       </div>
-      <Button type="submit" disabled={loading}>
-        {loading ? t("Menyimpan…", "Saving…") : t("Simpan invoice", "Save invoice")}
-      </Button>
+      <LoadingButton type="submit" loading={loading} loadingText={t("Menyimpan…", "Saving…")}>
+        {t("Simpan invoice", "Save invoice")}
+      </LoadingButton>
     </form>
   );
 }

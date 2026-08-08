@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { Globe, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { SortableHeader } from "@/components/ui/sortable-header";
@@ -31,12 +30,12 @@ export function ClientsListTable({
   clients,
   clientCount,
   canWrite,
-  isAtLimit,
+  isAtLimit: _isAtLimit,
 }: {
   clients: ClientListItem[];
   clientCount: number;
   canWrite: boolean;
-  isAtLimit: boolean;
+  isAtLimit: boolean; // Used by parent to show upgrade banner, not consumed here
 }) {
   const { t } = useT();
 
@@ -79,14 +78,6 @@ export function ClientsListTable({
               "Add your first client to start managing their projects, invoices, and portal.",
             )}
           </p>
-          {canWrite && !isAtLimit && (
-            <Button asChild className="mt-4">
-              <Link href="/app/clients/new">
-                <Plus className="h-4 w-4 mr-1" />
-                {t("Tambah Klien", "Add Client")}
-              </Link>
-            </Button>
-          )}
         </>
       ) : (
         <p className="text-sm text-muted-foreground">
@@ -218,14 +209,6 @@ export function ClientsListTable({
                     "Add your first client to start managing projects & invoices.",
                   )}
                 </p>
-                {canWrite && !isAtLimit && (
-                  <Button asChild className="mt-4">
-                    <Link href="/app/clients/new">
-                      <Plus className="h-4 w-4 mr-1" />
-                      {t("Tambah Klien", "Add Client")}
-                    </Link>
-                  </Button>
-                )}
               </>
             ) : (
               <p className="text-sm text-muted-foreground">

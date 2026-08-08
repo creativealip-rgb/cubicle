@@ -8,7 +8,7 @@ describe("client detail two-column layout", () => {
     expect(source).toContain("lg:grid-cols-[360px_minmax(0,1fr)]");
     expect(source).toContain("<aside className=\"space-y-4 lg:sticky lg:top-20 lg:self-start\">");
     expect(source).toContain("<section className=\"min-w-0\">");
-    expect(source.indexOf("<aside className=\"space-y-4 lg:sticky lg:top-20 lg:self-start\">")).toBeLessThan(source.indexOf("<Tabs defaultValue={initialTab}>"));
+    expect(source.indexOf("<aside className=\"space-y-4 lg:sticky lg:top-20 lg:self-start\">")).toBeLessThan(source.indexOf("<ClientTabsNav"));
   });
 
   it("keeps core client info inside the profile column", () => {

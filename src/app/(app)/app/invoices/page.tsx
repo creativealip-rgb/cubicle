@@ -511,7 +511,6 @@ export default async function InvoicesPage({
           icon={FileText}
           title={t("Belum ada invoice", "No invoices yet")}
           description={t("Buat invoice pertama untuk mulai tagih klienmu.", "Create your first invoice to start billing clients.")}
-          action={canWrite ? { label: t("Buat Invoice", "Create Invoice"), href: "/app/invoices/new" } : undefined}
         />
       ) : filteredTotal === 0 ? (
         <EmptyState
@@ -539,7 +538,6 @@ export default async function InvoicesPage({
                     "Try another status tab, or create a new invoice.",
                   )
           }
-          action={canWrite ? { label: t("Buat Invoice", "Create Invoice"), href: "/app/invoices/new" } : undefined}
         />
       ) : (
         <>

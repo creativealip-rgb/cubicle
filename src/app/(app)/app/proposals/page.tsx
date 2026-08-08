@@ -101,9 +101,9 @@ export default async function ProposalsPage({
           </p>
         </div>
         {canWrite && (
-          <Button asChild>
+          <Button size="sm" className="gap-1" asChild>
             <Link href="/app/proposals/new">
-              <Plus className="h-4 w-4 mr-1" />
+              <Plus className="h-4 w-4" />
               {t("Proposal baru", "New proposal")}
             </Link>
           </Button>
@@ -125,7 +125,7 @@ export default async function ProposalsPage({
       {rows.length === 0 ? (
         <div className="bg-white rounded-2xl border p-12 text-center">
           <FileText className="h-10 w-10 mx-auto text-slate-300 mb-3" />
-          <p className="text-sm text-slate-500 mb-4">
+          <p className="text-sm text-slate-500">
             {statusFilter === "all"
               ? t(
                   "Belum ada proposal. Buat proposal untuk mulai kirim scope.",
@@ -136,14 +136,6 @@ export default async function ProposalsPage({
                   "No proposals with this status.",
                 )}
           </p>
-          {canWrite && statusFilter === "all" && (
-            <Button asChild>
-              <Link href="/app/proposals/new">
-                <Plus className="h-4 w-4 mr-1" />
-                {t("Buat proposal pertama", "Create first proposal")}
-              </Link>
-            </Button>
-          )}
         </div>
       ) : (
         <ProposalsListTable rows={rows} canWrite={canWrite} />

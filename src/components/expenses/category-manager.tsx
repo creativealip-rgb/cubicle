@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Tag, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -218,9 +219,9 @@ export function CategoryManager({ workspaceId, categories, canWrite }: CategoryM
             <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(null)} disabled={loading}>
               {t("Batal", "Cancel")}
             </Button>
-            <Button size="sm" className="bg-red-600 hover:bg-red-700" onClick={handleDelete} disabled={loading}>
-              {loading ? t("Menghapus...", "Deleting...") : t("Hapus", "Delete")}
-            </Button>
+            <LoadingButton size="sm" className="bg-red-600 hover:bg-red-700" onClick={handleDelete} loading={loading} loadingText={t("Menghapus...", "Deleting...")}>
+              {t("Hapus", "Delete")}
+            </LoadingButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

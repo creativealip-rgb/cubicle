@@ -7,7 +7,7 @@ describe("client portal entitlement wiring", () => {
   it("checks plan before enabling portal during client create", () => {
     expect(source).toContain("hasClientPortal");
     expect(source).toContain("portalEnabled");
-    expect(source).toContain("Client portal tersedia di paket Solo dan Team");
+    expect(source).toContain("Client portal tidak tersedia di plan ini");
   });
 
   it("checks plan before portal token/password enable actions", () => {

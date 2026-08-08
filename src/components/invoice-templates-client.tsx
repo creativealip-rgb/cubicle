@@ -27,6 +27,7 @@ import {
   listInvoiceTemplates,
 } from "@/lib/actions/invoice-templates";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n-client";
 
 interface Template {
   id: string;
@@ -47,6 +48,7 @@ interface LineItem {
 }
 
 export function InvoiceTemplatesClient() {
+  const { t } = useT();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -177,12 +179,12 @@ export function InvoiceTemplatesClient() {
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Template Baru
+              {t("Template Baru", "New Template")}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{editingId ? "Edit Template" : "Buat Template Baru"}</DialogTitle>
+              <DialogTitle>{editingId ? t("Edit Template", "Edit Template") : t("Buat Template Baru", "Create New Template")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 mt-4">
               <div>

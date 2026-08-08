@@ -14,20 +14,21 @@ describe("client and project detail UX", () => {
     expect(billingTypeLabel("retainer", "id")).toBe("Retainer");
   });
 
-  it("keeps client summary at two columns and portal in lower tabs", () => {
-    expect(clientDetail).toContain('className="grid grid-cols-2 gap-2"');
-    expect(clientDetail).not.toContain('<p className="text-[11px] text-muted-foreground">Portal</p>');
-    expect(clientDetail).toContain('<TabsTrigger value="portal"');
+  it("keeps client summary at three columns (with portal status stat) and tabs in shared ClientTabsNav", () => {
+    expect(clientDetail).toContain('className="grid grid-cols-3 gap-2"');
+    expect(clientDetail).toContain('<p className="text-[11px] text-muted-foreground">Portal</p>');
+    expect(clientDetail).toContain("<ClientTabsNav");
   });
 
-  it("offers an explicit project currency selector", () => {
-    expect(projectForm).toContain("Mata uang");
+  it("offers an explicit i18n project currency selector with expanded currencies", () => {
+    expect(projectForm).toContain('t("Mata Uang", "Currency")');
     expect(projectForm).toContain('<SelectItem value="IDR">IDR</SelectItem>');
+    expect(projectForm).toContain('<SelectItem value="JPY">JPY</SelectItem>');
   });
 
-  it("shows nominal without fixed-rate wording and keeps retired service/activity tabs absent", () => {
-    expect(projectDetail).toContain('t("Nominal", "Amount")');
-    expect(projectDetail).not.toContain('t("Fixed rate", "Fixed rate")');
+  it("shows fixed-rate wording with i18n and keeps retired service/activity tabs absent", () => {
+    expect(projectDetail).toContain('t("Fixed rate", "Fixed rate")');
+    expect(projectDetail).not.toContain('t("Nominal", "Amount")');
     expect(projectDetail).not.toContain('<TabsTrigger value="services"');
     expect(projectDetail).not.toContain('<TabsContent value="services"');
     expect(projectDetail).not.toContain('<TabsTrigger value="activities"');

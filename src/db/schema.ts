@@ -17,7 +17,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
-import type { PersonalSiteLink, PersonalSiteSection } from "@/lib/personal-site/model";
+import type { PersonalSiteLink, PersonalSiteSection, PersonalSitePage, ThemeConfig, SeoMetadata } from "@/lib/personal-site/model";
 
 // ─── Better-Auth tables ───
 
@@ -789,6 +789,16 @@ export const timeEntries = pgTable("time_entries", {
     table.activityId,
     table.startTime,
   ),
+  index("time_entries_workspace_user_work_date_idx").on(
+    table.workspaceId,
+    table.userId,
+    table.workDate,
+  ),
+  index("time_entries_workspace_project_status_idx").on(
+    table.workspaceId,
+    table.projectId,
+    table.status,
+  ),
 ]);
 
 export const timerSegments = pgTable("timer_segments", {
@@ -834,7 +844,19 @@ export const invoices = pgTable("invoices", {
   clientFirstViewedAt: timestamp("client_first_viewed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => [unique().on(table.workspaceId, table.invoiceNumber)]);
+}, (table) => [
+  unique().on(table.workspaceId, table.invoiceNumber),
+  index("invoices_workspace_client_status_idx").on(
+    table.workspaceId,
+    table.clientId,
+    table.status,
+  ),
+  index("invoices_workspace_status_issue_date_idx").on(
+    table.workspaceId,
+    table.status,
+    table.issueDate,
+  ),
+]);
 
 export const legacyProjectBillingClassifications = pgTable("legacy_project_billing_classifications", { projectId: uuid("project_id").primaryKey(), workspaceId: uuid("workspace_id").notNull(), legacyBillingType: text("legacy_billing_type").notNull(), targetBillingModel: text("target_billing_model"), confidence: text("confidence").notNull().default("unreviewed"), evidence: jsonb("evidence").notNull().default(sql`'{}'::jsonb`), reviewedBy: text("reviewed_by"), reviewedAt: timestamp("reviewed_at", {withTimezone:true}), notes: text("notes") });
 
@@ -1512,10 +1534,14 @@ export const personalSites = pgTable("personal_sites", {
   about: text("about"),
   ctaLabel: text("cta_label"),
   ctaUrl: text("cta_url"),
-  theme: text("theme", { enum: ["midnight", "paper", "studio"] }).notNull().default("midnight"),
+  theme: text("theme", { enum: ["midnight", "paper", "studio", "ocean", "forest", "sunset", "rose", "dark"] }).notNull().default("midnight"),
   accent: text("accent").notNull().default("#6647F0"),
   sections: jsonb("sections").$type<PersonalSiteSection[]>().notNull().default(sql`'[]'::jsonb`),
   links: jsonb("links").$type<PersonalSiteLink[]>().notNull().default(sql`'[]'::jsonb`),
+  pages: jsonb("pages").$type<PersonalSitePage[]>().default(sql`'[]'::jsonb`),
+  themeConfig: jsonb("theme_config").$type<ThemeConfig>(),
+  seo: jsonb("seo").$type<SeoMetadata>(),
+  heroImage: text("hero_image"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [

@@ -15,9 +15,9 @@ describe("Client Invoice and Portal polish", () => {
   });
 
   it("gives Portal icon controls accessible names", () => {
-    expect(portal).toContain('aria-label="Salin link portal"');
-    expect(portal).toContain('aria-label="Buka portal klien"');
-    expect(portal).toContain('title="Salin link portal"');
-    expect(portal).toContain('title="Buka portal klien"');
+    expect(portal).toContain('aria-label={t("Salin link portal", "Copy portal link")}');
+    expect(portal).toContain('aria-label={t("Buka portal klien", "Open client portal")}');
+    expect(portal).toContain('title={t("Salin link portal", "Copy portal link")}');
+    expect(portal).toContain('title={t("Buka portal klien", "Open client portal")}');
   });
 });

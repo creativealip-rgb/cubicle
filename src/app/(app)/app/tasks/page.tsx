@@ -13,6 +13,7 @@ import { TaskTemplateWorkspace } from "@/components/tasks/task-template-workspac
 import { ActiveFilterSummary } from "@/components/ui/active-filter-summary";
 import { resolveBillingModel } from "@/lib/billing-model";
 import { defaultTaskWorkMode } from "@/lib/task-work-mode";
+import { getCurrentLang, createT } from "@/lib/i18n";
 import Link from "next/link";
 
 export const PAGE_SIZE = 10;
@@ -25,6 +26,8 @@ function buildTaskPageHref(params: Record<string, string | undefined>, page: num
 }
 
 export default async function TasksPage({ searchParams }: { searchParams: Promise<{ tab?: string; status?: string; priority?: string; projectId?: string; assignee?: string; view?: string; focus?: string; mode?: string; page?: string }> }) {
+  const lang = await getCurrentLang();
+  const t = createT(lang);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
@@ -54,12 +57,12 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const templates = templateRows.map((template) => ({ ...template, items: itemRows.filter((item) => item.templateId === template.id) }));
 
   return <div className="min-w-0 space-y-6">
-    <div className="app-page-header"><div><h1 className="app-page-title">Tugas</h1><p className="mt-1 text-sm text-muted-foreground">Kelola pekerjaan proyek dan template reusable.</p></div>{tab === "tasks" ? <TaskCreateDialog projectId={params.projectId} members={members} projects={taskProjects} /> : null}</div>
+    <div className="app-page-header"><div><h1 className="app-page-title">{t("Tugas", "Tasks")}</h1><p className="mt-1 text-sm text-muted-foreground">{t("Kelola pekerjaan proyek dan template reusable.", "Manage project work and reusable templates.")}</p></div>{tab === "tasks" ? <TaskCreateDialog projectId={params.projectId} members={members} projects={taskProjects} /> : null}</div>
     <TaskPageTabs current={tab} />
     {tab === "templates" ? <TaskTemplateWorkspace templates={templates} projects={taskProjects} /> : <>
-      <ActiveFilterSummary basePath="/app/tasks" filters={[{ key: "projectId", label: "Proyek", value: taskProjects.find((project) => project.id === params.projectId)?.name }, { key: "assignee", label: "Petugas", value: params.assignee }, { key: "priority", label: "Prioritas", value: params.priority }, { key: "status", label: "Status", value: params.status }]} />
+      <ActiveFilterSummary basePath="/app/tasks" filters={[{ key: "projectId", label: t("Proyek", "Project"), value: taskProjects.find((project) => project.id === params.projectId)?.name }, { key: "assignee", label: t("Petugas", "Assignee"), value: params.assignee }, { key: "priority", label: t("Prioritas", "Priority"), value: params.priority }, { key: "status", label: "Status", value: params.status }]} />
       {view === "board" ? <TasksBoardView tasks={taskList.map((task) => ({ ...task, projectId: task.projectId ?? undefined }))} members={members} /> : <TasksListTable tasks={taskList} members={members} projects={taskProjects} currentUserId={user.id} currentFilters={{ status: params.status, priority: params.priority, projectId: params.projectId, assignee: params.assignee }} focusId={params.focus ?? null} />}
-      {totalPages > 1 && <nav className="flex flex-wrap items-center justify-between gap-3" aria-label="Paginasi tugas"><span className="text-sm text-muted-foreground">Halaman {page} dari {totalPages}</span><div className="flex gap-2"><Link className={`rounded border px-3 py-2 text-sm ${page===1?"pointer-events-none opacity-50":""}`} href={buildTaskPageHref(params,page-1)}>Sebelumnya</Link><Link className={`rounded border px-3 py-2 text-sm ${page===totalPages?"pointer-events-none opacity-50":""}`} href={buildTaskPageHref(params,page+1)}>Berikutnya</Link></div></nav>}
+      {totalPages > 1 && <nav className="flex flex-wrap items-center justify-between gap-3" aria-label={t("Paginasi tugas", "Task pagination")}><span className="text-sm text-muted-foreground">{t("Halaman", "Page")} {page} {t("dari", "of")} {totalPages}</span><div className="flex gap-2"><Link className={`rounded border px-3 py-2 text-sm ${page===1?"pointer-events-none opacity-50":""}`} href={buildTaskPageHref(params,page-1)}>{t("Sebelumnya", "Previous")}</Link><Link className={`rounded border px-3 py-2 text-sm ${page===totalPages?"pointer-events-none opacity-50":""}`} href={buildTaskPageHref(params,page+1)}>{t("Berikutnya", "Next")}</Link></div></nav>}
     </>}
   </div>;
 }

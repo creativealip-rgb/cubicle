@@ -5,27 +5,19 @@ import { db } from "@/db";
 import { questionnaires, questionnaireResponses, clients, projects } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
+import { safeParseQuestionnaireSchema } from "@/lib/questionnaire-schema";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SendQuestionnaireButton } from "@/components/questionnaires/send-questionnaire-button";
 import { ResponseViewer } from "@/components/questionnaires/response-viewer";
 import Link from "next/link";
-import { ArrowLeft, ClipboardList, Inbox } from "lucide-react";
+import { ArrowLeft, Edit, ClipboardList, Inbox } from "lucide-react";
 import { notFound } from "next/navigation";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
 }
-
-type Field = {
-  id: string;
-  type: "text" | "textarea" | "select" | "multiselect" | "number" | "date" | "email" | "url";
-  label: string;
-  required: boolean;
-  options?: string[];
-  placeholder?: string;
-};
 
 export default async function QuestionnaireDetailPage({ params }: { params: Promise<{ questionnaireId: string }> }) {
   const { questionnaireId } = await params;
@@ -40,7 +32,7 @@ export default async function QuestionnaireDetailPage({ params }: { params: Prom
     .limit(1);
   if (!q) notFound();
 
-  const fields = (q.schema as Field[]) || [];
+  const fields = safeParseQuestionnaireSchema(q.schema);
   const responses = await db
     .select({
       id: questionnaireResponses.id,
@@ -95,11 +87,19 @@ export default async function QuestionnaireDetailPage({ params }: { params: Prom
           </div>
         </div>
         {canWrite && (
-          <SendQuestionnaireButton
-            questionnaireId={q.id}
-            clients={clientsList}
-            projects={projectsList}
-          />
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/app/questionnaires/${q.id}/edit`}>
+                <Edit className="mr-1.5 h-4 w-4" />
+                Edit
+              </Link>
+            </Button>
+            <SendQuestionnaireButton
+              questionnaireId={q.id}
+              clients={clientsList}
+              projects={projectsList}
+            />
+          </div>
         )}
       </div>
 

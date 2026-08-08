@@ -28,6 +28,7 @@ export type ProjectListItem = {
   billingModel?: string | null;
   trackedMinutes: number;
   packageHours: number | null;
+  retainerIncludedMinutes?: number | null;
 };
 
 const STATUS_ORDER = [

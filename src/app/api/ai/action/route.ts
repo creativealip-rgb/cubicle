@@ -8,7 +8,7 @@ import { activityLogs, invoices, tasks } from "@/db/schema";
 import { assertWorkspaceWritable } from "@/lib/access";
 import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
 import { enforcePlanApiRateLimit } from "@/lib/plan-api-rate-limit";
-import { checkAiRateLimitDb, getAiEntitlementFailure, getUserPlan } from "@/lib/plan";
+import { checkAiRateLimitDb, getAiEntitlementFailure, getUserPlan, releaseAiQuota } from "@/lib/plan";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -44,6 +44,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
+  // Workspace that holds a quota reservation (set right after a successful
+  // checkAiRateLimitDb). If execution fails AFTER reserving, we refund it in
+  // the catch below. Once the action succeeds the request is spent — no
+  // refund (see checkAiRateLimitDb boundary note).
+  let quotaWorkspaceId: string | null = null;
+
   try {
     if (request.kind === "update_task_status") {
       const p = request.payload as UpdateTaskPayload;
@@ -59,10 +65,11 @@ export async function POST(req: NextRequest) {
       const aiRate = await checkAiRateLimitDb(task.workspaceId, plan);
       if (!aiRate.allowed) {
         return NextResponse.json(
-          { error: `Batas AI harian tercapai (${aiRate.limit}/hari). Reset ${new Date(aiRate.resetAt).toISOString()}.` },
+          { error: `Batas AI bulanan tercapai (${aiRate.limit}/bulan). Reset ${new Date(aiRate.resetAt).toISOString()}.` },
           { status: 429 },
         );
       }
+      quotaWorkspaceId = task.workspaceId;
 
       const [updated] = await db.update(tasks)
         .set({ status: p.newStatus, updatedAt: new Date() })
@@ -95,10 +102,11 @@ export async function POST(req: NextRequest) {
       const aiRate = await checkAiRateLimitDb(invoice.workspaceId, plan);
       if (!aiRate.allowed) {
         return NextResponse.json(
-          { error: `Batas AI harian tercapai (${aiRate.limit}/hari). Reset ${new Date(aiRate.resetAt).toISOString()}.` },
+          { error: `Batas AI bulanan tercapai (${aiRate.limit}/bulan). Reset ${new Date(aiRate.resetAt).toISOString()}.` },
           { status: 429 },
         );
       }
+      quotaWorkspaceId = invoice.workspaceId;
       await db.insert(activityLogs).values({
         workspaceId: invoice.workspaceId,
         actorId: session.user.id,
@@ -113,6 +121,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
   } catch (error) {
     console.error("AI action failed", error);
+    // Refund the quota reservation made by checkAiRateLimitDb above — the
+    // action never completed, so the reservation must not be left counted
+    // against the monthly cap. Refund is best-effort; never mask the error.
+    if (quotaWorkspaceId) {
+      try {
+        await releaseAiQuota(quotaWorkspaceId);
+      } catch {
+        // best-effort refund
+      }
+    }
     const status = error instanceof Error && error.name === "ForbiddenError" ? 403 : 500;
     return NextResponse.json({ error: "Action could not be completed" }, { status });
   }

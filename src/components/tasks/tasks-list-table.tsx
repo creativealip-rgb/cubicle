@@ -170,70 +170,109 @@ export function TasksListTable({
         </div>
       </div>
 
-      {sorted.map((task, index) => {
-        const sb = taskStatusVariant(task.status, lang);
-        const isFocus = focusId === task.id;
-        return (
-          <TaskDetailSheet
-            key={task.id}
-            task={{
-              ...task,
-              projectId: task.projectId ?? undefined,
-            }}
-            members={members}
-            defaultOpen={isFocus}
-          >
-            <Card
-              id={isFocus ? `task-${task.id}` : undefined}
-              className={`cursor-pointer rounded-none border-0 !border-b border-slate-200 shadow-none transition-colors last:border-b-0 hover:bg-slate-100/70 ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"} ${isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""}`}
+      {/* Mobile cards */}
+      <div className="md:hidden divide-y">
+        {sorted.map((task, _index) => {
+          const sb = taskStatusVariant(task.status, lang);
+          const isFocus = focusId === task.id;
+          return (
+            <TaskDetailSheet
+              key={task.id}
+              task={{
+                ...task,
+                projectId: task.projectId ?? undefined,
+              }}
+              members={members}
+              defaultOpen={isFocus}
             >
-              <CardContent className="grid gap-3 p-3 md:flex md:items-center md:gap-4">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{task.title}</p>
-                  {task.sourceNoteId ? (
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">
-                      {t("Dari catatan", "From note")}
-                    </p>
-                  ) : null}
-                  <Badge variant="outline" className="mt-1 text-[10px] font-normal">
-                    {task.mode === "reusable" ? "Reusable" : "Workflow"}
-                  </Badge>
+              <div
+                id={isFocus ? `task-${task.id}` : undefined}
+                className={`cursor-pointer p-4 space-y-2 transition-colors hover:bg-muted/50 ${isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""}`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-medium flex-1 min-w-0">{task.title}</p>
+                  <Badge variant={sb.variant} className="text-[10px] shrink-0">{sb.label}</Badge>
                 </div>
-                <div className="text-xs text-muted-foreground md:w-44">
-                  <p className="truncate">{task.projectName ?? t("Tanpa proyek", "No project")}</p>
-                  {task.clientName ? <p className="truncate text-[10px] opacity-80">{task.clientName}</p> : null}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                  {task.projectName && <span>{task.projectName}</span>}
+                  {task.assigneeName && <span>· {task.assigneeName}</span>}
                 </div>
-                <div className="text-xs text-muted-foreground md:w-28 md:truncate">
-                  {task.assigneeName ?? t("Belum ditugaskan", "Unassigned")}
-                </div>
-                <div className={`flex items-center gap-1 text-xs md:w-24 ${dueTone(task)}`}>
-                  <Clock className="h-3 w-3" />
-                  {formatDue(task)}
-                </div>
-                <div className="md:w-20">
-                  <Badge
-                    variant="outline"
-                    className={`text-[10px] ${taskPriorityColor(task.priority)}`}
-                  >
-                    {task.priority === "urgent" && (
-                      <AlertTriangle className="mr-0.5 h-3 w-3" />
-                    )}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="outline" className={`text-[10px] ${taskPriorityColor(task.priority)}`}>
                     {taskPriorityLabel(task.priority, lang)}
                   </Badge>
+                  {task.dueDate && (
+                    <span className={`text-xs flex items-center gap-1 ${dueTone(task)}`}>
+                      <Clock className="h-3 w-3" />
+                      {formatDue(task)}
+                    </span>
+                  )}
                 </div>
-                <div className="md:w-24">
-                  <Badge
-                    variant={sb.variant}
-                    className={`text-[10px] ${task.status === "review" ? "border-violet-300 bg-violet-50 text-violet-700" : ""}`}
-                  >
-                    {sb.label}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          </TaskDetailSheet>
-        );
-      })}
+              </div>
+            </TaskDetailSheet>
+          );
+        })}
+      </div>
+
+      {/* Desktop rows */}
+      <div className="hidden md:block">
+        {sorted.map((task, index) => {
+          const sb = taskStatusVariant(task.status, lang);
+          const isFocus = focusId === task.id;
+          return (
+            <TaskDetailSheet
+              key={task.id}
+              task={{
+                ...task,
+                projectId: task.projectId ?? undefined,
+              }}
+              members={members}
+              defaultOpen={isFocus}
+            >
+              <Card
+                id={isFocus ? `task-${task.id}` : undefined}
+                className={`cursor-pointer rounded-none border-0 !border-b border-slate-200 shadow-none transition-colors last:border-b-0 hover:bg-slate-100/70 ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"} ${isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""}`}
+              >
+                <CardContent className="grid gap-3 p-3 md:flex md:items-center md:gap-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{task.title}</p>
+                    {task.sourceNoteId ? (
+                      <p className="mt-0.5 text-[10px] text-muted-foreground">
+                        {t("Dari catatan", "From note")}
+                      </p>
+                    ) : null}
+                    <Badge variant="outline" className="mt-1 text-[10px] font-normal">
+                      {task.mode === "reusable" ? "Reusable" : "Workflow"}
+                    </Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground md:w-44">
+                    <p className="truncate">{task.projectName ?? t("Tanpa proyek", "No project")}</p>
+                    {task.clientName ? <p className="truncate text-[10px] opacity-80">{task.clientName}</p> : null}
+                  </div>
+                  <div className="text-xs text-muted-foreground md:w-28 md:truncate">
+                    {task.assigneeName ?? t("Belum ditugaskan", "Unassigned")}
+                  </div>
+                  <div className={`flex items-center gap-1 text-xs md:w-24 ${dueTone(task)}`}>
+                    <Clock className="h-3 w-3" />
+                    {formatDue(task)}
+                  </div>
+                  <div className="md:w-20">
+                    <Badge variant="outline" className={`text-[10px] ${taskPriorityColor(task.priority)}`}>
+                      {task.priority === "urgent" && <AlertTriangle className="mr-0.5 h-3 w-3" />}
+                      {taskPriorityLabel(task.priority, lang)}
+                    </Badge>
+                  </div>
+                  <div className="md:w-24">
+                    <Badge variant={sb.variant} className={`text-[10px] ${task.status === "review" ? "border-violet-300 bg-violet-50 text-violet-700" : ""}`}>
+                      {sb.label}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            </TaskDetailSheet>
+          );
+        })}
+      </div>
     </div>
   );
 }

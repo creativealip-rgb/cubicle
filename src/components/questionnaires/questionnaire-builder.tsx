@@ -15,7 +15,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Trash2, Save, Loader2 } from "lucide-react";
-import { createQuestionnaire } from "@/lib/actions/questionnaires";
+import { toast } from "sonner";
+import { createQuestionnaire, updateQuestionnaire } from "@/lib/actions/questionnaires";
+import { useT } from "@/lib/i18n-client";
 import Link from "next/link";
 
 type FieldType = "text" | "textarea" | "select" | "multiselect" | "number" | "date" | "email" | "url";
@@ -53,6 +55,7 @@ export function QuestionnaireBuilder({
   questionnaireId?: string;
   initial?: { name: string; description: string | null; schema: Field[] };
 }) {
+  const { t } = useT();
   const router = useRouter();
   const [name, setName] = useState(initial?.name || "");
   const [description, setDescription] = useState(initial?.description || "");
@@ -89,11 +92,11 @@ export function QuestionnaireBuilder({
 
   function handleSave() {
     if (!name.trim()) {
-      alert("Please give the questionnaire a name");
+      toast.error("Please give the questionnaire a name");
       return;
     }
     if (fields.length === 0) {
-      alert("Please add at least one field");
+      toast.error("Please add at least one field");
       return;
     }
     const cleanFields = fields.map(f => ({
@@ -107,16 +110,28 @@ export function QuestionnaireBuilder({
 
     startTransition(async () => {
       try {
-        const q = await createQuestionnaire({
-          workspaceId,
-          name: name.trim(),
-          description: description.trim() || null,
-          schema: cleanFields,
-        });
-        router.push(`/app/questionnaires/${q.id}`);
+        let qId = questionnaireId;
+        if (questionnaireId) {
+          await updateQuestionnaire(questionnaireId, {
+            name: name.trim(),
+            description: description.trim() || null,
+            schema: cleanFields,
+          });
+          toast.success(t("Kuesioner berhasil diperbarui", "Questionnaire updated"));
+        } else {
+          const q = await createQuestionnaire({
+            workspaceId,
+            name: name.trim(),
+            description: description.trim() || null,
+            schema: cleanFields,
+          });
+          qId = q.id;
+          toast.success(t("Kuesioner berhasil dibuat", "Questionnaire created"));
+        }
+        router.push(`/app/questionnaires/${qId}`);
         router.refresh();
       } catch (err: any) {
-        alert(err?.message || "Save failed");
+        toast.error(err?.message || "Save failed");
       }
     });
   }

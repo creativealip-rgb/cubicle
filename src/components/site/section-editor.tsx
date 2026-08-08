@@ -10,6 +10,7 @@ import {
   type PersonalSiteSection,
 } from "@/lib/personal-site/model";
 import { useT } from "@/lib/i18n-client";
+import { useConfirm } from "@/lib/hooks/use-confirm";
 
 function id() {
   return crypto.randomUUID();
@@ -26,7 +27,20 @@ function emptySection(type: PersonalSiteSection["type"]): PersonalSiteSection {
     case "faq": return { ...base, type, items: [{ id: id(), question: "", answer: "" }] };
     case "contact": return { ...base, type, methods: [{ id: id(), label: "", value: "", url: "" }] };
     case "custom": return { ...base, type, content: "" };
+    case "gallery": return { ...base, type, images: [{ id: id(), url: "", alt: "" }] };
+    case "embed": return { ...base, type, url: "", height: 400 };
+    case "social": return { ...base, type, links: [{ id: id(), platform: "Instagram", url: "" }] };
+    case "cta": return { ...base, type, text: "", buttonLabel: "", buttonUrl: "" };
+    case "divider": return { ...base, type };
+    case "collapsible": return { ...base, type, items: [{ id: id(), title: "", content: "" }] };
+    case "spacer": return { ...base, type, height: 40 };
+    case "tableOfContents": return { ...base, type };
+    case "contentBlock": return { ...base, type, columns: 2, layout: "equal", items: [{ id: id(), content: "" }, { id: id(), content: "" }] };
   }
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return <label className="block space-y-1.5"><span className="text-sm font-medium">{label}</span>{children}</label>;
 }
 
 function Rows({ section, onChange }: { section: PersonalSiteSection; onChange: (section: PersonalSiteSection) => void }) {
@@ -48,7 +62,22 @@ function Rows({ section, onChange }: { section: PersonalSiteSection; onChange: (
 
   if (section.type === "contact") return <div className="space-y-2">{section.methods.map((method) => <div key={method.id} className="grid gap-2 rounded-lg bg-background p-2 sm:grid-cols-[0.6fr_0.8fr_1.2fr_auto]"><Input aria-label={t("Label kontak", "Contact label")} placeholder="Email / WhatsApp" value={method.label} onChange={(e) => onChange({ ...section, methods: section.methods.map((row) => row.id === method.id ? { ...row, label: e.target.value } : row) })} /><Input aria-label={t("Nilai kontak", "Contact value")} placeholder="hello@..." value={method.value} onChange={(e) => onChange({ ...section, methods: section.methods.map((row) => row.id === method.id ? { ...row, value: e.target.value } : row) })} /><Input aria-label={t("URL kontak", "Contact URL")} placeholder="mailto:, tel:, https://" value={method.url} onChange={(e) => onChange({ ...section, methods: section.methods.map((row) => row.id === method.id ? { ...row, url: e.target.value } : row) })} /><IconDelete label={deleteLabel} onClick={() => onChange({ ...section, methods: section.methods.filter((row) => row.id !== method.id) })} /></div>)}<AddRow label={addLabel} onClick={() => onChange({ ...section, methods: [...section.methods, { id: id(), label: "", value: "", url: "" }] })} /></div>;
 
-  return <Textarea aria-label={t("Isi section", "Section content")} rows={5} placeholder={t("Tulis isi section", "Write section content")} value={section.content} onChange={(e) => onChange({ ...section, content: e.target.value })} />;
+  if (section.type === "gallery") return <div className="space-y-2">{section.images.map((img) => <div key={img.id} className="grid gap-2 rounded-lg bg-background p-2 sm:grid-cols-[1fr_0.5fr_auto]"><Input aria-label={t("URL gambar", "Image URL")} placeholder="https://..." value={img.url} onChange={(e) => onChange({ ...section, images: section.images.map((row) => row.id === img.id ? { ...row, url: e.target.value } : row) })} /><Input aria-label={t("Alt text", "Alt text")} placeholder={t("Deskripsi singkat", "Short description")} value={img.alt ?? ""} onChange={(e) => onChange({ ...section, images: section.images.map((row) => row.id === img.id ? { ...row, alt: e.target.value } : row) })} /><IconDelete label={deleteLabel} onClick={() => onChange({ ...section, images: section.images.filter((row) => row.id !== img.id) })} /></div>)}<AddRow label={addLabel} onClick={() => onChange({ ...section, images: [...section.images, { id: id(), url: "", alt: "" }] })} /></div>;
+
+  if (section.type === "embed") return <div className="space-y-2"><Field label={t("URL embed", "Embed URL")}><Input placeholder="https://youtube.com/watch?v=..." value={section.url} onChange={(e) => onChange({ ...section, url: e.target.value })} /></Field><Field label={t("Tinggi (px)", "Height (px)")}><Input type="number" min={100} max={800} value={section.height ?? 400} onChange={(e) => onChange({ ...section, height: Number(e.target.value) })} /></Field></div>;
+
+  if (section.type === "social") {
+    const platforms = ["Instagram", "TikTok", "LinkedIn", "Twitter/X", "YouTube", "Facebook", "WhatsApp", "GitHub", "Dribbble", "Behance"];
+    return <div className="space-y-2">{section.links.map((link) => <div key={link.id} className="grid gap-2 rounded-lg bg-background p-2 sm:grid-cols-[0.6fr_1fr_auto]"><Select value={link.platform} onValueChange={(v) => onChange({ ...section, links: section.links.map((row) => row.id === link.id ? { ...row, platform: v } : row) })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{platforms.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select><Input aria-label={t("URL profil", "Profile URL")} placeholder="https://..." value={link.url} onChange={(e) => onChange({ ...section, links: section.links.map((row) => row.id === link.id ? { ...row, url: e.target.value } : row) })} /><IconDelete label={deleteLabel} onClick={() => onChange({ ...section, links: section.links.filter((row) => row.id !== link.id) })} /></div>)}<AddRow label={addLabel} onClick={() => onChange({ ...section, links: [...section.links, { id: id(), platform: "Instagram", url: "" }] })} /></div>;
+  }
+
+  if (section.type === "cta") return <div className="space-y-3"><Field label={t("Teks", "Text")}><Textarea rows={3} placeholder={t("Teks ajakan...", "Call to action text...")} value={section.text} onChange={(e) => onChange({ ...section, text: e.target.value })} /></Field><div className="grid gap-2 sm:grid-cols-2"><Field label={t("Label tombol", "Button label")}><Input placeholder={t("Hubungi saya", "Contact me")} value={section.buttonLabel} onChange={(e) => onChange({ ...section, buttonLabel: e.target.value })} /></Field><Field label={t("URL tombol", "Button URL")}><Input placeholder="https://..." value={section.buttonUrl} onChange={(e) => onChange({ ...section, buttonUrl: e.target.value })} /></Field></div></div>;
+
+  if (section.type === "divider") return <p className="text-xs text-muted-foreground">{t("Garis pemisah akan muncul di halaman publik.", "A divider line will appear on the public page.")}</p>;
+
+  if (section.type === "collapsible") return <div className="space-y-2">{section.items.map((item) => <div key={item.id} className="space-y-2 rounded-lg bg-background p-2"><Input aria-label={t("Judul", "Title")} placeholder={t("Judul accordion", "Accordion title")} value={item.title} onChange={(e) => onChange({ ...section, items: section.items.map((row) => row.id === item.id ? { ...row, title: e.target.value } : row) })} /><Textarea aria-label={t("Isi", "Content")} placeholder={t("Isi konten", "Content")} value={item.content} onChange={(e) => onChange({ ...section, items: section.items.map((row) => row.id === item.id ? { ...row, content: e.target.value } : row) })} /><IconDelete label={deleteLabel} onClick={() => onChange({ ...section, items: section.items.filter((row) => row.id !== item.id) })} /></div>)}<AddRow label={addLabel} onClick={() => onChange({ ...section, items: [...section.items, { id: id(), title: "", content: "" }] })} /></div>;
+
+  return <Textarea aria-label={t("Isi section", "Section content")} rows={5} placeholder={t("Tulis isi section", "Write section content")} value={"content" in section ? section.content : ""} onChange={(e) => onChange({ ...section, content: e.target.value } as PersonalSiteSection)} />;
 }
 
 function IconDelete({ label, onClick, className = "" }: { label: string; onClick: () => void; className?: string }) {
@@ -60,6 +89,7 @@ function AddRow({ label, onClick }: { label: string; onClick: () => void }) {
 
 export function SectionEditor({ sections, onChange }: { sections: PersonalSiteSection[]; onChange: (sections: PersonalSiteSection[]) => void }) {
   const { t } = useT();
+  const { confirm, dialog: _dialog } = useConfirm();
   const update = (idValue: string, next: PersonalSiteSection) => onChange(sections.map((section) => section.id === idValue ? next : section));
   const move = (index: number, delta: number) => {
     const target = index + delta;
@@ -69,20 +99,41 @@ export function SectionEditor({ sections, onChange }: { sections: PersonalSiteSe
     onChange(next);
   };
   const remove = (section: PersonalSiteSection) => {
-    if (JSON.stringify(section).length > 160 && !window.confirm(t("Hapus section beserta isinya?", "Delete this section and its content?"))) return;
-    onChange(sections.filter((item) => item.id !== section.id));
+    const run = async () => {
+      if (JSON.stringify(section).length > 160) {
+        const ok = await confirm({
+          title: t("Hapus section?", "Delete section?"),
+          description: t("Hapus section beserta isinya?", "Delete this section and its content?"),
+          confirmLabel: t("Hapus", "Delete"),
+          destructive: true,
+        });
+        if (!ok) return;
+      }
+      onChange(sections.filter((item) => item.id !== section.id));
+    };
+    run();
   };
   const duplicate = (section: PersonalSiteSection) => onChange([...sections.slice(0, sections.indexOf(section) + 1), { ...structuredClone(section), id: id(), heading: `${section.heading} (${t("salinan", "copy")})` }, ...sections.slice(sections.indexOf(section) + 1)]);
   const add = () => onChange([...sections, emptySection("custom")]);
 
+  // Confirm/dialog available at parent level, this component handles its own state
+  
   return <div className="space-y-3">
     <div className="flex items-center justify-between"><div><h3 className="font-semibold">{t("Section", "Sections")}</h3><p className="text-xs text-muted-foreground">{t("Maksimal 12 section. Tipe menentukan tampilan publik.", "Up to 12 sections. Type controls public layout.")}</p></div>{sections.length === 0 && <AddRow label={t("Tambah section", "Add section")} onClick={add} />}</div>
     {sections.map((section, index) => <div key={section.id} className="space-y-3 rounded-xl bg-muted/35 p-3 sm:p-4">
       <div className="grid gap-2 sm:grid-cols-[150px_1fr_auto]">
         <Select value={section.type} onValueChange={(value) => {
-          if (!window.confirm(t("Ganti tipe akan mereset isi section ini. Lanjut?", "Changing type resets this section. Continue?"))) return;
-          const replacement = emptySection(value as PersonalSiteSection["type"]);
-          update(section.id, { ...replacement, id: section.id, heading: section.heading } as PersonalSiteSection);
+          const run = async () => {
+            const ok = await confirm({
+              title: t("Ganti tipe section?", "Change section type?"),
+              description: t("Ganti tipe akan mereset isi section ini. Lanjut?", "Changing type resets this section. Continue?"),
+              confirmLabel: t("Lanjut", "Continue"),
+            });
+            if (!ok) return;
+            const replacement = emptySection(value as PersonalSiteSection["type"]);
+            update(section.id, { ...replacement, id: section.id, heading: section.heading } as PersonalSiteSection);
+          };
+          run();
         }}><SelectTrigger className="min-h-10"><SelectValue /></SelectTrigger><SelectContent>{PERSONAL_SITE_SECTION_TYPES.map((type) => <SelectItem key={type} value={type}>{type[0].toUpperCase() + type.slice(1)}</SelectItem>)}</SelectContent></Select>
         <Input aria-label={t("Judul section", "Section heading")} placeholder={t("Judul section", "Section heading")} value={section.heading} onChange={(e) => update(section.id, { ...section, heading: e.target.value })} />
         <div className="flex gap-1">

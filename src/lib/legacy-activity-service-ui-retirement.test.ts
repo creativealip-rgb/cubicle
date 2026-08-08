@@ -9,16 +9,15 @@ const schema = read("src/db/schema.ts");
 const registry = read("docs/migration-registry.md");
 
 describe("legacy Activity and Service UI retirement", () => {
-  it("keeps direct Activity and Service entries out of navigation", () => {
+  it("keeps direct Activity entry out of navigation while exposing Business Services", () => {
     expect(navigation).not.toContain('direct("activities"');
-    expect(navigation).not.toContain('direct("services"');
+    expect(navigation).toContain('direct("services"');
   });
 
-  it("redirects bookmarked catalog routes to canonical destinations", () => {
+  it("redirects bookmarked activity route to canonical destination while rendering Service catalog", () => {
     expect(activityRoute).toContain('router.replace("/app/time")');
-    expect(serviceRoute).toContain('router.replace("/app/tasks")');
+    expect(serviceRoute).toContain("ServiceCatalog");
     expect(activityRoute).not.toContain("ActivityCatalog");
-    expect(serviceRoute).not.toContain("ServiceCatalog");
   });
 
   it("preserves compatibility schema and marks destructive cleanup retired", () => {

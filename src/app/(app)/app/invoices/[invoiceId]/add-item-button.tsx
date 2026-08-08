@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { addInvoiceItem, addProjectInvoiceItem } from "@/lib/actions/invoices";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -68,7 +69,7 @@ export function InvoiceItemManager({ invoiceId, projectOptions }: { invoiceId: s
               <div className="grid grid-cols-2 gap-3"><div className="space-y-2"><Label htmlFor="quantity">Qty</Label><Input id="quantity" type="number" step="0.01" min="0.01" value={form.quantity} onChange={(e) => setForm((p) => ({ ...p, quantity: e.target.value }))} /></div><div className="space-y-2"><Label htmlFor="unitPrice">Harga Satuan</Label><Input id="unitPrice" type="number" step="0.01" min="0" value={form.unitPrice} onChange={(e) => setForm((p) => ({ ...p, unitPrice: e.target.value }))} /></div></div>
             </>
           )}
-          <Button type="submit" disabled={loading || (source === "project" && !projectId)} className="w-full">{loading ? "Menambahkan..." : "Tambah Item"}</Button>
+          <LoadingButton type="submit" loading={loading} loadingText="Menambahkan..." disabled={source === "project" && !projectId} className="w-full">{"Tambah Item"}</LoadingButton>
         </form>
       </DialogContent>
     </Dialog>

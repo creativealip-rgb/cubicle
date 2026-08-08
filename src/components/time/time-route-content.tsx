@@ -1,3 +1,4 @@
+import { getCurrentLang, createT } from "@/lib/i18n";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -27,6 +28,8 @@ async function getWorkspaceId(): Promise<string> {
 
 export async function TimeRouteContent({ mode, view = "daily", selectedDate = localDateIso(new Date()), action }: { mode: "timer" | "timesheet" | "history" | "approvals"; view?: "daily" | "weekly"; selectedDate?: string; action?: string }) {
 
+  const lang = await getCurrentLang();
+  const t = createT(lang);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -201,13 +204,14 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
         <>
           {canWrite && <TimerWidget workspaceId={workspaceId} userId={user.id} clients={clientList} projects={writableProjectList} tasks={writableTaskList} activities={activityList} recentCombinations={recentTimerCombinations} initialTimer={activeTimer ? { id: activeTimer.id, clientId: activeTimer.clientId, projectId: activeTimer.projectId, activityId: activeTimer.activityId, taskId: activeTimer.taskId, description: activeTimer.description, tags: activeTimer.tags, startTime: activeTimer.startTime!, pausedAt: activeTimer.pausedAt, clientName: activeTimer.clientName, projectName: activeTimer.projectName, activityName: activeTimer.activityName, taskTitle: activeTimer.taskTitle } : null} />}
           <section aria-labelledby="recent-time-heading">
-            <div className="mb-3 flex items-center justify-between"><h2 id="recent-time-heading" className="text-base font-semibold">Hari ini</h2><Link href="/app/time/history" className="text-sm font-medium text-primary hover:underline">Lihat semua di Riwayat</Link></div>
+            <div className="mb-3 flex items-center justify-between"><h2 id="recent-time-heading" className="text-base font-semibold">{t("Hari ini", "Today")}</h2><Link href="/app/time/history" className="text-sm font-medium text-primary hover:underline">{t("Lihat semua di Riwayat", "View all in History")}</Link></div>
             <Timesheet entries={entries.slice(0, 3).map((e) => ({ id: e.id, description: e.description, tags: e.tags, durationMinutes: e.durationMinutes, manualMinutes: e.manualMinutes, billable: e.billable ?? false, hourlyRate: e.hourlyRate, startTime: e.startTime, endTime: e.endTime, status: e.status, clientId: e.clientId, projectId: e.projectId, activityId: e.activityId, taskId: e.taskId, clientName: e.clientName, projectName: e.projectName, activityName: e.activityName, projectCurrency: e.projectCurrency, projectTimeTrackingMode: e.projectTimeTrackingMode, taskTitle: e.taskTitle, userName: e.userName, createdAt: e.createdAt }))} clients={clientList} projects={projectList} tasks={taskList} activities={activityList} />
           </section>
         </>
       )}
       {mode === "timesheet" && (
         <>
+          <WaktuNavigation view="weekly" selectedDate={selectedDate} actions={<PdfExportButton clients={clientList} projects={projectList} />} />
           <WeeklyTimeGrid selectedDate={selectedDate} entries={entries.map((entry) => ({ id: entry.id, projectId: entry.projectId, projectName: entry.projectName, taskId: entry.taskId, taskTitle: entry.taskTitle, workDate: entry.workDate, startTime: entry.startTime, createdAt: entry.createdAt, durationMinutes: entry.durationMinutes, manualMinutes: entry.manualMinutes, tags: entry.tags, status: entry.status }))} projects={writableProjectList.map((project) => ({ id: project.id, name: project.name }))} tasks={writableTaskList.map((task) => ({ id: task.id, title: task.title, projectId: task.projectId! }))} canWrite={canWrite} />
         </>
       )}

@@ -24,6 +24,7 @@ import {
 import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createContract } from "@/lib/actions/contracts";
+import { useT } from "@/lib/i18n-client";
 
 const DEFAULT_BODY = `# Perjanjian Jasa
 
@@ -53,29 +54,30 @@ Masing-masing pihak dapat mengakhiri perjanjian dengan pemberitahuan tertulis 14
 
 Dengan menandatangani di bawah, kedua pihak menyetujui syarat di atas.
 `;
-
 export function CreateContractButton({
-  clients,
   workspaceId,
+  clients,
 }: {
-  clients: { id: string; name: string }[];
   workspaceId: string;
+  clients: { id: string; name: string }[];
 }) {
+  const { t } = useT();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [clientId, setClientId] = useState("");
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState(DEFAULT_BODY);
-  const [validUntil, setValidUntil] = useState("");
   const [pending, startTransition] = useTransition();
 
+  const [clientId, setClientId] = useState<string>(clients[0]?.id ?? "");
+  const [title, setTitle] = useState("");
+  const [validUntil, setValidUntil] = useState("");
+  const [body, setBody] = useState(DEFAULT_BODY);
+
   function handleCreate() {
-    if (!clientId) {
-      toast.error("Pilih klien dulu");
+    if (!title.trim()) {
+      toast.error(t("Judul wajib diisi", "Title is required"));
       return;
     }
-    if (!title.trim()) {
-      toast.error("Isi judul kontrak");
+    if (!clientId) {
+      toast.error(t("Pilih klien", "Select a client"));
       return;
     }
     startTransition(async () => {
@@ -88,11 +90,11 @@ export function CreateContractButton({
           validUntil: validUntil || undefined,
         });
         setOpen(false);
-        toast.success("Draf kontrak dibuat");
+        toast.success(t("Draf kontrak dibuat", "Contract draft created"));
         router.push(`/app/contracts/${c.id}`);
         router.refresh();
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Gagal membuat kontrak";
+        const msg = err instanceof Error ? err.message : t("Gagal membuat kontrak", "Failed to create contract");
         toast.error(msg);
       }
     });
@@ -101,29 +103,29 @@ export function CreateContractButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-1" />
-          Kontrak baru
+        <Button size="sm" className="gap-1">
+          <Plus className="h-4 w-4" />
+          {t("Kontrak baru", "New contract")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Kontrak baru</DialogTitle>
+          <DialogTitle>{t("Kontrak baru", "New contract")}</DialogTitle>
           <DialogDescription>
-            Mulai dari template, edit isinya, lalu kirim ke klien untuk tanda tangan elektronik.
+            {t("Mulai dari template, edit isinya, lalu kirim ke klien untuk tanda tangan elektronik.", "Start from template, edit content, then send to client for e-signature.")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <label className="text-sm font-medium block mb-1">Klien</label>
+            <label className="text-sm font-medium block mb-1">{t("Klien", "Client")}</label>
             {clients.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Belum ada klien. Buat klien dulu.
+                {t("Belum ada klien. Buat klien dulu.", "No clients found. Create client first.")}
               </p>
             ) : (
               <Select value={clientId} onValueChange={setClientId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Pilih klien..." />
+                  <SelectValue placeholder={t("Pilih klien...", "Select client...")} />
                 </SelectTrigger>
                 <SelectContent>
                   {clients.map((c) => (
@@ -136,16 +138,16 @@ export function CreateContractButton({
             )}
           </div>
           <div>
-            <label className="text-sm font-medium block mb-1">Judul</label>
+            <label className="text-sm font-medium block mb-1">{t("Judul", "Title")}</label>
             <Input
-              placeholder="mis. Perjanjian Kerja Sama — Brand refresh"
+              placeholder={t("mis. Perjanjian Kerja Sama — Brand refresh", "e.g. Service Agreement — Brand refresh")}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
           </div>
           <div>
             <label className="text-sm font-medium block mb-1">
-              Berlaku sampai (opsional)
+              {t("Berlaku sampai (opsional)", "Valid until (optional)")}
             </label>
             <Input
               type="date"
@@ -155,7 +157,7 @@ export function CreateContractButton({
           </div>
           <div>
             <label className="text-sm font-medium block mb-1">
-              Isi kontrak
+              {t("Isi kontrak", "Contract body")}
               <span className="text-xs text-slate-500 ml-2 font-normal">
                 Placeholder: {`{{client.name}}`}, {`{{workspace.name}}`},{" "}
                 {`{{today}}`}, {`{{valid_until}}`}
@@ -171,11 +173,11 @@ export function CreateContractButton({
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)} disabled={pending}>
-            Batal
+            {t("Batal", "Cancel")}
           </Button>
           <Button onClick={handleCreate} disabled={pending || clients.length === 0}>
             {pending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
-            Buat draf
+            {t("Buat draf", "Create draft")}
           </Button>
         </DialogFooter>
       </DialogContent>

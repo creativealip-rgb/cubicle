@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, X } from "lucide-react";
+import { useT } from "@/lib/i18n-client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,20 +22,20 @@ interface AcceptDeclineButtonsProps {
 }
 
 export function AcceptDeclineButtons({ proposalId, token }: AcceptDeclineButtonsProps) {
+  const { t } = useT();
   const [loading, setLoading] = useState<"accept" | "decline" | null>(null);
   const [declineOpen, setDeclineOpen] = useState(false);
   const [reason, setReason] = useState("");
 
   async function handleAccept() {
-    if (!confirm("Setujui proposal ini? Proyek akan dibuat dan invoice DP disiapkan.")) return;
+    if (!confirm(t("Setujui proposal ini? Proyek akan dibuat dan invoice DP disiapkan.", "Accept this proposal? Project will be created and DP invoice prepared."))) return;
     setLoading("accept");
     try {
       await acceptProposalPublic(proposalId, token);
-      toast.success("Proposal diterima! Proyek + invoice DP dibuat.");
-      // Reload to show accepted state
+      toast.success(t("Proposal diterima! Proyek + invoice DP dibuat.", "Proposal accepted! Project + DP invoice created."));
       window.location.reload();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Terjadi kesalahan";
+      const msg = err instanceof Error ? err.message : t("Terjadi kesalahan", "An error occurred");
       toast.error(msg);
       setLoading(null);
     }
@@ -44,11 +45,11 @@ export function AcceptDeclineButtons({ proposalId, token }: AcceptDeclineButtons
     setLoading("decline");
     try {
       await declineProposalPublic(proposalId, token, reason || undefined);
-      toast.success("Proposal ditolak");
+      toast.success(t("Proposal ditolak", "Proposal declined"));
       setDeclineOpen(false);
       window.location.reload();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Terjadi kesalahan";
+      const msg = err instanceof Error ? err.message : t("Terjadi kesalahan", "An error occurred");
       toast.error(msg);
       setLoading(null);
     }
@@ -63,7 +64,7 @@ export function AcceptDeclineButtons({ proposalId, token }: AcceptDeclineButtons
         className="bg-emerald-600 hover:bg-emerald-700"
       >
         <Check className="h-4 w-4 mr-2" />
-        {loading === "accept" ? "Menyetujui..." : "Setujui proposal"}
+        {loading === "accept" ? t("Menyetujui...", "Accepting...") : t("Setujui proposal", "Accept proposal")}
       </Button>
       <Button
         size="lg"
@@ -72,28 +73,28 @@ export function AcceptDeclineButtons({ proposalId, token }: AcceptDeclineButtons
         disabled={loading !== null}
       >
         <X className="h-4 w-4 mr-2" />
-        Tolak
+        {t("Tolak", "Decline")}
       </Button>
       <Dialog open={declineOpen} onOpenChange={setDeclineOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Tolak proposal?</DialogTitle>
+            <DialogTitle>{t("Tolak proposal?", "Decline proposal?")}</DialogTitle>
             <DialogDescription>
-              Kalau berkenan, beri tahu alasannya supaya kami bisa memperbaiki. Tindakan ini tidak bisa dibatalkan.
+              {t("Kalau berkenan, beri tahu alasannya supaya kami bisa memperbaiki. Tindakan ini tidak bisa dibatalkan.", "If willing, let us know why so we can improve. This action cannot be undone.")}
             </DialogDescription>
           </DialogHeader>
           <Textarea
-            placeholder="Alasan (opsional)"
+            placeholder={t("Alasan (opsional)", "Reason (optional)")}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={3}
           />
           <DialogFooter>
             <Button variant="ghost" onClick={() => setDeclineOpen(false)} disabled={loading === "decline"}>
-              Batal
+              {t("Batal", "Cancel")}
             </Button>
             <Button onClick={handleDecline} disabled={loading === "decline"} variant="destructive">
-              {loading === "decline" ? "Menolak..." : "Konfirmasi tolak"}
+              {loading === "decline" ? t("Menolak...", "Declining...") : t("Konfirmasi tolak", "Confirm decline")}
             </Button>
           </DialogFooter>
         </DialogContent>

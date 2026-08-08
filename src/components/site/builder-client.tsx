@@ -21,6 +21,7 @@ import {
   type PersonalSiteInput,
 } from "@/lib/personal-site/model";
 import { useT } from "@/lib/i18n-client";
+import { useConfirm } from "@/lib/hooks/use-confirm";
 
 type EditorSection = "identity" | "content" | "links" | "appearance";
 
@@ -36,6 +37,7 @@ export function BuilderClient({
   previewUrl: string;
 }) {
   const { t } = useT();
+  const { confirm, dialog } = useConfirm();
   const [state, formAction, pending] = useActionState(
     action,
     { status: "idle" } satisfies PersonalSiteActionState,
@@ -47,6 +49,8 @@ export function BuilderClient({
   const [editorSection, setEditorSection] = useState<EditorSection>("identity");
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
   const [slugStatus, setSlugStatus] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle");
+  const formRef = useRef<HTMLFormElement>(null);
+  const mobileFormRef = useRef<HTMLFormElement>(null);
 
   const serialized = useMemo(() => JSON.stringify(site), [site]);
   const dirty = serialized !== savedSnapshot;
@@ -89,13 +93,34 @@ export function BuilderClient({
 
   const applyPreset = (preset: SitePreset) => {
     if (pending) return;
-    if (dirty && !window.confirm(t("Template akan mengganti konten utama dan section yang belum disimpan. Lanjut?", "Template will replace unsaved main content and sections. Continue?"))) return;
-    setSite((current) => ({ ...current, ...structuredClone(preset.values) }));
+    const run = async () => {
+      if (dirty) {
+        const ok = await confirm({
+          title: t("Ganti template?", "Replace template?"),
+          description: t("Template akan mengganti konten utama dan section yang belum disimpan. Lanjut?", "Template will replace unsaved main content and sections. Continue?"),
+          confirmLabel: t("Lanjut", "Continue"),
+        });
+        if (!ok) return;
+      }
+      setSite((current) => ({ ...current, ...structuredClone(preset.values) }));
+    };
+    run();
   };
 
   const reset = () => {
-    if (dirty && !window.confirm(t("Batalkan semua perubahan yang belum disimpan?", "Discard all unsaved changes?"))) return;
-    setSite(JSON.parse(savedSnapshot) as PersonalSiteInput);
+    const run = async () => {
+      if (dirty) {
+        const ok = await confirm({
+          title: t("Batalkan perubahan?", "Discard changes?"),
+          description: t("Batalkan semua perubahan yang belum disimpan?", "Discard all unsaved changes?"),
+          confirmLabel: t("Batalkan", "Discard"),
+          destructive: true,
+        });
+        if (!ok) return;
+      }
+      setSite(JSON.parse(savedSnapshot) as PersonalSiteInput);
+    };
+    run();
   };
 
   const labels = {
@@ -200,7 +225,7 @@ export function BuilderClient({
         <div className="sticky bottom-3 z-20 hidden items-center justify-between gap-3 rounded-2xl border bg-background/95 p-3 shadow-xl backdrop-blur xl:flex">
           <Button type="button" variant="ghost" disabled={!dirty || pending} onClick={reset}><Undo2 className="h-4 w-4" />{t("Batalkan", "Discard")}</Button>
           <div className="flex gap-2">
-            {site.published && <Button name="intent" value="unpublish" type="submit" variant="outline" disabled={pending} onClick={(event) => { if (!window.confirm(t("Sembunyikan halaman publik ini?", "Unpublish this public page?"))) event.preventDefault(); }}>{t("Unpublish", "Unpublish")}</Button>}
+            {site.published && <Button name="intent" value="unpublish" type="button" variant="outline" disabled={pending} onClick={async () => { const ok = await confirm({ title: t("Sembunyikan halaman?", "Unpublish page?"), description: t("Sembunyikan halaman publik ini?", "Unpublish this public page?"), confirmLabel: t("Unpublish", "Unpublish"), destructive: true }); if (ok) { const form = formRef.current; if (form) { const input = document.createElement("input"); input.type = "hidden"; input.name = "intent"; input.value = "unpublish"; form.appendChild(input); form.requestSubmit(); form.removeChild(input); } } }}>{t("Unpublish", "Unpublish")}</Button>}
             <Button name="intent" value="draft" type="submit" variant="outline" disabled={pending || slugStatus === "taken"}><Save className="h-4 w-4" />{pending ? t("Menyimpan…", "Saving…") : t("Simpan draft", "Save draft")}</Button>
             <Button name="intent" value="publish" type="submit" disabled={pending || slugStatus === "taken"}><Send className="h-4 w-4" />{pending ? t("Memproses…", "Publishing…") : t("Publish perubahan", "Publish changes")}</Button>
           </div>
@@ -215,14 +240,17 @@ export function BuilderClient({
       </section>
     </div>
 
+    {/* Confirm dialog MUST be rendered for useConfirm to work */}
+    {dialog}
+
     <div className={`${mode === "preview" ? "hidden" : "fixed"} inset-x-0 bottom-0 z-40 flex items-center justify-between gap-2 border-t bg-background/95 p-3 backdrop-blur xl:hidden`}>
       <Button type="button" variant="ghost" size="sm" disabled={!dirty || pending} onClick={reset}><Undo2 className="h-4 w-4" /><span className="sr-only">{t("Batalkan", "Discard")}</span></Button>
       <div className="flex flex-1 justify-end gap-2">
-        {site.published && <Button name="intent" value="unpublish" form="mobile-site-save" type="submit" variant="outline" size="sm" disabled={pending} onClick={(event) => { if (!window.confirm(t("Sembunyikan halaman publik ini?", "Unpublish this public page?"))) event.preventDefault(); }}>{t("Unpublish", "Unpublish")}</Button>}
+        {site.published && <Button name="intent" value="unpublish" type="button" variant="outline" size="sm" disabled={pending} onClick={async () => { const ok = await confirm({ title: t("Sembunyikan halaman?", "Unpublish page?"), description: t("Sembunyikan halaman publik ini?", "Unpublish this public page?"), confirmLabel: t("Unpublish", "Unpublish"), destructive: true }); if (ok) { const form = mobileFormRef.current; if (form) { const input = document.createElement("input"); input.type = "hidden"; input.name = "intent"; input.value = "unpublish"; form.appendChild(input); form.requestSubmit(); form.removeChild(input); } } }}>{t("Unpublish", "Unpublish")}</Button>}
         <form id="mobile-site-save" action={formAction} onSubmit={() => { submittedSnapshotRef.current = serialized; }} className="contents"><input type="hidden" name="site" value={serialized} /><Button name="intent" value="draft" type="submit" variant="outline" size="sm" disabled={pending || slugStatus === "taken"}><Save className="h-4 w-4" />{t("Draft", "Draft")}</Button><Button name="intent" value="publish" type="submit" size="sm" disabled={pending || slugStatus === "taken"}><Send className="h-4 w-4" />{t("Publish", "Publish")}</Button></form>
       </div>
     </div>
-  </div>;
+    </div>;
 }
 
 function Field({ label, children, hint, error }: { label: string; children: React.ReactNode; hint?: string; error?: string }) {

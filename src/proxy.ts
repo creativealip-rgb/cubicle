@@ -1,56 +1,33 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { getSessionCookie } from "better-auth/cookies"
+import { NextResponse, type NextRequest } from "next/server";
+import { logRequest } from "@/lib/logger";
+import { getCanonicalRedirect } from "@/lib/host-routing";
 
-import { getCanonicalRedirect } from "@/lib/host-routing"
-import { getAuthEnvironmentOptions } from "@/lib/auth-environment"
+export function proxy(request: NextRequest) {
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
+  const { pathname, search } = request.nextUrl;
 
-const authEnvironment = getAuthEnvironmentOptions(
-  process.env.BETTER_AUTH_URL,
-  process.env.NODE_ENV,
-)
-
-const protectedPrefixes = ["/app", "/onboarding"]
-
-
-export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl
-  const host = request.headers.get("host") || ""
-
-  // Redirect sslip.io domains to cubiqlo.com
-  if (host.includes("sslip.io")) {
-    const url = new URL(`https://cubiqlo.com${pathname}`)
-    url.search = request.nextUrl.search
-    return NextResponse.redirect(url, 301)
+  const target = getCanonicalRedirect(host, pathname, search, false);
+  if (target) {
+    return NextResponse.redirect(target, 308);
   }
 
+  const start = Date.now();
+  const response = NextResponse.next();
+  const duration = Date.now() - start;
 
-  const sessionCookie = getSessionCookie(request, {
-    cookiePrefix: authEnvironment.cookiePrefix,
-  })
-  const canonicalRedirect = getCanonicalRedirect(
-    host,
-    pathname,
-    request.nextUrl.search,
-    Boolean(sessionCookie),
-  )
-  if (canonicalRedirect) {
-    return NextResponse.redirect(canonicalRedirect, 308)
+  response.headers.set("X-Response-Time", `${duration}ms`);
+
+  // Log API and site requests
+  if (pathname.startsWith("/api") || pathname.startsWith("/site")) {
+    logRequest(request.method, pathname, response.status, duration);
   }
 
-  // Protected routes: no session → redirect to login on the same host.
-  const isProtected = protectedPrefixes.some((p) => pathname.startsWith(p))
-  if (isProtected && !sessionCookie) {
-    const loginUrl = new URL("/login", request.url)
-    loginUrl.searchParams.set("redirect", pathname)
-    return NextResponse.redirect(loginUrl)
-  }
-
-  return NextResponse.next()
+  return response;
 }
 
 export const config = {
   matcher: [
-    // Catch all paths for protected/auth routes + rate limiting
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
   ],
-}
+};
+

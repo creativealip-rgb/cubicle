@@ -26,6 +26,8 @@ export function ResetPasswordForm() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
+  // i18n labels hardcoded for auth flows
+  // const { t } = useT();
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 

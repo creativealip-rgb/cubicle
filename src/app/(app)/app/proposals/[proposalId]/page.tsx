@@ -48,7 +48,7 @@ export default async function ProposalDetailPage({
     .from(workspaces)
     .where(eq(workspaces.id, await getWorkspaceForCurrentUser()))
     .limit(1);
-  if (!ws) throw new Error("Workspace not found");
+  if (!ws) notFound();
   const member = await assertWorkspaceMember(db, user.id, ws.id);
   const canWrite = member.role === "owner" || member.role === "member";
 

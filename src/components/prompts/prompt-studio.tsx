@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Check, ChevronRight, Loader2, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, Info, Loader2, Monitor, Smartphone, Sparkles, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,33 +9,416 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { generateVisualPrompt } from "@/lib/actions/visual-prompts";
-import { launchPromptCatalog, type PromptCategory, type PromptOptionValue, type PromptTypeId } from "@/lib/prompts/catalog";
+import { launchPromptCatalog, resolveOverlapValue, type PromptCategory, type PromptOptionValue, type PromptTypeId, splitOverlapDefaults, nonOverlapFields } from "@/lib/prompts/catalog";
 import { parsePromptResult, type PromptGenerationResult } from "@/lib/prompts/build-prompt";
+import { toneOptions, styleOptions, platformOptions, ratioOptions } from "@/lib/prompts/field-options";
 import { PromptResult } from "./prompt-result";
 import { PromptHistoryDrawer, type PromptHistoryItem } from "./prompt-history-drawer";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n-client";
 import { toast } from "sonner";
 
-const categories: { id: PromptCategory; label: string }[] = [{ id: "social-media", label: "Social Media" }, { id: "ads-promotion", label: "Iklan & Promosi" }, { id: "product", label: "Produk" }, { id: "video", label: "Video" }, { id: "brand-copy", label: "Brand & Copy" }];
-type FormState = { brand: string; campaign: string; goal: string; audience: string; offer: string; tone: string; style: string; platform: string; ratio: string; colorPalette: string; notes: string; options: Record<string, PromptOptionValue> };
-const empty: FormState = { brand: "", campaign: "", goal: "", audience: "", offer: "", tone: "", style: "", platform: "", ratio: "", colorPalette: "", notes: "", options: {} };
+const categories: { id: PromptCategory; label: string; labelEn: string }[] = [
+  { id: "social-media", label: "Social Media", labelEn: "Social Media" },
+  { id: "ads-promotion", label: "Iklan & Promosi", labelEn: "Ads & Promotion" },
+  { id: "product", label: "Produk", labelEn: "Product" },
+  { id: "video", label: "Video", labelEn: "Video" },
+  { id: "brand-copy", label: "Brand & Copy", labelEn: "Brand & Copy" },
+];
 
-export function PromptStudio({ generations, usage }: { generations: PromptHistoryItem[]; usage: { totalInputTokens: number; totalOutputTokens: number; totalCost: number; monthlyCap: number; totalGenerations: number; generationLimit: number | null } }) {
-  const [category, setCategory] = useState<PromptCategory>("social-media"); const [typeId, setTypeId] = useState<PromptTypeId>("instagram-feed"); const [form, setForm] = useState(empty); const [result, setResult] = useState<PromptGenerationResult | null>(null); const [loading, setLoading] = useState(false);
+type FormState = {
+  brand: string; campaign: string; goal: string; audience: string;
+  offer: string; tone: string; style: string; platform: string;
+  ratio: string; colorPalette: string; notes: string;
+  options: Record<string, PromptOptionValue>;
+};
+const empty: FormState = {
+  brand: "", campaign: "", goal: "", audience: "",
+  offer: "", tone: "", style: "", platform: "",
+  ratio: "", colorPalette: "", notes: "", options: {},
+};
+
+const styleRefs: Record<string, { id: string; en: string }> = {
+  "Minimal Clean": { id: "Tipografi sans-serif, whitespace luas, warna netral. Cocok: tech, SaaS, skincare.", en: "Sans-serif typography, generous whitespace, neutral colors. Fits: tech, SaaS, skincare." },
+  "Luxury Premium": { id: "Tipografi serif, warna gelap/emas, tekstur marmer/velvet. Cocok: fashion, jewelry, hospitality.", en: "Serif typography, dark/gold tones, marble/velvet textures. Fits: fashion, jewelry, hospitality." },
+  "Dark Neon": { id: "Background gelap, aksen neon terang, glow effect. Cocok: nightlife, gaming, tech futuristik.", en: "Dark background, bright neon accents, glow effect. Fits: nightlife, gaming, futuristic tech." },
+  "Bold & Colorful": { id: "Warna cerah kontras, tipografi tebal, layout dinamis. Cocok: F&B, anak muda, event.", en: "Bright contrasting colors, bold typography, dynamic layout. Fits: F&B, youth, events." },
+  "Corporate Professional": { id: "Warna biru/netral, grid rapi, tipografi clean. Cocok: B2B, fintech, konsultan.", en: "Blue/neutral tones, clean grid, clean typography. Fits: B2B, fintech, consulting." },
+  "Bright & Fresh": { id: "Warna pastel/cerah, ilustrasi ringan, kesan segar. Cocok: health, food, eco-friendly.", en: "Pastel/bright colors, light illustrations, fresh feel. Fits: health, food, eco-friendly." },
+  "Warm & Cozy": { id: "Tone earth/warm, tekstur kayu/kain, pencahayaan lembut. Cocok: home decor, coffee shop, wellness.", en: "Earth/warm tones, wood/fabric textures, soft lighting. Fits: home decor, coffee shop, wellness." },
+  "Futuristic Tech": { id: "Gradien holografik, bentuk geometris, efek glassmorphism. Cocok: AI, blockchain, startup.", en: "Holographic gradients, geometric shapes, glassmorphism. Fits: AI, blockchain, startup." },
+  "Retro Vintage": { id: "Warna muted/sepia, tipografi klasik, tekstur kertas. Cocok: heritage, artisan, vinyl.", en: "Muted/sepia colors, classic typography, paper texture. Fits: heritage, artisan, vinyl." },
+  "Playful Fun": { id: "Bentuk rounded, warna pop, ilustrasi kartun. Cocok: kids, casual food, social app.", en: "Rounded shapes, pop colors, cartoon illustrations. Fits: kids, casual food, social app." },
+};
+
+function InfoTip({ text }: { text: string }) {
+  return (
+    <span className="group relative inline-flex">
+      <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help" />
+      <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-64 -translate-x-1/2 rounded-lg border bg-popover p-3 text-xs leading-relaxed text-popover-foreground shadow-md opacity-0 transition-opacity group-hover:opacity-100">
+        {text}
+      </span>
+    </span>
+  );
+}
+
+function PreviewPanel({ selected, form }: { selected: { name: string; nameEn?: string; description: string; descriptionEn?: string }; form: FormState }) {
+  const { t, lang } = useT();
+  const ratio = form.ratio || "4:5 (Portrait Feed)";
+  const style = form.style || "—";
+  const platform = form.platform || "—";
+  const ratioNum = ratio.split(" ")[0];
+  const [w, h] = ratioNum.split(":").map(Number);
+  const aspect = w && h ? w / h : 4 / 5;
+  const previewH = Math.min(120, Math.round(100 / aspect));
+
+  return (
+    <div className="space-y-2.5">
+      <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+        <Monitor className="h-3.5 w-3.5" /> Preview
+      </div>
+      <div className="flex justify-center">
+        <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/30 flex flex-col items-center justify-center gap-1 text-muted-foreground" style={{ width: Math.min(100, previewH * aspect), height: previewH }}>
+          <Smartphone className="h-4 w-4 opacity-40" />
+          <span className="text-[9px] font-medium">{ratioNum}</span>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+        <div className="rounded-md bg-muted/50 px-2 py-1">
+          <p className="text-[10px] text-muted-foreground">Style</p>
+          <p className="font-medium truncate">{style}</p>
+        </div>
+        <div className="rounded-md bg-muted/50 px-2 py-1">
+          <p className="text-[10px] text-muted-foreground">Platform</p>
+          <p className="font-medium truncate">{platform}</p>
+        </div>
+        <div className="rounded-md bg-muted/50 px-2 py-1">
+          <p className="text-[10px] text-muted-foreground">{t("Rasio", "Ratio")}</p>
+          <p className="font-medium truncate">{ratioNum}</p>
+        </div>
+        <div className="rounded-md bg-muted/50 px-2 py-1">
+          <p className="text-[10px] text-muted-foreground">Tone</p>
+          <p className="font-medium truncate">{form.tone || "—"}</p>
+        </div>
+      </div>
+      <div className="rounded-md border bg-background p-2">
+        <p className="text-[11px] font-medium text-foreground">{lang === "en" && selected.nameEn ? selected.nameEn : selected.name}</p>
+        <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground line-clamp-2">{lang === "en" && selected.descriptionEn ? selected.descriptionEn : selected.description}</p>
+      </div>
+    </div>
+  );
+}
+
+export function PromptStudio({ generations, usage }: { generations: PromptHistoryItem[]; usage: { totalInputTokens: number; totalOutputTokens: number; totalCost: number; monthlyCap: number; totalGenerations: number; generationLimit: number } }) {
+  const { t, lang } = useT();
+  const [category, setCategory] = useState<PromptCategory>("social-media");
+  const [typeId, setTypeId] = useState<PromptTypeId>("instagram-feed");
+  const [form, setForm] = useState(empty);
+  const [result, setResult] = useState<PromptGenerationResult | null>(null);
+  const [loading, setLoading] = useState(false);
   const [pendingType, setPendingType] = useState<PromptTypeId | null>(null);
-  const selected = launchPromptCatalog.find((item) => item.id === typeId)!; const types = launchPromptCatalog.filter((item) => item.category === category);
-  const valid = useMemo(() => Boolean(form.brand.trim() && form.campaign.trim() && form.goal.trim() && form.audience.trim() && selected.fields.filter((field) => field.required).every((field) => form.options[field.key] !== undefined && form.options[field.key] !== "")), [form, selected]);
-  function patchField(key: keyof Omit<FormState, "options">, value: string) { setForm((current) => ({ ...current, [key]: value })); }
-  function applyType(next: PromptTypeId) { const item = launchPromptCatalog.find((entry) => entry.id === next)!; setCategory(item.category); setTypeId(next); setForm((current) => ({ ...current, options: { ...item.defaults } })); setResult(null); setPendingType(null); }
-  function chooseType(next: PromptTypeId) { if (result && next !== typeId) { setPendingType(next); return; } applyType(next); }
-  function chooseCategory(next: PromptCategory) { const first = launchPromptCatalog.find((item) => item.category === next)!; if (result) { setPendingType(first.id); return; } applyType(first.id); }
-  async function generate() { if (!valid || loading) return; setLoading(true); try { const response = await generateVisualPrompt({ promptType: typeId, ...form }); const next = parsePromptResult(response.generation.generatedOutput || "", typeId).result; setResult(next); toast.success("Materi selesai dibuat"); } catch (error) { toast.error(error instanceof Error ? error.message : "Materi gagal dibuat"); } finally { setLoading(false); } }
-  return <div className="space-y-5"><div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><h1 className="app-page-title">Prompt Studio</h1><p className="mt-1 text-sm text-muted-foreground">Buat materi campaign dari brief sederhana.</p></div><div className="flex items-center gap-3"><span className="text-xs text-muted-foreground">Generate {usage.totalGenerations}/{usage.generationLimit ?? "Unlimited"}</span><PromptHistoryDrawer items={generations} onSelect={setResult}/></div></div>
-    <section className="rounded-2xl border bg-white p-3 sm:p-5"><div className="grid gap-3 md:hidden"><div className="space-y-1.5"><Label htmlFor="prompt-category-mobile">Kategori</Label><select id="prompt-category-mobile" aria-label="Pilih kategori prompt" value={category} onChange={(event) => chooseCategory(event.target.value as PromptCategory)} className="h-11 w-full rounded-md border bg-background px-3 text-sm font-medium">{categories.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></div><div className="space-y-1.5"><Label htmlFor="prompt-type-mobile">Jenis konten</Label><select id="prompt-type-mobile" aria-label="Pilih jenis konten" value={typeId} onChange={(event) => chooseType(event.target.value as PromptTypeId)} className="h-11 w-full rounded-md border bg-background px-3 text-sm font-medium">{types.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select><p className="text-xs leading-5 text-muted-foreground">{selected.description}</p></div></div><div className="hidden gap-2 overflow-x-auto pb-2 md:flex">{categories.map((item) => <button key={item.id} onClick={() => chooseCategory(item.id)} className={cn("min-h-11 shrink-0 rounded-lg px-4 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary", category === item.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground")}>{item.label}</button>)}</div><div className="mt-3 hidden gap-2 md:grid md:grid-cols-2 lg:grid-cols-4">{types.map((item) => <button key={item.id} onClick={() => chooseType(item.id)} className={cn("min-h-[76px] rounded-xl border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary", typeId === item.id ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:bg-muted/40")}><div className="flex items-center justify-between"><span className="text-sm font-semibold">{item.name}</span>{typeId === item.id ? <Check className="h-4 w-4 text-primary"/> : <ChevronRight className="h-4 w-4 text-muted-foreground"/>}</div><p className="mt-1 text-xs leading-5 text-muted-foreground">{item.description}</p></button>)}</div></section>
-    <div className="grid items-start gap-5 xl:grid-cols-[minmax(360px,430px)_minmax(0,1fr)]"><section id="prompt-brief" className="rounded-2xl border bg-slate-50/70 p-4 sm:p-5"><div className="mb-3 sm:mb-4"><p className="font-semibold">Brief {selected.name}</p><p className="text-xs text-muted-foreground">Isi empat informasi utama, lalu detail khusus bila diperlukan.</p></div><div className="space-y-3 sm:space-y-4">{[["brand","Brand","Contoh: Cubiqlo"],["campaign","Product / campaign","Contoh: Aplikasi pengelolaan klien untuk freelancer"],["goal","Goal","Contoh: Mendorong pendaftaran akun gratis"],["audience","Audience","Contoh: Freelancer Indonesia yang kewalahan mengelola banyak klien"]].map(([key,label,placeholder]) => <div className="space-y-1.5" key={key}><Label htmlFor={key}>{label}</Label><Input id={key} value={form[key as keyof FormState] as string} placeholder={placeholder} onChange={(event) => patchField(key as keyof Omit<FormState,"options">, event.target.value)}/></div>)}
-      {selected.fields.map((field) => <div className="space-y-1.5" key={field.key}><Label htmlFor={`option-${field.key}`}>{field.label}{field.required ? " *" : ""}</Label>{field.type === "select" ? <Select value={String(form.options[field.key] ?? "")} onValueChange={(value) => setForm((current) => ({ ...current, options: { ...current.options, [field.key]: field.key.endsWith("Count") ? Number(value) : value } }))}><SelectTrigger id={`option-${field.key}`}><SelectValue placeholder="Pilih opsi"/></SelectTrigger><SelectContent>{field.options?.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent></Select> : field.type === "textarea" ? <Textarea id={`option-${field.key}`} value={String(form.options[field.key] ?? "")} onChange={(event) => setForm((current) => ({ ...current, options: { ...current.options, [field.key]: event.target.value } }))}/> : <Input id={`option-${field.key}`} type={field.type} min={field.min} max={field.max} value={String(form.options[field.key] ?? "")} onChange={(event) => setForm((current) => ({ ...current, options: { ...current.options, [field.key]: field.type === "number" ? Number(event.target.value) : event.target.value } }))}/>}</div>)}
-      <details className="rounded-xl border bg-white p-3"><summary className="cursor-pointer text-sm font-medium">Advanced options</summary><div className="mt-4 space-y-3">{([...["offer","tone","style","platform","ratio","colorPalette","notes"]] as Array<keyof Omit<FormState,"options">>).map((key) => <div className="space-y-1.5" key={key}><Label htmlFor={key}>{key === "colorPalette" ? "Color palette" : key === "notes" ? "Catatan tambahan" : key[0].toUpperCase() + key.slice(1)}</Label>{key === "notes" ? <Textarea id={key} value={form[key]} onChange={(e) => patchField(key,e.target.value)}/> : <Input id={key} value={form[key]} onChange={(e) => patchField(key,e.target.value)}/>}</div>)}</div></details>
-      <Button className="h-11 w-full" disabled={!valid || loading} onClick={generate}>{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}{loading ? "Menyusun materi…" : "Generate Materi"}</Button></div></section><PromptResult result={result} loading={loading} onEdit={() => document.getElementById("prompt-brief")?.scrollIntoView({ behavior: "smooth" })} onRegenerate={generate}/></div>
-      <Dialog open={Boolean(pendingType)} onOpenChange={(open) => !open && setPendingType(null)}><DialogContent><DialogHeader><DialogTitle>Ganti jenis konten?</DialogTitle><DialogDescription>Hasil yang sedang tampil akan ditutup. Brief utama tetap tersimpan.</DialogDescription></DialogHeader><DialogFooter><Button variant="outline" onClick={() => setPendingType(null)}>Batal</Button><Button onClick={() => pendingType && applyType(pendingType)}>Ganti jenis</Button></DialogFooter></DialogContent></Dialog>
-    </div>;
+  const [showTerminal, setShowTerminal] = useState(false);
+
+  const selected = launchPromptCatalog.find((item) => item.id === typeId)!;
+  const types = launchPromptCatalog.filter((item) => item.category === category);
+  const detailFields = nonOverlapFields(selected.fields);
+
+  // Global form values are the single source of truth for overlap keys
+  // (platform, ratio, tone, offer); validation and prompt building resolve
+  // type-specific fields from them instead of duplicate inputs.
+  const globals = {
+    platform: form.platform,
+    ratio: form.ratio,
+    tone: form.tone,
+    offer: form.offer,
+  };
+
+  const valid = Boolean(
+    form.brand.trim() && form.campaign.trim() && form.goal.trim() && form.audience.trim() &&
+    selected.fields.filter((f) => f.required).every((f) => {
+      const value = resolveOverlapValue(f.key, form.options, globals);
+      return value !== undefined && value !== "";
+    })
+  );
+
+  function patchField(key: keyof Omit<FormState, "options">, value: string) {
+    setForm((current) => ({ ...current, [key]: value }));
+  }
+  function applyType(next: PromptTypeId) {
+    const item = launchPromptCatalog.find((entry) => entry.id === next)!;
+    setCategory(item.category);
+    setTypeId(next);
+    const { globals, options } = splitOverlapDefaults(item.defaults);
+    // Initialize global form fields from overlap defaults (cast string values for FormState)
+    setForm((current) => ({
+      ...current,
+      platform: String(globals.platform ?? current.platform),
+      ratio: String(globals.ratio ?? current.ratio),
+      tone: String(globals.tone ?? current.tone),
+      offer: String(globals.offer ?? current.offer),
+      options: { ...options },
+    }));
+    setResult(null);
+    setPendingType(null);
+  }
+  function chooseType(next: PromptTypeId) {
+    if (result && next !== typeId) { setPendingType(next); return; }
+    applyType(next);
+  }
+  function getFieldName(f: { label: string; labelEn?: string }) {
+    return lang === "en" && f.labelEn ? f.labelEn : f.label;
+  }
+  async function generate() {
+    if (!valid || loading) return;
+    setLoading(true);
+    try {
+      const response = await generateVisualPrompt({ promptType: typeId, ...form });
+      const next = parsePromptResult(response.generation.generatedOutput || "", typeId).result;
+      setResult(next);
+      toast.success(t("Materi selesai dibuat", "Material generated"));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("Materi gagal dibuat", "Generation failed"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const briefPlaceholders: Record<string, { id: string; en: string }> = {
+    brand: { id: "Contoh: Cubiqlo", en: "e.g.: Cubiqlo" },
+    campaign: { id: "Contoh: Aplikasi pengelolaan klien untuk freelancer", en: "e.g.: Client management app for freelancers" },
+    goal: { id: "Contoh: Mendorong pendaftaran akun gratis", en: "e.g.: Drive free account signups" },
+    audience: { id: "Contoh: Freelancer Indonesia yang kewalahan mengelola banyak klien", en: "e.g.: Indonesian freelancers overwhelmed managing multiple clients" },
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="app-page-title">Prompt Studio</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("Buat materi campaign dari brief sederhana.", "Create campaign material from a simple brief.")}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground">{t("Generate", "Generated")} {usage.totalGenerations}/{usage.generationLimit}</span>
+          <PromptHistoryDrawer items={generations} onSelect={setResult} />
+        </div>
+      </div>
+
+      {/* Compact type selector */}
+      <section className="rounded-2xl border bg-white p-3 sm:p-4">
+        {/* Mobile: dropdowns */}
+        <div className="grid gap-2 sm:grid-cols-2 md:hidden">
+          <div className="space-y-1">
+            <Label htmlFor="prompt-category-mobile" className="text-xs">{t("Kategori", "Category")}</Label>
+            <select id="prompt-category-mobile" value={category} onChange={(e) => {
+              const cat = e.target.value as PromptCategory;
+              const first = launchPromptCatalog.find((item) => item.category === cat)!;
+              setCategory(cat);
+              chooseType(first.id);
+            }} className="h-10 w-full rounded-lg border bg-background px-3 text-sm">
+              {categories.map((c) => <option key={c.id} value={c.id}>{lang === "en" ? c.labelEn : c.label}</option>)}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="prompt-type-mobile" className="text-xs">{t("Jenis", "Type")}</Label>
+            <select id="prompt-type-mobile" value={typeId} onChange={(e) => chooseType(e.target.value as PromptTypeId)} className="h-10 w-full rounded-lg border bg-background px-3 text-sm">
+              {types.map((t) => <option key={t.id} value={t.id}>{lang === "en" && t.nameEn ? t.nameEn : t.name}</option>)}
+            </select>
+          </div>
+        </div>
+        {/* Desktop: compact pills */}
+        <div className="hidden md:block">
+          <div className="flex items-center gap-3">
+            <Select value={category} onValueChange={(v) => {
+              const cat = v as PromptCategory;
+              const first = launchPromptCatalog.find((item) => item.category === cat)!;
+              setCategory(cat);
+              chooseType(first.id);
+            }}>
+              <SelectTrigger className="h-9 w-auto min-w-[140px] shrink-0 rounded-lg text-sm font-medium">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((c) => <SelectItem key={c.id} value={c.id}>{lang === "en" ? c.labelEn : c.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <div className="h-5 w-px bg-border" />
+            <div className="flex flex-1 items-center gap-1.5 overflow-x-auto pb-0.5">
+              {types.map((item) => (
+                <button key={item.id} onClick={() => chooseType(item.id)} className={cn(
+                  "h-8 shrink-0 rounded-lg px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  typeId === item.id ? "bg-primary text-primary-foreground" : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}>
+                  {lang === "en" && item.nameEn ? item.nameEn : item.name}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="mt-1.5 text-[11px] text-muted-foreground">{lang === "en" && selected.descriptionEn ? selected.descriptionEn : selected.description}</p>
+        </div>
+      </section>
+
+      {/* Main content: form + preview */}
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(360px,430px)_minmax(0,1fr)]">
+        {/* Brief form */}
+        <section id="prompt-brief" className="rounded-2xl border bg-slate-50/70 p-4 sm:p-5">
+          <div className="mb-3 sm:mb-4">
+            <p className="font-semibold">Brief {lang === "en" && selected.nameEn ? selected.nameEn : selected.name}</p>
+            <p className="text-xs text-muted-foreground">{t("Isi informasi utama, lalu detail khusus bila diperlukan.", "Fill in the main information, then add specific details if needed.")}</p>
+          </div>
+          <div className="space-y-3 sm:space-y-4">
+            {/* A. Brand Info */}
+            <div>
+              <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-[10px] font-bold text-primary">A</span>
+                {t("Informasi Brand & Produk", "Brand & Product Info")}
+              </p>
+              <div className="space-y-3">
+                {([["brand", "Brand"], ["campaign", "Product / campaign"], ["goal", "Goal"], ["audience", "Audience"]] as const).map(([key, label]) => (
+                  <div className="space-y-1.5" key={key}>
+                    <Label htmlFor={key}>{label}</Label>
+                    <Input id={key} value={form[key as keyof FormState] as string} placeholder={briefPlaceholders[key][lang]} onChange={(e) => patchField(key as keyof Omit<FormState, "options">, e.target.value)} />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* B. Type-specific fields */}
+            {detailFields.length > 0 && (
+              <div>
+                <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-[10px] font-bold text-primary">B</span>
+                  {t("Detail", "Details")} {lang === "en" && selected.nameEn ? selected.nameEn : selected.name}
+                </p>
+                <div className="space-y-3">
+                  {detailFields.map((field) => (
+                    <div className="space-y-1.5" key={field.key}>
+                      <Label htmlFor={`option-${field.key}`}>{getFieldName(field)}{field.required ? " *" : ""}</Label>
+                      {field.type === "select" ? (
+                        <Select value={String(form.options[field.key] ?? "")} onValueChange={(value) => setForm((current) => ({ ...current, options: { ...current.options, [field.key]: field.key.endsWith("Count") ? Number(value) : value } }))}>
+                          <SelectTrigger id={`option-${field.key}`}><SelectValue placeholder={t("Pilih opsi", "Select option")} /></SelectTrigger>
+                          <SelectContent>{field.options?.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
+                        </Select>
+                      ) : field.type === "textarea" ? (
+                        <Textarea id={`option-${field.key}`} value={String(form.options[field.key] ?? "")} onChange={(e) => setForm((current) => ({ ...current, options: { ...current.options, [field.key]: e.target.value } }))} />
+                      ) : (
+                        <Input id={`option-${field.key}`} type={field.type} min={field.min} max={field.max} value={String(form.options[field.key] ?? "")} onChange={(e) => setForm((current) => ({ ...current, options: { ...current.options, [field.key]: field.type === "number" ? Number(e.target.value) : e.target.value } }))} />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* C. Style & Visual */}
+            <details className="rounded-xl border bg-white p-3" open>
+              <summary className="flex cursor-pointer items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-[10px] font-bold text-primary">C</span>
+                Style & Visual
+                <ChevronDown className="ml-auto h-3.5 w-3.5 transition-transform [[data-state=open]>&]:rotate-180" />
+              </summary>
+              <div className="mt-3 space-y-3">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <Label htmlFor="style">{t("Gaya Desain", "Design Style")}</Label>
+                    {form.style && styleRefs[form.style] && <InfoTip text={lang === "en" ? styleRefs[form.style].en : styleRefs[form.style].id} />}
+                  </div>
+                  <Select value={form.style} onValueChange={(v) => patchField("style", v)}>
+                    <SelectTrigger id="style"><SelectValue placeholder={t("Pilih gaya desain", "Select design style")} /></SelectTrigger>
+                    <SelectContent>{styleOptions.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="tone">Tone</Label>
+                  <Select value={form.tone} onValueChange={(v) => patchField("tone", v)}>
+                    <SelectTrigger id="tone"><SelectValue placeholder={t("Pilih tone", "Select tone")} /></SelectTrigger>
+                    <SelectContent>{toneOptions.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="colorPalette">Color palette</Label>
+                  <Input id="colorPalette" value={form.colorPalette} onChange={(e) => patchField("colorPalette", e.target.value)} placeholder={t("Contoh: #2dd4bf, #ffffff", "e.g.: #2dd4bf, #ffffff")} />
+                </div>
+              </div>
+            </details>
+
+            {/* D. Platform & Format */}
+            <details className="rounded-xl border bg-white p-3" open>
+              <summary className="flex cursor-pointer items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-[10px] font-bold text-primary">D</span>
+                {t("Platform & Format", "Platform & Format")}
+                <ChevronDown className="ml-auto h-3.5 w-3.5 transition-transform [[data-state=open]>&]:rotate-180" />
+              </summary>
+              <div className="mt-3 space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="platform">Platform</Label>
+                  <Select value={form.platform} onValueChange={(v) => patchField("platform", v)}>
+                    <SelectTrigger id="platform"><SelectValue placeholder={t("Pilih platform", "Select platform")} /></SelectTrigger>
+                    <SelectContent>{platformOptions.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="ratio">{t("Rasio Aspek", "Aspect Ratio")}</Label>
+                  <Select value={form.ratio} onValueChange={(v) => patchField("ratio", v)}>
+                    <SelectTrigger id="ratio"><SelectValue placeholder={t("Pilih rasio", "Select ratio")} /></SelectTrigger>
+                    <SelectContent>{ratioOptions.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="offer">{t("Offer / Penawaran", "Offer")}</Label>
+                  <Input id="offer" value={form.offer} onChange={(e) => patchField("offer", e.target.value)} placeholder={t("Contoh: Diskon 50% untuk pembelian pertama", "e.g.: 50% off for first purchase")} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="notes">{t("Catatan tambahan", "Additional notes")}</Label>
+                  <Textarea id="notes" value={form.notes} onChange={(e) => patchField("notes", e.target.value)} placeholder={t("Instruksi khusus untuk AI...", "Special instructions for AI...")} />
+                </div>
+              </div>
+            </details>
+
+            {/* Generate */}
+            <Button className="h-11 w-full" disabled={!valid || loading} onClick={generate}>
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+              {loading ? t("Menyusun materi…", "Generating…") : t("Generate Materi", "Generate")}
+            </Button>
+          </div>
+        </section>
+
+        {/* Right panel: preview + result */}
+        <div className="space-y-3 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
+          <div className="hidden xl:block">
+            <div className="rounded-xl border bg-white p-3">
+              <PreviewPanel selected={selected} form={form} />
+            </div>
+          </div>
+          <div>
+            {result && (
+              <div className="mb-2 flex items-center gap-2">
+                <button onClick={() => setShowTerminal(false)} className={cn("rounded-md px-2.5 py-1 text-xs font-medium transition-colors", !showTerminal ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground")}>
+                  <Sparkles className="mr-1 inline-block h-3 w-3" />Cards
+                </button>
+                <button onClick={() => setShowTerminal(true)} className={cn("rounded-md px-2.5 py-1 text-xs font-medium transition-colors", showTerminal ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground")}>
+                  <Terminal className="mr-1 inline-block h-3 w-3" />Terminal
+                </button>
+              </div>
+            )}
+            <PromptResult result={result} loading={loading} onEdit={() => document.getElementById("prompt-brief")?.scrollIntoView({ behavior: "smooth" })} onRegenerate={generate} />
+          </div>
+        </div>
+      </div>
+
+      {/* Confirm type change dialog */}
+      <Dialog open={Boolean(pendingType)} onOpenChange={(open) => !open && setPendingType(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("Ganti jenis konten?", "Change content type?")}</DialogTitle>
+            <DialogDescription>{t("Hasil yang sedang tampil akan ditutup. Brief utama tetap tersimpan.", "Current results will be hidden. Main brief will be preserved.")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingType(null)}>{t("Batal", "Cancel")}</Button>
+            <Button onClick={() => pendingType && applyType(pendingType)}>{t("Ganti jenis", "Change type")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 }

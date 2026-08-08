@@ -79,7 +79,7 @@ async function notifyIfAssigneeChanged(
 
 const taskSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
+  description: z.string().nullable().optional(),
   projectId: z.string().uuid("Valid project required"),
   status: z.enum(["todo", "in_progress", "review", "done"]).optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
@@ -91,7 +91,7 @@ const taskSchema = z.object({
 
 const updateTaskSchema = z.object({
   title: z.string().min(1).optional(),
-  description: z.string().optional(),
+  description: z.string().nullable().optional(),
   status: z.enum(["todo", "in_progress", "review", "done"]).optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
   assigneeId: z.string().nullable().optional(),
@@ -403,11 +403,11 @@ export async function respondPortalTask(input: z.infer<typeof respondPortalTaskS
     )
     .limit(1);
 
-  if (!row) throw new Error("Task not found");
-  if (row.mode !== "workflow") throw new Error("Only workflow tasks support portal review");
-  if (row.projectClientId !== client.id) throw new Error("Task not in your portal");
-  if (!row.clientVisible) throw new Error("Task is not client-visible");
-  if (row.status !== "review") throw new Error("Task is not awaiting review");
+  if (!row) throw new Error("Task tidak ditemukan");
+  if (row.mode !== "workflow") throw new Error("Hanya task mode workflow yang mendukung portal review");
+  if (row.projectClientId !== client.id) throw new Error("Task tidak ada di portal Anda");
+  if (!row.clientVisible) throw new Error("Task tidak ditampilkan ke klien");
+  if (row.status !== "review") throw new Error("Task tidak sedang menunggu review");
 
   const nextStatus = parsed.decision === "approved" ? "done" : "in_progress";
   const stamp = new Date().toISOString();

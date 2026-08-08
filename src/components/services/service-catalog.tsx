@@ -58,9 +58,9 @@ export type ServiceCategory = {
 
 const CURRENCIES = ["IDR", "USD", "EUR", "GBP", "SGD"];
 const pricingModelLabels: Record<ServicePricingModel, { id: string; en: string }> = {
-  fixed: { id: "Fixed", en: "Fixed" },
+  fixed: { id: "Fixed Price", en: "Fixed Price" },
   hourly: { id: "Per jam", en: "Hourly" },
-  unit: { id: "Per unit", en: "Per unit" },
+  unit: { id: "Retainer", en: "Retainer" },
 };
 
 type FormState = {
@@ -308,9 +308,9 @@ export function ServiceCatalog({
                 <Select value={form.defaultPricingModel} onValueChange={(value) => setForm((prev) => ({ ...prev, defaultPricingModel: value as ServicePricingModel }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="fixed">Fixed</SelectItem>
+                    <SelectItem value="fixed">{t("Fixed Price", "Fixed Price")}</SelectItem>
                     <SelectItem value="hourly">{t("Per jam", "Hourly")}</SelectItem>
-                    <SelectItem value="unit">{t("Per unit", "Per unit")}</SelectItem>
+                    <SelectItem value="unit">{t("Retainer", "Retainer")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

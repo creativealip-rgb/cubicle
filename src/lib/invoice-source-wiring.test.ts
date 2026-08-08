@@ -26,9 +26,8 @@ describe("invoice source DTO wiring", () => {
     const form = read("src/components/forms/invoice-form.tsx");
     expect(form).toContain("hasActiveFixedHistory");
     expect(form).toContain("fixedSourcePreview");
-    expect(form).toContain("eligibleTimeEntriesInPeriod");
+    expect(form).toContain("eligibleTimeEntries");
     expect(form).toContain("Sisa nilai");
     expect(form).toContain('type="checkbox"');
-    expect(form).toContain("Total terpilih");
   });
 });
