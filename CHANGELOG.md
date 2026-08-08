@@ -1,5 +1,31 @@
 # Changelog
 
+## 2026-08-08 — Questionnaire editing, AI quota integrity, invoice lifecycle hardening, docs and UX cleanup
+
+**Questionnaire workflow:**
+- Added questionnaire create dialog, owner/editor edit route, shared runtime field schema, corrupt JSONB fallback, and validation for 1–50 fields.
+- Added focused action, schema, authorization, and wiring regression coverage.
+
+**AI quota and provider integrity:**
+- Replaced read-then-write monthly usage accounting with an atomic PostgreSQL upsert guarded by the plan limit.
+- Added best-effort quota release when the upstream provider never succeeds; successful provider responses remain charged even if later parsing or persistence fails.
+- Applied effective-plan checks to Prompt Studio, visual prompts, and Personal Site AI.
+- Removed fixed internal 9Router IP handling; endpoint resolution now uses environment configuration or Docker service DNS.
+
+**Invoice, plan, and navigation hardening:**
+- Added server-side invoice status transition rules so paid, cancelled, and archived invoices cannot be reopened through the generic edit action.
+- Removed dead Project/Task quick-create links and synchronized Free-plan Client Portal/AI copy with actual entitlement constants.
+- Added accessible IDs and labels to manual time Project/Task search controls.
+
+**Prompt Studio, docs, and UI:**
+- Added bilingual catalog names/descriptions, compact duration values with backward compatibility for legacy Indonesian values, loading skeletons, and updated docs/config examples.
+- Synchronized R2 public URL aliases, OpenAI-compatible environment names, and default AI model configuration.
+
+**Verification:**
+- 214 test files / 1,012 tests passed.
+- ESLint, TypeScript, Next.js production build, Compose config validation, and `git diff --check` passed.
+- Production deployment remains approval-gated; this batch targets `dev.cubiqlo.com` first.
+
 ## 2026-08-06 — Searchable Client/Project/Task combobox, multi-line description textarea, and compact Indonesian calendar popover
 
 **Searchable Combobox for Time Logs & Edit Dialog:**

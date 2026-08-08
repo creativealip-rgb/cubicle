@@ -62,48 +62,48 @@ function InfoTip({ text }: { text: string }) {
   );
 }
 
-function PreviewPanel({ selected, form }: { selected: { name: string; description: string }; form: FormState }) {
-  const { t } = useT();
+function PreviewPanel({ selected, form }: { selected: { name: string; nameEn?: string; description: string; descriptionEn?: string }; form: FormState }) {
+  const { t, lang } = useT();
   const ratio = form.ratio || "4:5 (Portrait Feed)";
   const style = form.style || "—";
   const platform = form.platform || "—";
   const ratioNum = ratio.split(" ")[0];
   const [w, h] = ratioNum.split(":").map(Number);
   const aspect = w && h ? w / h : 4 / 5;
-  const previewH = Math.min(200, Math.round(160 / aspect));
+  const previewH = Math.min(120, Math.round(100 / aspect));
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-        <Monitor className="h-4 w-4" /> Preview
+    <div className="space-y-2.5">
+      <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+        <Monitor className="h-3.5 w-3.5" /> Preview
       </div>
       <div className="flex justify-center">
-        <div className="rounded-xl border-2 border-dashed border-muted-foreground/20 bg-muted/30 flex flex-col items-center justify-center gap-2 text-muted-foreground" style={{ width: Math.min(160, previewH * aspect), height: previewH }}>
-          <Smartphone className="h-6 w-6 opacity-40" />
-          <span className="text-[10px] font-medium">{ratioNum}</span>
+        <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/30 flex flex-col items-center justify-center gap-1 text-muted-foreground" style={{ width: Math.min(100, previewH * aspect), height: previewH }}>
+          <Smartphone className="h-4 w-4 opacity-40" />
+          <span className="text-[9px] font-medium">{ratioNum}</span>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <div className="rounded-lg bg-muted/50 px-3 py-2">
-          <p className="text-muted-foreground">Style</p>
+      <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+        <div className="rounded-md bg-muted/50 px-2 py-1">
+          <p className="text-[10px] text-muted-foreground">Style</p>
           <p className="font-medium truncate">{style}</p>
         </div>
-        <div className="rounded-lg bg-muted/50 px-3 py-2">
-          <p className="text-muted-foreground">Platform</p>
+        <div className="rounded-md bg-muted/50 px-2 py-1">
+          <p className="text-[10px] text-muted-foreground">Platform</p>
           <p className="font-medium truncate">{platform}</p>
         </div>
-        <div className="rounded-lg bg-muted/50 px-3 py-2">
-          <p className="text-muted-foreground">{t("Rasio", "Ratio")}</p>
+        <div className="rounded-md bg-muted/50 px-2 py-1">
+          <p className="text-[10px] text-muted-foreground">{t("Rasio", "Ratio")}</p>
           <p className="font-medium truncate">{ratioNum}</p>
         </div>
-        <div className="rounded-lg bg-muted/50 px-3 py-2">
-          <p className="text-muted-foreground">Tone</p>
+        <div className="rounded-md bg-muted/50 px-2 py-1">
+          <p className="text-[10px] text-muted-foreground">Tone</p>
           <p className="font-medium truncate">{form.tone || "—"}</p>
         </div>
       </div>
-      <div className="rounded-lg border bg-background p-3">
-        <p className="text-xs font-medium text-foreground">{selected.name}</p>
-        <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">{selected.description}</p>
+      <div className="rounded-md border bg-background p-2">
+        <p className="text-[11px] font-medium text-foreground">{lang === "en" && selected.nameEn ? selected.nameEn : selected.name}</p>
+        <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground line-clamp-2">{lang === "en" && selected.descriptionEn ? selected.descriptionEn : selected.description}</p>
       </div>
     </div>
   );
@@ -222,7 +222,7 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
           <div className="space-y-1">
             <Label htmlFor="prompt-type-mobile" className="text-xs">{t("Jenis", "Type")}</Label>
             <select id="prompt-type-mobile" value={typeId} onChange={(e) => chooseType(e.target.value as PromptTypeId)} className="h-10 w-full rounded-lg border bg-background px-3 text-sm">
-              {types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              {types.map((t) => <option key={t.id} value={t.id}>{lang === "en" && t.nameEn ? t.nameEn : t.name}</option>)}
             </select>
           </div>
         </div>
@@ -249,12 +249,12 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
                   "h-8 shrink-0 rounded-lg px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                   typeId === item.id ? "bg-primary text-primary-foreground" : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}>
-                  {item.name}
+                  {lang === "en" && item.nameEn ? item.nameEn : item.name}
                 </button>
               ))}
             </div>
           </div>
-          <p className="mt-1.5 text-[11px] text-muted-foreground">{selected.description}</p>
+          <p className="mt-1.5 text-[11px] text-muted-foreground">{lang === "en" && selected.descriptionEn ? selected.descriptionEn : selected.description}</p>
         </div>
       </section>
 
@@ -263,7 +263,7 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
         {/* Brief form */}
         <section id="prompt-brief" className="rounded-2xl border bg-slate-50/70 p-4 sm:p-5">
           <div className="mb-3 sm:mb-4">
-            <p className="font-semibold">Brief {selected.name}</p>
+            <p className="font-semibold">Brief {lang === "en" && selected.nameEn ? selected.nameEn : selected.name}</p>
             <p className="text-xs text-muted-foreground">{t("Isi informasi utama, lalu detail khusus bila diperlukan.", "Fill in the main information, then add specific details if needed.")}</p>
           </div>
           <div className="space-y-3 sm:space-y-4">
@@ -288,7 +288,7 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
               <div>
                 <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-[10px] font-bold text-primary">B</span>
-                  {t("Detail", "Details")} {selected.name}
+                  {t("Detail", "Details")} {lang === "en" && selected.nameEn ? selected.nameEn : selected.name}
                 </p>
                 <div className="space-y-3">
                   {detailFields.map((field) => (
@@ -384,9 +384,9 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
         </section>
 
         {/* Right panel: preview + result */}
-        <div className="space-y-4">
+        <div className="space-y-3 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
           <div className="hidden xl:block">
-            <div className="rounded-2xl border bg-white p-4">
+            <div className="rounded-xl border bg-white p-3">
               <PreviewPanel selected={selected} form={form} />
             </div>
           </div>

@@ -6,15 +6,15 @@ const page = read("src/app/(app)/app/projects/[projectId]/page.tsx");
 
 describe("project detail billing-aware work tabs", () => {
   it("uses shared project task workspace under canonical Tugas tab", () => {
+    const nav = read("src/components/projects/project-tabs-nav.tsx");
     expect(page).toContain('ProjectTaskWorkspace');
-    expect(page).toContain('<TabsTrigger value="work"');
-    expect(page).toContain('t("Tugas", "Tasks")');
-    expect(page).toContain('<TabsContent value="work"');
+    expect(nav).toContain('<TabsTrigger value="work"');
+    expect(nav).toContain('t("Tugas", "Tasks")');
+    expect(nav).toContain('<TabsContent value="work"');
   });
 
   it("preserves conditional Time and consolidates commercial data under Billing", () => {
     expect(page).toContain("showTimeTab");
-    expect(page).toContain('<TabsTrigger value="billing"');
     expect(page).toContain("ProjectBillingTab");
     expect(page).toContain("invoices.workspaceId");
     expect(page).toContain("invoices.projectId");

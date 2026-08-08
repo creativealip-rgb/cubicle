@@ -10,9 +10,16 @@ describe("manual time entry visibility and accessibility", () => {
   });
 
   it("associates every manual-time label with its control", () => {
-    for (const id of ["manual-time-client", "manual-time-project", "manual-time-task", "manual-time-description", "manual-time-date", "manual-time-duration", "manual-time-tags"]) {
+    // Date/duration/description/tags keep label htmlFor/id pairs
+    for (const id of ["manual-time-description", "manual-time-date", "manual-time-duration", "manual-time-tags"]) {
       expect(form).toContain(`htmlFor="${id}"`);
       expect(form).toContain(`id="${id}"`);
     }
+    // Client+project is one combined combobox; task is a separate combobox.
+    // Both expose id + aria-label for accessible naming.
+    expect(form).toContain('id="manual-time-project"');
+    expect(form).toMatch(/aria-label=\{t\("Cari klien atau proyek\.\.\."/);
+    expect(form).toContain('id="manual-time-task"');
+    expect(form).toMatch(/aria-label=\{projectId \? t\("Cari tugas\.\.\."/);
   });
 });

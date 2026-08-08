@@ -3,15 +3,15 @@ import fs from "node:fs";
 import path from "node:path";
 
 const read = (file: string) => fs.readFileSync(path.join(process.cwd(), file), "utf8");
-const page = read("src/app/(app)/app/projects/[projectId]/page.tsx");
 const tab = read("src/components/projects/project-billing-tab.tsx");
 const form = read("src/components/forms/invoice-form.tsx");
 const actions = read("src/lib/actions/invoices.ts");
 
 describe("Project-scoped Invoice dialog", () => {
   it("renames Billing tab to Invoice and removes duplicate commercial summary", () => {
-    expect(page).toContain('value="billing"');
-    expect(page).toContain("Invoice ({projectInvoices.length})");
+    const nav = read("src/components/projects/project-tabs-nav.tsx");
+    expect(nav).toContain('value="billing"');
+    expect(nav).toContain("Invoice ({invoicesCount})");
     expect(tab).not.toContain("ProjectBillingSummary");
     expect(tab).not.toContain("Model billing");
     expect(tab).not.toContain("Nilai proyek");

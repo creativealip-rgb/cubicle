@@ -51,7 +51,7 @@ export const voiceLanguageOptions = [
 ] as const;
 
 export const durationOptions = [
-  "15 detik", "30 detik", "60 detik", "90 detik", "3 menit", "5 menit",
+  "15s", "30s", "60s", "90s", "3m", "5m",
 ] as const;
 
 export const cadenceOptions = [

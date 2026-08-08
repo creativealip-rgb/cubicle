@@ -1,300 +1,160 @@
-# Cubicle — Client Operations Hub
+# Cubiqlo — Client Operations Hub
 
-> **Status:** Production beta live · **URL:** https://cubiqlo.com
-> **Stack:** Next.js 16 · React 19 · Drizzle ORM + PostgreSQL · Better Auth · Tailwind v4 · shadcn/ui · Dokploy + Docker · Cloudflare R2 · Resend · Playwright/Vitest · **AI Assistant (9router + ag/gemini-3-flash)**
+> **Status:** Production live · **URL:** https://app.cubiqlo.com
+> **Stack:** Next.js 16 · React 19 · Drizzle ORM + PostgreSQL 16 · Better Auth v5 · Tailwind CSS v4 · shadcn/ui · Dokploy + Docker · Cloudflare R2 · Resend · Pakasir QRIS · **AI Assistant (9router + ag/gemini-3-flash)**
 
 ---
 
 ## 🧠 Overview
 
-Cubiqlo (repo masih `cubicle`) adalah SaaS client operations hub — satu workspace untuk mengelola client, project, task, file, time tracking, invoice, booking, client portal, proposal, questionnaire, contract/e-sign, finance report, AI prompt generator, dan AI Assistant.
+Cubiqlo (repo `cubicle`) adalah SaaS *Client Operations Hub* terpadu — satu workspace komprehensif untuk mengelola *Client, Project, Task, File, Time Tracking, Invoice, Booking, Client Portal, Proposal, Contract/E-sign, Personal Landing Builder, Personal Notes, Work Journal, AI Prompt Studio*, dan *AI Assistant*.
 
-Target user: freelancer, agency kecil, software/design studio, marketing team, dan konsultan yang butuh client work rapi tanpa pindah-pindah tool.
+Target pengguna: freelancer, studio desain/software, agensi kecil, marketing team, dan konsultan independen yang membutuhkan operasional kerja rapi tanpa harus berganti-ganti aplikasi.
 
 ---
 
-## 🔐 Authentication
+## 🔐 Authentication & Roles
 
-Better Auth v5 — email/password login.
+Menggunakan **Better Auth v5** (email & password).
 
 ```
 GET  /login
 GET  /signup
 GET  /forgot-password
+GET  /reset-password
+GET  /onboarding
 POST /api/auth/[...all]
 ```
 
-**Demo user (seed):**
+### Role & Permission Matrix
 
-| Role   | Email                | Password      |
-|--------|----------------------|---------------|
-| Owner  | owner@cubicle.test   | `password123` |
-| Member | member@cubicle.test  | `password123` |
-| Viewer | viewer@cubicle.test  | `password123` |
-
-All demo users belong to workspace **Acme Creative Studio** (`acme-creative`).
-
-**Role permission:**
-
-| Action              | Owner | Member | Viewer |
-|---------------------|:-----:|:------:|:------:|
-| Read all            | ✅     | ✅      | ✅      |
-| Create client/project/task/file/invoice | ✅ | ✅ | ❌ |
-| Edit anything       | ✅     | ✅      | ❌      |
-| Delete anything     | ✅     | ✅      | ❌      |
-| Manage team (add/remove member) | ✅ | ❌ | ❌ |
-| Time tracking       | ✅     | ✅      | ❌      |
-| Generate invoice share token | ✅ | ✅ | ❌ |
-| Record payment      | ✅     | ✅      | ❌      |
-| AI Prompt Generator | ✅     | ✅      | ❌      |
-| AI Assistant (chat)  | ✅     | ✅      | ❌      |
+| Action / Modul | Owner | Member | Viewer |
+|----------------|:-----:|:------:|:------:|
+| Read All Data | ✅ | ✅ | ✅ |
+| Create & Edit Client / Project / Task / File | ✅ | ✅ | ❌ |
+| Create & Edit Invoice / Proposal / Contract | ✅ | ✅ | ❌ |
+| Time Tracking (Start/Stop Timer, Add Log) | ✅ | ✅ | ❌ |
+| Generate Share Link / Client Portal Token | ✅ | ✅ | ❌ |
+| Record Payment / Mark Invoice Paid | ✅ | ✅ | ❌ |
+| AI Prompt Studio & AI Assistant | ✅ | ✅ | ❌ |
+| Personal Site Builder / Notes / Journal | ✅ | ✅ | ❌ |
+| Manage Workspace Settings & Team (Add/Remove) | ✅ | ❌ | ❌ |
+| Manage Billing & Upgrade Subscription (Pakasir QRIS) | ✅ | ❌ | ❌ |
 
 ---
 
-## 🌐 Localization / Bahasa
+## 🌐 Localization & Currency Rules
 
-Split bahasa berdasarkan route:
-
-### Indonesian (internal — `(app)/app/` routes)
-Dashboard, Clients, Invoices, Proposals, Tasks, Projects, Settings, Time, Files, Reports, Billing.
-Target user: freelancer/agency Indonesia.
-
-Internal non-IDR money display intentionally avoids `$` symbol and uses ISO currency prefix (example: `USD 1,000.00`). IDR stays `Rp`.
-
-Latest localization pass (2026-06-27): invoice list/detail, invoice item/payment/share-link dialogs, proposal list/new/detail, status labels, and internal date formatting.
-
-### English (client-facing — public token/slug routes)
-Invoice PDF, Invoice viewer, Client Portal, Proposal, Contract, Booking, Intake form, Email templates.
-Target user: international clients.
-
-Tidak pakai i18n library — hardcode string per context. Cukup buat MVP.
+- **Indonesian (Internal `(app)/app/` routes)**: Seluruh modul internal operasional (Dashboard, Klien, Proyek, Task, Time, Invoice, Proposal, Kontrak, Settings, Billing).
+- **English (Public & Client-Facing routes)**: Tampilan publik yang diakses klien internasional (Invoice Viewer, Client Portal, Proposal Viewer, Contract E-sign, Booking Page, Email Templates).
+- **Format Mata Uang**: Mata uang non-IDR menggunakan ISO currency code prefix (contoh: `USD 1,000.00` tanpa simbol `$`), sedangkan Rupiah menggunakan `Rp`.
 
 ---
 
-## 📊 Dashboard
+## 📊 Dashboard & Action Queue
 
 ```
 GET /app/dashboard
 ```
 
-Ringkasan instant:
-- **Klien Aktif / Active Clients** — jumlah klien
-- **Project Aktif / Active Projects** — jumlah proyek
-- **Task Jatuh Tempo / Due Tasks** — task yang overdue / due soon
-- **Invoice Belum Dibayar / Unpaid Invoices** — invoice belum paid
-
-Fitur dashboard:
-- [x] Language switch `ID / EN` di dashboard
-- [x] Preferensi bahasa disimpan di cookie `cubiqlo_lang`
-- [x] Greeting dinamis (Selamat pagi/siang/malam + nama user)
-- [x] Quick actions: Task baru, Invoice baru, Mulai timer, Tambah klien
-- [x] Attention needed: Invoice terlambat, Task hari ini, Kontrak menunggu, Notifikasi belum dibaca
-- [x] Revenue sparkline (14 hari terakhir)
-- [x] Kesehatan klien (Sehat / Diam / Berisiko)
-- [x] Proyeksi arus kas (30/60/90 hari)
-- [x] Aktivitas Terbaru
-- [x] Timer Aktif + Jadwal Mendatang
-- [x] Invoice Belum Dibayar
-- [x] Task Hari Ini
+- **Salam Dinamis & Bahasa**: Fitur pemilih bahasa `ID / EN` (disimpan di cookie `cubiqlo_lang`) dan salam dinamis sesuai waktu.
+- **Quick Action Bar**: Tombol pintas cepat: *Task Baru*, *Invoice Baru*, *Mulai Timer*, *Tambah Klien*.
+- **Perlu Ditangani (Action Queue)**: Pengelompokan tindakan mendesak (*Invoice Terlambat*, *Task Jatuh Tempo*, *Kontrak Menunggu Persetujuan*, *Notifikasi Belum Dibaca*).
+- **KPI Metrics**: Total Klien Aktif, Proyek Berjalan, Task Jatuh Tempo, dan Total Outstanding Invoices.
+- **Visual Arus Kas & Kesehatan**: Grafik tren pendapatan 14 hari terakhir, proyeksi kas 30/60/90 hari, serta status kesehatan klien (Sehat / Pasif / Berisiko).
 
 ---
 
-## 🏢 Clients
+## 🏢 Client Operations & Management
 
-### List
 ```
 GET /app/clients
-```
-Tabel semua klien dengan nama, company, email, status, projects count.
-
-### Detail
-```
 GET /app/clients/[clientId]
 ```
-Detail satu klien termasuk:
-- [x] Info dasar (nama, company, email, phone, address)
-- [x] Portal token management (generate / revoke)
-- [x] Short portal slug management (`/client-portal/[slug]`)
-- [x] Portal tab untuk document request/reminder
-- [x] Associated projects
 
-### Actions
-- [x] **Add Client** — owner/member only
-- [x] **Edit Client** — owner/member only
-- [x] **Portal Token** — generate token untuk client portal access
-- [x] **Portal Slug** — custom short link, lowercase/number/hyphen
-- [x] **Portal Request** — create reminder/document request untuk client portal
-- [x] **Portal Request Status** — mark done, cancel, reopen
+- **Profil Klien**: Pengelolaan informasi klien, nama perusahaan, email, nomor HP, alamat, dan catatan internal.
+- **Client Portal Access Control**:
+  - **Portal Token**: Token terenkripsi untuk akses portal via URL (`/client-portal/[token]`).
+  - **Custom Short Slug**: Tautan pendek kustom (contoh: `/client-portal/alip-studio`).
+  - **Manajemen Kata Sandi Portal**: Atur kata sandi portal, aktifkan, atau cabut akses kapan saja.
+- **Document & Action Requests**: Pengiriman permintaan dokumen/pengingat ke dashboard portal klien (tab **Requests** portal).
+- **Ekspor Data**: Fitur ekspor daftar klien & detail klien ke berkas Excel (`.xlsx`).
+- **Hapus Klien Terproteksi**: Hapus klien permanen beserta seluruh data proyek/invoice terkait dengan konfirmasi ketik nama klien secara transaksional.
 
 ---
 
-## 📁 Projects
+## 📁 Projects & Billing Models
 
-### List
 ```
 GET /app/projects
-```
-Tabel semua proyek dengan nama, klien, status, progress.
-
-### Detail
-```
 GET /app/projects/[projectId]
 ```
-Detail proyek termasuk:
-- Info dasar
-- Associated tasks (kanban)
-- Files
-- Comments
-- Client visibility toggle
 
-### Actions
-- **New Project** — owner/member only
-- **Edit Project** — owner/member only
-- **Set Client Visibility** — kontrol apakah proyek muncul di client portal
+- **Tipe Billing Proyek**:
+  - **Fixed Price (By Project)**: Paket harga tetap per proyek.
+  - **Hourly (By Hours)**: Penagihan berbasis tarif per jam (*hourly rate*).
+  - **Retainer**: Alokasi kuota jam kerja atau progres berkala.
+- **Client Visibility Toggle**: Kontrol apakah proyek & task bersangkutan ditampilkan di Client Portal.
+- **Struktur Tab Detail**: Tab Pekerjaan (Task), Waktu (Log Waktu), File, dan Billing (Keuangan & Invoice Proyek).
+- **Hapus Proyek Terproteksi**: Hapus proyek beserta seluruh data terikat dengan konfirmasi ketik nama proyek.
 
 ---
 
-## ✅ Tasks
+## ✅ Tasks & Kanban Board
 
 ```
 GET /app/tasks
 ```
 
-Kanban board dengan kolom:
-- **Backlog**
-- **Todo**
-- **In Progress**
-- **In Review**
-- **Done**
-
-Fitur:
-- Drag & drop antar kolom (@dnd-kit)
-- Assign member
-- Priority (low/medium/high/urgent)
-- Due date
-- Client visibility toggle
-- Comment thread per task
+- **5 Kolom Kanban**: *Backlog*, *Todo*, *In Progress*, *In Review*, *Done* dengan interaksi drag & drop (`@dnd-kit`).
+- **Properti Task**: Prioritas (*Low, Medium, High, Urgent*), Assignee, Due Date, dan Client Visibility.
+- **Task Comments**: Thread komentar internal per task.
+- **Koneksi Catatan**: Konversi cepat dari Personal Note menjadi Task resmi proyek.
 
 ---
 
-## 📎 Files
-
-```
-GET /app/files
-```
-
-Internal file manager per project.
-
-### Upload
-- **Visibility:** `Internal` (hanya workspace) atau `Client` (muncul di portal)
-- **File Type:** `Working File` atau `Deliverable`
-- Badge UI: Internal / Client / Deliverable
-
-### Download security
-```
-GET /api/files/[fileId]/download?token=PORTAL_TOKEN
-```
-
-Access control:
-- Workspace member (session) → ✅
-- Client portal (valid token + file visibility=client) → ✅
-- No auth / wrong token → ❌ 403
-
-### Storage
-- Upload menggunakan R2 (Cloudflare) signed URL
-- Penyimpanan: `workspaces/{workspaceId}/files/{fileId}/{filename}`
-- Batas upload: **25 MB per file**
-- Delete file meminta konfirmasi, menghapus object R2, lalu menghapus record database
-- Subfolder wajib memakai scope `clientId` dan `projectId` yang sama dengan parent folder
-
-### Permissions
-- Owner/member dapat upload, rename, dan delete
-- Viewer hanya dapat melihat dan membuka file
-
----
-
-## ⏱️ Time Tracking
+## ⏱️ Time Tracking & Timesheets
 
 ```
 GET /app/time
 ```
 
-Fitur:
-- **Active Timer** — Start / Stop time entry (real-time tick di topbar)
-- **Manual Entry** — Input durasi manual
-- **Timesheet** — List semua time entries
-- **CSV Export** — Export time entries ke CSV
-- **Hourly Rate** — Set rate per entry (digunakan untuk invoice)
-
-### Timer lifecycle:
-1. Start → timer aktif (muncul di topbar)
-2. Stop → save sebagai time entry
-3. Invoice import → status jadi `invoiced`
-
-> **Note:** Pause/resume ditunda ke Phase 2.
-
-### Topbar Timer Widget
-- Timer aktif: button merah dengan waktu berjalan
-- Klik → langsung ke `/app/time`
-- Update setiap 1 detik, sync setiap 15 detik
+- **Active Live Timer**: Widget timer aktif di topbar navigasi dengan indikator durasi di tab browser (`⏱️ [00:00:00]`).
+- **Input Manual & Tagging**: Input log waktu manual dengan hirarki Proyek > Task > Tag.
+- **Timesheet Harian & Mingguan**: Grid harian (maks 10 log/halaman) yang dapat diedit langsung, serta ringkasan mingguan tim.
+- **Status Log Waktu**: Log status `uninvoiced` dapat diimpor otomatis menjadi item penagihan Invoice. Log status `invoiced` terkunci dari pengeditan harga.
+- **Ekspor Berkas**: Ekspor log waktu ke PDF (Timesheet VA / Laporan Detail). *(CSV time export tidak tersedia.)*
+- **Persetujuan Timesheet**: Submit ringkasan mingguan (`/app/time/approvals`) & review oleh owner dengan status *draft → submitted → approved / rejected*.
 
 ---
 
-## 💰 Invoices
+## 💰 Invoices & Payments
 
 ```
 GET /app/invoices
 GET /app/invoices/[invoiceId]
+GET /invoice/[token] (Public)
 ```
 
-### Invoice lifecycle
-
-| Status     | Arti                            |
-|------------|---------------------------------|
-| `draft`    | Baru dibuat, belum dikirim      |
-| `sent`     | Share token sudah digenerate    |
-| `viewed`   | Client sudah buka shared link   |
-| `paid`     | Pembayaran lunas                |
-| `overdue`  | Melewati due date               |
-| `cancelled`| Dibatalkan manual               |
-
-### Fitur invoice:
-- Auto numbering (INV-0001, INV-0002, ...)
-- Counter per workspace, thread-safe
-- Tambah item (description, qty, unit price)
-- Import time entries → otomatis jadi invoice item
-- Hitung subtotal, tax, total otomatis
-- Record payment — auto status `paid` kalau total lunas
-- Generate share token (30 hari default)
-- Revoke share token
-- Public invoice page via token
-
-### Public invoice:
-```
-GET /invoice/[token]
-```
-Client bisa lihat invoice tanpa login. Auto update status `sent` → `viewed`.
+- **Invoice Lifecycle**: `Draft` ➔ `Sent` ➔ `Viewed` (auto saat dibaca klien) ➔ `Paid` / `Overdue` / `Cancelled` / `Archived`.
+- **Auto Numbering**: Penomoran invoice otomatis yang thread-safe (contoh: `INV-0001`).
+- **Import Time Logs**: Tarik log waktu *uninvoiced* otomatis menjadi item penagihan.
+- **Multi-Project Invoice**: Gabungkan item penagihan dari beberapa proyek milik klien yang sama dalam satu invoice.
+- **Public Share Link & PDF**: Halaman publik tanpa login (`/invoice/[token]`) & generate PDF via `@react-pdf/renderer` (`/api/invoices/[id]/pdf`).
+- **Pencatatan Pembayaran & Reminders**: Pencatatan pembayaran parsial/lunas & pengiriman pengingat jatuh tempo via email.
+- **Template Center**: Template invoice, proposal & kontrak dikelola di `/app/templates` (tersedia penuh hanya untuk pengguna preview; selain itu tampil sebagai "Segera").
 
 ---
 
-## 📅 Calendar & Appointments
+## 📄 Proposals, Contracts & Sales Docs
 
 ```
-GET /app/calendar
+GET /app/proposals | GET /app/contracts | GET /app/templates
 ```
 
-### Availability rules:
-- Set jam kerja per hari (Senin-Minggu)
-- Public booking berdasarkan rule ini
-
-### Public booking page:
-```
-GET /booking/acme-creative
-```
-- Client pilih tanggal → lihat slot tersedia
-- Isi nama, email, judul appointment
-- Submit → appointment tersimpan, redirect ke success page
-- Auto-assign ke workspace owner
+- **Proposal Penawaran (`/app/proposals`)**: Buat proposal dengan milestone harga & DP. Persetujuan di halaman publik (`/proposal/[token]`) otomatis membuatkan Proyek baru & Invoice DP.
+- **Kontrak & E-Sign (`/app/contracts`)**: Dokumen kesepakatan hukum dengan penandatanganan elektronik oleh klien (`/contract/[token]`).
+- **Template Center (`/app/templates`)**: Hub pengelolaan template invoice, proposal, dan kontrak.
 
 ---
 
@@ -305,374 +165,79 @@ GET /client-portal/[token]
 GET /client-portal/[slug]
 ```
 
-Client bisa akses tanpa login, menggunakan portal token atau custom slug pendek.
-
-Yang muncul:
-- [x] Nama/perusahaan client
-- [x] Requests & reminders (`portal_requests`)
-- [x] Client bisa mark request done
-- [x] Projects (hanya `clientVisible=true`)
-- [x] Tasks per project (hanya `clientVisible=true`)
-- [x] Files per project (hanya `visibility=client`)
-- [x] Deliverable badge untuk file `file_type=deliverable`
-- [x] Shared invoices (yang punya active share token)
-- [x] Comment form — client bisa kirim komentar (source=portal)
-
-Portal token/slug management:
-- [x] Generate token via client detail page
-- [x] Expiry configurable
-- [x] Revoke kapan saja
-- [x] Custom `portal_slug` via edit client form
-- [x] Toggle `portal_slug_enabled`
-- [x] Copy full short URL button
-- [x] Access logged ke `portal_access_logs`
-
-Notifications:
-- [x] Portal comment bikin in-app notification ke semua workspace members
-- [x] Portal comment kirim email via Resend helper
-- [ ] WhatsApp notification provider
+- Akses publik terisolasi untuk klien tanpa login. Link portal canonical menggunakan slug: `/client-portal/[slug]` (token dipakai internal untuk verifikasi).
+- Fitur: Branding workspace, ringkasan proyek & task visible, berkas & deliverable download, invoice & pembayaran, pengunggahan file revisi oleh klien (`POST /api/client-portal/files/upload`), serta tab **Requests** untuk permintaan dokumen/pengingat & pemesanan paket kustom.
+- *Komentar portal tidak tersedia* — komunikasi klien via kontak WA/email (lihat tab Contact).
 
 ---
 
-## 🤖 AI Assistant (v1.2 — Sprint F.3)
+## 📅 Calendar & Public Booking
 
-> See `docs/ai-assistant.md` for full reference. Quick summary below.
+```
+GET /app/calendar
+GET /booking/[slug] (Public)
+```
 
-Floating sparkle button (bottom-right of every `/app/*` page) → chat panel.
-
-**v1.2 adds**: workspace fuzzy search (pg_trgm), prompt library tools, voice input (Web Speech API), stop streaming, token display, export conversation to `.md`. Total **15 tools** (10 entity, 2 action, 3 utility).
-
-**Capabilities:**
-- Read tools (10): list clients/projects/tasks/invoices + entity drill-down + team lookup
-- Action tools (2): mark task done, draft invoice reminder — both require user confirm in UI
-- Conversation persistence (per-user, auto-titled from first message, history sidebar)
-- Multi-turn context (last 20 messages sent to model)
-- Terse responses, IDR-formatted, entity names not raw IDs
-
-**Stack:**
-- Model: `ag/gemini-3-flash` via 9router (OpenAI-compatible, internal Docker URL)
-- Architecture: agentic RAG — model calls structured tool functions over Drizzle queries (no embeddings)
-- Schema: `ai_conversations` + `ai_messages` tables
-- Cost: ~$0.01 per question, 1k Qs ≈ $10/mo
-
-**Try it:** click sparkle button → "How's the business?" or "Tell me about Kopi Senja".
+- **Availability Rules**: Pengaturan hari & jam kerja operasional berbasis IANA Timezone.
+- **Public Booking Page (`/booking/[slug]`)**: Klien memilih slot waktu yang dikonversi otomatis sesuai zona waktu klien.
+- **ICS Invite**: Konfirmasi janji temu dilengkapi berkas `.ics` yang dapat diunduh untuk Google/Apple Calendar.
 
 ---
 
-## 🤖 Prompt Generator
+## 🌐 Personal Landing Builder
 
 ```
-GET /app/prompts
+GET /app/personal-site
+GET /site/[slug] (Public)
 ```
 
-AI-powered content generation.
-
-### Provider:
-- **9Router** (local proxy) → model `ag/gemini-3-flash`
-- OpenAI-compatible API
-
-### Template system:
-- 3 built-in templates: **Social Caption**, **Copywriting**, **Email Marketing**
-- Variabel dinamis (e.g., `{{product_name}}`, `{{tone}}`)
-- Fill template → generate → output
-
-### Usage tracking:
-- Token usage (input/output)
-- Monthly cap: **$50**
-- Cost estimation per generation
-- History dengan filter per project
-
-### Technical:
-- API key via mounted secret file (`/run/secrets/9router_api_key`)
-- Fallback: auto-detect OPENAI_API_KEY / NINE_ROUTER_API_KEY / ROUTER_API_KEY
-- SSE response parsing (9router Gemini returns streaming chunks)
+- **WYSIWYG Canvas Editor**: 16 starter blocks, 3 template halaman (*Freelancer Profile, Agency Website, Service Offer*), section manager (Services, Pricing, FAQ, CTA, Gallery), dan device preview switcher (Desktop, Tablet, Mobile).
+- **Publish & SEO**: Pengaturan custom slug, meta SEO, gambar OpenGraph (OG), dan dukungan subpage (contoh: `/site/alip/contact`).
 
 ---
 
-## 💳 Billing & Payments (Pakasir)
+## 📝 Personal Notes & Work Journal
 
 ```
-GET /app/billing
-POST /api/billing/checkout
-POST /api/webhooks/pakasir
+GET /app/personal | GET /app/journal
 ```
 
-Pakasir QRIS payment gateway untuk upgrade plan workspace.
-
-### Plans
-
-| Plan  | Harga       | Limit              |
-|-------|-------------|---------------------|
-| Free  | Rp 0        | 3 klien max         |
-| Solo  | Rp 49rb/bln | Unlimited klien, 1 user |
-| Team  | Rp 99rb/bln | Unlimited klien, 5 users |
-
-### Checkout flow
-1. Owner klik "Bayar Solo/Team QRIS" di `/app/billing`
-2. `POST /api/billing/checkout` → create Pakasir transaction
-3. Redirect ke Pakasir QRIS page
-4. User bayar via QRIS
-5. Pakasir kirim webhook ke `/api/webhooks/pakasir`
-6. Webhook verify → update `workspace.plan` + `plan_expires_at` (+30 hari)
-7. `pakasir_payments` table tracks all transactions
-
-### Guards
-- Same plan → blocked (409)
-- Downgrade → blocked (409)
-- Upgrade (free→solo, free→team, solo→team) → allowed walau plan belum expired
-- Free plan checkout → blocked (400)
-- Non-owner → blocked (403)
-
-### Webhook endpoint
-```
-POST https://cubiqlo.com/api/webhooks/pakasir
-```
-Set di Pakasir dashboard sebagai callback URL.
+- **Personal Notes**: Catatan pribadi cepat, pinning, recurrence, dan konversi 1-klik menjadi Task resmi.
+- **Work Journal**: Log jurnal harian pekerjaan dengan mood tracker, tag i18n, search, dan ekspor.
 
 ---
 
-## ⚙️ Settings / Team Management
+## 🤖 AI Prompt Studio & AI Assistant
 
 ```
-GET /app/settings
+GET /app/prompts | Floating Chat Widget (/app/*)
 ```
 
-**Owner only:**
-- Add member by email → pilih role (member/viewer)
-- Change member role
-- Remove member
-- Owner self protected (tidak bisa remove/change self)
+- **AI Prompt Studio (`/app/prompts`)**: Generator materi kampanye & brief visual dengan 18 preset katalog (Feed Instagram, Carousel, Story, Product Ad, Thumbnail, UGC Script, Logo, dll) berdukungan bilingual (ID/EN).
+- **AI Assistant (`/app/brain`)**: Asisten pintar berbasis Agentic RAG (model default `ag/gemini-3-flash` via 9Router) untuk tanya-jawab data workspace & eksekusi tindakan terkonfirmasi UI. Tersedia juga sebagai widget mengambang di seluruh halaman `/app/*`.
 
 ---
 
-## 🏗️ Technical Architecture
+## ⚙️ Settings, Team & Subscriptions
 
-### Stack
 ```
-Next.js 16 (App Router)
-├── Better Auth v5 (email/password)
-├── Drizzle ORM + PostgreSQL
-├── Tailwind CSS v4 + shadcn/ui
-├── @dnd-kit (kanban drag & drop)
-├── @react-pdf/renderer (invoice PDF)
-├── AWS SDK S3 (R2 storage)
-├── Resend (email — noreply@cubiqlo.com verified)
-└── 9Router (AI provider gateway)
+GET /app/settings | GET /app/billing
 ```
 
-### Database
-- PostgreSQL 16 via Docker (`cubicle-pg`)
-- 26 tables (added `ai_conversations` + `ai_messages` + `pakasir_payments`)
-- Migrations via Drizzle
-- AI tables migration: `scripts/migrate-ai-tables.sql`
-
-### Deployment
-```
-Docker + Dokploy + Traefik
-├── Container: cubicle-mvp (Node.js, port 3000)
-├── Container: cubicle-pg (PostgreSQL, port 5432)
-├── Network: dokploy-network
-├── TLS: Let's Encrypt via Traefik
-└── Host: cubiqlo.com (sslip.io redirects to canonical domain)
-```
-
-### Build pipeline
-```bash
-npm run lint          # ESLint
-npx tsc --noEmit      # TypeScript check
-npx next build        # Production build
-docker compose up -d --build  # Deploy
-```
-
-### Current build status
-```
-lint:    PASS
-tsc:     PASS
-build:   PASS (verified 2026-06-23)
-unit:    PASS (17 Vitest tests)
-e2e:     PASS (13 Playwright tests)
-deploy:  PASS (Docker Compose, cubicle-cubicle-1 healthy)
-```
+- **Workspace & Team Settings (`/app/settings`)**: Logo workspace, alamat penagihan, email balasan kustom (*Reply-To*), dan manajemen peran tim (Owner, Member, Viewer).
+- **Subscription Pakasir QRIS (`/app/billing`)**: Langganan dibayar **tahunan** (sekali bayar via QRIS, tanpa pajak):
+  - **Free**: Gratis (maksimal 3 klien, 5 proyek, 10 invoice/bulan, AI 10 request/bulan).
+  - **Solo**: Rp 588.000 / tahun (unlimited klien, 1 user).
+  - **Team**: Rp 1.188.000 / tahun (unlimited klien & user).
+  - Checkout otomatis terverifikasi via webhook Pakasir (`/api/webhooks/pakasir`).
+- **Modul tersembunyi (tanpa entri sidebar, akses via URL langsung)**:
+  - **Email Suite (`/app/email`)**: Template email, draft & pengiriman — *experimental*, belum muncul di navigasi.
+  - **Packages (`/app/packages`)**: Manajemen paket & pesanan paket kustom — *experimental*, belum muncul di navigasi.
 
 ---
 
-## 🔑 Environment Variables
+## 🔒 Security & Access Control
 
-| Variable            | Status          | Deskripsi                        |
-|---------------------|:---------------:|----------------------------------|
-| DATABASE_URL        | ✅ Set          | PostgreSQL connection            |
-| BETTER_AUTH_URL     | ✅ Set          | Auth base URL                    |
-| BETTER_AUTH_SECRET  | ✅ Set          | Auth secret key                  |
-| OPENAI_API_BASE     | ✅ Set          | 9Router endpoint                 |
-| R2_ACCOUNT_ID       | ✅ Set          | Cloudflare R2 account            |
-| R2_ACCESS_KEY_ID    | ✅ Set          | R2 access key                    |
-| R2_SECRET_ACCESS_KEY| ✅ Set          | R2 secret key                    |
-| R2_BUCKET_NAME      | ✅ Set          | R2 bucket name                   |
-| RESEND_API_KEY      | ✅ Set          | Email provider                   |
-| EMAIL_FROM / RESEND_FROM | ✅ Set    | `noreply@cubiqlo.com` sender      |
-| AI_API_KEY          | ✅ Set          | 9router key (AI Assistant)       |
-| AI_BASE_URL         | ✅ Set          | 9router base URL                 |
-| AI_MODEL            | ✅ Set          | `ag/gemini-3-flash`              |
-| PAKASIR_PROJECT     | ✅ Set          | `cubiqlo` project slug           |
-| PAKASIR_API_KEY     | ✅ Set          | Server-side Pakasir API key      |
-| NEXT_PUBLIC_APP_URL | ✅ Set          | `https://cubiqlo.com`            |
-
----
-
-## 🧪 QA Status
-
-### ✅ Passed
-
-| Test                                | Result |
-|-------------------------------------|:------:|
-| All routes (25 routes)              | ✅ 200  |
-| Auth guard (unauthenticated → 307)  | ✅      |
-| Role-based UI (viewer hidden)       | ✅      |
-| Role-based backend guard            | ✅      |
-| Modal/dropdown/select interactions  | ✅      |
-| File download auth (token/session)  | ✅      |
-| File download forbidden (no auth)   | ✅ 403  |
-| Invoice share + auto viewed         | ✅      |
-| Client portal + deliverable badge   | ✅      |
-| Booking submit + success redirect   | ✅      |
-| Prompt generator 9Router connection | ✅ 200  |
-| SSE response parsing                | ✅      |
-| AI Assistant: 15 tools wired        | ✅      |
-| AI Assistant: persistence + history | ✅      |
-| AI Assistant: action confirm flow   | ✅      |
-| Reasoning leak strip                | ✅      |
-| Docker → host 9Router network       | ✅      |
-| Secret file mount permission        | ✅      |
-
-### ⚠️ Known Gaps
-
-| Item                                | Status     |
-|-------------------------------------|:----------:|
-| Payment gateway                    | ⚠️ Belum (manual payment/mark paid) |
-| Multi-workspace billing             | ⚠️ Phase 2 |
-| Pause/resume timer                  | ⚠️ Phase 2 |
-
----
-
-## 🗺️ Route Map
-
-```
-Public:
-  GET  /                                — Landing page
-  GET  /login                           — Login
-  GET  /signup                          — Register
-  GET  /forgot-password                 — Reset password
-  GET  /booking/[slug]                  — Public booking
-  GET  /booking/[slug]?success=1        — Booking confirmed
-  GET  /client-portal/[token]           — Client portal
-  GET  /invoice/[token]                 — Shared invoice
-
-Protected (require login):
-  GET  /app/dashboard                   — Dashboard
-  GET  /app/clients                     — Client list
-  GET  /app/clients/[clientId]          — Client detail
-  GET  /app/projects                    — Project list
-  GET  /app/projects/[projectId]        — Project detail
-  GET  /app/tasks                       — Kanban board
-  GET  /app/files                       — File manager
-  GET  /app/time                        — Time tracking
-  GET  /app/invoices                    — Invoice list
-  GET  /app/invoices/[invoiceId]        — Invoice detail
-  GET  /app/calendar                    — Calendar
-  GET  /app/prompts                     — Prompt generator
-  GET  /app/settings                    — Settings + team
-  GET  /onboarding                      — Onboarding flow
-
-API:
-  POST /api/auth/[...all]               — Better Auth endpoints
-  GET  /api/time/active                 — Active timer status
-  GET  /api/files/[fileId]/download     — File download (auth required)
-  POST /api/ai/chat                     — AI Assistant chat (auth required)
-  GET  /api/ai/chat                     — AI Assistant status
-  GET/POST/DELETE /api/ai/conversations — Conversation list/load/delete/create
-  POST /api/ai/action                   — Execute confirmed action
-  GET  /api/ai/conversations/export?conv=ID — Export conversation as .md (F.3)
-```
-
----
-
-## 🚀 Quick Start (Development)
-
-```bash
-cd /root/projects/cubicle
-cp .env.example .env
-# fill required env variables
-npm install
-npm run dev        # local dev
-npm run build      # production build
-docker compose up -d --build  # deploy to Docker
-```
-
----
-
-## 📝 User Guide — Common Flows
-
-### 1. Onboard client
-1. Login sebagai owner/member
-2. Buat client → `/app/clients` → Add Client
-3. Generate portal token → client detail → Portal Token
-4. Kirim link portal ke client: `https://cubiqlo.com/client-portal/{token}`
-
-### 2. Track project
-1. Buat project → `/app/projects` → New Project (pilih client)
-2. Tambah task → `/app/tasks` → buat task di kolom backlog
-3. Drag task ke In Progress saat mulai kerja
-4. Gunakan timer → start timer di `/app/time`, stop saat selesai
-
-### 3. Kirim invoice
-1. Buat invoice → `/app/invoices` → New Invoice (pilih client)
-2. Tambah item manual atau import time entries
-3. Generate share token → invoice detail → Generate Share Link
-4. Kirim link ke client: `https://cubiqlo.com/invoice/{token}`
-5. Client buka → status jadi `viewed`
-6. Record payment saat client bayar → status jadi `paid`
-
-### 4. Client self-booking
-1. Client buka: `https://cubiqlo.com/booking/acme-creative`
-2. Pilih tanggal, lihat slot tersedia
-3. Isi nama, email, judul → submit
-4. Appointment muncul di calendar workspace
-
-### 5. AI content generation
-1. `/app/prompts` → pilih template
-2. Isi variabel (product, tone, audience, dll)
-3. Generate → output dari AI
-4. Copy output untuk digunakan
-
-### 6. Upload file untuk client
-1. `/app/files` → Upload
-2. Pilih Visibility: `Client`
-3. Pilih File Type: `Deliverable` (kalau final)
-4. File muncul di client portal
-5. Client download via portal link
-
----
-
-## 📋 Sprint History
-
-```
-Sprint 1 — Foundation, auth, app shell       ✅
-Sprint 2 — Workspace, client, project, task   ✅
-Sprint 3 — Comments, files, time tracking     ✅
-Sprint 4 — Invoice + client portal            ✅
-Sprint 5 — Appointment, prompt, dashboard     ✅
-QA & deploy                                   ✅
-Post-QA role guard fix                        ✅
-File download security fix                    ✅
-9Router prompt integration                    ✅
-Cloudflare R2 + Resend + cubiqlo.com          ✅
-Reply-To email settings                       ✅
-Auth rate limiting + monitoring + backups     ✅
-Vitest unit tests + Playwright E2E            ✅
-Free tier 3-client enforcement                ✅
-Landing copy polish (Indo + SaaS English)     ✅
-```
-
----
-
-*Last updated: 23 June 2026 · Coder 2 (Hermes agent)*
+- **Multi-Tenant Isolation**: Kueri database diisolasi ketat berdasarkan `workspace_id`.
+- **Protected File Downloads**: Berkas terproteksi signed token R2; akses portal diverifikasi berdasar token & visibilitas berkas.
+- **Audit Logs**: Pencatatan aktivitas pembukaan portal, transaksi pembayaran, dan mutasi data penting.

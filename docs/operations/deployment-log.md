@@ -1,5 +1,28 @@
 # Deployment Log
 
+## 8 August 2026 — Questionnaire editing, AI quota integrity, invoice lifecycle and config hardening
+
+- Source branch before integration: `main`
+- Scope:
+  - Questionnaire create/edit workflow with runtime JSONB schema validation and writable-route authorization.
+  - Atomic monthly AI quota reservation plus best-effort release when provider execution fails before success.
+  - Effective-plan enforcement across visual prompts, Prompt Studio, and Personal Site AI.
+  - Server-side invoice status transition guard for terminal and backward states.
+  - Prompt catalog bilingual metadata and legacy duration compatibility.
+  - Manual-time combobox accessibility, dead topbar link cleanup, loading skeletons, docs/config synchronization.
+- Configuration:
+  - Added `R2_PUBLIC_URL` while preserving `R2_PUBLIC_ENDPOINT` for the logo script.
+  - Removed unused OpenAI-compatible aliases from Compose, added `OPENAI_API_BASE`, and aligned default `AI_MODEL` to `ag/gemini-3-flash`.
+  - Removed fixed 9Router IP handling from application source; Docker service DNS remains the default.
+- Release gate:
+  - Vitest: 214 files / 1,012 tests passed.
+  - ESLint, TypeScript, Next.js production build, `git diff --check`, production/dev Compose validation passed.
+  - Pre-deploy collision check passed: `dokploy-traefik` is sole public 80/443 owner; project Compose has no public proxy binding.
+- Deployment status at log creation:
+  - Commit/push: pending.
+  - Shared dev integration/deploy: pending through `dev/integration` and `scripts/operations/deploy-dev-integration.sh`.
+  - Production: not deployed; explicit approval remains required.
+
 ## 5 August 2026 — Approved time entries editability, Asia/Jakarta UTC+7 timezone fix, and Global Stale Server Action Auto-Reload Interceptor
 
 - Source revision: `8f884b2` / `main`

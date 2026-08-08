@@ -1,14 +1,11 @@
 import { db } from "@/db";
 import { services, serviceCategories } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { ServiceCatalog, type CatalogService, type ServicePricingModel } from "@/components/services/service-catalog";
-import { getCurrentLang, createT } from "@/lib/i18n";
 
 export default async function ServicesPage() {
   const workspaceId = await getWorkspaceForCurrentUser();
-  const lang = await getCurrentLang();
-  const t = createT(lang);
 
   const rawServices = await db
     .select({

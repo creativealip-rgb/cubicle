@@ -35,6 +35,7 @@ import { assertPaymentWithinRemaining } from "@/lib/invoice-payment-rules";
 import {
   assertInvoiceFinancialsMutable,
   calculateInvoiceTotals,
+  isInvoiceStatusTransitionAllowed,
 } from "@/lib/invoice-finance-rules";
 import { validateInvoiceMessage } from "@/lib/invoice-message";
 import { buildInvoiceReportUrl, normalizeInvoiceReportRange, signInvoiceReportRange } from "@/lib/invoice-report-options";
@@ -57,7 +58,7 @@ const createInvoiceSchema = z.object({
   projectId: z.string().optional(),
   projectIds: z.array(z.string()).optional(),
   projectSources: z.array(ProjectInvoiceSourceSchema).optional(),
-  scopedProjectId: z.string().optional(),
+  scopedProjectId: z.string().uuid().optional(),
   issueDate: z.string().min(1, "Issue date required"),
   dueDate: z.string().optional(),
   currency: z.string().default("USD"),
@@ -516,6 +517,15 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
   const currentInvoice = await assertInvoiceInWorkspace(invoiceId, workspaceId);
   if (parsed.status === "cancelled" && currentInvoice.status === "draft") {
     throw new Error("Gunakan aksi Batalkan Invoice untuk membatalkan draft");
+  }
+  // Guard invoice status transitions: paid/cancelled/archived are terminal and
+  // invalid backwards transitions (e.g. sent -> draft) are rejected. External
+  // flows (send email -> sent, portal -> viewed, cron -> overdue, payments ->
+  // paid) mutate status outside this action and are unaffected.
+  if (parsed.status !== undefined && parsed.status !== currentInvoice.status) {
+    if (!isInvoiceStatusTransitionAllowed(currentInvoice.status, parsed.status)) {
+      throw new Error("Status invoice tidak dapat diubah dari status saat ini");
+    }
   }
   const changesFinancials =
     (parsed.currency !== undefined && parsed.currency !== currentInvoice.currency) ||

@@ -5,7 +5,6 @@ import { Plus, FileText, Layers, Palette, Eye, ChevronLeft, ChevronRight, Trash2
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useT } from "@/lib/i18n-client";
 import type { PersonalSiteInput, PersonalSiteSection, PersonalSitePage } from "@/lib/personal-site/model";
 import { normalizePersonalSiteSlug } from "@/lib/personal-site/model";
 import { SECTION_TEMPLATES, type SectionTemplate } from "@/lib/personal-site/section-templates";
@@ -70,7 +69,6 @@ export function MobileStepEditor({
   onSetActivePageId,
   onSelectSection,
 }: Props) {
-  const { t } = useT();
   const [step, setStep] = useState<Step>("Pages");
   const stepIndex = STEPS.indexOf(step);
   const publicUrl = `${publicSiteBaseUrl}/${normalizePersonalSiteSlug(site.slug)}`;

@@ -33,12 +33,16 @@ This repo includes a `docker-compose.yml` optimized for Dokploy.
    R2_SECRET_ACCESS_KEY=...
    R2_BUCKET_NAME=cubicle-prod
    R2_PUBLIC_ENDPOINT=https://pub-xxx.r2.dev
+   R2_PUBLIC_URL=https://pub-xxx.r2.dev   # alias for site-upload API
 
    RESEND_API_KEY=re_...
    RESEND_FROM_EMAIL=noreply@your-domain.com
 
-   OPENAI_COMPATIBLE_BASE_URL=https://api.example.com/v1
-   OPENAI_COMPATIBLE_API_KEY=...
+   OPENAI_API_KEY=...
+   OPENAI_API_BASE=https://api.example.com/v1
+   AI_API_KEY=...
+   AI_BASE_URL=http://10.0.1.12:20128/v1
+   AI_MODEL=ag/gemini-3-flash
    AI_MONTHLY_CAP_USD=5
    ```
 

@@ -183,12 +183,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
   const [editTaskSearch, setEditTaskSearch] = useState("");
   const [editTaskSearchOpen, setEditTaskSearchOpen] = useState(false);
 
-  const editProjects = useMemo(() => {
-    const writableProjects = projects.filter((p) => p.timeTrackingMode !== "off");
-    if (!editClientId) return writableProjects;
-    return writableProjects.filter((p) => p.clientId === editClientId);
-  }, [editClientId, projects]);
-
   const allEditProjectOptions = useMemo(() => {
     const writableProjects = projects.filter((p) => p.timeTrackingMode !== "off");
     return writableProjects.map((p) => {

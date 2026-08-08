@@ -6,12 +6,13 @@ import { revalidatePath } from "next/cache";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { promptGenerations, users } from "@/db/schema";
+import { promptGenerations } from "@/db/schema";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { promptBriefSchema } from "@/lib/prompts/catalog";
 import { buildPromptRequest, parsePromptResult, serializePromptResult } from "@/lib/prompts/build-prompt";
+import { checkAiRateLimitDb, getPlanLimits, getUserPlan, releaseAiQuota } from "@/lib/plan";
 
 const MONTHLY_CAP_USD = 50;
 
@@ -108,13 +109,13 @@ export async function generateVisualPrompt(rawInput: unknown) {
   const apiBase =
     process.env.OPENAI_API_BASE || process.env.AI_BASE_URL || "http://9router:20128/v1";
 
-  // Monthly cap check from real stored cost
+  // Monthly cap check from real stored cost — plan comes from the effective
+  // plan helper so expired paid plans fall back to free limits.
   const monthStart = new Date();
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
-  const [account] = await db.select({ plan: users.plan }).from(users).where(eq(users.id, user.id)).limit(1);
-  const { getPlanLimits } = await import("@/lib/plan");
-  const limits = getPlanLimits(account?.plan ?? "free");
+  const plan = await getUserPlan(user.id);
+  const limits = getPlanLimits(plan);
   const generationLimit = limits.aiRequestsPerMonth;
   const [usage] = await db
     .select({
@@ -149,70 +150,98 @@ export async function generateVisualPrompt(rawInput: unknown) {
   let outputTokens = 0;
   let costUsd = "0.0000";
 
-  const response = await fetch(`${apiBase}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: input.model,
-      messages: [
-        { role: "system", content: request.systemPrompt },
-        { role: "user", content: generatedPrompt },
-      ],
-      temperature: 0.7,
-      max_tokens: 3500,
-    }),
-  });
-
-  if (!response.ok) {
-    await response.text();
-    throw new Error("Layanan AI sedang bermasalah. Coba lagi beberapa saat.");
+  // Atomic monthly quota reservation (same counter as chat/action routes).
+  // Reserve happens BEFORE the provider is invoked; the reservation is only
+  // released when the provider call never succeeded (see checkAiRateLimitDb
+  // boundary note — no refund for persistence failures after a success).
+  const aiRate = await checkAiRateLimitDb(workspaceId, plan);
+  if (!aiRate.allowed) {
+    throw new Error(
+      `Jatah AI bulanan ${aiRate.limit} sudah habis. Reset ${new Date(aiRate.resetAt).toISOString()}.`,
+    );
   }
+  let providerSucceeded = false;
 
-  const rawText = await response.text();
-  const parsed = parseAiResponse(rawText);
-  const normalized = parsePromptResult(parsed.content, input.promptType);
-  generatedOutput = serializePromptResult(normalized.result);
-  inputTokens =
-    parsed.promptTokens || Math.ceil((request.systemPrompt.length + generatedPrompt.length) / 4);
-  outputTokens = parsed.completionTokens || Math.ceil(generatedOutput.length / 4);
-  costUsd = estimateCost(input.model, inputTokens, outputTokens).toFixed(4);
+  try {
+    const response = await fetch(`${apiBase}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: input.model,
+        messages: [
+          { role: "system", content: request.systemPrompt },
+          { role: "user", content: generatedPrompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 3500,
+      }),
+    });
 
-  const [generation] = await db
-    .insert(promptGenerations)
-    .values({
+    if (!response.ok) {
+      await response.text();
+      throw new Error("Layanan AI sedang bermasalah. Coba lagi beberapa saat.");
+    }
+
+    providerSucceeded = true;
+
+    const rawText = await response.text();
+    const parsed = parseAiResponse(rawText);
+    const normalized = parsePromptResult(parsed.content, input.promptType);
+    generatedOutput = serializePromptResult(normalized.result);
+    inputTokens =
+      parsed.promptTokens || Math.ceil((request.systemPrompt.length + generatedPrompt.length) / 4);
+    outputTokens = parsed.completionTokens || Math.ceil(generatedOutput.length / 4);
+    costUsd = estimateCost(input.model, inputTokens, outputTokens).toFixed(4);
+
+    const [generation] = await db
+      .insert(promptGenerations)
+      .values({
+        workspaceId,
+        input,
+        generatedPrompt,
+        generatedOutput,
+        model: input.model,
+        inputTokens,
+        outputTokens,
+        costUsd,
+        createdBy: user.id,
+      })
+      .returning();
+
+    await writeActivityLog(
       workspaceId,
-      input,
-      generatedPrompt,
-      generatedOutput,
-      model: input.model,
-      inputTokens,
-      outputTokens,
-      costUsd,
-      createdBy: user.id,
-    })
-    .returning();
+      user.id,
+      "generated_visual_prompt",
+      "prompt_generation",
+      generation.id,
+    );
 
-  await writeActivityLog(
-    workspaceId,
-    user.id,
-    "generated_visual_prompt",
-    "prompt_generation",
-    generation.id,
-  );
+    revalidatePath("/app/prompts");
 
-  revalidatePath("/app/prompts");
-
-  return {
-    generation,
-    usage: {
-      inputTokens,
-      outputTokens,
-      costUsd: Number(costUsd),
-      monthlyCost: currentCost + Number(costUsd),
-      monthlyCap: MONTHLY_CAP_USD,
-    },
-  };
+    return {
+      generation,
+      usage: {
+        inputTokens,
+        outputTokens,
+        costUsd: Number(costUsd),
+        monthlyCost: currentCost + Number(costUsd),
+        monthlyCap: MONTHLY_CAP_USD,
+      },
+    };
+  } catch (err) {
+    // Refund the reservation ONLY if the provider never returned a successful
+    // response. After a success the request is spent — persistence failures
+    // (promptGenerations insert, activity log) do NOT refund.
+    if (!providerSucceeded) {
+      try {
+        await releaseAiQuota(workspaceId);
+      } catch {
+        // best-effort refund
+      }
+    }
+    throw err;
+  }
 }

@@ -58,6 +58,36 @@ describe("Overlap resolution in validation", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts both legacy and compact duration values", () => {
+    // Legacy briefs stored pre-compact durations ("30 detik") must still validate,
+    // and new compact values ("30s") must validate too.
+    const legacy = promptBriefSchema.safeParse({
+      ...base,
+      promptType: "short-video-script",
+      platform: "TikTok",
+      tone: "Friendly",
+      options: { duration: "30 detik", presentation: "presenter" },
+    });
+    expect(legacy.success).toBe(true);
+    const compact = promptBriefSchema.safeParse({
+      ...base,
+      promptType: "short-video-script",
+      platform: "TikTok",
+      tone: "Friendly",
+      options: { duration: "30s", presentation: "presenter" },
+    });
+    expect(compact.success).toBe(true);
+    // Unknown duration values still rejected
+    const bogus = promptBriefSchema.safeParse({
+      ...base,
+      promptType: "short-video-script",
+      platform: "TikTok",
+      tone: "Friendly",
+      options: { duration: "nanti saja", presentation: "presenter" },
+    });
+    expect(bogus.success).toBe(false);
+  });
+
   it("still rejects required overlap fields left empty everywhere", () => {
     const result = promptBriefSchema.safeParse({
       ...base,

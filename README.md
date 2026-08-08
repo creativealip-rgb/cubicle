@@ -73,19 +73,18 @@ R2_ACCESS_KEY_ID=<key>
 R2_SECRET_ACCESS_KEY=<secret>
 R2_BUCKET_NAME=cubicle-dev
 R2_PUBLIC_ENDPOINT=<public-r2-url>
+R2_PUBLIC_URL=<public-r2-url>   # alias used by site-upload API (same base)
 
 # Email (Resend)
 RESEND_API_KEY=<your-resend-key>
 EMAIL_FROM=Cubicle <noreply@your-domain.com>   # optional, defaults to onboarding@resend.dev
 
 # AI (optional, OpenAI-compatible) — used by Prompt Generator + AI Assistant
-OPENAI_COMPATIBLE_BASE_URL=https://api.example.com/v1
-OPENAI_COMPATIBLE_API_KEY=<key>
-
-# AI Assistant specific (optional, falls back to OPENAI_COMPATIBLE_* above)
-AI_API_KEY=***
+OPENAI_API_KEY=<key>          # fallback key for prompt generator
+OPENAI_API_BASE=https://api.example.com/v1
+AI_API_KEY=***                # AI Assistant key (or Docker secret /run/secrets/9router_api_key)
 AI_BASE_URL=http://10.0.1.12:20128/v1
-AI_MODEL=tr/MiniMax-M3
+AI_MODEL=ag/gemini-3-flash
 ```
 
 ### 3. Start database

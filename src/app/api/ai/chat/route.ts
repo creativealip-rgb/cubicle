@@ -145,12 +145,15 @@ export async function POST(req: NextRequest) {
 
   if (!limits.hasAiAssistant) {
     return new Response(
-      JSON.stringify({ error: "AI assistant tidak tersedia di plan Free. Upgrade ke Solo atau Team." }),
+      JSON.stringify({ error: "AI assistant tidak tersedia di plan ini." }),
       { status: 403, headers: { "Content-Type": "application/json" } },
     );
   }
 
-  // DB-backed daily limit: persists across restarts + correct across instances.
+  // DB-backed monthly quota: atomic reserve-or-reject (single statement, so
+  // concurrent requests cannot exceed the cap). Reservation happens BEFORE the
+  // provider is invoked; if the provider never returns a successful response
+  // the reservation is refunded in runAgentLoop's finally.
   const aiRate = await checkAiRateLimitDb(wsId, plan);
   if (!aiRate.allowed) {
     const resetDate = new Date(aiRate.resetAt).toISOString();
@@ -188,6 +191,15 @@ export async function POST(req: NextRequest) {
     await appendMessage(conversationId, { role: "user", content: last.content });
     await maybeAutoTitle(conversationId, last.content);
   } catch (err) {
+    // Quota was reserved above but the provider was never invoked — release
+    // the reservation (provider never succeeded → refund, see
+    // checkAiRateLimitDb boundary note). Best-effort; never mask the error.
+    try {
+      const { releaseAiQuota } = await import("@/lib/plan");
+      await releaseAiQuota(wsId);
+    } catch {
+      // best-effort refund
+    }
     return new Response(
       JSON.stringify({ error: String(err instanceof Error ? err.message : err) }),
       { status: 500, headers: { "Content-Type": "application/json" } },
@@ -214,6 +226,7 @@ export async function POST(req: NextRequest) {
     messages,
     send,
     close,
+    workspaceId: wsId,
     persistAssistant: async (final, toolRecords, lastToolName, totalUsage) => {
       // Persist tool messages first
       for (const tm of toolRecords) {
@@ -262,6 +275,7 @@ async function runAgentLoop(opts: {
   messages: ChatMessage[];
   send: (event: string, data: unknown) => void;
   close: () => void;
+  workspaceId: string;
   persistAssistant: (
     finalContent: string,
     toolRecords: Array<{ name: string; result: unknown }>,
@@ -273,7 +287,7 @@ async function runAgentLoop(opts: {
     },
   ) => Promise<void>;
 }) {
-  const { messages, send, close, persistAssistant } = opts;
+  const { messages, send, close, workspaceId, persistAssistant } = opts;
 
   let rounds = 0;
   let totalUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
@@ -281,6 +295,11 @@ async function runAgentLoop(opts: {
   let lastAssistantContent = "";
   let lastToolName: string | null = null;
   const persistedToolMessages: Array<{ name: string; result: unknown }> = [];
+  // Refund gate: the monthly quota reservation (checkAiRateLimitDb above) is
+  // only refunded when the provider never returned a successful response.
+  // Once streamChat succeeds the request is spent — later persistence failures
+  // do NOT refund (see checkAiRateLimitDb boundary note).
+  let providerSucceeded = false;
 
   try {
     while (rounds <= MAX_TOOL_ROUNDS) {
@@ -298,6 +317,8 @@ async function runAgentLoop(opts: {
         },
         { tools: TOOL_DEFS, toolChoice: "auto" },
       );
+
+      providerSucceeded = true;
 
       totalUsage = {
         prompt_tokens: totalUsage.prompt_tokens + final.usage.prompt_tokens,
@@ -405,6 +426,18 @@ async function runAgentLoop(opts: {
       message: err instanceof Error ? err.message : "Internal error",
     });
   } finally {
+    // Refund the monthly quota reservation ONLY if the provider never
+    // succeeded (streamChat threw / never returned). After a successful
+    // provider response the quota is spent — persistence failures here do
+    // NOT trigger a refund (see checkAiRateLimitDb boundary note).
+    if (!providerSucceeded && workspaceId) {
+      try {
+        const { releaseAiQuota } = await import("@/lib/plan");
+        await releaseAiQuota(workspaceId);
+      } catch {
+        // Refund is best-effort; never mask the original error.
+      }
+    }
     close();
   }
 }

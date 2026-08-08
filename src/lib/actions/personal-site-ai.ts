@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
+import { checkAiRateLimitDb, getAiEntitlementFailure, getUserPlan, releaseAiQuota } from "@/lib/plan";
 import * as copy from "@/lib/ai/copy";
 import type { PersonalSiteSection } from "@/lib/personal-site/model";
 
@@ -49,6 +50,20 @@ export async function generatePersonalSiteCopy(
     throw new Error(copy.MISSING_AI_KEY_MESSAGE);
   }
 
+  // Effective-plan entitlement: expired paid plans fall back to free limits.
+  const plan = await getUserPlan(user.id);
+  const entitlementFailure = getAiEntitlementFailure(plan);
+  if (entitlementFailure) {
+    throw new Error(entitlementFailure.error);
+  }
+
+  // Monthly AI quota (DB-backed, same counter as chat/action routes).
+  const aiRate = await checkAiRateLimitDb(workspaceId, plan);
+  if (!aiRate.allowed) {
+    const resetDate = new Date(aiRate.resetAt).toISOString();
+    throw new Error(`Batas ${aiRate.limit} request AI/bulan tercapai. Reset setelah ${resetDate}.`);
+  }
+
   // Build system + user prompts with exact constraints
   const prompts = copy.buildCopyPrompt(parsedInput);
   const messages = [
@@ -60,64 +75,85 @@ export async function generatePersonalSiteCopy(
   const baseUrl = process.env.AI_BASE_URL || "http://9router:20128/v1";
   const model = process.env.AI_MODEL || "ag/gemini-3.6-flash-low";
 
-  const response = await fetch(`${baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: 0.55,
-      max_tokens: 1200,
-    }),
-  });
+  // Refund gate: the reservation made by checkAiRateLimitDb above is only
+  // released when the provider call never succeeded. Once the provider has
+  // returned a successful response the request is spent — later parse /
+  // validation failures do NOT refund (see checkAiRateLimitDb boundary note).
+  let providerSucceeded = false;
 
-  if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    console.error("AI call failed:", response.status, text.slice(0, 200));
-    throw new Error(copy.AI_PROVIDER_ERROR_MESSAGE);
-  }
-
-  // Handle both stream (SSE) and non-stream responses
-  const contentType = response.headers.get("content-type") || "";
-  let rawText = "";
-  if (contentType.includes("text/event-stream")) {
-    rawText = await parseResponseWithSse(response.body!);
-  } else {
-    rawText = await response.text();
-  }
-
-  // Extract assistant content from raw/text or SSE chunks
-  const content = copy.extractChatContent(rawText);
-  if (!content || content.trim().length < 5) {
-    throw new Error("AI menghasilkan output kosong — coba lagi.");
-  }
-
-  // Parse the LLM's JSON response (raw/fenced JSON)
-  let parsedOutput;
   try {
-    parsedOutput = copy.parseAiJson(content);
-  } catch (err) {
-    throw new Error(copy.AI_PARSE_ERROR_MESSAGE);
-  }
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature: 0.55,
+        max_tokens: 1200,
+      }),
+    });
 
-  // Build canonical section patch with fresh nested IDs
-  let patch;
-  try {
-    patch = copy.buildSectionPatch(parsedInput, parsedOutput);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    throw new Error(`Format jawaban AI salah untuk tipe "${parsedInput.sectionType}": ${message}`);
-  }
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      console.error("AI call failed:", response.status, text.slice(0, 200));
+      throw new Error(copy.AI_PROVIDER_ERROR_MESSAGE);
+    }
 
-  // Return structured patch only - no DB writes
-  return {
-    sectionType: parsedInput.sectionType,
-    patch,
-    usage: undefined,
-  };
+    providerSucceeded = true;
+
+    // Handle both stream (SSE) and non-stream responses
+    const contentType = response.headers.get("content-type") || "";
+    let rawText = "";
+    if (contentType.includes("text/event-stream")) {
+      rawText = await parseResponseWithSse(response.body!);
+    } else {
+      rawText = await response.text();
+    }
+
+    // Extract assistant content from raw/text or SSE chunks
+    const content = copy.extractChatContent(rawText);
+    if (!content || content.trim().length < 5) {
+      throw new Error("AI menghasilkan output kosong — coba lagi.");
+    }
+
+    // Parse the LLM's JSON response (raw/fenced JSON)
+    let parsedOutput;
+    try {
+      parsedOutput = copy.parseAiJson(content);
+    } catch (err) {
+      throw new Error(copy.AI_PARSE_ERROR_MESSAGE);
+    }
+
+    // Build canonical section patch with fresh nested IDs
+    let patch;
+    try {
+      patch = copy.buildSectionPatch(parsedInput, parsedOutput);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new Error(`Format jawaban AI salah untuk tipe "${parsedInput.sectionType}": ${message}`);
+    }
+
+    // Return structured patch only - no DB writes
+    return {
+      sectionType: parsedInput.sectionType,
+      patch,
+      usage: undefined,
+    };
+  } finally {
+    // Refund the reservation ONLY if the provider never returned a successful
+    // response. After a success the request is spent — later parse / build
+    // failures do NOT refund. Best-effort; never mask the original error.
+    if (!providerSucceeded) {
+      try {
+        await releaseAiQuota(workspaceId);
+      } catch {
+        // best-effort refund
+      }
+    }
+  }
 }
 
 /** Resolve API key from Docker secret path (production). Falls back to no value if unavailable. */

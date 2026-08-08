@@ -316,19 +316,6 @@ export default async function DashboardPage() {
         ]}
       />
 
-      <Link
-        href="/app/docs"
-        className="flex items-center gap-3 rounded-lg border bg-gradient-to-r from-blue-50 to-violet-50 p-4 transition-all hover:shadow-md"
-      >
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <BookOpen className="h-5 w-5" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm font-semibold">{t("Dokumentasi Cubiqlo", "Cubiqlo Documentation")}</p>
-          <p className="text-xs text-muted-foreground">{t("Panduan lengkap semua fitur: landing page, invoice, time tracking, proyek, client portal.", "Complete guides: landing page, invoice, time tracking, projects, client portal.")}</p>
-        </div>
-      </Link>
-
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Reminder</h2>
@@ -481,6 +468,19 @@ export default async function DashboardPage() {
               </div>
             </CardContent>
           </Card>
+
+          <Link
+            href="/app/docs"
+            className="mt-4 flex items-center gap-3 rounded-lg border bg-gradient-to-r from-blue-50 to-violet-50 p-4 transition-all hover:shadow-md"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <BookOpen className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">{t("Dokumentasi Cubiqlo", "Cubiqlo Documentation")}</p>
+              <p className="text-xs text-muted-foreground">{t("Panduan lengkap semua fitur: landing page, invoice, time tracking, proyek, client portal.", "Complete guides: landing page, invoice, time tracking, projects, client portal.")}</p>
+            </div>
+          </Link>
         </div>
       </div>
     </div>

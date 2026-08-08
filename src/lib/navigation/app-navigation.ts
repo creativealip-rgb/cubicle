@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   BarChart3, Brain, Briefcase, BriefcaseBusiness, Calendar, CheckSquare, Clock,
   FileCheck2, FileSpreadsheet, FileText, FolderOpen, LayoutDashboard, NotebookPen,
-  Sparkles, Users, Wallet, Wrench,
+  Sparkles, Users, Wallet, Wrench, ClipboardList,
 } from "lucide-react";
 
 export type LocalizedText = { id: string; en: string };
@@ -43,6 +43,7 @@ export const appNavigation: NavigationEntry[] = [
     direct("services", "/app/services", Wrench, { id: "Layanan", en: "Services" }, { id: "Kelola katalog layanan milik Anda", en: "Manage your pure service catalog" }),
     direct("proposals", "/app/proposals", FileSpreadsheet, { id: "Proposal", en: "Proposals" }, { id: "Kelola penawaran dan proposal", en: "Manage client proposals and estimates" }, "draftProposals"),
     direct("contracts", "/app/contracts", FileCheck2, { id: "Kontrak", en: "Contracts" }, { id: "Kelola kontrak dan kesepakatan", en: "Manage client contracts and agreements" }, "draftContracts"),
+    direct("questionnaires", "/app/questionnaires", ClipboardList, { id: "Kuesioner", en: "Questionnaires" }, { id: "Form intake & brief klien", en: "Client intake forms & briefs" }),
   ]},
   direct("calendar", "/app/calendar", Calendar, { id: "Kalender", en: "Calendar" }),
   direct("files", "/app/files", FolderOpen, { id: "File", en: "Files" }),

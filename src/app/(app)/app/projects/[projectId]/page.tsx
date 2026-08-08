@@ -7,10 +7,7 @@ import { and, eq, desc, inArray } from "drizzle-orm";
 import { requireUser, assertProjectInWorkspace } from "@/lib/access";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { getProjectProgress } from "@/lib/actions/projects";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { projectStatusVariant } from "@/lib/status-badge";
@@ -29,11 +26,8 @@ import { Timesheet } from "@/components/time/timesheet";
 import Link from "next/link";
 import {
   ArrowLeft,
-  Pencil,
   Clock,
   FileText,
-  CheckSquare,
-  Wallet,
 } from "lucide-react";
 
 async function getWorkspaceId(): Promise<string> {

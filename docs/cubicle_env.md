@@ -24,6 +24,7 @@ R2_ACCESS_KEY_ID=your-access-key-id
 R2_SECRET_ACCESS_KEY=your-secret-access-key
 R2_BUCKET_NAME=cubicle-files
 R2_PUBLIC_ENDPOINT=https://files.example.com
+R2_PUBLIC_URL=https://files.example.com   # alias used by site-upload API (src/app/api/site/upload/route.ts)
 
 RESEND_API_KEY=your-resend-api-key
 EMAIL_FROM=Cubiqlo <noreply@cubiqlo.com>

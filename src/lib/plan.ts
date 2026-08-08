@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { aiUsageDaily, users, workspaceMembers } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, gt, sql } from "drizzle-orm";
 
 export type PlanTier = "free" | "solo" | "team";
 
@@ -86,7 +86,7 @@ export function getPlanLimits(plan: string): PlanLimits {
 export function getAiEntitlementFailure(plan: string): { status: number; error: string } | null {
   const limits = getPlanLimits(plan);
   if (!limits.hasAiAssistant) {
-    return { status: 403, error: "AI Assistant tersedia di paket Solo dan Team." };
+    return { status: 403, error: "AI Assistant tidak tersedia di plan ini." };
   }
   return null;
 }
@@ -162,16 +162,35 @@ export function checkWorkspaceRateLimit(
   return { allowed: true, remaining: limit - entry.count, resetAt: entry.resetAt, limit };
 }
 
-// ─── AI daily rate limit (DB-backed, atomic, persists across restarts) ───
+// ─── AI monthly quota (DB-backed, atomic, persists across restarts) ───
 
 /**
- * Atomically increment today's AI usage for a workspace and check against the
- * plan's daily cap. Unlike the in-memory limiter this survives restarts and is
- * correct across multiple app instances (single row per workspace+date,
- * incremented via UPSERT). Returns allowed=false WITHOUT incrementing when the
- * cap is already reached.
+ * Atomically reserve one AI request for a workspace's current month and check
+ * against the plan's monthly cap. The whole reserve-or-reject decision is a
+ * SINGLE statement:
  *
- * A limit of 0 means unlimited (no row written).
+ *   INSERT INTO ai_usage_daily (workspace_id, usage_date, count)
+ *   VALUES ($ws, current_date, 1)
+ *   ON CONFLICT (workspace_id, usage_date)
+ *   DO UPDATE SET count = ai_usage_daily.count + 1, updated_at = now()
+ *   WHERE ai_usage_daily.count < $limit
+ *   RETURNING count
+ *
+ * The `setWhere` guard makes the increment conditional: if the current count
+ * is already at the cap, the UPDATE matches zero rows, RETURNING yields no
+ * row, and nothing is incremented — so concurrent requests can NEVER push the
+ * counter past the limit. There is no read-then-write race window.
+ *
+ * A limit of 0 means unlimited (no row written; always allowed).
+ *
+ * ── Refund / rollback boundary ─────────────────────────────────────────
+ * Callers reserve quota BEFORE invoking the AI provider and must release it
+ * (via releaseAiQuota) ONLY when the provider call failed and the reservation
+ * will never be fulfilled. Once the provider has returned a successful
+ * response the request is "spent" — NEVER refund it, even if downstream
+ * persistence (DB write of the generated content, activity log, etc.) fails.
+ * Refunding after a successful provider response would let users exceed the
+ * cap by repeatedly retrying persistence.
  */
 export async function checkAiRateLimitDb(
   workspaceId: string,
@@ -187,32 +206,54 @@ export async function checkAiRateLimitDb(
     return { allowed: true, count: -1, limit: 0, resetAt: reset };
   }
 
-  // Current month total usage
-  const [usageRow] = await db
-    .select({
-      total: sql<number>`COALESCE(SUM(${aiUsageDaily.count}), 0)::int`,
-    })
-    .from(aiUsageDaily)
-    .where(
-      sql`${aiUsageDaily.workspaceId} = ${workspaceId} AND ${aiUsageDaily.usageDate} >= date_trunc('month', current_date)`,
-    );
-
-  const currentTotal = usageRow?.total ?? 0;
-
-  if (currentTotal >= limit) {
-    return { allowed: false, count: currentTotal, limit, resetAt: reset };
-  }
-
-  // Under cap: increment today's row count
-  await db
+  // Single atomic reserve-or-reject. Empty result = cap already reached.
+  const [row] = await db
     .insert(aiUsageDaily)
-    .values({ workspaceId, usageDate: sql`current_date`, count: 1 })
+    .values({
+      workspaceId,
+      usageDate: sql`current_date`,
+      count: 1,
+    })
     .onConflictDoUpdate({
       target: [aiUsageDaily.workspaceId, aiUsageDaily.usageDate],
-      set: { count: sql`${aiUsageDaily.count} + 1`, updatedAt: new Date() },
-    });
+      set: {
+        count: sql`${aiUsageDaily.count} + 1`,
+        updatedAt: new Date(),
+      },
+      setWhere: sql`${aiUsageDaily.count} < ${limit}`,
+    })
+    .returning({ count: aiUsageDaily.count });
 
-  return { allowed: true, count: currentTotal + 1, limit, resetAt: reset };
+  if (!row) {
+    return { allowed: false, count: limit, limit, resetAt: reset };
+  }
+
+  return { allowed: true, count: row.count, limit, resetAt: reset };
+}
+
+/**
+ * Atomically release one previously-reserved AI request for a workspace's
+ * current month (refund). Decrement is floored at zero — it can never make
+ * the counter negative, and it never affects rows from a previous month.
+ *
+ * ONLY call this when the provider call FAILED after a successful
+ * checkAiRateLimitDb reservation. Never refund after a successful provider
+ * response (see checkAiRateLimitDb boundary note).
+ */
+export async function releaseAiQuota(workspaceId: string): Promise<void> {
+  await db
+    .update(aiUsageDaily)
+    .set({
+      count: sql`GREATEST(${aiUsageDaily.count} - 1, 0)`,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(aiUsageDaily.workspaceId, workspaceId),
+        eq(aiUsageDaily.usageDate, sql`current_date`),
+        gt(aiUsageDaily.count, 0),
+      ),
+    );
 }
 
 // ─── Entity count checks (DB-backed) ───

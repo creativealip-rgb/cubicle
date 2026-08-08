@@ -55,7 +55,7 @@ describe("Phase 1 project time tracking wiring", () => {
     expect(timerWidget).toContain("startTimer({ workspaceId })");
     expect(timerWidget).toContain("await stopTimer(activeTimer.id)");
     expect(timerWidget).not.toContain("setStopDialogOpen(true)");
-    expect(topbar).toContain("await startTimer({ workspaceId })");
+    expect(topbar).not.toContain("await startTimer({ workspaceId })");
     expect(topbar).toContain("await stopTimer(activeTimer.id)");
     expect(topbar).not.toContain('if (!activeTimer.projectId)');
   });

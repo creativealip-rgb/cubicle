@@ -5,7 +5,6 @@ import {
   Layers,
   Image,
   Type,
-  LayoutGrid,
   GripVertical,
   Briefcase,
   ListOrdered,

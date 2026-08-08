@@ -37,9 +37,9 @@ describe("Prompt Studio mobile hierarchy", () => {
     expect(source).toContain(
       'typeId === item.id ? "bg-primary text-primary-foreground"',
     );
-    // Selected type description stays visible under the pill row
+    // Selected type description stays visible under the pill row (bilingual)
     expect(source).toContain(
-      'className="mt-1.5 text-[11px] text-muted-foreground">{selected.description}',
+      'className="mt-1.5 text-[11px] text-muted-foreground">{lang === "en" && selected.descriptionEn ? selected.descriptionEn : selected.description}',
     );
   });
 
@@ -53,9 +53,9 @@ describe("Prompt Studio mobile hierarchy", () => {
     expect(selectorSection).toBeGreaterThan(-1);
     expect(briefSection).toBeGreaterThan(selectorSection);
     expect(previewPanel).toBeGreaterThan(briefSection);
-    // Brief header and body structure
+    // Brief header and body structure (bilingual name)
     expect(source).toContain('className="mb-3 sm:mb-4"');
-    expect(source).toContain("Brief {selected.name}");
+    expect(source).toContain('Brief {lang === "en" && selected.nameEn ? selected.nameEn : selected.name}');
     expect(source).toContain('className="space-y-3 sm:space-y-4"');
   });
 });

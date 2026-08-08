@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/select";
 import { Plus, Trash2, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { createQuestionnaire } from "@/lib/actions/questionnaires";
+import { createQuestionnaire, updateQuestionnaire } from "@/lib/actions/questionnaires";
+import { useT } from "@/lib/i18n-client";
 import Link from "next/link";
 
 type FieldType = "text" | "textarea" | "select" | "multiselect" | "number" | "date" | "email" | "url";
@@ -54,6 +55,7 @@ export function QuestionnaireBuilder({
   questionnaireId?: string;
   initial?: { name: string; description: string | null; schema: Field[] };
 }) {
+  const { t } = useT();
   const router = useRouter();
   const [name, setName] = useState(initial?.name || "");
   const [description, setDescription] = useState(initial?.description || "");
@@ -108,13 +110,25 @@ export function QuestionnaireBuilder({
 
     startTransition(async () => {
       try {
-        const q = await createQuestionnaire({
-          workspaceId,
-          name: name.trim(),
-          description: description.trim() || null,
-          schema: cleanFields,
-        });
-        router.push(`/app/questionnaires/${q.id}`);
+        let qId = questionnaireId;
+        if (questionnaireId) {
+          await updateQuestionnaire(questionnaireId, {
+            name: name.trim(),
+            description: description.trim() || null,
+            schema: cleanFields,
+          });
+          toast.success(t("Kuesioner berhasil diperbarui", "Questionnaire updated"));
+        } else {
+          const q = await createQuestionnaire({
+            workspaceId,
+            name: name.trim(),
+            description: description.trim() || null,
+            schema: cleanFields,
+          });
+          qId = q.id;
+          toast.success(t("Kuesioner berhasil dibuat", "Questionnaire created"));
+        }
+        router.push(`/app/questionnaires/${qId}`);
         router.refresh();
       } catch (err: any) {
         toast.error(err?.message || "Save failed");

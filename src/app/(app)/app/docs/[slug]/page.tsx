@@ -29,12 +29,31 @@ const GUIDES = {
   "client-portal": {
     title: { id: "Client Portal", en: "Client Portal" },
     items: [
-      ["1. Aktifkan", "Klien → Edit → Aktifkan portal sekarang. Link: cubiqlo.com/p/[token]."],
+      ["1. Aktifkan", "Klien → Edit → Aktifkan portal sekarang. Link: cubiqlo.com/p/[token] atau slug kustom."],
       ["2. Dashboard", "Progress proyek, invoice status, aktivitas terbaru."],
       ["3. Task Review", "Klien Setujui/Revisi task. Notifikasi ke workspace kamu."],
-      ["4. File", "Download file di-share. Upload file (jika diizinkan)."],
+      ["4. File", "Download file di-share & upload berkas revisi oleh klien."],
       ["5. Invoice", "Lihat & download PDF invoice yang sudah dikirim."],
       ["6. Branding", "Settings → Branding → logo & warna workspace. Portal ikut tema."],
+    ],
+  },
+  "proposals-contracts": {
+    title: { id: "Proposal & Kontrak", en: "Proposals & Contracts" },
+    items: [
+      ["1. Buat Proposal", "Proposal Baru → set klien, milestone harga, DP (%), dan tanggal kadaluarsa."],
+      ["2. Approval Klien", "Klien membuka link publik proposal → menyetujui → proyek & invoice DP otomatis terbuat."],
+      ["3. Buat Kontrak", "Kontrak Baru → klausa hukum, syarat ketentuan kerja, dan penetapan nilai kontrak."],
+      ["4. Penandatanganan E-Sign", "Klien menandatangani kontrak secara elektronik via link publik /contract/[token]."],
+      ["5. Template Center", "Kelola template proposal & kontrak di /app/templates untuk digunakan kembali."],
+    ],
+  },
+  "ai-studio": {
+    title: { id: "AI Studio & Assistant", en: "AI Studio & Assistant" },
+    items: [
+      ["1. Prompt Studio", "Pilih dari 18 preset brief (Feed, Carousel, Story, Product Ad, Script Video, Logo, dll)."],
+      ["2. Parameter Bilingual", "Atur Platform, Rasio, Tone, dan Style dengan dukungan pilihan bahasa ID / EN."],
+      ["3. AI Assistant Floating", "Klik ikon sparkle di pojok kanan bawah untuk tanya-jawab data workspace."],
+      ["4. Agentic RAG Workspace", "Cek status proyek, invoice outstanding, atau buat draf pengingat tanpa data keluar."],
     ],
   },
 } as const;

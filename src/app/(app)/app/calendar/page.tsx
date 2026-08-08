@@ -16,6 +16,7 @@ import { Calendar, Clock, MapPin } from "lucide-react";
 import Link from "next/link";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { AvailabilityRuleForm } from "@/components/calendar/availability-rule-form";
+import { QuestionnaireCreateDialog } from "@/components/calendar/questionnaire-create-dialog";
 import { AppointmentActions, DeleteAvailabilityRuleButton } from "@/components/calendar/calendar-item-actions";
 import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 
@@ -99,11 +100,7 @@ export default async function CalendarPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/app/questionnaires/new">
-              {t("Buat formulir", "Create form")}
-            </Link>
-          </Button>
+          <QuestionnaireCreateDialog />
           {ws.bookingSlug ? (
             <Button variant="outline" size="sm" asChild>
               <Link href={`/booking/${ws.bookingSlug}`} target="_blank">

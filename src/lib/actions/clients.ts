@@ -94,7 +94,7 @@ async function assertCanUseClientPortal(userId: string) {
   const plan = await getUserPlan(userId);
   const limits = getPlanLimits(plan);
   if (!limits.hasClientPortal) {
-    throw new Error("Client portal tersedia di paket Solo dan Team.");
+    throw new Error("Client portal tidak tersedia di plan ini.");
   }
 }
 
@@ -111,7 +111,6 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
   } = {};
   let rawPortalToken: string | null = null;
   if (parsed.portalEnabled) {
-    const t = await getT();
     await assertCanUseClientPortal(userId);
     rawPortalToken = randomBytes(32).toString("hex");
     portalFields = {

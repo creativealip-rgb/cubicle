@@ -121,6 +121,8 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
           <Label className="text-xs">{t("Klien & Proyek *", "Client & Project *")}</Label>
           <div className="relative">
             <Input
+              id="manual-time-project"
+              aria-label={t("Cari klien atau proyek...", "Search client or project...")}
               placeholder={t("Cari klien atau proyek...", "Search client or project...")}
               value={projectSearch}
               onChange={(e) => {
@@ -167,6 +169,8 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
           <Label className="text-xs">{t("Tugas (Opsional)", "Task (Optional)")}</Label>
           <div className="relative">
             <Input
+              id="manual-time-task"
+              aria-label={projectId ? t("Cari tugas...", "Search task...") : t("Pilih klien & proyek dulu", "Select client & project first")}
               placeholder={projectId ? t("Cari tugas...", "Search task...") : t("Pilih klien & proyek dulu", "Select client & project first")}
               value={taskSearch}
               disabled={!projectId}

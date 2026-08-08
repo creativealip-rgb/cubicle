@@ -24,10 +24,7 @@ import { ClientTabsNav } from "@/components/clients/client-tabs-nav";
 import Link from "next/link";
 import {
   Globe,
-  FileText,
-  Calendar,
   ArrowLeft,
-  Receipt,
   Download,
   Wallet,
 } from "lucide-react";
