@@ -1,6 +1,6 @@
 # Changelog
 
-## 2026-08-08 — Questionnaire editing, AI quota integrity, invoice lifecycle hardening, docs and UX cleanup
+## 2026-08-08 — Questionnaire editing, AI quota integrity, invoice lifecycle hardening, billing integration, docs and UX cleanup
 
 **Questionnaire workflow:**
 - Added questionnaire create dialog, owner/editor edit route, shared runtime field schema, corrupt JSONB fallback, and validation for 1–50 fields.
@@ -14,17 +14,27 @@
 
 **Invoice, plan, and navigation hardening:**
 - Added server-side invoice status transition rules so paid, cancelled, and archived invoices cannot be reopened through the generic edit action.
+- Added legacy package-project fallback as fixed billing source while preserving billing-aware invoice behavior.
 - Removed dead Project/Task quick-create links and synchronized Free-plan Client Portal/AI copy with actual entitlement constants.
 - Added accessible IDs and labels to manual time Project/Task search controls.
+
+**Dev integration and production release:**
+- Merged `dev/integration` into `main` as `8248dcf` after resolving billing-aware integration conflicts without removing integration-only behavior.
+- Dev verified at `https://dev.cubiqlo.com`: app/DB health `ok`, authenticated dashboard, client/project/invoice flows, invoice status options, and no horizontal overflow at desktop QA viewport.
+- Production deployed to `cubiqlo-new-app` from image `sha256:bc39cd61b4a787ea6e8c79f2a95009f4ba6d4ff774979e988c25841a0ea80347`.
+- Production verification: `https://app.cubiqlo.com/api/health` returned `{"status":"ok","db":"ok"}`, login and landing HTTP 200, and `dokploy-traefik` remained sole public 80/443 owner.
+- Production DB backup: `/root/backups/cubiqlo/cubicle_prod_20260808T143858Z.dump`; SHA-256 `166a7d290a5ad207bee51d37eb426af7ed10281884b7d8764282bc4d18520511`.
+- Release gate: 215 test files / 1,018 tests passed, ESLint, TypeScript, and Next.js production build passed.
+- Production deployment is complete; follow-up mobile runtime QA remains separate from release gate.
 
 **Prompt Studio, docs, and UI:**
 - Added bilingual catalog names/descriptions, compact duration values with backward compatibility for legacy Indonesian values, loading skeletons, and updated docs/config examples.
 - Synchronized R2 public URL aliases, OpenAI-compatible environment names, and default AI model configuration.
 
 **Verification:**
-- 214 test files / 1,012 tests passed.
+- Superseded by final release gate below: 215 test files / 1,018 tests passed.
 - ESLint, TypeScript, Next.js production build, Compose config validation, and `git diff --check` passed.
-- Production deployment remains approval-gated; this batch targets `dev.cubiqlo.com` first.
+- Dev and production deployment completed; see release section above.
 
 ## 2026-08-06 — Searchable Client/Project/Task combobox, multi-line description textarea, and compact Indonesian calendar popover
 

@@ -1,27 +1,37 @@
 # Deployment Log
 
-## 8 August 2026 — Questionnaire editing, AI quota integrity, invoice lifecycle and config hardening
+## 8 August 2026 — Production release: dev integration, billing hardening, questionnaire, AI quota and invoice lifecycle
 
-- Source branch before integration: `main`
+- Source: `dev/integration` merged into `main` as `8248dcf`; pushed to `origin/main`.
 - Scope:
   - Questionnaire create/edit workflow with runtime JSONB schema validation and writable-route authorization.
   - Atomic monthly AI quota reservation plus best-effort release when provider execution fails before success.
   - Effective-plan enforcement across visual prompts, Prompt Studio, and Personal Site AI.
   - Server-side invoice status transition guard for terminal and backward states.
-  - Prompt catalog bilingual metadata and legacy duration compatibility.
-  - Manual-time combobox accessibility, dead topbar link cleanup, loading skeletons, docs/config synchronization.
-- Configuration:
-  - Added `R2_PUBLIC_URL` while preserving `R2_PUBLIC_ENDPOINT` for the logo script.
-  - Removed unused OpenAI-compatible aliases from Compose, added `OPENAI_API_BASE`, and aligned default `AI_MODEL` to `ag/gemini-3-flash`.
-  - Removed fixed 9Router IP handling from application source; Docker service DNS remains the default.
+  - Legacy package-project fallback as fixed billing source.
+  - Prompt catalog bilingual metadata, legacy duration compatibility, manual-time accessibility, loading skeletons, and docs/config synchronization.
+- Dev verification:
+  - `https://dev.cubiqlo.com` app/DB health `ok`.
+  - Authenticated dashboard, client, project, and invoice flows verified.
+  - Invoice status selector and billing source rendered correctly.
+  - Desktop runtime viewport had no horizontal overflow.
 - Release gate:
-  - Vitest: 214 files / 1,012 tests passed.
-  - ESLint, TypeScript, Next.js production build, `git diff --check`, production/dev Compose validation passed.
-  - Pre-deploy collision check passed: `dokploy-traefik` is sole public 80/443 owner; project Compose has no public proxy binding.
-- Deployment status at log creation:
-  - Commit/push: pending.
-  - Shared dev integration/deploy: pending through `dev/integration` and `scripts/operations/deploy-dev-integration.sh`.
-  - Production: not deployed; explicit approval remains required.
+  - 215 test files / 1,018 tests passed.
+  - ESLint, TypeScript, and Next.js production build passed.
+  - Pre-deploy collision check passed: `dokploy-traefik` sole public 80/443 owner.
+- Production backup:
+  - `/root/backups/cubiqlo/cubicle_prod_20260808T143858Z.dump`
+  - SHA-256: `166a7d290a5ad207bee51d37eb426af7ed10281884b7d8764282bc4d18520511`
+  - Database verified: `cubicle`.
+- Production deployment:
+  - Container: `cubiqlo-new-app`.
+  - Image: `sha256:bc39cd61b4a787ea6e8c79f2a95009f4ba6d4ff774979e988c25841a0ea80347`.
+  - `https://app.cubiqlo.com/api/health`: `{"status":"ok","db":"ok"}`.
+  - `https://app.cubiqlo.com/login`: HTTP 200.
+  - `https://cubiqlo.com/`: HTTP 200.
+  - Production container running; no fresh runtime errors.
+  - `dokploy-traefik` remains sole public 80/443 owner.
+- Follow-up: mobile runtime QA remains separate; production release gate passed.
 
 ## 5 August 2026 — Approved time entries editability, Asia/Jakarta UTC+7 timezone fix, and Global Stale Server Action Auto-Reload Interceptor
 
