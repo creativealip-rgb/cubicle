@@ -1,4 +1,9 @@
 import { z } from "zod";
+import type { BillingModel } from "./billing-model";
+
+export function isFixedInvoiceBillingModel(model: BillingModel): boolean {
+  return model === "fixed_price" || model === "legacy_package";
+}
 
 const projectId = z.string();
 const positiveNumber = z.number().finite().positive();

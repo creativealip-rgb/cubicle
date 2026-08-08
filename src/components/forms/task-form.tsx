@@ -43,7 +43,7 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", defaultValues
     priority: defaultValues?.priority ?? "medium",
     assigneeId: defaultValues?.assigneeId ?? "",
     dueDate: defaultValues?.dueDate ?? "",
-    clientVisible: defaultValues?.clientVisible ?? false,
+    clientVisible: defaultValues?.clientVisible ?? mode === "create",
     behavior: defaultValues?.behavior ?? projects.find((p) => p.id === (defaultValues?.projectId ?? projectId))?.defaultBehavior ?? "one_time",
   });
 
@@ -94,7 +94,7 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", defaultValues
           priority: defaultValues?.priority ?? "medium",
           assigneeId: defaultValues?.assigneeId ?? "",
           dueDate: defaultValues?.dueDate ?? "",
-          clientVisible: defaultValues?.clientVisible ?? false,
+          clientVisible: defaultValues?.clientVisible ?? mode === "create",
           behavior: projects.find((p) => p.id === (defaultValues?.projectId ?? projectId))?.defaultBehavior ?? "one_time",
         });
       }
