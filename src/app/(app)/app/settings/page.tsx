@@ -25,6 +25,7 @@ import {
   getGoogleRedirectUri,
 } from "@/lib/google-calendar";
 import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -139,7 +140,7 @@ export default async function SettingsPage({
         </p>
       </div>
 
-      <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+      <Suspense fallback={<div className="space-y-3"><Skeleton className="h-24 w-full" /><Skeleton className="h-48 w-full" /></div>}>
         <SettingsTabs
           initialTab={initialTab}
           workspace={

@@ -10,6 +10,7 @@ import { requireWorkspaceOwnerOrRedirect } from "@/lib/require-workspace-owner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default async function TemplateCenterPage({
   searchParams,
@@ -86,9 +87,9 @@ export default async function TemplateCenterPage({
       <Suspense
         fallback={
           <div className="space-y-4 p-6">
-            <div className="h-8 w-48 animate-pulse rounded bg-muted" />
-            <div className="h-4 w-72 animate-pulse rounded bg-muted" />
-            <div className="h-10 w-80 animate-pulse rounded bg-muted" />
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-72" />
+            <Skeleton className="h-10 w-80" />
           </div>
         }
       >
