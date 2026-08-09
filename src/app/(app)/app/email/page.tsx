@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Mail, Send, Save, Trash2 } from "lucide-react";
 import { getCurrentLang, createT } from "@/lib/i18n";
 
@@ -116,21 +117,27 @@ export default async function EmailPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <label htmlFor="clientId" className="text-sm font-medium">{t("Klien (opsional)", "Client (optional)")}</label>
-                <select id="clientId" name="clientId" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-                  <option value="">{t("Tanpa klien", "No client")}</option>
-                  {clientList.map((client) => (
-                    <option key={client.id} value={client.id}>{client.name}{client.email ? ` — ${client.email}` : ""}</option>
-                  ))}
-                </select>
+                <Select name="clientId" defaultValue="">
+                  <SelectTrigger id="clientId" className="h-10"><SelectValue placeholder={t("Tanpa klien", "No client")} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">{t("Tanpa klien", "No client")}</SelectItem>
+                    {clientList.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>{client.name}{client.email ? ` — ${client.email}` : ""}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <label htmlFor="projectId" className="text-sm font-medium">{t("Proyek (opsional)", "Project (optional)")}</label>
-                <select id="projectId" name="projectId" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-                  <option value="">{t("Tanpa proyek", "No project")}</option>
-                  {projectList.map((project) => (
-                    <option key={project.id} value={project.id}>{project.name}</option>
-                  ))}
-                </select>
+                <Select name="projectId" defaultValue="">
+                  <SelectTrigger id="projectId" className="h-10"><SelectValue placeholder={t("Tanpa proyek", "No project")} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">{t("Tanpa proyek", "No project")}</SelectItem>
+                    {projectList.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="space-y-2">
