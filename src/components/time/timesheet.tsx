@@ -68,6 +68,7 @@ interface Project {
   name: string;
   clientId?: string | null;
   timeTrackingMode?: "off" | "internal" | "billable" | null;
+  billingType?: string | null;
 }
 
 interface Task {
@@ -225,7 +226,10 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
   const editClientError = editOpen && !editClientId;
   const editProjectError = editOpen && !editProjectId;
   const editMinutesError = editOpen && (!Number.isFinite(editMinutesNumber) || editMinutesNumber <= 0);
-  const editValid = !editClientError && !editProjectError && !editMinutesError;
+  const selectedEditProject = projects.find((project) => project.id === editProjectId);
+  const editTaskRequired = selectedEditProject?.billingType === "hours" || selectedEditProject?.billingType === "hourly" || selectedEditProject?.billingType === "retainer";
+  const editTaskError = editOpen && Boolean(editTaskRequired && (!editTaskId || editTaskId === "__none__"));
+  const editValid = !editClientError && !editProjectError && !editMinutesError && !editTaskError;
 
   function formatDuration(minutes: number | null): string {
     const hLabel = t("j", "h");
@@ -304,6 +308,10 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
     if (!editEntry) return;
     if (!editClientId || !editProjectId) {
       toast.error(t("Klien dan proyek wajib", "Client and project required"));
+      return;
+    }
+    if (editTaskRequired && (!editTaskId || editTaskId === "__none__")) {
+      toast.error(t("Task wajib dipilih untuk project Hourly/Retainer", "Task is required for Hourly/Retainer projects"));
       return;
     }
     const minutes = Number(editMinutes);
@@ -719,7 +727,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs">{t("Tugas (Opsional)", "Task (Optional)")}</Label>
+              <Label className={`text-xs ${editTaskError ? "text-destructive" : ""}`}>{editTaskRequired ? t("Tugas *", "Task *") : t("Tugas (Opsional)", "Task (Optional)")}</Label>
               <div className="relative">
                 <Input
                   placeholder={editProjectId ? t("Cari tugas...", "Search task...") : t("Pilih klien & proyek dulu", "Select client & project first")}
@@ -733,8 +741,10 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                   onFocus={() => {
                     if (editTaskSearch.trim() && editProjectId) setEditTaskSearchOpen(true);
                   }}
-                  className="h-10 text-sm"
+                  className={`h-10 text-sm ${editTaskError ? "border-destructive" : ""}`}
+                  aria-invalid={editTaskError}
                 />
+                {editTaskError ? <p className="text-xs text-destructive">{t("Task wajib dipilih untuk project Hourly/Retainer", "Task is required for Hourly/Retainer projects")}</p> : null}
                 {editTaskSearchOpen && editProjectId && (
                   <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
                     <button
