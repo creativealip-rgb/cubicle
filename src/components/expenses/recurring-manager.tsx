@@ -352,15 +352,15 @@ export function RecurringManager({
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="flex max-h-[min(90dvh,720px)] w-[calc(100%-1.5rem)] max-w-md flex-col gap-0 overflow-hidden p-0 sm:w-full">
+          <DialogHeader className="shrink-0 border-b px-5 py-4 pr-12">
             <DialogTitle>
               {editing
                 ? t("Edit pengeluaran rutin", "Edit recurring expense")
                 : t("Tambah pengeluaran rutin", "Add recurring expense")}
             </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSave} className="space-y-3">
+          <form onSubmit={handleSave} className="min-h-0 space-y-3 overflow-y-auto px-5 py-5">
             <div className="space-y-1">
               <Label className="text-xs">{t("Nama", "Name")}</Label>
               <Input

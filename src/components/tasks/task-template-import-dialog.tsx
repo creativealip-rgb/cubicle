@@ -84,7 +84,7 @@ export function TaskTemplateImportDialog({ projectId, templates }: { projectId: 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild><Button variant="outline">{t("Import Template", "Import Template")}</Button></DialogTrigger>
-      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-h-[min(90dvh,720px)] w-[calc(100%-1.5rem)] max-w-2xl overflow-y-auto p-4 sm:w-full sm:p-6">
         <DialogHeader><DialogTitle>{t("Import Template Tugas", "Import Task Template")}</DialogTitle></DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
