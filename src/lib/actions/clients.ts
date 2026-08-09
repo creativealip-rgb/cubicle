@@ -7,7 +7,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { clients, workspaceMembers } from "@/db/schema";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceWritable, assertClientInWorkspace } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
@@ -15,6 +15,9 @@ import { createHash, randomBytes } from "crypto";
 import { hashPassword } from "@better-auth/utils/password";
 import { encryptSecret } from "@/lib/google-calendar";
 import { decryptPortalPassword, encryptPortalPassword } from "@/lib/portal-password-encryption";
+import {
+  buildPortalSlugCandidates,
+} from "@/lib/portal-slug";
 
 import { getCurrentLang, createT } from "@/lib/i18n";
 
@@ -155,7 +158,13 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
     if (typeof err === "object" && err !== null && "code" in err && err.code === "23505") {
       const detail = "detail" in err ? String(err.detail) : "";
       if (detail.includes("portal_slug") || ("constraint" in err && err.constraint === "clients_portal_slug_unique")) {
-        throw new Error(t("Slug URL portal sudah digunakan oleh klien lain. Silakan ubah URL portal.", "Portal URL slug is already in use by another client. Please change the portal URL."));
+        const slug = parsed.portalSlug || "";
+        throw new Error(
+          t(
+            `Slug URL portal "${slug}" sudah digunakan oleh klien lain. Silakan ubah URL portal.`,
+            `Portal URL slug "${slug}" is already in use by another client. Please change the portal URL.`,
+          ),
+        );
       }
     }
     throw err;
@@ -210,6 +219,45 @@ export async function createClientFromForm(formData: FormData) {
   redirect("/app/clients");
 }
 
+/**
+ * Preflight availability + deterministic candidate generation for the client
+ * form's "Generate" button. The DB unique index `clients_portal_slug_unique`
+ * is GLOBAL (across all workspaces — see drizzle/0012), so uniqueness is
+ * checked against the whole clients table, not just the current workspace.
+ */
+export async function generateUniquePortalSlug(
+  basis: string,
+  excludeClientId?: string,
+): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  for (const candidate of buildPortalSlugCandidates(basis || "")) {
+    const [existing] = await db
+      .select({ id: clients.id })
+      .from(clients)
+      .where(
+        and(
+          eq(clients.portalSlug, candidate),
+          excludeClientId ? ne(clients.id, excludeClientId) : undefined,
+        ),
+      )
+      .limit(1);
+    if (!existing) return { ok: true as const, slug: candidate };
+  }
+
+  const t = await getT();
+  return {
+    ok: false as const,
+    error: t(
+      "Tidak dapat menemukan slug portal yang tersedia. Coba ubah nama perusahaan.",
+      "Could not find an available portal slug. Try changing the company name.",
+    ),
+  };
+}
+
 export async function updateClient(clientId: string, input: Partial<z.infer<typeof clientSchema>> & { status?: string }) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
@@ -249,7 +297,10 @@ export async function updateClient(clientId: string, input: Partial<z.infer<type
     if (typeof err === "object" && err !== null && "code" in err && err.code === "23505") {
       const detail = "detail" in err ? String(err.detail) : "";
       if (detail.includes("portal_slug") || ("constraint" in err && err.constraint === "clients_portal_slug_unique")) {
-        throw new Error("Slug URL portal sudah digunakan oleh klien lain. Silakan ubah URL portal.");
+        const slug = parsed.portalSlug ?? "";
+        throw new Error(
+          `Slug URL portal "${slug}" sudah digunakan oleh klien lain. Silakan ubah URL portal.`,
+        );
       }
     }
     throw err;

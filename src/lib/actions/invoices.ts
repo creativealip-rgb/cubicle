@@ -624,6 +624,65 @@ export async function cancelDraftInvoice(invoiceId: string) {
   return { success: true };
 }
 
+const voidInvoiceSchema = z.object({
+  invoiceId: z.string().uuid(),
+  reason: z.string().trim().min(1, "Alasan wajib diisi").max(1000),
+});
+
+/**
+ * Void a paid or partially paid invoice. Unlike cancelDraftInvoice, this keeps
+ * the invoice record, line items, and payment rows intact for audit purposes —
+ * only the status moves to "cancelled" and a required reason is recorded in
+ * the activity log. Deletion of paid invoices stays disabled.
+ */
+export async function voidInvoice(input: z.infer<typeof voidInvoiceSchema>) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const parsed = voidInvoiceSchema.parse(input);
+  const inv = await assertInvoiceInWorkspace(parsed.invoiceId, workspaceId);
+
+  if (["cancelled", "archived"].includes(inv.status)) {
+    throw new Error("Invoice sudah dibatalkan atau diarsipkan");
+  }
+  const [paidResult] = await db
+    .select({ total: sql<string>`coalesce(sum(${payments.amount}), '0')` })
+    .from(payments)
+    .where(eq(payments.invoiceId, parsed.invoiceId));
+  const hasPayments = Number(paidResult?.total ?? 0) > 0;
+  const isPaidOrPartiallyPaid = inv.status === "paid" || hasPayments;
+  if (!isPaidOrPartiallyPaid) {
+    throw new Error("Hanya invoice yang sudah dibayar atau sebagian dibayar yang bisa dibatalkan");
+  }
+
+  await db.transaction(async (tx) => {
+    const [locked] = await tx
+      .select({ status: invoices.status })
+      .from(invoices)
+      .where(and(eq(invoices.id, parsed.invoiceId), eq(invoices.workspaceId, workspaceId)))
+      .for("update")
+      .limit(1);
+    if (!locked || ["cancelled", "archived"].includes(locked.status)) {
+      throw new Error("Status invoice berubah saat pembatalan");
+    }
+    const updated = await tx
+      .update(invoices)
+      .set({ status: "cancelled", updatedAt: new Date() })
+      .where(and(eq(invoices.id, parsed.invoiceId), eq(invoices.workspaceId, workspaceId)))
+      .returning({ id: invoices.id });
+    if (updated.length !== 1) throw new Error("Status invoice berubah saat pembatalan");
+  });
+
+  // Payment rows and line items intentionally remain — void is a status change
+  // with a required reason, not a deletion.
+  await writeActivityLog(workspaceId, user.id, "voided_invoice", "invoice", parsed.invoiceId, {
+    reason: parsed.reason,
+  });
+  return { success: true };
+}
+
 
 export async function recalculateInvoice(invoiceId: string) {
   const session = await auth.api.getSession({ headers: await headers() });

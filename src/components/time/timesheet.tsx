@@ -186,7 +186,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
 
   const allEditProjectOptions = useMemo(() => {
     const writableProjects = projects.filter((p) => p.timeTrackingMode !== "off");
-    return writableProjects.map((p) => {
+    const options = writableProjects.map((p) => {
       const client = clients.find((c) => c.id === p.clientId);
       return {
         projectId: p.id,
@@ -195,7 +195,18 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
         clientName: client?.name || t("Tanpa Klien", "No Client"),
       };
     });
-  }, [projects, clients, t]);
+    // Preserve existing history when parent options are absent from current list payload.
+    for (const entry of entries) {
+      if (!entry.projectId || options.some((option) => option.projectId === entry.projectId)) continue;
+      options.push({
+        projectId: entry.projectId,
+        projectName: entry.projectName || entry.projectId,
+        clientId: entry.clientId || "",
+        clientName: entry.clientName || t("Tanpa Klien", "No Client"),
+      });
+    }
+    return options;
+  }, [projects, clients, entries, t]);
 
   const filteredEditProjectOptions = useMemo(() => {
     const term = editProjectSearch.toLowerCase().trim();

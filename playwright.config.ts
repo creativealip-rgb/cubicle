@@ -4,6 +4,7 @@ const httpUser = process.env.PLAYWRIGHT_HTTP_USER
 const httpPassword = process.env.PLAYWRIGHT_HTTP_PASSWORD
 
 export default defineConfig({
+  globalSetup: "./e2e/global-setup.ts",
   testDir: "./e2e",
   fullyParallel: false,
   forbidOnly: true,

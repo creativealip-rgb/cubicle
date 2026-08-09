@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { createClient, updateClient } from "@/lib/actions/clients";
+import { createClient, generateUniquePortalSlug, updateClient } from "@/lib/actions/clients";
 import { isStaleServerActionError } from "@/lib/client-errors";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
@@ -45,6 +45,7 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
   const router = useRouter();
   const { t } = useT();
   const [loading, setLoading] = useState(false);
+  const [generatingSlug, setGeneratingSlug] = useState(false);
   const [form, setForm] = useState({
     name: defaultValues?.name ?? "",
     companyName: defaultValues?.companyName ?? "",
@@ -121,8 +122,30 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
     setForm((prev) => ({ ...prev, [k]: v }));
   }
 
-  function regeneratePortalSlug() {
-    set("portalSlug", slugify(form.companyName || form.name));
+  async function regeneratePortalSlug() {
+    if (generatingSlug) return;
+    setGeneratingSlug(true);
+    try {
+      const basis = form.companyName || form.name;
+      const result = await generateUniquePortalSlug(basis, defaultValues?.id);
+      if (result.ok) {
+        set("portalSlug", result.slug);
+      } else {
+        toast.error(result.error);
+      }
+    } catch (err: unknown) {
+      const msg = isStaleServerActionError(err)
+        ? "App baru di-deploy. Refresh halaman, lalu coba lagi."
+        : err instanceof Error
+          ? err.message
+          : t("Gagal membuat slug portal", "Failed to generate portal slug");
+      toast.error(msg);
+      if (isStaleServerActionError(err)) {
+        setTimeout(() => window.location.reload(), 800);
+      }
+    } finally {
+      setGeneratingSlug(false);
+    }
   }
 
   return (
@@ -246,8 +269,8 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
               onChange={(e) => set("portalSlug", slugify(e.target.value))}
               placeholder="kopi-senja"
             />
-            <Button type="button" variant="outline" onClick={regeneratePortalSlug} className="shrink-0">
-              Generate
+            <Button type="button" variant="outline" onClick={regeneratePortalSlug} disabled={generatingSlug} className="shrink-0">
+              {generatingSlug ? t("Membuat...", "Generating...") : "Generate"}
             </Button>
           </div>
           <p className="text-[11px] text-muted-foreground">Huruf kecil, angka, dash. Harus unik.</p>

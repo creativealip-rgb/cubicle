@@ -26,6 +26,7 @@ import { ShareTokenSection } from "./share-token-section";
 import { SendInvoiceButton } from "./send-invoice-button";
 import { SendReminderButton } from "./send-reminder-button";
 import { DeleteInvoiceButton } from "./delete-invoice-button";
+import { VoidInvoiceButton } from "./void-invoice-button";
 
 import { InvoiceMetaForm } from "@/components/invoices/invoice-meta-form";
 import { formatDateID, formatMoney } from "@/lib/utils";
@@ -192,13 +193,20 @@ export default async function InvoiceDetailPage({
   // invoice (without a recorded payment row) must still show "Lunas".
   // Only override upward to "paid" when payments cover the total but the DB
   // status hasn't been updated yet — never downgrade a "paid" status to
-  // "payment due" based on payment rows.
+  // "payment due" based on payment rows, and never override terminal
+  // cancelled/archived statuses (a fully paid invoice that was voided must
+  // still show "Dibatalkan").
   const displayStatus =
-    inv.status === "paid"
-      ? "paid"
-      : isPaid
+    ["cancelled", "archived"].includes(inv.status)
+      ? inv.status
+      : inv.status === "paid"
         ? "paid"
-        : inv.status;
+        : isPaid
+          ? "paid"
+          : inv.status;
+  const voidable =
+    !["cancelled", "archived"].includes(inv.status) &&
+    (inv.status === "paid" || totalPaid > 0);
   const defaultInvoiceMessage = buildDefaultInvoiceMessage({
     clientName: client?.companyName || client?.name || t("Klien", "Client"),
     invoiceNumber: inv.invoiceNumber,
@@ -251,6 +259,10 @@ export default async function InvoiceDetailPage({
           <SendReminderButton
             invoiceId={invoiceId}
             disabled={!client?.email || items.length === 0 || ["draft", "paid", "cancelled"].includes(inv.status)}
+          />
+          <VoidInvoiceButton
+            invoiceId={invoiceId}
+            disabled={!voidable}
           />
           <DeleteInvoiceButton
             invoiceId={invoiceId}

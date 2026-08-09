@@ -43,7 +43,8 @@ next-env.d.ts
 # Runtime
 cubicle.db
 scripts/monitor.log
-test-results/
+/test-results/
+.auth/
 playwright-report/
 
 # local agent scratch
