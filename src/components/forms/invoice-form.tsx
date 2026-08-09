@@ -344,7 +344,15 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
                     <Input
                       type="date"
                       value={source.periodStart ?? ""}
-                      onChange={(e) => updateSource(project.id, { periodStart: e.target.value })}
+                      onChange={(e) => {
+                        const periodStart = e.target.value;
+                        updateSource(project.id, {
+                          periodStart,
+                          ...(source?.periodEnd && source.periodEnd <= periodStart
+                            ? { periodEnd: addDaysToIsoDate(periodStart, 1) }
+                            : {}),
+                        });
+                      }}
                     />
                   </div>
                   <div>
@@ -352,7 +360,14 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
                     <Input
                       type="date"
                       value={source.periodEnd ?? ""}
-                      onChange={(e) => updateSource(project.id, { periodEnd: e.target.value })}
+                      onChange={(e) => {
+                        const periodEnd = e.target.value;
+                        updateSource(project.id, {
+                          periodEnd: source?.periodStart && periodEnd <= source.periodStart
+                            ? addDaysToIsoDate(periodEnd, 1)
+                            : periodEnd,
+                        });
+                      }}
                     />
                   </div>
                 </div>
