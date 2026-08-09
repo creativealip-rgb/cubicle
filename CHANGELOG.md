@@ -19,6 +19,40 @@
 - ESLint and TypeScript checks passed; production build passed.
 - Production deployed to `cubiqlo-new-app`; `/api/health` returned `status=ok`, `db=ok`.
 
+## 2026-08-09 — Prompt Studio UX polish, AI dev verification, and dev deployment
+
+**Prompt Studio:**
+- Added inline validation for required, range, NaN, and invalid select values.
+- Added bilingual option labels without exposing internal values such as `face`, `no-face`, `short`, `medium`, `long`, `yes`, and `no`.
+- Standardized testimonial rating to optional 1–5 selection.
+- Clarified ad placement/channel labels while preserving payload keys.
+- Added stable sections 1–4, including an explicit no-extra-details state for templates without detail fields.
+- Added mobile sticky Generate CTA and expanded mobile preview summary.
+- Localized visible core labels for Indonesian mode.
+
+**AI and QA:**
+- Fixed dev Compose environment precedence so `AI_API_KEY` from `.env.development.local` reaches `cubicle-dev`.
+- Authenticated QA verified Feed and Carousel flows at `https://dev.cubiqlo.com/app/prompts`.
+- Real Carousel generation passed: structured output, cards, terminal view, quota increment `0/1000 → 1/1000`, and zero browser console errors.
+- Removed dev-only Traefik Basic Auth middleware; production routing unchanged.
+
+**Commits and release state:**
+- `9731d42` — Prompt Studio validation and option UX.
+- `29efda7` — Prompt Studio sections and mobile preview polish.
+- `39726b0` — Preserve dev AI provider key.
+- All commits pushed to `origin/dev/integration`.
+- Integrated and deployed to `dev.cubiqlo.com`.
+- Latest dev revision: `39726b0`.
+- Production: not merged or deployed; explicit approval still required.
+
+**Verification:**
+- Prompt tests: 37 passed.
+- ESLint: passed.
+- TypeScript: passed.
+- Next.js production build: passed.
+- Dev health: `status=ok`, `db=ok`.
+- Production container/image: unchanged
+
 ## 2026-08-08 — Questionnaire editing, AI quota integrity, invoice lifecycle hardening, billing integration, docs and UX cleanup
 
 **Questionnaire workflow:**
