@@ -10,7 +10,7 @@ import { addDaysToIsoDate, calculateDraftItemsSubtotal } from "@/lib/invoice-cre
 import { buildRateMap } from "@/lib/currency-base";
 import { convertCurrency, resolveProjectAmount } from "@/lib/invoice-project-items";
 import { resolveFixedSourceAmount } from "@/lib/project-invoice-sources";
-import { defaultInvoiceSource, fixedSourcePreview, sourceDraftComplete, type EligibleInvoiceTimeEntry, type InvoiceSourceDraft, type InvoiceSourceMode } from "@/lib/invoice-source-ui";
+import { defaultInvoiceSource, eligibleTimeEntriesInPeriod, fixedSourcePreview, sourceDraftComplete, type EligibleInvoiceTimeEntry, type InvoiceSourceDraft, type InvoiceSourceMode } from "@/lib/invoice-source-ui";
 import { ProjectInvoiceSourceSchema } from "@/lib/project-invoice-sources";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -146,7 +146,14 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
     }
     const validItems = items.filter((item) => item.description.trim());
     if (missingRateProjects.length) { toast.error("Lengkapi kurs workspace sebelum membuat invoice"); return; }
-    const sourcePayload = selectedProjects.map((project) => ({ project, source: projectSources[project.id] ?? defaultInvoiceSource(project.billingType, { hasActiveFixedHistory: Boolean(project.priorActiveFixedBilledAmount), hasInitialTimeEntries: Boolean(project.initialTimeEntryIds?.length) }) }));
+    const sourcePayload = selectedProjects.map((project) => {
+      const source = projectSources[project.id] ?? defaultInvoiceSource(project.billingType, { hasActiveFixedHistory: Boolean(project.priorActiveFixedBilledAmount), hasInitialTimeEntries: Boolean(project.initialTimeEntryIds?.length) });
+      if (source?.mode === "hourly_timesheet") {
+        const period = eligibleTimeEntriesInPeriod(project.eligibleTimeEntries, source.periodStart, source.periodEnd);
+        return { project, source: { ...source, timeEntryIds: period.entries.map((entry) => entry.id) } };
+      }
+      return { project, source };
+    });
     if (selectedProjects.length > 0 && sourcePayload.some(({ source }) => !sourceDraftComplete(source))) { toast.error("Lengkapi sumber tagihan setiap proyek"); return; }
     if (mode === "create" && validItems.length === 0 && sourcePayload.length === 0) {
       toast.error("Tambahkan minimal satu item tagihan");
