@@ -44,7 +44,6 @@ services:
       R2_PUBLIC_URL: ""
       PAKASIR_PROJECT: ""
       PAKASIR_API_KEY: ""
-      AI_API_KEY: ${AI_API_KEY:-}
       AI_MODEL: ${AI_MODEL:-ag/gemini-3-flash}
       OPENAI_API_KEY: ""
       CRON_SECRET: ""
