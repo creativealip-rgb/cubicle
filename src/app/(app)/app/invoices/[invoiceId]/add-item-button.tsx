@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export type ProjectInvoiceItemOption = { id: string; name: string; amount: number; currency: string };
 
@@ -57,10 +58,12 @@ export function InvoiceItemManager({ invoiceId, projectOptions }: { invoiceId: s
           {source === "project" ? (
             <div className="space-y-2">
               <Label htmlFor="project-item">Fixed Price Project</Label>
-              <select id="project-item" value={projectId} onChange={(event) => setProjectId(event.target.value)} required className="h-11 w-full rounded-md border bg-background px-3 text-sm">
-                <option value="">Pilih proyek</option>
-                {projectOptions.map((project) => <option key={project.id} value={project.id}>{project.name} · {project.currency} {project.amount.toLocaleString("id-ID")}</option>)}
-              </select>
+              <Select value={projectId} onValueChange={setProjectId} required>
+                <SelectTrigger id="project-item" className="h-11"><SelectValue placeholder="Pilih proyek" /></SelectTrigger>
+                <SelectContent>
+                  {projectOptions.map((project) => <SelectItem key={project.id} value={project.id}>{project.name} · {project.currency} {project.amount.toLocaleString("id-ID")}</SelectItem>)}
+                </SelectContent>
+              </Select>
               {projectOptions.length === 0 ? <p className="text-sm text-muted-foreground">Tidak ada Fixed Price Project klien yang masih bisa ditagihkan.</p> : null}
             </div>
           ) : (
