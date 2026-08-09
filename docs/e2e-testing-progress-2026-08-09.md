@@ -41,7 +41,7 @@ Setiap mutation utama diuji lewat browser:
 | Retainer invoice | PASS | Dedicated E2E full invoice `1000000`; invoice kedua ditolak saat tidak ada sisa; fixture cleanup lewat UI. |
 | Payments | PASS | Partial payment UI pass; paid/partial status and remaining balance verified. Full-payment flow verified separately; paid invoice retained/voided, not deleted. |
 | Reports | PASS | Reports render and period filter UI pass. |
-| Expense | NOT STARTED | Belum dites. |
+| Expense | PASS | Dedicated E2E create/edit/reload/delete; receipt PNG upload UI pass. R2 download-link click belum dibuktikan. |
 | Client portal/files | NOT STARTED | Belum dites dalam pass ini. |
 | Calendar/booking | NOT STARTED | Belum dites dalam pass ini. |
 | Email | NOT STARTED | Belum dites dalam pass ini. |
