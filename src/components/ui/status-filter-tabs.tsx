@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useRef, type KeyboardEvent } from "react";
 import { cn } from "@/lib/utils";
 
 export type StatusFilterTab = {
@@ -33,6 +36,7 @@ export function StatusFilterTabs({
   listClassName,
   hideEmpty = true,
 }: StatusFilterTabsProps) {
+  const tablistRef = useRef<HTMLDivElement>(null);
   const visible = tabs.filter((tab) => {
     const active = tab.value === activeValue;
     if (active) return true;
@@ -43,16 +47,29 @@ export function StatusFilterTabs({
     return true;
   });
 
+  function handleKeyDown(event: KeyboardEvent<HTMLAnchorElement>, index: number) {
+    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft" && event.key !== "Home" && event.key !== "End") return;
+    event.preventDefault();
+    const nextIndex = event.key === "Home"
+      ? 0
+      : event.key === "End"
+        ? visible.length - 1
+        : (index + (event.key === "ArrowRight" ? 1 : -1) + visible.length) % visible.length;
+    tablistRef.current?.querySelector<HTMLAnchorElement>(`[data-status-tab-index="${nextIndex}"]`)?.focus();
+  }
+
   return (
     <div
       role="tablist"
+      ref={tablistRef}
+      aria-orientation="horizontal"
       className={cn(
         "inline-flex h-auto w-full items-center justify-start overflow-x-auto rounded-lg bg-muted p-1 text-muted-foreground lg:w-auto",
         listClassName,
         className,
       )}
     >
-      {visible.map((tab) => {
+      {visible.map((tab, index) => {
         const active = tab.value === activeValue;
         const hasCount = typeof tab.count === "number";
         return (
@@ -61,6 +78,9 @@ export function StatusFilterTabs({
             href={tab.href}
             role="tab"
             aria-selected={active}
+            tabIndex={active ? 0 : -1}
+            data-status-tab-index={index}
+            onKeyDown={(event) => handleKeyDown(event, index)}
             data-state={active ? "active" : "inactive"}
             className={cn(
               "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all",
