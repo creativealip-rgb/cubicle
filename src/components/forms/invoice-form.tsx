@@ -119,6 +119,8 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
     if (source) {
       if (source.mode === "hourly_deposit") {
         previewAmount = source.amount ?? source.value ?? 0;
+      } else if (source.mode === "hourly_timesheet") {
+        previewAmount = eligibleTimeEntriesInPeriod(project.eligibleTimeEntries, source.periodStart, source.periodEnd).totalAmount;
       } else if (["fixed_dp", "fixed_milestone"].includes(source.mode) && source.amountType && source.value) {
         previewAmount = resolveFixedSourceAmount(
           { mode: source.mode as "fixed_dp" | "fixed_milestone", amountType: source.amountType, value: source.value },
