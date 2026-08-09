@@ -477,7 +477,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="hidden max-w-[160px] gap-1.5 text-muted-foreground lg:inline-flex"
+                  className="hidden h-9 max-w-[160px] gap-1.5 text-muted-foreground lg:inline-flex"
                 >
                   <Building2 className="h-3.5 w-3.5 shrink-0" />
                   <span className="truncate text-xs font-medium">

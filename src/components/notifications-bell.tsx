@@ -129,7 +129,7 @@ export function NotificationsBell() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative h-9 w-9"
+          className="relative h-10 w-10 sm:h-9 sm:w-9"
           aria-label={`${t("Notifikasi", "Notifications")}${unread > 0 ? ` (${unread} ${t("belum dibaca", "unread")})` : ""}`}
           title={t("Notifikasi", "Notifications")}
         >
