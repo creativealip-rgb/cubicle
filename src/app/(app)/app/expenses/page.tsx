@@ -389,7 +389,7 @@ export default async function ExpensesPage({
             <div className="text-2xl font-semibold tabular-nums whitespace-nowrap">
               {formatMoney(spentTotal, baseCurrency)}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {t(
                 `Bulan terpilih · setara ${baseCurrency}`,
                 `Selected month · equiv. ${baseCurrency}`,
@@ -403,7 +403,7 @@ export default async function ExpensesPage({
               <BarChart3 className="h-4 w-4 text-blue-600" />
               {t("Butuh gambaran keuangan?", "Need a financial overview?")}
             </div>
-            <p className="text-xs leading-relaxed text-slate-500">
+            <p className="text-xs leading-relaxed text-muted-foreground">
               {t(
                 "Pemasukan, bersih, tren, dan piutang tersedia di Laporan.",
                 "Income, net, trends, and receivables are available in Reports.",
@@ -425,7 +425,7 @@ export default async function ExpensesPage({
             <CardTitle className="text-base flex items-center gap-2">
               <Tag className="h-4 w-4" />
               {t("Bulan ini per kategori", "This month by category")}
-              <span className="text-xs font-normal text-slate-500">
+              <span className="text-xs font-normal text-muted-foreground">
                 ({baseCurrency})
               </span>
             </CardTitle>
@@ -448,7 +448,7 @@ export default async function ExpensesPage({
                         <span className="text-sm tabular-nums whitespace-nowrap">
                           {formatMoney(c.primary, baseCurrency)}
                         </span>
-                        <span className="text-xs text-slate-500 w-8 text-right">
+                        <span className="text-xs text-muted-foreground w-8 text-right">
                           {pct.toFixed(0)}%
                         </span>
                       </div>
@@ -539,7 +539,7 @@ export default async function ExpensesPage({
             <>
               {expenseRows.length === 0 ? (
                 <div className="py-8 text-center space-y-3">
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-muted-foreground">
                     {q || categoryId
                       ? t(
                           "Tidak ada pengeluaran cocok filter.",
@@ -575,7 +575,7 @@ export default async function ExpensesPage({
                   />
 
                   {totalPages > 1 && (
-                    <div className="mt-4 flex flex-col gap-3 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
                       <span className="text-xs sm:text-sm">
                         {t(
                           `Menampilkan ${rangeStart}–${rangeEnd} dari ${totalCount}`,

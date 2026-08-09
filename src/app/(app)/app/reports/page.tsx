@@ -500,10 +500,10 @@ export default async function ReportsPage({
             className={item.label === t("Bersih", "Net") ? "col-span-2 md:col-span-1" : undefined}
           >
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 {item.label}
               </CardTitle>
-              <item.icon className={`h-4 w-4 ${hasValue ? item.tone : "text-slate-400"}`} />
+              <item.icon className={`h-4 w-4 ${hasValue ? item.tone : "text-muted-foreground"}`} />
             </CardHeader>
             <CardContent className="p-4 sm:p-6">
               <div
@@ -512,12 +512,12 @@ export default async function ReportsPage({
                 {formatMoney(item.value, baseCurrency)}
               </div>
               {(item.value !== 0 || item.previous !== 0) && (
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {deltaText(item.value, item.previous, lang)}
                 </p>
               )}
               {item.label === t("Bersih", "Net") && income > 0 && (
-                <p className="mt-0.5 text-xs text-slate-500">
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   {t("Margin", "Margin")} {Math.round((net / income) * 100)}%
                 </p>
               )}
@@ -561,7 +561,7 @@ export default async function ReportsPage({
           </CardHeader>
           <CardContent>
             {topClients.length === 0 ? (
-              <p className="py-6 text-center text-sm text-slate-500">
+              <p className="py-6 text-center text-sm text-muted-foreground">
                 {t("Belum ada pembayaran masuk.", "No payments received yet.")}
               </p>
             ) : (
@@ -578,7 +578,7 @@ export default async function ReportsPage({
                       >
                         {client.name}
                       </Link>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-muted-foreground">
                         {client.count} {t("pembayaran", "payments")}
                       </p>
                     </div>
@@ -610,7 +610,7 @@ export default async function ReportsPage({
           </CardHeader>
           <CardContent>
             {topCategories.length === 0 ? (
-              <p className="py-6 text-center text-sm text-slate-500">
+              <p className="py-6 text-center text-sm text-muted-foreground">
                 {t("Belum ada pengeluaran.", "No expenses yet.")}
               </p>
             ) : (
@@ -632,7 +632,7 @@ export default async function ReportsPage({
                           {category.name}
                         </span>
                       </div>
-                      <p className="ml-4 text-xs text-slate-500">
+                      <p className="ml-4 text-xs text-muted-foreground">
                         {expenseTotal > 0
                           ? Math.round((category.total / expenseTotal) * 100)
                           : 0}
@@ -682,7 +682,7 @@ export default async function ReportsPage({
         <CardContent>
           <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
             <div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 {t("Belum dibayar", "Unpaid")}
               </p>
               <p className="mt-1 text-lg font-semibold tabular-nums">
@@ -690,7 +690,7 @@ export default async function ReportsPage({
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 {t("Terlambat", "Overdue")}
               </p>
               <p className="mt-1 text-lg font-semibold text-red-600 tabular-nums">
@@ -698,14 +698,14 @@ export default async function ReportsPage({
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 {t("Invoice", "Invoices")}
               </p>
               <p className="mt-1 text-lg font-semibold">{receivables.length}</p>
             </div>
           </div>
           {overdueItems.length === 0 ? (
-            <p className="border-t py-4 text-sm text-slate-500">
+            <p className="border-t py-4 text-sm text-muted-foreground">
               {t("Tidak ada invoice terlambat.", "No overdue invoices.")}
             </p>
           ) : (
@@ -735,7 +735,7 @@ export default async function ReportsPage({
                     </div>
                     {item.remainingBase !== null &&
                       normalizeCurrency(item.currency) !== baseCurrency && (
-                        <div className="text-xs text-slate-500">
+                        <div className="text-xs text-muted-foreground">
                           ≈ {formatMoney(item.remainingBase, baseCurrency)}
                         </div>
                       )}
@@ -757,14 +757,14 @@ export default async function ReportsPage({
             <h2 className="mb-1 font-semibold">
               {t("Umur invoice", "Invoice aging")}
             </h2>
-            <p className="mb-3 text-xs text-slate-500">
+            <p className="mb-3 text-xs text-muted-foreground">
               {t(
                 "Rincian invoice belum dibayar berdasarkan keterlambatan.",
                 "Unpaid invoices grouped by age.",
               )}
             </p>
             {receivables.length === 0 ? (
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 {t("Tidak ada piutang aktif.", "No active receivables.")}
               </p>
             ) : (
@@ -821,11 +821,11 @@ export default async function ReportsPage({
             <h2 className="mb-1 font-semibold">
               {t("Pengeluaran per proyek", "Expenses by project")}
             </h2>
-            <p className="mb-3 text-xs text-slate-500">
+            <p className="mb-3 text-xs text-muted-foreground">
               {reportPeriodLabel(period, lang)}
             </p>
             {projectExpenses.length === 0 ? (
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 {t(
                   "Belum ada pengeluaran bertanda proyek.",
                   "No project-tagged expenses yet.",
@@ -845,7 +845,7 @@ export default async function ReportsPage({
                       >
                         {project.name}
                       </Link>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-muted-foreground">
                         {project.client ?? "—"} · {project.count}x
                       </p>
                     </div>
@@ -861,7 +861,7 @@ export default async function ReportsPage({
             <h2 className="mb-1 font-semibold">
               {t("Proyeksi arus kas", "Cash flow forecast")}
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               {t(
                 "Proyeksi detail disederhanakan. Piutang aktif di atas menjadi dasar pemasukan yang masih mungkin diterima.",
                 "Detailed forecasting is simplified. Active receivables above represent income that may still be collected.",
