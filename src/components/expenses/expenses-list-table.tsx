@@ -152,10 +152,10 @@ export function ExpensesListTable({
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 space-y-1">
-                <div className="text-xs text-slate-500 tabular-nums">{e.date}</div>
+                <div className="text-xs text-muted-foreground tabular-nums">{e.date}</div>
                 <div className="font-medium text-sm leading-snug">{e.description}</div>
                 {e.vendor && (
-                  <div className="text-xs text-slate-500 truncate">{e.vendor}</div>
+                  <div className="text-xs text-muted-foreground truncate">{e.vendor}</div>
                 )}
               </div>
               <div className="text-right shrink-0">
@@ -170,7 +170,7 @@ export function ExpensesListTable({
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
               {e.categoryName ? (
                 <span className="inline-flex items-center gap-1.5">
                   <span
@@ -180,7 +180,7 @@ export function ExpensesListTable({
                   <span className="truncate max-w-[10rem]">{e.categoryName}</span>
                 </span>
               ) : (
-                <span className="text-slate-400">—</span>
+                <span className="text-muted-foreground">—</span>
               )}
               {(e.projectName || e.clientName) && (
                 <span className="min-w-0 break-words">
@@ -256,21 +256,21 @@ export function ExpensesListTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sorted.map((e, index) => (
+            {sorted.map((e) => (
               <TableRow
                 key={e.id}
-                className={`border-b border-slate-200 hover:bg-slate-100/70 ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"}`}
+                className="border-b transition-colors hover:bg-muted/50 last:border-0"
               >
-                <TableCell className="text-xs text-slate-500 tabular-nums whitespace-nowrap">
+                <TableCell className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
                   {e.date}
                 </TableCell>
                 <TableCell>
                   <div className="font-medium text-sm">{e.description}</div>
                   {e.vendor && (
-                    <div className="text-xs text-slate-500">{e.vendor}</div>
+                    <div className="text-xs text-muted-foreground">{e.vendor}</div>
                   )}
                   {(e.projectName || e.clientName) && (
-                    <div className="mt-0.5 text-xs text-slate-500 lg:hidden">
+                    <div className="mt-0.5 text-xs text-muted-foreground lg:hidden">
                       {[e.projectName, e.clientName].filter(Boolean).join(" · ")}
                     </div>
                   )}
@@ -285,14 +285,14 @@ export function ExpensesListTable({
                       {e.categoryName}
                     </span>
                   ) : (
-                    <span className="text-xs text-slate-400">—</span>
+                    <span className="text-xs text-muted-foreground">—</span>
                   )}
                 </TableCell>
                 <TableCell className="text-xs text-slate-600 hidden lg:table-cell">
-                  {e.projectName ?? <span className="text-slate-400">—</span>}
+                  {e.projectName ?? <span className="text-muted-foreground">—</span>}
                 </TableCell>
                 <TableCell className="text-xs text-slate-600 hidden xl:table-cell">
-                  {e.clientName ?? <span className="text-slate-400">—</span>}
+                  {e.clientName ?? <span className="text-muted-foreground">—</span>}
                 </TableCell>
                 <TableCell className="text-right tabular-nums text-sm font-medium whitespace-nowrap">
                   <div>{formatMoney(e.amount, e.currency)}</div>

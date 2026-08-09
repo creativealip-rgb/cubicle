@@ -171,8 +171,8 @@ export function TasksListTable({
       </div>
 
       {/* Mobile cards */}
-      <div className="md:hidden divide-y">
-        {sorted.map((task, _index) => {
+      <div className="md:hidden space-y-3">
+        {sorted.map((task) => {
           const sb = taskStatusVariant(task.status, lang);
           const isFocus = focusId === task.id;
           return (
@@ -187,7 +187,7 @@ export function TasksListTable({
             >
               <div
                 id={isFocus ? `task-${task.id}` : undefined}
-                className={`cursor-pointer p-4 space-y-2 transition-colors hover:bg-muted/50 ${isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""}`}
+                className={`cursor-pointer rounded-lg border bg-card p-4 space-y-2 transition-colors hover:bg-muted/50 ${isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""}`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm font-medium flex-1 min-w-0">{task.title}</p>
@@ -231,7 +231,7 @@ export function TasksListTable({
             >
               <Card
                 id={isFocus ? `task-${task.id}` : undefined}
-                className={`cursor-pointer rounded-none border-0 !border-b border-slate-200 shadow-none transition-colors last:border-b-0 hover:bg-slate-100/70 ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"} ${isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""}`}
+                className={`cursor-pointer rounded-none border-0 !border-b shadow-none transition-colors last:border-b-0 hover:bg-muted/50 ${isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""}`}
               >
                 <CardContent className="grid gap-3 p-3 md:flex md:items-center md:gap-4">
                   <div className="min-w-0 flex-1">

@@ -142,10 +142,10 @@ export function ClientsListTable({
           <div className="text-right">{t("Aksi", "Action")}</div>
         </div>
         {clients.length === 0 && emptyDesktop}
-        {sorted.map((client, index) => (
+        {sorted.map((client) => (
           <div
             key={client.id}
-            className={`grid grid-cols-7 gap-4 p-3 items-center border-b border-slate-200 last:border-0 hover:bg-slate-100/70 transition-colors ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"}`}
+            className="grid grid-cols-7 gap-4 border-b p-3 items-center transition-colors last:border-0 hover:bg-muted/50"
           >
             <div className="col-span-2">
               <Link
@@ -221,7 +221,7 @@ export function ClientsListTable({
           </div>
         )}
         {sorted.map((client) => (
-          <Card key={client.id}>
+          <Card key={client.id} className="rounded-lg border bg-card transition-colors hover:bg-muted/50">
             <CardContent className="p-4">
               <div className="space-y-1">
                 <Link

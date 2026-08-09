@@ -218,9 +218,9 @@ export function ProjectsListTable({
         />
       )}
 
-      <div className="md:hidden divide-y">
+      <div className="md:hidden space-y-3">
         {sorted.map((project) => (
-          <div key={project.id} className="p-4 space-y-3">
+          <div key={project.id} className="rounded-lg border bg-card p-4 space-y-3 transition-colors hover:bg-muted/50">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <Link
@@ -257,10 +257,10 @@ export function ProjectsListTable({
         ))}
       </div>
 
-      {sorted.map((project, index) => (
+      {sorted.map((project) => (
         <div
           key={project.id}
-          className={`hidden md:grid grid-cols-12 gap-4 p-3 items-center border-b border-slate-200 last:border-0 hover:bg-slate-100/70 transition-colors ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"}`}
+          className="hidden md:grid grid-cols-12 gap-4 border-b p-3 items-center transition-colors last:border-0 hover:bg-muted/50"
         >
           <div className="col-span-3">
             <Link
