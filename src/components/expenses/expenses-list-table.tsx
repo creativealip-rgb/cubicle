@@ -145,12 +145,10 @@ export function ExpensesListTable({
     <>
       {/* Mobile cards */}
       <div className="md:hidden space-y-3">
-        {sorted.map((e, index) => (
+        {sorted.map((e) => (
           <div
             key={e.id}
-            className={`rounded-lg border p-4 space-y-3 ${
-              index % 2 === 1 ? "bg-slate-50" : "bg-card"
-            }`}
+            className="rounded-lg border bg-card p-4 space-y-3"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 space-y-1">

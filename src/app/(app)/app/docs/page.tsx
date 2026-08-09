@@ -103,11 +103,13 @@ export default async function DocsPage() {
 
   return (
     <div className="min-w-0 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t("Dokumentasi", "Documentation")}</h1>
-        <p className="text-muted-foreground mt-1">
-          {t("Panduan lengkap semua fitur Cubiqlo.", "Complete guides for all Cubiqlo features.")}
-        </p>
+      <div className="app-page-header">
+        <div className="min-w-0">
+          <h1 className="app-page-title">{t("Dokumentasi", "Documentation")}</h1>
+          <p className="app-page-description">
+            {t("Panduan lengkap semua fitur Cubiqlo.", "Complete guides for all Cubiqlo features.")}
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

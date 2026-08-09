@@ -409,7 +409,7 @@ export default async function ReportsPage({
     return (
       <div className="space-y-4 sm:space-y-6">
         <div className="app-page-header">
-          <div><h1 className="app-page-title">{t("Laporan", "Reports")}</h1><p className="mt-1 text-sm text-muted-foreground">{t("Analisis waktu lintas proyek dan anggota.", "Time analysis across projects and members.")}</p></div>
+          <div className="min-w-0"><h1 className="app-page-title">{t("Laporan", "Reports")}</h1><p className="app-page-description">{t("Analisis waktu lintas proyek dan anggota.", "Time analysis across projects and members.")}</p></div>
           <ReportControls lang={lang} preset={period.preset} from={period.start} to={period.end} />
         </div>
         <ReportTabs active="time" financeHref={reportHref("finance")} timeHref={reportHref("time")} financeLabel={t("Keuangan", "Finance")} timeLabel={t("Waktu", "Time")} lang={lang} />
@@ -428,7 +428,7 @@ export default async function ReportsPage({
       <div className="app-page-header">
         <div className="min-w-0">
           <h1 className="app-page-title">{t("Laporan", "Reports")}</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="app-page-description">
             {t(
               "Ringkasan pemasukan dan pengeluaran bisnismu.",
               "A summary of your business income and expenses.",

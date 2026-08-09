@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Clock, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n-client";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,7 @@ export function ExportTimesheetButton({
   projectId?: string | null;
   label?: string;
 }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -78,23 +80,26 @@ export function ExportTimesheetButton({
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Ekspor Timesheet</DialogTitle>
+          <DialogTitle>{t("Ekspor Timesheet", "Export Timesheet")}</DialogTitle>
           <DialogDescription>
-            Pilih rentang tanggal. Kosong = semua waktu untuk klien/proyek invoice ini.
+            {t(
+              "Pilih rentang tanggal. Kosong = semua waktu untuk klien/proyek invoice ini.",
+              "Pick a date range. Empty = all time for this invoice's client/project.",
+            )}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 py-1">
-          <label className="text-xs font-medium text-muted-foreground">Periode</label>
+          <label className="text-xs font-medium text-muted-foreground">{t("Periode", "Period")}</label>
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" size="sm" onClick={() => applyPreset("this")}>
-              Bulan ini
+              {t("Bulan ini", "This month")}
             </Button>
             <Button type="button" variant="outline" size="sm" onClick={() => applyPreset("last")}>
-              Bulan lalu
+              {t("Bulan lalu", "Last month")}
             </Button>
             <Button type="button" variant="ghost" size="sm" onClick={() => applyPreset("clear")}>
-              Semua waktu
+              {t("Semua waktu", "All time")}
             </Button>
           </div>
           <div className="flex items-center gap-2">
@@ -115,19 +120,19 @@ export function ExportTimesheetButton({
             />
           </div>
           {rangeInvalid && (
-            <p className="text-xs text-destructive">Tanggal awal harus sebelum tanggal akhir.</p>
+            <p className="text-xs text-destructive">{t("Tanggal awal harus sebelum tanggal akhir.", "Start date must be before end date.")}</p>
           )}
           {!from && !to && (
-            <p className="text-xs text-muted-foreground">Kosong = semua waktu.</p>
+            <p className="text-xs text-muted-foreground">{t("Kosong = semua waktu.", "Empty = all time.")}</p>
           )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={() => setOpen(false)}>
-            Batal
+            {t("Batal", "Cancel")}
           </Button>
           <Button size="sm" className="gap-1" onClick={handleExport} disabled={rangeInvalid}>
-            <Download className="h-3 w-3" /> Export
+            <Download className="h-3 w-3" /> {t("Export", "Export")}
           </Button>
         </DialogFooter>
       </DialogContent>

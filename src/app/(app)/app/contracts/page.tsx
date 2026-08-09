@@ -5,11 +5,12 @@ import { db } from "@/db";
 import { contracts, clients } from "@/db/schema";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
-import { FileSignature } from "lucide-react";
 import { CreateContractButton } from "@/components/contracts/create-contract-button";
 import { ContractsListTable } from "@/components/contracts/contracts-list-table";
 import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
+import { EmptyState } from "@/components/empty-state";
 import { getCurrentLang, createT } from "@/lib/i18n";
+import { FileSignature } from "lucide-react";
 
 const STATUS_TABS = [
   "all",
@@ -131,20 +132,30 @@ export default async function ContractsPage({
       />
 
       {rows.length === 0 ? (
-        <div className="bg-white rounded-2xl border p-12 text-center">
-          <FileSignature className="h-10 w-10 mx-auto text-slate-300 mb-3" />
-          <p className="text-sm text-slate-500">
-            {statusFilter === "all"
+        <EmptyState
+          icon={FileSignature}
+          title={
+            statusFilter === "all"
+              ? t("Belum ada kontrak", "No contracts yet")
+              : t("Tidak ada kontrak", "No contracts")
+          }
+          description={
+            statusFilter === "all"
               ? t(
-                  "Belum ada kontrak. Buat kontrak pertama untuk mulai tanda tangan elektronik.",
-                  "No contracts yet. Create your first one to start electronic signing.",
+                  "Buat kontrak pertama untuk mulai tanda tangan elektronik.",
+                  "Create your first one to start electronic signing.",
                 )
               : t(
                   "Tidak ada kontrak dengan status ini.",
                   "No contracts with this status.",
-                )}
-          </p>
-        </div>
+                )
+          }
+          actionNode={
+            canWrite ? (
+              <CreateContractButton clients={clientsList} workspaceId={workspaceId} />
+            ) : undefined
+          }
+        />
       ) : (
         <ContractsListTable rows={rows} canWrite={canWrite} />
       )}

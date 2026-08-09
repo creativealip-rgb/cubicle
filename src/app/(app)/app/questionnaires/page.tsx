@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { QuestionnairesListTable } from "@/components/questionnaires/questionnaires-list-table";
 import { QuestionnaireCreateDialog } from "@/components/calendar/questionnaire-create-dialog";
+import { EmptyState } from "@/components/empty-state";
 import { Plus, ClipboardList, ChevronRight } from "lucide-react";
 
 async function getWorkspaceId(): Promise<string> {
@@ -78,25 +79,26 @@ export default async function QuestionnairesPage() {
       </div>
 
       {rows.length === 0 ? (
-        <div className="bg-white rounded-2xl border p-12 text-center">
-          <ClipboardList className="mx-auto mb-3 h-10 w-10 text-slate-300" />
-          <p className="mb-4 text-sm text-slate-500">
-            {t(
-              "Belum ada kuesioner. Buat satu untuk kumpulkan brief dari klien.",
-              "No questionnaires yet. Create one to collect briefs from clients.",
-            )}
-          </p>
-          {canWrite && (
-            <QuestionnaireCreateDialog
-              trigger={
-                <Button size="sm" className="gap-1">
-                  <Plus className="h-4 w-4" />
-                  {t("Kuesioner baru", "New questionnaire")}
-                </Button>
-              }
-            />
+        <EmptyState
+          icon={ClipboardList}
+          title={t("Belum ada kuesioner", "No questionnaires yet")}
+          description={t(
+            "Buat satu untuk kumpulkan brief dari klien.",
+            "Create one to collect briefs from clients.",
           )}
-        </div>
+          actionNode={
+            canWrite ? (
+              <QuestionnaireCreateDialog
+                trigger={
+                  <Button size="sm" className="gap-1">
+                    <Plus className="h-4 w-4" />
+                    {t("Kuesioner baru", "New questionnaire")}
+                  </Button>
+                }
+              />
+            ) : undefined
+          }
+        />
       ) : (
         <>
           {/* Mobile cards */}
@@ -108,7 +110,7 @@ export default async function QuestionnairesPage() {
                 <Link
                   key={q.id}
                   href={`/app/questionnaires/${q.id}`}
-                  className="block rounded-2xl border bg-white p-4 shadow-sm transition hover:border-indigo-200 hover:shadow"
+                  className="block rounded-lg border bg-card p-4"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">

@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useT } from "@/lib/i18n-client";
 import { ArrowLeft, Save, Loader2, Trash2, Star } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -28,14 +29,14 @@ type Props = {
 };
 
 const VARIABLES = [
-  { key: "client.name", desc: "Nama klien" },
-  { key: "client.email", desc: "Email klien" },
-  { key: "project.name", desc: "Nama proyek" },
-  { key: "workspace.name", desc: "Nama workspace" },
-  { key: "today", desc: "Tanggal hari ini" },
-  { key: "valid_until", desc: "Berlaku sampai" },
-  { key: "value", desc: "Nilai kontrak" },
-  { key: "scope", desc: "Ringkasan lingkup" },
+  { key: "client.name" },
+  { key: "client.email" },
+  { key: "project.name" },
+  { key: "workspace.name" },
+  { key: "today" },
+  { key: "valid_until" },
+  { key: "value" },
+  { key: "scope" },
 ];
 
 const DEFAULT_BODY = `# Perjanjian Jasa
@@ -77,6 +78,7 @@ Dengan menandatangani di bawah, kedua pihak menyetujui syarat di atas.
 `;
 
 export function ContractTemplateBuilder({ workspaceId, template }: Props) {
+  const { t } = useT();
   const router = useRouter();
   const [name, setName] = useState(template?.name ?? "");
   const [body, setBody] = useState(template?.body ?? DEFAULT_BODY);
@@ -84,6 +86,18 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
   const [saving, startSave] = useTransition();
   const [deleting, startDelete] = useTransition();
   const [error, setError] = useState<string | null>(null);
+
+  const variableDesc = (key: string): string =>
+    ({
+      "client.name": t("Nama klien", "Client name"),
+      "client.email": t("Email klien", "Client email"),
+      "project.name": t("Nama proyek", "Project name"),
+      "workspace.name": t("Nama workspace", "Workspace name"),
+      today: t("Tanggal hari ini", "Today's date"),
+      valid_until: t("Berlaku sampai", "Valid until"),
+      value: t("Nilai kontrak", "Contract value"),
+      scope: t("Ringkasan lingkup", "Scope summary"),
+    })[key] ?? key;
 
   const isEdit = !!template;
   const canSave =
@@ -99,7 +113,7 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
       try {
         if (isEdit && template) {
           await updateContractTemplate(template.id, { name, body, isDefault });
-          toast.success("Template diperbarui");
+          toast.success(t("Template diperbarui", "Template updated"));
           router.push("/app/templates?tab=contract");
         } else {
           const created = await createContractTemplate({
@@ -108,13 +122,13 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
             body,
             isDefault,
           });
-          toast.success("Template dibuat");
+          toast.success(t("Template dibuat", "Template created"));
           router.push(`/app/contract-templates/${created.id}`);
         }
         router.refresh();
       } catch (e) {
         const msg =
-          e instanceof Error ? e.message : "Gagal menyimpan template";
+          e instanceof Error ? e.message : t("Gagal menyimpan template", "Failed to save template");
         setError(msg);
         toast.error(msg);
       }
@@ -125,7 +139,10 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
     if (!template) return;
     if (
       !confirm(
-        `Hapus template "${template.name}"? Kontrak yang sudah ada tidak terpengaruh.`,
+        t(
+          `Hapus template "${template.name}"? Kontrak yang sudah ada tidak terpengaruh.`,
+          `Delete template "${template.name}"? Existing contracts are unaffected.`,
+        ),
       )
     )
       return;
@@ -133,12 +150,12 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
     startDelete(async () => {
       try {
         await deleteContractTemplate(template.id);
-        toast.success("Template dihapus");
+        toast.success(t("Template dihapus", "Template deleted"));
         router.push("/app/templates?tab=contract");
         router.refresh();
       } catch (e) {
         const msg =
-          e instanceof Error ? e.message : "Gagal menghapus template";
+          e instanceof Error ? e.message : t("Gagal menghapus template", "Failed to delete template");
         setError(msg);
         toast.error(msg);
       }
@@ -152,14 +169,17 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
           <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2">
             <Link href="/app/templates?tab=contract">
               <ArrowLeft className="h-3.5 w-3.5 mr-1" />
-              Pusat Template
+              {t("Pusat Template", "Template Center")}
             </Link>
           </Button>
           <h1 className="app-page-title">
-            {isEdit ? "Edit template" : "Template kontrak baru"}
+            {isEdit ? t("Edit template", "Edit template") : t("Template kontrak baru", "New contract template")}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Tulis sekali, pakai ulang untuk tiap klien. Placeholder terisi saat kirim.
+            {t(
+              "Tulis sekali, pakai ulang untuk tiap klien. Placeholder terisi saat kirim.",
+              "Write once, reuse for every client. Placeholders fill in when sent.",
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -176,7 +196,7 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
               ) : (
                 <Trash2 className="h-4 w-4 mr-1" />
               )}
-              Hapus
+              {t("Hapus", "Delete")}
             </Button>
           ) : null}
           <Button onClick={onSave} disabled={!canSave}>
@@ -185,7 +205,7 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
             ) : (
               <Save className="h-4 w-4 mr-1" />
             )}
-            {isEdit ? "Simpan" : "Buat template"}
+            {isEdit ? t("Simpan", "Save") : t("Buat template", "Create template")}
           </Button>
         </div>
       </div>
@@ -199,21 +219,21 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="tpl-name">Nama template</Label>
+            <Label htmlFor="tpl-name">{t("Nama template", "Template name")}</Label>
             <Input
               id="tpl-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="mis. Perjanjian jasa standar"
+              placeholder={t("mis. Perjanjian jasa standar", "e.g. Standard service agreement")}
               maxLength={200}
             />
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="tpl-body">Isi kontrak</Label>
+              <Label htmlFor="tpl-body">{t("Isi kontrak", "Contract body")}</Label>
               <span className="text-xs text-slate-500">
-                {body.length.toLocaleString("id-ID")} karakter
+                {body.length.toLocaleString("id-ID")} {t("karakter", "characters")}
               </span>
             </div>
             <Textarea
@@ -239,7 +259,7 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
               className="cursor-pointer flex items-center gap-1.5"
             >
               <Star className="h-3.5 w-3.5 text-amber-500" />
-              Jadikan template default
+              {t("Jadikan template default", "Make default template")}
             </Label>
           </div>
         </div>
@@ -248,12 +268,15 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium">
-                Variabel tersedia
+                {t("Variabel tersedia", "Available variables")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-1.5">
               <p className="text-xs text-slate-500 mb-2">
-                Klik untuk sisipkan. Terisi saat kontrak dikirim.
+                {t(
+                  "Klik untuk sisipkan. Terisi saat kontrak dikirim.",
+                  "Click to insert. Fills in when the contract is sent.",
+                )}
               </p>
               {VARIABLES.map((v) => (
                 <button
@@ -265,7 +288,7 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
                   <code className="text-xs font-mono text-violet-700 group-hover:text-violet-900">
                     {`{{${v.key}}}`}
                   </code>
-                  <p className="text-xs text-slate-500 mt-0.5">{v.desc}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{variableDesc(v.key)}</p>
                 </button>
               ))}
             </CardContent>
@@ -274,7 +297,7 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
           {isDefault ? (
             <Badge variant="default" className="gap-1 w-fit">
               <Star className="h-3 w-3" />
-              Template default
+              {t("Template default", "Default template")}
             </Badge>
           ) : null}
         </div>

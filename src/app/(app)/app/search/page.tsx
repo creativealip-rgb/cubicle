@@ -90,17 +90,19 @@ export default async function SearchPage({
   ];
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-4 sm:p-6">
-      <div className="space-y-1">
-        <h1 className="app-page-title">
-          {t("Pencarian", "Search")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t(
-            "Cari klien, proyek, tugas, dan invoice di workspace aktif.",
-            "Search clients, projects, tasks, and invoices in the active workspace.",
-          )}
-        </p>
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+      <div className="app-page-header">
+        <div className="min-w-0">
+          <h1 className="app-page-title">
+            {t("Pencarian", "Search")}
+          </h1>
+          <p className="app-page-description">
+            {t(
+              "Cari klien, proyek, tugas, dan invoice di workspace aktif.",
+              "Search clients, projects, tasks, and invoices in the active workspace.",
+            )}
+          </p>
+        </div>
       </div>
 
       <Card>

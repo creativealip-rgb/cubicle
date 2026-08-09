@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, FileText } from "lucide-react";
 import { ProposalsListTable } from "@/components/proposals/proposals-list-table";
 import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
+import { EmptyState } from "@/components/empty-state";
 import { getCurrentLang, createT } from "@/lib/i18n";
 
 const STATUS_TABS = ["all", "draft", "sent", "viewed", "accepted", "declined", "expired"] as const;
@@ -123,20 +124,30 @@ export default async function ProposalsPage({
       />
 
       {rows.length === 0 ? (
-        <div className="bg-white rounded-2xl border p-12 text-center">
-          <FileText className="h-10 w-10 mx-auto text-slate-300 mb-3" />
-          <p className="text-sm text-slate-500">
-            {statusFilter === "all"
+        <EmptyState
+          icon={FileText}
+          title={
+            statusFilter === "all"
+              ? t("Belum ada proposal", "No proposals yet")
+              : t("Tidak ada proposal", "No proposals")
+          }
+          description={
+            statusFilter === "all"
               ? t(
-                  "Belum ada proposal. Buat proposal untuk mulai kirim scope.",
-                  "No proposals yet. Create one to start sending scope.",
+                  "Buat proposal untuk mulai kirim scope.",
+                  "Create one to start sending scope.",
                 )
               : t(
                   "Tidak ada proposal dengan status ini.",
                   "No proposals with this status.",
-                )}
-          </p>
-        </div>
+                )
+          }
+          action={
+            canWrite && statusFilter === "all"
+              ? { label: t("Proposal baru", "New proposal"), href: "/app/proposals/new" }
+              : undefined
+          }
+        />
       ) : (
         <ProposalsListTable rows={rows} canWrite={canWrite} />
       )}
