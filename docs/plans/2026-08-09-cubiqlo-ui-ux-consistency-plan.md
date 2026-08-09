@@ -53,10 +53,9 @@
 
 ### Batch 3 — pending
 
-- [ ] Decide dark-mode target with product owner.
-- [ ] If dark mode remains target, migrate remaining hardcoded colors by module.
-- [ ] Improve keyboard behavior for `StatusFilterTabs`.
-- [ ] Replace native selects in email and invoice add-item flow.
+- [x] Dark-mode decision: app shell remains light-only for this plan. `dark` presets belong to public landing-site themes, not app chrome. Do not mass-migrate app colors or add a theme toggle without product direction.
+- [x] Improve keyboard behavior for `StatusFilterTabs`.
+- [~] Replace native selects: invoice add-item flow done; email remains native because it is a server-action HTML form and Radix Select needs client/hidden-field wiring.
 - [ ] Run browser matrix at 1440px and 390px after QA rate-limit reset.
 
 ---
@@ -139,4 +138,4 @@ Execute Task 1 only. Inspect current markup first, patch smallest diff, run focu
 
 ---
 
-**Last updated:** 2026-08-09 after commit `904589a` and hydration repro follow-up.
+**Last updated:** 2026-08-09 after commit `6a79092`, dev deployment, and keyboard-tab verification.
