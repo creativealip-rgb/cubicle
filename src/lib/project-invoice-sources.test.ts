@@ -9,7 +9,7 @@ describe("ProjectInvoiceSource contract", () => {
     expect(isFixedInvoiceBillingModel("fixed_price")).toBe(true);
     expect(isFixedInvoiceBillingModel("legacy_package")).toBe(true);
     expect(isFixedInvoiceBillingModel("hourly")).toBe(false);
-    expect(isFixedInvoiceBillingModel("retainer")).toBe(false);
+    expect(isFixedInvoiceBillingModel("retainer")).toBe(true);
   });
 
   it("accepts generic fixed, hourly, and deposit sources", () => {

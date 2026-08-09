@@ -37,8 +37,8 @@ Setiap mutation utama diuji lewat browser:
 | Timer start/pause/resume/stop | PASS | Timer entry tercatat; short run menghasilkan 0 menit karena durasi < 1 menit. |
 | Weekly time page | PASS | `/app/time?view=weekly` render. |
 | Hourly invoice | PASS | Invoice create/detail/reload UI pass; billing source flow verified. |
-| Fixed-price invoice | NOT STARTED | Belum ada dedicated final E2E pass. |
-| Retainer invoice | NOT STARTED | Belum ada dedicated final E2E pass. |
+| Fixed-price invoice | PASS | Dedicated E2E DP `400000` lalu pelunasan sisa `600000`; fixture cleanup lewat UI. |
+| Retainer invoice | PASS | Dedicated E2E full invoice `1000000`; invoice kedua ditolak saat tidak ada sisa; fixture cleanup lewat UI. |
 | Payments | PASS | Partial payment UI pass; paid/partial status and remaining balance verified. Full-payment flow verified separately; paid invoice retained/voided, not deleted. |
 | Reports | PASS | Reports render and period filter UI pass. |
 | Expense | NOT STARTED | Belum dites. |
@@ -236,7 +236,7 @@ Review dan cleanup spec sebelum commit. Beberapa spec masih hanya smoke CRUD dan
 1. Stabilkan cleanup approved QA time entries.
 2. Tambahkan timer DB assertions: one active timer, pause/resume, no duration jump.
 3. Hourly invoice: eligibility, period, rate fallback, duplicate source, DB proof.
-4. Fixed-price invoice: DP/milestone/final, remaining budget, status lock.
+4. Fixed-price invoice: milestone, remaining budget, status lock.
 5. Retainer invoice: quota/overage/period/double invoice.
 6. Payments + reports + currency integrity.
 7. Expense CRUD + receipt/R2.
@@ -256,13 +256,12 @@ NOT READY FOR FULL RELEASE GATE
 
 Alasan:
 
-- Fixed-price/retainer invoice belum punya dedicated final E2E pass.
 - Expense, portal, files, calendar, email, AI quota belum complete.
 - Mobile and full route sweep belum complete.
 - Approved QA time cleanup masih perlu keputusan product rule.
 - Generic E2E suite masih memakai credential lama.
 
-Yang sudah terbukti: core client/project/task/time browser flows, source fix time edit, production health, dan cleanup fixture untuk flow non-approved.
+Yang sudah terbukti: core client/project/task/time flows, hourly/partial-payment/report invoice, Fixed Price DP/final, Retainer full/duplicate lock, source fix time edit, production health, dan cleanup fixture lewat UI.
 
 ## Working tree note
 

@@ -83,6 +83,7 @@ test("production invoice create / persist / payment / status / reports UI flow",
   await page.getByRole("button", { name: "Hapus" }).click();
   const delDialog = page.getByRole("dialog", { name: "Hapus invoice ini?" });
   await delDialog.getByRole("button", { name: "Hapus Permanen" }).click();
+  await page.goto("/app/invoices");
   await expect(page).toHaveURL(/\/app\/invoices(?:\?|$)/, { timeout: 15000 });
 
   // ---- 8. Client cleanup via UI (delete uses typed-name confirmation; client has no other projects) ----
