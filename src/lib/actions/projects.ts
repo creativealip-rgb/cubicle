@@ -141,6 +141,12 @@ export async function createProject(input: z.input<typeof projectCreateSchema>) 
   }
 
   await writeActivityLog(workspaceId, user.id, "created_project", "project", project.id);
+  // Keep client detail and projects lists fresh after create (client detail
+  // renders the linked-projects list from the DB; router.refresh alone cannot
+  // re-render other routes' server components).
+  revalidatePath(`/app/clients/${parsed.clientId}`);
+  revalidatePath("/app/projects");
+  revalidatePath("/app/dashboard");
   return { ok: true as const, project };
 }
 

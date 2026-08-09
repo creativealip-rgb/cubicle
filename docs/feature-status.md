@@ -52,7 +52,7 @@ Latest verified production commit: `fea68df`
 | Feature | Route | Status | Notes |
 | --- | --- | --- | --- |
 | Projects list | `/app/projects` | DONE | v0.1.114: compact zebra list, Review status, due-date context, client link, simplified client-only filter, progress % inside bar. |
-| Project billing type + dates | project form/schema | DONE | Supports `by project` / `by hours`, start date, finish date. |
+| Project billing type + dates | project form/schema | DONE | Active models: Fixed Price, Hourly, Retainer; supports start date and finish date. Legacy package records remain read-only compatibility data. |
 | Project detail | `/app/projects/[projectId]` | DONE | v0.1.124-dev adds persisted Portal visibility control and typed permanent deletion. Billing-aware `Pekerjaan`, conditional `Waktu`, File, and consolidated Billing tabs remain. |
 | Tasks | `/app/tasks` | DONE | Fixed Price uses workflow List/Board; Hourly/Retainer use reusable flat Tasks. v0.1.124-dev adds typed permanent deletion that removes linked Time Logs, comments, and notifications. |
 | Billing-aware Time cutover | `/app/time` | QA | Server/Timer/manual/weekly Task eligibility shipped locally; PostgreSQL 16 integration matrix and full automated suite green. Authenticated desktop/mobile browser QA still in progress; not pushed/deployed. |
@@ -92,7 +92,7 @@ Latest verified production commit: `fea68df`
 | Contracts list/detail | `/app/contracts`, `/app/contracts/[contractId]` | DONE | v0.1.114: compact list density; earlier v0.1.33 status tabs, activity date fix, detail i18n, send/resend+copy, revoke, delete guard. |
 | Public contract | `/contract/[token]` | DONE | Public token page exists. |
 | Contract template editor | `/app/contract-templates/new|[id]` | DONE | List page removed (redirect to Template Center). Full editor kept. |
-| Questionnaires | `/app/questionnaires` | DONE | v0.1.114: compact shared list density; questionnaire routes exist. |
+| Questionnaires | `/app/questionnaires` | DONE | List, create, detail, and edit routes standardized with responsive headers, localized breadcrumbs, consistent spacing, cards, and empty states. |
 | Intake | `/intake/[token]` | DONE | Public intake route exists. |
 
 ## Communication

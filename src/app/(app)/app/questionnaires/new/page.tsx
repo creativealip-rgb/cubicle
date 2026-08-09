@@ -4,24 +4,31 @@ import { QuestionnaireBuilder } from "@/components/questionnaires/questionnaire-
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-
+import { getCurrentLang, createT } from "@/lib/i18n";
 
 export default async function NewQuestionnairePage() {
   const { workspaceId } = await requireWorkspaceWritableOrRedirect("/app/questionnaires");
+  const lang = await getCurrentLang();
+  const t = createT(lang);
 
   return (
     <div className="space-y-6 p-6 max-w-4xl">
-      <div className="flex items-center gap-2 text-sm text-slate-500">
-        <Button variant="ghost" size="sm" asChild>
+      <div>
+        <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2">
           <Link href="/app/questionnaires">
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back
+            <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+            {t("Semua kuesioner", "All questionnaires")}
           </Link>
         </Button>
-      </div>
-      <div>
-        <h1 className="app-page-title">Kuesioner Baru</h1>
-        <p className="text-sm text-slate-500 mt-1">Buat form. Kirim ke klien. Dapatkan brief yang terstruktur.</p>
+        <h1 className="app-page-title">
+          {t("Kuesioner baru", "New questionnaire")}
+        </h1>
+        <p className="mt-1 text-sm text-slate-500">
+          {t(
+            "Buat form. Kirim ke klien. Dapatkan brief yang terstruktur.",
+            "Build a form. Send it to clients. Get structured briefs back.",
+          )}
+        </p>
       </div>
       <QuestionnaireBuilder
         workspaceId={workspaceId}

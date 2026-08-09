@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-08-09 — Documentation redesign, questionnaire UI alignment, portal/project refresh fixes
+
+**Documentation UI:**
+- Redesigned `/app/docs` index and all documentation routes with shared hero, breadcrumb, table of contents, numbered sections, callouts, responsive layout, and consistent cards.
+- Removed stale Package/Paket billing copy from user-facing documentation UI; active project billing models are Fixed Price, Hourly, and Retainer.
+
+**Questionnaires:**
+- Standardized list, create, detail, and edit pages with shared app spacing, responsive headers, localized breadcrumbs, consistent actions, cards, and empty states.
+
+**Client/project UX:**
+- Persisted client portal slug state when a slug is provided during client creation.
+- Revalidated client detail, project list, and dashboard after project creation so linked projects update without stale server-rendered data.
+
+**Verification:**
+- Focused wiring tests passed: docs shell 23 tests, questionnaire pages 4 tests, client/project fixes 4 tests.
+- Full Vitest suite passed: 218 files / 1,049 tests.
+- ESLint and TypeScript checks passed; production build passed.
+- Production deployed to `cubiqlo-new-app`; `/api/health` returned `status=ok`, `db=ok`.
+
 ## 2026-08-08 — Questionnaire editing, AI quota integrity, invoice lifecycle hardening, billing integration, docs and UX cleanup
 
 **Questionnaire workflow:**

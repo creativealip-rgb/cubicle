@@ -2,11 +2,13 @@ import Link from "next/link";
 import { BookOpen, Globe, FileText, Clock, Briefcase, Users, FileCheck2, Sparkles, Settings, Rocket, LifeBuoy } from "lucide-react";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
+import { DocsCard } from "@/components/docs/doc-shell";
 
 const GUIDES = [
   {
     href: "/app/docs/getting-started",
     icon: Rocket,
+    category: { id: "Panduan", en: "Guide" },
     title: { id: "Panduan Alur Operasional (End-to-End)", en: "Operational Workflow Guide (End-to-End)" },
     desc: {
       id: "Panduan lengkap mulai dari Tambah Klien, Buat Proyek, Kelola Task, hingga Terbitkan Invoice.",
@@ -16,6 +18,7 @@ const GUIDES = [
   {
     href: "/app/docs/workspace-settings",
     icon: Settings,
+    category: { id: "Pengaturan", en: "Settings" },
     title: { id: "Pengaturan & Setup Workspace", en: "Workspace Setup & Settings" },
     desc: {
       id: "Cara setup profil bisnis, branding, Reply-To email, manajemen tim, dan langganan QRIS.",
@@ -25,6 +28,7 @@ const GUIDES = [
   {
     href: "/app/docs/landing-page",
     icon: Globe,
+    category: { id: "Website", en: "Website" },
     title: { id: "Landing Page Builder", en: "Landing Page Builder" },
     desc: {
       id: "Bikin landing page profesional dengan drag & drop. 8 tema, mobile editor, SEO, publish, contact form.",
@@ -34,15 +38,17 @@ const GUIDES = [
   {
     href: "/app/docs/invoice",
     icon: FileText,
+    category: { id: "Keuangan", en: "Finance" },
     title: { id: "Invoice & Pembayaran", en: "Invoice & Payments" },
     desc: {
-      id: "Dari catat waktu sampai terima bayaran. Fixed price, hourly, retainer, package.",
-      en: "From time tracking to getting paid. Fixed price, hourly, retainer, package.",
+      id: "Dari catat waktu sampai terima bayaran. Fixed price, hourly, dan retainer.",
+      en: "From time tracking to getting paid. Fixed price, hourly, and retainer.",
     },
   },
   {
     href: "/app/docs/time-tracking",
     icon: Clock,
+    category: { id: "Produktivitas", en: "Productivity" },
     title: { id: "Time Tracking", en: "Time Tracking" },
     desc: {
       id: "Timer, input manual, timesheet mingguan. Siap ditagih.",
@@ -52,6 +58,7 @@ const GUIDES = [
   {
     href: "/app/docs/projects",
     icon: Briefcase,
+    category: { id: "Pekerjaan", en: "Work" },
     title: { id: "Proyek & Task", en: "Projects & Tasks" },
     desc: {
       id: "Kelola pipeline proyek & task. Kanban board, priority, assignee, deadline.",
@@ -61,6 +68,7 @@ const GUIDES = [
   {
     href: "/app/docs/client-portal",
     icon: Users,
+    category: { id: "Klien", en: "Clients" },
     title: { id: "Client Portal", en: "Client Portal" },
     desc: {
       id: "Share progres, file, dan invoice ke klien. Approval task real-time.",
@@ -70,6 +78,7 @@ const GUIDES = [
   {
     href: "/app/docs/proposals-contracts",
     icon: FileCheck2,
+    category: { id: "Sales", en: "Sales" },
     title: { id: "Proposal & Kontrak", en: "Proposals & Contracts" },
     desc: {
       id: "Penawaran harga, penandatanganan e-sign, dan template center sales docs.",
@@ -79,6 +88,7 @@ const GUIDES = [
   {
     href: "/app/docs/ai-studio",
     icon: Sparkles,
+    category: { id: "AI", en: "AI" },
     title: { id: "AI Studio & Assistant", en: "AI Studio & Assistant" },
     desc: {
       id: "Generator brief/prompt bilingual (18 preset) dan Asisten RAG workspace.",
@@ -100,27 +110,18 @@ export default async function DocsPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {GUIDES.map((guide) => {
           const Icon = guide.icon;
           return (
-            <Link
+            <DocsCard
               key={guide.href}
               href={guide.href}
-              className="group flex gap-4 rounded-xl border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-md"
-            >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Icon className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <h2 className="font-semibold text-sm group-hover:text-primary transition-colors">
-                  {lang === "en" ? guide.title.en : guide.title.id}
-                </h2>
-                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                  {lang === "en" ? guide.desc.en : guide.desc.id}
-                </p>
-              </div>
-            </Link>
+              icon={Icon}
+              title={lang === "en" ? guide.title.en : guide.title.id}
+              description={lang === "en" ? guide.desc.en : guide.desc.id}
+              category={lang === "en" ? guide.category.en : guide.category.id}
+            />
           );
         })}
       </div>

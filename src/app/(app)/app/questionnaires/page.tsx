@@ -52,11 +52,11 @@ export default async function QuestionnairesPage() {
   }
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="min-w-0 space-y-4 sm:space-y-6">
+      <div className="app-page-header">
         <div>
           <h1 className="app-page-title">{t("Kuesioner", "Questionnaires")}</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p>
             {t(
               "Form intake klien. Jawaban jadi brief proyek.",
               "Client intake forms. Answers become project briefs.",
@@ -64,19 +64,21 @@ export default async function QuestionnairesPage() {
           </p>
         </div>
         {canWrite && (
-          <QuestionnaireCreateDialog
-            trigger={
-              <Button className="w-full sm:w-auto">
-                <Plus className="mr-1 h-4 w-4" />
-                {t("Kuesioner baru", "New questionnaire")}
-              </Button>
-            }
-          />
+          <div className="app-page-actions">
+            <QuestionnaireCreateDialog
+              trigger={
+                <Button size="sm" className="gap-1">
+                  <Plus className="h-4 w-4" />
+                  {t("Kuesioner baru", "New questionnaire")}
+                </Button>
+              }
+            />
+          </div>
         )}
       </div>
 
       {rows.length === 0 ? (
-        <div className="rounded-2xl border bg-white p-8 text-center sm:p-12">
+        <div className="bg-white rounded-2xl border p-12 text-center">
           <ClipboardList className="mx-auto mb-3 h-10 w-10 text-slate-300" />
           <p className="mb-4 text-sm text-slate-500">
             {t(
@@ -87,8 +89,8 @@ export default async function QuestionnairesPage() {
           {canWrite && (
             <QuestionnaireCreateDialog
               trigger={
-                <Button size="sm">
-                  <Plus className="mr-1.5 h-4 w-4" />
+                <Button size="sm" className="gap-1">
+                  <Plus className="h-4 w-4" />
                   {t("Kuesioner baru", "New questionnaire")}
                 </Button>
               }

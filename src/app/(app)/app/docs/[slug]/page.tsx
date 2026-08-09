@@ -1,9 +1,22 @@
 import { getCurrentLang } from "@/lib/i18n";
-import Link from "next/link";
+import { Clock, Briefcase, Users, FileCheck2, Sparkles } from "lucide-react";
+import {
+  DocsBreadcrumb,
+  DocsHero,
+  DocsLayout,
+  DocsSection,
+  DocsCallout,
+} from "@/components/docs/doc-shell";
 
 const GUIDES = {
   "time-tracking": {
+    icon: Clock,
+    category: { id: "Produktivitas", en: "Productivity" },
     title: { id: "Time Tracking", en: "Time Tracking" },
+    description: {
+      id: "Timer, input manual, timesheet mingguan. Siap ditagih.",
+      en: "Timer, manual entry, weekly timesheet. Ready for invoicing.",
+    },
     items: [
       ["1. Timer", "Klik Mulai Timer atau tombol 00:00 di top bar. Pilih proyek & task. Timer tetap jalan meski pindah halaman."],
       ["2. Input Manual", "Catat Waktu → isi tanggal, durasi, proyek, task, deskripsi, toggle billable."],
@@ -14,11 +27,17 @@ const GUIDES = {
     ],
   },
   projects: {
+    icon: Briefcase,
+    category: { id: "Pekerjaan", en: "Work" },
     title: { id: "Proyek & Task", en: "Projects & Tasks" },
+    description: {
+      id: "Kelola pipeline proyek & task. Kanban board, priority, assignee, deadline.",
+      en: "Manage your project & task pipeline. Kanban board, priority, assignee, deadline.",
+    },
     items: [
-      ["1. Buat Proyek", "Proyek Baru → nama, klien, tipe billing (Fixed/Per Jam/Retainer/Paket), due date."],
+      ["1. Buat Proyek", "Proyek Baru → nama, klien, tipe billing (Fixed/Per Jam/Retainer), due date."],
       ["2. Status", "Draf → Aktif → Ditunda → Selesai → Dibatalkan → Arsip."],
-      ["3. Progress", "Progress bar, task selesai/total, jam tercatat, sisa kuota paket."],
+      ["3. Progress", "Progress bar, task selesai/total, jam tercatat, sisa kuota retainer."],
       ["4. Kanban Board", "Belum Mulai / Dikerjakan / Review / Selesai. Drag & drop task antar kolom."],
       ["5. Task Detail", "Klik task → judul, assignee, priority, due date, time entries, status."],
       ["6. Views", "Global Tasks: list + board toggle. Mobile: compact cards."],
@@ -27,7 +46,13 @@ const GUIDES = {
     ],
   },
   "client-portal": {
+    icon: Users,
+    category: { id: "Klien", en: "Clients" },
     title: { id: "Client Portal", en: "Client Portal" },
+    description: {
+      id: "Share progres, file, dan invoice ke klien. Approval task real-time.",
+      en: "Share progress, files, and invoices with clients. Real-time task approval.",
+    },
     items: [
       ["1. Aktifkan", "Klien → Edit → Aktifkan portal sekarang. Link: cubiqlo.com/p/[token] atau slug kustom."],
       ["2. Dashboard", "Progress proyek, invoice status, aktivitas terbaru."],
@@ -38,7 +63,13 @@ const GUIDES = {
     ],
   },
   "proposals-contracts": {
+    icon: FileCheck2,
+    category: { id: "Sales", en: "Sales" },
     title: { id: "Proposal & Kontrak", en: "Proposals & Contracts" },
+    description: {
+      id: "Penawaran harga, penandatanganan e-sign, dan template center sales docs.",
+      en: "Estimates, e-signatures, and sales doc template center.",
+    },
     items: [
       ["1. Buat Proposal", "Proposal Baru → set klien, milestone harga, DP (%), dan tanggal kadaluarsa."],
       ["2. Approval Klien", "Klien membuka link publik proposal → menyetujui → proyek & invoice DP otomatis terbuat."],
@@ -48,7 +79,13 @@ const GUIDES = {
     ],
   },
   "ai-studio": {
+    icon: Sparkles,
+    category: { id: "AI", en: "AI" },
     title: { id: "AI Studio & Assistant", en: "AI Studio & Assistant" },
+    description: {
+      id: "Generator brief/prompt bilingual (18 preset) dan Asisten RAG workspace.",
+      en: "Bilingual brief/prompt generator (18 presets) and workspace RAG Assistant.",
+    },
     items: [
       ["1. Prompt Studio", "Pilih dari 18 preset brief (Feed, Carousel, Story, Product Ad, Script Video, Logo, dll)."],
       ["2. Parameter Bilingual", "Atur Platform, Rasio, Tone, dan Style dengan dukungan pilihan bahasa ID / EN."],
@@ -62,22 +99,56 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
   const [{ slug }, lang] = await Promise.all([params, getCurrentLang()]);
 
   const guide = GUIDES[slug as keyof typeof GUIDES];
-  if (!guide) return <div className="p-8 text-center text-muted-foreground">Halaman tidak ditemukan.</div>;
+  if (!guide) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        {lang === "en" ? "Page not found." : "Halaman tidak ditemukan."}
+      </div>
+    );
+  }
+
+  const Icon = guide.icon;
+  const toc = guide.items.map(([title]) => ({
+    id: title.replace(/[^a-z0-9]+/gi, "-").toLowerCase(),
+    label: title,
+  }));
 
   return (
-    <div className="min-w-0 space-y-6 max-w-3xl">
-      <div>
-        <Link href="/app/docs" className="text-sm text-muted-foreground hover:text-primary">← Dokumentasi</Link>
-        <h1 className="text-2xl font-bold mt-1">{lang === "en" ? guide.title.en : guide.title.id}</h1>
-      </div>
-      <div className="space-y-4 text-sm text-muted-foreground">
-        {guide.items.map(([title, desc]) => (
-          <div key={title}>
-            <h2 className="text-base font-semibold text-foreground mb-1">{title}</h2>
+    <div className="min-w-0 space-y-5">
+      <DocsBreadcrumb
+        items={[
+          { label: lang === "en" ? "Documentation" : "Dokumentasi", href: "/app/docs" },
+          { label: lang === "en" ? guide.title.en : guide.title.id },
+        ]}
+      />
+      <DocsHero
+        icon={Icon}
+        category={lang === "en" ? guide.category.en : guide.category.id}
+        title={lang === "en" ? guide.title.en : guide.title.id}
+        description={lang === "en" ? guide.description.en : guide.description.id}
+        readMinutes={Math.max(1, Math.round(guide.items.join(" ").split(/\s+/).filter(Boolean).length / 200))}
+      />
+      <DocsLayout toc={toc} tocLabel={lang === "en" ? "Table of Contents" : "Daftar Isi"}>
+        {guide.items.map(([title, desc], i) => (
+          <DocsSection key={title} id={toc[i].id} step={i + 1} icon={Icon} title={title}>
             <p>{desc}</p>
-          </div>
+          </DocsSection>
         ))}
-      </div>
+        {slug === "time-tracking" && (
+          <DocsCallout variant="info">
+            {lang === "en"
+              ? "Time logs can be imported into invoices via Invoice → Import Time."
+              : "Log waktu bisa diimpor ke invoice via Invoice → Import Waktu."}
+          </DocsCallout>
+        )}
+        {slug === "projects" && (
+          <DocsCallout variant="info">
+            {lang === "en"
+              ? "Three active billing models: Fixed Price, Hourly, and Retainer."
+              : "Tiga model billing aktif: Fixed Price, Per Jam, dan Retainer."}
+          </DocsCallout>
+        )}
+      </DocsLayout>
     </div>
   );
 }

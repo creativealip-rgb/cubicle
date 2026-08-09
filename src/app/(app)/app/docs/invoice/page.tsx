@@ -1,47 +1,116 @@
 import { getCurrentLang, createT } from "@/lib/i18n";
-import Link from "next/link";
+import { FileText, Settings2, ListPlus, Send, BadgeCheck, Wallet, Download } from "lucide-react";
+import {
+  DocsBreadcrumb,
+  DocsHero,
+  DocsLayout,
+  DocsSection,
+  DocsCallout,
+  DocsInlineLink,
+} from "@/components/docs/doc-shell";
 
 export default async function DocInvoice() {
   const lang = await getCurrentLang();
   const t = createT(lang);
 
-  return (
-    <div className="min-w-0 space-y-6 max-w-3xl">
-      <div>
-        <Link href="/app/docs" className="text-sm text-muted-foreground hover:text-primary">← Dokumentasi</Link>
-        <h1 className="text-2xl font-bold mt-1">{t("Invoice & Pembayaran", "Invoice & Payments")}</h1>
-      </div>
+  const toc = [
+    { id: "persiapan", label: t("1. Persiapan", "1. Preparation") },
+    { id: "bikin-invoice", label: t("2. Bikin Invoice", "2. Create Invoice") },
+    { id: "detail-invoice", label: t("3. Detail Invoice", "3. Invoice Details") },
+    { id: "kirim", label: t("4. Kirim", "4. Send") },
+    { id: "status", label: t("5. Status", "5. Status") },
+    { id: "pembayaran", label: t("6. Pembayaran", "6. Payment") },
+    { id: "download", label: t("7. Download", "7. Download") },
+  ];
 
-      <div className="space-y-4 text-sm text-muted-foreground">
-        <div>
-          <h2 className="text-base font-semibold text-foreground mb-1">1. Persiapan</h2>
-          <p>Tambah Klien → Buat Proyek → Catat Waktu → Atur Settings (mata uang, pajak, terms).</p>
-        </div>
-        <div>
-          <h2 className="text-base font-semibold text-foreground mb-1">2. Bikin Invoice</h2>
-          <p>/app/invoices → Invoice Baru → pilih klien, proyek, tipe billing (Fixed Price / Per Jam / Retainer / Paket).</p>
-        </div>
-        <div>
-          <h2 className="text-base font-semibold text-foreground mb-1">3. Detail Invoice</h2>
-          <p>Tambah line items atau Import Waktu dari time entries. Set pajak & diskon.</p>
-        </div>
-        <div>
-          <h2 className="text-base font-semibold text-foreground mb-1">4. Kirim</h2>
-          <p>Review → Kirim Invoice. Klien terima email + link invoice online + PDF.</p>
-        </div>
-        <div>
-          <h2 className="text-base font-semibold text-foreground mb-1">5. Status</h2>
-          <p>Draf → Terkirim → Dilihat → Lunas → Arsip. Dashboard keuangan update otomatis.</p>
-        </div>
-        <div>
-          <h2 className="text-base font-semibold text-foreground mb-1">6. Pembayaran</h2>
-          <p>Tandai Dibayar → masukkan jumlah, metode, tanggal. Support partial payment.</p>
-        </div>
-        <div>
-          <h2 className="text-base font-semibold text-foreground mb-1">7. Download</h2>
-          <p>PDF putih profesional dengan logo. Share link publik.</p>
-        </div>
-      </div>
+  return (
+    <div className="min-w-0 space-y-5">
+      <DocsBreadcrumb
+        items={[
+          { label: t("Dokumentasi", "Documentation"), href: "/app/docs" },
+          { label: t("Invoice & Pembayaran", "Invoice & Payments") },
+        ]}
+      />
+      <DocsHero
+        icon={FileText}
+        category={t("Keuangan", "Finance")}
+        title={t("Invoice & Pembayaran", "Invoice & Payments")}
+        description={t(
+          "Dari catat waktu sampai terima bayaran. Fixed price, hourly, dan retainer.",
+          "From time tracking to getting paid. Fixed price, hourly, and retainer."
+        )}
+      />
+      <DocsLayout toc={toc} tocLabel={t("Daftar Isi", "Table of Contents")}>
+        <DocsSection id="persiapan" step={1} icon={Settings2} title={t("Persiapan", "Preparation")}>
+          <p>
+            {t(
+              "Tambah Klien → Buat Proyek → Catat Waktu → Atur Settings (mata uang, pajak, terms).",
+              "Add Client → Create Project → Track Time → Configure Settings (currency, tax, terms)."
+            )}
+          </p>
+        </DocsSection>
+
+        <DocsSection id="bikin-invoice" step={2} icon={ListPlus} title={t("Bikin Invoice", "Create Invoice")}>
+          <p>
+            {t(
+              "/app/invoices → Invoice Baru → pilih klien, proyek, tipe billing (Fixed Price / Per Jam / Retainer).",
+              "/app/invoices → New Invoice → select client, project, billing type (Fixed Price / Hourly / Retainer)."
+            )}
+          </p>
+        </DocsSection>
+
+        <DocsSection id="detail-invoice" step={3} icon={FileText} title={t("Detail Invoice", "Invoice Details")}>
+          <p>
+            {t(
+              "Tambah line items atau Import Waktu dari time entries. Set pajak & diskon.",
+              "Add line items or Import Time from time entries. Set tax & discount."
+            )}
+          </p>
+        </DocsSection>
+
+        <DocsSection id="kirim" step={4} icon={Send} title={t("Kirim", "Send")}>
+          <p>
+            {t(
+              "Review → Kirim Invoice. Klien terima email + link invoice online + PDF.",
+              "Review → Send Invoice. Client receives email + online invoice link + PDF."
+            )}
+          </p>
+        </DocsSection>
+
+        <DocsSection id="status" step={5} icon={BadgeCheck} title={t("Status", "Status")}>
+          <p>
+            {t(
+              "Draf → Terkirim → Dilihat → Lunas → Arsip. Dashboard keuangan update otomatis.",
+              "Draft → Sent → Viewed → Paid → Archived. Finance dashboard updates automatically."
+            )}
+          </p>
+        </DocsSection>
+
+        <DocsSection id="pembayaran" step={6} icon={Wallet} title={t("Pembayaran", "Payment")}>
+          <p>
+            {t(
+              "Tandai Dibayar → masukkan jumlah, metode, tanggal. Support partial payment.",
+              "Mark Paid → enter amount, method, date. Partial payments supported."
+            )}
+          </p>
+        </DocsSection>
+
+        <DocsSection id="download" step={7} icon={Download} title={t("Download", "Download")}>
+          <p>
+            {t(
+              "PDF putih profesional dengan logo. Share link publik.",
+              "Professional white PDF with your logo. Public share link."
+            )}
+          </p>
+          <DocsCallout variant="info">
+            {t(
+              "Cek juga panduan lengkap di Panduan Invoice.",
+              "See also the full guide in the Invoice Guide."
+            )}{" "}
+            <DocsInlineLink href="/app/docs/time-tracking">{t("Time Tracking", "Time Tracking")}</DocsInlineLink>
+          </DocsCallout>
+        </DocsSection>
+      </DocsLayout>
     </div>
   );
 }

@@ -90,12 +90,12 @@ GET /app/projects
 GET /app/projects/[projectId]
 ```
 
-- **Tipe Billing Proyek**:
-  - **Fixed Price (By Project)**: Paket harga tetap per proyek.
-  - **Hourly (By Hours)**: Penagihan berbasis tarif per jam (*hourly rate*).
-  - **Retainer**: Alokasi kuota jam kerja atau progres berkala.
+- **Tipe Billing Proyek** (3 model aktif):
+  - **Fixed Price (Harga Tetap)**: Nilai harga tetap per proyek; task memakai workflow kanban.
+  - **Hourly (Per Jam)**: Penagihan berbasis tarif per jam (*hourly rate*).
+  - **Retainer**: Biaya per periode + kuota menit termasuk, reset tiap periode, kebijakan overage.
 - **Client Visibility Toggle**: Kontrol apakah proyek & task bersangkutan ditampilkan di Client Portal.
-- **Struktur Tab Detail**: Tab Pekerjaan (Task), Waktu (Log Waktu), File, dan Billing (Keuangan & Invoice Proyek).
+- **Struktur Tab Detail**: Tab Tugas (Task), Berkas (File), Waktu (Log Waktu), dan Invoice (Keuangan & Invoice Proyek).
 - **Hapus Proyek Terproteksi**: Hapus proyek beserta seluruh data terikat dengan konfirmasi ketik nama proyek.
 
 ---

@@ -19,7 +19,7 @@ Panduan lengkap semua fitur Cubiqlo — Client Operations Hub.
 | Fitur | Status | Deskripsi Singkat |
 |---|---|---|
 | Landing Page Builder | ✅ | Drag & drop builder, 8 tema, mobile editor, SEO, publish toggle, contact form |
-| Invoice | ✅ | Fixed price, hourly, retainer, package. Import waktu, PDF, status tracking |
+| Invoice | ✅ | Fixed price, hourly, retainer. Import waktu, PDF, status tracking |
 | Time Tracking | ✅ | Timer, input manual, timesheet mingguan, ekspor PDF |
 | Proyek | ✅ | Multi-status, billing mode, progress bar, client visibility |
 | Task | ✅ | Kanban board, priority, assignee, due date, task detail sheet |

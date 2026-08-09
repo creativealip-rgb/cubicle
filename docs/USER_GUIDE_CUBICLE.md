@@ -14,7 +14,7 @@
 Satu app mengganti campuran spreadsheet + chat + folder drive:
 
 1. **Kerja** — klien, proyek, tugas, waktu, kalender, file  
-2. **Keuangan** — invoice, paket jam, pengeluaran, laporan  
+2. **Keuangan** — invoice, pengeluaran, laporan  
 3. **Penjualan** — proposal, kontrak, template, kuesioner intake  
 4. **Personal** — catatan/reminder, jurnal, landing page  
 5. **AI** — Brain chat + Prompt Studio  
@@ -38,7 +38,7 @@ Semua data di-scope **workspace**. User masuk lewat membership (`owner` / `membe
 Entity utama:
 
 - Workspace, members  
-- Clients, projects, tasks, packages  
+- Clients, projects, tasks  
 - Time entries, invoices, invoice items, payments  
 - Expenses, expense categories, recurring expenses  
 - Proposals, contracts, templates  
@@ -99,7 +99,7 @@ Sidebar grup:
 
 - **Dashboard**
 - **Kerja** — Klien, Proyek, Tugas, Waktu, Kalender, File  
-- **Keuangan** — Invoice, Paket, Pengeluaran, Laporan  
+- **Keuangan** — Invoice, Pengeluaran, Laporan  
 - **Personal** — Catatan, Landing Page, Jurnal  
 - **Penjualan** — Proposal, Kontrak, Template  
 - **AI** — Brain, Prompt  
@@ -204,7 +204,7 @@ Tab:
 | Tab | Isi |
 |---|---|
 | **Overview** | Ringkas kontak, status, stats |
-| **Projects** | Daftar proyek + progress (package = jam terpakai/kuota; project = task ratio; hours = akumulasi jam) |
+| **Projects** | Daftar proyek + progress (project = task ratio; hours = akumulasi jam; retainer = allowance periode; package legacy read-only) |
 | **Files** | File terkait klien |
 | **Invoices** | Invoice klien |
 | **Appointments** | Janji temu klien |
@@ -247,14 +247,15 @@ Admin: respond / complete request. Klien: upload/response via API portal.
 #### Field proyek penting
 
 - Nama, klien, status  
-- **Billing type:**
-  - `hours` — Per Jam  
-  - `package` — Per Paket (kuota jam)  
-  - `project` — Per Proyek (fixed)  
+- **Billing type (model aktif):**
+  - `fixed_price` (`project`) — Harga Tetap (per proyek)
+  - `hours` (`hourly`) — Per Jam
+  - `retainer` — Retainer bulanan
+  - legacy: `package` — proyek lama read-only sampai diklasifikasikan
 - Tanggal mulai / selesai  
-- Budget / package hours (jika relevan)  
+- Budget / rate (jika relevan)  
 - **clientVisible** — tampil di client portal  
-- **selectedPackageId** — link ke paket katalog  
+- **selectedPackageId** (legacy) — link ke paket katalog; hanya relevan untuk proyek `package` lama  
 - **Project members** — assign anggota tim ke proyek  
 - Rate / budget / currency  
 
@@ -333,7 +334,7 @@ Aksi:
 #### Integrasi
 
 - Import entry ke invoice (lihat Invoice detail)  
-- Progress package project memakai total menit entry  
+- Progress proyek `hours`/`retainer` memakai total menit entry; proyek `package` legacy read-only  
 
 ### 4.5 Kalender — `/app/calendar`
 
@@ -398,7 +399,7 @@ Setiap tab ada count badge. Count menyesuaikan filter aktif.
 **Kanan — filter sejajar tab:**
 
 - Dropdown **Klien**  
-- Dropdown **Jenis proyek** (`hours` / `package` / `project` / tanpa proyek)  
+- Dropdown **Jenis proyek** (`fixed_price` / `hours` / `retainer` / tanpa proyek)  
 - Tombol Filter / Reset  
 
 #### Tabel
@@ -484,17 +485,22 @@ Kolom:
 - Public URL `/invoice/[token]`  
 - View tracking (status bisa jadi `viewed`)
 
-### 5.4 Paket — `/app/packages`
+### 5.4 Paket — `/app/packages` (legacy / experimental)
 
-**Tujuan:** katalog paket jam/retainer.
+> **Status: legacy / experimental — BUKAN model billing project yang aktif.**
+> Model billing aktif hanya **`fixed_price` (Harga Tetap)**, **`hours` (Per Jam)**, dan **`retainer`**.
+> Proyek billing `package` lama bersifat read-only sampai diklasifikasikan (`billingModel` = `legacy_package`).
+> Halaman ini dipertahankan apa adanya untuk kompatibilitas data historis dan alur order portal lama; tidak dipakai untuk proyek baru.
 
-#### Fitur
+**Tujuan (legacy):** katalog paket jam + order portal.
+
+#### Fitur (legacy)
 
 - CRUD paket (nama, jam, harga, currency, deskripsi, features, badge)  
 - Active/inactive  
 - Custom package range (`minHours`–`maxHours`, `allowCustom`)  
 - Catalog level = `projectId` null (reusable) vs legacy per-project  
-- Assign package ke project (`selectedPackageId`)  
+- Assign package ke project (`selectedPackageId`) — hanya proyek `package` lama  
 - **Package order** (portal): klien order paket → status `pending / confirmed / invoiced / cancelled`  
 - **Custom package request** (portal): minta jam custom → `pending / approved / rejected`  
 
@@ -829,7 +835,7 @@ Bayar lewat **Pakasir QRIS**. Plan aktif setelah webhook payment sukses.
 ### A. Freelance retainer jam
 
 1. Buat **Klien**  
-2. Buat **Proyek** billing `hours` atau `package`  
+2. Buat **Proyek** billing `hours` atau `retainer`  
 3. Track kerja di **Waktu** (timer/manual)  
 4. Buat **Invoice** → **Import Time** → review line items  
 5. Send invoice + share link  
@@ -845,13 +851,14 @@ Bayar lewat **Pakasir QRIS**. Plan aktif setelah webhook payment sukses.
 5. Invoice milestone manual  
 6. Files & comments di project  
 
-### C. VA package 40 jam
+### C. Retainer bulanan
 
-1. Paket di `/app/packages`  
-2. Proyek `package` + kuota jam  
-3. Timer entry men-consume kuota  
-4. Progress bar klien/proyek = jam terpakai / total  
-5. Invoice sisa/overage sesuai kesepakatan  
+1. Proyek billing `retainer` (fee bulanan + included minutes)  
+2. Timer entry men-consume allowance retainer  
+3. Overage policy: `warn` / `bill` sesuai setting  
+4. Invoice periodik (retainer base + overage)  
+
+> Alur lama "VA package 40 jam" (paket di `/app/packages` + proyek `package`) masih berfungsi untuk data historis, tapi **legacy** — bukan model billing aktif.
 
 ### D. Lead → client
 
@@ -903,10 +910,10 @@ Cabang: `overdue`, `cancelled`, `archived`
 
 `pending` / `completed` / `cancelled` · type `document|approval|info|other`
 
-### Package order / custom request
+### Package order / custom request (legacy)
 
-- Order: `pending` / `confirmed` / `invoiced` / `cancelled`  
-- Custom request: `pending` / `approved` / `rejected`
+- Order: `pending` / `confirmed` / `invoiced` / `cancelled` — hanya relevan untuk alur portal paket legacy  
+- Custom request: `pending` / `approved` / `rejected` — legacy  
 
 ### Support ticket
 
@@ -981,7 +988,7 @@ Visibility `internal|client` · source `internal|portal` · entity `project|task
 5. Filter invoice by client + billing type saat periode tutup buku  
 6. Portal token per klien — jangan share workspace login ke klien  
 7. Proposal/kontrak: selalu set `validUntil`  
-8. Package project: cek progress jam sebelum over-serve  
+8. Proyek `hours`/`retainer`: cek progress jam sebelum over-serve (package legacy read-only)  
 9. Notes recurrence untuk reminder admin (pajak, perpanjang domain, dsb.)  
 10. Brain bagus untuk tanya “invoice outstanding klien X” — tetap verifikasi angka di Reports  
 
@@ -1005,7 +1012,7 @@ Visibility `internal|client` · source `internal|portal` · entity `project|task
 /app/invoices
 /app/invoices/new
 /app/invoices/[invoiceId]
-/app/packages
+/app/packages   # legacy/experimental (katalog & order portal lama, bukan billing aktif)
 /app/expenses
 /app/reports
 /app/personal
@@ -1114,6 +1121,9 @@ Visibility `internal|client` · source `internal|portal` · entity `project|task
   - Implement `/app/search` global search  
   - Form field list (section 20)  
   - Permission matrix owner/member/viewer (section 21)  
+- **2026-08-09 (klarifikasi billing)**
+  - Model billing project aktif: `fixed_price` / `hours` / `retainer` saja  
+  - Paket (`/app/packages`, package order, `selectedPackageId`, billingType `package`) dilabeli **legacy/experimental**, bukan billing model aktif  
 
 ---
 
@@ -1145,12 +1155,12 @@ Sumber: Zod schema di `src/lib/actions/*` + form components.
 | `description` | no | |
 | `clientId` | yes | uuid |
 | `status` | | `draft\|active\|on_hold\|completed\|cancelled` |
-| `billingType` | | `project\|hours\|package` |
+| `billingType` | | `fixed_price\|hours\|retainer` (legacy: `package`) |
 | `currency` | | default IDR |
 | `rate` / `budget` | no | number |
 | `startDate` / `finishDate` / `dueDate` | no | string date |
 | `clientVisible` | | default false |
-| `selectedPackageId` | no | uuid package |
+| `selectedPackageId` | no | legacy: uuid package (hanya proyek `package` lama) |
 
 ### Task
 
@@ -1184,9 +1194,9 @@ Sumber: Zod schema di `src/lib/actions/*` + form components.
 `amount*`, `currency` (3 char, default IDR), `date*`, `description*` (max 500), `categoryId?`, `projectId?`, `clientId?`, `vendor?`, `taxIncluded`, `taxAmount?`, `receiptUrl?`  
 **Category:** `name*`, `color` (#hex), `icon?`
 
-### Package
+### Package (legacy / experimental — bukan billing model aktif)
 
-`name*`, `hours?`, `price*`, `currency`, `description?`, `features[]?`, `badge?`, `sortOrder`, `active`, `customPrice?`, `minHours?`, `maxHours?`, `allowCustom`
+`name*`, `hours?`, `price*`, `currency`, `description?`, `features[]?`, `badge?`, `sortOrder`, `active`, `customPrice?`, `minHours?`, `maxHours?`, `allowCustom` — fitur dipertahankan untuk katalog & order portal legacy
 
 ### Personal note (owner-only)
 
@@ -1224,7 +1234,7 @@ Legend: **Y** = allowed · **N** = blocked · **R** = read-only UI
 | Timer start/stop + time entry write | Y | Y | N |
 | Invoice create/edit/item/import/payment/send/share | Y | Y | N (read list/detail ok) |
 | Expense create/update/delete | Y | Y | N |
-| Package CRUD + assign | Y | Y | N |
+| Package CRUD + assign (legacy) | Y | Y | N |
 | File/folder upload/rename/delete | Y | Y | R |
 | Comment create | Y | Y | N (umum writable) |
 | Proposal / contract write + send | Y | Y | N |

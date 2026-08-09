@@ -136,7 +136,10 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
       tags: parsed.tags,
       internalNotes: parsed.internalNotes || null,
       portalSlug: parsed.portalSlug || null,
-      portalSlugEnabled: false,
+      // Persist the caller-provided flag (e.g. form sets it from a filled slug).
+      // A slug is required for the portal slug to be usable, so an empty slug
+      // always stays disabled — even if the flag was sent as true.
+      portalSlugEnabled: parsed.portalSlug ? Boolean(parsed.portalSlugEnabled) : false,
       clientNumber,
       status: "active",
       ...portalFields,

@@ -26,8 +26,7 @@ Sebelum bikin invoice pertama, pastikan udah disiapkan:
 5. Tentukan tipe billing:
    - **Fixed Price** — harga tetap
    - **Per Jam** — tarif × jam
-   - **Retainer** — biaya langganan bulanan
-   - **Paket** — paket jam kerja
+   - **Retainer** — biaya per periode dengan kuota menit
 
 ---
 
@@ -123,7 +122,7 @@ List invoice support filter:
 - **Status tab:** Semua / Draf / Terkirim / Dilihat / Lunas / Arsip
 - **Klien filter:** per klien
 - **Proyek filter:** per proyek
-- **Billing filter:** Fixed Price / Per Jam / Retainer / Paket
+- **Billing filter:** Fixed Price / Per Jam / Retainer
 
 Urutkan klik header kolom (No. Invoice, Tanggal, Total).
 
