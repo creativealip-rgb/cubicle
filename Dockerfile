@@ -7,7 +7,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 FROM base AS deps
 COPY package.json package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm \
-  npm ci --legacy-peer-deps --ignore-scripts
+  npm ci --include=optional --legacy-peer-deps --ignore-scripts
 
 FROM deps AS builder
 COPY . .
