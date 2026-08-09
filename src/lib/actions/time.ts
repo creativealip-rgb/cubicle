@@ -449,6 +449,10 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
         hourlyRate: resolvedRate ?? entry.hourlyRate,
         endTime: finalEnd,
         pausedAt: null,
+        status: "approved",
+        approvedAt: new Date(),
+        rejectedAt: null,
+        reviewedBy: user.id,
         updatedAt: new Date(),
       })
       .where(eq(timeEntries.id, parsed.entryId))
