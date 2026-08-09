@@ -4,6 +4,7 @@ import {
   sceneOptions, cameraAngleOptions, lightingOptions, backgroundOptions,
   orientationOptions, voiceLanguageOptions, durationOptions, cadenceOptions,
 } from "./field-options";
+import { optionLabelId, optionLabelEn } from "./field-options";
 
 export const promptTypeIds = [
   "instagram-feed", "carousel", "story", "content-series", "product-ad",
@@ -98,6 +99,26 @@ export function splitOverlapDefaults(defaults: Record<string, PromptOptionValue>
   return { globals, options };
 }
 
+/**
+ * Returns the display label for a select option value in the current
+ * language, without exposing raw internal values (face, no-face, short,
+ * medium, long, yes, no, 3m, biweekly, ...). Falls back to the raw value for
+ * display-ready options (e.g. "Instagram", "Studio White").
+ */
+export function displayOption(value: string, lang: "id" | "en" = "id"): string {
+  return lang === "en" ? optionLabelEn(value) : optionLabelId(value);
+}
+
+/** Indonesian label for a catalog field option. */
+export function optionLabelIdFor(value: string): string {
+  return optionLabelId(value);
+}
+
+/** English label for a catalog field option. */
+export function optionLabelEnFor(value: string): string {
+  return optionLabelEn(value);
+}
+
 export const launchPromptCatalog: PromptCatalogEntry[] = [
   entry("instagram-feed", "social-media", "Feed", "Konsep visual, caption, CTA, dan hashtag siap posting.", "instagram", [
     field("platform", "Platform", "select", { options: [...platformOptions] }),
@@ -122,7 +143,7 @@ export const launchPromptCatalog: PromptCatalogEntry[] = [
 
   entry("product-ad", "ads-promotion", "Iklan Produk", "Materi iklan produk fokus konversi.", "badge-megaphone", [
     field("offer", "Penawaran", "text", { labelEn: "Offer" }),
-    field("placement", "Placement", "select", { required: true, options: [...platformOptions] }),
+    field("placement", "Platform iklan", "select", { required: true, options: [...platformOptions], labelEn: "Ad platform" }),
     field("ratio", "Rasio", "select", { required: true, options: [...ratioOptions], labelEn: "Ratio" }),
   ], ["Headline", "Subheadline", "Prompt visual", "Offer", "CTA", "Negative prompt"], {}, { nameEn: "Product Ad", descriptionEn: "Conversion-focused product ad material." }),
 
@@ -135,7 +156,7 @@ export const launchPromptCatalog: PromptCatalogEntry[] = [
 
   entry("testimonial-review", "ads-promotion", "Testimonial & Review", "Ubah bukti nyata menjadi materi review kredibel.", "message-square-quote", [
     field("proofSource", "Kutipan / sumber bukti", "textarea", { labelEn: "Quote / proof source" }),
-    field("rating", "Rating"),
+    field("rating", "Rating", "select", { required: false, options: ["1", "2", "3", "4", "5"] }),
     field("context", "Konteks produk / layanan", "textarea", { required: true, labelEn: "Product / service context" }),
   ], ["Proof angle", "Hierarki kutipan", "Layout review", "Supporting copy", "CTA"], {}, { nameEn: "Testimonial & Review", descriptionEn: "Turn social proof into credible review assets." }),
 
@@ -184,14 +205,14 @@ export const launchPromptCatalog: PromptCatalogEntry[] = [
   entry("youtube-thumbnail", "video", "YouTube Thumbnail", "Thumbnail kuat dengan teks singkat dan kontras.", "youtube", [
     field("videoTopic", "Topik / judul video", "textarea", { required: true, labelEn: "Topic / video title" }),
     field("subject", "Subjek", "text", { required: true, labelEn: "Subject" }),
-    field("face", "Wajah", "select", { required: true, options: ["face", "no-face"], labelEn: "Face" }),
+    field("face", "Tampilkan wajah", "select", { required: true, options: ["face", "no-face"], labelEn: "Show face" }),
     field("textPreference", "Preferensi teks", "text", { labelEn: "Text preference" }),
   ], ["Subject", "Expression", "Composition", "Teks 3–5 kata", "Contrast", "Negative prompt"], {}, { nameEn: "YouTube Thumbnail", descriptionEn: "High-impact thumbnail with short text and strong contrast." }),
 
   entry("marketing-copy", "brand-copy", "Marketing Copy", "Satu format copy yang fokus dan siap dipakai.", "type", [
     field("copyFormat", "Format copy", "select", { required: true, options: ["caption", "ad-copy", "product-description", "headline-set", "cta-set", "broadcast-message"], labelEn: "Copy format" }),
     field("length", "Panjang", "select", { required: true, options: ["short", "medium", "long"], labelEn: "Length" }),
-    field("channel", "Channel", "select", { required: true, options: [...platformOptions] }),
+    field("channel", "Platform / saluran", "select", { required: true, options: [...platformOptions], labelEn: "Platform / channel" }),
     field("tone", "Tone", "select", { options: [...toneOptions] }),
   ], ["Copy final", "CTA"], {}, { nameEn: "Marketing Copy", descriptionEn: "Focused marketing copy ready for use." }),
 
@@ -240,17 +261,22 @@ export const promptBriefSchema = baseSchema.superRefine((value, ctx) => {
     offer: value.offer || null,
   };
 
-  for (const spec of definition.fields.filter((item) => item.required)) {
+  for (const spec of definition.fields) {
     // Resolve value accounting for overlap with global form fields
     const candidate = resolveOverlapValue(spec.key, value.options, globals);
+    const hasValue = candidate !== undefined && candidate !== null && candidate !== "";
 
-    if (candidate === undefined || candidate === null || candidate === "") {
+    if (spec.required && !hasValue) {
       ctx.addIssue({ code: "custom", path: ["options", spec.key], message: `${spec.label} wajib diisi` });
     }
-    if (typeof candidate === "number" && spec.min !== undefined && candidate < spec.min) {
+    if (!hasValue) continue;
+    if (typeof candidate === "number" && Number.isNaN(candidate)) {
+      ctx.addIssue({ code: "custom", path: ["options", spec.key], message: "Harus berupa angka" });
+    }
+    if (typeof candidate === "number" && spec.min !== undefined && !Number.isNaN(candidate) && candidate < spec.min) {
       ctx.addIssue({ code: "custom", path: ["options", spec.key], message: `Minimal ${spec.min}` });
     }
-    if (typeof candidate === "number" && spec.max !== undefined && candidate > spec.max) {
+    if (typeof candidate === "number" && spec.max !== undefined && !Number.isNaN(candidate) && candidate > spec.max) {
       ctx.addIssue({ code: "custom", path: ["options", spec.key], message: `Maksimal ${spec.max}` });
     }
     if (spec.options && candidate !== undefined) {

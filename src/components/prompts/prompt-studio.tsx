@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Info, Loader2, Monitor, Smartphone, Sparkles, Terminal } from "lucide-react";
+import { ChevronDown, Info, Loader2, Monitor, Smartphone, Sparkles, Terminal, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,9 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { generateVisualPrompt } from "@/lib/actions/visual-prompts";
-import { launchPromptCatalog, resolveOverlapValue, type PromptCategory, type PromptOptionValue, type PromptTypeId, splitOverlapDefaults, nonOverlapFields } from "@/lib/prompts/catalog";
+import { launchPromptCatalog, type PromptCategory, type PromptFieldDefinition, type PromptOptionValue, type PromptTypeId, type OverlapKey, splitOverlapDefaults, nonOverlapFields, displayOption, isOverlapKey } from "@/lib/prompts/catalog";
 import { parsePromptResult, type PromptGenerationResult } from "@/lib/prompts/build-prompt";
 import { toneOptions, styleOptions, platformOptions, ratioOptions } from "@/lib/prompts/field-options";
+import { hasEnteredDetails, validateField } from "@/lib/prompts/prompt-studio-validation";
 import { PromptResult } from "./prompt-result";
 import { PromptHistoryDrawer, type PromptHistoryItem } from "./prompt-history-drawer";
 import { cn } from "@/lib/utils";
@@ -109,6 +110,20 @@ function PreviewPanel({ selected, form }: { selected: { name: string; nameEn?: s
   );
 }
 
+/**
+ * Validates one field against the catalog schema rules (required, min/max,
+ * select membership). Mirrors promptBriefSchema so users see the same rules
+ * inline, before submit. Returns null when the field is valid.
+ */
+function FieldError({ message }: { message: string }) {
+  return (
+    <p role="alert" className="flex items-center gap-1 text-xs font-medium text-destructive">
+      <TriangleAlert className="h-3 w-3 shrink-0" />
+      {message}
+    </p>
+  );
+}
+
 export function PromptStudio({ generations, usage }: { generations: PromptHistoryItem[]; usage: { totalInputTokens: number; totalOutputTokens: number; totalCost: number; monthlyCap: number; totalGenerations: number; generationLimit: number } }) {
   const { t, lang } = useT();
   const [category, setCategory] = useState<PromptCategory>("social-media");
@@ -117,7 +132,11 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
   const [result, setResult] = useState<PromptGenerationResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [pendingType, setPendingType] = useState<PromptTypeId | null>(null);
+  const [pendingReason, setPendingReason] = useState<"result" | "dirty" | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [attempted, setAttempted] = useState(false);
 
   const selected = launchPromptCatalog.find((item) => item.id === typeId)!;
   const types = launchPromptCatalog.filter((item) => item.category === category);
@@ -133,13 +152,25 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
     offer: form.offer,
   };
 
-  const valid = Boolean(
-    form.brand.trim() && form.campaign.trim() && form.goal.trim() && form.audience.trim() &&
-    selected.fields.filter((f) => f.required).every((f) => {
-      const value = resolveOverlapValue(f.key, form.options, globals);
-      return value !== undefined && value !== "";
-    })
-  );
+  function fieldValue(field: PromptFieldDefinition): PromptOptionValue | undefined {
+    if (isOverlapKey(field.key)) {
+      const global = globals[field.key as OverlapKey];
+      return global || undefined;
+    }
+    return form.options[field.key];
+  }
+
+  function fieldErrors(): Record<string, string> {
+    const next: Record<string, string> = {};
+    for (const field of selected.fields) {
+      const message = validateField(field, fieldValue(field), lang);
+      if (message) next[field.key] = message;
+    }
+    return next;
+  }
+
+  const errorsState = attempted ? fieldErrors() : {};
+  const valid = Object.keys(fieldErrors()).length === 0;
 
   function patchField(key: keyof Omit<FormState, "options">, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -160,16 +191,39 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
     }));
     setResult(null);
     setPendingType(null);
+    setPendingReason(null);
+    setErrors({});
+    setAttempted(false);
   }
   function chooseType(next: PromptTypeId) {
-    if (result && next !== typeId) { setPendingType(next); return; }
+    if (next === typeId) return;
+    if (result && next !== typeId) {
+      setPendingReason("result");
+      setPendingType(next);
+      return;
+    }
+    if (hasEnteredDetails(form)) {
+      setPendingReason("dirty");
+      setPendingType(next);
+      return;
+    }
     applyType(next);
+  }
+  function confirmTypeChange() {
+    if (pendingType) applyType(pendingType);
   }
   function getFieldName(f: { label: string; labelEn?: string }) {
     return lang === "en" && f.labelEn ? f.labelEn : f.label;
   }
   async function generate() {
-    if (!valid || loading) return;
+    if (loading) return;
+    const nextErrors = fieldErrors();
+    setErrors(nextErrors);
+    setAttempted(true);
+    if (Object.keys(nextErrors).length > 0) {
+      toast.error(t("Periksa kembali isian yang ditandai merah.", "Please check the highlighted fields."));
+      return;
+    }
     setLoading(true);
     try {
       const response = await generateVisualPrompt({ promptType: typeId, ...form });
@@ -189,6 +243,13 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
     goal: { id: "Contoh: Mendorong pendaftaran akun gratis", en: "e.g.: Drive free account signups" },
     audience: { id: "Contoh: Freelancer Indonesia yang kewalahan mengelola banyak klien", en: "e.g.: Indonesian freelancers overwhelmed managing multiple clients" },
   };
+
+  const coreFields: [keyof Omit<FormState, "options">, string][] = [
+    ["brand", "Brand"],
+    ["campaign", "Product / campaign"],
+    ["goal", "Goal"],
+    ["audience", "Audience"],
+  ];
 
   return (
     <div className="space-y-5">
@@ -222,7 +283,7 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
           <div className="space-y-1">
             <Label htmlFor="prompt-type-mobile" className="text-xs">{t("Jenis", "Type")}</Label>
             <select id="prompt-type-mobile" value={typeId} onChange={(e) => chooseType(e.target.value as PromptTypeId)} className="h-10 w-full rounded-lg border bg-background px-3 text-sm">
-              {types.map((t) => <option key={t.id} value={t.id}>{lang === "en" && t.nameEn ? t.nameEn : t.name}</option>)}
+              {types.map((item) => <option key={item.id} value={item.id}>{lang === "en" && item.nameEn ? item.nameEn : item.name}</option>)}
             </select>
           </div>
         </div>
@@ -274,10 +335,11 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
                 {t("Informasi Brand & Produk", "Brand & Product Info")}
               </p>
               <div className="space-y-3">
-                {([["brand", "Brand"], ["campaign", "Product / campaign"], ["goal", "Goal"], ["audience", "Audience"]] as const).map(([key, label]) => (
+                {coreFields.map(([key, label]) => (
                   <div className="space-y-1.5" key={key}>
                     <Label htmlFor={key}>{label}</Label>
-                    <Input id={key} value={form[key as keyof FormState] as string} placeholder={briefPlaceholders[key][lang]} onChange={(e) => patchField(key as keyof Omit<FormState, "options">, e.target.value)} />
+                    <Input id={key} value={form[key] as string} placeholder={briefPlaceholders[key][lang]} onChange={(e) => patchField(key, e.target.value)} aria-invalid={Boolean(errors[key])} />
+                    {errors[key] && <FieldError message={errors[key]} />}
                   </div>
                 ))}
               </div>
@@ -291,21 +353,26 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
                   {t("Detail", "Details")} {lang === "en" && selected.nameEn ? selected.nameEn : selected.name}
                 </p>
                 <div className="space-y-3">
-                  {detailFields.map((field) => (
-                    <div className="space-y-1.5" key={field.key}>
-                      <Label htmlFor={`option-${field.key}`}>{getFieldName(field)}{field.required ? " *" : ""}</Label>
-                      {field.type === "select" ? (
-                        <Select value={String(form.options[field.key] ?? "")} onValueChange={(value) => setForm((current) => ({ ...current, options: { ...current.options, [field.key]: field.key.endsWith("Count") ? Number(value) : value } }))}>
-                          <SelectTrigger id={`option-${field.key}`}><SelectValue placeholder={t("Pilih opsi", "Select option")} /></SelectTrigger>
-                          <SelectContent>{field.options?.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
-                        </Select>
-                      ) : field.type === "textarea" ? (
-                        <Textarea id={`option-${field.key}`} value={String(form.options[field.key] ?? "")} onChange={(e) => setForm((current) => ({ ...current, options: { ...current.options, [field.key]: e.target.value } }))} />
-                      ) : (
-                        <Input id={`option-${field.key}`} type={field.type} min={field.min} max={field.max} value={String(form.options[field.key] ?? "")} onChange={(e) => setForm((current) => ({ ...current, options: { ...current.options, [field.key]: field.type === "number" ? Number(e.target.value) : e.target.value } }))} />
-                      )}
-                    </div>
-                  ))}
+                  {detailFields.map((field) => {
+                    const raw = form.options[field.key];
+                    const fieldError = errors[field.key];
+                    return (
+                      <div className="space-y-1.5" key={field.key}>
+                        <Label htmlFor={`option-${field.key}`}>{getFieldName(field)}{field.required ? " *" : ""}</Label>
+                        {field.type === "select" ? (
+                          <Select value={raw === undefined ? "" : String(raw)} onValueChange={(value) => setForm((current) => ({ ...current, options: { ...current.options, [field.key]: field.key.endsWith("Count") ? Number(value) : value } }))}>
+                            <SelectTrigger id={`option-${field.key}`} aria-invalid={Boolean(fieldError)}><SelectValue placeholder={t("Pilih opsi", "Select option")} /></SelectTrigger>
+                            <SelectContent>{field.options?.map((option) => <SelectItem key={option} value={option}>{displayOption(option, lang)}</SelectItem>)}</SelectContent>
+                          </Select>
+                        ) : field.type === "textarea" ? (
+                          <Textarea id={`option-${field.key}`} value={String(raw ?? "")} onChange={(e) => setForm((current) => ({ ...current, options: { ...current.options, [field.key]: e.target.value } }))} aria-invalid={Boolean(fieldError)} />
+                        ) : (
+                          <Input id={`option-${field.key}`} type={field.type} min={field.min} max={field.max} value={raw === undefined ? "" : String(raw)} onChange={(e) => setForm((current) => ({ ...current, options: { ...current.options, [field.key]: field.type === "number" ? Number(e.target.value) : e.target.value } }))} aria-invalid={Boolean(fieldError)} />
+                        )}
+                        {fieldError && <FieldError message={fieldError} />}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -380,16 +447,31 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
               {loading ? t("Menyusun materi…", "Generating…") : t("Generate Materi", "Generate")}
             </Button>
+            {attempted && Object.keys(errorsState).length > 0 && (
+              <p role="alert" className="text-xs font-medium text-destructive">
+                {t("Periksa kembali isian yang ditandai merah.", "Please check the highlighted fields.")}
+              </p>
+            )}
           </div>
         </section>
 
         {/* Right panel: preview + result */}
         <div className="space-y-3 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
+          {/* Preview: static card on xl+, compact collapsible below */}
           <div className="hidden xl:block">
             <div className="rounded-xl border bg-white p-3">
               <PreviewPanel selected={selected} form={form} />
             </div>
           </div>
+          <details className="xl:hidden rounded-xl border bg-white" open={previewOpen} onToggle={(e) => setPreviewOpen((e.target as HTMLDetailsElement).open)}>
+            <summary className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-white p-3 text-xs font-semibold text-foreground select-none">
+              <Monitor className="h-3.5 w-3.5" /> Preview
+              <ChevronDown className="ml-auto h-3.5 w-3.5 transition-transform [[data-state=open]>&]:rotate-180" />
+            </summary>
+            <div className="px-3 pb-3">
+              <PreviewPanel selected={selected} form={form} />
+            </div>
+          </details>
           <div>
             {result && (
               <div className="mb-2 flex items-center gap-2">
@@ -411,11 +493,15 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("Ganti jenis konten?", "Change content type?")}</DialogTitle>
-            <DialogDescription>{t("Hasil yang sedang tampil akan ditutup. Brief utama tetap tersimpan.", "Current results will be hidden. Main brief will be preserved.")}</DialogDescription>
+            {pendingReason === "dirty" ? (
+              <DialogDescription>{t("Brief dan detail yang sudah diisi akan direset. Lanjutkan?", "Your filled brief and details will be reset. Continue?")}</DialogDescription>
+            ) : (
+              <DialogDescription>{t("Hasil yang sedang tampil akan ditutup. Brief utama tetap tersimpan.", "Current results will be hidden. Main brief will be preserved.")}</DialogDescription>
+            )}
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setPendingType(null)}>{t("Batal", "Cancel")}</Button>
-            <Button onClick={() => pendingType && applyType(pendingType)}>{t("Ganti jenis", "Change type")}</Button>
+            <Button onClick={confirmTypeChange}>{t("Ganti jenis", "Change type")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
