@@ -133,7 +133,7 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
   const [loading, setLoading] = useState(false);
   const [pendingType, setPendingType] = useState<PromptTypeId | null>(null);
   const [pendingReason, setPendingReason] = useState<"result" | "dirty" | null>(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(true);
   const [showTerminal, setShowTerminal] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [attempted, setAttempted] = useState(false);
@@ -245,10 +245,10 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
   };
 
   const coreFields: [keyof Omit<FormState, "options">, string][] = [
-    ["brand", "Brand"],
-    ["campaign", "Product / campaign"],
-    ["goal", "Goal"],
-    ["audience", "Audience"],
+    ["brand", t("Nama Brand", "Brand")],
+    ["campaign", t("Produk / Campaign", "Product / Campaign")],
+    ["goal", t("Tujuan", "Goal")],
+    ["audience", t("Audiens", "Audience")],
   ];
 
   return (
@@ -328,10 +328,10 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
             <p className="text-xs text-muted-foreground">{t("Isi informasi utama, lalu detail khusus bila diperlukan.", "Fill in the main information, then add specific details if needed.")}</p>
           </div>
           <div className="space-y-3 sm:space-y-4">
-            {/* A. Brand Info */}
+            {/* 1. Brand/Product Info */}
             <div>
               <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-[10px] font-bold text-primary">A</span>
+                <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-[10px] font-bold text-primary">1</span>
                 {t("Informasi Brand & Produk", "Brand & Product Info")}
               </p>
               <div className="space-y-3">
@@ -345,13 +345,13 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
               </div>
             </div>
 
-            {/* B. Type-specific fields */}
-            {detailFields.length > 0 && (
-              <div>
-                <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-[10px] font-bold text-primary">B</span>
-                  {t("Detail", "Details")} {lang === "en" && selected.nameEn ? selected.nameEn : selected.name}
-                </p>
+            {/* 2. Template Details */}
+            <div>
+              <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-[10px] font-bold text-primary">2</span>
+                {t("Detail Template", "Template Details")}
+              </p>
+              {detailFields.length > 0 ? (
                 <div className="space-y-3">
                   {detailFields.map((field) => {
                     const raw = form.options[field.key];
@@ -374,14 +374,18 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
                     );
                   })}
                 </div>
-              </div>
-            )}
+              ) : (
+                <p className="rounded-lg border border-dashed bg-white px-3 py-2.5 text-xs text-muted-foreground">
+                  {t("Template ini tidak butuh detail tambahan. Langsung lanjut ke bagian berikutnya.", "This template needs no extra details. Continue to the next section.")}
+                </p>
+              )}
+            </div>
 
-            {/* C. Style & Visual */}
+            {/* 3. Style & Visual */}
             <details className="rounded-xl border bg-white p-3" open>
               <summary className="flex cursor-pointer items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-[10px] font-bold text-primary">C</span>
-                Style & Visual
+                <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-[10px] font-bold text-primary">3</span>
+                {t("Gaya & Visual", "Style & Visual")}
                 <ChevronDown className="ml-auto h-3.5 w-3.5 transition-transform [[data-state=open]>&]:rotate-180" />
               </summary>
               <div className="mt-3 space-y-3">
@@ -396,29 +400,29 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="tone">Tone</Label>
+                  <Label htmlFor="tone">{t("Nada / Tone", "Tone")}</Label>
                   <Select value={form.tone} onValueChange={(v) => patchField("tone", v)}>
                     <SelectTrigger id="tone"><SelectValue placeholder={t("Pilih tone", "Select tone")} /></SelectTrigger>
                     <SelectContent>{toneOptions.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="colorPalette">Color palette</Label>
+                  <Label htmlFor="colorPalette">{t("Palet Warna", "Color palette")}</Label>
                   <Input id="colorPalette" value={form.colorPalette} onChange={(e) => patchField("colorPalette", e.target.value)} placeholder={t("Contoh: #2dd4bf, #ffffff", "e.g.: #2dd4bf, #ffffff")} />
                 </div>
               </div>
             </details>
 
-            {/* D. Platform & Format */}
+            {/* 4. Platform & Format */}
             <details className="rounded-xl border bg-white p-3" open>
               <summary className="flex cursor-pointer items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-[10px] font-bold text-primary">D</span>
+                <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-[10px] font-bold text-primary">4</span>
                 {t("Platform & Format", "Platform & Format")}
                 <ChevronDown className="ml-auto h-3.5 w-3.5 transition-transform [[data-state=open]>&]:rotate-180" />
               </summary>
               <div className="mt-3 space-y-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="platform">Platform</Label>
+                  <Label htmlFor="platform">{t("Platform", "Platform")}</Label>
                   <Select value={form.platform} onValueChange={(v) => patchField("platform", v)}>
                     <SelectTrigger id="platform"><SelectValue placeholder={t("Pilih platform", "Select platform")} /></SelectTrigger>
                     <SelectContent>{platformOptions.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
@@ -442,16 +446,18 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
               </div>
             </details>
 
-            {/* Generate */}
-            <Button className="h-11 w-full" disabled={!valid || loading} onClick={generate}>
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-              {loading ? t("Menyusun materi…", "Generating…") : t("Generate Materi", "Generate")}
-            </Button>
-            {attempted && Object.keys(errorsState).length > 0 && (
-              <p role="alert" className="text-xs font-medium text-destructive">
-                {t("Periksa kembali isian yang ditandai merah.", "Please check the highlighted fields.")}
-              </p>
-            )}
+            {/* Generate — sticky bottom action on mobile, in-flow on desktop */}
+            <div className="sticky bottom-2 z-20 space-y-2 rounded-xl bg-slate-50/95 px-2 py-2 shadow-[0_-4px_12px_rgba(15,23,42,0.06)] backdrop-blur sm:static sm:z-auto sm:bg-transparent sm:p-0 sm:shadow-none">
+              <Button className="h-11 w-full" disabled={!valid || loading} onClick={generate}>
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                {loading ? t("Menyusun materi…", "Generating…") : t("Generate Materi", "Generate")}
+              </Button>
+              {attempted && Object.keys(errorsState).length > 0 && (
+                <p role="alert" className="text-xs font-medium text-destructive">
+                  {t("Periksa kembali isian yang ditandai merah.", "Please check the highlighted fields.")}
+                </p>
+              )}
+            </div>
           </div>
         </section>
 
@@ -463,10 +469,13 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
               <PreviewPanel selected={selected} form={form} />
             </div>
           </div>
-          <details className="xl:hidden rounded-xl border bg-white" open={previewOpen} onToggle={(e) => setPreviewOpen((e.target as HTMLDetailsElement).open)}>
+          <details className="group xl:hidden rounded-xl border bg-white" open={previewOpen} onToggle={(e) => setPreviewOpen((e.target as HTMLDetailsElement).open)}>
             <summary className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-white p-3 text-xs font-semibold text-foreground select-none">
-              <Monitor className="h-3.5 w-3.5" /> Preview
-              <ChevronDown className="ml-auto h-3.5 w-3.5 transition-transform [[data-state=open]>&]:rotate-180" />
+              <Monitor className="h-3.5 w-3.5" /> {t("Preview", "Preview")}
+              <span className="min-w-0 flex-1 truncate text-[11px] font-normal text-muted-foreground">
+                {[form.platform, form.ratio?.split(" ")[0], form.style, form.tone].filter(Boolean).join(" · ") || t("Belum ada pilihan", "No selections yet")}
+              </span>
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-180" />
             </summary>
             <div className="px-3 pb-3">
               <PreviewPanel selected={selected} form={form} />
