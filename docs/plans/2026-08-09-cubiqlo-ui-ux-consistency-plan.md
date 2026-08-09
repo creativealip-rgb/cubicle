@@ -14,11 +14,10 @@
 
 - Audit source: 47+ app pages, 15+ UI components.
 - No P0 found.
-- Batch 1 partial commit already merged:
-  - `904589a standardize core app UI consistency`
-- Current branch: `main`, expected clean and synced with `origin/main`.
-- Hydration #418 remains separate investigation. Do not patch without stable repro.
-- Browser full matrix blocked by QA HTTP 429. Do not claim full mobile verification until account/rate limit is reset.
+- Batch 1 started from `904589a standardize core app UI consistency`; all listed UI batches are now complete.
+- Current branch: `main`, clean and synced with `origin/main`.
+- Hydration #418 remains separate investigation; no fix included here.
+- Browser smoke matrix completed for declared desktop/mobile route scope.
 
 ## Acceptance rules
 
@@ -60,12 +59,15 @@
 
 ### Release gate
 
-- [x] Main merged and pushed: `77c2bad`.
+- [x] Main merged and pushed: `070dde7` plus Docker optional-dependency fix `77c2bad`.
 - [x] Dev rebuilt with optional native dependencies and recreated healthy.
 - [x] Dev health: `status=ok`, `db=ok`.
-- [x] Prompt Studio mobile smoke: no overflow, no console errors.
-- [ ] Full mutation QA for Prompt Studio.
+- [x] Prompt Studio invalid-submit QA: no HTTP 500, no quota burn.
+- [x] Prompt Studio valid-generation QA on dev: result returned, no console errors, no overflow.
+- [x] Production release: image `sha256:54fcdd48...`, health `ok`, route HTTP 200, `dokploy-traefik` sole 80/443 owner.
+- [x] Production Prompt Studio smoke: authenticated generation returned result, mobile overflow false.
 - [ ] Hydration #418: separate intermittent investigation, not part of UI consistency completion.
+- [~] Email native select remains deferred.
 
 ---
 
@@ -147,4 +149,4 @@ UI consistency implementation complete. Optional follow-up: run Prompt Studio mu
 
 ---
 
-**Last updated:** 2026-08-09 after `77c2bad`, dev rebuild, health verification, and final mobile Prompt Studio smoke.
+**Last updated:** 2026-08-09 after `070dde7`, production release, and authenticated Prompt Studio smoke.

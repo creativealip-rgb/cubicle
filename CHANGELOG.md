@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-08-09 — UI/UX consistency release and Prompt Studio production verification
+
+**UI/UX:**
+- Completed the 47+ page consistency audit execution: headers, empty states, i18n, list cards/tables, action sizing, dialogs, skeletons, report tabs, and semantic finance colors.
+- Added keyboard navigation to shared `StatusFilterTabs`.
+- Added shared Select for invoice project-source items.
+
+**Prompt Studio:**
+- Added client-side validation for required core brief fields so empty submissions do not reach the Server Action or consume AI quota.
+- Verified invalid submit no longer returns HTTP 500.
+- Verified authenticated valid generation on dev and production.
+
+**Release verification:**
+- Full latest suite: 220 test files / 1,070 tests passed.
+- Next.js production build passed.
+- Production image: `sha256:54fcdd48e058d2298b9cd43d06a94ffc60b7c9446377a0aeeb035dadf7858a56`.
+- Production health: `status=ok`, `db=ok`; public route HTTP 200.
+- `dokploy-traefik` remains sole owner of public ports 80/443.
+- Production Prompt Studio mobile smoke: result returned, no app console errors, no horizontal overflow.
+- Hydration #418 remains a separate intermittent investigation; no speculative patch included.
+
 ## 2026-08-09 — Documentation redesign, questionnaire UI alignment, portal/project refresh fixes
 
 **Documentation UI:**
