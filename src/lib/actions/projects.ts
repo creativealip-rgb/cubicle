@@ -4,7 +4,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { projects, projectMembers, tasks, timeEntries, invoices } from "@/db/schema";
+import { projects, projectMembers, tasks, timeEntries, invoices, workspaceCurrencyRates, workspaces } from "@/db/schema";
 import { assignPackageToProject, syncProjectPackageAssignment } from "@/lib/actions/packages";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -16,6 +16,13 @@ import { revalidatePath } from "next/cache";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
+}
+
+async function assertWorkspaceCurrency(workspaceId: string, currency: string) {
+  const [workspace] = await db.select({ defaultCurrency: workspaces.defaultCurrency }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  if (workspace?.defaultCurrency === currency) return;
+  const [rate] = await db.select({ fromCurrency: workspaceCurrencyRates.fromCurrency }).from(workspaceCurrencyRates).where(and(eq(workspaceCurrencyRates.workspaceId, workspaceId), eq(workspaceCurrencyRates.fromCurrency, currency))).limit(1);
+  if (!rate) throw new Error(`Currency ${currency} belum dikonfigurasi. Atur currency workspace terlebih dahulu.`);
 }
 
 const projectInputSchema = z.object({
@@ -104,6 +111,7 @@ export async function createProject(input: z.input<typeof projectCreateSchema>) 
 
   const parsed = projectCreateSchema.parse(input);
   validateRetainerConfiguration(parsed);
+  await assertWorkspaceCurrency(workspaceId, parsed.currency);
   await assertClientInWorkspace(db, user.id, workspaceId, parsed.clientId);
   const timeTrackingMode = parsed.timeTrackingMode ?? (parsed.billingModel === "fixed_price" ? "off" : "billable");
 
@@ -160,6 +168,7 @@ export async function updateProject(projectId: string, input: z.input<typeof pro
   const parsed = projectUpdateSchema.parse(input);
   if (parsed.billingModel) await assertBillingModelTransitionAllowed(projectId, parsed.billingModel);
   validateRetainerConfiguration(parsed);
+  if (parsed.currency !== undefined) await assertWorkspaceCurrency(workspaceId, parsed.currency);
   if (parsed.clientId) {
     await assertClientInWorkspace(db, user.id, workspaceId, parsed.clientId);
   }

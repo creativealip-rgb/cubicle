@@ -33,6 +33,11 @@ type ProjectEditDialogProps = {
     dueDate: string | null;
     clientVisible: boolean;
     selectedPackageId: string | null;
+    retainerFee: string | null;
+    retainerIncludedMinutes: number | null;
+    retainerResetDay: number | null;
+    retainerOveragePolicy: "none" | "warn" | "bill" | null;
+    retainerOverageRate: string | null;
   };
   activeProjectServiceIds: string[];
 };
@@ -78,6 +83,11 @@ export function ProjectEditDialog({
             dueDate: project.dueDate ?? "",
             clientVisible: project.clientVisible,
             selectedPackageId: project.selectedPackageId,
+            retainerFee: project.retainerFee ?? "",
+            retainerIncludedMinutes: project.retainerIncludedMinutes ?? undefined,
+            retainerResetDay: project.retainerResetDay ?? 1,
+            retainerOveragePolicy: project.retainerOveragePolicy ?? "none",
+            retainerOverageRate: project.retainerOverageRate ?? "",
             serviceIds: activeProjectServiceIds,
           }}
           onSuccess={() => {

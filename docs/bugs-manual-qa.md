@@ -206,6 +206,145 @@ Status: **implemented + deployed; authenticated visual automation pending valid 
 - Guest guard live benar: `/app/whats-new` menuju `/login?redirect=%2Fapp%2Fwhats-new`.
 - Visual authenticated live belum diautomasi karena kredensial testing lama mengembalikan 401; akun tidak di-reset.
 
+## Manual QA findings — 2026-08-09
+
+Status: **open — hold fix**. Alip sedang testing manual. Jangan ubah code sebelum diminta.
+
+### PROJECT-002 — Retainer fee dan included minutes kosong saat edit
+**Prioritas:** P1
+**Status:** open — hold fix
+
+Saat project retainer diedit, user sudah memilih currency `SGD` dan mengisi `Biaya Retainer` serta `Menit termasuk`. Setelah klik `Simpan`, saat dialog edit dibuka kembali kedua field kembali kosong.
+
+Actual:
+- Currency dipilih `SGD`.
+- Biaya retainer diisi.
+- Menit termasuk diisi.
+- Save berhasil/tidak memberi error jelas.
+- Reopen edit menampilkan fee dan minutes kosong.
+
+Expected:
+- `retainerFee` dan `retainerIncludedMinutes` tersimpan ke DB.
+- Reopen edit menampilkan nilai tersimpan.
+- Reload halaman tetap menampilkan nilai sama.
+- Currency `SGD` tetap konsisten.
+- Field wajib tidak boleh silently clear.
+- Jika save gagal, tampil error human dan dialog tidak menutup seolah sukses.
+
+Evidence: screenshot manual QA dialog edit project retainer.
+
+---
+
+### PROJECT-001 — Project bisa dibuat dengan currency yang belum dikonfigurasi
+**Prioritas:** P1
+**Status:** open — hold fix
+
+User bisa memilih currency yang belum dikonfigurasi di workspace lalu tetap membuat project.
+
+Expected:
+- Submit ditolak jika currency belum dikonfigurasi/diaktifkan di workspace; atau
+- aplikasi menampilkan prompt jelas untuk mengatur currency tersebut terlebih dulu.
+- Error harus human, bukan Server Components digest.
+- Currency project tidak boleh tersimpan sebagai currency yang belum valid.
+- Validasi berlaku di UI dan server action.
+- Setelah currency dikonfigurasi, create project dengan currency tersebut berhasil.
+
+Evidence: manual QA saat membuat project dengan currency yang belum diset.
+
+---
+
+### PROJECT-UX-001 — Create project tidak menampilkan loading state
+**Prioritas:** P2
+**Status:** open — hold fix
+
+Setelah submit `Buat Project`, halaman/tab Projects terlihat kosong sebentar lalu project muncul tiba-tiba. Tidak ada indikator bahwa request sedang diproses.
+
+Expected:
+- Tombol submit berubah menjadi state loading, misalnya `Membuat project…`.
+- Tombol submit disabled selama request berjalan.
+- List menampilkan skeleton/optimistic pending state atau loading indicator yang jelas.
+- Tidak ada duplicate submit saat user klik berulang.
+- Setelah sukses, project muncul tanpa empty-state flash.
+- Setelah gagal, error human tampil dan form tetap aman.
+
+Evidence: manual QA setelah create project; tab Projects sempat kosong sebelum row muncul.
+
+---
+
+### CLIENT-002 — Duplicate portal slug menampilkan generic Server Components error
+**Prioritas:** P1
+**Status:** open — hold fix
+
+Saat membuat client memakai slug portal yang sudah terdaftar, submit gagal dengan generic production error:
+
+```text
+An error occurred in the Server Components render.
+The specific message is omitted in production builds...
+```
+
+Expected:
+
+```text
+Slug portal sudah digunakan. Pilih slug lain.
+```
+
+Acceptance criteria:
+- Server menangkap unique constraint duplicate slug.
+- Action mengembalikan soft error terstruktur, bukan throw generic yang menjadi digest.
+- Error tampil dekat field `Slug portal` atau sebagai toast yang jelas.
+- Modal tetap terbuka dan seluruh input tetap tersimpan.
+- Tidak membuat client setengah jadi.
+- Retry dengan slug baru berhasil.
+- Reload + DB membuktikan hanya satu slug yang tersimpan.
+
+Evidence: screenshot manual QA saat create client dengan slug `universitas-amikom-purwokerto` yang sudah dipakai.
+
+---
+
+### UX-001 — Create workspace masih pakai browser `prompt()` default
+**Prioritas:** P2
+**Status:** open — hold fix
+
+Saat membuat workspace baru, UI menampilkan native browser prompt:
+
+```text
+app.cubiqlo.com menyatakan
+Nama workspace baru:
+[ OK ] [ Batal ]
+```
+
+Risiko/cek lanjutan:
+- UX terlihat mentah dan tidak konsisten dengan modal aplikasi.
+- Input kosong perlu diuji.
+- Cancel perlu diuji.
+- Nama whitespace perlu diuji.
+- Nama duplikat perlu diuji.
+- Error server perlu tampil human.
+- Setelah create, workspace baru harus menjadi workspace aktif.
+- Reload harus mempertahankan workspace baru.
+- DB harus menyimpan nama yang benar.
+
+Evidence: screenshot manual QA, tab `B16-SOLO-1786278941974`.
+
+### UX-002 — Workspace baru masih memakai/default menampilkan state plan Solo
+**Prioritas:** P2
+**Status:** open — hold fix
+
+Setelah create workspace baru, tampilan masih menunjukkan kartu plan:
+
+```text
+Solo
+Aktif
+```
+
+Perlu verifikasi apakah ini:
+- expected inheritance dari plan account; atau
+- bug karena workspace baru seharusnya Free/default plan.
+
+Jangan simpulkan sebelum cek DB subscription/workspace dan aturan product.
+
+Evidence: screenshot manual QA, kartu `Solo Aktif`.
+
 ## Belum dicek / hold
 
 | Area | Risiko |

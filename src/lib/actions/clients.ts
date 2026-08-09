@@ -168,9 +168,16 @@ export async function createClient(input: z.infer<typeof clientSchema>) {
   const workspaceId = await getWorkspaceId();
   const gate = await assertCanCreateClient(workspaceId, user.id);
   if (!gate.ok) return gate;
-  const client = await insertClient(workspaceId, user.id, input);
-  revalidatePath("/app/clients");
-  return { ok: true as const, client };
+  try {
+    const client = await insertClient(workspaceId, user.id, input);
+    revalidatePath("/app/clients");
+    return { ok: true as const, client };
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: error instanceof Error ? error.message : "Gagal membuat klien",
+    };
+  }
 }
 
 export async function createClientFromForm(formData: FormData) {

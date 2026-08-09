@@ -82,6 +82,9 @@ export default async function ProjectDetailPage({
       taskModePolicy: projects.taskModePolicy,
       retainerFee: projects.retainerFee,
       retainerIncludedMinutes: projects.retainerIncludedMinutes,
+      retainerResetDay: projects.retainerResetDay,
+      retainerOveragePolicy: projects.retainerOveragePolicy,
+      retainerOverageRate: projects.retainerOverageRate,
     })
     .from(projects)
     .leftJoin(clients, eq(clients.id, projects.clientId))
