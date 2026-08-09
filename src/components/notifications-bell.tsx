@@ -63,6 +63,7 @@ function timeAgo(iso: string): string {
 export function NotificationsBell() {
   const { t } = useT();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [unread, setUnread] = useState(0);
   const pollRef = useRef<number | null>(null);
@@ -78,6 +79,8 @@ export function NotificationsBell() {
       // silent
     }
   }, []);
+
+  useEffect(() => setMounted(true), []);
 
   // Initial + poll every 30s when bell is mounted
   useEffect(() => {
@@ -195,7 +198,7 @@ export function NotificationsBell() {
                           {n.title}
                         </div>
                         <div className="text-[10px] text-muted-foreground shrink-0 mt-0.5">
-                          {timeAgo(n.createdAt)}
+                          {mounted ? timeAgo(n.createdAt) : "—"}
                         </div>
                       </div>
                       {n.body && (
