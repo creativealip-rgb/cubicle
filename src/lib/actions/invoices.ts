@@ -23,7 +23,7 @@ import {
   projectServices,
   workspaceCurrencyRates,
 } from "@/db/schema";
-import { eq, and, desc, sql, inArray, lt, isNotNull, ne } from "drizzle-orm";
+import { eq, and, desc, sql, inArray, lt, isNotNull, ne, or } from "drizzle-orm";
 import { z } from "zod";
 import { createHash, randomBytes } from "crypto";
 import { requireUser, assertWorkspaceWritable, assertWorkspaceMember } from "@/lib/access";
@@ -348,7 +348,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
         workDate: timeEntries.workDate, startTime: timeEntries.startTime, projectName: projects.name,
       }).from(timeEntries).innerJoin(projects, and(eq(projects.id, timeEntries.projectId), eq(projects.workspaceId, timeEntries.workspaceId))).where(and(
         inArray(timeEntries.id, sourceIds), eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.clientId, parsed.clientId),
-        eq(timeEntries.billable, true), eq(timeEntries.status, "approved"), isNotNull(timeEntries.endTime),
+        eq(timeEntries.billable, true), eq(timeEntries.status, "approved"), or(isNotNull(timeEntries.endTime), isNotNull(timeEntries.manualMinutes)),
         sql`${timeEntries.durationMinutes} > 0`, sql`${timeEntries.hourlyRate} > 0`,
         projectIds.length ? inArray(timeEntries.projectId, projectIds) : sql`true`,
       )).for("update") : [];
