@@ -21,7 +21,7 @@ export function contentSecurityPolicy(
 
     // Next.js app router requires inline scripts for hydration data;
     // 'unsafe-eval' stays dev-only.
-    `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""}`,
+    `script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com${isDevelopment ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
 
     // img-src stays broad (https:) because landing builder galleries
@@ -44,6 +44,8 @@ export function contentSecurityPolicy(
         ? ["https://dev.cubiqlo.com", "wss://dev.cubiqlo.com"]
         : []),
       "https://*.r2.cloudflarestorage.com",
+      "https://cloudflareinsights.com",
+      "https://*.cloudflareinsights.com",
     ].join(" "),
   ].join("; ");
 }
