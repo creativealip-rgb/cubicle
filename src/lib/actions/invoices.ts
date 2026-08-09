@@ -346,7 +346,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
         id: timeEntries.id, projectId: timeEntries.projectId, description: timeEntries.description,
         durationMinutes: timeEntries.durationMinutes, hourlyRate: timeEntries.hourlyRate,
         workDate: timeEntries.workDate, startTime: timeEntries.startTime, projectName: projects.name,
-      }).from(timeEntries).leftJoin(projects, and(eq(projects.id, timeEntries.projectId), eq(projects.workspaceId, timeEntries.workspaceId))).where(and(
+      }).from(timeEntries).innerJoin(projects, and(eq(projects.id, timeEntries.projectId), eq(projects.workspaceId, timeEntries.workspaceId))).where(and(
         inArray(timeEntries.id, sourceIds), eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.clientId, parsed.clientId),
         eq(timeEntries.billable, true), eq(timeEntries.status, "approved"), isNotNull(timeEntries.endTime),
         sql`${timeEntries.durationMinutes} > 0`, sql`${timeEntries.hourlyRate} > 0`,
