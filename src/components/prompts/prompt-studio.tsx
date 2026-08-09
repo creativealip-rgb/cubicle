@@ -162,8 +162,15 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
 
   function fieldErrors(): Record<string, string> {
     const next: Record<string, string> = {};
-    for (const field of selected.fields) {
-      const message = validateField(field, fieldValue(field), lang);
+    const coreDefinitions: PromptFieldDefinition[] = [
+      { key: "brand", label: "Brand", type: "text", required: true },
+      { key: "campaign", label: "Campaign", type: "text", required: true },
+      { key: "goal", label: "Goal", type: "text", required: true },
+      { key: "audience", label: "Audience", type: "text", required: true },
+    ];
+    for (const field of [...coreDefinitions, ...selected.fields]) {
+      const value = field.key in form ? form[field.key as keyof FormState] : fieldValue(field);
+      const message = validateField(field, value as PromptOptionValue | undefined, lang);
       if (message) next[field.key] = message;
     }
     return next;
