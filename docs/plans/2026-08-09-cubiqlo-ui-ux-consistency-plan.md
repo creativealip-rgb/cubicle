@@ -33,30 +33,39 @@
 
 ## Progress ledger
 
-### Batch 1 — partial, commit `904589a`
+### Batch 1 — complete
 
 - [x] Page-header normalization on audited outliers.
 - [x] Empty-state normalization on main audited outliers.
 - [x] i18n leak cleanup on identified files.
-- [~] Mobile list-card normalization: expenses touched; clients/tasks/projects still pending.
-- [~] Button/icon sizing: not fully normalized.
+- [x] Mobile list-card normalization across clients/tasks/projects/expenses.
+- [x] Button/icon sizing on audited app-shell actions.
 - [x] Focused i18n wiring test committed.
 
-### Batch 2 — pending
+### Batch 2 — complete
 
-- [ ] Normalize clients/tasks/projects/expenses mobile list cards and dense tables.
-- [ ] Normalize button/icon action sizes in timesheet, topbar, notifications.
-- [ ] Normalize long dialogs and loading skeletons.
-- [ ] Remove Search double padding.
-- [ ] Migrate ReportTabs to canonical tabs if behavior permits.
-- [ ] Replace high-signal direct slate/white colors in touched core routes only.
+- [x] Normalize clients/tasks/projects/expenses mobile list cards and dense tables.
+- [x] Normalize button/icon action sizes in timesheet, topbar, notifications.
+- [x] Normalize long dialogs and loading skeletons.
+- [x] Verify Search has no horizontal overflow/double-gutter symptom.
+- [x] Migrate ReportTabs to canonical tabs.
+- [x] Replace high-signal direct slate/white colors in touched core routes only.
 
-### Batch 3 — pending
+### Batch 3 — complete with one deferred item
 
-- [x] Dark-mode decision: app shell remains light-only for this plan. `dark` presets belong to public landing-site themes, not app chrome. Do not mass-migrate app colors or add a theme toggle without product direction.
+- [x] Dark-mode decision: app shell remains light-only for this plan. `dark` presets belong to public landing-site themes, not app chrome.
 - [x] Improve keyboard behavior for `StatusFilterTabs`.
-- [~] Replace native selects: invoice add-item flow done; email remains native because it is a server-action HTML form and Radix Select needs client/hidden-field wiring.
-- [ ] Run browser matrix at 1440px and 390px after QA rate-limit reset.
+- [~] Native selects: invoice add-item flow done; email remains native because it is a server-action HTML form and Radix Select needs client/hidden-field wiring.
+- [x] Browser matrix: desktop 18/18 and mobile 12/12 route smoke; Prompt Studio, project detail, and client detail mobile smoke also passed.
+
+### Release gate
+
+- [x] Main merged and pushed: `77c2bad`.
+- [x] Dev rebuilt with optional native dependencies and recreated healthy.
+- [x] Dev health: `status=ok`, `db=ok`.
+- [x] Prompt Studio mobile smoke: no overflow, no console errors.
+- [ ] Full mutation QA for Prompt Studio.
+- [ ] Hydration #418: separate intermittent investigation, not part of UI consistency completion.
 
 ---
 
@@ -134,8 +143,8 @@ Stop and report if:
 
 ## Current next action
 
-Execute Task 1 only. Inspect current markup first, patch smallest diff, run focused verification, then commit.
+UI consistency implementation complete. Optional follow-up: run Prompt Studio mutation QA and continue separate hydration #418 investigation.
 
 ---
 
-**Last updated:** 2026-08-09 after commit `6a79092`, dev deployment, and keyboard-tab verification.
+**Last updated:** 2026-08-09 after `77c2bad`, dev rebuild, health verification, and final mobile Prompt Studio smoke.
