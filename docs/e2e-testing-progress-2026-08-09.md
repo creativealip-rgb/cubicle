@@ -43,7 +43,7 @@ Setiap mutation utama diuji lewat browser:
 | Reports | PASS | Reports render and period filter UI pass. |
 | Expense | PASS | Dedicated E2E create/edit/reload/delete; receipt PNG upload UI pass. R2 download-link click belum dibuktikan. |
 | Client portal/files | PASS | Portal slug + password unlock + File tab upload E2E PASS; fixture cleanup lewat UI. |
-| Calendar/booking | NOT STARTED | Belum dites dalam pass ini. |
+| Calendar/booking | PARTIAL | Public booking render, timezone `Asia/Jakarta`, slot select, submit, confirmation, dan DB persistence PASS. Internal cancel + authenticated ICS belum. |
 | Email | NOT STARTED | Belum dites dalam pass ini. |
 | AI/plan quota | PARTIAL | Solo plan diaktifkan; full quota/concurrency belum dites. |
 | Mobile 390px | NOT STARTED | Belum ada fresh production E2E pass. |
@@ -256,7 +256,7 @@ NOT READY FOR FULL RELEASE GATE
 
 Alasan:
 
-- Expense, portal, files, calendar, email, AI quota belum complete.
+- Email dan AI quota belum complete; calendar masih partial karena internal cancel + authenticated ICS belum.
 - Mobile and full route sweep belum complete.
 - Approved QA time cleanup masih perlu keputusan product rule.
 - Generic E2E suite masih memakai credential lama.
