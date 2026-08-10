@@ -263,6 +263,22 @@ Alasan:
 
 Yang sudah terbukti: core client/project/task/time flows, hourly/partial-payment/report invoice, Fixed Price DP/final, Retainer full/duplicate lock, source fix time edit, production health, dan cleanup fixture lewat UI.
 
-## Working tree note
+## Checkpoint update — 2026-08-10
 
-Dokumen ini merekam hasil E2E production sampai checkpoint sekarang. Source change `src/components/time/timesheet.tsx` dan spec E2E baru masih perlu review, `git diff --check`, dan keputusan commit sebelum dianggap final.
+Production E2E terbaru:
+
+- Portal slug + password unlock + portal File upload: PASS.
+- Expense create/edit/reload/delete + receipt PNG upload: PASS.
+- Public booking render + `Asia/Jakarta` timezone + slot select + submit + confirmation + DB persistence: PASS.
+- Calendar internal cancel dan authenticated `.ics` download: belum.
+- Email, AI quota/concurrency, mobile 390px, full authenticated route sweep: belum.
+
+Production health terakhir:
+
+```json
+{"status":"ok","db":"ok"}
+```
+
+Last pushed commit: `c5afa5f update calendar booking e2e progress`.
+
+Release gate tetap `NOT READY`.
