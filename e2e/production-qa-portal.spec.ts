@@ -37,6 +37,10 @@ test("production client portal set password unlock and slug", async ({ page }) =
     await page.getByPlaceholder("Password portal").fill(portalPassword);
     await page.getByRole("button", { name: "Buka portal" }).click();
     await expect(page.getByText(clientName, { exact: true })).toBeVisible({ timeout: 15000 });
+    await page.getByRole("tab", { name: "File" }).click();
+    await expect(page.getByRole("heading", { name: "File" })).toBeVisible();
+    await page.locator('input[type="file"]').setInputFiles({ name: "qa-portal.txt", mimeType: "text/plain", buffer: Buffer.from("portal file fixture") });
+    await expect(page.getByText("qa-portal.txt", { exact: true })).toBeVisible({ timeout: 15000 });
   } finally {
     await page.goto("/app/clients");
     await page.getByRole("link", { name: clientName, exact: true }).click();

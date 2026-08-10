@@ -42,7 +42,7 @@ Setiap mutation utama diuji lewat browser:
 | Payments | PASS | Partial payment UI pass; paid/partial status and remaining balance verified. Full-payment flow verified separately; paid invoice retained/voided, not deleted. |
 | Reports | PASS | Reports render and period filter UI pass. |
 | Expense | PASS | Dedicated E2E create/edit/reload/delete; receipt PNG upload UI pass. R2 download-link click belum dibuktikan. |
-| Client portal/files | PARTIAL | Portal slug + password unlock E2E PASS; portal File tab/upload belum dites. |
+| Client portal/files | PASS | Portal slug + password unlock + File tab upload E2E PASS; fixture cleanup lewat UI. |
 | Calendar/booking | NOT STARTED | Belum dites dalam pass ini. |
 | Email | NOT STARTED | Belum dites dalam pass ini. |
 | AI/plan quota | PARTIAL | Solo plan diaktifkan; full quota/concurrency belum dites. |
