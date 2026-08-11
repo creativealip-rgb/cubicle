@@ -11,7 +11,7 @@ describe("billing copy package limits", () => {
   });
 
   it("mentions key Free/Solo/Team limits", () => {
-    for (const text of ["3 klien", "5 proyek", "10 invoice", "10 AI", "100 AI", "1.000 AI", "Unlimited users", "25 MB", "50 MB"]) {
+    for (const text of ["3 klien", "5 proyek", "10 invoice", "10 AI", "100 AI", "1,000 AI", "Up to 5 members/workspace", "25 MB", "50 MB"]) {
       expect(`${landing}\n${billing}`).toContain(text);
     }
   });

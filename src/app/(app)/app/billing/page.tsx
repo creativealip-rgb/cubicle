@@ -7,13 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckoutButton } from "@/components/billing/checkout-button";
 import { getSubscriptionStatus } from "@/lib/subscription";
 import { getCurrentLang, createT } from "@/lib/i18n";
+import { BILLING_PLANS } from "@/lib/billing-plans";
+import { listActiveAddOns } from "@/lib/actions/billing-addons";
+import { AddonManagement } from "@/components/billing/addon-management";
 
 export const dynamic = "force-dynamic";
 
 const plans = [
   {
     key: "free",
-    name: "Free",
+    name: "Free Forever",
     price: "Rp 0",
     description: "Coba dulu buat client work kecil.",
     features: ["1 pengguna", "1 workspace", "3 klien", "5 proyek", "10 invoice/bulan", "Client portal + AI", "10 AI request/bulan", "5 MB/file"],
@@ -21,16 +24,18 @@ const plans = [
   {
     key: "solo",
     name: "Solo",
-    price: "Rp 588rb/tahun",
+    price: "Rp 75rb/bulan",
+    yearlyPrice: "Rp 900rb/tahun",
     description: "Untuk freelancer yang butuh unlimited clients.",
     features: ["1 pengguna", "3 workspace", "Klien/proyek/invoice unlimited", "Client portal + AI", "100 AI request/bulan", "25 MB/file"],
   },
   {
     key: "team",
     name: "Team",
-    price: "Rp 1,188jt/tahun",
+    price: "Rp 165rb/bulan",
+    yearlyPrice: "Rp 1,98jt/tahun",
     description: "Untuk team kecil yang handle banyak client bareng.",
-    features: ["Unlimited users", "Workspace unlimited", "Klien/proyek/invoice unlimited", "Peran tim", "1.000 AI request/bulan", "50 MB/file"],
+    features: ["Maksimal 5 member/workspace", "Maksimal 3 workspace", "Klien/proyek/invoice unlimited", "Peran tim", "1.000 AI request/bulan", "5 GB/workspace", "50 MB/file"],
   },
 ] as const;
 
@@ -53,6 +58,7 @@ export default async function BillingPage() {
     : null;
 
   const currentPlan = user?.plan ?? "free";
+  const addons = userId ? await listActiveAddOns() : { storageAddons: [], extraWorkspaceSlots: 0 };
 
   return (
     <div className="space-y-8">
@@ -60,7 +66,10 @@ export default async function BillingPage() {
         <p className="text-sm font-medium text-[#6647F0]">{t("Billing", "Billing")}</p>
         <h1 className="app-page-title">{t("Langganan", "Subscription")}</h1>
         <p className="mt-2 text-slate-600">
-          {t("Bayar setahun sekali via Pakasir QRIS, tanpa pajak. Plan aktif otomatis setelah webhook payment diterima.", "Pay once yearly via Pakasir QRIS, tax-free. Plan activates automatically after payment webhook is received.")}
+          {t(
+            "Bayar bulanan atau tahunan via Pakasir QRIS, tanpa pajak. Plan aktif otomatis setelah webhook payment diterima.",
+            "Pay monthly or yearly via Pakasir QRIS, tax-free. Plan activates automatically after payment webhook is received.",
+          )}
         </p>
       </div>
 
@@ -84,10 +93,16 @@ export default async function BillingPage() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader><CardTitle>{t("Storage & add-on", "Storage & add-ons")}</CardTitle></CardHeader>
+        <CardContent><AddonManagement storageAddons={addons.storageAddons} extraWorkspaceSlots={addons.extraWorkspaceSlots} /></CardContent>
+      </Card>
+
       <div className="grid gap-5 lg:grid-cols-3">
         {plans.map((plan) => {
           const isCurrent = currentPlan === plan.key;
           const paid = plan.key === "solo" || plan.key === "team";
+          const planConfig = paid ? BILLING_PLANS[plan.key] : null;
           return (
             <Card key={plan.key} className={plan.key === "solo" ? "border-[#6647F0] shadow-lg" : ""}>
               <CardHeader>
@@ -96,6 +111,11 @@ export default async function BillingPage() {
                   {isCurrent && <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">{t("Aktif", "Active")}</span>}
                 </CardTitle>
                 <p className="text-2xl font-semibold text-slate-950">{plan.price}</p>
+                {paid && planConfig && (
+                  <p className="text-sm text-slate-600">
+                    {t("atau", "or")} {plan.yearlyPrice}
+                  </p>
+                )}
                 <p className="text-sm text-slate-600">{plan.description}</p>
               </CardHeader>
               <CardContent className="space-y-5">

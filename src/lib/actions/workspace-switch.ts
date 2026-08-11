@@ -6,6 +6,7 @@ import { eq, and } from "drizzle-orm";
 import { db } from "@/db";
 import { workspaceMembers, workspaces } from "@/db/schema";
 import { canCreateWorkspace, getPlanLimits, getUserPlan } from "@/lib/plan";
+import { canCreateWorkspaceWithAddons } from "@/lib/extra-workspace";
 
 const COOKIE_NAME = "active_workspace_id";
 
@@ -103,7 +104,7 @@ export async function createWorkspace(name: string): Promise<{ ok: boolean; erro
   const userId = session?.user?.id;
   if (!userId) return { ok: false, error: "Tidak terautentikasi" };
 
-  const check = await canCreateWorkspace(userId);
+  const check = await canCreateWorkspaceWithAddons(userId);
   if (!check.allowed) return { ok: false, error: check.reason };
 
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + userId.slice(0, 4);

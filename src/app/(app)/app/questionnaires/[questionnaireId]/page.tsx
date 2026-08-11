@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SendQuestionnaireButton } from "@/components/questionnaires/send-questionnaire-button";
 import { ResponseViewer } from "@/components/questionnaires/response-viewer";
+import { DeleteQuestionnaireButton } from "@/components/questionnaires/delete-questionnaire-button";
 import Link from "next/link";
 import { ArrowLeft, Edit, ClipboardList, Inbox } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -104,6 +105,7 @@ export default async function QuestionnaireDetailPage({ params }: { params: Prom
               clients={clientsList}
               projects={projectsList}
             />
+            <DeleteQuestionnaireButton questionnaireId={q.id} />
           </div>
         )}
       </div>

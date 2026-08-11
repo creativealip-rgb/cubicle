@@ -25,6 +25,10 @@ Reserve a number here before creating SQL. Recheck remote refs and every worktre
 - `0064` — Billing-aware project tasks and templates — Coder — `main` — committed.
 - `0065` — Encrypted Portal password display — Coder — `feat/client-project-invoice-task-revision` — committed.
 - `0066` — Invoice entry source modes and metadata — Coder — `main` — committed; disposable `cubicle_dev` clone apply/replay verified; production not applied.
+- `0070` — Storage add-ons and workspace upload reservations — Coder — `main` (uncommitted) — applied to `cubicle_dev`; production not applied.
+- `0071` — Monthly/yearly billing period — Coder — `main` (uncommitted) — applied to `cubicle_dev`; production not applied.
+- `0072` — Extra workspace add-on entitlements — Coder — `main` (uncommitted) — reserved; not applied anywhere yet; production not applied.
+- `0073` — Storage add-on payment metadata — Coder — `main` (uncommitted) — reserved; not applied anywhere yet; production not applied.
 
 ## Reservation protocol
 

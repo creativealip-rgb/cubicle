@@ -101,6 +101,9 @@ export const pakasirPayments = pgTable("pakasir_payments", {
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   orderId: text("order_id").notNull().unique(),
   plan: text("plan", { enum: ["solo", "team"] }).notNull(),
+  billingPeriod: text("billing_period", { enum: ["monthly", "yearly"] }).notNull().default("yearly"),
+  paymentType: text("payment_type", { enum: ["plan", "storage_addon", "extra_workspace"] }).notNull().default("plan"),
+  entitlementRef: text("entitlement_ref"),
   amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
   status: text("status", { enum: ["pending", "completed", "failed"] }).notNull().default("pending"),
   paymentMethod: text("payment_method").notNull().default("PAKASIR_QRIS"),
@@ -121,6 +124,45 @@ export const workspaceMembers = pgTable("workspace_members", {
 export const workspaceInvoiceCounters = pgTable("workspace_invoice_counters", {
   workspaceId: uuid("workspace_id").primaryKey().references(() => workspaces.id, { onDelete: "cascade" }),
   nextNumber: integer("next_number").notNull().default(1),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const userStorageAddons = pgTable("user_storage_addons", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  storageBytes: bigint("storage_bytes", { mode: "number" }).notNull(),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+  billingPeriod: text("billing_period", { enum: ["monthly", "yearly"] }).notNull(),
+  status: text("status", { enum: ["active", "cancel_scheduled", "cancelled", "expired"] }).notNull().default("active"),
+  startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+  endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+  autoRenew: boolean("auto_renew").notNull().default(true),
+  providerOrderId: text("provider_order_id").unique(),
+  providerEventId: text("provider_event_id").unique(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const workspaceStorageUsage = pgTable("workspace_storage_usage", {
+  workspaceId: uuid("workspace_id").primaryKey().references(() => workspaces.id, { onDelete: "cascade" }),
+  reservedBytes: bigint("reserved_bytes", { mode: "number" }).notNull().default(0),
+  reservedFiles: integer("reserved_files").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const userExtraWorkspaceEntitlements = pgTable("user_extra_workspace_entitlements", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  quantity: integer("quantity").notNull().default(1),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+  billingPeriod: text("billing_period", { enum: ["monthly", "yearly"] }).notNull(),
+  status: text("status", { enum: ["active", "cancel_scheduled", "cancelled", "expired"] }).notNull().default("active"),
+  startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+  endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+  autoRenew: boolean("auto_renew").notNull().default(true),
+  providerOrderId: text("provider_order_id").unique(),
+  providerEventId: text("provider_event_id").unique(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

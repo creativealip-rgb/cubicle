@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { expirePlans } from "@/lib/subscription";
+import { sweepStorageAddons } from "@/lib/storage-addons";
+import { sweepExtraWorkspaceEntitlementsTx } from "@/lib/extra-workspace";
+import { db } from "@/db";
 import { verifyCronRequest } from "@/lib/cron-auth";
 
 export async function GET(request: Request) {
@@ -8,7 +11,17 @@ export async function GET(request: Request) {
 
   try {
     const downgraded = await expirePlans();
-    return NextResponse.json({ ok: true, downgraded: downgraded.length, workspaceIds: downgraded });
+    const [storage, workspace] = await Promise.all([
+      sweepStorageAddons(),
+      db.transaction(async (tx) => sweepExtraWorkspaceEntitlementsTx(tx)),
+    ]);
+    return NextResponse.json({
+      ok: true,
+      downgraded: downgraded.length,
+      workspaceIds: downgraded,
+      storage,
+      extraWorkspace: workspace,
+    });
   } catch (err) {
     console.error("[cron/expire-plans] error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

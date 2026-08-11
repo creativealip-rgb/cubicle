@@ -1,0 +1,95 @@
+import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+const root = process.cwd();
+const read = (path: string) => readFileSync(join(root, path), "utf8");
+
+const actions = () => read("src/lib/actions/billing-addons.ts");
+const storage = () => read("src/lib/storage-addons.ts");
+const extraWs = () => read("src/lib/extra-workspace.ts");
+const webhook = () => read("src/app/api/webhooks/pakasir/route.ts");
+const checkout = () => read("src/app/api/billing/checkout/route.ts");
+const checkoutExtra = () => read("src/app/api/billing/checkout-extra-workspace/route.ts");
+const expireCron = () => read("src/app/api/cron/expire-plans/route.ts");
+
+describe("billing add-on server actions", () => {
+  it("exposes list + cancel endpoints for both add-on types", () => {
+    const src = actions();
+    expect(src).toContain("export async function listActiveAddOns(");
+    expect(src).toContain("export async function cancelStorageAddOn(");
+    expect(src).toContain("export async function cancelExtraWorkspaceAddOn(");
+  });
+
+  it("scopes cancel to the session user (helpers filter by userId)", () => {
+    const src = actions();
+    // The action must pass the authenticated user id into the lib helper so a
+    // user can never cancel someone else's add-on.
+    expect(src).toMatch(/cancelStorageAddon\(addonId,\s*user\.id\)/);
+    expect(src).toMatch(/cancelExtraWorkspaceEntitlement\(entitlementId,\s*user\.id\)/);
+    // Listing is user-scoped by the lib helpers.
+    expect(src).toContain("listActiveStorageAddons(user.id)");
+    expect(src).toContain("getActiveStorageAddonBytes(user.id)");
+    expect(src).toContain("getActiveExtraWorkspaceSlots(user.id)");
+  });
+
+  it("revalidates the billing page after a cancel", () => {
+    const src = actions();
+    expect(src).toContain('revalidatePath("/app/billing")');
+  });
+});
+
+describe("add-on lifecycle wiring (checkout → webhook → cron)", () => {
+  it("persists entitlement type and addon key on checkout rows", () => {
+    expect(checkout()).toContain('paymentType: "storage_addon"');
+    expect(checkout()).toContain("entitlementRef: String(addon)");
+    expect(checkout()).toContain("isStorageAddonKey(addonRaw)");
+    expect(checkoutExtra()).toContain('paymentType: "extra_workspace"');
+  });
+
+  it("webhook activates storage and extra-workspace entitlements idempotently", () => {
+    const src = webhook();
+    expect(src).toContain("activateStorageAddonTx(tx,");
+    expect(src).toContain("activateExtraWorkspaceEntitlementTx(tx,");
+    // Idempotency keys: provider order + event IDs must be passed through.
+    expect(src).toContain("providerOrderId: current.orderId");
+    expect(src).toContain("providerEventId: body.order_id");
+    // Add-on activation never touches the user's plan.
+    expect(src).toContain("// Add-on purchases (storage / extra workspace) reuse the same payment row.");
+  });
+
+  it("expiry cron sweeps both entitlement types", () => {
+    const src = expireCron();
+    expect(src).toContain("sweepStorageAddons()");
+    expect(src).toContain("sweepExtraWorkspaceEntitlementsTx(tx)");
+  });
+
+  it("cancellation keeps entitlement active until period end", () => {
+    for (const src of [storage(), extraWs()]) {
+      expect(src).toContain('status: "cancel_scheduled"');
+      expect(src).toContain("autoRenew: false");
+      // Slots/bytes still count until ends_at (no immediate drop).
+      expect(src).toMatch(/IN \('active', 'cancel_scheduled'\)/);
+    }
+  });
+
+  it("renewal sweep creates a new period row and expires the old one", () => {
+    for (const src of [storage(), extraWs()]) {
+      expect(src).toContain('status: "active"');
+      expect(src).toContain('status: "expired"');
+      expect(src).toContain("getPeriodExpiry");
+    }
+  });
+
+  it("workspace creation honors extra slots at the boundary", () => {
+    const src = extraWs();
+    expect(src).toContain("canCreateWorkspaceWithAddons");
+    expect(src).toContain("getActiveExtraWorkspaceSlots(userId, now)");
+    expect(src).toMatch(/count >= baseLimit \+ extraSlots/);
+    // Enforcement hook is wired into createWorkspace.
+    const ws = read("src/lib/actions/workspace-switch.ts");
+    expect(ws).toContain("canCreateWorkspaceWithAddons(userId)");
+  });
+});
+
+// Self-check: this file must remain source-wiring-only; no live DB calls.

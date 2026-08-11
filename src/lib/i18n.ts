@@ -2,9 +2,9 @@ import { cookies } from "next/headers";
 
 export type Lang = "id" | "en";
 
-export async function getCurrentLang(): Promise<Lang> {
+export async function getCurrentLang(defaultLang: Lang = "id"): Promise<Lang> {
   const langCookie = (await cookies()).get("cubiqlo_lang")?.value;
-  return langCookie === "en" ? "en" : "id";
+  return langCookie === "en" || langCookie === "id" ? langCookie : defaultLang;
 }
 
 export function getLocale(lang: Lang) {

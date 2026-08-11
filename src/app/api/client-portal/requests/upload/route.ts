@@ -8,11 +8,14 @@ import { buildFileKey, R2_BUCKET, r2, deleteStoredFile } from "@/lib/r2";
 import { validateUploadedFile } from "@/lib/file-validation";
 import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
 import { assertUploadQuota, getUploadQuotaLimits, safeUploadErrorResponse, validateContentLength } from "@/lib/upload-safety";
+import { reserveWorkspaceUpload, releaseWorkspaceUpload, consumeWorkspaceUpload } from "@/lib/storage-quota";
 
 const MAX_SIZE = getUploadQuotaLimits("team").maxFileBytes;
 
 export async function POST(req: NextRequest) {
   let uploadedObject: string | null = null;
+  let reservedBytes = 0;
+  let reservedWorkspaceId: string | null = null;
   if (!validateContentLength(req.headers.get("content-length"), MAX_SIZE)) return NextResponse.json({ error: "Upload too large" }, { status: 413 });
   const limited = await enforceRateLimitResponse(req, "portal:request-upload", { limit: 10, windowSec: 300 });
   if (limited) return limited;
@@ -63,6 +66,13 @@ export async function POST(req: NextRequest) {
     const safeName = upload.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const storageKey = buildFileKey(client.workspaceId, fileId, safeName);
 
+    // Reserve quota before writing to R2 so concurrent uploads can't overrun
+    // the workspace limit; consume after the DB transaction commits; release
+    // on any failure below.
+    await reserveWorkspaceUpload(client.workspaceId, upload.size);
+    reservedBytes = upload.size;
+    reservedWorkspaceId = client.workspaceId;
+
     await r2.send(
       new PutObjectCommand({
         Bucket: R2_BUCKET,
@@ -98,9 +108,15 @@ export async function POST(req: NextRequest) {
       return createdFile;
     });
 
+    // Upload committed — move the reservation into the real usage count.
+    await consumeWorkspaceUpload(client.workspaceId, upload.size);
+    reservedBytes = 0;
+    reservedWorkspaceId = null;
+
     return NextResponse.json({ file: fileRow });
   } catch (err) {
     if (uploadedObject) await deleteStoredFile(uploadedObject).catch(() => undefined);
+    if (reservedBytes && reservedWorkspaceId) await releaseWorkspaceUpload(reservedWorkspaceId, reservedBytes).catch(() => undefined);
     const safe = safeUploadErrorResponse(err);
     return NextResponse.json({ error: safe.error }, { status: safe.status });
   }

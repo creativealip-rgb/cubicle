@@ -1,5 +1,11 @@
 # Cubicle / Kubikel — Product Plan
 
+> **HISTORICAL DOCUMENT — SUPERSEDED (2026-08-11).** Pricing, workspace/member
+> limits, storage quota, and add-on decisions in this file are **historical**.
+> The canonical active plan is
+> [`docs/plans/2026-08-11-cubiqlo-final-billing-storage-plan.md`](plans/2026-08-11-cubiqlo-final-billing-storage-plan.md).
+> Do not reuse old pricing or `unlimited` Team limits from this document.
+
 ## 1. Product Summary
 
 Cubicle adalah client operation hub buat freelancer, agency kecil, konsultan, dan small team.

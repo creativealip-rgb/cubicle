@@ -56,7 +56,7 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", defaultValues
         description: mode === "edit" ? form.description || null : form.description || undefined,
         projectId: form.projectId,
         assigneeId: mode === "edit" ? form.assigneeId || null : form.assigneeId || undefined,
-        clientVisible: taskMode === "workflow" ? form.clientVisible : undefined,
+        clientVisible: form.clientVisible,
         status: taskMode === "workflow" ? form.status as "todo" | "in_progress" | "review" | "done" : undefined,
         priority: taskMode === "workflow" ? form.priority as "low" | "medium" | "high" | "urgent" : undefined,
         dueDate: taskMode === "workflow" ? (mode === "edit" ? form.dueDate || null : form.dueDate || undefined) : undefined,
@@ -162,6 +162,8 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", defaultValues
         <Label htmlFor="dueDate">{t("Jatuh Tempo", "Due Date")}</Label>
         <Input id="dueDate" type="date" value={form.dueDate} onChange={(e) => setForm((p) => ({ ...p, dueDate: e.target.value }))} />
       </div>
+      </>
+      ) : null}
       <div className="flex items-center gap-2">
         <input
           type="checkbox"
@@ -172,8 +174,6 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", defaultValues
         />
         <Label htmlFor="clientVisible">{t("Terlihat oleh klien", "Visible to client")}</Label>
       </div>
-      </>
-      ) : null}
       <div className="space-y-2">
         <Label>{t("Penanggung Jawab", "Assignee")}</Label>
         <Select

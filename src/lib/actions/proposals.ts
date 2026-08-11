@@ -4,13 +4,15 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { proposals, projects, projectServices, invoices, invoiceItems, workspaceInvoiceCounters } from "@/db/schema";
+import { proposals, projects, projectServices, invoices, invoiceItems, workspaceInvoiceCounters, clients, workspaces } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 import { requireUser, assertWorkspaceWritable, assertClientInWorkspace } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { sendNotification } from "@/lib/notifications";
+import { resolveWorkspaceReplyTo } from "@/lib/workspace-reply-to";
 import { assertPublicTokenLifecycle, PublicTokenError } from "@/lib/public-token-policy";
 import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
 import { buildProjectServiceDocumentLines } from "@/lib/project-service-lines";
@@ -184,19 +186,65 @@ export async function sendProposal(proposalId: string) {
   if (!existing) throw new Error("Proposal not found");
   if (existing.status === "accepted") throw new Error("Already accepted");
 
+  const [client] = await db.select({ name: clients.name, email: clients.email })
+    .from(clients)
+    .where(eq(clients.id, existing.clientId))
+    .limit(1);
+  if (!client?.email) throw new Error("Client email is missing");
+  const recipientEmail = client.email;
+  const [ws] = await db.select({ name: workspaces.name })
+    .from(workspaces)
+    .where(eq(workspaces.id, workspaceId))
+    .limit(1);
+
   const token = generateToken();
   const tokenHash = hashToken(token);
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
 
-  await db.update(proposals)
-    .set({
-      status: "sent",
-      sharedTokenHash: tokenHash,
-      sharedTokenExpiresAt: expiresAt,
-      sentAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .where(eq(proposals.id, proposalId));
+  // Transactional send: lock the row, guard the status transition, and only
+  // commit the sent status + rotated token AFTER the client email succeeded.
+  // If the email fails, throw so the transaction rolls back — the proposal
+  // stays in its previous status and the previous link stays valid.
+  await db.transaction(async (tx) => {
+    const [locked] = await tx.select({ id: proposals.id, status: proposals.status })
+      .from(proposals)
+      .where(eq(proposals.id, proposalId))
+      .for("update")
+      .limit(1);
+    if (!locked) throw new Error("Proposal not found");
+    if (locked.status === "accepted") throw new Error("Already accepted");
+
+    const appUrl = (
+      process.env.NEXT_PUBLIC_APP_URL ??
+      process.env.BETTER_AUTH_URL ??
+      "https://cubiqlo.com"
+    ).replace(/\/$/, "");
+    const replyTo = await resolveWorkspaceReplyTo(workspaceId);
+    const emailResult = await sendNotification({
+      to: recipientEmail,
+      subject: `Proposal: ${existing.title}`,
+      text:
+        `Hi ${client.name || "there"},\n\n` +
+        `${ws?.name || "Cubiqlo"} sent you a proposal: "${existing.title}".\n\n` +
+        `Review it here:\n${appUrl}/proposal/${token}\n\n` +
+        `This link is valid for 30 days. If you have any questions, just reply to this email.`,
+      type: "proposal_sent",
+      replyTo,
+    });
+    if (!emailResult.success) {
+      throw new Error("Failed to send proposal email — proposal was not marked as sent");
+    }
+
+    await tx.update(proposals)
+      .set({
+        status: "sent",
+        sharedTokenHash: tokenHash,
+        sharedTokenExpiresAt: expiresAt,
+        sentAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(proposals.id, proposalId));
+  });
 
   await writeActivityLog(workspaceId, user.id, "sent_proposal", "proposal", proposalId);
   revalidatePath("/app/proposals");

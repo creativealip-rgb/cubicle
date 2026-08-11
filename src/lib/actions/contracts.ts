@@ -12,6 +12,8 @@ import { revalidatePath } from "next/cache";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable, assertClientInWorkspace, assertProjectInWorkspace, ForbiddenError } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
+import { sendNotification } from "@/lib/notifications";
+import { resolveWorkspaceReplyTo } from "@/lib/workspace-reply-to";
 import { assertPublicTokenLifecycle, PublicTokenError } from "@/lib/public-token-policy";
 import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
 import { validateSignatureDataUrl } from "@/lib/upload-safety";
@@ -234,6 +236,8 @@ export async function sendContract(input: {
   const [client] = await db.select().from(clients)
     .where(eq(clients.id, c.clientId))
     .limit(1);
+  if (!client?.email) throw new Error("Client email is missing");
+  const recipientEmail = client.email;
   const [project] = c.projectId
     ? await db.select().from(projects).where(eq(projects.id, c.projectId)).limit(1)
     : [null];
@@ -254,18 +258,57 @@ export async function sendContract(input: {
   const ttl = input.ttlDays ?? 30;
   const expiresAt = new Date(Date.now() + ttl * 24 * 60 * 60 * 1000);
 
-  const [updated] = await db.update(contracts)
-    .set({
-      bodyResolved,
-      variables: vars,
-      sharedTokenHash: hashToken(token),
-      sharedTokenExpiresAt: expiresAt,
-      sentAt: new Date(),
-      status: "sent",
-      updatedAt: new Date(),
-    })
-    .where(eq(contracts.id, c.id))
-    .returning();
+  // Transactional send: lock the row, guard the status transition, and only
+  // commit the sent status + rotated token AFTER the client email succeeded.
+  // If the email fails, throw so the transaction rolls back — the contract
+  // stays in its previous status and the previous link stays valid (no
+  // duplicate-send / lost-link / "sent but never emailed" states).
+  const [updated] = await db.transaction(async (tx) => {
+    const [locked] = await tx.select({ id: contracts.id, status: contracts.status })
+      .from(contracts)
+      .where(eq(contracts.id, input.contractId))
+      .for("update")
+      .limit(1);
+    if (!locked) throw new Error("Contract not found");
+    if (locked.status !== "draft" && locked.status !== "sent" && locked.status !== "viewed") {
+      throw new Error(`Cannot send contract with status ${locked.status}`);
+    }
+
+    const appUrl = (
+      process.env.NEXT_PUBLIC_APP_URL ??
+      process.env.BETTER_AUTH_URL ??
+      "https://cubiqlo.com"
+    ).replace(/\/$/, "");
+    const replyTo = await resolveWorkspaceReplyTo(workspaceId);
+    const emailResult = await sendNotification({
+      to: recipientEmail,
+      subject: `Contract for signature: ${c.title}`,
+      text:
+        `Hi ${client.name || "there"},\n\n` +
+        `${ws?.name || "Cubiqlo"} sent you a contract for signature: "${c.title}".\n\n` +
+        `Review and sign it here:\n${appUrl}/contract/${token}\n\n` +
+        (vars["valid_until"] ? `This link is valid until ${vars["valid_until"]}.\n\n` : "\n") +
+        `If you have any questions, just reply to this email.`,
+      type: "contract_sent",
+      replyTo,
+    });
+    if (!emailResult.success) {
+      throw new Error("Failed to send contract email — contract was not marked as sent");
+    }
+
+    return tx.update(contracts)
+      .set({
+        bodyResolved,
+        variables: vars,
+        sharedTokenHash: hashToken(token),
+        sharedTokenExpiresAt: expiresAt,
+        sentAt: new Date(),
+        status: "sent",
+        updatedAt: new Date(),
+      })
+      .where(eq(contracts.id, c.id))
+      .returning();
+  });
 
   await writeActivityLog(workspaceId, user.id, "sent_contract", "contract", c.id, {
     title: c.title,

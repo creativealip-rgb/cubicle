@@ -15,9 +15,9 @@ const MB = 1024 * 1024;
 const GB = 1024 * MB;
 
 export function getUploadQuotaLimits(plan: string): UploadQuotaLimits {
-  if (plan === "team") return { maxFileBytes: 50 * MB, maxWorkspaceBytes: 25 * GB, maxWorkspaceFiles: 25_000, maxClientBytes: 5 * GB, maxClientFiles: 5_000 };
-  if (plan === "solo") return { maxFileBytes: 25 * MB, maxWorkspaceBytes: 5 * GB, maxWorkspaceFiles: 5_000, maxClientBytes: 1 * GB, maxClientFiles: 1_000 };
-  return { maxFileBytes: 5 * MB, maxWorkspaceBytes: 100 * MB, maxWorkspaceFiles: 100, maxClientBytes: 0, maxClientFiles: 0 };
+  if (plan === "team") return { maxFileBytes: 50 * MB, maxWorkspaceBytes: 5 * GB, maxWorkspaceFiles: 5_000, maxClientBytes: 0, maxClientFiles: 0 };
+  if (plan === "solo") return { maxFileBytes: 25 * MB, maxWorkspaceBytes: 5 * GB, maxWorkspaceFiles: 5_000, maxClientBytes: 0, maxClientFiles: 0 };
+  return { maxFileBytes: 5 * MB, maxWorkspaceBytes: 1 * GB, maxWorkspaceFiles: 1_000, maxClientBytes: 0, maxClientFiles: 0 };
 }
 
 export function checkUploadQuota(input: {

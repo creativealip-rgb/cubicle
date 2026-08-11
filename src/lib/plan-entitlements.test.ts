@@ -43,8 +43,8 @@ describe("plan entitlements", () => {
       maxFileSizeMb: 25,
     });
     expect(getPlanLimits("team")).toMatchObject({
-      maxWorkspaces: 0,
-      maxMembers: 0,
+      maxWorkspaces: 3,
+      maxMembers: 5,
       canInviteMembers: true,
       hasClientPortal: true,
       hasAiAssistant: true,

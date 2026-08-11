@@ -15,6 +15,8 @@ describe("AI quota atomicity contract (plan.ts)", () => {
     const src = plan();
     expect(src).toContain("onConflictDoUpdate");
     expect(src).toContain(".returning({ count: aiUsageDaily.count })");
+    // Monthly window must use a stable month key, not current_date.
+    expect(src).toContain("date_trunc('month', current_date)");
     // Old two-step SELECT-then-increment (read + write race window) must be gone.
     expect(src).not.toContain("COALESCE(SUM(");
   });

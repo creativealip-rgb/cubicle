@@ -447,6 +447,24 @@ export async function streamChat(
         if (delta?.tool_calls && delta.tool_calls.length > 0) {
           for (const tc of delta.tool_calls) mergeToolCall(tc);
         }
+        if (choice.finish_reason === "stop" || choice.finish_reason === "length") {
+          // Some OpenAI-compatible upstreams omit data: [DONE] and keep SSE open.
+          // Finish on terminal choice instead of hanging request until platform timeout.
+          if (emitTimer) {
+            clearTimeout(emitTimer);
+            flushPending();
+          }
+          onEvent({ type: "usage", usage: finalUsage });
+          onEvent({ type: "done" });
+          return {
+            message: {
+              role: "assistant",
+              content,
+              tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
+            },
+            usage: finalUsage,
+          };
+        }
         if (choice.finish_reason === "tool_calls") {
           // Flush any pending content, then emit tool_call events
           if (emitTimer) {

@@ -6,7 +6,7 @@ export function assertTaskModeMutationAllowed(
 ) {
   if (
     mode === "reusable"
-    && [input.status, input.priority, input.dueDate, input.clientVisible].some((value) => value !== undefined)
+    && [input.status, input.priority, input.dueDate].some((value) => value !== undefined)
   ) {
     throw new Error("Reusable task tidak mendukung field workflow");
   }

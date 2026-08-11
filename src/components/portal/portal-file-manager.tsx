@@ -249,7 +249,7 @@ export function PortalFileManager({
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold">File</h2>
+          <h2 className="text-xl font-semibold">{t("File", "Files")}</h2>
           <p className="text-sm text-muted-foreground">
             {t(
               "Kelola file yang dibagikan. Total",
@@ -461,7 +461,7 @@ export function PortalFileManager({
                     <p className="break-words text-sm font-medium">
                       {folder.name}
                     </p>
-                    <p className="text-xs text-muted-foreground">Folder</p>
+                    <p className="text-xs text-muted-foreground">{t("Folder", "Folder")}</p>
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </button>
@@ -510,7 +510,7 @@ export function PortalFileManager({
                     <p className="break-words text-sm font-medium">
                       {folder.name}
                     </p>
-                    <p className="text-xs text-muted-foreground">Folder</p>
+                    <p className="text-xs text-muted-foreground">{t("Folder", "Folder")}</p>
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </button>

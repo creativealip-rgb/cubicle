@@ -87,13 +87,13 @@ export default async function ClientPortalPage({
           <Card className="w-full max-w-sm">
             <CardContent className="space-y-4 p-6">
               <div className="text-center"><Globe className="mx-auto mb-3 h-8 w-8 text-primary" />
-                <h1 className="text-lg font-semibold">Portal Klien</h1>
-                <p className="text-sm text-muted-foreground">Masukkan password untuk melanjutkan.</p>
+                <h1 className="text-lg font-semibold">{t("Portal Klien", "Client Portal")}</h1>
+                <p className="text-sm text-muted-foreground">{t("Masukkan password untuk melanjutkan.", "Enter your password to continue.")}</p>
               </div>
               <form action={`/client-portal/${slugOrToken}/unlock`} method="post" className="space-y-3">
-                <Input name="password" type="password" autoComplete="current-password" required minLength={8} placeholder="Password portal" />
-                {error && <p className="text-sm text-destructive">Password salah atau terlalu banyak percobaan.</p>}
-                <Button className="w-full" type="submit">Buka portal</Button>
+                <Input name="password" type="password" autoComplete="current-password" required minLength={8} placeholder={t("Password portal", "Portal password")} />
+                {error && <p className="text-sm text-destructive">{t("Password salah atau terlalu banyak percobaan.", "Incorrect password or too many attempts.")}</p>}
+                <Button className="w-full" type="submit">{t("Buka portal", "Open portal")}</Button>
               </form>
             </CardContent>
           </Card>

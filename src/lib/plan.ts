@@ -47,9 +47,9 @@ const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxFileSizeMb: 25,
   },
   team: {
-    maxWorkspaces: 0,
+    maxWorkspaces: 3,
     canInviteMembers: true,
-    maxMembers: 0,
+    maxMembers: 5,
     hasClientPortal: true,
     hasAiAssistant: true,
     aiRequestsPerMonth: 1000,
@@ -211,7 +211,7 @@ export async function checkAiRateLimitDb(
     .insert(aiUsageDaily)
     .values({
       workspaceId,
-      usageDate: sql`current_date`,
+      usageDate: sql`date_trunc('month', current_date)::date`,
       count: 1,
     })
     .onConflictDoUpdate({
@@ -250,7 +250,7 @@ export async function releaseAiQuota(workspaceId: string): Promise<void> {
     .where(
       and(
         eq(aiUsageDaily.workspaceId, workspaceId),
-        eq(aiUsageDaily.usageDate, sql`current_date`),
+        eq(aiUsageDaily.usageDate, sql`date_trunc('month', current_date)::date`),
         gt(aiUsageDaily.count, 0),
       ),
     );

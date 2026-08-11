@@ -141,7 +141,7 @@ export function PortalTabs({
     },
     {
       key: "invoices",
-      label: "Invoice",
+      label: t("Invoice", "Invoices"),
       icon: <Receipt className="h-3.5 w-3.5" />,
       badge: counts?.invoices,
     },

@@ -433,11 +433,11 @@ function ProjectExpandedContent({
           </div>
           {includedServices.length > 0 ? (
             <div className="text-xs text-muted-foreground">
-              <p className="font-medium text-foreground">Layanan termasuk</p>
+              <p className="font-medium text-foreground">{t("Layanan termasuk", "Included services")}</p>
               <p>{includedServices.map((service) => service.serviceName).join(", ")}</p>
             </div>
           ) : assignedPackage?.projectPackageAssignmentId ? (
-            <p className="text-xs text-muted-foreground">Paket diarsipkan, riwayat order tetap aman.</p>
+            <p className="text-xs text-muted-foreground">{t("Paket diarsipkan, riwayat order tetap aman.", "Package archived; order history remains safe.")}</p>
           ) : null}
         </div>
       )}
@@ -611,7 +611,7 @@ function ProjectExpandedContent({
                   )}
                   {pkg.includedServices && pkg.includedServices.length > 0 && (
                     <div className="rounded-md bg-muted/40 p-2 text-left text-xs text-muted-foreground">
-                      <p className="font-medium text-foreground">Layanan termasuk</p>
+                      <p className="font-medium text-foreground">{t("Layanan termasuk", "Included services")}</p>
                       <p>{pkg.includedServices.map((service) => service.serviceName).join(", ")}</p>
                     </div>
                   )}
@@ -673,7 +673,7 @@ function ProjectExpandedContent({
                       Menunggu
                     </Badge>
                   )}
-                  {!order.packageName && <span className="text-xs text-muted-foreground">Paket diarsipkan</span>}
+                  {!order.packageName && <span className="text-xs text-muted-foreground">{t("Paket diarsipkan", "Package archived")}</span>}
                   <span className="text-xs text-muted-foreground">
                     {new Date(order.createdAt).toLocaleDateString()}
                   </span>

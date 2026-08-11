@@ -34,9 +34,10 @@ export const viewport: Viewport = {
 };
 
 const isDevelopment = process.env.CUBIQLO_ENV === "development";
+const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://cubiqlo.com";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://cubiqlo.com"),
+  metadataBase: new URL(appUrl),
   title: {
     default: "Cubiqlo — Client Operations Hub",
     template: "%s | Cubiqlo",

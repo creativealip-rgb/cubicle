@@ -87,9 +87,12 @@ export async function POST(req: NextRequest) {
       visibility,
       fileType,
     });
+    // completeUpload enforces the workspace quota atomically around the
+    // files insert — no separate reservation needed on this path.
 
     return NextResponse.json({ ok: true, file: record });
   } catch (err: unknown) {
+    console.error("[files/upload] failed", err);
     if (uploadedObject) await deleteStoredFile(uploadedObject).catch(() => undefined);
     const safe = safeUploadErrorResponse(err);
     return NextResponse.json({ error: safe.error }, { status: safe.status });

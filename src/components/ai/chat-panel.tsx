@@ -76,6 +76,14 @@ type Conv = {
   messageCount: number;
 };
 
+function normalizeAssistantText(text: string): string {
+  return text
+    .replace(/([^\n])\s*\*\s+(?=\*{0,2}(?:Klien|Proyek|Tugas|Invoice|Pengeluaran|Anggota|Keuangan|Tagihan))/g, "$1\n* ")
+    .replace(/(\d)(?=(?:terlambat|belum))/g, "$1 ")
+    .replace(/(proyek|klien|tugas|invoice)(?=(aktif|belum|open|terbuka))/gi, "$1 ")
+    .replace(/\)(?=senilai|total|sebesar)/gi, ") ");
+}
+
 function formatRelativeTime(iso: string): string {
   if (!iso) return "";
   const t = new Date(iso).getTime();
@@ -821,7 +829,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                             )}
                             {m.content && (
                               <div className="whitespace-pre-wrap break-words">
-                                {m.content}
+                                {normalizeAssistantText(m.content)}
                               </div>
                             )}
                             {!m.content && m.confirmation && (

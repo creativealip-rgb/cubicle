@@ -1,6 +1,17 @@
-# Cubicle Remaining Plan — From MVP Demo to Production-Ready
+# Cubicle Remaining Plan
+
+> **HISTORICAL DOCUMENT — SUPERSEDED (2026-08-11).** Active requirements and status live in [`docs/plans/2026-08-11-cubiqlo-final-billing-storage-plan.md`](plans/2026-08-11-cubiqlo-final-billing-storage-plan.md). Old pricing, limits, and `unlimited` Team wording below are historical only; do not reuse them.
+
+# From MVP Demo to Production-Ready
 
 Last updated: 2026-07-05
+
+> **HISTORICAL DOCUMENT — SUPERSEDED (2026-08-11).** Pricing, workspace/member
+> limits, storage quota, add-on, and document-send requirements in this file are
+> **historical** and may be stale. The canonical active plan is
+> [`docs/plans/2026-08-11-cubiqlo-final-billing-storage-plan.md`](plans/2026-08-11-cubiqlo-final-billing-storage-plan.md).
+> Follow that file for any new implementation; do not reuse old pricing
+> (e.g. Rp 49rb/Rp 99rb) or `unlimited` Team limits from this document.
 
 ## 1. Current Status
 

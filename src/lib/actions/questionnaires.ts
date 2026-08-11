@@ -4,13 +4,15 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { questionnaires, questionnaireResponses, clients } from "@/db/schema";
+import { questionnaires, questionnaireResponses, clients, workspaces } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { z } from "zod";
 import * as crypto from "node:crypto";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
+import { sendNotification } from "@/lib/notifications";
+import { resolveWorkspaceReplyTo } from "@/lib/workspace-reply-to";
 import {
   questionnaireSchemaInput,
   safeParseQuestionnaireSchema,
@@ -128,22 +130,54 @@ export async function sendQuestionnaire(input: {
     .where(and(eq(clients.id, input.clientId), eq(clients.workspaceId, workspaceId)))
     .limit(1);
   if (!c) throw new Error("Client not found");
+  if (!c.email) throw new Error("Client email is missing");
+  const recipientEmail = c.email;
+  const [ws] = await db.select({ name: workspaces.name })
+    .from(workspaces)
+    .where(eq(workspaces.id, workspaceId))
+    .limit(1);
 
   const token = generateToken();
   const ttl = input.ttlDays ?? 30;
   const expiresAt = new Date(Date.now() + ttl * 24 * 60 * 60 * 1000);
 
-  const [resp] = await db.insert(questionnaireResponses).values({
-    workspaceId,
-    questionnaireId: q.id,
-    clientId: c.id,
-    projectId: input.projectId || null,
-    respondentName: c.name,
-    respondentEmail: c.email,
-    status: "pending",
-    sharedTokenHash: hashToken(token),
-    sharedTokenExpiresAt: expiresAt,
-  }).returning();
+  // Transactional send: create the pending response + share token and email the
+  // client, committing only after the email succeeded. If the email fails, throw
+  // so the transaction rolls back — no orphaned "pending" response is created.
+  const [resp] = await db.transaction(async (tx) => {
+    const appUrl = (
+      process.env.NEXT_PUBLIC_APP_URL ??
+      process.env.BETTER_AUTH_URL ??
+      "https://cubiqlo.com"
+    ).replace(/\/$/, "");
+    const replyTo = await resolveWorkspaceReplyTo(workspaceId);
+    const emailResult = await sendNotification({
+      to: recipientEmail,
+      subject: `Questionnaire: ${q.name}`,
+      text:
+        `Hi ${c.name || "there"},\n\n` +
+        `${ws?.name || "Cubiqlo"} sent you a questionnaire: "${q.name}".\n\n` +
+        `Fill it out here:\n${appUrl}/intake/${token}\n\n` +
+        `This link is valid for ${ttl} days. If you have any questions, just reply to this email.`,
+      type: "questionnaire_sent",
+      replyTo,
+    });
+    if (!emailResult.success) {
+      throw new Error("Failed to send questionnaire email — response was not created");
+    }
+
+    return tx.insert(questionnaireResponses).values({
+      workspaceId,
+      questionnaireId: q.id,
+      clientId: c.id,
+      projectId: input.projectId || null,
+      respondentName: c.name,
+      respondentEmail: c.email,
+      status: "pending",
+      sharedTokenHash: hashToken(token),
+      sharedTokenExpiresAt: expiresAt,
+    }).returning();
+  });
 
   await writeActivityLog(workspaceId, user.id, "sent_questionnaire", "questionnaire_response", resp.id, {
     questionnaireName: q.name,

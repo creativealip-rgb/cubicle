@@ -1,11 +1,22 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { randomBytes } from "crypto";
+import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { pakasirPayments, users, workspaceMembers } from "@/db/schema";
+import { pakasirPayments, userStorageAddons, users, workspaceMembers } from "@/db/schema";
 import { createPakasirTransaction, isPakasirConfigured, pakasirPaymentUrl } from "@/lib/pakasir";
-import { BILLING_PLANS, isBillingPlan, type BillingPlan } from "@/lib/billing-plans";
+import {
+  BILLING_PLANS,
+  STORAGE_ADDONS,
+  getPlanAmount,
+  getStorageAddonAmount,
+  isBillingPlan,
+  isStorageAddonKey,
+  type BillingPeriod,
+  type BillingPlan,
+  type StorageAddonKey,
+} from "@/lib/billing-plans";
 
 const PLAN_RANK: Record<BillingPlan, number> = {
   free: 0,
@@ -29,11 +40,78 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => ({}));
   const plan = String(body.plan || "").toLowerCase();
+  const period = String(body.period || "yearly").toLowerCase() as BillingPeriod;
+  if (period !== "monthly" && period !== "yearly") {
+    return NextResponse.json({ error: "Periode billing tidak valid." }, { status: 400 });
+  }
   if (!isBillingPlan(plan)) {
     return NextResponse.json({ error: "Plan tidak valid. Pilih solo atau team." }, { status: 400 });
   }
   if (plan === "free") {
     return NextResponse.json({ error: "Plan free tidak butuh pembayaran." }, { status: 400 });
+  }
+
+  // Storage add-on purchase: buy extra GB for the current plan period without
+  // touching the plan itself. The addon key is persisted on the payment row so
+  // the webhook can create the entitlement idempotently on payment completion.
+  const addonRaw = body.addon ?? null;
+  if (addonRaw !== null) {
+    if (!isStorageAddonKey(addonRaw)) {
+      return NextResponse.json({ error: "Ukuran add-on tidak valid. Pilih 5, 10, atau 15 GB." }, { status: 400 });
+    }
+    const addon = addonRaw as StorageAddonKey;
+
+    // Still need a workspace for orderId generation and payment record
+    const [membership] = await db
+      .select({ workspaceId: workspaceMembers.workspaceId, role: workspaceMembers.role })
+      .from(workspaceMembers)
+      .where(eq(workspaceMembers.userId, session.user.id))
+      .limit(1);
+
+    if (!membership?.workspaceId) {
+      return NextResponse.json({ error: "Workspace tidak ditemukan" }, { status: 404 });
+    }
+
+    const amount = getStorageAddonAmount(addon, period);
+    const shortWs = membership.workspaceId.replace(/-/g, "").slice(0, 10).toUpperCase();
+    // Random suffix prevents order ID collisions on same-ms double checkout
+    // (order_id is UNIQUE on pakasir_payments and is the payment identity at
+    // Pakasir).
+    const orderId = `CUB-${shortWs}-GB${addon}-${Date.now()}-${randomBytes(3).toString("hex").toUpperCase()}`;
+
+    try {
+      const payment = await createPakasirTransaction({ orderId, amount, method: "qris" });
+      const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://cubiqlo.com").replace(/\/$/, "");
+      const redirectUrl = `${appUrl}/app/billing?checkout=${encodeURIComponent(orderId)}`;
+      const paymentUrl = pakasirPaymentUrl({
+        project: payment.project,
+        amount: payment.amount,
+        orderId: payment.order_id,
+        redirectUrl,
+      });
+
+      await db.insert(pakasirPayments).values({
+        workspaceId: membership.workspaceId,
+        orderId,
+        plan,
+        billingPeriod: period,
+        paymentType: "storage_addon",
+        entitlementRef: String(addon),
+        amount: String(amount),
+        status: "pending",
+        rawPayload: payment,
+      });
+
+      return NextResponse.json({
+        success: true,
+        data: { orderId, addon: Number(addon), amount, paymentUrl },
+      });
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "Gagal membuat pembayaran" },
+        { status: 502 },
+      );
+    }
   }
 
   // Get user plan
@@ -82,9 +160,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Workspace tidak ditemukan" }, { status: 404 });
   }
 
-  const amount = BILLING_PLANS[plan].amount;
+  const amount = getPlanAmount(plan as Exclude<BillingPlan, "free">, period);
   const shortWs = membership.workspaceId.replace(/-/g, "").slice(0, 10).toUpperCase();
-  const orderId = `CUB-${shortWs}-${plan.toUpperCase()}-${Date.now()}`;
+  // Random suffix prevents order ID collisions when the same user/plan is
+  // checked out twice within the same millisecond (order_id is UNIQUE on
+  // pakasir_payments and is the payment identity at Pakasir).
+  const orderId = `CUB-${shortWs}-${plan.toUpperCase()}-${Date.now()}-${randomBytes(3).toString("hex").toUpperCase()}`;
 
   try {
     const payment = await createPakasirTransaction({ orderId, amount, method: "qris" });
@@ -101,6 +182,7 @@ export async function POST(request: Request) {
       workspaceId: membership.workspaceId,
       orderId,
       plan,
+      billingPeriod: period,
       amount: String(amount),
       status: "pending",
       rawPayload: payment,

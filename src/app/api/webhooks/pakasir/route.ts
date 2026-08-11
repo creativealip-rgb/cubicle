@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { pakasirPayments, users, workspaces } from "@/db/schema";
+import { pakasirPayments, userStorageAddons, users, workspaces } from "@/db/schema";
 import { getPakasirTransactionDetail, pakasirProject, type PakasirWebhook } from "@/lib/pakasir";
 import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
-import { annualPlanExpiry } from "@/lib/billing-plans";
+import { getPeriodExpiry } from "@/lib/billing-plans";
+import { activateExtraWorkspaceEntitlementTx } from "@/lib/extra-workspace";
+import { activateStorageAddonTx } from "@/lib/storage-addons";
 
 export async function POST(request: Request) {
   const limited = await enforceRateLimitResponse(request, "webhook:pakasir", { limit: 120, windowSec: 60 });
@@ -66,7 +68,15 @@ export async function POST(request: Request) {
   if (Number.isNaN(paidAt.getTime())) {
     return NextResponse.json({ error: "Invalid completion time" }, { status: 400 });
   }
-  const expiresAt = annualPlanExpiry(paidAt);
+  const expiresAt = getPeriodExpiry(paidAt, payment.billingPeriod);
+
+  // Add-on purchases (storage / extra workspace) reuse the same payment row.
+  // The addon/entitlement key is persisted on the pending row, so replay/dedup
+  // works exactly like plan activation: provider order_id uniqueness + the
+  // pending->completed conditional update. A webhook that was already handled
+  // returns idempotent before any entitlement write is attempted.
+  const storageAddonKey = payment.paymentType === "storage_addon" ? payment.entitlementRef : null;
+  const extraWorkspace = payment.paymentType === "extra_workspace";
 
   const result = await db.transaction(async (tx) => {
     const locked = await tx.execute(sql`
@@ -83,7 +93,7 @@ export async function POST(request: Request) {
       .limit(1);
     if (!current) return { kind: "not_found" as const };
     if (current.status === "completed") {
-      return { kind: "idempotent" as const, plan: current.plan };
+      return { kind: "idempotent" as const, plan: current.plan, entitlementId: current.entitlementRef };
     }
     if (current.status !== "pending") {
       return { kind: "ignored" as const, status: current.status };
@@ -99,6 +109,61 @@ export async function POST(request: Request) {
       .limit(1);
     if (!workspace?.ownerId) return { kind: "owner_not_found" as const };
 
+    // Storage add-on: create the entitlement once (provider order/event ID
+    // uniqueness guards replay), then mark the payment completed.
+    if (storageAddonKey) {
+      const activated = await activateStorageAddonTx(tx, {
+        userId: workspace.ownerId,
+        storageBytes: Number(storageAddonKey) * 1024 ** 3,
+        amount: Math.round(Number(current.amount)),
+        billingPeriod: current.billingPeriod,
+        paidAt,
+        providerOrderId: current.orderId,
+        providerEventId: body.order_id,
+      });
+      if (activated.kind === "existing") {
+        return { kind: "idempotent" as const, plan: current.plan, entitlementId: activated.entitlementId };
+      }
+      await tx
+        .update(pakasirPayments)
+        .set({
+          status: "completed",
+          rawPayload: body,
+          paidAt,
+          updatedAt: new Date(),
+        })
+        .where(eq(pakasirPayments.id, current.id));
+      return { kind: "addon_activated" as const, entitlementId: activated.entitlementId };
+    }
+
+    // Extra-workspace add-on: create/refresh the entitlement but do not touch
+    // the plan.
+    if (extraWorkspace) {
+      const activated = await activateExtraWorkspaceEntitlementTx(tx, {
+        userId: workspace.ownerId,
+        quantity: 1,
+        amount: Number(current.amount),
+        billingPeriod: current.billingPeriod,
+        paidAt,
+        providerOrderId: current.orderId,
+        providerEventId: body.order_id,
+      });
+      if (activated.kind === "existing") {
+        return { kind: "idempotent" as const, plan: current.plan, entitlementId: activated.entitlementId };
+      }
+      await tx
+        .update(pakasirPayments)
+        .set({
+          status: "completed",
+          rawPayload: body,
+          paidAt,
+          updatedAt: new Date(),
+        })
+        .where(eq(pakasirPayments.id, current.id));
+      return { kind: "activated" as const, plan: current.plan, entitlementId: activated.entitlementId };
+    }
+
+    // Plan payment: activate the plan for the workspace owner.
     await tx
       .update(users)
       .set({ plan: current.plan, planExpiresAt: expiresAt })
@@ -139,6 +204,9 @@ export async function POST(request: Request) {
   }
 
   revalidatePath("/app/billing");
+  if (result.kind === "addon_activated") {
+    return NextResponse.json({ ok: true, activated: true, entitlementId: result.entitlementId });
+  }
   return NextResponse.json({ ok: true, activated: true, plan: result.plan });
 }
 

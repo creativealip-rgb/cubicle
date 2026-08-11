@@ -270,8 +270,21 @@ Production E2E terbaru:
 - Portal slug + password unlock + portal File upload: PASS.
 - Expense create/edit/reload/delete + receipt PNG upload: PASS.
 - Public booking render + `Asia/Jakarta` timezone + slot select + submit + confirmation + DB persistence: PASS.
-- Calendar internal cancel dan authenticated `.ics` download: belum.
+- Calendar/booking: PASS. Availability rule UI, future public booking, internal appointment visibility, authenticated `.ics` download (`200`, `text/calendar`, attachment, `BEGIN:VCALENDAR`, `BEGIN:VEVENT`, `STATUS:CONFIRMED`), internal cancel, dan post-cancel disappearance verified. Fixture cleaned via UI.
 - Email, AI quota/concurrency, mobile 390px, full authenticated route sweep: belum.
+
+### Checkpoint update — 2026-08-10 continuation
+
+- Expense production E2E rerun: PASS (`1 passed`, `e2e/production-qa-expense.spec.ts`, workers=1, retries=0).
+- Calendar authenticated browser probe: PASS untuk auth + route render; current workspace `QA E2E Orchestrator's Workspace`, `0 terjadwal`, no ICS href.
+- Calendar cancel/ICS mutation: PASS. Same-workspace future booking created via public UI, internal cancel via UI, authenticated ICS response validated, fixture disappeared after cancel.
+- Mobile 390px authenticated route sweep: PASS for 11 routes (`200`, no horizontal overflow, no visible app error). `/app/ai` returns `404` — route inventory mismatch, not mobile overflow.
+- Existing `e2e/client-task-revision.spec.ts` mobile/full-route attempt: BLOCKED sebagai setup mismatch; semua 8 test gagal `connect ECONNREFUSED 127.0.0.1:5432` karena spec memakai direct local DB fixture.
+- AI assistant production: basic `cek` and complex `Ringkas minggu ini` PASS after production image `cubicle-cubiqlo:ai-format-fix2`; tool loops complete with `done`, 1–3 tool calls. Two parallel requests PASS (`200`, `done`, no error), latency ~25s. Formatting retest PASS: spaces restored in `proyek aktif`, `klien aktif`, and invoice amount output. AI quota exact cap test not run.
+- AI quota audit/fix: monthly limit bug fixed. `aiUsageDaily` now keys reserve/refund to `date_trunc('month', current_date)::date`; atomic concurrency contract test `9/9` PASS. Production image `cubicle-cubiqlo:monthly-ai-quota-fix2` deployed; `/api/health` `{\"status\":\"ok\",\"db\":\"ok\"}`. Exact cap exhaustion and cross-month boundary E2E still OPEN.
+- AI formatting production retest after `cubicle-cubiqlo:ai-format-fix2`: content spacing PASS for `proyek aktif`, `klien aktif`, and invoice amount; no concatenated-pattern failure observed.
+- Quota post-deploy read-only DB check: current table still contains legacy daily rows from before migration plus current-month rows; no destructive cleanup performed. Exact quota exhaustion deferred to isolated QA quota fixture to avoid consuming production QA allowance.
+- Email: hidden feature, excluded from current release scope.
 
 Production health terakhir:
 

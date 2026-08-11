@@ -21,8 +21,8 @@ describe("upload quota policy", () => {
   it("uses plan-specific file and aggregate limits", () => {
     expect(getUploadQuotaLimits("free")).toEqual({
       maxFileBytes: 5 * 1024 * 1024,
-      maxWorkspaceBytes: 100 * 1024 * 1024,
-      maxWorkspaceFiles: 100,
+      maxWorkspaceBytes: 1 * 1024 * 1024 * 1024,
+      maxWorkspaceFiles: 1_000,
       maxClientBytes: 0,
       maxClientFiles: 0,
     });

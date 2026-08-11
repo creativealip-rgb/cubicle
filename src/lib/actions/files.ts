@@ -18,6 +18,7 @@ import {
 } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { deleteStoredFile } from "@/lib/r2";
+import { reserveWorkspaceUploadTx, consumeWorkspaceUploadTx } from "@/lib/storage-quota";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -67,21 +68,33 @@ export async function completeUpload(input: z.infer<typeof completeUploadReqSche
       ? "client"
       : parsed.visibility;
 
-  const [file] = await db.insert(files).values({
-    workspaceId: parsed.workspaceId,
-    clientId: parsed.clientId || null,
-    projectId: parsed.projectId || null,
-    folderId: parsed.folderId || null,
-    name: parsed.name,
-    storageKey: parsed.storageKey,
-    mimeType: parsed.mimeType || null,
-    sizeBytes: parsed.sizeBytes || null,
-    visibility,
-    fileType: parsed.fileType,
-    uploadedBy: user.id,
-  }).returning();
+  // Insert the file row and enforce the workspace quota in the same
+  // transaction: the reservation is held until the row commits, so a direct
+  // completeUpload call can never bypass the workspace byte/file limits.
+  const file = await db.transaction(async (tx) => {
+    await reserveWorkspaceUploadTx(tx, parsed.workspaceId, parsed.sizeBytes ?? 0);
+    const [inserted] = await tx.insert(files).values({
+      workspaceId: parsed.workspaceId,
+      clientId: parsed.clientId || null,
+      projectId: parsed.projectId || null,
+      folderId: parsed.folderId || null,
+      name: parsed.name,
+      storageKey: parsed.storageKey,
+      mimeType: parsed.mimeType || null,
+      sizeBytes: parsed.sizeBytes || null,
+      visibility,
+      fileType: parsed.fileType,
+      uploadedBy: user.id,
+    }).returning();
+    await consumeWorkspaceUploadTx(tx, parsed.workspaceId, parsed.sizeBytes ?? 0);
+    return inserted;
+  });
 
-  await writeActivityLog(parsed.workspaceId, user.id, "uploaded_file", "file", file.id);
+  try {
+    await writeActivityLog(parsed.workspaceId, user.id, "uploaded_file", "file", file.id);
+  } catch {
+    // Activity log is best-effort; the upload itself already committed.
+  }
   revalidatePath("/app/files");
   return file;
 }
