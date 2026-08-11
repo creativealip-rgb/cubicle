@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { Loader2, Play } from "lucide-react";
 import { toast } from "sonner";
 import { startTimer } from "@/lib/actions/time";
-import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n-client";
+import { Button } from "@/components/ui/button";
 
 type Project = { id: string; name: string; customerRef: string | null };
 type Task = { id: string; title: string; projectRef: string | null };
@@ -33,7 +33,7 @@ export function NewTimerDialog({
     try {
       await startTimer({ workspaceId });
       window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
-      toast.success("Timer dimulai. Detail bisa diisi setelah selesai lewat timesheet.");
+      toast.success(t("Timer dimulai. Detail bisa diisi setelah selesai lewat timesheet.", "Timer started. Details can be filled after stopping from the timesheet."));
       router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Gagal memulai timer");

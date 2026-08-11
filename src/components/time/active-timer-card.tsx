@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { pauseTimer, resumeTimer, stopTimer } from "@/lib/actions/time";
 import { Button } from "@/components/ui/button";
 import type { TimerFormClient, TimerFormProject, TimerFormTask } from "@/components/time/stop-timer-dialog";
+import { useT } from "@/lib/i18n-client";
 
 type ActiveTimer = {
   id: string;
@@ -35,6 +36,7 @@ export function ActiveTimerCard({ initialTimer }: {
   projects: TimerFormProject[];
   tasks: TimerFormTask[];
 }) {
+  const { t } = useT();
   const router = useRouter();
   const [timer, setTimer] = useState(initialTimer);
 
@@ -81,7 +83,7 @@ export function ActiveTimerCard({ initialTimer }: {
       try {
         await stopTimer(timer.id);
         setTimer(null);
-        toast.success("Timer dihentikan. Detail bisa diisi nanti lewat timesheet.");
+        toast.success(t("Timer dihentikan. Detail bisa diisi nanti lewat timesheet.", "Timer stopped. Details can be filled later from the timesheet."));
         window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
         router.refresh();
       } catch (error) {
@@ -93,14 +95,14 @@ export function ActiveTimerCard({ initialTimer }: {
     <section className="rounded-lg border bg-card p-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 text-xs font-semibold text-primary"><Clock className="h-4 w-4" />Timer aktif</div>
-          <p className="mt-1 truncate text-sm font-medium">{timer.projectName || "Tanpa proyek"}{timer.taskTitle ? ` · ${timer.taskTitle}` : " · Tanpa task"}</p>
+          <div className="flex items-center gap-2 text-xs font-semibold text-primary"><Clock className="h-4 w-4" />{t("Timer aktif", "Active timer")}</div>
+          <p className="mt-1 truncate text-sm font-medium">{timer.projectName || t("Tanpa proyek", "No project")}{timer.taskTitle ? ` · ${timer.taskTitle}` : ` · ${t("Tanpa task", "No task")}`}</p>
           {timer.description && <p className="truncate text-xs text-muted-foreground">{timer.description}</p>}
         </div>
         <div className="flex items-center gap-2">
           <strong className="min-w-24 font-mono text-lg tabular-nums">{formatElapsed(timer.startTime, timer.pausedAt)}</strong>
-          {paused ? <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => resumeTimer(timer.id), "Timer dilanjutkan")}><Play className="mr-1 h-4 w-4" />Lanjutkan</Button> : <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => pauseTimer(timer.id), "Timer dijeda")}><Pause className="mr-1 h-4 w-4" />Jeda</Button>}
-          <Button size="sm" variant="destructive" disabled={pending} onClick={handleStop}><Square className="mr-1 h-4 w-4" />Hentikan</Button>
+          {paused ? <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => resumeTimer(timer.id), t("Timer dilanjutkan", "Timer resumed"))}><Play className="mr-1 h-4 w-4" />{t("Lanjutkan", "Resume")}</Button> : <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => pauseTimer(timer.id), t("Timer dijeda", "Timer paused"))}><Pause className="mr-1 h-4 w-4" />{t("Jeda", "Pause")}</Button>}
+          <Button size="sm" variant="destructive" disabled={pending} onClick={handleStop}><Square className="mr-1 h-4 w-4" />{t("Hentikan", "Stop")}</Button>
         </div>
       </div>
     </section>

@@ -102,6 +102,10 @@ function toDateInputValue(value: Date | string | null | undefined): string {
   return `${year}-${month}-${day}`;
 }
 
+function localDateKey(value: Date | string | null | undefined): string {
+  return value ? toDateInputValue(value) : "";
+}
+
 export function Timesheet({ entries, clients, projects, tasks = [], activities: _activities = [], compact = false }: TimesheetProps) {
   const { t, locale } = useT();
   const router = useRouter();
@@ -144,11 +148,11 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
       )
         return false;
       if (dateFrom) {
-        const entryDate = e.startTime ? new Date(e.startTime).toISOString().split("T")[0] : "";
+        const entryDate = localDateKey(e.startTime);
         if (entryDate < dateFrom) return false;
       }
       if (dateTo) {
-        const entryDate = e.startTime ? new Date(e.startTime).toISOString().split("T")[0] : "";
+        const entryDate = localDateKey(e.startTime);
         if (entryDate > dateTo) return false;
       }
       return true;
