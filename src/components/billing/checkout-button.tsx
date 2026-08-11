@@ -22,10 +22,12 @@ function loadStoredPeriod(): Period {
 export function CheckoutButton({
   plan,
   children,
+  showPeriodToggle = true,
   disabled = false,
 }: {
   plan: Plan;
   children: React.ReactNode;
+  showPeriodToggle?: boolean;
   disabled?: boolean;
 }) {
   const [period, setPeriod] = useState<Period>("yearly");
@@ -67,7 +69,7 @@ export function CheckoutButton({
 
   return (
     <div className="space-y-3">
-      {!disabled && (
+      {!disabled && showPeriodToggle !== false && (
         <div
           role="tablist"
           aria-label="Billing period"

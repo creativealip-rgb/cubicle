@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Trash2, UserPlus, Mail } from "lucide-react";
+import { useT } from "@/lib/i18n-client";
 
 type Member = {
   id: string;
@@ -35,6 +36,7 @@ export function TeamManager({
   canInvite?: boolean;
   inviteBlockedReason?: string;
 }) {
+  const { t } = useT();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"member" | "viewer">("member");
@@ -43,7 +45,7 @@ export function TeamManager({
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!canInvite) {
-      toast.error(inviteBlockedReason || "Plan tidak mengizinkan undangan.");
+      toast.error(inviteBlockedReason || t("Plan tidak mengizinkan undangan.", "Your plan does not allow invitations."));
       return;
     }
     setLoading(true);
@@ -52,13 +54,13 @@ export function TeamManager({
       if (result.status === "pending_signup") {
         toast.success(result.message, { duration: 6000 });
       } else {
-        toast.success(result.message || "Anggota tim ditambahkan");
+        toast.success(result.message || t("Anggota tim ditambahkan", "Team member added"));
       }
       setEmail("");
       setRole("member");
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Gagal menambah anggota");
+      toast.error(err instanceof Error ? err.message : t("Gagal menambah anggota", "Failed to add member"));
     } finally {
       setLoading(false);
     }
@@ -67,22 +69,22 @@ export function TeamManager({
   async function handleRoleChange(memberId: string, nextRole: "member" | "viewer") {
     try {
       await updateWorkspaceMemberRole({ memberId, role: nextRole });
-      toast.success("Peran diperbarui");
+      toast.success(t("Peran diperbarui", "Role updated"));
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Gagal memperbarui peran");
+      toast.error(err instanceof Error ? err.message : t("Gagal memperbarui peran", "Failed to update role"));
     }
   }
 
   async function handleRemove(member: Member) {
     const target = member.email || member.name || "anggota ini";
-    if (!confirm(`Hapus ${target} dari workspace?`)) return;
+    if (!confirm(t(`Hapus ${target} dari workspace?`, `Remove ${target} from workspace?`))) return;
     try {
       await removeWorkspaceMember(member.id);
-      toast.success("Anggota dihapus");
+      toast.success(t("Anggota dihapus", "Member removed"));
       router.refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Gagal menghapus anggota");
+      toast.error(err instanceof Error ? err.message : t("Gagal menghapus anggota", "Failed to remove member"));
     }
   }
 
@@ -90,12 +92,12 @@ export function TeamManager({
     <div className="space-y-4">
       {!canInvite && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          <p className="font-medium">Undangan tim terkunci</p>
+          <p className="font-medium">{t("Undangan tim terkunci", "Team invitations locked")}</p>
           <p className="mt-1 text-xs text-amber-800/90">
-            {inviteBlockedReason || "Upgrade ke plan Team untuk kolaborasi."}
+            {inviteBlockedReason || t("Upgrade ke plan Team untuk kolaborasi.", "Upgrade to Team for collaboration.")}
           </p>
           <Button asChild size="sm" variant="outline" className="mt-2 h-8">
-            <Link href="/app/billing">Upgrade plan</Link>
+            <Link href="/app/billing">{t("Upgrade plan", "Upgrade plan")}</Link>
           </Button>
         </div>
       )}
@@ -103,7 +105,7 @@ export function TeamManager({
       <form onSubmit={handleAdd} className="rounded-lg border p-3 space-y-3">
         <div className="grid gap-3 md:grid-cols-[1fr_160px_auto] md:items-end">
           <div className="space-y-2">
-            <Label htmlFor="team-email">Undang via email</Label>
+            <Label htmlFor="team-email">{t("Undang via email", "Invite by email")}</Label>
             <Input
               id="team-email"
               type="email"
@@ -115,7 +117,7 @@ export function TeamManager({
             />
           </div>
           <div className="space-y-2">
-            <Label>Peran</Label>
+            <Label>{t("Peran", "Role")}</Label>
             <Select
               value={role}
               onValueChange={(v) => setRole(v as "member" | "viewer")}
@@ -125,20 +127,19 @@ export function TeamManager({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="member">Anggota</SelectItem>
-                <SelectItem value="viewer">Pengamat</SelectItem>
+                <SelectItem value="member">{t("Anggota", "Member")}</SelectItem>
+                <SelectItem value="viewer">{t("Pengamat", "Viewer")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <LoadingButton type="submit" loading={loading} loadingText="Mengirim..." disabled={!canInvite} className="gap-2">
-            <UserPlus className="h-4 w-4" /> {"Undang"}
+          <LoadingButton type="submit" loading={loading} loadingText={t("Mengirim...", "Sending...")} disabled={!canInvite} className="gap-2">
+            <UserPlus className="h-4 w-4" /> {t("Undang", "Invite")}
           </LoadingButton>
         </div>
         <p className="text-xs text-muted-foreground flex items-start gap-1.5">
           <Mail className="h-3.5 w-3.5 mt-0.5 shrink-0" />
           <span>
-            Kalau email sudah punya akun Cubiqlo → langsung join workspace + email notif.
-            Belum daftar → email undangan signup dikirim; setelah signup, undang lagi biar masuk.
+            {t("Kalau email sudah punya akun Cubiqlo → langsung join workspace + email notif. Belum daftar → email undangan signup dikirim; setelah signup, undang lagi biar masuk.", "If email already has a Cubiqlo account → they join workspace directly and get an email notification. Not registered yet → signup invitation email is sent; invite again after signup to add them.")}
           </span>
         </p>
       </form>
@@ -147,7 +148,7 @@ export function TeamManager({
         {members.map((member) => (
           <div key={member.id} className="flex items-center justify-between rounded-lg border p-3 gap-3">
             <div className="min-w-0">
-              <p className="font-medium truncate">{member.name || "Tanpa nama"}</p>
+              <p className="font-medium truncate">{member.name || t("Tanpa nama", "Unnamed")}</p>
               <p className="text-xs text-muted-foreground truncate">{member.email}</p>
             </div>
             <div className="flex items-center gap-2">
@@ -162,8 +163,8 @@ export function TeamManager({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="member">Anggota</SelectItem>
-                    <SelectItem value="viewer">Pengamat</SelectItem>
+                    <SelectItem value="member">{t("Anggota", "Member")}</SelectItem>
+                    <SelectItem value="viewer">{t("Pengamat", "Viewer")}</SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -172,7 +173,7 @@ export function TeamManager({
                   variant="ghost"
                   size="icon"
                   className="h-11 w-11 text-destructive"
-                  aria-label={`Hapus ${member.email || member.name || "anggota"}`}
+                  aria-label={t(`Hapus ${member.email || member.name || "anggota"}`, `Remove ${member.email || member.name || "member"}`)}
                   onClick={() => handleRemove(member)}
                 >
                   <Trash2 className="h-4 w-4" />

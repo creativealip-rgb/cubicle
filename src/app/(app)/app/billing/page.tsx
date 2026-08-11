@@ -30,7 +30,7 @@ const plans = [
     key: "solo",
     name: "Solo",
     price: "Rp 75rb/bulan",
-    yearlyPrice: "Rp 900rb/tahun",
+    yearlyPrice: "Billed yearly",
     description: "Untuk freelancer yang butuh unlimited clients.",
     features: ["1 pengguna", "3 workspace", "Klien/proyek/invoice unlimited", "Client portal + AI", "100 AI request/bulan", "25 MB/file"],
   },
@@ -38,7 +38,7 @@ const plans = [
     key: "team",
     name: "Team",
     price: "Rp 165rb/bulan",
-    yearlyPrice: "Rp 1,98jt/tahun",
+    yearlyPrice: "Billed yearly",
     description: "Untuk team kecil yang handle banyak client bareng.",
     features: ["Maksimal 5 member/workspace", "Maksimal 3 workspace", "Klien/proyek/invoice unlimited", "Peran tim", "1.000 AI request/bulan", "5 GB/workspace", "50 MB/file"],
   },
@@ -150,7 +150,7 @@ export default async function BillingPage({
                 <p className="text-2xl font-semibold text-slate-950">{plan.price}</p>
                 {paid && planConfig && (
                   <p className="text-sm text-slate-600">
-                    {t("atau", "or")} {plan.yearlyPrice}
+                    {t("Ditagih tahunan", plan.yearlyPrice)}
                   </p>
                 )}
                 <p className="text-sm text-slate-600">{plan.description}</p>
@@ -160,7 +160,7 @@ export default async function BillingPage({
                   {plan.features.map((feature) => <li key={feature}>✓ {feature}</li>)}
                 </ul>
                 {paid ? (
-                  <CheckoutButton plan={plan.key} disabled={isCurrent}>
+                  <CheckoutButton plan={plan.key} showPeriodToggle={plan.key !== "team"} disabled={isCurrent}>
                     {isCurrent ? t("Plan aktif", "Active plan") : plan.key === "solo" ? t("Bayar Solo QRIS", "Pay Solo QRIS") : t("Bayar Team QRIS", "Pay Team QRIS")}
                   </CheckoutButton>
                 ) : (
