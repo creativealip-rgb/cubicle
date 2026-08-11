@@ -18,7 +18,8 @@
     "test:phase4:db": "SOURCE_DB=cubicle_dev ./scripts/test-phase4-db-integration.sh",
     "test:watch": "vitest",
     "e2e:cross-tenant": "playwright test e2e/cross-tenant.spec.ts --project=chromium --workers=1 --retries=0",
-    "test:rate-limit": "tsx scripts/test-distributed-rate-limit.ts"
+    "test:rate-limit": "tsx scripts/test-distributed-rate-limit.ts",
+    "reconcile:storage-quota": "tsx scripts/reconcile-storage-quota.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1068.0",

@@ -36,12 +36,14 @@ services:
       CUBIQLO_ENV: development
       RESEND_API_KEY: ""
       EMAIL_FROM: "Cubiqlo Dev <dev@localhost>"
-      PAKASIR_PROJECT: ""
-      PAKASIR_API_KEY: ""
       AI_API_KEY: ${AI_API_KEY:-}
       AI_MODEL: ${AI_MODEL:-ag/gemini-3-flash}
       OPENAI_API_KEY: ""
-      CRON_SECRET: ""
+      # CRON_SECRET is intentionally NOT pinned here: an empty value in
+      # `environment:` would override (and null out) the secret coming from
+      # `.env.development.local` (env_file), 503-ing every /api/cron/* route
+      # in dev. The env_file value guards all cron endpoints; see
+      # docs/operations/storage-quota-reconcile-cron.md.
       GOOGLE_CLIENT_ID: ""
       GOOGLE_CLIENT_SECRET: ""
       GOOGLE_TOKEN_ENCRYPTION_KEY: ""

@@ -20,7 +20,7 @@ interface FileDropZoneProps {
  */
 export function FileDropZone({ scope, canWrite, children }: FileDropZoneProps) {
   const router = useRouter();
-  const { t } = useT();
+  const { lang, t } = useT();
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(0);
@@ -51,7 +51,7 @@ export function FileDropZone({ scope, canWrite, children }: FileDropZoneProps) {
       let ok = 0;
       for (const file of valid) {
         try {
-          await uploadOneFile(file, scope);
+          await uploadOneFile(file, scope, undefined, lang);
           ok++;
           setDone(ok);
         } catch (err: unknown) {
@@ -70,7 +70,7 @@ export function FileDropZone({ scope, canWrite, children }: FileDropZoneProps) {
         router.refresh();
       }
     },
-    [scope, router, t],
+    [scope, router, t, lang],
   );
 
   if (!canWrite) return <>{children}</>;

@@ -1,5 +1,31 @@
 # Changelog
 
+## 2026-08-11 — Final billing/storage hardening and dev QA checkpoint
+
+**Billing and storage:**
+- Added owner-only and same-origin guards to plan, storage add-on, and extra-workspace checkout routes.
+- Added bilingual storage add-on and extra-workspace purchase controls with monthly/yearly pricing.
+- Added scoped billing checkout status UI for pending, completed, failed, and expired payment states.
+- Added idempotent Pakasir missed-webhook recovery sync with protected cron route.
+- Made client-portal uploads use transaction-scoped quota reservation and consume.
+- Added age-gated storage reservation reconciliation command, cron route, and scheduler wrapper.
+- Added workspace-scoped Files usage display and bilingual quota-block errors.
+
+**Documents and QA:**
+- Added preview-confirm send dialogs with recipient and subject for proposals, contracts, and questionnaires.
+- Added contract signing row lock and best-effort post-commit audit logging.
+- Dev browser QA passed document preview-confirm matrix 18/18; disposable fixtures cleaned and verified zero in `cubicle_dev`.
+
+**Verification:**
+- Focused source gates passed: tests, ESLint, TypeScript, diff check, and production build.
+- Dev container `cubicle-dev` healthy; `/api/health` returned `status=ok`, `db=ok`; routed HTTP 200.
+- Authenticated reconciliation dry-run scanned 32 workspaces with 0 active and 0 stale reservations.
+- Dev Pakasir project/API key configured after removing empty Compose overrides; provider sync safely isolated stale order 404.
+- Production container/image unchanged; production deploy remains blocked.
+
+**Still open:** authorized real Pakasir payment/webhook lifecycle, real email delivery/token QA, concurrent quota stress, real reconciliation apply evidence, and explicit production approval.
+
+
 ## 2026-08-09 — UI/UX consistency release and Prompt Studio production verification
 
 **UI/UX:**

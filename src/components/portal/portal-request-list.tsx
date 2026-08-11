@@ -24,6 +24,7 @@ import {
   cleanPortalRequestDescription,
   partitionPortalRequests,
 } from "@/lib/portal-presentation";
+import { quotaBlockMessage } from "@/lib/upload-quota-messages";
 
 interface PortalRequest {
   id: string;
@@ -133,8 +134,10 @@ export function PortalRequestList({
         body: form,
       });
       const data = await res.json();
-      if (!res.ok)
-        throw new Error(data.error ?? t("Upload gagal", "Upload failed"));
+      if (!res.ok) {
+        const error = data.error ?? t("Upload gagal", "Upload failed");
+        throw new Error(quotaBlockMessage(error, lang) ?? error);
+      }
       setItems((p) =>
         p.map((r) => (r.id === id ? { ...r, status: "completed" } : r)),
       );

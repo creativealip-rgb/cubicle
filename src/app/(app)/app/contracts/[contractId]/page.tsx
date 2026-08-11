@@ -114,6 +114,9 @@ export default async function ContractDetailPage({
             <SendContractButton
               contractId={c.id}
               status={c.status}
+              title={c.title}
+              clientName={client?.name}
+              clientEmail={client?.email}
               labelSend={t("Kirim untuk tanda tangan", "Send for signature")}
               labelResend={t("Kirim ulang tautan", "Resend link")}
               labelSending={t("Mengirim...", "Sending...")}

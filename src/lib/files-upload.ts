@@ -1,3 +1,5 @@
+import { quotaBlockMessage } from "@/lib/upload-quota-messages";
+
 export interface UploadScope {
   workspaceId: string;
   clientId?: string;
@@ -9,6 +11,20 @@ export interface UploadScope {
 
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 
+/** Extract the API error string (or quota-block code) from a failed upload. */
+export function uploadErrorFromResponse(
+  xhr: XMLHttpRequest,
+  fallback: string,
+): string {
+  try {
+    const data = JSON.parse(xhr.responseText || "{}");
+    if (typeof data?.error === "string" && data.error) return data.error;
+  } catch {
+    // ignore unparseable body
+  }
+  return fallback;
+}
+
 /**
  * Upload a single file via same-origin proxy (server → R2).
  * Avoids browser CSP/CORS failures on direct R2 presigned PUT.
@@ -18,6 +34,7 @@ export async function uploadOneFile(
   file: File,
   scope: UploadScope,
   onProgress?: (pct: number) => void,
+  lang: "id" | "en" = "id",
 ): Promise<void> {
   if (file.size > MAX_UPLOAD_BYTES) {
     throw new Error("MAX_SIZE");
@@ -54,14 +71,11 @@ export async function uploadOneFile(
         resolve();
         return;
       }
-      let msg = `Upload failed: ${xhr.status}`;
-      try {
-        const data = JSON.parse(xhr.responseText || "{}");
-        if (data?.error) msg = data.error;
-      } catch {
-        // ignore
-      }
-      reject(new Error(msg));
+      const msg = uploadErrorFromResponse(
+        xhr,
+        `Upload failed: ${xhr.status}`,
+      );
+      reject(new Error(quotaBlockMessage(msg, lang) ?? msg));
     };
     xhr.onerror = () => reject(new Error("Network error during upload"));
     xhr.send(form);

@@ -2,6 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { files, users, workspaces } from "@/db/schema";
 import { ForbiddenError, UnauthorizedError } from "@/lib/access";
+import { QUOTA_BLOCK_CODE } from "@/lib/upload-quota-messages";
 
 export type UploadQuotaLimits = {
   maxFileBytes: number;
@@ -10,6 +11,8 @@ export type UploadQuotaLimits = {
   maxClientBytes: number;
   maxClientFiles: number;
 };
+
+export { QUOTA_BLOCK_CODE, isQuotaBlockCode } from "@/lib/upload-quota-messages";
 
 const MB = 1024 * 1024;
 const GB = 1024 * MB;
@@ -39,7 +42,11 @@ export function checkUploadQuota(input: {
 
 export class UploadQuotaError extends Error {
   constructor(public code: string) {
-    super("Storage quota exceeded");
+    // The message mirrors the machine-readable code: safeUploadErrorResponse
+    // maps UploadQuotaError to the stable QUOTA_BLOCK_CODE, so this text never
+    // reaches the UI. Kept in sync so a bare throw still reads meaningfully.
+    super(code);
+    this.name = "UploadQuotaError";
   }
 }
 
@@ -86,7 +93,9 @@ export function validateContentLength(value: string | null, maxFileBytes: number
 }
 
 export function safeUploadErrorResponse(error: unknown): { error: string; status: number } {
-  if (error instanceof UploadQuotaError) return { error: "Storage quota exceeded", status: 413 };
+  // Quota blocks return a stable machine-readable code so clients can show a
+  // localized (ID/EN) message instead of a raw English string.
+  if (error instanceof UploadQuotaError) return { error: QUOTA_BLOCK_CODE, status: 413 };
   if (error instanceof UnauthorizedError) return { error: "Unauthorized", status: 401 };
   if (error instanceof ForbiddenError) return { error: "Forbidden", status: 403 };
   return { error: "Upload failed", status: 500 };

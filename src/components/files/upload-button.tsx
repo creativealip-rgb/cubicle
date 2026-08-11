@@ -34,7 +34,7 @@ interface UploadButtonProps {
 
 export function UploadButton({ workspaceId, clientId, projectId, folderId }: UploadButtonProps) {
   const router = useRouter();
-  const { t } = useT();
+  const { lang, t } = useT();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -65,6 +65,7 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
         file,
         { workspaceId, clientId, projectId, folderId, visibility, fileType },
         (pct) => setProgress(pct),
+        lang,
       );
 
       toast.success(

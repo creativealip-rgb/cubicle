@@ -29,7 +29,9 @@ test("production manual time create and persistence", async ({ page }) => {
     await dialog.getByRole("button", { name: "Simpan" }).click();
     const projectLink = page.getByRole("link", { name: project, exact: true });
     await expect(projectLink).toBeVisible();
-    await page.goto(await projectLink.getAttribute("href")!);
+    const projectHref = await projectLink.getAttribute("href");
+    if (!projectHref) throw new Error("Project link is missing href");
+    await page.goto(projectHref);
 
     await page.getByRole("button", { name: "Tambah Tugas" }).click();
     dialog = page.getByRole("dialog", { name: "Tambah Tugas" });

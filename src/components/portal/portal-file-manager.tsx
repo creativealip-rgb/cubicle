@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n-client";
+import { quotaBlockMessage } from "@/lib/upload-quota-messages";
 import { portalLocale, portalStatusLabel } from "@/lib/portal-i18n";
 
 export type PortalFmProject = {
@@ -214,7 +215,8 @@ export function PortalFileManager({
       file?: PortalFmFile;
     };
     if (!res.ok || !data.file) {
-      throw new Error(data.error || t("Upload gagal", "Upload failed"));
+      const error = data.error || t("Upload gagal", "Upload failed");
+      throw new Error(quotaBlockMessage(error, lang) ?? error);
     }
     return data.file;
   }

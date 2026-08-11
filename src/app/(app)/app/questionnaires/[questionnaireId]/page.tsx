@@ -57,7 +57,7 @@ export default async function QuestionnaireDetailPage({ params }: { params: Prom
     .where(eq(questionnaireResponses.questionnaireId, questionnaireId))
     .orderBy(desc(questionnaireResponses.createdAt));
 
-  const clientsList = await db.select({ id: clients.id, name: clients.name })
+  const clientsList = await db.select({ id: clients.id, name: clients.name, email: clients.email })
     .from(clients).where(eq(clients.workspaceId, workspaceId));
   const projectsList = await db.select({ id: projects.id, name: projects.name })
     .from(projects).where(eq(projects.workspaceId, workspaceId));
@@ -102,6 +102,7 @@ export default async function QuestionnaireDetailPage({ params }: { params: Prom
             </Button>
             <SendQuestionnaireButton
               questionnaireId={q.id}
+              name={q.name}
               clients={clientsList}
               projects={projectsList}
             />

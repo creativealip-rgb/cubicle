@@ -5,11 +5,16 @@ import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckoutButton } from "@/components/billing/checkout-button";
+import { BillingCheckoutStatusCard } from "@/components/billing/billing-checkout-status-card";
 import { getSubscriptionStatus } from "@/lib/subscription";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { BILLING_PLANS } from "@/lib/billing-plans";
 import { listActiveAddOns } from "@/lib/actions/billing-addons";
 import { AddonManagement } from "@/components/billing/addon-management";
+import { AddonPurchaseControls } from "@/components/billing/addon-purchase-controls";
+import { getWorkspaceRecordForUser } from "@/lib/workspace";
+import { getCheckoutStatusForWorkspaceOwner, type CheckoutStatus } from "@/lib/billing-checkout-status";
+import { getEffectivePlan } from "@/lib/plan";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +44,11 @@ const plans = [
   },
 ] as const;
 
-export default async function BillingPage() {
+export default async function BillingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ checkout?: string }>;
+}) {
   const lang = await getCurrentLang();
   const t = createT(lang);
   const session = await auth.api.getSession({ headers: await headers() });
@@ -58,7 +67,24 @@ export default async function BillingPage() {
     : null;
 
   const currentPlan = user?.plan ?? "free";
+  // Effective plan after expiry/grace — drives the Team-only extra-workspace
+  // purchase gate on the client (the server re-checks and returns 409).
+  const effectivePlan = getEffectivePlan(user?.plan, user?.planExpiresAt);
   const addons = userId ? await listActiveAddOns() : { storageAddons: [], extraWorkspaceSlots: 0 };
+
+  // Checkout status: only shown to the current workspace OWNER and only when
+  // the order id belongs to that workspace. Members/viewers and foreign order
+  // ids get `null` here, so the pakasir_payments lookup is never run for them.
+  const { checkout: checkoutOrderId } = await searchParams;
+  let checkoutStatus: { status: CheckoutStatus; amount: string | null } | null = null;
+  if (userId && checkoutOrderId) {
+    const workspace = await getWorkspaceRecordForUser(userId);
+    checkoutStatus = await getCheckoutStatusForWorkspaceOwner({
+      userId,
+      workspaceId: workspace.id,
+      orderId: checkoutOrderId,
+    });
+  }
 
   return (
     <div className="space-y-8">
@@ -72,6 +98,14 @@ export default async function BillingPage() {
           )}
         </p>
       </div>
+
+      {checkoutStatus && (
+        <BillingCheckoutStatusCard
+          status={checkoutStatus.status}
+          amount={checkoutStatus.amount}
+          lang={lang}
+        />
+      )}
 
       <Card>
         <CardHeader>
@@ -95,7 +129,10 @@ export default async function BillingPage() {
 
       <Card>
         <CardHeader><CardTitle>{t("Storage & add-on", "Storage & add-ons")}</CardTitle></CardHeader>
-        <CardContent><AddonManagement storageAddons={addons.storageAddons} extraWorkspaceSlots={addons.extraWorkspaceSlots} /></CardContent>
+        <CardContent className="space-y-5">
+          <AddonPurchaseControls effectivePlan={effectivePlan} />
+          <AddonManagement storageAddons={addons.storageAddons} extraWorkspaceSlots={addons.extraWorkspaceSlots} />
+        </CardContent>
       </Card>
 
       <div className="grid gap-5 lg:grid-cols-3">

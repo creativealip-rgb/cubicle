@@ -31,6 +31,7 @@ export type ContractListItem = {
   updatedAt?: Date | string | null;
   clientId: string;
   clientName: string;
+  clientEmail: string | null;
 };
 
 const STATUS_ORDER = [
@@ -206,6 +207,9 @@ export function ContractsListTable({
                       contractId={c.id}
                       status={c.status}
                       compact
+                      title={c.title}
+                      clientName={c.clientName}
+                      clientEmail={c.clientEmail ?? undefined}
                       labelSend={t("Kirim", "Send")}
                       labelResend={t("Kirim ulang", "Resend")}
                       labelSending={t("Mengirim...", "Sending...")}

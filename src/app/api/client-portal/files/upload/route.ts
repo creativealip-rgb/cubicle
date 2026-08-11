@@ -9,7 +9,7 @@ import { validateUploadedFile } from "@/lib/file-validation";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
 import { assertUploadQuota, getUploadQuotaLimits, safeUploadErrorResponse, validateContentLength } from "@/lib/upload-safety";
-import { reserveWorkspaceUpload, releaseWorkspaceUpload, consumeWorkspaceUpload } from "@/lib/storage-quota";
+import { withWorkspaceQuotaReservation } from "@/lib/storage-quota";
 
 export const runtime = "nodejs";
 
@@ -22,8 +22,6 @@ const MAX_SIZE = getUploadQuotaLimits("team").maxFileBytes;
  */
 export async function POST(req: NextRequest) {
   let uploadedObject: string | null = null;
-  let reservedBytes = 0;
-  let reservedWorkspaceId: string | null = null;
   if (!validateContentLength(req.headers.get("content-length"), MAX_SIZE)) return NextResponse.json({ error: "Upload too large" }, { status: 413 });
   const limited = await enforceRateLimitResponse(req, "portal:file-upload", { limit: 10, windowSec: 300 });
   if (limited) return limited;
@@ -121,13 +119,6 @@ export async function POST(req: NextRequest) {
     const safeName = upload.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const storageKey = buildFileKey(client.workspaceId, fileId, safeName);
 
-    // Reserve quota before writing to R2 so concurrent uploads can't overrun
-    // the workspace limit; consume after the DB insert commits; release on
-    // any failure below.
-    await reserveWorkspaceUpload(client.workspaceId, upload.size);
-    reservedBytes = upload.size;
-    reservedWorkspaceId = client.workspaceId;
-
     await r2.send(
       new PutObjectCommand({
         Bucket: R2_BUCKET,
@@ -139,36 +130,40 @@ export async function POST(req: NextRequest) {
     );
 
     uploadedObject = storageKey;
-    const [fileRow] = await db
-      .insert(files)
-      .values({
-        workspaceId: client.workspaceId,
-        clientId: client.id,
-        projectId,
-        folderId,
-        name: upload.name,
-        storageKey,
-        mimeType: upload.type || null,
-        sizeBytes: upload.size,
-        visibility: "client",
-        fileType: "working_file",
-        uploadedBy: null,
-      })
-      .returning({
-        id: files.id,
-        name: files.name,
-        mimeType: files.mimeType,
-        sizeBytes: files.sizeBytes,
-        fileType: files.fileType,
-        createdAt: files.createdAt,
-        projectId: files.projectId,
-        folderId: files.folderId,
-      });
-
-    // Upload committed — move the reservation into the real usage count.
-    await consumeWorkspaceUpload(client.workspaceId, upload.size);
-    reservedBytes = 0;
-    reservedWorkspaceId = null;
+    // Insert the file row and enforce the workspace quota in one transaction:
+    // reserve -> insert -> consume commit atomically inside
+    // withWorkspaceQuotaReservation. The old standalone reserve/consume pair
+    // left the reservation stuck forever if the process died after the insert
+    // committed; the wrapper's single tx rolls it back together with the row,
+    // so a crash can never leak quota. R2 stays outside the tx — on any
+    // failure the object is removed in the catch below.
+    const [fileRow] = await withWorkspaceQuotaReservation(client.workspaceId, upload.size, (tx) =>
+      tx
+        .insert(files)
+        .values({
+          workspaceId: client.workspaceId,
+          clientId: client.id,
+          projectId,
+          folderId,
+          name: upload.name,
+          storageKey,
+          mimeType: upload.type || null,
+          sizeBytes: upload.size,
+          visibility: "client",
+          fileType: "working_file",
+          uploadedBy: null,
+        })
+        .returning({
+          id: files.id,
+          name: files.name,
+          mimeType: files.mimeType,
+          sizeBytes: files.sizeBytes,
+          fileType: files.fileType,
+          createdAt: files.createdAt,
+          projectId: files.projectId,
+          folderId: files.folderId,
+        }),
+    );
 
     try {
       await writeActivityLog(
@@ -207,7 +202,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     if (uploadedObject) await deleteStoredFile(uploadedObject).catch(() => undefined);
-    if (reservedBytes && reservedWorkspaceId) await releaseWorkspaceUpload(reservedWorkspaceId, reservedBytes).catch(() => undefined);
     const safe = safeUploadErrorResponse(err);
     return NextResponse.json({ error: safe.error }, { status: safe.status });
   }

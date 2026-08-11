@@ -60,6 +60,7 @@ export default async function ContractsPage({
       updatedAt: contracts.updatedAt,
       clientId: contracts.clientId,
       clientName: clients.name,
+      clientEmail: clients.email,
     })
     .from(contracts)
     .innerJoin(clients, eq(clients.id, contracts.clientId))

@@ -34,6 +34,7 @@ export type ProposalListItem = {
   updatedAt: Date | string;
   clientId: string;
   clientName: string;
+  clientEmail: string | null;
 };
 
 const STATUS_ORDER = [
@@ -215,6 +216,9 @@ export function ProposalsListTable({
                       proposalId={p.id}
                       status={p.status}
                       compact
+                      title={p.title}
+                      clientName={p.clientName}
+                      clientEmail={p.clientEmail ?? undefined}
                       labelSend={t("Kirim", "Send")}
                       labelResend={t("Kirim ulang", "Resend")}
                       labelSending={t("Mengirim...", "Sending...")}

@@ -46,7 +46,7 @@ describe("public token lifecycle wiring", () => {
     );
     expect(sign).toContain("assertPublicTokenLifecycle");
     expect(sign.indexOf("assertPublicTokenLifecycle")).toBeLessThan(
-      sign.indexOf('c.status === "signed"'),
+      sign.indexOf('locked.status === "signed"'),
     );
   });
 

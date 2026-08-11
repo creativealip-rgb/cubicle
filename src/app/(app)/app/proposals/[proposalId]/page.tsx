@@ -146,6 +146,9 @@ export default async function ProposalDetailPage({
             <SendProposalButton
               proposalId={p.id}
               status={p.status}
+              title={p.title}
+              clientName={p.clientName}
+              clientEmail={p.clientEmail}
               labelSend={t("Kirim ke klien", "Send to client")}
               labelResend={t("Kirim ulang tautan", "Resend link")}
               labelSending={t("Mengirim...", "Sending...")}

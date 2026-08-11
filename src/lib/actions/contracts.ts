@@ -447,70 +447,84 @@ export async function signContract(input: {
 
   const tokenHash = hashToken(input.token);
   await enforceServerActionRateLimit("contract:sign", tokenHash, { limit: 10, windowSec: 300 });
-  const [c] = await db.select().from(contracts)
-    .where(eq(contracts.sharedTokenHash, tokenHash))
-    .limit(1);
-  if (!c) throw new Error("Contract not found");
-  try {
-    assertPublicTokenLifecycle({
-      presentedHash: tokenHash,
-      storedHash: c.sharedTokenHash,
-      revokedAt: c.sharedTokenRevokedAt,
-      expiresAt: c.sharedTokenExpiresAt,
-      status: c.status,
-      allowedStatuses: ["sent", "viewed", "signed"],
-      processedStatuses: ["declined"],
-    });
-  } catch (error) {
-    if (error instanceof PublicTokenError) {
-      const messages = {
-        invalid: "Contract not found",
-        disabled: "Contract disabled",
-        revoked: "Contract revoked",
-        expired: "Contract expired",
-        processed: "Contract was declined",
-        unavailable: "Contract was not sent",
-      } as const;
-      throw new Error(messages[error.code]);
-    }
-    throw error;
-  }
-  if (c.status === "signed") throw new Error("Contract already signed");
 
   // Capture IP + UA from headers (server action receives request context)
   const h = await headers();
   const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "unknown";
   const ua = h.get("user-agent") || "unknown";
 
-  const [updated] = await db.update(contracts)
-    .set({
-      status: "signed",
-      signedName: input.signedName.trim(),
-      signedEmail: input.signedEmail.trim().toLowerCase(),
-      signatureDataUrl: input.signatureDataUrl,
-      signedAt: new Date(),
-      signedFromIp: ip,
-      signedUserAgent: ua,
-      updatedAt: new Date(),
-    })
-    .where(eq(contracts.id, c.id))
-    .returning();
+  // Atomic sign: lock the row, re-check the token lifecycle + already-signed
+  // guard under the lock, then commit the signature. Two concurrent submits
+  // can't both pass the "signed" check — the second transaction blocks on the
+  // row lock and re-reads status "signed" before writing (mirrors
+  // acceptProposalPublic).
+  const [updated] = await db.transaction(async (tx) => {
+    const [locked] = await tx.select().from(contracts)
+      .where(eq(contracts.sharedTokenHash, tokenHash))
+      .for("update")
+      .limit(1);
+    if (!locked) throw new Error("Contract not found");
+    try {
+      assertPublicTokenLifecycle({
+        presentedHash: tokenHash,
+        storedHash: locked.sharedTokenHash,
+        revokedAt: locked.sharedTokenRevokedAt,
+        expiresAt: locked.sharedTokenExpiresAt,
+        status: locked.status,
+        allowedStatuses: ["sent", "viewed", "signed"],
+        processedStatuses: ["declined"],
+      });
+    } catch (error) {
+      if (error instanceof PublicTokenError) {
+        const messages = {
+          invalid: "Contract not found",
+          disabled: "Contract disabled",
+          revoked: "Contract revoked",
+          expired: "Contract expired",
+          processed: "Contract was declined",
+          unavailable: "Contract was not sent",
+        } as const;
+        throw new Error(messages[error.code]);
+      }
+      throw error;
+    }
+    if (locked.status === "signed") throw new Error("Contract already signed");
 
-  await writeActivityLog(c.workspaceId, null, "signed_contract", "contract", c.id, {
-    title: c.title,
-    signedName: input.signedName,
-    signedEmail: input.signedEmail,
-    signedFromIp: ip,
+    return tx.update(contracts)
+      .set({
+        status: "signed",
+        signedName: input.signedName.trim(),
+        signedEmail: input.signedEmail.trim().toLowerCase(),
+        signatureDataUrl: input.signatureDataUrl,
+        signedAt: new Date(),
+        signedFromIp: ip,
+        signedUserAgent: ua,
+        updatedAt: new Date(),
+      })
+      .where(eq(contracts.id, locked.id))
+      .returning();
   });
 
   try {
-    await notifyWorkspaceMembers(c.workspaceId, {
+    await writeActivityLog(updated.workspaceId, null, "signed_contract", "contract", updated.id, {
+      title: updated.title,
+      signedName: input.signedName,
+      signedEmail: input.signedEmail,
+      signedFromIp: ip,
+    });
+  } catch {
+    // best-effort: the signature is already committed — an audit-log failure
+    // must never surface as a false "sign failed" error to the signer.
+  }
+
+  try {
+    await notifyWorkspaceMembers(updated.workspaceId, {
       type: "contract_signed",
       title: `${input.signedName.trim()} signed contract`,
-      body: c.title,
-      link: `/app/contracts/${c.id}`,
+      body: updated.title,
+      link: `/app/contracts/${updated.id}`,
       entityType: "contract",
-      entityId: c.id,
+      entityId: updated.id,
       actorId: null,
     });
   } catch {

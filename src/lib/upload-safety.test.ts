@@ -5,6 +5,9 @@ import {
   validateContentLength,
   validateSignatureDataUrl,
   persistUploadedObject,
+  QUOTA_BLOCK_CODE,
+  safeUploadErrorResponse,
+  UploadQuotaError,
 } from "@/lib/upload-safety";
 
 describe("upload quota policy", () => {
@@ -69,6 +72,16 @@ describe("upload quota policy", () => {
   it("rejects oversized content-length before multipart parsing", () => {
     expect(validateContentLength(String(6 * 1024 * 1024), 5 * 1024 * 1024)).toBe(false);
     expect(validateContentLength(null, 5 * 1024 * 1024)).toBe(true);
+  });
+
+  it("returns a stable quota-block code in the API-safe error response", () => {
+    const safe = safeUploadErrorResponse(new UploadQuotaError("WORKSPACE_BYTES_LIMIT"));
+    expect(safe).toEqual({ error: QUOTA_BLOCK_CODE, status: 413 });
+    // Non-quota errors keep their raw message so clients can fall back safely.
+    expect(safeUploadErrorResponse(new Error("boom"))).toEqual({
+      error: "Upload failed",
+      status: 500,
+    });
   });
 });
 

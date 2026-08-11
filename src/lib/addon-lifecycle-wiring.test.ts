@@ -9,6 +9,7 @@ const actions = () => read("src/lib/actions/billing-addons.ts");
 const storage = () => read("src/lib/storage-addons.ts");
 const extraWs = () => read("src/lib/extra-workspace.ts");
 const webhook = () => read("src/app/api/webhooks/pakasir/route.ts");
+const pakasirSync = () => read("src/lib/pakasir-sync.ts");
 const checkout = () => read("src/app/api/billing/checkout/route.ts");
 const checkoutExtra = () => read("src/app/api/billing/checkout-extra-workspace/route.ts");
 const expireCron = () => read("src/app/api/cron/expire-plans/route.ts");
@@ -47,15 +48,20 @@ describe("add-on lifecycle wiring (checkout → webhook → cron)", () => {
     expect(checkoutExtra()).toContain('paymentType: "extra_workspace"');
   });
 
-  it("webhook activates storage and extra-workspace entitlements idempotently", () => {
-    const src = webhook();
-    expect(src).toContain("activateStorageAddonTx(tx,");
-    expect(src).toContain("activateExtraWorkspaceEntitlementTx(tx,");
+  it("webhook + sync cron activate storage and extra-workspace entitlements idempotently", () => {
+    // The activation transaction is shared (src/lib/pakasir-sync.ts) so the
+    // webhook and the missed-webhook recovery cron can never diverge.
+    const shared = pakasirSync();
+    expect(shared).toContain("activateStorageAddonTx(tx,");
+    expect(shared).toContain("activateExtraWorkspaceEntitlementTx(tx,");
     // Idempotency keys: provider order + event IDs must be passed through.
-    expect(src).toContain("providerOrderId: current.orderId");
-    expect(src).toContain("providerEventId: body.order_id");
+    expect(shared).toContain("providerOrderId: current.orderId");
+    expect(shared).toContain("providerEventId: orderId");
     // Add-on activation never touches the user's plan.
-    expect(src).toContain("// Add-on purchases (storage / extra workspace) reuse the same payment row.");
+    expect(shared).toContain("// Add-on purchases (storage / extra workspace) reuse the same payment row.");
+    // Both callers must go through the shared helper.
+    expect(webhook()).toContain("activateCompletedPakasirPayment(payment.id, {");
+    expect(read("src/lib/pakasir-sync.ts")).toContain("syncPendingPakasirPayments");
   });
 
   it("expiry cron sweeps both entitlement types", () => {

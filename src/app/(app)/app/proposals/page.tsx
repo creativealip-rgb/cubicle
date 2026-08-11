@@ -54,6 +54,7 @@ export default async function ProposalsPage({
       updatedAt: proposals.updatedAt,
       clientId: clients.id,
       clientName: clients.name,
+      clientEmail: clients.email,
     })
     .from(proposals)
     .innerJoin(clients, eq(clients.id, proposals.clientId))

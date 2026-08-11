@@ -450,7 +450,7 @@ When a historical document conflicts with this file:
 4. Never reuse old pricing or `unlimited` Team limits.
 5. Update implementation/tests before updating marketing copy.
 
-**Final active status — session handoff 2026-08-11:** Dev deployed and healthy at `https://dev.cubiqlo.com`; production untouched and blocked. Source/build/migration gates pass. Backend storage add-on and extra-workspace lifecycle are implemented with wiring tests, but runtime/browser proof remains open. Landing desktop EN default + ID switch is deployed and browser-verified; mobile QA and metadata/OG verification remain open.
+**Final active status — session handoff 2026-08-11:** Dev deployed and healthy at `https://dev.cubiqlo.com`; production untouched and blocked. Source/build/migration gates pass. Storage add-on and extra-workspace lifecycle, checkout owner/origin guards, payment-status UI, Pakasir missed-webhook sync, reconciliation scheduler, add-on purchase UI, and document preview-confirm flow are implemented. Document dialog browser QA passed 18/18 with fixture cleanup verified in DB. Real provider payment/webhook and real email delivery remain open.
 
 ### Session handoff — resume here
 
@@ -469,22 +469,18 @@ Completed evidence:
 - Email/reset/verification/send/sign and payment-provider runtime QA remain intentionally on hold/open.
 
 Status snapshot 2026-08-11:
-- PASS: storage normal/portal mutation proof, document draft CRUD and cleanup, landing mobile/i18n, dev metadata/OG, Gate A source, Gate B migration evidence, Gate C dev health/proxy evidence.
-- PARTIAL: Storage UI and Gate D browser matrix.
-- OPEN: provider-dependent add-on/extra-workspace lifecycle runtime, concurrent/quota stress and reconciliation job, email QA (hold), document send/sign (email-dependent), stale historical-doc reconciliation, TSC baseline documentation.
+- PASS: source/build/TSC, storage normal/portal mutation proof, workspace-scoped storage UI, bilingual quota errors, age-gated reconciliation dry-run, document preview-confirm browser QA 18/18, document fixture cleanup, landing EN/ID/mobile/metadata, Gate B migration evidence, Gate C dev health/proxy evidence, add-on purchase UI, checkout owner/origin guards, billing status UI, and Pakasir sync route/auth.
+- PARTIAL: Gate D browser matrix; provider-dependent flows are code/runtime-wired but not completed with a real payment.
+- OPEN: real Pakasir checkout/webhook/renewal/expiry proof, real reset/verification/document email delivery, concurrent quota stress, real reconciliation apply run, and production approval.
 
 Release decision: dev-only QA continues; production remains blocked and untouched.
 
 Open work, priority order:
 
-1. Run persistent-context browser QA on dev: auth, billing toggle, Files quota UI, normal upload, portal upload, add-on UI/cancel, extra-workspace Team guard/slot, proposal, contract, questionnaire, landing mobile navbar.
-2. Prove mutations with DB/reload evidence; use disposable QA fixtures and cleanup. Do not call toast/modal closure success.
-3. Complete Storage UI: show available storage and add-on expiry; prove bilingual quota-block errors; add normal/portal/over-quota-after-cancel tests.
-4. Add quota reconciliation command/job and finish direct-file-insert audit.
-5. Run real reset/verification/resend email QA to `myvaword@gmail.com`; verify token lifecycle and secret-redacted logs. Do not claim delivery without mailbox evidence.
-6. Verify landing metadata/OG and mobile viewport.
-7. Resolve or formally document TSC baseline `e2e/production-qa-time.spec.ts(32,21)`.
-8. Re-run Gate A–D. Production requires explicit approval; never deploy production implicitly.
+1. Run authorized real Pakasir checkout on dev, then verify provider-confirmed webhook, entitlement, replay idempotency, renewal, cancellation, and expiry in DB/UI.
+2. Run real reset/verification/resend and document email QA to `myvaword@gmail.com`; verify token lifecycle, inbox evidence, and secret-redacted logs.
+3. Run concurrent quota stress and a real age-gated reconciliation apply against disposable/dev state.
+4. Re-run Gate A–D after provider/email evidence. Production requires explicit approval; never deploy production implicitly.
 
 Known environment facts:
 

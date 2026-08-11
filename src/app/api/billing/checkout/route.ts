@@ -1,14 +1,15 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { pakasirPayments, userStorageAddons, users, workspaceMembers } from "@/db/schema";
+import { pakasirPayments, users, workspaceMembers } from "@/db/schema";
 import { createPakasirTransaction, isPakasirConfigured, pakasirPaymentUrl } from "@/lib/pakasir";
+import { assertSameOrigin } from "@/lib/same-origin";
+import { canPurchaseStorageAddon } from "@/lib/storage-addons";
 import {
   BILLING_PLANS,
-  STORAGE_ADDONS,
   getPlanAmount,
   getStorageAddonAmount,
   isBillingPlan,
@@ -32,6 +33,18 @@ export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Browser-only endpoint: reject cross-origin POSTs (CSRF). Origin is
+  // compared against NEXT_PUBLIC_APP_URL (or Host as fallback), so a
+  // drive-by form on an attacker site cannot start a Pakasir checkout.
+  try {
+    assertSameOrigin(request, {
+      appUrl: process.env.NEXT_PUBLIC_APP_URL,
+      devOrigin: "https://dev.cubiqlo.com",
+    });
+  } catch {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   if (!isPakasirConfigured()) {
@@ -61,7 +74,9 @@ export async function POST(request: Request) {
     }
     const addon = addonRaw as StorageAddonKey;
 
-    // Still need a workspace for orderId generation and payment record
+    // Storage add-ons are per-user entitlements, but checkout is billed to
+    // the workspace owner. Only the authenticated current-workspace OWNER may
+    // start a payment — members/viewers are rejected before the provider call.
     const [membership] = await db
       .select({ workspaceId: workspaceMembers.workspaceId, role: workspaceMembers.role })
       .from(workspaceMembers)
@@ -70,6 +85,14 @@ export async function POST(request: Request) {
 
     if (!membership?.workspaceId) {
       return NextResponse.json({ error: "Workspace tidak ditemukan" }, { status: 404 });
+    }
+    if (membership.role !== "owner") {
+      return NextResponse.json({ error: "Hanya pemilik workspace yang dapat melakukan pembayaran." }, { status: 403 });
+    }
+
+    const purchaseCheck = await canPurchaseStorageAddon(session.user.id);
+    if (!purchaseCheck.allowed) {
+      return NextResponse.json({ error: purchaseCheck.reason }, { status: 409 });
     }
 
     const amount = getStorageAddonAmount(addon, period);
@@ -158,6 +181,9 @@ export async function POST(request: Request) {
 
   if (!membership?.workspaceId) {
     return NextResponse.json({ error: "Workspace tidak ditemukan" }, { status: 404 });
+  }
+  if (membership.role !== "owner") {
+    return NextResponse.json({ error: "Hanya pemilik workspace yang dapat melakukan pembayaran." }, { status: 403 });
   }
 
   const amount = getPlanAmount(plan as Exclude<BillingPlan, "free">, period);
