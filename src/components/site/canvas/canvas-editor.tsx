@@ -934,9 +934,11 @@ const PRESET_THEMES = [
 
 // Template tab sub-component
 function TemplateTabContent({ site, updateSite, setActivePageId }: { site: PersonalSiteInput; updateSite: (patch: Partial<PersonalSiteInput>) => void; setActivePageId: (id: string) => void }) {
+  const { t } = useT();
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showConfirm, setShowConfirm] = useState<string | null>(null);
 
+  const categoryLabels: Record<string, string> = { all: "All", individual: "Individual", business: "Business" };
   const categories = [{ value: "all", label: "Semua" }, ...getPageTemplateCategories()];
   const templates = getPageTemplatesByCategory(selectedCategory !== "all" ? selectedCategory : undefined);
 
@@ -980,7 +982,7 @@ function TemplateTabContent({ site, updateSite, setActivePageId }: { site: Perso
                 : "border-muted hover:bg-muted"
             }`}
           >
-            {cat.label}
+            {t(cat.label, categoryLabels[cat.value] ?? cat.label)}
           </button>
         ))}
       </div>
@@ -990,7 +992,7 @@ function TemplateTabContent({ site, updateSite, setActivePageId }: { site: Perso
         {templates.map((template) => (
           <div key={template.id} className="rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md">
             <div className="flex items-start justify-between mb-2">
-              <h3 className="font-semibold text-sm">{template.label}</h3>
+              <h3 className="font-semibold text-sm">{t(template.label, template.label)}</h3>
               <LayoutTemplate className="h-4 w-4 text-muted-foreground" />
             </div>
             <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{template.description}</p>
