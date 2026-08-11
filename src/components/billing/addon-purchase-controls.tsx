@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+
 import { useT } from "@/lib/i18n-client";
 import {
   getExtraWorkspaceAmount,
@@ -11,7 +11,7 @@ import {
   type StorageAddonKey,
 } from "@/lib/billing-plans";
 
-const PERIOD_STORAGE_KEY = "cubiqlo:billing:period";
+
 
 // Catalog mirrors STORAGE_ADDONS (5/10/15 GB). Prices come from
 // getStorageAddonAmount so the UI can never drift from checkout quoting.
@@ -19,15 +19,6 @@ const STORAGE_OPTIONS: StorageAddonKey[] = [5, 10, 15];
 
 type PendingKey = `storage:${StorageAddonKey}` | "workspace" | null;
 
-function loadStoredPeriod(): BillingPeriod {
-  if (typeof window === "undefined") return "yearly";
-  try {
-    const stored = window.localStorage.getItem(PERIOD_STORAGE_KEY);
-    return stored === "monthly" || stored === "yearly" ? stored : "yearly";
-  } catch {
-    return "yearly";
-  }
-}
 
 /** Compact app-style price, e.g. Rp 10rb / Rp 120rb (same convention as plan cards). */
 function formatRp(amount: number): string {
@@ -47,24 +38,10 @@ function formatRp(amount: number): string {
  */
 export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string }) {
   const { t } = useT();
-  const [period, setPeriod] = useState<BillingPeriod>("yearly");
+  const period: BillingPeriod = "yearly";
   const [pending, setPending] = useState<PendingKey>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Restore persisted period after hydration (defaults to yearly), same key
-  // as the plan CheckoutButton so the whole billing page stays in sync.
-  useEffect(() => {
-    setPeriod(loadStoredPeriod());
-  }, []);
-
-  function selectPeriod(next: BillingPeriod) {
-    setPeriod(next);
-    try {
-      window.localStorage.setItem(PERIOD_STORAGE_KEY, next);
-    } catch {
-      // localStorage unavailable — period still applies for this purchase.
-    }
-  }
 
   async function startCheckout(path: string, body: Record<string, unknown>, pendingKey: PendingKey) {
     setPending(pendingKey);
@@ -104,29 +81,8 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div>
         <p className="text-sm font-medium">{t("Beli add-on", "Buy add-ons")}</p>
-        <div
-          role="tablist"
-          aria-label="Billing period"
-          className="inline-flex h-9 items-center justify-center rounded-lg bg-slate-100 p-1 text-slate-600"
-        >
-          {(["monthly", "yearly"] as const).map((option) => (
-            <button
-              key={option}
-              type="button"
-              role="tab"
-              aria-selected={period === option}
-              onClick={() => selectPeriod(option)}
-              className={cn(
-                "inline-flex h-7 items-center justify-center gap-1 rounded-md px-2 text-xs font-medium transition-all",
-                period === option ? "bg-white text-slate-950 shadow" : "text-slate-500 hover:text-slate-800",
-              )}
-            >
-              {option === "monthly" ? t("Bulanan", "Monthly") : t("Tahunan · hemat 2x", "Yearly · save 2x")}
-            </button>
-          ))}
-        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
@@ -135,10 +91,7 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
             <div>
               <p className="font-medium text-slate-950">+{gb} GB</p>
               <p className="text-xs text-slate-600">
-                {formatRp(getStorageAddonAmount(gb, "monthly"))}/bln ·{" "}
-                <span className={period === "yearly" ? "font-medium text-slate-950" : ""}>
-                  {formatRp(getStorageAddonAmount(gb, "yearly"))}/thn
-                </span>
+                {formatRp(getStorageAddonAmount(gb, "yearly"))}/tahun
               </p>
             </div>
             <Button
@@ -161,10 +114,7 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
           <div>
             <p className="font-medium text-slate-950">+1 {t("workspace", "workspace")}</p>
             <p className="text-xs text-slate-600">
-              {formatRp(getExtraWorkspaceAmount("monthly"))}/bln ·{" "}
-              <span className={period === "yearly" ? "font-medium text-slate-950" : ""}>
-                {formatRp(getExtraWorkspaceAmount("yearly"))}/thn
-              </span>
+              {formatRp(getExtraWorkspaceAmount("yearly"))}/tahun
             </p>
             {!isTeam && (
               <p className="mt-1 text-xs text-amber-700">

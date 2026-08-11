@@ -30,7 +30,6 @@ type Member = {
 export function TeamManager({
   members,
   canInvite = true,
-  inviteBlockedReason,
 }: {
   members: Member[];
   canInvite?: boolean;
@@ -45,7 +44,7 @@ export function TeamManager({
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!canInvite) {
-      toast.error(inviteBlockedReason || t("Plan tidak mengizinkan undangan.", "Your plan does not allow invitations."));
+      toast.error(t("Free plan tidak bisa mengundang anggota. Upgrade ke Team untuk kolaborasi.", "Free plan can't invite members. Upgrade to Team for collaboration."));
       return;
     }
     setLoading(true);
@@ -94,7 +93,7 @@ export function TeamManager({
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
           <p className="font-medium">{t("Undangan tim terkunci", "Team invitations locked")}</p>
           <p className="mt-1 text-xs text-amber-800/90">
-            {inviteBlockedReason || t("Upgrade ke plan Team untuk kolaborasi.", "Upgrade to Team for collaboration.")}
+            {t("Free plan tidak bisa mengundang anggota. Upgrade ke Team untuk kolaborasi.", "Free plan can't invite members. Upgrade to Team for collaboration.")}
           </p>
           <Button asChild size="sm" variant="outline" className="mt-2 h-8">
             <Link href="/app/billing">{t("Upgrade plan", "Upgrade plan")}</Link>

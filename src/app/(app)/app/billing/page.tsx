@@ -23,24 +23,24 @@ const plans = [
     key: "free",
     name: "Free Forever",
     price: "Rp 0",
-    description: "Coba dulu buat client work kecil.",
-    features: ["1 pengguna", "1 workspace", "3 klien", "5 proyek", "10 invoice/bulan", "Client portal + AI", "10 AI request/bulan", "5 MB/file"],
+    description: ["Coba dulu buat client work kecil.", "Try it for small client work."],
+    features: [["1 pengguna", "1 user"], ["1 workspace", "1 workspace"], ["3 klien", "3 clients"], ["5 proyek", "5 projects"], ["10 invoice/bulan", "10 invoices/month"], ["Client portal + AI", "Client portal + AI"], ["10 AI request/bulan", "10 AI requests/month"], ["5 MB/file", "5 MB/file"]],
   },
   {
     key: "solo",
     name: "Solo",
     price: "Rp 75rb/bulan",
     yearlyPrice: "Billed yearly",
-    description: "Untuk freelancer yang butuh unlimited clients.",
-    features: ["1 pengguna", "3 workspace", "Klien/proyek/invoice unlimited", "Client portal + AI", "100 AI request/bulan", "25 MB/file"],
+    description: ["Untuk freelancer yang butuh unlimited clients.", "For freelancers who need unlimited clients."],
+    features: [["1 pengguna", "1 user"], ["3 workspace", "3 workspaces"], ["Klien/proyek/invoice unlimited", "Unlimited clients/projects/invoices"], ["Client portal + AI", "Client portal + AI"], ["100 AI request/bulan", "100 AI requests/month"], ["25 MB/file", "25 MB/file"]],
   },
   {
     key: "team",
     name: "Team",
     price: "Rp 165rb/bulan",
     yearlyPrice: "Billed yearly",
-    description: "Untuk team kecil yang handle banyak client bareng.",
-    features: ["Maksimal 5 member/workspace", "Maksimal 3 workspace", "Klien/proyek/invoice unlimited", "Peran tim", "1.000 AI request/bulan", "5 GB/workspace", "50 MB/file"],
+    description: ["Untuk team kecil yang handle banyak client bareng.", "For small teams handling many clients together."],
+    features: [["Maksimal 5 member/workspace", "Up to 5 members/workspace"], ["Maksimal 3 workspace", "Up to 3 workspaces"], ["Klien/proyek/invoice unlimited", "Unlimited clients/projects/invoices"], ["Peran tim", "Team roles"], ["1.000 AI request/bulan", "1,000 AI requests/month"], ["5 GB/workspace", "5 GB/workspace"], ["50 MB/file", "50 MB/file"]],
   },
 ] as const;
 
@@ -117,7 +117,7 @@ export default async function BillingPage({
             <p><span className="font-medium text-slate-950">{t("Berlaku hingga", "Valid until")}:</span> {user.planExpiresAt.toLocaleDateString(lang === "en" ? "en-US" : "id-ID")}</p>
           )}
           {user && (() => {
-            const sub = getSubscriptionStatus(user.planExpiresAt, currentPlan);
+            const sub = getSubscriptionStatus(user.planExpiresAt, currentPlan, lang);
             const badgeClass = sub.status === "active" ? "bg-emerald-50 text-emerald-800" :
               sub.status === "expiring" ? "bg-amber-50 text-amber-800" :
               sub.status === "grace" ? "bg-orange-50 text-orange-800" :
@@ -153,11 +153,11 @@ export default async function BillingPage({
                     {t("Ditagih tahunan", plan.yearlyPrice)}
                   </p>
                 )}
-                <p className="text-sm text-slate-600">{plan.description}</p>
+                <p className="text-sm text-slate-600">{t(plan.description[0], plan.description[1])}</p>
               </CardHeader>
               <CardContent className="space-y-5">
                 <ul className="space-y-2 text-sm text-slate-600">
-                  {plan.features.map((feature) => <li key={feature}>✓ {feature}</li>)}
+                  {plan.features.map((feature) => <li key={feature[0]}>✓ {t(feature[0], feature[1])}</li>)}
                 </ul>
                 {paid ? (
                   <CheckoutButton plan={plan.key} showPeriodToggle={plan.key !== "team"} disabled={isCurrent}>

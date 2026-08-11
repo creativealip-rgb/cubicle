@@ -77,13 +77,13 @@ export async function getExpiringUsers(): Promise<Array<{ id: string; name: stri
 /**
  * Get subscription status summary for a user.
  */
-export function getSubscriptionStatus(planExpiresAt: Date | null, plan: string): {
+export function getSubscriptionStatus(planExpiresAt: Date | null, plan: string, lang: "id" | "en" = "id"): {
   status: "active" | "expiring" | "grace" | "expired";
   daysRemaining: number | null;
   message: string;
 } {
   if (plan === "free" || !planExpiresAt) {
-    return { status: "active", daysRemaining: null, message: "Plan Free aktif selamanya." };
+    return { status: "active", daysRemaining: null, message: lang === "en" ? "Free plan is active forever." : "Plan Free aktif selamanya." };
   }
 
   const now = new Date();
@@ -91,13 +91,13 @@ export function getSubscriptionStatus(planExpiresAt: Date | null, plan: string):
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
   if (diffDays <= -GRACE_PERIOD_DAYS) {
-    return { status: "expired", daysRemaining: 0, message: `Plan ${plan.toUpperCase()} sudah kedaluwarsa. Upgrade untuk melanjutkan.` };
+    return { status: "expired", daysRemaining: 0, message: lang === "en" ? `Plan ${plan.toUpperCase()} has expired. Upgrade to continue.` : `Plan ${plan.toUpperCase()} sudah kedaluwarsa. Upgrade untuk melanjutkan.` };
   }
   if (diffDays <= 0) {
-    return { status: "grace", daysRemaining: 0, message: `Plan ${plan.toUpperCase()} kedaluwarsa. Grace period ${GRACE_PERIOD_DAYS} hari. Segera perpanjang!` };
+    return { status: "grace", daysRemaining: 0, message: lang === "en" ? `Plan ${plan.toUpperCase()} expired. ${GRACE_PERIOD_DAYS}-day grace period. Renew soon!` : `Plan ${plan.toUpperCase()} kedaluwarsa. Grace period ${GRACE_PERIOD_DAYS} hari. Segera perpanjang!` };
   }
   if (diffDays <= 7) {
-    return { status: "expiring", daysRemaining: diffDays, message: `Plan ${plan.toUpperCase()} berakhir dalam ${diffDays} hari.` };
+    return { status: "expiring", daysRemaining: diffDays, message: lang === "en" ? `Plan ${plan.toUpperCase()} expires in ${diffDays} days.` : `Plan ${plan.toUpperCase()} berakhir dalam ${diffDays} hari.` };
   }
-  return { status: "active", daysRemaining: diffDays, message: `Plan ${plan.toUpperCase()} aktif hingga ${planExpiresAt.toLocaleDateString("id-ID")}.` };
+  return { status: "active", daysRemaining: diffDays, message: lang === "en" ? `Plan ${plan.toUpperCase()} is active until ${planExpiresAt.toLocaleDateString("en-US")}.` : `Plan ${plan.toUpperCase()} aktif hingga ${planExpiresAt.toLocaleDateString("id-ID")}.` };
 }
