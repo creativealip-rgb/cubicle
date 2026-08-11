@@ -655,7 +655,10 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
 }
 
 function DraggableTemplateButton({ template, onClick }: { template: SectionTemplate; onClick: () => void }) {
+  const { t } = useT();
+  const labelEn: Record<string, string> = { "Layanan 3 Kartu": "3 Service Cards", "Pengembangan Software": "Software Development", "Proses 3 Langkah": "3-Step Process", "Metode Agile": "Agile Method", "Pricing 3 Paket": "3-Tier Pricing", "SaaS Pricing Tier": "SaaS Pricing Tiers", "FAQ 5 Pertanyaan": "5-Question FAQ", "FAQ Freelancer": "Freelancer FAQ", "CTA Utama": "Primary CTA", "CTA Kontak": "Contact CTA", "Testimoni 3 Klien": "3-Client Testimonials", "Portfolio Gallery": "Portfolio Gallery", "Embed Video": "Video Embed", Header: "Header", Footer: "Footer" };
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    
     id: `template-${template.id}`,
     data: { type: "template", template, label: template.label },
   });
@@ -674,10 +677,10 @@ function DraggableTemplateButton({ template, onClick }: { template: SectionTempl
       onClick={onClick}
       style={style}
       className="flex flex-col items-center gap-1 rounded-lg border p-2 text-[10px] hover:bg-muted transition-colors text-left cursor-grab active:cursor-grabbing"
-      title={template.description}
+      title={t(template.description, template.description)}
     >
       <Layers className="h-3 w-3 text-muted-foreground shrink-0" />
-      <span className="line-clamp-2">{template.label}</span>
+      <span className="line-clamp-2">{t(template.label, labelEn[template.label] ?? template.label)}</span>
     </button>
   );
 }
@@ -696,6 +699,7 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
   onSelectSection?: (id: string | null) => void;
   selectedSectionId?: string | null;
 }) {
+  const { t } = useT();
   const pages = normalizePages(site);
 
   // Group section templates by category for the Starter Blocks panel
@@ -751,23 +755,23 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
     <Tabs value={sidebarTab} onValueChange={setSidebarTab} className="w-full">
       <TabsList className="w-full h-auto rounded-none grid grid-cols-3">
         <TabsTrigger value="insert" className="text-xs gap-1 px-2 py-2">
-          <Plus className="h-3.5 w-3.5" /> Insert
+          <Plus className="h-3.5 w-3.5" /> {t("Sisipkan", "Insert")}
         </TabsTrigger>
         <TabsTrigger value="style" className="text-xs gap-1 px-2 py-2">
-          <Palette className="h-3.5 w-3.5" /> Style
+          <Palette className="h-3.5 w-3.5" /> {t("Gaya", "Style")}
         </TabsTrigger>
         <TabsTrigger value="structure" className="text-xs gap-1 px-2 py-2">
-          <Layers className="h-3.5 w-3.5" /> Structure
+          <Layers className="h-3.5 w-3.5" /> {t("Struktur", "Structure")}
         </TabsTrigger>
       </TabsList>
 
       <TabsContent value="insert" className="m-0 p-3 space-y-4">
         {/* Starter Blocks - SECTION_TEMPLATES */}
         <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground uppercase mb-2">Starter Blocks</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase mb-2">{t("Blok Awal", "Starter Blocks")}</p>
           {Object.entries(groupedSectionTemplates).map(([category, templates]) => (
             <div key={category}>
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">{category}</p>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">{t(category === "content" ? "Konten" : category === "conversion" ? "Konversi" : category === "proof" ? "Bukti" : category === "media" ? "Media" : "Tata Letak", category)}</p>
               <div className="grid grid-cols-2 gap-1.5">
                 {templates.map((t) => (
                   <DraggableTemplateButton key={t.id} template={t} onClick={() => addSectionTemplate(t)} />
@@ -801,7 +805,7 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
       <TabsContent value="style" className="m-0 p-3 space-y-5">
         {/* Templates section */}
         <div>
-          <p className="text-xs font-medium text-muted-foreground uppercase mb-2">Template Halaman</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase mb-2">{t("Template Halaman", "Page Templates")}</p>
           <TemplateTabContent site={site} updateSite={updateSite} setActivePageId={setActivePageId} />
         </div>
 
@@ -809,7 +813,7 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
 
         {/* Theme section */}
         <div>
-          <p className="text-xs font-medium text-muted-foreground uppercase mb-3">Theme Siap Pakai</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase mb-3">{t("Tema Siap Pakai", "Ready-made Themes")}</p>
           <div className="grid grid-cols-2 gap-2">
             {PRESET_THEMES.map((preset) => (
               <button
@@ -829,23 +833,23 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
 
           <div className="h-px bg-border my-4" />
 
-          <p className="text-xs font-medium text-muted-foreground uppercase mb-3">Custom Colors</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase mb-3">{t("Warna Kustom", "Custom Colors")}</p>
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Primary Color</Label>
+            <Label className="text-xs text-muted-foreground">{t("Warna Utama", "Primary Color")}</Label>
             <div className="flex gap-2">
               <input type="color" value={site.themeConfig?.primaryColor ?? "#6647F0"} onChange={(e) => updateTheme({ primaryColor: e.target.value })} className="h-8 w-8 rounded border cursor-pointer" />
               <Input value={site.themeConfig?.primaryColor ?? "#6647F0"} onChange={(e) => updateTheme({ primaryColor: e.target.value })} className="h-8 text-xs font-mono" />
             </div>
           </div>
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Text Color</Label>
+            <Label className="text-xs text-muted-foreground">{t("Warna Teks", "Text Color")}</Label>
             <div className="flex gap-2">
               <input type="color" value={site.themeConfig?.textColor ?? "#111827"} onChange={(e) => updateTheme({ textColor: e.target.value })} className="h-8 w-8 rounded border cursor-pointer" />
               <Input value={site.themeConfig?.textColor ?? "#111827"} onChange={(e) => updateTheme({ textColor: e.target.value })} className="h-8 text-xs font-mono" />
             </div>
           </div>
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Background Color</Label>
+            <Label className="text-xs text-muted-foreground">{t("Warna Latar", "Background Color")}</Label>
             <div className="flex gap-2">
               <input type="color" value={site.themeConfig?.backgroundColor ?? "#ffffff"} onChange={(e) => updateTheme({ backgroundColor: e.target.value })} className="h-8 w-8 rounded border cursor-pointer" />
               <Input value={site.themeConfig?.backgroundColor ?? "#ffffff"} onChange={(e) => updateTheme({ backgroundColor: e.target.value })} className="h-8 text-xs font-mono" />
@@ -854,13 +858,13 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
 
           <div className="h-px bg-border my-4" />
 
-          <p className="text-xs font-medium text-muted-foreground uppercase mb-3">Font</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase mb-3">{t("Font", "Font")}</p>
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Heading Font</Label>
+            <Label className="text-xs text-muted-foreground">{t("Font Judul", "Heading Font")}</Label>
             <Input value={site.themeConfig?.fontHeading ?? ""} placeholder="Inter, ui-sans-serif" onChange={(e) => updateTheme({ fontHeading: e.target.value || undefined })} className="h-8 text-xs" />
           </div>
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Body Font</Label>
+            <Label className="text-xs text-muted-foreground">{t("Font Isi", "Body Font")}</Label>
             <Input value={site.themeConfig?.fontBody ?? ""} placeholder="Inter, ui-sans-serif" onChange={(e) => updateTheme({ fontBody: e.target.value || undefined })} className="h-8 text-xs" />
           </div>
         </div>
