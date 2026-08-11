@@ -794,7 +794,7 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
                   className="flex flex-col items-center gap-1 rounded-lg border p-2 text-xs hover:bg-muted transition-colors"
                 >
                   <w.icon className="h-4 w-4 text-muted-foreground" />
-                  {w.label}
+                  {t(w.label, ({ "Teks": "Text", "Sosial": "Social", "Tombol CTA": "CTA Button", "Pemisah": "Divider", "Spasi": "Spacer", "Layanan": "Services", "Proses": "Process", "Harga": "Pricing", "Portofolio": "Portfolio", "Testimoni": "Testimonials", "FAQ": "FAQ", "Kontak": "Contact", "Accordion": "Accordion", "Galeri": "Gallery", "Embed": "Embed", "Daftar Isi": "Table of Contents", "Multi-Kolom": "Multi-Column" } as Record<string, string>)[w.label] ?? w.label)}
                 </button>
               ))}
             </div>
