@@ -86,18 +86,7 @@ export default async function QuestionnairesPage() {
             "Buat satu untuk kumpulkan brief dari klien.",
             "Create one to collect briefs from clients.",
           )}
-          actionNode={
-            canWrite ? (
-              <QuestionnaireCreateDialog
-                trigger={
-                  <Button size="sm" className="gap-1">
-                    <Plus className="h-4 w-4" />
-                    {t("Kuesioner baru", "New questionnaire")}
-                  </Button>
-                }
-              />
-            ) : undefined
-          }
+          actionNode={undefined}
         />
       ) : (
         <>

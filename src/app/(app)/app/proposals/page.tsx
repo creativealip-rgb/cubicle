@@ -143,11 +143,7 @@ export default async function ProposalsPage({
                   "No proposals with this status.",
                 )
           }
-          action={
-            canWrite && statusFilter === "all"
-              ? { label: t("Proposal baru", "New proposal"), href: "/app/proposals/new" }
-              : undefined
-          }
+          action={undefined}
         />
       ) : (
         <ProposalsListTable rows={rows} canWrite={canWrite} />

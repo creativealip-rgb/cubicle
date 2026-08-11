@@ -50,7 +50,7 @@ export function AvailabilityRuleForm() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="min-h-10 gap-1.5">
+        <Button size="sm" className="gap-1">
           <Plus className="h-4 w-4" /> {t("Tambah aturan", "Add rule")}
         </Button>
       </DialogTrigger>

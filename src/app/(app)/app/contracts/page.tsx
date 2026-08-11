@@ -151,11 +151,7 @@ export default async function ContractsPage({
                   "No contracts with this status.",
                 )
           }
-          actionNode={
-            canWrite ? (
-              <CreateContractButton clients={clientsList} workspaceId={workspaceId} />
-            ) : undefined
-          }
+          actionNode={undefined}
         />
       ) : (
         <ContractsListTable rows={rows} canWrite={canWrite} />
