@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-12 — i18n and UI polish follow-up
+
+- Localized secondary landing-page marketing labels and pricing/capability copy through existing EN/ID translator.
+- Localized site-builder canvas tabs, starter-block categories/labels, theme controls, colors, fonts, and starter-block names.
+- Moved Files storage usage card below workspace folder navigation in left rail.
+- Fixed Calendar action placement/style and vertically centered empty availability state.
+- Kept empty-state create actions out of duplicate cards while retaining page-header actions.
+- Localized Reports time-performance labels, timer controls/toasts, auth/client surfaces, and calendar/invoice tabs.
+- Fixed time-entry work-date derivation for `Asia/Jakarta` and reduced inactive project-tab mounting.
+
+**Verification:** targeted ESLint and TypeScript checks passed for each follow-up batch; dev deploys use clean `main` clones with production container unchanged.
+
 ## 2026-08-11 — Final billing/storage hardening and dev QA checkpoint
 
 **Billing and storage:**

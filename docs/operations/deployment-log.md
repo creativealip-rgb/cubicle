@@ -1,5 +1,13 @@
 # Deployment Log
 
+## 12 August 2026 — Main/dev UI and i18n follow-up
+
+- Source: `main`; latest site-builder canvas i18n follow-up: `374bf67`; landing secondary copy: `8052924`.
+- Dev target: `cubicle-dev` / `https://dev.cubiqlo.com`.
+- Scope: landing/site-builder EN/ID, Reports labels, Calendar/Files/sidebar polish, timer/date handling, and active-tab rendering.
+- Verification: targeted ESLint and TypeScript checks passed; deployment workflow checks app/DB health.
+- Production: not deployed; production container remains unchanged.
+
 ## 8 August 2026 — Production release: dev integration, billing hardening, questionnaire, AI quota and invoice lifecycle
 
 - Source: `dev/integration` merged into `main` as `8248dcf`; pushed to `origin/main`.
