@@ -180,8 +180,8 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
 
       <section className="space-y-3 border-t pt-4">
         <div>
-          <h3 className="text-sm font-medium">Kontak</h3>
-          <p className="text-xs text-muted-foreground">Cara hubungi klien.</p>
+          <h3 className="text-sm font-medium">{t("Kontak", "Contact")}</h3>
+          <p className="text-xs text-muted-foreground">{t("Cara hubungi klien.", "How to contact the client.")}</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">

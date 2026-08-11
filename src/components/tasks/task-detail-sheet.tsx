@@ -32,6 +32,7 @@ interface Task {
   projectName?: string | null;
   timeTrackingMode?: "off" | "internal" | "billable" | null;
   sourceNoteId?: string | null;
+  mode?: "workflow" | "reusable";
 }
 
 interface TaskDetailSheetProps {
@@ -69,7 +70,7 @@ export function TaskDetailSheet({
             <TaskForm
               mode="edit"
               projectId={task.projectId}
-              taskMode="workflow"
+              taskMode={task.mode ?? "workflow"}
               members={members}
               defaultValues={{
                 id: task.id,
