@@ -239,14 +239,14 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
       <section className="space-y-3 border-t pt-4">
         <div>
           <h3 className="text-sm font-medium">{t("Catatan internal", "Internal notes")}</h3>
-          <p className="text-xs text-muted-foreground">Hanya terlihat di workspace, tidak ke portal klien.</p>
+          <p className="text-xs text-muted-foreground">{t("Hanya terlihat di workspace, tidak ke portal klien.", "Visible only in your workspace, not in the client portal.")}</p>
         </div>
         <div className="space-y-1.5">
           <Textarea
             id="internalNotes"
             value={form.internalNotes}
             onChange={(e) => set("internalNotes", e.target.value)}
-            placeholder="Preferensi klien, jadwal report, dll."
+            placeholder={t("Preferensi klien, jadwal report, dll.", "Client preferences, reporting schedule, etc.")}
             rows={3}
             className="min-h-[88px] resize-y"
           />
@@ -255,13 +255,13 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
 
       <section className="space-y-3 rounded-lg border bg-muted/30 p-3 sm:p-4">
         <div>
-          <h3 className="text-sm font-medium">Portal klien</h3>
+          <h3 className="text-sm font-medium">{t("Portal klien", "Client portal")}</h3>
           <p className="text-xs text-muted-foreground">
-            Slug tampil di link; token aman tetap wajib untuk membuka portal.
+            {t("Slug tampil di link; token aman tetap wajib untuk membuka portal.", "The slug appears in the link; a secure token is still required to open the portal.")}
           </p>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="portalSlug">Slug portal</Label>
+          <Label htmlFor="portalSlug">{t("Slug portal", "Portal slug")}</Label>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Input
               id="portalSlug"
@@ -273,7 +273,7 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
               {generatingSlug ? t("Membuat...", "Generating...") : "Generate"}
             </Button>
           </div>
-          <p className="text-[11px] text-muted-foreground">Huruf kecil, angka, dash. Harus unik.</p>
+          <p className="text-[11px] text-muted-foreground">{t("Huruf kecil, angka, dash. Harus unik.", "Lowercase letters, numbers, and dashes. Must be unique.")}</p>
         </div>
         {mode === "create" && (
           <label className="flex items-center gap-2 text-sm">
@@ -282,7 +282,7 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
               checked={form.portalEnabled}
               onChange={(e) => set("portalEnabled", e.target.checked)}
             />
-            Aktifkan portal sekarang
+            {t("Aktifkan portal sekarang", "Enable portal now")}
           </label>
         )}
       </section>

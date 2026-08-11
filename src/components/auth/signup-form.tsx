@@ -17,9 +17,11 @@ import {
 import { LoadingButton } from "@/components/ui/loading-button";
 import { authClient } from "@/lib/auth-client";
 import { GoogleAuthButton } from "@/components/auth/google-auth-button";
+import { useT } from "@/lib/i18n-client";
 
 export function SignupForm() {
   const router = useRouter();
+  const { t } = useT();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -40,13 +42,13 @@ export function SignupForm() {
       });
 
       if (result.error) {
-        setError(result.error.message ?? "Gagal membuat akun");
+        setError(result.error.message ?? t("Gagal membuat akun", "Failed to create account"));
         return;
       }
 
       router.push(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch {
-      setError("Terjadi kesalahan. Coba lagi.");
+      setError(t("Terjadi kesalahan. Coba lagi.", "An error occurred. Try again."));
     } finally {
       setLoading(false);
     }
@@ -55,9 +57,9 @@ export function SignupForm() {
   return (
     <Card className="w-full border-slate-200 bg-white shadow-xl shadow-slate-200/50">
       <CardHeader className="space-y-1 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Buat akun</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("Buat akun", "Create your account")}</h1>
         <CardDescription>
-          Mulai workspace Cubiqlo gratis
+          {t("Mulai workspace Cubiqlo gratis", "Start your free Cubiqlo workspace")}
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit} aria-busy={loading}>
@@ -68,7 +70,7 @@ export function SignupForm() {
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="name">Nama lengkap</Label>
+            <Label htmlFor="name">{t("Nama lengkap", "Full name")}</Label>
             <Input
               id="name"
               type="text"
@@ -102,41 +104,39 @@ export function SignupForm() {
               minLength={8}
               autoComplete="new-password"
             />
-            <p className="text-xs text-muted-foreground">
-              Minimal 8 karakter
-            </p>
+            <p className="text-xs text-muted-foreground">{t("Minimal 8 karakter", "At least 8 characters")}</p>
           </div>
           <LoadingButton type="submit" className="w-full" loading={loading}>
-            {"Buat akun"}
+            {t("Buat akun", "Create account")}
           </LoadingButton>
           <GoogleAuthButton callbackURL="/onboarding" />
           <p className="text-center text-xs text-muted-foreground">
-            Dengan membuat akun, kamu menyetujui{" "}
+            {t("Dengan membuat akun, kamu menyetujui", "By creating an account, you agree to our")}{" "}
             <Link
               href="/terms"
               className="underline underline-offset-4 hover:text-foreground"
             >
-              Syarat &amp; Ketentuan
+              {t("Syarat & Ketentuan", "Terms of Service")}
             </Link>{" "}
-            dan{" "}
+            {t("dan", "and")}{" "}
             <Link
               href="/privacy"
               className="underline underline-offset-4 hover:text-foreground"
             >
-              Kebijakan Privasi
+              {t("Kebijakan Privasi", "Privacy Policy")}
             </Link>{" "}
-            kami.
+            {t("kami.", ".")}
           </p>
         </CardContent>
       </form>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
-          Sudah punya akun?{" "}
+          {t("Sudah punya akun?", "Already have an account?")}{" "}
           <Link
             href="/login"
             className="font-medium text-primary underline-offset-4 hover:underline"
           >
-            Masuk
+            {t("Masuk", "Sign in")}
           </Link>
         </p>
       </CardFooter>

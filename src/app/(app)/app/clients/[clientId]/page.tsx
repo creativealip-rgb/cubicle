@@ -391,7 +391,7 @@ export default async function ClientDetailPage({
                   )}
                   {client.internalNotes && (
                     <div>
-                      <p className="text-xs text-muted-foreground">Catatan Internal</p>
+                      <p className="text-xs text-muted-foreground">{t("Catatan Internal", "Internal notes")}</p>
                       <p className="mt-1 leading-relaxed">{client.internalNotes}</p>
                     </div>
                   )}

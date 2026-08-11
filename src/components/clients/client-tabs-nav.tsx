@@ -48,7 +48,7 @@ export function ClientTabsNav({
             <FileText className="h-3 w-3 shrink-0" /> {t("Proyek", "Projects")} ({projectsCount})
           </TabsTrigger>
           <TabsTrigger value="invoices" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
-            <Receipt className="h-3 w-3 shrink-0" /> Invoice ({invoicesCount})
+            <Receipt className="h-3 w-3 shrink-0" /> {t("Invoice", "Invoices")} ({invoicesCount})
           </TabsTrigger>
           <TabsTrigger value="calendar" className="gap-1 px-2.5 text-xs sm:px-3 sm:text-sm">
             <Calendar className="h-3 w-3 shrink-0" /> {t("Kalender", "Calendar")}
