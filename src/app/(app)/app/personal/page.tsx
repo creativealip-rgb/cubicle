@@ -247,7 +247,7 @@ export default async function PersonalPage({
       </div>
 
       <div
-        className="grid items-start gap-4 lg:grid-cols-[400px_minmax(0,1fr)]"
+        className="grid min-w-0 items-start gap-4 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)]"
         data-ui="notes-split-view"
       >
         <Card id="new-note" className="h-fit lg:sticky lg:top-4">

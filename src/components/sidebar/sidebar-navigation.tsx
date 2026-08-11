@@ -35,6 +35,7 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
   const [flyoutGroup, setFlyoutGroup] = useState<SidebarGroupId | null>(null);
   const [flyoutPosition, setFlyoutPosition] = useState({ top: 64, left: collapsed ? 76 : 268 });
   const [desktopOverride, setDesktopOverride] = useState<SidebarGroupOverride>({ kind: "default" });
+  const [desktopViewport, setDesktopViewport] = useState(false);
   const triggerRefs = useRef<Partial<Record<SidebarGroupId, HTMLButtonElement | null>>>({});
   const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -44,6 +45,11 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
   useEffect(() => {
     setMobileGroup(active.groupId);
     setDesktopOverride({ kind: "default" });
+    const media = window.matchMedia("(min-width: 1024px)");
+    const syncViewport = () => setDesktopViewport(media.matches);
+    syncViewport();
+    media.addEventListener("change", syncViewport);
+    return () => media.removeEventListener("change", syncViewport);
   }, [pathname, active.groupId]);
 
   function clearFlyoutTimers() {
@@ -79,7 +85,7 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
     return key ? (badgeCounts[key] ?? 0) : 0;
   }
 
-  function directLink(item: Extract<(typeof entries)[number], { kind: "direct" }>, compact = false) {
+  function directLink(item: Extract<(typeof entries)[number], { kind: "direct" }>, compact = false, mobile = false) {
     const Icon = item.icon;
     const isActive = active.itemId === item.id;
     const badge = badgeFor(item.badgeKey);
@@ -88,7 +94,7 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
         key={item.id}
         href={item.href}
         onClick={onNavigate}
-        aria-current={isActive ? "page" : undefined}
+        aria-current={isActive && (desktopViewport ? !mobile : mobile) ? "page" : undefined}
         title={compact ? t(item.label.id, item.label.en) : undefined}
         className={cn(
           "relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500",
@@ -126,7 +132,7 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
               <button
                 ref={(node) => { triggerRefs.current[entry.id] = node; }}
                 type="button"
-                aria-current={groupActive ? "true" : undefined}
+                aria-current={undefined}
                 aria-expanded={groupOpen}
                 aria-controls={`sidebar-desktop-${entry.id}`}
                 onClick={() => toggleDesktopGroup(entry.id)}
@@ -169,7 +175,7 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
       </div>
 
       <div className="space-y-1 lg:hidden">
-        {entries.map((entry) => entry.kind === "direct" ? directLink(entry) : (
+        {entries.map((entry) => entry.kind === "direct" ? directLink(entry, false, true) : (
           <div key={entry.id}>
             <button
               type="button"
@@ -188,7 +194,7 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
             </button>
             {mobileGroup === entry.id && (
               <div id={`sidebar-mobile-${entry.id}`} className="ml-4 space-y-1 border-l border-slate-200 pl-2">
-                {entry.children.map((item) => directLink(item))}
+                {entry.children.map((item) => directLink(item, false, true))}
               </div>
             )}
           </div>
