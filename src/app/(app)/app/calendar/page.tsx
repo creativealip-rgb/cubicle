@@ -101,9 +101,8 @@ export default async function CalendarPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <QuestionnaireCreateDialog />
-          <AvailabilityRuleForm />
           {ws.bookingSlug ? (
-            <Button variant="outline" size="sm" className="gap-1" asChild>
+            <Button size="sm" className="gap-1" asChild>
               <Link href={`/booking/${ws.bookingSlug}`} target="_blank">
                 <Calendar className="h-4 w-4" />
                 <span className="hidden sm:inline">{t("Halaman Booking Publik", "Public Booking Page")}</span>
@@ -111,7 +110,7 @@ export default async function CalendarPage() {
               </Link>
             </Button>
           ) : (
-            <Button variant="outline" size="sm" className="gap-1" asChild>
+            <Button size="sm" className="gap-1" asChild>
               <Link href="/app/settings">
                 <Calendar className="h-4 w-4" />
                 <span className="hidden sm:inline">{t("Aktifkan booking publik", "Enable public booking")}</span>
@@ -125,15 +124,16 @@ export default async function CalendarPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Availability Rules */}
         <Card className="lg:col-span-1">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between gap-3">
             <CardTitle className="text-base font-semibold">
               <Clock className="mr-2 inline h-4 w-4" />
               {t("Aturan Ketersediaan", "Availability Rules")}
             </CardTitle>
+            <AvailabilityRuleForm />
           </CardHeader>
           <CardContent className="space-y-2">
             {rules.length === 0 && (
-              <div className="flex min-h-48 flex-col items-center justify-center py-6 text-center">
+              <div className="flex min-h-64 flex-col items-center justify-center py-8 text-center">
                 <Calendar className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
                 <p className="text-sm text-muted-foreground">{t("Belum ada aturan ketersediaan", "No availability rules yet")}</p>
                 <p className="text-xs text-foreground/70">
