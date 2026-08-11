@@ -27,7 +27,14 @@ export function effectiveWorkDate(entry: EffectiveTimeEntry): string {
   if (entry.workDate) return String(entry.workDate).slice(0, 10);
   const candidate = entry.startTime ?? entry.createdAt;
   if (!candidate) return localDateIso(new Date());
-  return localDateIso(new Date(candidate));
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date(candidate));
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
 }
 
 export function weekStartDate(date: Date): Date {
