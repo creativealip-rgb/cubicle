@@ -102,17 +102,17 @@ export default async function CalendarPage() {
         <div className="flex flex-wrap items-center gap-2">
           <QuestionnaireCreateDialog />
           {ws.bookingSlug ? (
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" className="gap-1" asChild>
               <Link href={`/booking/${ws.bookingSlug}`} target="_blank">
-                <Calendar className="mr-2 h-4 w-4" />
+                <Calendar className="h-4 w-4" />
                 <span className="hidden sm:inline">{t("Halaman Booking Publik", "Public Booking Page")}</span>
                 <span className="sm:hidden">{t("Booking publik", "Public booking")}</span>
               </Link>
             </Button>
           ) : (
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" className="gap-1" asChild>
               <Link href="/app/settings">
-                <Calendar className="mr-2 h-4 w-4" />
+                <Calendar className="h-4 w-4" />
                 <span className="hidden sm:inline">{t("Aktifkan booking publik", "Enable public booking")}</span>
                 <span className="sm:hidden">{t("Aktifkan booking", "Enable booking")}</span>
               </Link>

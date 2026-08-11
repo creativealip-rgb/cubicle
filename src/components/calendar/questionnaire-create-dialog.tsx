@@ -50,8 +50,8 @@ export function QuestionnaireCreateDialog({ trigger }: { trigger?: React.ReactNo
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="outline" size="sm">
-            <Plus className="mr-1.5 h-4 w-4" />
+          <Button variant="outline" size="sm" className="gap-1">
+            <Plus className="h-4 w-4" />
             {t("Buat formulir", "Create form")}
           </Button>
         )}
