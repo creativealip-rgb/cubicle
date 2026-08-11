@@ -63,20 +63,20 @@ export function ProjectTabsNav({
       </TabsList>
 
       <TabsContent value="work" className="pt-4">
-        {tasksContent}
+        {currentTab === "work" ? tasksContent : null}
       </TabsContent>
 
       <TabsContent value="files" className="pt-4">
-        {filesContent}
+        {currentTab === "files" ? filesContent : null}
       </TabsContent>
 
       <TabsContent value="billing" className="pt-4">
-        {billingContent}
+        {currentTab === "billing" ? billingContent : null}
       </TabsContent>
 
       {showTimeTab && timeContent ? (
         <TabsContent value="time" className="pt-4">
-          {timeContent}
+          {currentTab === "time" ? timeContent : null}
         </TabsContent>
       ) : null}
     </Tabs>
