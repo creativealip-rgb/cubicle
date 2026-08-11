@@ -102,7 +102,7 @@ export default async function ProposalsPage({
             )}
           </p>
         </div>
-        {canWrite && (
+        {canWrite && rows.length > 0 && (
           <Button size="sm" className="gap-1" asChild>
             <Link href="/app/proposals/new">
               <Plus className="h-4 w-4" />

@@ -115,7 +115,7 @@ export default async function ContractsPage({
             )}
           </p>
         </div>
-        {canWrite && (
+        {canWrite && rows.length > 0 && (
           <CreateContractButton clients={clientsList} workspaceId={workspaceId} />
         )}
       </div>

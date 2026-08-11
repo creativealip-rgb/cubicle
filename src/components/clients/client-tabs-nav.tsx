@@ -57,19 +57,19 @@ export function ClientTabsNav({
       </div>
 
       <TabsContent value="portal" className="pt-4">
-        {portalContent}
+        {currentTab === "portal" ? portalContent : null}
       </TabsContent>
 
       <TabsContent value="projects" className="pt-4">
-        {projectsContent}
+        {currentTab === "projects" ? projectsContent : null}
       </TabsContent>
 
       <TabsContent value="invoices" className="pt-4">
-        {invoicesContent}
+        {currentTab === "invoices" ? invoicesContent : null}
       </TabsContent>
 
       <TabsContent value="calendar" className="pt-4">
-        {calendarContent}
+        {currentTab === "calendar" ? calendarContent : null}
       </TabsContent>
     </Tabs>
   );

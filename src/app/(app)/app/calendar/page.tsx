@@ -133,7 +133,7 @@ export default async function CalendarPage() {
           </CardHeader>
           <CardContent className="space-y-2">
             {rules.length === 0 && (
-              <div className="py-6 text-center">
+              <div className="flex min-h-48 flex-col items-center justify-center py-6 text-center">
                 <Calendar className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
                 <p className="text-sm text-muted-foreground">{t("Belum ada aturan ketersediaan", "No availability rules yet")}</p>
                 <p className="text-xs text-foreground/70">

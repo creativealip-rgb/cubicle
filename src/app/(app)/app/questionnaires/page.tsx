@@ -64,7 +64,7 @@ export default async function QuestionnairesPage() {
             )}
           </p>
         </div>
-        {canWrite && (
+        {canWrite && rows.length > 0 && (
           <div className="app-page-actions">
             <QuestionnaireCreateDialog
               trigger={
