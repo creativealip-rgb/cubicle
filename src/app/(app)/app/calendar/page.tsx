@@ -101,6 +101,7 @@ export default async function CalendarPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <QuestionnaireCreateDialog />
+          <AvailabilityRuleForm />
           {ws.bookingSlug ? (
             <Button variant="outline" size="sm" className="gap-1" asChild>
               <Link href={`/booking/${ws.bookingSlug}`} target="_blank">
@@ -124,12 +125,11 @@ export default async function CalendarPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Availability Rules */}
         <Card className="lg:col-span-1">
-          <CardHeader className="flex flex-row items-center justify-between gap-3">
+          <CardHeader>
             <CardTitle className="text-base font-semibold">
               <Clock className="mr-2 inline h-4 w-4" />
               {t("Aturan Ketersediaan", "Availability Rules")}
             </CardTitle>
-            <AvailabilityRuleForm />
           </CardHeader>
           <CardContent className="space-y-2">
             {rules.length === 0 && (
