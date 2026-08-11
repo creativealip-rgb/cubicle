@@ -3,15 +3,14 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { files as filesTable, clients, projects, folders as foldersTable } from "@/db/schema";
-import { eq, desc, and, isNull, sql } from "drizzle-orm";
+import { eq, desc, and, isNull } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { FileList } from "@/components/files/file-list";
 import { FileDropZone } from "@/components/files/file-drop-zone";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
+
 import { getCurrentLang, createT } from "@/lib/i18n";
-import { getWorkspaceStorageQuota } from "@/lib/storage-quota";
 
 /** File list + breadcrumb only — tree lives in layout (no full-page flash). */
 export default async function FilesPage({
@@ -72,13 +71,7 @@ export default async function FilesPage({
         .limit(1)
     : [];
 
-  const [storage, usage] = await Promise.all([
-    getWorkspaceStorageQuota(workspaceId),
-    db.select({ bytes: sql<number>`coalesce(sum(${filesTable.sizeBytes}), 0)` })
-      .from(filesTable)
-      .where(eq(filesTable.workspaceId, workspaceId)),
-  ]);
-  const usedBytes = Number(usage[0]?.bytes ?? 0);
+
 
   const folderList = await db
     .select({
@@ -124,14 +117,7 @@ export default async function FilesPage({
 
   return (
     <>
-      <Card className="mb-4">
-        <CardContent className="space-y-2 pt-4 text-sm">
-          <div className="flex items-center justify-between"><span>{t("Storage terpakai", "Storage used")}</span><strong>{(usedBytes / 1024 ** 3).toFixed(2)} GB / {(storage.maxBytes / 1024 ** 3).toFixed(2)} GB</strong></div>
-          <div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-[#6647F0]" style={{ width: `${Math.min(100, (usedBytes / Math.max(1, storage.maxBytes)) * 100)}%` }} /></div>
-          <p className="text-xs text-muted-foreground">{t("Tersedia", "Available")}: {(Math.max(0, storage.maxBytes - usedBytes) / 1024 ** 3).toFixed(2)} GB</p>
-          <p className="text-xs text-muted-foreground">{t("Batas workspace", "Workspace limit")}: {(storage.maxBytes / 1024 ** 3).toFixed(2)} GB</p>
-        </CardContent>
-      </Card>
+
       <nav className="flex items-center gap-1 text-sm text-muted-foreground flex-wrap">
         {crumbs.map((crumb, i) => (
           <span key={`${crumb.href}-${i}`} className="flex items-center gap-1">
