@@ -87,7 +87,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const langCookie = (await cookies()).get("cubiqlo_lang")?.value;
-  const lang: Lang = langCookie === "en" ? "en" : "id";
+  const lang: Lang = langCookie === "id" ? "id" : "en";
   return (
     <html
       lang={lang}

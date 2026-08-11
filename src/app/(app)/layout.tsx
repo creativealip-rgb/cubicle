@@ -28,7 +28,7 @@ export default async function AppLayout({
     redirect("/login");
   }
 
-  const lang = await getCurrentLang();
+  const lang = await getCurrentLang("en");
 
   const [workspace] = await db
     .select({ id: workspaces.id })
