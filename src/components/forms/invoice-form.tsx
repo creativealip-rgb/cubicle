@@ -147,7 +147,6 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
       return;
     }
     const validItems = items.filter((item) => item.description.trim());
-    if (missingRateProjects.length) { toast.error("Lengkapi kurs workspace sebelum membuat invoice"); return; }
     const sourcePayload = selectedProjects.map((project) => {
       const source = projectSources[project.id] ?? defaultInvoiceSource(project.billingType, { hasActiveFixedHistory: Boolean(project.priorActiveFixedBilledAmount), hasInitialTimeEntries: Boolean(project.initialTimeEntryIds?.length) });
       if (source?.mode === "hourly_timesheet") {
@@ -156,9 +155,10 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
       }
       return { project, source };
     });
-    if (selectedProjects.length > 0 && sourcePayload.some(({ source }) => !sourceDraftComplete(source))) { toast.error("Lengkapi sumber tagihan setiap proyek"); return; }
+    if (missingRateProjects.length) { toast.error(t("Lengkapi kurs workspace sebelum membuat invoice", "Complete workspace exchange rates before creating an invoice")); return; }
+    if (selectedProjects.length > 0 && sourcePayload.some(({ source }) => !sourceDraftComplete(source))) { toast.error(t("Lengkapi sumber tagihan setiap proyek", "Complete billing sources for every project")); return; }
     if (mode === "create" && validItems.length === 0 && sourcePayload.length === 0) {
-      toast.error("Tambahkan minimal satu item tagihan");
+      toast.error(t("Tambahkan minimal satu item tagihan", "Add at least one invoice item"));
       return;
     }
     setLoading(true);
@@ -191,7 +191,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         if (!invoice?.id) {
           throw new Error("Invoice dibuat tapi ID tidak diterima. Coba refresh daftar invoice.");
         }
-        toast.success("Invoice dibuat");
+        toast.success(t("Invoice dibuat", "Invoice created"));
         setLoading(false);
         if (onSuccess) onSuccess();
         else window.location.assign(buildInvoiceDetailUrl(invoice.id, { type: "global" }));
@@ -200,7 +200,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
 
       if (defaultValues?.id) {
         await updateInvoice(defaultValues.id, data);
-        toast.success("Invoice diperbarui");
+        toast.success(t("Invoice diperbarui", "Invoice updated"));
         onSuccess?.();
         router.refresh();
       }
@@ -256,7 +256,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
       )}
 
       {!scopedClientId && <div className="space-y-2">
-        <Label htmlFor="clientId">Klien *</Label>
+        <Label htmlFor="clientId">{t("Klien", "Client")} *</Label>
         <Select
           value={form.clientId}
           onValueChange={(v) => { setSelectedProjectIds([]); setProjectSources({}); setForm((prev) => ({ ...prev, clientId: v, projectId: "" })); }}
@@ -278,7 +278,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
 
       {!scopedProjectId && clientProjects.length > 0 && mode === "create" && (
         <div className="space-y-2">
-          <Label>Proyek (bisa pilih beberapa)</Label>
+          <Label>{t("Proyek (bisa pilih beberapa)", "Projects (you can select multiple)")}</Label>
           <div className="space-y-2 rounded-lg border p-2">
             {clientProjects.map((project) => {
               const selected = selectedProjectIds.includes(project.id);
@@ -308,7 +308,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         const source = projectSources[project.id] ?? defaultInvoiceSource(project.billingType, { hasActiveFixedHistory: Boolean(project.priorActiveFixedBilledAmount), hasInitialTimeEntries: Boolean(project.initialTimeEntryIds?.length) });
         const fixedPreview = fixedSourcePreview(project.agreedAmount, project.priorActiveFixedBilledAmount);
         return <div key={project.id} className="space-y-3 rounded-lg border p-3">
-          <div><p className="font-medium">{project.name}</p><p className="text-xs text-muted-foreground">Pilih sumber tagihan</p></div>
+          <div><p className="font-medium">{project.name}</p><p className="text-xs text-muted-foreground">{t("Pilih sumber tagihan", "Select billing source")}</p></div>
           <Select value={source?.mode ?? ""} onValueChange={(value) => updateSource(project.id, { mode: value as InvoiceSourceMode, amountType: undefined, value: undefined, milestoneName: undefined, description: undefined, periodStart: undefined, periodEnd: undefined, timeEntryIds: undefined })}>
             <SelectTrigger><SelectValue placeholder={t("Pilih sumber", "Select source")} /></SelectTrigger>
             <SelectContent>
@@ -410,7 +410,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="dueDate">Jatuh Tempo</Label>
+          <Label htmlFor="dueDate">{t("Jatuh Tempo", "Due Date")}</Label>
           <Input
             id="dueDate"
             type="date"
@@ -458,18 +458,18 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="notes">Catatan</Label>
+        <Label htmlFor="notes">{t("Catatan", "Notes")}</Label>
         <Textarea
           id="notes"
           value={form.notes}
           onChange={(e) => set("notes", e.target.value)}
-          placeholder="Catatan yang tampil di invoice..."
+          placeholder={t("Catatan yang tampil di invoice...", "Notes shown on the invoice...")}
           rows={3}
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="terms">Syarat</Label>
+        <Label htmlFor="terms">{t("Syarat", "Terms")}</Label>
         <Input
           id="terms"
           value={form.terms}

@@ -32,6 +32,7 @@ import {
   updateClientGoogleEventAction,
 } from "@/lib/actions/client-google-calendar";
 import { useRouter } from "next/navigation";
+import { useT } from "@/lib/i18n-client";
 
 export type ClientGcalEvent = {
   id: string;
@@ -156,6 +157,7 @@ export function ClientGoogleCalendarPanel({
   eventsError,
   appointments,
 }: Props) {
+  const { t } = useT();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -240,7 +242,7 @@ export function ClientGoogleCalendarPanel({
   async function handleSaveEvent(e: React.FormEvent) {
     e.preventDefault();
     if (!form.title.trim()) {
-      toast.error("Judul wajib diisi");
+      toast.error(t("Judul wajib diisi", "Title is required"));
       return;
     }
     setSaving(true);
@@ -255,10 +257,10 @@ export function ClientGoogleCalendarPanel({
       };
       if (editingId) {
         await updateClientGoogleEventAction(clientId, editingId, payload);
-        toast.success("Event diupdate di Google Calendar klien");
+        toast.success(t("Event diupdate di Google Calendar klien", "Event updated in the client's Google Calendar"));
       } else {
         await createClientGoogleEventAction(clientId, payload);
-        toast.success("Event dibuat di Google Calendar klien");
+        toast.success(t("Event dibuat di Google Calendar klien", "Event created in the client's Google Calendar"));
       }
       closeForm();
       router.refresh();
@@ -274,7 +276,7 @@ export function ClientGoogleCalendarPanel({
     setLoading(true);
     try {
       await deleteClientGoogleEventAction(clientId, event.id);
-      toast.success("Event dihapus");
+      toast.success(t("Event dihapus", "Event deleted"));
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal hapus event");
@@ -290,7 +292,7 @@ export function ClientGoogleCalendarPanel({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <Calendar className="h-4 w-4" />
-              Google Calendar Klien
+              {t("Google Calendar Klien", "Client Google Calendar")}
             </CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant={badge.variant}>{badge.label}</Badge>
@@ -300,7 +302,7 @@ export function ClientGoogleCalendarPanel({
             </div>
           </div>
           <p className="text-sm text-muted-foreground">
-            Terpisah dari kalender kamu. Buat/edit event langsung ke Google Calendar klien.
+            {t("Terpisah dari kalender kamu. Buat/edit event langsung ke Google Calendar klien.", "Separate from your calendar. Create/edit events directly in the client's Google Calendar.")}
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -309,13 +311,13 @@ export function ClientGoogleCalendarPanel({
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-500" />
                 <div>
-                  <p className="font-medium">Kalender klien terhubung</p>
+                  <p className="font-medium">{t("Kalender klien terhubung", "Client calendar connected")}</p>
                   <p className="text-muted-foreground">
                     {email || "Akun Google klien"}
                   </p>
                   {connectedAt ? (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Terhubung: {formatWhen(connectedAt)}
+                      {t("Terhubung", "Connected")}: {formatWhen(connectedAt)}
                     </p>
                   ) : null}
                   {lastError ? (
@@ -328,12 +330,11 @@ export function ClientGoogleCalendarPanel({
             <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
               {!configured ? (
                 <p>
-                  Google OAuth server belum dikonfigurasi. Hubungi admin Cubiqlo.
+                  {t("Google OAuth server belum dikonfigurasi. Hubungi admin Cubiqlo.", "Google OAuth server is not configured. Contact a Cubiqlo admin.")}
                 </p>
               ) : (
                 <p>
-                  Generate link undangan, kirim ke klien (email/WA). Klien connect
-                  Google Calendar mereka sendiri — tanpa login Cubiqlo.
+                  {t("Generate link undangan, kirim ke klien (email/WA). Klien connect Google Calendar mereka sendiri — tanpa login Cubiqlo.", "Generate an invitation link and send it to the client (email/WhatsApp). The client connects their own Google Calendar — no Cubiqlo login required.")}
                 </p>
               )}
             </div>
@@ -342,19 +343,19 @@ export function ClientGoogleCalendarPanel({
           {inviteUrl ? (
             <div className="space-y-2 rounded-lg border p-3">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Link undangan
+                {t("Link undangan", "Invitation link")}
               </p>
               <code className="block break-all rounded bg-muted px-2 py-1 text-xs">
                 {inviteUrl}
               </code>
               {inviteExpiresAt ? (
                 <p className="text-xs text-muted-foreground">
-                  Berlaku sampai {formatWhen(inviteExpiresAt)}
+                  {t("Berlaku sampai", "Valid until")} {formatWhen(inviteExpiresAt)}
                 </p>
               ) : null}
               <Button type="button" size="sm" variant="outline" onClick={handleCopy}>
                 <Copy className="mr-2 h-4 w-4" />
-                Salin link
+                {t("Salin link", "Copy link")}
               </Button>
             </div>
           ) : null}
@@ -373,8 +374,8 @@ export function ClientGoogleCalendarPanel({
                   <Link2 className="mr-2 h-4 w-4" />
                 )}
                 {inviteUrl || pendingInvite
-                  ? "Generate ulang link"
-                  : "Hubungkan Google Calendar klien"}
+                  ? t("Generate ulang link", "Regenerate link")
+                  : t("Hubungkan Google Calendar klien", "Connect client Google Calendar")}
               </Button>
             ) : (
               <>
@@ -385,7 +386,7 @@ export function ClientGoogleCalendarPanel({
                   disabled={loading}
                 >
                   <Plus className="mr-2 h-4 w-4" />
-                  Buat event
+                  {t("Buat event", "Create event")}
                 </Button>
                 <Button
                   type="button"
@@ -395,7 +396,7 @@ export function ClientGoogleCalendarPanel({
                   disabled={loading}
                 >
                   <RefreshCw className="mr-2 h-4 w-4" />
-                  Refresh event
+                  {t("Refresh event", "Refresh events")}
                 </Button>
                 <Button
                   type="button"
@@ -405,7 +406,7 @@ export function ClientGoogleCalendarPanel({
                   disabled={loading}
                 >
                   <Link2 className="mr-2 h-4 w-4" />
-                  Re-connect link
+                  {t("Re-connect link", "Reconnect link")}
                 </Button>
                 <Button
                   type="button"
@@ -419,7 +420,7 @@ export function ClientGoogleCalendarPanel({
                   ) : (
                     <Link2Off className="mr-2 h-4 w-4" />
                   )}
-                  Putuskan
+                  {t("Putuskan", "Disconnect")}
                 </Button>
               </>
             )}
@@ -432,31 +433,31 @@ export function ClientGoogleCalendarPanel({
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between gap-2">
               <CardTitle className="text-base">
-                {editingId ? "Edit event" : "Buat event baru"}
+                {editingId ? t("Edit event", "Edit event") : t("Buat event baru", "Create new event")}
               </CardTitle>
               <Button type="button" size="sm" variant="ghost" onClick={closeForm}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
             <p className="text-sm text-muted-foreground">
-              Langsung masuk Google Calendar klien ({email || "terhubung"}).
+              {t("Langsung masuk Google Calendar klien", "Added directly to the client's Google Calendar")} ({email || t("terhubung", "connected")} ).
             </p>
           </CardHeader>
           <CardContent>
             <form className="space-y-3" onSubmit={handleSaveEvent}>
               <div className="space-y-1.5">
-                <Label htmlFor="gcal-title">Judul</Label>
+                <Label htmlFor="gcal-title">{t("Judul", "Title")}</Label>
                 <Input
                   id="gcal-title"
                   value={form.title}
                   onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                  placeholder="Mis. Briefing 07.00–08.00"
+                  placeholder={t("Mis. Briefing 07.00–08.00", "E.g. Briefing 07:00–08:00")}
                   required
                 />
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="gcal-start">Mulai</Label>
+                  <Label htmlFor="gcal-start">{t("Mulai", "Start")}</Label>
                   <Input
                     id="gcal-start"
                     type="datetime-local"
@@ -466,7 +467,7 @@ export function ClientGoogleCalendarPanel({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="gcal-end">Selesai</Label>
+                  <Label htmlFor="gcal-end">{t("Selesai", "End")}</Label>
                   <Input
                     id="gcal-end"
                     type="datetime-local"
@@ -477,21 +478,21 @@ export function ClientGoogleCalendarPanel({
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="gcal-location">Lokasi (opsional)</Label>
+                <Label htmlFor="gcal-location">{t("Lokasi (opsional)", "Location (optional)")}</Label>
                 <Input
                   id="gcal-location"
                   value={form.location}
                   onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
-                  placeholder="Zoom / Kantor / dll"
+                  placeholder={t("Zoom / Kantor / dll", "Zoom / Office / etc.")}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="gcal-desc">Catatan (opsional)</Label>
+                <Label htmlFor="gcal-desc">{t("Catatan (opsional)", "Notes (optional)")}</Label>
                 <Textarea
                   id="gcal-desc"
                   value={form.description}
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                  placeholder="Agenda / yang dikerjakan di slot ini"
+                  placeholder={t("Agenda / yang dikerjakan di slot ini", "Agenda / what will be done in this slot")}
                   rows={3}
                 />
               </div>
@@ -500,10 +501,10 @@ export function ClientGoogleCalendarPanel({
                   {saving ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : null}
-                  {editingId ? "Simpan perubahan" : "Buat di Google Calendar"}
+                  {editingId ? t("Simpan perubahan", "Save changes") : t("Buat di Google Calendar", "Create in Google Calendar")}
                 </Button>
                 <Button type="button" size="sm" variant="outline" onClick={closeForm}>
-                  Batal
+                  {t("Batal", "Cancel")}
                 </Button>
               </div>
             </form>
@@ -515,14 +516,14 @@ export function ClientGoogleCalendarPanel({
         <CardHeader className="pb-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <CardTitle className="text-base">Event Google Calendar klien</CardTitle>
+              <CardTitle className="text-base">{t("Event Google Calendar klien", "Client Google Calendar events")}</CardTitle>
               <p className="text-sm text-muted-foreground">
-                7 hari ke belakang · 60 hari ke depan · max {PAGE_SIZE}/halaman
+                {t("7 hari ke belakang · 60 hari ke depan · max", "7 days back · 60 days ahead · max")} {PAGE_SIZE}/{t("halaman", "page")}
               </p>
             </div>
             {connected && events.length > 0 ? (
               <p className="text-xs text-muted-foreground">
-                {events.length} event · halaman {safePage}/{totalPages}
+                {events.length} {t("event", "events")} · {t("halaman", "page")} {safePage}/{totalPages}
               </p>
             ) : null}
           </div>
@@ -530,7 +531,7 @@ export function ClientGoogleCalendarPanel({
         <CardContent className="space-y-3">
           {!connected ? (
             <p className="py-6 text-center text-sm text-muted-foreground">
-              Hubungkan kalender klien dulu untuk lihat / atur event.
+              {t("Hubungkan kalender klien dulu untuk lihat / atur event.", "Connect the client calendar first to view/manage events.")}
             </p>
           ) : eventsError ? (
             <p className="text-sm text-destructive">{eventsError}</p>
