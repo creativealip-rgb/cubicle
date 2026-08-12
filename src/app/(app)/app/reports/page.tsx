@@ -497,7 +497,7 @@ export default async function ReportsPage({
           return (
           <Card
             key={item.label}
-            className={item.label === t("Bersih", "Net") ? "col-span-2 md:col-span-1" : undefined}
+            className={item.label === t("Bersih", "Net") ? "col-span-2 border-primary/20 bg-primary/[0.03] md:col-span-1" : undefined}
           >
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
