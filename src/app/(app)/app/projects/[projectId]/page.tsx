@@ -9,7 +9,7 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getProjectProgress } from "@/lib/actions/projects";
-import { getCurrentLang, createT } from "@/lib/i18n";
+import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { billingTypeHint, billingTypeLabel } from "@/lib/feature-access";
 import { ProjectTaskWorkspace } from "@/components/tasks/project-task-workspace";
@@ -43,6 +43,7 @@ export default async function ProjectDetailPage({
 }) {
   const lang = await getCurrentLang();
   const t = createT(lang);
+  const locale = getLocale(lang);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -268,14 +269,14 @@ export default async function ProjectDetailPage({
             </Badge>
             {project.billingType === "hours" && project.rate && (
               <span className="text-xs text-muted-foreground">
-                {t("Rate", "Rate")}: {project.currency} {Number(project.rate).toLocaleString("id-ID")}
+                {t("Rate", "Rate")}: {project.currency} {Number(project.rate).toLocaleString(locale)}
                 /{t("jam", "hr")}
               </span>
             )}
             {billingDisplayType === "fixed_price" && project.budget && (
               <span className="text-xs text-muted-foreground">
                 {t("Fixed rate", "Fixed rate")}: {project.currency}{" "}
-                {Number(project.budget).toLocaleString("id-ID")}
+                {Number(project.budget).toLocaleString(locale)}
               </span>
             )}
             {billingDisplayType === "package" && (
@@ -309,7 +310,7 @@ export default async function ProjectDetailPage({
               {project.dueDate && (
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  {t("Jatuh tempo", "Due")}: {new Date(project.dueDate).toLocaleDateString("id-ID")}
+                  {t("Jatuh tempo", "Due")}: {new Date(project.dueDate).toLocaleDateString(locale)}
                 </span>
               )}
             </div>

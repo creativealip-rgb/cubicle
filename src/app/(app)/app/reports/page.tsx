@@ -98,6 +98,7 @@ function ReportTabs({ active, financeHref, timeHref, financeLabel, timeLabel }: 
       activeValue={active}
       hideEmpty={false}
       listClassName="w-full sm:w-auto"
+      className="border border-border/70"
       tabs={[
         { value: "finance", label: financeLabel, href: financeHref, alwaysShow: true },
         { value: "time", label: timeLabel, href: timeHref, alwaysShow: true },
@@ -497,7 +498,7 @@ export default async function ReportsPage({
           return (
           <Card
             key={item.label}
-            className={item.label === t("Bersih", "Net") ? "col-span-2 md:col-span-1" : undefined}
+            className={item.label === t("Bersih", "Net") ? "col-span-2 border-primary/20 bg-primary/[0.03] md:col-span-1" : undefined}
           >
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -657,8 +658,6 @@ export default async function ReportsPage({
         </Card>
       </div>
 
-      <Card><CardHeader><CardTitle>{t("Kinerja Waktu", "Time performance")}</CardTitle><CardDescription>{reportPeriodLabel(period, lang)}</CardDescription></CardHeader><CardContent className="space-y-4"><div className="grid grid-cols-2 gap-3 sm:grid-cols-4"><div><p className="text-xs text-muted-foreground">{t("Total", "Total")}</p><p className="font-semibold">{(timeReport.summary.totalMinutes/60).toFixed(1)}h</p></div><div><p className="text-xs text-muted-foreground">{t("Billable", "Billable")}</p><p className="font-semibold">{(timeReport.summary.billableMinutes/60).toFixed(1)}h</p></div><div><p className="text-xs text-muted-foreground">{t("Non-billable", "Non-billable")}</p><p className="font-semibold">{(timeReport.summary.nonBillableMinutes/60).toFixed(1)}h</p></div><div><p className="text-xs text-muted-foreground">{t("Estimasi nilai", "Estimated value")}</p><p className="font-semibold">{formatMoney(timeReport.summary.billableValue, baseCurrency)}</p></div></div><div className="grid gap-4 lg:grid-cols-3">{[[t("Per Proyek", "By project"),timeReport.byProject],[t("Per Tugas", "By task"),timeReport.byTask],[t("Per Anggota", "By member"),timeReport.byMember]].map(([title,rows])=><div key={title as string}><h3 className="mb-2 text-sm font-semibold">{title as string}</h3><div className="divide-y rounded-lg border">{(rows as typeof timeReport.byProject).slice(0,10).map(row=><div key={row.id} className="flex justify-between gap-2 p-2 text-sm"><span className="truncate">{row.name}</span><span className="tabular-nums">{(row.minutes/60).toFixed(1)}h</span></div>)}</div></div>)}</div></CardContent></Card>
-
       <Card>
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div>
@@ -797,7 +796,8 @@ export default async function ReportsPage({
                         <TableCell>{item.client}</TableCell>
                         <TableCell>{item.dueDate || "—"}</TableCell>
                         <TableCell className="text-right">
-                          <Badge
+                          <div className="flex justify-end">
+                            <Badge
                             variant={
                               item.daysOverdue > 0 ? "destructive" : "secondary"
                             }
@@ -805,7 +805,8 @@ export default async function ReportsPage({
                             {item.daysOverdue > 0
                               ? `${item.daysOverdue}d`
                               : t("Berjalan", "Current")}
-                          </Badge>
+                            </Badge>
+                          </div>
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
                           {formatMoney(item.remaining, item.currency)}

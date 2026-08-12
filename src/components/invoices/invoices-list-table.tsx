@@ -225,7 +225,7 @@ export function InvoicesListTable({
               return (
                 <TableRow
                   key={inv.id}
-                  className={`border-b border-slate-200 hover:bg-slate-100/70 ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"}`}
+                  className={`border-b border-border hover:bg-muted/50 ${index % 2 === 1 ? "bg-muted/20" : "bg-card"}`}
                 >
                   <TableCell className="font-mono text-sm font-medium">
                     <Link href={buildInvoiceDetailUrl(inv.id, { type: "global" })} className="hover:underline">

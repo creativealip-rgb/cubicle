@@ -6,7 +6,7 @@ import {
 } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
-import { ArrowUpRight, BookOpen, TrendingUp } from "lucide-react";
+import { ArrowUpRight, BookOpen, TrendingUp, Users, FolderKanban, Receipt, Clock3, type LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -316,15 +316,36 @@ export default async function DashboardPage() {
         ]}
       />
 
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label={t("Ringkasan workspace", "Workspace summary")}>
+        {([
+          [t("Klien", "Clients"), totalClients, "/app/clients", Users],
+          [t("Proyek", "Projects"), totalProjects, "/app/projects", FolderKanban],
+          [t("Invoice", "Invoices"), totalInvoices, "/app/invoices", Receipt],
+          [t("Entri waktu", "Time entries"), totalTimeEntries, "/app/time", Clock3],
+        ] as [string, number, string, LucideIcon][]).map(([label, value, href, Icon]) => (
+          <Link key={String(label)} href={String(href)} className="group">
+            <Card className="h-full transition-colors group-hover:border-primary/30">
+              <CardContent className="flex items-center justify-between gap-3 p-4">
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-medium text-muted-foreground">{label}</p>
+                  <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
+                </div>
+                <Icon className="h-5 w-5 shrink-0 text-primary/70" aria-hidden="true" />
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+      </section>
+
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Reminder</h2>
           <Badge variant="secondary">{reminderItems.length}</Badge>
         </div>
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-5">
-          {reminderItems.map((item) => (
+          {[...reminderItems].sort((a, b) => Number(b.group === "urgent") - Number(a.group === "urgent")).map((item) => (
             <Link key={item.key} href={item.href} className="group">
-              <Card className={`h-full border-l-4 ${reminderToneBorder[item.tone]} transition hover:-translate-y-0.5 hover:shadow-md`}>
+              <Card className={`h-full border-l-4 ${reminderToneBorder[item.tone]} ${item.group === "urgent" ? "bg-amber-50/40" : ""} transition hover:shadow-md`}>
                 <CardContent className="flex min-h-24 items-start justify-between gap-3 p-4">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{item.label}</p>
@@ -381,7 +402,7 @@ export default async function DashboardPage() {
 
         <div className="xl:self-start">
           {/* Finance sidebar: 30d revenue only */}
-          <Card className="bg-gradient-to-b from-slate-50 to-white">
+          <Card className="border-primary/15 bg-primary/[0.03]">
             <CardHeader className="pb-1">
               <CardTitle className="flex items-center justify-between text-sm font-semibold">
                 <span className="flex items-center gap-2">
