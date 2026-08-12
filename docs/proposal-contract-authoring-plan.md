@@ -29,7 +29,7 @@
 - [x] Full test suite, production build, and clean typecheck.
 - [x] Dev deploy and browser acceptance evidence.
 
-**Current status:** COMPLETE. All authoring tasks, placeholder surface parity, unit/integration test suites (251 files / 1,277 tests), TypeScript typechecks, ESLint rules, and production build succeeded. `cubicle-dev` deployed safely with Traefik routing and HTTP 200 health check passed.
+**Current status:** PARTIAL. Source canvas/create-flow fixes are implemented and focused tests, TypeScript, and diff checks pass. Dev deploy is in progress. Full browser acceptance remains open: autosave reload, explicit Save, send/public acceptance/signature, post-sign Client creation, mobile 390px, EN/ID, and cleanup evidence are not yet fully proven.
 
 ## Batch 1 — Domain and schema compatibility
 
