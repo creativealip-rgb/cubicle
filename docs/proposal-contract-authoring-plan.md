@@ -29,7 +29,7 @@
 - [ ] Full test suite, production build, and clean typecheck.
 - [ ] Dev deploy and browser acceptance evidence.
 
-**Current status:** PARTIAL. Core batches 1, 2, 3, proposal PDF, autosave revision guard, and Batch 6 UI implemented. Real media upload, full placeholder parity audit, full suite/build/browser acceptance remain open.
+**Current status:** PARTIAL. Core batches 1–6, proposal PDF, autosave revision guard, and real media upload implemented. Full placeholder parity audit, stale full-suite assertions, production build, and browser acceptance remain open.
 
 ## Batch 1 — Domain and schema compatibility
 

@@ -9,7 +9,9 @@
 - Added signed-contract `Tambah client` / `Nanti` flow with workspace-scoped, writable, idempotent server action.
 - Added additive migrations `0074_document_authoring.sql` and `0075_autosave_revision_guard.sql`.
 
-**Verification:** focused authoring tests 43/43 pass; `npx tsc --noEmit --pretty false` pass; targeted ESLint pass; `git diff --check` pass. Real media upload and browser acceptance remain open.
+- Wired real proposal image/attachment uploads through existing workspace storage and quota paths, with safe media blocks, preview/download, rollback, delete, and reorder.
+
+**Verification:** focused authoring tests 43/43 pass before media; media/storage tests 29/29 pass; `npx tsc --noEmit --pretty false` pass; targeted ESLint and `git diff --check` pass. Full suite currently 1,268 pass / 9 stale pre-existing wiring failures; browser acceptance remains open.
 
 ## 2026-08-12 — Dev integration sync and deployment retry
 
