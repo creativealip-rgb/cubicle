@@ -9,6 +9,7 @@ import { useT } from "@/lib/i18n-client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { EmptyState } from "@/components/empty-state";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +38,6 @@ import {
   Package,
   Search,
   Trash2,
-  Upload,
 } from "lucide-react";
 
 interface FileItem {
@@ -141,14 +141,13 @@ export function FileList({ files, canWrite, lang }: FileListProps) {
 
   if (files.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed px-4 py-14 text-center">
-        <FileText className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
-        <p className="text-sm font-medium">{t("Belum ada berkas", "No files yet")}</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {canWrite ? t("Gunakan tombol Unggah atau tarik berkas ke area ini.", "Use Upload or drag files into this area.") : t("Berkas akan tampil di sini.", "Files will appear here.")}
-        </p>
-        {canWrite && <Upload className="mx-auto mt-4 h-5 w-5 text-primary" />}
-      </div>
+      <EmptyState
+        icon={FileText}
+        title={t("Belum ada berkas", "No files yet")}
+        description={canWrite
+          ? t("Gunakan tombol Unggah atau tarik berkas ke area ini.", "Use Upload or drag files into this area.")
+          : t("Berkas akan tampil di sini.", "Files will appear here.")}
+      />
     );
   }
 
@@ -175,10 +174,11 @@ export function FileList({ files, canWrite, lang }: FileListProps) {
       </p>
 
       {filtered.length === 0 ? (
-        <div className="rounded-lg border border-dashed py-12 text-center text-sm text-muted-foreground">
-          <Search className="mx-auto mb-3 h-9 w-9 opacity-30" />
-          {t("Tidak ada berkas yang cocok", "No matching files")}
-        </div>
+        <EmptyState
+          icon={Search}
+          title={t("Tidak ada berkas yang cocok", "No matching files")}
+          description={t("Coba ubah kata kunci atau filter.", "Try a different keyword or filter.")}
+        />
       ) : (
         <div className="divide-y overflow-hidden rounded-lg border bg-card">
           {filtered.map((file) => {
@@ -186,11 +186,11 @@ export function FileList({ files, canWrite, lang }: FileListProps) {
             return (
               <div key={file.id} className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md bg-muted">{getFileIcon(file.mimeType)}</div>
+                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md bg-muted" aria-hidden>{getFileIcon(file.mimeType)}</div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium" title={file.name}>{file.name}</p>
+                    <p className="truncate text-sm font-medium text-foreground" title={file.name}>{file.name}</p>
                     <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-                      <span>{formatBytes(file.sizeBytes, t("Tidak diketahui", "Unknown"))}</span>
+                      <span className="tabular-nums">{formatBytes(file.sizeBytes, t("Tidak diketahui", "Unknown"))}</span>
                       <span aria-hidden>·</span>
                       <span className="truncate">{file.uploaderName || t("Tidak diketahui", "Unknown")}</span>
                       <span aria-hidden>·</span>
@@ -202,14 +202,14 @@ export function FileList({ files, canWrite, lang }: FileListProps) {
                   {canWrite && (
                     <>
                       <Select value={file.visibility} onValueChange={(value) => handleVisibility(file.id, value as "internal" | "client")} disabled={busy}>
-                        <SelectTrigger className="h-9 w-[124px] text-xs"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-9 w-[124px] text-xs" aria-label={t("Visibilitas berkas", "File visibility")}><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="internal"><span className="inline-flex items-center gap-1"><Lock className="h-3 w-3" /> {t("Internal", "Internal")}</span></SelectItem>
                           <SelectItem value="client"><span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" /> {t("Klien", "Client")}</span></SelectItem>
                         </SelectContent>
                       </Select>
                       <Select value={file.fileType} onValueChange={(value) => handleFileType(file.id, value as "working_file" | "deliverable")} disabled={busy}>
-                        <SelectTrigger className="h-9 w-[140px] text-xs"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-9 w-[140px] text-xs" aria-label={t("Tipe berkas", "File type")}><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="working_file">{t("Berkas kerja", "Working file")}</SelectItem>
                           <SelectItem value="deliverable"><span className="inline-flex items-center gap-1"><Package className="h-3 w-3" /> {t("Hasil kerja", "Deliverable")}</span></SelectItem>
@@ -217,7 +217,7 @@ export function FileList({ files, canWrite, lang }: FileListProps) {
                       </Select>
                     </>
                   )}
-                  {file.fileType === "deliverable" && <Badge className="text-[10px]">{t("Hasil kerja", "Deliverable")}</Badge>}
+                  {file.fileType === "deliverable" && <Badge variant="warning" className="text-[10px]">{t("Hasil kerja", "Deliverable")}</Badge>}
                   <Button variant="outline" size="sm" className="h-9 gap-1" onClick={() => window.open(`/api/files/${file.id}/download`, "_blank")} disabled={busy}>
                     <Download className="h-3.5 w-3.5" /> {t("Buka", "Open")}
                   </Button>
