@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 const email = process.env.E2E_EMAIL!;
 const password = process.env.E2E_PASSWORD!;

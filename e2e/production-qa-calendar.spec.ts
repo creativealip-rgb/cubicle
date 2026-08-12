@@ -54,7 +54,7 @@ test('Calendar availability, public booking, internal cancel, and ICS download f
   await page.goto(`${BASE_URL}/app/settings`);
   await page.waitForLoadState('networkidle');
 
-  let bookingSlugInput = page.locator('input[name="bookingSlug"]');
+  const bookingSlugInput = page.locator('input[name="bookingSlug"]');
   let slugValue = '';
   if (await bookingSlugInput.count() > 0) {
     slugValue = await bookingSlugInput.inputValue();

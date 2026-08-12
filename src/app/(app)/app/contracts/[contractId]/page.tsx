@@ -2,7 +2,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { contracts, clients, projects } from "@/db/schema";
+import { contracts, clients, projects, workspaces } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import { projectStatusVariant } from "@/lib/status-badge";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { normalizeDocumentBlocks } from "@/lib/document-blocks";
 import { renderDocumentBlock } from "@/lib/document-block-renderer";
+import { buildContractPlaceholderValues } from "@/lib/document-placeholder-values";
 
 function normalizeBody(body: string) {
   return body.replace(/\\n/g, "\n");
@@ -56,6 +57,17 @@ export default async function ContractDetailPage({
   const [project] = c.projectId
     ? await db.select().from(projects).where(eq(projects.id, c.projectId)).limit(1)
     : [null];
+  const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  const placeholderValues = buildContractPlaceholderValues({
+    clientName: c.clientName,
+    clientEmail: c.clientEmail,
+    companyName: c.companyName,
+    contractNumber: c.contractNumber,
+    contractDate: c.contractDate,
+    validUntil: c.validUntil,
+    workspaceName: workspace?.name,
+    workspaceAddress: workspace?.billingAddress,
+  });
 
   const status = projectStatusVariant(c.status, lang);
   const body = normalizeBody(c.bodyResolved || c.body || "");
@@ -117,8 +129,8 @@ export default async function ContractDetailPage({
               contractId={c.id}
               status={c.status}
               title={c.title}
-              clientName={client?.name}
-              clientEmail={client?.email}
+              clientName={c.clientName}
+              clientEmail={c.clientEmail}
               labelSend={t("Kirim untuk tanda tangan", "Send for signature")}
               labelResend={t("Kirim ulang tautan", "Resend link")}
               labelSending={t("Mengirim...", "Sending...")}
@@ -288,7 +300,7 @@ export default async function ContractDetailPage({
           </div>
           {normalizeDocumentBlocks(c.contentBlocks, "contract").map((block) => (
             <div key={block.id} className="mt-3 whitespace-pre-wrap">
-              {renderDocumentBlock(block, { client_name: c.clientName, client_email: c.clientEmail, valid_until: c.validUntil })}
+              {renderDocumentBlock(block, placeholderValues)}
             </div>
           ))}
         </CardContent>

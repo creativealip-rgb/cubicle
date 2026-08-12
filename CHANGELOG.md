@@ -11,7 +11,7 @@
 
 - Wired real proposal image/attachment uploads through existing workspace storage and quota paths, with safe media blocks, preview/download, rollback, delete, and reorder.
 
-**Verification:** focused authoring tests 43/43 pass before media; media/storage tests 29/29 pass; `npx tsc --noEmit --pretty false` pass; targeted ESLint and `git diff --check` pass. Full suite currently 1,268 pass / 9 stale pre-existing wiring failures; browser acceptance remains open.
+**Verification:** focused authoring and media/storage tests pass; full suite 251/251 files and 1,277/1,277 tests pass; `npx tsc --noEmit`, production build, ESLint with zero errors, and `git diff --check` pass. Browser acceptance remains open.
 
 ## 2026-08-12 — Dev integration sync and deployment retry
 

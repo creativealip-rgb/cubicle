@@ -532,6 +532,8 @@ export async function getPublicContract(token: string) {
 
   const [client] = c.clientId ? await db.select({ name: clients.name, email: clients.email })
     .from(clients).where(eq(clients.id, c.clientId)).limit(1) : [null];
+  const [workspace] = await db.select({ name: workspaces.name, billingAddress: workspaces.billingAddress })
+    .from(workspaces).where(eq(workspaces.id, c.workspaceId)).limit(1);
 
   // Mark as viewed (idempotent) + notify workspace on first view
   if (!c.viewedAt && c.status === "sent") {
@@ -557,6 +559,7 @@ export async function getPublicContract(token: string) {
   return {
     contract: { ...c, bodyResolved: c.bodyResolved, variables: c.variables },
     client: client ?? { name: c.clientName, email: c.clientEmail },
+    workspace,
   };
 }
 

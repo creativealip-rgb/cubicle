@@ -20,7 +20,7 @@ describe("manual time create/edit form parity", () => {
   });
 
   it("passes client identity and persists selected create status", () => {
-    expect(route).toContain("clients={clientList}");
+    expect(route).toMatch(/clients=\{clientList\}/);
     expect(action).toContain('status: z.enum(["draft", "approved"]).default("draft")');
     expect(action).toContain("status: parsed.status");
   });

@@ -24,12 +24,12 @@
 - [x] Autosave revision/stale-write protection.
 - [x] Real proposal image/attachment upload, quota, cleanup, reorder, and media rendering.
 - [x] Proposal PDF block rendering/path.
-- [ ] Contract number/date/workspace placeholder parity across preview/public/email/PDF.
+- [x] Contract number/date/workspace placeholder parity across preview/public/email/PDF.
 - [x] Post-sign detail UI: `Tambah client` and `Nanti`.
-- [ ] Full test suite, production build, and clean typecheck.
+- [x] Full test suite, production build, and clean typecheck.
 - [ ] Dev deploy and browser acceptance evidence.
 
-**Current status:** PARTIAL. Core batches 1–6, proposal PDF, autosave revision guard, and real media upload implemented. Full placeholder parity audit, stale full-suite assertions, production build, and browser acceptance remain open.
+**Current status:** PARTIAL. Source implementation and regression gates pass: placeholder parity is shared across detail/public/PDF, stale wiring assertions are aligned, 251 test files / 1,277 tests pass, TypeScript and production build pass, and ESLint has zero errors. Dev deploy and browser acceptance remain open.
 
 ## Batch 1 — Domain and schema compatibility
 

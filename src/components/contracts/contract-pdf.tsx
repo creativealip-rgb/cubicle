@@ -9,6 +9,7 @@ import {
 } from "@react-pdf/renderer";
 import { normalizeDocumentBlocks } from "@/lib/document-blocks";
 import { renderDocumentBlock } from "@/lib/document-block-renderer";
+import { buildContractPlaceholderValues } from "@/lib/document-placeholder-values";
 
 Font.register({
   family: "Inter",
@@ -232,6 +233,11 @@ interface ContractData {
     status: string;
     body: string;
     contentBlocks?: unknown;
+    clientName?: string | null;
+    clientEmail?: string | null;
+    companyName?: string | null;
+    contractNumber?: string | null;
+    contractDate?: string | null;
     validUntil: string | null;
     sentAt: string | null;
     signedAt: string | null;
@@ -287,6 +293,16 @@ function stripBold(text: string): string {
 
 export function ContractPDF({ contract, workspace, client }: ContractData) {
   const status = STATUS_STYLES[contract.status] || STATUS_STYLES.draft;
+  const placeholderValues = buildContractPlaceholderValues({
+    clientName: contract.clientName ?? client.name,
+    clientEmail: contract.clientEmail ?? client.email,
+    companyName: contract.companyName ?? client.companyName,
+    contractNumber: contract.contractNumber,
+    contractDate: contract.contractDate,
+    validUntil: contract.validUntil,
+    workspaceName: workspace.name,
+    workspaceAddress: workspace.billingAddress,
+  });
 
   return (
     <Document
@@ -337,7 +353,7 @@ export function ContractPDF({ contract, workspace, client }: ContractData) {
           {normalizeDocumentBlocks(contract.contentBlocks, "contract").length > 0
             ? normalizeDocumentBlocks(contract.contentBlocks, "contract").map((block) => (
                 <Text key={block.id} style={block.type === "heading" ? styles.bodyH2 : styles.bodyText}>
-                  {renderDocumentBlock(block, { client_name: client.name, client_email: client.email, valid_until: contract.validUntil })}
+                  {renderDocumentBlock(block, placeholderValues)}
                 </Text>
               ))
             : renderMarkdown(contract.body)}

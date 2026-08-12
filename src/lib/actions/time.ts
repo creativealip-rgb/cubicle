@@ -513,10 +513,10 @@ export async function createManualEntry(input: z.infer<typeof createManualEntryS
     timezoneSnapshot: "UTC",
     billable,
     hourlyRate: resolvedRate,
-    status: "approved",
-    approvedAt: new Date(),
+    status: parsed.status,
+    approvedAt: parsed.status === "approved" ? new Date() : null,
     rejectedAt: null,
-    reviewedBy: user.id,
+    reviewedBy: parsed.status === "approved" ? user.id : null,
   }).returning();
 
   await writeActivityLog(parsed.workspaceId, user.id, "created_time_entry", "time_entry", entry.id);

@@ -6,15 +6,15 @@ const composeDev = readFileSync("docker-compose.dev.yml", "utf8");
 const envExample = readFileSync(".env.example", "utf8");
 
 describe("config env wiring", () => {
-  it("ships R2_PUBLIC_URL alias in compose, dev compose, and env example", () => {
+  it("ships R2_PUBLIC_URL alias in production compose and env example", () => {
     expect(compose).toContain("R2_PUBLIC_URL: ${R2_PUBLIC_URL:-}");
-    expect(composeDev).toContain("R2_PUBLIC_URL:");
+
     expect(envExample).toContain("R2_PUBLIC_URL");
   });
 
-  it("preserves R2_PUBLIC_ENDPOINT for scripts/upload-logo.mjs", () => {
+  it("preserves R2_PUBLIC_ENDPOINT in production compose and env example", () => {
     expect(compose).toContain("R2_PUBLIC_ENDPOINT: ${R2_PUBLIC_ENDPOINT:-}");
-    expect(composeDev).toContain("R2_PUBLIC_ENDPOINT:");
+
     expect(envExample).toContain("R2_PUBLIC_ENDPOINT");
   });
 

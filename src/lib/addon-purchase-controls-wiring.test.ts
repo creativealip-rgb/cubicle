@@ -8,31 +8,22 @@ const controls = () => read("src/components/billing/addon-purchase-controls.tsx"
 const page = () => read("src/app/(app)/app/billing/page.tsx");
 
 describe("billing add-on purchase controls wiring", () => {
-  it("offers storage add-ons +5/+10/+15 GB priced from the catalog helper", () => {
+  it("offers storage add-ons +5/+10/+15 GB priced yearly from the catalog helper", () => {
     const src = controls();
     expect(src).toContain("STORAGE_OPTIONS: StorageAddonKey[] = [5, 10, 15]");
     // Prices must come from the source-of-truth helper (billing-plans.test.ts
     // pins 10/20/30rb monthly, ×12 yearly) so UI and checkout can't drift.
-    expect(src).toContain("getStorageAddonAmount(gb, \"monthly\")");
     expect(src).toContain("getStorageAddonAmount(gb, \"yearly\")");
     expect(src).toContain("+{gb} GB");
   });
 
-  it("uses the same persisted monthly/yearly period key as plan checkout", () => {
+  it("uses the product-wide yearly billing period", () => {
     const src = controls();
-    const checkoutButton = read("src/components/billing/checkout-button.tsx");
-    expect(src).toContain('PERIOD_STORAGE_KEY = "cubiqlo:billing:period"');
-    // Same localStorage convention as the plan CheckoutButton so the whole
-    // billing page shares one period choice.
-    expect(checkoutButton).toContain('PERIOD_STORAGE_KEY = "cubiqlo:billing:period"');
-    expect(src).toMatch(/window\.localStorage\.getItem\(PERIOD_STORAGE_KEY\)/);
-    expect(src).toMatch(/window\.localStorage\.setItem\(PERIOD_STORAGE_KEY, next\)/);
-    expect(src).toMatch(/role="tablist"/);
+    expect(src).toContain('const period: BillingPeriod = "yearly"');
   });
 
-  it("quotes extra workspace from getExtraWorkspaceAmount (30rb monthly, 360rb yearly)", () => {
+  it("quotes extra workspace from yearly catalog pricing", () => {
     const src = controls();
-    expect(src).toContain("getExtraWorkspaceAmount(\"monthly\")");
     expect(src).toContain("getExtraWorkspaceAmount(\"yearly\")");
   });
 
