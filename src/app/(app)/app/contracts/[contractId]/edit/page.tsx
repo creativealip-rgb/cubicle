@@ -17,5 +17,9 @@ export default async function ContractEditPage({ params }: { params: Promise<{ c
   const [workspace] = await db.select({ name: workspaces.name, billingAddress: workspaces.billingAddress }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
   const blocks = normalizeDocumentBlocks(contract.contentBlocks, "contract");
   const placeholderValues = buildContractPlaceholderValues({ ...contract, workspaceName: workspace?.name, workspaceAddress: workspace?.billingAddress });
-  return <DocumentBlockEditor kind="contract" workspaceId={workspaceId} initialBlocks={blocks.length ? blocks : defaultDocumentBlocks("contract")} initialRevision={contract.contentRevision} placeholderValues={placeholderValues} saveBlocks={(next, revision) => saveContractBlocks(contractId, { contentBlocks: next, revision })} />;
+  async function saveBlocks(next: Parameters<typeof saveContractBlocks>[1]["contentBlocks"], revision: number) {
+    "use server";
+    return saveContractBlocks(contractId, { contentBlocks: next, revision });
+  }
+  return <DocumentBlockEditor kind="contract" workspaceId={workspaceId} initialBlocks={blocks.length ? blocks : defaultDocumentBlocks("contract")} initialRevision={contract.contentRevision} placeholderValues={placeholderValues} saveBlocks={saveBlocks} />;
 }

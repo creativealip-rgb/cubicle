@@ -25,7 +25,7 @@ type Props = {
   saveBlocks: (blocks: DocumentBlock[], revision: number) => Promise<unknown>;
 };
 
-type AddableBlock = "text" | "heading" | "placeholder" | "image" | "attachment";
+type AddableBlock = "text" | "heading" | "placeholder" | "list" | "divider" | "table" | "image" | "attachment";
 
 export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialRevision = 1, placeholderValues = {}, saveBlocks }: Props) {
   const [blocks, setBlocks] = useState(initialBlocks);
@@ -72,7 +72,16 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
   }
 
   function add(type: AddableBlock) {
-    setBlocks((current) => [...current, { id: crypto.randomUUID(), type, content: type === "placeholder" ? "{{client_name}}" : "", level: type === "heading" ? 2 : undefined }]);
+    const block: DocumentBlock = type === "placeholder"
+      ? { id: crypto.randomUUID(), type, content: "{{client_name}}" }
+      : type === "heading"
+        ? { id: crypto.randomUUID(), type, content: "", level: 2 }
+        : type === "list"
+          ? { id: crypto.randomUUID(), type, items: [""] }
+          : type === "table"
+            ? { id: crypto.randomUUID(), type, rows: [["", ""], ["", ""]] }
+            : { id: crypto.randomUUID(), type, content: "" };
+    setBlocks((current) => [...current, block]);
     setDirty(true);
   }
 
@@ -143,6 +152,9 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
           <Button type="button" size="sm" variant="outline" onClick={() => add("heading")}>+ Heading</Button>
           <Button type="button" size="sm" variant="outline" onClick={() => add("text")}>+ Teks</Button>
           <Button type="button" size="sm" variant="outline" onClick={() => add("placeholder")}>+ Placeholder</Button>
+          <Button type="button" size="sm" variant="outline" onClick={() => add("list")}>+ List</Button>
+          <Button type="button" size="sm" variant="outline" onClick={() => add("divider")}>+ Divider</Button>
+          <Button type="button" size="sm" variant="outline" onClick={() => add("table")}>+ Table</Button>
           {kind === "proposal" && <>
             <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleMediaUpload("image", e.target.files?.[0])} />
             <Button type="button" size="sm" variant="outline" disabled={uploading} onClick={() => imageInputRef.current?.click()}>{uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />} + Gambar</Button>
@@ -153,7 +165,7 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
         <section className="space-y-3 rounded-lg border bg-white p-6 shadow-sm">
           {blocks.map((block, index) => (
             <div key={block.id} className="group relative rounded border border-transparent p-1 hover:border-slate-200">
-              {block.type === "heading" ? <Input value={block.content ?? ""} onChange={(e) => update(block.id, e.target.value)} className="text-xl font-semibold" placeholder="Judul bagian" /> : block.type === "text" || block.type === "placeholder" ? <Textarea value={block.content ?? ""} onChange={(e) => update(block.id, e.target.value)} rows={3} placeholder={block.type === "placeholder" ? "{{client_name}}" : "Tulis isi dokumen..."} /> : block.type === "image" ? <div className="space-y-2">
+              {block.type === "heading" ? <Input value={block.content ?? ""} onChange={(e) => update(block.id, e.target.value)} className="text-xl font-semibold" placeholder="Judul bagian" /> : block.type === "text" || block.type === "placeholder" ? <Textarea value={block.content ?? ""} onChange={(e) => update(block.id, e.target.value)} rows={3} placeholder={block.type === "placeholder" ? "{{client_name}}" : "Tulis isi dokumen..."} /> : block.type === "list" ? <Textarea value={(block.items ?? []).join("\n")} onChange={(e) => { const items = e.target.value.split("\n"); setBlocks((current) => current.map((item) => item.id === block.id ? { ...item, items } : item)); setDirty(true); }} rows={3} placeholder="Satu item per baris" /> : block.type === "table" ? <Textarea value={(block.rows ?? []).map((row) => row.join(" | ")).join("\n")} onChange={(e) => { const rows = e.target.value.split("\n").map((row) => row.split("|")); setBlocks((current) => current.map((item) => item.id === block.id ? { ...item, rows } : item)); setDirty(true); }} rows={4} placeholder="Kolom dipisah |" /> : block.type === "divider" ? <hr className="border-slate-300" /> : block.type === "image" ? <div className="space-y-2">
                 {uploadingId === block.id ? (
                   <div className="flex items-center gap-2 rounded border border-dashed border-slate-300 p-4 text-sm text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" /> {t("Mengunggah gambar...", "Uploading image...")} {uploadProgress[block.id] ?? 0}%
