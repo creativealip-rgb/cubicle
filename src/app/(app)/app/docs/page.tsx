@@ -128,7 +128,7 @@ export default async function DocsPage() {
         })}
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border bg-muted/30 p-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-primary/20 bg-primary/[0.03] p-5">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <BookOpen className="h-4 w-4 text-primary" />

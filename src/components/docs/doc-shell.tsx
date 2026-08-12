@@ -276,19 +276,23 @@ export function DocsCard({
   return (
     <Link
       href={href}
-      className="group flex flex-col gap-3 rounded-xl border bg-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="group relative flex flex-col gap-3 overflow-hidden rounded-xl border bg-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <div className="flex items-center justify-between gap-2">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-primary/[0.05] blur-2xl transition-colors group-hover:bg-primary/[0.09]"
+      />
+      <div className="relative flex items-center justify-between gap-2">
         <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
           <Icon className="h-5 w-5" aria-hidden />
         </span>
         {category && (
-          <span className="rounded-full border bg-muted/40 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <span className="rounded-full border bg-primary/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
             {category}
           </span>
         )}
       </div>
-      <div className="min-w-0">
+      <div className="relative min-w-0">
         <h2 className="font-display text-sm font-semibold tracking-tight text-foreground transition-colors group-hover:text-primary">
           {title}
         </h2>
