@@ -98,6 +98,7 @@ function ReportTabs({ active, financeHref, timeHref, financeLabel, timeLabel }: 
       activeValue={active}
       hideEmpty={false}
       listClassName="w-full sm:w-auto"
+      className="border border-border/70"
       tabs={[
         { value: "finance", label: financeLabel, href: financeHref, alwaysShow: true },
         { value: "time", label: timeLabel, href: timeHref, alwaysShow: true },
