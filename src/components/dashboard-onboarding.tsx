@@ -135,9 +135,7 @@ export function DashboardOnboarding({ lang, steps }: DashboardOnboardingProps) {
                   "group flex min-h-11 items-center gap-3 rounded-lg border border-blue-200 bg-white/70 px-3 py-2.5 transition-all hover:border-blue-400 hover:shadow-sm"
                 )}
               >
-                <div
-                  className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-blue-300 text-xs font-semibold text-blue-600"
-                />
+                <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-blue-300 text-xs font-semibold text-blue-600" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-slate-900">{copy.title}</p>
                   <p className="line-clamp-1 text-xs text-muted-foreground">
