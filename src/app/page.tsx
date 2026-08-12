@@ -164,7 +164,7 @@ export default async function HomePage() {
                 <span className="h-2 w-2 rounded-full bg-emerald-500" /> {tx("Dibangun untuk bisnis berbasis klien", "Built for client-based businesses")}
               </div>
               <h1 className="mt-6 max-w-full text-[2.35rem] font-semibold leading-[1.04] tracking-[-0.04em] text-[#292D34] sm:max-w-[13ch] sm:text-6xl lg:text-[4.65rem]" style={{ fontWeight: 650 }}>
-                {tx("Lebih sedikit aplikasi. ", "Fewer apps. ")}<span className="relative text-[#6647F0]">{tx("Lebih banyak pekerjaan selesai.", "More work delivered.")}<span className="absolute inset-x-0 -bottom-1 h-2 rounded-full bg-[#FF7657]/30" aria-hidden="true" /></span>
+                {tx("Lebih sedikit aplikasi. ", "Fewer apps. ")}<span className="text-[#6647F0] underline decoration-[#FF7657]/45 decoration-4 underline-offset-4">{tx("Lebih banyak pekerjaan selesai.", "More work delivered.")}</span>
               </h1>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button asChild size="lg" className="h-12 w-full rounded-xl bg-[#292D34] px-6 text-white shadow-[0_12px_30px_rgba(41,45,52,.18)] hover:-translate-y-0.5 hover:bg-[#17191E] sm:w-auto">
