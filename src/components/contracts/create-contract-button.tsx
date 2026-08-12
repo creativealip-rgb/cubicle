@@ -13,41 +13,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 
 import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createContract } from "@/lib/actions/contracts";
 import { useT } from "@/lib/i18n-client";
 
-const DEFAULT_BODY = `# Perjanjian Jasa
-
-Perjanjian ini dibuat antara **{{workspace.name}}** ("Penyedia") dan **{{client.name}}** ("Klien").
-
-## 1. Lingkup pekerjaan
-
-[Jelaskan deliverable yang akan dikerjakan.]
-
-## 2. Jadwal
-
-Pekerjaan dimulai pada {{today}}. Target selesai: [tanggal].
-
-## 3. Pembayaran
-
-Biaya proyek sesuai proposal yang disepakati. Syarat: 50% di muka, 50% saat serah terima.
-
-## 4. Kerahasiaan
-
-Kedua pihak menjaga kerahasiaan informasi proprietary.
-
-## 5. Pengakhiran
-
-Masing-masing pihak dapat mengakhiri perjanjian dengan pemberitahuan tertulis 14 hari. Pekerjaan yang sudah selesai akan ditagihkan proporsional.
-
-## 6. Penerimaan
-
-Dengan menandatangani di bawah, kedua pihak menyetujui syarat di atas.
-`;
 export function CreateContractButton({
   workspaceId,
   clients: _clients,
@@ -65,7 +36,6 @@ export function CreateContractButton({
   const [companyName, setCompanyName] = useState("");
   const [title, setTitle] = useState("");
   const [validUntil, setValidUntil] = useState("");
-  const [body, setBody] = useState(DEFAULT_BODY);
 
   function handleCreate() {
     if (!title.trim()) {
@@ -133,21 +103,6 @@ export function CreateContractButton({
               type="date"
               value={validUntil}
               onChange={(e) => setValidUntil(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium block mb-1">
-              {t("Isi kontrak", "Contract body")}
-              <span className="text-xs text-slate-500 ml-2 font-normal">
-                Placeholder: {`{{client.name}}`}, {`{{workspace.name}}`},{" "}
-                {`{{today}}`}, {`{{valid_until}}`}
-              </span>
-            </label>
-            <Textarea
-              rows={16}
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              className="font-mono text-xs"
             />
           </div>
         </div>

@@ -87,6 +87,11 @@ export default async function ContractDetailPage({
               {c.title}
             </h1>
             <Badge variant={status.variant}>{status.label}</Badge>
+            {canWrite && c.status === "draft" ? (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/app/contracts/${c.id}/edit`}>{t("Edit", "Edit")}</Link>
+              </Button>
+            ) : null}
           </div>
           <p className="text-sm text-slate-500 mt-1">
             {t("Untuk", "For")}:{" "}

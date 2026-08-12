@@ -136,6 +136,11 @@ export default async function ProposalDetailPage({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant={status.variant}>{status.label}</Badge>
+          {canWrite && p.status === "draft" ? (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/app/proposals/${p.id}/edit`}>{t("Edit", "Edit")}</Link>
+            </Button>
+          ) : null}
           {canWrite ? (
             <Button variant="outline" size="sm" asChild>
               <a
