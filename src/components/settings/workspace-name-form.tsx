@@ -64,6 +64,7 @@ export function WorkspaceNameForm({
           onChange={(e) => setName(e.target.value)}
           maxLength={100}
           placeholder={t("Nama workspace", "Workspace name")}
+          className="max-w-md"
         />
         <p className="text-xs text-muted-foreground">
           {t(

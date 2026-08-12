@@ -28,6 +28,12 @@ import {
   NotesListClient,
   type NoteItem,
 } from "@/components/notes/notes-list-client";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Catatan",
+  description: "Catatan pribadi workspace Cubiqlo.",
+};
 
 type Tab = "open" | "done" | "archived" | "all";
 
@@ -237,7 +243,7 @@ export default async function PersonalPage({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="app-page-title">{t("Catatan", "Notes")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="app-page-description">
             {t(
               "Catatan pribadi di workspace ini. Tidak tampil ke client.",
               "Private notes in this workspace. Hidden from clients.",
@@ -267,6 +273,7 @@ export default async function PersonalPage({
                   name="title"
                   placeholder={t("Follow up client…", "Follow up client…")}
                   required
+                  className="max-w-md"
                 />
               </div>
               <div className="space-y-2">
@@ -287,7 +294,7 @@ export default async function PersonalPage({
                 <label htmlFor="dueDate" className="text-sm font-medium">
                   {t("Tenggat", "Due date")}
                 </label>
-                <Input id="dueDate" name="dueDate" type="datetime-local" />
+                <Input id="dueDate" name="dueDate" type="datetime-local" className="max-w-md" />
               </div>
               <div className="space-y-2">
                 <label htmlFor="recurrenceRule" className="text-sm font-medium">
@@ -297,7 +304,7 @@ export default async function PersonalPage({
                   id="recurrenceRule"
                   name="recurrenceRule"
                   defaultValue="none"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="flex h-10 w-full max-w-md rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   {RECURRENCE_OPTIONS.map((opt) => (
                     <option key={opt} value={opt}>
@@ -310,16 +317,16 @@ export default async function PersonalPage({
                 <p className="text-sm font-medium">
                   {t("Ingatkan sebelum tenggat", "Remind before due")}
                 </p>
-                <div className="grid grid-cols-3 gap-2 text-sm">
-                  <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
+                <div className="grid grid-cols-3 gap-2 sm:max-w-md">
+                  <label className="flex h-10 items-center gap-2 rounded-md border px-2.5 py-2 text-sm">
                     <input type="checkbox" name="notify7d" />
                     7d
                   </label>
-                  <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
+                  <label className="flex h-10 items-center gap-2 rounded-md border px-2.5 py-2 text-sm">
                     <input type="checkbox" name="notify3d" />
                     3d
                   </label>
-                  <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
+                  <label className="flex h-10 items-center gap-2 rounded-md border px-2.5 py-2 text-sm">
                     <input type="checkbox" name="notify1d" />
                     1d
                   </label>
@@ -348,7 +355,7 @@ export default async function PersonalPage({
               alwaysShow: true,
             }))}
           />
-          <form action="/app/personal" className="flex gap-2">
+          <form action="/app/personal" className="flex flex-wrap gap-2 sm:max-w-lg sm:flex-nowrap">
             <input type="hidden" name="tab" value={tab} />
             <Input
               name="q"
@@ -361,7 +368,7 @@ export default async function PersonalPage({
               {t("Cari", "Search")}
             </Button>
             {query || tab !== "open" ? (
-              <Button type="button" variant="ghost" asChild>
+              <Button type="button" variant="ghost" asChild className="h-10">
                 <Link href={buildHref("open", "")}>{t("Reset", "Clear")}</Link>
               </Button>
             ) : null}

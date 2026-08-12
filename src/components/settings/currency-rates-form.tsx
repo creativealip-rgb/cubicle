@@ -214,7 +214,7 @@ export function CurrencyRatesForm({
       )}
 
       {canEdit && (
-        <form onSubmit={onSave} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+        <form onSubmit={onSave} className="grid gap-3 sm:max-w-lg sm:grid-cols-[1fr_1fr_auto] sm:items-end">
           <div className="space-y-2">
             <Label htmlFor="fromCurrency">{t("Dari", "From")}</Label>
             <select
@@ -245,8 +245,8 @@ export function CurrencyRatesForm({
               required
             />
           </div>
-          <Button type="submit" disabled={busy} className="sm:mb-0">
-            <Plus className="h-4 w-4 mr-1" />
+          <Button type="submit" disabled={busy} className="h-10 sm:mb-0">
+            <Plus className="mr-1 h-4 w-4" />
             {busy ? t("Simpan…", "Saving…") : t("Simpan rate", "Save rate")}
           </Button>
         </form>

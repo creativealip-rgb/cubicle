@@ -137,7 +137,7 @@ export function SettingsTabs({
           value={activeTabItem?.key ?? "workspace"}
           onChange={(event) => changeTab(event.target.value)}
           aria-label={t("Pilih bagian pengaturan", "Choose settings section")}
-          className="h-11 w-full rounded-md border bg-background px-3 text-sm font-medium"
+          className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {tabs.map((tab) => <option key={tab.key} value={tab.key}>{tab.label}</option>)}
         </select>
@@ -148,7 +148,7 @@ export function SettingsTabs({
             <TabsTrigger
               key={tab.key}
               value={tab.key}
-              className="min-h-11 gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm"
+              className="min-h-9 gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm"
             >
               {tab.icon}
               <span className="whitespace-nowrap">{tab.label}</span>

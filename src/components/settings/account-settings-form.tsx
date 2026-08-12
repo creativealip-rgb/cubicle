@@ -60,7 +60,7 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
+        <div className="space-y-2 sm:max-w-md">
           <Label htmlFor="account-name">{t("Nama / username", "Name / username")}</Label>
           <Input
             id="account-name"
@@ -77,7 +77,12 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
           </p>
         </div>
       </div>
-      <Button type="button" onClick={saveName} disabled={pendingName}>
+      <Button
+        type="button"
+        onClick={saveName}
+        disabled={pendingName}
+        className="w-full sm:w-auto"
+      >
         {pendingName ? t("Menyimpan…", "Saving…") : t("Simpan nama", "Save name")}
       </Button>
 
@@ -89,7 +94,7 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
               {t("Ganti password pakai password sekarang. Minimal 8 karakter.", "Use your current password. New password must be at least 8 characters.")}
             </p>
           </div>
-          <Button type="button" variant="outline" size="sm" className="min-h-11" onClick={() => setShowPasswords((v) => !v)}>
+          <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => setShowPasswords((v) => !v)}>
             {showPasswords ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
             {showPasswords ? t("Sembunyikan", "Hide") : t("Tampilkan", "Show")}
           </Button>
@@ -123,7 +128,12 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
             <Input id="confirm-password" type={showPasswords ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" required minLength={8} />
           </div>
         </div>
-        <Button type="button" className="mt-4" onClick={savePassword} disabled={pendingPassword || !currentPassword || newPassword.length < 8 || newPassword !== confirmPassword}>
+        <Button
+          type="button"
+          className="mt-4 w-full sm:w-auto"
+          onClick={savePassword}
+          disabled={pendingPassword || !currentPassword || newPassword.length < 8 || newPassword !== confirmPassword}
+        >
           {pendingPassword ? t("Mengganti…", "Updating…") : t("Ganti password", "Change password")}
         </Button>
       </div>

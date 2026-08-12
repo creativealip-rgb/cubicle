@@ -26,6 +26,12 @@ import {
 } from "@/lib/google-calendar";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Pengaturan",
+  description: "Kelola pengaturan workspace, akun, tim, dan integrasi Cubiqlo.",
+};
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -132,7 +138,7 @@ export default async function SettingsPage({
     <div className="space-y-6">
       <div>
         <h1 className="app-page-title">{t("Pengaturan", "Settings")}</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="app-page-description">
           {t(
             "Kelompokkan konfigurasi workspace per tab biar gampang dicari.",
             "Group workspace settings into tabs so they stay easy to find.",
@@ -171,7 +177,10 @@ export default async function SettingsPage({
                     <Settings className="h-5 w-5" /> Workspace
                   </CardTitle>
                   <CardDescription>
-                    {t("Info workspace utama", "Main workspace info")}
+                    {t(
+                      "Nama, slug, dan mata uang default workspace kamu.",
+                      "Your workspace name, slug, and default currency.",
+                    )}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 text-sm">
@@ -266,8 +275,8 @@ export default async function SettingsPage({
                 <CardDescription>
                   {canManageTeam
                     ? t(
-                        "Tambah user, ubah role, atau hapus anggota.",
-                        "Add users, change roles, or remove members.",
+                        "Kelola anggota, peran, dan undangan workspace.",
+                        "Manage members, roles, and workspace invitations.",
                       )
                     : t("Lihat anggota tim workspace.", "View workspace team members.")}
                 </CardDescription>
@@ -327,8 +336,8 @@ export default async function SettingsPage({
                   </CardTitle>
                   <CardDescription>
                     {t(
-                      "Logo, nama tagihan, mata uang, tarif default — dipakai di PDF + preview klien.",
-                      "Logo, billing name, currency, default rate — used on PDF + client preview.",
+                      "Mata uang, terms pembayaran, pajak/rate, dan email invoice bikin tagihan lebih siap pakai.",
+                      "Currency, payment terms, tax/rate, and invoice email make billing ready to use.",
                     )}
                   </CardDescription>
                 </CardHeader>

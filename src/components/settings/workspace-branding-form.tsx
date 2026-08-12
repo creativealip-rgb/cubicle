@@ -46,6 +46,7 @@ export function WorkspaceBrandingForm({
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showUrl, setShowUrl] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({
     billingName: defaults.billingName ?? "",
     billingEmail: defaults.billingEmail ?? "",
@@ -81,6 +82,8 @@ export function WorkspaceBrandingForm({
         replyToEmail: form.replyToEmail,
       });
       toast.success(t("Branding disimpan", "Branding saved"));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("Gagal simpan", "Save failed"));
@@ -373,8 +376,16 @@ export function WorkspaceBrandingForm({
 
       </div>
 
-      <LoadingButton type="submit" loading={loading} loadingText={t("Menyimpan…", "Saving…")} disabled={uploading || !canEdit}>
-        {t("Simpan branding", "Save branding")}
+      <LoadingButton
+        type="submit"
+        loading={loading}
+        loadingText={t("Menyimpan…", "Saving…")}
+        disabled={uploading || !canEdit}
+        className="w-full md:w-auto"
+      >
+        {saved
+          ? t("Tersimpan ✓", "Saved ✓")
+          : t("Simpan branding", "Save branding")}
       </LoadingButton>
       </fieldset>
     </form>
