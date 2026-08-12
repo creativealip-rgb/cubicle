@@ -1292,9 +1292,15 @@ export const expenseRelations = relations(expenses, ({ one }) => ({
 export const proposals = pgTable("proposals", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "set null" }),
   projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
   title: text("title").notNull(),
+  clientName: text("client_name").notNull().default(""),
+  clientEmail: text("client_email"),
+  companyName: text("company_name"),
+  proposalNumber: text("proposal_number"),
+  contentBlocks: jsonb("content_blocks").notNull().default(sql`'[]'::jsonb`),
+  contentRevision: integer("content_revision").notNull().default(1),
   body: text("body"),
   // Stored as JSONB array: [{ description, quantity, unitPrice, amount }]
   lineItems: jsonb("line_items").notNull().default(sql`'[]'::jsonb`),
@@ -1421,10 +1427,17 @@ export const contractTemplates = pgTable("contract_templates", {
 export const contracts = pgTable("contracts", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "set null" }),
   projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
   templateId: uuid("template_id").references(() => contractTemplates.id, { onDelete: "set null" }),
   title: text("title").notNull(),
+  clientName: text("client_name").notNull().default(""),
+  clientEmail: text("client_email"),
+  companyName: text("company_name"),
+  contractNumber: text("contract_number"),
+  contractDate: date("contract_date"),
+  contentBlocks: jsonb("content_blocks").notNull().default(sql`'[]'::jsonb`),
+  contentRevision: integer("content_revision").notNull().default(1),
   body: text("body"), // original template body (with placeholders), for record
   bodyResolved: text("body_resolved"), // rendered at send, immutable
   variables: jsonb("variables").notNull().default(sql`'{}'::jsonb`),

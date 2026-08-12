@@ -32,7 +32,7 @@ export type ProposalListItem = {
   declinedAt: Date | string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
-  clientId: string;
+  clientId: string | null;
   clientName: string;
   clientEmail: string | null;
 };

@@ -52,20 +52,7 @@ export default async function NewProposalPage() {
           )}
         </p>
       </div>
-      {clientRows.length === 0 ? (
-        <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-          {t(
-            "Belum ada klien aktif. Buat klien dulu sebelum membuat proposal.",
-            "No active clients yet. Create a client before making a proposal.",
-          )}
-          <div className="mt-4">
-            <Button asChild>
-              <Link href="/app/clients">{t("Ke klien", "Go to clients")}</Link>
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <ProposalForm
+      <ProposalForm
           workspaceId={ws.id}
           defaultCurrency={ws.defaultCurrency}
           defaultTaxRate={ws.defaultTaxRate ?? "0"}
@@ -78,7 +65,6 @@ export default async function NewProposalPage() {
             defaultUnit: s.defaultUnit ?? "service",
           }))}
         />
-      )}
     </div>
   );
 }

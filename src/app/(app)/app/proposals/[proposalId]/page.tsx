@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/table";
 import { SendProposalButton } from "@/components/proposals/send-proposal-button";
 import { DeleteProposalButton } from "@/components/proposals/delete-proposal-button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { getCurrentLang, createT } from "@/lib/i18n";
@@ -72,11 +72,11 @@ export default async function ProposalDetailPage({
       declineReason: proposals.declineReason,
       projectId: proposals.projectId,
       clientId: clients.id,
-      clientName: clients.name,
-      clientEmail: clients.email,
+      clientName: proposals.clientName,
+      clientEmail: proposals.clientEmail,
     })
     .from(proposals)
-    .innerJoin(clients, eq(clients.id, proposals.clientId))
+    .leftJoin(clients, eq(clients.id, proposals.clientId))
     .where(and(eq(proposals.id, proposalId), eq(proposals.workspaceId, ws.id)))
     .limit(1);
   if (!p) notFound();
@@ -130,17 +130,24 @@ export default async function ProposalDetailPage({
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             {t("Untuk", "For")}{" "}
-            <Link
-              href={`/app/clients/${p.clientId}`}
-              className="text-slate-700 hover:underline"
-            >
-              {p.clientName}
-            </Link>
+            {p.clientId ? <Link href={`/app/clients/${p.clientId}`} className="text-slate-700 hover:underline">{p.clientName}</Link> : <span className="text-slate-700">{p.clientName}</span>}
             {p.clientEmail ? <> · {p.clientEmail}</> : null}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant={status.variant}>{status.label}</Badge>
+          {canWrite ? (
+            <Button variant="outline" size="sm" asChild>
+              <a
+                href={`/api/proposals/${p.id}/pdf`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FileText className="h-3.5 w-3.5 mr-1" />
+                {t("Unduh PDF", "Download PDF")}
+              </a>
+            </Button>
+          ) : null}
           {canWrite &&
           (p.status === "draft" || p.status === "sent" || p.status === "viewed") ? (
             <SendProposalButton

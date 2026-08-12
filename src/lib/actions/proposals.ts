@@ -4,7 +4,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { proposals, projects, projectServices, invoices, invoiceItems, workspaceInvoiceCounters, clients, workspaces } from "@/db/schema";
+import { proposals, projects, projectServices, invoices, invoiceItems, workspaceInvoiceCounters, workspaces } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
@@ -16,6 +16,13 @@ import { resolveWorkspaceReplyTo } from "@/lib/workspace-reply-to";
 import { assertPublicTokenLifecycle, PublicTokenError } from "@/lib/public-token-policy";
 import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
 import { buildProjectServiceDocumentLines } from "@/lib/project-service-lines";
+import { normalizeDocumentBlocks, isSameOriginMediaSrc } from "@/lib/document-blocks";
+import {
+  buildProposalNumber,
+  currentDocumentYear,
+  nextDocumentSequence,
+  proposalNumberSequence,
+} from "@/lib/document-numbers";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -30,7 +37,11 @@ const lineItemSchema = z.object({
 
 const createProposalSchema = z.object({
   workspaceId: z.string().uuid(),
-  clientId: z.string().uuid(),
+  clientId: z.string().uuid().optional().nullable(),
+  clientName: z.string().trim().min(1).max(200).optional(),
+  clientEmail: z.string().email().optional().nullable(),
+  companyName: z.string().trim().max(200).optional().nullable(),
+  proposalNumber: z.string().trim().max(100).optional().nullable(),
   projectIds: z.array(z.string().uuid()).optional(),
   title: z.string().min(1).max(200),
   body: z.string().max(10000).optional().nullable(),
@@ -71,7 +82,12 @@ export async function createProposal(input: z.infer<typeof createProposalSchema>
   const user = requireUser(session?.user);
   await assertWorkspaceWritable(db, user.id, input.workspaceId);
   const parsed = createProposalSchema.parse(input);
-  await assertClientInWorkspace(db, user.id, parsed.workspaceId, parsed.clientId);
+  let recipient = { name: parsed.clientName?.trim() ?? "", email: parsed.clientEmail ?? null, company: parsed.companyName ?? null };
+  if (parsed.clientId) {
+    const client = await assertClientInWorkspace(db, user.id, parsed.workspaceId, parsed.clientId);
+    recipient = { name: client.name, email: client.email, company: client.companyName ?? null };
+  }
+  if (!recipient.name) throw new Error("Nama client wajib diisi");
   const projectIds = Array.from(new Set(parsed.projectIds ?? []));
   if ((parsed.projectIds?.length ?? 0) !== projectIds.length) throw new Error("Proyek duplikat tidak diizinkan");
   const generatedLineItems: Array<z.infer<typeof lineItemSchema>> = [];
@@ -79,7 +95,7 @@ export async function createProposal(input: z.infer<typeof createProposalSchema>
     const [project] = await db.select({ id: projects.id }).from(projects).where(and(
       eq(projects.id, projectId),
       eq(projects.workspaceId, parsed.workspaceId),
-      eq(projects.clientId, parsed.clientId),
+      ...(parsed.clientId ? [eq(projects.clientId, parsed.clientId)] : []),
     )).limit(1);
     if (!project) throw new Error("Ada proyek yang tidak sesuai dengan klien");
     const serviceRows = await db.select({
@@ -104,24 +120,61 @@ export async function createProposal(input: z.infer<typeof createProposalSchema>
     })));
   }
   const lineItems = [...parsed.lineItems, ...generatedLineItems];
-  if (!lineItems.length) throw new Error("Proposal membutuhkan minimal satu item");
   const { subtotal, tax, total } = computeTotals(lineItems, parsed.taxRate);
 
-  const [proposal] = await db.insert(proposals).values({
-    workspaceId: parsed.workspaceId,
-    clientId: parsed.clientId,
-    title: parsed.title,
-    body: parsed.body || null,
-    lineItems,
-    subtotal: subtotal.toFixed(2),
-    tax: tax.toFixed(2),
-    total: total.toFixed(2),
-    currency: parsed.currency,
-    downPaymentPercent: parsed.downPaymentPercent.toFixed(2),
-    validUntil: parsed.validUntil || null,
-    status: "draft",
-    createdBy: user.id,
-  }).returning();
+  // Generate the proposal number inside a transaction.
+  // Counter is authoritative, but always bump above MAX(existing PROP-YYYY-####)
+  // so seed data / manual inserts cannot collide with the unique index
+  // `proposals_workspace_proposal_number_unique` (drizzle/0074).
+  const [proposal] = await db.transaction(async (tx) => {
+    let proposalNumber = parsed.proposalNumber?.trim() || buildProposalNumber(currentDocumentYear(), 1);
+
+    if (!parsed.proposalNumber?.trim()) {
+      const [counter] = await tx
+        .select({ nextNumber: workspaceInvoiceCounters.nextNumber })
+        .from(workspaceInvoiceCounters)
+        .where(eq(workspaceInvoiceCounters.workspaceId, parsed.workspaceId))
+        .for("update")
+        .limit(1);
+      const existing = await tx.select({ proposalNumber: proposals.proposalNumber })
+        .from(proposals)
+        .where(eq(proposals.workspaceId, parsed.workspaceId));
+      const seq = nextDocumentSequence(
+        counter?.nextNumber,
+        existing.map((row) => row.proposalNumber),
+        proposalNumberSequence,
+      );
+      const generated = buildProposalNumber(currentDocumentYear(), seq);
+      if (!counter) {
+        await tx.insert(workspaceInvoiceCounters).values({ workspaceId: parsed.workspaceId, nextNumber: seq + 1 });
+      } else {
+        await tx.update(workspaceInvoiceCounters)
+          .set({ nextNumber: seq + 1, updatedAt: new Date() })
+          .where(eq(workspaceInvoiceCounters.workspaceId, parsed.workspaceId));
+      }
+      proposalNumber = generated;
+    }
+
+    return tx.insert(proposals).values({
+      workspaceId: parsed.workspaceId,
+      clientId: parsed.clientId,
+      clientName: recipient.name,
+      clientEmail: recipient.email,
+      companyName: recipient.company,
+      proposalNumber,
+      title: parsed.title,
+      body: parsed.body || null,
+      lineItems,
+      subtotal: subtotal.toFixed(2),
+      tax: tax.toFixed(2),
+      total: total.toFixed(2),
+      currency: parsed.currency,
+      downPaymentPercent: parsed.downPaymentPercent.toFixed(2),
+      validUntil: parsed.validUntil || null,
+      status: "draft",
+      createdBy: user.id,
+    }).returning();
+  });
 
   await writeActivityLog(parsed.workspaceId, user.id, "created_proposal", "proposal", proposal.id, {
     title: proposal.title,
@@ -186,12 +239,9 @@ export async function sendProposal(proposalId: string) {
   if (!existing) throw new Error("Proposal not found");
   if (existing.status === "accepted") throw new Error("Already accepted");
 
-  const [client] = await db.select({ name: clients.name, email: clients.email })
-    .from(clients)
-    .where(eq(clients.id, existing.clientId))
-    .limit(1);
-  if (!client?.email) throw new Error("Client email is missing");
-  const recipientEmail = client.email;
+  if (!existing.clientEmail) throw new Error("Client email is missing");
+  const recipientEmail = existing.clientEmail;
+  const recipientName = existing.clientName;
   const [ws] = await db.select({ name: workspaces.name })
     .from(workspaces)
     .where(eq(workspaces.id, workspaceId))
@@ -224,7 +274,7 @@ export async function sendProposal(proposalId: string) {
       to: recipientEmail,
       subject: `Proposal: ${existing.title}`,
       text:
-        `Hi ${client.name || "there"},\n\n` +
+        `Hi ${recipientName || "there"},\n\n` +
         `${ws?.name || "Cubiqlo"} sent you a proposal: "${existing.title}".\n\n` +
         `Review it here:\n${appUrl}/proposal/${token}\n\n` +
         `This link is valid for 30 days. If you have any questions, just reply to this email.`,
@@ -250,6 +300,55 @@ export async function sendProposal(proposalId: string) {
   revalidatePath("/app/proposals");
   revalidatePath(`/app/proposals/${proposalId}`);
   return { id: proposalId, token };
+}
+
+const blockSaveSchema = z.object({
+  contentBlocks: z.unknown(),
+  revision: z.number().int().min(1).optional(),
+});
+
+/**
+ * Save proposal editor blocks with stale-write protection. The caller must
+ * send the `contentRevision` it loaded (defaults to 1 for legacy clients).
+ * The update is a compare-and-swap: it only lands when the stored revision
+ * still matches, and atomically bumps the revision on success. A save that
+ * raced with another tab/autosave is rejected so the newer content is never
+ * silently overwritten.
+ */
+export async function saveProposalBlocks(proposalId: string, input: z.infer<typeof blockSaveSchema>) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  const parsed = blockSaveSchema.parse(input);
+  const blocks = normalizeDocumentBlocks(parsed.contentBlocks, "proposal");
+  for (const block of blocks) {
+    if (block.type === "image" && block.src && !isSameOriginMediaSrc(block.src)) {
+      // Media blocks must reference files uploaded through the workspace
+      // upload proxy; external URLs would bypass upload validation/quota.
+      throw new Error("Gambar hanya bisa dari file workspace");
+    }
+  }
+  const expectedRevision = parsed.revision ?? 1;
+  const [updated] = await db.update(proposals)
+    .set({ contentBlocks: blocks, contentRevision: sql`${proposals.contentRevision} + 1`, updatedAt: new Date() })
+    .where(and(
+      eq(proposals.id, proposalId),
+      eq(proposals.workspaceId, workspaceId),
+      eq(proposals.status, "draft"),
+      eq(proposals.contentRevision, expectedRevision),
+    ))
+    .returning();
+  if (!updated) {
+    const [existing] = await db.select({ id: proposals.id, status: proposals.status, contentRevision: proposals.contentRevision })
+      .from(proposals)
+      .where(and(eq(proposals.id, proposalId), eq(proposals.workspaceId, workspaceId)))
+      .limit(1);
+    if (!existing || existing.status !== "draft") throw new Error("Proposal not found or not editable");
+    throw new Error("Perubahan sudah kedaluwarsa — dokumen diubah di tab lain. Muat ulang untuk melanjutkan.");
+  }
+  revalidatePath(`/app/proposals/${proposalId}`);
+  return updated;
 }
 
 export async function deleteProposal(proposalId: string) {
@@ -324,9 +423,9 @@ export async function acceptProposalPublic(proposalId: string, token: string) {
       return { id: proposalId, alreadyAccepted: true, projectId: p.projectId };
     }
 
+    if (!p.clientId) throw new Error("Proposal recipient is not linked to a Client");
     const projectId = crypto.randomUUID();
     await tx.insert(projects).values({
-      id: projectId,
       workspaceId: p.workspaceId,
       clientId: p.clientId,
       name: p.title,
@@ -350,7 +449,6 @@ export async function acceptProposalPublic(proposalId: string, token: string) {
 
     const invoiceId = crypto.randomUUID();
     await tx.insert(invoices).values({
-      id: invoiceId,
       workspaceId: p.workspaceId,
       clientId: p.clientId,
       invoiceNumber,

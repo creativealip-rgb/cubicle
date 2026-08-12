@@ -70,8 +70,8 @@ describe("document-send UI wiring (preview + confirm, recipient/subject, pending
 
     const contractPage = read("src/app/(app)/app/contracts/[contractId]/page.tsx");
     expect(contractPage).toMatch(/title=\{c\.title\}/);
-    expect(contractPage).toMatch(/clientName=\{client\?\.name\}/);
-    expect(contractPage).toMatch(/clientEmail=\{client\?\.email\}/);
+    expect(contractPage).toMatch(/clientName=\{c\.clientName\}/);
+    expect(contractPage).toMatch(/clientEmail=\{c\.clientEmail\}/);
 
     const questionnairePage = read(
       "src/app/(app)/app/questionnaires/[questionnaireId]/page.tsx",
@@ -88,9 +88,9 @@ describe("document-send UI wiring (preview + confirm, recipient/subject, pending
     expect(contractList).toMatch(/clientEmail=\{c\.clientEmail \?\? undefined\}/);
 
     const proposalsPage = read("src/app/(app)/app/proposals/page.tsx");
-    expect(proposalsPage).toContain("clientEmail: clients.email");
+    expect(proposalsPage).toContain("clientEmail: proposals.clientEmail");
     const contractsPage = read("src/app/(app)/app/contracts/page.tsx");
-    expect(contractsPage).toContain("clientEmail: clients.email");
+    expect(contractsPage).toContain("clientEmail: contracts.clientEmail");
   });
 
   it("no review status is introduced in send UI or send actions", () => {

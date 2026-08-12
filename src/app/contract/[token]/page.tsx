@@ -6,6 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import { CheckCircle2, AlertCircle, FileText } from "lucide-react";
+import { normalizeDocumentBlocks } from "@/lib/document-blocks";
+import { renderDocumentBlock } from "@/lib/document-block-renderer";
+import { buildContractPlaceholderValues } from "@/lib/document-placeholder-values";
 
 export default async function ContractPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -38,7 +41,17 @@ export default async function ContractPage({ params }: { params: Promise<{ token
     );
   }
 
-  const { contract, client } = result;
+  const { contract, client, workspace } = result;
+  const placeholderValues = buildContractPlaceholderValues({
+    clientName: contract.clientName,
+    clientEmail: contract.clientEmail,
+    companyName: contract.companyName,
+    contractNumber: contract.contractNumber,
+    contractDate: contract.contractDate,
+    validUntil: contract.validUntil,
+    workspaceName: workspace?.name,
+    workspaceAddress: workspace?.billingAddress,
+  });
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-white">
       <div className="max-w-3xl mx-auto p-4 md:p-8 space-y-6">
@@ -74,6 +87,11 @@ export default async function ContractPage({ params }: { params: Promise<{ token
             <div className="prose prose-sm prose-slate max-w-none text-sm leading-relaxed">
               <ReactMarkdown>{contract.bodyResolved || contract.body}</ReactMarkdown>
             </div>
+            {normalizeDocumentBlocks(contract.contentBlocks, "contract").map((block) => (
+              <div key={block.id} className="mt-3 whitespace-pre-wrap text-sm text-slate-700">
+                {renderDocumentBlock(block, placeholderValues)}
+              </div>
+            ))}
           </div>
 
           <div className="border-t bg-slate-50 px-6 py-5">

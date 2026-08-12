@@ -4,8 +4,8 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { contracts, contractTemplates, clients, projects, workspaces } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { contracts, contractTemplates, clients, projects, workspaces, workspaceInvoiceCounters } from "@/db/schema";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
@@ -17,6 +17,16 @@ import { resolveWorkspaceReplyTo } from "@/lib/workspace-reply-to";
 import { assertPublicTokenLifecycle, PublicTokenError } from "@/lib/public-token-policy";
 import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
 import { validateSignatureDataUrl } from "@/lib/upload-safety";
+import { createClient } from "@/lib/actions/clients";
+import { normalizeDocumentBlocks } from "@/lib/document-blocks";
+import { buildContractPlaceholderValues } from "@/lib/document-placeholder-values";
+import { resolveDocumentPlaceholders } from "@/lib/document-placeholders";
+import {
+  buildContractNumber,
+  currentDocumentYear,
+  contractNumberSequence,
+  nextDocumentSequence,
+} from "@/lib/document-numbers";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -130,11 +140,16 @@ export async function listContractTemplates() {
 
 const createContractSchema = z.object({
   workspaceId: z.string().uuid(),
-  clientId: z.string().uuid(),
+  clientId: z.string().uuid().optional().nullable(),
+  clientName: z.string().trim().min(1).max(200).optional(),
+  clientEmail: z.string().email(),
+  companyName: z.string().trim().max(200).optional().nullable(),
+  contractNumber: z.string().trim().max(100).optional().nullable(),
+  contractDate: z.string().optional().nullable(),
   projectId: z.string().uuid().optional().nullable(),
   templateId: z.string().uuid().optional().nullable(),
   title: z.string().min(1).max(200),
-  body: z.string().min(1).max(50000),
+  body: z.string().max(50000).default(""),
   validUntil: z.string().optional().nullable(),
 });
 
@@ -143,10 +158,15 @@ export async function createContract(input: z.infer<typeof createContractSchema>
   const user = requireUser(session?.user);
   await assertWorkspaceWritable(db, user.id, input.workspaceId);
   const parsed = createContractSchema.parse(input);
-  await assertClientInWorkspace(db, user.id, parsed.workspaceId, parsed.clientId);
+  let recipient = { name: parsed.clientName?.trim() ?? "", email: parsed.clientEmail, company: parsed.companyName ?? null };
+  if (parsed.clientId) {
+    const client = await assertClientInWorkspace(db, user.id, parsed.workspaceId, parsed.clientId);
+    recipient = { name: client.name, email: client.email ?? parsed.clientEmail, company: client.companyName ?? null };
+  }
+  if (!recipient.name) throw new Error("Nama client wajib diisi");
   if (parsed.projectId) {
     const project = await assertProjectInWorkspace(db, user.id, parsed.workspaceId, parsed.projectId);
-    if (project.clientId !== parsed.clientId) throw new ForbiddenError("Project does not belong to client");
+    if (parsed.clientId && project.clientId !== parsed.clientId) throw new ForbiddenError("Project does not belong to client");
   }
   if (parsed.templateId) {
     const [template] = await db.select({ id: contractTemplates.id }).from(contractTemplates)
@@ -155,18 +175,56 @@ export async function createContract(input: z.infer<typeof createContractSchema>
     if (!template) throw new ForbiddenError("Contract template access denied");
   }
 
-  const [c] = await db.insert(contracts).values({
-    workspaceId: parsed.workspaceId,
-    clientId: parsed.clientId,
-    projectId: parsed.projectId || null,
-    templateId: parsed.templateId || null,
-    title: parsed.title,
-    body: parsed.body,
-    bodyResolved: null,
-    validUntil: parsed.validUntil || null,
-    status: "draft",
-    createdBy: user.id,
-  }).returning();
+  // Generate the contract number (and default contract date) inside a
+  // transaction. Counter is authoritative, but always bump above
+  // MAX(existing CONT-YYYY-####) so seed data / manual inserts cannot collide
+  // with the unique index `contracts_workspace_contract_number_unique` (0074).
+  const [c] = await db.transaction(async (tx) => {
+    const contractDate = parsed.contractDate || new Date().toISOString().slice(0, 10);
+    let contractNumber: string | null = parsed.contractNumber?.trim() || null;
+    if (!parsed.contractNumber?.trim()) {
+      const [counter] = await tx
+        .select({ nextNumber: workspaceInvoiceCounters.nextNumber })
+        .from(workspaceInvoiceCounters)
+        .where(eq(workspaceInvoiceCounters.workspaceId, parsed.workspaceId))
+        .for("update")
+        .limit(1);
+      const existing = await tx.select({ contractNumber: contracts.contractNumber })
+        .from(contracts)
+        .where(eq(contracts.workspaceId, parsed.workspaceId));
+      const seq = nextDocumentSequence(
+        counter?.nextNumber,
+        existing.map((row) => row.contractNumber),
+        contractNumberSequence,
+      );
+      contractNumber = buildContractNumber(currentDocumentYear(), seq);
+      if (!counter) {
+        await tx.insert(workspaceInvoiceCounters).values({ workspaceId: parsed.workspaceId, nextNumber: seq + 1 });
+      } else {
+        await tx.update(workspaceInvoiceCounters)
+          .set({ nextNumber: seq + 1, updatedAt: new Date() })
+          .where(eq(workspaceInvoiceCounters.workspaceId, parsed.workspaceId));
+      }
+    }
+
+    return tx.insert(contracts).values({
+      workspaceId: parsed.workspaceId,
+      clientId: parsed.clientId,
+      clientName: recipient.name,
+      clientEmail: recipient.email,
+      companyName: recipient.company,
+      contractNumber,
+      contractDate,
+      projectId: parsed.projectId || null,
+      templateId: parsed.templateId || null,
+      title: parsed.title,
+      body: parsed.body,
+      bodyResolved: null,
+      validUntil: parsed.validUntil || null,
+      status: "draft",
+      createdBy: user.id,
+    }).returning();
+  });
 
   await writeActivityLog(parsed.workspaceId, user.id, "created_contract", "contract", c.id, {
     title: c.title,
@@ -192,6 +250,49 @@ export async function updateContract(contractId: string, input: { title?: string
     .where(eq(contracts.id, contractId))
     .returning();
   revalidatePath("/app/contracts");
+  revalidatePath(`/app/contracts/${contractId}`);
+  return updated;
+}
+
+const blockSaveSchema = z.object({
+  contentBlocks: z.unknown(),
+  revision: z.number().int().min(1).optional(),
+});
+
+/**
+ * Save contract editor blocks with stale-write protection. The caller must
+ * send the `contentRevision` it loaded (defaults to 1 for legacy clients).
+ * The update is a compare-and-swap: it only lands when the stored revision
+ * still matches, and atomically bumps the revision on success. A save that
+ * raced with another tab/autosave is rejected so the newer content is never
+ * silently overwritten.
+ */
+export async function saveContractBlocks(contractId: string, input: z.infer<typeof blockSaveSchema>) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  const parsed = blockSaveSchema.parse(input);
+  const blocks = normalizeDocumentBlocks(parsed.contentBlocks, "contract");
+  if (!blocks.some((block) => block.type === "signature")) throw new Error("Signature block wajib ada");
+  const expectedRevision = parsed.revision ?? 1;
+  const [updated] = await db.update(contracts)
+    .set({ contentBlocks: blocks, contentRevision: sql`${contracts.contentRevision} + 1`, updatedAt: new Date() })
+    .where(and(
+      eq(contracts.id, contractId),
+      eq(contracts.workspaceId, workspaceId),
+      eq(contracts.status, "draft"),
+      eq(contracts.contentRevision, expectedRevision),
+    ))
+    .returning();
+  if (!updated) {
+    const [existing] = await db.select({ id: contracts.id, status: contracts.status, contentRevision: contracts.contentRevision })
+      .from(contracts)
+      .where(and(eq(contracts.id, contractId), eq(contracts.workspaceId, workspaceId)))
+      .limit(1);
+    if (!existing || existing.status !== "draft") throw new Error("Contract not found or not editable");
+    throw new Error("Perubahan sudah kedaluwarsa — dokumen diubah di tab lain. Muat ulang untuk melanjutkan.");
+  }
   revalidatePath(`/app/contracts/${contractId}`);
   return updated;
 }
@@ -233,26 +334,38 @@ export async function sendContract(input: {
     throw new Error(`Cannot send contract with status ${c.status}`);
   }
 
-  const [client] = await db.select().from(clients)
-    .where(eq(clients.id, c.clientId))
-    .limit(1);
-  if (!client?.email) throw new Error("Client email is missing");
-  const recipientEmail = client.email;
+  if (!c.clientEmail) throw new Error("Client email is missing");
+  const recipientEmail = c.clientEmail;
+  const recipientName = c.clientName;
   const [project] = c.projectId
     ? await db.select().from(projects).where(eq(projects.id, c.projectId)).limit(1)
     : [null];
   const [ws] = await db.select().from(workspaces)
     .where(eq(workspaces.id, workspaceId)).limit(1);
 
-  const vars: Record<string, string> = {
-    "client.name": client?.name || "",
-    "client.email": client?.email || "",
+  const vars = buildContractPlaceholderValues({
+    clientName: c.clientName,
+    clientEmail: c.clientEmail,
+    companyName: c.companyName,
+    contractNumber: c.contractNumber,
+    contractDate: c.contractDate,
+    validUntil: c.validUntil,
+    workspaceName: ws?.name || "Cubiqlo",
+    workspaceAddress: ws?.billingAddress,
+  });
+  const legacyVars: Record<string, string> = {
+    "client.name": String(vars.client_name ?? ""),
+    "client.email": String(vars.client_email ?? ""),
+    "company.name": String(vars.company_name ?? ""),
     "project.name": project?.name || "",
-    "workspace.name": ws?.name || "Cubiqlo",
-    "today": new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
-    "valid_until": c.validUntil ? new Date(c.validUntil).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "",
+    "workspace.name": String(vars.workspace_name ?? ""),
+    "workspace.address": String(vars.workspace_address ?? ""),
+    "contract.number": String(vars.contract_number ?? ""),
+    "contract.date": String(vars.contract_date ?? ""),
+    today: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
+    valid_until: String(vars.valid_until ?? ""),
   };
-  const bodyResolved = resolveTemplate(c.body || "", vars);
+  const bodyResolved = resolveTemplate(resolveDocumentPlaceholders(c.body || "", vars), legacyVars);
 
   const token = generateToken();
   const ttl = input.ttlDays ?? 30;
@@ -284,10 +397,10 @@ export async function sendContract(input: {
       to: recipientEmail,
       subject: `Contract for signature: ${c.title}`,
       text:
-        `Hi ${client.name || "there"},\n\n` +
+        `Hi ${recipientName || "there"},\n\n` +
         `${ws?.name || "Cubiqlo"} sent you a contract for signature: "${c.title}".\n\n` +
         `Review and sign it here:\n${appUrl}/contract/${token}\n\n` +
-        (vars["valid_until"] ? `This link is valid until ${vars["valid_until"]}.\n\n` : "\n") +
+        (vars.valid_until ? `This link is valid until ${vars.valid_until}.\n\n` : "\n") +
         `If you have any questions, just reply to this email.`,
       type: "contract_sent",
       replyTo,
@@ -299,7 +412,7 @@ export async function sendContract(input: {
     return tx.update(contracts)
       .set({
         bodyResolved,
-        variables: vars,
+        variables: { ...legacyVars, ...vars },
         sharedTokenHash: hashToken(token),
         sharedTokenExpiresAt: expiresAt,
         sentAt: new Date(),
@@ -312,12 +425,37 @@ export async function sendContract(input: {
 
   await writeActivityLog(workspaceId, user.id, "sent_contract", "contract", c.id, {
     title: c.title,
-    clientName: client?.name,
+    clientName: recipientName,
   });
 
   revalidatePath("/app/contracts");
   revalidatePath(`/app/contracts/${c.id}`);
   return { contract: updated, token };
+}
+
+export async function createClientFromSignedContract(contractId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  const [contract] = await db.select().from(contracts)
+    .where(and(eq(contracts.id, contractId), eq(contracts.workspaceId, workspaceId), eq(contracts.status, "signed")))
+    .limit(1);
+  if (!contract) throw new Error("Signed contract not found");
+  if (contract.clientId) return { clientId: contract.clientId, created: false };
+  const created = await createClient({
+    name: contract.clientName,
+    email: contract.clientEmail ?? "",
+    companyName: contract.companyName ?? "",
+    tags: [],
+  });
+  if (!created.ok) throw new Error(created.error);
+  await db.update(contracts).set({ clientId: created.client.id, updatedAt: new Date() })
+    .where(and(eq(contracts.id, contractId), eq(contracts.workspaceId, workspaceId)));
+  await writeActivityLog(workspaceId, user.id, "created_client_from_contract", "contract", contractId, { clientId: created.client.id });
+  revalidatePath(`/app/contracts/${contractId}`);
+  revalidatePath("/app/clients");
+  return { clientId: created.client.id, created: true };
 }
 
 export async function revokeContract(contractId: string) {
@@ -358,10 +496,10 @@ export async function listContracts(filter?: { status?: string; clientId?: strin
     declinedAt: contracts.declinedAt,
     createdAt: contracts.createdAt,
     clientId: contracts.clientId,
-    clientName: clients.name,
+    clientName: contracts.clientName,
   })
     .from(contracts)
-    .innerJoin(clients, eq(clients.id, contracts.clientId))
+    .leftJoin(clients, eq(clients.id, contracts.clientId))
     .where(and(...conditions))
     .orderBy(desc(contracts.createdAt))
     .limit(100);
@@ -378,7 +516,7 @@ export async function getContract(contractId: string) {
     .limit(1);
   if (!c) throw new Error("Contract not found");
 
-  const [client] = await db.select().from(clients).where(eq(clients.id, c.clientId)).limit(1);
+  const [client] = c.clientId ? await db.select().from(clients).where(eq(clients.id, c.clientId)).limit(1) : [null];
   const [project] = c.projectId
     ? await db.select().from(projects).where(eq(projects.id, c.projectId)).limit(1)
     : [null];
@@ -402,8 +540,10 @@ export async function getPublicContract(token: string) {
   if (c.status === "declined") return { error: "declined" as const };
   if (c.status === "draft") return { error: "not_sent" as const };
 
-  const [client] = await db.select({ name: clients.name, email: clients.email })
-    .from(clients).where(eq(clients.id, c.clientId)).limit(1);
+  const [client] = c.clientId ? await db.select({ name: clients.name, email: clients.email })
+    .from(clients).where(eq(clients.id, c.clientId)).limit(1) : [null];
+  const [workspace] = await db.select({ name: workspaces.name, billingAddress: workspaces.billingAddress })
+    .from(workspaces).where(eq(workspaces.id, c.workspaceId)).limit(1);
 
   // Mark as viewed (idempotent) + notify workspace on first view
   if (!c.viewedAt && c.status === "sent") {
@@ -414,7 +554,7 @@ export async function getPublicContract(token: string) {
     try {
       await notifyWorkspaceMembers(c.workspaceId, {
         type: "contract_viewed",
-        title: `${client?.name ?? "Client"} viewed contract`,
+        title: `${client?.name ?? c.clientName ?? "Client"} viewed contract`,
         body: c.title,
         link: `/app/contracts/${c.id}`,
         entityType: "contract",
@@ -428,7 +568,8 @@ export async function getPublicContract(token: string) {
 
   return {
     contract: { ...c, bodyResolved: c.bodyResolved, variables: c.variables },
-    client,
+    client: client ?? { name: c.clientName, email: c.clientEmail },
+    workspace,
   };
 }
 

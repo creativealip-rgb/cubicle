@@ -44,11 +44,11 @@ export async function GET(
     return NextResponse.json({ error: "Workspace access denied" }, { status: 403 });
   }
 
-  const [client] = await db
+  const [client] = c.clientId ? await db
     .select()
     .from(clients)
     .where(eq(clients.id, c.clientId))
-    .limit(1);
+    .limit(1) : [null];
   const [ws] = await db
     .select()
     .from(workspaces)
@@ -60,6 +60,7 @@ export async function GET(
       title: c.title,
       status: c.status,
       body: c.bodyResolved || c.body || "",
+      contentBlocks: c.contentBlocks,
       validUntil: c.validUntil ? new Date(c.validUntil).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : null,
       sentAt: c.sentAt ? new Date(c.sentAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : null,
       signedAt: c.signedAt ? new Date(c.signedAt).toLocaleString("id-ID") : null,
@@ -75,9 +76,9 @@ export async function GET(
       billingAddress: ws?.billingAddress ?? null,
     },
     client: {
-      name: client?.name || "Unknown",
-      email: client?.email ?? null,
-      companyName: client?.companyName ?? null,
+      name: client?.name || c.clientName || "Unknown",
+      email: client?.email ?? c.clientEmail ?? null,
+      companyName: client?.companyName ?? c.companyName ?? null,
     },
   };
 

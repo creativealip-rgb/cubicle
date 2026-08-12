@@ -29,7 +29,7 @@ export type ContractListItem = {
   validUntil: string | null;
   createdAt: Date | string;
   updatedAt?: Date | string | null;
-  clientId: string;
+  clientId: string | null;
   clientName: string;
   clientEmail: string | null;
 };
@@ -185,12 +185,7 @@ export function ContractsListTable({
                   ) : null}
                 </TableCell>
                 <TableCell className="text-sm">
-                  <Link
-                    href={`/app/clients/${c.clientId}`}
-                    className="text-slate-600 hover:underline"
-                  >
-                    {c.clientName}
-                  </Link>
+                  {c.clientId ? <Link href={`/app/clients/${c.clientId}`} className="text-slate-600 hover:underline">{c.clientName}</Link> : c.clientName}
                 </TableCell>
                 <TableCell>
                   <Badge variant={status.variant}>{status.label}</Badge>

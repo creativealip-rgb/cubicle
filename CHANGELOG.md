@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-08-12 — Proposal and contract authoring foundation
+
+- Decoupled proposal/contract drafts from required Client rows with recipient snapshots and nullable `clientId` links.
+- Added block-based editors with autosave, explicit Save, content revision stale-write protection, protected contract signature blocks, and legacy body fallback.
+- Added automatic `PROP-YYYY-####` / `CONT-YYYY-####` numbering and shared placeholder value helpers.
+- Added public/detail/PDF block rendering for contracts and public/PDF block rendering for proposals.
+- Added signed-contract `Tambah client` / `Nanti` flow with workspace-scoped, writable, idempotent server action.
+- Added additive migrations `0074_document_authoring.sql` and `0075_autosave_revision_guard.sql`.
+
+- Wired real proposal image/attachment uploads through existing workspace storage and quota paths, with safe media blocks, preview/download, rollback, delete, and reorder.
+
+**Verification:** focused authoring and media/storage tests pass; full suite 251/251 files and 1,277/1,277 tests pass; `npx tsc --noEmit`, production build, ESLint with zero errors, and `git diff --check` pass. Browser acceptance remains open.
+
+## 2026-08-12 — Dev integration sync and deployment retry
+
+- Synchronized `dev/integration` with latest `main` billing/settings/i18n changes while preserving Prompt Studio validation and mobile UX improvements.
+- Kept main billing/storage hardening as source of truth; skipped duplicate older dev billing/storage changes.
+- Dev deployment retry blocked before build because GitHub fetch timed out on port 443.
+- Production unchanged; `dokploy-traefik` remains sole public 80/443 owner.
+
 ## 2026-08-12 — i18n and UI polish follow-up
 
 - Localized secondary landing-page marketing labels and pricing/capability copy through existing EN/ID translator.

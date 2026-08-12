@@ -25,17 +25,26 @@ export function uploadErrorFromResponse(
   return fallback;
 }
 
+export interface UploadedFileRecord {
+  id: string;
+  name: string;
+  storageKey: string;
+  mimeType?: string | null;
+  sizeBytes?: number | null;
+}
+
 /**
  * Upload a single file via same-origin proxy (server → R2).
  * Avoids browser CSP/CORS failures on direct R2 presigned PUT.
- * Shared by the Upload dialog and the drag-and-drop zone.
+ * Shared by the Upload dialog, the drag-and-drop zone, and the document editor.
+ * Resolves with the created file record when the upload succeeds.
  */
 export async function uploadOneFile(
   file: File,
   scope: UploadScope,
   onProgress?: (pct: number) => void,
   lang: "id" | "en" = "id",
-): Promise<void> {
+): Promise<UploadedFileRecord> {
   if (file.size > MAX_UPLOAD_BYTES) {
     throw new Error("MAX_SIZE");
   }
@@ -49,7 +58,7 @@ export async function uploadOneFile(
   form.append("visibility", scope.visibility ?? "internal");
   form.append("fileType", scope.fileType ?? "working_file");
 
-  await new Promise<void>((resolve, reject) => {
+  return new Promise<UploadedFileRecord>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.upload.addEventListener("progress", (evt) => {
       if (evt.lengthComputable && onProgress) {
@@ -65,10 +74,17 @@ export async function uploadOneFile(
             reject(new Error(data.error));
             return;
           }
+          const record: UploadedFileRecord | undefined = data?.file;
+          if (!record || !record.id || !record.storageKey) {
+            reject(new Error("Upload response missing file record"));
+            return;
+          }
+          resolve(record);
+          return;
         } catch {
-          // ok even if body empty
+          // fall through to resolve path below only for unparseable bodies
         }
-        resolve();
+        reject(new Error("Upload response missing file record"));
         return;
       }
       const msg = uploadErrorFromResponse(
