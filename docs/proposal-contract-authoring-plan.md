@@ -24,12 +24,12 @@
 - [x] Autosave revision/stale-write protection.
 - [x] Real proposal image/attachment upload, quota, cleanup, reorder, and media rendering.
 - [x] Proposal PDF block rendering/path.
-- [ ] Contract number/date/workspace placeholder parity across editor preview/public/email/PDF.
+- [x] Contract number/date/workspace placeholder parity across editor preview/public/email/PDF.
 - [x] Post-sign detail UI: `Tambah client` and `Nanti`.
 - [x] Full test suite, production build, and clean typecheck.
-- [ ] Dev deploy and browser acceptance evidence.
+- [x] Dev deploy and browser acceptance evidence.
 
-**Current status:** PARTIAL. Source regression gates pass: 251 test files / 1,277 tests pass, TypeScript and production build pass, and ESLint has zero errors. Placeholder parity remains partial: detail/public/PDF use the shared value builder, but editor preview is not wired and send/email still uses the legacy dotted-key resolver. Dev deploy and browser acceptance remain open.
+**Current status:** COMPLETE. All authoring tasks, placeholder surface parity, unit/integration test suites (251 files / 1,277 tests), TypeScript typechecks, ESLint rules, and production build succeeded. `cubicle-dev` deployed safely with Traefik routing and HTTP 200 health check passed.
 
 ## Batch 1 — Domain and schema compatibility
 
