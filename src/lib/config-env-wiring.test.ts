@@ -6,15 +6,17 @@ const composeDev = readFileSync("docker-compose.dev.yml", "utf8");
 const envExample = readFileSync(".env.example", "utf8");
 
 describe("config env wiring", () => {
-  it("ships R2_PUBLIC_URL alias in compose, dev compose, and env example", () => {
+  it("ships R2_PUBLIC_URL alias in compose and env example", () => {
     expect(compose).toContain("R2_PUBLIC_URL: ${R2_PUBLIC_URL:-}");
-    expect(composeDev).toContain("R2_PUBLIC_URL:");
+    // dev compose no longer pins R2 vars in environment: — they flow from the
+    // env_file (.env.development.local), same pattern as CRON_SECRET.
+    expect(composeDev).not.toContain("R2_PUBLIC_URL:");
     expect(envExample).toContain("R2_PUBLIC_URL");
   });
 
   it("preserves R2_PUBLIC_ENDPOINT for scripts/upload-logo.mjs", () => {
     expect(compose).toContain("R2_PUBLIC_ENDPOINT: ${R2_PUBLIC_ENDPOINT:-}");
-    expect(composeDev).toContain("R2_PUBLIC_ENDPOINT:");
+    expect(composeDev).not.toContain("R2_PUBLIC_ENDPOINT:");
     expect(envExample).toContain("R2_PUBLIC_ENDPOINT");
   });
 

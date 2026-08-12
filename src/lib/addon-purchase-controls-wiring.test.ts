@@ -13,26 +13,25 @@ describe("billing add-on purchase controls wiring", () => {
     expect(src).toContain("STORAGE_OPTIONS: StorageAddonKey[] = [5, 10, 15]");
     // Prices must come from the source-of-truth helper (billing-plans.test.ts
     // pins 10/20/30rb monthly, ×12 yearly) so UI and checkout can't drift.
-    expect(src).toContain("getStorageAddonAmount(gb, \"monthly\")");
+    // The purchase controls are yearly-only (same default as plan checkout).
     expect(src).toContain("getStorageAddonAmount(gb, \"yearly\")");
     expect(src).toContain("+{gb} GB");
   });
 
-  it("uses the same persisted monthly/yearly period key as plan checkout", () => {
+  it("shares the persisted period key convention with plan checkout", () => {
     const src = controls();
     const checkoutButton = read("src/components/billing/checkout-button.tsx");
-    expect(src).toContain('PERIOD_STORAGE_KEY = "cubiqlo:billing:period"');
-    // Same localStorage convention as the plan CheckoutButton so the whole
-    // billing page shares one period choice.
+    // The persisted localStorage key lives in the plan CheckoutButton.
     expect(checkoutButton).toContain('PERIOD_STORAGE_KEY = "cubiqlo:billing:period"');
-    expect(src).toMatch(/window\.localStorage\.getItem\(PERIOD_STORAGE_KEY\)/);
-    expect(src).toMatch(/window\.localStorage\.setItem\(PERIOD_STORAGE_KEY, next\)/);
-    expect(src).toMatch(/role="tablist"/);
+    expect(checkoutButton).toMatch(/window\.localStorage\.getItem\(PERIOD_STORAGE_KEY\)/);
+    expect(checkoutButton).toMatch(/window\.localStorage\.setItem\(PERIOD_STORAGE_KEY, next\)/);
+    expect(checkoutButton).toMatch(/role="tablist"/);
+    // The add-on controls stay on the yearly period (monthly price × 12).
+    expect(src).toContain('const period: BillingPeriod = "yearly";');
   });
 
   it("quotes extra workspace from getExtraWorkspaceAmount (30rb monthly, 360rb yearly)", () => {
     const src = controls();
-    expect(src).toContain("getExtraWorkspaceAmount(\"monthly\")");
     expect(src).toContain("getExtraWorkspaceAmount(\"yearly\")");
   });
 

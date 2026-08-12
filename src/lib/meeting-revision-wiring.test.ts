@@ -43,7 +43,7 @@ describe("meeting revision wiring", () => {
     expect(page).toContain("<StatusFilterTabs");
     expect(page).toContain('data-ui="notes-todoist-compact"');
     expect(page).toContain('data-ui="notes-split-view"');
-    expect(page).toContain("lg:grid-cols-[400px_minmax(0,1fr)]");
+    expect(page).toContain("lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)]");
     expect(list).toContain('data-ui="todoist-note-list"');
     expect(list).not.toContain("IntersectionObserver");
   });
