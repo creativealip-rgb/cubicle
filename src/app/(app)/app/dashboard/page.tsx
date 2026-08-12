@@ -381,7 +381,7 @@ export default async function DashboardPage() {
 
         <div className="xl:self-start">
           {/* Finance sidebar: 30d revenue only */}
-          <Card className="bg-gradient-to-b from-slate-50 to-white">
+          <Card className="border-primary/15 bg-primary/[0.03]">
             <CardHeader className="pb-1">
               <CardTitle className="flex items-center justify-between text-sm font-semibold">
                 <span className="flex items-center gap-2">
