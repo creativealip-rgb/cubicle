@@ -21,7 +21,7 @@ describe("global app shell accessibility", () => {
   it("keeps language controls and onboarding dismiss touch-friendly", () => {
     const sidebar = read("src/components/app-sidebar.tsx");
     const onboarding = read("src/components/dashboard-onboarding.tsx");
-    expect(sidebar).toContain("min-w-8");
+    expect(sidebar).toContain("min-h-11 min-w-11");
     expect(onboarding).toContain("min-h-11 min-w-11");
   });
 });
