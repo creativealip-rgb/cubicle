@@ -322,9 +322,9 @@ export default async function DashboardPage() {
           <Badge variant="secondary">{reminderItems.length}</Badge>
         </div>
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-5">
-          {reminderItems.map((item) => (
+          {[...reminderItems].sort((a, b) => Number(b.group === "urgent") - Number(a.group === "urgent")).map((item) => (
             <Link key={item.key} href={item.href} className="group">
-              <Card className={`h-full border-l-4 ${reminderToneBorder[item.tone]} transition hover:-translate-y-0.5 hover:shadow-md`}>
+              <Card className={`h-full border-l-4 ${reminderToneBorder[item.tone]} ${item.group === "urgent" ? "bg-amber-50/40" : ""} transition hover:shadow-md`}>
                 <CardContent className="flex min-h-24 items-start justify-between gap-3 p-4">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{item.label}</p>
