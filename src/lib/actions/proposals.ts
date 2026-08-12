@@ -16,7 +16,7 @@ import { resolveWorkspaceReplyTo } from "@/lib/workspace-reply-to";
 import { assertPublicTokenLifecycle, PublicTokenError } from "@/lib/public-token-policy";
 import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
 import { buildProjectServiceDocumentLines } from "@/lib/project-service-lines";
-import { normalizeDocumentBlocks } from "@/lib/document-blocks";
+import { normalizeDocumentBlocks, isSameOriginMediaSrc } from "@/lib/document-blocks";
 import {
   buildProposalNumber,
   currentDocumentYear,
@@ -322,6 +322,13 @@ export async function saveProposalBlocks(proposalId: string, input: z.infer<type
   await assertWorkspaceWritable(db, user.id, workspaceId);
   const parsed = blockSaveSchema.parse(input);
   const blocks = normalizeDocumentBlocks(parsed.contentBlocks, "proposal");
+  for (const block of blocks) {
+    if (block.type === "image" && block.src && !isSameOriginMediaSrc(block.src)) {
+      // Media blocks must reference files uploaded through the workspace
+      // upload proxy; external URLs would bypass upload validation/quota.
+      throw new Error("Gambar hanya bisa dari file workspace");
+    }
+  }
   const expectedRevision = parsed.revision ?? 1;
   const [updated] = await db.update(proposals)
     .set({ contentBlocks: blocks, contentRevision: sql`${proposals.contentRevision} + 1`, updatedAt: new Date() })

@@ -14,5 +14,5 @@ export default async function ProposalEditPage({ params }: { params: Promise<{ p
     .from(proposals).where(and(eq(proposals.id, proposalId), eq(proposals.workspaceId, workspaceId))).limit(1);
   if (!proposal || proposal.status !== "draft") notFound();
   const blocks = normalizeDocumentBlocks(proposal.contentBlocks, "proposal");
-  return <DocumentBlockEditor kind="proposal" initialBlocks={blocks.length ? blocks : defaultDocumentBlocks("proposal")} initialRevision={proposal.contentRevision} saveBlocks={(next, revision) => saveProposalBlocks(proposalId, { contentBlocks: next, revision })} />;
+  return <DocumentBlockEditor kind="proposal" workspaceId={workspaceId} initialBlocks={blocks.length ? blocks : defaultDocumentBlocks("proposal")} initialRevision={proposal.contentRevision} saveBlocks={(next, revision) => saveProposalBlocks(proposalId, { contentBlocks: next, revision })} />;
 }

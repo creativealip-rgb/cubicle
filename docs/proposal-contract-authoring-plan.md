@@ -22,7 +22,7 @@
 - [x] Automatic proposal/contract number generation.
 - [x] Full list/divider/table block model, editor controls, and safe renderer.
 - [x] Autosave revision/stale-write protection.
-- [ ] Real proposal image/attachment upload, quota, cleanup, reorder, and media rendering.
+- [x] Real proposal image/attachment upload, quota, cleanup, reorder, and media rendering.
 - [x] Proposal PDF block rendering/path.
 - [ ] Contract number/date/workspace placeholder parity across preview/public/email/PDF.
 - [x] Post-sign detail UI: `Tambah client` and `Nanti`.

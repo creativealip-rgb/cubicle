@@ -14,5 +14,5 @@ export default async function ContractEditPage({ params }: { params: Promise<{ c
     .from(contracts).where(and(eq(contracts.id, contractId), eq(contracts.workspaceId, workspaceId))).limit(1);
   if (!contract || contract.status !== "draft") notFound();
   const blocks = normalizeDocumentBlocks(contract.contentBlocks, "contract");
-  return <DocumentBlockEditor kind="contract" initialBlocks={blocks.length ? blocks : defaultDocumentBlocks("contract")} initialRevision={contract.contentRevision} saveBlocks={(next, revision) => saveContractBlocks(contractId, { contentBlocks: next, revision })} />;
+  return <DocumentBlockEditor kind="contract" workspaceId={workspaceId} initialBlocks={blocks.length ? blocks : defaultDocumentBlocks("contract")} initialRevision={contract.contentRevision} saveBlocks={(next, revision) => saveContractBlocks(contractId, { contentBlocks: next, revision })} />;
 }
