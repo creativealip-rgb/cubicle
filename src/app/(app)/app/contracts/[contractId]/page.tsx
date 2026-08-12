@@ -11,12 +11,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SendContractButton } from "@/components/contracts/send-contract-button";
 import { RevokeContractButton } from "@/components/contracts/revoke-contract-button";
 import { DeleteContractButton } from "@/components/contracts/delete-contract-button";
+import { PostSignClientBanner } from "@/components/contracts/post-sign-client-banner";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, X, FileText } from "lucide-react";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { getCurrentLang, createT } from "@/lib/i18n";
+import { normalizeDocumentBlocks } from "@/lib/document-blocks";
+import { renderDocumentBlock } from "@/lib/document-block-renderer";
 
 function normalizeBody(body: string) {
   return body.replace(/\\n/g, "\n");
@@ -45,11 +48,11 @@ export default async function ContractDetailPage({
     .limit(1);
   if (!c) notFound();
 
-  const [client] = await db
+  const client = c.clientId ? (await db
     .select()
     .from(clients)
     .where(eq(clients.id, c.clientId))
-    .limit(1);
+    .limit(1))[0] : null;
   const [project] = c.projectId
     ? await db.select().from(projects).where(eq(projects.id, c.projectId)).limit(1)
     : [null];
@@ -75,13 +78,12 @@ export default async function ContractDetailPage({
           </div>
           <p className="text-sm text-slate-500 mt-1">
             {t("Untuk", "For")}:{" "}
-            <Link
-              href={`/app/clients/${c.clientId}`}
-              className="text-slate-700 hover:underline font-medium"
-            >
-              {client?.name}
-            </Link>
-            {client?.email ? <> · {client.email}</> : null}
+            {c.clientId ? (
+              <Link href={`/app/clients/${c.clientId}`} className="text-slate-700 hover:underline font-medium">
+                {client?.name ?? c.clientName}
+              </Link>
+            ) : <span className="font-medium text-slate-700">{c.clientName}</span>}
+            {(client?.email ?? c.clientEmail) ? <> · {client?.email ?? c.clientEmail}</> : null}
             {project ? (
               <>
                 {" "}
@@ -236,6 +238,10 @@ export default async function ContractDetailPage({
         </Card>
       ) : null}
 
+      {canWrite && c.status === "signed" && !c.clientId ? (
+        <PostSignClientBanner contractId={c.id} />
+      ) : null}
+
       {c.status === "declined" ? (
         <Card>
           <CardHeader>
@@ -280,6 +286,11 @@ export default async function ContractDetailPage({
           <div className="prose prose-sm prose-slate max-w-none text-sm leading-relaxed whitespace-pre-wrap">
             <ReactMarkdown>{body}</ReactMarkdown>
           </div>
+          {normalizeDocumentBlocks(c.contentBlocks, "contract").map((block) => (
+            <div key={block.id} className="mt-3 whitespace-pre-wrap">
+              {renderDocumentBlock(block, { client_name: c.clientName, client_email: c.clientEmail, valid_until: c.validUntil })}
+            </div>
+          ))}
         </CardContent>
       </Card>
 

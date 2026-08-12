@@ -50,12 +50,14 @@ interface LineItemDraft {
 const blankItem = (): LineItemDraft => ({ description: "", quantity: 1, unitPrice: 0 });
 const defaultValidUntil = () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, clients, services = [] }: ProposalFormProps) {
+export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, clients: _clients, services = [] }: ProposalFormProps) {
   const router = useRouter();
   const { t } = useT();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(() => ({
-    clientId: clients[0]?.id ?? "",
+    clientName: "",
+    clientEmail: "",
+    companyName: "",
     title: "",
     body: "",
     currency: defaultCurrency,
@@ -91,7 +93,9 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
         }));
       const created = await createProposal({
         workspaceId,
-        clientId: form.clientId,
+        clientName: form.clientName,
+        clientEmail: form.clientEmail || undefined,
+        companyName: form.companyName || undefined,
         title: form.title,
         body: form.body || undefined,
         lineItems,
@@ -101,7 +105,7 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
         validUntil: form.validUntil,
       });
       toast.success("Proposal dibuat");
-      router.push(`/app/proposals/${created.id}`);
+      router.push(`/app/proposals/${created.id}/edit`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Terjadi kesalahan";
       toast.error(msg);
@@ -118,17 +122,9 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="client">Klien</Label>
-              <Select value={form.clientId} onValueChange={(v) => setForm({ ...form, clientId: v })}>
-                <SelectTrigger id="client"><SelectValue placeholder={t("Pilih klien", "Select client")} /></SelectTrigger>
-                <SelectContent>
-                  {clients.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <div className="space-y-1"><Label htmlFor="clientName">Nama client</Label><Input id="clientName" value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} required /></div>
+            <div className="space-y-1"><Label htmlFor="clientEmail">Email client</Label><Input id="clientEmail" type="email" value={form.clientEmail} onChange={(e) => setForm({ ...form, clientEmail: e.target.value })} /></div>
+            <div className="space-y-1"><Label htmlFor="companyName">Nama perusahaan</Label><Input id="companyName" value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} /></div>
             <div className="space-y-1">
               <Label htmlFor="title">Judul</Label>
               <Input id="title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="contoh: Brand refresh — fase 1" required />

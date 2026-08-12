@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import { CheckCircle2, AlertCircle, FileText } from "lucide-react";
+import { normalizeDocumentBlocks } from "@/lib/document-blocks";
+import { renderDocumentBlock } from "@/lib/document-block-renderer";
 
 export default async function ContractPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -74,6 +76,15 @@ export default async function ContractPage({ params }: { params: Promise<{ token
             <div className="prose prose-sm prose-slate max-w-none text-sm leading-relaxed">
               <ReactMarkdown>{contract.bodyResolved || contract.body}</ReactMarkdown>
             </div>
+            {normalizeDocumentBlocks(contract.contentBlocks, "contract").map((block) => (
+              <div key={block.id} className="mt-3 whitespace-pre-wrap text-sm text-slate-700">
+                {renderDocumentBlock(block, {
+                  client_name: client?.name,
+                  client_email: client?.email,
+                  valid_until: contract.validUntil,
+                })}
+              </div>
+            ))}
           </div>
 
           <div className="border-t bg-slate-50 px-6 py-5">

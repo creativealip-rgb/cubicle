@@ -5,7 +5,6 @@ import {
   View,
   StyleSheet,
   Font,
-  Image,
 } from "@react-pdf/renderer";
 import { normalizeDocumentBlocks } from "@/lib/document-blocks";
 import { renderDocumentBlock } from "@/lib/document-block-renderer";
@@ -34,10 +33,9 @@ const STATUS_STYLES: Record<string, { bg: string; fg: string; label: string }> =
   draft: { bg: "#f1f5f9", fg: "#475569", label: "DRAFT" },
   sent: { bg: "#dbeafe", fg: "#1e40af", label: "SENT" },
   viewed: { bg: "#fef3c7", fg: "#92400e", label: "VIEWED" },
-  signed: { bg: "#dcfce7", fg: "#166534", label: "SIGNED" },
+  accepted: { bg: "#dcfce7", fg: "#166534", label: "ACCEPTED" },
   declined: { bg: "#fee2e2", fg: "#991b1b", label: "DECLINED" },
   expired: { bg: "#fee2e2", fg: "#991b1b", label: "EXPIRED" },
-  revoked: { bg: "#e5e7eb", fg: "#374151", label: "REVOKED" },
 };
 
 const styles = StyleSheet.create({
@@ -104,7 +102,6 @@ const styles = StyleSheet.create({
     color: MUTED,
     marginTop: 1,
   },
-  // Parties
   parties: {
     flexDirection: "row",
     gap: 16,
@@ -135,7 +132,6 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: MUTED,
   },
-  // Body
   body: {
     fontSize: 10,
     color: TEXT,
@@ -156,61 +152,88 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   bodyText: { marginBottom: 6 },
-  bodyList: { marginLeft: 12 },
-  // Signature block
-  signatureBlock: {
-    marginTop: 32,
-    padding: 16,
+  // Line items table
+  table: {
+    marginTop: 20,
     borderWidth: 1,
     borderColor: BORDER,
     borderRadius: 6,
-    backgroundColor: "#fafbff",
+    overflow: "hidden",
   },
-  signatureTitle: {
-    fontSize: 11,
-    fontWeight: 700,
-    color: "#0f172a",
-    marginBottom: 10,
-  },
-  signatureGrid: {
+  tableHeader: {
     flexDirection: "row",
-    gap: 16,
+    backgroundColor: ROW_ALT,
+    borderBottomWidth: 1,
+    borderBottomColor: BORDER,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
   },
-  signatureCol: { flex: 1 },
-  signatureLabel: {
-    fontSize: 7,
+  tableHeaderCell: {
+    fontSize: 8,
+    fontWeight: 700,
     color: MUTED,
     textTransform: "uppercase",
-    letterSpacing: 1,
+    letterSpacing: 0.5,
+  },
+  tableRow: {
+    flexDirection: "row",
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderBottomWidth: 0.5,
+    borderBottomColor: BORDER,
+  },
+  tableCell: { fontSize: 9, color: TEXT },
+  colDesc: { flex: 4 },
+  colQty: { flex: 1, textAlign: "right" },
+  colUnit: { flex: 2, textAlign: "right" },
+  colAmount: { flex: 2, textAlign: "right" },
+  totals: {
+    marginTop: 8,
+    alignItems: "flex-end",
+  },
+  totalRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 24,
     marginBottom: 2,
   },
-  signatureValue: {
-    fontSize: 9,
-    color: TEXT,
-    marginBottom: 8,
+  totalLabel: { fontSize: 9, color: MUTED },
+  totalValue: { fontSize: 9, color: TEXT, minWidth: 80, textAlign: "right" },
+  grandTotal: {
+    marginTop: 4,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: BORDER,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 24,
   },
-  signatureImageBox: {
-    marginTop: 8,
-    padding: 8,
-    backgroundColor: "#ffffff",
+  grandTotalLabel: { fontSize: 10, fontWeight: 700, color: "#0f172a" },
+  grandTotalValue: {
+    fontSize: 10,
+    fontWeight: 700,
+    color: "#0f172a",
+    minWidth: 80,
+    textAlign: "right",
+  },
+  dpBlock: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: "#eff6ff",
     borderWidth: 1,
-    borderColor: BORDER,
-    borderRadius: 4,
-    minHeight: 60,
-    justifyContent: "center",
-    alignItems: "center",
+    borderColor: "#bfdbfe",
+    borderRadius: 6,
   },
-  signatureImage: {
-    maxHeight: 50,
-    maxWidth: 200,
-    objectFit: "contain",
+  dpTitle: {
+    fontSize: 9,
+    fontWeight: 700,
+    color: "#1e40af",
+    marginBottom: 2,
   },
-  signaturePlaceholder: {
-    fontSize: 8,
-    color: MUTED,
-    fontStyle: "italic",
+  dpDetail: {
+    fontSize: 9,
+    color: "#1d4ed8",
   },
-  // Footer
   footer: {
     position: "absolute",
     bottom: 32,
@@ -226,20 +249,29 @@ const styles = StyleSheet.create({
   },
 });
 
-interface ContractData {
-  contract: {
+interface LineItem {
+  description: string;
+  quantity?: number;
+  qty?: number;
+  unitPrice?: number;
+  unit_price?: number;
+  amount: number;
+}
+
+interface ProposalData {
+  proposal: {
     title: string;
     status: string;
-    body: string;
+    body: string | null;
     contentBlocks?: unknown;
+    lineItems?: unknown;
+    subtotal?: string;
+    tax?: string;
+    total?: string;
+    currency: string;
+    downPaymentPercent?: string;
     validUntil: string | null;
     sentAt: string | null;
-    signedAt: string | null;
-    signedName: string | null;
-    signedEmail: string | null;
-    signatureDataUrl: string | null;
-    signedFromIp: string | null;
-    declineReason: string | null;
   };
   workspace: { name: string; billingName: string | null; billingAddress: string | null };
   client: { name: string; email: string | null; companyName: string | null };
@@ -281,18 +313,45 @@ function renderMarkdown(text: string) {
 }
 
 function stripBold(text: string): string {
-  // Remove ** marks (PDF font is plain; bold not supported in heading strip)
   return text.replace(/\*\*/g, "");
 }
 
-export function ContractPDF({ contract, workspace, client }: ContractData) {
-  const status = STATUS_STYLES[contract.status] || STATUS_STYLES.draft;
+function formatCurrency(amount: number | string | null | undefined, currency: string): string {
+  const num = typeof amount === "string" ? Number(amount) : amount;
+  if (!num || !Number.isFinite(num)) return "-";
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency || "USD",
+    }).format(num);
+  } catch {
+    return `${currency} ${num.toFixed(2)}`;
+  }
+}
+
+export function ProposalPDF({ proposal, workspace, client }: ProposalData) {
+  const status = STATUS_STYLES[proposal.status] || STATUS_STYLES.draft;
+  const items = ((proposal.lineItems as LineItem[] | null) ?? []).map((li) => ({
+    description: li.description,
+    quantity: li.quantity ?? li.qty ?? 1,
+    unitPrice: li.unitPrice ?? li.unit_price ?? 0,
+    amount:
+      li.amount ??
+      (li.quantity ?? li.qty ?? 1) * (li.unitPrice ?? li.unit_price ?? 0),
+  }));
+  const subtotal = Number(proposal.subtotal ?? items.reduce((s, li) => s + Number(li.amount), 0));
+  const tax = Number(proposal.tax ?? 0);
+  const total = Number(proposal.total ?? subtotal + tax);
+  const dpPercent = Number(proposal.downPaymentPercent ?? 0);
+  const dpAmount = total * (dpPercent / 100);
+
+  const blocks = normalizeDocumentBlocks(proposal.contentBlocks, "proposal");
 
   return (
     <Document
-      title={`${contract.title} — Cubiqlo`}
+      title={`${proposal.title} — Cubiqlo`}
       author={workspace.billingName || workspace.name}
-      subject="Service Agreement"
+      subject="Proposal"
     >
       <Page size="A4" style={styles.page}>
         <View style={styles.accentBar} fixed />
@@ -300,22 +359,22 @@ export function ContractPDF({ contract, workspace, client }: ContractData) {
         <View style={styles.header} fixed>
           <View style={styles.brandBlock}>
             <Text style={styles.brandName}>{workspace.billingName || workspace.name}</Text>
-            <Text style={styles.brandLabel}>Service Provider</Text>
+            <Text style={styles.brandLabel}>Proposal</Text>
             {workspace.billingAddress && (
               <Text style={styles.meta}>{workspace.billingAddress}</Text>
             )}
           </View>
           <View style={styles.titleBlock}>
-            <Text style={styles.docType}>Service Agreement</Text>
-            <Text style={styles.docTitle}>{contract.title}</Text>
+            <Text style={styles.docType}>Proposal</Text>
+            <Text style={styles.docTitle}>{proposal.title}</Text>
             <View style={{ backgroundColor: status.bg, paddingVertical: 3, paddingHorizontal: 8, borderRadius: 4 }}>
               <Text style={{ fontSize: 8, fontWeight: 700, color: status.fg, letterSpacing: 0.5 }}>{status.label}</Text>
             </View>
-            {contract.validUntil && (
-              <Text style={styles.meta}>Valid until: {contract.validUntil}</Text>
+            {proposal.validUntil && (
+              <Text style={styles.meta}>Valid until: {proposal.validUntil}</Text>
             )}
-            {contract.sentAt && (
-              <Text style={styles.meta}>Sent: {contract.sentAt}</Text>
+            {proposal.sentAt && (
+              <Text style={styles.meta}>Sent: {proposal.sentAt}</Text>
             )}
           </View>
         </View>
@@ -334,50 +393,66 @@ export function ContractPDF({ contract, workspace, client }: ContractData) {
         </View>
 
         <View style={styles.body}>
-          {normalizeDocumentBlocks(contract.contentBlocks, "contract").length > 0
-            ? normalizeDocumentBlocks(contract.contentBlocks, "contract").map((block) => (
+          {blocks.length > 0
+            ? blocks.map((block) => (
                 <Text key={block.id} style={block.type === "heading" ? styles.bodyH2 : styles.bodyText}>
-                  {renderDocumentBlock(block, { client_name: client.name, client_email: client.email, valid_until: contract.validUntil })}
+                  {renderDocumentBlock(block, {
+                    client_name: client.name,
+                    client_email: client.email,
+                    company_name: client.companyName,
+                    valid_until: proposal.validUntil,
+                  })}
                 </Text>
               ))
-            : renderMarkdown(contract.body)}
+            : proposal.body
+              ? renderMarkdown(proposal.body)
+              : null}
         </View>
 
-        {contract.status === "signed" && (
-          <View style={styles.signatureBlock} wrap={false}>
-            <Text style={styles.signatureTitle}>Signature</Text>
-            <View style={styles.signatureGrid}>
-              <View style={styles.signatureCol}>
-                <Text style={styles.signatureLabel}>Signatory</Text>
-                <Text style={styles.signatureValue}>{contract.signedName}</Text>
-                <Text style={styles.signatureValue}>{contract.signedEmail}</Text>
-                <Text style={styles.signatureLabel}>Signed at</Text>
-                <Text style={styles.signatureValue}>{contract.signedAt}</Text>
+        {items.length > 0 && (
+          <View style={styles.table}>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableHeaderCell, styles.colDesc]}>Description</Text>
+              <Text style={[styles.tableHeaderCell, styles.colQty]}>Qty</Text>
+              <Text style={[styles.tableHeaderCell, styles.colUnit]}>Unit Price</Text>
+              <Text style={[styles.tableHeaderCell, styles.colAmount]}>Amount</Text>
+            </View>
+            {items.map((li, i) => (
+              <View key={i} style={styles.tableRow}>
+                <Text style={[styles.tableCell, styles.colDesc]}>{li.description}</Text>
+                <Text style={[styles.tableCell, styles.colQty]}>{li.quantity}</Text>
+                <Text style={[styles.tableCell, styles.colUnit]}>{formatCurrency(li.unitPrice, proposal.currency)}</Text>
+                <Text style={[styles.tableCell, styles.colAmount]}>{formatCurrency(li.amount, proposal.currency)}</Text>
               </View>
-              <View style={styles.signatureCol}>
-                <Text style={styles.signatureLabel}>IP address</Text>
-                <Text style={styles.signatureValue}>{contract.signedFromIp || "—"}</Text>
-                <Text style={styles.signatureLabel}>Signature</Text>
-                <View style={styles.signatureImageBox}>
-                  {contract.signatureDataUrl ? (
-                    // eslint-disable-next-line jsx-a11y/alt-text -- @react-pdf/renderer Image has no alt prop.
-                    <Image src={contract.signatureDataUrl} style={styles.signatureImage} />
-                  ) : (
-                    <Text style={styles.signaturePlaceholder}>(no signature data)</Text>
-                  )}
-                </View>
+            ))}
+          </View>
+        )}
+
+        {items.length > 0 && (
+          <View style={styles.totals}>
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Subtotal</Text>
+              <Text style={styles.totalValue}>{formatCurrency(subtotal, proposal.currency)}</Text>
+            </View>
+            {tax > 0 && (
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Tax</Text>
+                <Text style={styles.totalValue}>{formatCurrency(tax, proposal.currency)}</Text>
               </View>
+            )}
+            <View style={styles.grandTotal}>
+              <Text style={styles.grandTotalLabel}>Total</Text>
+              <Text style={styles.grandTotalValue}>{formatCurrency(total, proposal.currency)}</Text>
             </View>
           </View>
         )}
 
-        {contract.status === "declined" && contract.declineReason && (
-          <View style={styles.signatureBlock} wrap={false}>
-            <Text style={styles.signatureTitle}>Declined</Text>
-            <Text style={{ fontSize: 9, color: MUTED, marginBottom: 4 }}>
-              This contract was declined.
+        {dpPercent > 0 && (
+          <View style={styles.dpBlock} wrap={false}>
+            <Text style={styles.dpTitle}>Down payment to begin work</Text>
+            <Text style={styles.dpDetail}>
+              {dpPercent}% ({formatCurrency(dpAmount, proposal.currency)}) is due upon acceptance to begin work.
             </Text>
-            <Text style={styles.signatureValue}>Reason: {contract.declineReason}</Text>
           </View>
         )}
 

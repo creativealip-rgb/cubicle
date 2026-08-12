@@ -11,6 +11,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatMoney } from "@/lib/utils";
+import { normalizeDocumentBlocks } from "@/lib/document-blocks";
+import { renderDocumentBlock } from "@/lib/document-block-renderer";
 
 interface LineItem {
   description: string;
@@ -25,6 +27,7 @@ interface ProposalPublicViewProps {
   proposal: {
     title: string;
     body: string | null;
+    contentBlocks?: unknown;
     lineItems: unknown;
     subtotal: string;
     tax: string;
@@ -50,11 +53,15 @@ export function ProposalPublicView({ proposal }: ProposalPublicViewProps) {
         )}
       </div>
 
-      {proposal.body && (
+      {normalizeDocumentBlocks(proposal.contentBlocks, "proposal").length > 0 ? normalizeDocumentBlocks(proposal.contentBlocks, "proposal").map((block) => (
+        <div key={block.id} className="whitespace-pre-wrap text-slate-700">
+          {renderDocumentBlock(block, { client_name: undefined })}
+        </div>
+      )) : proposal.body ? (
         <div className="prose prose-sm max-w-none text-slate-700">
           <ReactMarkdown>{proposal.body}</ReactMarkdown>
         </div>
-      )}
+      ) : null}
 
       <Table>
         <TableHeader>

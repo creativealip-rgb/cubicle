@@ -24,6 +24,7 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
       workspaceId: proposals.workspaceId,
       title: proposals.title,
       body: proposals.body,
+      contentBlocks: proposals.contentBlocks,
       lineItems: proposals.lineItems,
       subtotal: proposals.subtotal,
       tax: proposals.tax,
@@ -38,12 +39,12 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
       sharedTokenExpiresAt: proposals.sharedTokenExpiresAt,
       sentAt: proposals.sentAt,
       viewedAt: proposals.viewedAt,
-      clientName: clients.name,
-      clientEmail: clients.email,
+      clientName: proposals.clientName,
+      clientEmail: proposals.clientEmail,
       workspaceName: workspaces.name,
     })
     .from(proposals)
-    .innerJoin(clients, eq(clients.id, proposals.clientId))
+    .leftJoin(clients, eq(clients.id, proposals.clientId))
     .innerJoin(workspaces, eq(workspaces.id, proposals.workspaceId))
     .where(eq(proposals.sharedTokenHash, tokenHash))
     .limit(1);

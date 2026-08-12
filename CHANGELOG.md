@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-08-12 — Proposal and contract authoring foundation
+
+- Decoupled proposal/contract drafts from required Client rows with recipient snapshots and nullable `clientId` links.
+- Added block-based editors with autosave, explicit Save, content revision stale-write protection, protected contract signature blocks, and legacy body fallback.
+- Added automatic `PROP-YYYY-####` / `CONT-YYYY-####` numbering and shared placeholder value helpers.
+- Added public/detail/PDF block rendering for contracts and public/PDF block rendering for proposals.
+- Added signed-contract `Tambah client` / `Nanti` flow with workspace-scoped, writable, idempotent server action.
+- Added additive migrations `0074_document_authoring.sql` and `0075_autosave_revision_guard.sql`.
+
+**Verification:** focused authoring tests 43/43 pass; `npx tsc --noEmit --pretty false` pass; targeted ESLint pass; `git diff --check` pass. Real media upload and browser acceptance remain open.
+
 ## 2026-08-12 — Dev integration sync and deployment retry
 
 - Synchronized `dev/integration` with latest `main` billing/settings/i18n changes while preserving Prompt Studio validation and mobile UX improvements.

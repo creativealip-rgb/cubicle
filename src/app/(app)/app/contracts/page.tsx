@@ -59,11 +59,11 @@ export default async function ContractsPage({
       createdAt: contracts.createdAt,
       updatedAt: contracts.updatedAt,
       clientId: contracts.clientId,
-      clientName: clients.name,
-      clientEmail: clients.email,
+      clientName: contracts.clientName,
+      clientEmail: contracts.clientEmail,
     })
     .from(contracts)
-    .innerJoin(clients, eq(clients.id, contracts.clientId))
+    .leftJoin(clients, eq(clients.id, contracts.clientId))
     .where(and(...conditions))
     .orderBy(desc(contracts.createdAt))
     .limit(100);

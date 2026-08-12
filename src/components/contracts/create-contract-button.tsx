@@ -14,13 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createContract } from "@/lib/actions/contracts";
@@ -56,7 +50,7 @@ Dengan menandatangani di bawah, kedua pihak menyetujui syarat di atas.
 `;
 export function CreateContractButton({
   workspaceId,
-  clients,
+  clients: _clients,
 }: {
   workspaceId: string;
   clients: { id: string; name: string }[];
@@ -66,7 +60,9 @@ export function CreateContractButton({
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  const [clientId, setClientId] = useState<string>(clients[0]?.id ?? "");
+  const [clientName, setClientName] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const [title, setTitle] = useState("");
   const [validUntil, setValidUntil] = useState("");
   const [body, setBody] = useState(DEFAULT_BODY);
@@ -76,22 +72,24 @@ export function CreateContractButton({
       toast.error(t("Judul wajib diisi", "Title is required"));
       return;
     }
-    if (!clientId) {
-      toast.error(t("Pilih klien", "Select a client"));
+    if (!clientName.trim() || !clientEmail.trim()) {
+      toast.error(t("Nama dan email client wajib diisi", "Client name and email are required"));
       return;
     }
     startTransition(async () => {
       try {
         const c = await createContract({
           workspaceId,
-          clientId,
+          clientName: clientName.trim(),
+          clientEmail: clientEmail.trim(),
+          companyName: companyName.trim() || undefined,
           title: title.trim(),
-          body,
+          body: "",
           validUntil: validUntil || undefined,
         });
         setOpen(false);
         toast.success(t("Draf kontrak dibuat", "Contract draft created"));
-        router.push(`/app/contracts/${c.id}`);
+        router.push(`/app/contracts/${c.id}/edit`);
         router.refresh();
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : t("Gagal membuat kontrak", "Failed to create contract");
@@ -116,27 +114,9 @@ export function CreateContractButton({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
-          <div>
-            <label className="text-sm font-medium block mb-1">{t("Klien", "Client")}</label>
-            {clients.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {t("Belum ada klien. Buat klien dulu.", "No clients found. Create client first.")}
-              </p>
-            ) : (
-              <Select value={clientId} onValueChange={setClientId}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("Pilih klien...", "Select client...")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
+          <div><label className="text-sm font-medium block mb-1">{t("Nama client", "Client name")}</label><Input value={clientName} onChange={(e) => setClientName(e.target.value)} /></div>
+          <div><label className="text-sm font-medium block mb-1">{t("Email client", "Client email")}</label><Input type="email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} required /></div>
+          <div><label className="text-sm font-medium block mb-1">{t("Nama perusahaan", "Company name")}</label><Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} /></div>
           <div>
             <label className="text-sm font-medium block mb-1">{t("Judul", "Title")}</label>
             <Input
@@ -175,7 +155,7 @@ export function CreateContractButton({
           <Button variant="ghost" onClick={() => setOpen(false)} disabled={pending}>
             {t("Batal", "Cancel")}
           </Button>
-          <Button onClick={handleCreate} disabled={pending || clients.length === 0}>
+          <Button onClick={handleCreate} disabled={pending}>
             {pending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
             {t("Buat draf", "Create draft")}
           </Button>
