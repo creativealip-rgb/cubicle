@@ -29,7 +29,7 @@
 - [x] Full test suite, production build, and clean typecheck.
 - [ ] Dev deploy and browser acceptance evidence.
 
-**Current status:** PARTIAL. Source regression gates pass: 251 test files / 1,277 tests pass, TypeScript and production build pass, and ESLint has zero errors. Placeholder parity remains partial: detail/public/PDF use the shared value builder, but editor preview is not wired and send/email still uses the legacy dotted-key resolver. Dev deploy and browser acceptance remain open.
+**Current status:** PARTIAL. Canvas/create-flow fixes are implemented. Proposal create → canvas → autosave → reload persistence is browser-proven with DB evidence. Contract lifecycle, send/public acceptance/signature, post-sign Client creation, mobile 390px, EN/ID, and cleanup evidence remain open.
 
 ## Batch 1 — Domain and schema compatibility
 
