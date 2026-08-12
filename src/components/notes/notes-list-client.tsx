@@ -518,7 +518,7 @@ export function NotesListClient({
                   </form>
                 ) : null}
 
-                <details className="rounded-md bg-muted/40 p-3" open>
+                <details className="rounded-md bg-muted/40 p-3">
                   <summary className="cursor-pointer text-sm font-medium">
                     {t("Ubah", "Edit")}
                   </summary>
@@ -526,7 +526,12 @@ export function NotesListClient({
                     <input type="hidden" name="noteId" value={note.id} />
                     <input type="hidden" name="tab" value={tab} />
                     <input type="hidden" name="q" value={query} />
-                    <Input name="title" defaultValue={note.title} required />
+                    <Input
+                      name="title"
+                      defaultValue={note.title}
+                      required
+                      className="max-w-md"
+                    />
                     <Textarea
                       name="body"
                       defaultValue={note.body ?? ""}
@@ -544,7 +549,7 @@ export function NotesListClient({
                           ? rule
                           : "none"
                       }
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       {RECURRENCE_OPTIONS.map((opt) => (
                         <option key={opt} value={opt}>
@@ -552,8 +557,8 @@ export function NotesListClient({
                         </option>
                       ))}
                     </select>
-                    <div className="grid grid-cols-3 gap-2 text-sm">
-                      <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
+                    <div className="grid grid-cols-3 gap-2 text-sm sm:max-w-md">
+                      <label className="flex h-10 items-center gap-2 rounded-md border px-2.5 py-2">
                         <input
                           type="checkbox"
                           name="notify7d"
@@ -561,7 +566,7 @@ export function NotesListClient({
                         />
                         7d
                       </label>
-                      <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
+                      <label className="flex h-10 items-center gap-2 rounded-md border px-2.5 py-2">
                         <input
                           type="checkbox"
                           name="notify3d"
@@ -569,7 +574,7 @@ export function NotesListClient({
                         />
                         3d
                       </label>
-                      <label className="flex items-center gap-2 rounded-md border px-2 py-1.5">
+                      <label className="flex h-10 items-center gap-2 rounded-md border px-2.5 py-2">
                         <input
                           type="checkbox"
                           name="notify1d"

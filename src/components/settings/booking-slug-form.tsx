@@ -102,7 +102,7 @@ export function BookingSlugForm({
     <form onSubmit={onSubmit} className="space-y-3 border-t pt-3">
       <div className="space-y-1.5">
         <Label htmlFor="booking-slug">{t("Booking slug", "Booking slug")}</Label>
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="flex flex-col gap-2 sm:max-w-md sm:flex-row">
           <Input
             id="booking-slug"
             value={slug}
