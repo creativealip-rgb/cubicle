@@ -88,7 +88,7 @@ export function FolderTree({ clients, projects, folders, canWrite = false }: Fol
 
       return (
         <div key={folder.id}>
-          <div className={cn("group flex items-center rounded-md", active && "bg-muted")}>
+          <div className={cn("group flex items-center rounded-md", active && "bg-muted/70")}>
             <Button
               type="button"
               variant="ghost"
@@ -102,7 +102,7 @@ export function FolderTree({ clients, projects, folders, canWrite = false }: Fol
             >
               <ChevronRight
                 className={cn(
-                  "h-3.5 w-3.5 transition-transform duration-200",
+                  "h-3.5 w-3.5 text-muted-foreground transition-transform duration-200",
                   expanded && "rotate-90",
                   !hasChildren && "opacity-0",
                 )}
@@ -113,9 +113,9 @@ export function FolderTree({ clients, projects, folders, canWrite = false }: Fol
                 {active ? (
                   <FolderOpen className="h-3.5 w-3.5 shrink-0 text-primary" />
                 ) : (
-                  <Folder className="h-3.5 w-3.5 shrink-0 opacity-60" />
+                  <Folder className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 )}
-                <span className="truncate" title={folder.name}>{folder.name}</span>
+                <span className={cn("truncate", active ? "font-medium text-foreground" : "text-muted-foreground")} title={folder.name}>{folder.name}</span>
               </Link>
             </Button>
             {canWrite && <FolderRowActions folderId={folder.id} currentName={folder.name} />}
@@ -135,12 +135,12 @@ export function FolderTree({ clients, projects, folders, canWrite = false }: Fol
         size="sm"
         className={cn(
           "w-full justify-start gap-2 text-sm",
-          !currentClientId && !currentProjectId && !currentFolderId && "bg-muted",
+          !currentClientId && !currentProjectId && !currentFolderId && "bg-muted/70 font-medium",
         )}
         asChild
       >
         <Link href="/app/files" prefetch scroll={false}>
-          <Files className="h-3.5 w-3.5" /> {t("Semua Berkas", "All Files")}
+          <Files className="h-3.5 w-3.5 text-muted-foreground" /> {t("Semua Berkas", "All Files")}
         </Link>
       </Button>
 
@@ -180,7 +180,7 @@ export function FolderTree({ clients, projects, folders, canWrite = false }: Fol
                   size="sm"
                   className={cn(
                     "min-w-0 flex-1 justify-start px-1 text-sm",
-                    currentClientId === client.id && !currentProjectId && !currentFolderId && "bg-muted",
+                    currentClientId === client.id && !currentProjectId && !currentFolderId && "bg-muted/70 font-medium",
                   )}
                   asChild
                 >
@@ -216,12 +216,12 @@ export function FolderTree({ clients, projects, folders, canWrite = false }: Fol
                             size="sm"
                             className={cn(
                               "min-w-0 flex-1 justify-start gap-2 px-1 text-sm",
-                              currentProjectId === project.id && !currentFolderId && "bg-muted",
+                              currentProjectId === project.id && !currentFolderId && "bg-muted/70 font-medium",
                             )}
                             asChild
                           >
                             <Link href={scopeHref({ clientId: client.id, projectId: project.id })} prefetch scroll={false}>
-                              <Folder className="h-3.5 w-3.5 shrink-0 opacity-60" />
+                              <Folder className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                               <span className="truncate" title={project.name}>{project.name}</span>
                             </Link>
                           </Button>

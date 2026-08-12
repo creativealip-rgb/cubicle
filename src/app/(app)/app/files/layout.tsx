@@ -105,8 +105,8 @@ export default async function FilesLayout({
         <div className="lg:col-span-3 space-y-4 min-w-0">
           <Card>
             <CardContent className="space-y-2 pt-4 text-sm">
-              <div className="flex items-center justify-between"><span>{t("Storage terpakai", "Storage used")}</span><strong>{(usedBytes / 1024 ** 3).toFixed(2)} GB / {(storage.maxBytes / 1024 ** 3).toFixed(2)} GB</strong></div>
-              <div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-[#6647F0]" style={{ width: `${Math.min(100, (usedBytes / Math.max(1, storage.maxBytes)) * 100)}%` }} /></div>
+              <div className="flex items-center justify-between gap-2"><span className="text-muted-foreground">{t("Storage terpakai", "Storage used")}</span><strong className="tabular-nums">{Number((usedBytes / 1024 ** 3).toFixed(2)).toLocaleString(lang === "en" ? "en-US" : "id-ID", { maximumFractionDigits: 2 })} / {Number((storage.maxBytes / 1024 ** 3).toFixed(2)).toLocaleString(lang === "en" ? "en-US" : "id-ID", { maximumFractionDigits: 2 })} GB</strong></div>
+              <div className="h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuenow={Math.min(100, Math.round((usedBytes / Math.max(1, storage.maxBytes)) * 100))} aria-valuemin={0} aria-valuemax={100}><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, (usedBytes / Math.max(1, storage.maxBytes)) * 100)}%` }} /></div>
               <p className="text-xs text-muted-foreground">{t("Tersedia", "Available")}: {(Math.max(0, storage.maxBytes - usedBytes) / 1024 ** 3).toFixed(2)} GB</p>
               <p className="text-xs text-muted-foreground">{t("Batas workspace", "Workspace limit")}: {(storage.maxBytes / 1024 ** 3).toFixed(2)} GB</p>
             </CardContent>
