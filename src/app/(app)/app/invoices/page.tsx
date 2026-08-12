@@ -511,6 +511,7 @@ export default async function InvoicesPage({
           icon={FileText}
           title={t("Belum ada invoice", "No invoices yet")}
           description={t("Buat invoice pertama untuk mulai tagih klienmu.", "Create your first invoice to start billing clients.")}
+          action={{ label: t("Buat invoice", "Create invoice"), href: "/app/invoices/new" }}
         />
       ) : filteredTotal === 0 ? (
         <EmptyState
