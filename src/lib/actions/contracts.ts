@@ -19,6 +19,8 @@ import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
 import { validateSignatureDataUrl } from "@/lib/upload-safety";
 import { createClient } from "@/lib/actions/clients";
 import { normalizeDocumentBlocks } from "@/lib/document-blocks";
+import { buildContractPlaceholderValues } from "@/lib/document-placeholder-values";
+import { resolveDocumentPlaceholders } from "@/lib/document-placeholders";
 import {
   buildContractNumber,
   currentDocumentYear,
@@ -341,21 +343,29 @@ export async function sendContract(input: {
   const [ws] = await db.select().from(workspaces)
     .where(eq(workspaces.id, workspaceId)).limit(1);
 
-  const vars: Record<string, string> = {
-    "client.name": c.clientName || "",
-    "client.email": c.clientEmail || "",
-    "company.name": c.companyName || "",
+  const vars = buildContractPlaceholderValues({
+    clientName: c.clientName,
+    clientEmail: c.clientEmail,
+    companyName: c.companyName,
+    contractNumber: c.contractNumber,
+    contractDate: c.contractDate,
+    validUntil: c.validUntil,
+    workspaceName: ws?.name || "Cubiqlo",
+    workspaceAddress: ws?.billingAddress,
+  });
+  const legacyVars: Record<string, string> = {
+    "client.name": String(vars.client_name ?? ""),
+    "client.email": String(vars.client_email ?? ""),
+    "company.name": String(vars.company_name ?? ""),
     "project.name": project?.name || "",
-    "workspace.name": ws?.name || "Cubiqlo",
-    "workspace.address": ws?.billingAddress || "",
-    "contract.number": c.contractNumber || "",
-    "contract.date": c.contractDate
-      ? new Date(`${c.contractDate}T00:00:00Z`).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" })
-      : "",
-    "today": new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
-    "valid_until": c.validUntil ? new Date(c.validUntil).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "",
+    "workspace.name": String(vars.workspace_name ?? ""),
+    "workspace.address": String(vars.workspace_address ?? ""),
+    "contract.number": String(vars.contract_number ?? ""),
+    "contract.date": String(vars.contract_date ?? ""),
+    today: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
+    valid_until: String(vars.valid_until ?? ""),
   };
-  const bodyResolved = resolveTemplate(c.body || "", vars);
+  const bodyResolved = resolveTemplate(resolveDocumentPlaceholders(c.body || "", vars), legacyVars);
 
   const token = generateToken();
   const ttl = input.ttlDays ?? 30;
@@ -390,7 +400,7 @@ export async function sendContract(input: {
         `Hi ${recipientName || "there"},\n\n` +
         `${ws?.name || "Cubiqlo"} sent you a contract for signature: "${c.title}".\n\n` +
         `Review and sign it here:\n${appUrl}/contract/${token}\n\n` +
-        (vars["valid_until"] ? `This link is valid until ${vars["valid_until"]}.\n\n` : "\n") +
+        (vars.valid_until ? `This link is valid until ${vars.valid_until}.\n\n` : "\n") +
         `If you have any questions, just reply to this email.`,
       type: "contract_sent",
       replyTo,
@@ -402,7 +412,7 @@ export async function sendContract(input: {
     return tx.update(contracts)
       .set({
         bodyResolved,
-        variables: vars,
+        variables: { ...legacyVars, ...vars },
         sharedTokenHash: hashToken(token),
         sharedTokenExpiresAt: expiresAt,
         sentAt: new Date(),

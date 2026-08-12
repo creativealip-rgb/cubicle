@@ -24,12 +24,12 @@
 - [x] Autosave revision/stale-write protection.
 - [x] Real proposal image/attachment upload, quota, cleanup, reorder, and media rendering.
 - [x] Proposal PDF block rendering/path.
-- [x] Contract number/date/workspace placeholder parity across preview/public/email/PDF.
+- [ ] Contract number/date/workspace placeholder parity across editor preview/public/email/PDF.
 - [x] Post-sign detail UI: `Tambah client` and `Nanti`.
 - [x] Full test suite, production build, and clean typecheck.
 - [ ] Dev deploy and browser acceptance evidence.
 
-**Current status:** PARTIAL. Source implementation and regression gates pass: placeholder parity is shared across detail/public/PDF, stale wiring assertions are aligned, 251 test files / 1,277 tests pass, TypeScript and production build pass, and ESLint has zero errors. Dev deploy and browser acceptance remain open.
+**Current status:** PARTIAL. Source regression gates pass: 251 test files / 1,277 tests pass, TypeScript and production build pass, and ESLint has zero errors. Placeholder parity remains partial: detail/public/PDF use the shared value builder, but editor preview is not wired and send/email still uses the legacy dotted-key resolver. Dev deploy and browser acceptance remain open.
 
 ## Batch 1 — Domain and schema compatibility
 

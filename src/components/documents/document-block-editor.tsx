@@ -12,6 +12,8 @@ import {
 } from "@/lib/document-blocks";
 import { uploadOneFile, MAX_UPLOAD_BYTES } from "@/lib/files-upload";
 import { useT } from "@/lib/i18n-client";
+import { renderDocumentBlock } from "@/lib/document-block-renderer";
+import type { DocumentPlaceholderValues } from "@/lib/document-placeholders";
 import { ArrowDown, ArrowUp, Loader2, Paperclip, Trash2, Upload } from "lucide-react";
 
 type Props = {
@@ -19,12 +21,13 @@ type Props = {
   workspaceId: string;
   initialBlocks: DocumentBlock[];
   initialRevision?: number;
+  placeholderValues?: DocumentPlaceholderValues;
   saveBlocks: (blocks: DocumentBlock[], revision: number) => Promise<unknown>;
 };
 
 type AddableBlock = "text" | "heading" | "placeholder" | "image" | "attachment";
 
-export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialRevision = 1, saveBlocks }: Props) {
+export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialRevision = 1, placeholderValues = {}, saveBlocks }: Props) {
   const [blocks, setBlocks] = useState(initialBlocks);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -187,6 +190,14 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
                   <button type="button" className="rounded bg-white p-1 text-xs text-red-600 shadow-sm ring-1 ring-slate-200 hover:bg-red-50" title="Hapus" onClick={() => remove(block.id)} disabled={uploading}><Trash2 className="h-3 w-3" /></button>
                 </div>
               )}
+            </div>
+          ))}
+        </section>
+        <section className="space-y-3 rounded-lg border bg-white p-6 shadow-sm">
+          <h2 className="text-sm font-semibold">{t("Pratinjau", "Preview")}</h2>
+          {blocks.map((block) => (
+            <div key={block.id} className="whitespace-pre-wrap text-sm text-slate-700">
+              {renderDocumentBlock(block, placeholderValues)}
             </div>
           ))}
         </section>
