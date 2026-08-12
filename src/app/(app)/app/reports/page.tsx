@@ -795,7 +795,8 @@ export default async function ReportsPage({
                         <TableCell>{item.client}</TableCell>
                         <TableCell>{item.dueDate || "—"}</TableCell>
                         <TableCell className="text-right">
-                          <Badge
+                          <div className="flex justify-end">
+                            <Badge
                             variant={
                               item.daysOverdue > 0 ? "destructive" : "secondary"
                             }
@@ -803,7 +804,8 @@ export default async function ReportsPage({
                             {item.daysOverdue > 0
                               ? `${item.daysOverdue}d`
                               : t("Berjalan", "Current")}
-                          </Badge>
+                            </Badge>
+                          </div>
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
                           {formatMoney(item.remaining, item.currency)}
