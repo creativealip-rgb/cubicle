@@ -1,5 +1,15 @@
 # Deployment Log
 
+## 12 August 2026 — Dev integration sync and deploy retry
+
+- `dev/integration` synchronized with latest `main` revision `03883ac`.
+- Preserved Prompt Studio improvements: inline validation, bilingual option labels, mobile preview, sticky generate action, and template-change confirmation.
+- Main billing/storage implementation retained as source of truth; older duplicate dev billing/storage commits were not reapplied.
+- Deploy retry did not reach build: GitHub fetch timed out connecting to `github.com:443`.
+- Production unchanged. Pre-deploy collision check passed: `dokploy-traefik` remains sole public 80/443 owner.
+- Current deploy status: **BLOCKED — network**, not source/build failure.
+
+
 ## 12 August 2026 — Main/dev UI and i18n follow-up
 
 - Source: `main`; latest site-builder canvas i18n follow-up: `374bf67`; landing secondary copy: `8052924`.

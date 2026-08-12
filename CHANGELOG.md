@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-12 — Dev integration sync and deployment retry
+
+- Synchronized `dev/integration` with latest `main` billing/settings/i18n changes while preserving Prompt Studio validation and mobile UX improvements.
+- Kept main billing/storage hardening as source of truth; skipped duplicate older dev billing/storage changes.
+- Dev deployment retry blocked before build because GitHub fetch timed out on port 443.
+- Production unchanged; `dokploy-traefik` remains sole public 80/443 owner.
+
 ## 2026-08-12 — i18n and UI polish follow-up
 
 - Localized secondary landing-page marketing labels and pricing/capability copy through existing EN/ID translator.
