@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { pakasirPayments, users, workspaceMembers } from "@/db/schema";
 import { createPakasirTransaction, isPakasirConfigured, pakasirPaymentUrl } from "@/lib/pakasir";
 import { assertSameOrigin } from "@/lib/same-origin";
+import { getEffectivePlan } from "@/lib/plan";
 import { canPurchaseStorageAddon } from "@/lib/storage-addons";
 import {
   BILLING_PLANS,
@@ -169,18 +170,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
   }
 
-  const currentPlan = (user.plan ?? "free") as BillingPlan;
+  const effectivePlan = getEffectivePlan(user.plan, user.planExpiresAt);
   const now = new Date();
 
-  if (currentPlan === plan) {
+  if (effectivePlan === plan) {
     return NextResponse.json(
       { error: `Kamu sudah di plan ${BILLING_PLANS[plan].label}` },
       { status: 409 },
     );
   }
 
-  if (!isUpgrade(currentPlan, plan)) {
-    if (currentPlan !== "free" && user.planExpiresAt && user.planExpiresAt > now) {
+  if (!isUpgrade(effectivePlan, plan)) {
+    if (effectivePlan !== "free" && user.planExpiresAt && user.planExpiresAt > now) {
       return NextResponse.json(
         { error: "Downgrade belum tersedia. Plan aktif masih berjalan." },
         { status: 409 },
