@@ -167,7 +167,7 @@ export default async function BillingPage({
                   {plan.features.map((feature) => <li key={feature[0]}>✓ {t(feature[0], feature[1])}</li>)}
                 </ul>
                 {paid ? (
-                  <CheckoutButton plan={plan.key} showPeriodToggle={plan.key !== "team"} disabled={isCurrent}>
+                  <CheckoutButton plan={plan.key} showPeriodToggle={false} disabled={isCurrent}>
                     {isCurrent ? t("Plan aktif", "Active plan") : plan.key === "solo" ? t("Bayar Solo QRIS", "Pay Solo QRIS") : t("Bayar Team QRIS", "Pay Team QRIS")}
                   </CheckoutButton>
                 ) : (

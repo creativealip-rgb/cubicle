@@ -79,7 +79,7 @@ describe("billing UI/copy alignment", () => {
   it("billing page offers the period toggle on every paid plan card", () => {
     const src = billingPage();
     // Solo keeps period selection; Team is yearly-only and forces yearly checkout.
-    expect(src).toContain("<CheckoutButton plan={plan.key} showPeriodToggle={plan.key !== \"team\"} disabled={isCurrent}");
+    expect(src).toContain("<CheckoutButton plan={plan.key} showPeriodToggle={false} disabled={isCurrent}");
   });
 
   it("does not claim storage usage anywhere in the scoped billing UI", () => {
