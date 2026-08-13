@@ -239,10 +239,30 @@ export async function processPakasirPayment(paymentId: string) {
 
   const amount = Math.round(Number(payment.amount));
   const detail = await getPakasirTransactionDetail({ orderId: payment.orderId, amount });
-  const verifiedStatus = detail.transaction?.status;
+  const transaction = detail.transaction;
+  const verifiedStatus = transaction?.status;
 
   // Fail-closed: only a provider-confirmed "completed" status may activate.
+  // An explicitly expired provider status, or a provider-supplied expiry time
+  // that has already passed, closes the pending row out as `expired` — the
+  // row is never activated, and the terminal transition is conditional on the
+  // row still being pending so a concurrent completion cannot be overwritten.
   if (!verifiedStatus || verifiedStatus !== "completed") {
+    if (transaction && verifiedStatus === "expired") {
+      const updated = await db
+        .update(pakasirPayments)
+        .set({ status: "expired", updatedAt: new Date() })
+        .where(and(
+          eq(pakasirPayments.id, payment.id),
+          eq(pakasirPayments.status, "pending"),
+        ))
+        .returning({ id: pakasirPayments.id });
+      if (updated.length === 1) {
+        return { orderId: payment.orderId, outcome: "expired" as const, status: verifiedStatus };
+      }
+      // Row no longer pending (concurrent completion/expiry won the race) —
+      // fall through to the ignored outcome rather than clobbering it.
+    }
     return {
       orderId: payment.orderId,
       outcome: "ignored" as const,
@@ -250,12 +270,29 @@ export async function processPakasirPayment(paymentId: string) {
     };
   }
 
-  // Verified completed — narrow the possibly-undefined transaction reference
-  // for the callers below. (TS cannot infer this from the verifiedStatus guard.)
-  const transaction = detail.transaction;
-  if (!transaction) {
-    return { orderId: payment.orderId, outcome: "ignored" as const, status: verifiedStatus };
+  // Provider reports completed — but a transaction that carries BOTH a
+  // completed status and a past expiry is contradictory and unsafe; the
+  // expired_at check runs before any activation work, so a late-firing
+  // completion can never resurrect an already-expired payment.
+  if (transaction?.expired_at) {
+    const expiredAt = new Date(transaction.expired_at);
+    if (!Number.isNaN(expiredAt.getTime()) && expiredAt.getTime() <= Date.now()) {
+      const updated = await db
+        .update(pakasirPayments)
+        .set({ status: "expired", updatedAt: new Date() })
+        .where(and(
+          eq(pakasirPayments.id, payment.id),
+          eq(pakasirPayments.status, "pending"),
+        ))
+        .returning({ id: pakasirPayments.id });
+      if (updated.length === 1) {
+        return { orderId: payment.orderId, outcome: "expired" as const, status: verifiedStatus };
+      }
+    }
   }
+
+  // Verified completed — the transaction reference is guaranteed non-null
+  // here (the fail-closed guard above already returned for missing status).
   const paidAt = transaction.completed_at
     ? new Date(transaction.completed_at)
     : new Date();
@@ -282,6 +319,7 @@ export type PakasirSyncReport = {
   activated: number;
   idempotent: number;
   ignored: number;
+  expired: number;
   errored: number;
   processed: Array<{
     orderId: string;
@@ -326,6 +364,7 @@ export async function syncPendingPakasirPayments(limit = 25): Promise<PakasirSyn
     activated: summarize("activated") + summarize("addon_activated"),
     idempotent: summarize("idempotent"),
     ignored: summarize("ignored"),
+    expired: summarize("expired"),
     errored: summarize("error"),
     processed,
   };
