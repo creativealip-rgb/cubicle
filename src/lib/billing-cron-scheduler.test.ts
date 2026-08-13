@@ -21,6 +21,8 @@ describe("billing recovery cron scheduler wiring", () => {
     expect(src).toContain("load_env_key CRON_SECRET");
     expect(src).toContain(": \"${CRON_SECRET:?CRON_SECRET not set in env}\"");
     expect(src).toContain("Authorization: Bearer $CRON_SECRET");
+    // Reject a literal placeholder that would fail auth against the cron routes.
+    expect(src).not.toContain("Authorization: Bearer ***");
   });
 
   it("expire-plans targets /api/cron/expire-plans and authenticates with the shared CRON_SECRET bearer token", () => {
@@ -29,6 +31,8 @@ describe("billing recovery cron scheduler wiring", () => {
     expect(src).toContain("load_env_key CRON_SECRET");
     expect(src).toContain(": \"${CRON_SECRET:?CRON_SECRET not set in env}\"");
     expect(src).toContain("Authorization: Bearer $CRON_SECRET");
+    // Reject a literal placeholder that would fail auth against the cron routes.
+    expect(src).not.toContain("Authorization: Bearer ***");
   });
 
   it("both scripts load the URL from env (CUBIQLO_URL or CUBICLE_URL) and default to dev", () => {
