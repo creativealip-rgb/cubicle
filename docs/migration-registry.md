@@ -29,6 +29,7 @@ Reserve a number here before creating SQL. Recheck remote refs and every worktre
 - `0071` — Monthly/yearly billing period — Coder — `main` (uncommitted) — applied to `cubicle_dev`; production not applied.
 - `0072` — Extra workspace add-on entitlements — Coder — `main` (uncommitted) — reserved; not applied anywhere yet; production not applied.
 - `0073` — Storage add-on payment metadata — Coder — `main` (uncommitted) — reserved; not applied anywhere yet; production not applied.
+- `0077` — Disable unfunded add-on auto-renewal (Phase 3 corrective) — Coder — `main` — committed; not applied anywhere yet; production not applied.
 
 ## Reservation protocol
 
