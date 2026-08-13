@@ -29,8 +29,8 @@ export function CheckoutButton({
 
   // Restore persisted period after hydration (defaults to yearly).
   useEffect(() => {
-    setPeriod(loadStoredPeriod());
-  }, []);
+    setPeriod(showPeriodToggle ? loadStoredPeriod() : "yearly");
+  }, [showPeriodToggle]);
 
   function selectPeriod(next: BillingPeriod) {
     setPeriod(next);
