@@ -151,7 +151,7 @@ export default async function BillingPage({
                       <span className="text-sm font-normal text-slate-500">/{t("bulan", "month")}</span>
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
-                      {t("Ditagih bulanan", "Billed monthly")} · {getPlanPeriodLabel(plan.key, "monthly")}/{t("bulan", "month")}
+                      {t("Ditagih tahunan", "Billed yearly")} · {getPlanPeriodLabel(plan.key, "yearly")}/{t("tahun", "year")}
                     </p>
                   </div>
                 ) : (

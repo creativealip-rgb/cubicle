@@ -72,7 +72,7 @@ describe("billing UI/copy alignment", () => {
     expect(projectsPage()).toContain("getPlanYearlyLabel(BILLING_PLANS.solo)");
     expect(docsPage()).toContain("getPlanYearlyLabel(BILLING_PLANS.solo)");
     expect(docsPage()).toContain("getPlanYearlyLabel(BILLING_PLANS.team)");
-    expect(billingPage()).not.toContain("getPlanPeriodLabel(plan.key, \"yearly\")");
+    expect(billingPage()).toContain("getPlanPeriodLabel(plan.key, \"yearly\")");
     expect(billingPage()).toContain("getPlanPeriodLabel(plan.key, \"monthly\")");
   });
 
