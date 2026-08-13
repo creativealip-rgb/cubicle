@@ -47,7 +47,7 @@ export function LoginForm() {
 
     try {
       const result = await authClient.signIn.email({
-        email,
+        email: email.trim().toLowerCase(),
         password,
       });
 
