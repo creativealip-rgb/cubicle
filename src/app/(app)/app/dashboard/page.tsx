@@ -6,7 +6,7 @@ import {
 } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
-import { ArrowUpRight, BookOpen, TrendingUp, Users, FolderKanban, Receipt, Clock3, type LucideIcon } from "lucide-react";
+import { ArrowUpRight, BookOpen, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -316,26 +316,6 @@ export default async function DashboardPage() {
         ]}
       />
 
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label={t("Ringkasan workspace", "Workspace summary")}>
-        {([
-          [t("Klien", "Clients"), totalClients, "/app/clients", Users],
-          [t("Proyek", "Projects"), totalProjects, "/app/projects", FolderKanban],
-          [t("Invoice", "Invoices"), totalInvoices, "/app/invoices", Receipt],
-          [t("Entri waktu", "Time entries"), totalTimeEntries, "/app/time", Clock3],
-        ] as [string, number, string, LucideIcon][]).map(([label, value, href, Icon]) => (
-          <Link key={String(label)} href={String(href)} className="group">
-            <Card className="h-full transition-colors group-hover:border-primary/30">
-              <CardContent className="flex items-center justify-between gap-3 p-4">
-                <div className="min-w-0">
-                  <p className="truncate text-xs font-medium text-muted-foreground">{label}</p>
-                  <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
-                </div>
-                <Icon className="h-5 w-5 shrink-0 text-primary/70" aria-hidden="true" />
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </section>
 
       <section className="space-y-3">
         <div className="flex items-center justify-between">
