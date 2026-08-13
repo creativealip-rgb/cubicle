@@ -316,15 +316,16 @@ export default async function DashboardPage() {
         ]}
       />
 
+
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Reminder</h2>
           <Badge variant="secondary">{reminderItems.length}</Badge>
         </div>
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-5">
-          {reminderItems.map((item) => (
+          {[...reminderItems].sort((a, b) => Number(b.group === "urgent") - Number(a.group === "urgent")).map((item) => (
             <Link key={item.key} href={item.href} className="group">
-              <Card className={`h-full border-l-4 ${reminderToneBorder[item.tone]} transition hover:-translate-y-0.5 hover:shadow-md`}>
+              <Card className={`h-full border-l-4 ${reminderToneBorder[item.tone]} ${item.group === "urgent" ? "bg-amber-50/40" : ""} transition hover:shadow-md`}>
                 <CardContent className="flex min-h-24 items-start justify-between gap-3 p-4">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{item.label}</p>
@@ -381,7 +382,7 @@ export default async function DashboardPage() {
 
         <div className="xl:self-start">
           {/* Finance sidebar: 30d revenue only */}
-          <Card className="bg-gradient-to-b from-slate-50 to-white">
+          <Card className="border-primary/15 bg-primary/[0.03]">
             <CardHeader className="pb-1">
               <CardTitle className="flex items-center justify-between text-sm font-semibold">
                 <span className="flex items-center gap-2">
