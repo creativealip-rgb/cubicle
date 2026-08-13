@@ -10,23 +10,29 @@ const actions = () => read("src/lib/actions/billing-addons.ts");
 const component = () => read("src/components/billing/addon-management.tsx");
 
 describe("billing add-on purchase controls wiring", () => {
-  it("offers storage add-ons +5/+10/+15 GB priced yearly from the catalog helper", () => {
+  it("offers storage add-ons +5/+10/+15 GB priced from the catalog helper", () => {
     const src = controls();
     expect(src).toContain("STORAGE_OPTIONS: StorageAddonKey[] = [5, 10, 15]");
-    // Prices must come from the source-of-truth helper (billing-plans.test.ts
-    // pins 10/20/30rb monthly, ×12 yearly) so UI and checkout can't drift.
-    expect(src).toContain("getStorageAddonAmount(gb, \"yearly\")");
+    // Prices must come from the source-of-truth period label helper
+    // (billing-plans.test.ts pins 10/20/30rb monthly, ×12 yearly) so UI and
+    // checkout can't drift.
+    expect(src).toContain("getStorageAddonPeriodLabel(gb, period)");
     expect(src).toContain("+{gb} GB");
   });
 
-  it("uses the product-wide yearly billing period", () => {
+  it("lets the user pick monthly or yearly (shared product-wide period key)", () => {
     const src = controls();
-    expect(src).toContain('const period: BillingPeriod = "yearly"');
+    // Visible monthly/yearly selection, same shared storage key as the plan
+    // checkout button (single source in billing-pricing.ts).
+    expect(src).toContain("loadStoredPeriod()");
+    expect(src).toContain("persistPeriod(next)");
+    expect(src).toContain('const [period, setPeriod] = useState<BillingPeriod>("yearly")');
+    expect(src).toContain('option === "monthly" ? t("Bulanan", "Monthly") : t("Tahunan", "Yearly")');
   });
 
-  it("quotes extra workspace from yearly catalog pricing", () => {
+  it("quotes extra workspace from the period-aware catalog pricing", () => {
     const src = controls();
-    expect(src).toContain("getExtraWorkspaceAmount(\"yearly\")");
+    expect(src).toContain("getExtraWorkspacePeriodLabel(period)");
   });
 
   it("gates extra workspace on the effective Team plan, disabled + explained otherwise", () => {

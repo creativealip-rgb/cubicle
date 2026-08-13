@@ -9,6 +9,7 @@ import { BillingCheckoutStatusCard } from "@/components/billing/billing-checkout
 import { getSubscriptionStatus } from "@/lib/subscription";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { BILLING_PLANS } from "@/lib/billing-plans";
+import { getPlanPeriodLabel } from "@/lib/billing-pricing";
 import { listActiveAddOns } from "@/lib/actions/billing-addons";
 import { AddonManagement } from "@/components/billing/addon-management";
 import { AddonPurchaseControls } from "@/components/billing/addon-purchase-controls";
@@ -29,16 +30,12 @@ const plans = [
   {
     key: "solo",
     name: "Solo",
-    price: "Rp 75rb/bulan",
-    yearlyPrice: "Billed yearly",
     description: ["Untuk freelancer yang butuh unlimited clients.", "For freelancers who need unlimited clients."],
     features: [["1 pengguna", "1 user"], ["3 workspace", "3 workspaces"], ["Klien/proyek/invoice unlimited", "Unlimited clients/projects/invoices"], ["Client portal + AI", "Client portal + AI"], ["100 AI request/bulan", "100 AI requests/month"], ["25 MB/file", "25 MB/file"]],
   },
   {
     key: "team",
     name: "Team",
-    price: "Rp 165rb/bulan",
-    yearlyPrice: "Billed yearly",
     description: ["Untuk team kecil yang handle banyak client bareng.", "For small teams handling many clients together."],
     features: [["Maksimal 5 member/workspace", "Up to 5 members/workspace"], ["Maksimal 3 workspace", "Up to 3 workspaces"], ["Klien/proyek/invoice unlimited", "Unlimited clients/projects/invoices"], ["Peran tim", "Team roles"], ["1.000 AI request/bulan", "1,000 AI requests/month"], ["5 GB/workspace", "5 GB/workspace"], ["50 MB/file", "50 MB/file"]],
   },
@@ -147,11 +144,18 @@ export default async function BillingPage({
                   {plan.name}
                   {isCurrent && <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">{t("Aktif", "Active")}</span>}
                 </CardTitle>
-                <p className="text-2xl font-semibold text-slate-950">{plan.price}</p>
-                {paid && planConfig && (
-                  <p className="text-sm text-slate-600">
-                    {t("Ditagih tahunan", plan.yearlyPrice)}
-                  </p>
+                {paid && planConfig ? (
+                  <div>
+                    <p className="text-2xl font-semibold text-slate-950">
+                      {getPlanPeriodLabel(plan.key, "yearly")}
+                      <span className="text-sm font-normal text-slate-500">/{t("tahun", "year")}</span>
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {t("atau", "or")} {getPlanPeriodLabel(plan.key, "monthly")}/{t("bulan", "month")}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-2xl font-semibold text-slate-950">Rp 0</p>
                 )}
                 <p className="text-sm text-slate-600">{t(plan.description[0], plan.description[1])}</p>
               </CardHeader>
@@ -160,7 +164,7 @@ export default async function BillingPage({
                   {plan.features.map((feature) => <li key={feature[0]}>✓ {t(feature[0], feature[1])}</li>)}
                 </ul>
                 {paid ? (
-                  <CheckoutButton plan={plan.key} showPeriodToggle={plan.key !== "team"} disabled={isCurrent}>
+                  <CheckoutButton plan={plan.key} disabled={isCurrent}>
                     {isCurrent ? t("Plan aktif", "Active plan") : plan.key === "solo" ? t("Bayar Solo QRIS", "Pay Solo QRIS") : t("Bayar Team QRIS", "Pay Team QRIS")}
                   </CheckoutButton>
                 ) : (

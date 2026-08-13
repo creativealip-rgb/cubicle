@@ -80,8 +80,12 @@ describe("docs pages keep billing copy aligned with active models", () => {
 
   it("workspace-settings keeps subscription plans (Solo/Team) as billing copy", () => {
     const text = source("workspace-settings/page.tsx");
-    expect(text).toMatch(/Solo \(Rp 588rb\/tahun\)|Solo \(Rp 588k\/yr\)/);
-    expect(text).toMatch(/Team \(Rp 1,188jt\/tahun\)|Team \(Rp 1\.188m\/yr\)/);
+    // Subscription plan copy must come from the shared exact-price helpers
+    // (yearly Solo Rp 900.000 / Team Rp 1.980.000), not hardcoded
+    // abbreviated prices that can drift from the checkout catalog.
+    expect(text).toContain("getPlanYearlyLabel(BILLING_PLANS.solo)");
+    expect(text).toContain("getPlanYearlyLabel(BILLING_PLANS.team)");
+    expect(text).not.toMatch(/Rp\s*\d+rb|Rp\s*[\d.,]+jt|588|1,188|1\.188/);
   });
 });
 
