@@ -1,4 +1,6 @@
 import { getCurrentLang, createT } from "@/lib/i18n";
+import { getPlanYearlyLabel } from "@/lib/billing-pricing";
+import { BILLING_PLANS } from "@/lib/billing-plans";
 import { Building2, Image, Users, CreditCard } from "lucide-react";
 import {
   DocsBreadcrumb,
@@ -161,8 +163,8 @@ export default async function DocWorkspaceSettings() {
               items={[
                 t("Buka menu Billing (/app/billing).", "Open Billing menu (/app/billing)."),
                 t(
-                  "Pilih paket langganan: Solo (Rp 588rb/tahun) atau Team (Rp 1,188jt/tahun).",
-                  "Choose plan: Solo (Rp 588k/yr) or Team (Rp 1.188m/yr)."
+                  `Pilih paket langganan: Solo (${getPlanYearlyLabel(BILLING_PLANS.solo)}/tahun) atau Team (${getPlanYearlyLabel(BILLING_PLANS.team)}/tahun).`,
+                  `Choose plan: Solo (${getPlanYearlyLabel(BILLING_PLANS.solo)}/yr) or Team (${getPlanYearlyLabel(BILLING_PLANS.team)}/yr).`
                 ),
                 t(
                   "Klik 'Pilih Paket'. Sistem akan mengarahkan ke halaman pembayaran resmi.",

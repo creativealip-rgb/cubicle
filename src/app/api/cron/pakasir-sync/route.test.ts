@@ -33,6 +33,7 @@ describe("GET /api/cron/pakasir-sync", () => {
       activated: 1,
       idempotent: 0,
       ignored: 1,
+      expired: 0,
       errored: 0,
       processed: [
         { orderId: "CUB-ABC-SOLO-1-ABCDEF", outcome: "activated", plan: "solo" },
@@ -59,6 +60,7 @@ describe("GET /api/cron/pakasir-sync", () => {
       activated: 0,
       idempotent: 0,
       ignored: 0,
+      expired: 0,
       errored: 0,
       processed: [],
     });

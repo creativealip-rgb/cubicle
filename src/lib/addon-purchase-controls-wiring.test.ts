@@ -6,33 +6,33 @@ const read = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 
 const controls = () => read("src/components/billing/addon-purchase-controls.tsx");
 const page = () => read("src/app/(app)/app/billing/page.tsx");
+const actions = () => read("src/lib/actions/billing-addons.ts");
+const component = () => read("src/components/billing/addon-management.tsx");
 
 describe("billing add-on purchase controls wiring", () => {
   it("offers storage add-ons +5/+10/+15 GB priced from the catalog helper", () => {
     const src = controls();
     expect(src).toContain("STORAGE_OPTIONS: StorageAddonKey[] = [5, 10, 15]");
-    // Prices must come from the source-of-truth helper (billing-plans.test.ts
-    // pins 10/20/30rb monthly, ×12 yearly) so UI and checkout can't drift.
-    // The purchase controls are yearly-only (same default as plan checkout).
-    expect(src).toContain("getStorageAddonAmount(gb, \"yearly\")");
+    // Prices must come from the source-of-truth period label helper
+    // (billing-plans.test.ts pins 10/20/30rb monthly, ×12 yearly) so UI and
+    // checkout can't drift.
+    expect(src).toContain("getStorageAddonPeriodLabel(gb, period)");
     expect(src).toContain("+{gb} GB");
   });
 
-  it("shares the persisted period key convention with plan checkout", () => {
+  it("lets the user pick monthly or yearly (shared product-wide period key)", () => {
     const src = controls();
-    const checkoutButton = read("src/components/billing/checkout-button.tsx");
-    // The persisted localStorage key lives in the plan CheckoutButton.
-    expect(checkoutButton).toContain('PERIOD_STORAGE_KEY = "cubiqlo:billing:period"');
-    expect(checkoutButton).toMatch(/window\.localStorage\.getItem\(PERIOD_STORAGE_KEY\)/);
-    expect(checkoutButton).toMatch(/window\.localStorage\.setItem\(PERIOD_STORAGE_KEY, next\)/);
-    expect(checkoutButton).toMatch(/role="tablist"/);
-    // The add-on controls stay on the yearly period (monthly price × 12).
-    expect(src).toContain('const period: BillingPeriod = "yearly";');
+    // Visible monthly/yearly selection, same shared storage key as the plan
+    // checkout button (single source in billing-pricing.ts).
+    expect(src).toContain("loadStoredPeriod()");
+    expect(src).toContain("persistPeriod(next)");
+    expect(src).toContain('const [period, setPeriod] = useState<BillingPeriod>("yearly")');
+    expect(src).toContain('option === "monthly" ? t("Bulanan", "Monthly") : t("Tahunan", "Yearly")');
   });
 
-  it("quotes extra workspace from getExtraWorkspaceAmount (30rb monthly, 360rb yearly)", () => {
+  it("quotes extra workspace from the period-aware catalog pricing", () => {
     const src = controls();
-    expect(src).toContain("getExtraWorkspaceAmount(\"yearly\")");
+    expect(src).toContain("getExtraWorkspacePeriodLabel(period)");
   });
 
   it("gates extra workspace on the effective Team plan, disabled + explained otherwise", () => {
@@ -89,9 +89,38 @@ describe("billing page wiring", () => {
   it("keeps the add-on management (list/cancel) wired alongside purchase controls", () => {
     const src = page();
     expect(src).toContain("<AddonManagement storageAddons={addons.storageAddons}");
+    expect(src).toContain("extraWorkspaceEntitlements={addons.extraWorkspaceEntitlements}");
     expect(src.indexOf("<AddonPurchaseControls")).toBeLessThan(
       src.indexOf("<AddonManagement"),
     );
+  });
+});
+
+describe("extra-workspace entitlement list wiring", () => {
+  it("action exposes per-entitlement rows (not just the aggregate slot count)", () => {
+    const src = actions();
+    expect(src).toContain("listActiveExtraWorkspaceEntitlements(user.id)");
+    expect(src).toContain("extraWorkspaceEntitlements:");
+    // The entitlement list helper lives in extra-workspace.ts and returns rows.
+    const lib = read("src/lib/extra-workspace.ts");
+    expect(lib).toContain("export async function listActiveExtraWorkspaceEntitlements(");
+    expect(lib).toMatch(/IN \('active', 'cancel_scheduled'\)/);
+  });
+
+  it("billing page passes the entitlement rows to AddonManagement", () => {
+    const src = page();
+    expect(src).toContain("extraWorkspaceEntitlements={addons.extraWorkspaceEntitlements}");
+  });
+
+  it("AddonManagement renders a cancel button per entitlement, disabled when cancel_scheduled", () => {
+    const src = component();
+    expect(src).toContain("extraWorkspaceEntitlements.map((entitlement) =>");
+    expect(src).toContain("entitlement.status !== \"active\"");
+    expect(src).toContain("cancelWorkspace(entitlement.id)");
+    expect(src).toContain("entitlement.endsAt.toLocaleDateString()");
+    expect(src).toContain("aktif hingga akhir periode");
+    // Cancel action is user-scoped: the action passes the session user id.
+    expect(actions()).toMatch(/cancelExtraWorkspaceEntitlement\(entitlementId,\s*user\.id\)/);
   });
 });
 

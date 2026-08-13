@@ -65,11 +65,26 @@ export function getPlanAmount(plan: PaidBillingPlan, period: BillingPeriod) {
   return BILLING_PLANS[plan][period === "monthly" ? "monthlyAmount" : "yearlyAmount"];
 }
 
+/**
+ * Add one calendar period to a start date using clamped UTC arithmetic:
+ * clone the start, move to day 1, advance the month/year, then clamp the
+ * original day-of-month to the target month's final UTC day. This keeps
+ * month-end expiries on the last day of the target month (2026-01-31 →
+ * 2026-02-28) and leap-day yearly expiries on Feb 28 (2024-02-29 →
+ * 2025-02-28) instead of overflowing into the following month.
+ */
 export function getPeriodExpiry(start: Date, period: BillingPeriod) {
-  const expiresAt = new Date(start);
-  if (period === "monthly") expiresAt.setUTCMonth(expiresAt.getUTCMonth() + 1);
-  else expiresAt.setUTCFullYear(expiresAt.getUTCFullYear() + 1);
-  return expiresAt;
+  const target = new Date(start);
+  const day = target.getUTCDate();
+
+  target.setUTCDate(1);
+  if (period === "monthly") target.setUTCMonth(target.getUTCMonth() + 1);
+  else target.setUTCFullYear(target.getUTCFullYear() + 1);
+
+  // Final UTC day of the target month (month + 1, day 0 = last day of month).
+  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
+  target.setUTCDate(Math.min(day, lastDay));
+  return target;
 }
 
 export type BillingPlan = keyof typeof BILLING_PLANS;

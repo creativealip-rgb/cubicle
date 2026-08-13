@@ -11,6 +11,7 @@ import {
 import {
   cancelExtraWorkspaceEntitlement,
   getActiveExtraWorkspaceSlots,
+  listActiveExtraWorkspaceEntitlements,
 } from "@/lib/extra-workspace";
 import { getUserPlan } from "@/lib/plan";
 import { getUploadQuotaLimits } from "@/lib/upload-safety";
@@ -32,17 +33,19 @@ export async function listActiveAddOns(): Promise<{
   storageBytes: number;
   storageAddons: Awaited<ReturnType<typeof listActiveStorageAddons>>;
   extraWorkspaceSlots: number;
+  extraWorkspaceEntitlements: Awaited<ReturnType<typeof listActiveExtraWorkspaceEntitlements>>;
 }> {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
 
-  const [storageAddons, storageBytes, extraWorkspaceSlots] = await Promise.all([
+  const [storageAddons, storageBytes, extraWorkspaceSlots, extraWorkspaceEntitlements] = await Promise.all([
     listActiveStorageAddons(user.id),
     getActiveStorageAddonBytes(user.id),
     getActiveExtraWorkspaceSlots(user.id),
+    listActiveExtraWorkspaceEntitlements(user.id),
   ]);
 
-  return { ok: true, storageBytes, storageAddons, extraWorkspaceSlots };
+  return { ok: true, storageBytes, storageAddons, extraWorkspaceSlots, extraWorkspaceEntitlements };
 }
 
 /** Storage add-on usage context (bytes + limits) for quota UI. */

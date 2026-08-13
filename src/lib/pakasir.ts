@@ -21,6 +21,7 @@ export type PakasirWebhook = {
   status: string;
   payment_method?: string;
   completed_at?: string;
+  expired_at?: string;
 };
 
 function config() {

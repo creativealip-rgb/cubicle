@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { ProjectCreateDialog } from "@/components/projects/project-create-dialog";
 import { ProjectsListTable } from "@/components/projects/projects-list-table";
 import { getCurrentLang, createT } from "@/lib/i18n";
+import { getPlanYearlyLabel } from "@/lib/billing-pricing";
+import { BILLING_PLANS } from "@/lib/billing-plans";
 import {
   PROJECT_STATUS_TABS,
   buildProjectsHref,
@@ -170,7 +172,7 @@ export default async function ProjectsPage({
             </div>
             <Button size="sm" className="bg-[#6647F0] hover:bg-[#5333DD] shrink-0" asChild>
               <Link href="/app/billing">
-                {t("Upgrade ke Solo — Rp 588rb/tahun", "Upgrade to Solo — Rp 588k/year")}
+                {t(`Upgrade ke Solo — ${getPlanYearlyLabel(BILLING_PLANS.solo)}/tahun`, `Upgrade to Solo — ${getPlanYearlyLabel(BILLING_PLANS.solo)}/year`)}
               </Link>
             </Button>
           </div>

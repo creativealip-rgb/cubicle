@@ -80,6 +80,10 @@ export async function canPurchaseStorageAddon(
  * Activate a paid storage add-on inside the webhook transaction.
  * Idempotent on `providerEventId` (webhook replay) and `providerOrderId`
  * (same order completing twice): both return the existing entitlement.
+ *
+ * A fresh entitlement is funded by a single QRIS payment — QRIS cannot be
+ * auto-charged, so `autoRenew` is always false. Renewal requires a NEW
+ * payment, which creates a new row via this same helper.
  */
 export async function activateStorageAddonTx(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
@@ -123,7 +127,7 @@ export async function activateStorageAddonTx(
       status: "active",
       startsAt,
       endsAt,
-      autoRenew: true,
+      autoRenew: false,
       providerOrderId: input.providerOrderId ?? null,
       providerEventId: input.providerEventId ?? null,
     })
@@ -159,68 +163,63 @@ export async function cancelStorageAddon(
 }
 
 /**
- * Period-end sweep for storage add-ons. Two transitions:
- *  1. `active` + autoRenew + ended  → renew for the next period (new row).
- *  2. `cancel_scheduled` + ended    → `cancelled` (bytes removed).
+ * Period-end sweep for storage add-ons. Expiry is TERMINAL: QRIS carries no
+ * payment mandate, so the sweep never creates a new period. Two transitions:
+ *  1. `active` + ended      → `expired` (bytes removed).
+ *  2. `cancel_scheduled` + ended → `cancelled` (bytes removed).
+ *
+ * Concurrency safety: due rows are selected with `FOR UPDATE SKIP LOCKED`
+ * (parallel sweep runs pick disjoint rows instead of blocking), and each
+ * transition is a single conditional UPDATE guarded by the still-due status,
+ * so only the winning run counts the transition. Idempotent: a row already
+ * transitioned is skipped by the guard.
+ *
  * Runs inside the caller's transaction so plan downgrade and add-on expiry
- * commit atomically. Idempotent: a row already transitioned is skipped.
+ * commit atomically.
  */
 export async function sweepStorageAddonsTx(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   now: Date = new Date(),
-): Promise<{ renewed: number; cancelled: number }> {
-  const expired = await tx
-    .select()
+): Promise<{ expired: number; cancelled: number }> {
+  const due = await tx
+    .select({ id: userStorageAddons.id, status: userStorageAddons.status })
     .from(userStorageAddons)
     .where(
       and(
         sql`${userStorageAddons.endsAt} <= ${now.toISOString()}`,
         sql`${userStorageAddons.status} IN ('active', 'cancel_scheduled')`,
       ),
-    );
+    )
+    .for("update", { skipLocked: true });
 
-  let renewed = 0;
+  let expired = 0;
   let cancelled = 0;
-  for (const addon of expired) {
-    if (addon.status === "cancel_scheduled" || !addon.autoRenew) {
-      await tx
-        .update(userStorageAddons)
-        .set({ status: "cancelled", updatedAt: now })
-        .where(eq(userStorageAddons.id, addon.id));
-      cancelled += 1;
-      continue;
-    }
-    // Auto-renew: keep the bytes for the next period with a new row so the
-    // cancel-at-period-end semantics stay unambiguous.
-    const startsAt = new Date(addon.endsAt);
-    const endsAt = getPeriodExpiry(startsAt, addon.billingPeriod);
-    await tx.insert(userStorageAddons).values({
-      userId: addon.userId,
-      storageBytes: addon.storageBytes,
-      amount: addon.amount,
-      billingPeriod: addon.billingPeriod,
-      status: "active",
-      startsAt,
-      endsAt,
-      autoRenew: true,
-      // Renewal is a new entitlement period; provider IDs identify original payment.
-      providerOrderId: null,
-      providerEventId: null,
-    });
-    await tx
+  for (const addon of due) {
+    const target = addon.status === "cancel_scheduled" ? "cancelled" : "expired";
+    const updated = await tx
       .update(userStorageAddons)
-      .set({ status: "expired", updatedAt: now })
-      .where(eq(userStorageAddons.id, addon.id));
-    renewed += 1;
+      .set({ status: target, updatedAt: now })
+      .where(
+        and(
+          eq(userStorageAddons.id, addon.id),
+          sql`${userStorageAddons.endsAt} <= ${now.toISOString()}`,
+          sql`${userStorageAddons.status} IN ('active', 'cancel_scheduled')`,
+        ),
+      )
+      .returning({ id: userStorageAddons.id });
+    if (updated.length === 1) {
+      if (target === "cancelled") cancelled += 1;
+      else expired += 1;
+    }
   }
-  return { renewed, cancelled };
+  return { expired, cancelled };
 }
 
 /**
  * Period-end sweep for storage add-ons, standalone (cron entry point).
- * Runs inside a single transaction so renewals and cancellations commit
+ * Runs inside a single transaction so expirations and cancellations commit
  * atomically with each other.
  */
-export async function sweepStorageAddons(now: Date = new Date()): Promise<{ renewed: number; cancelled: number }> {
+export async function sweepStorageAddons(now: Date = new Date()): Promise<{ expired: number; cancelled: number }> {
   return db.transaction(async (tx) => sweepStorageAddonsTx(tx, now));
 }

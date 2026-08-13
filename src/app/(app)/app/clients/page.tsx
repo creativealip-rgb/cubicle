@@ -17,6 +17,8 @@ import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { ClientsListTable } from "@/components/clients/clients-list-table";
 import { ClientCreateDialog } from "@/components/clients/client-create-dialog";
 import { getCurrentLang, createT } from "@/lib/i18n";
+import { getPlanYearlyLabel } from "@/lib/billing-pricing";
+import { BILLING_PLANS } from "@/lib/billing-plans";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -149,7 +151,7 @@ export default async function ClientsPage({
             </div>
             <Button size="sm" className="bg-[#6647F0] hover:bg-[#5333DD] shrink-0" asChild>
               <Link href="/app/billing">
-                {t("Upgrade ke Solo — Rp 588rb/tahun", "Upgrade to Solo — Rp 588k/year")}
+                {t(`Upgrade ke Solo — ${getPlanYearlyLabel(BILLING_PLANS.solo)}/tahun`, `Upgrade to Solo — ${getPlanYearlyLabel(BILLING_PLANS.solo)}/year`)}
               </Link>
             </Button>
           </div>

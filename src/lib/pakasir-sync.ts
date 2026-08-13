@@ -4,8 +4,14 @@ import { db } from "@/db";
 import { pakasirPayments, users, workspaces } from "@/db/schema";
 import { getPakasirTransactionDetail, type PakasirWebhook } from "@/lib/pakasir";
 import { getPeriodExpiry } from "@/lib/billing-plans";
+import { getEffectivePlan } from "@/lib/plan";
 import { activateExtraWorkspaceEntitlementTx } from "@/lib/extra-workspace";
 import { activateStorageAddonTx } from "@/lib/storage-addons";
+
+// Tier order for activation safety: a payment may only ever RAISE the user's
+// effective tier (or renew the same one). Lower-tier payments completing late
+// must never overwrite a currently effective higher plan.
+const PLAN_RANK: Record<string, number> = { free: 0, solo: 1, team: 2 };
 
 export type PakasirActivationResult =
   | { kind: "activated"; plan: string }
@@ -89,7 +95,10 @@ export async function activateCompletedPakasirPayment(
     // The addon/entitlement key is persisted on the pending row, so replay/dedup
     // works exactly like plan activation: provider order_id uniqueness + the
     // pending->completed conditional update. A payment that was already handled
-    // returns idempotent before any entitlement write is attempted.
+    // returns idempotent before any entitlement write is attempted. Add-on
+    // branches intentionally never touch users.plan, so they are NOT subject to
+    // the plan tier guard below — add-ons stack on top of whatever plan is
+    // active.
     const storageAddonKey = current.paymentType === "storage_addon" ? current.entitlementRef : null;
     const extraWorkspace = current.paymentType === "extra_workspace";
 
@@ -147,10 +156,37 @@ export async function activateCompletedPakasirPayment(
       return { kind: "activated" as const, plan: current.plan, entitlementId: activated.entitlementId };
     }
 
-    // Plan payment: activate the plan for the workspace owner.
+    // Plan payment: activate the plan for the workspace owner. NEVER downgrade
+    // a currently effective higher tier: a stale lower-tier payment (e.g. a
+    // solo purchase created before the user later paid for team) that
+    // completes late must not overwrite the active team plan. Read the user's
+    // CURRENT plan + expiry inside the locked transaction and compare
+    // EFFECTIVE tiers (getEffectivePlan applies the grace period), so the
+    // guard sees the same state the rest of the app does.
+    const [owner] = await tx
+      .select({ plan: users.plan, planExpiresAt: users.planExpiresAt })
+      .from(users)
+      .where(eq(users.id, workspace.ownerId))
+      .limit(1);
+
+    const paidPlan = current.plan;
+    const currentEffective = owner
+      ? getEffectivePlan(owner.plan, owner.planExpiresAt)
+      : "free";
+
+    // Same tier = renewal (extend expiry). Higher tier = upgrade. Lower tier
+    // while the current higher tier is still effective = stale payment: leave
+    // the user AND the payment row untouched (still pending, so the operator
+    // can see it was deliberately skipped; the payment itself was real, but
+    // applying it would downgrade the user's active entitlements).
+    const rank = (tier: string) => PLAN_RANK[tier] ?? 0;
+    if (rank(paidPlan) < rank(currentEffective)) {
+      return { kind: "ignored" as const, status: "no_downgrade" };
+    }
+
     await tx
       .update(users)
-      .set({ plan: current.plan, planExpiresAt: expiresAt })
+      .set({ plan: paidPlan, planExpiresAt: expiresAt })
       .where(eq(users.id, workspace.ownerId));
 
     const completed = await tx
@@ -203,10 +239,30 @@ export async function processPakasirPayment(paymentId: string) {
 
   const amount = Math.round(Number(payment.amount));
   const detail = await getPakasirTransactionDetail({ orderId: payment.orderId, amount });
-  const verifiedStatus = detail.transaction?.status;
+  const transaction = detail.transaction;
+  const verifiedStatus = transaction?.status;
 
   // Fail-closed: only a provider-confirmed "completed" status may activate.
+  // An explicitly expired provider status, or a provider-supplied expiry time
+  // that has already passed, closes the pending row out as `expired` — the
+  // row is never activated, and the terminal transition is conditional on the
+  // row still being pending so a concurrent completion cannot be overwritten.
   if (!verifiedStatus || verifiedStatus !== "completed") {
+    if (transaction && verifiedStatus === "expired") {
+      const updated = await db
+        .update(pakasirPayments)
+        .set({ status: "expired", updatedAt: new Date() })
+        .where(and(
+          eq(pakasirPayments.id, payment.id),
+          eq(pakasirPayments.status, "pending"),
+        ))
+        .returning({ id: pakasirPayments.id });
+      if (updated.length === 1) {
+        return { orderId: payment.orderId, outcome: "expired" as const, status: verifiedStatus };
+      }
+      // Row no longer pending (concurrent completion/expiry won the race) —
+      // fall through to the ignored outcome rather than clobbering it.
+    }
     return {
       orderId: payment.orderId,
       outcome: "ignored" as const,
@@ -214,12 +270,29 @@ export async function processPakasirPayment(paymentId: string) {
     };
   }
 
-  // Verified completed — narrow the possibly-undefined transaction reference
-  // for the callers below. (TS cannot infer this from the verifiedStatus guard.)
-  const transaction = detail.transaction;
-  if (!transaction) {
-    return { orderId: payment.orderId, outcome: "ignored" as const, status: verifiedStatus };
+  // Provider reports completed — but a transaction that carries BOTH a
+  // completed status and a past expiry is contradictory and unsafe; the
+  // expired_at check runs before any activation work, so a late-firing
+  // completion can never resurrect an already-expired payment.
+  if (transaction?.expired_at) {
+    const expiredAt = new Date(transaction.expired_at);
+    if (!Number.isNaN(expiredAt.getTime()) && expiredAt.getTime() <= Date.now()) {
+      const updated = await db
+        .update(pakasirPayments)
+        .set({ status: "expired", updatedAt: new Date() })
+        .where(and(
+          eq(pakasirPayments.id, payment.id),
+          eq(pakasirPayments.status, "pending"),
+        ))
+        .returning({ id: pakasirPayments.id });
+      if (updated.length === 1) {
+        return { orderId: payment.orderId, outcome: "expired" as const, status: verifiedStatus };
+      }
+    }
   }
+
+  // Verified completed — the transaction reference is guaranteed non-null
+  // here (the fail-closed guard above already returned for missing status).
   const paidAt = transaction.completed_at
     ? new Date(transaction.completed_at)
     : new Date();
@@ -246,6 +319,7 @@ export type PakasirSyncReport = {
   activated: number;
   idempotent: number;
   ignored: number;
+  expired: number;
   errored: number;
   processed: Array<{
     orderId: string;
@@ -290,6 +364,7 @@ export async function syncPendingPakasirPayments(limit = 25): Promise<PakasirSyn
     activated: summarize("activated") + summarize("addon_activated"),
     idempotent: summarize("idempotent"),
     ignored: summarize("ignored"),
+    expired: summarize("expired"),
     errored: summarize("error"),
     processed,
   };

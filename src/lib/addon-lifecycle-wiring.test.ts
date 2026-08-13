@@ -79,11 +79,25 @@ describe("add-on lifecycle wiring (checkout → webhook → cron)", () => {
     }
   });
 
-  it("renewal sweep creates a new period row and expires the old one", () => {
+  it("expiry sweep is terminal: ended active rows expire, cancel_scheduled rows cancel, nothing renews", () => {
+    // QRIS carries no payment mandate, so the sweep must never create a new
+    // period: ended active rows go to `expired`, cancel_scheduled rows to
+    // `cancelled`, and the sweep body contains no insert at all.
     for (const src of [storage(), extraWs()]) {
-      expect(src).toContain('status: "active"');
-      expect(src).toContain('status: "expired"');
-      expect(src).toContain("getPeriodExpiry");
+      const sweep = src.slice(src.indexOf("export async function sweep"));
+      expect(sweep).toContain('"expired"');
+      expect(sweep).toContain('"cancelled"');
+      expect(sweep).toMatch(/status === "cancel_scheduled" \? "cancelled" : "expired"/);
+      expect(sweep).not.toMatch(/\.insert\(/);
+      expect(sweep).not.toContain("renewed");
+      // Row-lock + conditional update keep parallel sweep runs from
+      // double-transitioning a row. drizzle 0.45 `.for("update", { skipLocked: true })`
+      // compiles to `FOR UPDATE SKIP LOCKED`; the UPDATE is re-guarded by the
+      // still-due status/ends_at so only the winning run counts the transition.
+      expect(sweep).toMatch(/\.for\("update", \{ skipLocked: true \}\)/);
+      expect(sweep).toMatch(/IN \('active', 'cancel_scheduled'\)/);
+      expect(sweep).toMatch(/endsAt} <=/);
+      expect(sweep).toMatch(/returning\(\{ id:/);
     }
   });
 
@@ -95,6 +109,33 @@ describe("add-on lifecycle wiring (checkout → webhook → cron)", () => {
     // Enforcement hook is wired into createWorkspace.
     const ws = read("src/lib/actions/workspace-switch.ts");
     expect(ws).toContain("canCreateWorkspaceWithAddons(userId)");
+  });
+
+  it("counts OWNED workspaces, not memberships, for the workspace slot limit", () => {
+    const src = extraWs();
+    // Plan limit is an ownership limit: membership in other people's
+    // workspaces must not consume the user's own workspace slots.
+    expect(src).toContain("workspaces.ownerId, userId");
+    expect(src).not.toContain("workspaceMembers.userId, userId");
+  });
+
+  it("workspace-switch UI uses the same add-on-aware ownership check as createWorkspace", () => {
+    const ws = read("src/lib/actions/workspace-switch.ts");
+    // getUserWorkspaces must not fall back to the old membership-count check
+    // that ignores purchased extra slots.
+    expect(ws).toContain("canCreateWorkspaceWithAddons(userId)");
+    expect(ws).not.toContain("canCreateWorkspace(userId)");
+  });
+});
+
+describe("workspace storage quota cancel_scheduled inclusion", () => {
+  it("getWorkspaceStorageQuota counts cancel_scheduled add-ons until period end", () => {
+    const src = read("src/lib/storage-quota.ts");
+    // Cancel must not drop the workspace maxBytes mid-paid-period: the same
+    // status set used by getActiveStorageAddonBytes applies here.
+    expect(src).toMatch(/userStorageAddons\.status\} IN \('active', 'cancel_scheduled'\)/);
+    expect(src).not.toMatch(/userStorageAddons\.status = 'active'/);
+    expect(src).toContain("endsAt} > now()");
   });
 });
 
