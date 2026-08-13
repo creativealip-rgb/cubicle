@@ -5,8 +5,8 @@ import { headers, cookies } from "next/headers";
 import { eq, and } from "drizzle-orm";
 import { db } from "@/db";
 import { workspaceMembers, workspaces } from "@/db/schema";
-import { canCreateWorkspace, getPlanLimits, getUserPlan } from "@/lib/plan";
 import { canCreateWorkspaceWithAddons } from "@/lib/extra-workspace";
+import { getPlanLimits, getUserPlan } from "@/lib/plan";
 
 const COOKIE_NAME = "active_workspace_id";
 
@@ -81,7 +81,9 @@ export async function getUserWorkspaces(): Promise<{
   const validIds = new Set(rows.map(r => r.id));
   const activeWorkspaceId = activeId && validIds.has(activeId) ? activeId : rows[0]?.id;
 
-  const createCheck = await canCreateWorkspace(userId);
+  // Same add-on-aware ownership check as createWorkspace: extra workspace
+  // slots purchased via billing must unlock the "Buat workspace" UI button.
+  const createCheck = await canCreateWorkspaceWithAddons(userId);
   const limits = getPlanLimits(currentPlan);
 
   return {

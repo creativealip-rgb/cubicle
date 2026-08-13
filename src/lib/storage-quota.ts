@@ -30,7 +30,7 @@ export async function getWorkspaceStorageQuota(workspaceId: string, executor: St
   const [addons] = await executor.select({ bytes: sql<number>`coalesce(sum(${userStorageAddons.storageBytes}), 0)` })
     .from(userStorageAddons)
     .innerJoin(workspaceMembers, eq(workspaceMembers.userId, userStorageAddons.userId))
-    .where(and(eq(workspaceMembers.workspaceId, workspaceId), sql`${userStorageAddons.status} = 'active'`, sql`${userStorageAddons.endsAt} > now()`));
+    .where(and(eq(workspaceMembers.workspaceId, workspaceId), sql`${userStorageAddons.status} IN ('active', 'cancel_scheduled')`, sql`${userStorageAddons.endsAt} > now()`));
 
   const base = getUploadQuotaLimits(workspace.plan ?? "free").maxWorkspaceBytes;
   return { maxBytes: base + Number(addons?.bytes ?? 0), maxFiles: getUploadQuotaLimits(workspace.plan ?? "free").maxWorkspaceFiles };

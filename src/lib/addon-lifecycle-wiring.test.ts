@@ -96,6 +96,33 @@ describe("add-on lifecycle wiring (checkout → webhook → cron)", () => {
     const ws = read("src/lib/actions/workspace-switch.ts");
     expect(ws).toContain("canCreateWorkspaceWithAddons(userId)");
   });
+
+  it("counts OWNED workspaces, not memberships, for the workspace slot limit", () => {
+    const src = extraWs();
+    // Plan limit is an ownership limit: membership in other people's
+    // workspaces must not consume the user's own workspace slots.
+    expect(src).toContain("workspaces.ownerId, userId");
+    expect(src).not.toContain("workspaceMembers.userId, userId");
+  });
+
+  it("workspace-switch UI uses the same add-on-aware ownership check as createWorkspace", () => {
+    const ws = read("src/lib/actions/workspace-switch.ts");
+    // getUserWorkspaces must not fall back to the old membership-count check
+    // that ignores purchased extra slots.
+    expect(ws).toContain("canCreateWorkspaceWithAddons(userId)");
+    expect(ws).not.toContain("canCreateWorkspace(userId)");
+  });
+});
+
+describe("workspace storage quota cancel_scheduled inclusion", () => {
+  it("getWorkspaceStorageQuota counts cancel_scheduled add-ons until period end", () => {
+    const src = read("src/lib/storage-quota.ts");
+    // Cancel must not drop the workspace maxBytes mid-paid-period: the same
+    // status set used by getActiveStorageAddonBytes applies here.
+    expect(src).toMatch(/userStorageAddons\.status\} IN \('active', 'cancel_scheduled'\)/);
+    expect(src).not.toMatch(/userStorageAddons\.status = 'active'/);
+    expect(src).toContain("endsAt} > now()");
+  });
 });
 
 // Self-check: this file must remain source-wiring-only; no live DB calls.

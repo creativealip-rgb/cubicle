@@ -6,6 +6,8 @@ const read = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 
 const controls = () => read("src/components/billing/addon-purchase-controls.tsx");
 const page = () => read("src/app/(app)/app/billing/page.tsx");
+const actions = () => read("src/lib/actions/billing-addons.ts");
+const component = () => read("src/components/billing/addon-management.tsx");
 
 describe("billing add-on purchase controls wiring", () => {
   it("offers storage add-ons +5/+10/+15 GB priced yearly from the catalog helper", () => {
@@ -81,9 +83,38 @@ describe("billing page wiring", () => {
   it("keeps the add-on management (list/cancel) wired alongside purchase controls", () => {
     const src = page();
     expect(src).toContain("<AddonManagement storageAddons={addons.storageAddons}");
+    expect(src).toContain("extraWorkspaceEntitlements={addons.extraWorkspaceEntitlements}");
     expect(src.indexOf("<AddonPurchaseControls")).toBeLessThan(
       src.indexOf("<AddonManagement"),
     );
+  });
+});
+
+describe("extra-workspace entitlement list wiring", () => {
+  it("action exposes per-entitlement rows (not just the aggregate slot count)", () => {
+    const src = actions();
+    expect(src).toContain("listActiveExtraWorkspaceEntitlements(user.id)");
+    expect(src).toContain("extraWorkspaceEntitlements:");
+    // The entitlement list helper lives in extra-workspace.ts and returns rows.
+    const lib = read("src/lib/extra-workspace.ts");
+    expect(lib).toContain("export async function listActiveExtraWorkspaceEntitlements(");
+    expect(lib).toMatch(/IN \('active', 'cancel_scheduled'\)/);
+  });
+
+  it("billing page passes the entitlement rows to AddonManagement", () => {
+    const src = page();
+    expect(src).toContain("extraWorkspaceEntitlements={addons.extraWorkspaceEntitlements}");
+  });
+
+  it("AddonManagement renders a cancel button per entitlement, disabled when cancel_scheduled", () => {
+    const src = component();
+    expect(src).toContain("extraWorkspaceEntitlements.map((entitlement) =>");
+    expect(src).toContain("entitlement.status !== \"active\"");
+    expect(src).toContain("cancelWorkspace(entitlement.id)");
+    expect(src).toContain("entitlement.endsAt.toLocaleDateString()");
+    expect(src).toContain("aktif hingga akhir periode");
+    // Cancel action is user-scoped: the action passes the session user id.
+    expect(actions()).toMatch(/cancelExtraWorkspaceEntitlement\(entitlementId,\s*user\.id\)/);
   });
 });
 

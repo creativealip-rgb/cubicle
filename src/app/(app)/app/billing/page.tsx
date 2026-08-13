@@ -70,7 +70,7 @@ export default async function BillingPage({
   // Effective plan after expiry/grace — drives the Team-only extra-workspace
   // purchase gate on the client (the server re-checks and returns 409).
   const effectivePlan = getEffectivePlan(user?.plan, user?.planExpiresAt);
-  const addons = userId ? await listActiveAddOns() : { storageAddons: [], extraWorkspaceSlots: 0 };
+  const addons = userId ? await listActiveAddOns() : { storageAddons: [], extraWorkspaceEntitlements: [] };
 
   // Checkout status: only shown to the current workspace OWNER and only when
   // the order id belongs to that workspace. Members/viewers and foreign order
@@ -131,7 +131,7 @@ export default async function BillingPage({
         <CardHeader><CardTitle>{t("Storage & add-on", "Storage & add-ons")}</CardTitle></CardHeader>
         <CardContent className="space-y-5">
           <AddonPurchaseControls effectivePlan={effectivePlan} />
-          <AddonManagement storageAddons={addons.storageAddons} extraWorkspaceSlots={addons.extraWorkspaceSlots} />
+          <AddonManagement storageAddons={addons.storageAddons} extraWorkspaceEntitlements={addons.extraWorkspaceEntitlements} />
         </CardContent>
       </Card>
 

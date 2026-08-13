@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { userExtraWorkspaceEntitlements, users, workspaceMembers } from "@/db/schema";
+import { userExtraWorkspaceEntitlements, users, workspaces } from "@/db/schema";
 import { getPeriodExpiry, type BillingPeriod } from "@/lib/billing-plans";
 import { getEffectivePlan, getPlanLimits } from "@/lib/plan";
 
@@ -25,6 +25,35 @@ export async function getActiveExtraWorkspaceSlots(userId: string, now: Date = n
       ),
     );
   return Number(row?.quantity ?? 0);
+}
+
+/**
+ * Active extra-workspace entitlement rows for a user (list endpoint / UI).
+ * Mirrors `listActiveStorageAddons`: `cancel_scheduled` rows stay listed with
+ * their period end so the UI can show "active until …" and keep the cancel
+ * button disabled.
+ */
+export async function listActiveExtraWorkspaceEntitlements(userId: string, now: Date = new Date()) {
+  return db
+    .select({
+      id: userExtraWorkspaceEntitlements.id,
+      quantity: userExtraWorkspaceEntitlements.quantity,
+      amount: userExtraWorkspaceEntitlements.amount,
+      billingPeriod: userExtraWorkspaceEntitlements.billingPeriod,
+      status: userExtraWorkspaceEntitlements.status,
+      startsAt: userExtraWorkspaceEntitlements.startsAt,
+      endsAt: userExtraWorkspaceEntitlements.endsAt,
+      autoRenew: userExtraWorkspaceEntitlements.autoRenew,
+    })
+    .from(userExtraWorkspaceEntitlements)
+    .where(
+      and(
+        eq(userExtraWorkspaceEntitlements.userId, userId),
+        sql`${userExtraWorkspaceEntitlements.status} IN ('active', 'cancel_scheduled')`,
+        sql`${userExtraWorkspaceEntitlements.endsAt} > ${now.toISOString()}`,
+      ),
+    )
+    .orderBy(userExtraWorkspaceEntitlements.endsAt);
 }
 
 /**
@@ -201,8 +230,8 @@ export async function canCreateWorkspaceWithAddons(
 
   const [{ count }] = await db
     .select({ count: sql<number>`count(*)::int` })
-    .from(workspaceMembers)
-    .where(eq(workspaceMembers.userId, userId));
+    .from(workspaces)
+    .where(eq(workspaces.ownerId, userId));
 
   const baseLimit = getPlanLimits(plan).maxWorkspaces;
   const extraSlots = await getActiveExtraWorkspaceSlots(userId, now);
