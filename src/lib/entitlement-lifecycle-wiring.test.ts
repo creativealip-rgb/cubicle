@@ -32,6 +32,21 @@ describe("entitlement lifecycle wiring", () => {
       expect(source).toContain("providerOrderId");
     }
   });
+
+  it("0077 migration flips auto_renew default to false and backfills both entitlement tables", () => {
+    const schema = read("src/db/schema.ts");
+    const migration = read("drizzle/0077_disable_unfunded_addon_autorenew.sql");
+    // Schema expects DEFAULT false on BOTH tables; the corrective migration must
+    // match that for future rows and backfill existing rows (no unfunded renewal).
+    expect(
+      migration.match(/ALTER TABLE "user_storage_addons"[\s\S]*?ALTER COLUMN "auto_renew" SET DEFAULT false/),
+    ).not.toBeNull();
+    expect(
+      migration.match(/ALTER TABLE "user_extra_workspace_entitlements"[\s\S]*?ALTER COLUMN "auto_renew" SET DEFAULT false/),
+    ).not.toBeNull();
+    expect(migration.match(/SET "auto_renew" = false/g)?.length).toBe(2);
+    expect(schema.match(/autoRenew: boolean\("auto_renew"\)\.notNull\(\)\.default\(false\)/g)?.length).toBe(2);
+  });
 });
 
 // Self-check: this file must remain source-wiring-only; no live DB calls.
