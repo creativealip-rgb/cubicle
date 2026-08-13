@@ -491,3 +491,17 @@ Known environment facts:
 - Current source worktree is dirty/uncommitted; preserve unrelated changes.
 
 Do not mark plan complete until Verification Matrix rows and Gates A–D have fresh evidence.
+
+---
+
+## Status snapshot 2026-08-13 — billing integrity revision (appended; see `docs/operations/evidence/billing-revision-2026-08-13.md`)
+
+Billing integrity revision commits: `a830939`, `23ab270`, `f5bb86f`, `8e93cc0`, `325bd32`, `1d7cb7d`, `147fcee`, `9c7a211`, `fa39564` (HEAD `fa39564`); dev integration merge `d1b1b55`.
+
+- **Gate A — Source: PASS.** Focused suites 104/104; source batch 71/71; lifecycle 23/23; scheduler 4/4; `tsc --noEmit` PASS; `npm run build` PASS; `git diff --check` PASS.
+- **Gate B — Migration: PASS (dev).** Backup `/root/backups/databases/cubiqlo-manual/cubicle_dev-billing-20260813T122100Z.dump`, SHA-256 `0784f403f9ce7f1bc4536fb996cca5b9d617013062b01057fbb3269d87ef9ea3`; restore-test PASS; migration `0077_disable_unfunded_addon_autorenew.sql` applied to `cubiqlo-new-pg/cubicle_dev` (ledger `cubiqlo_migrations`, applied 2026-08-13 12:24:26Z); `auto_renew` defaults verified `false` on `user_storage_addons` and `user_extra_workspace_entitlements`.
+- **Gate C — Dev deploy: PASS.** Dev image built from merge `d1b1b55` (`org.opencontainers.image.revision:d1b1b55d…`), `cubicle-dev:prod` sha256 `65e425bccab7…`; container `cubicle-dev` Up healthy; `/api/health` `{"status":"ok","db":"ok"}`; production container `cubiqlo-new-app` unchanged (image `cubicle-cubiqlo:landing-preview-fix`, up 3 days); `dokploy-traefik` sole owner of ports 80/443; production health ok.
+- **Gate D — Acceptance: PARTIAL.** Browser smoke login + billing toggles PASS. Runtime/provider still OPEN: 16 stale `pending` `pakasir_payments` in `cubicle_dev` (pending 16 / completed 6 / cancelled 1); live `pakasir-sync` scanned all 16 and every row errored `Pakasir detail HTTP 404: {"message":"Transaksi tidak ditemukan"}` — provider no longer holds these transactions. Real payment, verified webhook completion, replay idempotency, cancel, expiry, and browser QA with DB proof NOT complete.
+- **Gate E — Production: BLOCKED.** No production migration/deploy/restart/cron install/payment mutation; requires Gates A–D PASS plus explicit approval.
+
+Scope note: untracked `docs/operations/evidence/ui-phase0-2026-08-12/` preserved; no code changes in this task.
