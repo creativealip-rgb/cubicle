@@ -78,4 +78,28 @@ describe("billing period expiry", () => {
     const start = new Date("2026-02-10T08:30:00.000Z");
     expect(getPeriodExpiry(start, "yearly").toISOString()).toBe(annualPlanExpiry(start).toISOString());
   });
+
+  it("clamps month-end January expiry to the final day of February", () => {
+    expect(getPeriodExpiry(new Date("2026-01-31T10:00:00.000Z"), "monthly").toISOString()).toBe(
+      "2026-02-28T10:00:00.000Z",
+    );
+  });
+
+  it("clamps leap-year January expiry to February 29", () => {
+    expect(getPeriodExpiry(new Date("2024-01-31T10:00:00.000Z"), "monthly").toISOString()).toBe(
+      "2024-02-29T10:00:00.000Z",
+    );
+  });
+
+  it("clamps March 31 monthly expiry to April 30", () => {
+    expect(getPeriodExpiry(new Date("2026-03-31T10:00:00.000Z"), "monthly").toISOString()).toBe(
+      "2026-04-30T10:00:00.000Z",
+    );
+  });
+
+  it("clamps leap-day yearly expiry to February 28 of the following year", () => {
+    expect(getPeriodExpiry(new Date("2024-02-29T10:00:00.000Z"), "yearly").toISOString()).toBe(
+      "2025-02-28T10:00:00.000Z",
+    );
+  });
 });

@@ -52,21 +52,17 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => ({}));
-  const plan = String(body.plan || "").toLowerCase();
   const period = String(body.period || "yearly").toLowerCase() as BillingPeriod;
   if (period !== "monthly" && period !== "yearly") {
     return NextResponse.json({ error: "Periode billing tidak valid." }, { status: 400 });
-  }
-  if (!isBillingPlan(plan)) {
-    return NextResponse.json({ error: "Plan tidak valid. Pilih solo atau team." }, { status: 400 });
-  }
-  if (plan === "free") {
-    return NextResponse.json({ error: "Plan free tidak butuh pembayaran." }, { status: 400 });
   }
 
   // Storage add-on purchase: buy extra GB for the current plan period without
   // touching the plan itself. The addon key is persisted on the payment row so
   // the webhook can create the entitlement idempotently on payment completion.
+  // Branch on the PRESENCE of `addon` BEFORE parsing `plan` so an add-on
+  // checkout never requires a plan field, and a plan checkout is never
+  // mistaken for an add-on checkout.
   const addonRaw = body.addon ?? null;
   if (addonRaw !== null) {
     if (!isStorageAddonKey(addonRaw)) {
@@ -95,6 +91,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: purchaseCheck.reason }, { status: 409 });
     }
 
+    // The payment row's `plan` column is NOT NULL with a solo|team enum, but an
+    // add-on checkout carries no `plan` field (it never touches the plan).
+    // Persist the buyer's current plan label instead; the guard above already
+    // proved a paid plan is active, so this is solo or team.
+    const [planOwner] = await db
+      .select({ plan: users.plan })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1);
+    const addonPlan = (planOwner?.plan ?? "free") as BillingPlan;
+    if (addonPlan === "free") {
+      return NextResponse.json({ error: "Storage add-on hanya tersedia untuk plan berbayar." }, { status: 409 });
+    }
+
     const amount = getStorageAddonAmount(addon, period);
     const shortWs = membership.workspaceId.replace(/-/g, "").slice(0, 10).toUpperCase();
     // Random suffix prevents order ID collisions on same-ms double checkout
@@ -116,7 +126,7 @@ export async function POST(request: Request) {
       await db.insert(pakasirPayments).values({
         workspaceId: membership.workspaceId,
         orderId,
-        plan,
+        plan: addonPlan,
         billingPeriod: period,
         paymentType: "storage_addon",
         entitlementRef: String(addon),
@@ -135,6 +145,17 @@ export async function POST(request: Request) {
         { status: 502 },
       );
     }
+  }
+
+  // Plan purchase: `plan` is parsed only in this branch so add-on checkouts
+  // never require it, and plan checkouts are not intercepted by the add-on
+  // branch above.
+  const plan = String(body.plan || "").toLowerCase();
+  if (!isBillingPlan(plan)) {
+    return NextResponse.json({ error: "Plan tidak valid. Pilih solo atau team." }, { status: 400 });
+  }
+  if (plan === "free") {
+    return NextResponse.json({ error: "Plan free tidak butuh pembayaran." }, { status: 400 });
   }
 
   // Get user plan
@@ -209,6 +230,7 @@ export async function POST(request: Request) {
       orderId,
       plan,
       billingPeriod: period,
+      paymentType: "plan",
       amount: String(amount),
       status: "pending",
       rawPayload: payment,
