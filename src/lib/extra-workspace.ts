@@ -125,7 +125,7 @@ export async function activateExtraWorkspaceEntitlementTx(
       status: "active",
       startsAt,
       endsAt,
-      autoRenew: true,
+      autoRenew: false,
       providerOrderId: input.providerOrderId ?? null,
       providerEventId: input.providerEventId ?? null,
     })
@@ -161,55 +161,57 @@ export async function cancelExtraWorkspaceEntitlement(
 }
 
 /**
- * Period-end sweep for extra-workspace entitlements. Two transitions:
- *  1. `active` + autoRenew + ended  → renew for the next period (new row).
- *  2. `cancel_scheduled` + ended    → `cancelled` (slots removed).
+ * Period-end sweep for extra-workspace entitlements. Expiry is TERMINAL:
+ * QRIS carries no payment mandate, so the sweep never creates a new period.
+ * Two transitions:
+ *  1. `active` + ended      → `expired` (slots removed).
+ *  2. `cancel_scheduled` + ended → `cancelled` (slots removed).
+ *
+ * Concurrency safety: due rows are selected with `FOR UPDATE SKIP LOCKED`
+ * (parallel sweep runs pick disjoint rows instead of blocking), and each
+ * transition is a single conditional UPDATE guarded by the still-due status,
+ * so only the winning run counts the transition. Idempotent: a row already
+ * transitioned is skipped by the guard.
+ *
  * Runs inside the caller's transaction so plan downgrade and entitlement
  * expiry commit atomically.
  */
 export async function sweepExtraWorkspaceEntitlementsTx(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   now: Date = new Date(),
-): Promise<{ renewed: number; cancelled: number }> {
-  const expired = await tx
-    .select()
+): Promise<{ expired: number; cancelled: number }> {
+  const due = await tx
+    .select({ id: userExtraWorkspaceEntitlements.id, status: userExtraWorkspaceEntitlements.status })
     .from(userExtraWorkspaceEntitlements)
-    .where(and(sql`${userExtraWorkspaceEntitlements.endsAt} <= ${now.toISOString()}`, sql`${userExtraWorkspaceEntitlements.status} IN ('active', 'cancel_scheduled')`));
+    .where(
+      and(
+        sql`${userExtraWorkspaceEntitlements.endsAt} <= ${now.toISOString()}`,
+        sql`${userExtraWorkspaceEntitlements.status} IN ('active', 'cancel_scheduled')`,
+      ),
+    )
+    .for("update", { skipLocked: true });
 
-  let renewed = 0;
+  let expired = 0;
   let cancelled = 0;
-  for (const entitlement of expired) {
-    if (entitlement.status === "cancel_scheduled" || !entitlement.autoRenew) {
-      await tx
-        .update(userExtraWorkspaceEntitlements)
-        .set({ status: "cancelled", updatedAt: now })
-        .where(eq(userExtraWorkspaceEntitlements.id, entitlement.id));
-      cancelled += 1;
-      continue;
-    }
-    // Auto-renew: keep the slot active for the next period with a new row so
-    // the cancel-at-period-end semantics stay unambiguous.
-    const startsAt = new Date(entitlement.endsAt);
-    const endsAt = getPeriodExpiry(startsAt, entitlement.billingPeriod);
-    await tx.insert(userExtraWorkspaceEntitlements).values({
-      userId: entitlement.userId,
-      quantity: entitlement.quantity,
-      amount: entitlement.amount,
-      billingPeriod: entitlement.billingPeriod,
-      status: "active",
-      startsAt,
-      endsAt,
-      autoRenew: true,
-      providerOrderId: entitlement.providerOrderId,
-      providerEventId: entitlement.providerEventId,
-    });
-    await tx
+  for (const entitlement of due) {
+    const target = entitlement.status === "cancel_scheduled" ? "cancelled" : "expired";
+    const updated = await tx
       .update(userExtraWorkspaceEntitlements)
-      .set({ status: "expired", updatedAt: now })
-      .where(eq(userExtraWorkspaceEntitlements.id, entitlement.id));
-    renewed += 1;
+      .set({ status: target, updatedAt: now })
+      .where(
+        and(
+          eq(userExtraWorkspaceEntitlements.id, entitlement.id),
+          sql`${userExtraWorkspaceEntitlements.endsAt} <= ${now.toISOString()}`,
+          sql`${userExtraWorkspaceEntitlements.status} IN ('active', 'cancel_scheduled')`,
+        ),
+      )
+      .returning({ id: userExtraWorkspaceEntitlements.id });
+    if (updated.length === 1) {
+      if (target === "cancelled") cancelled += 1;
+      else expired += 1;
+    }
   }
-  return { renewed, cancelled };
+  return { expired, cancelled };
 }
 
 /**
