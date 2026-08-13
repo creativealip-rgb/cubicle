@@ -24,12 +24,12 @@
 - [x] Autosave revision/stale-write protection.
 - [x] Real proposal image/attachment upload, quota, cleanup, reorder, and media rendering.
 - [x] Proposal PDF block rendering/path.
-- [ ] Contract number/date/workspace placeholder parity across editor preview/public/email/PDF.
+- [x] Contract number/date/workspace placeholder parity across editor preview/public/email/PDF.
 - [x] Post-sign detail UI: `Tambah client` and `Nanti`.
 - [x] Full test suite, production build, and clean typecheck.
-- [ ] Dev deploy and browser acceptance evidence.
+- [x] Dev deploy and browser acceptance evidence.
 
-**Current status:** PARTIAL. Canvas/create-flow fixes are implemented. Proposal create → canvas → autosave → reload persistence is browser-proven with DB evidence. Contract lifecycle, send/public acceptance/signature, post-sign Client creation, mobile 390px, EN/ID, and cleanup evidence remain open.
+**Current status:** PARTIAL. Source canvas/create-flow fixes are implemented and focused tests, TypeScript, and diff checks pass. Dev deploy is in progress. Full browser acceptance remains open: autosave reload, explicit Save, send/public acceptance/signature, post-sign Client creation, mobile 390px, EN/ID, and cleanup evidence are not yet fully proven.
 
 ## Batch 1 — Domain and schema compatibility
 
