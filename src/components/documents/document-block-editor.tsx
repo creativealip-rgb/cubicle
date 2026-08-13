@@ -12,7 +12,7 @@ import {
 } from "@/lib/document-blocks";
 import { uploadOneFile, MAX_UPLOAD_BYTES } from "@/lib/files-upload";
 import { useT } from "@/lib/i18n-client";
-import { renderDocumentBlock } from "@/lib/document-block-renderer";
+import { renderDocumentBlockHtml } from "@/lib/document-block-renderer";
 import type { DocumentPlaceholderValues } from "@/lib/document-placeholders";
 import { ArrowDown, ArrowUp, Eye, Loader2, Paperclip, Trash2, Upload, X } from "lucide-react";
 
@@ -158,7 +158,7 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
         <section className="mx-auto max-w-3xl space-y-3 rounded-lg border bg-white p-6 shadow-sm">
           {blocks.map((block, index) => (
             <div key={block.id} className="group relative rounded border border-transparent p-1 hover:border-slate-200">
-              {block.type === "heading" ? <Input value={block.content ?? ""} onChange={(e) => update(block.id, e.target.value)} className="text-xl font-semibold" placeholder="Judul bagian" /> : block.type === "text" || block.type === "placeholder" ? <Textarea value={block.content ?? ""} onChange={(e) => update(block.id, e.target.value)} rows={3} placeholder={block.type === "placeholder" ? "{{client_name}}" : "Tulis isi dokumen..."} /> : block.type === "list" ? <Textarea value={(block.items ?? []).join("\n")} onChange={(e) => { const items = e.target.value.split("\n"); setBlocks((current) => current.map((item) => item.id === block.id ? { ...item, items } : item)); setDirty(true); }} rows={3} placeholder="Satu item per baris" /> : block.type === "table" ? <Textarea value={(block.rows ?? []).map((row) => row.join(" | ")).join("\n")} onChange={(e) => { const rows = e.target.value.split("\n").map((row) => row.split("|")); setBlocks((current) => current.map((item) => item.id === block.id ? { ...item, rows } : item)); setDirty(true); }} rows={4} placeholder="Kolom dipisah |" /> : block.type === "divider" ? <hr className="border-slate-300" /> : block.type === "image" ? <div className="space-y-2">
+              {block.type === "heading" ? <Input value={block.content ?? ""} onChange={(e) => update(block.id, e.target.value)} className="text-xl font-semibold" placeholder="Judul bagian" /> : block.type === "text" || block.type === "placeholder" ? <Textarea className="max-w-full break-words [overflow-wrap:anywhere]" value={block.content ?? ""} onChange={(e) => update(block.id, e.target.value)} rows={3} placeholder={block.type === "placeholder" ? "{{client_name}}" : "Tulis isi dokumen..."} /> : block.type === "list" ? <Textarea value={(block.items ?? []).join("\n")} onChange={(e) => { const items = e.target.value.split("\n"); setBlocks((current) => current.map((item) => item.id === block.id ? { ...item, items } : item)); setDirty(true); }} rows={3} placeholder="Satu item per baris" /> : block.type === "table" ? <Textarea value={(block.rows ?? []).map((row) => row.join(" | ")).join("\n")} onChange={(e) => { const rows = e.target.value.split("\n").map((row) => row.split("|")); setBlocks((current) => current.map((item) => item.id === block.id ? { ...item, rows } : item)); setDirty(true); }} rows={4} placeholder="Kolom dipisah |" /> : block.type === "divider" ? <hr className="border-slate-300" /> : block.type === "image" ? <div className="space-y-2">
                 {uploadingId === block.id ? (
                   <div className="flex items-center gap-2 rounded border border-dashed border-slate-300 p-4 text-sm text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" /> {t("Mengunggah gambar...", "Uploading image...")} {uploadProgress[block.id] ?? 0}%
@@ -227,7 +227,7 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
       {showPreview && <div className="fixed inset-0 z-50 bg-black/40 p-4 sm:p-10" onClick={() => setShowPreview(false)}>
         <section className="mx-auto max-h-full max-w-3xl overflow-y-auto rounded-lg bg-white p-8 shadow-xl" onClick={(event) => event.stopPropagation()}>
           <div className="mb-6 flex items-center justify-between"><h2 className="text-lg font-semibold">Preview</h2><Button type="button" variant="ghost" size="icon" onClick={() => setShowPreview(false)} aria-label="Tutup preview"><X className="h-4 w-4" /></Button></div>
-          <div className="space-y-4">{blocks.map((block) => <div key={block.id} className="whitespace-pre-wrap text-sm text-slate-700">{renderDocumentBlock(block, placeholderValues)}</div>)}</div>
+          <div className="min-w-0 space-y-4 break-words [overflow-wrap:anywhere]">{blocks.map((block) => <div key={block.id} className="min-w-0 break-words text-sm text-slate-700 [overflow-wrap:anywhere]">{renderDocumentBlockHtml(block, placeholderValues)}</div>)}</div>
         </section>
       </div>}
     </div>
