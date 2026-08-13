@@ -147,11 +147,11 @@ export default async function BillingPage({
                 {paid && planConfig ? (
                   <div>
                     <p className="text-2xl font-semibold text-slate-950">
-                      {getPlanPeriodLabel(plan.key, "yearly")}
-                      <span className="text-sm font-normal text-slate-500">/{t("tahun", "year")}</span>
+                      {getPlanPeriodLabel(plan.key, "monthly")}
+                      <span className="text-sm font-normal text-slate-500">/{t("bulan", "month")}</span>
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
-                      {t("atau", "or")} {getPlanPeriodLabel(plan.key, "monthly")}/{t("bulan", "month")}
+                      {t("Ditagih bulanan", "Billed monthly")} · {getPlanPeriodLabel(plan.key, "monthly")}/{t("bulan", "month")}
                     </p>
                   </div>
                 ) : (
