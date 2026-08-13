@@ -109,7 +109,10 @@ export default async function BillingPage({
           <CardTitle>{t("Plan saat ini", "Current Plan")}</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-slate-600">
-          <p><span className="font-medium text-slate-950">{t("Plan", "Plan")}:</span> {currentPlan.toUpperCase()}</p>
+          <p><span className="font-medium text-slate-950">{t("Plan aktif", "Active plan")}:</span> {effectivePlan.toUpperCase()}</p>
+          {currentPlan !== effectivePlan && (
+            <p><span className="font-medium text-slate-950">{t("Plan terakhir", "Previous plan")}:</span> {currentPlan.toUpperCase()}</p>
+          )}
           {user?.planExpiresAt && (
             <p><span className="font-medium text-slate-950">{t("Berlaku hingga", "Valid until")}:</span> {user.planExpiresAt.toLocaleDateString(lang === "en" ? "en-US" : "id-ID")}</p>
           )}
@@ -134,7 +137,7 @@ export default async function BillingPage({
 
       <div className="grid gap-5 lg:grid-cols-3">
         {plans.map((plan) => {
-          const isCurrent = currentPlan === plan.key;
+          const isCurrent = effectivePlan === plan.key;
           const paid = plan.key === "solo" || plan.key === "team";
           const planConfig = paid ? BILLING_PLANS[plan.key] : null;
           return (
