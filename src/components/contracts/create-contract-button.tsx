@@ -20,7 +20,7 @@ import { createContract } from "@/lib/actions/contracts";
 import { useT } from "@/lib/i18n-client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-type ContractTemplateOption = { id: string; name: string; body: string };
+type ContractTemplateOption = { id: string; name: string; body: string; contentBlocks?: unknown };
 
 export function CreateContractButton({
   workspaceId,
@@ -42,9 +42,11 @@ export function CreateContractButton({
   const [title, setTitle] = useState("");
   const [validUntil, setValidUntil] = useState("");
   const [body, setBody] = useState("");
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
 
   function applyTemplate(id: string) {
     const template = templates.find((item) => item.id === id);
+    setSelectedTemplateId(id);
     if (template) setBody(template.body || "");
   }
 
@@ -66,6 +68,7 @@ export function CreateContractButton({
           companyName: companyName.trim() || undefined,
           title: title.trim(),
           body,
+          templateId: selectedTemplateId,
           validUntil: validUntil || undefined,
         });
         setOpen(false);
@@ -80,7 +83,18 @@ export function CreateContractButton({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        // Do not carry a stale template into the next create: a template
+        // selected then cancelled must not apply to an un-templated contract.
+        if (!next) {
+          setSelectedTemplateId(undefined);
+          setBody("");
+        }
+      }}
+    >
       <DialogTrigger asChild>
         <Button size="sm" className="gap-1">
           <Plus className="h-4 w-4" />

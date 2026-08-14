@@ -37,6 +37,7 @@ interface ProposalTemplateOption {
   id: string;
   name: string;
   body: string | null;
+  contentBlocks?: unknown;
   defaultCurrency: string;
   defaultTaxRate: string;
   defaultDownPaymentPercent: string;
@@ -77,10 +78,12 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
     validUntil: defaultValidUntil(),
   }));
   const [items, setItems] = useState<LineItemDraft[]>([blankItem()]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
 
   function applyTemplate(id: string) {
     const template = templates.find((item) => item.id === id);
     if (!template) return;
+    setSelectedTemplateId(id);
     let nextItems: LineItemDraft[] = [blankItem()];
     try {
       const parsed = template.lineItems ? JSON.parse(template.lineItems) : [];
@@ -121,6 +124,7 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
         companyName: form.companyName || undefined,
         title: form.title,
         body: form.body || undefined,
+        templateId: selectedTemplateId,
         lineItems,
         currency: form.currency,
         taxRate: form.taxRate,
