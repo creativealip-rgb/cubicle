@@ -15,7 +15,7 @@ import { RevokeContractButton } from "@/components/contracts/revoke-contract-but
 import { DeleteContractButton } from "@/components/contracts/delete-contract-button";
 import { PostSignClientBanner } from "@/components/contracts/post-sign-client-banner";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, X, FileText } from "lucide-react";
+import { ArrowLeft, CheckCircle2, X, FileText, Eye } from "lucide-react";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { projectStatusVariant } from "@/lib/status-badge";
@@ -125,14 +125,10 @@ export default async function ContractDetailPage({
         <div className="flex flex-wrap items-center gap-2">
           {canWrite ? (
             <Button variant="outline" size="sm" asChild>
-              <a
-                href={`/api/contracts/${c.id}/pdf`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FileText className="h-3.5 w-3.5 mr-1" />
-                {t("Unduh PDF", "Download PDF")}
-              </a>
+              <Link href={`/app/contracts/${c.id}`}>
+                <Eye className="h-3.5 w-3.5 mr-1" />
+                {t("Lihat kontrak", "View contract")}
+              </Link>
             </Button>
           ) : null}
           {canWrite &&

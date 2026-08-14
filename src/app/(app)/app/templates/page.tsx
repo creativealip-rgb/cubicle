@@ -40,7 +40,7 @@ export default async function TemplateCenterPage({
             {t("Template", "Templates")}
           </h1>
           <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
-            Soon
+            {t("Segera hadir", "Coming soon")}
           </Badge>
         </div>
         <Card>
@@ -75,7 +75,7 @@ export default async function TemplateCenterPage({
     <div className="space-y-3 p-1 sm:p-0">
       <div className="flex flex-wrap items-center gap-2 px-1">
         <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
-          Soon
+          {t("Segera hadir", "Coming soon")}
         </Badge>
         <p className="text-xs text-muted-foreground">
           {t(

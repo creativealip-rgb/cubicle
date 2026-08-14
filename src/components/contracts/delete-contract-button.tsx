@@ -6,6 +6,7 @@ import { Trash2 } from "lucide-react";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { toast } from "sonner";
 import { deleteContract } from "@/lib/actions/contracts";
+import { useT } from "@/lib/i18n-client";
 
 export function DeleteContractButton({
   contractId,
@@ -19,6 +20,7 @@ export function DeleteContractButton({
   confirmText?: string;
 }) {
   const router = useRouter();
+  const { t } = useT();
   const [loading, setLoading] = useState(false);
 
   async function onDelete() {
@@ -26,11 +28,11 @@ export function DeleteContractButton({
     setLoading(true);
     try {
       await deleteContract(contractId);
-      toast.success("Kontrak dihapus");
+      toast.success(t("Kontrak dihapus", "Contract deleted"));
       router.push(redirectTo);
       router.refresh();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Gagal menghapus";
+      const msg = err instanceof Error ? err.message : t("Gagal menghapus", "Delete failed");
       toast.error(msg);
       setLoading(false);
     }

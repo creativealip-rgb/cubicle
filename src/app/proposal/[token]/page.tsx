@@ -6,6 +6,7 @@ import crypto from "crypto";
 import { notFound } from "next/navigation";
 import { AcceptDeclineButtons } from "@/components/proposals/accept-decline-buttons";
 import { ProposalPublicView } from "@/components/proposals/proposal-public-view";
+import { getCurrentLang, createT } from "@/lib/i18n";
 
 interface ProposalPageProps {
   params: Promise<{ token: string }>;
@@ -17,6 +18,7 @@ function hashToken(token: string) {
 
 export default async function PublicProposalPage({ params }: ProposalPageProps) {
   const { token } = await params;
+  const t = createT(await getCurrentLang());
   const tokenHash = hashToken(token);
   const [proposal] = await db
     .select({
@@ -82,16 +84,16 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
       <div className="max-w-3xl mx-auto">
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">{proposal.workspaceName}</h1>
-          <p className="text-sm text-slate-500 mt-1">Proposal for {proposal.clientName}</p>
+          <p className="text-sm text-slate-500 mt-1">{t("Proposal untuk", "Proposal for")} {proposal.clientName}</p>
         </div>
         {expired && (
           <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
-            This proposal link has expired. Please contact the sender for a new one.
+            {t("Tautan proposal ini sudah kedaluwarsa. Hubungi pengirim untuk tautan baru.", "This proposal link has expired. Please contact the sender for a new one.")}
           </div>
         )}
         {isDraft && (
           <div className="mb-4 p-4 bg-slate-100 border border-slate-200 rounded-lg text-sm text-slate-700">
-            This proposal hasn&apos;t been sent yet.
+            {t("Proposal ini belum dikirim.", "This proposal hasn't been sent yet.")}
           </div>
         )}
         <ProposalPublicView proposal={proposal} />
@@ -102,17 +104,17 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
         )}
         {isAccepted && (
           <div className="mt-8 p-6 bg-emerald-50 border border-emerald-200 rounded-lg text-center">
-            <h2 className="text-lg font-semibold text-emerald-900">Proposal accepted</h2>
+            <h2 className="text-lg font-semibold text-emerald-900">{t("Proposal diterima", "Proposal accepted")}</h2>
             <p className="text-sm text-emerald-700 mt-1">
-              Thank you. We&apos;ve started the project and a down-payment invoice is on its way.
+              {t("Terima kasih. Proyek sudah dimulai dan invoice uang muka sedang disiapkan.", "Thank you. We've started the project and a down-payment invoice is on its way.")}
             </p>
           </div>
         )}
         {isDeclined && (
           <div className="mt-8 p-6 bg-slate-100 border border-slate-200 rounded-lg text-center">
-            <h2 className="text-lg font-semibold text-slate-700">Proposal declined</h2>
+            <h2 className="text-lg font-semibold text-slate-700">{t("Proposal ditolak", "Proposal declined")}</h2>
             {proposal.declineReason && (
-              <p className="text-sm text-slate-600 mt-1">Reason: {proposal.declineReason}</p>
+              <p className="text-sm text-slate-600 mt-1">{t("Alasan", "Reason")}: {proposal.declineReason}</p>
             )}
           </div>
         )}

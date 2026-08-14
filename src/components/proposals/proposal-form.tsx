@@ -104,7 +104,7 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (items.length === 0 || items.every((li) => !li.description.trim())) {
-      toast.error("Tambahkan minimal satu item");
+      toast.error(t("Tambahkan minimal satu item", "Add at least one item"));
       return;
     }
     setLoading(true);
@@ -131,7 +131,7 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
         downPaymentPercent: form.downPaymentPercent,
         validUntil: form.validUntil,
       });
-      toast.success("Proposal dibuat");
+      toast.success(t("Proposal dibuat", "Proposal created"));
       router.push(`/app/proposals/${created.id}/edit`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Terjadi kesalahan";
@@ -157,8 +157,8 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-1"><Label htmlFor="clientName">Nama client</Label><Input id="clientName" value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} required /></div>
-            <div className="space-y-1"><Label htmlFor="clientEmail">Email client</Label><Input id="clientEmail" type="email" value={form.clientEmail} onChange={(e) => setForm({ ...form, clientEmail: e.target.value })} /></div>
+            <div className="space-y-1"><Label htmlFor="clientName">{t("Nama client", "Client name")}</Label><Input id="clientName" value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} required /></div>
+            <div className="space-y-1"><Label htmlFor="clientEmail">{t("Email client", "Client email")}</Label><Input id="clientEmail" type="email" value={form.clientEmail} onChange={(e) => setForm({ ...form, clientEmail: e.target.value })} /></div>
             <div className="space-y-1"><Label htmlFor="companyName">Nama perusahaan</Label><Input id="companyName" value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} /></div>
             <div className="space-y-1">
               <Label htmlFor="title">Judul</Label>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { signContract, declineContract } from "@/lib/actions/contracts";
+import { useT } from "@/lib/i18n-client";
 import { Loader2, CheckCircle2, Trash2, X, Send } from "lucide-react";
 
 export function SignaturePad({
@@ -16,6 +17,7 @@ export function SignaturePad({
   defaultName: string;
   defaultEmail: string;
 }) {
+  const { t } = useT();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [drawing, setDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
@@ -94,16 +96,16 @@ export function SignaturePad({
   function handleSign() {
     setError(null);
     if (!name.trim()) {
-      setError("Please enter your full name");
+      setError(t("Masukkan nama lengkap.", "Please enter your full name"));
       return;
     }
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Please enter a valid email");
+      setError(t("Masukkan email yang valid.", "Please enter a valid email"));
       return;
     }
     const dataUrl = getDataUrl();
     if (!dataUrl) {
-      setError("Please draw your signature in the box above");
+      setError(t("Gambar tanda tangan di kotak di atas.", "Please draw your signature in the box above"));
       return;
     }
     startTransition(async () => {
@@ -111,7 +113,7 @@ export function SignaturePad({
         await signContract({ token, signedName: name, signedEmail: email, signatureDataUrl: dataUrl });
         setDone("signed");
       } catch (err: any) {
-        setError(err?.message || "Failed to sign");
+        setError(err?.message || t("Gagal menandatangani kontrak.", "Failed to sign"));
       }
     });
   }
@@ -122,7 +124,7 @@ export function SignaturePad({
         await declineContract({ token, reason: declineReason || undefined });
         setDone("declined");
       } catch (err: any) {
-        setError(err?.message || "Failed to decline");
+        setError(err?.message || t("Gagal menolak kontrak.", "Failed to decline"));
       }
     });
   }
@@ -131,9 +133,9 @@ export function SignaturePad({
     return (
       <div className="text-center py-6 space-y-3">
         <CheckCircle2 className="h-12 w-12 mx-auto text-emerald-500" />
-        <h3 className="text-lg font-semibold">Contract signed</h3>
+        <h3 className="text-lg font-semibold">{t("Kontrak ditandatangani", "Contract signed")}</h3>
         <p className="text-sm text-slate-500">
-          Thank you. A copy of this signed contract has been sent to {email}.
+          {t("Terima kasih. Salinan kontrak dikirim ke", "Thank you. A copy of this signed contract has been sent to")} {email}.
         </p>
       </div>
     );
@@ -143,9 +145,9 @@ export function SignaturePad({
     return (
       <div className="text-center py-6 space-y-3">
         <X className="h-12 w-12 mx-auto text-slate-400" />
-        <h3 className="text-lg font-semibold">Contract declined</h3>
+        <h3 className="text-lg font-semibold">{t("Kontrak ditolak", "Contract declined")}</h3>
         <p className="text-sm text-slate-500">
-          The workspace owner has been notified.
+          {t("Pemilik workspace sudah diberi tahu.", "The workspace owner has been notified.")}
         </p>
       </div>
     );
@@ -154,21 +156,21 @@ export function SignaturePad({
   if (showDecline) {
     return (
       <div className="space-y-3">
-        <p className="text-sm font-medium">Decline this contract</p>
-        <p className="text-xs text-slate-500">Optional: let the sender know why.</p>
+        <p className="text-sm font-medium">{t("Tolak kontrak ini", "Decline this contract")}</p>
+        <p className="text-xs text-slate-500">{t("Opsional: beri tahu pengirim alasannya.", "Optional: let the sender know why.")}</p>
         <Textarea
           rows={3}
-          placeholder="Reason for declining (optional)"
+          placeholder={t("Alasan penolakan (opsional)", "Reason for declining (optional)")}
           value={declineReason}
           onChange={(e) => setDeclineReason(e.target.value)}
         />
         <div className="flex items-center gap-2">
           <Button variant="destructive" onClick={handleDecline} disabled={pending}>
             {pending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <X className="h-4 w-4 mr-1" />}
-            Confirm decline
+            {t("Konfirmasi penolakan", "Confirm decline")}
           </Button>
           <Button variant="ghost" onClick={() => setShowDecline(false)} disabled={pending}>
-            Back
+            {t("Kembali", "Back")}
           </Button>
         </div>
       </div>
@@ -179,11 +181,11 @@ export function SignaturePad({
     <div className="space-y-4">
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <label className="text-sm font-medium">Sign here</label>
+          <label className="text-sm font-medium">{t("Tanda tangan di sini", "Sign here")}</label>
           {hasSignature && (
             <Button type="button" variant="ghost" size="sm" onClick={clearSignature}>
               <Trash2 className="h-3 w-3 mr-1" />
-              Clear
+              {t("Hapus", "Clear")}
             </Button>
           )}
         </div>
@@ -197,14 +199,14 @@ export function SignaturePad({
             onPointerLeave={endDraw}
           />
         </div>
-        <p className="text-xs text-slate-500 mt-1">Draw with your mouse, trackpad, or finger.</p>
+        <p className="text-xs text-slate-500 mt-1">{t("Gambar dengan mouse, trackpad, atau jari.", "Draw with your mouse, trackpad, or finger.")}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className="text-sm font-medium block mb-1">Full name</label>
+          <label className="text-sm font-medium block mb-1">{t("Nama lengkap", "Full name")}</label>
           <Input
-            placeholder="Your full legal name"
+            placeholder={t("Nama lengkap sesuai identitas", "Your full legal name")}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -228,11 +230,11 @@ export function SignaturePad({
 
       <div className="flex items-center justify-between gap-2 pt-2">
         <Button variant="ghost" onClick={() => setShowDecline(true)} disabled={pending}>
-          Decline
+          {t("Tolak", "Decline")}
         </Button>
         <Button onClick={handleSign} disabled={pending}>
           {pending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Send className="h-4 w-4 mr-1" />}
-          Sign contract
+          {t("Tandatangani kontrak", "Sign contract")}
         </Button>
       </div>
     </div>

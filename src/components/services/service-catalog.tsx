@@ -244,7 +244,7 @@ export function ServiceCatalog({
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-semibold">{service.name}</p>
                       <Badge variant={service.status === "active" ? "secondary" : "outline"} className="text-[10px]">
-                        {service.status}
+                        {service.status === "active" ? t("Aktif", "Active") : t("Diarsipkan", "Archived")}
                       </Badge>
                     </div>
                     {service.description ? (

@@ -92,11 +92,11 @@ export function QuestionnaireBuilder({
 
   function handleSave() {
     if (!name.trim()) {
-      toast.error("Please give the questionnaire a name");
+      toast.error(t("Beri nama untuk kuesioner", "Please give the questionnaire a name"));
       return;
     }
     if (fields.length === 0) {
-      toast.error("Please add at least one field");
+      toast.error(t("Tambahkan minimal satu field", "Please add at least one field"));
       return;
     }
     const cleanFields = fields.map(f => ({
@@ -131,7 +131,7 @@ export function QuestionnaireBuilder({
         router.push(`/app/questionnaires/${qId}`);
         router.refresh();
       } catch (err: any) {
-        toast.error(err?.message || "Save failed");
+        toast.error(err?.message || t("Gagal menyimpan", "Save failed"));
       }
     });
   }
@@ -141,19 +141,19 @@ export function QuestionnaireBuilder({
       <Card>
         <CardContent className="pt-6 space-y-4">
           <div>
-            <label htmlFor="questionnaire-name" className="text-sm font-medium block mb-1">Name</label>
+            <label htmlFor="questionnaire-name" className="text-sm font-medium block mb-1">{t("Nama", "Name")}</label>
             <Input
               id="questionnaire-name"
-              placeholder="mis. Intake klien baru"
+              placeholder={t("mis. Intake klien baru", "e.g. New client intake")}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </div>
           <div>
-            <label htmlFor="questionnaire-description" className="text-sm font-medium block mb-1">Description (optional)</label>
+            <label htmlFor="questionnaire-description" className="text-sm font-medium block mb-1">{t("Deskripsi (opsional)", "Description (optional)")}</label>
             <Textarea
               id="questionnaire-description"
-              placeholder="Untuk apa kuesioner ini, dan apa yang kamu lakukan dengan jawabannya"
+              placeholder={t("Untuk apa kuesioner ini, dan apa yang kamu lakukan dengan jawabannya", "What this questionnaire is for and how you will use the answers")}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
@@ -164,16 +164,16 @@ export function QuestionnaireBuilder({
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Fields</h2>
+          <h2 className="text-lg font-semibold">{t("Field", "Fields")}</h2>
           <Button variant="outline" size="sm" onClick={addField}>
-            <Plus className="h-4 w-4 mr-1" /> Add field
+            <Plus className="h-4 w-4 mr-1" /> {t("Tambah field", "Add field")}
           </Button>
         </div>
 
         {fields.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-sm text-slate-500">
-              No fields yet. Click &ldquo;Add field&rdquo; to start building.
+              {t("Belum ada field. Klik “Tambah field” untuk mulai.", "No fields yet. Click “Add field” to start building.")}
             </CardContent>
           </Card>
         ) : (
@@ -201,7 +201,7 @@ export function QuestionnaireBuilder({
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="text-xs">#{idx + 1}</Badge>
                       <Input
-                        placeholder="Field label (e.g. Project goals)"
+                        placeholder={t("Label field (mis. Tujuan proyek)", "Field label (e.g. Project goals)")}
                         value={field.label}
                         onChange={(e) => updateField(field.id, { label: e.target.value })}
                         className="flex-1"
@@ -225,21 +225,21 @@ export function QuestionnaireBuilder({
                           checked={field.required}
                           onChange={(e) => updateField(field.id, { required: e.target.checked })}
                         />
-                        Required
+                        {t("Wajib", "Required")}
                       </label>
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
                         onClick={() => removeField(field.id)}
-                        aria-label="Delete field"
+                        aria-label={t("Hapus field", "Delete field")}
                       >
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     </div>
 
                     <Input
-                      placeholder="Placeholder (optional)"
+                      placeholder={t("Placeholder (opsional)", "Placeholder (optional)")}
                       value={field.placeholder || ""}
                       onChange={(e) => updateField(field.id, { placeholder: e.target.value })}
                       className="text-sm"
@@ -247,7 +247,7 @@ export function QuestionnaireBuilder({
 
                     {(field.type === "select" || field.type === "multiselect") && (
                       <div className="space-y-2">
-                        <label className="text-xs font-medium text-slate-600 block">Options (one per line)</label>
+                        <label className="text-xs font-medium text-slate-600 block">{t("Opsi (satu per baris)", "Options (one per line)")}</label>
                         <Textarea
                           rows={4}
                           placeholder={"Option A\nOption B\nOption C"}

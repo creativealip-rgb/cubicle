@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { revokeContract } from "@/lib/actions/contracts";
+import { useT } from "@/lib/i18n-client";
 
 export function RevokeContractButton({
   contractId,
@@ -19,6 +20,7 @@ export function RevokeContractButton({
   pendingLabel?: string;
 }) {
   const router = useRouter();
+  const { t } = useT();
   const [pending, startTransition] = useTransition();
 
   function handleRevoke() {
@@ -26,10 +28,10 @@ export function RevokeContractButton({
     startTransition(async () => {
       try {
         await revokeContract(contractId);
-        toast.success("Kontrak dicabut");
+        toast.success(t("Kontrak dicabut", "Contract revoked"));
         router.refresh();
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Gagal mencabut";
+        const msg = err instanceof Error ? err.message : t("Gagal mencabut", "Revoke failed");
         toast.error(msg);
       }
     });
