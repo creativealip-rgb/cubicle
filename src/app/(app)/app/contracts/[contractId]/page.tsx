@@ -21,7 +21,7 @@ import ReactMarkdown from "react-markdown";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { normalizeDocumentBlocks } from "@/lib/document-blocks";
-import { renderDocumentBlock } from "@/lib/document-block-renderer";
+import { renderDocumentBlockHtml } from "@/lib/document-block-renderer";
 import { buildContractPlaceholderValues } from "@/lib/document-placeholder-values";
 
 function normalizeBody(body: string) {
@@ -315,8 +315,8 @@ export default async function ContractDetailPage({
             <ReactMarkdown>{body}</ReactMarkdown>
           </div>
           {normalizeDocumentBlocks(c.contentBlocks, "contract").map((block) => (
-            <div key={block.id} className="mt-3 whitespace-pre-wrap">
-              {renderDocumentBlock(block, placeholderValues)}
+            <div key={block.id} className={`mt-3 ${block.type === "heading" ? "font-semibold text-slate-900" : "text-slate-700"}`}>
+              {renderDocumentBlockHtml(block, placeholderValues)}
             </div>
           ))}
         </CardContent>

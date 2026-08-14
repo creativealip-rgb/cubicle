@@ -273,7 +273,7 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
       {showPreview && <div className="fixed inset-0 z-50 bg-black/40 p-4 sm:p-10" onClick={() => setShowPreview(false)}>
         <section className="mx-auto max-h-full max-w-3xl overflow-y-auto rounded-lg bg-white p-8 shadow-xl" onClick={(event) => event.stopPropagation()}>
           <div className="mb-6 flex items-center justify-between"><h2 className="text-lg font-semibold">Preview</h2><Button type="button" variant="ghost" size="icon" onClick={() => setShowPreview(false)} aria-label="Tutup preview"><X className="h-4 w-4" /></Button></div>
-          <div className="min-w-0 space-y-4 break-words [overflow-wrap:anywhere]">{blocks.map((block) => <div key={block.id} className="min-w-0 break-words text-sm text-slate-700 [overflow-wrap:anywhere]">{renderDocumentBlockHtml(block, placeholderValues)}</div>)}</div>
+          <div className="min-w-0 space-y-4 break-words [overflow-wrap:anywhere]">{blocks.map((block) => <div key={block.id} className={`min-w-0 break-words [overflow-wrap:anywhere] ${block.type === "heading" ? "text-lg font-semibold text-slate-900" : "text-sm text-slate-700"}`}>{renderDocumentBlockHtml(block, placeholderValues)}</div>)}</div>
         </section>
       </div>}
     </div>

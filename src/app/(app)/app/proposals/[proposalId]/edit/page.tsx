@@ -10,7 +10,7 @@ import { saveProposalBlocks } from "@/lib/actions/proposals";
 export default async function ProposalEditPage({ params }: { params: Promise<{ proposalId: string }> }) {
   const { proposalId } = await params;
   const workspaceId = await getWorkspaceForCurrentUser();
-  const [proposal] = await db.select({ id: proposals.id, contentBlocks: proposals.contentBlocks, contentRevision: proposals.contentRevision, status: proposals.status })
+  const [proposal] = await db.select({ id: proposals.id, clientName: proposals.clientName, contentBlocks: proposals.contentBlocks, contentRevision: proposals.contentRevision, status: proposals.status })
     .from(proposals).where(and(eq(proposals.id, proposalId), eq(proposals.workspaceId, workspaceId))).limit(1);
   if (!proposal || proposal.status !== "draft") notFound();
   const blocks = normalizeDocumentBlocks(proposal.contentBlocks, "proposal");
@@ -18,5 +18,5 @@ export default async function ProposalEditPage({ params }: { params: Promise<{ p
     "use server";
     return saveProposalBlocks(proposalId, { contentBlocks: next, revision });
   }
-  return <DocumentBlockEditor kind="proposal" workspaceId={workspaceId} initialBlocks={blocks.length ? blocks : defaultDocumentBlocks("proposal")} initialRevision={proposal.contentRevision} saveBlocks={saveBlocks} />;
+  return <DocumentBlockEditor kind="proposal" workspaceId={workspaceId} initialBlocks={blocks.length ? blocks : defaultDocumentBlocks("proposal")} initialRevision={proposal.contentRevision} placeholderValues={{ client_name: proposal.clientName ?? undefined }} saveBlocks={saveBlocks} />;
 }

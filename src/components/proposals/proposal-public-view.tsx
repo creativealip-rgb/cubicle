@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { formatMoney } from "@/lib/utils";
 import { normalizeDocumentBlocks } from "@/lib/document-blocks";
-import { renderDocumentBlock } from "@/lib/document-block-renderer";
+import { renderDocumentBlockHtml } from "@/lib/document-block-renderer";
 
 interface LineItem {
   description: string;
@@ -36,6 +36,7 @@ interface ProposalPublicViewProps {
     downPaymentPercent: string;
     validUntil: string | null;
     sentAt: Date | null;
+    clientName?: string | null;
   };
 }
 
@@ -54,8 +55,10 @@ export function ProposalPublicView({ proposal }: ProposalPublicViewProps) {
       </div>
 
       {normalizeDocumentBlocks(proposal.contentBlocks, "proposal").length > 0 ? normalizeDocumentBlocks(proposal.contentBlocks, "proposal").map((block) => (
-        <div key={block.id} className="whitespace-pre-wrap text-slate-700">
-          {renderDocumentBlock(block, { client_name: undefined })}
+        <div key={block.id} className={block.type === "heading" ? "text-slate-900" : "text-slate-700"}>
+          {renderDocumentBlockHtml(block, {
+            client_name: proposal.clientName ?? undefined,
+          })}
         </div>
       )) : proposal.body ? (
         <div className="prose prose-sm max-w-none text-slate-700">

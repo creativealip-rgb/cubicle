@@ -7,7 +7,7 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import { CheckCircle2, AlertCircle, FileText } from "lucide-react";
 import { normalizeDocumentBlocks } from "@/lib/document-blocks";
-import { renderDocumentBlock } from "@/lib/document-block-renderer";
+import { renderDocumentBlockHtml } from "@/lib/document-block-renderer";
 import { buildContractPlaceholderValues } from "@/lib/document-placeholder-values";
 
 export default async function ContractPage({ params }: { params: Promise<{ token: string }> }) {
@@ -88,8 +88,8 @@ export default async function ContractPage({ params }: { params: Promise<{ token
               <ReactMarkdown>{contract.bodyResolved || contract.body}</ReactMarkdown>
             </div>
             {normalizeDocumentBlocks(contract.contentBlocks, "contract").map((block) => (
-              <div key={block.id} className="mt-3 whitespace-pre-wrap text-sm text-slate-700">
-                {renderDocumentBlock(block, placeholderValues)}
+              <div key={block.id} className={`mt-3 text-sm ${block.type === "heading" ? "font-semibold text-slate-900" : "text-slate-700"}`}>
+                {renderDocumentBlockHtml(block, placeholderValues)}
               </div>
             ))}
           </div>
