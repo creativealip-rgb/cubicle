@@ -84,6 +84,11 @@ export default async function ProposalDetailPage({
     .limit(1);
   if (!p) notFound();
 
+  async function saveDetails(input: { clientName: string; clientEmail: string | null; companyName: string | null; title: string }) {
+    "use server";
+    return updateProposal(p.id, input);
+  }
+
   const items = (
     (p.lineItems as Array<{
       description: string;
@@ -189,7 +194,7 @@ export default async function ProposalDetailPage({
       </div>
 
       {canWrite && p.status === "draft" ? (
-        <DocumentDetailsForm kind="proposal" initial={{ clientName: p.clientName, clientEmail: p.clientEmail ?? "", companyName: p.companyName ?? "", title: p.title }} update={(input) => updateProposal(p.id, input)} />
+        <DocumentDetailsForm kind="proposal" initial={{ clientName: p.clientName, clientEmail: p.clientEmail ?? "", companyName: p.companyName ?? "", title: p.title }} update={saveDetails} />
       ) : null}
 
       <div className="grid gap-3 sm:grid-cols-3">
