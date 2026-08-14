@@ -195,7 +195,9 @@ export async function createContract(input: z.infer<typeof createContractSchema>
   // transaction. Counter is authoritative, but always bump above
   // MAX(existing CONT-YYYY-####) so seed data / manual inserts cannot collide
   // with the unique index `contracts_workspace_contract_number_unique` (0074).
-  const [c] = await db.transaction(async (tx) => {
+  let c: typeof contracts.$inferSelect;
+  try {
+    [c] = await db.transaction(async (tx) => {
     const contractDate = parsed.contractDate || new Date().toISOString().slice(0, 10);
     let contractNumber: string | null = parsed.contractNumber?.trim() || null;
     if (!parsed.contractNumber?.trim()) {
@@ -241,7 +243,16 @@ export async function createContract(input: z.infer<typeof createContractSchema>
       status: "draft",
       createdBy: user.id,
     }).returning();
-  });
+    });
+  } catch (error) {
+    console.error("createContract failed", {
+      workspaceId: parsed.workspaceId,
+      templateId: parsed.templateId ?? null,
+      clientEmail: parsed.clientEmail,
+      error,
+    });
+    throw error;
+  }
 
   await writeActivityLog(parsed.workspaceId, user.id, "created_contract", "contract", c.id, {
     title: c.title,
