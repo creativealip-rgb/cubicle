@@ -267,21 +267,13 @@ export function TemplateCenterClient({
       setFormDpPercent("50");
       setFormIsDefault(false);
     } else if (type === "contract") {
-      const t = tpl as ContractTpl;
-      setFormBody(t.body || "");
-      setFormIsDefault(!!t.isDefault);
-      setFormNotes("");
-      setFormTerms("");
-      setFormDpPercent("50");
+      // Contract templates open the block editor (DocumentBlockEditor).
+      router.push(`/app/templates/${tpl.id}/edit`);
+      return;
     } else {
-      const t = tpl as ProposalTpl;
-      setFormBody(t.body || "");
-      setFormCurrency(t.defaultCurrency || "IDR");
-      setFormTaxRate(String(t.defaultTaxRate ?? "0"));
-      setFormDpPercent(String(t.defaultDownPaymentPercent ?? "50"));
-      setFormIsDefault(!!t.isDefault);
-      setFormNotes("");
-      setFormTerms("");
+      // Proposal templates open the block editor (DocumentBlockEditor).
+      router.push(`/app/templates/${tpl.id}/edit/proposal`);
+      return;
     }
     setDialogOpen(true);
   }

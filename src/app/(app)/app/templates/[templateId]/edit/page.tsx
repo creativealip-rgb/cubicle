@@ -1,14 +1,14 @@
-import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
+import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { contractTemplates } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
 import { TemplateBlocksEditor } from "@/components/templates/template-blocks-editor";
 
-export default async function ContractTemplateDetailPage({
+export default async function EditContractTemplatePage({
   params,
 }: {
   params: Promise<{ templateId: string }>;
@@ -21,16 +21,10 @@ export default async function ContractTemplateDetailPage({
   await assertWorkspaceWritable(db, user.id, workspaceId);
 
   const [template] = await db
-    .select({
-      id: contractTemplates.id,
-      name: contractTemplates.name,
-      isDefault: contractTemplates.isDefault,
-      contentBlocks: contractTemplates.contentBlocks,
-    })
+    .select({ id: contractTemplates.id, name: contractTemplates.name, isDefault: contractTemplates.isDefault, contentBlocks: contractTemplates.contentBlocks })
     .from(contractTemplates)
     .where(and(eq(contractTemplates.id, templateId), eq(contractTemplates.workspaceId, workspaceId)))
     .limit(1);
-
   if (!template) notFound();
 
   return (
