@@ -40,9 +40,9 @@ export const appNavigation: NavigationEntry[] = [
   ]},
   direct("time", "/app/time", Clock, { id: "Waktu", en: "Time" }, undefined, undefined, ["/app/activities"]),
   { kind: "group", id: "business", icon: BriefcaseBusiness, label: { id: "Bisnis", en: "Business" }, children: [
-    direct("services", "/app/services", Wrench, { id: "Layanan", en: "Services" }, { id: "Kelola katalog layanan milik Anda", en: "Manage your pure service catalog" }),
     direct("proposals", "/app/proposals", FileSpreadsheet, { id: "Proposal", en: "Proposals" }, { id: "Kelola penawaran dan proposal", en: "Manage client proposals and estimates" }, "draftProposals"),
     direct("contracts", "/app/contracts", FileCheck2, { id: "Kontrak", en: "Contracts" }, { id: "Kelola kontrak dan kesepakatan", en: "Manage client contracts and agreements" }, "draftContracts"),
+    direct("services", "/app/services", Wrench, { id: "Layanan", en: "Services" }, { id: "Kelola katalog layanan milik Anda", en: "Manage your pure service catalog" }),
     direct("templates", "/app/templates", ClipboardList, { id: "Template", en: "Templates" }, { id: "Kelola template proposal, kontrak, dan invoice", en: "Manage proposal, contract, and invoice templates" }),
     direct("questionnaires", "/app/questionnaires", ClipboardList, { id: "Kuesioner", en: "Questionnaires" }, { id: "Form intake & brief klien", en: "Client intake forms & briefs" }),
   ]},
