@@ -76,6 +76,7 @@ export default async function ProposalDetailPage({
       clientId: clients.id,
       clientName: proposals.clientName,
       clientEmail: proposals.clientEmail,
+      companyName: proposals.companyName,
     })
     .from(proposals)
     .leftJoin(clients, eq(clients.id, proposals.clientId))
