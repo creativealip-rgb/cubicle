@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db } from "@/db";
 import { clients, services } from "@/db/schema";
+import { listProposalTemplates } from "@/lib/actions/proposal-templates";
 import { eq, and } from "drizzle-orm";
 import { requireWorkspaceWritableOrRedirect } from "@/lib/require-workspace-owner";
 import { ProposalForm } from "@/components/proposals/proposal-form";
@@ -32,6 +33,7 @@ export default async function NewProposalPage() {
     .from(services)
     .where(and(eq(services.workspaceId, workspaceId), eq(services.status, "active")))
     .orderBy(services.name);
+  const proposalTemplates = await listProposalTemplates();
 
   return (
     <div className="space-y-6 p-6 max-w-4xl">
@@ -57,6 +59,7 @@ export default async function NewProposalPage() {
           defaultCurrency={ws.defaultCurrency}
           defaultTaxRate={ws.defaultTaxRate ?? "0"}
           clients={clientRows}
+          templates={proposalTemplates}
           services={serviceRows.map((s) => ({
             id: s.id,
             name: s.name,

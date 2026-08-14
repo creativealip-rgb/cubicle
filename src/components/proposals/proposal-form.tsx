@@ -33,12 +33,23 @@ export interface ServiceOption {
   defaultUnit: string;
 }
 
+interface ProposalTemplateOption {
+  id: string;
+  name: string;
+  body: string | null;
+  defaultCurrency: string;
+  defaultTaxRate: string;
+  defaultDownPaymentPercent: string;
+  lineItems: string | null;
+}
+
 interface ProposalFormProps {
   workspaceId: string;
   defaultCurrency: string;
   defaultTaxRate: string;
   clients: ClientOption[];
   services?: ServiceOption[];
+  templates?: ProposalTemplateOption[];
 }
 
 interface LineItemDraft {
@@ -50,7 +61,7 @@ interface LineItemDraft {
 const blankItem = (): LineItemDraft => ({ description: "", quantity: 1, unitPrice: 0 });
 const defaultValidUntil = () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, clients: _clients, services = [] }: ProposalFormProps) {
+export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, clients: _clients, services = [], templates = [] }: ProposalFormProps) {
   const router = useRouter();
   const { t } = useT();
   const [loading, setLoading] = useState(false);
@@ -66,6 +77,18 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
     validUntil: defaultValidUntil(),
   }));
   const [items, setItems] = useState<LineItemDraft[]>([blankItem()]);
+
+  function applyTemplate(id: string) {
+    const template = templates.find((item) => item.id === id);
+    if (!template) return;
+    let nextItems: LineItemDraft[] = [blankItem()];
+    try {
+      const parsed = template.lineItems ? JSON.parse(template.lineItems) : [];
+      if (Array.isArray(parsed) && parsed.length > 0) nextItems = parsed.map((item) => ({ description: String(item.description ?? ""), quantity: Number(item.quantity) || 1, unitPrice: Number(item.unitPrice) || 0 }));
+    } catch { /* ignore malformed legacy template items */ }
+    setForm((prev) => ({ ...prev, body: template.body || "", currency: template.defaultCurrency || prev.currency, taxRate: Number(template.defaultTaxRate) || 0, downPaymentPercent: Number(template.defaultDownPaymentPercent) || 0 }));
+    setItems(nextItems);
+  }
 
   const subtotal = items.reduce((s, li) => s + li.quantity * li.unitPrice, 0);
   const tax = subtotal * (form.taxRate / 100);
@@ -118,7 +141,15 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Detail</CardTitle>
+          <CardTitle className="text-base flex items-center justify-between gap-3">
+            Detail
+            {templates.length > 0 && (
+              <Select onValueChange={applyTemplate}>
+                <SelectTrigger className="w-52"><SelectValue placeholder={t("Pakai template", "Use template")} /></SelectTrigger>
+                <SelectContent>{templates.map((template) => <SelectItem key={template.id} value={template.id}>{template.name}</SelectItem>)}</SelectContent>
+              </Select>
+            )}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
