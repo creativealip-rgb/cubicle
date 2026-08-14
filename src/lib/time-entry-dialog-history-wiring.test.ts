@@ -8,6 +8,7 @@ describe("time entry edit dialog and history", () => {
     expect(source).not.toContain("editActivities.map");
   });
   it("uses Task label in edit dialog", () => {
+    // Label switches between required ("Tugas *") and optional variants.
     expect(source).toContain('t("Tugas (Opsional)", "Task (Optional)")');
   });
   it("shows project and task before description", () => {

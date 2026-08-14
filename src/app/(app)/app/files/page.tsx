@@ -117,15 +117,14 @@ export default async function FilesPage({
 
   return (
     <>
-
-      <nav className="flex items-center gap-1 text-sm text-muted-foreground flex-wrap">
+      <nav aria-label={t("Breadcrumb berkas", "File breadcrumb")} className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
         {crumbs.map((crumb, i) => (
           <span key={`${crumb.href}-${i}`} className="flex items-center gap-1">
-            {i > 0 && <ChevronRight className="h-3.5 w-3.5 opacity-50" />}
+            {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-border" aria-hidden />}
             {i === crumbs.length - 1 ? (
-              <span className="font-medium text-foreground">{crumb.label}</span>
+              <span aria-current="page" className="font-medium text-foreground">{crumb.label}</span>
             ) : (
-              <Link href={crumb.href} scroll={false} className="hover:text-foreground hover:underline">
+              <Link href={crumb.href} scroll={false} className="rounded-sm transition-colors hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 {crumb.label}
               </Link>
             )}

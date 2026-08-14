@@ -14,7 +14,7 @@ export function IncomeExpenseChart({ points, currency, lang }: Props) {
 
   if (!hasData) {
     return (
-      <p className="py-10 text-center text-sm text-slate-500">
+      <p className="min-h-40 rounded-lg bg-muted/35 px-4 py-10 text-center text-sm text-muted-foreground">
         {t(
           "Belum ada pemasukan atau pengeluaran pada periode ini.",
           "No income or expenses in this period yet.",
@@ -26,7 +26,7 @@ export function IncomeExpenseChart({ points, currency, lang }: Props) {
   return (
     <div>
       <div
-        className="mb-5 flex flex-wrap gap-4 text-xs text-slate-500"
+        className="mb-5 flex flex-wrap gap-4 text-xs text-muted-foreground"
         aria-hidden="true"
       >
         <span>
@@ -39,7 +39,7 @@ export function IncomeExpenseChart({ points, currency, lang }: Props) {
         </span>
       </div>
       <div
-        className="grid min-h-56 items-end gap-2 border-b border-slate-200 sm:gap-4"
+        className="grid min-h-56 items-end gap-2 border-b border-border sm:gap-4"
         style={{
           gridTemplateColumns: `repeat(${points.length}, minmax(0, 1fr))`,
         }}
@@ -82,7 +82,7 @@ export function IncomeExpenseChart({ points, currency, lang }: Props) {
                 }}
               />
             </div>
-            <span className="w-full truncate pb-2 text-center text-[10px] text-slate-500 sm:text-xs">
+            <span className="w-full truncate pb-2 text-center text-[10px] text-muted-foreground sm:text-xs">
               {point.label}
             </span>
           </div>

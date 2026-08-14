@@ -1,0 +1,2959 @@
+{
+  "base": "https://dev.cubiqlo.com",
+  "account": "[REDACTED]",
+  "results": [
+    {
+      "route": "/app/dashboard",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/dashboard",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Selamat pagi, Alip",
+      "excerpt": "Selamat pagi, Alip Rabu, 12 Agustus 2026 Mulai di sini 4 dari 7 langkah selesai Lengkapi profil workspace Nama bisnis, email, alamat, dan logo. Atur invoice & pembayaran Mata uang, pajak, terms, dan email invoice. Terbitkan invoice Ubah kerja jadi tagihan. REMINDER 5 Proyek Aktif Proyek sedang berjalan 3 Task Task mau jatuh tempo 1 Reminder Reminder dari note 0 Invoice Due Invoice mau jatuh tempo 0 Approval Approval task client 0 Aktivitas Terbaru Lihat tugas Updated Booking Slug workspace oleh ",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 1180,
+      "current": [
+        {
+          "text": "Dashboard",
+          "tag": "A",
+          "href": "/app/dashboard"
+        },
+        {
+          "text": "Dashboard",
+          "tag": "A",
+          "href": "/app/dashboard"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s NewNew",
+        "id",
+        "en",
+        "New",
+        "aaa",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "desktop-app_dashboard.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/reports",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/reports",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Laporan",
+      "excerpt": "Laporan Ringkasan pemasukan dan pengeluaran bisnismu. Bulan berjalan Ekspor Excel Keuangan Waktu Pemasukan Rp 0 Pengeluaran Rp 0 Bersih Rp 0 Pemasukan vs pengeluaran Agustus 2026 · IDR Belum ada pemasukan atau pengeluaran pada periode ini. Sumber pemasukan Pembayaran diterima pada periode ini Belum ada pembayaran masuk. Lihat semua pemasukan Pengeluaran terbesar Berdasarkan kategori pada periode ini Belum ada pengeluaran. Lihat semua pengeluaran Kinerja Waktu Agustus 2026 Total 2.0h Billable 2.0",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 1619,
+      "current": [
+        {
+          "text": "Reports",
+          "tag": "A",
+          "href": "/app/reports"
+        },
+        {
+          "text": "Reports",
+          "tag": "A",
+          "href": "/app/reports"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Invoices",
+        "Expenses",
+        "Reports",
+        "Personal",
+        "AI",
+        "What’s NewNew",
+        "id",
+        "en",
+        "New"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "desktop-app_reports.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/projects",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/projects",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Proyek",
+      "excerpt": "Proyek Pantau pipeline proyekmu New Project Project Client Status Progress Due Action Hourly Mimi Amilia Active 0% — Edit Creativealip Mimi Amilia Active 0 jam Aug 7 · overdue Edit Whale Dive Centre Mimi Amilia Active 0% Jul 30 · overdue Edit",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 900,
+      "current": [
+        {
+          "text": "Projects",
+          "tag": "A",
+          "href": "/app/projects"
+        },
+        {
+          "text": "Projects",
+          "tag": "A",
+          "href": "/app/projects"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Clients",
+        "Projects",
+        "Tasks1",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s NewNew",
+        "id",
+        "en",
+        "New"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "desktop-app_projects.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/time",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/time",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Time",
+      "excerpt": "Time Log time and fill weekly timesheets. Log Time Start Timer Daily Weekly Aug 12, 2026 Today Ekspor PDF Showing 1–2 of 2 · max 10/page Hourly · Task 1 Catatan waktu manual Mimi Amilia · Alip · — Approved Rp 180.000 / hr 1h 0m Hourly · Task 1 Manual time entry Mimi Amilia · Alip · — Approved Rp 180.000 / hr 1h 0m",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 900,
+      "current": [
+        {
+          "text": "Time",
+          "tag": "A",
+          "href": "/app/time"
+        },
+        {
+          "text": "Time",
+          "tag": "A",
+          "href": "/app/time"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s NewNew",
+        "id",
+        "en",
+        "New",
+        "aaa",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "desktop-app_time.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/invoices",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/invoices",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Invoice",
+      "excerpt": "Invoice Baris total tetap currency invoice. Ringkasan setara IDR. Invoice Baru Semua 0 Draf 0 Terkirim 0 Lunas 0 Arsip 0 Belum ada invoice Buat invoice pertama untuk mulai tagih klienmu.",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 900,
+      "current": [
+        {
+          "text": "Invoices",
+          "tag": "A",
+          "href": "/app/invoices"
+        },
+        {
+          "text": "Invoices",
+          "tag": "A",
+          "href": "/app/invoices"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Invoices",
+        "Expenses",
+        "Reports",
+        "Personal",
+        "AI",
+        "What’s NewNew",
+        "id",
+        "en",
+        "New"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "desktop-app_invoices.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/calendar",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/calendar",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Kalender",
+      "excerpt": "Kalender Kelola janji temu dan ketersediaan Create form Halaman Booking Publik Aturan Ketersediaan Add rule Belum ada aturan ketersediaan Tambah aturan untuk menentukan kapan kamu tersedia menerima booking Janji Temu Mendatang 0 terjadwal Belum ada jadwal mendatang Bagikan link booking supaya klien bisa atur jadwal sendiri",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 900,
+      "current": [
+        {
+          "text": "Calendar",
+          "tag": "A",
+          "href": "/app/calendar"
+        },
+        {
+          "text": "Calendar",
+          "tag": "A",
+          "href": "/app/calendar"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s NewNew",
+        "id",
+        "en",
+        "New",
+        "aaa",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "desktop-app_calendar.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/files",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/files",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Berkas",
+      "excerpt": "Berkas Kelola berkas workspace-mu New Folder Upload All Files WORKSPACE FOLDERS No folders yet CLIENTS Mimi Amilia Storage terpakai 0.00 GB / 5.00 GB Tersedia: 5.00 GB Batas workspace: 5.00 GB Semua File All Internal files are team-only. Client files and deliverables appear in the portal. Screenshot_20.png 8.8 KB · Unknown · 02 Jul 2026 Client Deliverable Deliverable Open",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 900,
+      "current": [
+        {
+          "text": "Files",
+          "tag": "A",
+          "href": "/app/files"
+        },
+        {
+          "text": "Files",
+          "tag": "A",
+          "href": "/app/files"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s NewNew",
+        "id",
+        "en",
+        "New",
+        "aaa",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "desktop-app_files.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/tasks",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/tasks",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Tugas",
+      "excerpt": "Tugas Kelola pekerjaan proyek dan template reusable. New Task Project Tasks Task Templates TITLE PROJECT ASSIGNEE DUE PRIORITY STATUS Task 1 Reusable Hourly Mimi Amilia Unassigned No due date Medium To Do Test Reusable Creativealip Mimi Amilia Alip Jul 7 · overdue Medium To Do Test Workflow Whale Dive Centre Mimi Amilia Unassigned No due date Medium In Progress",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 900,
+      "current": [
+        {
+          "text": "Tasks1",
+          "tag": "A",
+          "href": "/app/tasks"
+        },
+        {
+          "text": "Tasks1",
+          "tag": "A",
+          "href": "/app/tasks"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Clients",
+        "Projects",
+        "Tasks1",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s NewNew",
+        "id",
+        "en",
+        "New"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "desktop-app_tasks.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/settings",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/settings",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Pengaturan",
+      "excerpt": "Pengaturan Kelompokkan konfigurasi workspace per tab biar gampang dicari. Workspace Account Team Branding & Invoice Integrations More Lengkapi profil workspace Data ini dipakai di invoice, portal client, booking, dan email agar terlihat profesional. 2/4 selesai Workspace Info workspace utama Workspace name Only owners can rename. Slug stays the same. Save name Slug ws-ycPGDVqP Mata Uang IDR Pajak 0.00% Ubah mata uang / pajak default di tab Branding & Invoice. Booking slug Save slug Public form l",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 1510,
+      "current": [],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s NewNew",
+        "id",
+        "en",
+        "New",
+        "aaa",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "desktop-app_settings.png",
+      "issues": []
+    },
+    {
+      "route": "/app/personal",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/personal",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Catatan",
+      "excerpt": "Catatan Catatan pribadi di workspace ini. Tidak tampil ke client. Catatan baru Judul Isi Tenggat Pengulangan Tidak berulang Harian Mingguan Bulanan Tahunan Ingatkan sebelum tenggat 7d 3d 1d Sematkan catatan Simpan catatan Aktif 1 Selesai 0 Arsip 0 Semua 1 Cari Daftar catatan 1–1 of 1 aaa aaa No due date Expand All notes loaded",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 911,
+      "current": [
+        {
+          "text": "Notes",
+          "tag": "A",
+          "href": "/app/personal"
+        },
+        {
+          "text": "Notes",
+          "tag": "A",
+          "href": "/app/personal"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "Notes",
+        "Journal",
+        "Landing Page",
+        "AI",
+        "What’s NewNew",
+        "id",
+        "en",
+        "New"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "desktop-app_personal.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/docs",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/docs",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Dokumentasi",
+      "excerpt": "Dokumentasi Panduan lengkap semua fitur Cubiqlo. PANDUAN Panduan Alur Operasional (End-to-End) Panduan lengkap mulai dari Tambah Klien, Buat Proyek, Kelola Task, hingga Terbitkan Invoice. PENGATURAN Pengaturan & Setup Workspace Cara setup profil bisnis, branding, Reply-To email, manajemen tim, dan langganan QRIS. WEBSITE Landing Page Builder Bikin landing page profesional dengan drag & drop. 8 tema, mobile editor, SEO, publish, contact form. KEUANGAN Invoice & Pembayaran Dari catat waktu sampai ",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 900,
+      "current": [],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s NewNew",
+        "id",
+        "en",
+        "New",
+        "aaa",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "desktop-app_docs.png",
+      "issues": []
+    },
+    {
+      "route": "/app/whats-new",
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/whats-new",
+      "title": "What’s New di Cubiqlo | Cubiqlo",
+      "h1": "Cubiqlo terus jadi lebih baik.",
+      "excerpt": "Product updates Cubiqlo terus jadi lebih baik. Semua fitur baru, peningkatan, dan perbaikan penting—dirangkum singkat di satu tempat. Update terbaru 24 Juli 2026 3 pembaruan 24 Juli 2026 LATEST Pengaturan lebih aman, akses lebih rapi Pembaruan keamanan akun, pengalaman mobile, dan pemisahan landing page dengan dashboard. Pengaturan akun lebih aman IMPROVEMENT Validasi password, sesi perangkat lain, upload logo, dan izin owner diperketat. Buka Pengaturan Navigasi mobile Settings IMPROVEMENT Tab S",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 1644,
+      "current": [],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "aaa",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "desktop-app_whats-new.png",
+      "issues": []
+    },
+    {
+      "route": "/app/dashboard",
+      "viewport": {
+        "name": "tablet",
+        "width": 1024,
+        "height": 768
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/dashboard",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Selamat pagi, Alip",
+      "excerpt": "Selamat pagi, Alip Rabu, 12 Agustus 2026 Mulai di sini 4 dari 7 langkah selesai Lengkapi profil workspace Nama bisnis, email, alamat, dan logo. Atur invoice & pembayaran Mata uang, pajak, terms, dan email invoice. Terbitkan invoice Ubah kerja jadi tagihan. REMINDER 5 Proyek Aktif Proyek sedang berjalan 3 Task Task mau jatuh tempo 1 Reminder Reminder dari note 0 Invoice Due Invoice mau jatuh tempo 0 Approval Approval task client 0 Aktivitas Terbaru Lihat tugas Updated Booking Slug workspace oleh ",
+      "scrollWidth": 1024,
+      "clientWidth": 1024,
+      "scrollHeight": 1725,
+      "current": [
+        {
+          "text": "Dashboard",
+          "tag": "A",
+          "href": "/app/dashboard"
+        },
+        {
+          "text": "Dashboard",
+          "tag": "A",
+          "href": "/app/dashboard"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "aaa",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "tablet-app_dashboard.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/reports",
+      "viewport": {
+        "name": "tablet",
+        "width": 1024,
+        "height": 768
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/reports",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Laporan",
+      "excerpt": "Laporan Ringkasan pemasukan dan pengeluaran bisnismu. Bulan berjalan Ekspor Excel Keuangan Waktu Pemasukan Rp 0 Pengeluaran Rp 0 Bersih Rp 0 Pemasukan vs pengeluaran Agustus 2026 · IDR Belum ada pemasukan atau pengeluaran pada periode ini. Sumber pemasukan Pembayaran diterima pada periode ini Belum ada pembayaran masuk. Lihat semua pemasukan Pengeluaran terbesar Berdasarkan kategori pada periode ini Belum ada pengeluaran. Lihat semua pengeluaran Kinerja Waktu Agustus 2026 Total 2.0h Billable 2.0",
+      "scrollWidth": 1024,
+      "clientWidth": 1024,
+      "scrollHeight": 1619,
+      "current": [
+        {
+          "text": "Reports",
+          "tag": "A",
+          "href": "/app/reports"
+        },
+        {
+          "text": "Reports",
+          "tag": "A",
+          "href": "/app/reports"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Invoices",
+        "Expenses",
+        "Reports",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "tablet-app_reports.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/projects",
+      "viewport": {
+        "name": "tablet",
+        "width": 1024,
+        "height": 768
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/projects",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Proyek",
+      "excerpt": "Proyek Pantau pipeline proyekmu New Project Project Client Status Progress Due Action Hourly Mimi Amilia Active 0% — Edit Creativealip Mimi Amilia Active 0 jam Aug 7 · overdue Edit Whale Dive Centre Mimi Amilia Active 0% Jul 30 · overdue Edit",
+      "scrollWidth": 1024,
+      "clientWidth": 1024,
+      "scrollHeight": 768,
+      "current": [
+        {
+          "text": "Projects",
+          "tag": "A",
+          "href": "/app/projects"
+        },
+        {
+          "text": "Projects",
+          "tag": "A",
+          "href": "/app/projects"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Clients",
+        "Projects",
+        "Tasks1",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "tablet-app_projects.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/time",
+      "viewport": {
+        "name": "tablet",
+        "width": 1024,
+        "height": 768
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/time",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Time",
+      "excerpt": "Time Log time and fill weekly timesheets. Log Time Start Timer Daily Weekly Aug 12, 2026 Today Ekspor PDF Showing 1–2 of 2 · max 10/page Hourly · Task 1 Catatan waktu manual Mimi Amilia · Alip · — Approved Rp 180.000 / hr 1h 0m Hourly · Task 1 Manual time entry Mimi Amilia · Alip · — Approved Rp 180.000 / hr 1h 0m",
+      "scrollWidth": 1024,
+      "clientWidth": 1024,
+      "scrollHeight": 768,
+      "current": [
+        {
+          "text": "Time",
+          "tag": "A",
+          "href": "/app/time"
+        },
+        {
+          "text": "Time",
+          "tag": "A",
+          "href": "/app/time"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "aaa",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "tablet-app_time.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/invoices",
+      "viewport": {
+        "name": "tablet",
+        "width": 1024,
+        "height": 768
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/invoices",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Invoice",
+      "excerpt": "Invoice Baris total tetap currency invoice. Ringkasan setara IDR. Invoice Baru Semua 0 Draf 0 Terkirim 0 Lunas 0 Arsip 0 Belum ada invoice Buat invoice pertama untuk mulai tagih klienmu.",
+      "scrollWidth": 1024,
+      "clientWidth": 1024,
+      "scrollHeight": 768,
+      "current": [
+        {
+          "text": "Invoices",
+          "tag": "A",
+          "href": "/app/invoices"
+        },
+        {
+          "text": "Invoices",
+          "tag": "A",
+          "href": "/app/invoices"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Invoices",
+        "Expenses",
+        "Reports",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "tablet-app_invoices.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/calendar",
+      "viewport": {
+        "name": "tablet",
+        "width": 1024,
+        "height": 768
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/calendar",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Kalender",
+      "excerpt": "Kalender Kelola janji temu dan ketersediaan Create form Halaman Booking Publik Aturan Ketersediaan Add rule Belum ada aturan ketersediaan Tambah aturan untuk menentukan kapan kamu tersedia menerima booking Janji Temu Mendatang 0 terjadwal Belum ada jadwal mendatang Bagikan link booking supaya klien bisa atur jadwal sendiri",
+      "scrollWidth": 1024,
+      "clientWidth": 1024,
+      "scrollHeight": 768,
+      "current": [
+        {
+          "text": "Calendar",
+          "tag": "A",
+          "href": "/app/calendar"
+        },
+        {
+          "text": "Calendar",
+          "tag": "A",
+          "href": "/app/calendar"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "aaa",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "tablet-app_calendar.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/files",
+      "viewport": {
+        "name": "tablet",
+        "width": 1024,
+        "height": 768
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/files",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Berkas",
+      "excerpt": "Berkas Kelola berkas workspace-mu New Folder Upload All Files WORKSPACE FOLDERS No folders yet CLIENTS Mimi Amilia Storage terpakai 0.00 GB / 5.00 GB Tersedia: 5.00 GB Batas workspace: 5.00 GB Semua File All Internal files are team-only. Client files and deliverables appear in the portal. Screenshot_20.png 8.8 KB · Unknown · 02 Jul 2026 Client Deliverable Deliverable Open",
+      "scrollWidth": 1024,
+      "clientWidth": 1024,
+      "scrollHeight": 768,
+      "current": [
+        {
+          "text": "Files",
+          "tag": "A",
+          "href": "/app/files"
+        },
+        {
+          "text": "Files",
+          "tag": "A",
+          "href": "/app/files"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "aaa",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "tablet-app_files.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/tasks",
+      "viewport": {
+        "name": "tablet",
+        "width": 1024,
+        "height": 768
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/tasks",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Tugas",
+      "excerpt": "Tugas Kelola pekerjaan proyek dan template reusable. New Task Project Tasks Task Templates TITLE PROJECT ASSIGNEE DUE PRIORITY STATUS Task 1 Reusable Hourly Mimi Amilia Unassigned No due date Medium To Do Test Reusable Creativealip Mimi Amilia Alip Jul 7 · overdue Medium To Do Test Workflow Whale Dive Centre Mimi Amilia Unassigned No due date Medium In Progress",
+      "scrollWidth": 1024,
+      "clientWidth": 1024,
+      "scrollHeight": 768,
+      "current": [
+        {
+          "text": "Tasks1",
+          "tag": "A",
+          "href": "/app/tasks"
+        },
+        {
+          "text": "Tasks1",
+          "tag": "A",
+          "href": "/app/tasks"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Clients",
+        "Projects",
+        "Tasks1",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "tablet-app_tasks.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/settings",
+      "viewport": {
+        "name": "tablet",
+        "width": 1024,
+        "height": 768
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/settings",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Pengaturan",
+      "excerpt": "Pengaturan Kelompokkan konfigurasi workspace per tab biar gampang dicari. Workspace Account Team Branding & Invoice Integrations More Lengkapi profil workspace Data ini dipakai di invoice, portal client, booking, dan email agar terlihat profesional. 2/4 selesai Workspace Info workspace utama Workspace name Only owners can rename. Slug stays the same. Save name Slug ws-ycPGDVqP Mata Uang IDR Pajak 0.00% Ubah mata uang / pajak default di tab Branding & Invoice. Booking slug Save slug Public form l",
+      "scrollWidth": 1024,
+      "clientWidth": 1024,
+      "scrollHeight": 1546,
+      "current": [],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "aaa",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "tablet-app_settings.png",
+      "issues": []
+    },
+    {
+      "route": "/app/personal",
+      "viewport": {
+        "name": "tablet",
+        "width": 1024,
+        "height": 768
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/personal",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Catatan",
+      "excerpt": "Catatan Catatan pribadi di workspace ini. Tidak tampil ke client. Catatan baru Judul Isi Tenggat Pengulangan Tidak berulang Harian Mingguan Bulanan Tahunan Ingatkan sebelum tenggat 7d 3d 1d Sematkan catatan Simpan catatan Aktif 1 Selesai 0 Arsip 0 Semua 1 Cari Daftar catatan 1–1 of 1 aaa aaa No due date Expand All notes loaded",
+      "scrollWidth": 1069,
+      "clientWidth": 1024,
+      "scrollHeight": 911,
+      "current": [
+        {
+          "text": "Notes",
+          "tag": "A",
+          "href": "/app/personal"
+        },
+        {
+          "text": "Notes",
+          "tag": "A",
+          "href": "/app/personal"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "Notes",
+        "Journal",
+        "Landing Page",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "tablet-app_personal.png",
+      "issues": [
+        "horizontal overflow: document 1069px > viewport 1024px",
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/docs",
+      "viewport": {
+        "name": "tablet",
+        "width": 1024,
+        "height": 768
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/docs",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Dokumentasi",
+      "excerpt": "Dokumentasi Panduan lengkap semua fitur Cubiqlo. PANDUAN Panduan Alur Operasional (End-to-End) Panduan lengkap mulai dari Tambah Klien, Buat Proyek, Kelola Task, hingga Terbitkan Invoice. PENGATURAN Pengaturan & Setup Workspace Cara setup profil bisnis, branding, Reply-To email, manajemen tim, dan langganan QRIS. WEBSITE Landing Page Builder Bikin landing page profesional dengan drag & drop. 8 tema, mobile editor, SEO, publish, contact form. KEUANGAN Invoice & Pembayaran Dari catat waktu sampai ",
+      "scrollWidth": 1024,
+      "clientWidth": 1024,
+      "scrollHeight": 984,
+      "current": [],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "aaa",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "tablet-app_docs.png",
+      "issues": []
+    },
+    {
+      "route": "/app/whats-new",
+      "viewport": {
+        "name": "tablet",
+        "width": 1024,
+        "height": 768
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/whats-new",
+      "title": "What’s New di Cubiqlo | Cubiqlo",
+      "h1": "Cubiqlo terus jadi lebih baik.",
+      "excerpt": "Product updates Cubiqlo terus jadi lebih baik. Semua fitur baru, peningkatan, dan perbaikan penting—dirangkum singkat di satu tempat. Update terbaru 24 Juli 2026 3 pembaruan 24 Juli 2026 LATEST Pengaturan lebih aman, akses lebih rapi Pembaruan keamanan akun, pengalaman mobile, dan pemisahan landing page dengan dashboard. Pengaturan akun lebih aman IMPROVEMENT Validasi password, sesi perangkat lain, upload logo, dan izin owner diperketat. Buka Pengaturan Navigasi mobile Settings IMPROVEMENT Tab S",
+      "scrollWidth": 1024,
+      "clientWidth": 1024,
+      "scrollHeight": 1716,
+      "current": [],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "aaa",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "tablet-app_whats-new.png",
+      "issues": []
+    },
+    {
+      "route": "/app/dashboard",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/dashboard",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Selamat pagi, Alip",
+      "excerpt": "Selamat pagi, Alip Rabu, 12 Agustus 2026 Mulai di sini 4 dari 7 langkah selesai Lengkapi profil workspace Nama bisnis, email, alamat, dan logo. Atur invoice & pembayaran Mata uang, pajak, terms, dan email invoice. Terbitkan invoice Ubah kerja jadi tagihan. REMINDER 5 Proyek Aktif Proyek sedang berjalan 3 Task Task mau jatuh tempo 1 Reminder Reminder dari note 0 Invoice Due Invoice mau jatuh tempo 0 Approval Approval task client 0 Aktivitas Terbaru Lihat tugas Updated Booking Slug workspace oleh ",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 1905,
+      "current": [
+        {
+          "text": "Dashboard",
+          "tag": "A",
+          "href": "/app/dashboard"
+        },
+        {
+          "text": "Dashboard",
+          "tag": "A",
+          "href": "/app/dashboard"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "mobile-app_dashboard.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/reports",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/reports",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Laporan",
+      "excerpt": "Laporan Ringkasan pemasukan dan pengeluaran bisnismu. Bulan berjalan Ekspor Excel Keuangan Waktu Pemasukan Rp 0 Pengeluaran Rp 0 Bersih Rp 0 Pemasukan vs pengeluaran Agustus 2026 · IDR Belum ada pemasukan atau pengeluaran pada periode ini. Sumber pemasukan Pembayaran diterima pada periode ini Belum ada pembayaran masuk. Lihat semua pemasukan Pengeluaran terbesar Berdasarkan kategori pada periode ini Belum ada pengeluaran. Lihat semua pengeluaran Kinerja Waktu Agustus 2026 Total 2.0h Billable 2.0",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 2323,
+      "current": [
+        {
+          "text": "Reports",
+          "tag": "A",
+          "href": "/app/reports"
+        },
+        {
+          "text": "Reports",
+          "tag": "A",
+          "href": "/app/reports"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Invoices",
+        "Expenses",
+        "Reports",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "mobile-app_reports.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/projects",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "status": 502,
+      "url": "https://dev.cubiqlo.com/app/projects",
+      "title": "",
+      "h1": "",
+      "excerpt": "Bad Gateway",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 844,
+      "current": [],
+      "buttons": [],
+      "tokens": {
+        "primary": "",
+        "foreground": "",
+        "mutedForeground": "",
+        "border": "",
+        "background": "",
+        "sidebarBackground": "",
+        "orange": "",
+        "navy": ""
+      },
+      "consoleErrors": [
+        {
+          "url": "https://dev.cubiqlo.com/app/projects",
+          "text": "Failed to load resource: the server responded with a status of 502 ()"
+        }
+      ],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "mobile-app_projects.png",
+      "issues": [
+        "transient HTTP 502; immediate manual retry returned 200; retry not represented as a separate capture"
+      ]
+    },
+    {
+      "route": "/app/time",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/time",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Time",
+      "excerpt": "Time Log time and fill weekly timesheets. Log Time Start Timer Daily Weekly Aug 12, 2026 Today Ekspor PDF Showing 1–2 of 2 · max 10/page Hourly · Task 1 Catatan waktu manual Mimi Amilia · Alip · — Approved Rp 180.000 / hr 1h 0m Hourly · Task 1 Manual time entry Mimi Amilia · Alip · — Approved Rp 180.000 / hr 1h 0m",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 906,
+      "current": [
+        {
+          "text": "Time",
+          "tag": "A",
+          "href": "/app/time"
+        },
+        {
+          "text": "Time",
+          "tag": "A",
+          "href": "/app/time"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "mobile-app_time.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/invoices",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/invoices",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Invoice",
+      "excerpt": "Invoice Baris total tetap currency invoice. Ringkasan setara IDR. Baru Semua 0 Draf 0 Terkirim 0 Lunas 0 Arsip 0 Belum ada invoice Buat invoice pertama untuk mulai tagih klienmu.",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 844,
+      "current": [
+        {
+          "text": "Invoices",
+          "tag": "A",
+          "href": "/app/invoices"
+        },
+        {
+          "text": "Invoices",
+          "tag": "A",
+          "href": "/app/invoices"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Invoices",
+        "Expenses",
+        "Reports",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "mobile-app_invoices.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/calendar",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/calendar",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Kalender",
+      "excerpt": "Kalender Kelola janji temu dan ketersediaan Create form Booking publik Aturan Ketersediaan Add rule Belum ada aturan ketersediaan Tambah aturan untuk menentukan kapan kamu tersedia menerima booking Janji Temu Mendatang 0 terjadwal Belum ada jadwal mendatang Bagikan link booking supaya klien bisa atur jadwal sendiri",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 1086,
+      "current": [
+        {
+          "text": "Calendar",
+          "tag": "A",
+          "href": "/app/calendar"
+        },
+        {
+          "text": "Calendar",
+          "tag": "A",
+          "href": "/app/calendar"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "mobile-app_calendar.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/files",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/files",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Berkas",
+      "excerpt": "Berkas Kelola berkas workspace-mu New Folder Upload All Files WORKSPACE FOLDERS No folders yet CLIENTS Mimi Amilia Storage terpakai 0.00 GB / 5.00 GB Tersedia: 5.00 GB Batas workspace: 5.00 GB Semua File All Internal files are team-only. Client files and deliverables appear in the portal. Screenshot_20.png 8.8 KB · Unknown · 02 Jul 2026 Client Deliverable Deliverable Open",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 993,
+      "current": [
+        {
+          "text": "Files",
+          "tag": "A",
+          "href": "/app/files"
+        },
+        {
+          "text": "Files",
+          "tag": "A",
+          "href": "/app/files"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "mobile-app_files.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/tasks",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/tasks",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Tugas",
+      "excerpt": "Tugas Kelola pekerjaan proyek dan template reusable. New Task Project Tasks Task Templates Task 1 To Do Hourly Medium Test To Do Creativealip · Alip Medium Jul 7 · overdue Test In Progress Whale Dive Centre Medium",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 844,
+      "current": [
+        {
+          "text": "Tasks1",
+          "tag": "A",
+          "href": "/app/tasks"
+        },
+        {
+          "text": "Tasks1",
+          "tag": "A",
+          "href": "/app/tasks"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Clients",
+        "Projects",
+        "Tasks1",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "mobile-app_tasks.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/settings",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/settings",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Pengaturan",
+      "excerpt": "Pengaturan Kelompokkan konfigurasi workspace per tab biar gampang dicari. Settings section Workspace Account Team Branding & Invoice Integrations More Lengkapi profil workspace Data ini dipakai di invoice, portal client, booking, dan email agar terlihat profesional. 2/4 selesai Workspace Info workspace utama Workspace name Only owners can rename. Slug stays the same. Save name Slug ws-ycPGDVqP Mata Uang IDR Pajak 0.00% Ubah mata uang / pajak default di tab Branding & Invoice. Booking slug Save s",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 1982,
+      "current": [],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "mobile-app_settings.png",
+      "issues": []
+    },
+    {
+      "route": "/app/personal",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/personal",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Catatan",
+      "excerpt": "Catatan Catatan pribadi di workspace ini. Tidak tampil ke client. Catatan baru Judul Isi Tenggat Pengulangan Tidak berulang Harian Mingguan Bulanan Tahunan Ingatkan sebelum tenggat 7d 3d 1d Sematkan catatan Simpan catatan Aktif 1 Selesai 0 Arsip 0 Semua 1 Cari Daftar catatan 1–1 of 1 aaa aaa No due date Expand All notes loaded",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 1247,
+      "current": [
+        {
+          "text": "Notes",
+          "tag": "A",
+          "href": "/app/personal"
+        },
+        {
+          "text": "Notes",
+          "tag": "A",
+          "href": "/app/personal"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "Notes",
+        "Journal",
+        "Landing Page",
+        "AI",
+        "What’s New",
+        "id",
+        "en"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "mobile-app_personal.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/docs",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/docs",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Dokumentasi",
+      "excerpt": "Dokumentasi Panduan lengkap semua fitur Cubiqlo. PANDUAN Panduan Alur Operasional (End-to-End) Panduan lengkap mulai dari Tambah Klien, Buat Proyek, Kelola Task, hingga Terbitkan Invoice. PENGATURAN Pengaturan & Setup Workspace Cara setup profil bisnis, branding, Reply-To email, manajemen tim, dan langganan QRIS. WEBSITE Landing Page Builder Bikin landing page profesional dengan drag & drop. 8 tema, mobile editor, SEO, publish, contact form. KEUANGAN Invoice & Pembayaran Dari catat waktu sampai ",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 1963,
+      "current": [],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "mobile-app_docs.png",
+      "issues": []
+    },
+    {
+      "route": "/app/whats-new",
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/whats-new",
+      "title": "What’s New di Cubiqlo | Cubiqlo",
+      "h1": "Cubiqlo terus jadi lebih baik.",
+      "excerpt": "Product updates Cubiqlo terus jadi lebih baik. Semua fitur baru, peningkatan, dan perbaikan penting—dirangkum singkat di satu tempat. Update terbaru 24 Juli 2026 3 pembaruan 24 Juli 2026 LATEST Pengaturan lebih aman, akses lebih rapi Pembaruan keamanan akun, pengalaman mobile, dan pemisahan landing page dengan dashboard. Pengaturan akun lebih aman IMPROVEMENT Validasi password, sesi perangkat lain, upload logo, dan izin owner diperketat. Buka Pengaturan Navigasi mobile Settings IMPROVEMENT Tab S",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 2167,
+      "current": [],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "mobile-app_whats-new.png",
+      "issues": []
+    },
+    {
+      "route": "/app/dashboard",
+      "viewport": {
+        "name": "short-mobile",
+        "width": 390,
+        "height": 667
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/dashboard",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Selamat pagi, Alip",
+      "excerpt": "Selamat pagi, Alip Rabu, 12 Agustus 2026 Mulai di sini 4 dari 7 langkah selesai Lengkapi profil workspace Nama bisnis, email, alamat, dan logo. Atur invoice & pembayaran Mata uang, pajak, terms, dan email invoice. Terbitkan invoice Ubah kerja jadi tagihan. REMINDER 5 Proyek Aktif Proyek sedang berjalan 3 Task Task mau jatuh tempo 1 Reminder Reminder dari note 0 Invoice Due Invoice mau jatuh tempo 0 Approval Approval task client 0 Aktivitas Terbaru Lihat tugas Updated Booking Slug workspace oleh ",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 1905,
+      "current": [
+        {
+          "text": "Dashboard",
+          "tag": "A",
+          "href": "/app/dashboard"
+        },
+        {
+          "text": "Dashboard",
+          "tag": "A",
+          "href": "/app/dashboard"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "short-mobile-app_dashboard.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/reports",
+      "viewport": {
+        "name": "short-mobile",
+        "width": 390,
+        "height": 667
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/reports",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Laporan",
+      "excerpt": "Laporan Ringkasan pemasukan dan pengeluaran bisnismu. Bulan berjalan Ekspor Excel Keuangan Waktu Pemasukan Rp 0 Pengeluaran Rp 0 Bersih Rp 0 Pemasukan vs pengeluaran Agustus 2026 · IDR Belum ada pemasukan atau pengeluaran pada periode ini. Sumber pemasukan Pembayaran diterima pada periode ini Belum ada pembayaran masuk. Lihat semua pemasukan Pengeluaran terbesar Berdasarkan kategori pada periode ini Belum ada pengeluaran. Lihat semua pengeluaran Kinerja Waktu Agustus 2026 Total 2.0h Billable 2.0",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 2323,
+      "current": [
+        {
+          "text": "Reports",
+          "tag": "A",
+          "href": "/app/reports"
+        },
+        {
+          "text": "Reports",
+          "tag": "A",
+          "href": "/app/reports"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Invoices",
+        "Expenses",
+        "Reports",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "short-mobile-app_reports.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/projects",
+      "viewport": {
+        "name": "short-mobile",
+        "width": 390,
+        "height": 667
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/projects",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Proyek",
+      "excerpt": "Proyek Pantau pipeline proyekmu New Project Hourly Mimi Amilia Active Progress 0% — Edit Creativealip Mimi Amilia Active Progress 0 jam Aug 7 · overdue Edit Whale Dive Centre Mimi Amilia Active Progress 0% Jul 30 · overdue Edit",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 914,
+      "current": [
+        {
+          "text": "Projects",
+          "tag": "A",
+          "href": "/app/projects"
+        },
+        {
+          "text": "Projects",
+          "tag": "A",
+          "href": "/app/projects"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Clients",
+        "Projects",
+        "Tasks1",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "short-mobile-app_projects.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/time",
+      "viewport": {
+        "name": "short-mobile",
+        "width": 390,
+        "height": 667
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/time",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Time",
+      "excerpt": "Time Log time and fill weekly timesheets. Log Time Start Timer Daily Weekly Aug 12, 2026 Today Ekspor PDF Showing 1–2 of 2 · max 10/page Hourly · Task 1 Catatan waktu manual Mimi Amilia · Alip · — Approved Rp 180.000 / hr 1h 0m Hourly · Task 1 Manual time entry Mimi Amilia · Alip · — Approved Rp 180.000 / hr 1h 0m",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 906,
+      "current": [
+        {
+          "text": "Time",
+          "tag": "A",
+          "href": "/app/time"
+        },
+        {
+          "text": "Time",
+          "tag": "A",
+          "href": "/app/time"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "short-mobile-app_time.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/invoices",
+      "viewport": {
+        "name": "short-mobile",
+        "width": 390,
+        "height": 667
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/invoices",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Invoice",
+      "excerpt": "Invoice Baris total tetap currency invoice. Ringkasan setara IDR. Baru Semua 0 Draf 0 Terkirim 0 Lunas 0 Arsip 0 Belum ada invoice Buat invoice pertama untuk mulai tagih klienmu.",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 667,
+      "current": [
+        {
+          "text": "Invoices",
+          "tag": "A",
+          "href": "/app/invoices"
+        },
+        {
+          "text": "Invoices",
+          "tag": "A",
+          "href": "/app/invoices"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Invoices",
+        "Expenses",
+        "Reports",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "short-mobile-app_invoices.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/calendar",
+      "viewport": {
+        "name": "short-mobile",
+        "width": 390,
+        "height": 667
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/calendar",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Kalender",
+      "excerpt": "Kalender Kelola janji temu dan ketersediaan Create form Booking publik Aturan Ketersediaan Add rule Belum ada aturan ketersediaan Tambah aturan untuk menentukan kapan kamu tersedia menerima booking Janji Temu Mendatang 0 terjadwal Belum ada jadwal mendatang Bagikan link booking supaya klien bisa atur jadwal sendiri",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 1086,
+      "current": [
+        {
+          "text": "Calendar",
+          "tag": "A",
+          "href": "/app/calendar"
+        },
+        {
+          "text": "Calendar",
+          "tag": "A",
+          "href": "/app/calendar"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "short-mobile-app_calendar.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/files",
+      "viewport": {
+        "name": "short-mobile",
+        "width": 390,
+        "height": 667
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/files",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Berkas",
+      "excerpt": "Berkas Kelola berkas workspace-mu New Folder Upload All Files WORKSPACE FOLDERS No folders yet CLIENTS Mimi Amilia Storage terpakai 0.00 GB / 5.00 GB Tersedia: 5.00 GB Batas workspace: 5.00 GB Semua File All Internal files are team-only. Client files and deliverables appear in the portal. Screenshot_20.png 8.8 KB · Unknown · 02 Jul 2026 Client Deliverable Deliverable Open",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 993,
+      "current": [
+        {
+          "text": "Files",
+          "tag": "A",
+          "href": "/app/files"
+        },
+        {
+          "text": "Files",
+          "tag": "A",
+          "href": "/app/files"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "short-mobile-app_files.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/tasks",
+      "viewport": {
+        "name": "short-mobile",
+        "width": 390,
+        "height": 667
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/tasks",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Tugas",
+      "excerpt": "Tugas Kelola pekerjaan proyek dan template reusable. New Task Project Tasks Task Templates Task 1 To Do Hourly Medium Test To Do Creativealip · Alip Medium Jul 7 · overdue Test In Progress Whale Dive Centre Medium",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 691,
+      "current": [
+        {
+          "text": "Tasks1",
+          "tag": "A",
+          "href": "/app/tasks"
+        },
+        {
+          "text": "Tasks1",
+          "tag": "A",
+          "href": "/app/tasks"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Clients",
+        "Projects",
+        "Tasks1",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "short-mobile-app_tasks.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/settings",
+      "viewport": {
+        "name": "short-mobile",
+        "width": 390,
+        "height": 667
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/settings",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Pengaturan",
+      "excerpt": "Pengaturan Kelompokkan konfigurasi workspace per tab biar gampang dicari. Settings section Workspace Account Team Branding & Invoice Integrations More Lengkapi profil workspace Data ini dipakai di invoice, portal client, booking, dan email agar terlihat profesional. 2/4 selesai Workspace Info workspace utama Workspace name Only owners can rename. Slug stays the same. Save name Slug ws-ycPGDVqP Mata Uang IDR Pajak 0.00% Ubah mata uang / pajak default di tab Branding & Invoice. Booking slug Save s",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 1982,
+      "current": [],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "short-mobile-app_settings.png",
+      "issues": []
+    },
+    {
+      "route": "/app/personal",
+      "viewport": {
+        "name": "short-mobile",
+        "width": 390,
+        "height": 667
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/personal",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Catatan",
+      "excerpt": "Catatan Catatan pribadi di workspace ini. Tidak tampil ke client. Catatan baru Judul Isi Tenggat Pengulangan Tidak berulang Harian Mingguan Bulanan Tahunan Ingatkan sebelum tenggat 7d 3d 1d Sematkan catatan Simpan catatan Aktif 1 Selesai 0 Arsip 0 Semua 1 Cari Daftar catatan 1–1 of 1 aaa aaa No due date Expand All notes loaded",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 1247,
+      "current": [
+        {
+          "text": "Notes",
+          "tag": "A",
+          "href": "/app/personal"
+        },
+        {
+          "text": "Notes",
+          "tag": "A",
+          "href": "/app/personal"
+        }
+      ],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "Notes",
+        "Journal",
+        "Landing Page",
+        "AI",
+        "What’s New",
+        "id",
+        "en"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "short-mobile-app_personal.png",
+      "issues": [
+        "duplicate current navigation entries present in DOM"
+      ]
+    },
+    {
+      "route": "/app/docs",
+      "viewport": {
+        "name": "short-mobile",
+        "width": 390,
+        "height": 667
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/docs",
+      "title": "Cubiqlo — Client Operations Hub",
+      "h1": "Dokumentasi",
+      "excerpt": "Dokumentasi Panduan lengkap semua fitur Cubiqlo. PANDUAN Panduan Alur Operasional (End-to-End) Panduan lengkap mulai dari Tambah Klien, Buat Proyek, Kelola Task, hingga Terbitkan Invoice. PENGATURAN Pengaturan & Setup Workspace Cara setup profil bisnis, branding, Reply-To email, manajemen tim, dan langganan QRIS. WEBSITE Landing Page Builder Bikin landing page profesional dengan drag & drop. 8 tema, mobile editor, SEO, publish, contact form. KEUANGAN Invoice & Pembayaran Dari catat waktu sampai ",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 1963,
+      "current": [],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "short-mobile-app_docs.png",
+      "issues": []
+    },
+    {
+      "route": "/app/whats-new",
+      "viewport": {
+        "name": "short-mobile",
+        "width": 390,
+        "height": 667
+      },
+      "status": 200,
+      "url": "https://dev.cubiqlo.com/app/whats-new",
+      "title": "What’s New di Cubiqlo | Cubiqlo",
+      "h1": "Cubiqlo terus jadi lebih baik.",
+      "excerpt": "Product updates Cubiqlo terus jadi lebih baik. Semua fitur baru, peningkatan, dan perbaikan penting—dirangkum singkat di satu tempat. Update terbaru 24 Juli 2026 3 pembaruan 24 Juli 2026 LATEST Pengaturan lebih aman, akses lebih rapi Pembaruan keamanan akun, pengalaman mobile, dan pemisahan landing page dengan dashboard. Pengaturan akun lebih aman IMPROVEMENT Validasi password, sesi perangkat lain, upload logo, dan izin owner diperketat. Buka Pengaturan Navigasi mobile Settings IMPROVEMENT Tab S",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "scrollHeight": 2167,
+      "current": [],
+      "buttons": [
+        "Lompati ke konten utama",
+        "Dashboard",
+        "Work",
+        "Time",
+        "Business",
+        "Calendar",
+        "Files",
+        "Finance",
+        "Personal",
+        "AI",
+        "What’s New",
+        "id",
+        "en",
+        "New",
+        "A"
+      ],
+      "tokens": {
+        "primary": "#6647f0",
+        "foreground": "#292d34",
+        "mutedForeground": "#646464",
+        "border": "#e8e8e8",
+        "background": "#fff",
+        "sidebarBackground": "#f8f9fa",
+        "orange": "#ed5f00",
+        "navy": "#292d34"
+      },
+      "consoleErrors": [],
+      "role": "owner",
+      "locale": "id",
+      "state": "current populated/account-visible",
+      "revision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+      "screenshot": "short-mobile-app_whats-new.png",
+      "issues": []
+    }
+  ],
+  "consoleErrors": [
+    {
+      "url": "https://dev.cubiqlo.com/app/projects",
+      "text": "Failed to load resource: the server responded with a status of 502 ()"
+    }
+  ],
+  "auditContext": {
+    "role": "owner",
+    "locale": "id",
+    "workspace": "dedicated QA workspace",
+    "state": "current populated/account-visible runtime state",
+    "sourceRevision": "44a9c32ef58b03f8f83b4d32f63dbf1544b03b0d",
+    "devIntegrationRevision": "b211a50b74ce08a077d8c9a7b37785cf09bc8813",
+    "devImage": "sha256:dc1f4d82fcd046fbd77509553dbfdd98711917945ff7a647f750a07b38ebcde8"
+  }
+}

@@ -109,6 +109,19 @@ export function projectStatusVariant(status: string, lang?: Lang): StatusBadgeCo
   switch (status) {
     case "draft":
       return { variant: "secondary", label: tr(lang, "Draf", "Draft") };
+    case "active":
+      return { variant: "success", label: tr(lang, "Aktif", "Active") };
+    case "review":
+      return { variant: "info", label: tr(lang, "Review", "Review") };
+    case "on_hold":
+      return { variant: "warning", label: tr(lang, "Ditunda", "On Hold") };
+    case "completed":
+    case "done":
+      return { variant: "success", label: tr(lang, "Selesai", "Completed") };
+    case "cancelled":
+      return { variant: "outline", label: tr(lang, "Dibatalkan", "Cancelled") };
+    case "archived":
+      return { variant: "outline", label: tr(lang, "Diarsipkan", "Archived") };
     case "sent":
       return { variant: "info", label: tr(lang, "Terkirim", "Sent") };
     case "viewed":
@@ -117,13 +130,6 @@ export function projectStatusVariant(status: string, lang?: Lang): StatusBadgeCo
       return { variant: "destructive", label: tr(lang, "Terlambat", "Overdue") };
     case "paid":
       return { variant: "success", label: tr(lang, "Lunas", "Paid") };
-    case "cancelled":
-      return { variant: "outline", label: tr(lang, "Dibatalkan", "Cancelled") };
-    case "active":
-      return { variant: "success", label: tr(lang, "Aktif", "Active") };
-    case "completed":
-    case "done":
-      return { variant: "success", label: tr(lang, "Selesai", "Completed") };
     case "signed":
       return { variant: "success", label: tr(lang, "Ditandatangani", "Signed") };
     case "accepted":
@@ -134,11 +140,51 @@ export function projectStatusVariant(status: string, lang?: Lang): StatusBadgeCo
       return { variant: "destructive", label: tr(lang, "Kedaluwarsa", "Expired") };
     case "revoked":
       return { variant: "destructive", label: tr(lang, "Dicabut", "Revoked") };
+    default:
+      return { variant: "outline", label: titleize(status) || tr(lang, "Tidak diketahui", "Unknown") };
+  }
+}
+
+/** Semantic badge config for project statuses in list surfaces (projects list, client detail). */
+export function projectListStatusVariant(status: string, lang?: Lang): StatusBadgeConfig {
+  switch (status) {
+    case "draft":
+      return { variant: "secondary", label: tr(lang, "Draf", "Draft") };
+    case "active":
+      return { variant: "success", label: tr(lang, "Aktif", "Active") };
+    case "review":
+      return { variant: "info", label: tr(lang, "Review", "Review") };
     case "on_hold":
       return { variant: "warning", label: tr(lang, "Ditunda", "On Hold") };
+    case "completed":
+      return { variant: "success", label: tr(lang, "Selesai", "Completed") };
+    case "cancelled":
+      return { variant: "outline", label: tr(lang, "Dibatalkan", "Cancelled") };
     case "archived":
       return { variant: "outline", label: tr(lang, "Diarsipkan", "Archived") };
     default:
       return { variant: "outline", label: titleize(status) || tr(lang, "Tidak diketahui", "Unknown") };
+  }
+}
+
+/** Dot color shown next to a status pill in project list surfaces. */
+export function projectStatusDot(status: string): string {
+  switch (status) {
+    case "active":
+      return "bg-emerald-500";
+    case "review":
+      return "bg-blue-500";
+    case "draft":
+      return "bg-slate-400";
+    case "on_hold":
+      return "bg-amber-500";
+    case "completed":
+      return "bg-green-600";
+    case "cancelled":
+      return "bg-red-400";
+    case "archived":
+      return "bg-slate-500";
+    default:
+      return "bg-slate-400";
   }
 }

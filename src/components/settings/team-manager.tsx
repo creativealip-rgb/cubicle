@@ -102,7 +102,7 @@ export function TeamManager({
       )}
 
       <form onSubmit={handleAdd} className="rounded-lg border p-3 space-y-3">
-        <div className="grid gap-3 md:grid-cols-[1fr_160px_auto] md:items-end">
+        <div className="grid gap-3 md:max-w-2xl md:grid-cols-[1fr_160px_auto] md:items-end">
           <div className="space-y-2">
             <Label htmlFor="team-email">{t("Undang via email", "Invite by email")}</Label>
             <Input
@@ -131,7 +131,7 @@ export function TeamManager({
               </SelectContent>
             </Select>
           </div>
-          <LoadingButton type="submit" loading={loading} loadingText={t("Mengirim...", "Sending...")} disabled={!canInvite} className="gap-2">
+          <LoadingButton type="submit" loading={loading} loadingText={t("Mengirim...", "Sending...")} disabled={!canInvite} className="h-10 gap-2">
             <UserPlus className="h-4 w-4" /> {t("Undang", "Invite")}
           </LoadingButton>
         </div>
@@ -158,7 +158,7 @@ export function TeamManager({
                   value={member.role}
                   onValueChange={(v) => handleRoleChange(member.id, v as "member" | "viewer")}
                 >
-                  <SelectTrigger className="w-28 h-8">
+                  <SelectTrigger className="h-9 w-28">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -171,7 +171,7 @@ export function TeamManager({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-11 w-11 text-destructive"
+                  className="h-9 w-9 text-destructive"
                   aria-label={t(`Hapus ${member.email || member.name || "anggota"}`, `Remove ${member.email || member.name || "member"}`)}
                   onClick={() => handleRemove(member)}
                 >

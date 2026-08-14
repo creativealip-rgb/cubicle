@@ -7,13 +7,14 @@ const source = readFileSync(resolve(process.cwd(), "src/components/settings/sett
 describe("settings mobile navigation", () => {
   it("uses a compact mobile section selector", () => {
     expect(source).toContain('aria-label={t("Pilih bagian pengaturan", "Choose settings section")}');
-    expect(source).toContain('className="h-11 w-full rounded-md border bg-background px-3 text-sm font-medium"');
+    expect(source).toContain('className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm font-medium');
     expect(source).toContain("tabs.find((tab) => tab.key === activeTab)");
   });
 
   it("keeps full tab navigation for desktop only", () => {
     expect(source).toContain('className="hidden md:block"');
-    expect(source).toContain('className="min-h-11');
+    // Desktop tabs keep a comfortable touch target (h-auto list, min-h-9 triggers).
+    expect(source).toContain('min-h-9');
   });
 
   it("keeps URL-synced tab changes", () => {

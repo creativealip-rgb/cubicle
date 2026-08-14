@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n-client";
 
 export function TimeHeader({ actions }: { actions?: React.ReactNode }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { t } = useT();
 
   const primaryTabs = [
@@ -33,14 +34,14 @@ export function TimeHeader({ actions }: { actions?: React.ReactNode }) {
       <div className="border-b">
         <nav aria-label={t("Navigasi waktu", "Time navigation")} className="flex min-w-0 gap-0.5 sm:gap-1">
           {primaryTabs.map((tab) => {
-            const active = pathname === tab.href;
+            const active = pathname === "/app/time" && (searchParams.get("view") ?? "daily") === (tab.href.includes("weekly") ? "weekly" : "daily");
             return (
               <Link
                 key={tab.href}
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "shrink-0 border-b-2 px-2.5 py-2 text-sm font-medium transition-colors sm:px-3",
+                  "min-h-11 shrink-0 border-b-2 px-2.5 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:px-3",
                   active
                     ? "border-primary text-foreground"
                     : "border-transparent text-muted-foreground hover:text-foreground",

@@ -12,7 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, Clock, MapPin } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
+import { Calendar, CalendarDays, Clock, User } from "lucide-react";
 import Link from "next/link";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { AvailabilityRuleForm } from "@/components/calendar/availability-rule-form";
@@ -133,23 +134,25 @@ export default async function CalendarPage() {
           </CardHeader>
           <CardContent className="space-y-2">
             {rules.length === 0 && (
-              <div className="flex min-h-64 flex-col items-center justify-center py-8 text-center">
-                <Calendar className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
-                <p className="text-sm text-muted-foreground">{t("Belum ada aturan ketersediaan", "No availability rules yet")}</p>
-                <p className="text-xs text-foreground/70">
-                  {t("Tambah aturan untuk menentukan kapan kamu tersedia menerima booking", "Add rules to define when you're available for bookings")}
-                </p>
-              </div>
+              <EmptyState
+                icon={Clock}
+                title={t("Belum ada aturan ketersediaan", "No availability rules yet")}
+                description={t("Tambah aturan untuk menentukan kapan kamu tersedia menerima booking", "Add rules to define when you're available for bookings")}
+              />
             )}
             {rules.map((rule) => (
               <div
                 key={rule.id}
-                className="flex items-center justify-between rounded-lg border p-3"
+                className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3 shadow-sm transition-colors hover:border-primary/30"
               >
-                <div>
-                  <p className="text-sm font-medium">{dayNames[rule.dayOfWeek]}</p>
-                  <p className="text-xs text-foreground/70">
-                    {rule.startTime.substring(0, 5)} – {rule.endTime.substring(0, 5)} ({rule.timezone})
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">{dayNames[rule.dayOfWeek]}</p>
+                  <p className="mt-0.5 inline-flex items-center gap-1.5 text-xs text-foreground/70">
+                    <Clock className="h-3 w-3 shrink-0" aria-hidden />
+                    <span>
+                      {rule.startTime.substring(0, 5)} – {rule.endTime.substring(0, 5)}
+                    </span>
+                    <span className="text-muted-foreground">({rule.timezone})</span>
                   </p>
                 </div>
                 <DeleteAvailabilityRuleButton
@@ -175,13 +178,11 @@ export default async function CalendarPage() {
           <CardContent className="flex flex-1 flex-col space-y-3">
             {upcoming.length === 0 && (
               <div className="flex min-h-[20rem] flex-1 items-center justify-center py-8 text-center">
-                <div>
-                  <Calendar className="mx-auto mb-2 h-10 w-10 text-muted-foreground/30" />
-                  <p className="text-sm text-muted-foreground">{t("Belum ada jadwal mendatang", "No upcoming appointments")}</p>
-                  <p className="text-xs text-foreground/70">
-                    {t("Bagikan link booking supaya klien bisa atur jadwal sendiri", "Share your booking link so clients can schedule themselves")}
-                  </p>
-                </div>
+                <EmptyState
+                  icon={CalendarDays}
+                  title={t("Belum ada jadwal mendatang", "No upcoming appointments")}
+                  description={t("Bagikan link booking supaya klien bisa atur jadwal sendiri", "Share your booking link so clients can schedule themselves")}
+                />
               </div>
             )}
             {upcoming.map((apt, i) => (
@@ -189,18 +190,19 @@ export default async function CalendarPage() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0 space-y-1">
                     <p className="text-sm font-medium">{apt.title}</p>
-                    <p className="text-xs text-foreground/70">
+                    <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                      <Clock className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
                       {formatDateTime(apt.startTime)} – {formatTime(apt.endTime)}
                     </p>
                     {apt.attendeeName && (
                       <p className="text-xs text-foreground/70">
-                        <MapPin className="mr-1 inline h-3 w-3" />
+                        <User className="mr-1 inline h-3 w-3" aria-hidden />
                         {apt.attendeeName}
                         {apt.attendeeEmail && ` (${apt.attendeeEmail})`}
                       </p>
                     )}
                     {apt.notes && (
-                      <p className="text-xs text-foreground/70 italic">{apt.notes}</p>
+                      <p className="rounded-md bg-muted/40 px-2 py-1 text-xs text-foreground/70 italic">{apt.notes}</p>
                     )}
                     {apt.userName && (
                       <p className="text-xs text-foreground/70">

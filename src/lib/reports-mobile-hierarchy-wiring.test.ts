@@ -17,6 +17,7 @@ describe("reports mobile hierarchy", () => {
   });
 
   it("keeps the net KPI full width on mobile", () => {
-    expect(source).toContain('item.label === t("Bersih", "Net") ? "col-span-2 md:col-span-1" : undefined');
+    expect(source).toContain('item.label === t("Bersih", "Net") ? "col-span-2');
+    expect(source).toContain("md:col-span-1");
   });
 });

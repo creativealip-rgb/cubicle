@@ -9,7 +9,8 @@ import { SortableHeader } from "@/components/ui/sortable-header";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { cn } from "@/lib/utils";
-import { getProjectProgress, progressColor } from "@/lib/project-progress";
+import { getProjectProgress, progressTone } from "@/lib/project-progress";
+import { projectListStatusVariant, projectStatusDot } from "@/lib/status-badge";
 
 import type { ProjectBillingType } from "@/lib/project-list-filters";
 import { TableHeaderFilter } from "@/components/ui/table-header-filter";
@@ -43,16 +44,6 @@ const STATUS_ORDER = [
 
 type SortKey = "name" | "client" | "status" | "progress" | "dueDate";
 
-const statusColors: Record<string, string> = {
-  draft: "bg-slate-400",
-  active: "bg-emerald-500",
-  review: "bg-violet-500",
-  on_hold: "bg-amber-500",
-  completed: "bg-green-600",
-  cancelled: "bg-red-400",
-  archived: "bg-slate-500",
-};
-
 function progressPct(project: ProjectListItem) {
   return getProjectProgress(project).pct;
 }
@@ -66,26 +57,46 @@ function dueDays(dueDate: string | null) {
   return Math.ceil((due.getTime() - today.getTime()) / 86_400_000);
 }
 
-function dueTone(dueDate: string | null, status: string) {
-  if (!dueDate || status === "archived" || status === "cancelled") {
-    return "text-muted-foreground";
-  }
+type DueTone = "muted" | "normal" | "warn" | "danger" | "done";
+
+function dueTone(dueDate: string | null, status: string): DueTone {
+  if (!dueDate || status === "archived" || status === "cancelled") return "muted";
+  if (status === "completed") return "done";
   const days = dueDays(dueDate) ?? 0;
-  if (days < 0) return status === "completed" ? "text-green-700 font-medium" : "text-red-600 font-semibold";
-  if (days <= 14) return "text-amber-700 font-semibold";
-  return "text-muted-foreground";
+  if (days < 0) return "danger";
+  if (days === 0) return "warn";
+  if (days <= 14) return "warn";
+  return "normal";
 }
 
-function ProgressBar({ project }: { project: ProjectListItem }) {
+const dueChipClass: Record<DueTone, string> = {
+  muted: "bg-muted/60 text-muted-foreground",
+  normal: "bg-muted/60 text-muted-foreground",
+  warn: "bg-amber-100 text-amber-900",
+  danger: "bg-red-100 text-red-800",
+  done: "bg-emerald-100 text-emerald-800",
+};
+
+function ProgressBar({ project, label }: { project: ProjectListItem; label?: string }) {
   const progress = getProjectProgress(project);
+  const overdue = project.status !== "completed" && (dueDays(project.dueDate) ?? 0) < 0;
   return (
-    <div className="relative h-5 w-full overflow-hidden rounded-full bg-muted shadow-inner">
+    <div className="flex items-center gap-2">
       <div
-        className="h-full rounded-full transition-all"
-        style={{ width: `${progress.pct}%`, backgroundColor: progressColor(progress.pct) }}
-      />
-      <div className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold leading-none text-slate-700 mix-blend-multiply">
-        {progress.label}
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={progress.pct}
+        aria-label={label ?? "Progress"}
+        className="relative h-5 min-w-0 flex-1 overflow-hidden rounded-full bg-muted shadow-inner"
+      >
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${progress.pct}%`, backgroundColor: progressTone(progress.pct, overdue) }}
+        />
+        <div className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold leading-none text-slate-700 mix-blend-multiply">
+          {progress.label}
+        </div>
       </div>
     </div>
   );
@@ -112,16 +123,6 @@ export function ProjectsListTable({
 }) {
   const { t, locale } = useT();
 
-  const statusLabels: Record<string, string> = {
-    draft: t("Draf", "Draft"),
-    active: t("Aktif", "Active"),
-    review: t("Review", "Review"),
-    on_hold: t("Ditunda", "On Hold"),
-    completed: t("Selesai", "Completed"),
-    cancelled: t("Dibatalkan", "Cancelled"),
-    archived: t("Diarsipkan", "Archived"),
-  };
-
   const getters = useMemo(
     () => ({
       name: (r: ProjectListItem) => r.name,
@@ -147,16 +148,46 @@ export function ProjectsListTable({
       day: "numeric",
     });
     if (project.status === "archived" || project.status === "cancelled") return base;
+    if (project.status === "completed") return `${base} · ${t("selesai", "done")}`;
     const days = dueDays(project.dueDate);
     if (days === null) return base;
-    if (days < 0) {
-      return project.status === "completed"
-        ? `${base} · ${t("selesai", "done")}`
-        : `${base} · ${t("lewat", "overdue")}`;
-    }
+    if (days < 0) return `${base} · ${t("lewat", "overdue")}`;
     if (days === 0) return `${base} · ${t("hari ini", "today")}`;
     if (days <= 14) return `${base} · ${days} ${t("hari", "days")}`;
     return base;
+  }
+
+  function StatusPill({ status }: { status: string }) {
+    const config = projectListStatusVariant(status, locale === "en-US" ? "en" : "id");
+    return (
+      <Badge variant={config.variant} className="text-xs gap-1.5">
+        <span className={cn("h-1.5 w-1.5 rounded-full", projectStatusDot(status))} />
+        {config.label}
+      </Badge>
+    );
+  }
+
+  function DueCell({ project }: { project: ProjectListItem }) {
+    const tone = dueTone(project.dueDate, project.status);
+    if (!project.dueDate) {
+      return (
+        <span className="text-xs text-muted-foreground">
+          <Clock className="mr-1 inline h-3 w-3" />
+          —
+        </span>
+      );
+    }
+    return (
+      <span
+        className={cn(
+          "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium",
+          dueChipClass[tone],
+        )}
+      >
+        <Clock className="h-3 w-3" />
+        {formatDue(project)}
+      </span>
+    );
   }
 
   return (
@@ -233,26 +264,20 @@ export function ProjectsListTable({
                   {project.clientName || "—"}
                 </div>
               </div>
-              <Badge variant="outline" className="text-xs shrink-0 gap-1.5">
-                <span
-                  className={`h-1.5 w-1.5 rounded-full ${statusColors[project.status] ?? "bg-slate-400"}`}
-                />
-                {statusLabels[project.status] ?? project.status}
-              </Badge>
+              <StatusPill status={project.status} />
             </div>
 
             <div className="space-y-1.5">
               <div className="text-xs text-muted-foreground">
                 {t("Progres", "Progress")}
               </div>
-              <ProgressBar project={project} />
+              <ProgressBar project={project} label={t("Progres", "Progress")} />
             </div>
 
-            <div className={cn("flex items-center gap-1 text-xs", dueTone(project.dueDate, project.status))}>
-              <Clock className="h-3 w-3" />
-              {formatDue(project)}
+            <div className="flex items-center justify-between gap-2">
+              <DueCell project={project} />
+              {canWrite ? <ProjectStatusEditDialog projectId={project.id} projectName={project.name} currentStatus={project.status} /> : null}
             </div>
-            {canWrite ? <ProjectStatusEditDialog projectId={project.id} projectName={project.name} currentStatus={project.status} /> : null}
           </div>
         ))}
       </div>
@@ -274,21 +299,13 @@ export function ProjectsListTable({
             {project.clientName || "—"}
           </div>
           <div className="col-span-2">
-            <Badge variant="outline" className="text-xs gap-1.5">
-              <span
-                className={`h-1.5 w-1.5 rounded-full ${statusColors[project.status] ?? "bg-slate-400"}`}
-              />
-              {statusLabels[project.status] ?? project.status}
-            </Badge>
+            <StatusPill status={project.status} />
           </div>
           <div className="col-span-2">
             <ProgressBar project={project} />
           </div>
-          <div className={cn("col-span-2 text-xs", dueTone(project.dueDate, project.status))}>
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {formatDue(project)}
-            </span>
+          <div className="col-span-2">
+            <DueCell project={project} />
           </div>
           <div className="col-span-1 flex justify-end">{canWrite ? <ProjectStatusEditDialog projectId={project.id} projectName={project.name} currentStatus={project.status} /> : null}</div>
         </div>

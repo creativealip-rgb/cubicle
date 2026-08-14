@@ -54,7 +54,8 @@ function dueTone(task: TasksListItem) {
   const days = dueDays(task.dueDate);
   if (days === null) return "text-muted-foreground";
   if (days < 0) return task.status === "done" ? "text-green-700 font-medium" : "text-red-600 font-semibold";
-  if (days <= 7) return "text-amber-700 font-semibold";
+  if (days === 0) return task.status === "done" ? "text-muted-foreground" : "text-amber-700 font-semibold";
+  if (days <= 7) return "text-amber-700 font-medium";
   return "text-muted-foreground";
 }
 
@@ -216,7 +217,7 @@ export function TasksListTable({
 
       {/* Desktop rows */}
       <div className="hidden md:block">
-        {sorted.map((task, index) => {
+        {sorted.map((task) => {
           const sb = taskStatusVariant(task.status, lang);
           const isFocus = focusId === task.id;
           return (
