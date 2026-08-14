@@ -753,17 +753,7 @@ export function TemplateCenterClient({
                     />
                   </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="tpl-prop-body">{t("Isi / scope", "Body / scope")}</Label>
-                  <Textarea
-                    id="tpl-prop-body"
-                    value={formBody}
-                    onChange={(e) => setFormBody(e.target.value)}
-                    placeholder={t("Ringkasan lingkup pekerjaan...", "Summary of the scope of work...")}
-                    rows={8}
-                    className="font-mono text-xs"
-                  />
-                </div>
+
                 <label className="flex items-center gap-2 text-sm cursor-pointer">
                   <input
                     type="checkbox"
@@ -777,40 +767,13 @@ export function TemplateCenterClient({
               </>
             ) : (
               <>
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <Label htmlFor="tpl-body">{t("Isi kontrak *", "Contract body *")}</Label>
-                    {editingId ? (
-                      <Button asChild variant="ghost" size="sm" className="h-7 text-xs">
-                        <Link href={`/app/contract-templates/${editingId}`}>
-                          <Maximize2 className="mr-1 h-3 w-3" />
-                          {t("Editor penuh", "Full editor")}
-                        </Link>
-                      </Button>
-                    ) : (
-                      <Button asChild variant="ghost" size="sm" className="h-7 text-xs">
-                        <Link href="/app/contract-templates/new">
-                          <Maximize2 className="mr-1 h-3 w-3" />
-                          {t("Editor penuh", "Full editor")}
-                        </Link>
-                      </Button>
-                    )}
-                  </div>
-                  <Textarea
-                    id="tpl-body"
-                    value={formBody}
-                    onChange={(e) => setFormBody(e.target.value)}
-                    placeholder={t("Isi template kontrak...", "Contract template body...")}
-                    rows={10}
-                    className="font-mono text-xs"
-                  />
+
                   <p className="text-xs text-muted-foreground">
                     {t(
                       "Placeholder: {{client.name}}, {{client.email}}, {{workspace.name}}, {{project.name}}, {{today}}, {{valid_until}}, {{value}}, {{scope}}",
                       "Placeholders: {{client.name}}, {{client.email}}, {{workspace.name}}, {{project.name}}, {{today}}, {{valid_until}}, {{value}}, {{scope}}",
                     )}
                   </p>
-                </div>
                 <label className="flex items-center gap-2 text-sm cursor-pointer">
                   <input
                     type="checkbox"
