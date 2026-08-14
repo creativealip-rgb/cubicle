@@ -18,7 +18,7 @@ import { assertPublicTokenLifecycle, PublicTokenError } from "@/lib/public-token
 import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
 import { validateSignatureDataUrl } from "@/lib/upload-safety";
 import { createClient } from "@/lib/actions/clients";
-import { normalizeDocumentBlocks } from "@/lib/document-blocks";
+import { normalizeDocumentBlocks, type DocumentBlock } from "@/lib/document-blocks";
 import { buildContractPlaceholderValues } from "@/lib/document-placeholder-values";
 import { resolveDocumentPlaceholders } from "@/lib/document-placeholders";
 import {
@@ -150,6 +150,7 @@ const createContractSchema = z.object({
   templateId: z.string().uuid().optional().nullable(),
   title: z.string().min(1).max(200),
   body: z.string().max(50000).default(""),
+  contentBlocks: z.unknown().optional(),
   validUntil: z.string().optional().nullable(),
 });
 
@@ -168,12 +169,27 @@ export async function createContract(input: z.infer<typeof createContractSchema>
     const project = await assertProjectInWorkspace(db, user.id, parsed.workspaceId, parsed.projectId);
     if (parsed.clientId && project.clientId !== parsed.clientId) throw new ForbiddenError("Project does not belong to client");
   }
+  // Re-fetch the template server-side when one is selected: the client list
+  // is only used to render the picker. The workspace-scoped row is the source
+  // of truth for both the legacy markdown body and the unified contentBlocks,
+  // so a tampered client payload can never smuggle foreign-template content
+  // into the new contract.
+  let templateBlocks: DocumentBlock[] = [];
+  let templateBody = "";
   if (parsed.templateId) {
-    const [template] = await db.select({ id: contractTemplates.id }).from(contractTemplates)
+    const [template] = await db.select({ id: contractTemplates.id, body: contractTemplates.body, contentBlocks: contractTemplates.contentBlocks }).from(contractTemplates)
       .where(and(eq(contractTemplates.id, parsed.templateId), eq(contractTemplates.workspaceId, parsed.workspaceId)))
       .limit(1);
     if (!template) throw new ForbiddenError("Contract template access denied");
+    templateBlocks = normalizeDocumentBlocks(template.contentBlocks, "contract");
+    templateBody = template.body;
   }
+  const contentBlocks = templateBlocks.length > 0
+    ? templateBlocks
+    : normalizeDocumentBlocks(parsed.contentBlocks, "contract");
+  // Legacy body fallback: template body is canonical when a template was
+  // picked (the dialog has no body editor); otherwise the client body is used.
+  const body = parsed.templateId ? (templateBody || parsed.body) : parsed.body;
 
   // Generate the contract number (and default contract date) inside a
   // transaction. Counter is authoritative, but always bump above
@@ -218,7 +234,8 @@ export async function createContract(input: z.infer<typeof createContractSchema>
       projectId: parsed.projectId || null,
       templateId: parsed.templateId || null,
       title: parsed.title,
-      body: parsed.body,
+      body,
+      contentBlocks,
       bodyResolved: null,
       validUntil: parsed.validUntil || null,
       status: "draft",

@@ -4,7 +4,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { proposals, projects, projectServices, invoices, invoiceItems, workspaceInvoiceCounters, workspaces } from "@/db/schema";
+import { proposals, projects, projectServices, invoices, invoiceItems, workspaceInvoiceCounters, workspaces, proposalTemplates } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
@@ -16,7 +16,7 @@ import { resolveWorkspaceReplyTo } from "@/lib/workspace-reply-to";
 import { assertPublicTokenLifecycle, PublicTokenError } from "@/lib/public-token-policy";
 import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
 import { buildProjectServiceDocumentLines } from "@/lib/project-service-lines";
-import { normalizeDocumentBlocks, isSameOriginMediaSrc } from "@/lib/document-blocks";
+import { normalizeDocumentBlocks, isSameOriginMediaSrc, type DocumentBlock } from "@/lib/document-blocks";
 import {
   buildProposalNumber,
   currentDocumentYear,
@@ -43,8 +43,10 @@ const createProposalSchema = z.object({
   companyName: z.string().trim().max(200).optional().nullable(),
   proposalNumber: z.string().trim().max(100).optional().nullable(),
   projectIds: z.array(z.string().uuid()).optional(),
+  templateId: z.string().uuid().optional().nullable(),
   title: z.string().min(1).max(200),
   body: z.string().max(10000).optional().nullable(),
+  contentBlocks: z.unknown().optional(),
   lineItems: z.array(lineItemSchema).default([]),
   currency: z.string().min(3).max(3).default("IDR"),
   taxRate: z.number().min(0).max(100).default(0),
@@ -88,6 +90,37 @@ export async function createProposal(input: z.infer<typeof createProposalSchema>
     recipient = { name: client.name, email: client.email, company: client.companyName ?? null };
   }
   if (!recipient.name) throw new Error("Nama client wajib diisi");
+  // Re-fetch the template server-side when one is selected: the client list
+  // is only used to render the picker. The workspace-scoped row is the source
+  // of truth for the document content (legacy markdown body + unified
+  // contentBlocks), so a tampered client payload can never smuggle
+  // foreign-template content into the new proposal. Billing metadata
+  // (currency/tax/DP/line items) stays as sent by the form — applyTemplate
+  // prefills those from the workspace-scoped template list and the user can
+  // still edit them before submit.
+  let templateBlocks: DocumentBlock[] = [];
+  let templateBody: string | null = null;
+  if (parsed.templateId) {
+    const [template] = await db.select({
+      id: proposalTemplates.id,
+      body: proposalTemplates.body,
+      contentBlocks: proposalTemplates.contentBlocks,
+    }).from(proposalTemplates)
+      .where(and(eq(proposalTemplates.id, parsed.templateId), eq(proposalTemplates.workspaceId, parsed.workspaceId)))
+      .limit(1);
+    if (!template) throw new Error("Proposal template access denied");
+    templateBlocks = normalizeDocumentBlocks(template.contentBlocks, "proposal");
+    templateBody = template.body;
+  }
+  // Template blocks win when present; otherwise fall back to the client-sent
+  // blocks (legacy create without a template), then to nothing.
+  const contentBlocks = templateBlocks.length > 0
+    ? templateBlocks
+    : normalizeDocumentBlocks(parsed.contentBlocks, "proposal");
+  // Legacy body fallback: template body is canonical when a template was
+  // picked (the form copies it into the scope textarea); otherwise the client
+  // body is used.
+  const body = parsed.templateId ? (templateBody || parsed.body) : parsed.body;
   const projectIds = Array.from(new Set(parsed.projectIds ?? []));
   if ((parsed.projectIds?.length ?? 0) !== projectIds.length) throw new Error("Proyek duplikat tidak diizinkan");
   const generatedLineItems: Array<z.infer<typeof lineItemSchema>> = [];
@@ -163,7 +196,8 @@ export async function createProposal(input: z.infer<typeof createProposalSchema>
       companyName: recipient.company,
       proposalNumber,
       title: parsed.title,
-      body: parsed.body || null,
+      body,
+      contentBlocks,
       lineItems,
       subtotal: subtotal.toFixed(2),
       tax: tax.toFixed(2),
