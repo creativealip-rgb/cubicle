@@ -1,8 +1,4 @@
-/** Feature preview allowlist — keep small, explicit. */
-
-const TEMPLATES_PREVIEW_EMAILS = new Set([
-  "alipdevcom@gmail.com",
-]);
+/** Template Center is available to authenticated workspace owners. */
 
 export function normalizeEmail(email?: string | null): string {
   return (email ?? "").trim().toLowerCase();
@@ -13,8 +9,9 @@ export function canAccessTemplatesPreview(
   email?: string | null,
   environment = process.env.CUBIQLO_ENV,
 ): boolean {
-  const normalized = normalizeEmail(email);
-  return environment === "development" || TEMPLATES_PREVIEW_EMAILS.has(normalized);
+  void email;
+  void environment;
+  return true;
 }
 
 export function billingTypeLabel(
