@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SendContractButton } from "@/components/contracts/send-contract-button";
+import DocumentDetailsForm from "@/components/documents/document-details-form";
+import { updateContract } from "@/lib/actions/contracts";
 import { RevokeContractButton } from "@/components/contracts/revoke-contract-button";
 import { DeleteContractButton } from "@/components/contracts/delete-contract-button";
 import { PostSignClientBanner } from "@/components/contracts/post-sign-client-banner";
@@ -170,6 +172,10 @@ export default async function ContractDetailPage({
           ) : null}
         </div>
       </div>
+
+      {canWrite && c.status === "draft" ? (
+        <DocumentDetailsForm kind="contract" initial={{ clientName: c.clientName, clientEmail: c.clientEmail ?? "", companyName: c.companyName ?? "", title: c.title }} update={(input) => updateContract(c.id, input)} />
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Card>

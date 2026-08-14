@@ -20,6 +20,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SendProposalButton } from "@/components/proposals/send-proposal-button";
+import DocumentDetailsForm from "@/components/documents/document-details-form";
+import { updateProposal } from "@/lib/actions/proposals";
 import { DeleteProposalButton } from "@/components/proposals/delete-proposal-button";
 import { ArrowLeft, FileText } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
@@ -184,6 +186,10 @@ export default async function ProposalDetailPage({
           ) : null}
         </div>
       </div>
+
+      {canWrite && p.status === "draft" ? (
+        <DocumentDetailsForm kind="proposal" initial={{ clientName: p.clientName, clientEmail: p.clientEmail ?? "", companyName: p.companyName ?? "", title: p.title }} update={(input) => updateProposal(p.id, input)} />
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Card>

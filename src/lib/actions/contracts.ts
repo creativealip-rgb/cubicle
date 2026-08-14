@@ -261,7 +261,7 @@ export async function createContract(input: z.infer<typeof createContractSchema>
   return c;
 }
 
-export async function updateContract(contractId: string, input: { title?: string; body?: string; validUntil?: string | null }) {
+export async function updateContract(contractId: string, input: { clientName?: string; clientEmail?: string | null; companyName?: string | null; title?: string; body?: string; validUntil?: string | null }) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();

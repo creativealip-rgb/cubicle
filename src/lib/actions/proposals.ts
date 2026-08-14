@@ -55,6 +55,9 @@ const createProposalSchema = z.object({
 });
 
 const updateProposalSchema = z.object({
+  clientName: z.string().trim().min(1).max(200).optional(),
+  clientEmail: z.string().email().nullable().optional(),
+  companyName: z.string().trim().max(200).nullable().optional(),
   title: z.string().min(1).max(200).optional(),
   body: z.string().max(10000).optional().nullable(),
   lineItems: z.array(lineItemSchema).min(1).optional(),
@@ -239,6 +242,9 @@ export async function updateProposal(proposalId: string, input: z.infer<typeof u
 
   const [proposal] = await db.update(proposals)
     .set({
+      clientName: parsed.clientName ?? existing.clientName,
+      clientEmail: parsed.clientEmail !== undefined ? parsed.clientEmail : existing.clientEmail,
+      companyName: parsed.companyName !== undefined ? parsed.companyName : existing.companyName,
       title: parsed.title ?? existing.title,
       body: parsed.body !== undefined ? parsed.body : existing.body,
       lineItems,
