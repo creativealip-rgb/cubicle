@@ -18,13 +18,18 @@ import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createContract } from "@/lib/actions/contracts";
 import { useT } from "@/lib/i18n-client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+type ContractTemplateOption = { id: string; name: string; body: string };
 
 export function CreateContractButton({
   workspaceId,
   clients: _clients,
+  templates = [],
 }: {
   workspaceId: string;
   clients: { id: string; name: string }[];
+  templates?: ContractTemplateOption[];
 }) {
   const { t } = useT();
   const router = useRouter();
@@ -36,6 +41,12 @@ export function CreateContractButton({
   const [companyName, setCompanyName] = useState("");
   const [title, setTitle] = useState("");
   const [validUntil, setValidUntil] = useState("");
+  const [body, setBody] = useState("");
+
+  function applyTemplate(id: string) {
+    const template = templates.find((item) => item.id === id);
+    if (template) setBody(template.body || "");
+  }
 
   function handleCreate() {
     if (!title.trim()) {
@@ -54,7 +65,7 @@ export function CreateContractButton({
           clientEmail: clientEmail.trim(),
           companyName: companyName.trim() || undefined,
           title: title.trim(),
-          body: "",
+          body,
           validUntil: validUntil || undefined,
         });
         setOpen(false);
@@ -84,6 +95,7 @@ export function CreateContractButton({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
+          {templates.length > 0 && <div><label className="text-sm font-medium block mb-1">{t("Template kontrak", "Contract template")}</label><Select onValueChange={applyTemplate}><SelectTrigger><SelectValue placeholder={t("Pilih template", "Choose template")} /></SelectTrigger><SelectContent>{templates.map((template) => <SelectItem key={template.id} value={template.id}>{template.name}</SelectItem>)}</SelectContent></Select></div>}
           <div><label className="text-sm font-medium block mb-1">{t("Nama client", "Client name")}</label><Input value={clientName} onChange={(e) => setClientName(e.target.value)} /></div>
           <div><label className="text-sm font-medium block mb-1">{t("Email client", "Client email")}</label><Input type="email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} required /></div>
           <div><label className="text-sm font-medium block mb-1">{t("Nama perusahaan", "Company name")}</label><Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} /></div>

@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { contracts, clients } from "@/db/schema";
+import { listContractTemplates } from "@/lib/actions/contract-templates";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { CreateContractButton } from "@/components/contracts/create-contract-button";
@@ -73,6 +74,7 @@ export default async function ContractsPage({
     .from(clients)
     .where(and(eq(clients.workspaceId, workspaceId), eq(clients.status, "active")))
     .orderBy(clients.name);
+  const contractTemplates = await listContractTemplates();
 
   const countRows = await db
     .select({
@@ -116,7 +118,7 @@ export default async function ContractsPage({
           </p>
         </div>
         {canWrite && (
-          <CreateContractButton clients={clientsList} workspaceId={workspaceId} />
+          <CreateContractButton clients={clientsList} templates={contractTemplates} workspaceId={workspaceId} />
         )}
       </div>
 
