@@ -1416,6 +1416,7 @@ export const contractTemplates = pgTable("contract_templates", {
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   body: text("body").notNull(),
+  contentBlocks: jsonb("content_blocks").notNull().default(sql`'[]'::jsonb`),
   isDefault: boolean("is_default").notNull().default(false),
   createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -1642,6 +1643,7 @@ export const proposalTemplates = pgTable("proposal_templates", {
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   body: text("body"), // scope / cover text
+  contentBlocks: jsonb("content_blocks").notNull().default(sql`'[]'::jsonb`),
   defaultCurrency: text("default_currency").notNull().default("IDR"),
   defaultTaxRate: numeric("default_tax_rate", { precision: 5, scale: 2 }).notNull().default("0"),
   defaultDownPaymentPercent: numeric("default_down_payment_percent", { precision: 5, scale: 2 }).notNull().default("50"),

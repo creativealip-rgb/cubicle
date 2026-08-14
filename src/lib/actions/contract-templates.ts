@@ -8,11 +8,13 @@ import { eq, and, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
+import { normalizeDocumentBlocks } from "@/lib/document-blocks";
 import { z } from "zod";
 
 const schema = z.object({
   name: z.string().min(1).max(200),
   body: z.string().min(1).max(50000).optional(),
+  contentBlocks: z.unknown().optional(),
   isDefault: z.boolean().default(false),
 });
 
@@ -35,6 +37,7 @@ export async function createContractTemplate(input: z.infer<typeof schema>) {
 
   const parsed = schema.parse(input);
   if (!parsed.body?.trim()) throw new Error("Isi kontrak wajib diisi");
+  const blocks = normalizeDocumentBlocks(parsed.contentBlocks, "contract");
 
   if (parsed.isDefault) {
     await db
@@ -49,6 +52,7 @@ export async function createContractTemplate(input: z.infer<typeof schema>) {
       workspaceId,
       name: parsed.name,
       body: parsed.body.trim(),
+      contentBlocks: blocks,
       isDefault: parsed.isDefault,
       createdBy: user.id,
     })
@@ -70,6 +74,7 @@ export async function updateContractTemplate(
 
   const parsed = schema.parse(input);
   if (!parsed.body?.trim()) throw new Error("Isi kontrak wajib diisi");
+  const blocks = normalizeDocumentBlocks(parsed.contentBlocks, "contract");
 
   const [existing] = await db
     .select()
@@ -95,6 +100,7 @@ export async function updateContractTemplate(
     .set({
       name: parsed.name,
       body: parsed.body.trim(),
+      contentBlocks: blocks,
       isDefault: parsed.isDefault,
       updatedAt: new Date(),
     })
@@ -193,6 +199,7 @@ export async function duplicateContractTemplate(templateId: string) {
       workspaceId,
       name: `${existing.name} (salinan)`,
       body: existing.body,
+      contentBlocks: normalizeDocumentBlocks(existing.contentBlocks, "contract"),
       isDefault: false,
       createdBy: user.id,
     })

@@ -8,11 +8,13 @@ import { eq, and, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
+import { normalizeDocumentBlocks } from "@/lib/document-blocks";
 import { z } from "zod";
 
 const templateSchema = z.object({
   name: z.string().min(1).max(200),
   body: z.string().max(20000).optional().nullable(),
+  contentBlocks: z.unknown().optional(),
   defaultCurrency: z.string().min(3).max(3).default("IDR"),
   defaultTaxRate: z.string().default("0"),
   defaultDownPaymentPercent: z.string().default("50"),
@@ -40,6 +42,7 @@ export async function createProposalTemplate(
   if (member.role === "viewer") throw new Error("Viewer tidak bisa membuat template");
 
   const parsed = templateSchema.parse(input);
+  const blocks = normalizeDocumentBlocks(parsed.contentBlocks, "proposal");
 
   if (parsed.isDefault) {
     await db
@@ -54,6 +57,7 @@ export async function createProposalTemplate(
       workspaceId,
       name: parsed.name,
       body: parsed.body?.trim() || null,
+      contentBlocks: blocks,
       defaultCurrency: parsed.defaultCurrency || "IDR",
       defaultTaxRate: parsed.defaultTaxRate || "0",
       defaultDownPaymentPercent: parsed.defaultDownPaymentPercent || "50",
@@ -78,6 +82,7 @@ export async function updateProposalTemplate(
   if (member.role === "viewer") throw new Error("Viewer tidak bisa mengubah template");
 
   const parsed = templateSchema.parse(input);
+  const blocks = normalizeDocumentBlocks(parsed.contentBlocks, "proposal");
 
   const [existing] = await db
     .select({ id: proposalTemplates.id })
@@ -103,6 +108,7 @@ export async function updateProposalTemplate(
     .set({
       name: parsed.name,
       body: parsed.body?.trim() || null,
+      contentBlocks: blocks,
       defaultCurrency: parsed.defaultCurrency || "IDR",
       defaultTaxRate: parsed.defaultTaxRate || "0",
       defaultDownPaymentPercent: parsed.defaultDownPaymentPercent || "50",
@@ -205,6 +211,7 @@ export async function duplicateProposalTemplate(templateId: string) {
       workspaceId,
       name: `${existing.name} (salinan)`,
       body: existing.body,
+      contentBlocks: normalizeDocumentBlocks(existing.contentBlocks, "proposal"),
       defaultCurrency: existing.defaultCurrency,
       defaultTaxRate: existing.defaultTaxRate,
       defaultDownPaymentPercent: existing.defaultDownPaymentPercent,
@@ -229,6 +236,7 @@ export async function listProposalTemplates() {
       id: proposalTemplates.id,
       name: proposalTemplates.name,
       body: proposalTemplates.body,
+      contentBlocks: proposalTemplates.contentBlocks,
       defaultCurrency: proposalTemplates.defaultCurrency,
       defaultTaxRate: proposalTemplates.defaultTaxRate,
       defaultDownPaymentPercent: proposalTemplates.defaultDownPaymentPercent,
