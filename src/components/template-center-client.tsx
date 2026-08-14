@@ -315,8 +315,12 @@ export function TemplateCenterClient({
           await updateContractTemplate(editingId, input);
           toast.success(t("Template kontrak diperbarui", "Contract template updated"));
         } else {
-          await createContractTemplate(input);
+          const created = await createContractTemplate(input);
           toast.success(t("Template kontrak dibuat", "Contract template created"));
+          setDialogOpen(false);
+          resetForm();
+          router.push(`/app/templates/${created.id}/edit`);
+          return;
         }
       } else {
         const input = {
@@ -331,8 +335,12 @@ export function TemplateCenterClient({
           await updateProposalTemplate(editingId, input);
           toast.success(t("Template proposal diperbarui", "Proposal template updated"));
         } else {
-          await createProposalTemplate(input);
+          const created = await createProposalTemplate(input);
           toast.success(t("Template proposal dibuat", "Proposal template created"));
+          setDialogOpen(false);
+          resetForm();
+          router.push(`/app/templates/${created.id}/edit/proposal`);
+          return;
         }
       }
 
