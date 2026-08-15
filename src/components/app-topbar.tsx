@@ -70,12 +70,31 @@ type WorkspaceData = {
   canInvite: boolean;
 };
 
+type ActiveTimer = {
+  id: string;
+  startTime: string;
+  pausedAt?: string | null;
+};
+
+function formatElapsed(startTime?: string | null, pausedAt?: string | null) {
+  if (!startTime) return "00:00";
+  const endMs = pausedAt ? new Date(pausedAt).getTime() : Date.now();
+  const seconds = Math.max(0, Math.floor((endMs - new Date(startTime).getTime()) / 1000));
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  return hours > 0
+    ? `${hours}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
+    : `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
 export function AppTopbar({ user }: AppTopbarProps) {
   const { t } = useT();
   const router = useRouter();
   const pathname = usePathname();
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
   const { setMobileOpen } = useSidebar();
   const [wsData, setWsData] = useState<WorkspaceData | null>(null);
   const [switching, setSwitching] = useState<string | null>(null);
@@ -99,6 +118,17 @@ export function AppTopbar({ user }: AppTopbarProps) {
     try {
       const data = await getUserWorkspaces();
       setWsData(data);
+    } catch {
+      // silent
+    }
+  }, []);
+
+  const loadActiveTimer = useCallback(async () => {
+    try {
+      const res = await fetch("/api/time/active", { cache: "no-store" });
+      if (!res.ok) return;
+      const data = (await res.json()) as { activeTimer: ActiveTimer | null };
+      setActiveTimer(data.activeTimer);
     } catch {
       // silent
     }
@@ -136,12 +166,38 @@ export function AppTopbar({ user }: AppTopbarProps) {
   }
 
   useEffect(() => {
+    loadActiveTimer();
     loadWorkspaces();
+    const poll = window.setInterval(loadActiveTimer, 15000);
+    window.addEventListener("cubicle:timer-changed", loadActiveTimer);
+    window.addEventListener("focus", loadActiveTimer);
     window.addEventListener("focus", loadWorkspaces);
     return () => {
+      window.clearInterval(poll);
+      window.removeEventListener("cubicle:timer-changed", loadActiveTimer);
+      window.removeEventListener("focus", loadActiveTimer);
       window.removeEventListener("focus", loadWorkspaces);
     };
-  }, [loadWorkspaces]);
+  }, [loadActiveTimer, loadWorkspaces]);
+
+  useEffect(() => {
+    if (!activeTimer?.startTime || activeTimer.pausedAt) {
+      document.title = document.title.replace(/^(?:⏱️\s*\[[^\]]+\]\s*)+/, "");
+      return;
+    }
+
+    const baseTitle = document.title.replace(/^(?:⏱️\s*\[[^\]]+\]\s*)+/, "");
+    const updateTitle = () => {
+      document.title = `⏱️ [${formatElapsed(activeTimer.startTime)}] ${baseTitle}`;
+    };
+
+    updateTitle();
+    const tick = window.setInterval(updateTitle, 1000);
+    return () => {
+      window.clearInterval(tick);
+      document.title = baseTitle;
+    };
+  }, [activeTimer]);
 
   const canWrite = user.role === "owner" || user.role === "member";
 
