@@ -176,7 +176,7 @@ export default async function ContractDetailPage({
       </div>
 
       {canWrite && c.status === "draft" ? (
-        <DocumentDetailsForm kind="contract" initial={{ clientName: c.clientName, clientEmail: c.clientEmail ?? "", companyName: c.companyName ?? "", title: c.title, validUntil: c.validUntil }} update={saveDetails} />
+        <DocumentDetailsForm kind="contract" initial={{ clientName: c.clientName, clientEmail: c.clientEmail ?? "", companyName: c.companyName ?? "", title: c.title, contractNumber: c.contractNumber, validUntil: c.validUntil }} update={saveDetails} />
       ) : null}
 
       <div className="grid gap-3 sm:grid-cols-3">

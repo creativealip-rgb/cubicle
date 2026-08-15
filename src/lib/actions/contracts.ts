@@ -261,7 +261,7 @@ export async function createContract(input: z.infer<typeof createContractSchema>
   return c;
 }
 
-export async function updateContract(contractId: string, input: { clientName?: string; clientEmail?: string | null; companyName?: string | null; title?: string; body?: string; validUntil?: string | null }) {
+export async function updateContract(contractId: string, input: { clientName?: string; clientEmail?: string | null; companyName?: string | null; title?: string; body?: string; validUntil?: string | null; contractNumber?: string | null }) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -272,6 +272,19 @@ export async function updateContract(contractId: string, input: { clientName?: s
     .limit(1);
   if (!existing) throw new Error("Contract not found");
   if (existing.status !== "draft") throw new Error("Can only edit draft contracts");
+  if (input.contractNumber !== undefined) {
+    const normalized = input.contractNumber?.trim().toUpperCase() || null;
+    if (normalized && !/^CONT-\d{4}-\d{4,}$/.test(normalized)) {
+      throw new Error("Contract number must use format CONT-YYYY-####");
+    }
+    if (normalized) {
+      const [duplicate] = await db.select({ id: contracts.id }).from(contracts)
+        .where(and(eq(contracts.workspaceId, workspaceId), eq(contracts.contractNumber, normalized)))
+        .limit(1);
+      if (duplicate && duplicate.id !== contractId) throw new Error("Contract number already exists in this workspace");
+    }
+    input = { ...input, contractNumber: normalized };
+  }
 
   const [updated] = await db.update(contracts)
     .set({ ...input, updatedAt: new Date() })

@@ -10,7 +10,7 @@ import { useT } from "@/lib/i18n-client";
 type Item = { description: string; quantity: number; unitPrice: number };
 type Props = {
   kind: "proposal" | "contract";
-  initial: { clientName: string; clientEmail: string; companyName: string; title: string; validUntil?: string | null; downPaymentPercent?: number; taxRate?: number; lineItems?: Item[] };
+  initial: { clientName: string; clientEmail: string; companyName: string; title: string; contractNumber?: string | null; validUntil?: string | null; downPaymentPercent?: number; taxRate?: number; lineItems?: Item[] };
   update: (input: Record<string, unknown>) => Promise<unknown>;
 };
 
@@ -28,6 +28,7 @@ export function DocumentDetailsForm({ kind, initial, update }: Props) {
       <div><Label>{t("Email client", "Client email")}</Label><Input type="email" value={value.clientEmail} onChange={e => setValue(v => ({ ...v, clientEmail: e.target.value }))} /></div>
       <div><Label>{t("Nama perusahaan", "Company name")}</Label><Input value={value.companyName} onChange={e => setValue(v => ({ ...v, companyName: e.target.value }))} /></div>
       <div><Label>{t("Judul", "Title")}</Label><Input value={value.title} onChange={e => setValue(v => ({ ...v, title: e.target.value }))} required /></div>
+      {kind === "contract" && <div><Label>{t("Nomor kontrak", "Contract number")}</Label><Input value={value.contractNumber ?? ""} placeholder="CONT-2026-0001" onChange={e => setValue(v => ({ ...v, contractNumber: e.target.value }))} /></div>}
       <div><Label>{t("Berlaku sampai", "Valid until")}</Label><Input type="date" value={value.validUntil} onChange={e => setValue(v => ({ ...v, validUntil: e.target.value }))} /></div>
       {kind === "proposal" && <>
         <div><Label>{t("Pajak (%)", "Tax (%)")}</Label><Input type="number" min="0" max="100" value={value.taxRate} onChange={e => setValue(v => ({ ...v, taxRate: Number(e.target.value) || 0 }))} /></div>
