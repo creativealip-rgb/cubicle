@@ -1,5 +1,21 @@
 # Deployment Log
 
+## 16 August 2026 — Sidebar chevron toggle + document editor scroll/back polish
+
+- Source: `release/cubiqlo-20260816-2`, merge commit `105593b` from `dev/integration` into `main`.
+- Scope:
+  - Sidebar collapse/expand changed to a single circular chevron button at the sidebar edge (`ChevronLeft` expanded, `ChevronRight` collapsed).
+  - Document editor (proposal + contract) scroll now confined to Structure / Canvas / Insert panels; page no longer scrolls with empty bottom space.
+  - Proposal and contract editor headers gained a back button to their detail pages.
+  - Proposal/contract edit routes are full-bleed (`md:p-0 md:pb-0`) without forcing sidebar collapse.
+- Dev proof: `dev.cubiqlo.com` deployed at `7731145d55383173ca52afbed59fc7feffa35fc8`; health app/DB ok; production unchanged during dev QA.
+- Release gate before production deploy:
+  - `git diff --check` passed.
+  - Targeted Vitest passed: document editor layout wiring, global shell accessibility, autosave revision wiring.
+  - `npx tsc --noEmit` passed.
+  - `npm run build` passed.
+- Migration: none.
+
 ## 16 August 2026 — Production release prep: Cubiqlo document workflow polish
 
 - Source: `release/cubiqlo-20260816`, merge commit `9ca9f7e` from `dev/integration` into `main`.
