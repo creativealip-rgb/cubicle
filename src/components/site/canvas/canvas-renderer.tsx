@@ -11,7 +11,7 @@ import { InlineText } from "./inline-text";
 import { ImageUpload } from "./image-upload";
 import { useT } from "@/lib/i18n-client";
 import type { PersonalSiteInput, PersonalSiteSection, ThemeConfig } from "@/lib/personal-site/model";
-import { PERSONAL_SITE_ANIMATIONS } from "@/lib/personal-site/model";
+import { isEditorialPlaceholderText, PERSONAL_SITE_ANIMATIONS } from "@/lib/personal-site/model";
 
 // --- Device preview (Phase 5) ---------------------------------------------
 // Preview-only viewport widths for the editor canvas. This state never touches
@@ -59,6 +59,8 @@ export function CanvasRenderer({
 }: Props & { onReorderSections?: (sections: PersonalSiteSection[]) => void }) { // reserved for future use
   const { t } = useT();
   const theme = site.themeConfig ?? undefined;
+  const heroCopy = isEditorialPlaceholderText(site.hero) ? "" : site.hero;
+  const aboutCopy = isEditorialPlaceholderText(site.about) ? "" : site.about;
 
   return (
     <div
@@ -99,7 +101,7 @@ export function CanvasRenderer({
             placeholder="Subtitle..."
           />
           <InlineText
-            value={site.hero}
+            value={heroCopy}
             onChange={(v) => onUpdateSite({ hero: v })}
             tag="p"
             className="text-white/90 max-w-2xl mx-auto"
@@ -116,10 +118,10 @@ export function CanvasRenderer({
       </div>
 
       {/* About */}
-      {site.about && (
+      {aboutCopy && (
         <div className="px-8 py-8">
           <InlineText
-            value={site.about}
+            value={aboutCopy}
             onChange={(v) => onUpdateSite({ about: v })}
             tag="p"
             className="text-muted-foreground leading-relaxed"
