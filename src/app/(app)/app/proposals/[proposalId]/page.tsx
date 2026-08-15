@@ -23,7 +23,7 @@ import { SendProposalButton } from "@/components/proposals/send-proposal-button"
 import DocumentDetailsForm from "@/components/documents/document-details-form";
 import { updateProposal } from "@/lib/actions/proposals";
 import { DeleteProposalButton } from "@/components/proposals/delete-proposal-button";
-import { ArrowLeft, FileText } from "lucide-react";
+import { ArrowLeft, Eye } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { getCurrentLang, createT } from "@/lib/i18n";
@@ -89,7 +89,7 @@ export default async function ProposalDetailPage({
     .limit(1);
   if (!p) notFound();
 
-  async function saveDetails(input: { clientName: string; clientEmail: string | null; companyName: string | null; title: string }) {
+  async function saveDetails(input: Record<string, unknown>) {
     "use server";
     return updateProposal(p.id, input);
   }
@@ -156,14 +156,10 @@ export default async function ProposalDetailPage({
           ) : null}
           {canWrite ? (
             <Button variant="outline" size="sm" asChild>
-              <a
-                href={`/api/proposals/${p.id}/pdf`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FileText className="h-3.5 w-3.5 mr-1" />
-                {t("Unduh PDF", "Download PDF")}
-              </a>
+              <Link href={`/app/proposals/${p.id}/preview`}>
+                <Eye className="h-3.5 w-3.5 mr-1" />
+                {t("Lihat proposal", "View proposal")}
+              </Link>
             </Button>
           ) : null}
           {canWrite &&
@@ -199,7 +195,7 @@ export default async function ProposalDetailPage({
       </div>
 
       {canWrite && p.status === "draft" ? (
-        <DocumentDetailsForm kind="proposal" initial={{ clientName: p.clientName, clientEmail: p.clientEmail ?? "", companyName: p.companyName ?? "", title: p.title }} update={saveDetails} />
+        <DocumentDetailsForm kind="proposal" initial={{ clientName: p.clientName, clientEmail: p.clientEmail ?? "", companyName: p.companyName ?? "", title: p.title, validUntil: p.validUntil, downPaymentPercent: Number(p.downPaymentPercent), taxRate: Number(p.tax) / Number(p.subtotal || 1), lineItems: (p.lineItems as Array<{description: string; quantity?: number; unitPrice?: number; amount?: number}> ?? []).map((item) => ({ description: item.description, quantity: item.quantity ?? 1, unitPrice: item.unitPrice ?? 0 })) }} update={saveDetails} />
       ) : null}
 
       <div className="grid gap-3 sm:grid-cols-3">
