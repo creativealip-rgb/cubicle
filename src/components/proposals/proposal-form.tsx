@@ -104,7 +104,8 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (items.length === 0 || items.every((li) => !li.description.trim())) {
-      toast.error("Tambahkan minimal satu item");
+      toast.error(t("Tambahkan minimal satu item", "Add at least one line item"));
+      toast.error(t("Jumlah item harus lebih dari 0", "Item quantity must be greater than 0"));
       return;
     }
     setLoading(true);
@@ -131,10 +132,12 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
         downPaymentPercent: form.downPaymentPercent,
         validUntil: form.validUntil,
       });
-      toast.success("Proposal dibuat");
+      toast.success(t("Draft proposal dibuat", "Draft proposal created"), {
+        description: t("Melanjutkan ke editor proposal…", "Continuing to the proposal editor…"),
+      });
       router.push(`/app/proposals/${created.id}/edit`);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Terjadi kesalahan";
+      const msg = err instanceof Error ? err.message : t("Terjadi kesalahan", "Something went wrong");
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -146,7 +149,7 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center justify-between gap-3">
-            Detail
+            {t("Detail", "Details")}
             {templates.length > 0 && (
               <Select onValueChange={applyTemplate}>
                 <SelectTrigger className="w-52"><SelectValue placeholder={t("Pakai template", "Use template")} /></SelectTrigger>
@@ -157,15 +160,15 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-1"><Label htmlFor="clientName">Nama client</Label><Input id="clientName" value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} required /></div>
-            <div className="space-y-1"><Label htmlFor="clientEmail">Email client</Label><Input id="clientEmail" type="email" value={form.clientEmail} onChange={(e) => setForm({ ...form, clientEmail: e.target.value })} /></div>
-            <div className="space-y-1"><Label htmlFor="companyName">Nama perusahaan</Label><Input id="companyName" value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} /></div>
+            <div className="space-y-1"><Label htmlFor="clientName">{t("Nama client", "Client name")} <span className="text-red-500">*</span></Label><Input id="clientName" value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} required /></div>
+            <div className="space-y-1"><Label htmlFor="clientEmail">{t("Email client", "Client email")}</Label><Input id="clientEmail" type="email" value={form.clientEmail} onChange={(e) => setForm({ ...form, clientEmail: e.target.value })} /></div>
+            <div className="space-y-1"><Label htmlFor="companyName">{t("Nama perusahaan", "Company name")}</Label><Input id="companyName" value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} /></div>
             <div className="space-y-1">
-              <Label htmlFor="title">Judul</Label>
-              <Input id="title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="contoh: Brand refresh — fase 1" required />
+              <Label htmlFor="title">{t("Judul", "Title")} <span className="text-red-500">*</span></Label>
+              <Input id="title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder={t("contoh: Brand refresh — fase 1", "e.g. Brand refresh — phase 1")} required />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="currency">Mata Uang</Label>
+              <Label htmlFor="currency">{t("Mata Uang", "Currency")}</Label>
               <Select value={form.currency} onValueChange={(v) => setForm({ ...form, currency: v })}>
                 <SelectTrigger id="currency"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -177,21 +180,21 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
               </Select>
             </div>
             <div className="space-y-1">
-              <Label htmlFor="valid">Berlaku sampai</Label>
+              <Label htmlFor="valid">{t("Berlaku sampai", "Valid until")}</Label>
               <Input id="valid" type="date" value={form.validUntil} onChange={(e) => setForm({ ...form, validUntil: e.target.value })} />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="tax">Pajak (%)</Label>
+              <Label htmlFor="tax">{t("Pajak (%)", "Tax (%)")}</Label>
               <Input id="tax" type="number" min="0" max="100" step="0.01" value={form.taxRate} onChange={(e) => setForm({ ...form, taxRate: parseFloat(e.target.value) || 0 })} />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="dp">DP (%)</Label>
+              <Label htmlFor="dp">{t("DP (%)", "DP (%)")}</Label>
               <Input id="dp" type="number" min="0" max="100" step="1" value={form.downPaymentPercent} onChange={(e) => setForm({ ...form, downPaymentPercent: parseFloat(e.target.value) || 0 })} />
             </div>
           </div>
           <div className="space-y-1">
-            <Label htmlFor="body">Scope / deskripsi (opsional)</Label>
-            <Textarea id="body" rows={4} value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} placeholder="Yang termasuk, timeline, asumsi…" />
+            <Label htmlFor="body">{t("Scope / deskripsi (opsional)", "Scope / description (optional)")}</Label>
+            <Textarea id="body" rows={4} value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} placeholder={t("Yang termasuk, timeline, asumsi…", "What's included, timeline, assumptions…")} />
           </div>
         </CardContent>
       </Card>
@@ -199,10 +202,10 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center justify-between">
-            Rincian item
+            {t("Rincian item", "Line items")}
             <Button type="button" variant="ghost" size="sm" onClick={() => setItems([...items, blankItem()])}>
               <Plus className="h-3.5 w-3.5 mr-1" />
-              Tambah
+              {t("Tambah", "Add")}
             </Button>
           </CardTitle>
         </CardHeader>
@@ -211,7 +214,7 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
             <div key={i} className="space-y-2 rounded-lg border p-3 bg-slate-50/50">
               {services.length > 0 && (
                 <div>
-                  <Label htmlFor={`service-${i}`} className="text-xs">Impor dari Katalog Layanan</Label>
+                  <Label htmlFor={`service-${i}`} className="text-xs">{t("Impor dari Katalog Layanan", "Import from service catalog")}</Label>
                   <Select
                     onValueChange={(serviceId) => {
                       const s = services.find((srv) => srv.id === serviceId);
@@ -238,20 +241,20 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
               )}
               <div className="grid grid-cols-12 gap-2 items-end">
                 <div className="col-span-12 sm:col-span-6">
-                  <Label htmlFor={`desc-${i}`} className="text-xs">Deskripsi Item</Label>
-                  <Input id={`desc-${i}`} className="bg-white text-xs" value={li.description} onChange={(e) => updateItem(i, { description: e.target.value })} placeholder="contoh: Desain logo / Landing page" />
+                  <Label htmlFor={`desc-${i}`} className="text-xs">{t("Deskripsi Item", "Description")}</Label>
+                  <Input id={`desc-${i}`} className="bg-white text-xs" value={li.description} onChange={(e) => updateItem(i, { description: e.target.value })} placeholder={t("contoh: Desain logo / Landing page", "e.g. Logo design / Landing page")} />
                 </div>
-                <div className="col-span-4 sm:col-span-2">
-                  <Label htmlFor={`qty-${i}`} className="text-xs">Qty</Label>
+                <div className="col-span-4 sm:col-span-3">
+                  <Label htmlFor={`qty-${i}`} className="text-xs">{t("Qty", "Qty")}</Label>
                   <Input id={`qty-${i}`} className="bg-white text-xs" type="number" min="0" step="0.5" value={li.quantity} onChange={(e) => updateItem(i, { quantity: parseFloat(e.target.value) || 0 })} />
                 </div>
                 <div className="col-span-6 sm:col-span-3">
-                  <Label htmlFor={`price-${i}`} className="text-xs">Harga Satuan</Label>
+                  <Label htmlFor={`price-${i}`} className="text-xs">{t("Harga Satuan", "Unit Price")}</Label>
                   <Input id={`price-${i}`} className="bg-white text-xs" type="number" min="0" step="0.01" value={li.unitPrice} onChange={(e) => updateItem(i, { unitPrice: parseFloat(e.target.value) || 0 })} />
                 </div>
-                <div className="col-span-2 sm:col-span-1 flex justify-end">
+                <div className="col-span-2 sm:col-span-2 flex justify-end">
                   {items.length > 1 && (
-                    <Button type="button" variant="ghost" size="icon" onClick={() => setItems(items.filter((_, idx) => idx !== i))} className="h-8 w-8 text-slate-500 hover:text-red-600" aria-label="Hapus item">
+                    <Button type="button" variant="ghost" size="icon" onClick={() => setItems(items.filter((_, idx) => idx !== i))} className="h-8 w-8 text-slate-500 hover:text-red-600" aria-label={t("Hapus item", "Remove item")}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   )}
@@ -260,18 +263,18 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
             </div>
           ))}
           <div className="border-t pt-3 text-sm space-y-1">
-            <div className="flex justify-end gap-8"><span className="text-slate-500">Subtotal</span><span className="tabular-nums w-32 text-right">{form.currency === "IDR" ? "Rp" : form.currency} {subtotal.toLocaleString(form.currency === "IDR" ? "id-ID" : "en-US")}</span></div>
+            <div className="flex justify-end gap-8"><span className="text-slate-500">{t("Subtotal", "Subtotal")}</span><span className="tabular-nums w-32 text-right">{form.currency === "IDR" ? "Rp" : form.currency} {subtotal.toLocaleString(form.currency === "IDR" ? "id-ID" : "en-US")}</span></div>
             {form.taxRate > 0 && (
-              <div className="flex justify-end gap-8"><span className="text-slate-500">Pajak ({form.taxRate}%)</span><span className="tabular-nums w-32 text-right">{form.currency === "IDR" ? "Rp" : form.currency} {tax.toLocaleString(form.currency === "IDR" ? "id-ID" : "en-US")}</span></div>
+              <div className="flex justify-end gap-8"><span className="text-slate-500">{t("Pajak", "Tax")} ({form.taxRate}%)</span><span className="tabular-nums w-32 text-right">{form.currency === "IDR" ? "Rp" : form.currency} {tax.toLocaleString(form.currency === "IDR" ? "id-ID" : "en-US")}</span></div>
             )}
-            <div className="flex justify-end gap-8 pt-2 border-t font-semibold"><span>Total</span><span className="tabular-nums w-32 text-right">{form.currency === "IDR" ? "Rp" : form.currency} {total.toLocaleString(form.currency === "IDR" ? "id-ID" : "en-US")}</span></div>
+            <div className="flex justify-end gap-8 pt-2 border-t font-semibold"><span>{t("Total", "Total")}</span><span className="tabular-nums w-32 text-right">{form.currency === "IDR" ? "Rp" : form.currency} {total.toLocaleString(form.currency === "IDR" ? "id-ID" : "en-US")}</span></div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="flex gap-2">
-        <LoadingButton type="submit" loading={loading} loadingText="Membuat...">{"Buat draft"}</LoadingButton>
-        <Button type="button" variant="ghost" onClick={() => router.back()}>Batal</Button>
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:gap-2">
+        <LoadingButton type="submit" loading={loading} loadingText={t("Membuat...", "Creating...")} className="w-full sm:w-auto">{t("Buat draft", "Create draft")}</LoadingButton>
+        <Button type="button" variant="ghost" onClick={() => router.back()} className="w-full sm:w-auto">{t("Batal", "Cancel")}</Button>
       </div>
     </form>
   );

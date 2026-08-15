@@ -261,7 +261,7 @@ export async function createContract(input: z.infer<typeof createContractSchema>
   return c;
 }
 
-export async function updateContract(contractId: string, input: { clientName?: string; clientEmail?: string | null; companyName?: string | null; title?: string; body?: string; validUntil?: string | null }) {
+export async function updateContract(contractId: string, input: { clientName?: string; clientEmail?: string | null; companyName?: string | null; title?: string; body?: string; validUntil?: string | null; contractNumber?: string | null }) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -272,6 +272,19 @@ export async function updateContract(contractId: string, input: { clientName?: s
     .limit(1);
   if (!existing) throw new Error("Contract not found");
   if (existing.status !== "draft") throw new Error("Can only edit draft contracts");
+  if (input.contractNumber !== undefined) {
+    const normalized = input.contractNumber?.trim().toUpperCase() || null;
+    if (normalized && !/^CONT-\d{4}-\d{4,}$/.test(normalized)) {
+      throw new Error("Contract number must use format CONT-YYYY-####");
+    }
+    if (normalized) {
+      const [duplicate] = await db.select({ id: contracts.id }).from(contracts)
+        .where(and(eq(contracts.workspaceId, workspaceId), eq(contracts.contractNumber, normalized)))
+        .limit(1);
+      if (duplicate && duplicate.id !== contractId) throw new Error("Contract number already exists in this workspace");
+    }
+    input = { ...input, contractNumber: normalized };
+  }
 
   const [updated] = await db.update(contracts)
     .set({ ...input, updatedAt: new Date() })
@@ -347,6 +360,7 @@ export async function deleteContract(contractId: string) {
 
 export async function sendContract(input: {
   contractId: string;
+  customMessage?: string;
   ttlDays?: number;
 }) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -421,15 +435,19 @@ export async function sendContract(input: {
       "https://cubiqlo.com"
     ).replace(/\/$/, "");
     const replyTo = await resolveWorkspaceReplyTo(workspaceId);
+    const contractUrl = `${appUrl}/contract/${token}`;
+    const text = (
+      input.customMessage?.trim() ||
+      `Hi ${recipientName || "there"},\n\n` +
+        `${ws?.name || "Cubiqlo"} sent you a contract for signature: "${c.title}".\n\n` +
+        `Review and sign it here:\n{{contract_link}}\n\n` +
+        (vars.valid_until ? `This link is valid until ${vars.valid_until}.\n\n` : "\n") +
+        `If you have any questions, just reply to this email.`
+    ).replace(/\{\{contract_link\}\}/g, contractUrl);
     const emailResult = await sendNotification({
       to: recipientEmail,
       subject: `Contract for signature: ${c.title}`,
-      text:
-        `Hi ${recipientName || "there"},\n\n` +
-        `${ws?.name || "Cubiqlo"} sent you a contract for signature: "${c.title}".\n\n` +
-        `Review and sign it here:\n${appUrl}/contract/${token}\n\n` +
-        (vars.valid_until ? `This link is valid until ${vars.valid_until}.\n\n` : "\n") +
-        `If you have any questions, just reply to this email.`,
+      text,
       type: "contract_sent",
       replyTo,
     });

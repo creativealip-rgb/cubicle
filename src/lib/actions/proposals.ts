@@ -267,7 +267,7 @@ export async function updateProposal(proposalId: string, input: z.infer<typeof u
   return proposal;
 }
 
-export async function sendProposal(proposalId: string) {
+export async function sendProposal(proposalId: string, customMessage?: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -310,14 +310,18 @@ export async function sendProposal(proposalId: string) {
       "https://cubiqlo.com"
     ).replace(/\/$/, "");
     const replyTo = await resolveWorkspaceReplyTo(workspaceId);
+    const proposalUrl = `${appUrl}/proposal/${token}`;
+    const text = (
+      customMessage?.trim() ||
+      `Hi ${recipientName || "there"},\n\n` +
+        `${ws?.name || "Cubiqlo"} sent you a proposal: "${existing.title}".\n\n` +
+        `Review it here:\n{{proposal_link}}\n\n` +
+        `This link is valid for 30 days. If you have any questions, just reply to this email.`
+    ).replace(/\{\{proposal_link\}\}/g, proposalUrl);
     const emailResult = await sendNotification({
       to: recipientEmail,
       subject: `Proposal: ${existing.title}`,
-      text:
-        `Hi ${recipientName || "there"},\n\n` +
-        `${ws?.name || "Cubiqlo"} sent you a proposal: "${existing.title}".\n\n` +
-        `Review it here:\n${appUrl}/proposal/${token}\n\n` +
-        `This link is valid for 30 days. If you have any questions, just reply to this email.`,
+      text,
       type: "proposal_sent",
       replyTo,
     });

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Send, Copy, ExternalLink, Loader2, Check, Link2 } from "lucide-react";
 import {
   Dialog,
@@ -60,11 +61,13 @@ export function SendContractButton({
   const subject = title
     ? `Contract for signature: ${title}`
     : t("Kontrak untuk ditandatangani", "Contract for signature");
+  const defaultMessage = `Halo ${clientName || ""},\n\nKontrak "${title || "ini"}" sudah siap untuk ditinjau dan ditandatangani.\n\nSilakan buka tautan kontrak berikut:\n{{contract_link}}\n\nTerima kasih.`;
+  const [message, setMessage] = useState(defaultMessage);
 
   function handleSend() {
     startTransition(async () => {
       try {
-        const { token } = await sendContract({ contractId });
+        const { token } = await sendContract({ contractId, customMessage: message.trim() || undefined });
         const url = `${window.location.origin}/contract/${token}`;
         setLink(url);
         setOpen(false);
@@ -128,6 +131,8 @@ export function SendContractButton({
           onClick={() => setOpen(true)}
           disabled={pending}
           className={compact ? "h-7 px-2 text-xs" : undefined}
+          aria-label={pending ? sendingText : sendText}
+          title={pending ? sendingText : sendText}
         >
           {pending ? (
             <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
@@ -141,10 +146,13 @@ export function SendContractButton({
       <Dialog
         open={open}
         onOpenChange={(next) => {
-          if (!pending) setOpen(next);
+          if (!pending) {
+            if (next) setMessage(defaultMessage);
+            setOpen(next);
+          }
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
               {isSentLike
@@ -158,22 +166,34 @@ export function SendContractButton({
               )}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 text-sm">
-            <div className="flex gap-2">
-              <span className="w-20 shrink-0 text-muted-foreground">
-                {t("Penerima", "Recipient")}
-              </span>
-              <span className="min-w-0 break-words font-medium">
-                {clientName || clientEmail
-                  ? [clientName, clientEmail].filter(Boolean).join(" · ")
-                  : t("Belum ada penerima", "No recipient set")}
-              </span>
-            </div>
-            <div className="flex gap-2">
-              <span className="w-20 shrink-0 text-muted-foreground">
-                {t("Subjek", "Subject")}
-              </span>
-              <span className="min-w-0 break-words font-medium">{subject}</span>
+          <div className="space-y-4 text-sm">
+            <label className="block space-y-2">
+              <span className="block text-sm font-medium text-foreground">{t("Pesan", "Message")}</span>
+              <Textarea
+                value={message}
+                onChange={(event) => setMessage(event.target.value)}
+                disabled={pending}
+                className="min-h-40 resize-y leading-relaxed"
+                placeholder={t("Pesan tambahan untuk client (opsional)", "Optional message to client")}
+              />
+            </label>
+            <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
+              <div className="space-y-1">
+                <span className="block text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("Penerima", "Recipient")}
+                </span>
+                <span className="block min-w-0 break-words font-medium">
+                  {clientName || clientEmail
+                    ? [clientName, clientEmail].filter(Boolean).join(" · ")
+                    : t("Belum ada penerima", "No recipient set")}
+                </span>
+              </div>
+              <div className="space-y-1">
+                <span className="block text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("Subjek", "Subject")}
+                </span>
+                <span className="block min-w-0 break-words font-medium">{subject}</span>
+              </div>
             </div>
           </div>
           <DialogFooter>

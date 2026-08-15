@@ -15,17 +15,21 @@ import { RevokeContractButton } from "@/components/contracts/revoke-contract-but
 import { DeleteContractButton } from "@/components/contracts/delete-contract-button";
 import { PostSignClientBanner } from "@/components/contracts/post-sign-client-banner";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, X, FileText } from "lucide-react";
+import { ArrowLeft, CheckCircle2, X, FileText, Eye } from "lucide-react";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { normalizeDocumentBlocks } from "@/lib/document-blocks";
-import { renderDocumentBlock } from "@/lib/document-block-renderer";
+import { renderDocumentBlockHtml } from "@/lib/document-block-renderer";
 import { buildContractPlaceholderValues } from "@/lib/document-placeholder-values";
 
 function normalizeBody(body: string) {
   return body.replace(/\\n/g, "\n");
+}
+
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
 export default async function ContractDetailPage({
@@ -34,6 +38,7 @@ export default async function ContractDetailPage({
   params: Promise<{ contractId: string }>;
 }) {
   const { contractId } = await params;
+  if (!isUuid(contractId)) notFound();
   const lang = await getCurrentLang();
   const t = createT(lang);
   const locale = lang === "en" ? "en-US" : "id-ID";
@@ -51,7 +56,7 @@ export default async function ContractDetailPage({
     .limit(1);
   if (!c) notFound();
 
-  async function saveDetails(input: { clientName: string; clientEmail: string | null; companyName: string | null; title: string }) {
+  async function saveDetails(input: Record<string, unknown>) {
     "use server";
     return updateContract(c.id, input);
   }
@@ -94,13 +99,9 @@ export default async function ContractDetailPage({
               {c.title}
             </h1>
             <Badge variant={status.variant}>{status.label}</Badge>
-            {canWrite && c.status === "draft" ? (
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/app/contracts/${c.id}/edit`}>{t("Edit", "Edit")}</Link>
-              </Button>
-            ) : null}
           </div>
           <p className="text-sm text-slate-500 mt-1">
+            {c.contractNumber ? <span className="mr-2 font-mono text-xs">{c.contractNumber}</span> : null}
             {t("Untuk", "For")}:{" "}
             {c.clientId ? (
               <Link href={`/app/clients/${c.clientId}`} className="text-slate-700 hover:underline font-medium">
@@ -123,16 +124,17 @@ export default async function ContractDetailPage({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {canWrite && c.status === "draft" ? (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/app/contracts/${c.id}/edit`}>{t("Edit", "Edit")}</Link>
+            </Button>
+          ) : null}
           {canWrite ? (
             <Button variant="outline" size="sm" asChild>
-              <a
-                href={`/api/contracts/${c.id}/pdf`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FileText className="h-3.5 w-3.5 mr-1" />
-                {t("Unduh PDF", "Download PDF")}
-              </a>
+              <Link href={`/app/contracts/${c.id}/preview`}>
+                <Eye className="h-3.5 w-3.5 mr-1" />
+                {t("Lihat kontrak", "View contract")}
+              </Link>
             </Button>
           ) : null}
           {canWrite &&
@@ -179,7 +181,7 @@ export default async function ContractDetailPage({
       </div>
 
       {canWrite && c.status === "draft" ? (
-        <DocumentDetailsForm kind="contract" initial={{ clientName: c.clientName, clientEmail: c.clientEmail ?? "", companyName: c.companyName ?? "", title: c.title }} update={saveDetails} />
+        <DocumentDetailsForm kind="contract" initial={{ clientName: c.clientName, clientEmail: c.clientEmail ?? "", companyName: c.companyName ?? "", title: c.title, contractNumber: c.contractNumber, validUntil: c.validUntil }} update={saveDetails} />
       ) : null}
 
       <div className="grid gap-3 sm:grid-cols-3">
@@ -315,8 +317,8 @@ export default async function ContractDetailPage({
             <ReactMarkdown>{body}</ReactMarkdown>
           </div>
           {normalizeDocumentBlocks(c.contentBlocks, "contract").map((block) => (
-            <div key={block.id} className="mt-3 whitespace-pre-wrap">
-              {renderDocumentBlock(block, placeholderValues)}
+            <div key={block.id} className={`mt-3 ${block.type === "heading" ? "font-semibold text-slate-900" : "text-slate-700"}`}>
+              {renderDocumentBlockHtml(block, placeholderValues)}
             </div>
           ))}
         </CardContent>

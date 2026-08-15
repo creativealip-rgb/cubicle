@@ -9,8 +9,9 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { InlineText } from "./inline-text";
 import { ImageUpload } from "./image-upload";
+import { useT } from "@/lib/i18n-client";
 import type { PersonalSiteInput, PersonalSiteSection, ThemeConfig } from "@/lib/personal-site/model";
-import { PERSONAL_SITE_ANIMATIONS } from "@/lib/personal-site/model";
+import { isEditorialPlaceholderText, PERSONAL_SITE_ANIMATIONS } from "@/lib/personal-site/model";
 
 // --- Device preview (Phase 5) ---------------------------------------------
 // Preview-only viewport widths for the editor canvas. This state never touches
@@ -41,6 +42,7 @@ type Props = {
   onMoveSection: (id: string, direction: -1 | 1) => void;
   onDuplicateSection: (id: string) => void;
   onDeleteSection: (id: string) => void;
+  readinessTarget?: string | null;
 };
 
 export function CanvasRenderer({
@@ -54,9 +56,13 @@ export function CanvasRenderer({
   onMoveSection,
   onDuplicateSection,
   onDeleteSection,
+  readinessTarget,
   onReorderSections: _onReorderSections,
 }: Props & { onReorderSections?: (sections: PersonalSiteSection[]) => void }) { // reserved for future use
+  const { t } = useT();
   const theme = site.themeConfig ?? undefined;
+  const heroCopy = isEditorialPlaceholderText(site.hero) ? "" : site.hero;
+  const aboutCopy = isEditorialPlaceholderText(site.about) ? "" : site.about;
 
   return (
     <div
@@ -70,7 +76,7 @@ export function CanvasRenderer({
       onClick={() => onSelectSection(null)}
     >
       {/* Hero section */}
-      <div className="relative px-8 pt-16 pb-12 text-center" style={{ backgroundColor: theme?.primaryColor ?? "#6647F0" }}>
+      <div data-readiness-target="hero" className={cn("relative px-8 pt-16 pb-12 text-center", readinessTarget === "hero" && "ring-4 ring-red-400 ring-offset-2")} style={{ backgroundColor: theme?.primaryColor ?? "#6647F0" }}>
         {site.heroImage && (
           <Image
             src={site.heroImage}
@@ -87,7 +93,7 @@ export function CanvasRenderer({
             onChange={(v) => onUpdateSite({ title: v })}
             tag="h1"
             className="text-3xl font-bold text-white mb-2"
-            placeholder="Judul..."
+            placeholder={t("Judul...", "Title...")}
           />
           <InlineText
             value={site.subtitle}
@@ -97,31 +103,31 @@ export function CanvasRenderer({
             placeholder="Subtitle..."
           />
           <InlineText
-            value={site.hero}
+            value={heroCopy}
             onChange={(v) => onUpdateSite({ hero: v })}
             tag="p"
             className="text-white/90 max-w-2xl mx-auto"
-            placeholder="Deskripsi hero..."
+            placeholder={t("Deskripsi hero...", "Hero description...")}
           />
           <div className="mt-4 flex justify-center">
             <ImageUpload
               value={site.heroImage ?? ""}
               onChange={(url) => onUpdateSite({ heroImage: url || undefined })}
-              label="Upload hero image"
+              label={t("Unggah gambar hero", "Upload hero image")}
             />
           </div>
         </div>
       </div>
 
       {/* About */}
-      {site.about && (
+      {aboutCopy && (
         <div className="px-8 py-8">
           <InlineText
-            value={site.about}
+            value={aboutCopy}
             onChange={(v) => onUpdateSite({ about: v })}
             tag="p"
             className="text-muted-foreground leading-relaxed"
-            placeholder="Tentang kamu..."
+            placeholder={t("Tentang kamu...", "About you...")}
           />
         </div>
       )}
@@ -154,20 +160,20 @@ export function CanvasRenderer({
             className="gap-2"
           >
             <Plus className="h-4 w-4" />
-            Tambah Section
+            {t("Tambah Bagian", "Add Section")}
           </Button>
         </div>
       </div>
 
       {/* CTA */}
       {(site.ctaLabel || site.ctaUrl) && (
-        <div className="px-8 py-8 text-center">
+        <div data-readiness-target="cta" className={cn("px-8 py-8 text-center", readinessTarget === "cta" && "ring-4 ring-red-400 ring-offset-2")}>
           <InlineText
             value={site.ctaLabel}
             onChange={(v) => onUpdateSite({ ctaLabel: v })}
             tag="p"
             className="text-lg font-semibold mb-2"
-            placeholder="Label tombol..."
+            placeholder={t("Label tombol...", "Button label...")}
           />
         </div>
       )}

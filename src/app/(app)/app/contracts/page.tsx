@@ -27,7 +27,7 @@ const STATUS_TABS = [
 export default async function ContractsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; new?: string }>;
 }) {
   const lang = await getCurrentLang();
   const t = createT(lang);
@@ -118,7 +118,7 @@ export default async function ContractsPage({
           </p>
         </div>
         {canWrite && (
-          <CreateContractButton clients={clientsList} templates={contractTemplates} workspaceId={workspaceId} />
+          <CreateContractButton clients={clientsList} templates={contractTemplates} workspaceId={workspaceId} defaultOpen={params.new === "1"} />
         )}
       </div>
 

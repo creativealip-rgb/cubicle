@@ -20,8 +20,8 @@ function isBillingModel(value: string | null | undefined): value is BillingModel
 }
 
 export function resolveBillingModel(input: {
-  billingModel: string | null | undefined;
-  billingType: string | null | undefined;
+  billingModel?: string | null | undefined;
+  billingType?: string | null | undefined;
 }): BillingModel {
   if (input.billingModel != null) {
     if (isBillingModel(input.billingModel)) return input.billingModel;
@@ -36,6 +36,24 @@ export function resolveBillingModel(input: {
 
 export function allowsTimeTracking(model: BillingModel): boolean {
   return model === "hourly" || model === "retainer";
+}
+
+/**
+ * Client-side selector gate mirroring server `assertBillingModelAllowsTime`.
+ * Fixed Price and legacy Package projects never appear in Timer/Timesheet
+ * project selectors, even when legacy `timeTrackingMode` is not "off".
+ * Inputs mirror the projects row so callers can pass raw row values.
+ */
+export function allowsTimeTrackingProject(input: {
+  billingModel?: string | null | undefined;
+  billingType?: string | null | undefined;
+}): boolean {
+  try {
+    return allowsTimeTracking(resolveBillingModel(input));
+  } catch {
+    // Unknown/legacy-ambiguous model: fail closed — never offer time entry.
+    return false;
+  }
 }
 
 export function allowsTimeInvoice(model: BillingModel): boolean {

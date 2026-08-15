@@ -14,7 +14,7 @@ import { uploadOneFile, MAX_UPLOAD_BYTES } from "@/lib/files-upload";
 import { useT } from "@/lib/i18n-client";
 import { renderDocumentBlockHtml } from "@/lib/document-block-renderer";
 import type { DocumentPlaceholderValues } from "@/lib/document-placeholders";
-import { ArrowDown, ArrowUp, Eye, Loader2, Monitor, Paperclip, Redo2, Smartphone, Tablet, Trash2, Undo2, Upload, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Eye, GripVertical, Loader2, Monitor, Paperclip, Redo2, Smartphone, Tablet, Trash2, Undo2, Upload, X } from "lucide-react";
 
 type Props = {
   kind: "proposal" | "contract";
@@ -48,6 +48,22 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
   const attachmentInputRef = useRef<HTMLInputElement>(null);
   const { lang, t } = useT();
 
+  const blockLabel = (type: string) => {
+    const labels: Record<string, [string, string]> = {
+      heading: ["Heading", "Heading"],
+      text: ["Teks", "Text"],
+      placeholder: ["Placeholder", "Placeholder"],
+      list: ["Daftar", "List"],
+      divider: ["Pembatas", "Divider"],
+      table: ["Tabel", "Table"],
+      image: ["Gambar", "Image"],
+      attachment: ["Lampiran", "Attachment"],
+      signature: ["Tanda tangan", "Signature"],
+    };
+    const pair = labels[type];
+    return pair ? t(pair[0], pair[1]) : `${t("Blok", "Block")} ${type}`;
+  };
+
   const save = useCallback(async () => {
     if (!dirty || saving || stale) return;
     setSaving(true);
@@ -60,11 +76,11 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
       setDirty(false);
     } catch (error) {
       setStale(true);
-      toast.error(error instanceof Error ? error.message : "Gagal menyimpan");
+      toast.error(error instanceof Error ? error.message : t("Gagal menyimpan", "Failed to save"));
     } finally {
       setSaving(false);
     }
-  }, [blocks, dirty, saveBlocks, saving, stale]);
+  }, [blocks, dirty, saveBlocks, saving, stale, t]);
 
   useEffect(() => {
     if (!dirty) return;
@@ -171,26 +187,27 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
   return (
     <div className="min-h-[calc(100vh-5rem)] bg-slate-100">
       <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-4 py-3">
-        <div><h1 className="font-semibold">{kind === "proposal" ? "Proposal editor" : "Contract editor"}</h1><p className="text-xs text-muted-foreground">{stale ? "Dokumen berubah di tempat lain — muat ulang untuk melanjutkan" : saving || pending ? "Menyimpan..." : dirty ? "Perubahan belum tersimpan" : "Perubahan tersimpan"}</p></div>
+        <div><h1 className="font-semibold">{kind === "proposal" ? t("Editor proposal", "Proposal editor") : t("Editor kontrak", "Contract editor")}</h1><p className="text-xs text-muted-foreground">{stale ? t("Dokumen berubah di tempat lain — muat ulang untuk melanjutkan", "Document changed elsewhere — reload to continue") : saving || pending ? t("Menyimpan...", "Saving...") : dirty ? t("Perubahan belum tersimpan", "Unsaved changes") : t("Perubahan tersimpan", "Changes saved")}</p></div>
         <div className="flex items-center gap-2">
           <div className="hidden items-center gap-1 rounded-md border bg-muted/40 p-0.5 sm:flex">
             {([["desktop", Monitor], ["tablet", Tablet], ["mobile", Smartphone]] as const).map(([name, Icon]) => <Button key={name} type="button" variant={device === name ? "default" : "ghost"} size="icon" className="h-7 w-7" onClick={() => setDevice(name)} aria-label={name} aria-pressed={device === name}><Icon className="h-3.5 w-3.5" /></Button>)}
           </div>
-          <Button type="button" variant="ghost" size="icon" className="hidden h-8 w-8 sm:inline-flex" onClick={undo} disabled={historyIndex <= 0} title="Undo"><Undo2 className="h-4 w-4" /></Button>
-          <Button type="button" variant="ghost" size="icon" className="hidden h-8 w-8 sm:inline-flex" onClick={redo} disabled={historyIndex >= history.length - 1} title="Redo"><Redo2 className="h-4 w-4" /></Button>
-          <Button type="button" size="sm" variant="outline" className="lg:hidden" onClick={() => setShowTools(true)}>Blok</Button>
-          <Button type="button" size="sm" variant="outline" onClick={() => setShowPreview(true)}><Eye className="mr-1.5 h-4 w-4" />Preview</Button>
-          <Button size="sm" onClick={() => startTransition(() => { void save(); })} disabled={!dirty || saving || pending || stale}>Simpan</Button>
+          <Button type="button" variant="ghost" size="icon" className="hidden h-8 w-8 sm:inline-flex" onClick={undo} disabled={historyIndex <= 0} title={t("Urungkan", "Undo")}><Undo2 className="h-4 w-4" /></Button>
+          <Button type="button" variant="ghost" size="icon" className="hidden h-8 w-8 sm:inline-flex" onClick={redo} disabled={historyIndex >= history.length - 1} title={t("Ulangi", "Redo")}><Redo2 className="h-4 w-4" /></Button>
+          <Button type="button" size="sm" variant="outline" className="lg:hidden" onClick={() => setShowTools(true)}>{t("Blok", "Blocks")}</Button>
+          <Button type="button" size="sm" variant="outline" onClick={() => setShowPreview(true)}><Eye className="mr-1.5 h-4 w-4" />{t("Pratinjau", "Preview")}</Button>
+          <Button size="sm" onClick={() => startTransition(() => { void save(); })} disabled={!dirty || saving || pending || stale}>{t("Simpan", "Save")}</Button>
         </div>
       </div>
       <div className="flex min-h-[calc(100vh-5rem)]">
         <aside className="hidden w-56 shrink-0 border-r bg-white p-4 lg:block">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Struktur</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("Struktur", "Structure")}</p>
           <div className="space-y-1">
             {blocks.map((block, index) => (
-              <button key={block.id} type="button" draggable onDragStart={() => setDraggedBlockId(block.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => draggedBlockId && reorder(draggedBlockId, block.id)} onDragEnd={() => setDraggedBlockId(null)} onClick={() => setSelectedBlockId(block.id)} className={`flex w-full cursor-grab items-center gap-2 rounded-md px-3 py-2 text-left text-sm ${selectedBlockId === block.id ? "bg-primary/10 font-medium text-primary" : "text-muted-foreground hover:bg-muted"}`}>
+              <button key={block.id} type="button" draggable onDragStart={() => setDraggedBlockId(block.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => draggedBlockId && reorder(draggedBlockId, block.id)} onDragEnd={() => setDraggedBlockId(null)} onClick={() => setSelectedBlockId(block.id)} title={t("Seret untuk mengurutkan", "Drag to reorder")} className={`flex w-full cursor-grab items-center gap-2 rounded-md px-3 py-2 text-left text-sm ${selectedBlockId === block.id ? "bg-primary/10 font-medium text-primary" : "text-muted-foreground hover:bg-muted"}`}>
+                <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
                 <span className="w-5 text-xs text-muted-foreground">{index + 1}</span>
-                <span className="truncate">{block.type === "text" ? "Teks" : block.type[0].toUpperCase() + block.type.slice(1)}</span>
+                <span className="truncate">{blockLabel(block.type)}</span>
               </button>
             ))}
           </div>
@@ -199,7 +216,7 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
         <section className={`mx-auto min-h-[calc(100vh-12rem)] space-y-3 rounded-lg border bg-white p-6 shadow-sm transition-[width] ${device === "mobile" ? "max-w-[390px]" : device === "tablet" ? "max-w-[768px]" : "max-w-3xl"}`}>
           {blocks.map((block, index) => (
             <div key={block.id} onClick={() => setSelectedBlockId(block.id)} className={`group relative rounded border p-1 hover:border-slate-200 ${selectedBlockId === block.id ? "border-primary/40 ring-1 ring-primary/20" : "border-transparent"}`}>
-              {block.type === "heading" ? <Input value={block.content ?? ""} onChange={(e) => update(block.id, e.target.value)} className="text-xl font-semibold" placeholder="Judul bagian" /> : block.type === "text" || block.type === "placeholder" ? <Textarea className="max-w-full break-words [overflow-wrap:anywhere]" value={block.content ?? ""} onChange={(e) => update(block.id, e.target.value)} rows={3} placeholder={block.type === "placeholder" ? "{{client_name}}" : "Tulis isi dokumen..."} /> : block.type === "list" ? <Textarea value={(block.items ?? []).join("\n")} onChange={(e) => { const items = e.target.value.split("\n"); setBlocks((current) => current.map((item) => item.id === block.id ? { ...item, items } : item)); setDirty(true); }} rows={3} placeholder="Satu item per baris" /> : block.type === "table" ? <Textarea value={(block.rows ?? []).map((row) => row.join(" | ")).join("\n")} onChange={(e) => { const rows = e.target.value.split("\n").map((row) => row.split("|")); setBlocks((current) => current.map((item) => item.id === block.id ? { ...item, rows } : item)); setDirty(true); }} rows={4} placeholder="Kolom dipisah |" /> : block.type === "divider" ? <hr className="border-slate-300" /> : block.type === "image" ? <div className="space-y-2">
+              {block.type === "heading" ? <Input value={block.content ?? ""} onChange={(e) => update(block.id, e.target.value)} className="text-xl font-semibold" placeholder={t("Judul bagian", "Section heading")} /> : block.type === "text" || block.type === "placeholder" ? <Textarea className="max-w-full break-words [overflow-wrap:anywhere]" value={block.content ?? ""} onChange={(e) => update(block.id, e.target.value)} rows={3} placeholder={block.type === "placeholder" ? "{{client_name}}" : t("Tulis isi dokumen...", "Write document content...")} /> : block.type === "list" ? <Textarea value={(block.items ?? []).join("\n")} onChange={(e) => { const items = e.target.value.split("\n"); setBlocks((current) => current.map((item) => item.id === block.id ? { ...item, items } : item)); setDirty(true); }} rows={3} placeholder={t("Satu item per baris", "One item per line")} /> : block.type === "table" ? <Textarea value={(block.rows ?? []).map((row) => row.join(" | ")).join("\n")} onChange={(e) => { const rows = e.target.value.split("\n").map((row) => row.split("|")); setBlocks((current) => current.map((item) => item.id === block.id ? { ...item, rows } : item)); setDirty(true); }} rows={4} placeholder={t("Kolom dipisah |", "Columns separated by |")} /> : block.type === "divider" ? <hr className="border-slate-300" /> : block.type === "image" ? <div className="space-y-2">
                 {uploadingId === block.id ? (
                   <div className="flex items-center gap-2 rounded border border-dashed border-slate-300 p-4 text-sm text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" /> {t("Mengunggah gambar...", "Uploading image...")} {uploadProgress[block.id] ?? 0}%
@@ -207,11 +224,11 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
                 ) : isSafeImageBlock(block) ? (
                   <figure className="my-1">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={block.src} alt={block.fileName ?? "Gambar"} className="max-h-72 rounded-lg border border-slate-200" />
+                    <img src={block.src} alt={block.fileName ?? t("Gambar", "Image")} className="max-h-72 rounded-lg border border-slate-200" />
                     <figcaption className="mt-1 text-xs text-muted-foreground">{block.fileName}</figcaption>
                   </figure>
                 ) : (
-                  <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">Gambar tidak valid — hanya file workspace yang didukung.</div>
+                  <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">{t("Gambar tidak valid — hanya file workspace yang didukung.", "Invalid image — only workspace files are supported.")}</div>
                 )}
               </div> : block.type === "attachment" ? <div className="space-y-2">
                 {uploadingId === block.id ? (
@@ -221,19 +238,19 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
                 ) : block.fileId ? (
                   <div className="flex items-center gap-2 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
                     <Paperclip className="h-3.5 w-3.5 text-slate-500" />
-                    <span className="flex-1 truncate">{block.fileName ?? "Lampiran"}</span>
+                    <span className="flex-1 truncate">{block.fileName ?? t("Lampiran", "Attachment")}</span>
                     {block.sizeBytes ? <span className="text-xs text-muted-foreground">{(block.sizeBytes / 1024).toFixed(0)} KB</span> : null}
-                    <a href={`/api/files/${block.fileId}/download`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Buka</a>
+                    <a href={`/api/files/${block.fileId}/download`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{t("Buka", "Open")}</a>
                   </div>
                 ) : (
-                  <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">Lampiran tidak valid.</div>
+                  <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">{t("Lampiran tidak valid.", "Invalid attachment.")}</div>
                 )}
-              </div> : block.type === "signature" ? <div className="rounded border border-dashed p-6 text-center text-sm text-muted-foreground">Tempat tanda tangan client</div> : <div className="text-sm text-muted-foreground">Block {block.type}</div>}
+              </div> : block.type === "signature" ? <div className="rounded border border-dashed p-6 text-center text-sm text-muted-foreground">{t("Tempat tanda tangan client", "Client signature area")}</div> : <div className="text-sm text-muted-foreground">{blockLabel(block.type)}</div>}
               {block.type !== "signature" && (
                 <div className="absolute -right-1 -top-1 hidden items-center gap-0.5 group-hover:flex">
-                  <button type="button" className="rounded bg-white p-1 text-xs text-slate-500 shadow-sm ring-1 ring-slate-200 hover:text-slate-900" title="Naik" onClick={() => move(block.id, -1)} disabled={index === 0 || uploading}><ArrowUp className="h-3 w-3" /></button>
-                  <button type="button" className="rounded bg-white p-1 text-xs text-slate-500 shadow-sm ring-1 ring-slate-200 hover:text-slate-900" title="Turun" onClick={() => move(block.id, 1)} disabled={index === blocks.length - 1 || uploading}><ArrowDown className="h-3 w-3" /></button>
-                  <button type="button" className="rounded bg-white p-1 text-xs text-red-600 shadow-sm ring-1 ring-slate-200 hover:bg-red-50" title="Hapus" onClick={() => remove(block.id)} disabled={uploading}><Trash2 className="h-3 w-3" /></button>
+                  <button type="button" className="rounded bg-white p-1 text-xs text-slate-500 shadow-sm ring-1 ring-slate-200 hover:text-slate-900" title={t("Naik", "Move up")} onClick={() => move(block.id, -1)} disabled={index === 0 || uploading}><ArrowUp className="h-3 w-3" /></button>
+                  <button type="button" className="rounded bg-white p-1 text-xs text-slate-500 shadow-sm ring-1 ring-slate-200 hover:text-slate-900" title={t("Turun", "Move down")} onClick={() => move(block.id, 1)} disabled={index === blocks.length - 1 || uploading}><ArrowDown className="h-3 w-3" /></button>
+                  <button type="button" className="rounded bg-white p-1 text-xs text-red-600 shadow-sm ring-1 ring-slate-200 hover:bg-red-50" title={t("Hapus", "Delete")} onClick={() => remove(block.id)} disabled={uploading}><Trash2 className="h-3 w-3" /></button>
                 </div>
               )}
             </div>
@@ -241,38 +258,36 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
         </section>
         </main>
         <aside className="hidden w-72 shrink-0 border-l bg-white p-4 lg:block">
-          <div className="mb-4 flex items-center justify-between"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Insert</p><span className="text-[11px] text-muted-foreground">Properties</span></div>
-          {selectedBlockId ? <div className="mb-4 rounded-lg border bg-muted/30 p-3 text-sm"><p className="font-medium">{blocks.find((block) => block.id === selectedBlockId)?.type === "text" ? "Teks" : blocks.find((block) => block.id === selectedBlockId)?.type}</p><p className="mt-1 text-xs text-muted-foreground">Klik block di canvas untuk edit. Drag item Struktur untuk reorder.</p>{blocks.find((block) => block.id === selectedBlockId)?.type === "heading" ? <label className="mt-3 block text-xs text-muted-foreground">Ukuran heading<select className="mt-1 w-full rounded border bg-white px-2 py-1 text-sm text-foreground" value={blocks.find((block) => block.id === selectedBlockId)?.level ?? 2} onChange={(event) => selectedBlockId && updateBlock(selectedBlockId, { level: Number(event.target.value) as 1 | 2 | 3 })}><option value="1">Heading 1</option><option value="2">Heading 2</option><option value="3">Heading 3</option></select></label> : null}{blocks.find((block) => block.id === selectedBlockId)?.type === "list" ? <label className="mt-3 flex items-center gap-2 text-xs text-muted-foreground"><input type="checkbox" checked={Boolean(blocks.find((block) => block.id === selectedBlockId)?.ordered)} onChange={(event) => selectedBlockId && updateBlock(selectedBlockId, { ordered: event.target.checked })} />List bernomor</label> : null}</div> : null}
+          <div className="mb-4 flex items-center justify-between"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("Sisipkan", "Insert")}</p><span className="text-[11px] text-muted-foreground">{t("Properti", "Properties")}</span></div>
+          {selectedBlockId ? <div className="mb-4 rounded-lg border bg-muted/30 p-3 text-sm"><p className="font-medium">{blockLabel(blocks.find((block) => block.id === selectedBlockId)?.type ?? "")}</p><p className="mt-1 text-xs text-muted-foreground">{t("Klik block di canvas untuk edit. Drag item Struktur untuk reorder.", "Click a block on the canvas to edit. Drag items in Structure to reorder.")}</p>{blocks.find((block) => block.id === selectedBlockId)?.type === "heading" ? <label className="mt-3 block text-xs text-muted-foreground">{t("Ukuran heading", "Heading size")}<select className="mt-1 w-full rounded border bg-white px-2 py-1 text-sm text-foreground" value={blocks.find((block) => block.id === selectedBlockId)?.level ?? 2} onChange={(event) => selectedBlockId && updateBlock(selectedBlockId, { level: Number(event.target.value) as 1 | 2 | 3 })}><option value="1">Heading 1</option><option value="2">Heading 2</option><option value="3">Heading 3</option></select></label> : null}{blocks.find((block) => block.id === selectedBlockId)?.type === "list" ? <label className="mt-3 flex items-center gap-2 text-xs text-muted-foreground"><input type="checkbox" checked={Boolean(blocks.find((block) => block.id === selectedBlockId)?.ordered)} onChange={(event) => selectedBlockId && updateBlock(selectedBlockId, { ordered: event.target.checked })} />{t("List bernomor", "Numbered list")}</label> : null}</div> : null}
           <div className="grid gap-2">
             {(["heading", "text", "placeholder", "list", "divider", "table"] as AddableBlock[]).map((type) => (
-              <Button key={type} type="button" variant="outline" className="justify-start" onClick={() => add(type)}>+ {type === "text" ? "Teks" : type[0].toUpperCase() + type.slice(1)}</Button>
+              <Button key={type} type="button" variant="outline" className="justify-start" onClick={() => add(type)}>+ {blockLabel(type)}</Button>
             ))}
             {kind === "proposal" && <>
               <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleMediaUpload("image", e.target.files?.[0])} />
-              <Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => imageInputRef.current?.click()}><Upload className="mr-2 h-3.5 w-3.5" />Gambar</Button>
+              <Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => imageInputRef.current?.click()}><Upload className="mr-2 h-3.5 w-3.5" />{t("Gambar", "Image")}</Button>
               <input ref={attachmentInputRef} type="file" className="hidden" onChange={(e) => handleMediaUpload("attachment", e.target.files?.[0])} />
-              <Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => attachmentInputRef.current?.click()}><Paperclip className="mr-2 h-3.5 w-3.5" />Lampiran</Button>
+              <Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => attachmentInputRef.current?.click()}><Paperclip className="mr-2 h-3.5 w-3.5" />{t("Lampiran", "Attachment")}</Button>
             </>}
           </div>
-          <Button type="button" className="mt-6 w-full" variant="outline" onClick={() => setShowPreview(true)}><Eye className="mr-2 h-4 w-4" />Preview</Button>
         </aside>
       </div>
       <div className="sticky bottom-0 z-20 flex items-center justify-between gap-3 border-t bg-white/95 px-4 py-2 text-xs text-muted-foreground backdrop-blur" role="status" aria-live="polite">
-        <span>{blocks.length} blok · {saving || pending ? "Menyimpan..." : dirty ? "Belum tersimpan" : "Tersimpan"}</span>
-        <div className="flex items-center gap-2"><Button type="button" variant="outline" size="sm" onClick={() => setShowPreview(true)}><Eye className="mr-1.5 h-3.5 w-3.5" />Preview</Button><Button type="button" size="sm" onClick={() => startTransition(() => { void save(); })} disabled={!dirty || saving || pending || stale}>Simpan</Button></div>
+        <span>{blocks.length} {t("blok", blocks.length === 1 ? "block" : "blocks")} · {saving || pending ? t("Menyimpan...", "Saving...") : dirty ? t("Belum tersimpan", "Not saved") : t("Tersimpan", "Saved")}</span>
       </div>
       {showTools && <div className="fixed inset-0 z-50 bg-black/40 lg:hidden" onClick={() => setShowTools(false)}>
         <aside className="absolute right-0 top-0 h-full w-72 bg-white p-4 shadow-xl" onClick={(event) => event.stopPropagation()}>
-          <div className="mb-4 flex items-center justify-between"><p className="text-sm font-semibold">Blok</p><Button type="button" variant="ghost" size="icon" onClick={() => setShowTools(false)} aria-label="Tutup blok"><X className="h-4 w-4" /></Button></div>
+          <div className="mb-4 flex items-center justify-between"><p className="text-sm font-semibold">{t("Blok", "Blocks")}</p><Button type="button" variant="ghost" size="icon" onClick={() => setShowTools(false)} aria-label={t("Tutup blok", "Close blocks")}><X className="h-4 w-4" /></Button></div>
           <div className="grid gap-2">
-            {(["heading", "text", "placeholder", "list", "divider", "table"] as AddableBlock[]).map((type) => <Button key={type} type="button" variant="outline" className="justify-start" onClick={() => { add(type); setShowTools(false); }}>+ {type === "text" ? "Teks" : type[0].toUpperCase() + type.slice(1)}</Button>)}
-            {kind === "proposal" && <><Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => { setShowTools(false); imageInputRef.current?.click(); }}><Upload className="mr-2 h-3.5 w-3.5" />Gambar</Button><Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => { setShowTools(false); attachmentInputRef.current?.click(); }}><Paperclip className="mr-2 h-3.5 w-3.5" />Lampiran</Button></>}
+            {(["heading", "text", "placeholder", "list", "divider", "table"] as AddableBlock[]).map((type) => <Button key={type} type="button" variant="outline" className="justify-start" onClick={() => { add(type); setShowTools(false); }}>+ {blockLabel(type)}</Button>)}
+            {kind === "proposal" && <><Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => { setShowTools(false); imageInputRef.current?.click(); }}><Upload className="mr-2 h-3.5 w-3.5" />{t("Gambar", "Image")}</Button><Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => { setShowTools(false); attachmentInputRef.current?.click(); }}><Paperclip className="mr-2 h-3.5 w-3.5" />{t("Lampiran", "Attachment")}</Button></>}
           </div>
         </aside>
       </div>}
       {showPreview && <div className="fixed inset-0 z-50 bg-black/40 p-4 sm:p-10" onClick={() => setShowPreview(false)}>
         <section className="mx-auto max-h-full max-w-3xl overflow-y-auto rounded-lg bg-white p-8 shadow-xl" onClick={(event) => event.stopPropagation()}>
-          <div className="mb-6 flex items-center justify-between"><h2 className="text-lg font-semibold">Preview</h2><Button type="button" variant="ghost" size="icon" onClick={() => setShowPreview(false)} aria-label="Tutup preview"><X className="h-4 w-4" /></Button></div>
+          <div className="mb-6 flex items-center justify-between"><h2 className="text-lg font-semibold">{t("Pratinjau", "Preview")}</h2><Button type="button" variant="ghost" size="icon" onClick={() => setShowPreview(false)} aria-label={t("Tutup preview", "Close preview")}><X className="h-4 w-4" /></Button></div>
           <div className="min-w-0 space-y-4 break-words [overflow-wrap:anywhere]">{blocks.map((block) => <div key={block.id} className="min-w-0 break-words text-sm text-slate-700 [overflow-wrap:anywhere]">{renderDocumentBlockHtml(block, placeholderValues)}</div>)}</div>
         </section>
       </div>}

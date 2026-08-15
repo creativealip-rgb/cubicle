@@ -8,8 +8,13 @@ import { defaultDocumentBlocks, normalizeDocumentBlocks } from "@/lib/document-b
 import { saveContractBlocks } from "@/lib/actions/contracts";
 import { buildContractPlaceholderValues } from "@/lib/document-placeholder-values";
 
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 export default async function ContractEditPage({ params }: { params: Promise<{ contractId: string }> }) {
   const { contractId } = await params;
+  if (!isUuid(contractId)) notFound();
   const workspaceId = await getWorkspaceForCurrentUser();
   const [contract] = await db.select({ id: contracts.id, contentBlocks: contracts.contentBlocks, contentRevision: contracts.contentRevision, status: contracts.status, clientName: contracts.clientName, clientEmail: contracts.clientEmail, companyName: contracts.companyName, contractNumber: contracts.contractNumber, contractDate: contracts.contractDate, validUntil: contracts.validUntil })
     .from(contracts).where(and(eq(contracts.id, contractId), eq(contracts.workspaceId, workspaceId))).limit(1);

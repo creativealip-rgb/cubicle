@@ -207,7 +207,8 @@ export function ProposalsListTable({
                 <TableCell className="text-xs text-slate-500">
                   {activityLabel(p, t, lang)}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right align-middle">
+                  <div className="flex justify-end">
                   {canWrite &&
                   (p.status === "draft" ||
                     p.status === "sent" ||
@@ -236,6 +237,7 @@ export function ProposalsListTable({
                       </Link>
                     </Button>
                   )}
+                  </div>
                 </TableCell>
               </TableRow>
             );
