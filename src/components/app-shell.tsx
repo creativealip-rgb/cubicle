@@ -43,6 +43,7 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const pathname = usePathname();
+  const onDocumentEditor = /\/app\/(proposals|contracts)\/[^/]+\/edit$/.test(pathname ?? "");
   // Brain page renders the full-page AI panel itself; skip the floating one.
   const onBrainPage = pathname?.startsWith("/app/brain") ?? false;
 
@@ -93,7 +94,7 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
       >
         Lompati ke konten utama
       </a>
-      <div className="flex min-h-screen">
+      <div className={cn("flex", onDocumentEditor ? "h-screen overflow-hidden" : "min-h-screen")}>
         {/* Mobile overlay backdrop */}
         {mobileOpen && (
           <div
@@ -119,7 +120,7 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
           )}
         >
           <AppTopbar user={user} />
-          <main id="main-content" className="min-w-0 flex-1 p-3 pb-24 sm:p-4 md:p-6 md:pb-28">{children}</main>
+          <main id="main-content" className={cn("min-w-0 flex-1", onDocumentEditor ? "min-h-0 overflow-hidden p-0" : "p-3 pb-24 sm:p-4 md:p-6 md:pb-28")}>{children}</main>
         </div>
         {!onBrainPage && <AIChatPanel variant="floating" />}
       </div>

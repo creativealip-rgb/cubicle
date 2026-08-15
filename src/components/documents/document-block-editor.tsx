@@ -169,7 +169,7 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
   }
 
   return (
-    <div className="flex h-[calc(100vh-5rem)] min-h-0 flex-col overflow-hidden bg-slate-100">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden overscroll-none bg-slate-100">
       <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-4 py-3">
         <div><h1 className="font-semibold">{kind === "proposal" ? "Proposal editor" : "Contract editor"}</h1><p className="text-xs text-muted-foreground">{stale ? "Dokumen berubah di tempat lain — muat ulang untuk melanjutkan" : saving || pending ? "Menyimpan..." : dirty ? "Perubahan belum tersimpan" : "Perubahan tersimpan"}</p></div>
         <div className="flex items-center gap-2">
