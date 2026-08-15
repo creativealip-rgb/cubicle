@@ -266,6 +266,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [history, setHistory] = useState<string[]>(() => [JSON.stringify({ ...initialSite, pages: normalizePages(initialSite) })]);
   const [historyIndex, setHistoryIndex] = useState(0);
+  const [readinessTarget, setReadinessTarget] = useState<string | null>(null);
 
   // Drag state - track currently dragged item for preview
   const [activeDrag, setActiveDrag] = useState<{ id: string; label: string } | null>(null);
@@ -463,6 +464,24 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
     }
   }, [onSave, router, site, t]);
 
+  const handleSelectReadinessIssue = useCallback((issue: { id: string }) => {
+    if (issue.id === "theme-config-missing") {
+      setSidebarTab("style");
+      return;
+    }
+
+    const target = issue.id.startsWith("cta") || issue.id === "placeholder-example-destination"
+      ? "cta"
+      : issue.id.startsWith("hero") || issue.id.startsWith("title")
+        ? "hero"
+        : null;
+    if (!target) return;
+    setReadinessTarget(target);
+    window.setTimeout(() => {
+      document.querySelector(`[data-readiness-target="${target}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
+  }, []);
+
   // Keyboard shortcuts
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -600,6 +619,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
             onDuplicateSection={duplicateSection}
             onDeleteSection={deleteSection}
             onReorderSections={reorderSections}
+            readinessTarget={readinessTarget}
           />
         </main>
 
@@ -625,7 +645,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
           </div>
 
           {/* Phase 6: Readiness status badge — clicks toggle accessible issue list */}
-          <ReadinessBadge site={site} t={(id, fallback) => t(id, fallback)} />
+          <ReadinessBadge site={site} onSelectIssue={handleSelectReadinessIssue} t={(id, fallback) => t(id, fallback)} />
 
           {/* Publish toggle */}
           <button

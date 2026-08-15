@@ -42,6 +42,7 @@ type Props = {
   onMoveSection: (id: string, direction: -1 | 1) => void;
   onDuplicateSection: (id: string) => void;
   onDeleteSection: (id: string) => void;
+  readinessTarget?: string | null;
 };
 
 export function CanvasRenderer({
@@ -55,6 +56,7 @@ export function CanvasRenderer({
   onMoveSection,
   onDuplicateSection,
   onDeleteSection,
+  readinessTarget,
   onReorderSections: _onReorderSections,
 }: Props & { onReorderSections?: (sections: PersonalSiteSection[]) => void }) { // reserved for future use
   const { t } = useT();
@@ -74,7 +76,7 @@ export function CanvasRenderer({
       onClick={() => onSelectSection(null)}
     >
       {/* Hero section */}
-      <div className="relative px-8 pt-16 pb-12 text-center" style={{ backgroundColor: theme?.primaryColor ?? "#6647F0" }}>
+      <div data-readiness-target="hero" className={cn("relative px-8 pt-16 pb-12 text-center", readinessTarget === "hero" && "ring-4 ring-red-400 ring-offset-2")} style={{ backgroundColor: theme?.primaryColor ?? "#6647F0" }}>
         {site.heroImage && (
           <Image
             src={site.heroImage}
@@ -165,7 +167,7 @@ export function CanvasRenderer({
 
       {/* CTA */}
       {(site.ctaLabel || site.ctaUrl) && (
-        <div className="px-8 py-8 text-center">
+        <div data-readiness-target="cta" className={cn("px-8 py-8 text-center", readinessTarget === "cta" && "ring-4 ring-red-400 ring-offset-2")}>
           <InlineText
             value={site.ctaLabel}
             onChange={(v) => onUpdateSite({ ctaLabel: v })}

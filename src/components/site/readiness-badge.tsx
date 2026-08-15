@@ -61,6 +61,7 @@ export function groupReadinessIssues(issues: ReadinessIssue[]): { errors: Readin
 
 type ReadinessBadgeProps = {
   site: PersonalSiteInput;
+  onSelectIssue?: (issue: ReadinessIssue) => void;
   /**
    * Optional translation function so the badge follows the app's
    * bilingual pattern without importing the i18n client itself.
@@ -79,7 +80,7 @@ type ReadinessBadgeProps = {
  * - Click toggles an accessible issue panel with severity labels
  *   (errors listed first, each item labelled with its user-friendly copy).
  */
-export function ReadinessBadge({ site, t = (_id, fallback) => fallback }: ReadinessBadgeProps) {
+export function ReadinessBadge({ site, onSelectIssue, t = (_id, fallback) => fallback }: ReadinessBadgeProps) {
   const preview = useMemo(() => computeReadinessPreview(site), [site]);
   const grouped = useMemo(() => groupReadinessIssues(preview.issues), [preview.issues]);
   const [open, setOpen] = useState(false);
@@ -151,11 +152,14 @@ export function ReadinessBadge({ site, t = (_id, fallback) => fallback }: Readin
                   </p>
                   <ul aria-label={t("Error yang harus diperbaiki sebelum publikasi", "Errors to fix before publishing")} className="space-y-1">
                     {grouped.errors.map((issue) => (
-                      <li key={issue.id} className="rounded border border-red-200 bg-red-50 p-1.5 text-xs text-red-700">
-                        <span className="font-medium" aria-label={t("Error", "Error")}>
-                          [ERROR]
-                        </span>{" "}
-                        {issue.label}
+                      <li key={issue.id}>
+                        <button
+                          type="button"
+                          onClick={() => { onSelectIssue?.(issue); setOpen(false); }}
+                          className="w-full rounded border border-red-200 bg-red-50 p-1.5 text-left text-xs text-red-700 hover:border-red-300 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                        >
+                          {issue.label}
+                        </button>
                       </li>
                     ))}
                   </ul>
@@ -169,11 +173,14 @@ export function ReadinessBadge({ site, t = (_id, fallback) => fallback }: Readin
                   </p>
                   <ul aria-label={t("Peringatan — perbaikan yang disarankan", "Warnings — recommended fixes")} className="space-y-1">
                     {grouped.warnings.map((issue) => (
-                      <li key={issue.id} className="rounded border border-amber-200 bg-amber-50 p-1.5 text-xs text-amber-800">
-                        <span className="font-medium" aria-label={t("Peringatan", "Warning")}>
-                          [WARN]
-                        </span>{" "}
-                        {issue.label}
+                      <li key={issue.id}>
+                        <button
+                          type="button"
+                          onClick={() => { onSelectIssue?.(issue); setOpen(false); }}
+                          className="w-full rounded border border-amber-200 bg-amber-50 p-1.5 text-left text-xs text-amber-800 hover:border-amber-300 hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                        >
+                          {issue.label}
+                        </button>
                       </li>
                     ))}
                   </ul>
