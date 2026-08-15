@@ -21,6 +21,7 @@ import { NewTimerDialog } from "@/components/time/new-timer-dialog";
 import { ActiveTimerCard } from "@/components/time/active-timer-card";
 import { WaktuNavigation } from "@/components/time/waktu-navigation";
 import { effectiveWorkDateSql, shiftDateIso, weekStartDate, localDateIso } from "@/lib/effective-work-date";
+import { allowsTimeTrackingProject } from "@/lib/billing-model";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -128,6 +129,7 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
       name: projects.name,
       clientId: projects.clientId,
       billingType: projects.billingType,
+      billingModel: projects.billingModel,
       timeTrackingMode: projects.timeTrackingMode,
       activityRequired: projects.activityRequired,
       rate: projects.rate,
@@ -170,7 +172,9 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
     )
     .orderBy(activities.name);
 
-  const writableProjectList = projectList.filter((project) => project.timeTrackingMode !== "off");
+  const writableProjectList = projectList.filter(
+    (project) => project.timeTrackingMode !== "off" && allowsTimeTrackingProject(project),
+  );
   const writableProjectIds = new Set(writableProjectList.map((project) => project.id));
   const writableTaskList = taskList.filter((task) => task.projectId && writableProjectIds.has(task.projectId));
   const recentTimerCombinations = uniqueRecentTimerCombinations(
