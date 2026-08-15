@@ -168,6 +168,21 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
     setBlocks(next); recordHistory(next); setDirty(true); setDraggedBlockId(null);
   }
 
+  function updateTable(blockId: string, rows: string[][]) {
+    setBlocks((current) => current.map((item) => item.id === blockId ? { ...item, rows } : item));
+    setDirty(true);
+  }
+
+  function addTableRow(block: DocumentBlock) {
+    const rows = block.rows?.length ? block.rows : [["", ""]];
+    updateTable(block.id, [...rows, Array(rows[0].length).fill("")]);
+  }
+
+  function addTableColumn(block: DocumentBlock) {
+    const rows = block.rows?.length ? block.rows : [["", ""]];
+    updateTable(block.id, rows.map((row) => [...row, ""]));
+  }
+
   return (
     <div className="relative flex h-full min-h-0 flex-col overflow-hidden overscroll-none bg-slate-100">
       <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-4 py-3">
@@ -199,7 +214,7 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
         <section className={`mx-auto min-h-[calc(100vh-12rem)] space-y-3 rounded-lg border bg-white p-6 shadow-sm transition-[width] ${device === "mobile" ? "max-w-[390px]" : device === "tablet" ? "max-w-[768px]" : "max-w-3xl"}`}>
           {blocks.map((block, index) => (
             <div key={block.id} onClick={() => setSelectedBlockId(block.id)} className={`group relative rounded border p-1 hover:border-slate-200 ${selectedBlockId === block.id ? "border-primary/40 ring-1 ring-primary/20" : "border-transparent"}`}>
-              {block.type === "heading" ? <Input value={block.content ?? ""} onChange={(e) => update(block.id, e.target.value)} className="text-xl font-semibold" placeholder="Judul bagian" /> : block.type === "text" || block.type === "placeholder" ? <Textarea className="max-w-full break-words [overflow-wrap:anywhere]" value={block.content ?? ""} onChange={(e) => update(block.id, e.target.value)} rows={3} placeholder={block.type === "placeholder" ? "{{client_name}}" : "Tulis isi dokumen..."} /> : block.type === "list" ? <Textarea value={(block.items ?? []).join("\n")} onChange={(e) => { const items = e.target.value.split("\n"); setBlocks((current) => current.map((item) => item.id === block.id ? { ...item, items } : item)); setDirty(true); }} rows={3} placeholder="Satu item per baris" /> : block.type === "table" ? <Textarea value={(block.rows ?? []).map((row) => row.join(" | ")).join("\n")} onChange={(e) => { const rows = e.target.value.split("\n").map((row) => row.split("|")); setBlocks((current) => current.map((item) => item.id === block.id ? { ...item, rows } : item)); setDirty(true); }} rows={4} placeholder="Kolom dipisah |" /> : block.type === "divider" ? <hr className="border-slate-300" /> : block.type === "image" ? <div className="space-y-2">
+              {block.type === "heading" ? <Input value={block.content ?? ""} onChange={(e) => update(block.id, e.target.value)} className="text-xl font-semibold" placeholder="Judul bagian" /> : block.type === "text" || block.type === "placeholder" ? <Textarea className="max-w-full break-words [overflow-wrap:anywhere]" value={block.content ?? ""} onChange={(e) => update(block.id, e.target.value)} rows={3} placeholder={block.type === "placeholder" ? "{{client_name}}" : "Tulis isi dokumen..."} /> : block.type === "list" ? <Textarea value={(block.items ?? []).join("\n")} onChange={(e) => { const items = e.target.value.split("\n"); setBlocks((current) => current.map((item) => item.id === block.id ? { ...item, items } : item)); setDirty(true); }} rows={3} placeholder="Satu item per baris" /> : block.type === "table" ? <div className="space-y-2 overflow-x-auto"><table className="w-full border-collapse text-sm"><tbody>{(block.rows?.length ? block.rows : [["", ""]]).map((row, rowIndex) => <tr key={rowIndex}>{row.map((cell, colIndex) => <td key={colIndex} className="border border-slate-200 p-0"><Input className="h-9 rounded-none border-0 shadow-none" value={cell} onChange={(e) => { const rows = (block.rows?.length ? block.rows : [["", ""]]).map((currentRow) => [...currentRow]); rows[rowIndex][colIndex] = e.target.value; updateTable(block.id, rows); }} aria-label={`Row ${rowIndex + 1}, column ${colIndex + 1}`} /></td>)}</tr>)}</tbody></table><div className="flex gap-2"><Button type="button" variant="outline" size="sm" onClick={() => addTableRow(block)}>+ Row</Button><Button type="button" variant="outline" size="sm" onClick={() => addTableColumn(block)}>+ Column</Button></div></div> : block.type === "divider" ? <hr className="border-slate-300" /> : block.type === "image" ? <div className="space-y-2">
                 {uploadingId === block.id ? (
                   <div className="flex items-center gap-2 rounded border border-dashed border-slate-300 p-4 text-sm text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" /> {t("Mengunggah gambar...", "Uploading image...")} {uploadProgress[block.id] ?? 0}%
