@@ -21,6 +21,15 @@
   - Previous image: `sha256:533c4509dc25aca94346f360acfaba2f5abc4a2f7f80bea69e2b6ac5303b9af6`.
   - Health: `https://app.cubiqlo.com/api/health` app/DB ok.
   - Smoke: `https://app.cubiqlo.com/login` HTTP 200; `https://cubiqlo.com/` HTTP 200.
+- Production deployment:
+  - New image: `sha256:8b00f813684ed3481fcfded27d0155ff7add34b2a27b49bc91927309b9b19e9b`.
+  - Image tag: `cubiqlo-prod:sha-f6aef587c1a49f611516a3929a8320680ef1a711`.
+  - Runtime revision: `f6aef587c1a49f611516a3929a8320680ef1a711`.
+  - Container recreated: `cubiqlo-new-app-next`; restart policy `unless-stopped`.
+  - Health: `https://app.cubiqlo.com/api/health` app/DB ok.
+  - Smoke: `https://app.cubiqlo.com/login` HTTP 200; `https://cubiqlo.com/` HTTP 200.
+  - Asset revision proof: `dpl=f6aef587c1a49f611516a3929a8320680ef1a711`.
+  - Proxy safety: `dokploy-traefik` remains sole public 80/443 owner.
 - Migration: none.
 
 ## 12 August 2026 — Dev integration sync and deploy retry
