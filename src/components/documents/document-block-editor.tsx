@@ -271,12 +271,10 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
               <Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => attachmentInputRef.current?.click()}><Paperclip className="mr-2 h-3.5 w-3.5" />{t("Lampiran", "Attachment")}</Button>
             </>}
           </div>
-          <Button type="button" className="mt-6 w-full" variant="outline" onClick={() => setShowPreview(true)}><Eye className="mr-2 h-4 w-4" />{t("Pratinjau", "Preview")}</Button>
         </aside>
       </div>
       <div className="sticky bottom-0 z-20 flex items-center justify-between gap-3 border-t bg-white/95 px-4 py-2 text-xs text-muted-foreground backdrop-blur" role="status" aria-live="polite">
         <span>{blocks.length} {t("blok", blocks.length === 1 ? "block" : "blocks")} · {saving || pending ? t("Menyimpan...", "Saving...") : dirty ? t("Belum tersimpan", "Not saved") : t("Tersimpan", "Saved")}</span>
-        <div className="flex items-center gap-2"><Button type="button" size="sm" onClick={() => startTransition(() => { void save(); })} disabled={!dirty || saving || pending || stale}>{t("Simpan", "Save")}</Button></div>
       </div>
       {showTools && <div className="fixed inset-0 z-50 bg-black/40 lg:hidden" onClick={() => setShowTools(false)}>
         <aside className="absolute right-0 top-0 h-full w-72 bg-white p-4 shadow-xl" onClick={(event) => event.stopPropagation()}>
