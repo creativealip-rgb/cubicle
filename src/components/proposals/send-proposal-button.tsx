@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Send, Copy, Check, Link2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -58,11 +59,13 @@ export function SendProposalButton({
     : labelSend || "Kirim";
   const sendingText = labelSending || "Mengirim...";
   const subject = title ? `Proposal: ${title}` : t("Proposal", "Proposal");
+  const defaultMessage = `Halo ${clientName || ""},\n\nProposal "${title || "ini"}" sudah siap untuk ditinjau.\n\nSilakan buka tautan proposal untuk melihat detail scope, harga, dan ketentuan:\n{{proposal_link}}\n\nTerima kasih.`;
+  const [message, setMessage] = useState(defaultMessage);
 
   function handleSend() {
     startTransition(async () => {
       try {
-        const result = await sendProposal(proposalId);
+        const result = await sendProposal(proposalId, message.trim() || undefined);
         const url = `${window.location.origin}/proposal/${result.token}`;
         setLink(url);
         setOpen(false);
@@ -130,7 +133,10 @@ export function SendProposalButton({
       <Dialog
         open={open}
         onOpenChange={(next) => {
-          if (!pending) setOpen(next);
+          if (!pending) {
+            if (next) setMessage(defaultMessage);
+            setOpen(next);
+          }
         }}
       >
         <DialogContent className="sm:max-w-md">
@@ -147,7 +153,17 @@ export function SendProposalButton({
               )}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 text-sm">
+          <div className="space-y-3 text-sm">
+            <label className="block space-y-1">
+              <span className="text-muted-foreground">{t("Pesan", "Message")}</span>
+              <Textarea
+                value={message}
+                onChange={(event) => setMessage(event.target.value)}
+                disabled={pending}
+                className="min-h-36 resize-y"
+                placeholder={t("Pesan tambahan untuk client (opsional)", "Optional message to client")}
+              />
+            </label>
             <div className="flex gap-2">
               <span className="w-20 shrink-0 text-muted-foreground">
                 {t("Penerima", "Recipient")}

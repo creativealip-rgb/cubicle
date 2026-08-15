@@ -347,6 +347,7 @@ export async function deleteContract(contractId: string) {
 
 export async function sendContract(input: {
   contractId: string;
+  customMessage?: string;
   ttlDays?: number;
 }) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -421,15 +422,19 @@ export async function sendContract(input: {
       "https://cubiqlo.com"
     ).replace(/\/$/, "");
     const replyTo = await resolveWorkspaceReplyTo(workspaceId);
+    const contractUrl = `${appUrl}/contract/${token}`;
+    const text = (
+      input.customMessage?.trim() ||
+      `Hi ${recipientName || "there"},\n\n` +
+        `${ws?.name || "Cubiqlo"} sent you a contract for signature: "${c.title}".\n\n` +
+        `Review and sign it here:\n{{contract_link}}\n\n` +
+        (vars.valid_until ? `This link is valid until ${vars.valid_until}.\n\n` : "\n") +
+        `If you have any questions, just reply to this email.`
+    ).replace(/\{\{contract_link\}\}/g, contractUrl);
     const emailResult = await sendNotification({
       to: recipientEmail,
       subject: `Contract for signature: ${c.title}`,
-      text:
-        `Hi ${recipientName || "there"},\n\n` +
-        `${ws?.name || "Cubiqlo"} sent you a contract for signature: "${c.title}".\n\n` +
-        `Review and sign it here:\n${appUrl}/contract/${token}\n\n` +
-        (vars.valid_until ? `This link is valid until ${vars.valid_until}.\n\n` : "\n") +
-        `If you have any questions, just reply to this email.`,
+      text,
       type: "contract_sent",
       replyTo,
     });
