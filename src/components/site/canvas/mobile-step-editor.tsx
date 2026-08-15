@@ -11,15 +11,23 @@ import { SECTION_TEMPLATES, type SectionTemplate } from "@/lib/personal-site/sec
 import { SEOPanel } from "./seo-panel";
 import { ReadinessBadge } from "../readiness-badge";
 import { isReadyToPublish, getPersonalSiteReadiness } from "@/lib/personal-site/readiness";
+import { useT } from "@/lib/i18n-client";
 
-const STEPS = ["Pages", "Sections", "Theme", "Publish"] as const;
+const STEPS = ["pages", "sections", "theme", "publish"] as const;
 type Step = typeof STEPS[number];
 
 const STEP_ICONS: Record<Step, typeof FileText> = {
-  Pages: FileText,
-  Sections: Layers,
-  Theme: Palette,
-  Publish: Eye,
+  pages: FileText,
+  sections: Layers,
+  theme: Palette,
+  publish: Eye,
+};
+
+const STEP_LABELS: Record<Step, { id: string; en: string }> = {
+  pages: { id: "Halaman", en: "Pages" },
+  sections: { id: "Bagian", en: "Sections" },
+  theme: { id: "Tema", en: "Theme" },
+  publish: { id: "Terbitkan", en: "Publish" },
 };
 
 function slugifyPageTitle(title: string, fallback: string) {
@@ -69,7 +77,8 @@ export function MobileStepEditor({
   onSetActivePageId,
   onSelectSection,
 }: Props) {
-  const [step, setStep] = useState<Step>("Pages");
+  const { t } = useT();
+  const [step, setStep] = useState<Step>("pages");
   const stepIndex = STEPS.indexOf(step);
   const publicUrl = `${publicSiteBaseUrl}/${normalizePersonalSiteSlug(site.slug)}`;
 
@@ -124,7 +133,7 @@ export function MobileStepEditor({
               }`}
             >
               <Icon className="h-3 w-3" />
-              {s}
+              {t(STEP_LABELS[s].id, STEP_LABELS[s].en)}
             </button>
           );
         })}
@@ -132,7 +141,7 @@ export function MobileStepEditor({
 
       {/* Step content */}
       <div className="flex-1 overflow-y-auto p-4 pb-20">
-        {step === "Pages" && (
+        {step === "pages" && (
           <PagesStep
             pages={pages}
             activePageId={activePageId}
@@ -141,7 +150,7 @@ export function MobileStepEditor({
           />
         )}
 
-        {step === "Sections" && (
+        {step === "sections" && (
           <SectionsStep
             sections={sections}
             selectedSectionId={selectedSectionId}
@@ -152,14 +161,14 @@ export function MobileStepEditor({
           />
         )}
 
-        {step === "Theme" && (
+        {step === "theme" && (
           <ThemeStep
             site={site}
             onUpdateSite={onUpdateSite}
           />
         )}
 
-        {step === "Publish" && (
+        {step === "publish" && (
           <PublishStep
             site={site}
             publicUrl={publicUrl}
@@ -178,10 +187,10 @@ export function MobileStepEditor({
           onClick={() => setStep(STEPS[Math.max(0, stepIndex - 1)])}
           disabled={stepIndex === 0}
         >
-          <ChevronLeft className="h-4 w-4 mr-1" /> Back
+          <ChevronLeft className="h-4 w-4 mr-1" /> {t("Kembali", "Back")}
         </Button>
         <span className="text-xs text-muted-foreground">
-          {stepIndex + 1} / {STEPS.length}
+          {t("Langkah", "Step")} {stepIndex + 1} / {STEPS.length}
         </span>
         <Button
           type="button"
@@ -190,7 +199,7 @@ export function MobileStepEditor({
           onClick={() => setStep(STEPS[Math.min(STEPS.length - 1, stepIndex + 1)])}
           disabled={stepIndex === STEPS.length - 1}
         >
-          Next <ChevronRight className="h-4 w-4 ml-1" />
+          {t("Lanjut", "Next")} <ChevronRight className="h-4 w-4 ml-1" />
         </Button>
       </div>
     </div>
@@ -205,19 +214,20 @@ function PagesStep({ pages, activePageId, onSetActivePageId, updatePages }: {
 }) {
   function addPage() {
     const id = makeId().replace(/^s_/, "p_");
-    const title = `Page ${pages.length + 1}`;
+    const title = `${t("Halaman", "Page")} ${pages.length + 1}`;
     updatePages([...pages, { id, slug: slugifyPageTitle(title, `page-${pages.length + 1}`), title, isHome: false, sections: [] }]);
     onSetActivePageId(id);
   }
 
+  const { t } = useT();
   return (
     <div className="space-y-3">
-      <h2 className="text-sm font-semibold">Pages</h2>
+      <h2 className="text-sm font-semibold">{t("Halaman", "Pages")}</h2>
       {pages.map((page, _i) => (
         <div key={page.id} className={`flex items-center gap-2 rounded-lg border p-3 ${page.id === activePageId ? "border-primary/60 bg-primary/5" : ""}`}>
           <button type="button" className="flex-1 text-left" onClick={() => onSetActivePageId(page.id)}>
             <p className="text-sm font-medium">{page.title}</p>
-            <p className="text-xs text-muted-foreground">/{page.slug || ""} {page.isHome ? "· Home" : ""}</p>
+            <p className="text-xs text-muted-foreground">/{page.slug || ""} {page.isHome ? `· ${t("Beranda", "Home")}` : ""}</p>
           </button>
           <div className="flex gap-1">
             <Button type="button" variant="ghost" size="icon" className="h-8 w-8"
@@ -245,7 +255,7 @@ function PagesStep({ pages, activePageId, onSetActivePageId, updatePages }: {
         </div>
       ))}
       <Button type="button" variant="outline" size="sm" className="w-full" onClick={addPage}>
-        <Plus className="h-3.5 w-3.5 mr-1" /> Tambah Page
+        <Plus className="h-3.5 w-3.5 mr-1" /> {t("Tambah Halaman", "Add Page")}
       </Button>
     </div>
   );
@@ -259,9 +269,10 @@ function SectionsStep({ sections, selectedSectionId, onSelectSection, addSection
   deleteSection: (id: string) => void;
   reorderSections: (from: number, to: number) => void;
 }) {
+  const { t } = useT();
   return (
     <div className="space-y-4">
-      <h2 className="text-sm font-semibold">Sections ({sections.length})</h2>
+      <h2 className="text-sm font-semibold">{t("Bagian", "Sections")} ({sections.length})</h2>
 
       {/* Section list */}
       <div className="space-y-1">
@@ -280,23 +291,23 @@ function SectionsStep({ sections, selectedSectionId, onSelectSection, addSection
           </div>
         ))}
         {sections.length === 0 && (
-          <p className="text-xs text-muted-foreground text-center py-4">Belum ada section. Tambah dari bawah.</p>
+          <p className="text-xs text-muted-foreground text-center py-4">{t("Belum ada bagian. Tambahkan dari bawah.", "No sections yet. Add one below.")}</p>
         )}
       </div>
 
       {/* Add section buttons */}
       <div className="space-y-2">
-        <h3 className="text-xs font-medium text-muted-foreground uppercase">Tambah Section</h3>
+        <h3 className="text-xs font-medium text-muted-foreground uppercase">{t("Tambah Bagian", "Add Section")}</h3>
         <div className="grid grid-cols-2 gap-1.5">
-          {SECTION_TEMPLATES.map((t) => (
+          {SECTION_TEMPLATES.map((template) => (
             <button
-              key={t.id}
+              key={template.id}
               type="button"
-              onClick={() => addSection(t)}
+              onClick={() => addSection(template)}
               className="flex flex-col items-center gap-1 rounded-lg border p-2 text-[10px] hover:bg-muted transition-colors"
             >
               <Layers className="h-3 w-3 text-muted-foreground" />
-              <span className="line-clamp-2">{t.label}</span>
+              <span className="line-clamp-2">{t(template.label, SECTION_TEMPLATE_EN[template.label] ?? template.label)}</span>
             </button>
           ))}
         </div>
@@ -305,13 +316,16 @@ function SectionsStep({ sections, selectedSectionId, onSelectSection, addSection
   );
 }
 
+const SECTION_TEMPLATE_EN: Record<string, string> = { "Layanan 3 Kartu": "3 Service Cards", "Pengembangan Software": "Software Development", "Proses 3 Langkah": "3-Step Process", "Metode Agile": "Agile Method", "Pricing 3 Paket": "3-Tier Pricing", "SaaS Pricing Tier": "SaaS Pricing Tiers", "FAQ 5 Pertanyaan": "5-Question FAQ", "FAQ Freelancer": "Freelancer FAQ", "CTA Utama": "Primary CTA", "CTA Kontak": "Contact CTA", "Testimoni 3 Klien": "3-Client Testimonials", "Portfolio Gallery": "Portfolio Gallery", "Embed Video": "Video Embed" };
+
 function ThemeStep({ site, onUpdateSite }: {
   site: PersonalSiteInput;
   onUpdateSite: (patch: Partial<PersonalSiteInput>) => void;
 }) {
+  const { t } = useT();
   return (
     <div className="space-y-4">
-      <h2 className="text-sm font-semibold">Theme</h2>
+      <h2 className="text-sm font-semibold">{t("Tema", "Theme")}</h2>
 
       <div className="grid grid-cols-2 gap-2">
         {PRESET_THEMES.map((preset) => (
@@ -348,7 +362,7 @@ function ThemeStep({ site, onUpdateSite }: {
       <div className="h-px bg-border" />
 
       <div className="space-y-2">
-        <Label className="text-xs">Primary Color</Label>
+        <Label className="text-xs">{t("Warna Utama", "Primary Color")}</Label>
         <div className="flex gap-2">
           <input type="color" value={site.themeConfig?.primaryColor ?? "#6647F0"}
             onChange={(e) => onUpdateSite({
@@ -392,13 +406,14 @@ function PublishStep({ site, publicUrl, previewUrl, onUpdateSite }: {
   previewUrl: string;
   onUpdateSite: (patch: Partial<PersonalSiteInput>) => void;
 }) {
+  const { t } = useT();
   return (
     <div className="space-y-5">
-      <h2 className="text-sm font-semibold">Publish</h2>
+      <h2 className="text-sm font-semibold">{t("Terbitkan", "Publish")}</h2>
 
       {/* Readiness */}
       <div className="flex items-center gap-2">
-        <ReadinessBadge site={site} t={(id, fallback) => fallback} />
+        <ReadinessBadge site={site} t={(id, fallback) => t(id, fallback)} />
       </div>
 
       {/* Publish toggle */}
@@ -415,12 +430,12 @@ function PublishStep({ site, publicUrl, previewUrl, onUpdateSite }: {
         }`}
       >
         <span className={`h-2.5 w-2.5 rounded-full ${site.published ? "bg-emerald-500" : "bg-muted-foreground/30"}`} />
-        {site.published ? "Live — tap to unpublish" : "Draft — tap to publish"}
+        {site.published ? t("Tayang — ketuk untuk sembunyikan", "Live — tap to unpublish") : t("Draft — ketuk untuk terbitkan", "Draft — tap to publish")}
       </button>
 
       {/* Slug */}
       <div className="space-y-2">
-        <Label className="text-xs">URL Slug</Label>
+        <Label className="text-xs">{t("Slug URL", "URL Slug")}</Label>
         <Input
           value={site.slug}
           onChange={(e) => onUpdateSite({ slug: e.target.value })}
@@ -439,7 +454,7 @@ function PublishStep({ site, publicUrl, previewUrl, onUpdateSite }: {
       {/* Preview */}
       <Button type="button" variant="outline" size="sm" className="w-full" asChild>
         <a href={previewUrl} target="_blank" rel="noopener noreferrer">
-          <Eye className="h-3.5 w-3.5 mr-1" /> Preview
+          <Eye className="h-3.5 w-3.5 mr-1" /> {t("Pratinjau", "Preview")}
         </a>
       </Button>
     </div>
