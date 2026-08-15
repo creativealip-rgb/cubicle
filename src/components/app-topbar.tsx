@@ -396,69 +396,6 @@ export function AppTopbar({ user }: AppTopbarProps) {
               </DropdownMenu>
             )}
 
-            {/* Timer: only visible when activeTimer is running/paused */}
-            {canWrite && activeTimer && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant={isPaused ? "secondary" : "destructive"}
-                    size="sm"
-                    className="h-9 gap-1 px-2 sm:px-2.5"
-                    title={timerTitle}
-                    disabled={timerBusy}
-                  >
-                    {timerBusy ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Timer className="h-4 w-4" />
-                    )}
-                    <span className="tabular-nums text-xs sm:text-sm">
-                      {elapsed}
-                      {isPaused ? (
-                        <span className="ml-1 text-[10px] font-medium uppercase opacity-80">
-                          {t("Jeda", "Paused")}
-                        </span>
-                      ) : null}
-                    </span>
-                    <ChevronDown className="hidden h-3 w-3 opacity-60 sm:block" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel className="text-xs text-muted-foreground">
-                    {isPaused
-                      ? t("Timer dijeda", "Timer paused")
-                      : t("Timer aktif", "Active timer")}
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {isPaused ? (
-                    <DropdownMenuItem
-                      onClick={() => void handleResumeTimer()}
-                      disabled={timerBusy}
-                    >
-                      {t("Lanjut timer", "Resume timer")}
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem
-                      onClick={() => void handlePauseTimer()}
-                      disabled={timerBusy}
-                    >
-                      {t("Jeda timer", "Pause timer")}
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem
-                    onClick={() => void handleStopTimer()}
-                    disabled={timerBusy}
-                    className="text-red-600 focus:text-red-600"
-                  >
-                    {t("Hentikan timer", "Stop timer")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push("/app/time")}>
-                    {t("Lihat detail timer", "View timer details")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-
             {/* AI — tablet/desktop only */}
             <Button
               variant="outline"
