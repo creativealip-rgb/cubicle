@@ -43,6 +43,7 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const pathname = usePathname();
+  const focusEditor = pathname === "/app/personal-site";
   // Brain page renders the full-page AI panel itself; skip the floating one.
   const onBrainPage = pathname?.startsWith("/app/brain") ?? false;
 
@@ -115,11 +116,12 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
             // Desktop (lg+): shift for sidebar width; tablet/mobile overlay
             "lg:ml-[260px]",
             collapsed && "lg:ml-[68px]",
+            focusEditor && "lg:ml-[68px]",
             "ml-0"
           )}
         >
           <AppTopbar user={user} />
-          <main id="main-content" className="min-w-0 flex-1 p-3 pb-24 sm:p-4 md:p-6 md:pb-28">{children}</main>
+          <main id="main-content" className={cn("min-w-0 flex-1 p-3 pb-24 sm:p-4 md:p-6 md:pb-28", focusEditor && "md:p-0 md:pb-0")}>{children}</main>
         </div>
         {!onBrainPage && <AIChatPanel variant="floating" />}
       </div>
