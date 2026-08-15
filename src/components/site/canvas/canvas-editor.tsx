@@ -36,6 +36,8 @@ import {
   ListCollapse,
   BookOpen,
   Columns3,
+  ChevronDown,
+  Search,
 } from "lucide-react";
 import { DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, useDraggable, type DragStartEvent, type DragEndEvent } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
@@ -156,6 +158,97 @@ const WIDGET_LIST: Array<{ type: PersonalSiteSection["type"]; label: string; ico
   { type: "tableOfContents", label: "Daftar Isi", icon: BookOpen, category: "navigation" },
   { type: "contentBlock", label: "Multi-Kolom", icon: Columns3, category: "layout" },
 ];
+
+// EN labels for primitive blocks — used for EN mode and for search matching.
+const WIDGET_EN_LABELS: Record<string, string> = {
+  Teks: "Text",
+  Layanan: "Services",
+  Proses: "Process",
+  Harga: "Pricing",
+  Portofolio: "Portfolio",
+  Testimoni: "Testimonials",
+  FAQ: "FAQ",
+  Kontak: "Contact",
+  Galeri: "Gallery",
+  Embed: "Embed",
+  Sosial: "Social",
+  "Tombol CTA": "CTA Button",
+  Pemisah: "Divider",
+  Spasi: "Spacer",
+  Accordion: "Accordion",
+  "Daftar Isi": "Table of Contents",
+  "Multi-Kolom": "Multi-Column",
+};
+
+// Localized category names for primitive blocks.
+const WIDGET_CATEGORY_LABELS: Record<string, { id: string; en: string }> = {
+  basic: { id: "Dasar", en: "Basic" },
+  content: { id: "Konten", en: "Content" },
+  media: { id: "Media", en: "Media" },
+  navigation: { id: "Navigasi", en: "Navigation" },
+  layout: { id: "Tata Letak", en: "Layout" },
+};
+
+// Localized category names for ready-made patterns.
+const TEMPLATE_CATEGORY_LABELS: Record<string, { id: string; en: string }> = {
+  hero: { id: "Hero", en: "Hero" },
+  content: { id: "Konten", en: "Content" },
+  conversion: { id: "Konversi", en: "Conversion" },
+  proof: { id: "Bukti", en: "Proof" },
+  media: { id: "Media", en: "Media" },
+  layout: { id: "Tata Letak", en: "Layout" },
+};
+
+// EN labels + descriptions for ready-made pattern templates.
+const SECTION_TEMPLATE_EN_LABELS: Record<string, string> = {
+  "Layanan 3 Kartu": "3 Service Cards",
+  "Pengembangan Software": "Software Development",
+  "Proses 3 Langkah": "3-Step Process",
+  "Metode Agile": "Agile Method",
+  "Pricing 3 Paket": "3-Tier Pricing",
+  "SaaS Pricing Tier": "SaaS Pricing Tiers",
+  "FAQ 5 Pertanyaan": "5-Question FAQ",
+  "FAQ Freelancer": "Freelancer FAQ",
+  "CTA Utama": "Primary CTA",
+  "CTA Kontak": "Contact CTA",
+  "Testimoni 3 Klien": "3-Client Testimonials",
+  "Portfolio Gallery": "Portfolio Gallery",
+  "Embed Video": "Video Embed",
+  "Content Block 2 Kolom": "2-Column Content Block",
+  "Divider Minimalis": "Minimal Divider",
+  "Spacer Besar": "Large Spacer",
+  Header: "Header",
+  Footer: "Footer",
+};
+
+const SECTION_TEMPLATE_EN_DESCRIPTIONS: Record<string, string> = {
+  "Layanan 3 Kartu": "Three main services with short benefits.",
+  "Pengembangan Software": "Custom software services for your business.",
+  "Proses 3 Langkah": "Simple workflow in 3 steps.",
+  "Metode Agile": "Development workflow with agile methodology.",
+  "Pricing 3 Paket": "Basic, Growth, and Premium packages.",
+  "SaaS Pricing Tier": "Monthly plans for SaaS products.",
+  "FAQ 5 Pertanyaan": "Common questions before clients reach out.",
+  "FAQ Freelancer": "FAQ tailored for a freelancer profile.",
+  "CTA Utama": "Call-to-action for the main conversion.",
+  "CTA Kontak": "CTA to direct visitors to contact/WhatsApp.",
+  "Testimoni 3 Klien": "Quotes from previous clients.",
+  "Portfolio Gallery": "Image gallery to showcase your work.",
+  "Embed Video": "Embed a video from YouTube or others.",
+  "Content Block 2 Kolom": "Two content columns with a flexible layout.",
+  "Divider Minimalis": "Horizontal separator for a visual break.",
+  "Spacer Besar": "Larger vertical spacing.",
+  Header: "Header",
+  Footer: "Footer",
+};
+
+// Local search for the block library — matches both the ID and EN label so
+// search works in either UI language. No dependency, case-insensitive.
+function matchesSearch(label: string, enLabel: string, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return label.toLowerCase().includes(q) || enLabel.toLowerCase().includes(q);
+}
 
 export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSave }: Props) {
   const { t } = useT();
@@ -520,7 +613,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
         {/* Bottom bar */}
         <div className={`fixed bottom-0 left-0 md:left-64 right-0 z-30 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-2 backdrop-blur ${selectedSection ? "md:right-80" : ""}`} role="status" aria-live="polite">
           <div className="flex items-center gap-2 text-xs text-muted-foreground flex-1 min-w-0">
-            <span className="hidden sm:inline">{activePage?.title ?? "Page"} · {activeSections.length} sections</span>
+            <span className="hidden sm:inline">{activePage?.title ?? t("Halaman", "Page")} · {activeSections.length} {t("bagian", "sections")}</span>
             <span className="hidden sm:inline text-muted-foreground/50">·</span>
             {saving ? (
               <span className="flex items-center gap-1 text-primary"><Loader2 className="h-3 w-3 animate-spin" /> {t("Menyimpan...", "Saving...")}</span>
@@ -556,7 +649,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
             title={site.published ? t("Klik untuk unpublish", "Click to unpublish") : t("Belum siap publikasi", "Not ready to publish")}
           >
             <span className={`h-2 w-2 rounded-full ${site.published ? "bg-emerald-500" : "bg-muted-foreground/30"}`} />
-            {site.published ? t("Live", "Live") : t("Draft", "Draft")}
+            {site.published ? t("Tayang", "Live") : t("Draft", "Draft")}
           </button>
 
           <div className="flex items-center gap-1">
@@ -588,16 +681,16 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
               })}
             </div>
             <div className="w-px h-5 bg-border mx-1" />
-            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={undo} disabled={historyIndex <= 0} title="Undo (Ctrl+Z)">
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={undo} disabled={historyIndex <= 0} title={t("Urungkan (Ctrl+Z)", "Undo (Ctrl+Z)")}>
               <Undo2 className="h-4 w-4" />
             </Button>
-            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={redo} disabled={historyIndex >= history.length - 1} title="Redo (Ctrl+Shift+Z)">
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={redo} disabled={historyIndex >= history.length - 1} title={t("Ulangi (Ctrl+Shift+Z)", "Redo (Ctrl+Shift+Z)")}>
               <Redo2 className="h-4 w-4" />
             </Button>
             <div className="w-px h-5 bg-border mx-1" />
             <Button type="button" variant="outline" size="sm" asChild>
               <a href={previewUrl} target="_blank" rel="noopener noreferrer">
-                <Eye className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Preview</span>
+                <Eye className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">{t("Pratinjau", "Preview")}</span>
               </a>
             </Button>
             <Button type="button" size="sm" onClick={handleSave} disabled={saving || !isDirty}>
@@ -656,7 +749,6 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
 
 function DraggableTemplateButton({ template, onClick }: { template: SectionTemplate; onClick: () => void }) {
   const { t } = useT();
-  const labelEn: Record<string, string> = { "Layanan 3 Kartu": "3 Service Cards", "Pengembangan Software": "Software Development", "Proses 3 Langkah": "3-Step Process", "Metode Agile": "Agile Method", "Pricing 3 Paket": "3-Tier Pricing", "SaaS Pricing Tier": "SaaS Pricing Tiers", "FAQ 5 Pertanyaan": "5-Question FAQ", "FAQ Freelancer": "Freelancer FAQ", "CTA Utama": "Primary CTA", "CTA Kontak": "Contact CTA", "Testimoni 3 Klien": "3-Client Testimonials", "Portfolio Gallery": "Portfolio Gallery", "Embed Video": "Video Embed", Header: "Header", Footer: "Footer" };
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     
     id: `template-${template.id}`,
@@ -677,10 +769,10 @@ function DraggableTemplateButton({ template, onClick }: { template: SectionTempl
       onClick={onClick}
       style={style}
       className="flex flex-col items-center gap-1 rounded-lg border p-2 text-[10px] hover:bg-muted transition-colors text-left cursor-grab active:cursor-grabbing"
-      title={t(template.description, template.description)}
+      title={t(template.description, SECTION_TEMPLATE_EN_DESCRIPTIONS[template.label] ?? template.description)}
     >
       <Layers className="h-3 w-3 text-muted-foreground shrink-0" />
-      <span className="line-clamp-2">{t(template.label, labelEn[template.label] ?? template.label)}</span>
+      <span className="line-clamp-2">{t(template.label, SECTION_TEMPLATE_EN_LABELS[template.label] ?? template.label)}</span>
     </button>
   );
 }
@@ -701,6 +793,16 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
 }) {
   const { t } = useT();
   const pages = normalizePages(site);
+  // Block library IA: primitives (Blok) vs ready-made patterns (Blok Siap
+  // Pakai) are separate views, plus a dependency-free local search that
+  // matches both the ID and EN label.
+  const [blockView, setBlockView] = useState<"blocks" | "patterns">("blocks");
+  const [blockSearch, setBlockSearch] = useState("");
+  const [openTemplateCategories, setOpenTemplateCategories] = useState<Record<string, boolean>>({});
+
+  function toggleTemplateCategory(category: string) {
+    setOpenTemplateCategories((prev) => ({ ...prev, [category]: !(prev[category] ?? true) }));
+  }
 
   // Group section templates by category for the Starter Blocks panel
   const groupedSectionTemplates = SECTION_TEMPLATES.reduce<Record<string, SectionTemplate[]>>((acc, template) => {
@@ -755,7 +857,7 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
     <Tabs value={sidebarTab} onValueChange={setSidebarTab} className="w-full">
       <TabsList className="w-full h-auto rounded-none grid grid-cols-3">
         <TabsTrigger value="insert" className="text-xs gap-1 px-2 py-2">
-          <Plus className="h-3.5 w-3.5" /> {t("Sisipkan", "Insert")}
+          <Plus className="h-3.5 w-3.5" /> {t("Blok", "Blocks")}
         </TabsTrigger>
         <TabsTrigger value="style" className="text-xs gap-1 px-2 py-2">
           <Palette className="h-3.5 w-3.5" /> {t("Gaya", "Style")}
@@ -765,41 +867,112 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="insert" className="m-0 p-3 space-y-4">
-        {/* Starter Blocks - SECTION_TEMPLATES */}
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground uppercase mb-2">{t("Blok Awal", "Starter Blocks")}</p>
-          {Object.entries(groupedSectionTemplates).map(([category, templates]) => (
-            <div key={category}>
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">{t(category === "content" ? "Konten" : category === "conversion" ? "Konversi" : category === "proof" ? "Bukti" : category === "media" ? "Media" : "Tata Letak", category)}</p>
-              <div className="grid grid-cols-2 gap-1.5">
-                {templates.map((t) => (
-                  <DraggableTemplateButton key={t.id} template={t} onClick={() => addSectionTemplate(t)} />
-                ))}
-              </div>
-            </div>
-          ))}
+      <TabsContent value="insert" className="m-0 p-3 space-y-3">
+        {/* Block library segmented control: primitive blocks vs ready-made patterns */}
+        <div
+          role="group"
+          aria-label={t("Jenis blok", "Block type")}
+          className="grid grid-cols-2 gap-1 rounded-md border bg-muted/40 p-0.5"
+        >
+          <button
+            type="button"
+            onClick={() => setBlockView("blocks")}
+            aria-pressed={blockView === "blocks"}
+            className={`rounded px-2 py-1.5 text-xs font-medium transition-colors ${
+              blockView === "blocks" ? "bg-background shadow-sm border" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t("Blok", "Blocks")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setBlockView("patterns")}
+            aria-pressed={blockView === "patterns"}
+            className={`rounded px-2 py-1.5 text-xs font-medium transition-colors ${
+              blockView === "patterns" ? "bg-background shadow-sm border" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t("Pola Siap Pakai", "Ready-made Patterns")}
+          </button>
         </div>
 
-        {/* Widgets */}
-        {Object.entries(groupedWidgets).map(([category, widgets]) => (
-          <div key={category}>
-            <p className="text-xs font-medium text-muted-foreground uppercase mb-2">{category}</p>
-            <div className="grid grid-cols-2 gap-1.5">
-              {widgets.map((w) => (
-                <button
-                  key={w.type}
-                  type="button"
-                  onClick={() => addSection(w.type)}
-                  className="flex flex-col items-center gap-1 rounded-lg border p-2 text-xs hover:bg-muted transition-colors"
-                >
-                  <w.icon className="h-4 w-4 text-muted-foreground" />
-                  {t(w.label, ({ "Teks": "Text", "Sosial": "Social", "Tombol CTA": "CTA Button", "Pemisah": "Divider", "Spasi": "Spacer", "Layanan": "Services", "Proses": "Process", "Harga": "Pricing", "Portofolio": "Portfolio", "Testimoni": "Testimonials", "FAQ": "FAQ", "Kontak": "Contact", "Accordion": "Accordion", "Galeri": "Gallery", "Embed": "Embed", "Daftar Isi": "Table of Contents", "Multi-Kolom": "Multi-Column" } as Record<string, string>)[w.label] ?? w.label)}
-                </button>
-              ))}
-            </div>
+        {/* Local search — matches both ID and EN labels */}
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <Input
+            type="search"
+            value={blockSearch}
+            onChange={(e) => setBlockSearch(e.target.value)}
+            placeholder={t("Cari blok...", "Search blocks...")}
+            aria-label={t("Cari blok", "Search blocks")}
+            className="h-8 pl-8 text-xs"
+          />
+        </div>
+
+        {blockView === "blocks" ? (
+          /* Primitive blocks — single-purpose building blocks. */
+          <div className="space-y-3">
+            {Object.entries(groupedWidgets).map(([category, widgets]) => {
+              const catLabel = WIDGET_CATEGORY_LABELS[category] ?? { id: category, en: category };
+              const visible = widgets.filter((w) => matchesSearch(w.label, WIDGET_EN_LABELS[w.label] ?? w.label, blockSearch));
+              if (visible.length === 0) return null;
+              return (
+                <div key={category}>
+                  <p className="text-xs font-medium text-muted-foreground uppercase mb-2">{t(catLabel.id, catLabel.en)}</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {visible.map((w) => (
+                      <button
+                        key={w.type}
+                        type="button"
+                        onClick={() => addSection(w.type)}
+                        className="flex flex-col items-center gap-1 rounded-lg border p-2 text-xs hover:bg-muted transition-colors"
+                      >
+                        <w.icon className="h-4 w-4 text-muted-foreground" />
+                        {t(w.label, WIDGET_EN_LABELS[w.label] ?? w.label)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+            {Object.values(groupedWidgets).every((widgets) => widgets.every((w) => !matchesSearch(w.label, WIDGET_EN_LABELS[w.label] ?? w.label, blockSearch))) && (
+              <p className="text-center text-xs text-muted-foreground py-4">{t("Tidak ada blok yang cocok.", "No blocks match your search.")}</p>
+            )}
           </div>
-        ))}
+        ) : (
+          /* Ready-made patterns — multi-part sections (services grid, pricing, etc.). */
+          <div className="space-y-2">
+            {Object.entries(groupedSectionTemplates).map(([category, templates]) => {
+              const catLabel = TEMPLATE_CATEGORY_LABELS[category] ?? { id: category, en: category };
+              const visible = templates.filter((template) => matchesSearch(template.label, SECTION_TEMPLATE_EN_LABELS[template.label] ?? template.label, blockSearch));
+              if (visible.length === 0) return null;
+              const open = openTemplateCategories[category] ?? true;
+              return (
+                <div key={category} className="rounded-lg border">
+                  <button
+                    type="button"
+                    onClick={() => toggleTemplateCategory(category)}
+                    aria-expanded={open}
+                    className="flex w-full items-center justify-between gap-2 px-2.5 py-2 text-left"
+                  >
+                    <span className="text-xs font-semibold text-muted-foreground uppercase">{t(catLabel.id, catLabel.en)}</span>
+                    <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
+                  </button>
+                  {open && (
+                    <div className="grid grid-cols-2 gap-1.5 px-2 pb-2">
+                      {visible.map((template) => (
+                        <DraggableTemplateButton key={template.id} template={template} onClick={() => addSectionTemplate(template)} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {Object.values(groupedSectionTemplates).every((templates) => templates.every((template) => !matchesSearch(template.label, SECTION_TEMPLATE_EN_LABELS[template.label] ?? template.label, blockSearch))) && (
+              <p className="text-center text-xs text-muted-foreground py-4">{t("Tidak ada pola yang cocok.", "No patterns match your search.")}</p>
+            )}
+          </div>
+        )}
       </TabsContent>
 
       <TabsContent value="style" className="m-0 p-3 space-y-5">
@@ -995,7 +1168,7 @@ function TemplateTabContent({ site, updateSite, setActivePageId }: { site: Perso
               <h3 className="font-semibold text-sm">{t(template.label, template.label)}</h3>
               <LayoutTemplate className="h-4 w-4 text-muted-foreground" />
             </div>
-            <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{template.description}</p>
+            <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{t(template.description, template.description)}</p>
             <Button
               type="button"
               size="sm"
@@ -1003,7 +1176,7 @@ function TemplateTabContent({ site, updateSite, setActivePageId }: { site: Perso
               className="w-full"
               onClick={() => handleApplyTemplate(template)}
             >
-              Apply Template
+              {t("Terapkan Template", "Apply Template")}
             </Button>
           </div>
         ))}
@@ -1013,14 +1186,17 @@ function TemplateTabContent({ site, updateSite, setActivePageId }: { site: Perso
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-background rounded-lg p-6 max-w-sm mx-4 shadow-xl border">
-            <h3 className="font-semibold mb-2">Ganti template?</h3>
+            <h3 className="font-semibold mb-2">{t("Ganti template?", "Replace template?")}</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Halaman ini sudah berisi konten. Apakah Anda yakin ingin mengganti dengan template ini? Konten saat ini akan hilang.
+              {t(
+                "Halaman ini sudah berisi konten. Apakah Anda yakin ingin mengganti dengan template ini? Konten saat ini akan hilang.",
+                "This page already has content. Are you sure you want to replace it with this template? Current content will be lost.",
+              )}
             </p>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setShowConfirm(null)} className="flex-1">Batal</Button>
+              <Button variant="outline" onClick={() => setShowConfirm(null)} className="flex-1">{t("Batal", "Cancel")}</Button>
               <Button onClick={() => applyTemplate(PAGE_TEMPLATES.find((t) => t.id === showConfirm)!)} className="flex-1">
-                Ganti Saja
+                {t("Ganti Saja", "Replace Anyway")}
               </Button>
             </div>
           </div>

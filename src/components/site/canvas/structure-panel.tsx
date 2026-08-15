@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useT } from "@/lib/i18n-client";
 import type { PersonalSiteSection } from "@/lib/personal-site/model";
 
 const SECTION_ICONS: Record<string, typeof FileText> = {
@@ -46,19 +47,19 @@ const SECTION_ICONS: Record<string, typeof FileText> = {
   contentBlock: Columns3,
 };
 
-function getSectionPreview(section: PersonalSiteSection): string {
+function getSectionPreview(section: PersonalSiteSection, t: (id: string, en: string) => string): string {
   if (section.heading && section.heading !== "Section") return section.heading;
   switch (section.type) {
-    case "custom": return section.content?.slice(0, 50) || "Teks";
+    case "custom": return section.content?.slice(0, 50) || t("Teks", "Text");
     case "cta": return section.text || section.buttonLabel || "CTA";
-    case "testimonials": return section.testimonials?.[0]?.author || "Testimoni";
+    case "testimonials": return section.testimonials?.[0]?.author || t("Testimoni", "Testimonials");
     case "faq": return section.items?.[0]?.question || "FAQ";
-    case "pricing": return section.offers?.[0]?.name || "Harga";
-    case "services": return section.items?.[0]?.title || "Layanan";
-    case "portfolio": return section.projects?.[0]?.title || "Portofolio";
-    case "gallery": return "Galeri";
-    case "contact": return "Kontak";
-    case "process": return section.steps?.[0]?.title || "Proses";
+    case "pricing": return section.offers?.[0]?.name || t("Harga", "Pricing");
+    case "services": return section.items?.[0]?.title || t("Layanan", "Services");
+    case "portfolio": return section.projects?.[0]?.title || t("Portofolio", "Portfolio");
+    case "gallery": return t("Galeri", "Gallery");
+    case "contact": return t("Kontak", "Contact");
+    case "process": return section.steps?.[0]?.title || t("Proses", "Process");
     default: return section.type;
   }
 }
@@ -68,6 +69,7 @@ function StructureRow({ section, selected, onSelect }: {
   selected: boolean;
   onSelect: () => void;
 }) {
+  const { t } = useT();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: section.id,
   });
@@ -79,7 +81,7 @@ function StructureRow({ section, selected, onSelect }: {
   };
 
   const Icon = SECTION_ICONS[section.type] ?? FileText;
-  const preview = getSectionPreview(section);
+  const preview = getSectionPreview(section, t);
 
   return (
     <div
@@ -95,8 +97,8 @@ function StructureRow({ section, selected, onSelect }: {
         {...attributes}
         {...listeners}
         className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground shrink-0"
-        aria-label="Drag to reorder"
-        title="Drag to reorder"
+        aria-label={t("Seret untuk mengurutkan", "Drag to reorder")}
+        title={t("Seret untuk mengurutkan", "Drag to reorder")}
       >
         <GripVertical className="h-3.5 w-3.5" />
       </button>
@@ -113,12 +115,13 @@ type Props = {
 };
 
 export function StructurePanel({ sections, selectedSectionId, onSelectSection }: Props) {
+  const { t } = useT();
   if (sections.length === 0) {
     return (
       <div className="p-4 text-center text-xs text-muted-foreground">
         <Layers className="h-5 w-5 mx-auto mb-2 opacity-30" />
-        <p>Belum ada section.</p>
-        <p>Tambah dari tab Insert.</p>
+        <p>{t("Belum ada bagian.", "No sections yet.")}</p>
+        <p>{t("Tambah dari tab Blok.", "Add from the Blocks tab.")}</p>
       </div>
     );
   }
