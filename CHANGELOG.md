@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-08-15 — Proposal/contract email message templates
+
+- Added editable default email message bodies for Proposal and Contract send/resend dialogs.
+- Added `{{proposal_link}}` and `{{contract_link}}` placeholders; server replaces them with public URLs at send time.
+- Prevented duplicate greeting text when custom message is provided; behavior now matches Invoice `{{invoice_link}}` flow.
+- Fixed public proposal acceptance for drafts without linked Client by resolving or creating workspace-scoped Client from recipient snapshot, then creating project and DP invoice.
+- Revalidated proposal list/detail after acceptance so status displays `Accepted`, not stale `Viewed`.
+
+**Verification:** production build passed; `git diff --check` passed; `/api/health` returned HTTP 200 with DB `ok`; production deployed as `cubiqlo-prod:sha-PLACEHOLDER`.
+
+
 ## 2026-08-12 — Proposal and contract authoring foundation
 
 - Decoupled proposal/contract drafts from required Client rows with recipient snapshots and nullable `clientId` links.
