@@ -1,5 +1,28 @@
 # Deployment Log
 
+## 16 August 2026 — Production release prep: Cubiqlo document workflow polish
+
+- Source: `release/cubiqlo-20260816`, merge commit `9ca9f7e` from `dev/integration` into `main`.
+- Scope:
+  - Billing-aware Time selector gating: Fixed Price/legacy Package excluded from Timer/Timesheet selectors.
+  - Timer UX: navbar timer control removed, Time page Start Timer retained, browser tab active timer indicator restored.
+  - Proposal/Contract send dialog: editable email message with `{{proposal_link}}` / `{{contract_link}}` replacement.
+  - Proposal/Contract table actions: `Send`/`Resend` buttons aligned right.
+  - Proposal/Contract detail layouts: action buttons and editable detail fields matched production-approved layout, including preview routes.
+  - Timesheet work-date fallback now derives timestamp dates in `Asia/Jakarta`.
+- Dev proof: `dev.cubiqlo.com` deployed at `7eaddbbf75cc137140631a1a2e34b6a5dec0c3f6`; health app/DB ok; production unchanged during dev QA.
+- Release gate before production deploy:
+  - `git diff --check` passed.
+  - Targeted Vitest passed: send document wiring, timer tab/action wiring, time report date wiring, billing-aware selector gating.
+  - `npx tsc --noEmit` passed.
+  - `npm run build` passed.
+- Production baseline before deploy:
+  - Container: `cubiqlo-new-app-next`.
+  - Previous image: `sha256:533c4509dc25aca94346f360acfaba2f5abc4a2f7f80bea69e2b6ac5303b9af6`.
+  - Health: `https://app.cubiqlo.com/api/health` app/DB ok.
+  - Smoke: `https://app.cubiqlo.com/login` HTTP 200; `https://cubiqlo.com/` HTTP 200.
+- Migration: none.
+
 ## 12 August 2026 — Dev integration sync and deploy retry
 
 - `dev/integration` synchronized with latest `main` revision `03883ac`.
