@@ -439,11 +439,8 @@ export async function sendContract(input: {
       to: recipientEmail,
       subject: `Contract for signature: ${c.title}`,
       text:
-        `Hi ${recipientName || "there"},\n\n` +
-        `${input.customMessage?.trim() ? `${input.customMessage.trim()}\n\n` : `${ws?.name || "Cubiqlo"} sent you a contract for signature: "${c.title}".\n\n`}` +
-        `Review and sign it here:\n${appUrl}/contract/${token}\n\n` +
-        (vars.valid_until ? `This link is valid until ${vars.valid_until}.\n\n` : "\n") +
-        `If you have any questions, just reply to this email.`,
+        (input.customMessage?.trim() || `Hi ${recipientName || "there"},\n\n${ws?.name || "Cubiqlo"} sent you a contract for signature: "${c.title}".\n\nReview and sign it here:\n{{contract_link}}\n\n${vars.valid_until ? `This link is valid until ${vars.valid_until}.\n\n` : ""}If you have any questions, just reply to this email.`)
+          .replace(/{{contract_link}}/g, `${appUrl}/contract/${token}`),
       type: "contract_sent",
       replyTo,
     });

@@ -52,7 +52,7 @@ export function SendContractButton({
   const [copied, setCopied] = useState(false);
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState(
-    `Halo ${clientName || ""},\n\nKontrak "${title || "ini"}" sudah siap untuk ditinjau dan ditandatangani.\n\nSilakan buka tautan kontrak untuk melanjutkan.\n\nTerima kasih.`,
+    `Halo ${clientName || ""},\n\nKontrak "${title || "ini"}" sudah siap untuk ditinjau dan ditandatangani.\n\nSilakan buka tautan kontrak untuk melanjutkan:\n{{contract_link}}\n\nTerima kasih.`,
   );
 
   const isSentLike = status === "sent" || status === "viewed";

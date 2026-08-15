@@ -314,10 +314,8 @@ export async function sendProposal(proposalId: string, customMessage?: string) {
       to: recipientEmail,
       subject: `Proposal: ${existing.title}`,
       text:
-        `Hi ${recipientName || "there"},\n\n` +
-        `${customMessage?.trim() ? `${customMessage.trim()}\n\n` : `${ws?.name || "Cubiqlo"} sent you a proposal: "${existing.title}".\n\n`}` +
-        `Review it here:\n${appUrl}/proposal/${token}\n\n` +
-        `This link is valid for 30 days. If you have any questions, just reply to this email.`,
+        (customMessage?.trim() || `Hi ${recipientName || "there"},\n\n${ws?.name || "Cubiqlo"} sent you a proposal: "${existing.title}".\n\nReview it here:\n{{proposal_link}}\n\nThis link is valid for 30 days. If you have any questions, just reply to this email.`)
+          .replace(/\{\{proposal_link\}\}/g, `${appUrl}/proposal/${token}`),
       type: "proposal_sent",
       replyTo,
     });

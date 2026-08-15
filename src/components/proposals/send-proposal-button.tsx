@@ -52,7 +52,7 @@ export function SendProposalButton({
   const [copied, setCopied] = useState(false);
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState(
-    `Halo ${clientName || ""},\n\nProposal "${title || "ini"}" sudah siap untuk ditinjau.\n\nSilakan buka tautan proposal untuk melihat detail scope, harga, dan ketentuan.\n\nTerima kasih.`,
+    `Halo ${clientName || ""},\n\nProposal "${title || "ini"}" sudah siap untuk ditinjau.\n\nSilakan buka tautan proposal untuk melihat detail scope, harga, dan ketentuan:\n{{proposal_link}}\n\nTerima kasih.`,
   );
 
   const isSentLike = status === "sent" || status === "viewed";
