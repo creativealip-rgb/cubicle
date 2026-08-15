@@ -123,10 +123,14 @@ export function SendProposalButton({
           size={compact ? "sm" : "sm"}
           onClick={() => setOpen(true)}
           disabled={pending}
-          className={compact ? "h-7 px-2 text-xs" : undefined}
+          className={compact ? "h-8 w-8 p-0" : undefined}
+          aria-label={pending ? sendingText : sendText}
+          title={pending ? sendingText : sendText}
         >
-          <Send className="h-3.5 w-3.5 mr-1" />
-          {pending ? sendingText : sendText}
+          <Send className={compact ? "h-3.5 w-3.5" : "h-3.5 w-3.5 mr-1"} />
+          <span className={compact ? "sr-only" : undefined}>
+            {pending ? sendingText : sendText}
+          </span>
         </Button>
       </div>
 
@@ -139,7 +143,7 @@ export function SendProposalButton({
           }
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
               {isSentLike
@@ -153,32 +157,34 @@ export function SendProposalButton({
               )}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 text-sm">
-            <label className="block space-y-1">
-              <span className="text-muted-foreground">{t("Pesan", "Message")}</span>
+          <div className="space-y-4 text-sm">
+            <label className="block space-y-2">
+              <span className="block text-sm font-medium text-foreground">{t("Pesan", "Message")}</span>
               <Textarea
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
                 disabled={pending}
-                className="min-h-36 resize-y"
+                className="min-h-40 resize-y leading-relaxed"
                 placeholder={t("Pesan tambahan untuk client (opsional)", "Optional message to client")}
               />
             </label>
-            <div className="flex gap-2">
-              <span className="w-20 shrink-0 text-muted-foreground">
-                {t("Penerima", "Recipient")}
-              </span>
-              <span className="min-w-0 break-words font-medium">
-                {clientName || clientEmail
-                  ? [clientName, clientEmail].filter(Boolean).join(" · ")
-                  : t("Belum ada penerima", "No recipient set")}
-              </span>
-            </div>
-            <div className="flex gap-2">
-              <span className="w-20 shrink-0 text-muted-foreground">
-                {t("Subjek", "Subject")}
-              </span>
-              <span className="min-w-0 break-words font-medium">{subject}</span>
+            <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
+              <div className="space-y-1">
+                <span className="block text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("Penerima", "Recipient")}
+                </span>
+                <span className="block min-w-0 break-words font-medium">
+                  {clientName || clientEmail
+                    ? [clientName, clientEmail].filter(Boolean).join(" · ")
+                    : t("Belum ada penerima", "No recipient set")}
+                </span>
+              </div>
+              <div className="space-y-1">
+                <span className="block text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("Subjek", "Subject")}
+                </span>
+                <span className="block min-w-0 break-words font-medium">{subject}</span>
+              </div>
             </div>
           </div>
           <DialogFooter>
