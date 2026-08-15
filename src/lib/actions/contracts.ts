@@ -361,6 +361,7 @@ export async function deleteContract(contractId: string) {
 export async function sendContract(input: {
   contractId: string;
   ttlDays?: number;
+  customMessage?: string;
 }) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
@@ -439,7 +440,7 @@ export async function sendContract(input: {
       subject: `Contract for signature: ${c.title}`,
       text:
         `Hi ${recipientName || "there"},\n\n` +
-        `${ws?.name || "Cubiqlo"} sent you a contract for signature: "${c.title}".\n\n` +
+        `${input.customMessage?.trim() ? `${input.customMessage.trim()}\n\n` : `${ws?.name || "Cubiqlo"} sent you a contract for signature: "${c.title}".\n\n`}` +
         `Review and sign it here:\n${appUrl}/contract/${token}\n\n` +
         (vars.valid_until ? `This link is valid until ${vars.valid_until}.\n\n` : "\n") +
         `If you have any questions, just reply to this email.`,

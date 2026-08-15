@@ -51,6 +51,7 @@ export function SendProposalButton({
   const [link, setLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [message, setMessage] = useState("");
 
   const isSentLike = status === "sent" || status === "viewed";
   const sendText = isSentLike
@@ -62,7 +63,7 @@ export function SendProposalButton({
   function handleSend() {
     startTransition(async () => {
       try {
-        const result = await sendProposal(proposalId);
+        const result = await sendProposal(proposalId, message.trim() || undefined);
         const url = `${window.location.origin}/proposal/${result.token}`;
         setLink(url);
         setOpen(false);
@@ -147,7 +148,8 @@ export function SendProposalButton({
               )}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 text-sm">
+          <div className="space-y-3 text-sm">
+            <label className="block"><span className="mb-1 block text-muted-foreground">{t("Pesan", "Message")}</span><textarea className="min-h-24 w-full rounded-md border p-2" value={message} onChange={(e) => setMessage(e.target.value)} placeholder={t("Pesan tambahan untuk client (opsional)", "Optional message to client")} /></label>
             <div className="flex gap-2">
               <span className="w-20 shrink-0 text-muted-foreground">
                 {t("Penerima", "Recipient")}
