@@ -21,6 +21,7 @@ export interface DocumentValueSource {
   validUntil?: string | Date | null;
   workspaceName?: string | null;
   workspaceAddress?: string | null;
+  total?: string | number | null;
 }
 
 function formatIdDate(value: string | Date | null | undefined, _now: Date): string {
@@ -52,6 +53,7 @@ export function buildProposalPlaceholderValues(
     valid_until: formatIdDate(source.validUntil, now),
     workspace_name: source.workspaceName ?? "",
     workspace_address: source.workspaceAddress ?? "",
+    value: source.total ?? "",
   };
   if (source.proposalNumber != null && source.proposalNumber !== "") {
     values.proposal_number = source.proposalNumber;
@@ -70,6 +72,7 @@ export function buildContractPlaceholderValues(
     valid_until: formatIdDate(source.validUntil, now),
     workspace_name: source.workspaceName ?? "",
     workspace_address: source.workspaceAddress ?? "",
+    value: source.total ?? "",
   };
   if (source.contractNumber != null && source.contractNumber !== "") {
     values.contract_number = source.contractNumber;
