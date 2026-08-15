@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { InlineText } from "./inline-text";
 import { ImageUpload } from "./image-upload";
+import { useT } from "@/lib/i18n-client";
 import type { PersonalSiteInput, PersonalSiteSection, ThemeConfig } from "@/lib/personal-site/model";
 import { PERSONAL_SITE_ANIMATIONS } from "@/lib/personal-site/model";
 
@@ -56,6 +57,7 @@ export function CanvasRenderer({
   onDeleteSection,
   onReorderSections: _onReorderSections,
 }: Props & { onReorderSections?: (sections: PersonalSiteSection[]) => void }) { // reserved for future use
+  const { t } = useT();
   const theme = site.themeConfig ?? undefined;
 
   return (
@@ -87,7 +89,7 @@ export function CanvasRenderer({
             onChange={(v) => onUpdateSite({ title: v })}
             tag="h1"
             className="text-3xl font-bold text-white mb-2"
-            placeholder="Judul..."
+            placeholder={t("Judul...", "Title...")}
           />
           <InlineText
             value={site.subtitle}
@@ -101,13 +103,13 @@ export function CanvasRenderer({
             onChange={(v) => onUpdateSite({ hero: v })}
             tag="p"
             className="text-white/90 max-w-2xl mx-auto"
-            placeholder="Deskripsi hero..."
+            placeholder={t("Deskripsi hero...", "Hero description...")}
           />
           <div className="mt-4 flex justify-center">
             <ImageUpload
               value={site.heroImage ?? ""}
               onChange={(url) => onUpdateSite({ heroImage: url || undefined })}
-              label="Upload hero image"
+              label={t("Unggah gambar hero", "Upload hero image")}
             />
           </div>
         </div>
@@ -121,7 +123,7 @@ export function CanvasRenderer({
             onChange={(v) => onUpdateSite({ about: v })}
             tag="p"
             className="text-muted-foreground leading-relaxed"
-            placeholder="Tentang kamu..."
+            placeholder={t("Tentang kamu...", "About you...")}
           />
         </div>
       )}
@@ -154,7 +156,7 @@ export function CanvasRenderer({
             className="gap-2"
           >
             <Plus className="h-4 w-4" />
-            Tambah Section
+            {t("Tambah Bagian", "Add Section")}
           </Button>
         </div>
       </div>
@@ -167,7 +169,7 @@ export function CanvasRenderer({
             onChange={(v) => onUpdateSite({ ctaLabel: v })}
             tag="p"
             className="text-lg font-semibold mb-2"
-            placeholder="Label tombol..."
+            placeholder={t("Label tombol...", "Button label...")}
           />
         </div>
       )}

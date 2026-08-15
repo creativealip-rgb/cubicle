@@ -4,6 +4,7 @@ import type { CSSProperties, ReactNode } from "react";
 import {
   accentForeground,
   isPlaceholderHref,
+  isEditorialPlaceholderText,
   safePublicHref,
   sectionHasContent,
   type PersonalSiteInput,
@@ -194,6 +195,8 @@ export function PersonalSiteRenderer({
   const visiblePages = pages.filter((page) => page.title);
   const visibleSections = (activePage?.sections?.length ? activePage.sections : site.sections).filter(sectionHasContent);
   const visibleLinks = site.links.filter((link) => link.label && !isPlaceholderHref(link.url) && safePublicHref(link.url) !== "#");
+  const heroCopy = isEditorialPlaceholderText(site.hero) ? "" : site.hero;
+  const aboutCopy = isEditorialPlaceholderText(site.about) ? "" : site.about;
   const themeConfig = site.themeConfig;
   const accent = themeConfig?.primaryColor ?? site.accent;
   const buttonRadius = themeConfig?.buttonStyle === "pill" ? "999px" : themeConfig?.buttonStyle === "square" ? "0.25rem" : "0.75rem";
@@ -223,7 +226,7 @@ export function PersonalSiteRenderer({
         <div className="relative z-10 mx-auto max-w-6xl">
           {site.subtitle && <p className={`text-xs font-semibold uppercase tracking-[0.2em] sm:text-sm ${styles.eyebrow}`}>{site.subtitle}</p>}
           <h1 className={`${site.subtitle ? "mt-5" : ""} max-w-4xl text-4xl font-bold leading-[1.05] tracking-[-0.02em] sm:text-6xl lg:text-7xl`} style={headingStyle}>{site.title}</h1>
-          <p className={`mt-6 max-w-2xl text-base leading-7 sm:text-xl sm:leading-8 ${styles.heroMuted}`}>{site.hero}</p>
+          {heroCopy && <p className={`mt-6 max-w-2xl text-base leading-7 sm:text-xl sm:leading-8 ${styles.heroMuted}`}>{heroCopy}</p>}
           {site.ctaLabel && site.ctaUrl && !isPlaceholderHref(site.ctaUrl) && safePublicHref(site.ctaUrl) !== "#" && (
             <a className="mt-8 inline-flex min-h-11 items-center justify-center px-6 py-3 text-sm font-semibold shadow-lg transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" style={{ backgroundColor: accent, color: accentForeground(accent), borderRadius: buttonRadius }} href={safePublicHref(site.ctaUrl)}>{site.ctaLabel}</a>
           )}
@@ -248,7 +251,7 @@ export function PersonalSiteRenderer({
         </div>
       </section>
 
-      {site.about && <section className="px-6 py-14 sm:px-10 lg:px-16 lg:py-20"><div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.65fr_1.35fr]"><div><p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: accent }}>{labels.about}</p><h2 className="mt-3 text-3xl font-bold tracking-[-0.01em]" style={headingStyle}>{site.title}</h2></div><p className="whitespace-pre-wrap text-base leading-8 opacity-70">{site.about}</p></div></section>}
+      {aboutCopy && <section className="px-6 py-14 sm:px-10 lg:px-16 lg:py-20"><div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.65fr_1.35fr]"><div><p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: accent }}>{labels.about}</p><h2 className="mt-3 text-3xl font-bold tracking-[-0.01em]" style={headingStyle}>{site.title}</h2></div><p className="whitespace-pre-wrap text-base leading-8 opacity-70">{aboutCopy}</p></div></section>}
 
       {visibleSections.map((section, index) => (
         <AnimateOnScroll key={section.id} animation={section.animation}>
