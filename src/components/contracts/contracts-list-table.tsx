@@ -193,7 +193,8 @@ export function ContractsListTable({
                 <TableCell className="text-xs text-slate-500">
                   {activityLabel(c, t, lang)}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="w-[132px] whitespace-nowrap text-right">
+                  <div className="flex justify-end gap-2">
                   {canWrite &&
                   (c.status === "draft" ||
                     c.status === "sent" ||
@@ -222,6 +223,7 @@ export function ContractsListTable({
                       </Link>
                     </Button>
                   )}
+                  </div>
                 </TableCell>
               </TableRow>
             );
