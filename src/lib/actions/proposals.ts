@@ -506,6 +506,7 @@ export async function acceptProposalPublic(proposalId: string, token: string) {
 
     const invoiceId = crypto.randomUUID();
     await tx.insert(invoices).values({
+      id: invoiceId,
       workspaceId: p.workspaceId,
       clientId,
       invoiceNumber,
