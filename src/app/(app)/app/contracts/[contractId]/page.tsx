@@ -96,6 +96,7 @@ export default async function ContractDetailPage({
             <Badge variant={status.variant}>{status.label}</Badge>
           </div>
           <p className="text-sm text-slate-500 mt-1">
+            {c.contractNumber ? <span className="mr-2 font-mono text-xs">{c.contractNumber}</span> : null}
             {t("Untuk", "For")}:{" "}
             {c.clientId ? (
               <Link href={`/app/clients/${c.clientId}`} className="text-slate-700 hover:underline font-medium">
