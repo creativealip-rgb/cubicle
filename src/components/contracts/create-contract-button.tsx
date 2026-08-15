@@ -26,14 +26,16 @@ export function CreateContractButton({
   workspaceId,
   clients: _clients,
   templates = [],
+  defaultOpen = false,
 }: {
   workspaceId: string;
   clients: { id: string; name: string }[];
   templates?: ContractTemplateOption[];
+  defaultOpen?: boolean;
 }) {
   const { t } = useT();
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [pending, startTransition] = useTransition();
 
   const [clientName, setClientName] = useState("");

@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import ContractsPage from "../page";
 
 export default function NewContractPage() {
-  redirect("/app/contracts?new=1");
+  return <ContractsPage searchParams={Promise.resolve({ new: "1" })} />;
 }
