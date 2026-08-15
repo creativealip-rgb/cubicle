@@ -631,10 +631,9 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
         />
 
         {/* Bottom bar */}
-        <div className={`fixed bottom-0 left-0 md:left-64 right-0 z-30 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-2 backdrop-blur ${selectedSection ? "md:right-80" : ""}`} role="status" aria-live="polite">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground flex-1 min-w-0">
-            <span className="hidden sm:inline">{activePage?.title ?? t("Halaman", "Page")} · {activeSections.length} {t("bagian", "sections")}</span>
-            <span className="hidden sm:inline text-muted-foreground/50">·</span>
+        <div className={`fixed bottom-0 left-0 md:left-[68px] right-0 z-30 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-2 backdrop-blur ${selectedSection ? "md:right-80" : ""}`} role="status" aria-live="polite">
+          <div className="flex min-w-0 flex-1 items-center gap-2 text-xs text-muted-foreground">
+            <span className="hidden truncate rounded-md bg-muted px-2 py-1 font-medium text-foreground sm:inline">{activePage?.title ?? t("Halaman", "Page")} · {activeSections.length} {t("bagian", "sections")}</span>
             {saving ? (
               <span className="flex items-center gap-1 text-primary"><Loader2 className="h-3 w-3 animate-spin" /> {t("Menyimpan...", "Saving...")}</span>
             ) : isDirty ? (
@@ -658,7 +657,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                 setShowPublishConfirm(true);
               }
             }}
-            className={`flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition-colors ${
+            className={`flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
               site.published
                 ? "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
                 : isReadyToPublish(getPersonalSiteReadiness(site))
@@ -672,7 +671,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
             {site.published ? t("Tayang", "Live") : t("Draft", "Draft")}
           </button>
 
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             {/* Phase 5: device preview switcher — local state only, does not touch site data. */}
             <div
               role="group"
@@ -713,7 +712,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                 <Eye className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">{t("Pratinjau", "Preview")}</span>
               </a>
             </Button>
-            <Button type="button" size="sm" onClick={handleSave} disabled={saving || !isDirty}>
+            <Button type="button" size="sm" variant={isDirty ? "default" : "outline"} className={!isDirty ? "bg-muted/40 text-muted-foreground shadow-none" : undefined} onClick={handleSave} disabled={saving || !isDirty}>
               {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
               {saving ? t("Menyimpan...", "Saving...") : t("Simpan", "Save")}
             </Button>
