@@ -24,11 +24,11 @@ interface AcceptDeclineButtonsProps {
 export function AcceptDeclineButtons({ proposalId, token }: AcceptDeclineButtonsProps) {
   const { t } = useT();
   const [loading, setLoading] = useState<"accept" | "decline" | null>(null);
+  const [acceptOpen, setAcceptOpen] = useState(false);
   const [declineOpen, setDeclineOpen] = useState(false);
   const [reason, setReason] = useState("");
 
   async function handleAccept() {
-    if (!confirm(t("Setujui proposal ini? Proyek akan dibuat dan invoice DP disiapkan.", "Accept this proposal? Project will be created and DP invoice prepared."))) return;
     setLoading("accept");
     try {
       await acceptProposalPublic(proposalId, token);
@@ -59,7 +59,7 @@ export function AcceptDeclineButtons({ proposalId, token }: AcceptDeclineButtons
     <div className="flex flex-col sm:flex-row gap-3 justify-center">
       <Button
         size="lg"
-        onClick={handleAccept}
+        onClick={() => setAcceptOpen(true)}
         disabled={loading !== null}
         className="bg-emerald-600 hover:bg-emerald-700"
       >
@@ -75,6 +75,22 @@ export function AcceptDeclineButtons({ proposalId, token }: AcceptDeclineButtons
         <X className="h-4 w-4 mr-2" />
         {t("Tolak", "Decline")}
       </Button>
+      <Dialog open={acceptOpen} onOpenChange={(open) => !loading && setAcceptOpen(open)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("Setujui proposal?", "Accept proposal?")}</DialogTitle>
+            <DialogDescription>
+              {t("Persetujuan Anda mengonfirmasi scope, harga, dan ketentuan. Setelah itu kami menyiapkan project dan invoice pembayaran awal.", "Your approval confirms the scope, pricing, and terms. We will then prepare the project setup and initial payment invoice.")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAcceptOpen(false)} disabled={loading === "accept"}>{t("Batal", "Cancel")}</Button>
+            <Button onClick={handleAccept} disabled={loading === "accept"} className="bg-emerald-600 hover:bg-emerald-700">
+              {loading === "accept" ? t("Menyetujui...", "Accepting...") : t("Konfirmasi persetujuan", "Confirm approval")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog open={declineOpen} onOpenChange={setDeclineOpen}>
         <DialogContent>
           <DialogHeader>
