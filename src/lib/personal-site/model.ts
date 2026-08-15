@@ -315,10 +315,10 @@ export type PersonalSiteInput = z.infer<typeof personalSiteInputSchema>;
 export const DEFAULT_PERSONAL_SITE: PersonalSiteInput = {
   slug: "my-studio",
   published: false,
-  title: "Nama atau studio kamu",
+  title: "Nama Studio",
   subtitle: "Freelancer · Studio · Consultant",
-  hero: "Jelaskan hasil utama yang kamu bantu capai untuk klien.",
-  about: "Ceritakan keahlian, cara kerja, dan tipe klien yang paling cocok bekerja dengan kamu.",
+  hero: "Membantu bisnis tampil profesional dan siap menerima klien baru.",
+  about: "Keahlian, cara kerja, dan tipe klien yang paling cocok bekerja sama.",
   ctaLabel: "Hubungi saya",
   ctaUrl: "",
   theme: "midnight",
@@ -329,7 +329,7 @@ export const DEFAULT_PERSONAL_SITE: PersonalSiteInput = {
       type: "services",
       heading: "Layanan",
       items: [
-        { id: "default-service-1", title: "Layanan utama", description: "Jelaskan hasil dan ruang lingkup singkat." },
+        { id: "default-service-1", title: "Layanan", description: "Hasil dan ruang lingkup singkat." },
       ],
     },
     {
@@ -387,6 +387,39 @@ export function isSafePublicHref(value: string) {
 
 export function safePublicHref(value: string) {
   return isSafePublicHref(value) ? value.trim() : "#";
+}
+
+/**
+ * True when a public href still points at an example/placeholder destination
+ * (example.com / example.org / hello@example.com), which must never ship as
+ * real public copy.
+ */
+export function isPlaceholderHref(value: string | undefined | null) {
+  if (!value) return false;
+  const href = value.trim();
+  if (!href) return false;
+  if (/(^|[/@.])example\.(com|org|net|io)([/?#]|$)/i.test(href)) return true;
+  if (/^mailto:(?:hello|your|name|info)@/i.test(href)) return true;
+  return false;
+}
+
+/**
+ * True when text still carries template/editorial instruction language
+ * ("Jelaskan ...", "Tell clients what you do ...") that must not render as
+ * public copy.
+ */
+export function isEditorialPlaceholderText(value: string | undefined | null) {
+  if (!value) return false;
+  const text = value.trim();
+  if (!text) return false;
+  return /(jelaskan|ceritakan|tell clients|describe your|share your|add your|masukkan|tuliskan|contoh)/i.test(text);
+}
+
+function isFakeProofItem(quote: string, author: string, role: string) {
+  const text = `${quote} ${author} ${role}`.trim().toLowerCase();
+  if (!text) return false;
+  return /(budi santoso|siti rahmawati|andi wijaya|startupx|techcorp|ceo startup)/i.test(text)
+    || /\b\d+\s*%|\b\d+\+\s*(project|tahun|tahun pengalaman|project|klien)/i.test(text);
 }
 
 export function accentForeground(hex: string) {
@@ -525,7 +558,7 @@ export function sectionHasContent(section: PersonalSiteSection) {
     case "process": return section.steps.some((item) => item.title || item.description);
     case "pricing": return section.offers.some((item) => item.name || item.price || item.description);
     case "portfolio": return section.projects.some((item) => item.title || item.description || item.url);
-    case "testimonials": return section.testimonials.some((item) => item.quote && (item.author || item.role));
+    case "testimonials": return section.testimonials.some((item) => item.quote && (item.author || item.role) && !isFakeProofItem(item.quote, item.author, item.role));
     case "faq": return section.items.some((item) => item.question && item.answer);
     case "contact": return section.methods.some((item) => item.label && (item.value || item.url));
     case "custom": return Boolean(section.content.trim());

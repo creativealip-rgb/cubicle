@@ -37,7 +37,6 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
           sections: buildSections([
             "services-software-dev",
             "process-agile",
-            "testimonials-3-clients",
             "cta-primary"
           ]),
         },
@@ -68,7 +67,6 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
             "services-3-cards",
             "pricing-3-packages",
             "gallery-portfolio",
-            "testimonials-3-clients",
             "cta-contact"
           ]),
         },

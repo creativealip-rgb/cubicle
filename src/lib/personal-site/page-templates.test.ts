@@ -107,7 +107,7 @@ describe("PAGE_TEMPLATES", () => {
   });
 
   describe("section content in templates", () => {
-    it("Freelancer Profile should have services and testimonials", () => {
+    it("Freelancer Profile should have services and CTA", () => {
       const freelancer = PAGE_TEMPLATES.find((t) => t.id === "freelancer-profile")!;
       const result = freelancer.build(DEFAULT_PERSONAL_SITE as PersonalSiteInput);
       
@@ -117,7 +117,7 @@ describe("PAGE_TEMPLATES", () => {
       
       const types = sections?.map((s) => s.type);
       expect(types).toContain("services");
-      expect(types).toContain("testimonials");
+      expect(types).toContain("cta");
     });
 
     it("Agency Website should have services and gallery", () => {
