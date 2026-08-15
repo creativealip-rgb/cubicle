@@ -130,18 +130,16 @@ export function SendContractButton({
           size="sm"
           onClick={() => setOpen(true)}
           disabled={pending}
-          className={compact ? "h-8 w-8 p-0" : undefined}
+          className={compact ? "h-7 px-2 text-xs" : undefined}
           aria-label={pending ? sendingText : sendText}
           title={pending ? sendingText : sendText}
         >
           {pending ? (
-            <Loader2 className={compact ? "h-3.5 w-3.5 animate-spin" : "h-3.5 w-3.5 mr-1 animate-spin"} />
+            <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
           ) : (
-            <Send className={compact ? "h-3.5 w-3.5" : "h-3.5 w-3.5 mr-1"} />
+            <Send className="h-3.5 w-3.5 mr-1" />
           )}
-          <span className={compact ? "sr-only" : undefined}>
-            {pending ? sendingText : sendText}
-          </span>
+          {pending ? sendingText : sendText}
         </Button>
       </div>
 

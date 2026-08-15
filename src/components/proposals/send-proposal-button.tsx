@@ -123,14 +123,12 @@ export function SendProposalButton({
           size={compact ? "sm" : "sm"}
           onClick={() => setOpen(true)}
           disabled={pending}
-          className={compact ? "h-8 w-8 p-0" : undefined}
+          className={compact ? "h-7 px-2 text-xs" : undefined}
           aria-label={pending ? sendingText : sendText}
           title={pending ? sendingText : sendText}
         >
-          <Send className={compact ? "h-3.5 w-3.5" : "h-3.5 w-3.5 mr-1"} />
-          <span className={compact ? "sr-only" : undefined}>
-            {pending ? sendingText : sendText}
-          </span>
+          <Send className="h-3.5 w-3.5 mr-1" />
+          {pending ? sendingText : sendText}
         </Button>
       </div>
 
