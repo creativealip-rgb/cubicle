@@ -151,7 +151,7 @@ export default async function ProposalDetailPage({
           ) : null}
           {canWrite ? (
             <Button variant="outline" size="sm" asChild>
-              <Link href={`/app/proposals/${p.id}`}>
+              <Link href={`/app/proposals/${p.id}/preview`}>
                 <Eye className="h-3.5 w-3.5 mr-1" />
                 {t("Lihat proposal", "View proposal")}
               </Link>

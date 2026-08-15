@@ -94,11 +94,6 @@ export default async function ContractDetailPage({
               {c.title}
             </h1>
             <Badge variant={status.variant}>{status.label}</Badge>
-            {canWrite && c.status === "draft" ? (
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/app/contracts/${c.id}/edit`}>{t("Edit", "Edit")}</Link>
-              </Button>
-            ) : null}
           </div>
           <p className="text-sm text-slate-500 mt-1">
             {t("Untuk", "For")}:{" "}
@@ -123,9 +118,14 @@ export default async function ContractDetailPage({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {canWrite && c.status === "draft" ? (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/app/contracts/${c.id}/edit`}>{t("Edit", "Edit")}</Link>
+            </Button>
+          ) : null}
           {canWrite ? (
             <Button variant="outline" size="sm" asChild>
-              <Link href={`/app/contracts/${c.id}`}>
+              <Link href={`/app/contracts/${c.id}/preview`}>
                 <Eye className="h-3.5 w-3.5 mr-1" />
                 {t("Lihat kontrak", "View contract")}
               </Link>
