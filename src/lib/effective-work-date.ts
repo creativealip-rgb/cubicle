@@ -7,7 +7,7 @@ export type EffectiveTimeEntryColumns = {
 };
 
 export function effectiveWorkDateSql(entry: EffectiveTimeEntryColumns) {
-  return sql`coalesce(${entry.workDate}, (${entry.startTime})::date, (${entry.createdAt})::date)`;
+  return sql`coalesce(${entry.workDate}, (${entry.startTime} AT TIME ZONE 'Asia/Jakarta')::date, (${entry.createdAt} AT TIME ZONE 'Asia/Jakarta')::date)`;
 }
 
 export type EffectiveTimeEntry = {

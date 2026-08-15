@@ -10,6 +10,11 @@ describe("effective work-date query wiring", () => {
     expect(route).toContain("effectiveWorkDateSql(timeEntries)");
   });
 
+  it("uses Asia/Jakarta when deriving work date from timestamps", () => {
+    const helper = read("src/lib/effective-work-date.ts");
+    expect(helper).toContain("AT TIME ZONE 'Asia/Jakarta'");
+  });
+
   it("uses effective work date for both report time queries", () => {
     const reports = read("src/app/(app)/app/reports/page.tsx");
     expect(reports).toContain("effectiveWorkDateSql(timeEntries)");
