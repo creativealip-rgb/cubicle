@@ -51,7 +51,7 @@ export default async function ContractDetailPage({
     .limit(1);
   if (!c) notFound();
 
-  async function saveDetails(input: { clientName: string; clientEmail: string | null; companyName: string | null; title: string }) {
+  async function saveDetails(input: Record<string, unknown>) {
     "use server";
     return updateContract(c.id, input);
   }
@@ -176,7 +176,7 @@ export default async function ContractDetailPage({
       </div>
 
       {canWrite && c.status === "draft" ? (
-        <DocumentDetailsForm kind="contract" initial={{ clientName: c.clientName, clientEmail: c.clientEmail ?? "", companyName: c.companyName ?? "", title: c.title }} update={saveDetails} />
+        <DocumentDetailsForm kind="contract" initial={{ clientName: c.clientName, clientEmail: c.clientEmail ?? "", companyName: c.companyName ?? "", title: c.title, validUntil: c.validUntil }} update={saveDetails} />
       ) : null}
 
       <div className="grid gap-3 sm:grid-cols-3">

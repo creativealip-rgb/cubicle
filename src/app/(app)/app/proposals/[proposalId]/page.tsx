@@ -84,7 +84,7 @@ export default async function ProposalDetailPage({
     .limit(1);
   if (!p) notFound();
 
-  async function saveDetails(input: { clientName: string; clientEmail: string | null; companyName: string | null; title: string }) {
+  async function saveDetails(input: Record<string, unknown>) {
     "use server";
     return updateProposal(p.id, input);
   }
@@ -190,7 +190,7 @@ export default async function ProposalDetailPage({
       </div>
 
       {canWrite && p.status === "draft" ? (
-        <DocumentDetailsForm kind="proposal" initial={{ clientName: p.clientName, clientEmail: p.clientEmail ?? "", companyName: p.companyName ?? "", title: p.title }} update={saveDetails} />
+        <DocumentDetailsForm kind="proposal" initial={{ clientName: p.clientName, clientEmail: p.clientEmail ?? "", companyName: p.companyName ?? "", title: p.title, validUntil: p.validUntil, downPaymentPercent: Number(p.downPaymentPercent), taxRate: Number(p.tax) / Number(p.subtotal || 1), lineItems: (p.lineItems as Array<{description: string; quantity?: number; unitPrice?: number; amount?: number}> ?? []).map((item) => ({ description: item.description, quantity: item.quantity ?? 1, unitPrice: item.unitPrice ?? 0 })) }} update={saveDetails} />
       ) : null}
 
       <div className="grid gap-3 sm:grid-cols-3">
