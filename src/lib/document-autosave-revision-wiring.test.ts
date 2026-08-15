@@ -36,11 +36,13 @@ describe("autosave revision/stale-write protection wiring", () => {
   it("edit pages load the revision and the editor passes it back on every save", () => {
     expect(proposalEditPage).toMatch(/contentRevision: proposals\.contentRevision/);
     expect(proposalEditPage).toMatch(/initialRevision=\{proposal\.contentRevision\}/);
-    expect(proposalEditPage).toMatch(/saveBlocks=\{\(next, revision\) => saveProposalBlocks\(proposalId, \{ contentBlocks: next, revision \}\)\}/);
+    expect(proposalEditPage).toMatch(/return saveProposalBlocks\(proposalId, \{ contentBlocks: next, revision \}\);/);
+    expect(proposalEditPage).toMatch(/saveBlocks=\{saveBlocks\}/);
 
     expect(contractEditPage).toMatch(/contentRevision: contracts\.contentRevision/);
     expect(contractEditPage).toMatch(/initialRevision=\{contract\.contentRevision\}/);
-    expect(contractEditPage).toMatch(/saveBlocks=\{\(next, revision\) => saveContractBlocks\(contractId, \{ contentBlocks: next, revision \}\)\}/);
+    expect(contractEditPage).toMatch(/return saveContractBlocks\(contractId, \{ contentBlocks: next, revision \}\);/);
+    expect(contractEditPage).toMatch(/saveBlocks=\{saveBlocks\}/);
   });
 
   it("editor tracks the revision, adopts the server revision after save, and surfaces stale state", () => {

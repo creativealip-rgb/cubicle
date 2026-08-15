@@ -26,5 +26,5 @@ export default async function ContractEditPage({ params }: { params: Promise<{ c
     "use server";
     return saveContractBlocks(contractId, { contentBlocks: next, revision });
   }
-  return <DocumentBlockEditor kind="contract" workspaceId={workspaceId} initialBlocks={blocks.length ? blocks : defaultDocumentBlocks("contract")} initialRevision={contract.contentRevision} placeholderValues={placeholderValues} saveBlocks={saveBlocks} />;
+  return <DocumentBlockEditor kind="contract" workspaceId={workspaceId} initialBlocks={blocks.length ? blocks : defaultDocumentBlocks("contract")} initialRevision={contract.contentRevision} backHref={`/app/contracts/${contractId}`} placeholderValues={placeholderValues} saveBlocks={saveBlocks} />;
 }
