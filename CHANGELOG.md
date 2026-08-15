@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-08-15 — Repository branch cleanup
+
+- Audited local branches/worktrees against current production source before cleanup.
+- Preserved `main`, `dev/integration`, and current production branch.
+- Removed stale local branches/worktrees and selected stale remote branches after creating branch bundles and dirty-worktree backups.
+- Archived backups under `/root/backups/cubiqlo-branches-20260815/`.
+- Preserved unrelated uncommitted `mobile-step-editor.tsx` change; not included in this commit.
+
+**Verification:** worktree list reduced to current branch + `dev/integration`; `main` restored from `origin/main`; current branch remains synced with origin.
+
 ## 2026-08-15 — Proposal/contract email message templates
 
 - Added editable default email message bodies for Proposal and Contract send/resend dialogs.
