@@ -104,7 +104,7 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
           />
         )}
         <AppSidebar
-          collapsed={collapsed}
+          collapsed={focusEditor || collapsed}
           onToggle={() => setCollapsed(!collapsed)}
           badgeCounts={badgeCounts}
           userEmail={user.email}
