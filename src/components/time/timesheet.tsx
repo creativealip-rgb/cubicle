@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { useT } from "@/lib/i18n-client";
 import { timeEntryStatusVariant } from "@/lib/status-badge";
+import { allowsTimeTrackingProject } from "@/lib/billing-model";
 
 const PAGE_SIZE = 10;
 
@@ -53,6 +54,7 @@ interface TimeEntry {
   activityName?: string | null;
   projectCurrency: string | null;
   projectTimeTrackingMode: "off" | "internal" | "billable" | null;
+  billingType?: string | null;
   taskTitle: string | null;
   userName: string | null;
   createdAt: Date | string;
@@ -69,6 +71,7 @@ interface Project {
   clientId?: string | null;
   timeTrackingMode?: "off" | "internal" | "billable" | null;
   billingType?: string | null;
+  billingModel?: string | null;
 }
 
 interface Task {
@@ -189,7 +192,9 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
   const [editTaskSearchOpen, setEditTaskSearchOpen] = useState(false);
 
   const allEditProjectOptions = useMemo(() => {
-    const writableProjects = projects.filter((p) => p.timeTrackingMode !== "off");
+    const writableProjects = projects.filter(
+      (p) => p.timeTrackingMode !== "off" && allowsTimeTrackingProject(p),
+    );
     const options = writableProjects.map((p) => {
       const client = clients.find((c) => c.id === p.clientId);
       return {
@@ -285,7 +290,13 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
   }
 
   function canEditEntry(entry: TimeEntry) {
-    return entry.status !== "invoiced" && entry.projectTimeTrackingMode !== "off";
+    if (entry.status === "invoiced") return false;
+    if (entry.projectTimeTrackingMode === "off") return false;
+    // Historical Fixed Price / legacy Package entries are immutable (server
+    // assertHistoricalTimeEntryMutable) — mirror the read-only gate in UI.
+    const billingType = entry.billingType;
+    if (billingType === "project" || billingType === "fixed_price" || billingType === "package") return false;
+    return true;
   }
 
   function openEdit(entry: TimeEntry) {

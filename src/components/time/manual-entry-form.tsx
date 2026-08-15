@@ -226,7 +226,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks, activit
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs">{t("Tugas terkait", "Related Task")}</Label>
+            <Label className="text-xs">{t("Tugas", "Task")}</Label>
             <Select
               value={taskId || "__none__"}
               onValueChange={handleTaskChange}

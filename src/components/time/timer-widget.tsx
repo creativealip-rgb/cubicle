@@ -605,7 +605,7 @@ export function TimerWidget({
                       </Select>
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs">{t("Tugas terkait", "Related Task")}</Label>
+                      <Label className="text-xs">{t("Tugas", "Task")}</Label>
                       <Select value={selectedTaskId} onValueChange={setSelectedTaskId} disabled={!selectedProjectId}>
                         <SelectTrigger className="h-9 text-sm">
                           <SelectValue placeholder={t("Pilih tugas", "Select task")} />
@@ -839,7 +839,7 @@ export function TimerWidget({
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">{t("Tugas terkait", "Related Task")}</Label>
+                  <Label className="text-xs">{t("Tugas", "Task")}</Label>
                   <Select
                     value={selectedTaskId}
                     onValueChange={setSelectedTaskId}
