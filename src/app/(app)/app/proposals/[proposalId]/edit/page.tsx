@@ -7,8 +7,13 @@ import { DocumentBlockEditor } from "@/components/documents/document-block-edito
 import { defaultDocumentBlocks, normalizeDocumentBlocks } from "@/lib/document-blocks";
 import { saveProposalBlocks } from "@/lib/actions/proposals";
 
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 export default async function ProposalEditPage({ params }: { params: Promise<{ proposalId: string }> }) {
   const { proposalId } = await params;
+  if (!isUuid(proposalId)) notFound();
   const workspaceId = await getWorkspaceForCurrentUser();
   const [proposal] = await db.select({ id: proposals.id, contentBlocks: proposals.contentBlocks, contentRevision: proposals.contentRevision, status: proposals.status })
     .from(proposals).where(and(eq(proposals.id, proposalId), eq(proposals.workspaceId, workspaceId))).limit(1);

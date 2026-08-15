@@ -28,12 +28,17 @@ function normalizeBody(body: string) {
   return body.replace(/\\n/g, "\n");
 }
 
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 export default async function ContractDetailPage({
   params,
 }: {
   params: Promise<{ contractId: string }>;
 }) {
   const { contractId } = await params;
+  if (!isUuid(contractId)) notFound();
   const lang = await getCurrentLang();
   const t = createT(lang);
   const locale = lang === "en" ? "en-US" : "id-ID";
