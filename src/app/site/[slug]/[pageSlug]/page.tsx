@@ -51,6 +51,9 @@ export default async function PublicPersonalSiteSubPage({
           "Pilih cara menghubungi atau lihat portfolio di bawah.",
           "Choose a contact or portfolio link below.",
         ),
+        contact: t("Hubungi Saya", "Contact me"),
+        openProject: t("Buka project", "Open project"),
+        pageNav: t("Halaman situs", "Site pages"),
       }}
     />
   );

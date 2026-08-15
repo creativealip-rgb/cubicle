@@ -1,5 +1,5 @@
 import type { PersonalSiteInput } from "./model";
-import { isSafePublicHref, RESERVED_PERSONAL_SITE_SLUGS, sectionHasContent } from "./model";
+import { isSafePublicHref, isPlaceholderHref, RESERVED_PERSONAL_SITE_SLUGS, sectionHasContent } from "./model";
 
 /**
  * Readiness issue identified in a personal site configuration.
@@ -122,6 +122,12 @@ export function getPersonalSiteReadiness(site: PersonalSiteInput): ReadinessIssu
           id: "cta-url-invalid",
           severity: "error",
           label: "URL CTA menggunakan protokol yang tidak aman",
+        });
+      } else if (isPlaceholderHref(url)) {
+        issues.push({
+          id: "placeholder-example-destination",
+          severity: "error",
+          label: "URL CTA masih memakai contoh (example.com / hello@example.com) — ganti dengan alamat asli",
         });
       }
     }

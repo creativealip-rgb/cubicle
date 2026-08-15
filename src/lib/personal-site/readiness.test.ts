@@ -441,6 +441,70 @@ describe("getPersonalSiteReadiness", () => {
     expect(issues.some((i) => i.id === "slug-reserved")).toBe(true);
   });
 
+  it("reports example/placeholder destinations as publish errors", () => {
+    const sitePlaceholder = {
+      ...DEFAULT_PERSONAL_SITE,
+      slug: "placeholder-site",
+      title: "Test",
+      hero: "Test hero",
+      published: true,
+      ctaLabel: "Contact",
+      ctaUrl: "https://example.com/",
+      pages: [DEFAULT_PERSONAL_SITE.pages![0]],
+      themeConfig: DEFAULT_PERSONAL_SITE.themeConfig!,
+    };
+
+    const issues = getPersonalSiteReadiness(sitePlaceholder);
+    expect(issues.some((i) => i.id === "placeholder-example-destination")).toBe(true);
+    expect(issues.some((i) => i.id === "cta-url-invalid")).toBe(false); // safe protocol, placeholder instead
+
+    // mailto:hello@example.com is equally blocked
+    const siteMailto = { ...sitePlaceholder, ctaUrl: "mailto:hello@example.com" };
+    const mailtoIssues = getPersonalSiteReadiness(siteMailto);
+    expect(mailtoIssues.some((i) => i.id === "placeholder-example-destination")).toBe(true);
+
+    // A real destination passes
+    const siteReal = { ...sitePlaceholder, ctaUrl: "https://wa.me/62812345678" };
+    const realIssues = getPersonalSiteReadiness(siteReal);
+    expect(realIssues.some((i) => i.id === "placeholder-example-destination")).toBe(false);
+    expect(realIssues.some((i) => i.id === "cta-url-invalid")).toBe(false);
+  });
+
+  it("does not count fake-proof testimonials as content", () => {
+    const siteFakeProof = {
+      ...DEFAULT_PERSONAL_SITE,
+      slug: "fake-proof",
+      title: "Test",
+      hero: "Test hero",
+      published: true,
+      ctaLabel: "",
+      ctaUrl: "",
+      sections: [],
+      pages: [
+        {
+          id: "home",
+          slug: "",
+          title: "Home",
+          isHome: true,
+          sections: [
+            {
+              id: "t1",
+              type: "testimonials" as const,
+              heading: "Apa kata klien",
+              testimonials: [
+                { id: "q1", quote: "Website yang dibangun meningkatkan konversi kita hingga 40%.", author: "Andi Wijaya", role: "Founder TechCorp" },
+              ],
+            },
+          ],
+        },
+      ],
+      themeConfig: DEFAULT_PERSONAL_SITE.themeConfig!,
+    };
+
+    const issues = getPersonalSiteReadiness(siteFakeProof);
+    expect(issues.some((i) => i.id === "no-content-sections")).toBe(true);
+  });
+
   it("validates unpaired CTA when published is false does not error", () => {
     const siteUnpublished = {
       ...DEFAULT_PERSONAL_SITE,

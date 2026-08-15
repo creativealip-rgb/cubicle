@@ -205,23 +205,14 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
     label: "Testimoni 3 Klien",
     description: "Kutipan dari klien sebelumnya.",
     category: "proof",
+    // Starter block inserts an EMPTY proof block — fake testimonials are never
+    // auto-generated (P0.3). The section stays hidden on the public page until
+    // the owner adds real client quotes.
     build: () => ({
       id: makeId(),
       type: "testimonials" as const,
       heading: "Apa kata klien",
-      testimonials: buildItems(
-        { id: "", quote: "", author: "", role: "" },
-        3,
-        (i) => ({
-          quote: [
-            "Hasil kerja sangat memuaskan, komunikasi lancar, dan tepat waktu.",
-            "Profesional dan detail-oriented. Sangat merekomendasikan!",
-            "Website yang dibangun meningkatkan konversi kita hingga 40%.",
-          ][i],
-          author: ["Budi Santoso", "Siti Rahmawati", "Andi Wijaya"][i],
-          role: ["CEO StartupX", "Marketing Director", "Founder TechCorp"][i],
-        })
-      ),
+      testimonials: [],
     }),
   },
 
@@ -253,7 +244,9 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
       heading: "Butuh bantuan?",
       text: "Tim kami siap membantu menjawab pertanyaan Anda 24/7.",
       buttonLabel: "Chat via WhatsApp",
-      buttonUrl: "https://wa.me/",
+      // Left empty on purpose: a template must not point at a dead
+      // https://wa.me/ destination. The owner fills in their own number.
+      buttonUrl: "",
     }),
   },
 

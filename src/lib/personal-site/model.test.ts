@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_PERSONAL_SITE,
+  isEditorialPlaceholderText,
+  isPlaceholderHref,
   isSafePublicHref,
   normalizeLegacyLinks,
   normalizeLegacySections,
@@ -53,5 +55,43 @@ describe("personal site model", () => {
       heading: "Proof",
       testimonials: [{ id: "1", quote: "Real quote", author: "Client", role: "Founder" }],
     })).toBe(true);
+  });
+
+  it("treats template fake-proof testimonials as empty content", () => {
+    expect(sectionHasContent({
+      id: "proof",
+      type: "testimonials",
+      heading: "Apa kata klien",
+      testimonials: [
+        { id: "1", quote: "Website yang dibangun meningkatkan konversi kita hingga 40%.", author: "Andi Wijaya", role: "Founder TechCorp" },
+        { id: "2", quote: "Hasil kerja sangat memuaskan.", author: "Budi Santoso", role: "CEO StartupX" },
+      ],
+    })).toBe(false);
+  });
+
+  it("detects example/placeholder destinations", () => {
+    expect(isPlaceholderHref("https://example.com/")).toBe(true);
+    expect(isPlaceholderHref("https://example.com/contact")).toBe(true);
+    expect(isPlaceholderHref("mailto:hello@example.com")).toBe(true);
+    expect(isPlaceholderHref("mailto:info@example.org")).toBe(true);
+    expect(isPlaceholderHref("https://wa.me/62812345678")).toBe(false);
+    expect(isPlaceholderHref("mailto:owner@real-domain.com")).toBe(false);
+    expect(isPlaceholderHref("")).toBe(false);
+    expect(isPlaceholderHref(undefined)).toBe(false);
+  });
+
+  it("detects editorial instruction copy", () => {
+    expect(isEditorialPlaceholderText("Jelaskan hasil utama yang kamu bantu capai untuk klien.")).toBe(true);
+    expect(isEditorialPlaceholderText("Ceritakan keahlian dan cara kerja.")).toBe(true);
+    expect(isEditorialPlaceholderText("Tell clients what you do")).toBe(true);
+    expect(isEditorialPlaceholderText("Hasil dan ruang lingkup singkat.")).toBe(false);
+    expect(isEditorialPlaceholderText("Membantu bisnis tampil profesional.")).toBe(false);
+  });
+
+  it("default site copy is free of editorial placeholders", () => {
+    expect(isEditorialPlaceholderText(DEFAULT_PERSONAL_SITE.title)).toBe(false);
+    expect(isEditorialPlaceholderText(DEFAULT_PERSONAL_SITE.hero)).toBe(false);
+    expect(isEditorialPlaceholderText(DEFAULT_PERSONAL_SITE.about)).toBe(false);
+    expect(DEFAULT_PERSONAL_SITE.sections[0].type).toBe("services");
   });
 });
