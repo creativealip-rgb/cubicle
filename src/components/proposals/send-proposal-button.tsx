@@ -51,7 +51,9 @@ export function SendProposalButton({
   const [link, setLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [pending, startTransition] = useTransition();
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(
+    `Halo ${clientName || ""},\n\nProposal "${title || "ini"}" sudah siap untuk ditinjau.\n\nSilakan buka tautan proposal untuk melihat detail scope, harga, dan ketentuan.\n\nTerima kasih.`,
+  );
 
   const isSentLike = status === "sent" || status === "viewed";
   const sendText = isSentLike
