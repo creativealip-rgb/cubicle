@@ -169,7 +169,7 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
   }
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-slate-100">
+    <div className="flex h-[calc(100vh-5rem)] min-h-0 flex-col overflow-hidden bg-slate-100">
       <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-4 py-3">
         <div><h1 className="font-semibold">{kind === "proposal" ? "Proposal editor" : "Contract editor"}</h1><p className="text-xs text-muted-foreground">{stale ? "Dokumen berubah di tempat lain — muat ulang untuk melanjutkan" : saving || pending ? "Menyimpan..." : dirty ? "Perubahan belum tersimpan" : "Perubahan tersimpan"}</p></div>
         <div className="flex items-center gap-2">
@@ -183,8 +183,8 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
           <Button size="sm" onClick={() => startTransition(() => { void save(); })} disabled={!dirty || saving || pending || stale}>Simpan</Button>
         </div>
       </div>
-      <div className="flex min-h-[calc(100vh-5rem)]">
-        <aside className="hidden w-56 shrink-0 border-r bg-white p-4 lg:block">
+      <div className="flex min-h-0 flex-1">
+        <aside className="hidden w-56 shrink-0 overflow-y-auto border-r bg-white p-4 lg:block">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Struktur</p>
           <div className="space-y-1">
             {blocks.map((block, index) => (
@@ -240,7 +240,7 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
           ))}
         </section>
         </main>
-        <aside className="hidden w-72 shrink-0 border-l bg-white p-4 lg:block">
+        <aside className="hidden w-72 shrink-0 overflow-y-auto border-l bg-white p-4 lg:block">
           <div className="mb-4 flex items-center justify-between"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Insert</p><span className="text-[11px] text-muted-foreground">Properties</span></div>
           {selectedBlockId ? <div className="mb-4 rounded-lg border bg-muted/30 p-3 text-sm"><p className="font-medium">{blocks.find((block) => block.id === selectedBlockId)?.type === "text" ? "Teks" : blocks.find((block) => block.id === selectedBlockId)?.type}</p><p className="mt-1 text-xs text-muted-foreground">Klik block di canvas untuk edit. Drag item Struktur untuk reorder.</p>{blocks.find((block) => block.id === selectedBlockId)?.type === "heading" ? <label className="mt-3 block text-xs text-muted-foreground">Ukuran heading<select className="mt-1 w-full rounded border bg-white px-2 py-1 text-sm text-foreground" value={blocks.find((block) => block.id === selectedBlockId)?.level ?? 2} onChange={(event) => selectedBlockId && updateBlock(selectedBlockId, { level: Number(event.target.value) as 1 | 2 | 3 })}><option value="1">Heading 1</option><option value="2">Heading 2</option><option value="3">Heading 3</option></select></label> : null}{blocks.find((block) => block.id === selectedBlockId)?.type === "list" ? <label className="mt-3 flex items-center gap-2 text-xs text-muted-foreground"><input type="checkbox" checked={Boolean(blocks.find((block) => block.id === selectedBlockId)?.ordered)} onChange={(event) => selectedBlockId && updateBlock(selectedBlockId, { ordered: event.target.checked })} />List bernomor</label> : null}</div> : null}
           <div className="grid gap-2">
@@ -254,12 +254,7 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
               <Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => attachmentInputRef.current?.click()}><Paperclip className="mr-2 h-3.5 w-3.5" />Lampiran</Button>
             </>}
           </div>
-          <Button type="button" className="mt-6 w-full" variant="outline" onClick={() => setShowPreview(true)}><Eye className="mr-2 h-4 w-4" />Preview</Button>
         </aside>
-      </div>
-      <div className="sticky bottom-0 z-20 flex items-center justify-between gap-3 border-t bg-white/95 px-4 py-2 text-xs text-muted-foreground backdrop-blur" role="status" aria-live="polite">
-        <span>{blocks.length} blok · {saving || pending ? "Menyimpan..." : dirty ? "Belum tersimpan" : "Tersimpan"}</span>
-        <div className="flex items-center gap-2"><Button type="button" variant="outline" size="sm" onClick={() => setShowPreview(true)}><Eye className="mr-1.5 h-3.5 w-3.5" />Preview</Button><Button type="button" size="sm" onClick={() => startTransition(() => { void save(); })} disabled={!dirty || saving || pending || stale}>Simpan</Button></div>
       </div>
       {showTools && <div className="fixed inset-0 z-50 bg-black/40 lg:hidden" onClick={() => setShowTools(false)}>
         <aside className="absolute right-0 top-0 h-full w-72 bg-white p-4 shadow-xl" onClick={(event) => event.stopPropagation()}>
