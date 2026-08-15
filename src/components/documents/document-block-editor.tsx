@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,20 +15,21 @@ import { uploadOneFile, MAX_UPLOAD_BYTES } from "@/lib/files-upload";
 import { useT } from "@/lib/i18n-client";
 import { renderDocumentBlockHtml } from "@/lib/document-block-renderer";
 import type { DocumentPlaceholderValues } from "@/lib/document-placeholders";
-import { ArrowDown, ArrowUp, Eye, GripVertical, Loader2, Monitor, Paperclip, Redo2, Smartphone, Tablet, Trash2, Undo2, Upload, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, Eye, GripVertical, Loader2, Monitor, Paperclip, Redo2, Smartphone, Tablet, Trash2, Undo2, Upload, X } from "lucide-react";
 
 type Props = {
   kind: "proposal" | "contract";
   workspaceId: string;
   initialBlocks: DocumentBlock[];
   initialRevision?: number;
+  backHref?: string;
   placeholderValues?: DocumentPlaceholderValues;
   saveBlocks: (blocks: DocumentBlock[], revision: number) => Promise<unknown>;
 };
 
 type AddableBlock = "text" | "heading" | "placeholder" | "list" | "divider" | "table" | "image" | "attachment";
 
-export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialRevision = 1, placeholderValues = {}, saveBlocks }: Props) {
+export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialRevision = 1, backHref, placeholderValues = {}, saveBlocks }: Props) {
   const [blocks, setBlocks] = useState(initialBlocks);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -185,9 +187,9 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
   }
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-slate-100">
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-4 py-3">
-        <div><h1 className="font-semibold">{kind === "proposal" ? t("Editor proposal", "Proposal editor") : t("Editor kontrak", "Contract editor")}</h1><p className="text-xs text-muted-foreground">{stale ? t("Dokumen berubah di tempat lain — muat ulang untuk melanjutkan", "Document changed elsewhere — reload to continue") : saving || pending ? t("Menyimpan...", "Saving...") : dirty ? t("Perubahan belum tersimpan", "Unsaved changes") : t("Perubahan tersimpan", "Changes saved")}</p></div>
+    <div className="flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden bg-slate-100">
+      <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b bg-white px-4 py-3">
+        <div className="flex min-w-0 items-center gap-2">{backHref && <Button asChild type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label={t("Kembali", "Back")}><Link href={backHref}><ArrowLeft className="h-4 w-4" /></Link></Button>}<div className="min-w-0"><h1 className="font-semibold">{kind === "proposal" ? t("Editor proposal", "Proposal editor") : t("Editor kontrak", "Contract editor")}</h1><p className="text-xs text-muted-foreground">{stale ? t("Dokumen berubah di tempat lain — muat ulang untuk melanjutkan", "Document changed elsewhere — reload to continue") : saving || pending ? t("Menyimpan...", "Saving...") : dirty ? t("Perubahan belum tersimpan", "Unsaved changes") : t("Perubahan tersimpan", "Changes saved")}</p></div></div>
         <div className="flex items-center gap-2">
           <div className="hidden items-center gap-1 rounded-md border bg-muted/40 p-0.5 sm:flex">
             {([["desktop", Monitor], ["tablet", Tablet], ["mobile", Smartphone]] as const).map(([name, Icon]) => <Button key={name} type="button" variant={device === name ? "default" : "ghost"} size="icon" className="h-7 w-7" onClick={() => setDevice(name)} aria-label={name} aria-pressed={device === name}><Icon className="h-3.5 w-3.5" /></Button>)}
@@ -199,8 +201,8 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
           <Button size="sm" onClick={() => startTransition(() => { void save(); })} disabled={!dirty || saving || pending || stale}>{t("Simpan", "Save")}</Button>
         </div>
       </div>
-      <div className="flex min-h-[calc(100vh-5rem)]">
-        <aside className="hidden w-56 shrink-0 border-r bg-white p-4 lg:block">
+      <div className="flex min-h-0 flex-1">
+        <aside className="hidden w-56 shrink-0 overflow-y-auto border-r bg-white p-4 lg:block">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("Struktur", "Structure")}</p>
           <div className="space-y-1">
             {blocks.map((block, index) => (
@@ -257,7 +259,7 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
           ))}
         </section>
         </main>
-        <aside className="hidden w-72 shrink-0 border-l bg-white p-4 lg:block">
+        <aside className="hidden w-72 shrink-0 overflow-y-auto border-l bg-white p-4 lg:block">
           <div className="mb-4 flex items-center justify-between"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("Sisipkan", "Insert")}</p><span className="text-[11px] text-muted-foreground">{t("Properti", "Properties")}</span></div>
           {selectedBlockId ? <div className="mb-4 rounded-lg border bg-muted/30 p-3 text-sm"><p className="font-medium">{blockLabel(blocks.find((block) => block.id === selectedBlockId)?.type ?? "")}</p><p className="mt-1 text-xs text-muted-foreground">{t("Klik block di canvas untuk edit. Drag item Struktur untuk reorder.", "Click a block on the canvas to edit. Drag items in Structure to reorder.")}</p>{blocks.find((block) => block.id === selectedBlockId)?.type === "heading" ? <label className="mt-3 block text-xs text-muted-foreground">{t("Ukuran heading", "Heading size")}<select className="mt-1 w-full rounded border bg-white px-2 py-1 text-sm text-foreground" value={blocks.find((block) => block.id === selectedBlockId)?.level ?? 2} onChange={(event) => selectedBlockId && updateBlock(selectedBlockId, { level: Number(event.target.value) as 1 | 2 | 3 })}><option value="1">Heading 1</option><option value="2">Heading 2</option><option value="3">Heading 3</option></select></label> : null}{blocks.find((block) => block.id === selectedBlockId)?.type === "list" ? <label className="mt-3 flex items-center gap-2 text-xs text-muted-foreground"><input type="checkbox" checked={Boolean(blocks.find((block) => block.id === selectedBlockId)?.ordered)} onChange={(event) => selectedBlockId && updateBlock(selectedBlockId, { ordered: event.target.checked })} />{t("List bernomor", "Numbered list")}</label> : null}</div> : null}
           <div className="grid gap-2">
@@ -273,7 +275,7 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
           </div>
         </aside>
       </div>
-      <div className="sticky bottom-0 z-20 flex items-center justify-between gap-3 border-t bg-white/95 px-4 py-2 text-xs text-muted-foreground backdrop-blur" role="status" aria-live="polite">
+      <div className="sticky bottom-0 z-20 flex shrink-0 items-center justify-between gap-3 border-t bg-white/95 px-4 py-2 text-xs text-muted-foreground backdrop-blur" role="status" aria-live="polite">
         <span>{blocks.length} {t("blok", blocks.length === 1 ? "block" : "blocks")} · {saving || pending ? t("Menyimpan...", "Saving...") : dirty ? t("Belum tersimpan", "Not saved") : t("Tersimpan", "Saved")}</span>
       </div>
       {showTools && <div className="fixed inset-0 z-50 bg-black/40 lg:hidden" onClick={() => setShowTools(false)}>

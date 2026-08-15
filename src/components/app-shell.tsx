@@ -44,6 +44,7 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
   const [hydrated, setHydrated] = useState(false);
   const pathname = usePathname();
   const focusEditor = pathname === "/app/personal-site";
+  const documentEditor = Boolean(pathname?.endsWith("/edit") && (pathname.startsWith("/app/proposals/") || pathname.startsWith("/app/contracts/")));
   // Brain page renders the full-page AI panel itself; skip the floating one.
   const onBrainPage = pathname?.startsWith("/app/brain") ?? false;
 
@@ -121,7 +122,7 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
           )}
         >
           <AppTopbar user={user} />
-          <main id="main-content" className={cn("min-w-0 flex-1 p-3 pb-24 sm:p-4 md:p-6 md:pb-28", focusEditor && "md:p-0 md:pb-0")}>{children}</main>
+          <main id="main-content" className={cn("min-w-0 flex-1 p-3 pb-24 sm:p-4 md:p-6 md:pb-28", (focusEditor || documentEditor) && "md:p-0 md:pb-0")}>{children}</main>
         </div>
         {!onBrainPage && <AIChatPanel variant="floating" />}
       </div>

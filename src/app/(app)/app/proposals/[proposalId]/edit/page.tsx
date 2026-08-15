@@ -23,5 +23,5 @@ export default async function ProposalEditPage({ params }: { params: Promise<{ p
     "use server";
     return saveProposalBlocks(proposalId, { contentBlocks: next, revision });
   }
-  return <DocumentBlockEditor kind="proposal" workspaceId={workspaceId} initialBlocks={blocks.length ? blocks : defaultDocumentBlocks("proposal")} initialRevision={proposal.contentRevision} saveBlocks={saveBlocks} />;
+  return <DocumentBlockEditor kind="proposal" workspaceId={workspaceId} initialBlocks={blocks.length ? blocks : defaultDocumentBlocks("proposal")} initialRevision={proposal.contentRevision} backHref={`/app/proposals/${proposalId}`} saveBlocks={saveBlocks} />;
 }

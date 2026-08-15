@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Megaphone, PanelLeft, PanelLeftClose, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Megaphone, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { SidebarNavigation } from "@/components/sidebar/sidebar-navigation";
@@ -56,8 +56,8 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts, workspaceRole }: 
       {!collapsed && <Link href="/app/dashboard" className="flex min-w-0 items-center gap-2 font-semibold text-sidebar-foreground"><Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-8 w-auto object-contain sm:h-9" /></Link>}
       {collapsed && <Link href="/app/dashboard" className="hidden lg:flex"><Image src="/logo-icon.png" alt="Cubiqlo" width={36} height={36} className="h-9 w-9 rounded-md object-cover" /></Link>}
       <Button variant="ghost" size="icon" className="h-11 w-11 text-sidebar-foreground hover:bg-sidebar-accent lg:hidden" onClick={() => setMobileOpen(false)} aria-label={t("Tutup menu", "Close menu")}><X className="h-4 w-4" /></Button>
-      {!collapsed && <Button variant="ghost" size="icon" className="hidden h-11 w-11 text-sidebar-foreground hover:bg-sidebar-accent lg:flex" onClick={onToggle} aria-label={t("Ciutkan sidebar", "Collapse sidebar")}><PanelLeftClose className="h-4 w-4" /></Button>}
-      {collapsed && <Button variant="ghost" size="icon" className="absolute -right-3 top-1.5 hidden h-11 w-11 rounded-full border bg-background text-sidebar-foreground shadow-sm hover:bg-sidebar-accent lg:flex" onClick={onToggle} aria-label={t("Bentangkan sidebar", "Expand sidebar")}><PanelLeft className="h-4 w-4" /></Button>}
+      {!collapsed && <Button variant="ghost" size="icon" className="absolute -right-3 top-1.5 hidden h-11 w-11 rounded-full border bg-background text-sidebar-foreground shadow-sm hover:bg-sidebar-accent lg:flex" onClick={onToggle} aria-label={t("Ciutkan sidebar", "Collapse sidebar")}><ChevronLeft className="h-4 w-4" /></Button>}
+      {collapsed && <Button variant="ghost" size="icon" className="absolute -right-3 top-1.5 hidden h-11 w-11 rounded-full border bg-background text-sidebar-foreground shadow-sm hover:bg-sidebar-accent lg:flex" onClick={onToggle} aria-label={t("Bentangkan sidebar", "Expand sidebar")}><ChevronRight className="h-4 w-4" /></Button>}
     </div>
 
     <nav className="flex-1 overflow-y-auto px-2 py-3">
