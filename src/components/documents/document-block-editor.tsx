@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
   buildDocumentMediaBlock,
+  buildProposalStarterBlocks,
   isSafeImageBlock,
   type DocumentBlock,
   type DocumentTableRow,
@@ -106,6 +107,7 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [showPreview, setShowPreview] = useState(false);
   const [showTools, setShowTools] = useState(false);
+  const [showTemplateConfirm, setShowTemplateConfirm] = useState(false);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(initialBlocks[0]?.id ?? null);
   const [device, setDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [history, setHistory] = useState<DocumentBlock[][]>([initialBlocks]);
@@ -184,6 +186,57 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
             : { id: crypto.randomUUID(), type, content: "" };
     setBlocks((current) => [...current, block]);
     setDirty(true);
+  }
+
+  function hasNonDefaultContent() {
+    const nonEmpty = blocks.some((block) => {
+      if (block.type === "text" && (block.content ?? "").trim() !== "") return true;
+      if (block.type === "heading" && (block.content ?? "").trim() !== "") return true;
+      if (block.type === "list" && (block.items ?? []).some((item) => item.trim() !== "")) return true;
+      if (block.type === "table" && (block.rows ?? []).some((row) => row.some((cell) => cell.trim() !== ""))) return true;
+      if (block.type === "placeholder" && (block.content ?? "").trim() !== "") return true;
+      if (block.type === "image" || block.type === "attachment") return true;
+      return false;
+    });
+    return nonEmpty;
+  }
+
+  function handleStartFromTemplate() {
+    if (hasNonDefaultContent()) {
+      setShowTemplateConfirm(true);
+      return;
+    }
+    applyStarterTemplate();
+  }
+
+  function applyStarterTemplate() {
+    const starter = buildProposalStarterBlocks();
+    recordHistory(starter);
+    setBlocks(starter);
+    setDirty(true);
+    setSelectedBlockId(starter[0]?.id ?? null);
+    setShowTemplateConfirm(false);
+  }
+
+  function insertPlaceholder(token: string) {
+    const target = blocks.find((block) => block.id === selectedBlockId && (block.type === "text" || block.type === "placeholder" || block.type === "heading"));
+    if (target) {
+      updateBlock(target.id, { content: `${target.content ?? ""}${token}` });
+    } else {
+      const block: DocumentBlock = { id: crypto.randomUUID(), type: "text", content: token };
+      setBlocks((current) => [...current, block]);
+      recordHistory([...blocks, block]);
+      setDirty(true);
+      setSelectedBlockId(block.id);
+    }
+  }
+
+  function addPricingTable() {
+    const block: DocumentBlock = { id: crypto.randomUUID(), type: "table", rows: [["Item", "Qty", "Harga", "Jumlah"], ["", "", "", ""]] };
+    setBlocks((current) => [...current, block]);
+    recordHistory([...blocks, block]);
+    setDirty(true);
+    setSelectedBlockId(block.id);
   }
 
   function move(id: string, direction: -1 | 1) {
@@ -344,6 +397,8 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
             {(["heading", "text", "placeholder", "list", "divider", "table"] as AddableBlock[]).map((type) => (
               <Button key={type} type="button" variant="outline" className="justify-start" onClick={() => add(type)}>+ {blockLabel(type)}</Button>
             ))}
+            {kind === "proposal" && <Button type="button" variant="outline" className="justify-start" onClick={addPricingTable}>+ {t("Pricing Table", "Pricing Table")}</Button>}
+            {kind === "proposal" && <Button type="button" variant="outline" className="justify-start" onClick={handleStartFromTemplate}>+ {t("Mulai dari template", "Start from template")}</Button>}
             {kind === "proposal" && <>
               <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleMediaUpload("image", e.target.files?.[0])} />
               <Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => imageInputRef.current?.click()}><Upload className="mr-2 h-3.5 w-3.5" />{t("Gambar", "Image")}</Button>
@@ -351,6 +406,15 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
               <Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => attachmentInputRef.current?.click()}><Paperclip className="mr-2 h-3.5 w-3.5" />{t("Lampiran", "Attachment")}</Button>
             </>}
           </div>
+          {kind === "proposal" && <div className="mt-4 rounded-lg border bg-muted/30 p-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("Placeholder", "Placeholder")}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {["{{client_name}}", "{{client_email}}", "{{company_name}}", "{{workspace_name}}", "{{proposal_number}}", "{{valid_until}}", "{{today}}", "{{total_amount}}", "{{down_payment}}", "{{subtotal}}", "{{tax}}"].map((token) => (
+                <button key={token} type="button" onClick={() => insertPlaceholder(token)} className="rounded-full border bg-white px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary" title={t("Sisipkan ke blok terpilih", "Insert into selected block")}>{token}</button>
+              ))}
+            </div>
+            <p className="mt-2 text-[11px] text-muted-foreground">{t("Klik chip untuk menyisipkan ke blok teks terpilih.", "Click a chip to insert it into the selected text block.")}</p>
+          </div>}
         </aside>
       </div>
       <div className="sticky bottom-0 z-20 flex shrink-0 items-center justify-between gap-3 border-t bg-white/95 px-4 py-2 text-xs text-muted-foreground backdrop-blur" role="status" aria-live="polite">
@@ -361,9 +425,21 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
           <div className="mb-4 flex items-center justify-between"><p className="text-sm font-semibold">{t("Blok", "Blocks")}</p><Button type="button" variant="ghost" size="icon" onClick={() => setShowTools(false)} aria-label={t("Tutup blok", "Close blocks")}><X className="h-4 w-4" /></Button></div>
           <div className="grid gap-2">
             {(["heading", "text", "placeholder", "list", "divider", "table"] as AddableBlock[]).map((type) => <Button key={type} type="button" variant="outline" className="justify-start" onClick={() => { add(type); setShowTools(false); }}>+ {blockLabel(type)}</Button>)}
+            {kind === "proposal" && <Button type="button" variant="outline" className="justify-start" onClick={() => { addPricingTable(); setShowTools(false); }}>+ {t("Pricing Table", "Pricing Table")}</Button>}
+            {kind === "proposal" && <Button type="button" variant="outline" className="justify-start" onClick={() => { setShowTools(false); handleStartFromTemplate(); }}>+ {t("Mulai dari template", "Start from template")}</Button>}
             {kind === "proposal" && <><Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => { setShowTools(false); imageInputRef.current?.click(); }}><Upload className="mr-2 h-3.5 w-3.5" />{t("Gambar", "Image")}</Button><Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => { setShowTools(false); attachmentInputRef.current?.click(); }}><Paperclip className="mr-2 h-3.5 w-3.5" />{t("Lampiran", "Attachment")}</Button></>}
           </div>
         </aside>
+      </div>}
+      {showTemplateConfirm && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="max-w-sm rounded-lg border bg-background p-6 shadow-xl">
+          <h3 className="mb-2 font-semibold">{t("Ganti dengan template?", "Replace with template?")}</h3>
+          <p className="mb-4 text-sm text-muted-foreground">{t("Dokumen ini sudah berisi konten. Semua blok saat ini akan diganti dengan template proposal. Lanjutkan?", "This document already has content. All current blocks will be replaced with the proposal template. Continue?")}</p>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" className="flex-1" onClick={() => setShowTemplateConfirm(false)}>{t("Batal", "Cancel")}</Button>
+            <Button type="button" className="flex-1" onClick={applyStarterTemplate}>{t("Ganti Saja", "Replace Anyway")}</Button>
+          </div>
+        </div>
       </div>}
       {showPreview && <div className="fixed inset-0 z-50 bg-black/40 p-4 sm:p-10" onClick={() => setShowPreview(false)}>
         <section className="mx-auto max-h-full max-w-3xl overflow-y-auto rounded-lg bg-white p-8 shadow-xl" onClick={(event) => event.stopPropagation()}>
