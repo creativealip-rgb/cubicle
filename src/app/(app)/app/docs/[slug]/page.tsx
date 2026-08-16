@@ -1,5 +1,5 @@
 import { getCurrentLang } from "@/lib/i18n";
-import { Clock, Briefcase, Users, FileCheck2, Sparkles } from "lucide-react";
+import { Clock, Briefcase, Users, FileCheck2, Sparkles, Wrench, Layers, ClipboardList } from "lucide-react";
 import {
   DocsBreadcrumb,
   DocsHero,
@@ -18,7 +18,7 @@ const GUIDES = {
       en: "Timer, manual entry, weekly timesheet. Ready for invoicing.",
     },
     items: [
-      ["1. Timer", "Klik Mulai Timer atau tombol 00:00 di top bar. Pilih proyek & task. Timer tetap jalan meski pindah halaman."],
+      ["1. Timer", "Buka /app/time → Mulai Timer. Pilih proyek & task, lalu jalankan. Timer tetap berjalan meski pindah halaman; indikator timer aktif muncul di tab browser."],
       ["2. Input Manual", "Catat Waktu → isi tanggal, durasi, proyek, task, deskripsi, toggle billable."],
       ["3. Timesheet", "Harian: list per hari + total. Mingguan: grid 7 kolom. Klik cell untuk edit."],
       ["4. Filter", "By proyek, task, status, klien."],
@@ -54,7 +54,7 @@ const GUIDES = {
       en: "Share progress, files, and invoices with clients. Real-time task approval.",
     },
     items: [
-      ["1. Aktifkan", "Klien → Edit → Aktifkan portal sekarang. Link: cubiqlo.com/p/[token] atau slug kustom."],
+      ["1. Aktifkan", "Klien → Edit → Aktifkan portal sekarang. Link: cubiqlo.com/client-portal/[token] atau cubiqlo.com/client-portal/s/[slug] (slug kustom)."],
       ["2. Dashboard", "Progress proyek, invoice status, aktivitas terbaru."],
       ["3. Task Review", "Klien Setujui/Revisi task. Notifikasi ke workspace kamu."],
       ["4. File", "Download file di-share & upload berkas revisi oleh klien."],
@@ -76,6 +76,52 @@ const GUIDES = {
       ["3. Buat Kontrak", "Kontrak Baru → klausa hukum, syarat ketentuan kerja, dan penetapan nilai kontrak."],
       ["4. Penandatanganan E-Sign", "Klien menandatangani kontrak secara elektronik via link publik /contract/[token]."],
       ["5. Template Center", "Kelola template proposal & kontrak di /app/templates untuk digunakan kembali."],
+    ],
+  },
+  services: {
+    icon: Wrench,
+    category: { id: "Bisnis", en: "Business" },
+    title: { id: "Layanan", en: "Services" },
+    description: {
+      id: "Katalog layanan workspace: harga, satuan, dan kategori standar.",
+      en: "Workspace service catalog: pricing, units, and standard categories.",
+    },
+    items: [
+      ["1. Katalog Layanan", "Kelola daftar layanan milik workspace. Tiap layanan punya nama, deskripsi, kategori, harga default, satuan, dan mata uang."],
+      ["2. Buat Layanan", "Layanan Baru → nama, deskripsi, kategori (opsional), model harga (Fixed Price / Per Jam / Retainer), harga default, dan satuan."],
+      ["3. Kategori", "Kelompokkan layanan dengan kategori berwarna (mis. Desain, Development). Buat kategori cepat langsung dari halaman Layanan."],
+      ["4. Arsip", "Arsipkan layanan yang tidak dipakai lagi. Snapshot proyek lama tetap aman — arsip tidak menghapus data historis."],
+    ],
+  },
+  templates: {
+    icon: Layers,
+    category: { id: "Bisnis", en: "Business" },
+    title: { id: "Template", en: "Templates" },
+    description: {
+      id: "Template Center: template proposal, kontrak, dan invoice.",
+      en: "Template Center: proposal, contract, and invoice templates.",
+    },
+    items: [
+      ["1. Template Center", "Buka /app/templates untuk mengelola semua template dokumen bisnis dalam satu tempat."],
+      ["2. Tab Template", "Template Center punya 3 tab: Proposal, Contract, dan Invoice. Pilih tab sesuai jenis dokumen."],
+      ["3. Buat & Edit", "Buat template baru dari tab aktif. Template proposal & kontrak diedit lewat block editor; template invoice pakai form cepat (catatan, terms, mata uang, pajak default)."],
+      ["4. Route Lama", "URL lama /app/contract-templates, /app/invoices/templates, dan /app/invoice-templates otomatis diarahkan ke /app/templates?tab=... yang sesuai."],
+    ],
+  },
+  questionnaires: {
+    icon: ClipboardList,
+    category: { id: "Bisnis", en: "Business" },
+    title: { id: "Kuesioner", en: "Questionnaires" },
+    description: {
+      id: "Form intake & brief klien. Jawaban jadi brief proyek.",
+      en: "Client intake forms & briefs. Answers become project briefs.",
+    },
+    items: [
+      ["1. Buat Kuesioner", "Kuesioner Baru → susun form dengan berbagai tipe kolom: teks pendek, teks panjang, email, URL, angka, tanggal, pilihan tunggal, dan pilihan ganda."],
+      ["2. Detail & Preview", "Klik kuesioner → lihat pratinjau form, jumlah kolom, dan status jawaban (terkirim / menunggu)."],
+      ["3. Edit", "Ubah nama, deskripsi, atau susunan kolom kapan saja lewat tombol Edit."],
+      ["4. Kirim ke Klien", "Tombol Kirim → pilih klien & proyek, lalu kirim kuesioner. Jawaban klien masuk ke halaman detail sebagai response."],
+      ["5. Jawaban", "Lihat semua response di bagian Jawaban — jawaban yang masuk menjadi brief untuk pekerjaan klien."],
     ],
   },
   "ai-studio": {

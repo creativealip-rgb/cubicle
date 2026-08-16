@@ -1,5 +1,28 @@
 # Deployment Log
 
+## 16 August 2026 — UI button style/spacing standardization (currency rates + icon margin)
+
+- Source: `main` `44ddb3a` (merge of `f355683` + `44ddb3a` into `dev/integration` as `2255eb2`).
+- Scope:
+  - Currency rates form: "Save rate" button now `size="sm"` + `gap-1` (32px, was 40px `h-10`); remove-rate icon button `h-9 w-9` (was `h-11 w-11`).
+  - App-wide icon spacing standardization: removed redundant `mr-1`/`mr-1.5`/`mr-2` from icons inside `<Button>` (base button already applies `gap-2` 8px). 51 files, 131 margin tokens. Non-`<Button>` contexts (`<Label>`, `<Badge>`, lowercase `<button>`, `mr-1 inline`) untouched; `-mr-1` negative margin preserved.
+- Dev proof: `dev.cubiqlo.com` deployed at `2255eb2`; health app/DB ok; production unchanged during dev QA. Browser QA (computed style): row "Send"/"Resend" 28px gap 8px icon-margin 0; header CTA 32px gap 4px; "Save rate" 32px gap 4px.
+- Release gate:
+  - `npx tsc --noEmit` passed.
+  - `eslint` 0 errors (2 pre-existing warnings).
+  - Tracked Vitest: 1391/1396 passed; 5 failures confirmed **pre-existing** (identical on clean tree).
+- Migration: none.
+- Production deployment:
+  - Image tag: `cubiqlo-prod:sha-44ddb3af237d5aab9698cad866b54fc93f06568c`.
+  - Image ID: `sha256:b5acd36036252d9ad75b86b30047512ba23be5a037bfa3ae94fdd573eabdf8aa`.
+  - Previous image ID: `sha256:0f5a49908e2bebfd5f7ada0289dd5155b18e63ddbe9ec688d72149fbfeebcb95`.
+  - Container recreated: `cubiqlo-new-app-next`; restart `unless-stopped`; network `dokploy-network`.
+  - Health: `https://app.cubiqlo.com/api/health` app/DB ok.
+  - Asset revision proof: `dpl=44ddb3af237d5aab9698cad866b54fc93f06568c`.
+  - Smoke: `https://app.cubiqlo.com/login` HTTP 200; `https://cubiqlo.com/` HTTP 200.
+  - Proxy safety: `dokploy-traefik` remains sole public 80/443 owner.
+- Note: `scripts/operations/cubiqlo_deploy_release.sh` still hardcodes stale container name `cubicle-cubicle-1` (actual prod = `cubiqlo-new-app-next`, manual `docker run`). Prod deploy done via direct `docker run` with captured env; wrapper needs patch.
+
 ## 16 August 2026 — Contract editor starter template + proposal pricing single-source
 
 - Source: `release/cubiqlo-20260816-4`, merge commit from `dev/integration` into `main`.

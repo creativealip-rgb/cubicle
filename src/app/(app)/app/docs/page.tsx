@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Globe, FileText, Clock, Briefcase, Users, FileCheck2, Sparkles, Settings, Rocket, LifeBuoy } from "lucide-react";
+import { BookOpen, Globe, FileText, Clock, Briefcase, Users, FileCheck2, Sparkles, Settings, Rocket, LifeBuoy, Wrench, Layers, ClipboardList } from "lucide-react";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { DocsCard } from "@/components/docs/doc-shell";
@@ -83,6 +83,36 @@ const GUIDES = [
     desc: {
       id: "Penawaran harga, penandatanganan e-sign, dan template center sales docs.",
       en: "Estimates, e-signatures, and sales doc template center.",
+    },
+  },
+  {
+    href: "/app/docs/services",
+    icon: Wrench,
+    category: { id: "Bisnis", en: "Business" },
+    title: { id: "Layanan", en: "Services" },
+    desc: {
+      id: "Katalog layanan workspace: harga, satuan, dan kategori standar.",
+      en: "Workspace service catalog: pricing, units, and standard categories.",
+    },
+  },
+  {
+    href: "/app/docs/templates",
+    icon: Layers,
+    category: { id: "Bisnis", en: "Business" },
+    title: { id: "Template", en: "Templates" },
+    desc: {
+      id: "Template Center: template proposal, kontrak, dan invoice.",
+      en: "Template Center: proposal, contract, and invoice templates.",
+    },
+  },
+  {
+    href: "/app/docs/questionnaires",
+    icon: ClipboardList,
+    category: { id: "Bisnis", en: "Business" },
+    title: { id: "Kuesioner", en: "Questionnaires" },
+    desc: {
+      id: "Form intake & brief klien. Jawaban jadi brief proyek.",
+      en: "Client intake forms & briefs. Answers become project briefs.",
     },
   },
   {
