@@ -1,5 +1,5 @@
 import type { DocumentBlock } from "@/lib/document-blocks";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { proposalTemplates, contractTemplates } from "@/db/schema";
 
@@ -169,41 +169,39 @@ export function buildDefaultContractBlocks(): DocumentBlock[] {
 
 /**
  * Seed the default proposal + contract templates into a newly created
- * workspace. Idempotent per workspace: skips a template type if the workspace
- * already has a default of that kind. Safe to call from both workspace-creation
- * paths (`ensureUserWorkspace` on first signup and `createWorkspace` on
- * additional workspaces).
+ * workspace. Idempotent per workspace: relies on the partial unique index
+ * (`*_one_default_per_ws_uidx`) + `onConflictDoNothing` so concurrent
+ * workspace-creation calls (which fire in parallel on first login) cannot
+ * produce duplicate defaults. Safe to call from both workspace-creation paths
+ * (`ensureUserWorkspace` on first signup and `createWorkspace` on additional
+ * workspaces).
  */
 export async function seedDefaultTemplates(workspaceId: string): Promise<void> {
-  const [existingProposal] = await db
-    .select({ id: proposalTemplates.id })
-    .from(proposalTemplates)
-    .where(and(eq(proposalTemplates.workspaceId, workspaceId), eq(proposalTemplates.isDefault, true)))
-    .limit(1);
-
-  const [existingContract] = await db
-    .select({ id: contractTemplates.id })
-    .from(contractTemplates)
-    .where(and(eq(contractTemplates.workspaceId, workspaceId), eq(contractTemplates.isDefault, true)))
-    .limit(1);
-
-  if (!existingProposal) {
-    await db.insert(proposalTemplates).values({
+  await db
+    .insert(proposalTemplates)
+    .values({
       workspaceId,
       name: DEFAULT_PROPOSAL_TEMPLATE_NAME,
       body: DEFAULT_PROPOSAL_BODY,
       contentBlocks: buildDefaultProposalBlocks(),
       isDefault: true,
+    })
+    .onConflictDoNothing({
+      target: proposalTemplates.workspaceId,
+      where: eq(proposalTemplates.isDefault, true),
     });
-  }
 
-  if (!existingContract) {
-    await db.insert(contractTemplates).values({
+  await db
+    .insert(contractTemplates)
+    .values({
       workspaceId,
       name: DEFAULT_CONTRACT_TEMPLATE_NAME,
       body: DEFAULT_CONTRACT_BODY,
       contentBlocks: buildDefaultContractBlocks(),
       isDefault: true,
+    })
+    .onConflictDoNothing({
+      target: contractTemplates.workspaceId,
+      where: eq(contractTemplates.isDefault, true),
     });
-  }
 }
