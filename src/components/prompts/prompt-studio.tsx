@@ -473,7 +473,7 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
         </section>
 
         {/* Right panel: preview + result */}
-        <div className="space-y-3 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto pb-1">
+        <div className="space-y-3 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto xl:pb-6">
           {/* Preview: static card on xl+, compact collapsible below */}
           <div className="hidden xl:block">
             <div className="rounded-xl border bg-white p-3">
