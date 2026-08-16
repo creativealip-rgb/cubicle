@@ -53,7 +53,7 @@ describe("app navigation registry", () => {
     expect(getActiveNavigation("/app/services")).toEqual({ groupId: "business", itemId: "services" });
     expect(getActiveNavigation("/app/proposals/abc")).toEqual({ groupId: "business", itemId: "proposals" });
     expect(getActiveNavigation("/app/contracts/abc")).toEqual({ groupId: "business", itemId: "contracts" });
-    expect(getActiveNavigation("/app/templates")).toEqual({ groupId: null, itemId: null });
+    expect(getActiveNavigation("/app/templates")).toEqual({ groupId: "business", itemId: "templates" });
   });
 
   it("keeps finance longest-prefix behavior", () => {

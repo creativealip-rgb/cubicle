@@ -1,5 +1,95 @@
 # Deployment Log
 
+## 16 August 2026 — Contract editor starter template + proposal pricing single-source
+
+- Source: `release/cubiqlo-20260816-4`, merge commit from `dev/integration` into `main`.
+- Scope:
+  - `buildContractStarterBlocks()`: 18-block contract starter (cover "Perjanjian Kerja" centered, "No: {{contract_number}}", Para Pihak / Latar Belakang / Ruang Lingkup / Nilai Kontrak table / Jangka Waktu / Ketentuan Lain / signature).
+  - Contract editor: "Mulai dari template" now available for both `proposal` and `contract` kind; `applyStarterTemplate` branches by kind; contract placeholder chips (`{{contract_number}}`, `{{contract_date}}`, `{{workspace_address}}`) branch by kind.
+  - Proposal pricing single-source: removed manual "Investasi" table from `buildProposalStarterBlocks()` and the "+ Pricing Table" preset from the editor. Proposal pricing now comes solely from the detail form `lineItems` → rendered in PDF/public view (table + subtotal/tax/total + down-payment banner).
+- Dev proof: `dev.cubiqlo.com` deployed at `bc0e542a53710ffd9912030b9a17c64b1589a7a5`; health app/DB ok; production unchanged during dev QA. Visual QA: proposal starter renders 12 blocks without "Investasi"/pricing table; "+ Pricing Table" preset absent from insert panel.
+- Release gate before production deploy:
+  - `git diff --check` passed.
+  - `npx tsc --noEmit` passed.
+  - Targeted Vitest passed (34 tests): contract starter, contract editor, proposal editor, proposal starter, document placeholder values, template block editor, template create flow.
+  - `npm run build` passed.
+  - Full suite: 1390/1396 passed; 6 failures confirmed **pre-existing** (identical failures reproduced on clean `origin/main` base) — stale wiring tests for send UI, proposal PDF route, time route, project time tracking, billing cron scheduler; unrelated to this change.
+- Migration: none (0074/0075/0076 already applied in production).
+- Production deployment:
+  - Release branch: `release/cubiqlo-20260816-4`.
+
+## 16 August 2026 — Proposal editor enhancement (starter template, financial placeholders, align)
+
+- Source: `release/cubiqlo-20260816-3`, merge commit `221807c` from `dev/integration` into `main`.
+- Scope:
+  - `buildProposalStarterBlocks()`: 14-block proposal starter (cover "Proposal" centered, workspace name, "Untuk: {{client_name}}", About / Scope / Timeline / Investasi pricing table / Syarat & Ketentuan).
+  - Financial placeholders `{{today}}`, `{{subtotal}}`, `{{tax}}`, `{{total_amount}}`, `{{down_payment}}` added to proposal & contract placeholder builders and PDF rendering.
+  - Document editor: "Mulai dari template" button with overwrite confirm, 11 placeholder chips, "+ Pricing Table" preset.
+  - Proposal edit page now wires `buildProposalPlaceholderValues` into the editor preview.
+  - Renderer applies `align` (left/center/right) to list & table blocks in addition to heading/text/placeholder.
+- Dev proof: `dev.cubiqlo.com` deployed at `3a355209d6d6cbcc12bfa6cf98836fe4fb6b2c44`; health app/DB ok; production unchanged during dev QA.
+- Release gate before production deploy:
+  - `git diff --check` passed.
+  - Targeted Vitest passed (25 tests): proposal starter placeholder, financial render, editor template, document editor layout, autosave revision, contract placeholder parity.
+  - `npx tsc --noEmit` passed.
+  - `npm run build` passed.
+- Migration: none.
+- Production deployment:
+  - New image: `sha256:d78fe9e5d5e4404b4ae73350e9fab47a6658c125a3dfcec9efb966f47ad3a734`.
+  - Image tag: `cubiqlo-prod:sha-221807cda8a7dd901291f4c3b0223b4d1f91630c`.
+  - Runtime revision: `221807cda8a7dd901291f4c3b0223b4d1f91630c`.
+  - Container recreated: `cubiqlo-new-app-next`; restart `unless-stopped`; network `dokploy-network`.
+  - Health: `https://app.cubiqlo.com/api/health` app/DB ok; login 200; root 308 (redirect).
+  - Auth QA (prod): starter template 14 blocks + 11 placeholder chips verified via headless browser.
+
+## 16 August 2026 — Sidebar chevron toggle + document editor scroll/back polish
+
+- Source: `release/cubiqlo-20260816-2`, merge commit `105593b` from `dev/integration` into `main`.
+- Scope:
+  - Sidebar collapse/expand changed to a single circular chevron button at the sidebar edge (`ChevronLeft` expanded, `ChevronRight` collapsed).
+  - Document editor (proposal + contract) scroll now confined to Structure / Canvas / Insert panels; page no longer scrolls with empty bottom space.
+  - Proposal and contract editor headers gained a back button to their detail pages.
+  - Proposal/contract edit routes are full-bleed (`md:p-0 md:pb-0`) without forcing sidebar collapse.
+- Dev proof: `dev.cubiqlo.com` deployed at `7731145d55383173ca52afbed59fc7feffa35fc8`; health app/DB ok; production unchanged during dev QA.
+- Release gate before production deploy:
+  - `git diff --check` passed.
+  - Targeted Vitest passed: document editor layout wiring, global shell accessibility, autosave revision wiring.
+  - `npx tsc --noEmit` passed.
+  - `npm run build` passed.
+- Migration: none.
+
+## 16 August 2026 — Production release prep: Cubiqlo document workflow polish
+
+- Source: `release/cubiqlo-20260816`, merge commit `9ca9f7e` from `dev/integration` into `main`.
+- Scope:
+  - Billing-aware Time selector gating: Fixed Price/legacy Package excluded from Timer/Timesheet selectors.
+  - Timer UX: navbar timer control removed, Time page Start Timer retained, browser tab active timer indicator restored.
+  - Proposal/Contract send dialog: editable email message with `{{proposal_link}}` / `{{contract_link}}` replacement.
+  - Proposal/Contract table actions: `Send`/`Resend` buttons aligned right.
+  - Proposal/Contract detail layouts: action buttons and editable detail fields matched production-approved layout, including preview routes.
+  - Timesheet work-date fallback now derives timestamp dates in `Asia/Jakarta`.
+- Dev proof: `dev.cubiqlo.com` deployed at `7eaddbbf75cc137140631a1a2e34b6a5dec0c3f6`; health app/DB ok; production unchanged during dev QA.
+- Release gate before production deploy:
+  - `git diff --check` passed.
+  - Targeted Vitest passed: send document wiring, timer tab/action wiring, time report date wiring, billing-aware selector gating.
+  - `npx tsc --noEmit` passed.
+  - `npm run build` passed.
+- Production baseline before deploy:
+  - Container: `cubiqlo-new-app-next`.
+  - Previous image: `sha256:533c4509dc25aca94346f360acfaba2f5abc4a2f7f80bea69e2b6ac5303b9af6`.
+  - Health: `https://app.cubiqlo.com/api/health` app/DB ok.
+  - Smoke: `https://app.cubiqlo.com/login` HTTP 200; `https://cubiqlo.com/` HTTP 200.
+- Production deployment:
+  - New image: `sha256:8b00f813684ed3481fcfded27d0155ff7add34b2a27b49bc91927309b9b19e9b`.
+  - Image tag: `cubiqlo-prod:sha-f6aef587c1a49f611516a3929a8320680ef1a711`.
+  - Runtime revision: `f6aef587c1a49f611516a3929a8320680ef1a711`.
+  - Container recreated: `cubiqlo-new-app-next`; restart policy `unless-stopped`.
+  - Health: `https://app.cubiqlo.com/api/health` app/DB ok.
+  - Smoke: `https://app.cubiqlo.com/login` HTTP 200; `https://cubiqlo.com/` HTTP 200.
+  - Asset revision proof: `dpl=f6aef587c1a49f611516a3929a8320680ef1a711`.
+  - Proxy safety: `dokploy-traefik` remains sole public 80/443 owner.
+- Migration: none.
+
 ## 12 August 2026 — Dev integration sync and deploy retry
 
 - `dev/integration` synchronized with latest `main` revision `03883ac`.
