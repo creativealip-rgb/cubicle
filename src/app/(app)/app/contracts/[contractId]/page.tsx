@@ -15,7 +15,7 @@ import { RevokeContractButton } from "@/components/contracts/revoke-contract-but
 import { DeleteContractButton } from "@/components/contracts/delete-contract-button";
 import { PostSignClientBanner } from "@/components/contracts/post-sign-client-banner";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, X, FileText, Eye } from "lucide-react";
+import { ArrowLeft, CheckCircle2, X, FileText } from "lucide-react";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { projectStatusVariant } from "@/lib/status-badge";
@@ -127,14 +127,6 @@ export default async function ContractDetailPage({
           {canWrite && c.status === "draft" ? (
             <Button variant="outline" size="sm" asChild>
               <Link href={`/app/contracts/${c.id}/edit`}>{t("Edit", "Edit")}</Link>
-            </Button>
-          ) : null}
-          {canWrite ? (
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/app/contracts/${c.id}/preview`}>
-                <Eye className="h-3.5 w-3.5" />
-                {t("Lihat kontrak", "View contract")}
-              </Link>
             </Button>
           ) : null}
           {canWrite &&
