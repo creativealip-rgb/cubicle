@@ -46,7 +46,7 @@ export function ReportControls({ lang, preset, from, to }: Props) {
           }}
         >
           <SelectTrigger
-            className="h-10 w-full sm:w-[190px]"
+            className="h-8 w-full text-xs sm:w-[190px]"
             aria-label={t("Pilih periode laporan", "Select report period")}
           >
             <SelectValue />
@@ -71,7 +71,8 @@ export function ReportControls({ lang, preset, from, to }: Props) {
         </Select>
         <Button
           variant="outline"
-          className="h-10"
+          size="sm"
+          className="gap-1"
           onClick={() => {
             const params = new URLSearchParams({ period: preset });
             if (preset === "custom") {
