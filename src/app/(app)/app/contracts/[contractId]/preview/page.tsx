@@ -3,9 +3,8 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { contracts, workspaces } from "@/db/schema";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
-import { normalizeDocumentBlocks } from "@/lib/document-blocks";
-import { renderDocumentBlockHtml } from "@/lib/document-block-renderer";
 import { buildContractPlaceholderValues } from "@/lib/document-placeholder-values";
+import { ContractPublicView } from "@/components/contracts/contract-public-view";
 import Link from "next/link";
 
 export default async function ContractPreviewPage({ params }: { params: Promise<{ contractId: string }> }) {
@@ -14,6 +13,31 @@ export default async function ContractPreviewPage({ params }: { params: Promise<
   const [contract] = await db.select().from(contracts).where(and(eq(contracts.id, contractId), eq(contracts.workspaceId, workspaceId))).limit(1);
   if (!contract) notFound();
   const [workspace] = await db.select({ name: workspaces.name, billingAddress: workspaces.billingAddress }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
-  const values = buildContractPlaceholderValues({ ...contract, workspaceName: workspace?.name, workspaceAddress: workspace?.billingAddress });
-  return <main className="min-h-screen bg-slate-50 px-4 py-8"><div className="mx-auto max-w-3xl space-y-6"><div className="flex items-center justify-between"><Link href={`/app/contracts/${contract.id}`} className="text-sm text-slate-600 hover:underline">← Back</Link><span className="text-xs text-slate-500">Preview</span></div><article className="rounded-2xl border bg-white p-6 shadow-sm sm:p-8"><p className="text-sm text-slate-500">{workspace?.name}</p><h1 className="mt-1 text-2xl font-semibold">{contract.title}</h1><p className="mt-1 text-sm text-slate-500">{contract.contractNumber ? `${contract.contractNumber} · ` : ""}For: {contract.clientName}</p><div className="mt-8 space-y-4">{normalizeDocumentBlocks(contract.contentBlocks, "contract").map((block) => <div key={block.id} className={block.type === "heading" ? "text-lg font-semibold text-slate-900" : "text-slate-700"}>{renderDocumentBlockHtml(block, values)}</div>)}</div></article></div></main>;
+  const placeholderValues = buildContractPlaceholderValues({ ...contract, workspaceName: workspace?.name, workspaceAddress: workspace?.billingAddress });
+
+  return (
+    <ContractPublicView
+      contract={{
+        title: contract.title,
+        contractNumber: contract.contractNumber,
+        clientName: contract.clientName,
+        clientEmail: contract.clientEmail,
+        validUntil: contract.validUntil,
+        status: contract.status,
+        contentBlocks: contract.contentBlocks,
+        body: contract.body,
+        bodyResolved: contract.bodyResolved,
+      }}
+      placeholderValues={placeholderValues}
+      embedded
+      topBar={
+        <div className="flex items-center justify-between">
+          <Link href={`/app/contracts/${contract.id}`} className="text-sm text-slate-600 hover:underline">
+            ← Back
+          </Link>
+          <span className="text-xs text-slate-500">Preview</span>
+        </div>
+      }
+    />
+  );
 }
