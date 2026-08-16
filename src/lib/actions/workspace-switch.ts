@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { workspaceMembers, workspaces } from "@/db/schema";
 import { canCreateWorkspaceWithAddons } from "@/lib/extra-workspace";
 import { getPlanLimits, getUserPlan } from "@/lib/plan";
+import { seedDefaultTemplates } from "@/lib/default-templates";
 
 const COOKIE_NAME = "active_workspace_id";
 
@@ -126,6 +127,8 @@ export async function createWorkspace(name: string): Promise<{ ok: boolean; erro
     userId,
     role: "owner",
   });
+
+  await seedDefaultTemplates(ws.id);
 
   // Auto-switch to new workspace
   const cookieStore = await cookies();
