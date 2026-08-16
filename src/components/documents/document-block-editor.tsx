@@ -10,6 +10,7 @@ import {
   buildDocumentMediaBlock,
   isSafeImageBlock,
   type DocumentBlock,
+  type DocumentTableRow,
 } from "@/lib/document-blocks";
 import { uploadOneFile, MAX_UPLOAD_BYTES } from "@/lib/files-upload";
 import { useT } from "@/lib/i18n-client";
@@ -28,6 +29,72 @@ type Props = {
 };
 
 type AddableBlock = "text" | "heading" | "placeholder" | "list" | "divider" | "table" | "image" | "attachment";
+
+type TFunc = (id: string, en: string) => string;
+
+function TableBlockEditor({ block, t, onChange }: { block: DocumentBlock; t: TFunc; onChange: (rows: DocumentTableRow[]) => void }) {
+  const raw = block.rows ?? [];
+  const rows: DocumentTableRow[] = raw.length ? raw : [["", ""], ["", ""]];
+  const colCount = Math.max(1, ...rows.map((r) => r.length));
+
+  function setCell(ri: number, ci: number, value: string) {
+    onChange(rows.map((row, i) => row.map((cell, j) => (i === ri && j === ci ? value : cell))));
+  }
+  function addRow() {
+    onChange([...rows, Array(colCount).fill("")]);
+  }
+  function addColumn() {
+    onChange(rows.map((row) => [...row, ""]));
+  }
+  function removeRow(ri: number) {
+    if (rows.length <= 1) return;
+    onChange(rows.filter((_, i) => i !== ri));
+  }
+  function removeColumn(ci: number) {
+    if (colCount <= 1) return;
+    onChange(rows.map((row) => row.filter((_, j) => j !== ci)));
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-sm">
+          <tbody>
+            {rows.map((row, ri) => (
+              <tr key={ri}>
+                <td className="w-8 border border-slate-200 bg-slate-50 p-0.5 align-middle text-center">
+                  <button type="button" onClick={() => removeRow(ri)} disabled={rows.length <= 1} className="text-slate-400 hover:text-red-600 disabled:opacity-30" title={t("Hapus baris", "Remove row")} aria-label={t("Hapus baris", "Remove row")}>×</button>
+                </td>
+                {row.map((cell, ci) => (
+                  <td key={ci} className="border border-slate-200 p-0.5">
+                    <input
+                      value={cell}
+                      onChange={(e) => setCell(ri, ci, e.target.value)}
+                      className="w-full min-w-[3.5rem] border-0 bg-transparent px-2 py-1.5 text-sm outline-none focus:bg-white focus:ring-1 focus:ring-primary/40"
+                      placeholder={ri === 0 ? t("Kolom", "Column") : ""}
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))}
+            <tr>
+              <td className="border border-slate-200 bg-slate-50 p-0.5" />
+              {Array.from({ length: colCount }).map((_, ci) => (
+                <td key={ci} className="border border-slate-200 bg-slate-50 p-0.5 text-center">
+                  <button type="button" onClick={() => removeColumn(ci)} disabled={colCount <= 1} className="text-xs text-slate-400 hover:text-red-600 disabled:opacity-30" title={t("Hapus kolom", "Remove column")} aria-label={t("Hapus kolom", "Remove column")}>×</button>
+                </td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" size="sm" variant="outline" onClick={addRow}>+ {t("Baris", "Row")}</Button>
+        <Button type="button" size="sm" variant="outline" onClick={addColumn}>+ {t("Kolom", "Column")}</Button>
+      </div>
+    </div>
+  );
+}
 
 export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialRevision = 1, backHref, placeholderValues = {}, saveBlocks }: Props) {
   const [blocks, setBlocks] = useState(initialBlocks);
@@ -48,6 +115,8 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
   const revision = useRef(initialRevision);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const attachmentInputRef = useRef<HTMLInputElement>(null);
+  const canvasScrollRef = useRef<HTMLElement>(null);
+  const blockRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const { lang, t } = useT();
 
   const blockLabel = (type: string) => {
@@ -186,6 +255,15 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
     setBlocks(next); recordHistory(next); setDirty(true); setDraggedBlockId(null);
   }
 
+  function selectBlock(id: string) {
+    setSelectedBlockId(id);
+    const node = blockRefs.current[id];
+    const scroller = canvasScrollRef.current;
+    if (node && scroller) {
+      node.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+
   return (
     <div className="flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden bg-slate-100">
       <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b bg-white px-4 py-3">
@@ -206,7 +284,7 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("Struktur", "Structure")}</p>
           <div className="space-y-1">
             {blocks.map((block, index) => (
-              <button key={block.id} type="button" draggable onDragStart={() => setDraggedBlockId(block.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => draggedBlockId && reorder(draggedBlockId, block.id)} onDragEnd={() => setDraggedBlockId(null)} onClick={() => setSelectedBlockId(block.id)} title={t("Seret untuk mengurutkan", "Drag to reorder")} className={`flex w-full cursor-grab items-center gap-2 rounded-md px-3 py-2 text-left text-sm ${selectedBlockId === block.id ? "bg-primary/10 font-medium text-primary" : "text-muted-foreground hover:bg-muted"}`}>
+              <button key={block.id} type="button" draggable onDragStart={() => setDraggedBlockId(block.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => draggedBlockId && reorder(draggedBlockId, block.id)} onDragEnd={() => setDraggedBlockId(null)} onClick={() => selectBlock(block.id)} title={t("Seret untuk mengurutkan", "Drag to reorder")} className={`flex w-full cursor-grab items-center gap-2 rounded-md px-3 py-2 text-left text-sm ${selectedBlockId === block.id ? "bg-primary/10 font-medium text-primary" : "text-muted-foreground hover:bg-muted"}`}>
                 <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
                 <span className="w-5 text-xs text-muted-foreground">{index + 1}</span>
                 <span className="truncate">{blockLabel(block.type)}</span>
@@ -214,11 +292,11 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
             ))}
           </div>
         </aside>
-        <main className="min-w-0 flex-1 space-y-3 overflow-y-auto bg-muted/30 p-4 sm:p-8">
+        <main ref={canvasScrollRef} className="min-w-0 flex-1 space-y-3 overflow-y-auto bg-muted/30 p-4 sm:p-8">
         <section className={`mx-auto min-h-[calc(100vh-12rem)] space-y-3 rounded-lg border bg-white p-6 shadow-sm transition-[width] ${device === "mobile" ? "max-w-[390px]" : device === "tablet" ? "max-w-[768px]" : "max-w-3xl"}`}>
           {blocks.map((block, index) => (
-            <div key={block.id} onClick={() => setSelectedBlockId(block.id)} className={`group relative rounded border p-1 hover:border-slate-200 ${selectedBlockId === block.id ? "border-primary/40 ring-1 ring-primary/20" : "border-transparent"}`}>
-              {block.type === "heading" ? <Input value={block.content ?? ""} onChange={(e) => update(block.id, e.target.value)} className="text-xl font-semibold" placeholder={t("Judul bagian", "Section heading")} /> : block.type === "text" || block.type === "placeholder" ? <Textarea className="max-w-full break-words [overflow-wrap:anywhere]" value={block.content ?? ""} onChange={(e) => update(block.id, e.target.value)} rows={3} placeholder={block.type === "placeholder" ? "{{client_name}}" : t("Tulis isi dokumen...", "Write document content...")} /> : block.type === "list" ? <Textarea value={(block.items ?? []).join("\n")} onChange={(e) => { const items = e.target.value.split("\n"); setBlocks((current) => current.map((item) => item.id === block.id ? { ...item, items } : item)); setDirty(true); }} rows={3} placeholder={t("Satu item per baris", "One item per line")} /> : block.type === "table" ? <Textarea value={(block.rows ?? []).map((row) => row.join(" | ")).join("\n")} onChange={(e) => { const rows = e.target.value.split("\n").map((row) => row.split("|")); setBlocks((current) => current.map((item) => item.id === block.id ? { ...item, rows } : item)); setDirty(true); }} rows={4} placeholder={t("Kolom dipisah |", "Columns separated by |")} /> : block.type === "divider" ? <hr className="border-slate-300" /> : block.type === "image" ? <div className="space-y-2">
+            <div key={block.id} ref={(node) => { blockRefs.current[block.id] = node; }} onClick={() => setSelectedBlockId(block.id)} className={`group relative rounded border p-1 hover:border-slate-200 ${selectedBlockId === block.id ? "border-primary/40 ring-1 ring-primary/20" : "border-transparent"}`}>
+              {block.type === "heading" ? <Input value={block.content ?? ""} onChange={(e) => update(block.id, e.target.value)} className="text-xl font-semibold" placeholder={t("Judul bagian", "Section heading")} /> : block.type === "text" || block.type === "placeholder" ? <Textarea className="max-w-full break-words [overflow-wrap:anywhere]" value={block.content ?? ""} onChange={(e) => update(block.id, e.target.value)} rows={3} placeholder={block.type === "placeholder" ? "{{client_name}}" : t("Tulis isi dokumen...", "Write document content...")} /> : block.type === "list" ? <Textarea value={(block.items ?? []).join("\n")} onChange={(e) => { const items = e.target.value.split("\n"); setBlocks((current) => current.map((item) => item.id === block.id ? { ...item, items } : item)); setDirty(true); }} rows={3} placeholder={t("Satu item per baris", "One item per line")} /> : block.type === "table" ? <TableBlockEditor block={block} t={t} onChange={(rows) => updateBlock(block.id, { rows })} /> : block.type === "divider" ? <hr className="border-slate-300" /> : block.type === "image" ? <div className="space-y-2">
                 {uploadingId === block.id ? (
                   <div className="flex items-center gap-2 rounded border border-dashed border-slate-300 p-4 text-sm text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" /> {t("Mengunggah gambar...", "Uploading image...")} {uploadProgress[block.id] ?? 0}%
