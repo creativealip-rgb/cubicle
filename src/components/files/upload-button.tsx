@@ -98,15 +98,15 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
         accept="*/*"
       />
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-10 gap-1 sm:h-9" disabled={uploading}>
+        <Button variant="outline" size="sm" className="h-10 gap-1 sm:h-8" disabled={uploading}>
           {uploading ? (
             <>
-              <Loader2 className="h-3 w-3 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
               {progress > 0 ? `${progress}%` : t("Mengunggah...", "Uploading...")}
             </>
           ) : (
             <>
-              <Upload className="h-3 w-3" /> {t("Unggah", "Upload")}
+              <Upload className="h-4 w-4" /> {t("Unggah", "Upload")}
             </>
           )}
         </Button>
