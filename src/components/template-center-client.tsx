@@ -102,27 +102,33 @@ Masing-masing pihak dapat mengakhiri dengan pemberitahuan tertulis 14 hari.
 Dengan menandatangani di bawah, kedua pihak menyetujui syarat di atas.
 `;
 
-const DEFAULT_PROPOSAL_BODY = `## Ringkasan
+const DEFAULT_PROPOSAL_BODY = `## Executive Summary
 
-Terima kasih atas kesempatan ini. Berikut proposal untuk **{{project.name}}**.
+This proposal outlines our recommended approach, scope, and investment for your project. We have aligned the deliverables below with your stated goals, and we are confident our team can deliver measurable results on schedule and on budget.
 
-## Lingkup pekerjaan
+## Scope of Work
 
-- Item 1
-- Item 2
-- Item 3
+- Discovery & requirements gathering
+- Design & prototyping
+- Development & implementation
+- Testing, QA & refinements
+- Launch, training & post-launch support
 
 ## Timeline
 
-Estimasi pengerjaan: 2–4 minggu sejak kickoff.
+Estimated timeline: 4–6 weeks from kickoff. Detailed milestones will be confirmed during the discovery phase and tracked through a shared project timeline.
 
-## Investasi
+## Investment
 
-Lihat rincian item di bawah. DP **{{dp}}%** di muka, sisanya sesuai milestone.
+Please refer to the itemized pricing table and payment schedule below. A 50% down payment is required to begin work; the remaining balance is due upon project completion.
 
-## Catatan
+## About {{workspace_name}}
 
-Proposal berlaku sampai **{{valid_until}}**.
+{{workspace_name}} is a dedicated team of designers, engineers, and strategists. We partner with clients to deliver high-quality digital work that drives real business results.
+
+## Terms & Conditions
+
+This proposal is valid until {{valid_until}}. Prices exclude applicable taxes unless stated otherwise. Any additional work outside the defined scope will be quoted separately.
 `;
 
 export function normalizeTemplateTab(tab?: string | null): TemplateTabKey {
