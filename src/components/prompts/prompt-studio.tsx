@@ -76,7 +76,7 @@ function PreviewPanel({ selected, form }: { selected: { name: string; nameEn?: s
   return (
     <div className="space-y-2.5">
       <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-        <Monitor className="h-3.5 w-3.5" /> Preview
+        <Monitor className="h-3.5 w-3.5" /> {t("Preview", "Preview")}
       </div>
       <div className="flex justify-center">
         <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/30 flex flex-col items-center justify-center gap-1 text-muted-foreground" style={{ width: Math.min(100, previewH * aspect), height: previewH }}>
@@ -86,11 +86,11 @@ function PreviewPanel({ selected, form }: { selected: { name: string; nameEn?: s
       </div>
       <div className="grid grid-cols-2 gap-1.5 text-[11px]">
         <div className="rounded-md bg-muted/50 px-2 py-1">
-          <p className="text-[10px] text-muted-foreground">Style</p>
+          <p className="text-[10px] text-muted-foreground">{t("Style", "Style")}</p>
           <p className="font-medium truncate">{style}</p>
         </div>
         <div className="rounded-md bg-muted/50 px-2 py-1">
-          <p className="text-[10px] text-muted-foreground">Platform</p>
+          <p className="text-[10px] text-muted-foreground">{t("Platform", "Platform")}</p>
           <p className="font-medium truncate">{platform}</p>
         </div>
         <div className="rounded-md bg-muted/50 px-2 py-1">
@@ -98,7 +98,7 @@ function PreviewPanel({ selected, form }: { selected: { name: string; nameEn?: s
           <p className="font-medium truncate">{ratioNum}</p>
         </div>
         <div className="rounded-md bg-muted/50 px-2 py-1">
-          <p className="text-[10px] text-muted-foreground">Tone</p>
+          <p className="text-[10px] text-muted-foreground">{t("Tone", "Tone")}</p>
           <p className="font-medium truncate">{form.tone || "—"}</p>
         </div>
       </div>
@@ -261,6 +261,11 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground">{t("Generate", "Generated")} {usage.totalGenerations}/{usage.generationLimit}</span>
+          {/* Desktop CTA so Generate stays visible in the first fold without scrolling */}
+          <Button className="hidden h-9 xl:inline-flex" disabled={!valid || loading} onClick={generate}>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            {loading ? t("Menyusun materi…", "Generating…") : t("Generate", "Generate")}
+          </Button>
           <PromptHistoryDrawer items={generations} onSelect={setResult} />
         </div>
       </div>
@@ -485,14 +490,14 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
             {result && (
               <div className="mb-2 flex items-center gap-2">
                 <button onClick={() => setShowTerminal(false)} className={cn("rounded-md px-2.5 py-1 text-xs font-medium transition-colors", !showTerminal ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground")}>
-                  <Sparkles className="mr-1 inline-block h-3 w-3" />Cards
+                  <Sparkles className="mr-1 inline-block h-3 w-3" />{t("Kartu", "Cards")}
                 </button>
                 <button onClick={() => setShowTerminal(true)} className={cn("rounded-md px-2.5 py-1 text-xs font-medium transition-colors", showTerminal ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground")}>
-                  <Terminal className="mr-1 inline-block h-3 w-3" />Terminal
+                  <Terminal className="mr-1 inline-block h-3 w-3" />{t("Terminal", "Terminal")}
                 </button>
               </div>
             )}
-            <PromptResult result={result} loading={loading} onEdit={() => document.getElementById("prompt-brief")?.scrollIntoView({ behavior: "smooth" })} onRegenerate={generate} />
+            <PromptResult result={result} loading={loading} view={showTerminal ? "terminal" : "cards"} onEdit={() => document.getElementById("prompt-brief")?.scrollIntoView({ behavior: "smooth" })} onRegenerate={generate} />
           </div>
         </div>
       </div>
