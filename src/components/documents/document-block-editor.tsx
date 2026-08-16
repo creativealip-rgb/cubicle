@@ -418,7 +418,7 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
               ))}
             </div>
             <p className="mt-2 text-[11px] text-muted-foreground">{t("Klik chip untuk menyisipkan ke blok teks terpilih.", "Click a chip to insert it into the selected text block.")}</p>
-          </div>}
+          </div>
         </aside>
       </div>
       <div className="sticky bottom-0 z-20 flex shrink-0 items-center justify-between gap-3 border-t bg-white/95 px-4 py-2 text-xs text-muted-foreground backdrop-blur" role="status" aria-live="polite">
