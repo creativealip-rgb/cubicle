@@ -102,14 +102,16 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
           compact && "justify-center px-2",
         )}
       >
-        <Icon className="h-4 w-4 shrink-0" />
+        <span className="relative inline-flex">
+          <Icon className="h-4 w-4 shrink-0" />
+          {compact && badge > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-blue-600 ring-2 ring-white" />}
+        </span>
         {!compact && <span className="flex-1">{t(item.label.id, item.label.en)}</span>}
         {!compact && badge > 0 && (
           <span className={cn("rounded-full px-1.5 py-0.5 text-xs font-semibold", isActive ? "bg-white text-violet-700" : "bg-blue-600 text-white")}>
             {formatSidebarBadge(badge)}
           </span>
         )}
-        {compact && badge > 0 && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-blue-600" />}
       </Link>
     );
   }
@@ -143,9 +145,12 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
                 )}
                 title={collapsed ? t(entry.label.id, entry.label.en) : undefined}
               >
-                <Icon className="h-4 w-4 shrink-0" />
+                <span className="relative inline-flex">
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {groupHasNotification(entry.id, badgeCounts) && !groupActive && collapsed && <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-blue-600 ring-2 ring-white" />}
+                </span>
                 {!collapsed && <span className="flex-1 text-left">{t(entry.label.id, entry.label.en)}</span>}
-                {groupHasNotification(entry.id, badgeCounts) && !groupActive && <span className="h-2 w-2 rounded-full bg-blue-600" />}
+                {groupHasNotification(entry.id, badgeCounts) && !groupActive && !collapsed && <span className="h-2 w-2 rounded-full bg-blue-600" />}
                 {!collapsed && <ChevronRight className={cn("h-4 w-4 shrink-0 transition-transform", groupOpen && "rotate-90")} />}
               </button>
               {groupActive && !collapsed && (

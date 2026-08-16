@@ -29,12 +29,12 @@ describe("document editor layout wiring", () => {
     expect(contractEdit).toContain('backHref={`/app/contracts/${contractId}`}');
   });
 
-  it("uses circular sidebar chevrons for collapse and expand", () => {
+  it("uses compact circular sidebar chevrons for collapse and expand", () => {
     const sidebar = read("src/components/app-sidebar.tsx");
 
     expect(sidebar).toContain("ChevronLeft");
     expect(sidebar).toContain("ChevronRight");
-    expect(sidebar).toContain("absolute -right-3 top-1.5 hidden h-11 w-11 rounded-full");
-    expect(sidebar.match(/h-11 w-11/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(sidebar).toContain("absolute -right-3 top-4 hidden h-6 w-6 rounded-full");
+    expect(sidebar.match(/h-6 w-6 rounded-full/g)?.length).toBeGreaterThanOrEqual(2);
   });
 });

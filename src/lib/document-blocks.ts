@@ -2,6 +2,8 @@ export type DocumentBlockType = "heading" | "text" | "list" | "divider" | "place
 
 export type DocumentTableRow = string[];
 
+export type DocumentBlockAlign = "left" | "center" | "right";
+
 export type DocumentBlock = {
   id: string;
   type: DocumentBlockType;
@@ -9,6 +11,7 @@ export type DocumentBlock = {
   level?: 1 | 2 | 3;
   items?: string[];
   ordered?: boolean;
+  align?: DocumentBlockAlign;
   src?: string;
   fileName?: string;
   fileId?: string;
@@ -42,6 +45,7 @@ export function isSafeDocumentBlock(value: unknown): value is DocumentBlock {
   if (block.items !== undefined && !Array.isArray(block.items)) return false;
   if (block.items !== undefined && !block.items.every((item) => typeof item === "string")) return false;
   if (block.ordered !== undefined && typeof block.ordered !== "boolean") return false;
+  if (block.align !== undefined && block.align !== "left" && block.align !== "center" && block.align !== "right") return false;
   if (block.rows !== undefined && !isSafeTableRows(block.rows)) return false;
   if (block.src !== undefined && typeof block.src !== "string") return false;
   if (block.fileName !== undefined && typeof block.fileName !== "string") return false;
@@ -96,6 +100,30 @@ export function defaultDocumentBlocks(kind: "proposal" | "contract"): DocumentBl
         { id: crypto.randomUUID(), type: "signature" },
       ]
     : [{ id: crypto.randomUUID(), type: "heading", level: 1, content: "Proposal" }, { id: crypto.randomUUID(), type: "text", content: "" }];
+}
+
+/**
+ * Starter blocks for a fresh proposal: cover header, standard sections, and
+ * a financial table. Placeholder tokens ({{workspace_name}}, {{client_name}},
+ * {{valid_until}}) resolve through the shared {{key}} resolver.
+ */
+export function buildProposalStarterBlocks(): DocumentBlock[] {
+  return [
+    { id: crypto.randomUUID(), type: "heading", level: 1, content: "Proposal", align: "center" },
+    { id: crypto.randomUUID(), type: "text", content: "{{workspace_name}}", align: "center" },
+    { id: crypto.randomUUID(), type: "text", content: "Untuk: {{client_name}}", align: "center" },
+    { id: crypto.randomUUID(), type: "divider" },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Tentang Kami" },
+    { id: crypto.randomUUID(), type: "text", content: "" },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Ruang Lingkup" },
+    { id: crypto.randomUUID(), type: "list", items: ["", "", ""], ordered: false },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Timeline" },
+    { id: crypto.randomUUID(), type: "text", content: "" },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Investasi" },
+    { id: crypto.randomUUID(), type: "table", rows: [["Item", "Qty", "Harga", "Jumlah"], ["", "", "", ""]] },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Syarat & Ketentuan" },
+    { id: crypto.randomUUID(), type: "text", content: "Berlaku sampai {{valid_until}}" },
+  ];
 }
 
 const IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "gif", "webp", "avif", "bmp", "tiff", "ico"]);

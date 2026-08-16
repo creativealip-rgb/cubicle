@@ -567,7 +567,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
         {mobileSidebar && (
           <div className="fixed inset-0 z-50 md:hidden" onClick={() => setMobileSidebar(false)}>
             <div className="absolute inset-0 bg-black/50" />
-            <aside className="absolute left-0 top-0 bottom-0 w-72 bg-background overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <aside className="absolute left-0 top-0 bottom-0 w-72 bg-background overflow-y-auto pb-16" onClick={(e) => e.stopPropagation()}>
               <SidebarContent
                 sidebarTab={sidebarTab}
                 setSidebarTab={setSidebarTab}
@@ -587,7 +587,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
         )}
 
         {/* Left sidebar (desktop) */}
-        <aside className="hidden md:block w-64 shrink-0 border-r bg-background overflow-y-auto">
+        <aside className="hidden md:block w-64 shrink-0 border-r bg-background overflow-y-auto pb-16">
           <SidebarContent
             sidebarTab={sidebarTab}
             setSidebarTab={setSidebarTab}
@@ -1180,19 +1180,19 @@ function TemplateTabContent({ site, updateSite, setActivePageId }: { site: Perso
       </div>
 
       {/* Template cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-2">
         {templates.map((template) => (
-          <div key={template.id} className="rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md">
-            <div className="flex items-start justify-between mb-2">
+          <div key={template.id} className="rounded-lg border bg-card p-3 shadow-sm transition-all hover:shadow-md">
+            <div className="flex items-center justify-between mb-1.5">
               <h3 className="font-semibold text-sm">{t(template.label, template.label)}</h3>
-              <LayoutTemplate className="h-4 w-4 text-muted-foreground" />
+              <LayoutTemplate className="h-4 w-4 shrink-0 text-muted-foreground" />
             </div>
-            <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{t(template.description, template.description)}</p>
+            <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{t(template.description, template.description)}</p>
             <Button
               type="button"
               size="sm"
               variant="default"
-              className="w-full"
+              className="w-full whitespace-nowrap"
               onClick={() => handleApplyTemplate(template)}
             >
               {t("Terapkan Template", "Apply Template")}

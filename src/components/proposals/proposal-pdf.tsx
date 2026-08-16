@@ -395,12 +395,17 @@ export function ProposalPDF({ proposal, workspace, client }: ProposalData) {
         <View style={styles.body}>
           {blocks.length > 0
             ? blocks.map((block) => (
-                <Text key={block.id} style={block.type === "heading" ? styles.bodyH2 : styles.bodyText}>
+                <Text key={block.id} style={[block.type === "heading" ? styles.bodyH2 : styles.bodyText, ...(block.align ? [{ textAlign: block.align as "left" | "center" | "right" }] : [])]}>
                   {renderDocumentBlock(block, {
                     client_name: client.name,
                     client_email: client.email,
                     company_name: client.companyName,
                     valid_until: proposal.validUntil,
+                    today: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
+                    subtotal,
+                    tax,
+                    total_amount: total,
+                    down_payment: dpAmount,
                   })}
                 </Text>
               ))

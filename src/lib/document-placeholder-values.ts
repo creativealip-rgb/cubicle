@@ -21,6 +21,11 @@ export interface DocumentValueSource {
   validUntil?: string | Date | null;
   workspaceName?: string | null;
   workspaceAddress?: string | null;
+  today?: string | Date | null;
+  subtotal?: string | number | null;
+  tax?: string | number | null;
+  total?: string | number | null;
+  downPaymentAmount?: string | number | null;
 }
 
 function formatIdDate(value: string | Date | null | undefined, _now: Date): string {
@@ -31,6 +36,22 @@ function formatIdDate(value: string | Date | null | undefined, _now: Date): stri
   const date = value instanceof Date ? value : new Date(`${value}T00:00:00Z`);
   if (Number.isNaN(date.getTime())) return "";
   return date.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" });
+}
+
+function formatMoney(value: string | number | null | undefined): string {
+  if (value === null || value === undefined || value === "") return "";
+  return String(value);
+}
+
+/** Shared financial placeholder values (today, subtotal, tax, total, down payment). */
+function financialPlaceholderValues(source: DocumentValueSource, now: Date): DocumentPlaceholderValues {
+  return {
+    today: source.today instanceof Date ? formatIdDate(source.today, now) : source.today == null ? "" : String(source.today),
+    subtotal: formatMoney(source.subtotal),
+    tax: formatMoney(source.tax),
+    total_amount: formatMoney(source.total),
+    down_payment: formatMoney(source.downPaymentAmount),
+  };
 }
 
 /**
@@ -52,6 +73,7 @@ export function buildProposalPlaceholderValues(
     valid_until: formatIdDate(source.validUntil, now),
     workspace_name: source.workspaceName ?? "",
     workspace_address: source.workspaceAddress ?? "",
+    ...financialPlaceholderValues(source, now),
   };
   if (source.proposalNumber != null && source.proposalNumber !== "") {
     values.proposal_number = source.proposalNumber;
@@ -70,6 +92,7 @@ export function buildContractPlaceholderValues(
     valid_until: formatIdDate(source.validUntil, now),
     workspace_name: source.workspaceName ?? "",
     workspace_address: source.workspaceAddress ?? "",
+    ...financialPlaceholderValues(source, now),
   };
   if (source.contractNumber != null && source.contractNumber !== "") {
     values.contract_number = source.contractNumber;

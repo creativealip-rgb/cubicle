@@ -15,7 +15,9 @@ describe("global app shell accessibility", () => {
     const sidebar = read("src/components/app-sidebar.tsx");
     expect(topbar).toContain('className="h-11 w-11 shrink-0 lg:hidden"');
     expect(topbar).toContain('className="absolute right-0 h-11 w-11"');
-    expect(sidebar.match(/h-11 w-11/g)?.length).toBeGreaterThanOrEqual(3);
+    // Mobile close button stays a 44px touch target; the desktop-only collapse
+    // chevron is intentionally compact (h-6 w-6) as a mouse-driven control.
+    expect(sidebar).toContain("h-11 w-11 text-sidebar-foreground");
   });
 
   it("keeps language controls and onboarding dismiss touch-friendly", () => {
