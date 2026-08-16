@@ -401,6 +401,11 @@ export function ProposalPDF({ proposal, workspace, client }: ProposalData) {
                     client_email: client.email,
                     company_name: client.companyName,
                     valid_until: proposal.validUntil,
+                    today: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
+                    subtotal,
+                    tax,
+                    total_amount: total,
+                    down_payment: dpAmount,
                   })}
                 </Text>
               ))

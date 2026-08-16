@@ -49,6 +49,7 @@ export function renderDocumentBlockHtml(
   block: DocumentBlock,
   values: DocumentPlaceholderValues,
 ): React.ReactNode {
+  const textAlignClass = block.align === "center" ? "text-center" : block.align === "right" ? "text-right" : block.align === "left" ? "text-left" : "";
   if (block.type === "divider") {
     return <hr className="my-4 border-slate-200" />;
   }
@@ -82,7 +83,7 @@ export function renderDocumentBlockHtml(
     const rows = block.rows ?? [];
     if (rows.length === 0) return null;
     return (
-      <div className="my-3 overflow-x-auto">
+      <div className={`my-3 overflow-x-auto ${textAlignClass}`}>
         <table className="w-full border-collapse text-sm">
           <tbody>
             {rows.map((row, i) => (
@@ -104,7 +105,7 @@ export function renderDocumentBlockHtml(
     if (items.length === 0) return null;
     if (block.ordered) {
       return (
-        <ol className="my-2 list-decimal pl-6 space-y-1">
+        <ol className={`my-2 list-decimal pl-6 space-y-1 ${textAlignClass}`}>
           {items.map((item, i) => (
             <li key={i}>{item}</li>
           ))}
@@ -112,7 +113,7 @@ export function renderDocumentBlockHtml(
       );
     }
     return (
-      <ul className="my-2 list-disc pl-6 space-y-1">
+      <ul className={`my-2 list-disc pl-6 space-y-1 ${textAlignClass}`}>
         {items.map((item, i) => (
           <li key={i}>{item}</li>
         ))}
@@ -122,6 +123,5 @@ export function renderDocumentBlockHtml(
   if (block.type === "signature") {
     return <div className="rounded border border-dashed p-6 text-center text-sm text-muted-foreground">Tempat tanda tangan client</div>;
   }
-  const textAlignClass = block.align === "center" ? "text-center" : block.align === "right" ? "text-right" : block.align === "left" ? "text-left" : "";
   return <div className={`whitespace-pre-wrap ${textAlignClass}`}>{renderDocumentBlock(block, values)}</div>;
 }
