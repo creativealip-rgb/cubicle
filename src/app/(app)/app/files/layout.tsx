@@ -83,6 +83,18 @@ export default async function FilesLayout({
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
         <Card className="lg:col-span-1 h-fit lg:sticky lg:top-4">
           <CardContent className="pt-5">
+            <div className="mb-4 space-y-1.5 border-b pb-4 text-sm">
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <span className="text-muted-foreground">{t("Storage terpakai", "Storage used")}</span>
+                <span className="tabular-nums text-muted-foreground">
+                  <strong className="font-semibold text-foreground">{Number((usedBytes / 1024 ** 3).toFixed(2)).toLocaleString(lang === "en" ? "en-US" : "id-ID", { maximumFractionDigits: 2 })}</strong>
+                  {" / "}
+                  {Number((storage.maxBytes / 1024 ** 3).toFixed(2)).toLocaleString(lang === "en" ? "en-US" : "id-ID", { maximumFractionDigits: 2 })} GB
+                </span>
+              </div>
+              <div className="h-1.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuenow={Math.min(100, Math.round((usedBytes / Math.max(1, storage.maxBytes)) * 100))} aria-valuemin={0} aria-valuemax={100}><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, (usedBytes / Math.max(1, storage.maxBytes)) * 100)}%` }} /></div>
+              <p className="text-xs text-muted-foreground">{t("Tersedia", "Available")}: {(Math.max(0, storage.maxBytes - usedBytes) / 1024 ** 3).toFixed(2)} GB · {t("Batas", "Limit")}: {(storage.maxBytes / 1024 ** 3).toFixed(2)} GB</p>
+            </div>
             <Suspense
               fallback={
                 <div className="space-y-2">
@@ -104,20 +116,6 @@ export default async function FilesLayout({
 
         <div className="lg:col-span-3 space-y-4 min-w-0">
           {children}
-          <Card>
-            <CardContent className="space-y-1.5 pt-3 text-sm">
-              <div className="flex items-center justify-between gap-2 text-xs">
-                <span className="text-muted-foreground">{t("Storage terpakai", "Storage used")}</span>
-                <span className="tabular-nums text-muted-foreground">
-                  <strong className="font-semibold text-foreground">{Number((usedBytes / 1024 ** 3).toFixed(2)).toLocaleString(lang === "en" ? "en-US" : "id-ID", { maximumFractionDigits: 2 })}</strong>
-                  {" / "}
-                  {Number((storage.maxBytes / 1024 ** 3).toFixed(2)).toLocaleString(lang === "en" ? "en-US" : "id-ID", { maximumFractionDigits: 2 })} GB
-                </span>
-              </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuenow={Math.min(100, Math.round((usedBytes / Math.max(1, storage.maxBytes)) * 100))} aria-valuemin={0} aria-valuemax={100}><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, (usedBytes / Math.max(1, storage.maxBytes)) * 100)}%` }} /></div>
-              <p className="text-xs text-muted-foreground">{t("Tersedia", "Available")}: {(Math.max(0, storage.maxBytes - usedBytes) / 1024 ** 3).toFixed(2)} GB · {t("Batas", "Limit")}: {(storage.maxBytes / 1024 ** 3).toFixed(2)} GB</p>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
