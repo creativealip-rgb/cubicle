@@ -1,19 +1,23 @@
+"use client";
+
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { FileText } from "lucide-react";
-import { normalizeDocumentBlocks, type DocumentBlock } from "@/lib/document-blocks";
+import type { DocumentBlock } from "@/lib/document-blocks";
 import { renderDocumentBlockHtml } from "@/lib/document-block-renderer";
 import type { DocumentPlaceholderValues } from "@/lib/document-placeholders";
 
 /**
  * Single source of truth for rendering a contract's public-facing view.
  *
- * Used by BOTH the internal preview page and the public `/contract/[token]`
- * page, so "what the workspace owner sees in preview" is byte-for-byte what
- * the client receives via email. The signature block is intentionally skipped
- * here — the signature area is rendered in the footer slot by the caller
- * (interactive SignaturePad on the public page, a static placeholder in the
- * internal preview).
+ * Used by THREE surfaces so they are byte-for-byte identical:
+ *   1. the public `/contract/[token]` page (what the client receives via email),
+ *   2. the internal preview page (`/app/contracts/[id]/preview`), and
+ *   3. the in-editor preview modal (live blocks, before saving).
+ *
+ * Callers pass already-normalized `blocks`; the signature block is rendered
+ * in the footer slot by the caller (interactive SignaturePad on the public
+ * page, a static placeholder in the internal surfaces).
  */
 
 export interface ContractViewData {
@@ -23,9 +27,6 @@ export interface ContractViewData {
   clientEmail: string | null;
   validUntil: Date | string | null;
   status: string;
-  contentBlocks: unknown;
-  body: string | null;
-  bodyResolved: string | null;
 }
 
 function statusBadge(status: string) {
@@ -48,19 +49,19 @@ function headingClass(level: number | undefined): string {
 
 export function ContractPublicView({
   contract,
+  blocks,
   placeholderValues,
   signatureSlot,
   topBar,
   embedded = false,
 }: {
   contract: ContractViewData;
+  blocks: DocumentBlock[];
   placeholderValues: DocumentPlaceholderValues;
   signatureSlot?: React.ReactNode;
   topBar?: React.ReactNode;
   embedded?: boolean;
 }) {
-  const blocks = normalizeDocumentBlocks(contract.contentBlocks, "contract");
-
   function renderBlock(block: DocumentBlock) {
     if (block.type === "signature") return null; // rendered in footer slot
     if (block.type === "heading") {

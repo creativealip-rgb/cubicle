@@ -5,6 +5,7 @@ import { contracts, workspaces } from "@/db/schema";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { buildContractPlaceholderValues } from "@/lib/document-placeholder-values";
 import { ContractPublicView } from "@/components/contracts/contract-public-view";
+import { normalizeDocumentBlocks } from "@/lib/document-blocks";
 import Link from "next/link";
 
 export default async function ContractPreviewPage({ params }: { params: Promise<{ contractId: string }> }) {
@@ -24,10 +25,8 @@ export default async function ContractPreviewPage({ params }: { params: Promise<
         clientEmail: contract.clientEmail,
         validUntil: contract.validUntil,
         status: contract.status,
-        contentBlocks: contract.contentBlocks,
-        body: contract.body,
-        bodyResolved: contract.bodyResolved,
       }}
+      blocks={normalizeDocumentBlocks(contract.contentBlocks, "contract")}
       placeholderValues={placeholderValues}
       embedded
       topBar={

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 import { buildContractPlaceholderValues } from "@/lib/document-placeholder-values";
+import { normalizeDocumentBlocks } from "@/lib/document-blocks";
 
 export default async function ContractPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -59,10 +60,8 @@ export default async function ContractPage({ params }: { params: Promise<{ token
         clientEmail: client.email,
         validUntil: contract.validUntil,
         status: contract.status,
-        contentBlocks: contract.contentBlocks,
-        body: contract.body,
-        bodyResolved: contract.bodyResolved,
       }}
+      blocks={normalizeDocumentBlocks(contract.contentBlocks, "contract")}
       placeholderValues={placeholderValues}
       signatureSlot={<SignaturePad token={token} defaultName={client?.name || ""} defaultEmail={client?.email || ""} />}
     />
