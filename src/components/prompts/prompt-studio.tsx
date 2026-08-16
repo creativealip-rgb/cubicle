@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Braces, Info, Loader2, Monitor, Smartphone, Sparkles, TriangleAlert } from "lucide-react";
+import { ChevronDown, Braces, Info, Loader2, Sparkles, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import { generateVisualPrompt } from "@/lib/actions/visual-prompts";
 import { launchPromptCatalog, type PromptCategory, type PromptFieldDefinition, type PromptOptionValue, type PromptTypeId, type OverlapKey, splitOverlapDefaults, nonOverlapFields, displayOption, isOverlapKey } from "@/lib/prompts/catalog";
 import { parsePromptResult, type PromptGenerationResult } from "@/lib/prompts/build-prompt";
 import { toneOptions, styleOptions, platformOptions, ratioOptions } from "@/lib/prompts/field-options";
-import { hasEnteredDetails, validateField } from "@/lib/prompts/prompt-studio-validation";
+import { validateField } from "@/lib/prompts/prompt-studio-validation";
 import { PromptResult } from "./prompt-result";
 import { PromptHistoryDrawer, type PromptHistoryItem } from "./prompt-history-drawer";
 import { cn } from "@/lib/utils";
@@ -63,59 +63,6 @@ function InfoTip({ text }: { text: string }) {
   );
 }
 
-function PreviewPanel({ selected, form }: { selected: { name: string; nameEn?: string; description: string; descriptionEn?: string }; form: FormState }) {
-  const { t, lang } = useT();
-  const ratio = form.ratio || "4:5 (Portrait Feed)";
-  const style = form.style || "";
-  const platform = form.platform || "";
-  const ratioNum = ratio.split(" ")[0];
-  const [w, h] = ratioNum.split(":").map(Number);
-  const aspect = w && h ? w / h : 4 / 5;
-  const previewH = Math.min(120, Math.round(100 / aspect));
-
-  return (
-    <div className="space-y-2.5">
-      <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-        <Monitor className="h-3.5 w-3.5" /> {t("Preview", "Preview")}
-      </div>
-      <div className="flex justify-center">
-        <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/30 flex flex-col items-center justify-center gap-1 text-muted-foreground" style={{ width: Math.min(100, previewH * aspect), height: previewH }}>
-          <Smartphone className="h-4 w-4 opacity-40" />
-          <span className="text-[9px] font-medium">{ratioNum}</span>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-1.5 text-[11px]">
-        {style ? (
-          <div className="rounded-md bg-muted/50 px-2 py-1">
-            <p className="text-[10px] text-muted-foreground">{t("Style", "Style")}</p>
-            <p className="font-medium truncate">{style}</p>
-          </div>
-        ) : null}
-        {platform ? (
-          <div className="rounded-md bg-muted/50 px-2 py-1">
-            <p className="text-[10px] text-muted-foreground">{t("Platform", "Platform")}</p>
-            <p className="font-medium truncate">{platform}</p>
-          </div>
-        ) : null}
-        <div className="rounded-md bg-muted/50 px-2 py-1">
-          <p className="text-[10px] text-muted-foreground">{t("Rasio", "Ratio")}</p>
-          <p className="font-medium truncate">{ratioNum}</p>
-        </div>
-        {form.tone ? (
-          <div className="rounded-md bg-muted/50 px-2 py-1">
-            <p className="text-[10px] text-muted-foreground">{t("Tone", "Tone")}</p>
-            <p className="font-medium truncate">{form.tone}</p>
-          </div>
-        ) : null}
-      </div>
-      <div className="rounded-md border bg-background p-2">
-        <p className="text-[11px] font-medium text-foreground">{lang === "en" && selected.nameEn ? selected.nameEn : selected.name}</p>
-        <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground line-clamp-2">{lang === "en" && selected.descriptionEn ? selected.descriptionEn : selected.description}</p>
-      </div>
-    </div>
-  );
-}
-
 /**
  * Validates one field against the catalog schema rules (required, min/max,
  * select membership). Mirrors promptBriefSchema so users see the same rules
@@ -139,10 +86,12 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
   const [loading, setLoading] = useState(false);
   const [pendingType, setPendingType] = useState<PromptTypeId | null>(null);
   const [pendingReason, setPendingReason] = useState<"result" | "dirty" | null>(null);
-  const [previewOpen, setPreviewOpen] = useState(true);
   const [showPrompt, setShowPrompt] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [attempted, setAttempted] = useState(false);
+  // Tracks whether the user has actually edited any field (excludes auto-seeded
+  // type defaults, which should NOT count as "the user filled something in").
+  const [dirty, setDirty] = useState(false);
 
   const selected = launchPromptCatalog.find((item) => item.id === typeId)!;
   const types = launchPromptCatalog.filter((item) => item.category === category);
@@ -180,6 +129,7 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
 
   function patchField(key: keyof Omit<FormState, "options">, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
+    setDirty(true);
   }
   function applyType(next: PromptTypeId) {
     const item = launchPromptCatalog.find((entry) => entry.id === next)!;
@@ -200,6 +150,7 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
     setPendingReason(null);
     setErrors({});
     setAttempted(false);
+    setDirty(false);
   }
   function chooseType(next: PromptTypeId) {
     if (next === typeId) return;
@@ -208,7 +159,7 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
       setPendingType(next);
       return;
     }
-    if (hasEnteredDetails(form)) {
+    if (dirty) {
       setPendingReason("dirty");
       setPendingType(next);
       return;
@@ -371,14 +322,14 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
                       <div className="space-y-1.5" key={field.key}>
                         <Label htmlFor={`option-${field.key}`}>{getFieldName(field)}{field.required ? " *" : ""}</Label>
                         {field.type === "select" ? (
-                          <Select value={raw === undefined ? "" : String(raw)} onValueChange={(value) => setForm((current) => ({ ...current, options: { ...current.options, [field.key]: field.key.endsWith("Count") ? Number(value) : value } }))}>
+                          <Select value={raw === undefined ? "" : String(raw)} onValueChange={(value) => { setForm((current) => ({ ...current, options: { ...current.options, [field.key]: field.key.endsWith("Count") ? Number(value) : value } })); setDirty(true); }}>
                             <SelectTrigger id={`option-${field.key}`} aria-invalid={Boolean(fieldError)}><SelectValue placeholder={t("Pilih opsi", "Select option")} /></SelectTrigger>
                             <SelectContent>{field.options?.map((option) => <SelectItem key={option} value={option}>{displayOption(option, lang)}</SelectItem>)}</SelectContent>
                           </Select>
                         ) : field.type === "textarea" ? (
-                          <Textarea id={`option-${field.key}`} value={String(raw ?? "")} onChange={(e) => setForm((current) => ({ ...current, options: { ...current.options, [field.key]: e.target.value } }))} aria-invalid={Boolean(fieldError)} />
+                          <Textarea id={`option-${field.key}`} value={String(raw ?? "")} onChange={(e) => { setForm((current) => ({ ...current, options: { ...current.options, [field.key]: e.target.value } })); setDirty(true); }} aria-invalid={Boolean(fieldError)} />
                         ) : (
-                          <Input id={`option-${field.key}`} type={field.type} min={field.min} max={field.max} value={raw === undefined ? "" : String(raw)} onChange={(e) => setForm((current) => ({ ...current, options: { ...current.options, [field.key]: field.type === "number" ? Number(e.target.value) : e.target.value } }))} aria-invalid={Boolean(fieldError)} />
+                          <Input id={`option-${field.key}`} type={field.type} min={field.min} max={field.max} value={raw === undefined ? "" : String(raw)} onChange={(e) => { setForm((current) => ({ ...current, options: { ...current.options, [field.key]: field.type === "number" ? Number(e.target.value) : e.target.value } })); setDirty(true); }} aria-invalid={Boolean(fieldError)} />
                         )}
                         {fieldError && <FieldError message={fieldError} />}
                       </div>
@@ -472,26 +423,8 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
           </div>
         </section>
 
-        {/* Right panel: preview + result */}
+        {/* Right panel: result */}
         <div className="space-y-3 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto xl:pb-6">
-          {/* Preview: static card on xl+, compact collapsible below */}
-          <div className="hidden xl:block">
-            <div className="rounded-xl border bg-white p-3">
-              <PreviewPanel selected={selected} form={form} />
-            </div>
-          </div>
-          <details className="group xl:hidden rounded-xl border bg-white" open={previewOpen} onToggle={(e) => setPreviewOpen((e.target as HTMLDetailsElement).open)}>
-            <summary className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-white p-3 text-xs font-semibold text-foreground select-none">
-              <Monitor className="h-3.5 w-3.5" /> {t("Preview", "Preview")}
-              <span className="min-w-0 flex-1 truncate text-[11px] font-normal text-muted-foreground">
-                {[form.platform, form.ratio?.split(" ")[0], form.style, form.tone].filter(Boolean).join(" · ") || t("Belum ada pilihan", "No selections yet")}
-              </span>
-              <ChevronDown className="h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-180" />
-            </summary>
-            <div className="px-3 pb-3">
-              <PreviewPanel selected={selected} form={form} />
-            </div>
-          </details>
           <div>
             {result && (
               <div className="mb-2 flex items-center gap-2">

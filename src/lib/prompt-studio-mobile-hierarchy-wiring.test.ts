@@ -44,15 +44,15 @@ describe("Prompt Studio mobile hierarchy", () => {
   });
 
   it("prioritizes brief before secondary guidance on mobile", () => {
-    // DOM order on mobile: compact selector section -> brief form -> preview/result
+    // DOM order on mobile: compact selector section -> brief form -> result panel
     const selectorSection = source.indexOf(
       'className="rounded-2xl border bg-white p-3 sm:p-4"',
     );
     const briefSection = source.indexOf('id="prompt-brief"');
-    const previewPanel = source.indexOf('className="hidden xl:block"');
+    const resultPanel = source.indexOf("Right panel: result");
     expect(selectorSection).toBeGreaterThan(-1);
     expect(briefSection).toBeGreaterThan(selectorSection);
-    expect(previewPanel).toBeGreaterThan(briefSection);
+    expect(resultPanel).toBeGreaterThan(briefSection);
     // Brief header and body structure (bilingual name)
     expect(source).toContain('className="mb-3 sm:mb-4"');
     expect(source).toContain('Brief {lang === "en" && selected.nameEn ? selected.nameEn : selected.name}');
