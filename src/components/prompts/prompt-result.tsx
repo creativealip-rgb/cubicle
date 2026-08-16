@@ -65,13 +65,31 @@ export function PromptResult({ result, loading, view = "cards", onEdit, onRegene
 
   const technical = technicalText(result);
   const hasTechnical = Boolean(technical);
+  const sections: { label: string; content: string }[] = [];
+  if (result.technicalPrompt) sections.push({ label: "TECHNICAL PROMPT", content: result.technicalPrompt });
+  if (result.negativePrompt) sections.push({ label: "NEGATIVE PROMPT", content: result.negativePrompt });
+  if (result.notes?.length) sections.push({ label: "NOTES", content: result.notes.map((note) => `- ${note}`).join("\n") });
 
   return <div className="min-h-[220px] rounded-xl border bg-white p-3.5 sm:p-4">
-    <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><div><p className="text-[10px] font-medium uppercase tracking-wide text-primary">{t("Hasil", "Result")}</p><h2 className="mt-0.5 text-base font-semibold">{result.title}</h2></div><div className="flex gap-1.5"><Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={onEdit}><Pencil className="mr-1 h-3.5 w-3.5"/>{t("Edit brief", "Edit brief")}</Button><Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={onRegenerate}><RotateCcw className="mr-1 h-3.5 w-3.5"/>{t("Generate ulang", "Regenerate")}</Button></div></div>
+    <div className="mb-3">
+      <p className="text-[10px] font-medium uppercase tracking-wide text-primary">{t("Hasil", "Result")}</p>
+      <h2 className="mt-0.5 text-base font-semibold">{result.title}</h2>
+      <div className="mt-2.5 flex flex-wrap items-center justify-end gap-1.5 border-t pt-2.5">
+        <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={onEdit}><Pencil className="mr-1 h-3.5 w-3.5"/>{t("Edit brief", "Edit brief")}</Button>
+        <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={onRegenerate}><RotateCcw className="mr-1 h-3.5 w-3.5"/>{t("Generate ulang", "Regenerate")}</Button>
+      </div>
+    </div>
     {view === "terminal" ? (
       hasTechnical ? (
         <div>
-          <pre className="max-h-[380px] overflow-auto whitespace-pre-wrap rounded-lg bg-slate-950 p-3 text-[11px] leading-4 text-slate-100">{technical}</pre>
+          <div className="max-h-[380px] space-y-3 overflow-auto rounded-lg bg-slate-950 p-3">
+            {sections.map((section) => (
+              <div key={section.label}>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-400">{section.label}</p>
+                <pre className="mt-1 whitespace-pre-wrap font-mono text-[11px] leading-4 text-slate-200">{section.content}</pre>
+              </div>
+            ))}
+          </div>
           <div className="mt-2.5">
             <CopyButton text={technical} actionLabel={t("Copy", "Copy")} doneLabel={t("Tersalin", "Copied")} toastLabel={t("Detail teknis disalin", "Technical details copied")} />
           </div>

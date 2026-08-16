@@ -66,8 +66,8 @@ function InfoTip({ text }: { text: string }) {
 function PreviewPanel({ selected, form }: { selected: { name: string; nameEn?: string; description: string; descriptionEn?: string }; form: FormState }) {
   const { t, lang } = useT();
   const ratio = form.ratio || "4:5 (Portrait Feed)";
-  const style = form.style || "—";
-  const platform = form.platform || "—";
+  const style = form.style || "";
+  const platform = form.platform || "";
   const ratioNum = ratio.split(" ")[0];
   const [w, h] = ratioNum.split(":").map(Number);
   const aspect = w && h ? w / h : 4 / 5;
@@ -85,22 +85,28 @@ function PreviewPanel({ selected, form }: { selected: { name: string; nameEn?: s
         </div>
       </div>
       <div className="grid grid-cols-2 gap-1.5 text-[11px]">
-        <div className="rounded-md bg-muted/50 px-2 py-1">
-          <p className="text-[10px] text-muted-foreground">{t("Style", "Style")}</p>
-          <p className="font-medium truncate">{style}</p>
-        </div>
-        <div className="rounded-md bg-muted/50 px-2 py-1">
-          <p className="text-[10px] text-muted-foreground">{t("Platform", "Platform")}</p>
-          <p className="font-medium truncate">{platform}</p>
-        </div>
+        {style ? (
+          <div className="rounded-md bg-muted/50 px-2 py-1">
+            <p className="text-[10px] text-muted-foreground">{t("Style", "Style")}</p>
+            <p className="font-medium truncate">{style}</p>
+          </div>
+        ) : null}
+        {platform ? (
+          <div className="rounded-md bg-muted/50 px-2 py-1">
+            <p className="text-[10px] text-muted-foreground">{t("Platform", "Platform")}</p>
+            <p className="font-medium truncate">{platform}</p>
+          </div>
+        ) : null}
         <div className="rounded-md bg-muted/50 px-2 py-1">
           <p className="text-[10px] text-muted-foreground">{t("Rasio", "Ratio")}</p>
           <p className="font-medium truncate">{ratioNum}</p>
         </div>
-        <div className="rounded-md bg-muted/50 px-2 py-1">
-          <p className="text-[10px] text-muted-foreground">{t("Tone", "Tone")}</p>
-          <p className="font-medium truncate">{form.tone || "—"}</p>
-        </div>
+        {form.tone ? (
+          <div className="rounded-md bg-muted/50 px-2 py-1">
+            <p className="text-[10px] text-muted-foreground">{t("Tone", "Tone")}</p>
+            <p className="font-medium truncate">{form.tone}</p>
+          </div>
+        ) : null}
       </div>
       <div className="rounded-md border bg-background p-2">
         <p className="text-[11px] font-medium text-foreground">{lang === "en" && selected.nameEn ? selected.nameEn : selected.name}</p>
@@ -467,7 +473,7 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
         </section>
 
         {/* Right panel: preview + result */}
-        <div className="space-y-3 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
+        <div className="space-y-3 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto pb-1">
           {/* Preview: static card on xl+, compact collapsible below */}
           <div className="hidden xl:block">
             <div className="rounded-xl border bg-white p-3">
