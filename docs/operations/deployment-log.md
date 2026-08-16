@@ -1,5 +1,23 @@
 # Deployment Log
 
+## 16 August 2026 — Contract editor starter template + proposal pricing single-source
+
+- Source: `release/cubiqlo-20260816-4`, merge commit from `dev/integration` into `main`.
+- Scope:
+  - `buildContractStarterBlocks()`: 18-block contract starter (cover "Perjanjian Kerja" centered, "No: {{contract_number}}", Para Pihak / Latar Belakang / Ruang Lingkup / Nilai Kontrak table / Jangka Waktu / Ketentuan Lain / signature).
+  - Contract editor: "Mulai dari template" now available for both `proposal` and `contract` kind; `applyStarterTemplate` branches by kind; contract placeholder chips (`{{contract_number}}`, `{{contract_date}}`, `{{workspace_address}}`) branch by kind.
+  - Proposal pricing single-source: removed manual "Investasi" table from `buildProposalStarterBlocks()` and the "+ Pricing Table" preset from the editor. Proposal pricing now comes solely from the detail form `lineItems` → rendered in PDF/public view (table + subtotal/tax/total + down-payment banner).
+- Dev proof: `dev.cubiqlo.com` deployed at `bc0e542a53710ffd9912030b9a17c64b1589a7a5`; health app/DB ok; production unchanged during dev QA. Visual QA: proposal starter renders 12 blocks without "Investasi"/pricing table; "+ Pricing Table" preset absent from insert panel.
+- Release gate before production deploy:
+  - `git diff --check` passed.
+  - `npx tsc --noEmit` passed.
+  - Targeted Vitest passed (34 tests): contract starter, contract editor, proposal editor, proposal starter, document placeholder values, template block editor, template create flow.
+  - `npm run build` passed.
+  - Full suite: 1390/1396 passed; 6 failures confirmed **pre-existing** (identical failures reproduced on clean `origin/main` base) — stale wiring tests for send UI, proposal PDF route, time route, project time tracking, billing cron scheduler; unrelated to this change.
+- Migration: none (0074/0075/0076 already applied in production).
+- Production deployment:
+  - Release branch: `release/cubiqlo-20260816-4`.
+
 ## 16 August 2026 — Proposal editor enhancement (starter template, financial placeholders, align)
 
 - Source: `release/cubiqlo-20260816-3`, merge commit `221807c` from `dev/integration` into `main`.

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-16 — Contract editor starter template + proposal pricing single-source
+
+- Added `buildContractStarterBlocks()`: 18-block contract starter (Perjanjian Kerja → Para Pihak → Latar Belakang → Ruang Lingkup → Nilai Kontrak table → Jangka Waktu → Ketentuan Lain → signature).
+- Contract editor "Mulai dari template" now available for both proposal and contract; `applyStarterTemplate` branches by kind; contract placeholder chips (`{{contract_number}}`, `{{contract_date}}`, `{{workspace_address}}`) branch by kind.
+- Proposal pricing single-source: removed manual "Investasi" table from the proposal starter and the "+ Pricing Table" preset; proposal pricing now comes solely from the detail form `lineItems` (rendered in PDF and public view).
+- No migration changes.
+
 ## 2026-08-12 — Proposal and contract authoring foundation
 
 - Decoupled proposal/contract drafts from required Client rows with recipient snapshots and nullable `clientId` links.
