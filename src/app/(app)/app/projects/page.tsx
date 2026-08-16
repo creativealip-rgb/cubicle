@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { projects, clients, tasks, workspaceMembers, users } from "@/db/schema";
-import { eq, and, desc, sql, SQL } from "drizzle-orm";
+import { eq, and, desc, sql, SQL, inArray } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -14,11 +14,13 @@ import { getPlanYearlyLabel } from "@/lib/billing-pricing";
 import { BILLING_PLANS } from "@/lib/billing-plans";
 import {
   PROJECT_STATUS_TABS,
+  PROJECT_STATUS_TAB_VALUES,
   buildProjectsHref,
   parseBillingType,
   type ProjectStatusTab,
 } from "@/lib/project-list-filters";
 import { ActiveFilterSummary } from "@/components/ui/active-filter-summary";
+import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -52,12 +54,9 @@ export default async function ProjectsPage({
   const lang = await getCurrentLang();
   const t = createT(lang);
   const PROJECT_STATUS_LABELS: Record<string, string> = {
-    draft: t("Draf", "Draft"),
     active: t("Aktif", "Active"),
     on_hold: t("Ditunda", "On Hold"),
     completed: t("Selesai", "Completed"),
-    cancelled: t("Dibatalkan", "Cancelled"),
-    archived: t("Diarsipkan", "Archived"),
   };
   const tabLabel = (tab: ProjectStatusTab) => {
 
@@ -94,9 +93,27 @@ export default async function ProjectsPage({
     .where(eq(clients.workspaceId, workspaceId))
     .orderBy(clients.name);
 
+  const countRows = await db
+    .select({ status: projects.status, count: sql<number>`count(*)::int` })
+    .from(projects)
+    .where(eq(projects.workspaceId, workspaceId))
+    .groupBy(projects.status);
+
+  const statusCounts: Record<ProjectStatusTab, number> = { active: 0, on_hold: 0, completed: 0 };
+  for (const row of countRows) {
+    const n = Number(row.count) || 0;
+    if (PROJECT_STATUS_TAB_VALUES.active.includes(row.status)) statusCounts.active += n;
+    else if (row.status === "on_hold") statusCounts.on_hold = n;
+    else if (row.status === "completed") statusCounts.completed = n;
+  }
 
   const whereClauses: SQL[] = [eq(projects.workspaceId, workspaceId)];
-  whereClauses.push(eq(projects.status, statusTab));
+  whereClauses.push(
+    inArray(
+      projects.status,
+      PROJECT_STATUS_TAB_VALUES[statusTab] as readonly ("active" | "on_hold" | "completed" | "draft" | "cancelled" | "archived")[],
+    ),
+  );
   if (clientId) whereClauses.push(eq(projects.clientId, clientId));
   if (billingType === "package") whereClauses.push(eq(projects.billingType, "package"));
   else if (billingType) whereClauses.push(eq(projects.billingModel, billingType));
@@ -156,6 +173,18 @@ export default async function ProjectsPage({
         )}
       </div>
 
+      <StatusFilterTabs
+        activeValue={statusTab}
+        hideEmpty={false}
+        tabs={PROJECT_STATUS_TABS.map((tab) => ({
+          value: tab,
+          label: tabLabel(tab),
+          href: buildProjectsHref({ ...filtersForHref, status: tab }),
+          count: statusCounts[tab] ?? 0,
+          alwaysShow: true,
+        }))}
+      />
+
       {isAtLimit && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
           <div className="flex items-center justify-between gap-4">
@@ -181,7 +210,6 @@ export default async function ProjectsPage({
 
       <ActiveFilterSummary basePath="/app/projects" filters={[
         { key: "clientId", label: t("Klien", "Client"), value: selectedClient?.name },
-        { key: "status", label: t("Status", "Status"), value: statusTab === "active" ? undefined : tabLabel(statusTab) },
         { key: "billingType", label: t("Model", "Model"), value: billingType === "fixed_price" ? "Fixed Price" : billingType === "hourly" ? t("Per Jam", "Hourly") : billingType === "retainer" ? "Retainer" : billingType === "package" ? t("Paket", "Package") : undefined },
       ]} />
 
@@ -190,7 +218,6 @@ export default async function ProjectsPage({
         clients={clientOptions}
         currentClientId={clientId}
         hasExtraFilters={hasExtraFilters}
-        statusTab={statusTab}
         billingType={billingType}
         billingTypeHrefs={{
           all: buildProjectsHref({ ...filtersForHref, billingType: undefined }),

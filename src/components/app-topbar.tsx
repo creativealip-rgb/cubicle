@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAppTransition } from "@/lib/transition-provider";
 import Link from "next/link";
 import {
@@ -41,7 +41,6 @@ import { useSidebar } from "@/components/app-shell";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { getUserWorkspaces, switchWorkspace, createWorkspace } from "@/lib/actions/workspace-switch";
 import { useT } from "@/lib/i18n-client";
-import { cn } from "@/lib/utils";
 import { getPlanYearlyLabel } from "@/lib/billing-pricing";
 import { BILLING_PLANS } from "@/lib/billing-plans";
 
@@ -92,7 +91,6 @@ export function AppTopbar({ user }: AppTopbarProps) {
   const { t } = useT();
   const router = useRouter();
   const { refresh } = useAppTransition();
-  const pathname = usePathname();
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
@@ -286,7 +284,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" className="h-9 gap-1 px-2.5 sm:px-3">
                     <Plus className="h-4 w-4" />
-                    <span className={cn("hidden sm:inline", pathname === "/app/projects" && "lg:hidden")}>
+                    <span className="hidden sm:inline">
                       {t("Baru", "New")}
                     </span>
                   </Button>

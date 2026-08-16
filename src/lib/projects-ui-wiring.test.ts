@@ -21,7 +21,7 @@ describe("project list status pills", () => {
 
   it("keeps the list table filters wired in header columns", () => {
     expect(listTable).toContain('queryKey="clientId"');
-    expect(listTable).toContain('queryKey="status"');
+    expect(listTable).not.toContain('queryKey="status"');
     expect(listTable).toContain('queryKey="billingType"');
   });
 });
