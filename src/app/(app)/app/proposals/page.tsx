@@ -1,24 +1,25 @@
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
-import Link from "next/link";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { proposals, clients } from "@/db/schema";
+import { proposals, clients, services } from "@/db/schema";
+import { listProposalTemplates } from "@/lib/actions/proposal-templates";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
-import { Button } from "@/components/ui/button";
-import { Plus, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 import { ProposalsListTable } from "@/components/proposals/proposals-list-table";
+import { CreateProposalButton } from "@/components/proposals/create-proposal-button";
 import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { EmptyState } from "@/components/empty-state";
 import { getCurrentLang, createT } from "@/lib/i18n";
+import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 
 const STATUS_TABS = ["all", "draft", "sent", "viewed", "accepted", "declined", "expired"] as const;
 
 export default async function ProposalsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; new?: string }>;
 }) {
   const lang = await getCurrentLang();
   const t = createT(lang);
@@ -71,6 +72,25 @@ export default async function ProposalsPage({
     .where(eq(proposals.workspaceId, workspaceId))
     .groupBy(proposals.status);
 
+  const ws = await getWorkspaceFullForCurrentUser();
+  const clientRows = await db
+    .select({ id: clients.id, name: clients.name })
+    .from(clients)
+    .where(and(eq(clients.workspaceId, workspaceId), eq(clients.status, "active")))
+    .orderBy(clients.name);
+  const serviceRows = await db
+    .select({
+      id: services.id,
+      name: services.name,
+      description: services.description,
+      defaultPrice: services.defaultPrice,
+      defaultUnit: services.defaultUnit,
+    })
+    .from(services)
+    .where(and(eq(services.workspaceId, workspaceId), eq(services.status, "active")))
+    .orderBy(services.name);
+  const proposalTemplates = await listProposalTemplates();
+
   const counts: Record<string, number> = { all: 0 };
   for (const row of countRows) {
     const n = Number(row.count) || 0;
@@ -103,12 +123,21 @@ export default async function ProposalsPage({
           </p>
         </div>
         {canWrite && (
-          <Button size="sm" className="gap-1" asChild>
-            <Link href="/app/proposals/new">
-              <Plus className="h-4 w-4" />
-              {t("Proposal baru", "New proposal")}
-            </Link>
-          </Button>
+          <CreateProposalButton
+            workspaceId={workspaceId}
+            defaultCurrency={ws.defaultCurrency}
+            defaultTaxRate={ws.defaultTaxRate ?? "0"}
+            clients={clientRows}
+            services={serviceRows.map((s) => ({
+              id: s.id,
+              name: s.name,
+              description: s.description ?? "",
+              defaultPrice: s.defaultPrice ? Number(s.defaultPrice) : 0,
+              defaultUnit: s.defaultUnit ?? "service",
+            }))}
+            templates={proposalTemplates}
+            defaultOpen={params.new === "1"}
+          />
         )}
       </div>
 

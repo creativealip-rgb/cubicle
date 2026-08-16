@@ -19,6 +19,7 @@ import { useT } from "@/lib/i18n-client";
 import { renderDocumentBlockHtml } from "@/lib/document-block-renderer";
 import type { DocumentPlaceholderValues } from "@/lib/document-placeholders";
 import { ContractPublicView } from "@/components/contracts/contract-public-view";
+import { ProposalPublicView } from "@/components/proposals/proposal-public-view";
 import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowLeft, ArrowUp, Eye, GripVertical, Loader2, Monitor, Paperclip, Redo2, Smartphone, Tablet, Trash2, Undo2, Upload, X } from "lucide-react";
 
 type Props = {
@@ -35,6 +36,13 @@ type Props = {
     clientEmail: string | null;
     validUntil: Date | string | null;
     contractNumber: string | null;
+  };
+  proposalMeta?: {
+    title: string;
+    clientName: string | null;
+    clientEmail: string | null;
+    validUntil: Date | string | null;
+    status: string;
   };
 };
 
@@ -109,7 +117,7 @@ function TableBlockEditor({ block, t, onChange }: { block: DocumentBlock; t: TFu
   );
 }
 
-export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialRevision = 1, backHref, placeholderValues = {}, saveBlocks, documentMeta }: Props) {
+export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialRevision = 1, backHref, placeholderValues = {}, saveBlocks, documentMeta, proposalMeta }: Props) {
   const [blocks, setBlocks] = useState(initialBlocks);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -456,6 +464,25 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
                 clientEmail: documentMeta.clientEmail,
                 validUntil: documentMeta.validUntil,
                 status: "draft",
+              }}
+              blocks={blocks}
+              placeholderValues={placeholderValues}
+            />
+          ) : kind === "proposal" && proposalMeta ? (
+            <ProposalPublicView
+              embedded
+              proposal={{
+                title: proposalMeta.title,
+                clientName: proposalMeta.clientName,
+                clientEmail: proposalMeta.clientEmail,
+                validUntil: proposalMeta.validUntil,
+                status: proposalMeta.status,
+                lineItems: [],
+                subtotal: null,
+                tax: null,
+                total: null,
+                currency: "IDR",
+                downPaymentPercent: null,
               }}
               blocks={blocks}
               placeholderValues={placeholderValues}

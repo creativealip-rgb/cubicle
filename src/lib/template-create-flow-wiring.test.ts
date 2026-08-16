@@ -9,7 +9,7 @@ const proposalActions = read("src/lib/actions/proposals.ts");
 const createContractButton = read("src/components/contracts/create-contract-button.tsx");
 const proposalForm = read("src/components/proposals/proposal-form.tsx");
 const contractsPage = read("src/app/(app)/app/contracts/page.tsx");
-const proposalsNewPage = read("src/app/(app)/app/proposals/new/page.tsx");
+const proposalsPage = read("src/app/(app)/app/proposals/page.tsx");
 const listContractTemplates = read("src/lib/actions/contract-templates.ts");
 const listProposalTemplates = read("src/lib/actions/proposal-templates.ts");
 
@@ -76,7 +76,7 @@ describe("unified template contentBlocks in real create flows (batch 3)", () => 
   it("create pages keep passing workspace-scoped templates into the flows", () => {
     expect(contractsPage).toMatch(/listContractTemplates\(\)/);
     expect(contractsPage).toMatch(/templates=\{contractTemplates\}/);
-    expect(proposalsNewPage).toMatch(/listProposalTemplates\(\)/);
-    expect(proposalsNewPage).toMatch(/templates=\{proposalTemplates\}/);
+    expect(proposalsPage).toMatch(/listProposalTemplates\(\)/);
+    expect(proposalsPage).toMatch(/templates=\{proposalTemplates\}/);
   });
 });

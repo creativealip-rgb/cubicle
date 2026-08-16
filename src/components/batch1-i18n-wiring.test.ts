@@ -42,7 +42,7 @@ describe("batch 1 i18n wiring", () => {
     expect(page).toContain('import { getCurrentLang, createT } from "@/lib/i18n";');
     expect(page).toContain("const t = createT(lang);");
     expect(page).toContain('t("Belum ada proposal", "No proposals yet")');
-    expect(page).toContain('t("Proposal baru", "New proposal")');
+    expect(page).toContain("CreateProposalButton");
   });
 
   it("questionnaires page keeps shared chrome and localized copy", () => {

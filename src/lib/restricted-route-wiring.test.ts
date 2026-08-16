@@ -18,7 +18,6 @@ describe("restricted app route wiring", () => {
   it("redirects viewers from writable-only pages before protected UI or data", () => {
     const routes = {
       "src/app/(app)/app/invoices/new/page.tsx": "const clientOptions",
-      "src/app/(app)/app/proposals/new/page.tsx": "const ws =",
       "src/app/(app)/app/questionnaires/new/page.tsx": "return (",
     };
     for (const [path, protectedContent] of Object.entries(routes)) {
@@ -29,5 +28,11 @@ describe("restricted app route wiring", () => {
       expect(guard).toBeLessThan(functionBody.indexOf(protectedContent));
       expect(page).not.toContain("assertWorkspaceWritable");
     }
+  });
+
+  it("proposals/new delegates to the proposals list page (dialog create, no write-only page)", () => {
+    const page = read("src/app/(app)/app/proposals/new/page.tsx");
+    expect(page).toContain("ProposalsPage");
+    expect(page).toContain('searchParams={Promise.resolve({ new: "1" })}');
   });
 });
