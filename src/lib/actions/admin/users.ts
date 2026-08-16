@@ -72,7 +72,7 @@ export async function listUsers(input: z.infer<typeof listUsersSchema>) {
       planExpiresAt: usersTable.planExpiresAt,
       createdAt: usersTable.createdAt,
       workspaceCount: sql<number>`(
-        SELECT count(*)::int FROM workspace_members wm WHERE wm.user_id = ${usersTable.id}
+        SELECT count(*)::int FROM workspace_members wm WHERE wm.user_id = "users"."id"
       )`,
     })
     .from(usersTable)
