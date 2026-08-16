@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient, generateUniquePortalSlug, updateClient } from "@/lib/actions/clients";
 import { isStaleServerActionError } from "@/lib/client-errors";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
+import { useAppTransition } from "@/lib/transition-provider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useT } from "@/lib/i18n-client";
@@ -42,8 +42,8 @@ function slugify(value: string) {
 }
 
 export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: ClientFormProps) {
-  const router = useRouter();
   const { t } = useT();
+  const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(false);
   const [generatingSlug, setGeneratingSlug] = useState(false);
   const [form, setForm] = useState({
@@ -96,7 +96,7 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
 
       onSuccess?.();
       if (redirectTo) window.location.assign(redirectTo);
-      else router.refresh();
+      else refresh();
     } catch (err: unknown) {
       const msg = isStaleServerActionError(err)
         ? "App baru di-deploy. Refresh halaman, lalu coba lagi."

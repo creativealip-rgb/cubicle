@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
 import {
@@ -13,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { ProjectForm } from "@/components/forms/project-form";
 import { useT } from "@/lib/i18n-client";
+import { useAppTransition } from "@/lib/transition-provider";
 
 type ProjectEditDialogProps = {
   project: {
@@ -47,7 +47,7 @@ export function ProjectEditDialog({
   activeProjectServiceIds,
 }: ProjectEditDialogProps) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [open, setOpen] = useState(false);
 
   return (
@@ -92,7 +92,7 @@ export function ProjectEditDialog({
           }}
           onSuccess={() => {
             setOpen(false);
-            router.refresh();
+            refresh();
           }}
         />
       </DialogContent>

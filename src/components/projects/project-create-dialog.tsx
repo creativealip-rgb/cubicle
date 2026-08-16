@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { ProjectForm } from "@/components/forms/project-form";
 import { useT } from "@/lib/i18n-client";
+import { useAppTransition } from "@/lib/transition-provider";
 
 export function ProjectCreateDialog({
   clients,
@@ -29,12 +29,12 @@ export function ProjectCreateDialog({
   projectLimit?: number;
 }) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [open, setOpen] = useState(false);
 
   function handleSuccess() {
     setOpen(false);
-    router.refresh();
+    refresh();
   }
 
   if (isAtLimit) {
