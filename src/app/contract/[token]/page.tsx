@@ -1,14 +1,12 @@
 import { getPublicContract } from "@/lib/actions/contracts";
 import { SignaturePad } from "@/components/contracts/signature-pad";
+import { ContractPublicView } from "@/components/contracts/contract-public-view";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import ReactMarkdown from "react-markdown";
-import { CheckCircle2, AlertCircle, FileText } from "lucide-react";
-import { normalizeDocumentBlocks } from "@/lib/document-blocks";
-import { renderDocumentBlock } from "@/lib/document-block-renderer";
+import { CheckCircle2, AlertCircle } from "lucide-react";
 import { buildContractPlaceholderValues } from "@/lib/document-placeholder-values";
+import { normalizeDocumentBlocks } from "@/lib/document-blocks";
 
 export default async function ContractPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -52,57 +50,20 @@ export default async function ContractPage({ params }: { params: Promise<{ token
     workspaceName: workspace?.name,
     workspaceAddress: workspace?.billingAddress,
   });
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-white">
-      <div className="max-w-3xl mx-auto p-4 md:p-8 space-y-6">
-        <div className="text-center pt-4">
-          <Link href="/" className="inline-block text-xl font-semibold text-slate-900">Cubiqlo</Link>
-          <p className="text-xs text-slate-500 mt-1">E-signature</p>
-        </div>
-
-        <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-          <div className="border-b bg-slate-50 px-6 py-4">
-            <div className="flex items-center gap-2 mb-1">
-              <FileText className="h-4 w-4 text-slate-500" />
-              <span className="text-xs text-slate-500 uppercase tracking-wider">Contract</span>
-            </div>
-            <h1 className="text-2xl font-semibold tracking-tight">{contract.title}</h1>
-            {client && (
-              <p className="text-sm text-slate-500 mt-1">
-                For: <span className="font-medium text-slate-700">{client.name}</span>
-                {client.email && ` · ${client.email}`}
-              </p>
-            )}
-            {contract.validUntil && (
-              <p className="text-xs text-slate-500 mt-1">
-                Valid until: {new Date(contract.validUntil).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
-              </p>
-            )}
-            {contract.status === "viewed" && (
-              <Badge variant="secondary" className="mt-2">Viewed — awaiting signature</Badge>
-            )}
-          </div>
-
-          <div className="px-6 py-6 max-h-[60vh] overflow-y-auto">
-            <div className="prose prose-sm prose-slate max-w-none text-sm leading-relaxed">
-              <ReactMarkdown>{contract.bodyResolved || contract.body}</ReactMarkdown>
-            </div>
-            {normalizeDocumentBlocks(contract.contentBlocks, "contract").map((block) => (
-              <div key={block.id} className="mt-3 whitespace-pre-wrap text-sm text-slate-700">
-                {renderDocumentBlock(block, placeholderValues)}
-              </div>
-            ))}
-          </div>
-
-          <div className="border-t bg-slate-50 px-6 py-5">
-            <SignaturePad token={token} defaultName={client?.name || ""} defaultEmail={client?.email || ""} />
-          </div>
-        </div>
-
-        <p className="text-center text-xs text-slate-400">
-          Powered by <Link href="/" className="hover:underline">Cubiqlo</Link>
-        </p>
-      </div>
-    </div>
+    <ContractPublicView
+      contract={{
+        title: contract.title,
+        contractNumber: contract.contractNumber,
+        clientName: client.name,
+        clientEmail: client.email,
+        validUntil: contract.validUntil,
+        status: contract.status,
+      }}
+      blocks={normalizeDocumentBlocks(contract.contentBlocks, "contract")}
+      placeholderValues={placeholderValues}
+      signatureSlot={<SignaturePad token={token} defaultName={client?.name || ""} defaultEmail={client?.email || ""} />}
+    />
   );
 }

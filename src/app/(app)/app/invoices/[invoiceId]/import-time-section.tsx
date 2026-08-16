@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { importTimeEntries } from "@/lib/actions/invoices";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +31,7 @@ export function ImportTimeSection({
   timeEntries: TimeEntry[];
   currency?: string;
 }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t, lang } = useT();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
@@ -75,7 +75,7 @@ export function ImportTimeSection({
       });
       toast.success(t(`Berhasil import ${selected.size} catatan waktu`, `Imported ${selected.size} time entries`));
       setSelected(new Set());
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal", "Failed"));
     } finally {

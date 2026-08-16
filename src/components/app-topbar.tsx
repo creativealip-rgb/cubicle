@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import Link from "next/link";
 import {
   Search,
@@ -10,7 +11,6 @@ import {
   LogOut,
   Settings,
   HelpCircle,
-  Megaphone,
   Menu,
   Sparkles,
   Check,
@@ -41,7 +41,6 @@ import { useSidebar } from "@/components/app-shell";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { getUserWorkspaces, switchWorkspace, createWorkspace } from "@/lib/actions/workspace-switch";
 import { useT } from "@/lib/i18n-client";
-import { cn } from "@/lib/utils";
 import { getPlanYearlyLabel } from "@/lib/billing-pricing";
 import { BILLING_PLANS } from "@/lib/billing-plans";
 
@@ -91,7 +90,7 @@ function formatElapsed(startTime?: string | null, pausedAt?: string | null) {
 export function AppTopbar({ user }: AppTopbarProps) {
   const { t } = useT();
   const router = useRouter();
-  const pathname = usePathname();
+  const { refresh } = useAppTransition();
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
@@ -111,7 +110,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
   async function handleSignOut() {
     await authClient.signOut();
     router.push("/login");
-    router.refresh();
+    refresh();
   }
 
   const loadWorkspaces = useCallback(async () => {
@@ -140,7 +139,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
     try {
       const result = await switchWorkspace(wsId);
       if (result.ok) {
-        router.refresh();
+        refresh();
         await new Promise((r) => setTimeout(r, 300));
         await loadWorkspaces();
       }
@@ -156,7 +155,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
     try {
       const result = await createWorkspace(name.trim());
       if (result.ok) {
-        router.refresh();
+        refresh();
       } else {
         toast.error(result.error);
       }
@@ -285,7 +284,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" className="h-9 gap-1 px-2.5 sm:px-3">
                     <Plus className="h-4 w-4" />
-                    <span className={cn("hidden sm:inline", pathname === "/app/projects" && "lg:hidden")}>
+                    <span className="hidden sm:inline">
                       {t("Baru", "New")}
                     </span>
                   </Button>
@@ -495,12 +494,6 @@ export function AppTopbar({ user }: AppTopbarProps) {
                     <Link href="/app/billing" className="cursor-pointer">
                       <CreditCard className="h-4 w-4" />
                       {t("Tagihan", "Billing")}
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/app/whats-new" className="cursor-pointer">
-                      <Megaphone className="h-4 w-4" />
-                      What’s New
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>

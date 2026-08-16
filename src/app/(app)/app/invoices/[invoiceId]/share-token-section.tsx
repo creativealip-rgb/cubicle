@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { generateInvoiceShareToken, revokeInvoiceShareToken } from "@/lib/actions/invoices";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
@@ -24,7 +24,7 @@ export function ShareTokenSection({
   isExpired: boolean;
   initialToken: string | null;
 }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [token, setToken] = useState<string | null>(initialToken);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -35,7 +35,7 @@ export function ShareTokenSection({
       await revokeInvoiceShareToken(invoiceId);
       setToken(null);
       toast.success("Link berbagi dicabut");
-      router.refresh();
+      refresh();
     } finally {
       setLoading(false);
     }
@@ -47,7 +47,7 @@ export function ShareTokenSection({
       const generated = await generateInvoiceShareToken(invoiceId);
       setToken(generated.token);
       toast.success("Link invoice dibuat");
-      router.refresh();
+      refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal buat link");
     } finally {

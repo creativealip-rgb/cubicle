@@ -388,7 +388,7 @@ export default async function InvoicesPage({
         <div className="flex w-full sm:w-auto">
           {canWrite && (
             <Link href="/app/invoices/new" className="min-w-0 flex-1 sm:flex-none">
-              <Button size="sm" className="w-full gap-2 sm:w-auto">
+              <Button size="sm" className="w-full gap-1 sm:w-auto">
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">{t("Invoice Baru", "New Invoice")}</span>
                 <span className="sm:hidden">{t("Baru", "New")}</span>

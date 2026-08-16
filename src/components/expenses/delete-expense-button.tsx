@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import { deleteExpense } from "@/lib/actions/expenses";
@@ -23,7 +23,7 @@ interface DeleteExpenseButtonProps {
 }
 
 export function DeleteExpenseButton({ expenseId, description }: DeleteExpenseButtonProps) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -34,7 +34,7 @@ export function DeleteExpenseButton({ expenseId, description }: DeleteExpenseBut
       await deleteExpense(expenseId);
       toast.success(t("Pengeluaran dihapus", "Expense deleted"));
       setOpen(false);
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t("Terjadi kesalahan", "Something went wrong");
       toast.error(msg);

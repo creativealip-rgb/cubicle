@@ -6,6 +6,8 @@ import crypto from "crypto";
 import { notFound } from "next/navigation";
 import { AcceptDeclineButtons } from "@/components/proposals/accept-decline-buttons";
 import { ProposalPublicView } from "@/components/proposals/proposal-public-view";
+import { buildProposalPlaceholderValues } from "@/lib/document-placeholder-values";
+import { normalizeDocumentBlocks } from "@/lib/document-blocks";
 
 interface ProposalPageProps {
   params: Promise<{ token: string }>;
@@ -41,7 +43,10 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
       viewedAt: proposals.viewedAt,
       clientName: proposals.clientName,
       clientEmail: proposals.clientEmail,
+      companyName: proposals.companyName,
+      proposalNumber: proposals.proposalNumber,
       workspaceName: workspaces.name,
+      workspaceAddress: workspaces.billingAddress,
     })
     .from(proposals)
     .leftJoin(clients, eq(clients.id, proposals.clientId))
@@ -77,13 +82,23 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
     }
   }
 
+  const placeholderValues = buildProposalPlaceholderValues({
+    clientName: proposal.clientName,
+    clientEmail: proposal.clientEmail,
+    companyName: proposal.companyName,
+    proposalNumber: proposal.proposalNumber,
+    validUntil: proposal.validUntil,
+    workspaceName: proposal.workspaceName,
+    workspaceAddress: proposal.workspaceAddress,
+    subtotal: Number(proposal.subtotal),
+    tax: Number(proposal.tax),
+    total: Number(proposal.total),
+    downPaymentAmount: Number(proposal.total) * Number(proposal.downPaymentPercent) / 100,
+  });
+
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="max-w-3xl mx-auto">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">{proposal.workspaceName}</h1>
-          <p className="text-sm text-slate-500 mt-1">Proposal for {proposal.clientName}</p>
-        </div>
         {expired && (
           <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
             This proposal link has expired. Please contact the sender for a new one.
@@ -94,12 +109,28 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
             This proposal hasn&apos;t been sent yet.
           </div>
         )}
-        <ProposalPublicView proposal={proposal} />
-        {isActionable && (
-          <div className="mt-8">
-            <AcceptDeclineButtons proposalId={proposal.id} token={token} />
-          </div>
-        )}
+        <ProposalPublicView
+          proposal={{
+            title: proposal.title,
+            clientName: proposal.clientName,
+            clientEmail: proposal.clientEmail,
+            validUntil: proposal.validUntil,
+            status: proposal.status,
+            lineItems: (proposal.lineItems ?? []) as import("@/components/proposals/proposal-public-view").ProposalLineItem[],
+            subtotal: proposal.subtotal,
+            tax: proposal.tax,
+            total: proposal.total,
+            currency: proposal.currency,
+            downPaymentPercent: proposal.downPaymentPercent,
+          }}
+          blocks={normalizeDocumentBlocks(proposal.contentBlocks, "proposal")}
+          placeholderValues={placeholderValues}
+          signatureSlot={
+            isActionable ? (
+              <AcceptDeclineButtons proposalId={proposal.id} token={token} />
+            ) : null
+          }
+        />
         {isAccepted && (
           <div className="mt-8 p-6 bg-emerald-50 border border-emerald-200 rounded-lg text-center">
             <h2 className="text-lg font-semibold text-emerald-900">Proposal accepted</h2>

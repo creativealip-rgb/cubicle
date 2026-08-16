@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { deleteTimeEntry, updateTimeEntry } from "@/lib/actions/time";
 import { Button } from "@/components/ui/button";
@@ -111,7 +111,7 @@ function localDateKey(value: Date | string | null | undefined): string {
 
 export function Timesheet({ entries, clients, projects, tasks = [], activities: _activities = [], compact = false }: TimesheetProps) {
   const { t, locale } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
 
   const [clientFilter, setClientFilter] = useState<string>("all");
   const [projectFilter, setProjectFilter] = useState<string>("all");
@@ -281,7 +281,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
       await deleteTimeEntry(deleteEntry.id);
       toast.success(t("Entri dihapus", "Entry deleted"));
       setDeleteEntry(null);
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal menghapus", "Failed to delete"));
     } finally {
@@ -371,7 +371,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
       toast.success(t("Entri diperbarui", "Entry updated"));
       setEditOpen(false);
       setEditEntry(null);
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal update", "Failed to update"));
     } finally {

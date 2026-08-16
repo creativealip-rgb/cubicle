@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { Check, Loader2, ShoppingCart, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +23,7 @@ export interface AdminPackageOrder {
 }
 
 export function PackageOrderAdminPanel({ orders }: { orders: AdminPackageOrder[] }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   async function decide(orderId: string, decision: "confirm" | "cancel") {
@@ -31,7 +31,7 @@ export function PackageOrderAdminPanel({ orders }: { orders: AdminPackageOrder[]
     try {
       await transitionPackageOrder({ orderId, decision });
       toast.success(decision === "confirm" ? "Order dikonfirmasi" : "Order dibatalkan");
-      router.refresh();
+      refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Gagal memproses order");
     } finally {

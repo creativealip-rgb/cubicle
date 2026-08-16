@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
 import {
@@ -39,7 +39,7 @@ export function CurrencyRatesForm({
   showBaseCurrencyApprox,
 }: Props) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { confirm, dialog } = useConfirm();
   const [fromCurrency, setFromCurrency] = useState("USD");
   const [rate, setRate] = useState("");
@@ -65,7 +65,7 @@ export function CurrencyRatesForm({
           ? t("Tampilkan ≈ base: ON", "Show ≈ base: ON")
           : t("Tampilkan ≈ base: OFF", "Show ≈ base: OFF"),
       );
-      router.refresh();
+      refresh();
     } catch (err) {
       setApproxOn(prev);
       toast.error(err instanceof Error ? err.message : t("Gagal simpan", "Save failed"));
@@ -92,7 +92,7 @@ export function CurrencyRatesForm({
         ),
       );
       setRate("");
-      router.refresh();
+      refresh();
     } catch (err) {
       if (isStaleServerActionError(err)) {
         toast.info(t("Versi aplikasi baru terdeteksi. Memuat ulang...", "App updated. Reloading..."));
@@ -121,7 +121,7 @@ export function CurrencyRatesForm({
     try {
       await deleteWorkspaceCurrencyRate({ fromCurrency: code });
       toast.success(t(`Rate ${code} dihapus`, `${code} rate removed`));
-      router.refresh();
+      refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("Gagal hapus", "Delete failed"));
     } finally {

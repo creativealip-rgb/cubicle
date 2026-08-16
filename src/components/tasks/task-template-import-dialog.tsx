@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { importTaskTemplates, previewTaskTemplateImport } from "@/lib/actions/task-templates";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { useT } from "@/lib/i18n-client";
 
 type TemplateOption = {
@@ -23,7 +23,7 @@ type PreviewItem = {
 
 export function TaskTemplateImportDialog({ projectId, templates }: { projectId: string; templates: TemplateOption[] }) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
@@ -75,7 +75,7 @@ export function TaskTemplateImportDialog({ projectId, templates }: { projectId: 
       toast.success(`Tugas berhasil ditambahkan: ${result.created?.length ?? 0}`);
       idempotencyKeyRef.current = crypto.randomUUID();
       setOpen(false);
-      router.refresh();
+      refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Import gagal");
     } finally { setLoading(false); }

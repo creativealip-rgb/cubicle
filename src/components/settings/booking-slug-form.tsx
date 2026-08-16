@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { Copy, ExternalLink } from "lucide-react";
 import { updateWorkspaceBookingSlug } from "@/lib/actions/workspace";
@@ -28,7 +28,7 @@ export function BookingSlugForm({
   canEdit: boolean;
 }) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [slug, setSlug] = useState(defaultSlug ?? "");
   const [loading, setLoading] = useState(false);
 
@@ -58,7 +58,7 @@ export function BookingSlugForm({
           ? t("Booking slug disimpan", "Booking slug saved")
           : t("Booking slug dikosongkan", "Booking slug cleared"),
       );
-      router.refresh();
+      refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("Gagal simpan", "Save failed"));
     } finally {

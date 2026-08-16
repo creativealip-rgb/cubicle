@@ -26,9 +26,7 @@ export default async function TemplateCenterPage({
 
   const params = await searchParams;
   const tab =
-    params.tab === "contract" ||
-    params.tab === "proposal" ||
-    params.tab === "invoice"
+    params.tab === "contract" || params.tab === "proposal"
       ? params.tab
       : "proposal";
 

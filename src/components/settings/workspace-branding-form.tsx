@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { ImagePlus, Trash2, Link2 } from "lucide-react";
 import { updateWorkspaceBranding } from "@/lib/actions/workspace";
@@ -40,7 +40,7 @@ export function WorkspaceBrandingForm({
   canEdit = true,
 }: WorkspaceBrandingFormProps) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { confirm, dialog } = useConfirm();
   const fileRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
@@ -84,7 +84,7 @@ export function WorkspaceBrandingForm({
       toast.success(t("Branding disimpan", "Branding saved"));
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
-      router.refresh();
+      refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("Gagal simpan", "Save failed"));
     } finally {
@@ -114,7 +114,7 @@ export function WorkspaceBrandingForm({
       }
       setForm((p) => ({ ...p, logoUrl: data.logoUrl! }));
       toast.success(t("Logo diupload", "Logo uploaded"));
-      router.refresh();
+      refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("Upload logo gagal", "Logo upload failed"));
     } finally {
@@ -140,7 +140,7 @@ export function WorkspaceBrandingForm({
       }
       setForm((p) => ({ ...p, logoUrl: "" }));
       toast.success(t("Logo dihapus", "Logo removed"));
-      router.refresh();
+      refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("Gagal hapus logo", "Failed to remove logo"));
     } finally {

@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { clients, projects, folders as foldersTable, files as filesTable } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { FolderTree } from "@/components/files/folder-tree";
 import { FilesPageHeader } from "@/components/files/files-page-header";
@@ -38,7 +38,7 @@ export default async function FilesLayout({
   const clientList = await db
     .select({ id: clients.id, name: clients.name })
     .from(clients)
-    .where(eq(clients.workspaceId, workspaceId))
+    .where(and(eq(clients.workspaceId, workspaceId), eq(clients.status, "active")))
     .orderBy(clients.name);
 
   const projectList = await db
@@ -83,6 +83,18 @@ export default async function FilesLayout({
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
         <Card className="lg:col-span-1 h-fit lg:sticky lg:top-4">
           <CardContent className="pt-5">
+            <div className="mb-4 space-y-1.5 border-b pb-4 text-sm">
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <span className="text-muted-foreground">{t("Storage terpakai", "Storage used")}</span>
+                <span className="tabular-nums text-muted-foreground">
+                  <strong className="font-semibold text-foreground">{Number((usedBytes / 1024 ** 3).toFixed(2)).toLocaleString(lang === "en" ? "en-US" : "id-ID", { maximumFractionDigits: 2 })}</strong>
+                  {" / "}
+                  {Number((storage.maxBytes / 1024 ** 3).toFixed(2)).toLocaleString(lang === "en" ? "en-US" : "id-ID", { maximumFractionDigits: 2 })} GB
+                </span>
+              </div>
+              <div className="h-1.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuenow={Math.min(100, Math.round((usedBytes / Math.max(1, storage.maxBytes)) * 100))} aria-valuemin={0} aria-valuemax={100}><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, (usedBytes / Math.max(1, storage.maxBytes)) * 100)}%` }} /></div>
+              <p className="text-xs text-muted-foreground">{t("Tersedia", "Available")}: {(Math.max(0, storage.maxBytes - usedBytes) / 1024 ** 3).toFixed(2)} GB · {t("Batas", "Limit")}: {(storage.maxBytes / 1024 ** 3).toFixed(2)} GB</p>
+            </div>
             <Suspense
               fallback={
                 <div className="space-y-2">
@@ -103,14 +115,6 @@ export default async function FilesLayout({
         </Card>
 
         <div className="lg:col-span-3 space-y-4 min-w-0">
-          <Card>
-            <CardContent className="space-y-2 pt-4 text-sm">
-              <div className="flex items-center justify-between gap-2"><span className="text-muted-foreground">{t("Storage terpakai", "Storage used")}</span><strong className="tabular-nums">{Number((usedBytes / 1024 ** 3).toFixed(2)).toLocaleString(lang === "en" ? "en-US" : "id-ID", { maximumFractionDigits: 2 })} / {Number((storage.maxBytes / 1024 ** 3).toFixed(2)).toLocaleString(lang === "en" ? "en-US" : "id-ID", { maximumFractionDigits: 2 })} GB</strong></div>
-              <div className="h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuenow={Math.min(100, Math.round((usedBytes / Math.max(1, storage.maxBytes)) * 100))} aria-valuemin={0} aria-valuemax={100}><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, (usedBytes / Math.max(1, storage.maxBytes)) * 100)}%` }} /></div>
-              <p className="text-xs text-muted-foreground">{t("Tersedia", "Available")}: {(Math.max(0, storage.maxBytes - usedBytes) / 1024 ** 3).toFixed(2)} GB</p>
-              <p className="text-xs text-muted-foreground">{t("Batas workspace", "Workspace limit")}: {(storage.maxBytes / 1024 ** 3).toFixed(2)} GB</p>
-            </CardContent>
-          </Card>
           {children}
         </div>
       </div>

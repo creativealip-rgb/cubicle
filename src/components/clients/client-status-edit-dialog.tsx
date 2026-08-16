@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { updateClientStatus } from "@/lib/actions/clients";
@@ -14,13 +14,13 @@ import { useT } from "@/lib/i18n-client";
 
 export function ClientStatusEditDialog({ clientId, clientName, currentStatus }: { clientId: string; clientName: string; currentStatus: string }) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<"active" | "inactive" | "archived">(currentStatus === "inactive" || currentStatus === "archived" ? currentStatus : "active");
   async function save() {
     setLoading(true);
-    try { await updateClientStatus(clientId, status); toast.success(t("Status klien diperbarui", "Client status updated")); setOpen(false); router.refresh(); }
+    try { await updateClientStatus(clientId, status); toast.success(t("Status klien diperbarui", "Client status updated")); setOpen(false); refresh(); }
     catch (error) { toast.error(error instanceof Error ? error.message : t("Gagal memperbarui status", "Failed to update status")); }
     finally { setLoading(false); }
   }

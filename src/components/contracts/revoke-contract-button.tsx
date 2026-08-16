@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { Button } from "@/components/ui/button";
 import { X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -18,7 +18,7 @@ export function RevokeContractButton({
   confirmText?: string;
   pendingLabel?: string;
 }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [pending, startTransition] = useTransition();
 
   function handleRevoke() {
@@ -27,7 +27,7 @@ export function RevokeContractButton({
       try {
         await revokeContract(contractId);
         toast.success("Kontrak dicabut");
-        router.refresh();
+        refresh();
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Gagal mencabut";
         toast.error(msg);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ export function SendInvoiceButton({
   defaultTo: string;
   disabled?: boolean;
 }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState(defaultMessage);
@@ -59,7 +59,7 @@ export function SendInvoiceButton({
       await sendInvoiceEmail(invoiceId, message, attachReport ? { from, to } : undefined);
       toast.success(t("Invoice terkirim ke email klien", "Invoice sent to client email"));
       setOpen(false);
-      router.refresh();
+      refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("Gagal mengirim invoice", "Failed to send invoice"));
     } finally {

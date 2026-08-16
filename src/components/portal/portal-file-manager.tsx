@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import {
   ChevronRight,
   Download,
@@ -79,7 +80,7 @@ export function PortalFileManager({
   initialProjectId,
   initialFolderId,
 }: PortalFileManagerProps) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { lang, t } = useT();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -236,7 +237,7 @@ export function PortalFileManager({
         for (const f of uploaded) map.set(f.id, f);
         return [...map.values()];
       });
-      router.refresh();
+      refresh();
     } catch (err) {
       setUploadError(
         err instanceof Error ? err.message : t("Upload gagal", "Upload failed"),

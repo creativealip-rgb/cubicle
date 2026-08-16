@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { updateInvoice } from "@/lib/actions/invoices";
 import { LoadingButton } from "@/components/ui/loading-button";
@@ -44,7 +44,7 @@ interface InvoiceMetaFormProps {
 
 export function InvoiceMetaForm({ invoiceId, defaults, project }: InvoiceMetaFormProps) {
   const { t, lang } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     status: defaults.status || "draft",
@@ -72,7 +72,7 @@ export function InvoiceMetaForm({ invoiceId, defaults, project }: InvoiceMetaFor
         terms: form.terms || undefined,
       });
       toast.success(t("Invoice disimpan", "Invoice saved"));
-      router.refresh();
+      refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("Gagal simpan", "Save failed"));
     } finally {

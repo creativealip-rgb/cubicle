@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { updateProjectListStatus } from "@/lib/actions/projects";
@@ -14,14 +14,14 @@ import { useT } from "@/lib/i18n-client";
 
 export function ProjectStatusEditDialog({ projectId, projectName, currentStatus }: { projectId: string; projectName: string; currentStatus: string }) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const initial = currentStatus === "on_hold" ? "on_hold" : currentStatus === "completed" || currentStatus === "cancelled" || currentStatus === "archived" ? "completed" : "active";
   const [status, setStatus] = useState<"active" | "on_hold" | "completed">(initial);
   async function save() {
     setLoading(true);
-    try { await updateProjectListStatus(projectId, status); toast.success(t("Status proyek diperbarui", "Project status updated")); setOpen(false); router.refresh(); }
+    try { await updateProjectListStatus(projectId, status); toast.success(t("Status proyek diperbarui", "Project status updated")); setOpen(false); refresh(); }
     catch (error) { toast.error(error instanceof Error ? error.message : t("Gagal memperbarui status", "Failed to update status")); }
     finally { setLoading(false); }
   }

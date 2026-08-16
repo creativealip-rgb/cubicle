@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { BriefcaseBusiness, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -94,7 +94,7 @@ export function ServiceCatalog({
   categories: ServiceCategory[];
   defaultCurrency?: string;
 }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CatalogService | null>(null);
@@ -131,7 +131,7 @@ export function ServiceCatalog({
       await createServiceCategory({ name, color: "#64748b", sortOrder: categories.length });
       toast.success(t("Kategori dibuat", "Category created"));
       setCategoryName("");
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal buat kategori", "Failed to create category"));
     } finally {
@@ -165,7 +165,7 @@ export function ServiceCatalog({
         toast.success(t("Layanan dibuat", "Service created"));
       }
       setOpen(false);
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Terjadi kesalahan", "Something went wrong"));
     } finally {
@@ -180,7 +180,7 @@ export function ServiceCatalog({
       await archiveService(deleteTarget.id);
       toast.success(t("Layanan diarsipkan", "Service archived"));
       setDeleteTarget(null);
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal arsip", "Archive failed"));
     } finally {

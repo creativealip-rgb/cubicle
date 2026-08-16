@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { startTimer, stopTimer, pauseTimer, resumeTimer, discardTimer, updateActiveTimerMetadata } from "@/lib/actions/time";
 import { Button } from "@/components/ui/button";
@@ -115,7 +115,7 @@ export function TimerWidget({
   recentCombinations = [],
   initialTimer,
 }: TimerWidgetProps) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(initialTimer);
   const [elapsed, setElapsed] = useState("00:00:00");
@@ -215,11 +215,11 @@ export function TimerWidget({
         return;
       }
       void loadActiveFromApi();
-      router.refresh();
+      refresh();
     }
     window.addEventListener("cubicle:timer-changed", onTimerChanged);
     return () => window.removeEventListener("cubicle:timer-changed", onTimerChanged);
-  }, [loadActiveFromApi, router]);
+  }, [loadActiveFromApi, refresh]);
 
   // Tick — freeze saat pause
   useEffect(() => {
@@ -276,7 +276,7 @@ export function TimerWidget({
       selfDispatched.current = true;
       window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
       toast.success(t("Timer dimulai", "Timer started"));
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal memulai timer", "Failed to start timer"));
     } finally {
@@ -295,7 +295,7 @@ export function TimerWidget({
     allProjects,
     allActivities,
     allTasks,
-    router,
+    refresh,
     t,
   ]);
 
@@ -323,13 +323,13 @@ export function TimerWidget({
       window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
       window.dispatchEvent(new CustomEvent("cubicle:time-entry-started", { detail: { startTime: entry.startTime } }));
       toast.success(t("Timer dimulai. Detail bisa diisi nanti lewat timesheet.", "Timer started. Details can be filled later from the timesheet."));
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal memulai timer", "Failed to start timer"));
     } finally {
       setLoading(false);
     }
-  }, [loading, router, t, workspaceId]);
+  }, [loading, refresh, t, workspaceId]);
 
   const handlePause = useCallback(async () => {
     if (!activeTimer || loading) return;
@@ -397,13 +397,13 @@ export function TimerWidget({
       selfDispatched.current = true;
       window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
       toast.success(t("Timer dihentikan. Detail bisa diisi nanti lewat timesheet.", "Timer stopped. Details can be filled later from the timesheet."));
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal menghentikan timer", "Failed to stop timer"));
     } finally {
       setLoading(false);
     }
-  }, [activeTimer, loading, router, t]);
+  }, [activeTimer, loading, refresh, t]);
 
   const handleDiscard = useCallback(async () => {
     if (!activeTimer) return;
@@ -415,13 +415,13 @@ export function TimerWidget({
       selfDispatched.current = true;
       window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
       toast.success(t("Timer dibuang", "Timer discarded"));
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal membuang timer", "Failed to discard timer"));
     } finally {
       setLoading(false);
     }
-  }, [activeTimer, router, t]);
+  }, [activeTimer, refresh, t]);
 
   const startEditingActiveTimer = useCallback(() => {
     if (!activeTimer) return;
@@ -477,7 +477,7 @@ export function TimerWidget({
       selfDispatched.current = true;
       window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
       toast.success(t("Detail timer diperbarui", "Timer details updated"));
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal menyimpan detail timer", "Failed to save timer details"));
     } finally {
@@ -497,7 +497,7 @@ export function TimerWidget({
     allProjects,
     allActivities,
     allTasks,
-    router,
+    refresh,
     t,
   ]);
 

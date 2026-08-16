@@ -8,6 +8,10 @@ import {
   normalizeDocumentBlocks,
 } from "@/lib/document-blocks";
 import {
+  buildContractPlaceholderValues,
+  buildProposalPlaceholderValues,
+} from "@/lib/document-placeholder-values";
+import {
   saveContractTemplateBlocks,
   saveProposalTemplateBlocks,
 } from "@/lib/actions/template-blocks";
@@ -32,7 +36,19 @@ type TemplateEditorProps = {
  * contract documents. Saving goes through the workspace-scoped server actions
  * in `template-blocks.ts` — no CAS because templates have no content revision;
  * the server still normalizes and validates every block.
+ *
+ * Preview parity: a template has no concrete client/workspace/date yet, so we
+ * pass SAMPLE metadata + placeholder values. This makes the in-editor preview
+ * render through the same `ProposalPublicView` / `ContractPublicView` used by
+ * real proposals/contracts, so placeholders resolve to illustrative values
+ * (e.g. "Your Company", "Client Name") instead of showing raw `{{...}}` tokens.
  */
+const SAMPLE_CLIENT = "Client Name";
+const SAMPLE_CLIENT_EMAIL = "client@example.com";
+const SAMPLE_WORKSPACE = "Your Company";
+const SAMPLE_COMPANY = "Client Company";
+const sampleValidUntil = () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
 export async function TemplateBlocksEditor({
   kind,
   workspaceId,
@@ -50,6 +66,47 @@ export async function TemplateBlocksEditor({
     }
     return saveProposalTemplateBlocks(template.id, { contentBlocks: next });
   }
+
+  const proposalMeta = kind === "proposal"
+    ? {
+        title: template.name,
+        clientName: SAMPLE_CLIENT,
+        clientEmail: SAMPLE_CLIENT_EMAIL,
+        validUntil: sampleValidUntil(),
+        status: "draft",
+      }
+    : undefined;
+
+  const documentMeta = kind === "contract"
+    ? {
+        title: template.name,
+        clientName: SAMPLE_CLIENT,
+        clientEmail: SAMPLE_CLIENT_EMAIL,
+        validUntil: sampleValidUntil(),
+        contractNumber: "CNT-0001",
+      }
+    : undefined;
+
+  const placeholderValues = kind === "proposal"
+    ? buildProposalPlaceholderValues({
+        clientName: SAMPLE_CLIENT,
+        clientEmail: SAMPLE_CLIENT_EMAIL,
+        companyName: SAMPLE_COMPANY,
+        workspaceName: SAMPLE_WORKSPACE,
+        proposalNumber: "PRO-0001",
+        validUntil: sampleValidUntil(),
+        today: new Date(),
+      })
+    : buildContractPlaceholderValues({
+        clientName: SAMPLE_CLIENT,
+        clientEmail: SAMPLE_CLIENT_EMAIL,
+        companyName: SAMPLE_COMPANY,
+        workspaceName: SAMPLE_WORKSPACE,
+        contractNumber: "CNT-0001",
+        contractDate: new Date(),
+        validUntil: sampleValidUntil(),
+        today: new Date(),
+      });
 
   return (
     <div>
@@ -88,6 +145,9 @@ export async function TemplateBlocksEditor({
         workspaceId={workspaceId}
         initialBlocks={blocks.length ? blocks : defaultDocumentBlocks(kind)}
         saveBlocks={saveBlocks}
+        proposalMeta={proposalMeta}
+        documentMeta={documentMeta}
+        placeholderValues={placeholderValues}
       />
     </div>
   );

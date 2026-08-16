@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -57,6 +58,7 @@ export function QuestionnaireBuilder({
 }) {
   const { t } = useT();
   const router = useRouter();
+  const { refresh } = useAppTransition();
   const [name, setName] = useState(initial?.name || "");
   const [description, setDescription] = useState(initial?.description || "");
   const [fields, setFields] = useState<Field[]>(initial?.schema || []);
@@ -129,7 +131,7 @@ export function QuestionnaireBuilder({
           toast.success(t("Kuesioner berhasil dibuat", "Questionnaire created"));
         }
         router.push(`/app/questionnaires/${qId}`);
-        router.refresh();
+        refresh();
       } catch (err: any) {
         toast.error(err?.message || "Save failed");
       }

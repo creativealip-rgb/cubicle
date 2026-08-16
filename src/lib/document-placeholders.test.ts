@@ -14,4 +14,13 @@ describe("resolveDocumentPlaceholders", () => {
   it("normalizes missing values to empty text", () => {
     expect(resolveDocumentPlaceholders("{{company_name}}", { company_name: null })).toBe("");
   });
+
+  it("accepts dot spelling ({{client.name}}) and normalizes to snake_case", () => {
+    expect(
+      resolveDocumentPlaceholders(
+        "This agreement is between {{workspace.name}} and {{client.name}}.",
+        { workspace_name: "Cubiqlo Labs", client_name: "Mimi" },
+      ),
+    ).toBe("This agreement is between Cubiqlo Labs and Mimi.");
+  });
 });

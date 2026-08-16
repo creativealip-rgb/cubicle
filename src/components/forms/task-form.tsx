@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createTask, updateTask } from "@/lib/actions/tasks";
 import { LoadingButton } from "@/components/ui/loading-button";
+import { useAppTransition } from "@/lib/transition-provider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,7 +33,7 @@ interface TaskFormProps {
 
 export function TaskForm({ mode, projectId, taskMode = "workflow", defaultValues, members = [], projects = [], onSuccess }: TaskFormProps) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     title: defaultValues?.title ?? "",
@@ -98,7 +98,7 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", defaultValues
           behavior: projects.find((p) => p.id === (defaultValues?.projectId ?? projectId))?.defaultBehavior ?? "one_time",
         });
       }
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Terjadi kesalahan";
       toast.error(msg);

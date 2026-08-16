@@ -7,6 +7,7 @@ import { AppSidebar, type SidebarBadgeCounts } from "@/components/app-sidebar";
 import { AppTopbar } from "@/components/app-topbar";
 import { AIChatPanel } from "@/components/ai/chat-panel";
 import { LangProvider, type Lang } from "@/lib/i18n-client";
+import { TransitionProvider, useAppTransition } from "@/lib/transition-provider";
 import { isStaleServerActionError } from "@/lib/client-errors";
 import { toast } from "sonner";
 
@@ -36,6 +37,17 @@ const SidebarContext = createContext<{
 
 export function useSidebar() {
   return useContext(SidebarContext);
+}
+
+/** Thin indeterminate bar shown while a transition refresh is in flight. */
+function TopProgressBar() {
+  const { isPending } = useAppTransition();
+  if (!isPending) return null;
+  return (
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-0.5 overflow-hidden">
+      <div className="top-progress-bar h-full w-1/3 rounded-full bg-[#6647F0]" />
+    </div>
+  );
 }
 
 export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
@@ -86,8 +98,10 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
   }, [collapsed, hydrated]);
 
   return (
+    <TransitionProvider>
     <LangProvider lang={lang}>
     <SidebarContext.Provider value={{ collapsed, setCollapsed, mobileOpen, setMobileOpen }}>
+      <TopProgressBar />
       {/* Skip-to-content accessibility link */}
       <a
         href="#main-content"
@@ -128,5 +142,6 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
       </div>
     </SidebarContext.Provider>
     </LangProvider>
+    </TransitionProvider>
   );
 }

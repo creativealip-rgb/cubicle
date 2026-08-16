@@ -25,8 +25,8 @@ describe("client-scoped Project creation", () => {
   });
 
   it("closes and refreshes current Client route after success without replacing its tab query", () => {
-    expect(dialogSource).toContain('import { useRouter } from "next/navigation"');
-    expect(dialogSource).toMatch(/setOpen\(false\)[\s\S]*router\.refresh\(\)/);
+    expect(dialogSource).toContain('import { useAppTransition } from "@/lib/transition-provider"');
+    expect(dialogSource).toMatch(/setOpen\(false\)[\s\S]*refresh\(\)/);
     expect(dialogSource).not.toMatch(/router\.(?:push|replace)\(/);
     // Back link from project detail returns to the client's Projects tab
     const projectPage = read("src/app/(app)/app/projects/[projectId]/page.tsx");

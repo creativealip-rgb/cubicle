@@ -1,14 +1,14 @@
-export const PROJECT_STATUS_TABS = [
-  "active",
-  "draft",
-  "on_hold",
-  "completed",
-  "cancelled",
-  "archived",
-] as const;
+export const PROJECT_STATUS_TABS = ["active", "on_hold", "completed"] as const;
 
 export type ProjectStatusTab = (typeof PROJECT_STATUS_TABS)[number];
 export type ProjectBillingType = "fixed_price" | "hourly" | "retainer" | "package";
+
+/** Status values grouped under each tab. Legacy "draft"/"review" fold into "active". */
+export const PROJECT_STATUS_TAB_VALUES: Record<ProjectStatusTab, readonly string[]> = {
+  active: ["active", "draft", "review"],
+  on_hold: ["on_hold"],
+  completed: ["completed"],
+};
 
 export function parseBillingType(raw?: string): ProjectBillingType | undefined {
   if (raw === "project") return "fixed_price";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { setWeeklyTimeCell } from "@/lib/actions/time";
 import { buildWeeklyGrid, formatDurationInput, getWeekDates, parseDurationInput, type WeeklyGridEntry } from "@/lib/weekly-time-grid";
@@ -38,7 +38,7 @@ export function WeeklyTimeGrid({
   tasks: TaskOption[];
   canWrite: boolean;
 }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t, lang } = useT();
   const locale = lang === "en" ? "en-US" : "id-ID";
   const hLabel = lang === "en" ? "h" : "j";
@@ -147,7 +147,7 @@ export function WeeklyTimeGrid({
       try {
         await setWeeklyTimeCell({ projectId: row.projectId, taskId: row.taskId!, date: row.cells[index].date, totalMinutes });
         toast.success(t("Waktu tersimpan", "Time saved"));
-        router.refresh();
+        refresh();
       } catch (error) {
         toast.error(error instanceof Error ? error.message : t("Gagal menyimpan waktu", "Failed to save time"));
       }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { uploadOneFile, MAX_UPLOAD_BYTES } from "@/lib/files-upload";
 import { useT } from "@/lib/i18n-client";
@@ -33,7 +33,7 @@ interface UploadButtonProps {
 }
 
 export function UploadButton({ workspaceId, clientId, projectId, folderId }: UploadButtonProps) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { lang, t } = useT();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -74,7 +74,7 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
           : t("File diunggah", "File uploaded"),
       );
       setOpen(false);
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       if (err instanceof Error && err.message === "MAX_SIZE") {
         toast.error(t("Berkas harus di bawah 25MB", "File must be under 25MB"));
@@ -98,15 +98,15 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
         accept="*/*"
       />
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-10 gap-1 sm:h-9" disabled={uploading}>
+        <Button variant="outline" size="sm" className="h-10 gap-1 sm:h-8" disabled={uploading}>
           {uploading ? (
             <>
-              <Loader2 className="h-3 w-3 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
               {progress > 0 ? `${progress}%` : t("Mengunggah...", "Uploading...")}
             </>
           ) : (
             <>
-              <Upload className="h-3 w-3" /> {t("Unggah", "Upload")}
+              <Upload className="h-4 w-4" /> {t("Unggah", "Upload")}
             </>
           )}
         </Button>

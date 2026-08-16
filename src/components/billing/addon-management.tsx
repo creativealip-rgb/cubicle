@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { cancelExtraWorkspaceAddOn, cancelStorageAddOn } from "@/lib/actions/billing-addons";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ export function AddonManagement({
   extraWorkspaceEntitlements: ExtraWorkspaceEntitlement[];
 }) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [busy, setBusy] = useState<string | null>(null);
   async function cancelStorage(id: string) {
     setBusy(id);
@@ -49,7 +49,7 @@ export function AddonManagement({
     setBusy(null);
     if (!result.ok) return toast.error(result.error ?? t("Gagal membatalkan add-on", "Could not cancel add-on"));
     toast.success(t("Add-on dibatalkan di akhir periode", "Add-on will cancel at period end"));
-    router.refresh();
+    refresh();
   }
   async function cancelWorkspace(id: string) {
     setBusy(id);
@@ -57,7 +57,7 @@ export function AddonManagement({
     setBusy(null);
     if (!result.ok) return toast.error(result.error ?? t("Gagal membatalkan workspace", "Could not cancel workspace add-on"));
     toast.success(t("Workspace tambahan dibatalkan di akhir periode", "Extra workspace will cancel at period end"));
-    router.refresh();
+    refresh();
   }
   const storageTotal = storageAddons.reduce((sum, addon) => sum + addon.storageBytes, 0);
   const workspaceSlots = extraWorkspaceEntitlements.reduce((sum, e) => sum + e.quantity, 0);

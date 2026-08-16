@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import {
   Plus,
@@ -252,7 +252,7 @@ function matchesSearch(label: string, enLabel: string, query: string): boolean {
 
 export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSave }: Props) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [site, setSite] = useState<PersonalSiteInput>(() => ({ ...initialSite, pages: normalizePages(initialSite) }));
   const [activePageId, setActivePageId] = useState(() => normalizePages(initialSite).find((page) => page.isHome)?.id ?? normalizePages(initialSite)[0]?.id ?? "home");
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
@@ -456,13 +456,13 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
       await onSave(site);
       setLastSaved(JSON.stringify(site));
       toast.success(t("Tersimpan", "Saved"));
-      router.refresh();
+      refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("Gagal simpan", "Save failed"));
     } finally {
       setSaving(false);
     }
-  }, [onSave, router, site, t]);
+  }, [onSave, refresh, site, t]);
 
   const handleSelectReadinessIssue = useCallback((issue: { id: string }) => {
     if (issue.id === "theme-config-missing") {

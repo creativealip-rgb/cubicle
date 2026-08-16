@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import {
   BadgeCheck,
@@ -68,7 +68,7 @@ export function PortalTaskList({
   tasks: Task[];
   token: string;
 }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { lang, t } = useT();
   const [items, setItems] = useState(tasks);
   const [noteById, setNoteById] = useState<Record<string, string>>({});
@@ -115,7 +115,7 @@ export function PortalTaskList({
           ? t("Tugas disetujui", "Task approved")
           : t("Revisi dikirim ke tim", "Revision sent to the team"),
       );
-      router.refresh();
+      refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("Gagal", "Failed"));
     } finally {

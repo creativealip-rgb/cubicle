@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createManualEntry } from "@/lib/actions/time";
@@ -24,7 +24,7 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
   projects: Project[];
   tasks: Task[];
 }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -106,14 +106,14 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
       setOpen(false);
       reset();
       toast.success(t("Waktu tercatat", "Time logged"));
-      router.refresh();
+      refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("Gagal mencatat waktu", "Failed to log time"));
     } finally { setLoading(false); }
   }
 
   return <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next && !loading) reset(); }}>
-    <DialogTrigger asChild><Button className="h-11 w-full gap-2 sm:h-9 sm:w-auto"><Plus className="h-4 w-4" />{t("Catat Waktu", "Log Time")}</Button></DialogTrigger>
+    <DialogTrigger asChild><Button size="sm" className="h-11 w-full gap-1 sm:h-8 sm:w-auto"><Plus className="h-4 w-4" />{t("Catat Waktu", "Log Time")}</Button></DialogTrigger>
     <DialogContent className="flex max-h-[min(90dvh,760px)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-xl">
       <DialogHeader className="shrink-0 border-b px-5 py-4 pr-12"><DialogTitle>{t("Catat Waktu", "Log Time")}</DialogTitle></DialogHeader>
       <form id="create-time-entry-form" onSubmit={submit} className="grid min-h-0 gap-4 overflow-y-auto px-5 py-5">

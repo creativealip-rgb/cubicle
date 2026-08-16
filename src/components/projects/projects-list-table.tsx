@@ -107,7 +107,6 @@ export function ProjectsListTable({
   clients,
   currentClientId,
   hasExtraFilters,
-  statusTab,
   billingType,
   billingTypeHrefs: _billingTypeHrefs,
   canWrite,
@@ -116,7 +115,6 @@ export function ProjectsListTable({
   clients: Array<{ id: string; name: string }>;
   currentClientId?: string;
   hasExtraFilters: boolean;
-  statusTab: string;
   billingType?: ProjectBillingType;
   billingTypeHrefs: Record<"all" | ProjectBillingType, string>;
   canWrite: boolean;
@@ -206,12 +204,7 @@ export function ProjectsListTable({
           <TableHeaderFilter label={t("Klien", "Client")} queryKey="clientId" value={currentClientId} basePath="/app/projects" options={[{ value: "all", label: t("Semua klien", "All clients") }, ...clients.map((client) => ({ value: client.id, label: client.name }))]} className="text-xs" />
         </div>
         <div className="col-span-2">
-          <TableHeaderFilter label={t("Status", "Status")} queryKey="status" value={statusTab} basePath="/app/projects" options={[
-            { value: "all", label: t("Semua status", "All statuses") },
-            { value: "active", label: t("Aktif", "Active") }, { value: "draft", label: t("Draf", "Draft") },
-            { value: "on_hold", label: t("Ditunda", "On Hold") }, { value: "completed", label: t("Selesai", "Completed") },
-            { value: "cancelled", label: t("Dibatalkan", "Cancelled") }, { value: "archived", label: t("Diarsipkan", "Archived") },
-          ]} className="text-xs" />
+          <span className="text-xs font-medium text-muted-foreground">{t("Status", "Status")}</span>
         </div>
         <div className="col-span-2">
           <TableHeaderFilter label={t("Progres", "Progress")} queryKey="billingType" value={billingType} basePath="/app/projects" options={[
@@ -236,7 +229,7 @@ export function ProjectsListTable({
           icon={Plus}
           title={t("Belum ada proyek", "No projects yet")}
           description={
-            hasExtraFilters || statusTab !== "all"
+            hasExtraFilters
               ? t(
                   "Tidak ada proyek untuk filter ini. Coba ubah status atau klien.",
                   "No projects match these filters. Try another status or client.",

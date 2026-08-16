@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { Send, Copy, Check, Link2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -46,7 +46,7 @@ export function SendProposalButton({
   successMessage?: string;
   compact?: boolean;
 }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [open, setOpen] = useState(false);
   const [link, setLink] = useState<string | null>(null);
@@ -73,7 +73,7 @@ export function SendProposalButton({
           successMessage ||
             "Proposal siap dibagikan. Salin tautan ke klien.",
         );
-        router.refresh();
+        refresh();
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Terjadi kesalahan";
         toast.error(msg);

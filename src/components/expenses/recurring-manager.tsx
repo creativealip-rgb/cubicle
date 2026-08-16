@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import {
   Plus,
@@ -109,7 +109,7 @@ export function RecurringManager({
   defaultCurrency,
   baseCurrency,
 }: RecurringManagerProps) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const base = (baseCurrency || defaultCurrency || "IDR").toUpperCase();
   const [open, setOpen] = useState(false);
@@ -177,7 +177,7 @@ export function RecurringManager({
         toast.success(t("Pengeluaran rutin ditambahkan", "Recurring expense added"));
       }
       setOpen(false);
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal", "Failed"));
     } finally {
@@ -192,7 +192,7 @@ export function RecurringManager({
       await deleteRecurring(deleteTarget.id);
       toast.success(t("Rutin dihapus", "Recurring deleted"));
       setDeleteTarget(null);
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal", "Failed"));
     } finally {
@@ -208,7 +208,7 @@ export function RecurringManager({
           ? t("Rutin dijeda", "Recurring paused")
           : t("Rutin diaktifkan", "Recurring resumed"),
       );
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal", "Failed"));
     }
@@ -219,7 +219,7 @@ export function RecurringManager({
     try {
       await generateFromRecurring(r.id);
       toast.success(t("Pengeluaran digenerate", "Expense generated"));
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal", "Failed"));
     } finally {

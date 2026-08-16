@@ -8,7 +8,7 @@ import {
   archiveTaskTemplate, createTaskTemplate, createTaskTemplateItem, duplicateTaskTemplate,
   removeTaskTemplateItem, reorderTaskTemplateItems, restoreTaskTemplate, updateTaskTemplate, updateTaskTemplateItem,
 } from "@/lib/actions/task-templates";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -27,8 +27,8 @@ function TemplateFormDialog({template,onSave}:{template?:TemplateRow;onSave:(val
 function ItemFormDialog({item,onSave}:{item?:TemplateItem;onSave:(value:{title:string;description?:string;defaultAssigneeId?:string|null})=>Promise<void>}){const { t } = useT();const[open,setOpen]=useState(false);const[title,setTitle]=useState(item?.title??"");const[description,setDescription]=useState(item?.description??"");const[defaultAssigneeId,setDefaultAssigneeId]=useState(item?.defaultAssigneeId??"");return <Dialog open={open} onOpenChange={setOpen}><DialogTrigger asChild><Button size="sm" variant="ghost">{item?t("Ubah", "Edit"):t("Tambah item", "Add item")}</Button></DialogTrigger><DialogContent><DialogHeader><DialogTitle>{item?t("Ubah Item", "Edit Item"):t("Tambah Item", "Add Item")}</DialogTitle></DialogHeader><form className="space-y-3" onSubmit={async e=>{e.preventDefault();await onSave({title,description:description||undefined,defaultAssigneeId:defaultAssigneeId||null});setOpen(false)}}><Input value={title} onChange={e=>setTitle(e.target.value)} placeholder={t("Judul", "Title")} required/><Input value={description} onChange={e=>setDescription(e.target.value)} placeholder={t("Deskripsi", "Description")}/><Input value={defaultAssigneeId} onChange={e=>setDefaultAssigneeId(e.target.value)} placeholder={t("ID assignee opsional", "Optional assignee ID")}/><Button>{t("Simpan", "Save")}</Button></form></DialogContent></Dialog>}
 
 export function TaskTemplateWorkspace({ templates, projects }: { templates: TemplateRow[]; projects: Array<{ id: string; name: string }> }) {
-  const router = useRouter(); const [projectId, setProjectId] = useState(projects[0]?.id ?? "");
-  async function run(action: () => Promise<unknown>) { try { await action(); router.refresh(); } catch (error) { toast.error(error instanceof Error ? error.message : "Aksi gagal"); } }
+  const { refresh } = useAppTransition(); const [projectId, setProjectId] = useState(projects[0]?.id ?? "");
+  async function run(action: () => Promise<unknown>) { try { await action(); refresh(); } catch (error) { toast.error(error instanceof Error ? error.message : "Aksi gagal"); } }
   function moveItem(templateId:string,all:TemplateItem[],index:number,direction:"up"|"down"){const target=direction==="up"?index-1:index+1;if(target<0||target>=all.length)return;const ids=all.map(i=>i.id);[ids[index],ids[target]]=[ids[target],ids[index]];run(()=>reorderTaskTemplateItems(templateId,ids))}
   return <div className="space-y-4">
     <div className="flex flex-wrap gap-2">

@@ -18,6 +18,7 @@ export default async function ProposalEditPage({ params }: { params: Promise<{ p
   const workspaceId = await getWorkspaceForCurrentUser();
   const [proposal] = await db.select({
     id: proposals.id,
+    title: proposals.title,
     clientName: proposals.clientName,
     clientEmail: proposals.clientEmail,
     companyName: proposals.companyName,
@@ -53,5 +54,5 @@ export default async function ProposalEditPage({ params }: { params: Promise<{ p
     "use server";
     return saveProposalBlocks(proposalId, { contentBlocks: next, revision });
   }
-  return <DocumentBlockEditor kind="proposal" workspaceId={workspaceId} initialBlocks={blocks.length ? blocks : defaultDocumentBlocks("proposal")} initialRevision={proposal.contentRevision} backHref={`/app/proposals/${proposalId}`} placeholderValues={placeholderValues} saveBlocks={saveBlocks} />;
+  return <DocumentBlockEditor kind="proposal" workspaceId={workspaceId} initialBlocks={blocks.length ? blocks : defaultDocumentBlocks("proposal")} initialRevision={proposal.contentRevision} backHref={`/app/proposals/${proposalId}`} placeholderValues={placeholderValues} saveBlocks={saveBlocks} proposalMeta={{ title: proposal.title, clientName: proposal.clientName, clientEmail: proposal.clientEmail, validUntil: proposal.validUntil, status: proposal.status }} />;
 }

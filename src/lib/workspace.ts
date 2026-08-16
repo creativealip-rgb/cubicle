@@ -5,6 +5,7 @@ import { headers, cookies } from "next/headers";
 import { eq, and } from "drizzle-orm";
 import { db } from "@/db";
 import { users, workspaceMembers, workspaces } from "@/db/schema";
+import { seedDefaultTemplates } from "@/lib/default-templates";
 
 const COOKIE_NAME = "active_workspace_id";
 
@@ -129,6 +130,7 @@ async function createWorkspaceForUser(userId: string): Promise<WorkspaceRow> {
   if (!ws) throw new Error("Failed to create workspace");
 
   await ensureWorkspaceMembership(ws.id, userId);
+  await seedDefaultTemplates(ws.id);
   return ws;
 }
 

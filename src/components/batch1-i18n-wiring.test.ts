@@ -9,21 +9,19 @@ describe("batch 1 i18n wiring", () => {
     const comp = source("src/components/template-center-client.tsx");
     expect(comp).toContain('import { useT } from "@/lib/i18n-client";');
     expect(comp).toContain("const { t } = useT();");
-    // All three tabs localized
+    // Two tabs localized (invoice tab removed)
     expect(comp).toContain('t("Proposal", "Proposals")');
     expect(comp).toContain('t("Kontrak", "Contracts")');
-    expect(comp).toContain('t("Invoice", "Invoices")');
+    expect(comp).not.toContain('t("Invoice", "Invoices")');
     // Proposal empty state + card copy localized
     expect(comp).toContain('t("Belum ada template proposal", "No proposal templates yet")');
-    expect(comp).toContain('t("Buat template pertama", "Create first template")');
-    // Contract empty state + full editor links localized
+    // Contract empty state localized (full editor links removed)
     expect(comp).toContain('t("Belum ada template kontrak", "No contract templates yet")');
-    expect(comp).toContain('t("Editor penuh", "Full editor")');
+    expect(comp).not.toContain('t("Editor penuh", "Full editor")');
     // Dialog fields localized
     expect(comp).toContain('t("Nama template *", "Template name *")');
     expect(comp).toContain('t("Mata uang", "Currency")');
-    expect(comp).toContain('t("PPN default (%)", "Default tax (%)")');
-    expect(comp).toContain('t("Syarat & ketentuan", "Terms & conditions")');
+    expect(comp).toContain('t("PPN (%)\", \"Tax (%)\")');
     expect(comp).toContain('t("Jadikan template default", "Make default template")');
     expect(comp).toContain('t("Batal", "Cancel")');
     expect(comp).toContain('t("Simpan", "Save")');
@@ -33,8 +31,6 @@ describe("batch 1 i18n wiring", () => {
     expect(comp).toContain('t("Tanpa preview", "No preview")');
     expect(comp).toContain('t("Duplikat", "Duplicate")');
     expect(comp).toContain('t("Hapus", "Delete")');
-    // Editable Indonesian defaults intentionally left untranslated
-    expect(comp).toContain("setFormNotes(\"Terima kasih atas kepercayaannya.\")");
   });
 
   it("proposal list page localizes empty state and new-proposal CTA", () => {
@@ -42,7 +38,7 @@ describe("batch 1 i18n wiring", () => {
     expect(page).toContain('import { getCurrentLang, createT } from "@/lib/i18n";');
     expect(page).toContain("const t = createT(lang);");
     expect(page).toContain('t("Belum ada proposal", "No proposals yet")');
-    expect(page).toContain('t("Proposal baru", "New proposal")');
+    expect(page).toContain("CreateProposalButton");
   });
 
   it("questionnaires page keeps shared chrome and localized copy", () => {

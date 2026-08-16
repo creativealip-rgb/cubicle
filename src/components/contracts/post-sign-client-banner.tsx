@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import Link from "next/link";
 import { UserPlus, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
@@ -24,7 +24,7 @@ import { useT } from "@/lib/i18n-client";
  */
 export function PostSignClientBanner({ contractId }: { contractId: string }) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [createdClientId, setCreatedClientId] = useState<string | null>(null);
@@ -41,7 +41,7 @@ export function PostSignClientBanner({ contractId }: { contractId: string }) {
       );
       // Server action revalidated the contract page; refresh so the header
       // shows the linked client and the banner disappears server-side too.
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       const msg =
         err instanceof Error

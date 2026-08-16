@@ -2,7 +2,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { contracts, clients, projects, workspaces } from "@/db/schema";
+import { contracts, clients, projects } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Button } from "@/components/ui/button";
@@ -15,18 +15,10 @@ import { RevokeContractButton } from "@/components/contracts/revoke-contract-but
 import { DeleteContractButton } from "@/components/contracts/delete-contract-button";
 import { PostSignClientBanner } from "@/components/contracts/post-sign-client-banner";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, X, FileText, Eye } from "lucide-react";
+import { ArrowLeft, CheckCircle2, X, Eye } from "lucide-react";
 import { notFound } from "next/navigation";
-import ReactMarkdown from "react-markdown";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { getCurrentLang, createT } from "@/lib/i18n";
-import { normalizeDocumentBlocks } from "@/lib/document-blocks";
-import { renderDocumentBlockHtml } from "@/lib/document-block-renderer";
-import { buildContractPlaceholderValues } from "@/lib/document-placeholder-values";
-
-function normalizeBody(body: string) {
-  return body.replace(/\\n/g, "\n");
-}
 
 function isUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -69,20 +61,8 @@ export default async function ContractDetailPage({
   const [project] = c.projectId
     ? await db.select().from(projects).where(eq(projects.id, c.projectId)).limit(1)
     : [null];
-  const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
-  const placeholderValues = buildContractPlaceholderValues({
-    clientName: c.clientName,
-    clientEmail: c.clientEmail,
-    companyName: c.companyName,
-    contractNumber: c.contractNumber,
-    contractDate: c.contractDate,
-    validUntil: c.validUntil,
-    workspaceName: workspace?.name,
-    workspaceAddress: workspace?.billingAddress,
-  });
 
   const status = projectStatusVariant(c.status, lang);
-  const body = normalizeBody(c.bodyResolved || c.body || "");
 
   return (
     <div className="space-y-6 p-6 max-w-4xl">
@@ -302,27 +282,6 @@ export default async function ContractDetailPage({
           </CardContent>
         </Card>
       ) : null}
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            {c.bodyResolved
-              ? t("Isi terkirim (ter-render)", "Sent body (rendered)")
-              : t("Isi draf", "Draft body")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="prose prose-sm prose-slate max-w-none text-sm leading-relaxed whitespace-pre-wrap">
-            <ReactMarkdown>{body}</ReactMarkdown>
-          </div>
-          {normalizeDocumentBlocks(c.contentBlocks, "contract").map((block) => (
-            <div key={block.id} className={`mt-3 ${block.type === "heading" ? "font-semibold text-slate-900" : "text-slate-700"}`}>
-              {renderDocumentBlockHtml(block, placeholderValues)}
-            </div>
-          ))}
-        </CardContent>
-      </Card>
 
       {(c.sentAt || c.viewedAt || c.sharedTokenExpiresAt) &&
       c.status !== "signed" &&

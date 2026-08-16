@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { useT } from "@/lib/i18n-client";
 import { toast } from "sonner";
 import { buildInvoiceDetailUrl } from "@/lib/invoice-origin";
@@ -81,7 +81,7 @@ interface InvoiceFormProps {
 }
 
 export function InvoiceForm({ mode, defaultValues, clients, projects, templates, baseCurrency = "IDR", currencyRates = [], initialItems = [], onSuccess, scopedClientId, scopedProjectId }: InvoiceFormProps) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t, lang } = useT();
   const [loading, setLoading] = useState(false);
   const startsSourceBacked = Boolean(scopedProjectId || defaultValues?.projectId || initialItems.some((item) => item.sourceId));
@@ -202,7 +202,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         await updateInvoice(defaultValues.id, data);
         toast.success(t("Invoice diperbarui", "Invoice updated"));
         onSuccess?.();
-        router.refresh();
+        refresh();
       }
     } catch (err: unknown) {
       const msg =

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { Download, Loader2, XCircle } from "lucide-react";
 import { cancelAppointment, deleteAvailabilityRule } from "@/lib/actions/appointments";
@@ -44,7 +44,7 @@ export function AppointmentActions({ id, title }: { id: string; title: string })
 
 function CalendarDestructiveAction({ action }: { action: Exclude<PendingAction, null> }) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [isPending, startTransition] = useTransition();
   const isRule = action.type === "rule";
@@ -61,7 +61,7 @@ function CalendarDestructiveAction({ action }: { action: Exclude<PendingAction, 
             : t("Janji temu dibatalkan", "Appointment cancelled"),
         );
         setPendingAction(null);
-        router.refresh();
+        refresh();
       } catch (error) {
         toast.error(error instanceof Error ? error.message : t("Tindakan gagal", "Action failed"));
       }

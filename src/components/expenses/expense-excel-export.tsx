@@ -16,10 +16,10 @@ export function ExpenseExcelExportButton({ month, categoryId, q }: Props) {
     <Button
       variant="outline"
       size="sm"
-      className="h-10 min-h-10 gap-1"
+      className="gap-1"
       onClick={handleExport}
     >
-      <Download className="h-3.5 w-3.5" />
+      <Download className="h-4 w-4" />
       {t("Ekspor Excel", "Export Excel")}
     </Button>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { createExpense, updateExpense } from "@/lib/actions/expenses";
 import { Button } from "@/components/ui/button";
@@ -78,7 +78,7 @@ export function ExpenseForm({
   compact = false,
   mode = "create",
 }: ExpenseFormProps) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [loading, setLoading] = useState(false);
   const [showMore, setShowMore] = useState(mode === "edit" || !compact);
@@ -207,7 +207,7 @@ export function ExpenseForm({
           receiptUrl: null,
         });
       }
-      router.refresh();
+      refresh();
       onSuccess?.();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t("Terjadi kesalahan", "Something went wrong");

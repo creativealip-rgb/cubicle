@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-08-16 — Loading state audit: route skeletons + transition-aware refresh
+
+- Added `loading.tsx` skeletons to 20 server-fetch routes previously missing them (billing, expenses, packages, reports, settings, email, personal, templates, search, support, journal, personal-site, contract/proposal preview+edit, contract/questionnaire/template detail+edit). Route coverage now 39 loading.tsx; remaining routes without one are client-redirect / instant-form / static-docs / time-passthrough and need no skeleton.
+- Refactored `useAppTransition` to fall back to a local transition when rendered outside `<TransitionProvider>` (login/onboarding), keeping a single `const { refresh } = useAppTransition()` call-site safe everywhere.
+- Migrated 76 components from bare `router.refresh()` → `useAppTransition().refresh()`, so every mutation surfaces the global top progress bar instead of refreshing silently in the background.
+- Fixed Template Center tab counters flashing `(0)` during fetch — counters now render without a number while loading, then `(N)` once data is ready; replaced the plain "Loading..." text with a card skeleton grid.
+- Updated 3 wiring tests to assert the new `refresh()` pattern (was `router.refresh()` / `useRouter`).
+
+**Verification:** `npx tsc --noEmit` clean; production build clean; Vitest 1389 pass / 9 pre-existing failures (EN contract starter block, legacy invoice tab, timer event contract — not caused by this change). Production deployed `4f93750` (image `cubiqlo-prod:sha-4f93750…`), health/DB ok, `dpl=4f93750…`, live browser QA confirmed counter shows "Proposals (5)"/"Contracts (5)" with no `(0)` flash.
+
 ## 2026-08-16 — Contract editor starter template + proposal pricing single-source
 
 - Added `buildContractStarterBlocks()`: 18-block contract starter (Perjanjian Kerja → Para Pihak → Latar Belakang → Ruang Lingkup → Nilai Kontrak table → Jangka Waktu → Ketentuan Lain → signature).

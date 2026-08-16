@@ -20,7 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createProposal } from "@/lib/actions/proposals";
 import { useT } from "@/lib/i18n-client";
 
-interface ClientOption {
+export interface ClientOption {
   id: string;
   name: string;
 }
@@ -33,7 +33,7 @@ export interface ServiceOption {
   defaultUnit: string;
 }
 
-interface ProposalTemplateOption {
+export interface ProposalTemplateOption {
   id: string;
   name: string;
   body: string | null;
@@ -51,6 +51,8 @@ interface ProposalFormProps {
   clients: ClientOption[];
   services?: ServiceOption[];
   templates?: ProposalTemplateOption[];
+  onCancel?: () => void;
+  onCreated?: (id: string) => void;
 }
 
 interface LineItemDraft {
@@ -62,7 +64,7 @@ interface LineItemDraft {
 const blankItem = (): LineItemDraft => ({ description: "", quantity: 1, unitPrice: 0 });
 const defaultValidUntil = () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, clients: _clients, services = [], templates = [] }: ProposalFormProps) {
+export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, clients: _clients, services = [], templates = [], onCancel, onCreated }: ProposalFormProps) {
   const router = useRouter();
   const { t } = useT();
   const [loading, setLoading] = useState(false);
@@ -135,7 +137,11 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
       toast.success(t("Draft proposal dibuat", "Draft proposal created"), {
         description: t("Melanjutkan ke editor proposal…", "Continuing to the proposal editor…"),
       });
-      router.push(`/app/proposals/${created.id}/edit`);
+      if (onCreated) {
+        onCreated(created.id);
+      } else {
+        router.push(`/app/proposals/${created.id}/edit`);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t("Terjadi kesalahan", "Something went wrong");
       toast.error(msg);
@@ -274,7 +280,7 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:gap-2">
         <LoadingButton type="submit" loading={loading} loadingText={t("Membuat...", "Creating...")} className="w-full sm:w-auto">{t("Buat draft", "Create draft")}</LoadingButton>
-        <Button type="button" variant="ghost" onClick={() => router.back()} className="w-full sm:w-auto">{t("Batal", "Cancel")}</Button>
+        <Button type="button" variant="ghost" onClick={() => (onCancel ? onCancel() : router.back())} className="w-full sm:w-auto">{t("Batal", "Cancel")}</Button>
       </div>
     </form>
   );

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import { useT } from "@/lib/i18n-client";
 
 export function DeleteInvoiceButton({ invoiceId, disabled, backUrl = "/app/invoices" }: { invoiceId: string; disabled?: boolean; backUrl?: string }) {
   const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -31,7 +33,7 @@ export function DeleteInvoiceButton({ invoiceId, disabled, backUrl = "/app/invoi
       toast.success(t("Invoice dihapus", "Invoice deleted"));
       setOpen(false);
       router.push(backUrl);
-      router.refresh();
+      refresh();
     } catch (err) {
       const msg = err instanceof Error ? err.message : t("Gagal menghapus invoice", "Failed to delete invoice");
       toast.error(msg);

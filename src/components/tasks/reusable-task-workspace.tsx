@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { archiveTask, restoreTask } from "@/lib/actions/tasks";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { TaskForm } from "@/components/forms/task-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PermanentDeleteButton } from "@/components/shared/permanent-delete-button";
@@ -29,11 +29,11 @@ export function ReusableTaskWorkspace({ tasks, members = [], onMove }: {
   onMove?: (id: string, direction: "up" | "down") => void;
 }) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   async function toggle(row: ReusableTaskRow) {
     if (row.lifecycle === "active") await archiveTask(row.id);
     else await restoreTask(row.id);
-    router.refresh();
+    refresh();
   }
   return (
     <div className="overflow-x-auto rounded-lg border bg-card">

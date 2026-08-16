@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { Trash2 } from "lucide-react";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { toast } from "sonner";
@@ -19,6 +20,7 @@ export function DeleteProposalButton({
   confirmText?: string;
 }) {
   const router = useRouter();
+  const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(false);
 
   async function onDelete() {
@@ -28,7 +30,7 @@ export function DeleteProposalButton({
       await deleteProposal(proposalId);
       toast.success("Proposal dihapus");
       router.push(redirectTo);
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Gagal menghapus";
       toast.error(msg);

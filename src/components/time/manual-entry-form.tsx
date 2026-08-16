@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { createManualEntry } from "@/lib/actions/time";
 import { Button } from "@/components/ui/button";
@@ -54,7 +54,7 @@ function localDateValue(date = new Date()): string {
 
 export function ManualEntryForm({ workspaceId, clients, projects, tasks, activities = [] }: ManualEntryFormProps) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -151,7 +151,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks, activit
       setMinutes("0");
       setBillable(true);
       setHourlyRate("");
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal menambah entri", "Failed to add entry"));
     } finally {

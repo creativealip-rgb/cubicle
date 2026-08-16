@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,6 +81,7 @@ Dengan menandatangani di bawah, kedua pihak menyetujui syarat di atas.
 export function ContractTemplateBuilder({ workspaceId, template }: Props) {
   const { t } = useT();
   const router = useRouter();
+  const { refresh } = useAppTransition();
   const [name, setName] = useState(template?.name ?? "");
   const [body, setBody] = useState(template?.body ?? DEFAULT_BODY);
   const [isDefault, setIsDefault] = useState(template?.isDefault ?? false);
@@ -125,7 +127,7 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
           toast.success(t("Template dibuat", "Template created"));
           router.push(`/app/contract-templates/${created.id}`);
         }
-        router.refresh();
+        refresh();
       } catch (e) {
         const msg =
           e instanceof Error ? e.message : t("Gagal menyimpan template", "Failed to save template");
@@ -152,7 +154,7 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
         await deleteContractTemplate(template.id);
         toast.success(t("Template dihapus", "Template deleted"));
         router.push("/app/templates?tab=contract");
-        router.refresh();
+        refresh();
       } catch (e) {
         const msg =
           e instanceof Error ? e.message : t("Gagal menghapus template", "Failed to delete template");

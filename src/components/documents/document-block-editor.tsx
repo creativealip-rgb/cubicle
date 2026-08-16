@@ -18,6 +18,8 @@ import { uploadOneFile, MAX_UPLOAD_BYTES } from "@/lib/files-upload";
 import { useT } from "@/lib/i18n-client";
 import { renderDocumentBlockHtml } from "@/lib/document-block-renderer";
 import type { DocumentPlaceholderValues } from "@/lib/document-placeholders";
+import { ContractPublicView } from "@/components/contracts/contract-public-view";
+import { ProposalPublicView } from "@/components/proposals/proposal-public-view";
 import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowLeft, ArrowUp, Eye, GripVertical, Loader2, Monitor, Paperclip, Redo2, Smartphone, Tablet, Trash2, Undo2, Upload, X } from "lucide-react";
 
 type Props = {
@@ -28,6 +30,20 @@ type Props = {
   backHref?: string;
   placeholderValues?: DocumentPlaceholderValues;
   saveBlocks: (blocks: DocumentBlock[], revision: number) => Promise<unknown>;
+  documentMeta?: {
+    title: string;
+    clientName: string | null;
+    clientEmail: string | null;
+    validUntil: Date | string | null;
+    contractNumber: string | null;
+  };
+  proposalMeta?: {
+    title: string;
+    clientName: string | null;
+    clientEmail: string | null;
+    validUntil: Date | string | null;
+    status: string;
+  };
 };
 
 type AddableBlock = "text" | "heading" | "placeholder" | "list" | "divider" | "table" | "image" | "attachment";
@@ -101,7 +117,7 @@ function TableBlockEditor({ block, t, onChange }: { block: DocumentBlock; t: TFu
   );
 }
 
-export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialRevision = 1, backHref, placeholderValues = {}, saveBlocks }: Props) {
+export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialRevision = 1, backHref, placeholderValues = {}, saveBlocks, documentMeta, proposalMeta }: Props) {
   const [blocks, setBlocks] = useState(initialBlocks);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -438,7 +454,42 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
       {showPreview && <div className="fixed inset-0 z-50 bg-black/40 p-4 sm:p-10" onClick={() => setShowPreview(false)}>
         <section className="mx-auto max-h-full max-w-3xl overflow-y-auto rounded-lg bg-white p-8 shadow-xl" onClick={(event) => event.stopPropagation()}>
           <div className="mb-6 flex items-center justify-between"><h2 className="text-lg font-semibold">{t("Pratinjau", "Preview")}</h2><Button type="button" variant="ghost" size="icon" onClick={() => setShowPreview(false)} aria-label={t("Tutup preview", "Close preview")}><X className="h-4 w-4" /></Button></div>
-          <div className="min-w-0 space-y-4 break-words [overflow-wrap:anywhere]">{blocks.map((block) => <div key={block.id} className="min-w-0 break-words text-sm text-slate-700 [overflow-wrap:anywhere]">{renderDocumentBlockHtml(block, placeholderValues)}</div>)}</div>
+          {kind === "contract" && documentMeta ? (
+            <ContractPublicView
+              embedded
+              contract={{
+                title: documentMeta.title,
+                contractNumber: documentMeta.contractNumber,
+                clientName: documentMeta.clientName,
+                clientEmail: documentMeta.clientEmail,
+                validUntil: documentMeta.validUntil,
+                status: "draft",
+              }}
+              blocks={blocks}
+              placeholderValues={placeholderValues}
+            />
+          ) : kind === "proposal" && proposalMeta ? (
+            <ProposalPublicView
+              embedded
+              proposal={{
+                title: proposalMeta.title,
+                clientName: proposalMeta.clientName,
+                clientEmail: proposalMeta.clientEmail,
+                validUntil: proposalMeta.validUntil,
+                status: proposalMeta.status,
+                lineItems: [],
+                subtotal: null,
+                tax: null,
+                total: null,
+                currency: "IDR",
+                downPaymentPercent: null,
+              }}
+              blocks={blocks}
+              placeholderValues={placeholderValues}
+            />
+          ) : (
+            <div className="min-w-0 space-y-4 break-words [overflow-wrap:anywhere]">{blocks.map((block) => <div key={block.id} className="min-w-0 break-words text-sm text-slate-700 [overflow-wrap:anywhere]">{renderDocumentBlockHtml(block, placeholderValues)}</div>)}</div>
+          )}
         </section>
       </div>}
     </div>

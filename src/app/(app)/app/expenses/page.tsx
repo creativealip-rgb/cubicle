@@ -341,7 +341,7 @@ export default async function ExpensesPage({
                 categories={categories}
                 projects={projectOpts}
                 clients={clientOpts}
-                triggerClassName="flex-1 sm:flex-none min-h-10"
+                triggerClassName="flex-1 sm:flex-none gap-1"
               />
             )}
             <ExpenseExcelExportButton
