@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { tasks, timeEntries, users, workspaceMembers, projects } from "@/db/schema";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
 import { requireUser, assertWorkspaceWritable, assertTaskInWorkspace, assertProjectInWorkspace } from "@/lib/access";
 import { assertWorkspaceUserReference } from "@/lib/tenant-reference-rules";
 import { writeActivityLog } from "@/lib/actions/activity";
@@ -161,6 +162,7 @@ export async function createTask(input: z.infer<typeof taskSchema>) {
     user.id,
   );
 
+  revalidatePath("/app/tasks");
   return task;
 }
 
@@ -208,6 +210,7 @@ export async function updateTask(taskId: string, input: z.infer<typeof updateTas
     );
   }
 
+  revalidatePath("/app/tasks");
   return task;
 }
 
@@ -245,6 +248,7 @@ export async function updateTaskStatus(taskId: string, status: string, position?
     }
   }
 
+  revalidatePath("/app/tasks");
   return task;
 }
 
@@ -306,6 +310,7 @@ export async function assignTask(taskId: string, assigneeId: string | null) {
     user.id,
   );
 
+  revalidatePath("/app/tasks");
   return { success: true };
 }
 
@@ -318,6 +323,7 @@ export async function archiveTask(taskId: string) {
   const [task] = await db.update(tasks).set({ lifecycle: "archived", archivedAt: new Date(), updatedAt: new Date() }).where(and(
     eq(tasks.id, taskId), eq(tasks.workspaceId, workspaceId),
   )).returning();
+  revalidatePath("/app/tasks");
   return task;
 }
 
@@ -330,6 +336,7 @@ export async function restoreTask(taskId: string) {
   const [task] = await db.update(tasks).set({ lifecycle: "active", archivedAt: null, updatedAt: new Date() }).where(and(
     eq(tasks.id, taskId), eq(tasks.workspaceId, workspaceId),
   )).returning();
+  revalidatePath("/app/tasks");
   return task;
 }
 
@@ -345,6 +352,7 @@ export async function deleteTask(taskId: string) {
   if (reference) throw new Error("TASK_REFERENCED_BY_TIME: Task dengan Time Log harus diarsipkan");
   await db.delete(tasks).where(and(eq(tasks.id, taskId), eq(tasks.workspaceId, workspaceId)));
   await writeActivityLog(workspaceId, user.id, "deleted_task", "task", taskId);
+  revalidatePath("/app/tasks");
   return { success: true };
 }
 
@@ -354,7 +362,7 @@ export async function permanentlyDeleteTask(taskId: string) {
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   await assertTaskInWorkspace(db, user.id, workspaceId, taskId);
-  return db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     await tx.execute(sql`DELETE FROM comments WHERE workspace_id=${workspaceId} AND entity_type='task' AND entity_id=${taskId}`);
     await tx.execute(sql`DELETE FROM notifications WHERE workspace_id=${workspaceId} AND entity_type='task' AND entity_id=${taskId}`);
     await tx.delete(timeEntries).where(and(eq(timeEntries.taskId, taskId), eq(timeEntries.workspaceId, workspaceId)));
@@ -362,6 +370,8 @@ export async function permanentlyDeleteTask(taskId: string) {
     if (!deleted) throw new Error("Task tidak ditemukan");
     return { success: true };
   });
+  revalidatePath("/app/tasks");
+  return result;
 }
 
 const respondPortalTaskSchema = z.object({
