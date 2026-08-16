@@ -11,7 +11,7 @@ import { toast } from "sonner";
 type PromptResultProps = {
   result: PromptGenerationResult | null;
   loading: boolean;
-  view?: "cards" | "terminal";
+  view?: "cards" | "prompt";
   onEdit(): void;
   onRegenerate(): void;
 };
@@ -49,26 +49,17 @@ function CopyButton({ text, actionLabel, doneLabel, toastLabel }: { text: string
   );
 }
 
-/** Assembles technicalPrompt + negativePrompt + notes into one copyable blob. */
-function technicalText(result: PromptGenerationResult): string {
-  const parts: string[] = [];
-  if (result.technicalPrompt) parts.push(`TECHNICAL PROMPT\n${result.technicalPrompt}`);
-  if (result.negativePrompt) parts.push(`NEGATIVE PROMPT\n${result.negativePrompt}`);
-  if (result.notes?.length) parts.push(`NOTES\n${result.notes.map((note) => `- ${note}`).join("\n")}`);
-  return parts.join("\n\n");
+/** Raw JSON representation of the full generation result (for the "Prompt" tab). */
+function promptJson(result: PromptGenerationResult): string {
+  return JSON.stringify(result, null, 2);
 }
 
 export function PromptResult({ result, loading, view = "cards", onEdit, onRegenerate }: PromptResultProps) {
   const { t } = useT();
-  if (loading) return <div className="flex min-h-[220px] items-center justify-center rounded-xl border bg-white p-4"><div className="text-center"><div className="mx-auto mb-2 h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"/><p className="text-xs font-medium">Menyusun materi…</p><p className="text-[11px] text-muted-foreground">Brief sedang diolah menjadi hasil siap pakai.</p></div></div>;
-  if (!result) return <div className="flex min-h-[220px] items-center justify-center rounded-xl border bg-white p-4 text-center"><div><FileText className="mx-auto mb-2 h-7 w-7 text-muted-foreground/50"/><p className="text-xs font-semibold">Hasil akan muncul di sini</p><p className="mt-0.5 text-[11px] text-muted-foreground">Pilih jenis konten, isi brief, lalu generate materi.</p></div></div>;
+  if (loading) return <div className="flex min-h-[220px] items-center justify-center rounded-xl border bg-white p-4"><div className="text-center"><div className="mx-auto mb-2 h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"/><p className="text-xs font-medium">{t("Menyusun materi…", "Generating…")}</p><p className="text-[11px] text-muted-foreground">{t("Brief sedang diolah menjadi hasil siap pakai.", "Your brief is being turned into ready-to-use material.")}</p></div></div>;
+  if (!result) return <div className="flex min-h-[220px] items-center justify-center rounded-xl border bg-white p-4 text-center"><div><FileText className="mx-auto mb-2 h-7 w-7 text-muted-foreground/50"/><p className="text-xs font-semibold">{t("Hasil akan muncul di sini", "Your result will appear here")}</p><p className="mt-0.5 text-[11px] text-muted-foreground">{t("Pilih jenis konten, isi brief, lalu generate materi.", "Pick a content type, fill in the brief, then generate.")}</p></div></div>;
 
-  const technical = technicalText(result);
-  const hasTechnical = Boolean(technical);
-  const sections: { label: string; content: string }[] = [];
-  if (result.technicalPrompt) sections.push({ label: "TECHNICAL PROMPT", content: result.technicalPrompt });
-  if (result.negativePrompt) sections.push({ label: "NEGATIVE PROMPT", content: result.negativePrompt });
-  if (result.notes?.length) sections.push({ label: "NOTES", content: result.notes.map((note) => `- ${note}`).join("\n") });
+  const json = promptJson(result);
 
   return <div className="min-h-[220px] rounded-xl border bg-white p-3.5 sm:p-4">
     <div className="mb-3">
@@ -79,24 +70,15 @@ export function PromptResult({ result, loading, view = "cards", onEdit, onRegene
         <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={onRegenerate}><RotateCcw className="mr-1 h-3.5 w-3.5"/>{t("Generate ulang", "Regenerate")}</Button>
       </div>
     </div>
-    {view === "terminal" ? (
-      hasTechnical ? (
-        <div>
-          <div className="max-h-[380px] space-y-3 overflow-auto rounded-lg bg-slate-950 p-3">
-            {sections.map((section) => (
-              <div key={section.label}>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-400">{section.label}</p>
-                <pre className="mt-1 whitespace-pre-wrap font-mono text-[11px] leading-4 text-slate-200">{section.content}</pre>
-              </div>
-            ))}
-          </div>
-          <div className="mt-2.5">
-            <CopyButton text={technical} actionLabel={t("Copy", "Copy")} doneLabel={t("Tersalin", "Copied")} toastLabel={t("Detail teknis disalin", "Technical details copied")} />
-          </div>
+    {view === "prompt" ? (
+      <div>
+        <div className="max-h-[380px] overflow-auto rounded-lg bg-slate-950 p-3">
+          <pre className="whitespace-pre-wrap font-mono text-[11px] leading-4 text-slate-100">{json}</pre>
         </div>
-      ) : (
-        <p className="rounded-lg border border-dashed px-3 py-4 text-center text-xs text-muted-foreground">{t("Tidak ada detail teknis.", "No technical details available.")}</p>
-      )
+        <div className="mt-2.5">
+          <CopyButton text={json} actionLabel={t("Copy JSON", "Copy JSON")} doneLabel={t("Tersalin", "Copied")} toastLabel={t("JSON prompt disalin", "Prompt JSON copied")} />
+        </div>
+      </div>
     ) : (
       <div className="space-y-2.5">
         {result.readyOutput.map((item, index) => (

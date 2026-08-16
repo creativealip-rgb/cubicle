@@ -22,18 +22,16 @@ describe("meeting revision wiring", () => {
     expect(form).not.toContain("selectedTimeIds");
   });
 
-  it("adds article generation with ready-to-use cards and terminal details", () => {
+  it("adds article generation with ready-to-use cards and raw JSON prompt view", () => {
     const catalog = read("src/lib/prompts/catalog.ts");
     const result = read("src/components/prompts/prompt-result.tsx");
     expect(catalog).toContain('"article"');
-    // Result surfaces readyOutput as per-item copyable cards (no raw JSON dump)
-    expect(result).not.toContain("JSON.stringify(result, null, 2)");
+    // Cards view surfaces readyOutput as per-item copyable cards
     expect(result).toContain("result.readyOutput.map");
-    expect(result).toContain('view?: "cards" | "terminal"');
-    // Terminal view renders the technical side (technicalPrompt / negativePrompt / notes)
-    expect(result).toContain("result.technicalPrompt");
-    expect(result).toContain("result.negativePrompt");
-    expect(result).toContain("result.notes");
+    expect(result).toContain('view?: "cards" | "prompt"');
+    // Prompt view renders the full result as raw JSON (with a copy button)
+    expect(result).toContain("JSON.stringify(result, null, 2)");
+    expect(result).toContain('view === "prompt"');
   });
 
   it("shows generation quota instead of spend", () => {
