@@ -46,6 +46,7 @@ import {
 } from "@/lib/actions/proposal-templates";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n-client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ContractTpl {
   id: string;
@@ -379,10 +380,10 @@ export function TemplateCenterClient({
       <Tabs value={activeTab} onValueChange={changeTab}>
         <TabsList className="inline-flex h-auto max-w-full justify-start gap-1 overflow-x-auto">
           <TabsTrigger value="proposal" className="gap-1.5">
-            <ScrollText className="h-4 w-4" /> {t("Proposal", "Proposals")} ({proposalTpls.length})
+            <ScrollText className="h-4 w-4" /> {t("Proposal", "Proposals")} {loading ? "…" : `(${proposalTpls.length})`}
           </TabsTrigger>
           <TabsTrigger value="contract" className="gap-1.5">
-            <FileSignature className="h-4 w-4" /> {t("Kontrak", "Contracts")} ({contractTpls.length})
+            <FileSignature className="h-4 w-4" /> {t("Kontrak", "Contracts")} {loading ? "…" : `(${contractTpls.length})`}
           </TabsTrigger>
         </TabsList>
 
@@ -399,7 +400,11 @@ export function TemplateCenterClient({
             </Button>
           </div>
           {loading ? (
-            <p className="text-sm text-muted-foreground">{t("Memuat...", "Loading...")}</p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-36 w-full rounded-xl" />
+              ))}
+            </div>
           ) : proposalEmpty ? (
             <div className="rounded-2xl border border-dashed p-8 text-center">
               <ScrollText className="mx-auto h-8 w-8 text-muted-foreground/50" />
@@ -448,7 +453,11 @@ export function TemplateCenterClient({
             </Button>
           </div>
           {loading ? (
-            <p className="text-sm text-muted-foreground">{t("Memuat...", "Loading...")}</p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-36 w-full rounded-xl" />
+              ))}
+            </div>
           ) : contractEmpty ? (
             <div className="rounded-2xl border border-dashed p-8 text-center">
               <FileSignature className="mx-auto h-8 w-8 text-muted-foreground/50" />
