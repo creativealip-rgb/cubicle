@@ -16,10 +16,7 @@ interface TransitionContextValue {
   refresh: () => void;
 }
 
-const TransitionContext = createContext<TransitionContextValue>({
-  isPending: false,
-  refresh: () => {},
-});
+const TransitionContext = createContext<TransitionContextValue | null>(null);
 
 /**
  * Single shared transition source. Forms and dialogs call `refresh()` after a
@@ -43,6 +40,24 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useAppTransition() {
-  return useContext(TransitionContext);
+/**
+ * Returns the shared transition source when inside <TransitionProvider>, or a
+ * self-contained local transition when rendered outside it (login, onboarding).
+ * This keeps a single call-site API (`const { refresh } = useAppTransition()`)
+ * safe to use anywhere without a provider.
+ */
+export function useAppTransition(): TransitionContextValue {
+  const ctx = useContext(TransitionContext);
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  // Fallback refresh for components rendered outside the AppShell provider.
+  const localRefresh = useCallback(() => {
+    startTransition(() => {
+      router.refresh();
+    });
+  }, [router, startTransition]);
+
+  if (ctx) return ctx;
+  return { isPending, refresh: localRefresh };
 }

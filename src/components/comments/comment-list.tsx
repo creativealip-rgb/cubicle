@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { createComment, deleteComment } from "@/lib/actions/comments";
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,7 @@ interface CommentListProps {
 }
 
 export function CommentList({ entityType, entityId, initialComments, clientPhone, contextTitle }: CommentListProps) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [comments, setComments] = useState<Comment[]>(initialComments);
   const [body, setBody] = useState("");
   const [visibility, setVisibility] = useState<"internal" | "client">("internal");
@@ -58,24 +58,24 @@ export function CommentList({ entityType, entityId, initialComments, clientPhone
       setComments((prev) => [comment as Comment, ...prev]);
       setBody("");
       toast.success("Komentar ditambahkan");
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to add comment");
     } finally {
       setLoading(false);
     }
-  }, [body, visibility, entityType, entityId, router]);
+  }, [body, visibility, entityType, entityId, refresh]);
 
   const handleDelete = useCallback(async (commentId: string) => {
     try {
       await deleteComment(commentId);
       setComments((prev) => prev.filter((c) => c.id !== commentId));
       toast.success("Komentar dihapus");
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to delete comment");
     }
-  }, [router]);
+  }, [refresh]);
 
   function getInitials(name: string | null, email: string | null): string {
     if (name) return name.slice(0, 2).toUpperCase();

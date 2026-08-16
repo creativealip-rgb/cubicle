@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import { updateAccountName, updateAccountPassword } from "@/lib/actions/account";
@@ -17,7 +17,7 @@ type AccountSettingsFormProps = {
 };
 
 export function AccountSettingsForm({ name, email, emailVerified }: AccountSettingsFormProps) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [displayName, setDisplayName] = useState(name);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -35,7 +35,7 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
         return;
       }
       toast.success(t("Nama akun diperbarui", "Account name updated"));
-      router.refresh();
+      refresh();
     });
   }
 

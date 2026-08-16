@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import {
   getProjectActivities,
@@ -38,7 +38,7 @@ export function ProjectActivitySettings({
   projectId,
 }: ProjectActivitySettingsProps) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [catalog, setCatalog] = useState<CatalogRow[]>([]);
@@ -128,7 +128,7 @@ export function ProjectActivitySettings({
         }));
       await setProjectActivities(projectId, payload);
       toast.success(t("Activity project disimpan", "Project activities saved"));
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(
         err instanceof Error

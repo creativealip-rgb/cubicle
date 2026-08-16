@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { createAvailabilityRule } from "@/lib/actions/appointments";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ const DAYS = [
 
 export function AvailabilityRuleForm() {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [dayOfWeek, setDayOfWeek] = useState("1");
@@ -39,7 +39,7 @@ export function AvailabilityRuleForm() {
       await createAvailabilityRule({ dayOfWeek: Number(dayOfWeek), startTime, endTime, timezone });
       toast.success(t("Aturan ketersediaan ditambahkan", "Availability rule added"));
       setOpen(false);
-      router.refresh();
+      refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("Gagal menambah aturan", "Failed to add rule"));
     } finally {

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -35,6 +36,7 @@ export function CreateContractButton({
 }) {
   const { t } = useT();
   const router = useRouter();
+  const { refresh } = useAppTransition();
   const [open, setOpen] = useState(defaultOpen);
   const [pending, startTransition] = useTransition();
 
@@ -76,7 +78,7 @@ export function CreateContractButton({
         setOpen(false);
         toast.success(t("Draf kontrak dibuat", "Contract draft created"));
         router.push(`/app/contracts/${c.id}/edit`);
-        router.refresh();
+        refresh();
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : t("Gagal membuat kontrak", "Failed to create contract");
         toast.error(msg);

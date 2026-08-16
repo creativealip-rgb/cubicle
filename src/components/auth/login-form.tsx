@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import Link from "next/link";
 
 import { Loader2, CheckCircle } from "lucide-react";
@@ -24,6 +25,7 @@ import { useT } from "@/lib/i18n-client";
 
 export function LoginForm() {
   const router = useRouter();
+  const { refresh } = useAppTransition();
   const searchParams = useSearchParams();
   const { t } = useT();
   const requestedRedirect = searchParams.get("redirect");
@@ -63,7 +65,7 @@ export function LoginForm() {
       }
 
       router.push(redirect);
-      router.refresh();
+      refresh();
     } catch {
       setError(t("Terjadi kesalahan. Coba lagi.", "An error occurred. Try again."));
     } finally {

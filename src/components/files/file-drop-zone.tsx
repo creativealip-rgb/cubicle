@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { uploadOneFile, MAX_UPLOAD_BYTES, type UploadScope } from "@/lib/files-upload";
 import { useT } from "@/lib/i18n-client";
@@ -19,7 +19,7 @@ interface FileDropZoneProps {
  * target. Uploads sequentially, reports per-batch progress, then refreshes.
  */
 export function FileDropZone({ scope, canWrite, children }: FileDropZoneProps) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { lang, t } = useT();
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -67,10 +67,10 @@ export function FileDropZone({ scope, canWrite, children }: FileDropZoneProps) {
         toast.success(
           t(`${ok} file diunggah`, `${ok} file(s) uploaded`),
         );
-        router.refresh();
+        refresh();
       }
     },
-    [scope, router, t, lang],
+    [scope, refresh, t, lang],
   );
 
   if (!canWrite) return <>{children}</>;

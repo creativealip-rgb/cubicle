@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import {
   Loader2,
   Check,
@@ -33,6 +34,7 @@ const steps = [
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { refresh } = useAppTransition();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,7 +70,7 @@ export default function OnboardingPage() {
     try {
       await finishOnboarding({ workspaceName });
       router.push("/app/dashboard");
-      router.refresh();
+      refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal menyelesaikan onboarding.");
       setLoading(false);

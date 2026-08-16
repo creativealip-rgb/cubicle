@@ -43,8 +43,8 @@ describe("project create list freshness", () => {
     expect(body).toContain('revalidatePath("/app/dashboard")');
   });
 
-  it("keeps client-side router.refresh after project create", () => {
+  it("keeps client-side refresh after project create", () => {
     const dialog = readFileSync("src/components/projects/project-create-dialog.tsx", "utf8");
-    expect(dialog).toContain("router.refresh()");
+    expect(dialog).toContain("refresh()");
   });
 });

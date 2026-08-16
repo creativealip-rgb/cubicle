@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Copy, ExternalLink, Loader2, Check, Link2 } from "lucide-react";
@@ -46,7 +46,7 @@ export function SendContractButton({
   labelCopied?: string;
   successMessage?: string;
 }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [open, setOpen] = useState(false);
   const [link, setLink] = useState<string | null>(null);
@@ -75,7 +75,7 @@ export function SendContractButton({
           successMessage ||
             "Kontrak siap dibagikan. Salin tautan ke klien.",
         );
-        router.refresh();
+        refresh();
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Gagal mengirim";
         toast.error(msg);

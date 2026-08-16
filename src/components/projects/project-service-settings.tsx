@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,7 @@ type ProjectServiceRow = {
 
 export function ProjectServiceSettings({ projectId }: { projectId: string }) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [catalog, setCatalog] = useState<CatalogRow[]>([]);
@@ -106,7 +106,7 @@ export function ProjectServiceSettings({ projectId }: { projectId: string }) {
         })),
       );
       toast.success(t("Layanan project disimpan", "Project services saved"));
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal simpan layanan project", "Failed to save project services"));
     } finally {

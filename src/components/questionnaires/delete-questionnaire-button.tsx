@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import { deleteQuestionnaire } from "@/lib/actions/questionnaires";
@@ -9,6 +10,7 @@ import { LoadingButton } from "@/components/ui/loading-button";
 
 export function DeleteQuestionnaireButton({ questionnaireId }: { questionnaireId: string }) {
   const router = useRouter();
+  const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(false);
 
   async function remove() {
@@ -18,7 +20,7 @@ export function DeleteQuestionnaireButton({ questionnaireId }: { questionnaireId
       await deleteQuestionnaire(questionnaireId);
       toast.success("Kuesioner dihapus");
       router.push("/app/questionnaires");
-      router.refresh();
+      refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Gagal menghapus kuesioner");
       setLoading(false);

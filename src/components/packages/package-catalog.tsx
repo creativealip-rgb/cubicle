@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { Plus, Package, Pencil, Trash2, Clock, Loader2, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -114,7 +114,7 @@ export function PackageCatalog({
   /** Workspace base currency for secondary ≈ line. */
   baseCurrency?: string;
 }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const base = (baseCurrency || defaultCurrency || "IDR").toUpperCase();
   const [open, setOpen] = useState(false);
@@ -199,7 +199,7 @@ export function PackageCatalog({
         toast.success(t("Paket dibuat", "Package created"));
       }
       setOpen(false);
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Terjadi kesalahan", "Something went wrong"));
     } finally {
@@ -214,7 +214,7 @@ export function PackageCatalog({
       await deletePackage(deleteTarget.id);
       toast.success(t("Paket diarsipkan", "Package archived"));
       setDeleteTarget(null);
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal menghapus", "Failed to delete"));
     } finally {

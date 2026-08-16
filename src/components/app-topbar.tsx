@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import Link from "next/link";
 import {
   Search,
@@ -90,6 +91,7 @@ function formatElapsed(startTime?: string | null, pausedAt?: string | null) {
 export function AppTopbar({ user }: AppTopbarProps) {
   const { t } = useT();
   const router = useRouter();
+  const { refresh } = useAppTransition();
   const pathname = usePathname();
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -110,7 +112,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
   async function handleSignOut() {
     await authClient.signOut();
     router.push("/login");
-    router.refresh();
+    refresh();
   }
 
   const loadWorkspaces = useCallback(async () => {
@@ -139,7 +141,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
     try {
       const result = await switchWorkspace(wsId);
       if (result.ok) {
-        router.refresh();
+        refresh();
         await new Promise((r) => setTimeout(r, 300));
         await loadWorkspaces();
       }
@@ -155,7 +157,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
     try {
       const result = await createWorkspace(name.trim());
       if (result.ok) {
-        router.refresh();
+        refresh();
       } else {
         toast.error(result.error);
       }

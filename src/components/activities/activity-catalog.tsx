@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import {
   archiveActivity,
@@ -45,7 +45,7 @@ interface ActivityCatalogProps {
 
 export function ActivityCatalog({ activities }: ActivityCatalogProps) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [statusFilter, setStatusFilter] = useState<"active" | "all">("active");
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -100,7 +100,7 @@ export function ActivityCatalog({ activities }: ActivityCatalogProps) {
       toast.success(t("Activity dibuat", "Activity created"));
       setOpen(false);
       resetForm();
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(
         err instanceof Error
@@ -131,7 +131,7 @@ export function ActivityCatalog({ activities }: ActivityCatalogProps) {
       toast.success(t("Activity diperbarui", "Activity updated"));
       setEditOpen(false);
       resetForm();
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(
         err instanceof Error
@@ -148,7 +148,7 @@ export function ActivityCatalog({ activities }: ActivityCatalogProps) {
     try {
       await archiveActivity(row.id);
       toast.success(t("Activity diarsipkan", "Activity archived"));
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(
         err instanceof Error

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { Ban } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ export function VoidInvoiceButton({
   invoiceId: string;
   disabled?: boolean;
 }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -43,7 +43,7 @@ export function VoidInvoiceButton({
       await voidInvoice({ invoiceId, reason: reason.trim() });
       toast.success(t("Invoice dibatalkan", "Invoice voided"));
       setOpen(false);
-      router.refresh();
+      refresh();
     } catch (err) {
       const msg = err instanceof Error ? err.message : t("Gagal membatalkan invoice", "Failed to void invoice");
       toast.error(msg);

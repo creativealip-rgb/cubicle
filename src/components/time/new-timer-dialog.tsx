@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { Loader2, Play } from "lucide-react";
 import { toast } from "sonner";
 import { startTimer } from "@/lib/actions/time";
@@ -23,7 +23,7 @@ export function NewTimerDialog({
   tasks: Task[];
   initialOpen?: boolean;
 }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [loading, setLoading] = useState(initialOpen);
 
@@ -34,7 +34,7 @@ export function NewTimerDialog({
       await startTimer({ workspaceId });
       window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
       toast.success(t("Timer dimulai. Detail bisa diisi setelah selesai lewat timesheet.", "Timer started. Details can be filled after stopping from the timesheet."));
-      router.refresh();
+      refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Gagal memulai timer");
     } finally {

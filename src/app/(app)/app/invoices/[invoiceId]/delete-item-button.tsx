@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { deleteInvoiceItem } from "@/lib/actions/invoices";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 
 export function DeleteItemButton({ itemId }: { itemId: string }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(false);
 
   async function handleDelete() {
@@ -17,7 +17,7 @@ export function DeleteItemButton({ itemId }: { itemId: string }) {
     try {
       await deleteInvoiceItem(itemId);
       toast.success("Item dihapus");
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed");
     } finally {

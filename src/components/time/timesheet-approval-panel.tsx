@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,12 +10,12 @@ import { submitWeeklyTimesheet, reviewWeeklyTimesheet } from "@/lib/actions/time
 
 export interface ApprovalItem { id:string; userName:string|null; weekStart:string; status:string; totalMinutes:number; billableMinutes:number; submitterNote:string|null; reviewNote:string|null }
 export function TimesheetApprovalPanel({ weekStart, current, pending = [], isOwner }: { weekStart:string; current:ApprovalItem|null; pending?:ApprovalItem[]; isOwner:boolean }) {
-  const router=useRouter();
+  const { refresh } = useAppTransition();
   const [submitterNote,setSubmitterNote]=useState("");
   const [reviewNotes,setReviewNotes]=useState<Record<string,string>>({});
   const [busy,setBusy]=useState(false);
-  async function submit(){setBusy(true);try{await submitWeeklyTimesheet({weekStart,note:submitterNote});toast.success("Minggu ini dikirim");router.refresh()}catch(e){toast.error(e instanceof Error?e.message:"Gagal mengirim")}finally{setBusy(false)}}
-  async function review(id:string,decision:"approved"|"rejected"){const note=reviewNotes[id]??"";if(decision==="rejected"&&!note.trim()){toast.error("Catatan penolakan wajib diisi");return}setBusy(true);try{await reviewWeeklyTimesheet({submissionId:id,decision,note});toast.success(decision==="approved"?"Timesheet disetujui":"Timesheet ditolak");setReviewNotes(currentNotes=>({...currentNotes,[id]:""}));router.refresh()}catch(e){toast.error(e instanceof Error?e.message:"Gagal review")}finally{setBusy(false)}}
+  async function submit(){setBusy(true);try{await submitWeeklyTimesheet({weekStart,note:submitterNote});toast.success("Minggu ini dikirim");refresh()}catch(e){toast.error(e instanceof Error?e.message:"Gagal mengirim")}finally{setBusy(false)}}
+  async function review(id:string,decision:"approved"|"rejected"){const note=reviewNotes[id]??"";if(decision==="rejected"&&!note.trim()){toast.error("Catatan penolakan wajib diisi");return}setBusy(true);try{await reviewWeeklyTimesheet({submissionId:id,decision,note});toast.success(decision==="approved"?"Timesheet disetujui":"Timesheet ditolak");setReviewNotes(currentNotes=>({...currentNotes,[id]:""}));refresh()}catch(e){toast.error(e instanceof Error?e.message:"Gagal review")}finally{setBusy(false)}}
   return <Card><CardContent className="space-y-3 p-4"><div className="flex flex-wrap items-center justify-between gap-2"><div><p className="font-medium">Persetujuan minggu ini</p><p className="text-xs text-muted-foreground">Minggu {weekStart}</p></div>{current?<Badge>{current.status}</Badge>:<Badge variant="secondary">draft</Badge>}</div>
     {current?.reviewNote&&<p className="rounded-md bg-muted p-2 text-sm">Catatan reviewer: {current.reviewNote}</p>}
     {(!current||current.status==="rejected")&&<div className="flex flex-col gap-2 sm:flex-row"><Input value={submitterNote} onChange={e=>setSubmitterNote(e.target.value)} placeholder="Catatan pengirim (opsional)"/><Button disabled={busy} onClick={submit}>Kirim Minggu Ini</Button></div>}

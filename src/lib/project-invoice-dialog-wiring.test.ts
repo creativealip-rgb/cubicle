@@ -31,7 +31,7 @@ describe("Project-scoped Invoice dialog", () => {
     expect(form).toMatch(/!scopedProjectId\s*&&[\s\S]*Proyek \(bisa pilih beberapa\)/);
     expect(form).toContain("onSuccess?.()");
     expect(form).toContain("if (onSuccess)");
-    expect(read("src/components/invoices/project-invoice-create-dialog.tsx")).toMatch(/setOpen\(false\)[\s\S]*router\.refresh\(\)/);
+    expect(read("src/components/invoices/project-invoice-create-dialog.tsx")).toMatch(/setOpen\(false\)[\s\S]*refresh\(\)/);
   });
 
   it("enforces locked Project and Client in server action", () => {

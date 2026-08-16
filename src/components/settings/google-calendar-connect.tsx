@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { Calendar, CheckCircle2, Link2Off, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,7 @@ export function GoogleCalendarConnect({
 }: Props) {
   const { t } = useT();
   const router = useRouter();
+  const { refresh } = useAppTransition();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const { confirm, dialog } = useConfirm();
@@ -71,7 +73,7 @@ export function GoogleCalendarConnect({
       });
       if (!res.ok) throw new Error("Disconnect failed");
       toast.success(t("Google Calendar diputus", "Google Calendar disconnected"));
-      router.refresh();
+      refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Disconnect failed");
     } finally {

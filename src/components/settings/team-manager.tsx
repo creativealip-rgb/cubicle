@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { addWorkspaceMember, removeWorkspaceMember, updateWorkspaceMemberRole } from "@/lib/actions/team";
 import { Badge } from "@/components/ui/badge";
@@ -36,7 +36,7 @@ export function TeamManager({
   inviteBlockedReason?: string;
 }) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"member" | "viewer">("member");
   const [loading, setLoading] = useState(false);
@@ -57,7 +57,7 @@ export function TeamManager({
       }
       setEmail("");
       setRole("member");
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal menambah anggota", "Failed to add member"));
     } finally {
@@ -69,7 +69,7 @@ export function TeamManager({
     try {
       await updateWorkspaceMemberRole({ memberId, role: nextRole });
       toast.success(t("Peran diperbarui", "Role updated"));
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal memperbarui peran", "Failed to update role"));
     }
@@ -81,7 +81,7 @@ export function TeamManager({
     try {
       await removeWorkspaceMember(member.id);
       toast.success(t("Anggota dihapus", "Member removed"));
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal menghapus anggota", "Failed to remove member"));
     }

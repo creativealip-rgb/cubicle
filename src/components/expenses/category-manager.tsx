@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Tag, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,7 @@ interface CategoryManagerProps {
 }
 
 export function CategoryManager({ workspaceId, categories, canWrite }: CategoryManagerProps) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CategoryRow | null>(null);
@@ -77,7 +77,7 @@ export function CategoryManager({ workspaceId, categories, canWrite }: CategoryM
         toast.success(t("Kategori ditambahkan", "Category added"));
       }
       setOpen(false);
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal", "Failed"));
     } finally {
@@ -92,7 +92,7 @@ export function CategoryManager({ workspaceId, categories, canWrite }: CategoryM
       await deleteCategory(deleteTarget.id);
       toast.success(t("Kategori dihapus", "Category deleted"));
       setDeleteTarget(null);
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal", "Failed"));
     } finally {

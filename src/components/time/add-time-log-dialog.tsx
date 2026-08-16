@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createManualEntry } from "@/lib/actions/time";
@@ -24,7 +24,7 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
   projects: Project[];
   tasks: Task[];
 }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -106,7 +106,7 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
       setOpen(false);
       reset();
       toast.success(t("Waktu tercatat", "Time logged"));
-      router.refresh();
+      refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("Gagal mencatat waktu", "Failed to log time"));
     } finally { setLoading(false); }

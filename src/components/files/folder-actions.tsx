@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { createFolder, renameFolder, deleteFolder } from "@/lib/actions/folders";
 import { useT } from "@/lib/i18n-client";
@@ -37,7 +37,7 @@ export function NewFolderButton({
   projectId?: string;
   parentId?: string;
 }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -57,7 +57,7 @@ export function NewFolderButton({
       toast.success(t("Folder dibuat", "Folder created"));
       setName("");
       setOpen(false);
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal membuat folder", "Failed to create folder"));
     } finally {
@@ -110,7 +110,7 @@ export function FolderRowActions({
   folderId: string;
   currentName: string;
 }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -124,7 +124,7 @@ export function FolderRowActions({
       await renameFolder({ folderId, name: name.trim() });
       toast.success(t("Folder diubah", "Folder renamed"));
       setRenameOpen(false);
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal mengubah nama", "Failed to rename"));
     } finally {
@@ -142,7 +142,7 @@ export function FolderRowActions({
       }
       toast.success(t("Folder dihapus", "Folder deleted"));
       setDeleteOpen(false);
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal menghapus folder", "Failed to delete folder"));
     } finally {

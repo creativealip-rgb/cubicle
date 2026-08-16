@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { permanentlyDeleteClient } from "@/lib/actions/clients";
@@ -23,6 +24,7 @@ export function PermanentDeleteButton({ entityType, entityId, entityName, redire
   size?: "sm" | "default";
 }) {
   const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [open, setOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
@@ -38,7 +40,7 @@ export function PermanentDeleteButton({ entityType, entityId, entityName, redire
       toast.success(`${entityName} ${t("dihapus permanen", "deleted permanently")}`);
       setOpen(false);
       if (redirectTo) router.push(redirectTo);
-      else router.refresh();
+      else refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("Gagal menghapus permanen", "Failed to delete permanently"));
     } finally {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -35,7 +35,7 @@ export function SendQuestionnaireButton({
   clients: { id: string; name: string; email?: string | null }[];
   projects: { id: string; name: string }[];
 }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [open, setOpen] = useState(false);
   const [clientId, setClientId] = useState("");
@@ -64,7 +64,7 @@ export function SendQuestionnaireButton({
         const url = `${window.location.origin}/intake/${token}`;
         setLink(url);
         setOpen(false);
-        router.refresh();
+        refresh();
       } catch (err: any) {
         toast.error(err?.message || t("Gagal mengirim", "Send failed"));
       }

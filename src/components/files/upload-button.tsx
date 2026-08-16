@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { uploadOneFile, MAX_UPLOAD_BYTES } from "@/lib/files-upload";
 import { useT } from "@/lib/i18n-client";
@@ -33,7 +33,7 @@ interface UploadButtonProps {
 }
 
 export function UploadButton({ workspaceId, clientId, projectId, folderId }: UploadButtonProps) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { lang, t } = useT();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -74,7 +74,7 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
           : t("File diunggah", "File uploaded"),
       );
       setOpen(false);
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       if (err instanceof Error && err.message === "MAX_SIZE") {
         toast.error(t("Berkas harus di bawah 25MB", "File must be under 25MB"));

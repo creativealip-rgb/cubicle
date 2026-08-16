@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,12 +40,13 @@ export function CreateProposalButton({
 }) {
   const { t } = useT();
   const router = useRouter();
+  const { refresh } = useAppTransition();
   const [open, setOpen] = useState(defaultOpen);
 
   function handleCreated(id: string) {
     setOpen(false);
     router.push(`/app/proposals/${id}/edit`);
-    router.refresh();
+    refresh();
   }
 
   return (

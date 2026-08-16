@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateTicket, deleteTicket } from "@/lib/actions/support";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import {
   Plus,
@@ -74,7 +74,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 export function SupportPageClient({ tickets, counts, clients, projects, members, createAction }: Props) {
   const { t, locale } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [showCreate, setShowCreate] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
@@ -105,7 +105,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
     try {
       await updateTicket(ticketId, { status: status as "open" | "in_progress" | "resolved" | "closed" });
       toast.success(t("Status diperbarui", "Status updated"));
-      router.refresh();
+      refresh();
     } catch {
       toast.error(t("Gagal memperbarui status", "Failed to update status"));
     }
@@ -116,7 +116,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
     try {
       await deleteTicket(ticketId);
       toast.success(t("Tiket dihapus", "Ticket deleted"));
-      router.refresh();
+      refresh();
     } catch {
       toast.error(t("Gagal menghapus tiket", "Failed to delete ticket"));
     }

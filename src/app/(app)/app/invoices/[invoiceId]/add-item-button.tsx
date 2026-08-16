@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { addInvoiceItem, addProjectInvoiceItem } from "@/lib/actions/invoices";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export type ProjectInvoiceItemOption = { id: string; name: string; amount: number; currency: string };
 
 export function InvoiceItemManager({ invoiceId, projectOptions }: { invoiceId: string; projectOptions: ProjectInvoiceItemOption[] }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [source, setSource] = useState<"manual" | "project">("manual");
@@ -37,7 +37,7 @@ export function InvoiceItemManager({ invoiceId, projectOptions }: { invoiceId: s
       setSource("manual");
       setProjectId("");
       setForm({ description: "", quantity: "1", unitPrice: "0" });
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Gagal");
     } finally {

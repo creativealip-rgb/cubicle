@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { deleteFile, updateFileMeta } from "@/lib/actions/files";
 import { formatFileDate } from "@/lib/file-manager-rules";
@@ -78,7 +78,7 @@ function formatBytes(bytes: number | null, unknownLabel: string): string {
 }
 
 export function FileList({ files, canWrite, lang }: FileListProps) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "internal" | "client" | "deliverable">("all");
@@ -105,7 +105,7 @@ export function FileList({ files, canWrite, lang }: FileListProps) {
       await deleteFile(deleteTarget.id);
       toast.success(t("Berkas dihapus", "File deleted"));
       setDeleteTarget(null);
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal menghapus berkas", "Failed to delete file"));
     } finally {
@@ -118,7 +118,7 @@ export function FileList({ files, canWrite, lang }: FileListProps) {
       setBusyId(fileId);
       await updateFileMeta({ fileId, visibility });
       toast.success(visibility === "client" ? t("Berkas dibagikan ke klien", "Shared with client") : t("Berkas menjadi internal", "Marked internal"));
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal memperbarui", "Update failed"));
     } finally {
@@ -131,7 +131,7 @@ export function FileList({ files, canWrite, lang }: FileListProps) {
       setBusyId(fileId);
       await updateFileMeta({ fileId, fileType });
       toast.success(fileType === "deliverable" ? t("Ditandai sebagai hasil kerja", "Marked as deliverable") : t("Ditandai sebagai berkas kerja", "Marked as working file"));
-      router.refresh();
+      refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal memperbarui", "Update failed"));
     } finally {

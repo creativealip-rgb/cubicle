@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { Clock, Pause, Play, Square } from "lucide-react";
 import { toast } from "sonner";
 import { pauseTimer, resumeTimer, stopTimer } from "@/lib/actions/time";
@@ -37,7 +37,7 @@ export function ActiveTimerCard({ initialTimer }: {
   tasks: TimerFormTask[];
 }) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [timer, setTimer] = useState(initialTimer);
 
   const [, setTick] = useState(0);
@@ -49,10 +49,10 @@ export function ActiveTimerCard({ initialTimer }: {
   }, []);
 
   useEffect(() => {
-    const sync = () => { void load(); router.refresh(); };
+    const sync = () => { void load(); refresh(); };
     window.addEventListener("cubicle:timer-changed", sync);
     return () => window.removeEventListener("cubicle:timer-changed", sync);
-  }, [load, router]);
+  }, [load, refresh]);
 
   useEffect(() => {
     if (!timer || timer.pausedAt) return;
@@ -69,7 +69,7 @@ export function ActiveTimerCard({ initialTimer }: {
         toast.success(message);
         window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
         await load();
-        router.refresh();
+        refresh();
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Aksi timer gagal");
       }
@@ -85,7 +85,7 @@ export function ActiveTimerCard({ initialTimer }: {
         setTimer(null);
         toast.success(t("Timer dihentikan. Detail bisa diisi nanti lewat timesheet.", "Timer stopped. Details can be filled later from the timesheet."));
         window.dispatchEvent(new CustomEvent("cubicle:timer-changed"));
-        router.refresh();
+        refresh();
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Gagal menghentikan timer");
       }

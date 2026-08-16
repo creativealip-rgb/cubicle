@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { BarChart3, Calendar, Loader2 } from "lucide-react";
 import { createClientPortalRequest } from "@/lib/actions/portal-requests";
@@ -35,7 +35,7 @@ export function PortalActionButtons({
   token: string;
   projects: ProjectOption[];
 }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [kind, setKind] = useState<"report" | "meeting" | null>(null);
   const [loading, setLoading] = useState(false);
@@ -87,7 +87,7 @@ export function PortalActionButtons({
             ),
       );
       close();
-      router.refresh();
+      refresh();
     } catch (err) {
       toast.error(
         err instanceof Error

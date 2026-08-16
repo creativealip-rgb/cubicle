@@ -31,7 +31,7 @@ import {
   generateClientGoogleCalendarInvite,
   updateClientGoogleEventAction,
 } from "@/lib/actions/client-google-calendar";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { useT } from "@/lib/i18n-client";
 
 export type ClientGcalEvent = {
@@ -158,7 +158,7 @@ export function ClientGoogleCalendarPanel({
   appointments,
 }: Props) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
@@ -192,7 +192,7 @@ export function ClientGoogleCalendarPanel({
       setInviteUrl(result.inviteUrl);
       setInviteExpiresAt(result.expiresAt);
       toast.success("Link undangan dibuat. Kirim ke klien.");
-      router.refresh();
+      refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal buat link");
     } finally {
@@ -213,7 +213,7 @@ export function ClientGoogleCalendarPanel({
       setInviteUrl(null);
       setInviteExpiresAt(null);
       toast.success("Google Calendar klien diputus");
-      router.refresh();
+      refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal putus koneksi");
     } finally {
@@ -263,7 +263,7 @@ export function ClientGoogleCalendarPanel({
         toast.success(t("Event dibuat di Google Calendar klien", "Event created in the client's Google Calendar"));
       }
       closeForm();
-      router.refresh();
+      refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal simpan event");
     } finally {
@@ -277,7 +277,7 @@ export function ClientGoogleCalendarPanel({
     try {
       await deleteClientGoogleEventAction(clientId, event.id);
       toast.success(t("Event dihapus", "Event deleted"));
-      router.refresh();
+      refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal hapus event");
     } finally {
@@ -392,7 +392,7 @@ export function ClientGoogleCalendarPanel({
                   type="button"
                   size="sm"
                   variant="outline"
-                  onClick={() => router.refresh()}
+                  onClick={() => refresh()}
                   disabled={loading}
                 >
                   <RefreshCw className="h-4 w-4" />

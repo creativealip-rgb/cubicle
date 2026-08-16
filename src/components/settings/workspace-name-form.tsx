@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { updateWorkspaceName } from "@/lib/actions/workspace";
 import { LoadingButton } from "@/components/ui/loading-button";
@@ -17,7 +17,7 @@ export function WorkspaceNameForm({
   canEdit: boolean;
 }) {
   const { t } = useT();
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const [name, setName] = useState(defaultName);
   const [loading, setLoading] = useState(false);
 
@@ -37,7 +37,7 @@ export function WorkspaceNameForm({
     try {
       await updateWorkspaceName({ name: next });
       toast.success(t("Nama workspace disimpan", "Workspace name saved"));
-      router.refresh();
+      refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("Gagal simpan", "Save failed"));
     } finally {

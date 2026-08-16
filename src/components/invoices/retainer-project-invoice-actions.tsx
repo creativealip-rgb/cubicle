@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { createOrGetRetainerPeriod, generateRetainerInvoice, lockRetainerPeriod } from "@/lib/actions/retainers";
@@ -20,7 +20,7 @@ export type RetainerPeriodView = {
 const hours = (value: number) => new Intl.NumberFormat("id-ID", { maximumFractionDigits: 2 }).format(value);
 
 export function RetainerProjectInvoiceActions({ projectId, period, renderSummaryOnly }: { projectId: string; period: RetainerPeriodView | null; renderSummaryOnly?: boolean }) {
-  const router = useRouter();
+  const { refresh } = useAppTransition();
   const { t } = useT();
   const [pending, setPending] = useState(false);
   const summary = period ? getRetainerPeriodUsageSummary({
@@ -38,7 +38,7 @@ export function RetainerProjectInvoiceActions({ projectId, period, renderSummary
       if (current.status === "open") current = await lockRetainerPeriod(current.id);
       if (current.status === "locked") await generateRetainerInvoice({ retainerPeriodId: current.id, issueDate: new Date().toISOString().slice(0, 10) });
       toast.success(t("Invoice Retainer dibuat", "Retainer invoice created"));
-      router.refresh();
+      refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("Gagal membuat invoice Retainer", "Failed to create retainer invoice"));
     } finally { setPending(false); }
