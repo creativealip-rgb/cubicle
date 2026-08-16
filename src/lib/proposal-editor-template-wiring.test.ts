@@ -17,11 +17,9 @@ describe("proposal editor template wiring", () => {
     expect(editor).toMatch(/Ganti dengan template\?/);
   });
 
-  it("editor exposes the pricing table preset", () => {
-    expect(editor).toContain("Pricing Table");
-    expect(editor).toMatch(/addPricingTable/);
-    expect(editor).toMatch(/\[\"Item\", \"Qty\", \"Harga\", \"Jumlah\"\]/);
-    expect(editor).toMatch(/\[\"\", \"\", \"\", \"\"\]/);
+  it("editor no longer exposes a manual pricing table preset (pricing lives in the form)", () => {
+    expect(editor).not.toContain("Pricing Table");
+    expect(editor).not.toMatch(/addPricingTable/);
   });
 
   it("editor exposes placeholder chips for every proposal token", () => {

@@ -119,8 +119,6 @@ export function buildProposalStarterBlocks(): DocumentBlock[] {
     { id: crypto.randomUUID(), type: "list", items: ["", "", ""], ordered: false },
     { id: crypto.randomUUID(), type: "heading", level: 2, content: "Timeline" },
     { id: crypto.randomUUID(), type: "text", content: "" },
-    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Investasi" },
-    { id: crypto.randomUUID(), type: "table", rows: [["Item", "Qty", "Harga", "Jumlah"], ["", "", "", ""]] },
     { id: crypto.randomUUID(), type: "heading", level: 2, content: "Syarat & Ketentuan" },
     { id: crypto.randomUUID(), type: "text", content: "Berlaku sampai {{valid_until}}" },
   ];

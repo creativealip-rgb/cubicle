@@ -7,21 +7,16 @@ import { buildProposalPlaceholderValues } from "@/lib/document-placeholder-value
 const read = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 
 describe("proposal starter placeholder wiring", () => {
-  it("exposes buildProposalStarterBlocks with centered cover and Investasi section", () => {
+  it("exposes buildProposalStarterBlocks with centered cover and terms section", () => {
     const blocks = read("src/lib/document-blocks.ts");
     expect(blocks).toContain("buildProposalStarterBlocks");
     expect(blocks).toContain('align: "center"');
-    expect(blocks).toContain("Investasi");
+    expect(blocks).toContain("Syarat & Ketentuan");
   });
 
-  it("builds starter blocks that include a financial table", () => {
+  it("builds starter blocks without a manual pricing table (pricing lives in the form)", () => {
     const starter = buildProposalStarterBlocks();
-    const table = starter.find((block) => block.type === "table");
-    expect(table).toBeDefined();
-    expect(table?.rows).toEqual([
-      ["Item", "Qty", "Harga", "Jumlah"],
-      ["", "", "", ""],
-    ]);
+    expect(starter.some((block) => block.type === "table")).toBe(false);
     // Placeholder tokens used by the cover and terms resolve later.
     expect(starter.some((block) => block.content?.includes("{{workspace_name}}"))).toBe(true);
     expect(starter.some((block) => block.content?.includes("{{valid_until}}"))).toBe(true);

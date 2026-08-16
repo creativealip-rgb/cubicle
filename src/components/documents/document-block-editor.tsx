@@ -235,14 +235,6 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
     }
   }
 
-  function addPricingTable() {
-    const block: DocumentBlock = { id: crypto.randomUUID(), type: "table", rows: [["Item", "Qty", "Harga", "Jumlah"], ["", "", "", ""]] };
-    setBlocks((current) => [...current, block]);
-    recordHistory([...blocks, block]);
-    setDirty(true);
-    setSelectedBlockId(block.id);
-  }
-
   function move(id: string, direction: -1 | 1) {
     setBlocks((current) => {
       const index = current.findIndex((block) => block.id === id);
@@ -401,7 +393,6 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
             {(["heading", "text", "placeholder", "list", "divider", "table"] as AddableBlock[]).map((type) => (
               <Button key={type} type="button" variant="outline" className="justify-start" onClick={() => add(type)}>+ {blockLabel(type)}</Button>
             ))}
-            {kind === "proposal" && <Button type="button" variant="outline" className="justify-start" onClick={addPricingTable}>+ {t("Pricing Table", "Pricing Table")}</Button>}
             <Button type="button" variant="outline" className="justify-start" onClick={handleStartFromTemplate}>+ {t("Mulai dari template", "Start from template")}</Button>
             {kind === "proposal" && <>
               <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleMediaUpload("image", e.target.files?.[0])} />
@@ -429,7 +420,6 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
           <div className="mb-4 flex items-center justify-between"><p className="text-sm font-semibold">{t("Blok", "Blocks")}</p><Button type="button" variant="ghost" size="icon" onClick={() => setShowTools(false)} aria-label={t("Tutup blok", "Close blocks")}><X className="h-4 w-4" /></Button></div>
           <div className="grid gap-2">
             {(["heading", "text", "placeholder", "list", "divider", "table"] as AddableBlock[]).map((type) => <Button key={type} type="button" variant="outline" className="justify-start" onClick={() => { add(type); setShowTools(false); }}>+ {blockLabel(type)}</Button>)}
-            {kind === "proposal" && <Button type="button" variant="outline" className="justify-start" onClick={() => { addPricingTable(); setShowTools(false); }}>+ {t("Pricing Table", "Pricing Table")}</Button>}
             <Button type="button" variant="outline" className="justify-start" onClick={() => { setShowTools(false); handleStartFromTemplate(); }}>+ {t("Mulai dari template", "Start from template")}</Button>
             {kind === "proposal" && <><Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => { setShowTools(false); imageInputRef.current?.click(); }}><Upload className="mr-2 h-3.5 w-3.5" />{t("Gambar", "Image")}</Button><Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => { setShowTools(false); attachmentInputRef.current?.click(); }}><Paperclip className="mr-2 h-3.5 w-3.5" />{t("Lampiran", "Attachment")}</Button></>}
           </div>
