@@ -1,5 +1,29 @@
 # Deployment Log
 
+## 16 August 2026 — Proposal editor enhancement (starter template, financial placeholders, align)
+
+- Source: `release/cubiqlo-20260816-3`, merge commit `221807c` from `dev/integration` into `main`.
+- Scope:
+  - `buildProposalStarterBlocks()`: 14-block proposal starter (cover "Proposal" centered, workspace name, "Untuk: {{client_name}}", About / Scope / Timeline / Investasi pricing table / Syarat & Ketentuan).
+  - Financial placeholders `{{today}}`, `{{subtotal}}`, `{{tax}}`, `{{total_amount}}`, `{{down_payment}}` added to proposal & contract placeholder builders and PDF rendering.
+  - Document editor: "Mulai dari template" button with overwrite confirm, 11 placeholder chips, "+ Pricing Table" preset.
+  - Proposal edit page now wires `buildProposalPlaceholderValues` into the editor preview.
+  - Renderer applies `align` (left/center/right) to list & table blocks in addition to heading/text/placeholder.
+- Dev proof: `dev.cubiqlo.com` deployed at `3a355209d6d6cbcc12bfa6cf98836fe4fb6b2c44`; health app/DB ok; production unchanged during dev QA.
+- Release gate before production deploy:
+  - `git diff --check` passed.
+  - Targeted Vitest passed (25 tests): proposal starter placeholder, financial render, editor template, document editor layout, autosave revision, contract placeholder parity.
+  - `npx tsc --noEmit` passed.
+  - `npm run build` passed.
+- Migration: none.
+- Production deployment:
+  - New image: `sha256:d78fe9e5d5e4404b4ae73350e9fab47a6658c125a3dfcec9efb966f47ad3a734`.
+  - Image tag: `cubiqlo-prod:sha-221807cda8a7dd901291f4c3b0223b4d1f91630c`.
+  - Runtime revision: `221807cda8a7dd901291f4c3b0223b4d1f91630c`.
+  - Container recreated: `cubiqlo-new-app-next`; restart `unless-stopped`; network `dokploy-network`.
+  - Health: `https://app.cubiqlo.com/api/health` app/DB ok; login 200; root 308 (redirect).
+  - Auth QA (prod): starter template 14 blocks + 11 placeholder chips verified via headless browser.
+
 ## 16 August 2026 — Sidebar chevron toggle + document editor scroll/back polish
 
 - Source: `release/cubiqlo-20260816-2`, merge commit `105593b` from `dev/integration` into `main`.
