@@ -30,7 +30,7 @@ export async function GET(request: Request) {
   await assertWorkspaceMember(db, user.id, workspaceId);
 
   const cookieStore = await cookies();
-  const lang = (cookieStore.get("cubiqlo_lang")?.value === "en" ? "en" : "id") as "id" | "en";
+  const lang = (cookieStore.get("cubiqlo_lang")?.value === "id" ? "id" : "en") as "id" | "en";
   const locale = lang === "en" ? "en-US" : "id-ID";
 
   // i18n labels

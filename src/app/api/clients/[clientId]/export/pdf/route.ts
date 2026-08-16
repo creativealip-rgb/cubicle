@@ -27,7 +27,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ cli
   const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, client.workspaceId)).limit(1);
   const projectRows = await db.select().from(projects).where(eq(projects.clientId, client.id));
   const cookieStore = await cookies();
-  const lang = (cookieStore.get("cubiqlo_lang")?.value === "en" ? "en" : "id") as "id" | "en";
+  const lang = (cookieStore.get("cubiqlo_lang")?.value === "id" ? "id" : "en") as "id" | "en";
 
   const buf = await renderClientPdf({
     title: lang === "en" ? "Client Detail" : "Detail Klien",

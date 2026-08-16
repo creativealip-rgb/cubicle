@@ -1,7 +1,7 @@
 export type PortalLang = "id" | "en";
 
 export function normalizePortalLang(value: unknown): PortalLang {
-  return value === "en" ? "en" : "id";
+  return value === "id" ? "id" : "en";
 }
 
 export function portalLocale(lang: PortalLang) {
