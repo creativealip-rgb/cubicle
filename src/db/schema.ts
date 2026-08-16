@@ -31,7 +31,32 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   plan: text("plan").notNull().default("free"), // free | solo | team
   planExpiresAt: timestamp("plan_expires_at", { withTimezone: true }),
+  // Superadmin control plane (2026-08-17): platform role + suspension.
+  role: text("role", { enum: ["user", "admin"] }).notNull().default("user"),
+  banned: boolean("banned").notNull().default(false),
+  bannedAt: timestamp("banned_at", { withTimezone: true }),
+  bannedReason: text("banned_reason"),
 });
+
+// ─── Admin audit trail (superadmin control plane) ───
+export const adminAuditLogs = pgTable(
+  "admin_audit_logs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    adminUserId: text("admin_user_id").references(() => users.id, { onDelete: "set null" }),
+    action: text("action").notNull(), // user.create | user.update | user.password_reset | user.ban | user.unban | user.plan_change
+    targetUserId: text("target_user_id").references(() => users.id, { onDelete: "set null" }),
+    targetWorkspaceId: uuid("target_workspace_id").references(() => workspaces.id, { onDelete: "set null" }),
+    metadata: jsonb("metadata").notNull().default(sql`'{}'::jsonb`),
+    ipAddress: text("ip_address"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("admin_audit_logs_created_idx").on(table.createdAt),
+    index("admin_audit_logs_admin_created_idx").on(table.adminUserId, table.createdAt),
+    index("admin_audit_logs_target_user_idx").on(table.targetUserId),
+  ],
+);
 
 export const sessions = pgTable("sessions", {
   id: text("id").primaryKey(),
