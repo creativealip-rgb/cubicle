@@ -122,7 +122,7 @@ export function LoginForm() {
                   onClick={handleResendVerification}
                   disabled={resending}
                 >
-                  {resending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {resending && <Loader2 className="h-4 w-4 animate-spin" />}
                   {t("Kirim ulang email verifikasi", "Resend verification email")}
                 </Button>
               )}

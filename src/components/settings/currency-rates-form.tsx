@@ -200,7 +200,7 @@ export function CurrencyRatesForm({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-11 w-11 shrink-0"
+                  className="h-9 w-9 shrink-0"
                   aria-label={t(`Hapus rate ${r.fromCurrency}`, `Remove ${r.fromCurrency} rate`)}
                   disabled={deleting === r.fromCurrency}
                   onClick={() => onDelete(r.fromCurrency)}
@@ -245,8 +245,8 @@ export function CurrencyRatesForm({
               required
             />
           </div>
-          <Button type="submit" disabled={busy} className="h-10 sm:mb-0">
-            <Plus className="mr-1 h-4 w-4" />
+          <Button type="submit" size="sm" disabled={busy} className="gap-1">
+            <Plus className="h-4 w-4" />
             {busy ? t("Simpan…", "Saving…") : t("Simpan rate", "Save rate")}
           </Button>
         </form>

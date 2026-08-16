@@ -324,7 +324,7 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
           <Button type="button" variant="ghost" size="icon" className="hidden h-8 w-8 sm:inline-flex" onClick={undo} disabled={historyIndex <= 0} title={t("Urungkan", "Undo")}><Undo2 className="h-4 w-4" /></Button>
           <Button type="button" variant="ghost" size="icon" className="hidden h-8 w-8 sm:inline-flex" onClick={redo} disabled={historyIndex >= history.length - 1} title={t("Ulangi", "Redo")}><Redo2 className="h-4 w-4" /></Button>
           <Button type="button" size="sm" variant="outline" className="lg:hidden" onClick={() => setShowTools(true)}>{t("Blok", "Blocks")}</Button>
-          <Button type="button" size="sm" variant="outline" onClick={() => setShowPreview(true)}><Eye className="mr-1.5 h-4 w-4" />{t("Pratinjau", "Preview")}</Button>
+          <Button type="button" size="sm" variant="outline" onClick={() => setShowPreview(true)}><Eye className="h-4 w-4" />{t("Pratinjau", "Preview")}</Button>
           <Button size="sm" onClick={() => startTransition(() => { void save(); })} disabled={!dirty || saving || pending || stale}>{t("Simpan", "Save")}</Button>
         </div>
       </div>
@@ -396,9 +396,9 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
             <Button type="button" variant="outline" className="justify-start" onClick={handleStartFromTemplate}>+ {t("Mulai dari template", "Start from template")}</Button>
             {kind === "proposal" && <>
               <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleMediaUpload("image", e.target.files?.[0])} />
-              <Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => imageInputRef.current?.click()}><Upload className="mr-2 h-3.5 w-3.5" />{t("Gambar", "Image")}</Button>
+              <Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => imageInputRef.current?.click()}><Upload className="h-3.5 w-3.5" />{t("Gambar", "Image")}</Button>
               <input ref={attachmentInputRef} type="file" className="hidden" onChange={(e) => handleMediaUpload("attachment", e.target.files?.[0])} />
-              <Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => attachmentInputRef.current?.click()}><Paperclip className="mr-2 h-3.5 w-3.5" />{t("Lampiran", "Attachment")}</Button>
+              <Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => attachmentInputRef.current?.click()}><Paperclip className="h-3.5 w-3.5" />{t("Lampiran", "Attachment")}</Button>
             </>}
           </div>
           <div className="mt-4 rounded-lg border bg-muted/30 p-3">
@@ -421,7 +421,7 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
           <div className="grid gap-2">
             {(["heading", "text", "placeholder", "list", "divider", "table"] as AddableBlock[]).map((type) => <Button key={type} type="button" variant="outline" className="justify-start" onClick={() => { add(type); setShowTools(false); }}>+ {blockLabel(type)}</Button>)}
             <Button type="button" variant="outline" className="justify-start" onClick={() => { setShowTools(false); handleStartFromTemplate(); }}>+ {t("Mulai dari template", "Start from template")}</Button>
-            {kind === "proposal" && <><Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => { setShowTools(false); imageInputRef.current?.click(); }}><Upload className="mr-2 h-3.5 w-3.5" />{t("Gambar", "Image")}</Button><Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => { setShowTools(false); attachmentInputRef.current?.click(); }}><Paperclip className="mr-2 h-3.5 w-3.5" />{t("Lampiran", "Attachment")}</Button></>}
+            {kind === "proposal" && <><Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => { setShowTools(false); imageInputRef.current?.click(); }}><Upload className="h-3.5 w-3.5" />{t("Gambar", "Image")}</Button><Button type="button" variant="outline" className="justify-start" disabled={uploading} onClick={() => { setShowTools(false); attachmentInputRef.current?.click(); }}><Paperclip className="h-3.5 w-3.5" />{t("Lampiran", "Attachment")}</Button></>}
           </div>
         </aside>
       </div>}

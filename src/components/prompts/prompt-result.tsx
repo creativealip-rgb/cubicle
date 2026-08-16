@@ -66,8 +66,8 @@ export function PromptResult({ result, loading, view = "cards", onEdit, onRegene
       <p className="text-[10px] font-medium uppercase tracking-wide text-primary">{t("Hasil", "Result")}</p>
       <h2 className="mt-0.5 text-base font-semibold">{result.title}</h2>
       <div className="mt-2.5 flex flex-wrap items-center justify-end gap-1.5 border-t pt-2.5">
-        <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={onEdit}><Pencil className="mr-1 h-3.5 w-3.5"/>{t("Edit brief", "Edit brief")}</Button>
-        <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={onRegenerate}><RotateCcw className="mr-1 h-3.5 w-3.5"/>{t("Generate ulang", "Regenerate")}</Button>
+        <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={onEdit}><Pencil className="h-3.5 w-3.5"/>{t("Edit brief", "Edit brief")}</Button>
+        <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={onRegenerate}><RotateCcw className="h-3.5 w-3.5"/>{t("Generate ulang", "Regenerate")}</Button>
       </div>
     </div>
     {view === "prompt" ? (

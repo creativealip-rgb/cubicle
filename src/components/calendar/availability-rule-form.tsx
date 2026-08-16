@@ -86,7 +86,7 @@ export function AvailabilityRuleForm() {
             <p className="text-xs text-muted-foreground">{t("Gunakan format zona IANA, misalnya Asia/Jakarta.", "Use an IANA timezone, for example Asia/Jakarta.")}</p>
           </div>
           <Button type="submit" disabled={loading || timeInvalid || !timezone.trim()} className="min-h-11 w-full">
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             {t("Simpan aturan", "Save rule")}
           </Button>
         </form>

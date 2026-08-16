@@ -101,8 +101,8 @@ export function ActiveTimerCard({ initialTimer }: {
         </div>
         <div className="flex items-center gap-2">
           <strong className="min-w-24 font-mono text-lg tabular-nums">{formatElapsed(timer.startTime, timer.pausedAt)}</strong>
-          {paused ? <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => resumeTimer(timer.id), t("Timer dilanjutkan", "Timer resumed"))}><Play className="mr-1 h-4 w-4" />{t("Lanjutkan", "Resume")}</Button> : <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => pauseTimer(timer.id), t("Timer dijeda", "Timer paused"))}><Pause className="mr-1 h-4 w-4" />{t("Jeda", "Pause")}</Button>}
-          <Button size="sm" variant="destructive" disabled={pending} onClick={handleStop}><Square className="mr-1 h-4 w-4" />{t("Hentikan", "Stop")}</Button>
+          {paused ? <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => resumeTimer(timer.id), t("Timer dilanjutkan", "Timer resumed"))}><Play className="h-4 w-4" />{t("Lanjutkan", "Resume")}</Button> : <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => pauseTimer(timer.id), t("Timer dijeda", "Timer paused"))}><Pause className="h-4 w-4" />{t("Jeda", "Pause")}</Button>}
+          <Button size="sm" variant="destructive" disabled={pending} onClick={handleStop}><Square className="h-4 w-4" />{t("Hentikan", "Stop")}</Button>
         </div>
       </div>
     </section>

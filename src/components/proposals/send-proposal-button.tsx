@@ -106,12 +106,12 @@ export function SendProposalButton({
             >
               {copied ? (
                 <>
-                  <Check className="h-3.5 w-3.5 text-emerald-600 mr-1" />
+                  <Check className="h-3.5 w-3.5 text-emerald-600" />
                   {labelCopied || "Disalin"}
                 </>
               ) : (
                 <>
-                  <Copy className="h-3.5 w-3.5 mr-1" />
+                  <Copy className="h-3.5 w-3.5" />
                   {labelCopy || "Salin"}
                 </>
               )}
@@ -127,7 +127,7 @@ export function SendProposalButton({
           aria-label={pending ? sendingText : sendText}
           title={pending ? sendingText : sendText}
         >
-          <Send className="h-3.5 w-3.5 mr-1" />
+          <Send className="h-3.5 w-3.5" />
           {pending ? sendingText : sendText}
         </Button>
       </div>
@@ -195,9 +195,9 @@ export function SendProposalButton({
             </Button>
             <Button onClick={handleSend} disabled={pending}>
               {pending ? (
-                <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Send className="h-3.5 w-3.5 mr-1" />
+                <Send className="h-3.5 w-3.5" />
               )}
               {pending ? sendingText : sendText}
             </Button>

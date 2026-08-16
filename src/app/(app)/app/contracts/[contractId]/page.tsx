@@ -90,7 +90,7 @@ export default async function ContractDetailPage({
         <div className="min-w-0">
           <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2">
             <Link href="/app/contracts">
-              <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+              <ArrowLeft className="h-3.5 w-3.5" />
               {t("Semua kontrak", "All contracts")}
             </Link>
           </Button>
@@ -132,7 +132,7 @@ export default async function ContractDetailPage({
           {canWrite ? (
             <Button variant="outline" size="sm" asChild>
               <Link href={`/app/contracts/${c.id}/preview`}>
-                <Eye className="h-3.5 w-3.5 mr-1" />
+                <Eye className="h-3.5 w-3.5" />
                 {t("Lihat kontrak", "View contract")}
               </Link>
             </Button>

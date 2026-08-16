@@ -57,7 +57,7 @@ export async function TemplateBlocksEditor({
         <div className="flex min-w-0 items-center gap-2">
           <Button asChild variant="ghost" size="sm" className="-ml-2 shrink-0">
             <Link href={`/app/templates?tab=${backTab}`}>
-              <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+              <ArrowLeft className="h-3.5 w-3.5" />
               Template Center
             </Link>
           </Button>
@@ -78,7 +78,7 @@ export async function TemplateBlocksEditor({
         </div>
         <Button asChild variant="outline" size="sm" className="shrink-0">
           <Link href={`/app/templates?tab=${backTab}`}>
-            <ExternalLink className="h-3.5 w-3.5 mr-1" />
+            <ExternalLink className="h-3.5 w-3.5" />
             Template Center
           </Link>
         </Button>

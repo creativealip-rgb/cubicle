@@ -144,16 +144,16 @@ export function GoogleCalendarConnect({
             disabled={loading}
           >
             {loading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Link2Off className="mr-2 h-4 w-4" />
+              <Link2Off className="h-4 w-4" />
             )}
             {t("Putuskan", "Disconnect")}
           </Button>
         ) : (
           <Button type="button" size="sm" className="h-10" asChild disabled={!configured}>
             <a href="/api/integrations/google-calendar/connect">
-              <Calendar className="mr-2 h-4 w-4" />
+              <Calendar className="h-4 w-4" />
               {t("Hubungkan Google Calendar", "Connect Google Calendar")}
             </a>
           </Button>

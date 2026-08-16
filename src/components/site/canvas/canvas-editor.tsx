@@ -709,11 +709,11 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
             <div className="w-px h-5 bg-border mx-1" />
             <Button type="button" variant="outline" size="sm" asChild>
               <a href={previewUrl} target="_blank" rel="noopener noreferrer">
-                <Eye className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">{t("Pratinjau", "Preview")}</span>
+                <Eye className="h-4 w-4" /> <span className="hidden sm:inline">{t("Pratinjau", "Preview")}</span>
               </a>
             </Button>
             <Button type="button" size="sm" variant={isDirty ? "default" : "outline"} className={!isDirty ? "bg-muted/40 text-muted-foreground shadow-none" : undefined} onClick={handleSave} disabled={saving || !isDirty}>
-              {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               {saving ? t("Menyimpan...", "Saving...") : t("Simpan", "Save")}
             </Button>
           </div>

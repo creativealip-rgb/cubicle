@@ -108,12 +108,12 @@ export function SendContractButton({
             >
               {copied ? (
                 <>
-                  <Check className="h-3.5 w-3.5 text-emerald-600 mr-1" />
+                  <Check className="h-3.5 w-3.5 text-emerald-600" />
                   {labelCopied || "Disalin"}
                 </>
               ) : (
                 <>
-                  <Copy className="h-3.5 w-3.5 mr-1" />
+                  <Copy className="h-3.5 w-3.5" />
                   {labelCopy || "Salin"}
                 </>
               )}
@@ -135,9 +135,9 @@ export function SendContractButton({
           title={pending ? sendingText : sendText}
         >
           {pending ? (
-            <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
-            <Send className="h-3.5 w-3.5 mr-1" />
+            <Send className="h-3.5 w-3.5" />
           )}
           {pending ? sendingText : sendText}
         </Button>
@@ -206,9 +206,9 @@ export function SendContractButton({
             </Button>
             <Button onClick={handleSend} disabled={pending}>
               {pending ? (
-                <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Send className="h-3.5 w-3.5 mr-1" />
+                <Send className="h-3.5 w-3.5" />
               )}
               {pending ? sendingText : sendText}
             </Button>

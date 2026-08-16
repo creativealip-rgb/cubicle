@@ -95,7 +95,7 @@ export function QuestionnaireCreateDialog({ trigger }: { trigger?: React.ReactNo
               {t("Batal", "Cancel")}
             </Button>
             <Button type="submit" disabled={loading || !name.trim()}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
               {t("Buat & Atur Field", "Create & Edit Fields")}
             </Button>
           </DialogFooter>

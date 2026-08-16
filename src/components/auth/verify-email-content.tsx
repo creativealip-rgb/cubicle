@@ -94,7 +94,7 @@ export function VerifyEmailContent() {
             onClick={handleResend}
             disabled={resending || resent}
           >
-            {resending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {resending && <Loader2 className="h-4 w-4 animate-spin" />}
             {resent ? "Email terkirim" : "Kirim ulang email verifikasi"}
           </Button>
         )}

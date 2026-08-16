@@ -63,7 +63,7 @@ export function AcceptDeclineButtons({ proposalId, token }: AcceptDeclineButtons
         disabled={loading !== null}
         className="bg-emerald-600 hover:bg-emerald-700"
       >
-        <Check className="h-4 w-4 mr-2" />
+        <Check className="h-4 w-4" />
         {loading === "accept" ? t("Menyetujui...", "Accepting...") : t("Setujui proposal", "Accept proposal")}
       </Button>
       <Button
@@ -72,7 +72,7 @@ export function AcceptDeclineButtons({ proposalId, token }: AcceptDeclineButtons
         onClick={() => setDeclineOpen(true)}
         disabled={loading !== null}
       >
-        <X className="h-4 w-4 mr-2" />
+        <X className="h-4 w-4" />
         {t("Tolak", "Decline")}
       </Button>
       <Dialog open={declineOpen} onOpenChange={setDeclineOpen}>

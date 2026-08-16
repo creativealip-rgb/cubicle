@@ -402,7 +402,7 @@ export function NotesListClient({
                         <input type="hidden" name="q" value={query} />
                         <input type="hidden" name="status" value="open" />
                         <Button type="submit" size="sm" variant="outline">
-                          <RotateCcw className="mr-1 h-3.5 w-3.5" />
+                          <RotateCcw className="h-3.5 w-3.5" />
                           {t("Buka lagi", "Reopen")}
                         </Button>
                       </form>
@@ -414,7 +414,7 @@ export function NotesListClient({
                         <input type="hidden" name="q" value={query} />
                         <input type="hidden" name="status" value="archived" />
                         <Button type="submit" size="sm" variant="outline">
-                          <Archive className="mr-1 h-3.5 w-3.5" />
+                          <Archive className="h-3.5 w-3.5" />
                           {t("Arsipkan", "Archive")}
                         </Button>
                       </form>
@@ -425,7 +425,7 @@ export function NotesListClient({
                         <input type="hidden" name="q" value={query} />
                         <input type="hidden" name="status" value="open" />
                         <Button type="submit" size="sm" variant="outline">
-                          <RotateCcw className="mr-1 h-3.5 w-3.5" />
+                          <RotateCcw className="h-3.5 w-3.5" />
                           {t("Pulihkan", "Restore")}
                         </Button>
                       </form>
@@ -506,7 +506,7 @@ export function NotesListClient({
                       variant="secondary"
                       disabled={pending}
                     >
-                      <ListTodo className="mr-1 h-3.5 w-3.5" />
+                      <ListTodo className="h-3.5 w-3.5" />
                       {t("Buat task", "Create task")}
                     </Button>
                     <p className="w-full text-[11px] text-muted-foreground">
@@ -621,7 +621,7 @@ export function NotesListClient({
           >
             {loadingMore ? (
               <>
-                <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 {t("Memuat…", "Loading…")}
               </>
             ) : (

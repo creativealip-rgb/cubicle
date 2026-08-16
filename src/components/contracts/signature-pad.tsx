@@ -164,7 +164,7 @@ export function SignaturePad({
         />
         <div className="flex items-center gap-2">
           <Button variant="destructive" onClick={handleDecline} disabled={pending}>
-            {pending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <X className="h-4 w-4 mr-1" />}
+            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
             Confirm decline
           </Button>
           <Button variant="ghost" onClick={() => setShowDecline(false)} disabled={pending}>
@@ -182,7 +182,7 @@ export function SignaturePad({
           <label className="text-sm font-medium">Sign here</label>
           {hasSignature && (
             <Button type="button" variant="ghost" size="sm" onClick={clearSignature}>
-              <Trash2 className="h-3 w-3 mr-1" />
+              <Trash2 className="h-3 w-3" />
               Clear
             </Button>
           )}
@@ -231,7 +231,7 @@ export function SignaturePad({
           Decline
         </Button>
         <Button onClick={handleSign} disabled={pending}>
-          {pending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Send className="h-4 w-4 mr-1" />}
+          {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           Sign contract
         </Button>
       </div>

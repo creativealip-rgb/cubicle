@@ -166,7 +166,7 @@ export function QuestionnaireBuilder({
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Fields</h2>
           <Button variant="outline" size="sm" onClick={addField}>
-            <Plus className="h-4 w-4 mr-1" /> Add field
+            <Plus className="h-4 w-4" /> Add field
           </Button>
         </div>
 
@@ -267,14 +267,14 @@ export function QuestionnaireBuilder({
 
         {fields.length > 0 && (
           <Button variant="outline" onClick={addField}>
-            <Plus className="h-4 w-4 mr-1" /> Add another field
+            <Plus className="h-4 w-4" /> Add another field
           </Button>
         )}
       </div>
 
       <div className="flex items-center gap-2 pt-2">
         <Button onClick={handleSave} disabled={pending}>
-          {pending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+          {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           {questionnaireId ? "Update questionnaire" : "Create questionnaire"}
         </Button>
         <Button variant="ghost" asChild>

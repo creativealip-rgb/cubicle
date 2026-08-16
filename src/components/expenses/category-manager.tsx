@@ -197,7 +197,7 @@ export function CategoryManager({ workspaceId, categories, canWrite }: CategoryM
               {t("Batal", "Cancel")}
             </Button>
             <Button size="sm" onClick={handleSave} disabled={loading}>
-              {loading && <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />}
+              {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               {t("Simpan", "Save")}
             </Button>
           </DialogFooter>

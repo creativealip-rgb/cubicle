@@ -171,7 +171,7 @@ export function IntakeForm({ token, fields }: { token: string; fields: Field[] }
       )}
 
       <Button type="submit" disabled={pending} className="w-full" size="lg">
-        {pending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
+        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
         Submit responses
       </Button>
     </form>

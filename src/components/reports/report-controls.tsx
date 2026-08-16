@@ -81,7 +81,7 @@ export function ReportControls({ lang, preset, from, to }: Props) {
             window.location.href = `/api/reports/export/xlsx?${params.toString()}`;
           }}
         >
-          <Download className="mr-2 h-4 w-4" />
+          <Download className="h-4 w-4" />
           {t("Ekspor Excel", "Export Excel")}
         </Button>
       </div>

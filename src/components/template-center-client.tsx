@@ -476,7 +476,7 @@ export function TemplateCenterClient({
               {t("Notes, terms, mata uang, dan PPN default.", "Default notes, terms, currency, and tax.")}
             </p>
             <Button size="sm" onClick={() => openCreate("invoice")}>
-              <Plus className="mr-1 h-3.5 w-3.5" /> {t("Template invoice", "Invoice template")}
+              <Plus className="h-3.5 w-3.5" /> {t("Template invoice", "Invoice template")}
             </Button>
           </div>
           {loading ? (
@@ -489,7 +489,7 @@ export function TemplateCenterClient({
                 {t("Simpan notes, terms, mata uang, dan PPN default.", "Save default notes, terms, currency, and tax.")}
               </p>
               <Button size="sm" className="mt-4" onClick={() => openCreate("invoice")}>
-                <Plus className="mr-1 h-3.5 w-3.5" /> {t("Buat template pertama", "Create first template")}
+                <Plus className="h-3.5 w-3.5" /> {t("Buat template pertama", "Create first template")}
               </Button>
             </div>
           ) : (
@@ -519,7 +519,7 @@ export function TemplateCenterClient({
               )}
             </p>
             <Button size="sm" onClick={() => openCreate("proposal")}>
-              <Plus className="mr-1 h-3.5 w-3.5" /> {t("Template proposal", "Proposal template")}
+              <Plus className="h-3.5 w-3.5" /> {t("Template proposal", "Proposal template")}
             </Button>
           </div>
           {loading ? (
@@ -535,7 +535,7 @@ export function TemplateCenterClient({
                 )}
               </p>
               <Button size="sm" className="mt-4" onClick={() => openCreate("proposal")}>
-                <Plus className="mr-1 h-3.5 w-3.5" /> {t("Buat template pertama", "Create first template")}
+                <Plus className="h-3.5 w-3.5" /> {t("Buat template pertama", "Create first template")}
               </Button>
             </div>
           ) : (
@@ -573,12 +573,12 @@ export function TemplateCenterClient({
             <div className="flex gap-2">
               <Button asChild size="sm" variant="outline">
                 <Link href="/app/contract-templates/new">
-                  <Maximize2 className="mr-1 h-3.5 w-3.5" />
+                  <Maximize2 className="h-3.5 w-3.5" />
                   {t("Editor penuh", "Full editor")}
                 </Link>
               </Button>
               <Button size="sm" onClick={() => openCreate("contract")}>
-                <Plus className="mr-1 h-3.5 w-3.5" /> {t("Template kontrak", "Contract template")}
+                <Plus className="h-3.5 w-3.5" /> {t("Template kontrak", "Contract template")}
               </Button>
             </div>
           </div>
@@ -599,7 +599,7 @@ export function TemplateCenterClient({
                   <Link href="/app/contract-templates/new">{t("Editor penuh", "Full editor")}</Link>
                 </Button>
                 <Button size="sm" onClick={() => openCreate("contract")}>
-                  <Plus className="mr-1 h-3.5 w-3.5" /> {t("Buat cepat", "Quick create")}
+                  <Plus className="h-3.5 w-3.5" /> {t("Buat cepat", "Quick create")}
                 </Button>
               </div>
             </div>
@@ -880,13 +880,13 @@ function TemplateCard({
 
       <div className="flex flex-wrap gap-1 pt-1 border-t">
         <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={onEdit}>
-          <Pencil className="h-3.5 w-3.5 mr-1" />
+          <Pencil className="h-3.5 w-3.5" />
           {t("Edit", "Edit")}
         </Button>
         {onOpenFull ? (
           <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-xs">
             <Link href={onOpenFull}>
-              <Maximize2 className="h-3.5 w-3.5 mr-1" />
+              <Maximize2 className="h-3.5 w-3.5" />
               {t("Penuh", "Full")}
             </Link>
           </Button>
@@ -898,7 +898,7 @@ function TemplateCard({
             className="h-7 px-2 text-xs"
             onClick={onDuplicate}
           >
-            <Copy className="h-3.5 w-3.5 mr-1" />
+            <Copy className="h-3.5 w-3.5" />
             {t("Duplikat", "Duplicate")}
           </Button>
         ) : null}
@@ -909,7 +909,7 @@ function TemplateCard({
             className="h-7 px-2 text-xs"
             onClick={onSetDefault}
           >
-            <Star className="h-3.5 w-3.5 mr-1" />
+            <Star className="h-3.5 w-3.5" />
             {t("Default", "Default")}
           </Button>
         ) : null}
@@ -919,7 +919,7 @@ function TemplateCard({
           className="h-7 px-2 text-xs text-destructive hover:text-destructive"
           onClick={onDelete}
         >
-          <Trash2 className="h-3.5 w-3.5 mr-1" />
+          <Trash2 className="h-3.5 w-3.5" />
           {t("Hapus", "Delete")}
         </Button>
       </div>

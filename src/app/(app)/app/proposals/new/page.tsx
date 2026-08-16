@@ -40,7 +40,7 @@ export default async function NewProposalPage() {
       <div>
         <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2">
           <Link href="/app/proposals">
-            <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+            <ArrowLeft className="h-3.5 w-3.5" />
             {t("Semua proposal", "All proposals")}
           </Link>
         </Button>

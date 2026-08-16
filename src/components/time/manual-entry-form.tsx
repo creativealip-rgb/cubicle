@@ -368,7 +368,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks, activit
           </div>
 
           <Button type="submit" disabled={loading} className="w-full">
-            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Tambah Entri
           </Button>
         </form>

@@ -52,7 +52,7 @@ export function AddExpenseButton({
         className={triggerClassName}
         onClick={() => setOpen(true)}
       >
-        <Plus className="h-4 w-4 mr-1" />
+        <Plus className="h-4 w-4" />
         {label}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>

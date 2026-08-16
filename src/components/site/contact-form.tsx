@@ -132,7 +132,7 @@ export function ContactForm({ siteSlug }: ContactFormProps) {
 
       <Button type="submit" disabled={status === "sending"} className="w-full">
         {status === "sending" ? (
-          <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("Mengirim...", "Sending...")}</>
+          <><Loader2 className="h-4 w-4 animate-spin" /> {t("Mengirim...", "Sending...")}</>
         ) : (
           t("Kirim Pesan", "Send Message")
         )}

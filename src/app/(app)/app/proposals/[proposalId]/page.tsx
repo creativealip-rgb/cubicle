@@ -134,7 +134,7 @@ export default async function ProposalDetailPage({
         <div className="min-w-0">
           <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2">
             <Link href="/app/proposals">
-              <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+              <ArrowLeft className="h-3.5 w-3.5" />
               {t("Semua proposal", "All proposals")}
             </Link>
           </Button>
@@ -157,7 +157,7 @@ export default async function ProposalDetailPage({
           {canWrite ? (
             <Button variant="outline" size="sm" asChild>
               <Link href={`/app/proposals/${p.id}/preview`}>
-                <Eye className="h-3.5 w-3.5 mr-1" />
+                <Eye className="h-3.5 w-3.5" />
                 {t("Lihat proposal", "View proposal")}
               </Link>
             </Button>

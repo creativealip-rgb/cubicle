@@ -656,7 +656,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                 disabled={safePage <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
               >
-                <ChevronLeft className="mr-1 h-4 w-4" />
+                <ChevronLeft className="h-4 w-4" />
                 {t("Sebelumnya", "Previous")}
               </Button>
               <span className="text-xs text-muted-foreground">
