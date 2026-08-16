@@ -1,5 +1,25 @@
 # Deployment Log
 
+## 16 August 2026 — Docs: fix stale claims + add Business guides (Layanan, Template, Kuesioner)
+
+- Source: `main` `0207663`; merged into `dev/integration` as `26e6dd6`.
+- Scope:
+  - Time Tracking guide: removed reference to deleted topbar timer button (now points to `/app/time → Mulai Timer`).
+  - Client Portal guide: fixed URL to `client-portal/[token]` + `client-portal/s/[slug]` (was wrong `/p/[token]`).
+  - Invoice guide: clarified callout text to match its Time Tracking link.
+  - Added 3 new Business guides: Layanan (service catalog), Template (Template Center), Kuesioner (intake forms). Content verified against actual enums (pricing models fixed/hourly/retainer; 8 questionnaire field types).
+- Dev proof: `dev.cubiqlo.com` deployed at `26e6dd6`; health app/DB ok; browser QA verified 3 new cards render + detail routes + corrected URLs.
+- Release gate: `npx tsc --noEmit` passed; `eslint` 0 errors; `git diff --check` passed.
+- Migration: none.
+- Production deployment:
+  - Image tag: `cubiqlo-prod:sha-020766392c8221f03c8bec2df6e69f10f99fbf44`.
+  - Image ID: `sha256:44adacd759b7c3ddf8126b84038dbfcf0378d1423c857c40bd002e693ef2588b`.
+  - Previous image ID: `sha256:b5acd36036252d9ad75b86b30047512ba23be5a037bfa3ae94fdd573eabdf8aa`.
+  - Container recreated: `cubiqlo-new-app-next`; restart `unless-stopped`; network `dokploy-network`.
+  - Health: `https://app.cubiqlo.com/api/health` app/DB ok.
+  - Asset revision proof: `dpl=020766392c8221f03c8bec2df6e69f10f99fbf44`.
+  - Proxy safety: `dokploy-traefik` sole public 80/443 owner.
+
 ## 16 August 2026 — UI button style/spacing standardization (currency rates + icon margin)
 
 - Source: `main` `44ddb3a` (merge of `f355683` + `44ddb3a` into `dev/integration` as `2255eb2`).
