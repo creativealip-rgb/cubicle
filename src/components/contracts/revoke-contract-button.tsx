@@ -38,9 +38,9 @@ export function RevokeContractButton({
   return (
     <Button variant="outline" size="sm" onClick={handleRevoke} disabled={pending}>
       {pending ? (
-        <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
       ) : (
-        <X className="h-3.5 w-3.5 mr-1" />
+        <X className="h-3.5 w-3.5" />
       )}
       {pending ? pendingLabel : label}
     </Button>

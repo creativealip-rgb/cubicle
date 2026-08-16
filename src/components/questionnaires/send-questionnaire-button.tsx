@@ -113,7 +113,7 @@ export function SendQuestionnaireButton({
   return (
     <>
       <Button onClick={() => setOpen(true)}>
-        <Send className="h-4 w-4 mr-1" />
+        <Send className="h-4 w-4" />
         {t("Kirim ke klien", "Send to client")}
       </Button>
 
@@ -208,9 +208,9 @@ export function SendQuestionnaireButton({
             </Button>
             <Button onClick={handleSend} disabled={pending || !clientId}>
               {pending ? (
-                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Send className="h-4 w-4 mr-1" />
+                <Send className="h-4 w-4" />
               )}
               {pending
                 ? t("Mengirim...", "Sending...")

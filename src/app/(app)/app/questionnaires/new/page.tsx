@@ -16,7 +16,7 @@ export default async function NewQuestionnairePage() {
       <div>
         <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2">
           <Link href="/app/questionnaires">
-            <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+            <ArrowLeft className="h-3.5 w-3.5" />
             {t("Semua kuesioner", "All questionnaires")}
           </Link>
         </Button>

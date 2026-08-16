@@ -309,11 +309,11 @@ export function WeeklyTimeGrid({
               )}
             </div>
             <Button variant="outline" onClick={addRow} disabled={!projectId || !taskId}>
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="h-4 w-4" />
               {t("Tambah baris", "Add row")}
             </Button>
             <Button variant="ghost" onClick={copyPreviousRows} disabled={!previousGrid.rows.length}>
-              <Copy className="mr-2 h-4 w-4" />
+              <Copy className="h-4 w-4" />
               {t("Salin baris minggu lalu", "Copy last week's rows")}
             </Button>
           </div>

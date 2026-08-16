@@ -95,7 +95,7 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
             </p>
           </div>
           <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => setShowPasswords((v) => !v)}>
-            {showPasswords ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+            {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             {showPasswords ? t("Sembunyikan", "Hide") : t("Tampilkan", "Show")}
           </Button>
         </div>

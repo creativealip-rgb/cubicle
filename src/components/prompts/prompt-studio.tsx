@@ -449,7 +449,7 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
             {/* Generate — sticky bottom action on mobile, in-flow on desktop */}
             <div className="sticky bottom-2 z-20 space-y-2 rounded-xl bg-slate-50/95 px-2 py-2 shadow-[0_-4px_12px_rgba(15,23,42,0.06)] backdrop-blur sm:static sm:z-auto sm:bg-transparent sm:p-0 sm:shadow-none">
               <Button className="h-11 w-full" disabled={!valid || loading} onClick={generate}>
-                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 {loading ? t("Menyusun materi…", "Generating…") : t("Generate Materi", "Generate")}
               </Button>
               {attempted && Object.keys(errorsState).length > 0 && (

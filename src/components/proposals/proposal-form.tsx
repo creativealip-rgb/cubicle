@@ -204,7 +204,7 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
           <CardTitle className="text-base flex items-center justify-between">
             {t("Rincian item", "Line items")}
             <Button type="button" variant="ghost" size="sm" onClick={() => setItems([...items, blankItem()])}>
-              <Plus className="h-3.5 w-3.5 mr-1" />
+              <Plus className="h-3.5 w-3.5" />
               {t("Tambah", "Add")}
             </Button>
           </CardTitle>

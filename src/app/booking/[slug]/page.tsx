@@ -234,7 +234,7 @@ export default async function PublicBookingPage({ params, searchParams }: Props)
                 </div>
 
                 <Button type="submit" className="w-full">
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  <CheckCircle2 className="h-4 w-4" />
                   {t("Pesan Janji Temu", "Book Appointment")}
                 </Button>
               </form>

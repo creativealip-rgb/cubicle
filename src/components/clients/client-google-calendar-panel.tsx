@@ -354,7 +354,7 @@ export function ClientGoogleCalendarPanel({
                 </p>
               ) : null}
               <Button type="button" size="sm" variant="outline" onClick={handleCopy}>
-                <Copy className="mr-2 h-4 w-4" />
+                <Copy className="h-4 w-4" />
                 {t("Salin link", "Copy link")}
               </Button>
             </div>
@@ -369,9 +369,9 @@ export function ClientGoogleCalendarPanel({
                 disabled={loading || !configured}
               >
                 {loading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Link2 className="mr-2 h-4 w-4" />
+                  <Link2 className="h-4 w-4" />
                 )}
                 {inviteUrl || pendingInvite
                   ? t("Generate ulang link", "Regenerate link")
@@ -385,7 +385,7 @@ export function ClientGoogleCalendarPanel({
                   onClick={openCreateForm}
                   disabled={loading}
                 >
-                  <Plus className="mr-2 h-4 w-4" />
+                  <Plus className="h-4 w-4" />
                   {t("Buat event", "Create event")}
                 </Button>
                 <Button
@@ -395,7 +395,7 @@ export function ClientGoogleCalendarPanel({
                   onClick={() => router.refresh()}
                   disabled={loading}
                 >
-                  <RefreshCw className="mr-2 h-4 w-4" />
+                  <RefreshCw className="h-4 w-4" />
                   {t("Refresh event", "Refresh events")}
                 </Button>
                 <Button
@@ -405,7 +405,7 @@ export function ClientGoogleCalendarPanel({
                   onClick={handleGenerateInvite}
                   disabled={loading}
                 >
-                  <Link2 className="mr-2 h-4 w-4" />
+                  <Link2 className="h-4 w-4" />
                   {t("Re-connect link", "Reconnect link")}
                 </Button>
                 <Button
@@ -416,9 +416,9 @@ export function ClientGoogleCalendarPanel({
                   disabled={loading}
                 >
                   {loading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <Link2Off className="mr-2 h-4 w-4" />
+                    <Link2Off className="h-4 w-4" />
                   )}
                   {t("Putuskan", "Disconnect")}
                 </Button>
@@ -499,7 +499,7 @@ export function ClientGoogleCalendarPanel({
               <div className="flex flex-wrap gap-2">
                 <Button type="submit" size="sm" disabled={saving}>
                   {saving ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : null}
                   {editingId ? t("Simpan perubahan", "Save changes") : t("Buat di Google Calendar", "Create in Google Calendar")}
                 </Button>
@@ -541,7 +541,7 @@ export function ClientGoogleCalendarPanel({
                 Tidak ada event di rentang ini.
               </p>
               <Button type="button" size="sm" onClick={openCreateForm}>
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="h-4 w-4" />
                 Buat event pertama
               </Button>
             </div>
@@ -615,7 +615,7 @@ export function ClientGoogleCalendarPanel({
                     disabled={safePage <= 1}
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                   >
-                    <ChevronLeft className="mr-1 h-4 w-4" />
+                    <ChevronLeft className="h-4 w-4" />
                     Sebelumnya
                   </Button>
                   <span className="text-xs text-muted-foreground">

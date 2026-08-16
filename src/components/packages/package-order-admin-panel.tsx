@@ -65,11 +65,11 @@ export function PackageOrderAdminPanel({ orders }: { orders: AdminPackageOrder[]
               {order.status === "pending" ? (
                 <div className="flex gap-2">
                   <Button size="sm" onClick={() => decide(order.id, "confirm")} disabled={loadingId === order.id}>
-                    {loadingId === order.id ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Check className="mr-1 h-4 w-4" />}
+                    {loadingId === order.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                     Konfirmasi
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => decide(order.id, "cancel")} disabled={loadingId === order.id}>
-                    <X className="mr-1 h-4 w-4" /> Batal
+                    <X className="h-4 w-4" /> Batal
                   </Button>
                 </div>
               ) : (

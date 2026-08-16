@@ -187,7 +187,7 @@ export function MobileStepEditor({
           onClick={() => setStep(STEPS[Math.max(0, stepIndex - 1)])}
           disabled={stepIndex === 0}
         >
-          <ChevronLeft className="h-4 w-4 mr-1" /> {t("Kembali", "Back")}
+          <ChevronLeft className="h-4 w-4" /> {t("Kembali", "Back")}
         </Button>
         <span className="text-xs text-muted-foreground">
           {t("Langkah", "Step")} {stepIndex + 1} / {STEPS.length}
@@ -255,7 +255,7 @@ function PagesStep({ pages, activePageId, onSetActivePageId, updatePages }: {
         </div>
       ))}
       <Button type="button" variant="outline" size="sm" className="w-full" onClick={addPage}>
-        <Plus className="h-3.5 w-3.5 mr-1" /> {t("Tambah Halaman", "Add Page")}
+        <Plus className="h-3.5 w-3.5" /> {t("Tambah Halaman", "Add Page")}
       </Button>
     </div>
   );
@@ -454,7 +454,7 @@ function PublishStep({ site, publicUrl, previewUrl, onUpdateSite }: {
       {/* Preview */}
       <Button type="button" variant="outline" size="sm" className="w-full" asChild>
         <a href={previewUrl} target="_blank" rel="noopener noreferrer">
-          <Eye className="h-3.5 w-3.5 mr-1" /> {t("Pratinjau", "Preview")}
+          <Eye className="h-3.5 w-3.5" /> {t("Pratinjau", "Preview")}
         </a>
       </Button>
     </div>

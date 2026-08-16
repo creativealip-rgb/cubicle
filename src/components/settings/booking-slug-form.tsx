@@ -137,12 +137,12 @@ export function BookingSlugForm({
           </div>
           <div className="flex gap-2">
             <Button type="button" size="sm" variant="outline" onClick={copyLink}>
-              <Copy className="mr-1.5 h-3.5 w-3.5" />
+              <Copy className="h-3.5 w-3.5" />
               {t("Salin", "Copy")}
             </Button>
             <Button type="button" size="sm" variant="outline" asChild>
               <a href={publicUrl} target="_blank" rel="noreferrer">
-                <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+                <ExternalLink className="h-3.5 w-3.5" />
                 {t("Buka", "Open")}
               </a>
             </Button>

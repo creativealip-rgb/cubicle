@@ -139,7 +139,7 @@ export function CreateContractButton({
             {t("Batal", "Cancel")}
           </Button>
           <Button onClick={handleCreate} disabled={pending}>
-            {pending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
+            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             {t("Buat draf", "Create draft")}
           </Button>
         </DialogFooter>

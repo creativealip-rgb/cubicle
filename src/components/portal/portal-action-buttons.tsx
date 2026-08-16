@@ -257,7 +257,7 @@ export function PortalActionButtons({
             <Button type="button" onClick={submit} disabled={loading || (kind === "meeting" && (!preferredDate || !preferredTime || !timezone || !message.trim()))}>
               {loading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   {t("Mengirim…", "Sending…")}
                 </>
               ) : (

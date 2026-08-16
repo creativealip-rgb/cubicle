@@ -97,7 +97,7 @@ function CalendarDestructiveAction({ action }: { action: Exclude<PendingAction, 
               <Button className="min-h-11 flex-1" variant="outline" disabled={isPending}>{t("Batal", "Back")}</Button>
             </DialogClose>
             <Button className="min-h-11 flex-1" variant="destructive" onClick={confirm} disabled={isPending}>
-              {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               {isRule ? t("Hapus", "Delete") : t("Batalkan janji", "Cancel booking")}
             </Button>
           </DialogFooter>

@@ -61,7 +61,7 @@ export default async function TemplateCenterPage({
             </div>
             <Button asChild variant="outline" size="sm" className="mt-1">
               <Link href="/app/dashboard">
-                <Layers className="mr-1.5 h-4 w-4" />
+                <Layers className="h-4 w-4" />
                 {t("Kembali ke Dashboard", "Back to Dashboard")}
               </Link>
             </Button>

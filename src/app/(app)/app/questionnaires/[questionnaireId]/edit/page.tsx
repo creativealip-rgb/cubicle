@@ -28,7 +28,7 @@ export default async function QuestionnaireEditPage({ params }: { params: Promis
       <div>
         <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2">
           <Link href={`/app/questionnaires/${q.id}`}>
-            <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+            <ArrowLeft className="h-3.5 w-3.5" />
             {t("Kembali ke kuesioner", "Back to questionnaire")}
           </Link>
         </Button>

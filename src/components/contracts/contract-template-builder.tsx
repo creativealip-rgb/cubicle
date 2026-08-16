@@ -168,7 +168,7 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
         <div>
           <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2">
             <Link href="/app/templates?tab=contract">
-              <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+              <ArrowLeft className="h-3.5 w-3.5" />
               {t("Pusat Template", "Template Center")}
             </Link>
           </Button>
@@ -192,18 +192,18 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
               className="text-red-600 hover:text-red-700 hover:bg-red-50"
             >
               {deleting ? (
-                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Trash2 className="h-4 w-4 mr-1" />
+                <Trash2 className="h-4 w-4" />
               )}
               {t("Hapus", "Delete")}
             </Button>
           ) : null}
           <Button onClick={onSave} disabled={!canSave}>
             {saving ? (
-              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Save className="h-4 w-4 mr-1" />
+              <Save className="h-4 w-4" />
             )}
             {isEdit ? t("Simpan", "Save") : t("Buat template", "Create template")}
           </Button>
