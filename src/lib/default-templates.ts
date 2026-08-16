@@ -1,7 +1,11 @@
 import type { DocumentBlock } from "@/lib/document-blocks";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { proposalTemplates, contractTemplates } from "@/db/schema";
+import {
+  PROPOSAL_VARIANT_TEMPLATES,
+  CONTRACT_VARIANT_TEMPLATES,
+} from "@/lib/default-template-variants";
 
 /**
  * Default proposal + contract templates seeded into every new workspace.
@@ -168,15 +172,22 @@ export function buildDefaultContractBlocks(): DocumentBlock[] {
 }
 
 /**
- * Seed the default proposal + contract templates into a newly created
- * workspace. Idempotent per workspace: relies on the partial unique index
- * (`*_one_default_per_ws_uidx`) + `onConflictDoNothing` so concurrent
- * workspace-creation calls (which fire in parallel on first login) cannot
- * produce duplicate defaults. Safe to call from both workspace-creation paths
- * (`ensureUserWorkspace` on first signup and `createWorkspace` on additional
- * workspaces).
+ * Seed the default + variant proposal/contract templates into a newly created
+ * workspace. Idempotent per workspace and safe against concurrent calls (two
+ * parallel workspace-creation calls on first login).
+ *
+ * - Default templates use the partial unique index
+ *   (`*_one_default_per_ws_uidx`) + `onConflictDoNothing`.
+ * - Variant templates have no DB uniqueness (users may create/duplicate
+ *   arbitrary names), so they are guarded by a per-workspace advisory lock
+ *   (`pg_advisory_xact_lock`) plus an insert-time name check inside the same
+ *   transaction. This makes the whole seed effectively race-free.
+ *
+ * Safe to call from both workspace-creation paths (`ensureUserWorkspace` on
+ * first signup and `createWorkspace` on additional workspaces).
  */
 export async function seedDefaultTemplates(workspaceId: string): Promise<void> {
+  // 1. Defaults — idempotent via partial unique index.
   await db
     .insert(proposalTemplates)
     .values({
@@ -204,4 +215,63 @@ export async function seedDefaultTemplates(workspaceId: string): Promise<void> {
       target: contractTemplates.workspaceId,
       where: eq(contractTemplates.isDefault, true),
     });
+
+  // 2. Variants — race-safe via advisory lock + name check.
+  await seedVariantTemplates(workspaceId);
+}
+
+function withBlockIds(blocks: DocumentBlock[]): DocumentBlock[] {
+  return blocks.map((block) => ({ ...block, id: crypto.randomUUID() }));
+}
+
+async function seedVariantTemplates(workspaceId: string): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`SELECT pg_advisory_xact_lock(hashtextextended(${`seed-default-templates:${workspaceId}`}, 0))`,
+    );
+
+    const existingProposalRows = await tx
+      .select({ name: proposalTemplates.name })
+      .from(proposalTemplates)
+      .where(eq(proposalTemplates.workspaceId, workspaceId));
+
+    const proposalNames = new Set(existingProposalRows.map((r) => r.name));
+    const proposalsToInsert = PROPOSAL_VARIANT_TEMPLATES
+      .filter((t) => !proposalNames.has(t.name))
+      .map((t) => ({
+        workspaceId,
+        name: t.name,
+        body: t.body,
+        contentBlocks: withBlockIds(t.contentBlocks),
+        defaultCurrency: t.defaultCurrency,
+        defaultTaxRate: t.defaultTaxRate,
+        defaultDownPaymentPercent: t.defaultDownPaymentPercent,
+        lineItems: t.lineItems,
+        isDefault: false,
+      }));
+
+    if (proposalsToInsert.length > 0) {
+      await tx.insert(proposalTemplates).values(proposalsToInsert);
+    }
+
+    const existingContractRows = await tx
+      .select({ name: contractTemplates.name })
+      .from(contractTemplates)
+      .where(eq(contractTemplates.workspaceId, workspaceId));
+
+    const contractNames = new Set(existingContractRows.map((r) => r.name));
+    const contractsToInsert = CONTRACT_VARIANT_TEMPLATES
+      .filter((t) => !contractNames.has(t.name))
+      .map((t) => ({
+        workspaceId,
+        name: t.name,
+        body: t.body,
+        contentBlocks: withBlockIds(t.contentBlocks),
+        isDefault: false,
+      }));
+
+    if (contractsToInsert.length > 0) {
+      await tx.insert(contractTemplates).values(contractsToInsert);
+    }
+  });
 }
