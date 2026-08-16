@@ -352,7 +352,7 @@ export function ContractPDF({ contract, workspace, client }: ContractData) {
         <View style={styles.body}>
           {normalizeDocumentBlocks(contract.contentBlocks, "contract").length > 0
             ? normalizeDocumentBlocks(contract.contentBlocks, "contract").map((block) => (
-                <Text key={block.id} style={block.type === "heading" ? styles.bodyH2 : styles.bodyText}>
+                <Text key={block.id} style={[block.type === "heading" ? styles.bodyH2 : styles.bodyText, ...(block.align ? [{ textAlign: block.align as "left" | "center" | "right" }] : [])]}>
                   {renderDocumentBlock(block, placeholderValues)}
                 </Text>
               ))

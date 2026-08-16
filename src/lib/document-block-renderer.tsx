@@ -122,5 +122,6 @@ export function renderDocumentBlockHtml(
   if (block.type === "signature") {
     return <div className="rounded border border-dashed p-6 text-center text-sm text-muted-foreground">Tempat tanda tangan client</div>;
   }
-  return <div className="whitespace-pre-wrap">{renderDocumentBlock(block, values)}</div>;
+  const textAlignClass = block.align === "center" ? "text-center" : block.align === "right" ? "text-right" : block.align === "left" ? "text-left" : "";
+  return <div className={`whitespace-pre-wrap ${textAlignClass}`}>{renderDocumentBlock(block, values)}</div>;
 }

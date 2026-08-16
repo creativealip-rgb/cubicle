@@ -24,7 +24,7 @@ describe("contract placeholder surface parity", () => {
     expect(editPage).toContain("buildContractPlaceholderValues");
     expect(editPage).toContain("placeholderValues={placeholderValues}");
     expect(editor).toContain("placeholderValues?: DocumentPlaceholderValues");
-    expect(editor).toContain("renderDocumentBlock(block, placeholderValues)");
+    expect(editor).toContain("renderDocumentBlockHtml(block, placeholderValues)");
     expect(editor).toContain('t("Pratinjau", "Preview")');
   });
 });

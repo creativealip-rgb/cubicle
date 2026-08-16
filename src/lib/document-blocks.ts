@@ -2,6 +2,8 @@ export type DocumentBlockType = "heading" | "text" | "list" | "divider" | "place
 
 export type DocumentTableRow = string[];
 
+export type DocumentBlockAlign = "left" | "center" | "right";
+
 export type DocumentBlock = {
   id: string;
   type: DocumentBlockType;
@@ -9,6 +11,7 @@ export type DocumentBlock = {
   level?: 1 | 2 | 3;
   items?: string[];
   ordered?: boolean;
+  align?: DocumentBlockAlign;
   src?: string;
   fileName?: string;
   fileId?: string;
@@ -42,6 +45,7 @@ export function isSafeDocumentBlock(value: unknown): value is DocumentBlock {
   if (block.items !== undefined && !Array.isArray(block.items)) return false;
   if (block.items !== undefined && !block.items.every((item) => typeof item === "string")) return false;
   if (block.ordered !== undefined && typeof block.ordered !== "boolean") return false;
+  if (block.align !== undefined && block.align !== "left" && block.align !== "center" && block.align !== "right") return false;
   if (block.rows !== undefined && !isSafeTableRows(block.rows)) return false;
   if (block.src !== undefined && typeof block.src !== "string") return false;
   if (block.fileName !== undefined && typeof block.fileName !== "string") return false;
