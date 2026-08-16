@@ -104,8 +104,8 @@ export default async function DocInvoice() {
           </p>
           <DocsCallout variant="info">
             {t(
-              "Cek juga panduan lengkap di Panduan Invoice.",
-              "See also the full guide in the Invoice Guide."
+              "Pelajari cara mengimpor waktu yang belum ditagih ke invoice di panduan:",
+              "Learn how to import unbilled time into invoices in the guide:",
             )}{" "}
             <DocsInlineLink href="/app/docs/time-tracking">{t("Time Tracking", "Time Tracking")}</DocsInlineLink>
           </DocsCallout>
