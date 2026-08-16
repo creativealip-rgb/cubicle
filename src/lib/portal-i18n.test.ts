@@ -8,10 +8,11 @@ import {
 } from "./portal-i18n";
 
 describe("portal i18n", () => {
-  it("normalizes unsupported language to Indonesian", () => {
-    expect(normalizePortalLang(undefined)).toBe("id");
-    expect(normalizePortalLang("fr")).toBe("id");
+  it("normalizes unsupported language to English", () => {
+    expect(normalizePortalLang(undefined)).toBe("en");
+    expect(normalizePortalLang("fr")).toBe("en");
     expect(normalizePortalLang("en")).toBe("en");
+    expect(normalizePortalLang("id")).toBe("id");
   });
 
   it("maps language to date locale", () => {

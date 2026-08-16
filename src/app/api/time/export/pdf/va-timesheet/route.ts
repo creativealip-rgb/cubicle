@@ -227,7 +227,7 @@ export async function GET(request: Request) {
   }
 
   const cookieStore = await cookies();
-  const lang = (cookieStore.get("cubiqlo_lang")?.value === "en" ? "en" : "id") as "id" | "en";
+  const lang = (cookieStore.get("cubiqlo_lang")?.value === "id" ? "id" : "en") as "id" | "en";
   const locale = lang === "en" ? "en-US" : "id-ID";
 
   const clientId = tokenInvoice?.clientId ?? url.searchParams.get("clientId");

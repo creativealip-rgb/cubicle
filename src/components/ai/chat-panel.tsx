@@ -145,7 +145,7 @@ const MODULE_ICONS = [
 export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "fullpage" } = {}) {
   const isFullpage = variant === "fullpage";
   const { lang: currentLang } = useT();
-  const lang: AssistantLang = currentLang === "en" ? "en" : "id";
+  const lang: AssistantLang = currentLang === "id" ? "id" : "en";
   const assistantText = getAssistantCopy(lang);
   const [open, setOpen] = useState(isFullpage);
   useEffect(() => {

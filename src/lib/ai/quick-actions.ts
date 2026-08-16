@@ -30,4 +30,4 @@ export const assistantQuickActions: AssistantQuickAction[] = [
 ];
 
 export const primaryAssistantActions = assistantQuickActions.filter((item) => item.primary);
-export const localizeAssistantAction = (action: AssistantQuickAction, lang: string) => ({ label: action.label[lang === "en" ? "en" : "id"], prompt: action.prompt[lang === "en" ? "en" : "id"] });
+export const localizeAssistantAction = (action: AssistantQuickAction, lang: string) => ({ label: action.label[lang === "id" ? "id" : "en"], prompt: action.prompt[lang === "id" ? "id" : "en"] });

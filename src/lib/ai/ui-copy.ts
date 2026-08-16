@@ -31,7 +31,7 @@ export const assistantCopy = {
   },
 } as const;
 
-export function getAssistantCopy(lang: string) { return assistantCopy[lang === "en" ? "en" : "id"]; }
+export function getAssistantCopy(lang: string) { return assistantCopy[lang === "id" ? "id" : "en"]; }
 
 const toolGroups: Array<[RegExp, string, string]> = [
   [/thinking/i, "Menganalisis pertanyaan…", "Analyzing your question…"],

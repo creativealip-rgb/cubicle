@@ -18,10 +18,10 @@ interface LangContextValue {
 }
 
 const LangContext = createContext<LangContextValue>({
-  lang: "id",
-  t: (id) => id,
+  lang: "en",
+  t: (_id, en) => en,
   setLang: () => {},
-  locale: "id-ID",
+  locale: "en-US",
   pending: false,
 });
 
