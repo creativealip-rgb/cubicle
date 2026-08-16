@@ -10,6 +10,7 @@ import {
 import { normalizeDocumentBlocks } from "@/lib/document-blocks";
 import { renderDocumentBlock } from "@/lib/document-block-renderer";
 import { buildContractPlaceholderValues } from "@/lib/document-placeholder-values";
+import type { DocumentPlaceholderValues } from "@/lib/document-placeholders";
 
 Font.register({
   family: "Inter",
@@ -246,6 +247,14 @@ interface ContractData {
     signatureDataUrl: string | null;
     signedFromIp: string | null;
     declineReason: string | null;
+    // Optional financial values injected when the contract has them (e.g.
+    // derived from the accepted proposal); absent values leave {{...}} tokens
+    // unresolved so the literal placeholder stays visible.
+    subtotal?: string | null;
+    tax?: string | null;
+    total?: string | null;
+    downPaymentPercent?: string | null;
+    currency?: string | null;
   };
   workspace: { name: string; billingName: string | null; billingAddress: string | null };
   client: { name: string; email: string | null; companyName: string | null };
@@ -293,16 +302,32 @@ function stripBold(text: string): string {
 
 export function ContractPDF({ contract, workspace, client }: ContractData) {
   const status = STATUS_STYLES[contract.status] || STATUS_STYLES.draft;
-  const placeholderValues = buildContractPlaceholderValues({
-    clientName: contract.clientName ?? client.name,
-    clientEmail: contract.clientEmail ?? client.email,
-    companyName: contract.companyName ?? client.companyName,
-    contractNumber: contract.contractNumber,
-    contractDate: contract.contractDate,
-    validUntil: contract.validUntil,
-    workspaceName: workspace.name,
-    workspaceAddress: workspace.billingAddress,
-  });
+  const placeholderValues: DocumentPlaceholderValues = {
+    ...buildContractPlaceholderValues({
+      clientName: contract.clientName ?? client.name,
+      clientEmail: contract.clientEmail ?? client.email,
+      companyName: contract.companyName ?? client.companyName,
+      contractNumber: contract.contractNumber,
+      contractDate: contract.contractDate,
+      validUntil: contract.validUntil,
+      workspaceName: workspace.name,
+      workspaceAddress: workspace.billingAddress,
+    }),
+    today: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
+  };
+  // Financial placeholders: derived from optional contract fields (accepted
+  // proposal carry-over). Missing values are omitted so {{subtotal}} etc.
+  // stay visible instead of resolving to 0 or empty.
+  const subtotal = contract.subtotal != null && contract.subtotal !== "" ? Number(contract.subtotal) : null;
+  const tax = contract.tax != null && contract.tax !== "" ? Number(contract.tax) : null;
+  const total = contract.total != null && contract.total !== "" ? Number(contract.total) : null;
+  const dpPercent = contract.downPaymentPercent != null && contract.downPaymentPercent !== "" ? Number(contract.downPaymentPercent) : null;
+  if (subtotal !== null) placeholderValues.subtotal = subtotal;
+  if (tax !== null) placeholderValues.tax = tax;
+  if (total !== null) {
+    placeholderValues.total_amount = total;
+    placeholderValues.down_payment = dpPercent !== null ? total * (dpPercent / 100) : 0;
+  }
 
   return (
     <Document
