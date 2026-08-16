@@ -190,7 +190,7 @@ export function ActivityCatalog({ activities }: ActivityCatalogProps) {
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button size="sm" className="gap-1" onClick={openCreate}>
-                <Plus className="h-3 w-3" />
+                <Plus className="h-4 w-4" />
                 {t("Tambah", "Add")}
               </Button>
             </DialogTrigger>
