@@ -43,7 +43,7 @@ export function NewTimerDialog({
   }
 
   return (
-    <Button variant="outline" className="h-11 w-full gap-2 sm:h-9 sm:w-auto" onClick={startEmptyTimer} disabled={loading}>
+    <Button variant="outline" className="h-11 w-full gap-1 sm:h-8 sm:w-auto" onClick={startEmptyTimer} disabled={loading}>
       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
       {t("Mulai Timer", "Start Timer")}
     </Button>
