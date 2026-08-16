@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Info, Loader2, Monitor, Smartphone, Sparkles, Terminal, TriangleAlert } from "lucide-react";
+import { ChevronDown, Braces, Info, Loader2, Monitor, Smartphone, Sparkles, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -140,7 +140,7 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
   const [pendingType, setPendingType] = useState<PromptTypeId | null>(null);
   const [pendingReason, setPendingReason] = useState<"result" | "dirty" | null>(null);
   const [previewOpen, setPreviewOpen] = useState(true);
-  const [showTerminal, setShowTerminal] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [attempted, setAttempted] = useState(false);
 
@@ -495,15 +495,15 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
           <div>
             {result && (
               <div className="mb-2 flex items-center gap-2">
-                <button onClick={() => setShowTerminal(false)} className={cn("rounded-md px-2.5 py-1 text-xs font-medium transition-colors", !showTerminal ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground")}>
-                  <Sparkles className="mr-1 inline-block h-3 w-3" />{t("Kartu", "Cards")}
+                <button onClick={() => setShowPrompt(true)} className={cn("rounded-md px-2.5 py-1 text-xs font-medium transition-colors", showPrompt ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground")}>
+                  <Braces className="mr-1 inline-block h-3 w-3" />{t("Prompt", "Prompt")}
                 </button>
-                <button onClick={() => setShowTerminal(true)} className={cn("rounded-md px-2.5 py-1 text-xs font-medium transition-colors", showTerminal ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground")}>
-                  <Terminal className="mr-1 inline-block h-3 w-3" />{t("Terminal", "Terminal")}
+                <button onClick={() => setShowPrompt(false)} className={cn("rounded-md px-2.5 py-1 text-xs font-medium transition-colors", !showPrompt ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground")}>
+                  <Sparkles className="mr-1 inline-block h-3 w-3" />{t("Kartu", "Cards")}
                 </button>
               </div>
             )}
-            <PromptResult result={result} loading={loading} view={showTerminal ? "terminal" : "cards"} onEdit={() => document.getElementById("prompt-brief")?.scrollIntoView({ behavior: "smooth" })} onRegenerate={generate} />
+            <PromptResult result={result} loading={loading} view={showPrompt ? "prompt" : "cards"} onEdit={() => document.getElementById("prompt-brief")?.scrollIntoView({ behavior: "smooth" })} onRegenerate={generate} />
           </div>
         </div>
       </div>
