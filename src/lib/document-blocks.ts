@@ -119,10 +119,37 @@ export function buildProposalStarterBlocks(): DocumentBlock[] {
     { id: crypto.randomUUID(), type: "list", items: ["", "", ""], ordered: false },
     { id: crypto.randomUUID(), type: "heading", level: 2, content: "Timeline" },
     { id: crypto.randomUUID(), type: "text", content: "" },
-    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Investasi" },
-    { id: crypto.randomUUID(), type: "table", rows: [["Item", "Qty", "Harga", "Jumlah"], ["", "", "", ""]] },
     { id: crypto.randomUUID(), type: "heading", level: 2, content: "Syarat & Ketentuan" },
     { id: crypto.randomUUID(), type: "text", content: "Berlaku sampai {{valid_until}}" },
+  ];
+}
+
+/**
+ * Starter blocks for a fresh contract: cover header, parties, scope, pricing
+ * table, term, and a signature block. Placeholder tokens ({{workspace_name}},
+ * {{contract_number}}, {{client_name}}, {{contract_date}}, {{valid_until}})
+ * resolve through the shared {{key}} resolver.
+ */
+export function buildContractStarterBlocks(): DocumentBlock[] {
+  return [
+    { id: crypto.randomUUID(), type: "heading", level: 1, content: "Perjanjian Kerja", align: "center" },
+    { id: crypto.randomUUID(), type: "text", content: "{{workspace_name}}", align: "center" },
+    { id: crypto.randomUUID(), type: "text", content: "No: {{contract_number}}", align: "center" },
+    { id: crypto.randomUUID(), type: "divider" },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Para Pihak" },
+    { id: crypto.randomUUID(), type: "text", content: "Pihak Pertama: {{workspace_name}}" },
+    { id: crypto.randomUUID(), type: "text", content: "Pihak Kedua: {{client_name}}" },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Latar Belakang" },
+    { id: crypto.randomUUID(), type: "text", content: "" },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Ruang Lingkup" },
+    { id: crypto.randomUUID(), type: "list", items: ["", "", ""], ordered: false },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Nilai Kontrak" },
+    { id: crypto.randomUUID(), type: "table", rows: [["Item", "Qty", "Harga", "Jumlah"], ["", "", "", ""]] },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Jangka Waktu" },
+    { id: crypto.randomUUID(), type: "text", content: "Berlaku sejak {{contract_date}} sampai {{valid_until}}" },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Ketentuan Lain" },
+    { id: crypto.randomUUID(), type: "text", content: "" },
+    { id: crypto.randomUUID(), type: "signature" },
   ];
 }
 
