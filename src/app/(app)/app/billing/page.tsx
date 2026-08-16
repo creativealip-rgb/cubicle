@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CheckoutButton } from "@/components/billing/checkout-button";
 import { BillingCheckoutStatusCard } from "@/components/billing/billing-checkout-status-card";
 import { getSubscriptionStatus } from "@/lib/subscription";
@@ -86,8 +87,7 @@ export default async function BillingPage({
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-sm font-medium text-[#6647F0]">{t("Billing", "Billing")}</p>
-        <h1 className="app-page-title">{t("Langganan", "Subscription")}</h1>
+        <h1 className="app-page-title">{t("Billing", "Billing")}</h1>
         <p className="mt-2 text-slate-600">
           {t(
             "Bayar bulanan atau tahunan via Pakasir QRIS, tanpa pajak. Plan aktif otomatis setelah webhook payment diterima.",
@@ -104,80 +104,91 @@ export default async function BillingPage({
         />
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("Plan saat ini", "Current Plan")}</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-slate-600">
-          <p><span className="font-medium text-slate-950">{t("Plan aktif", "Active plan")}:</span> {effectivePlan.toUpperCase()}</p>
-          {currentPlan !== effectivePlan && (
-            <p><span className="font-medium text-slate-950">{t("Plan terakhir", "Previous plan")}:</span> {currentPlan.toUpperCase()}</p>
-          )}
-          {user?.planExpiresAt && (
-            <p><span className="font-medium text-slate-950">{t("Berlaku hingga", "Valid until")}:</span> {user.planExpiresAt.toLocaleDateString(lang === "en" ? "en-US" : "id-ID")}</p>
-          )}
-          {user && (() => {
-            const sub = getSubscriptionStatus(user.planExpiresAt, currentPlan, lang);
-            const badgeClass = sub.status === "active" ? "bg-emerald-50 text-emerald-800" :
-              sub.status === "expiring" ? "bg-amber-50 text-amber-800" :
-              sub.status === "grace" ? "bg-orange-50 text-orange-800" :
-              "bg-red-50 text-red-800";
-            return <p className={`mt-2 rounded-lg px-3 py-2 text-sm ${badgeClass}`}>{sub.message}</p>;
-          })()}
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="plans">
+        <TabsList>
+          <TabsTrigger value="plans">{t("Paket", "Plans")}</TabsTrigger>
+          <TabsTrigger value="addons">{t("Add-on", "Add-ons")}</TabsTrigger>
+        </TabsList>
 
-      <Card>
-        <CardHeader><CardTitle>{t("Storage & add-on", "Storage & add-ons")}</CardTitle></CardHeader>
-        <CardContent className="space-y-5">
-          <AddonPurchaseControls effectivePlan={effectivePlan} />
-          <AddonManagement storageAddons={addons.storageAddons} extraWorkspaceEntitlements={addons.extraWorkspaceEntitlements} />
-        </CardContent>
-      </Card>
+        <TabsContent value="plans" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("Plan saat ini", "Current Plan")}</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-slate-600">
+              <p><span className="font-medium text-slate-950">{t("Plan aktif", "Active plan")}:</span> {effectivePlan.toUpperCase()}</p>
+              {currentPlan !== effectivePlan && (
+                <p><span className="font-medium text-slate-950">{t("Plan terakhir", "Previous plan")}:</span> {currentPlan.toUpperCase()}</p>
+              )}
+              {user?.planExpiresAt && (
+                <p><span className="font-medium text-slate-950">{t("Berlaku hingga", "Valid until")}:</span> {user.planExpiresAt.toLocaleDateString(lang === "en" ? "en-US" : "id-ID")}</p>
+              )}
+              {user && (() => {
+                const sub = getSubscriptionStatus(user.planExpiresAt, currentPlan, lang);
+                const badgeClass = sub.status === "active" ? "bg-emerald-50 text-emerald-800" :
+                  sub.status === "expiring" ? "bg-amber-50 text-amber-800" :
+                  sub.status === "grace" ? "bg-orange-50 text-orange-800" :
+                  "bg-red-50 text-red-800";
+                return <p className={`mt-2 rounded-lg px-3 py-2 text-sm ${badgeClass}`}>{sub.message}</p>;
+              })()}
+            </CardContent>
+          </Card>
 
-      <div className="grid gap-5 lg:grid-cols-3">
-        {plans.map((plan) => {
-          const isCurrent = effectivePlan === plan.key;
-          const paid = plan.key === "solo" || plan.key === "team";
-          const planConfig = paid ? BILLING_PLANS[plan.key] : null;
-          return (
-            <Card key={plan.key} className={plan.key === "solo" ? "border-[#6647F0] shadow-lg" : ""}>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  {plan.name}
-                  {isCurrent && <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">{t("Aktif", "Active")}</span>}
-                </CardTitle>
-                {paid && planConfig ? (
-                  <div>
-                    <p className="text-2xl font-semibold text-slate-950">
-                      {getPlanPeriodLabel(plan.key, "monthly")}
-                      <span className="text-sm font-normal text-slate-500">/{t("bulan", "month")}</span>
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {t("Ditagih tahunan", "Billed yearly")} · {getPlanPeriodLabel(plan.key, "yearly")}/{t("tahun", "year")}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-2xl font-semibold text-slate-950">Rp 0</p>
-                )}
-                <p className="text-sm text-slate-600">{t(plan.description[0], plan.description[1])}</p>
-              </CardHeader>
-              <CardContent className="space-y-5">
-                <ul className="space-y-2 text-sm text-slate-600">
-                  {plan.features.map((feature) => <li key={feature[0]}>✓ {t(feature[0], feature[1])}</li>)}
-                </ul>
-                {paid ? (
-                  <CheckoutButton plan={plan.key} showPeriodToggle={false} disabled={isCurrent}>
-                    {isCurrent ? t("Plan aktif", "Active plan") : plan.key === "solo" ? t("Bayar Solo QRIS", "Pay Solo QRIS") : t("Bayar Team QRIS", "Pay Team QRIS")}
-                  </CheckoutButton>
-                ) : (
-                  <div className="rounded-lg bg-slate-100 px-4 py-2 text-center text-sm font-medium text-slate-600">{t("Plan default", "Default plan")}</div>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+          <div className="grid gap-5 lg:grid-cols-3">
+            {plans.map((plan) => {
+              const isCurrent = effectivePlan === plan.key;
+              const paid = plan.key === "solo" || plan.key === "team";
+              const planConfig = paid ? BILLING_PLANS[plan.key] : null;
+              return (
+                <Card key={plan.key} className={plan.key === "solo" ? "border-[#6647F0] shadow-lg" : ""}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      {plan.name}
+                      {isCurrent && <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">{t("Aktif", "Active")}</span>}
+                    </CardTitle>
+                    {paid && planConfig ? (
+                      <div>
+                        <p className="text-2xl font-semibold text-slate-950">
+                          {getPlanPeriodLabel(plan.key, "monthly")}
+                          <span className="text-sm font-normal text-slate-500">/{t("bulan", "month")}</span>
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {t("Ditagih tahunan", "Billed yearly")} · {getPlanPeriodLabel(plan.key, "yearly")}/{t("tahun", "year")}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-2xl font-semibold text-slate-950">Rp 0</p>
+                    )}
+                    <p className="text-sm text-slate-600">{t(plan.description[0], plan.description[1])}</p>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    <ul className="space-y-2 text-sm text-slate-600">
+                      {plan.features.map((feature) => <li key={feature[0]}>✓ {t(feature[0], feature[1])}</li>)}
+                    </ul>
+                    {paid ? (
+                      <CheckoutButton plan={plan.key} showPeriodToggle={false} disabled={isCurrent}>
+                        {isCurrent ? t("Plan aktif", "Active plan") : plan.key === "solo" ? t("Bayar Solo QRIS", "Pay Solo QRIS") : t("Bayar Team QRIS", "Pay Team QRIS")}
+                      </CheckoutButton>
+                    ) : (
+                      <div className="rounded-lg bg-slate-100 px-4 py-2 text-center text-sm font-medium text-slate-600">{t("Plan default", "Default plan")}</div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="addons">
+          <Card>
+            <CardHeader><CardTitle>{t("Storage & add-on", "Storage & add-ons")}</CardTitle></CardHeader>
+            <CardContent className="space-y-5">
+              <AddonPurchaseControls effectivePlan={effectivePlan} />
+              <AddonManagement storageAddons={addons.storageAddons} extraWorkspaceEntitlements={addons.extraWorkspaceEntitlements} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
