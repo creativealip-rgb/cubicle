@@ -36,7 +36,10 @@ services:
       CUBIQLO_ENV: development
       RESEND_API_KEY: ""
       EMAIL_FROM: "Cubiqlo Dev <dev@localhost>"
-      AI_API_KEY: ${AI_API_KEY:-}
+      # AI_API_KEY intentionally NOT pinned here (same as CRON_SECRET below):
+      # an empty `${AI_API_KEY:-}` in `environment:` would override and null
+      # out the real key coming from `.env.development.local` (env_file),
+      # making generateVisualPrompt throw "AI belum dikonfigurasi".
       AI_MODEL: ${AI_MODEL:-ag/gemini-3-flash}
       OPENAI_API_KEY: ""
       # CRON_SECRET is intentionally NOT pinned here: an empty value in
