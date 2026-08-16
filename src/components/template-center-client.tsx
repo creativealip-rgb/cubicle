@@ -380,10 +380,10 @@ export function TemplateCenterClient({
       <Tabs value={activeTab} onValueChange={changeTab}>
         <TabsList className="inline-flex h-auto max-w-full justify-start gap-1 overflow-x-auto">
           <TabsTrigger value="proposal" className="gap-1.5">
-            <ScrollText className="h-4 w-4" /> {t("Proposal", "Proposals")} {loading ? "…" : `(${proposalTpls.length})`}
+            <ScrollText className="h-4 w-4" /> {t("Proposal", "Proposals")}{!loading ? ` (${proposalTpls.length})` : ""}
           </TabsTrigger>
           <TabsTrigger value="contract" className="gap-1.5">
-            <FileSignature className="h-4 w-4" /> {t("Kontrak", "Contracts")} {loading ? "…" : `(${contractTpls.length})`}
+            <FileSignature className="h-4 w-4" /> {t("Kontrak", "Contracts")}{!loading ? ` (${contractTpls.length})` : ""}
           </TabsTrigger>
         </TabsList>
 
