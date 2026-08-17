@@ -95,6 +95,12 @@ export const auth = betterAuth({
     enabled: true,
     requireEmailVerification: true,
     sendResetPassword: async ({ user, url }) => {
+      // Better Auth builds the reset link against `baseURL + basePath`, which
+      // resolves to `https://app.cubiqlo.com/api/auth/reset-password/{token}`.
+      // That path is the *API* GET endpoint (which redirects), not the app's
+      // `/reset-password/{token}` page. Strip the `/api/auth` segment so the
+      // email link points straight at the frontend reset page.
+      const resetUrl = url.replace(/(\/api\/auth)(?=\/reset-password\/)/, "");
       const html = `<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f6f7f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1a1d24;">
