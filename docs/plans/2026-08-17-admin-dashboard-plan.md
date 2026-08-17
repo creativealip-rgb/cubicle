@@ -295,7 +295,7 @@ Gunakan shadcn/radix existing (Dialog, Select, Switch, Tabs, Table). Mobile resp
 1. Dev branch: `feature/admin-dashboard` dari `main`.
 2. Implement P0 → `tsc`/vitest/build/smoke → screenshot QA dev (authenticated, dua browser admin+non-admin).
 3. Review Alip → approval.
-4. Merge `main` → deploy Dokploy (`cubiqlo-new-app`, rebuild image) + update Traefik labels (tambah host admin).
+4. Merge `main` → deploy Dokploy (`cubiqlo-new-app-next`, rebuild image) + update Traefik labels (tambah host admin).
 5. Tambah DNS record `admin.cubiqlo.com`.
 6. Bootstrap akun admin di prod DB via SQL:
    ```sql
