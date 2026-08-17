@@ -1,40 +1,35 @@
 import { describe, expect, it } from "vitest";
-import { getCanonicalRedirect } from "./host-routing";
+import { getAdminRewritePath } from "./host-routing";
 
-describe("getCanonicalRedirect", () => {
-  it("redirects www to canonical apex while preserving path and query", () => {
-    expect(getCanonicalRedirect("www.cubiqlo.com", "/pricing", "?ref=ads", false)).toBe(
-      "https://cubiqlo.com/pricing?ref=ads",
-    );
+describe("getAdminRewritePath (admin host transparent rewrite)", () => {
+  it("maps / to the admin dashboard", () => {
+    expect(getAdminRewritePath("/")).toBe("/admin/dashboard");
   });
 
-  it("keeps apex landing for guests", () => {
-    expect(getCanonicalRedirect("cubiqlo.com", "/", "", false)).toBeNull();
+  it("passes through canonical /admin paths", () => {
+    expect(getAdminRewritePath("/admin/dashboard")).toBe("/admin/dashboard");
+    expect(getAdminRewritePath("/admin/users")).toBe("/admin/users");
+    expect(getAdminRewritePath("/admin")).toBe("/admin/dashboard");
+    expect(getAdminRewritePath("/admin/")).toBe("/admin/dashboard");
   });
 
-  it("does not trust a raw session cookie for apex landing redirects", () => {
-    expect(getCanonicalRedirect("cubiqlo.com", "/", "", true)).toBeNull();
+  it("maps bare control-plane paths to the (admin) route group", () => {
+    expect(getAdminRewritePath("/users")).toBe("/admin/users");
+    expect(getAdminRewritePath("/workspaces")).toBe("/admin/workspaces");
+    expect(getAdminRewritePath("/payments")).toBe("/admin/payments");
+    expect(getAdminRewritePath("/audit")).toBe("/admin/audit");
   });
 
-  it("redirects apex auth pages to app host and preserves query", () => {
-    expect(getCanonicalRedirect("cubiqlo.com", "/login", "?redirect=%2Fapp%2Ftasks", false)).toBe(
-      "https://app.cubiqlo.com/login?redirect=%2Fapp%2Ftasks",
-    );
+  it("maps /app/* (post-login landing) to the admin route group, not /admin/app/*", () => {
+    expect(getAdminRewritePath("/app/dashboard")).toBe("/admin/dashboard");
+    expect(getAdminRewritePath("/app/users")).toBe("/admin/users");
+    expect(getAdminRewritePath("/app")).toBe("/admin/dashboard");
+    expect(getAdminRewritePath("/app/")).toBe("/admin/dashboard");
   });
 
-  it("redirects apex app routes to app host", () => {
-    expect(getCanonicalRedirect("cubiqlo.com", "/app/tasks", "?status=open", true)).toBe(
-      "https://app.cubiqlo.com/app/tasks?status=open",
-    );
-  });
-
-  it("redirects app root to dashboard", () => {
-    expect(getCanonicalRedirect("app.cubiqlo.com", "/", "", false)).toBe(
-      "https://app.cubiqlo.com/app/dashboard",
-    );
-  });
-
-  it("keeps app login reachable even when a stale cookie exists", () => {
-    expect(getCanonicalRedirect("app.cubiqlo.com", "/login", "", true)).toBeNull();
+  it("passes auth paths through unrewritten so /login renders", () => {
+    for (const p of ["/login", "/signup", "/forgot-password", "/reset-password", "/verify-email", "/verify-email/success"]) {
+      expect(getAdminRewritePath(p)).toBe(p);
+    }
   });
 });
