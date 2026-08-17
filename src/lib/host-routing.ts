@@ -79,6 +79,13 @@ export function getCanonicalRedirect(
  * rewrite applies (non-admin hosts).
  */
 export function getAdminRewritePath(pathname: string): string | null {
+  // Auth paths (login/signup/verify/etc.) must pass through UNREWRITTEN on the
+  // admin host: rewriting /login → /admin/login hits a non-existent route and
+  // 404s. The admin layout's auth guard redirects to /login on the same host,
+  // and that redirect target must render normally.
+  if (AUTH_PATHS.includes(pathname)) {
+    return pathname;
+  }
   if (pathname === "/admin" || pathname === "/admin/") {
     return "/admin/dashboard";
   }
