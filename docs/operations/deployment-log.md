@@ -19,9 +19,10 @@
   - Health: `https://cubiqlo.com/api/health` app/DB ok.
   - Asset revision proof: `dpl=f550793f98b6ab8a84622a8b5cefc6d17a06ce2b`.
   - Proxy safety: `dokploy-traefik` sole public 80/443 owner.
-- Traefik: added `cubiqlo-admin-http` + `cubiqlo-admin-https` routers in `/etc/dokploy/traefik/dynamic/cubiqlo-new.yml` → service `cubiqlo-new-service` (port 3000), TLS letsencrypt. File-backed (hot reload).
-- DNS: `admin.cubiqlo.com` A record → `43.134.165.218` (DNS-only, like `dev.cubiqlo.com`) — **PENDING** (Cloudflare zone access required; NXDOMAIN until added).
-- Bootstrap: promote an existing Alip-owned account to `role='admin'` — **PENDING user decision** (`admin@cubiqlo.com` doesn't exist yet; options: `alipdevcom@gmail.com` or create new).
+- Traefik: added `cubiqlo-admin-http` + `cubiqlo-admin-https` routers in `/etc/dokploy/traefik/dynamic/cubiqlo-new.yml` → service `cubiqlo-new-service` (port 3000), TLS letsencrypt. File-backed (hot reload). Cert issued `admin.cubiqlo.com` in acme.json after Traefik restart (httpChallenge).
+- Post-release fix `750d4b1`: `getAdminRewritePath` rewrote auth paths (`/login` → `/admin/login` 404). Auth paths now pass through unrewritten. Verified dev + prod: `/admin` → 307 → `/login` renders 200; login → dashboard/users/payments/workspaces/audit all render. Prod QA via playwright: all 5 admin pages ✅.
+- DNS: `admin.cubiqlo.com` A record → `43.134.165.218` (DNS-only) **DONE** via Cloudflare API (zone `5ee934b3e107c2e2ef62b6a507b93cf3`, token `cfat_evDe...` from coder profile skills).
+- Bootstrap: **DONE** — `admin@cubiqlo.com` created in prod DB (role='admin', credential login, scrypt hash); login verified via Better Auth API (HTTP 200). Password stored in CREDENTIALS.md.
 
 ## 16 August 2026 — Docs: fix stale claims + add Business guides (Layanan, Template, Kuesioner)
 
