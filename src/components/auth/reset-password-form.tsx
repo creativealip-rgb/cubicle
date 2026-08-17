@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Loader2, ArrowLeft, CheckCircle, AlertTriangle } from "lucide-react";
@@ -18,10 +18,14 @@ import {
 } from "@/components/ui/card";
 import { authClient } from "@/lib/auth-client";
 
-export function ResetPasswordForm() {
-  const params = useSearchParams();
+export function ResetPasswordForm({
+  token,
+  callbackURL,
+}: {
+  token?: string;
+  callbackURL?: string;
+}) {
   const router = useRouter();
-  const token = params.get("token") ?? "";
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -31,11 +35,7 @@ export function ResetPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
-  useEffect(() => {
-    if (!token) {
-      setError("Link reset tidak valid atau tidak ada. Silakan minta link baru.");
-    }
-  }, [token]);
+  const hasToken = Boolean(token);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -67,8 +67,9 @@ export function ResetPasswordForm() {
       }
 
       setDone(true);
-      // Redirect to login after a short pause so the success state registers
-      setTimeout(() => router.push("/login"), 1500);
+      // Redirect after a short pause so the success state registers.
+      const target = callbackURL || "/login";
+      setTimeout(() => router.push(target), 1500);
     } catch {
       setError("Terjadi kesalahan. Coba lagi.");
     } finally {
@@ -88,7 +89,7 @@ export function ResetPasswordForm() {
         </CardHeader>
         <CardFooter className="flex justify-center">
           <Link
-            href="/login"
+            href={callbackURL || "/login"}
             className="text-sm text-muted-foreground underline-offset-4 hover:underline"
           >
             Kembali ke halaman masuk
@@ -109,13 +110,13 @@ export function ResetPasswordForm() {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
-          {!token && (
+          {!hasToken && (
             <div className="flex items-start gap-2 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <span>Token reset tidak ditemukan. Gunakan link dari email kamu, atau minta link baru.</span>
             </div>
           )}
-          {error && token && (
+          {error && hasToken && (
             <div className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {error}
             </div>
@@ -130,7 +131,7 @@ export function ResetPasswordForm() {
               required
               minLength={8}
               autoComplete="new-password"
-              disabled={!token}
+              disabled={!hasToken}
             />
           </div>
           <div className="space-y-2">
@@ -143,10 +144,10 @@ export function ResetPasswordForm() {
               required
               minLength={8}
               autoComplete="new-password"
-              disabled={!token}
+              disabled={!hasToken}
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading || !token}>
+          <Button type="submit" className="w-full" disabled={loading || !hasToken}>
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             Perbarui password
           </Button>
@@ -154,11 +155,11 @@ export function ResetPasswordForm() {
       </form>
       <CardFooter className="flex justify-center">
         <Link
-          href={token ? "/forgot-password" : "/login"}
+          href={hasToken ? "/forgot-password" : "/login"}
           className="flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:underline"
         >
           <ArrowLeft className="h-3 w-3" />
-          {token ? "Minta link baru" : "Kembali ke halaman masuk"}
+          {hasToken ? "Minta link baru" : "Kembali ke halaman masuk"}
         </Link>
       </CardFooter>
     </Card>
