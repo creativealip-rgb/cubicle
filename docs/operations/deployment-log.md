@@ -297,3 +297,5 @@
 - `docs/operations/monitoring-slo.md`
 - `docs/operations/backup-recovery-observability.md`
 - `docs/operations/staging-contract.md`
+
+- Post-release fix `07bf901`: post-login landing `/app/dashboard` on admin host was rewritten to `/admin/app/dashboard` → 404 "Page not found". `getAdminRewritePath` now maps `/app/*` → `/admin/*` (strip prefix). Added 5 functional unit tests (`host-routing.test.ts`, 16/16 wiring+unit pass). Verified prod: login form → `admin.cubiqlo.com/app/dashboard` renders dashboard (screenshot 17-prod-postlogin.png).
