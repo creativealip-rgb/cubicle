@@ -179,7 +179,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
   if (!(parsed.items?.length || explicitSources.length || projectIds.length)) throw new Error("Tambahkan minimal satu item atau sumber tagihan");
   const rateRows = await db.select({ fromCurrency: workspaceCurrencyRates.fromCurrency, rate: workspaceCurrencyRates.rate }).from(workspaceCurrencyRates).where(eq(workspaceCurrencyRates.workspaceId, workspaceId));
   const rateMap = buildRateMap(rateRows);
-  const projectItemValues: Array<{ description: string; quantity: number; unitPrice: number; sourceId: string; sourceMode: "fixed_full" | "fixed_dp" | "fixed_milestone" | "fixed_final" | "hourly_deposit"; sourceMetadata: { milestoneName?: string; requestedPercent?: string } | null; originalCurrency: string; originalAmount: number; conversionRate: number }> = [];
+  const projectItemValues: Array<{ description: string; quantity: number; unitPrice: number; sourceId: string; sourceMode: "fixed_full" | "fixed_dp" | "fixed_milestone" | "fixed_final" | "hourly_deposit" | "hourly_timesheet"; sourceMetadata: { milestoneName?: string; requestedPercent?: string } | null; originalCurrency: string; originalAmount: number; conversionRate: number }> = [];
   const projectServiceItemValues: Array<{ description: string; quantity: number; unitPrice: number; sourceId: string; originalCurrency: string; originalAmount: number; conversionRate: number }> = [];
   for (const projectId of projectIds) {
     const [project] = await db.select({ id: projects.id, name: projects.name, billingModel: projects.billingModel, billingType: projects.billingType, budget: projects.budget, rate: projects.rate, currency: projects.currency, retainerFee: projects.retainerFee, packagePrice: packages.price, packageCustomPrice: packages.customPrice }).from(projects).leftJoin(packages, eq(projects.selectedPackageId, packages.id)).where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId), eq(projects.clientId, parsed.clientId))).limit(1);
@@ -187,12 +187,12 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
     const source = explicitSources.find((candidate) => candidate.projectId === project.id);
     const effectiveBudget = project.billingModel === "retainer" && project.retainerFee ? Number(project.retainerFee) : project.budget ? Number(project.budget) : null;
     let originalAmount = resolveProjectAmount({ billingType: project.billingType, budget: effectiveBudget, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packageCustomPrice ?? project.packagePrice ?? 0) || null });
-    let sourceMode: "fixed_full" | "fixed_dp" | "fixed_milestone" | "fixed_final" | "hourly_deposit" = "fixed_final";
+    let sourceMode: "fixed_full" | "fixed_dp" | "fixed_milestone" | "fixed_final" | "hourly_deposit" | "hourly_timesheet" = isFixedInvoiceBillingModel(resolveBillingModel(project)) ? "fixed_final" : "hourly_timesheet";
     let sourceMetadata: { milestoneName?: string; requestedPercent?: string } | null = null;
     if (source?.mode === "hourly_timesheet") continue;
     if (source?.mode === "hourly_deposit") {
-      // Backward compat: old hourly deposit flow
-      originalAmount = source.amount;
+      // Hourly deposit flow (DP / bayaran di awal untuk projek per jam)
+      originalAmount = Number((source as any).amount ?? (source as any).value ?? 0);
       sourceMode = "hourly_deposit";
     } else if (isFixedInvoiceBillingModel(resolveBillingModel(project))) {
       const priorRows = await db
@@ -214,7 +214,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
     } else if (source) {
       throw new Error("Source invoice tidak sesuai model billing proyek");
     }
-    if (project.billingType === "hours" && !source) continue;
+    if (resolveBillingModel(project) === "hourly" && !source) continue;
     // For fixed-price projects with an explicit source (DP/milestone/full),
     // skip service rows — the source amount IS the invoice line, not the services.
     const skipServices = source && source.mode.startsWith("fixed_");
@@ -444,7 +444,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
             if (pkg) {
               unitPrice = Number(pkg.customPrice ?? pkg.price) || 0;
             }
-          } else if (proj.billingType === "hours") {
+          } else if (proj.billingType === "hours" || proj.billingType === "hourly" || resolveBillingModel(proj) === "hourly") {
             // Hours: seed project name only; amount 0 — isi via import timesheet / edit manual.
             unitPrice = 0;
           } else if (proj.budget != null) {

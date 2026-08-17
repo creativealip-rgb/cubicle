@@ -28,6 +28,8 @@ describe("billing model compatibility", () => {
     expect(resolveBillingModel({ billingModel: "retainer", billingType: "project" })).toBe("retainer");
     expect(resolveBillingModel({ billingModel: null, billingType: "project" })).toBe("fixed_price");
     expect(resolveBillingModel({ billingModel: null, billingType: "hours" })).toBe("hourly");
+    expect(resolveBillingModel({ billingModel: null, billingType: "hourly" })).toBe("hourly");
+    expect(resolveBillingModel({ billingModel: "hourly", billingType: "hourly" })).toBe("hourly");
     expect(resolveBillingModel({ billingModel: null, billingType: "package" })).toBe("legacy_package");
   });
 
