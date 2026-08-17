@@ -1,7 +1,7 @@
-import { betterAuth } from "better-auth";
+import { betterAuth, APIError } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db";
-import { sessions } from "@/db/schema";
+import { sessions, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { sendNotification } from "@/lib/notifications";
 import { resolveBetterAuthSecret } from "@/lib/auth-secret";
@@ -43,12 +43,31 @@ export const auth = betterAuth({
   databaseHooks: {
     session: {
       create: {
-        before: async (session) => ({
-          data: {
-            ...session,
-            expiresAt: capSessionExpiry(session.createdAt, session.expiresAt),
-          },
-        }),
+        before: async (session) => {
+          // Superadmin control plane: banned users cannot create sessions.
+          // `session.userId` is present on the create path; throwing APIError
+          // makes Better Auth reject the login cleanly (a plain Error would
+          // not surface as an auth failure).
+          if (session?.userId) {
+            const [target] = await db
+              .select({ banned: users.banned })
+              .from(users)
+              .where(eq(users.id, session.userId))
+              .limit(1);
+            if (target?.banned) {
+              throw new APIError("FORBIDDEN", {
+                code: "ACCOUNT_BANNED",
+                message: "This account has been suspended.",
+              });
+            }
+          }
+          return {
+            data: {
+              ...session,
+              expiresAt: capSessionExpiry(session.createdAt, session.expiresAt),
+            },
+          };
+        },
       },
       update: {
         before: async (session) => {
@@ -190,6 +209,8 @@ export const auth = betterAuth({
     "http://cubiqlo.com",
     "https://www.cubiqlo.com",
     "http://www.cubiqlo.com",
+    "https://admin.cubiqlo.com",
+    "http://admin.cubiqlo.com",
     "https://localhost:3000",
     "http://localhost:3000",
     "https://127.0.0.1:3000",
