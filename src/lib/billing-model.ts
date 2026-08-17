@@ -28,9 +28,10 @@ export function resolveBillingModel(input: {
     throw new Error("Model billing Project tidak didukung");
   }
 
-  if (input.billingType === "project") return "fixed_price";
-  if (input.billingType === "hours") return "hourly";
-  if (input.billingType === "package") return "legacy_package";
+  if (input.billingType === "project" || input.billingType === "fixed_price") return "fixed_price";
+  if (input.billingType === "hours" || input.billingType === "hourly") return "hourly";
+  if (input.billingType === "package" || input.billingType === "legacy_package") return "legacy_package";
+  if (input.billingType === "retainer") return "retainer";
   throw new Error("Model billing Project tidak didukung");
 }
 
