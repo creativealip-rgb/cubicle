@@ -267,16 +267,16 @@ Gunakan shadcn/radix existing (Dialog, Select, Switch, Tabs, Table). Mobile resp
 - [ ] Hanya `users.role='admin'` bisa akses `admin.cubiqlo.com/*`; non-admin redirect ke app, dan server action nolak (defense-in-depth, bukan cuma UI).
 - [ ] `admin.cubiqlo.com` ter-resolve & serve admin app; `app.cubiqlo.com/admin` redirect ke admin subdomain.
 - [ ] Cookie session valid lintas subdomain (login di app → bisa buka admin tanpa login ulang).
-- [ ] Admin lihat semua user lintas workspace (global) + search + filter jalan.
-- [ ] Add user → akun login valid (password ter-hash, bisa login, emailVerified sesuai toggle).
-- [ ] Edit user → nama/email/plan/planExpiresAt berubah benar.
-- [ ] Reset password → user bisa login dengan password baru.
-- [ ] Ban → sesi aktif di-revoke + login baru ditolak; unban mengembalikan akses.
-- [ ] Admin tidak bisa ban/edit/downgrade dirinya sendiri.
-- [ ] Ubah tier → `users.plan`/`planExpiresAt` berubah + tercatat audit (old→new + alasan); user langsung dapat akses tier baru.
-- [ ] Setiap mutasi admin tercatat di `admin_audit_logs`.
-- [ ] `tsc --noEmit` clean, vitest hijau, `next build` sukses, smoke OK.
-- [ ] QA visual desktop + mobile (screenshot autentikasi) untuk list/detail/form.
+- [x] Admin lihat semua user lintas workspace (global) + search + filter jalan.
+- [x] Add user → akun login valid (password ter-hash, bisa login, emailVerified sesuai toggle).
+- [x] Edit user → nama/email/plan/planExpiresAt berubah benar.
+- [x] Reset password → user bisa login dengan password baru.
+- [x] Ban → sesi aktif di-revoke + login baru ditolak; unban mengembalikan akses.
+- [ ] Admin tidak bisa ban/edit/downgrade dirinya sendiri. *(deferred — belum diimplementasi, guard manual)*
+- [x] Ubah tier → `users.plan`/`planExpiresAt` berubah + tercatat audit (old→new + alasan); user langsung dapat akses tier baru.
+- [x] Setiap mutasi admin tercatat di `admin_audit_logs`.
+- [x] `tsc --noEmit` clean, vitest hijau (16/16 wiring+unit), `next build` sukses, smoke OK.
+- [x] QA visual desktop + mobile (screenshot autentikasi) untuk list/detail/form.
 
 ---
 
@@ -292,15 +292,26 @@ Gunakan shadcn/radix existing (Dialog, Select, Switch, Tabs, Table). Mobile resp
 
 ## 10. Rollout
 
-1. Dev branch: `feature/admin-dashboard` dari `main`.
-2. Implement P0 → `tsc`/vitest/build/smoke → screenshot QA dev (authenticated, dua browser admin+non-admin).
-3. Review Alip → approval.
-4. Merge `main` → deploy Dokploy (`cubiqlo-new-app-next`, rebuild image) + update Traefik labels (tambah host admin).
-5. Tambah DNS record `admin.cubiqlo.com`.
+1. Dev branch: `feature/admin-dashboard` dari `main`. *(done)*
+2. Implement P0 → `tsc`/vitest/build/smoke → screenshot QA dev (authenticated, dua browser admin+non-admin). *(done — 13+ screenshot di `/root/qa-screens/admin-dashboard/`)*
+3. Review Alip → approval. *(done — "Gas")*
+4. Merge `main` → deploy Dokploy (`cubiqlo-new-app-next`, rebuild image) + update Traefik labels (tambah host admin). *(done — image `cubiqlo-prod:sha-07bf901de905` live; Traefik router `cubiqlo-admin-http/https` di `/etc/dokploy/traefik/dynamic/cubiqlo-new.yml`)*
+5. Tambah DNS record `admin.cubiqlo.com`. *(done — A `43.134.165.218`, DNS-only, via Cloudflare API; cert letsencrypt issued)*
 6. Bootstrap akun admin di prod DB via SQL:
    ```sql
    UPDATE users SET role='admin' WHERE email='admin@cubiqlo.com';
    ```
-7. Verifikasi live: login app → buka admin.cubiqlo.com → add/edit/ban test user → cek audit log.
+   *(done — `admin@cubiqlo.com` dibuat baru di prod: role='admin', credential login, scrypt hash; password di CREDENTIALS.md)*
+7. Verifikasi live: login app → buka admin.cubiqlo.com → add/edit/ban test user → cek audit log. *(done — playwright QA prod: login → dashboard/users/payments/workspaces/audit semua render; plan change/ban/create terverifikasi di dev E2E)*
 
-**Tidak ada deploy/commit/migrate sampai approval eksplisit.**
+**Tidak ada deploy/commit/migrate sampai approval eksplisit.** *(status: sudah approval & live sejak 2026-08-17)*
+
+## 11. Status Akhir (17 Agustus 2026)
+
+- **LIVE di prod**: `https://admin.cubiqlo.com` — superadmin `admin@cubiqlo.com` (role=admin, credential login).
+- **Bug yang ditemukan & di-fix pasca go-live:**
+  - `text = uuid` di users list (drizzle bare identifier di subquery) → qualify `"users"."id"` (`abe5f7d`).
+  - Auth path di-rewrite → `/admin/login` 404 → auth paths pass-through (`750d4b1`).
+  - Post-login landing `/app/dashboard` → `/admin/app/dashboard` 404 → map `/app/*` → `/admin/*` (`07bf901`, +5 unit test).
+- **Deferred (P2):** self-protection guard (admin tidak bisa ban/edit/downgrade diri sendiri) — belum diimplementasi, perlu manual care.
+- **Catatan:** paid users bisa > completed payments karena `changeUserPlan` set plan langsung tanpa payment row (by design).
