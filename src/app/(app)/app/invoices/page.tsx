@@ -11,7 +11,7 @@ import {
   workspaceCurrencyRates,
   workspaceMembers,
 } from "@/db/schema";
-import { eq, desc, and, count, ne, isNull, SQL, sql, inArray } from "drizzle-orm";
+import { eq, desc, and, count, ne, isNull, SQL, sql, inArray, gte, lte } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +28,8 @@ import {
   convertToBase,
   normalizeCurrency,
 } from "@/lib/currency-base";
+import { buildReportPeriod } from "@/lib/report-period";
+import { InvoicePeriodControls } from "@/components/invoices/invoice-period-controls";
 
 const PAGE_SIZE = 10;
 
@@ -92,6 +94,9 @@ type InvoiceListFilters = {
   clientId?: string;
   projectId?: string;
   billing: BillingFilter;
+  period?: string;
+  from?: string;
+  to?: string;
   page: number;
 };
 
@@ -101,6 +106,9 @@ function buildInvoicesHref(filters: InvoiceListFilters): string {
   if (filters.clientId) params.set("clientId", filters.clientId);
   if (filters.projectId) params.set("projectId", filters.projectId);
   if (filters.billing !== "all") params.set("billing", filters.billing);
+  if (filters.period) params.set("period", filters.period);
+  if (filters.from) params.set("from", filters.from);
+  if (filters.to) params.set("to", filters.to);
   if (filters.page > 1) params.set("page", String(filters.page));
   const qs = params.toString();
   return qs ? `/app/invoices?${qs}` : "/app/invoices";
@@ -112,6 +120,7 @@ function buildFilterConditions(opts: {
   clientId?: string;
   projectId?: string;
   billing: BillingFilter;
+  periodDateRange?: { start: string; end: string };
 }): SQL[] {
   const conditions: SQL[] = [eq(invoices.workspaceId, opts.workspaceId)];
 
@@ -135,6 +144,11 @@ function buildFilterConditions(opts: {
     conditions.push(eq(projects.billingType, opts.billing));
   }
 
+  if (opts.periodDateRange) {
+    conditions.push(gte(invoices.issueDate, opts.periodDateRange.start));
+    conditions.push(lte(invoices.issueDate, opts.periodDateRange.end));
+  }
+
   return conditions;
 }
 
@@ -147,6 +161,9 @@ export default async function InvoicesPage({
     clientId?: string;
     projectId?: string;
     billing?: string;
+    period?: string;
+    from?: string;
+    to?: string;
   }>;
 }) {
   const lang = await getCurrentLang();
@@ -162,6 +179,10 @@ export default async function InvoicesPage({
   const billing = parseBillingFilter(params.billing);
   const clientId = isUuid(params.clientId) ? params.clientId : undefined;
   const projectId = isUuid(params.projectId) ? params.projectId : undefined;
+
+  const periodPreset = params.period || "all";
+  const periodObj = periodPreset !== "all" ? buildReportPeriod({ period: params.period, from: params.from, to: params.to }) : null;
+  const periodDateRange = periodObj ? { start: periodObj.start, end: periodObj.end } : undefined;
 
   const [member] = await db
     .select({ role: workspaceMembers.role })
@@ -202,6 +223,10 @@ export default async function InvoicesPage({
   if (projectId) statusCountWhere.push(eq(invoices.projectId, projectId));
   if (billing === "none") statusCountWhere.push(isNull(invoices.projectId));
   else if (billing !== "all") statusCountWhere.push(eq(projects.billingType, billing));
+  if (periodDateRange) {
+    statusCountWhere.push(gte(invoices.issueDate, periodDateRange.start));
+    statusCountWhere.push(lte(invoices.issueDate, periodDateRange.end));
+  }
 
   const needsProjectJoin = billing !== "all" && billing !== "none";
 
@@ -247,6 +272,7 @@ export default async function InvoicesPage({
     clientId,
     projectId,
     billing,
+    periodDateRange,
   });
 
   const invoiceList = await db
@@ -365,10 +391,13 @@ export default async function InvoicesPage({
     clientId,
     projectId,
     billing,
+    period: params.period,
+    from: params.from,
+    to: params.to,
     page: currentPage,
   };
 
-  const hasExtraFilters = Boolean(clientId) || Boolean(projectId) || billing !== "all";
+  const hasExtraFilters = Boolean(clientId) || Boolean(projectId) || billing !== "all" || periodPreset !== "all";
   const selectedClient = clientId
     ? clientOptions.find((c) => c.id === clientId)
     : undefined;
@@ -489,6 +518,12 @@ export default async function InvoicesPage({
                 tab === "sent" ||
                 tab === "archived",
             }))}
+          />
+          <InvoicePeriodControls
+            lang={lang}
+            preset={params.period || "all"}
+            from={params.from || ""}
+            to={params.to || ""}
           />
         </div>
       </div>

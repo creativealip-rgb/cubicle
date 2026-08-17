@@ -58,23 +58,27 @@ export function ProjectCreateDialog({
             : t("Proyek Baru", "New Project")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90dvh] w-[calc(100%-1rem)] overflow-y-auto p-4 sm:max-w-[500px] sm:p-6">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[min(90dvh,800px)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+        <DialogHeader className="border-b px-6 py-4">
           <DialogTitle>{t("Proyek Baru", "New Project")}</DialogTitle>
         </DialogHeader>
-        <ProjectForm
-          mode="create"
-          clientId={clientId}
-          clients={clients}
-          onSuccess={handleSuccess}
-        />
+        <div className="flex-1 overflow-y-auto p-6">
+          <ProjectForm
+            mode="create"
+            clientId={clientId}
+            clients={clients}
+            onSuccess={handleSuccess}
+          />
+        </div>
         {projectLimit > 0 && projectCount > 0 ? (
-          <p className="text-[11px] text-muted-foreground">
-            {t(
-              `${projectCount}/${projectLimit} proyek di free plan`,
-              `${projectCount}/${projectLimit} projects on free plan`,
-            )}
-          </p>
+          <div className="border-t px-6 py-3 bg-muted/20">
+            <p className="text-[11px] text-muted-foreground">
+              {t(
+                `${projectCount}/${projectLimit} proyek di free plan`,
+                `${projectCount}/${projectLimit} projects on free plan`,
+              )}
+            </p>
+          </div>
         ) : null}
       </DialogContent>
     </Dialog>

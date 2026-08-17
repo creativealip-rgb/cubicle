@@ -8,13 +8,18 @@ export interface WeeklyGridEntry {
   projectName: string | null;
   taskId: string | null;
   taskTitle: string | null;
+  description?: string | null;
   workDate?: string | null;
   startTime: Date | string | null;
+  endTime?: Date | string | null;
   createdAt?: Date | string | null;
   durationMinutes: number | null;
   manualMinutes: number | null;
   tags: string | null;
   status: string;
+  billable?: boolean;
+  clientId?: string | null;
+  clientName?: string | null;
 }
 
 export interface WeeklyGridCell {
@@ -22,6 +27,7 @@ export interface WeeklyGridCell {
   totalMinutes: number;
   editableMinutes: number;
   immutableMinutes: number;
+  entries: WeeklyGridEntry[];
 }
 
 export interface WeeklyGridRow {
@@ -76,8 +82,7 @@ export function formatDurationInput(minutes: number): string {
   if (minutes <= 0) return "";
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
-  if (!rest) return String(hours);
-  return `${hours}:${String(rest).padStart(2, "0")}`;
+  return `${String(hours).padStart(2, "0")}:${String(rest).padStart(2, "0")}`;
 }
 
 export function buildWeeklyGrid(entries: WeeklyGridEntry[], anchor: Date | string) {
@@ -101,7 +106,7 @@ export function buildWeeklyGrid(entries: WeeklyGridEntry[], anchor: Date | strin
         projectName: entry.projectName || "Project",
         taskId: entry.taskId,
         taskTitle: entry.taskTitle,
-        cells: dateKeys.map((day) => ({ date: day, totalMinutes: 0, editableMinutes: 0, immutableMinutes: 0 })),
+        cells: dateKeys.map((day) => ({ date: day, totalMinutes: 0, editableMinutes: 0, immutableMinutes: 0, entries: [] })),
         totalMinutes: 0,
       };
       rows.set(key, row);
@@ -109,6 +114,7 @@ export function buildWeeklyGrid(entries: WeeklyGridEntry[], anchor: Date | strin
     const minutes = Math.max(0, entry.durationMinutes ?? entry.manualMinutes ?? 0);
     const editable = entry.status === "draft" && entry.manualMinutes != null && entry.tags?.split(",").map((tag) => tag.trim()).includes(WEEKLY_GRID_TAG);
     row.cells[dayIndex].totalMinutes += minutes;
+    row.cells[dayIndex].entries.push(entry);
     if (editable) row.cells[dayIndex].editableMinutes += minutes;
     else row.cells[dayIndex].immutableMinutes += minutes;
     row.totalMinutes += minutes;
