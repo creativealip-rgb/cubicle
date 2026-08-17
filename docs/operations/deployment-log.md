@@ -1,5 +1,28 @@
 # Deployment Log
 
+## 17 August 2026 — Superadmin control plane (admin.cubiqlo.com) P0+P1
+
+- Source: `main` `f550793` (merge of `feature/admin-dashboard` — 3 commits: `39e13a4` feat, `abe5f7d` fix subquery, `a8e6186` docs).
+- Scope:
+  - `users.role` ('user'|'admin') + `banned`/`banned_at`/`banned_reason` columns.
+  - `admin_audit_logs` table + audit on every admin mutation (`user.create`, `user.update`, `user.plan_change`, `user.ban`, `user.unban`, ...).
+  - Control plane UI at `admin.cubiqlo.com` (route group `(admin)`): dashboard KPIs, users CRUD (create silent provisioning, edit, reset password, ban/unban, plan change direct), workspaces, payments (read-only), audit log.
+  - Host routing: `admin.cubiqlo.com/*` → rewrite to `/admin/*`; `/admin*` on app host → 308 to admin subdomain. Ban hook in `databaseHooks.session.create.before` (login blocked: 403 ACCOUNT_BANNED). `trustedOrigins` includes `admin.cubiqlo.com`.
+- Dev proof: `dev.cubiqlo.com` deployed; migration `0079` applied to `cubicle_dev`; browser QA E2E (playwright): dashboard KPIs, users list, change plan free→solo (DB + audit verified), ban (DB + audit + login blocked 403), unban (login OK), create user (silent provisioning, emailVerified=true, login works), user detail, payments, workspaces. 13 screenshots.
+- Release gate: `npx tsc --noEmit` passed; `next build` passed; admin wiring 11/11 vitest; full suite 1400 pass / 9 pre-existing fail (verified identical on clean base).
+- Migration: `drizzle/0079_admin_dashboard.sql` applied to prod `cubicle` (role/banned columns + `admin_audit_logs` + indexes). Idempotent.
+- Production deployment:
+  - Image tag: `cubiqlo-prod:sha-f550793f98b6ab8a84622a8b5cefc6d17a06ce2b`.
+  - Image ID: `sha256:da6f1988f59e908ae34c7c73ff0eff1ac4e7e56cb008601c0f2d5c4174889525`.
+  - Previous image ID: `sha256:` (see previous entry below — prior release `0207663`).
+  - Container recreated: `cubiqlo-new-app-next`; restart `unless-stopped`; network `dokploy-network`.
+  - Health: `https://cubiqlo.com/api/health` app/DB ok.
+  - Asset revision proof: `dpl=f550793f98b6ab8a84622a8b5cefc6d17a06ce2b`.
+  - Proxy safety: `dokploy-traefik` sole public 80/443 owner.
+- Traefik: added `cubiqlo-admin-http` + `cubiqlo-admin-https` routers in `/etc/dokploy/traefik/dynamic/cubiqlo-new.yml` → service `cubiqlo-new-service` (port 3000), TLS letsencrypt. File-backed (hot reload).
+- DNS: `admin.cubiqlo.com` A record → `43.134.165.218` (DNS-only, like `dev.cubiqlo.com`) — **PENDING** (Cloudflare zone access required; NXDOMAIN until added).
+- Bootstrap: promote an existing Alip-owned account to `role='admin'` — **PENDING user decision** (`admin@cubiqlo.com` doesn't exist yet; options: `alipdevcom@gmail.com` or create new).
+
 ## 16 August 2026 — Docs: fix stale claims + add Business guides (Layanan, Template, Kuesioner)
 
 - Source: `main` `0207663`; merged into `dev/integration` as `26e6dd6`.
