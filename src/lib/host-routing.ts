@@ -92,6 +92,16 @@ export function getAdminRewritePath(pathname: string): string | null {
   if (pathname.startsWith("/admin/")) {
     return pathname;
   }
+  // Post-login landing + app routes: Better Auth redirects authenticated
+  // sessions to /app/dashboard, and app links point at /app/... On the admin
+  // host those must resolve to the control plane route group, not
+  // /admin/app/dashboard (404). Map /app/<x> → /admin/<x>.
+  if (pathname === "/app" || pathname === "/app/") {
+    return "/admin/dashboard";
+  }
+  if (pathname.startsWith("/app/")) {
+    return `/admin${pathname.slice("/app".length)}`;
+  }
   if (pathname === "/") {
     return "/admin/dashboard";
   }
