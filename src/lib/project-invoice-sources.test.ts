@@ -19,6 +19,7 @@ describe("ProjectInvoiceSource contract", () => {
     expect(ProjectInvoiceSourceSchema.parse({ mode: "fixed_final", projectId }).mode).toBe("fixed_final");
     expect(ProjectInvoiceSourceSchema.parse({ mode: "hourly_timesheet", projectId, timeEntryIds: [entryId], periodStart: "2026-01-01", periodEnd: "2026-02-01" }).mode).toBe("hourly_timesheet");
     expect(ProjectInvoiceSourceSchema.parse({ mode: "hourly_deposit", projectId, amount: 100 }).mode).toBe("hourly_deposit");
+    expect(ProjectInvoiceSourceSchema.parse({ mode: "hourly_deposit", projectId, value: 17500000 })).toEqual({ mode: "hourly_deposit", projectId, amount: 17500000 });
   });
 
   it("rejects ambiguous amounts, empty timesheets, invalid periods, unknown keys, and retainer period", () => {

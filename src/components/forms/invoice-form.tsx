@@ -169,7 +169,13 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         projectIds: selectedProjectIds,
         projectSources: sourcePayload.flatMap(({ project, source }) => {
           if (!source) return [];
-          const raw = { projectId: project.id, ...source, ...(source.mode === "hourly_timesheet" ? { timeEntryIds: source.timeEntryIds?.length ? source.timeEntryIds : project.initialTimeEntryIds ?? [] } : {}) };
+          const amountVal = source.mode === "hourly_deposit" ? (source.amount ?? source.value) : undefined;
+          const raw = {
+            projectId: project.id,
+            ...source,
+            ...(source.mode === "hourly_deposit" && amountVal ? { amount: amountVal } : {}),
+            ...(source.mode === "hourly_timesheet" ? { timeEntryIds: source.timeEntryIds?.length ? source.timeEntryIds : project.initialTimeEntryIds ?? [] } : {})
+          };
           const clean: Record<string, unknown> = {};
           for (const [k, v] of Object.entries(raw)) {
             if (v !== undefined && v !== null && v !== "") clean[k] = v;
