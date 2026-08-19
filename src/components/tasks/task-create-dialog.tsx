@@ -32,17 +32,19 @@ export function TaskCreateDialog({
           <Plus className="h-4 w-4" /> {t("Tugas Baru", "New Task")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[min(90dvh,800px)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+        <DialogHeader className="shrink-0 border-b px-6 py-4">
           <DialogTitle>{t("Tugas Baru", "New Task")}</DialogTitle>
         </DialogHeader>
-        <TaskForm
-          mode="create"
-          projectId={projectId}
-          members={members}
-          projects={projects}
-          onSuccess={() => setOpen(false)}
-        />
+        <div className="flex-1 overflow-y-auto p-6">
+          <TaskForm
+            mode="create"
+            projectId={projectId}
+            members={members}
+            projects={projects}
+            onSuccess={() => setOpen(false)}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );

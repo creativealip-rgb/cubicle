@@ -52,3 +52,4 @@ playwright-report/
 .superpowers/brainstorm/
 public/screenshots/*.backup-*.png
 public/screenshots/*.generated-mock-backup.png
+.qa/

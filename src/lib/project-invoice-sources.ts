@@ -31,7 +31,9 @@ export const ProjectInvoiceSourceSchema = z.union([
     periodStart: z.iso.date(), periodEnd: z.iso.date(),
     timeEntryIds: z.array(z.string()).min(1),
   }).strict().refine((value) => value.periodStart < value.periodEnd, { message: "periodEnd harus setelah periodStart", path: ["periodEnd"] }),
-  z.object({ mode: z.literal("hourly_deposit"), projectId, description: z.string().trim().min(1).optional(), amount: positiveNumber }).strict(),
+  z.object({ mode: z.literal("hourly_deposit"), projectId, description: z.string().trim().min(1).optional(), amount: positiveNumber.optional(), value: positiveNumber.optional() })
+    .refine((v) => (v.amount ?? v.value) !== undefined && (v.amount ?? v.value)! > 0, { message: "Nominal deposit harus lebih dari 0" })
+    .transform((v) => ({ mode: v.mode, projectId: v.projectId, ...(v.description ? { description: v.description } : {}), amount: (v.amount ?? v.value)! })),
 ]);
 
 export type ProjectInvoiceSource = z.infer<typeof ProjectInvoiceSourceSchema>;

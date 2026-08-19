@@ -70,29 +70,16 @@ export default async function TemplateCenterPage({
   }
 
   return (
-    <div className="space-y-3 p-1 sm:p-0">
-      <div className="flex flex-wrap items-center gap-2 px-1">
-        <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
-          Soon
-        </Badge>
-        <p className="text-xs text-muted-foreground">
-          {t(
-            "Preview internal — user lain cuma lihat halaman Soon.",
-            "Internal preview — other users only see the Soon page.",
-          )}
-        </p>
-      </div>
-      <Suspense
-        fallback={
-          <div className="space-y-4 p-6">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-4 w-72" />
-            <Skeleton className="h-10 w-80" />
-          </div>
-        }
-      >
-        <TemplateCenterClient initialTab={tab} />
-      </Suspense>
-    </div>
+    <Suspense
+      fallback={
+        <div className="space-y-4 p-6">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-72" />
+          <Skeleton className="h-10 w-80" />
+        </div>
+      }
+    >
+      <TemplateCenterClient initialTab={tab} />
+    </Suspense>
   );
 }

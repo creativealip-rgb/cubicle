@@ -95,6 +95,12 @@ export const auth = betterAuth({
     enabled: true,
     requireEmailVerification: true,
     sendResetPassword: async ({ user, url }) => {
+      // Better Auth builds the reset link against `baseURL + basePath`, which
+      // resolves to `https://app.cubiqlo.com/api/auth/reset-password/{token}`.
+      // That path is the *API* GET endpoint (which redirects), not the app's
+      // `/reset-password/{token}` page. Strip the `/api/auth` segment so the
+      // email link points straight at the frontend reset page.
+      const resetUrl = url.replace(/(\/api\/auth)(?=\/reset-password\/)/, "");
       const html = `<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f6f7f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1a1d24;">
@@ -110,11 +116,11 @@ export const auth = betterAuth({
         <p style="margin:0 0 24px;">We received a request to reset your password. Click the button below to choose a new one. This link expires in 1 hour.</p>
         <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
           <tr><td style="border-radius:8px;background:#1a1d24;">
-            <a href="${url}" target="_blank" style="display:inline-block;padding:12px 32px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;">Reset Password</a>
+            <a href="${resetUrl}" target="_blank" style="display:inline-block;padding:12px 32px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;">Reset Password</a>
           </td></tr>
         </table>
         <p style="margin:0 0 8px;font-size:13px;color:#6b7280;">If the button doesn't work, copy this link:</p>
-        <p style="margin:0;font-size:13px;color:#6b7280;word-break:break-all;">${url}</p>
+        <p style="margin:0;font-size:13px;color:#6b7280;word-break:break-all;">${resetUrl}</p>
       </td></tr>
       <tr><td style="padding:16px 32px;border-top:1px solid #e5e7eb;font-size:12px;color:#6b7280;text-align:center;">
         <p style="margin:0;">If you didn't request this, you can safely ignore this email.</p>
@@ -132,7 +138,7 @@ export const auth = betterAuth({
         text:
           `Hi ${user.name ?? ""},\n\n` +
           `We received a request to reset your password.\n\n` +
-          `Reset link (expires in 1 hour):\n${url}\n\n` +
+          `Reset link (expires in 1 hour):\n${resetUrl}\n\n` +
           `If you didn't request this, ignore this email.`,
         html,
         type: "password_reset",

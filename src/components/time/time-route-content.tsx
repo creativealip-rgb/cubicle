@@ -216,7 +216,32 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
       {mode === "timesheet" && (
         <>
           <WaktuNavigation view="weekly" selectedDate={selectedDate} actions={<PdfExportButton clients={clientList} projects={projectList} />} />
-          <WeeklyTimeGrid selectedDate={selectedDate} entries={entries.map((entry) => ({ id: entry.id, projectId: entry.projectId, projectName: entry.projectName, taskId: entry.taskId, taskTitle: entry.taskTitle, workDate: entry.workDate, startTime: entry.startTime, createdAt: entry.createdAt, durationMinutes: entry.durationMinutes, manualMinutes: entry.manualMinutes, tags: entry.tags, status: entry.status }))} projects={writableProjectList.map((project) => ({ id: project.id, name: project.name }))} tasks={writableTaskList.map((task) => ({ id: task.id, title: task.title, projectId: task.projectId! }))} canWrite={canWrite} />
+          <WeeklyTimeGrid
+            selectedDate={selectedDate}
+            entries={entries.map((entry) => ({
+              id: entry.id,
+              projectId: entry.projectId,
+              projectName: entry.projectName,
+              taskId: entry.taskId,
+              taskTitle: entry.taskTitle,
+              description: entry.description,
+              workDate: entry.workDate,
+              startTime: entry.startTime,
+              endTime: entry.endTime,
+              createdAt: entry.createdAt,
+              durationMinutes: entry.durationMinutes,
+              manualMinutes: entry.manualMinutes,
+              tags: entry.tags,
+              status: entry.status,
+              billable: entry.billable ?? false,
+              clientId: entry.clientId,
+              clientName: entry.clientName,
+            }))}
+            clients={clientList}
+            projects={projectList}
+            tasks={taskList}
+            canWrite={canWrite}
+          />
         </>
       )}
       {mode === "history" && (

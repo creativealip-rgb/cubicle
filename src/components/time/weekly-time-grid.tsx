@@ -7,7 +7,8 @@ import { setWeeklyTimeCell } from "@/lib/actions/time";
 import { buildWeeklyGrid, formatDurationInput, getWeekDates, parseDurationInput, type WeeklyGridEntry } from "@/lib/weekly-time-grid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Copy } from "lucide-react";
+import { Plus, Copy, Pencil } from "lucide-react";
+import { Timesheet } from "@/components/time/timesheet";
 import { localDateIso, weekStartDate } from "@/lib/effective-work-date";
 import { useT } from "@/lib/i18n-client";
 
@@ -22,7 +23,7 @@ function key(projectId: string, taskId: string | null) {
 function minutesLabel(minutes: number, hLabel = "j", mLabel = "m") {
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
-  return rest ? `${hours}${hLabel} ${rest}${mLabel}` : `${hours}${hLabel}`;
+  return `${String(hours).padStart(2, "0")}:${String(rest).padStart(2, "0")}`;
 }
 
 export function WeeklyTimeGrid({
@@ -30,12 +31,14 @@ export function WeeklyTimeGrid({
   entries,
   projects,
   tasks,
+  clients = [],
   canWrite,
 }: {
   selectedDate: string;
   entries: WeeklyGridEntry[];
-  projects: ProjectOption[];
-  tasks: TaskOption[];
+  projects: Array<{ id: string; name: string; customerRef?: string | null; billingType?: string | null; timeTrackingMode?: string | null }>;
+  tasks: Array<{ id: string; title: string; projectId: string | null; projectRef?: string | null }>;
+  clients?: Array<{ id: string; name: string }>;
   canWrite: boolean;
 }) {
   const { refresh } = useAppTransition();
@@ -53,6 +56,7 @@ export function WeeklyTimeGrid({
   const [taskSearch, setTaskSearch] = useState("");
   const [taskSearchOpen, setTaskSearchOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [editingEntry, setEditingEntry] = useState<any | null>(null);
 
   const projectContainerRef = useRef<HTMLDivElement>(null);
   const taskContainerRef = useRef<HTMLDivElement>(null);
@@ -109,7 +113,7 @@ export function WeeklyTimeGrid({
         projectName: project?.name ?? "Project",
         taskId: added.taskId,
         taskTitle: task?.title ?? "Task",
-        cells: dates.map((date) => ({ date: date.toISOString().slice(0, 10), totalMinutes: 0, editableMinutes: 0, immutableMinutes: 0 })),
+        cells: dates.map((date) => ({ date: date.toISOString().slice(0, 10), totalMinutes: 0, editableMinutes: 0, immutableMinutes: 0, entries: [] })),
         totalMinutes: 0,
       });
     }
@@ -156,6 +160,12 @@ export function WeeklyTimeGrid({
 
   const weekTotalMinutes = rows.reduce((sum, row) => sum + row.totalMinutes, 0);
 
+  const dailyTotals = useMemo(() => {
+    return dates.map((_, colIndex) => {
+      return rows.reduce((sum, row) => sum + (row.cells[colIndex]?.totalMinutes ?? 0), 0);
+    });
+  }, [dates, rows]);
+
   return (
     <section className="rounded-lg border bg-card">
       <div className="p-3">
@@ -177,24 +187,94 @@ export function WeeklyTimeGrid({
                   <span>{t("Total", "Total")}</span>
                 </div>
                 {rows.map((row) => (
-                  <div key={row.key} className="grid grid-cols-[minmax(210px,1.7fr)_repeat(7,minmax(76px,1fr))_86px] items-center gap-1 border-b py-2">
+                  <div key={row.key} className="group grid grid-cols-[minmax(210px,1.7fr)_repeat(7,minmax(76px,1fr))_86px] items-center gap-1 border-b py-2 hover:bg-muted/20 transition-colors">
                     <div className="min-w-0 pr-2">
                       <p className="truncate text-sm font-medium">{row.projectName}</p>
                       <p className="truncate text-xs text-muted-foreground">{row.taskTitle ?? t("Tanpa task", "No task")}</p>
                     </div>
-                    {row.cells.map((cell, index) => (
-                      <Input
-                        key={cell.date}
-                        className="h-9 text-center text-xs"
-                        defaultValue={formatDurationInput(cell.totalMinutes)}
-                        disabled={!canWrite || pending || !row.taskId}
-                        aria-label={`${row.projectName} ${row.taskTitle ?? t("Tanpa task", "No task")} ${cell.date}`}
-                        onBlur={(event) => saveCell(row, index, event.target.value)}
-                      />
-                    ))}
+                    {row.cells.map((cell, index) => {
+                      const hasNotes = cell.entries.some((e) => e.description || e.tags);
+                      return (
+                        <div key={cell.date} className="group/cell relative flex items-center justify-center">
+                          <Input
+                            className="h-9 text-center text-xs focus:bg-accent/40 focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-muted-foreground/50 pr-5"
+                            placeholder="HH:MM"
+                            defaultValue={formatDurationInput(cell.totalMinutes)}
+                            disabled={!canWrite || pending || !row.taskId}
+                            aria-label={`${row.projectName} ${row.taskTitle ?? t("Tanpa task", "No task")} ${cell.date}`}
+                            onBlur={(event) => saveCell(row, index, event.target.value)}
+                          />
+                          <button
+                            type="button"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/cell:opacity-100 p-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+                            title={t("Edit detail log waktu", "Edit time log details")}
+                            onClick={() => {
+                              const existing = cell.entries[0];
+                              const projectObj = projects.find((p) => p.id === row.projectId);
+                              const taskObj = tasks.find((t) => t.id === row.taskId);
+                              if (existing) {
+                                setEditingEntry({
+                                  id: existing.id,
+                                  description: existing.description ?? "",
+                                  tags: existing.tags ?? "",
+                                  durationMinutes: existing.durationMinutes ?? cell.totalMinutes,
+                                  manualMinutes: existing.manualMinutes ?? cell.totalMinutes,
+                                  billable: existing.billable ?? false,
+                                  startTime: existing.startTime ? new Date(existing.startTime).toISOString() : `${cell.date}T09:00:00.000Z`,
+                                  endTime: existing.endTime ? new Date(existing.endTime).toISOString() : `${cell.date}T10:00:00.000Z`,
+                                  status: existing.status ?? "approved",
+                                  clientId: existing.clientId ?? projectObj?.customerRef ?? "",
+                                  projectId: row.projectId,
+                                  taskId: row.taskId,
+                                  clientName: existing.clientName ?? "",
+                                  projectName: row.projectName,
+                                  taskTitle: row.taskTitle,
+                                });
+                              } else {
+                                setEditingEntry({
+                                  id: `new-${row.projectId}-${row.taskId}-${cell.date}`,
+                                  description: "",
+                                  tags: "",
+                                  durationMinutes: cell.totalMinutes || 60,
+                                  manualMinutes: cell.totalMinutes || 60,
+                                  billable: false,
+                                  startTime: `${cell.date}T09:00:00.000Z`,
+                                  endTime: `${cell.date}T10:00:00.000Z`,
+                                  status: "approved",
+                                  clientId: projectObj?.customerRef ?? "",
+                                  projectId: row.projectId,
+                                  taskId: row.taskId,
+                                  clientName: "",
+                                  projectName: row.projectName,
+                                  taskTitle: row.taskTitle,
+                                });
+                              }
+                            }}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </button>
+                          {hasNotes && (
+                            <span
+                              className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-primary/80"
+                              title={t("Memiliki catatan/tag", "Has notes/tags")}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
                     <strong className="text-center text-sm">{minutesLabel(row.totalMinutes, hLabel, mLabel)}</strong>
                   </div>
                 ))}
+                {/* Daily Totals Footer Row */}
+                <div className="grid grid-cols-[minmax(210px,1.7fr)_repeat(7,minmax(76px,1fr))_86px] items-center gap-1 bg-muted/30 py-2.5 font-medium">
+                  <span className="text-left text-xs font-semibold text-muted-foreground">{t("Total Harian", "Daily Total")}</span>
+                  {dailyTotals.map((colTotal, idx) => (
+                    <span key={dates[idx].toISOString()} className="text-center text-xs font-semibold">
+                      {colTotal > 0 ? minutesLabel(colTotal, hLabel, mLabel) : "-"}
+                    </span>
+                  ))}
+                  <strong className="text-center text-sm font-bold text-primary">{minutesLabel(weekTotalMinutes, hLabel, mLabel)}</strong>
+                </div>
               </div>
             </div>
             <div className="space-y-3 lg:hidden">
@@ -212,7 +292,8 @@ export function WeeklyTimeGrid({
                       <label key={cell.date} className="text-xs text-muted-foreground">
                         <span className="mb-1 block">{dates[index].toLocaleDateString(locale, { weekday: "short", day: "numeric", timeZone: "UTC" })}</span>
                         <Input
-                          className="h-9 text-center text-xs"
+                          className="h-9 text-center text-xs placeholder:text-muted-foreground/50"
+                          placeholder="HH:MM"
                           defaultValue={formatDurationInput(cell.totalMinutes)}
                           disabled={!canWrite || pending || !row.taskId}
                           onBlur={(event) => saveCell(row, index, event.target.value)}
@@ -241,11 +322,14 @@ export function WeeklyTimeGrid({
                   setProjectSearchOpen(true);
                 }}
                 onFocus={() => {
-                  setProjectSearchOpen(true);
+                  const currentProject = projects.find((p) => p.id === projectId);
+                  if (projectSearch.trim() !== currentProject?.name.trim()) {
+                    setProjectSearchOpen(true);
+                  }
                 }}
                 className="h-10 text-sm"
               />
-              {projectSearchOpen && (
+              {projectSearchOpen && projectSearch.trim() !== "" && (
                 <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
                   {filteredProjects.length === 0 ? (
                     <p className="p-2 text-xs text-muted-foreground">{t("Project tidak ditemukan", "Project not found")}</p>
@@ -281,11 +365,14 @@ export function WeeklyTimeGrid({
                   setTaskSearchOpen(true);
                 }}
                 onFocus={() => {
-                  if (projectId) setTaskSearchOpen(true);
+                  const currentTask = availableActivities.find((t) => t.id === taskId);
+                  if (projectId && taskSearch.trim() !== currentTask?.title.trim()) {
+                    setTaskSearchOpen(true);
+                  }
                 }}
                 className="h-10 text-sm"
               />
-              {taskSearchOpen && projectId && (
+              {taskSearchOpen && projectId && taskSearch.trim() !== "" && (
                 <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
                   {filteredTasks.length === 0 ? (
                     <p className="p-2 text-xs text-muted-foreground">{t("Task tidak ditemukan", "Task not found")}</p>
@@ -319,6 +406,21 @@ export function WeeklyTimeGrid({
           </div>
         )}
       </div>
+
+      {editingEntry && (
+        <Timesheet
+          dialogOnly
+          initialEditEntry={editingEntry}
+          onEditClose={() => {
+            setEditingEntry(null);
+            refresh();
+          }}
+          entries={[]}
+          clients={clients}
+          projects={projects.map((p) => ({ id: p.id, name: p.name, clientId: p.customerRef, billingType: p.billingType }))}
+          tasks={tasks.map((t) => ({ id: t.id, title: t.title, projectId: t.projectId ?? t.projectRef ?? null }))}
+        />
+      )}
     </section>
   );
 }

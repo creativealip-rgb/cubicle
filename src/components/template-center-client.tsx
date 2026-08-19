@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import {
   Select,
   SelectContent,
@@ -377,17 +377,27 @@ export function TemplateCenterClient({
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={changeTab}>
-        <TabsList className="inline-flex h-auto max-w-full justify-start gap-1 overflow-x-auto">
-          <TabsTrigger value="proposal" className="gap-1.5">
-            <ScrollText className="h-4 w-4" /> {t("Proposal", "Proposals")}{!loading ? ` (${proposalTpls.length})` : ""}
-          </TabsTrigger>
-          <TabsTrigger value="contract" className="gap-1.5">
-            <FileSignature className="h-4 w-4" /> {t("Kontrak", "Contracts")}{!loading ? ` (${contractTpls.length})` : ""}
-          </TabsTrigger>
-        </TabsList>
+      <StatusFilterTabs
+        activeValue={activeTab}
+        hideEmpty={false}
+        tabs={[
+          {
+            value: "proposal",
+            label: t("Proposal", "Proposals"),
+            href: "/app/templates?tab=proposal",
+            count: loading ? undefined : proposalTpls.length,
+          },
+          {
+            value: "contract",
+            label: t("Kontrak", "Contracts"),
+            href: "/app/templates?tab=contract",
+            count: loading ? undefined : contractTpls.length,
+          },
+        ]}
+      />
 
-        <TabsContent value="proposal" className="mt-4 space-y-4">
+      {activeTab === "proposal" ? (
+        <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs text-muted-foreground">
               {t(
@@ -438,9 +448,9 @@ export function TemplateCenterClient({
               ))}
             </div>
           )}
-        </TabsContent>
-
-        <TabsContent value="contract" className="mt-4 space-y-4">
+        </div>
+      ) : (
+        <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs text-muted-foreground">
               {t(
@@ -489,10 +499,8 @@ export function TemplateCenterClient({
               ))}
             </div>
           )}
-        </TabsContent>
-
-
-      </Tabs>
+        </div>
+      )}
 
       <Dialog
         open={dialogOpen}
