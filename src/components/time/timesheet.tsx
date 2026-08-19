@@ -27,14 +27,12 @@ import {
   Clock,
   Trash2,
   Filter,
-  Pencil,
   Loader2,
   Tag as TagIcon,
   Calendar as CalendarIcon,
   Hourglass,
 } from "lucide-react";
 import { useT } from "@/lib/i18n-client";
-import { timeEntryStatusVariant } from "@/lib/status-badge";
 import { allowsTimeTrackingProject } from "@/lib/billing-model";
 
 const PAGE_SIZE = 10;

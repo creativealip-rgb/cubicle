@@ -1,6 +1,6 @@
 "use server";
 
-import { and, desc, eq, ilike, inArray, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, ne, or, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { hashPassword } from "@better-auth/utils/password";
 import { z } from "zod";
@@ -8,11 +8,7 @@ import { randomBytes } from "node:crypto";
 import { db } from "@/db";
 import {
   accounts,
-  adminAuditLogs,
-  clients,
-  invoices,
   pakasirPayments,
-  projects,
   sessions,
   users as usersTable,
   workspaceMembers,
