@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useAppTransition } from "@/lib/transition-provider";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -175,7 +175,7 @@ function pickRatio(modeRatio: string) {
 }
 
 export function AutoFeedsStudio() {
-  const { refresh } = useAppTransition();
+  const router = useRouter();
   const [group, setGroup] = useState<ModeGroup>("visual-ads");
   const [mode, setMode] = useState(modes[0].id);
   const [brand, setBrand] = useState("GoldHeritage");
@@ -268,7 +268,7 @@ export function AutoFeedsStudio() {
       toast.success(
         `AI output generated · $${Number(result.usage?.costUsd ?? 0).toFixed(4)}`,
       );
-      refresh();
+      router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "AI generation failed");
     } finally {
