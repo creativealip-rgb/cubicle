@@ -379,18 +379,21 @@ export default async function SettingsPage({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" /> Google Calendar
+                  <Calendar className="h-5 w-5" /> Google Calendar{" "}
+                  <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 border border-amber-300">
+                    Soon
+                  </span>
                 </CardTitle>
                 <CardDescription>
                   {t(
-                    "Hubungkan Google Calendar biar booking otomatis masuk event.",
-                    "Connect Google Calendar so bookings auto-create events.",
+                    "Integrasi Google Calendar sedang dalam tahap verifikasi oleh Google dan akan segera tersedia.",
+                    "Google Calendar integration is pending Google verification and will be available soon.",
                   )}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <GoogleCalendarConnect
-                  configured={googleStatus.configured}
+                  configured={false}
                   connected={googleStatus.connected}
                   email={googleStatus.connection?.googleAccountEmail ?? null}
                   status={googleStatus.connection?.status ?? null}

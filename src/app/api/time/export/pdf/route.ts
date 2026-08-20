@@ -7,6 +7,7 @@ import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { and, desc, eq } from "drizzle-orm";
+import { effectiveWorkDateSql } from "@/lib/effective-work-date";
 
 function escapeHtml(value: unknown) {
   return String(value ?? "")
@@ -69,7 +70,7 @@ export async function GET(request: Request) {
 
   const entries = await db
     .select({
-      date: timeEntries.startTime,
+      date: effectiveWorkDateSql(timeEntries),
       client: clients.name,
       project: projects.name,
       task: tasks.title,
@@ -89,7 +90,7 @@ export async function GET(request: Request) {
     .leftJoin(tasks, eq(tasks.id, timeEntries.taskId))
     .leftJoin(users, eq(users.id, timeEntries.userId))
     .where(and(eq(timeEntries.workspaceId, workspaceId)))
-    .orderBy(desc(timeEntries.startTime))
+    .orderBy(desc(effectiveWorkDateSql(timeEntries)))
     .limit(500);
 
   const url = new URL(request.url);
@@ -128,7 +129,7 @@ export async function GET(request: Request) {
 
   const rows = entries.map((entry) => `
     <tr>
-      <td>${escapeHtml(entry.date ? new Date(entry.date).toLocaleDateString(locale) : "—")}</td>
+      <td>${escapeHtml(entry.date ? String(entry.date).slice(0, 10) : "—")}</td>
       <td>${escapeHtml(entry.client)}</td>
       <td>${escapeHtml(entry.project)}</td>
       <td>${escapeHtml(entry.task)}</td>

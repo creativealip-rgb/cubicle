@@ -4,10 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Calendar,
-  CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Copy,
   ExternalLink,
   Link2,
   Link2Off,
@@ -292,7 +290,10 @@ export function ClientGoogleCalendarPanel({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <Calendar className="h-4 w-4" />
-              {t("Google Calendar Klien", "Client Google Calendar")}
+              {t("Google Calendar Klien", "Client Google Calendar")}{" "}
+              <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 border border-amber-300">
+                Soon
+              </span>
             </CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant={badge.variant}>{badge.label}</Badge>
@@ -302,80 +303,31 @@ export function ClientGoogleCalendarPanel({
             </div>
           </div>
           <p className="text-sm text-muted-foreground">
-            {t("Terpisah dari kalender kamu. Buat/edit event langsung ke Google Calendar klien.", "Separate from your calendar. Create/edit events directly in the client's Google Calendar.")}
+            {t("Integrasi Google Calendar klien dikunci sementara menunggu verifikasi aplikasi oleh Google.", "Client Google Calendar integration is temporarily locked pending Google verification.")}
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          {connected ? (
-            <div className="rounded-lg border bg-muted/30 p-3 text-sm">
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-500" />
-                <div>
-                  <p className="font-medium">{t("Kalender klien terhubung", "Client calendar connected")}</p>
-                  <p className="text-muted-foreground">
-                    {email || "Akun Google klien"}
-                  </p>
-                  {connectedAt ? (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {t("Terhubung", "Connected")}: {formatWhen(connectedAt)}
-                    </p>
-                  ) : null}
-                  {lastError ? (
-                    <p className="mt-1 text-xs text-destructive">{lastError}</p>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-              {!configured ? (
-                <p>
-                  {t("Google OAuth server belum dikonfigurasi. Hubungi admin Cubiqlo.", "Google OAuth server is not configured. Contact a Cubiqlo admin.")}
-                </p>
-              ) : (
-                <p>
-                  {t("Generate link undangan, kirim ke klien (email/WA). Klien connect Google Calendar mereka sendiri — tanpa login Cubiqlo.", "Generate an invitation link and send it to the client (email/WhatsApp). The client connects their own Google Calendar — no Cubiqlo login required.")}
-                </p>
+          <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 text-xs text-amber-900">
+            <p className="font-medium">
+              {t("Fitur Belum Diverifikasi Google (Soon)", "Feature Pending Google Verification (Soon)")}
+            </p>
+            <p className="mt-1">
+              {t(
+                "Integrasi Google Calendar untuk klien belum dapat dihubungkan hingga proses verifikasi selesai.",
+                "Google Calendar integration for clients cannot be connected until verification completes.",
               )}
-            </div>
-          )}
-
-          {inviteUrl ? (
-            <div className="space-y-2 rounded-lg border p-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("Link undangan", "Invitation link")}
-              </p>
-              <code className="block break-all rounded bg-muted px-2 py-1 text-xs">
-                {inviteUrl}
-              </code>
-              {inviteExpiresAt ? (
-                <p className="text-xs text-muted-foreground">
-                  {t("Berlaku sampai", "Valid until")} {formatWhen(inviteExpiresAt)}
-                </p>
-              ) : null}
-              <Button type="button" size="sm" variant="outline" onClick={handleCopy}>
-                <Copy className="h-4 w-4" />
-                {t("Salin link", "Copy link")}
-              </Button>
-            </div>
-          ) : null}
+            </p>
+          </div>
 
           <div className="flex flex-wrap gap-2">
             {!connected ? (
               <Button
                 type="button"
                 size="sm"
-                onClick={handleGenerateInvite}
-                disabled={loading || !configured}
+                disabled
               >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Link2 className="h-4 w-4" />
-                )}
-                {inviteUrl || pendingInvite
-                  ? t("Generate ulang link", "Regenerate link")
-                  : t("Hubungkan Google Calendar klien", "Connect client Google Calendar")}
+                <Link2 className="h-4 w-4" />
+                {t("Hubungkan Google Calendar klien (Soon)", "Connect client Google Calendar (Soon)")}
               </Button>
             ) : (
               <>

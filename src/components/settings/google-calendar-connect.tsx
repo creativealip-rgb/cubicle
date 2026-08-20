@@ -123,14 +123,15 @@ export function GoogleCalendarConnect({
       )}
 
       {!configured ? (
-        <div className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
-          <p className="font-medium text-foreground">
-            {t("Butuh setup Google Cloud OAuth (Web client)", "Needs Google Cloud OAuth (Web client) setup")}
+        <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 text-xs text-amber-900">
+          <p className="font-medium">
+            {t("Fitur Ini Belum Diverifikasi Google (Soon)", "Feature Pending Google Verification (Soon)")}
           </p>
-          <p className="mt-1">Redirect URI:</p>
-          <code className="mt-1 block break-all rounded bg-muted px-2 py-1">{redirectUri}</code>
-          <p className="mt-2">
-            Env: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (opsional `GOOGLE_REDIRECT_URI`)
+          <p className="mt-1">
+            {t(
+              "Integrasi ini sedang dikunci sementara hingga proses verifikasi aplikasi di Google Cloud Console selesai.",
+              "This integration is temporarily locked until Google Cloud Console app verification completes.",
+            )}
           </p>
         </div>
       ) : null}
@@ -153,11 +154,9 @@ export function GoogleCalendarConnect({
             {t("Putuskan", "Disconnect")}
           </Button>
         ) : (
-          <Button type="button" size="sm" className="h-10" asChild disabled={!configured}>
-            <a href="/api/integrations/google-calendar/connect">
-              <Calendar className="h-4 w-4" />
-              {t("Hubungkan Google Calendar", "Connect Google Calendar")}
-            </a>
+          <Button type="button" size="sm" className="h-10" disabled>
+            <Calendar className="h-4 w-4" />
+            {t("Hubungkan Google Calendar (Soon)", "Connect Google Calendar (Soon)")}
           </Button>
         )}
       </div>

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
+import { effectiveWorkDate } from "@/lib/effective-work-date";
 import { deleteTimeEntry, updateTimeEntry } from "@/lib/actions/time";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +46,7 @@ interface TimeEntry {
   manualMinutes?: number | null;
   billable: boolean;
   hourlyRate: string | number | null;
+  workDate?: string | null;
   startTime: Date | string | null;
   endTime: Date | string | null;
   status: string;
@@ -111,8 +113,8 @@ function toDateInputValue(value: Date | string | null | undefined): string {
   return `${year}-${month}-${day}`;
 }
 
-function localDateKey(value: Date | string | null | undefined): string {
-  return value ? toDateInputValue(value) : "";
+function localDateKey(entry: TimeEntry): string {
+  return effectiveWorkDate(entry);
 }
 
 export function Timesheet({ entries, clients, projects, tasks = [], activities: _activities = [], compact = false, dialogOnly = false, initialEditEntry, onEditClose }: TimesheetProps) {
@@ -165,11 +167,11 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
       )
         return false;
       if (dateFrom) {
-        const entryDate = localDateKey(e.startTime);
+        const entryDate = localDateKey(e);
         if (entryDate < dateFrom) return false;
       }
       if (dateTo) {
-        const entryDate = localDateKey(e.startTime);
+        const entryDate = localDateKey(e);
         if (entryDate > dateTo) return false;
       }
       return true;
@@ -335,8 +337,8 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
     setEditTaskSearch(taskTitle);
     setEditTaskSearchOpen(false);
     
-    // Set date from startTime
-    const initialDate = toDateInputValue(entry.startTime);
+    // Set date from workDate or startTime
+    const initialDate = entry.workDate ? String(entry.workDate).slice(0, 10) : toDateInputValue(entry.startTime);
     setEditDate(initialDate);
 
     const sTime = entry.startTime ? new Date(entry.startTime).toTimeString().slice(0, 5) : "";
@@ -914,9 +916,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                       <span>{entry.userName || t("Tidak diketahui", "Unknown")}</span>
                       <span>·</span>
                       <span>
-                        {entry.startTime
-                          ? new Date(entry.startTime).toLocaleDateString(locale)
-                          : "—"}
+                        {effectiveWorkDate(entry)}
                       </span>
                     </div>
                     {entry.tags && (

@@ -112,6 +112,7 @@ const updateTimeEntrySchema = z.object({
   projectId: z.string().uuid().optional(),
   activityId: z.string().uuid().nullable().optional(),
   taskId: z.string().uuid().nullable().optional(),
+  workDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   startTime: z.string().nullable().optional(),
   endTime: z.string().nullable().optional(),
   manualMinutes: z.number().nullable().optional(),
@@ -712,6 +713,8 @@ export async function updateTimeEntry(entryId: string, input: z.infer<typeof upd
   updateData.activityId = activityPolicy.activityId;
   if (parsed.taskId !== undefined) updateData.taskId = parsed.taskId;
   if (parsed.startTime !== undefined) updateData.startTime = parsed.startTime ? new Date(parsed.startTime) : null;
+  if (parsed.workDate !== undefined) updateData.workDate = parsed.workDate;
+  else if (parsed.startTime !== undefined && parsed.startTime) updateData.workDate = parsed.startTime.slice(0, 10);
   if (parsed.endTime !== undefined) updateData.endTime = parsed.endTime ? new Date(parsed.endTime) : null;
   if (parsed.manualMinutes !== undefined) updateData.manualMinutes = parsed.manualMinutes;
   updateData.billable = timeEntryBillableForMode(projectMode);
