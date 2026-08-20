@@ -3,12 +3,12 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 
 describe("files page layout and list wiring", () => {
-  it("keeps sidebar sticky under topbar with lg:top-20", () => {
+  it("keeps sidebar sticky under topbar with lg:top-20 and lg:self-start", () => {
     const layout = readFileSync(
       resolve(__dirname, "../app/(app)/app/files/layout.tsx"),
       "utf8",
     );
-    expect(layout).toContain("lg:sticky lg:top-20");
+    expect(layout).toContain("lg:sticky lg:top-20 lg:self-start");
   });
 
   it("paginates file list to 10 items per page with prev/next navigation", () => {

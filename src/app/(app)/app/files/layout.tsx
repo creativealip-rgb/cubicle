@@ -80,8 +80,8 @@ export default async function FilesLayout({
         />
       </Suspense>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
-        <Card className="lg:col-span-1 h-fit lg:sticky lg:top-20">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6 items-start">
+        <Card className="lg:col-span-1 h-fit lg:sticky lg:top-20 lg:self-start">
           <CardContent className="pt-5">
             <div className="mb-4 space-y-1.5 border-b pb-4 text-sm">
               <div className="flex items-center justify-between gap-2 text-xs">
