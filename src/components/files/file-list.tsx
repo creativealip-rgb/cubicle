@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { deleteFile, updateFileMeta } from "@/lib/actions/files";
@@ -26,6 +26,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  ChevronLeft,
+  ChevronRight,
   Download,
   Eye,
   FileArchive,
@@ -77,11 +79,14 @@ function formatBytes(bytes: number | null, unknownLabel: string): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+const PAGE_SIZE = 10;
+
 export function FileList({ files, canWrite, lang }: FileListProps) {
   const { refresh } = useAppTransition();
   const { t } = useT();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "internal" | "client" | "deliverable">("all");
+  const [page, setPage] = useState(1);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<FileItem | null>(null);
 
@@ -97,6 +102,17 @@ export function FileList({ files, canWrite, lang }: FileListProps) {
         (file.uploaderName?.toLowerCase().includes(q) ?? false);
     });
   }, [files, query, filter]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, filter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const paginated = useMemo(() => {
+    const start = (safePage - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, safePage]);
 
   async function handleDelete() {
     if (!deleteTarget) return;
@@ -180,56 +196,86 @@ export function FileList({ files, canWrite, lang }: FileListProps) {
           description={t("Coba ubah kata kunci atau filter.", "Try a different keyword or filter.")}
         />
       ) : (
-        <div className="divide-y overflow-hidden rounded-lg border bg-card">
-          {filtered.map((file) => {
-            const busy = busyId === file.id;
-            return (
-              <div key={file.id} className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md bg-muted" aria-hidden>{getFileIcon(file.mimeType)}</div>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-foreground" title={file.name}>{file.name}</p>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-                      <span className="tabular-nums">{formatBytes(file.sizeBytes, t("Tidak diketahui", "Unknown"))}</span>
-                      <span aria-hidden>·</span>
-                      <span className="truncate">{file.uploaderName || t("Tidak diketahui", "Unknown")}</span>
-                      <span aria-hidden>·</span>
-                      <span>{formatFileDate(file.createdAt, lang)}</span>
+        <div className="space-y-3">
+          <div className="divide-y overflow-hidden rounded-lg border bg-card">
+            {paginated.map((file) => {
+              const busy = busyId === file.id;
+              return (
+                <div key={file.id} className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md bg-muted" aria-hidden>{getFileIcon(file.mimeType)}</div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-foreground" title={file.name}>{file.name}</p>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                        <span className="tabular-nums">{formatBytes(file.sizeBytes, t("Tidak diketahui", "Unknown"))}</span>
+                        <span aria-hidden>·</span>
+                        <span className="truncate">{file.uploaderName || t("Tidak diketahui", "Unknown")}</span>
+                        <span aria-hidden>·</span>
+                        <span>{formatFileDate(file.createdAt, lang)}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
-                  {canWrite && (
-                    <>
-                      <Select value={file.visibility} onValueChange={(value) => handleVisibility(file.id, value as "internal" | "client")} disabled={busy}>
-                        <SelectTrigger className="h-9 w-[124px] text-xs" aria-label={t("Visibilitas berkas", "File visibility")}><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="internal"><span className="inline-flex items-center gap-1"><Lock className="h-3 w-3" /> {t("Internal", "Internal")}</span></SelectItem>
-                          <SelectItem value="client"><span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" /> {t("Klien", "Client")}</span></SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Select value={file.fileType} onValueChange={(value) => handleFileType(file.id, value as "working_file" | "deliverable")} disabled={busy}>
-                        <SelectTrigger className="h-9 w-[140px] text-xs" aria-label={t("Tipe berkas", "File type")}><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="working_file">{t("Berkas kerja", "Working file")}</SelectItem>
-                          <SelectItem value="deliverable"><span className="inline-flex items-center gap-1"><Package className="h-3 w-3" /> {t("Hasil kerja", "Deliverable")}</span></SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </>
-                  )}
-                  {file.fileType === "deliverable" && <Badge variant="warning" className="text-[10px]">{t("Hasil kerja", "Deliverable")}</Badge>}
-                  <Button variant="outline" size="sm" className="h-9 gap-1" onClick={() => window.open(`/api/files/${file.id}/download`, "_blank")} disabled={busy}>
-                    <Download className="h-3.5 w-3.5" /> {t("Buka", "Open")}
-                  </Button>
-                  {canWrite && (
-                    <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive" onClick={() => setDeleteTarget(file)} aria-label={t(`Hapus ${file.name}`, `Delete ${file.name}`)} disabled={busy}>
-                      {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+                    {canWrite && (
+                      <>
+                        <Select value={file.visibility} onValueChange={(value) => handleVisibility(file.id, value as "internal" | "client")} disabled={busy}>
+                          <SelectTrigger className="h-9 w-[124px] text-xs" aria-label={t("Visibilitas berkas", "File visibility")}><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="internal"><span className="inline-flex items-center gap-1"><Lock className="h-3 w-3" /> {t("Internal", "Internal")}</span></SelectItem>
+                            <SelectItem value="client"><span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" /> {t("Klien", "Client")}</span></SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Select value={file.fileType} onValueChange={(value) => handleFileType(file.id, value as "working_file" | "deliverable")} disabled={busy}>
+                          <SelectTrigger className="h-9 w-[140px] text-xs" aria-label={t("Tipe berkas", "File type")}><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="working_file">{t("Berkas kerja", "Working file")}</SelectItem>
+                            <SelectItem value="deliverable"><span className="inline-flex items-center gap-1"><Package className="h-3 w-3" /> {t("Hasil kerja", "Deliverable")}</span></SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </>
+                    )}
+                    {file.fileType === "deliverable" && <Badge variant="warning" className="text-[10px]">{t("Hasil kerja", "Deliverable")}</Badge>}
+                    <Button variant="outline" size="sm" className="h-9 gap-1" onClick={() => window.open(`/api/files/${file.id}/download`, "_blank")} disabled={busy}>
+                      <Download className="h-3.5 w-3.5" /> {t("Buka", "Open")}
                     </Button>
-                  )}
+                    {canWrite && (
+                      <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive" onClick={() => setDeleteTarget(file)} aria-label={t(`Hapus ${file.name}`, `Delete ${file.name}`)} disabled={busy}>
+                        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between gap-2 border-t px-1 pt-3">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={safePage <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                {t("Sebelumnya", "Previous")}
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {t("Halaman", "Page")} {safePage} / {totalPages}
+              </span>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={safePage >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                {t("Berikutnya", "Next")}
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
