@@ -17,7 +17,6 @@ import { Calendar, CalendarDays, Clock, User } from "lucide-react";
 import Link from "next/link";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { AvailabilityRuleForm } from "@/components/calendar/availability-rule-form";
-import { QuestionnaireCreateDialog } from "@/components/calendar/questionnaire-create-dialog";
 import { AppointmentActions, DeleteAvailabilityRuleButton } from "@/components/calendar/calendar-item-actions";
 import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 
@@ -101,21 +100,18 @@ export default async function CalendarPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <QuestionnaireCreateDialog />
           {ws.bookingSlug ? (
             <Button size="sm" className="gap-1" asChild>
               <Link href={`/booking/${ws.bookingSlug}`} target="_blank">
                 <Calendar className="h-4 w-4" />
-                <span className="hidden sm:inline">{t("Halaman Booking Publik", "Public Booking Page")}</span>
-                <span className="sm:hidden">{t("Booking publik", "Public booking")}</span>
+                <span>{t("Booking Page", "Booking Page")}</span>
               </Link>
             </Button>
           ) : (
             <Button size="sm" className="gap-1" asChild>
               <Link href="/app/settings">
                 <Calendar className="h-4 w-4" />
-                <span className="hidden sm:inline">{t("Aktifkan booking publik", "Enable public booking")}</span>
-                <span className="sm:hidden">{t("Aktifkan booking", "Enable booking")}</span>
+                <span>{t("Aktifkan booking", "Enable booking")}</span>
               </Link>
             </Button>
           )}
