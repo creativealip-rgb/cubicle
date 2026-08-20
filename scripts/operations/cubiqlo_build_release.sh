@@ -4,7 +4,7 @@ set -euo pipefail
 PROJECT_DIR=${PROJECT_DIR:-/root/projects/cubicle}
 RELEASE_DIR=${RELEASE_DIR:-/root/releases/cubiqlo}
 IMAGE_REPO=${IMAGE_REPO:-cubicle}
-NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://cubiqlo.com}
+NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://app.cubiqlo.com}
 SKIP_QUALITY_GATE=${SKIP_QUALITY_GATE:-0}
 
 cd "$PROJECT_DIR"
