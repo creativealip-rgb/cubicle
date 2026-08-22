@@ -46,6 +46,7 @@ function CalendarDestructiveAction({ action }: { action: Exclude<PendingAction, 
   const { t } = useT();
   const { refresh } = useAppTransition();
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  const [confirming, setConfirming] = useState(false);
   const [isPending, startTransition] = useTransition();
   const isRule = action.type === "rule";
 
@@ -70,19 +71,30 @@ function CalendarDestructiveAction({ action }: { action: Exclude<PendingAction, 
 
   return (
     <>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="h-11 w-11 text-destructive hover:bg-destructive/10 hover:text-destructive sm:h-10 sm:w-10"
-        onClick={() => setPendingAction(action)}
-        aria-label={isRule ? t(`Hapus aturan ${action.label}`, `Delete ${action.label} rule`) : t(`Batalkan ${action.label}`, `Cancel ${action.label}`)}
-        title={isRule ? t("Hapus aturan", "Delete rule") : t("Batalkan janji", "Cancel appointment")}
-      >
-        <XCircle className="h-4 w-4" />
-      </Button>
+      {!confirming && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-11 w-11 shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive sm:h-10 sm:w-10"
+          onClick={() => { setPendingAction(action); setConfirming(true); }}
+          aria-label={isRule ? t(`Hapus aturan ${action.label}`, `Delete ${action.label} rule`) : t(`Batalkan ${action.label}`, `Cancel appointment`)}
+          title={isRule ? t("Hapus aturan", "Delete rule") : t("Batalkan janji", "Cancel appointment")}
+        >
+          <XCircle className="h-4 w-4" />
+        </Button>
+      )}
 
-      <Dialog open={Boolean(pendingAction)} onOpenChange={(open) => !open && !isPending && setPendingAction(null)}>
+      {confirming && pendingAction && (
+        <span className="inline-flex shrink-0 items-center gap-2" role="group" aria-label={isRule ? "Konfirmasi hapus aturan" : "Konfirmasi batalkan janji"}>
+          <Button type="button" variant="outline" size="sm" disabled={isPending} onClick={() => { setConfirming(false); setPendingAction(null); }}>{t("Batal", "Cancel")}</Button>
+          <Button type="button" variant="destructive" size="sm" disabled={isPending} onClick={confirm}>
+            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {isRule ? t("Hapus", "Delete") : t("Batalkan", "Cancel booking")}
+          </Button>
+        </span>
+      )}
+      <Dialog open={false} onOpenChange={() => undefined}>
         <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>{isRule ? t("Hapus aturan ketersediaan?", "Delete availability rule?") : t("Batalkan janji temu?", "Cancel appointment?")}</DialogTitle>

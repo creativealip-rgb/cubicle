@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-22 — Manual release QA checkpoint
+
+- Added `docs/qa-report-2026-08-22-cubiqlo-release.md` with live browser evidence and final PASS/PARTIAL/BLOCKED status.
+- Verified auth/session, workspace isolation, invoice share-link lifecycle, client portal, reports Excel export, booking create/cancel, proposal preview/send/public render, and contract metadata correction.
+- Recorded remaining gaps: payment recording, file picker upload/download, exact 390px viewport, second-account team lifecycle, and untested recovery/auth-provider flows.
+- Confirmed read-only DB prefix audit found zero `QA-BROWSER-*` clients, projects, tasks, expenses, appointments, proposals, and contracts.
+
+
 ## 2026-08-16 — Loading state audit: route skeletons + transition-aware refresh
 
 - Added `loading.tsx` skeletons to 20 server-fetch routes previously missing them (billing, expenses, packages, reports, settings, email, personal, templates, search, support, journal, personal-site, contract/proposal preview+edit, contract/questionnaire/template detail+edit). Route coverage now 39 loading.tsx; remaining routes without one are client-redirect / instant-form / static-docs / time-passthrough and need no skeleton.

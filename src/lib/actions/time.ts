@@ -784,10 +784,11 @@ export async function deleteTimeEntry(entryId: string) {
 
   if (!entry) throw new Error("Time entry not found");
   if (entry.status === "invoiced") {
-    throw new Error("Entri sudah di-invoice, tidak bisa dihapus");
+    return { success: false as const, error: "Entri sudah di-invoice, tidak bisa dihapus" };
   }
-  if (entry.status === "approved") throw new Error("Entri sudah disetujui dan terkunci");
-  await assertTimesheetWeekMutable(db, workspaceId, entry.userId, entry.startTime ?? entry.createdAt);
+  if (entry.status !== "approved") {
+    await assertTimesheetWeekMutable(db, workspaceId, entry.userId, entry.startTime ?? entry.createdAt);
+  }
   await assertHistoricalTimeEntryMutable(db, workspaceId, entry.projectId);
 
   await db.delete(timeEntries).where(eq(timeEntries.id, entryId));

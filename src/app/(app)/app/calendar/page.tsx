@@ -20,6 +20,8 @@ import { AvailabilityRuleForm } from "@/components/calendar/availability-rule-fo
 import { AppointmentActions, DeleteAvailabilityRuleButton } from "@/components/calendar/calendar-item-actions";
 import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 
+export const dynamic = "force-dynamic";
+
 export default async function CalendarPage() {
   const lang = await getCurrentLang();
   const t = createT(lang);

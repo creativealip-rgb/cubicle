@@ -295,7 +295,11 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
     if (!deleteEntry) return;
     setDeleteLoading(true);
     try {
-      await deleteTimeEntry(deleteEntry.id);
+      const result = await deleteTimeEntry(deleteEntry.id);
+      if (result && "success" in result && result.success === false) {
+        toast.error(result.error);
+        return;
+      }
       toast.success(t("Entri dihapus", "Entry deleted"));
       setDeleteEntry(null);
       refresh();
@@ -689,7 +693,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
 
             <DialogFooter className="shrink-0 items-center justify-between gap-2 border-t bg-background px-5 py-4 sm:gap-3">
               <div>
-                {editEntry && (
+                {editEntry && editEntry.status !== "invoiced" && (
                   <Button
                     variant="ghost"
                     type="button"
