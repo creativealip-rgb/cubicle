@@ -13,6 +13,7 @@ export interface OnboardingStep {
 
 interface DashboardOnboardingProps {
   lang: "id" | "en";
+  workspaceId: string;
   steps: OnboardingStep[];
 }
 
@@ -56,7 +57,7 @@ const COPY: Record<
   },
 };
 
-export function DashboardOnboarding({ lang, steps }: DashboardOnboardingProps) {
+export function DashboardOnboarding({ lang, workspaceId, steps }: DashboardOnboardingProps) {
   const [dismissed, setDismissed] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const t = (id: string, en: string) => (lang === "en" ? en : id);
@@ -71,14 +72,14 @@ export function DashboardOnboarding({ lang, steps }: DashboardOnboardingProps) {
     // Show unless the user explicitly dismissed it, and never once all done.
     const wasDismissed =
       typeof window !== "undefined" &&
-      window.localStorage.getItem("cubiqlo_onboarding_dismissed") === "1";
+      window.localStorage.getItem(`cubiqlo_onboarding_dismissed:${workspaceId}`) === "1";
     setDismissed(wasDismissed);
-  }, []);
+  }, [workspaceId]);
 
   if (allDone || dismissed) return null;
 
   function dismiss() {
-    window.localStorage.setItem("cubiqlo_onboarding_dismissed", "1");
+    window.localStorage.setItem(`cubiqlo_onboarding_dismissed:${workspaceId}`, "1");
     setDismissed(true);
   }
 

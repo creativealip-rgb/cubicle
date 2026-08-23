@@ -305,6 +305,7 @@ export default async function DashboardPage() {
 
       <DashboardOnboarding
         lang={lang}
+        workspaceId={workspaceId}
         steps={[
           { key: "workspace", done: workspaceProfileDone, href: "/app/settings" },
           { key: "invoiceSettings", done: invoiceSettingsDone, href: "/app/settings?tab=branding" },
