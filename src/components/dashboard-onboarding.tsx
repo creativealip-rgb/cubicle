@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { ChevronDown, ChevronRight, ChevronUp, X, Sparkles } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronUp, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface OnboardingStep {
@@ -58,7 +58,6 @@ const COPY: Record<
 };
 
 export function DashboardOnboarding({ lang, workspaceId, steps }: DashboardOnboardingProps) {
-  const [dismissed, setDismissed] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const t = (id: string, en: string) => (lang === "en" ? en : id);
 
@@ -68,20 +67,7 @@ export function DashboardOnboarding({ lang, workspaceId, steps }: DashboardOnboa
   const pendingSteps = steps.filter((step) => !step.done);
   const visibleSteps = expanded ? pendingSteps : pendingSteps.slice(0, 3);
 
-  useEffect(() => {
-    // Show unless the user explicitly dismissed it, and never once all done.
-    const wasDismissed =
-      typeof window !== "undefined" &&
-      window.localStorage.getItem(`cubiqlo_onboarding_dismissed:${workspaceId}`) === "1";
-    setDismissed(wasDismissed);
-  }, [workspaceId]);
-
-  if (allDone || dismissed) return null;
-
-  function dismiss() {
-    window.localStorage.setItem(`cubiqlo_onboarding_dismissed:${workspaceId}`, "1");
-    setDismissed(true);
-  }
+  if (allDone) return null;
 
   const pct = Math.round((doneCount / total) * 100);
 
@@ -106,14 +92,7 @@ export function DashboardOnboarding({ lang, workspaceId, steps }: DashboardOnboa
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={dismiss}
-            aria-label={t("Tutup panduan", "Dismiss guide")}
-            className="flex min-h-11 min-w-11 items-center justify-center rounded-md text-blue-900/50 transition-colors hover:bg-blue-100 hover:text-blue-900"
-          >
-            <X className="h-4 w-4" />
-          </button>
+
         </div>
 
         {/* Progress bar */}
