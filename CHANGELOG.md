@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-24 — Booking email date format
+
+- Booking confirmation email now formats appointment time for `Asia/Jakarta` as readable date/time with `GMT+7`.
+- Google Calendar add-event link remains included in email.
+- Production commit: `81847cd`.
+
+
 ## 2026-08-24 — Proposal acceptance fixes
 
 - Accept proposal now resolves or creates workspace Client from recipient email when no `clientId` exists.
