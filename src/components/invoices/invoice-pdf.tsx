@@ -194,9 +194,9 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   totalValueBold: {
-    fontSize: 15,
-    fontWeight: 700,
-    color: ACCENT_DARK,
+    fontSize: 10,
+    fontWeight: 400,
+    color: TEXT,
     width: 90,
     textAlign: "right",
   },
