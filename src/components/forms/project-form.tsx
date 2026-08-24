@@ -126,7 +126,8 @@ export function ProjectForm({
         const result = await createProject(data);
         if (!result.ok) throw new Error(result.error);
       } else if (defaultValues?.id) {
-        await updateProject(defaultValues.id, data);
+        const result = await updateProject(defaultValues.id, data);
+        if (!result.ok) throw new Error(result.error);
       }
 
       toast.success(

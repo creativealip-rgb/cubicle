@@ -111,7 +111,15 @@ export async function createProject(input: z.input<typeof projectCreateSchema>) 
 
   const parsed = projectCreateSchema.parse(input);
   validateRetainerConfiguration(parsed);
-  await assertWorkspaceCurrency(workspaceId, parsed.currency);
+  try {
+    await assertWorkspaceCurrency(workspaceId, parsed.currency);
+  } catch (error) {
+    return {
+      ok: false as const,
+      code: "CURRENCY_NOT_CONFIGURED" as const,
+      error: error instanceof Error ? error.message : "Currency is not configured",
+    };
+  }
   await assertClientInWorkspace(db, user.id, workspaceId, parsed.clientId);
   const timeTrackingMode = parsed.timeTrackingMode ?? (parsed.billingModel === "fixed_price" ? "off" : "billable");
 
@@ -168,7 +176,17 @@ export async function updateProject(projectId: string, input: z.input<typeof pro
   const parsed = projectUpdateSchema.parse(input);
   if (parsed.billingModel) await assertBillingModelTransitionAllowed(projectId, parsed.billingModel);
   validateRetainerConfiguration(parsed);
-  if (parsed.currency !== undefined) await assertWorkspaceCurrency(workspaceId, parsed.currency);
+  if (parsed.currency !== undefined) {
+    try {
+      await assertWorkspaceCurrency(workspaceId, parsed.currency);
+    } catch (error) {
+      return {
+        ok: false as const,
+        code: "CURRENCY_NOT_CONFIGURED" as const,
+        error: error instanceof Error ? error.message : "Currency is not configured",
+      };
+    }
+  }
   if (parsed.clientId) {
     await assertClientInWorkspace(db, user.id, workspaceId, parsed.clientId);
   }
@@ -212,7 +230,7 @@ export async function updateProject(projectId: string, input: z.input<typeof pro
   }
 
   await writeActivityLog(workspaceId, user.id, "updated_project", "project", projectId);
-  return project;
+  return { ok: true as const, project };
 }
 
 export async function archiveProject(projectId: string) {
