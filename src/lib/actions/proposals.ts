@@ -490,6 +490,7 @@ export async function acceptProposalPublic(proposalId: string, token: string) {
     const projectId = crypto.randomUUID();
     if (!clientId) throw new Error("Proposal recipient client could not be resolved");
     await tx.insert(projects).values({
+      id: projectId,
       workspaceId: p.workspaceId,
       clientId,
       name: p.title,
