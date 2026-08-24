@@ -57,9 +57,8 @@ export function ProjectTaskWorkspace({ projectId, mode, workflowTasks, reusableT
 
   return (
     <section className="space-y-4">
-      {visibleWorkflow.length > 0 && mode === "workflow" && <WorkflowTaskWorkspace title={titleText} tasks={visibleWorkflow} members={members} projects={projects} currentUserId={currentUserId} addTask={createButton} />}
-      {visibleReusable.length > 0 && mode === "reusable" && <ReusableTaskWorkspace tasks={visibleReusable} members={members} projects={projects} onMove={projectId ? moveReusable : undefined} />}
-      {visibleWorkflow.length === 0 && visibleReusable.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">{t("Belum ada tugas.", "No tasks yet.")}</p>}
+      {mode === "workflow" && <WorkflowTaskWorkspace title={titleText} tasks={visibleWorkflow} members={members} projects={projects} currentUserId={currentUserId} addTask={createButton} />}
+      {mode === "reusable" && <ReusableTaskWorkspace tasks={visibleReusable} members={members} projects={projects} onMove={projectId ? moveReusable : undefined} addTask={createButton} />}
       {!projectId && Math.max(workflowTasks.length, reusableTasks.length) > PAGE_SIZE ? (
         <div className="flex justify-end gap-2">
           <button disabled={page === 1} onClick={() => setPage((value) => value - 1)}>{t("Sebelumnya", "Previous")}</button>

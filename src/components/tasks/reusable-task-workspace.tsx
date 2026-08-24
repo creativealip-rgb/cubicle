@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
@@ -19,16 +20,19 @@ export type ReusableTaskRow = {
   lifecycle: "active" | "archived";
 };
 
-export function ReusableTaskWorkspace({ tasks, members = [], projects = [], onMove }: {
+export function ReusableTaskWorkspace({ tasks, members = [], projects = [], onMove, addTask }: {
   tasks: ReusableTaskRow[];
   members?: Array<{ id: string; name: string | null; email: string | null }>;
   projects?: Array<{ id: string; name: string }>;
   onMove?: (id: string, direction: "up" | "down") => void;
+  addTask?: ReactNode;
 }) {
   const { t } = useT();
 
   return (
-    <div className="overflow-x-auto rounded-lg border bg-card">
+    <div className="space-y-3">
+      {addTask && <div className="flex justify-end">{addTask}</div>}
+      <div className="overflow-x-auto rounded-lg border bg-card">
       <div className="hidden min-w-[50rem] gap-3 border-b bg-muted/40 px-4 py-2 text-[11px] font-medium uppercase text-muted-foreground md:grid md:grid-cols-[minmax(12rem,1.5fr)_minmax(10rem,1fr)_minmax(8rem,.8fr)_6rem_7rem_6rem]">
         <span>{t("Tugas", "Task")}</span>
         <span>{t("Proyek / Klien", "Project / Client")}</span>
@@ -89,6 +93,7 @@ export function ReusableTaskWorkspace({ tasks, members = [], projects = [], onMo
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
