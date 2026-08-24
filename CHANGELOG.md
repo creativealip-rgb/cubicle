@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-24 — Proposal acceptance fixes
+
+- Accept proposal now resolves or creates workspace Client from recipient email when no `clientId` exists.
+- Proposal acceptance persists generated `projects.id` and `invoices.id` before creating dependent records, preventing foreign-key failures.
+- Replaced native browser `confirm()` with localized Radix confirmation dialog.
+- Production commit: `7ca8c97`.
+
+
 ## 2026-08-22 — Manual release QA checkpoint
 
 - Added `docs/qa-report-2026-08-22-cubiqlo-release.md` with live browser evidence and final PASS/PARTIAL/BLOCKED status.
