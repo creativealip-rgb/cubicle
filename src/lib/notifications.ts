@@ -104,9 +104,19 @@ export async function notifyAppointmentBooked(opts: {
   replyTo?: string;
   calendarUrl?: string;
 }) {
+  const readableDateTime = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Jakarta",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZoneName: "short",
+  }).format(new Date(opts.dateTime));
   const text =
     `Hi ${opts.attendeeName},\n\n` +
-    `Your appointment "${opts.appointmentTitle}" has been scheduled for ${opts.dateTime}` +
+    `Your appointment "${opts.appointmentTitle}" has been scheduled for ${readableDateTime}` +
     (opts.workspaceName ? ` with ${opts.workspaceName}` : "") +
     `.\n\nWe look forward to meeting with you!` +
     (opts.calendarUrl ? `\n\nAdd to Google Calendar: ${opts.calendarUrl}` : "");
