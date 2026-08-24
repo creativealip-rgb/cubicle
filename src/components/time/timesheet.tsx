@@ -302,6 +302,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
       }
       toast.success(t("Entri dihapus", "Entry deleted"));
       setDeleteEntry(null);
+      setEditEntry(null);
       refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal menghapus", "Failed to delete"));
