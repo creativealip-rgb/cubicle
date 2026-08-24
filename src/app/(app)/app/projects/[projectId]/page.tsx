@@ -342,6 +342,7 @@ export default async function ProjectDetailPage({
                 )}
               </p>
               <WorkflowTaskWorkspace
+                title={t("Tugas Workflow", "Workflow Tasks")}
                 tasks={projectTasks.filter((task) => task.mode === "workflow")}
                 members={projectMembers}
                 projects={[{ id: project.id, name: project.name }]}

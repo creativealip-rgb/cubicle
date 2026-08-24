@@ -8,7 +8,8 @@ import { TasksBoardView } from "@/components/tasks/tasks-board-view";
 
 type Member = { id: string; name: string | null; email: string | null };
 
-export function WorkflowTaskWorkspace({ tasks, members, projects, currentUserId, addTask }: {
+export function WorkflowTaskWorkspace({ title, tasks, members, projects, currentUserId, addTask }: {
+  title: string;
   tasks: TasksListItem[];
   members: Member[];
   projects: Array<{ id: string; name: string }>;
@@ -19,6 +20,7 @@ export function WorkflowTaskWorkspace({ tasks, members, projects, currentUserId,
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-end gap-2">
+        <h3 className="mr-auto font-semibold">{title}</h3>
         <Button size="sm" variant={view === "list" ? "default" : "outline"} onClick={() => setView("list")}>List</Button>
         <Button size="sm" variant={view === "board" ? "default" : "outline"} onClick={() => setView("board")}>Board</Button>
         {addTask}

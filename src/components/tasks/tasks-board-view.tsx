@@ -97,7 +97,7 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
               onDragOver={(event) => event.preventDefault()}
               onDrop={(event) => {
                 event.preventDefault();
-                const taskId = draggedId;
+                const taskId = event.dataTransfer.getData("text/task-id") || draggedId;
                 setDraggedId(null);
                 if (!taskId || pending) return;
                 startTransition(async () => { await updateTask(taskId, { status: col.id as "todo" | "in_progress" | "review" | "done" }); });
@@ -105,7 +105,7 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
             >
               {colTasks.map((task) => (
                 <TaskDetailSheet key={task.id} task={task} members={members}>
-                  <Card draggable onDragStart={() => setDraggedId(task.id)} onDragEnd={() => setDraggedId(null)} className="cursor-grab border-border transition-shadow hover:shadow-md active:cursor-grabbing">
+                  <Card draggable onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/task-id", task.id); setDraggedId(task.id); }} onDragEnd={() => setDraggedId(null)} className="cursor-grab border-border transition-shadow hover:shadow-md active:cursor-grabbing">
                     <CardContent className="space-y-2 p-3">
                       <p className="text-sm font-medium leading-snug">{task.title}</p>
                       <Badge variant="outline" className="text-[10px] font-normal">
