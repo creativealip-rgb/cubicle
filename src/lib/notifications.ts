@@ -102,16 +102,22 @@ export async function notifyAppointmentBooked(opts: {
   dateTime: string;
   workspaceName?: string;
   replyTo?: string;
+  calendarUrl?: string;
 }) {
   const text =
     `Hi ${opts.attendeeName},\n\n` +
     `Your appointment "${opts.appointmentTitle}" has been scheduled for ${opts.dateTime}` +
     (opts.workspaceName ? ` with ${opts.workspaceName}` : "") +
-    `.\n\nWe look forward to meeting with you!`;
+    `.\n\nWe look forward to meeting with you!` +
+    (opts.calendarUrl ? `\n\nAdd to Google Calendar: ${opts.calendarUrl}` : "");
+  const calendarHtml = opts.calendarUrl
+    ? `<p style="margin:24px 0 0;"><a href="${escapeHtml(opts.calendarUrl)}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;font-weight:600;">Add to Google Calendar</a></p>`
+    : "";
   return sendNotification({
     to: opts.attendeeEmail,
     subject: `Appointment Confirmed: ${opts.appointmentTitle}`,
     text,
+    html: wrapTemplate({ title: `Appointment Confirmed: ${opts.appointmentTitle}`, bodyHtml: `<p style="margin:0;">${escapeHtml(text).replace(/\n/g, "<br>")}</p>${calendarHtml}` }),
     type: "appointment_booked",
     replyTo: opts.replyTo,
   });
