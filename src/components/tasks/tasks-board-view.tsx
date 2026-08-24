@@ -6,6 +6,8 @@ import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
 import { taskPriorityColor, taskPriorityLabel } from "@/lib/status-badge";
 import { useT } from "@/lib/i18n-client";
 import { Clock, AlertTriangle } from "lucide-react";
+import { updateTask } from "@/lib/actions/tasks";
+import { useState, useTransition } from "react";
 
 interface Task {
   id: string;
@@ -50,6 +52,8 @@ function dueTone(task: Task) {
 
 export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
   const { t, lang, locale } = useT();
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
 
   const columns = [
     { id: "todo", label: t("Belum Mulai", "To Do"), color: "bg-slate-300" },
@@ -88,10 +92,20 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
                 {colTasks.length}
               </Badge>
             </div>
-            <div className="space-y-2">
+            <div
+              className="min-h-24 space-y-2"
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                event.preventDefault();
+                const taskId = draggedId;
+                setDraggedId(null);
+                if (!taskId || pending) return;
+                startTransition(async () => { await updateTask(taskId, { status: col.id as "todo" | "in_progress" | "review" | "done" }); });
+              }}
+            >
               {colTasks.map((task) => (
                 <TaskDetailSheet key={task.id} task={task} members={members}>
-                  <Card className="cursor-pointer border-border transition-shadow hover:shadow-md">
+                  <Card draggable onDragStart={() => setDraggedId(task.id)} onDragEnd={() => setDraggedId(null)} className="cursor-grab border-border transition-shadow hover:shadow-md active:cursor-grabbing">
                     <CardContent className="space-y-2 p-3">
                       <p className="text-sm font-medium leading-snug">{task.title}</p>
                       <Badge variant="outline" className="text-[10px] font-normal">
