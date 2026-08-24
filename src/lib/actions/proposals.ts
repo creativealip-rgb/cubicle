@@ -4,7 +4,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { proposals, projects, projectServices, invoices, invoiceItems, workspaceInvoiceCounters, workspaces, proposalTemplates } from "@/db/schema";
+import { proposals, projects, projectServices, invoices, invoiceItems, workspaceInvoiceCounters, workspaces, proposalTemplates, clients } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
@@ -467,11 +467,31 @@ export async function acceptProposalPublic(proposalId: string, token: string) {
       return { id: proposalId, alreadyAccepted: true, projectId: p.projectId };
     }
 
-    if (!p.clientId) throw new Error("Proposal recipient is not linked to a Client");
+    let clientId = p.clientId;
+    if (!clientId) {
+      const email = p.clientEmail?.trim().toLowerCase();
+      if (!email) throw new Error("Proposal recipient email is required");
+      const [existingClient] = await tx.select({ id: clients.id }).from(clients)
+        .where(and(eq(clients.workspaceId, p.workspaceId), sql`lower(${clients.email}) = ${email}`))
+        .limit(1);
+      if (existingClient) {
+        clientId = existingClient.id;
+      } else {
+        const [createdClient] = await tx.insert(clients).values({
+          workspaceId: p.workspaceId,
+          name: p.clientName || email,
+          email,
+          companyName: p.companyName || null,
+        }).returning({ id: clients.id });
+        clientId = createdClient.id;
+      }
+      await tx.update(proposals).set({ clientId }).where(eq(proposals.id, p.id));
+    }
     const projectId = crypto.randomUUID();
+    if (!clientId) throw new Error("Proposal recipient client could not be resolved");
     await tx.insert(projects).values({
       workspaceId: p.workspaceId,
-      clientId: p.clientId,
+      clientId,
       name: p.title,
       status: "active",
     });
@@ -494,7 +514,7 @@ export async function acceptProposalPublic(proposalId: string, token: string) {
     const invoiceId = crypto.randomUUID();
     await tx.insert(invoices).values({
       workspaceId: p.workspaceId,
-      clientId: p.clientId,
+      clientId,
       invoiceNumber,
       issueDate: new Date().toISOString().slice(0, 10),
       dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
