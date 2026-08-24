@@ -7,7 +7,7 @@ import { taskPriorityColor, taskPriorityLabel } from "@/lib/status-badge";
 import { useT } from "@/lib/i18n-client";
 import { Clock, AlertTriangle } from "lucide-react";
 import { updateTask } from "@/lib/actions/tasks";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 interface Task {
   id: string;
@@ -52,8 +52,11 @@ function dueTone(task: Task) {
 
 export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
   const { t, lang, locale } = useT();
+  const [boardTasks, setBoardTasks] = useState(tasks);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  useEffect(() => setBoardTasks(tasks), [tasks]);
 
   const columns = [
     { id: "todo", label: t("Belum Mulai", "To Do"), color: "bg-slate-300" },
@@ -63,7 +66,7 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
   ];
 
   const grouped: Record<string, Task[]> = { todo: [], in_progress: [], review: [], done: [] };
-  for (const task of tasks) {
+  for (const task of boardTasks) {
     const col = task.status in grouped ? task.status : "todo";
     grouped[col].push(task);
   }
@@ -100,7 +103,16 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
                 const taskId = event.dataTransfer.getData("text/task-id") || draggedId;
                 setDraggedId(null);
                 if (!taskId || pending) return;
-                startTransition(async () => { await updateTask(taskId, { status: col.id as "todo" | "in_progress" | "review" | "done" }); });
+                const previous = boardTasks;
+                const nextStatus = col.id as "todo" | "in_progress" | "review" | "done";
+                setBoardTasks((current) => current.map((task) => task.id === taskId ? { ...task, status: nextStatus } : task));
+                startTransition(async () => {
+                  try {
+                    await updateTask(taskId, { status: nextStatus });
+                  } catch {
+                    setBoardTasks(previous);
+                  }
+                });
               }}
             >
               {colTasks.map((task) => (
