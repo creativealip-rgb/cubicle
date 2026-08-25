@@ -64,6 +64,7 @@ interface InvoiceFormProps {
     projectId?: string;
     issueDate?: string;
     dueDate?: string;
+    invoiceNumber?: string;
     currency?: string;
     notes?: string;
     terms?: string;
@@ -95,6 +96,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
     projectId: "",
     issueDate: defaultValues?.issueDate ?? new Date().toISOString().split("T")[0],
     dueDate: defaultValues?.dueDate ?? addDaysToIsoDate(defaultValues?.issueDate ?? new Date().toISOString().split("T")[0], 14),
+    invoiceNumber: defaultValues?.invoiceNumber ?? "",
     currency: defaultValues?.currency ?? baseCurrency,
     notes: defaultValues?.notes ?? "",
     terms: defaultValues?.terms ?? "",
@@ -185,6 +187,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         }),
         issueDate: form.issueDate,
         dueDate: form.dueDate || undefined,
+        invoiceNumber: form.invoiceNumber || undefined,
         currency: form.currency,
         notes: form.notes || undefined,
         terms: form.terms || undefined,
@@ -424,6 +427,16 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
             onChange={(e) => { setDueDateTouched(true); set("dueDate", e.target.value); }}
           />
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="invoiceNumber">{t("Nomor Invoice", "Invoice Number")}</Label>
+        <Input
+          id="invoiceNumber"
+          value={form.invoiceNumber}
+          onChange={(e) => set("invoiceNumber", e.target.value)}
+          placeholder={t("Kosongkan untuk nomor otomatis", "Leave blank for automatic number")}
+        />
       </div>
 
       <div className="space-y-2">
