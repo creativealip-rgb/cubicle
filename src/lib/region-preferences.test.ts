@@ -33,7 +33,8 @@ describe("getCountryFromHeaders", () => {
   });
 
   it("supports plain header records and missing headers", () => {
-    expect(getCountryFromHeaders({ "x-country-code": "ID" })).toBe("ID");
+    expect(getCountryFromHeaders({ "X-COUNTRY-CODE": "ID" })).toBe("ID");
+    expect(getCountryFromHeaders({ "x-country-code": "" , "X-VERCEL-IP-COUNTRY": "US" })).toBe("US");
     expect(getCountryFromHeaders(new Headers())).toBeUndefined();
   });
 });

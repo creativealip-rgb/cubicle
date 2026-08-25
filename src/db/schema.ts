@@ -36,6 +36,7 @@ export const users = pgTable("users", {
   banned: boolean("banned").notNull().default(false),
   bannedAt: timestamp("banned_at", { withTimezone: true }),
   bannedReason: text("banned_reason"),
+  preferredLanguage: text("preferred_language", { enum: ["id", "en"] }),
 });
 
 // ─── Admin audit trail (superadmin control plane) ───

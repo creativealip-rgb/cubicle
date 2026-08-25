@@ -18,7 +18,9 @@ type HeaderSource = Headers | Record<string, string | undefined>;
 
 export function getCountryFromHeaders(headers: HeaderSource): string | undefined {
   for (const name of countryHeaders) {
-    const value = headers instanceof Headers ? headers.get(name) : headers[name] ?? headers[name.toLowerCase()];
+    const value = typeof Headers !== "undefined" && headers instanceof Headers
+      ? headers.get(name)
+      : Object.entries(headers).find(([key]) => key.toLowerCase() === name)?.[1];
     if (value?.trim()) return value;
   }
   return undefined;
