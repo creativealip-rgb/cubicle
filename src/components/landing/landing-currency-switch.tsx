@@ -19,7 +19,7 @@ export function LandingCurrencySwitch({ initialCurrency }: { initialCurrency: Di
     } catch { setError(true); }
     finally { setPending(false); }
   }
-  return <div className="inline-flex items-center rounded-xl bg-white p-1 text-xs shadow-sm ring-1 ring-slate-200" aria-label="Currency / Mata uang">
+  return <div role="group" className="inline-flex items-center rounded-xl bg-white p-1 text-xs shadow-sm ring-1 ring-slate-200" aria-label="Currency / Mata uang">
     {(["IDR", "USD"] as const).map(value => <button key={value} type="button" disabled={pending} aria-pressed={currency === value} onClick={() => change(value)} className={`rounded-lg px-2.5 py-1.5 font-semibold ${currency === value ? "bg-[#292D34] text-white" : "text-slate-500"}`}>{value}</button>)}
     {error && <span role="status" className="sr-only">Currency update failed. Pembaruan mata uang gagal.</span>}
   </div>;
