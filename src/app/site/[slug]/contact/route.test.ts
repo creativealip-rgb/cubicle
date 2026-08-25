@@ -5,8 +5,11 @@ vi.mock("@/lib/notifications", () => ({
   sendNotification: vi.fn(async () => {}),
 }));
 
+vi.mock("@/lib/actions/personal-site", () => ({
+  getPublishedPersonalSiteBySlug: vi.fn(async () => ({ userId: "u-1", title: "My Site" })),
+}));
+
 vi.mock("@/db", () => {
-  const siteRow = [{ userId: "u-1" }];
   const userRow = [{ email: "owner@cubiqlo.test", name: "Owner" }];
 
   const makeChain = (data: unknown[]) => ({
@@ -15,32 +18,26 @@ vi.mock("@/db", () => {
     from: vi.fn(() => makeChain(data)),
   });
 
-  const siteChain = makeChain(siteRow);
   const userChain = makeChain(userRow);
-
-  // Route does two queries: personalSites first, then users.
-  // Alternate chains by call count to serve both.
-  let callCount = 0;
 
   return {
     db: {
-      select: vi.fn(() => {
-        callCount++;
-        if (callCount % 2 === 1) return siteChain;
-        return userChain;
-      }),
+      select: vi.fn(() => userChain),
     },
   };
 });
 
 import { POST } from "@/app/site/[slug]/contact/route";
 import { sendNotification } from "@/lib/notifications";
+import { getPublishedPersonalSiteBySlug } from "@/lib/actions/personal-site";
 
 const mockSendNotification = vi.mocked(sendNotification);
+const mockGetPublishedPersonalSiteBySlug = vi.mocked(getPublishedPersonalSiteBySlug);
 
 describe("POST /site/[slug]/contact", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetPublishedPersonalSiteBySlug.mockResolvedValue({ userId: "u-1", title: "My Site" } as never);
   });
 
   it("returns 404 for non-normalized slug", async () => {
@@ -71,6 +68,12 @@ describe("POST /site/[slug]/contact", () => {
     const data = await response.json();
     expect(data.success).toBe(true);
     expect(mockSendNotification).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns 404 when effective published site is missing", async () => {
+    mockGetPublishedPersonalSiteBySlug.mockResolvedValue(null);
+    const response = await POST(new Request("http://localhost/site/old-custom/contact", { method: "POST", headers: { "x-forwarded-for": "old-custom-404" }, body: JSON.stringify({ name: "V", email: "v@e.com", message: "Hi" }) }), { params: Promise.resolve({ slug: "old-custom" }) });
+    expect(response.status).toBe(404);
   });
 
   it("rate limits after 3 requests per hour per IP", async () => {
