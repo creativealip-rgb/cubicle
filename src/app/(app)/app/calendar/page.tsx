@@ -17,6 +17,7 @@ import { Calendar, CalendarDays, Clock, User } from "lucide-react";
 import Link from "next/link";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { AvailabilityRuleForm } from "@/components/calendar/availability-rule-form";
+import { BookingSlugForm } from "@/components/settings/booking-slug-form";
 import { AppointmentActions, DeleteAvailabilityRuleButton } from "@/components/calendar/calendar-item-actions";
 import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 
@@ -117,6 +118,7 @@ export default async function CalendarPage() {
               </Link>
             </Button>
           )}
+          <BookingSlugForm defaultSlug={ws.bookingSlug} canEdit={ws.ownerId === user.id} />
         </div>
       </div>
 

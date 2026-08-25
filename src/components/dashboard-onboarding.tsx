@@ -63,11 +63,8 @@ export function DashboardOnboarding({ lang, workspaceId, steps }: DashboardOnboa
 
   const doneCount = steps.filter((s) => s.done).length;
   const total = steps.length;
-  const allDone = doneCount === total;
   const pendingSteps = steps.filter((step) => !step.done);
-  const visibleSteps = expanded ? pendingSteps : pendingSteps.slice(0, 3);
-
-  if (allDone) return null;
+  const visibleSteps = expanded ? steps : (pendingSteps.length > 0 ? pendingSteps.slice(0, 3) : steps);
 
   const pct = Math.round((doneCount / total) * 100);
 
@@ -82,7 +79,7 @@ export function DashboardOnboarding({ lang, workspaceId, steps }: DashboardOnboa
             </div>
             <div>
               <h2 className="text-sm font-semibold tracking-tight text-blue-950">
-                {t("Mulai di sini", "Start here")}
+                {t("Mulai dari Pengaturan", "Start from Settings")}
               </h2>
               <p className="text-xs text-blue-800/70">
                 {t(
@@ -115,9 +112,9 @@ export function DashboardOnboarding({ lang, workspaceId, steps }: DashboardOnboa
                   "group flex min-h-11 items-center gap-3 rounded-lg border border-blue-200 bg-white/70 px-3 py-2.5 transition-all hover:border-blue-400 hover:shadow-sm"
                 )}
               >
-                <div
-                  className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-blue-300 text-xs font-semibold text-blue-600"
-                />
+                <div className={cn("flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border text-xs font-semibold", step.done ? "border-emerald-500 bg-emerald-50 text-emerald-600" : "border-blue-300 text-blue-600")}>
+                  {step.done ? "✓" : ""}
+                </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-slate-900">{copy.title}</p>
                   <p className="line-clamp-1 text-xs text-muted-foreground">

@@ -13,7 +13,6 @@ import { Settings, Users, Receipt, Calendar, Sparkles, ImageIcon, Plug, Coins, C
 import { TeamManager } from "@/components/settings/team-manager";
 import { WorkspaceBrandingForm } from "@/components/settings/workspace-branding-form";
 import { WorkspaceNameForm } from "@/components/settings/workspace-name-form";
-import { BookingSlugForm } from "@/components/settings/booking-slug-form";
 import { GoogleCalendarConnect } from "@/components/settings/google-calendar-connect";
 import { CurrencyRatesForm } from "@/components/settings/currency-rates-form";
 import { SettingsTabs } from "@/components/settings/settings-tabs";
@@ -205,7 +204,6 @@ export default async function SettingsPage({
                       )}
                     </p>
                   </div>
-                  <BookingSlugForm defaultSlug={workspace.bookingSlug} canEdit={canEditWorkspace} />
                   <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-2">
                     {workspaceSetupItems.map((item) => {
                       const Icon = item.done ? CheckCircle2 : Circle;
@@ -307,7 +305,7 @@ export default async function SettingsPage({
               </CardContent>
             </Card>
           }
-          branding={
+          invoice={
             <>
               {invoiceSetupDone < invoiceSetupItems.length && (
                 <Card className="border-amber-200 bg-amber-50/70">
@@ -403,7 +401,7 @@ export default async function SettingsPage({
               </CardContent>
             </Card>
           }
-          more={
+          billing={
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

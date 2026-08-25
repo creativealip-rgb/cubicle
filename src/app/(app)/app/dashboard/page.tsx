@@ -308,7 +308,7 @@ export default async function DashboardPage() {
         workspaceId={workspaceId}
         steps={[
           { key: "workspace", done: workspaceProfileDone, href: "/app/settings" },
-          { key: "invoiceSettings", done: invoiceSettingsDone, href: "/app/settings?tab=branding" },
+          { key: "invoiceSettings", done: invoiceSettingsDone, href: "/app/settings?tab=invoice" },
           { key: "client", done: totalClients > 0, href: "/app/clients" },
           { key: "project", done: totalProjects > 0, href: "/app/projects" },
           { key: "time", done: totalTimeEntries > 0, href: "/app/time" },

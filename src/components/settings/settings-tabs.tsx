@@ -15,22 +15,24 @@ import { useT } from "@/lib/i18n-client";
 
 export type SettingsTabKey =
   | "workspace"
+  | "invoice"
   | "account"
   | "team"
-  | "branding"
   | "integrations"
-  | "more";
+  | "billing";
 
 const TAB_KEYS: SettingsTabKey[] = [
   "workspace",
-  "account",
+  "invoice",
   "team",
-  "branding",
+  "account",
   "integrations",
-  "more",
+  "billing",
 ];
 
 function normalizeTab(tab?: string | null): SettingsTabKey {
+  if (tab === "branding") return "invoice";
+  if (tab === "more") return "billing";
   if (tab && (TAB_KEYS as string[]).includes(tab)) {
     return tab as SettingsTabKey;
   }
@@ -42,9 +44,9 @@ type SettingsTabsProps = {
   workspace: ReactNode;
   account: ReactNode;
   team: ReactNode;
-  branding: ReactNode;
+  invoice: ReactNode;
   integrations: ReactNode;
-  more: ReactNode;
+  billing: ReactNode;
 };
 
 export function SettingsTabs({
@@ -52,9 +54,9 @@ export function SettingsTabs({
   workspace,
   account,
   team,
-  branding,
+  invoice,
   integrations,
-  more,
+  billing,
 }: SettingsTabsProps) {
   const { t } = useT();
   const router = useRouter();
@@ -100,9 +102,9 @@ export function SettingsTabs({
       icon: <Settings className="h-3.5 w-3.5" />,
     },
     {
-      key: "account",
-      label: t("Akun", "Account"),
-      icon: <User className="h-3.5 w-3.5" />,
+      key: "invoice",
+      label: t("Invoice", "Invoice"),
+      icon: <LayoutGrid className="h-3.5 w-3.5" />,
     },
     {
       key: "team",
@@ -110,9 +112,9 @@ export function SettingsTabs({
       icon: <Users className="h-3.5 w-3.5" />,
     },
     {
-      key: "branding",
-      label: t("Branding & Invoice", "Branding & Invoice"),
-      icon: <ImageIcon className="h-3.5 w-3.5" />,
+      key: "account",
+      label: t("Akun", "Account"),
+      icon: <User className="h-3.5 w-3.5" />,
     },
     {
       key: "integrations",
@@ -120,9 +122,9 @@ export function SettingsTabs({
       icon: <Plug className="h-3.5 w-3.5" />,
     },
     {
-      key: "more",
-      label: t("Lainnya", "More"),
-      icon: <LayoutGrid className="h-3.5 w-3.5" />,
+      key: "billing",
+      label: t("Billing", "Billing"),
+      icon: <ImageIcon className="h-3.5 w-3.5" />,
     },
   ];
   const activeTabItem = tabs.find((tab) => tab.key === activeTab);
@@ -166,14 +168,14 @@ export function SettingsTabs({
       <TabsContent value="team" className="mt-0 space-y-4 focus-visible:ring-0">
         {team}
       </TabsContent>
-      <TabsContent value="branding" className="mt-0 space-y-4 focus-visible:ring-0">
-        {branding}
+      <TabsContent value="invoice" className="mt-0 space-y-4 focus-visible:ring-0">
+        {invoice}
       </TabsContent>
       <TabsContent value="integrations" className="mt-0 space-y-4 focus-visible:ring-0">
         {integrations}
       </TabsContent>
-      <TabsContent value="more" className="mt-0 space-y-4 focus-visible:ring-0">
-        {more}
+      <TabsContent value="billing" className="mt-0 space-y-4 focus-visible:ring-0">
+        {billing}
       </TabsContent>
     </Tabs>
   );
