@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Plus, FileText, Layers, Palette, Eye, ChevronLeft, ChevronRight, Trash2, Home, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -176,6 +177,7 @@ export function MobileStepEditor({
             publicUrl={publicUrl}
             previewUrl={previewUrl}
             onUpdateSite={onUpdateSite}
+            canEditSlug={canEditSlug}
           />
         )}
       </div>
@@ -402,11 +404,12 @@ function ThemeStep({ site, onUpdateSite }: {
   );
 }
 
-function PublishStep({ site, publicUrl, previewUrl, onUpdateSite }: {
+function PublishStep({ site, publicUrl, previewUrl, onUpdateSite, canEditSlug }: {
   site: PersonalSiteInput;
   publicUrl: string;
   previewUrl: string;
   onUpdateSite: (patch: Partial<PersonalSiteInput>) => void;
+  canEditSlug: boolean;
 }) {
   const { t } = useT();
   return (
@@ -441,9 +444,17 @@ function PublishStep({ site, publicUrl, previewUrl, onUpdateSite }: {
         <Input
           value={site.slug}
           onChange={(e) => onUpdateSite({ slug: e.target.value })}
+          disabled={!canEditSlug}
+          readOnly={!canEditSlug}
           className="h-9 text-xs"
           placeholder="nama-halaman"
         />
+        {!canEditSlug && (
+          <p className="text-xs text-muted-foreground">
+            {t("Paket Free menggunakan slug workspace. Upgrade untuk memakai slug kustom.", "Free uses your workspace slug. Upgrade to use a custom slug.")} {" "}
+            <Link href="/app/billing" className="font-medium underline">Upgrade</Link>
+          </p>
+        )}
         <p className="text-[10px] text-muted-foreground">{publicUrl}</p>
       </div>
 
