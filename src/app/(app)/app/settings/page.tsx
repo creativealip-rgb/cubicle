@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Settings, Users, Receipt, Calendar, Sparkles, Plug, Coins, CheckCircle2, Circle } from "lucide-react";
+import { Settings, Users, Receipt, Calendar, Sparkles, Plug, CheckCircle2, Circle } from "lucide-react";
 import { TeamManager } from "@/components/settings/team-manager";
 import { WorkspaceBrandingForm } from "@/components/settings/workspace-branding-form";
 import { WorkspaceNameForm } from "@/components/settings/workspace-name-form";
