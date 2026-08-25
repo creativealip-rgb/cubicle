@@ -203,7 +203,9 @@ export async function savePersonalSite(
   };
 }
 
-export async function getPublishedPersonalSiteBySlug(slug: string): Promise<PersonalSiteInput | null> {
+export async function getPublishedPersonalSiteBySlug(
+  slug: string,
+): Promise<(PersonalSiteInput & { userId: string }) | null> {
   const clean = normalizePersonalSiteSlug(slug);
   const match = findPersonalSiteByEffectiveSlug(await listPersonalSiteRows(), clean, { publishedOnly: true });
   if (!match) return null;
@@ -213,13 +215,16 @@ export async function getPublishedPersonalSiteBySlug(slug: string): Promise<Pers
     .where(eq(personalSites.id, match.id))
     .limit(1);
   if (!site) return null;
-  return normalizeStoredPersonalSite({
-    ...site,
-    subtitle: site.subtitle ?? "",
-    about: site.about ?? "",
-    ctaLabel: site.ctaLabel ?? "",
-    ctaUrl: site.ctaUrl ?? "",
-  });
+  return {
+    ...normalizeStoredPersonalSite({
+      ...site,
+      subtitle: site.subtitle ?? "",
+      about: site.about ?? "",
+      ctaLabel: site.ctaLabel ?? "",
+      ctaUrl: site.ctaUrl ?? "",
+    }),
+    userId: site.userId,
+  };
 }
 
 export async function getPersonalSiteBySlugForPreview(slug: string): Promise<PersonalSiteInput | null> {

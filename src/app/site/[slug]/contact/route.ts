@@ -63,7 +63,7 @@ export async function POST(
   }
 
   // Find effective published site and owner
-  const site = await getPublishedPersonalSiteBySlug(clean) as ({ userId: string; title: string } | null);
+  const site = await getPublishedPersonalSiteBySlug(clean);
   if (!site) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
