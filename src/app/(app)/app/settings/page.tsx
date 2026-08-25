@@ -183,13 +183,9 @@ export default async function SettingsPage({
                   <WorkspaceNameForm defaultName={workspace.name} canEdit={canEditWorkspace} />
                   <div className="border-t pt-3">
                     <h3 className="mb-3 text-sm font-semibold">{t("Profil workspace & Branding", "Workspace profile & Branding")}</h3>
-                    <WorkspaceBrandingForm canEdit={canEditWorkspace} defaults={{ billingName: workspace.billingName, billingEmail: workspace.billingEmail, billingPhone: workspace.billingPhone, billingAddress: workspace.billingAddress, taxId: workspace.taxId, logoUrl: workspace.logoUrl, defaultCurrency: workspace.defaultCurrency, defaultTaxRate: workspace.defaultTaxRate, defaultHourlyRate: workspace.defaultHourlyRate, defaultInvoiceTerms: workspace.defaultInvoiceTerms, replyToEmail: workspace.replyToEmail }} ownerEmailHint={ownerUser?.email ?? null} />
+                    <WorkspaceBrandingForm section="workspace" canEdit={canEditWorkspace} defaults={{ billingName: workspace.billingName, billingEmail: workspace.billingEmail, billingPhone: workspace.billingPhone, billingAddress: workspace.billingAddress, taxId: workspace.taxId, logoUrl: workspace.logoUrl, defaultCurrency: workspace.defaultCurrency, defaultTaxRate: workspace.defaultTaxRate, defaultHourlyRate: workspace.defaultHourlyRate, defaultInvoiceTerms: workspace.defaultInvoiceTerms, replyToEmail: workspace.replyToEmail }} ownerEmailHint={ownerUser?.email ?? null} />
                   </div>
                   <div className="space-y-3 border-t pt-3">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Slug</span>
-                      <Badge variant="secondary">{workspace.slug}</Badge>
-                    </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">{t("Mata Uang", "Currency")}</span>
                       <span>{workspace.defaultCurrency}</span>
@@ -218,31 +214,7 @@ export default async function SettingsPage({
                   </div>
                 </CardContent>
               </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Coins className="h-5 w-5" /> {t("Kurs finance", "Finance FX rates")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t(
-                      "Konversi multi-currency ke base currency untuk ringkasan dashboard, laporan, dan KPI pengeluaran (manual rate).",
-                      "Convert multi-currency totals into base currency for dashboard, reports, and expense KPIs (manual rates).",
-                    )}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <CurrencyRatesForm
-                    baseCurrency={workspace.defaultCurrency || "IDR"}
-                    rates={currencyRateRows.map((r) => ({
-                      id: r.id,
-                      fromCurrency: r.fromCurrency,
-                      rate: Number(r.rate),
-                    }))}
-                    canEdit={canEditWorkspace}
-                    showBaseCurrencyApprox={workspace.showBaseCurrencyApprox !== false}
-                  />
-                </CardContent>
-              </Card>
+
             </>
           }
           account={
@@ -341,6 +313,8 @@ export default async function SettingsPage({
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <WorkspaceBrandingForm section="invoice" canEdit={canEditWorkspace} defaults={{ billingName: workspace.billingName, billingEmail: workspace.billingEmail, billingPhone: workspace.billingPhone, billingAddress: workspace.billingAddress, taxId: workspace.taxId, logoUrl: workspace.logoUrl, defaultCurrency: workspace.defaultCurrency, defaultTaxRate: workspace.defaultTaxRate, defaultHourlyRate: workspace.defaultHourlyRate, defaultInvoiceTerms: workspace.defaultInvoiceTerms, replyToEmail: workspace.replyToEmail }} ownerEmailHint={ownerUser?.email ?? null} />
+                  <CurrencyRatesForm baseCurrency={workspace.defaultCurrency || "IDR"} rates={currencyRateRows.map((r) => ({ id: r.id, fromCurrency: r.fromCurrency, rate: Number(r.rate) }))} canEdit={canEditWorkspace} showBaseCurrencyApprox={workspace.showBaseCurrencyApprox !== false} />
                   <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-2">
                     {invoiceSetupItems.map((item) => {
                       const Icon = item.done ? CheckCircle2 : Circle;
