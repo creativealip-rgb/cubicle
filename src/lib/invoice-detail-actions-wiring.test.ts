@@ -5,11 +5,26 @@ import { join } from "node:path";
 const read = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 
 describe("invoice detail actions", () => {
-  it("does not show a download action in the invoice edit header", () => {
+  it("shows invoice preview only on the detail page", () => {
     const page = read("src/app/(app)/app/invoices/[invoiceId]/page.tsx");
+    const list = read("src/app/(app)/app/invoices/page.tsx");
+    const create = read("src/app/(app)/app/invoices/new/page.tsx");
 
-    expect(page).not.toContain('t("Unduh Invoice", "Download Invoice")');
-    expect(page).not.toContain("/api/invoices/${invoiceId}/pdf");
+    expect(page).toContain('t("Pratinjau Invoice", "Invoice Preview")');
+    expect(page).toContain("/api/invoices/${invoiceId}/pdf");
+    expect(page).toContain('target="_blank"');
+    expect(list).not.toContain("Invoice Preview");
+    expect(create).not.toContain("Invoice Preview");
+  });
+
+  it("wires draft-only invoice number editing", () => {
+    const page = read("src/app/(app)/app/invoices/[invoiceId]/page.tsx");
+    const form = read("src/components/invoices/invoice-meta-form.tsx");
+
+    expect(page).toContain("invoiceNumber: inv.invoiceNumber");
+    expect(form).toContain('t("Nomor Invoice", "Invoice Number")');
+    expect(form).toContain('disabled={defaults.status !== "draft"}');
+    expect(form).toContain("invoiceNumber: form.invoiceNumber");
   });
 
   it("restores the HTML shared-invoice view action", () => {

@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Share2 } from "lucide-react";
+import { ArrowLeft, Eye, Share2 } from "lucide-react";
 import { InvoiceItemManager } from "./add-item-button";
 import { DeleteItemButton } from "./delete-item-button";
 import { PaymentSection } from "./payment-section";
@@ -248,6 +248,12 @@ export default async function InvoiceDetailPage({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="outline" size="sm" className="gap-1.5">
+            <Link href={`/api/invoices/${invoiceId}/pdf`} target="_blank" rel="noreferrer">
+              <Eye className="h-4 w-4" />
+              {t("Pratinjau Invoice", "Invoice Preview")}
+            </Link>
+          </Button>
           <SendInvoiceButton
             invoiceId={invoiceId}
             defaultMessage={defaultInvoiceMessage}
@@ -418,6 +424,7 @@ export default async function InvoiceDetailPage({
           <InvoiceMetaForm
             invoiceId={invoiceId}
             defaults={{
+              invoiceNumber: inv.invoiceNumber,
               status: inv.status,
               issueDate: String(inv.issueDate),
               dueDate: inv.dueDate ? String(inv.dueDate) : null,
