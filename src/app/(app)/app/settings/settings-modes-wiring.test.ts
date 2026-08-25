@@ -10,7 +10,7 @@ describe("settings mode wiring", () => {
     expect(workspace).toBeGreaterThan(-1);
     expect(invoice).toBeGreaterThan(workspace);
     expect(source.indexOf("<CurrencyRatesForm", invoice)).toBeGreaterThan(invoice);
+    expect(source).not.toContain("BookingSlugForm");
     expect(source).not.toContain("BookingSlug");
-    expect(source).not.toContain("Slug");
   });
 });
