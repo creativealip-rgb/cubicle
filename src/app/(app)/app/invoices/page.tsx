@@ -8,6 +8,7 @@ import {
   invoices,
   payments,
   projects,
+  recurringInvoiceRules,
   workspaceCurrencyRates,
   workspaceMembers,
 } from "@/db/schema";
@@ -30,6 +31,7 @@ import {
 } from "@/lib/currency-base";
 import { buildReportPeriod } from "@/lib/report-period";
 import { InvoicePeriodControls } from "@/components/invoices/invoice-period-controls";
+import { RecurringInvoiceManager } from "@/components/invoices/recurring-invoice-manager";
 
 const PAGE_SIZE = 10;
 
@@ -212,10 +214,14 @@ export default async function InvoicesPage({
     .orderBy(clients.name);
 
   const projectOptions = await db
-    .select({ id: projects.id, name: projects.name })
+    .select({ id: projects.id, clientId: projects.clientId, name: projects.name })
     .from(projects)
     .where(eq(projects.workspaceId, workspaceId))
     .orderBy(projects.name);
+
+  const recurringRules = await db.select().from(recurringInvoiceRules)
+    .where(eq(recurringInvoiceRules.workspaceId, workspaceId))
+    .orderBy(recurringInvoiceRules.nextRunDate);
 
   // Counts per status (respect client/billing filters; include archived for badge)
   const statusCountWhere: SQL[] = [eq(invoices.workspaceId, workspaceId)];
@@ -500,6 +506,17 @@ export default async function InvoicesPage({
           </Link>
         </div>
       )}
+
+      <RecurringInvoiceManager
+        rules={recurringRules.map((rule) => ({
+          ...rule,
+          lines: rule.lines.map((line) => ({ ...line, quantity: Number(line.quantity), unitPrice: Number(line.unitPrice) })),
+        }))}
+        clients={clientOptions.map((client) => ({ id: client.id, name: client.companyName || client.name }))}
+        projects={projectOptions}
+        canWrite={canWrite}
+        defaultCurrency={baseCurrency}
+      />
 
       {/* Status tabs */}
       <div className="space-y-4">
