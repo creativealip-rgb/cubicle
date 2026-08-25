@@ -31,7 +31,7 @@ vi.mock("@/db", () => {
         return {
           from: vi.fn(() => ({
             innerJoin: vi.fn(() => ({
-              innerJoin: vi.fn(() => ({ where: vi.fn(() => query) })),
+              innerJoin: vi.fn(() => query),
               where: vi.fn(() => query),
             })),
           })),
