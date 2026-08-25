@@ -104,9 +104,15 @@ export async function savePersonalSite(
     return { status: "error", message: "Data landing page tidak valid. Muat ulang lalu coba lagi." };
   }
 
+  const { userId, workspaceId, planContext } = await ownerContext();
+  const effectiveSlug = getEffectivePersonalSiteSlug(
+    getEffectivePlan(planContext.plan, planContext.planExpiresAt),
+    planContext.workspaceSlug,
+    String((decoded as Record<string, unknown>)?.slug || ""),
+  );
   const payload = personalSiteInputSchema.safeParse({
     ...(decoded as Record<string, unknown>),
-    slug: normalizePersonalSiteSlug(String((decoded as Record<string, unknown>)?.slug || "")),
+    slug: effectiveSlug,
     published: intent === "publish" ? true : intent === "unpublish" || intent === "draft" ? false : false,
   });
   if (!payload.success) {
@@ -126,7 +132,15 @@ export async function savePersonalSite(
     };
   }
 
-  const { userId, workspaceId } = await ownerContext();
+  const rows = await listPersonalSiteRows();
+  const currentRow = rows.find((row) => row.workspaceId === workspaceId && row.userId === userId);
+  if (hasEffectiveSlugCollision(rows, data.slug, currentRow?.id)) {
+    return {
+      status: "error",
+      message: "Slug sudah dipakai. Pilih alamat publik lain.",
+      fieldErrors: { slug: ["Slug sudah dipakai."] },
+    };
+  }
   let previousSlug: string | null = null;
 
   try {
