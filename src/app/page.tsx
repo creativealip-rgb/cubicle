@@ -220,7 +220,7 @@ export default async function HomePage() {
           <div className="mx-auto max-w-7xl">
             <div className="grid gap-8 lg:grid-cols-[.8fr_1.2fr] lg:items-end">
               <div><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#6647F0]">{tx("Satu alur kerja", "One workflow")}</p><h2 className="mt-4 max-w-xl text-3xl font-semibold leading-tight tracking-[-.03em] sm:text-5xl">{tx("Data cukup dimasukkan sekali. Sisanya tetap terhubung.", "Enter data once. Everything stays connected.")}</h2></div>
-              <p className="max-w-2xl text-lg leading-8 text-slate-600 lg:justify-self-end">{tx("Informasi klien yang lu masukkan di awal ikut ke proyek, portal, dan invoice tanpa input ulang.", "Client information flows into projects, portals, and invoices without re-entry.")}</p>
+              <p className="max-w-2xl text-lg leading-8 text-slate-600 lg:justify-self-end">{tx("Informasi klien yang Anda masukkan di awal ikut ke proyek, portal, dan invoice tanpa input ulang.", "Client information flows into projects, portals, and invoices without re-entry.")}</p>
             </div>
 
             <div className="mt-14 grid gap-8 lg:grid-cols-[.72fr_1.28fr] lg:items-center">
@@ -247,7 +247,7 @@ export default async function HomePage() {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-violet-200 ring-1 ring-white/15"><ShieldCheck className="h-4 w-4" /> {tx("Portal klien aman", "Secure client portal")}</div>
               <h2 className="mt-6 text-4xl font-semibold leading-[1.08] tracking-[-.035em] sm:text-6xl">{tx("Satu link.", "One link.")}<br /><span className="text-violet-300">{tx("Lebih sedikit “update dong?”", "Fewer “any updates?” messages")}</span></h2>
-              <p className="mt-6 max-w-xl text-lg leading-8 text-slate-300">{tx("Klien melihat progress, hasil kerja, komentar, dan invoice. Mereka hanya melihat yang lu bagikan. Catatan internal tetap aman.", "Clients see progress, deliverables, comments, and invoices. They see only what you share. Internal notes stay private.")}</p>
+              <p className="mt-6 max-w-xl text-lg leading-8 text-slate-300">{tx("Klien melihat progress, hasil kerja, komentar, dan invoice. Mereka hanya melihat yang Anda bagikan. Catatan internal tetap aman.", "Clients see progress, deliverables, comments, and invoices. They see only what you share. Internal notes stay private.")}</p>
               <div className="mt-8 grid gap-3 sm:grid-cols-2">
                 {[["Progress terpilih", "Selected progress"], ["File deliverable", "Deliverable files"], ["Komentar publik", "Public comments"], ["Link invoice", "Invoice link"], ["Token aman", "Secure token"], ["Data internal terlindungi", "Internal data protected"]].map(([id, en]) => <div key={id} className="flex items-center gap-2 text-sm text-slate-200"><Check className="h-4 w-4 text-emerald-400" />{tx(id, en)}</div>)}
               </div>

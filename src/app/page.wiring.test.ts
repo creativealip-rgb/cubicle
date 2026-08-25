@@ -15,6 +15,7 @@ describe("landing regional wiring", () => {
     expect(pageSource).toContain("Payment processed in IDR.");
     expect(pageSource).toContain("Pembayaran diproses dalam IDR.");
     expect(pageSource).not.toContain("Indonesia");
+    expect(pageSource).not.toMatch(/\b(lu|kamu)\b/i);
   });
 });
 
