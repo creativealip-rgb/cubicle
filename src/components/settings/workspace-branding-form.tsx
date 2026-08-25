@@ -15,6 +15,7 @@ import { useT } from "@/lib/i18n-client";
 import { useConfirm } from "@/lib/hooks/use-confirm";
 
 interface WorkspaceBrandingFormProps {
+  section: "workspace" | "invoice";
   canEdit?: boolean;
   defaults: {
     billingName?: string | null;
@@ -35,6 +36,7 @@ interface WorkspaceBrandingFormProps {
 }
 
 export function WorkspaceBrandingForm({
+  section,
   defaults,
   ownerEmailHint,
   canEdit = true,
@@ -81,7 +83,7 @@ export function WorkspaceBrandingForm({
 
         replyToEmail: form.replyToEmail,
       });
-      toast.success(t("Branding disimpan", "Branding saved"));
+      toast.success(section === "workspace" ? t("Workspace disimpan", "Workspace saved") : t("Default invoice disimpan", "Invoice defaults saved"));
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
       refresh();
@@ -153,7 +155,7 @@ export function WorkspaceBrandingForm({
     {dialog}
     <form onSubmit={onSubmit} className="space-y-4">
       <fieldset disabled={!canEdit} className="space-y-4">
-      <div className="space-y-3 rounded-lg border p-4">
+      {section === "workspace" ? <div className="space-y-3 rounded-lg border p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <Label>{t("Logo invoice", "Invoice logo")}</Label>
@@ -249,9 +251,10 @@ export function WorkspaceBrandingForm({
             </p>
           </div>
         ) : null}
-      </div>
+      </div> : null}
 
       <div className="grid gap-4 md:grid-cols-2">
+        {section === "workspace" ? <>
         <div className="space-y-2">
           <Label htmlFor="billingName">{t("Nama tagihan", "Billing name")}</Label>
           <Input
@@ -269,26 +272,6 @@ export function WorkspaceBrandingForm({
             value={form.billingEmail}
             onChange={(e) => setForm((p) => ({ ...p, billingEmail: e.target.value }))}
           />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="replyToEmail">{t("Email balasan klien", "Client reply-to email")}</Label>
-          <Input
-            id="replyToEmail"
-            type="email"
-            value={form.replyToEmail}
-            onChange={(e) => setForm((p) => ({ ...p, replyToEmail: e.target.value }))}
-            placeholder={
-              form.billingEmail ||
-              ownerEmailHint ||
-              "email-kamu@gmail.com"
-            }
-          />
-          <p className="text-xs text-muted-foreground">
-            {t(
-              "Balasan klien ke invoice/booking masuk sini. Kosong = email tagihan, lalu email owner.",
-              "Client replies to invoices/bookings go here. Empty = billing email, then owner email.",
-            )}
-          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="billingPhone">{t("Telepon", "Phone")}</Label>
@@ -314,6 +297,24 @@ export function WorkspaceBrandingForm({
             value={form.billingAddress}
             onChange={(e) => setForm((p) => ({ ...p, billingAddress: e.target.value }))}
           />
+        </div>
+        </> : null}
+        {section === "invoice" ? <>
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="replyToEmail">{t("Email balasan klien", "Client reply-to email")}</Label>
+          <Input
+            id="replyToEmail"
+            type="email"
+            value={form.replyToEmail}
+            onChange={(e) => setForm((p) => ({ ...p, replyToEmail: e.target.value }))}
+            placeholder={form.billingEmail || ownerEmailHint || "email-kamu@gmail.com"}
+          />
+          <p className="text-xs text-muted-foreground">
+            {t(
+              "Balasan klien ke invoice/booking masuk sini. Kosong = email tagihan, lalu email owner.",
+              "Client replies to invoices/bookings go here. Empty = billing email, then owner email.",
+            )}
+          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="defaultCurrency">{t("Mata uang default", "Default currency")}</Label>
@@ -374,6 +375,7 @@ export function WorkspaceBrandingForm({
           />
         </div>
 
+        </> : null}
       </div>
 
       <LoadingButton
@@ -385,7 +387,9 @@ export function WorkspaceBrandingForm({
       >
         {saved
           ? t("Tersimpan ✓", "Saved ✓")
-          : t("Simpan branding", "Save branding")}
+          : section === "workspace"
+            ? t("Simpan workspace", "Save workspace")
+            : t("Simpan invoice", "Save invoice defaults")}
       </LoadingButton>
       </fieldset>
     </form>
