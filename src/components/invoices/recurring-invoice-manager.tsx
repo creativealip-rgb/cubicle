@@ -24,6 +24,8 @@ export type RecurringInvoiceRuleView = {
   currency: string;
   numberPattern: string;
   lastSequence: number;
+  notes: string | null;
+  terms: string | null;
   lines: Array<{ description: string; quantity: number; unitPrice: number }>;
 };
 
@@ -41,6 +43,7 @@ export function RecurringInvoiceManager({ rules, clients, projects, canWrite, de
   const { t } = useT();
   const { refresh } = useAppTransition();
   const [pending, setPending] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({
     clientId: clients[0]?.id ?? "",
     projectId: "",
@@ -69,7 +72,7 @@ export function RecurringInvoiceManager({ rules, clients, projects, canWrite, de
     event.preventDefault();
     setPending(true);
     try {
-      await createRecurringInvoiceRule({
+      const payload = {
         clientId: form.clientId,
         projectId: form.projectId || null,
         frequency: form.frequency,
@@ -80,13 +83,36 @@ export function RecurringInvoiceManager({ rules, clients, projects, canWrite, de
         notes: form.notes || null,
         terms: form.terms || null,
         lines: [{ description: form.description, quantity: Number(form.quantity), unitPrice: Number(form.unitPrice) }],
-      });
-      toast.success(t("Aturan invoice berulang dibuat", "Recurring invoice rule created"));
+      };
+      if (editingId) await updateRecurringInvoiceRule(editingId, payload);
+      else await createRecurringInvoiceRule(payload);
+      toast.success(editingId ? t("Aturan invoice berulang diperbarui", "Recurring invoice rule updated") : t("Aturan invoice berulang dibuat", "Recurring invoice rule created"));
+      setEditingId(null);
       setForm((current) => ({ ...current, description: "", unitPrice: "0" }));
       refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("Gagal membuat aturan", "Failed to create rule"));
     } finally { setPending(false); }
+  }
+
+  function edit(rule: RecurringInvoiceRuleView) {
+    const line = rule.lines[0] ?? { description: "", quantity: 1, unitPrice: 0 };
+    setEditingId(rule.id);
+    setForm({
+      clientId: rule.clientId,
+      projectId: rule.projectId ?? "",
+      frequency: rule.frequency,
+      startDate: rule.startDate,
+      endDate: rule.endDate ?? "",
+      currency: rule.currency,
+      numberPattern: rule.numberPattern,
+      description: line.description,
+      quantity: String(line.quantity),
+      unitPrice: String(line.unitPrice),
+      notes: rule.notes ?? "",
+      terms: rule.terms ?? "",
+    });
+    document.getElementById("recurring-invoice-form")?.scrollIntoView({ behavior: "smooth" });
   }
 
   async function toggle(rule: RecurringInvoiceRuleView) {
@@ -112,7 +138,7 @@ export function RecurringInvoiceManager({ rules, clients, projects, canWrite, de
       <CardContent className="space-y-5">
         <p className="text-sm text-muted-foreground">{t("Aturan aktif membuat invoice draft otomatis sesuai jadwal.", "Active rules create draft invoices automatically on schedule.")}</p>
         {canWrite && clients.length > 0 ? (
-          <form onSubmit={submit} className="grid gap-3 rounded-lg border p-4 md:grid-cols-2">
+          <form id="recurring-invoice-form" onSubmit={submit} className="grid gap-3 rounded-lg border p-4 md:grid-cols-2">
             <div className="space-y-1.5"><Label htmlFor="recurring-client">{t("Klien", "Client")}</Label><select id="recurring-client" className="flex h-10 w-full rounded-md border bg-background px-3 text-sm" value={form.clientId} onChange={(e) => { set("clientId", e.target.value); set("projectId", ""); }} required>{clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}</select></div>
             <div className="space-y-1.5"><Label htmlFor="recurring-project">{t("Proyek (opsional)", "Project (optional)")}</Label><select id="recurring-project" className="flex h-10 w-full rounded-md border bg-background px-3 text-sm" value={form.projectId} onChange={(e) => set("projectId", e.target.value)}><option value="">—</option>{filteredProjects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select></div>
             <div className="space-y-1.5"><Label htmlFor="recurring-frequency">{t("Frekuensi", "Frequency")}</Label><select id="recurring-frequency" className="flex h-10 w-full rounded-md border bg-background px-3 text-sm" value={form.frequency} onChange={(e) => set("frequency", e.target.value)}><option value="monthly">{t("Bulanan", "Monthly")}</option><option value="quarterly">{t("Kuartalan", "Quarterly")}</option><option value="yearly">{t("Tahunan", "Yearly")}</option></select></div>
@@ -125,13 +151,13 @@ export function RecurringInvoiceManager({ rules, clients, projects, canWrite, de
             <div className="space-y-1.5"><Label htmlFor="recurring-price">{t("Harga satuan", "Unit price")}</Label><Input id="recurring-price" type="number" min="0" step="0.01" value={form.unitPrice} onChange={(e) => set("unitPrice", e.target.value)} required /></div>
             <div className="space-y-1.5"><Label htmlFor="recurring-notes">{t("Catatan", "Notes")}</Label><Textarea id="recurring-notes" value={form.notes} onChange={(e) => set("notes", e.target.value)} /></div>
             <div className="space-y-1.5"><Label htmlFor="recurring-terms">{t("Syarat", "Terms")}</Label><Textarea id="recurring-terms" value={form.terms} onChange={(e) => set("terms", e.target.value)} /></div>
-            <Button type="submit" disabled={pending} className="md:col-span-2">{pending ? t("Menyimpan…", "Saving…") : t("Tambah Aturan", "Add Rule")}</Button>
+            <div className="flex gap-2 md:col-span-2"><Button type="submit" disabled={pending} className="flex-1">{pending ? t("Menyimpan…", "Saving…") : editingId ? t("Simpan Perubahan", "Save Changes") : t("Tambah Aturan", "Add Rule")}</Button>{editingId ? <Button type="button" variant="outline" onClick={() => setEditingId(null)}>{t("Batal", "Cancel")}</Button> : null}</div>
           </form>
         ) : null}
         <div className="space-y-2">
           {rules.length === 0 ? <p className="text-sm text-muted-foreground">{t("Belum ada aturan invoice berulang.", "No recurring invoice rules yet.")}</p> : rules.map((rule) => {
             const client = clients.find((item) => item.id === rule.clientId)?.name ?? t("Klien", "Client");
-            return <div key={rule.id} className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-medium">{client} · {rule.numberPattern}</p><p className="text-xs text-muted-foreground">{rule.frequency} · {t("Berikutnya", "Next")}: {rule.nextRunDate} · {rule.currency} · {rule.isActive ? t("Aktif", "Active") : t("Dijeda", "Paused")}</p></div>{canWrite ? <div className="flex gap-2"><Button type="button" size="sm" variant="outline" disabled={pending} onClick={() => toggle(rule)}>{rule.isActive ? t("Jeda", "Pause") : t("Aktifkan", "Activate")}</Button><Button type="button" size="sm" variant="destructive" disabled={pending} onClick={() => remove(rule.id)}>{t("Hapus", "Delete")}</Button></div> : null}</div>;
+            return <div key={rule.id} className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-medium">{client} · {rule.numberPattern}</p><p className="text-xs text-muted-foreground">{rule.frequency} · {t("Berikutnya", "Next")}: {rule.nextRunDate} · {rule.currency} · {rule.isActive ? t("Aktif", "Active") : t("Dijeda", "Paused")}</p></div>{canWrite ? <div className="flex gap-2"><Button type="button" size="sm" variant="outline" disabled={pending} onClick={() => edit(rule)}>{t("Edit", "Edit")}</Button><Button type="button" size="sm" variant="outline" disabled={pending} onClick={() => toggle(rule)}>{rule.isActive ? t("Jeda", "Pause") : t("Aktifkan", "Activate")}</Button><Button type="button" size="sm" variant="destructive" disabled={pending} onClick={() => remove(rule.id)}>{t("Hapus", "Delete")}</Button></div> : null}</div>;
           })}
         </div>
       </CardContent>

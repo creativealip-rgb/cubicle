@@ -15,7 +15,9 @@ describe("recurring invoice UI", () => {
     const manager = read("src/components/invoices/recurring-invoice-manager.tsx");
     expect(manager).toContain("createRecurringInvoiceRule");
     expect(manager).toContain("renderRecurringInvoiceNumber");
-    expect(manager).toContain("updateRecurringInvoiceRule");
+    expect(manager).toContain("updateRecurringInvoiceRule(editingId, payload)");
+    expect(manager).toContain("setEditingId(rule.id)");
+    expect(manager).toContain('t("Simpan Perubahan", "Save Changes")');
     expect(manager).toContain("deleteRecurringInvoiceRule");
     expect(manager).toContain("INV-{YYYY}-{SEQ}");
   });
