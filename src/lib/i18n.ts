@@ -4,8 +4,13 @@ import { auth } from "@/lib/auth";
 export type Lang = "id" | "en";
 
 export async function getCurrentLang(defaultLang: Lang = "en"): Promise<Lang> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const preferred = session?.user?.preferredLanguage;
+  let preferred: unknown;
+  try {
+    preferred = (await auth.api.getSession({ headers: await headers() }))?.user
+      ?.preferredLanguage;
+  } catch {
+    // Auth failure must not prevent cookie/default language resolution.
+  }
   if (preferred === "en" || preferred === "id") return preferred;
   const langCookie = (await cookies()).get("cubiqlo_lang")?.value;
   return langCookie === "en" || langCookie === "id" ? langCookie : defaultLang;
