@@ -12,8 +12,18 @@ const currencies = ["IDR", "USD"] as const;
 export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
-    const body: unknown = await request.json();
-    if (!body || typeof body !== "object") throw new Error("Invalid preferences");
+  } catch {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  try {
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid preferences" }, { status: 400 });
+    }
+    if (!body || typeof body !== "object") return NextResponse.json({ error: "Invalid preferences" }, { status: 400 });
     const { lang, currency } = body as Record<string, unknown>;
     if ((lang === undefined && currency === undefined)
       || (lang !== undefined && !langs.includes(lang as typeof langs[number]))
@@ -29,8 +39,8 @@ export async function POST(request: Request) {
       if (session?.user?.id) await db.update(users).set({ preferredLanguage: lang as "id" | "en" }).where(eq(users.id, session.user.id));
     }
     return response;
-  } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid request" }, { status: 403 });
+  } catch {
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 

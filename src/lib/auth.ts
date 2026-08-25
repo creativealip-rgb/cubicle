@@ -22,6 +22,15 @@ export const auth = betterAuth({
     provider: "pg",
     usePlural: true,
   }),
+  user: {
+    additionalFields: {
+      preferredLanguage: {
+        type: "string",
+        input: true,
+        required: false,
+      },
+    },
+  },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
