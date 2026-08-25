@@ -26,7 +26,7 @@ export const auth = betterAuth({
     additionalFields: {
       preferredLanguage: {
         type: "string",
-        input: true,
+        input: false,
         required: false,
       },
     },
