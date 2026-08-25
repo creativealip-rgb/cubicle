@@ -960,6 +960,50 @@ export const invoiceItems = pgTable("invoice_items", {
   index("invoice_items_source_lookup_idx").on(table.sourceType, table.sourceId),
 ]);
 
+export type RecurringInvoiceLine = {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+};
+
+export const recurringInvoiceRules = pgTable("recurring_invoice_rules", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
+  frequency: text("frequency", { enum: ["monthly", "quarterly", "yearly"] }).notNull().default("monthly"),
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date"),
+  nextRunDate: date("next_run_date").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  currency: text("currency").notNull().default("IDR"),
+  terms: text("terms"),
+  notes: text("notes"),
+  lines: jsonb("lines").$type<RecurringInvoiceLine[]>().notNull().default(sql`'[]'::jsonb`),
+  numberPattern: text("number_pattern").notNull().default("INV-{YYYY}-{SEQ}"),
+  lastSequence: integer("last_sequence").notNull().default(0),
+  createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("recurring_invoice_rules_due_idx").on(table.workspaceId, table.isActive, table.nextRunDate),
+  unique("recurring_invoice_rules_id_workspace_unique").on(table.id, table.workspaceId),
+  check("recurring_invoice_rules_last_sequence_check", sql`${table.lastSequence} >= 0`),
+]);
+
+export const recurringInvoiceGenerations = pgTable("recurring_invoice_generations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  ruleId: uuid("rule_id").notNull(),
+  occurrenceDate: date("occurrence_date").notNull(),
+  invoiceId: uuid("invoice_id").notNull().references(() => invoices.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  foreignKey({ columns: [table.ruleId, table.workspaceId], foreignColumns: [recurringInvoiceRules.id, recurringInvoiceRules.workspaceId] }).onDelete("cascade"),
+  unique("recurring_invoice_generations_rule_occurrence_unique").on(table.ruleId, table.occurrenceDate),
+  index("recurring_invoice_generations_workspace_idx").on(table.workspaceId),
+]);
+
 export const payments = pgTable("payments", {
   id: uuid("id").defaultRandom().primaryKey(),
   invoiceId: uuid("invoice_id").notNull().references(() => invoices.id, { onDelete: "cascade" }),
