@@ -44,6 +44,7 @@ import { buildRateMap } from "@/lib/currency-base";
 import { convertCurrency, resolveFixedPriceInvoiceAmount, resolveProjectAmount } from "@/lib/invoice-project-items";
 import { buildProjectServiceDocumentLines } from "@/lib/project-service-lines";
 import { assertBillingModelAllowsTimeInvoice, resolveBillingModel } from "@/lib/billing-model";
+import { invoiceNumberTakenMessage, isInvoiceNumberUniqueConstraint, normalizeInvoiceNumber } from "@/lib/invoice-number";
 import { encryptSecret } from "@/lib/google-calendar";
 import { ProjectInvoiceSourceSchema, billingDateInTimezone, isFixedInvoiceBillingModel, resolveFixedSourceAmount } from "@/lib/project-invoice-sources";
 
@@ -64,6 +65,7 @@ const createInvoiceSchema = z.object({
   currency: z.string().default("USD"),
   notes: z.string().optional(),
   terms: z.string().optional(),
+  invoiceNumber: z.string().optional(),
   items: z.array(z.object({
     description: z.string().min(1),
     quantity: z.number().positive(),
@@ -83,6 +85,7 @@ const updateInvoiceSchema = z.object({
   terms: z.string().optional(),
   discount: z.number().optional(),
   tax: z.number().optional(),
+  invoiceNumber: z.string().optional(),
 });
 
 const addItemSchema = z.object({
@@ -301,7 +304,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
     const maxExisting = Number(maxRow?.maxNum ?? 0);
     const counterNext = counter?.nextNumber ?? 1;
     const nextNum = Math.max(counterNext, maxExisting + 1);
-    const invoiceNumber = `INV-${String(nextNum).padStart(4, "0")}`;
+    const invoiceNumber = normalizeInvoiceNumber(parsed.invoiceNumber) ?? `INV-${String(nextNum).padStart(4, "0")}`;
 
     if (!counter) {
       await tx.insert(workspaceInvoiceCounters).values({
@@ -489,14 +492,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
       return inv;
     } catch (err: unknown) {
       // Surface a clean message instead of opaque RSC production digest.
-      const cause = err as { cause?: { code?: string; constraint?: string }; code?: string; constraint?: string };
-      const code = cause?.cause?.code ?? cause?.code;
-      const constraint = cause?.cause?.constraint ?? cause?.constraint;
-      if (code === "23505" || constraint === "invoices_workspace_id_invoice_number_unique") {
-        throw new Error(
-          `Nomor invoice ${invoiceNumber} sudah dipakai. Coba simpan lagi — nomor berikutnya akan digenerate otomatis.`,
-        );
-      }
+      if (isInvoiceNumberUniqueConstraint(err)) throw new Error(invoiceNumberTakenMessage(invoiceNumber));
       throw err;
     }
   });
@@ -544,12 +540,18 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
   if (parsed.terms !== undefined) updateData.terms = parsed.terms;
   if (parsed.discount !== undefined) updateData.discount = String(parsed.discount);
   if (parsed.tax !== undefined) updateData.tax = String(parsed.tax);
+  if (parsed.invoiceNumber !== undefined) {
+    if (currentInvoice.status !== "draft") throw new Error("Nomor invoice hanya dapat diubah saat draft / Invoice number can only be changed while draft");
+    updateData.invoiceNumber = normalizeInvoiceNumber(parsed.invoiceNumber) ?? currentInvoice.invoiceNumber;
+  }
 
-  const [inv] = await db
-    .update(invoices)
-    .set(updateData)
-    .where(eq(invoices.id, invoiceId))
-    .returning();
+  let inv;
+  try {
+    [inv] = await db.update(invoices).set(updateData).where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId))).returning();
+  } catch (err) {
+    if (isInvoiceNumberUniqueConstraint(err)) throw new Error(invoiceNumberTakenMessage(String(updateData.invoiceNumber)));
+    throw err;
+  }
 
   // When status is manually set to "paid" but no payment rows cover the
   // full total, auto-create a payment row for the remaining amount so the
