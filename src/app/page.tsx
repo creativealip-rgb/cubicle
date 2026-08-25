@@ -25,7 +25,8 @@ import { auth } from "@/lib/auth";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { LandingLanguageSwitch } from "@/components/landing/landing-language-switch";
 import { LandingCurrencySwitch } from "@/components/landing/landing-currency-switch";
-import { getLandingPrice, inferCurrency, type DisplayCurrency } from "@/lib/landing-pricing";
+import { getCountryFromHeaders, resolveVisitorPreferences } from "@/lib/region-preferences";
+import { getLandingPrice, type DisplayCurrency } from "@/lib/landing-pricing";
 
 const workflow = [
   {
@@ -94,7 +95,7 @@ const comparison = [
   { label: "Harga mulai", honeybook: "$19/mo", bonsai: "$17/mo", cubiqlo: "Gratis" },
   { label: "Client portal", honeybook: "Ada", bonsai: "Add-on", cubiqlo: "Termasuk" },
   { label: "Booking page", honeybook: "Ada", bonsai: "Add-on", cubiqlo: "Termasuk" },
-  { label: "Billing IDR", honeybook: "Integration", bonsai: "Integration", cubiqlo: "Native" },
+  { label: "Billing", honeybook: "Integration", bonsai: "Integration", cubiqlo: "Native" },
   { label: "AI assistant", honeybook: "Ada", bonsai: "Ada", cubiqlo: "Termasuk" },
 ];
 
@@ -121,9 +122,13 @@ export default async function HomePage() {
   if (session?.user?.id) redirect("https://app.cubiqlo.com/app/dashboard");
   const requestHeaders = await headers();
   const cookieStore = await cookies();
-  const country = requestHeaders.get("x-vercel-ip-country") ?? requestHeaders.get("cf-ipcountry") ?? undefined;
-  const currency: DisplayCurrency = cookieStore.get("cubiqlo_currency")?.value === "IDR" || cookieStore.get("cubiqlo_currency")?.value === "USD" ? cookieStore.get("cubiqlo_currency")!.value as DisplayCurrency : inferCurrency(country);
-  const lang = await getCurrentLang(country?.toUpperCase() === "ID" ? "id" : "en");
+  const country = getCountryFromHeaders(requestHeaders);
+  const preferences = resolveVisitorPreferences({
+    country,
+    currencyCookie: cookieStore.get("cubiqlo_currency")?.value,
+  });
+  const currency: DisplayCurrency = preferences.currency;
+  const lang = await getCurrentLang(preferences.lang);
   const t = createT(lang);
   const tx = (id: string, en: string) => t(id, en);
   const workflowCopy = [
@@ -186,7 +191,7 @@ export default async function HomePage() {
                 <div className="hidden h-8 w-px bg-slate-200 sm:block" />
                 <div><strong className="block text-lg text-[#292D34] sm:text-xl">7+</strong> {tx("tool diringkas", "tools combined")}</div>
                 <div className="hidden h-8 w-px bg-slate-200 sm:block" />
-                <div><strong className="block text-lg text-[#292D34] sm:text-xl">IDR</strong> {tx("sejak awal", "from day one")}</div>
+                <div><strong className="block text-lg text-[#292D34] sm:text-xl">7+</strong> {tx("fitur terhubung", "connected features")}</div>
               </div>
             </div>
 
@@ -261,7 +266,7 @@ export default async function HomePage() {
 
         <section id="compare" className="px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mx-auto max-w-6xl">
-            <div className="mx-auto max-w-3xl text-center"><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#6647F0]">{tx("Dibuat untuk bisnis Indonesia", "Built for Indonesian businesses")}</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.03em] sm:text-5xl">{tx("Dibuat untuk cara kerja dan harga bisnis Indonesia.", "Built for how Indonesian businesses work and price their services.")}</h2><p className="mt-5 text-lg leading-8 text-slate-600">{tx("Mulai gratis, gunakan Rupiah, dan kelola portal klien tanpa membayar add-on tambahan.", "Start free, use Rupiah, and manage your client portal without extra add-ons.")}</p></div>
+            <div className="mx-auto max-w-3xl text-center"><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#6647F0]">{tx("Untuk bisnis berbasis klien", "For client-based businesses")}</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.03em] sm:text-5xl">{tx("Dibuat untuk cara kerja bisnis modern.", "Built for modern client work.")}</h2><p className="mt-5 text-lg leading-8 text-slate-600">{tx("Mulai gratis, kelola pekerjaan klien tanpa add-on tambahan.", "Start free, manage client work without extra add-ons.")}</p></div>
             <div className="mt-12 hidden overflow-hidden rounded-3xl bg-white shadow-[0_20px_60px_rgba(41,45,52,.08)] ring-1 ring-slate-200 md:block">
               <table className="w-full text-left text-sm"><thead className="bg-slate-50"><tr><th className="px-6 py-5" /><th className="px-6 py-5 text-slate-500">HoneyBook</th><th className="px-6 py-5 text-slate-500">Bonsai</th><th className="bg-[#F4F0FF] px-6 py-5 text-[#6647F0]">Cubiqlo</th></tr></thead><tbody>{comparison.map(row => <tr key={row.label} className="border-t border-slate-100"><td className="px-6 py-4 font-medium">{tx(row.label, row.label === "Harga mulai" ? "Starting price" : row.label)}</td><td className="px-6 py-4 text-slate-500">{tx(row.honeybook, row.honeybook === "Ada" ? "Yes" : row.honeybook)}</td><td className="px-6 py-4 text-slate-500">{tx(row.bonsai, row.bonsai === "Ada" ? "Yes" : row.bonsai === "Termasuk" ? "Included" : row.bonsai)}</td><td className="bg-[#F4F0FF]/65 px-6 py-4 font-semibold text-[#6647F0]">{tx(row.cubiqlo, row.cubiqlo === "Gratis" ? "Free" : row.cubiqlo === "Termasuk" ? "Included" : row.cubiqlo)}</td></tr>)}</tbody></table>
             </div>
@@ -280,7 +285,7 @@ export default async function HomePage() {
         <section id="pricing" className="bg-white px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <div className="mx-auto max-w-3xl text-center"><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#6647F0]">{tx("Harga transparan", "Transparent pricing")}</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.03em] sm:text-5xl">{tx("Mulai gratis. Upgrade saat klien bertambah.", "Start free. Upgrade as your client work grows.")}</h2><p className="mt-5 text-lg text-slate-600">{tx("Tidak perlu kartu kredit untuk mulai.", "No credit card required.")}</p></div>
-            <div className="mt-12 grid gap-5 lg:grid-cols-3">{pricing.map(plan => <div key={plan.name} className={`relative flex flex-col rounded-3xl p-6 ${plan.featured ? "bg-[#292D34] text-white shadow-[0_24px_70px_rgba(41,45,52,.22)] lg:-translate-y-3" : "bg-[#FBFAFE] ring-1 ring-slate-200"}`}>{plan.featured && <span className="absolute right-5 top-5 rounded-full bg-[#FF7657] px-3 py-1 text-xs font-semibold">{tx("Paling populer", "Most popular")}</span>}<p className={`text-sm font-semibold ${plan.featured ? "text-violet-300" : "text-[#6647F0]"}`}>{tx(plan.name, plan.name === "Free" ? "Free" : plan.name)}</p><p className={`mt-3 text-sm ${plan.featured ? "text-slate-300" : "text-slate-600"}`}>{plan.name === "Free" ? tx("Coba dulu untuk client work kecil.", "Try it for small client work.") : plan.name === "Solo" ? tx("Untuk freelancer yang mulai serius.", "For freelancers getting serious.") : tx("Untuk tim kecil yang kerja bareng.", "For small teams working together.")}</p><div className="mt-7"><strong className="block text-3xl tracking-[-.03em]">{getLandingPrice(plan.name.toLowerCase() as "free" | "solo" | "team", "monthly", currency)}</strong><span className={`mt-1 block text-xs ${plan.featured ? "text-slate-400" : "text-slate-500"}`}>{plan.name === "Solo" || plan.name === "Team" ? tx("Ditagih tahunan", "Billed yearly") : tx(plan.suffix, "forever")}</span></div><div className={`my-6 h-px ${plan.featured ? "bg-white/10" : "bg-slate-200"}`} /><div className="flex-1 space-y-3">{plan.items.map(item => <div key={item} className={`flex items-center gap-2 text-sm ${plan.featured ? "text-slate-200" : "text-slate-700"}`}><Check className={`h-4 w-4 ${plan.featured ? "text-emerald-400" : "text-[#6647F0]"}`} />{tx(item, landingEn[item] ?? item)}</div>)}</div><Button asChild className={`mt-8 h-11 rounded-xl ${plan.featured ? "bg-white text-[#292D34] hover:bg-violet-50" : "bg-[#292D34] text-white hover:bg-[#17191E]"}`}><Link href="/signup">{tx(plan.cta, plan.name === "Free" ? "Start free" : `Choose ${plan.name}`)}<ArrowRight className="ml-1 inline h-4 w-4" /></Link></Button></div>)}</div>
+            <div className="mt-12 grid gap-5 lg:grid-cols-3">{pricing.map(plan => <div key={plan.name} className={`relative flex flex-col rounded-3xl p-6 ${plan.featured ? "bg-[#292D34] text-white shadow-[0_24px_70px_rgba(41,45,52,.22)] lg:-translate-y-3" : "bg-[#FBFAFE] ring-1 ring-slate-200"}`}>{plan.featured && <span className="absolute right-5 top-5 rounded-full bg-[#FF7657] px-3 py-1 text-xs font-semibold">{tx("Paling populer", "Most popular")}</span>}<p className={`text-sm font-semibold ${plan.featured ? "text-violet-300" : "text-[#6647F0]"}`}>{tx(plan.name, plan.name === "Free" ? "Free" : plan.name)}</p><p className={`mt-3 text-sm ${plan.featured ? "text-slate-300" : "text-slate-600"}`}>{plan.name === "Free" ? tx("Coba dulu untuk client work kecil.", "Try it for small client work.") : plan.name === "Solo" ? tx("Untuk freelancer yang mulai serius.", "For freelancers getting serious.") : tx("Untuk tim kecil yang kerja bareng.", "For small teams working together.")}</p><div className="mt-7"><strong className="block text-3xl tracking-[-.03em]">{getLandingPrice(plan.name.toLowerCase() as "free" | "solo" | "team", "monthly", currency)}</strong><span className={`mt-1 block text-xs ${plan.featured ? "text-slate-400" : "text-slate-500"}`}>{plan.name === "Solo" || plan.name === "Team" ? `${getLandingPrice(plan.name.toLowerCase() as "solo" | "team", "yearly", currency)} / ${tx("tahun", "year")}` : tx("selamanya", "forever")}</span>{currency === "USD" && plan.name !== "Free" && <p className="mt-2 text-xs">{tx("Pembayaran diproses dalam IDR.", "Payment processed in IDR.")}</p>}</div><div className={`my-6 h-px ${plan.featured ? "bg-white/10" : "bg-slate-200"}`} /><div className="flex-1 space-y-3">{plan.items.map(item => <div key={item} className={`flex items-center gap-2 text-sm ${plan.featured ? "text-slate-200" : "text-slate-700"}`}><Check className={`h-4 w-4 ${plan.featured ? "text-emerald-400" : "text-[#6647F0]"}`} />{tx(item, landingEn[item] ?? item)}</div>)}</div><Button asChild className={`mt-8 h-11 rounded-xl ${plan.featured ? "bg-white text-[#292D34] hover:bg-violet-50" : "bg-[#292D34] text-white hover:bg-[#17191E]"}`}><Link href="/signup">{tx(plan.cta, plan.name === "Free" ? "Start free" : `Choose ${plan.name}`)}<ArrowRight className="ml-1 inline h-4 w-4" /></Link></Button></div>)}</div>
           </div>
         </section>
 

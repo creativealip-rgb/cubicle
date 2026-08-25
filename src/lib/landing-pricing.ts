@@ -1,11 +1,16 @@
 import { BILLING_PLANS, type BillingPeriod, type BillingPlan, getPlanAmount } from "@/lib/billing-plans";
+import type { DisplayCurrency } from "@/lib/region-preferences";
 
-export type DisplayCurrency = "IDR" | "USD";
+const DISPLAY_PRICES = {
+  free: { IDR: { monthly: 0, yearly: 0 }, USD: { monthly: 0, yearly: 0 } },
+  solo: { IDR: { monthly: 75_000, yearly: 900_000 }, USD: { monthly: 5, yearly: 60 } },
+  team: { IDR: { monthly: 165_000, yearly: 1_980_000 }, USD: { monthly: 10, yearly: 120 } },
+} as const;
+
+export type { DisplayCurrency };
 
 export function getDisplayPlanAmount(plan: BillingPlan, period: BillingPeriod, currency: DisplayCurrency) {
-  if (plan === "free") return 0;
-  const idr = getPlanAmount(plan, period);
-  return currency === "USD" ? Math.round(idr / 15_000) : idr;
+  return DISPLAY_PRICES[plan][currency][period];
 }
 
 export function formatDisplayPrice(amount: number, currency: DisplayCurrency) {
