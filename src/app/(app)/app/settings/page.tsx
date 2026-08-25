@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Settings, Users, Receipt, Calendar, Sparkles, ImageIcon, Plug, Coins, CheckCircle2, Circle } from "lucide-react";
+import { Settings, Users, Receipt, Calendar, Sparkles, Plug, Coins, CheckCircle2, Circle } from "lucide-react";
 import { TeamManager } from "@/components/settings/team-manager";
 import { WorkspaceBrandingForm } from "@/components/settings/workspace-branding-form";
 import { WorkspaceNameForm } from "@/components/settings/workspace-name-form";
@@ -103,10 +103,7 @@ export default async function SettingsPage({
       label: t("Alamat atau telepon bisnis", "Business address or phone"),
       done: Boolean(workspace.billingAddress || workspace.billingPhone),
     },
-    {
-      label: t("Booking slug / link booking", "Booking slug / booking link"),
-      done: Boolean(workspace.bookingSlug),
-    },
+
   ];
   const invoiceSetupItems = [
     {
@@ -177,13 +174,17 @@ export default async function SettingsPage({
                   </CardTitle>
                   <CardDescription>
                     {t(
-                      "Nama, slug, dan mata uang default workspace kamu.",
-                      "Your workspace name, slug, and default currency.",
+                      "Profil workspace dan branding bisnis kamu.",
+                      "Your workspace profile and business branding.",
                     )}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 text-sm">
                   <WorkspaceNameForm defaultName={workspace.name} canEdit={canEditWorkspace} />
+                  <div className="border-t pt-3">
+                    <h3 className="mb-3 text-sm font-semibold">{t("Profil workspace & Branding", "Workspace profile & Branding")}</h3>
+                    <WorkspaceBrandingForm canEdit={canEditWorkspace} defaults={{ billingName: workspace.billingName, billingEmail: workspace.billingEmail, billingPhone: workspace.billingPhone, billingAddress: workspace.billingAddress, taxId: workspace.taxId, logoUrl: workspace.logoUrl, defaultCurrency: workspace.defaultCurrency, defaultTaxRate: workspace.defaultTaxRate, defaultHourlyRate: workspace.defaultHourlyRate, defaultInvoiceTerms: workspace.defaultInvoiceTerms, replyToEmail: workspace.replyToEmail }} ownerEmailHint={ownerUser?.email ?? null} />
+                  </div>
                   <div className="space-y-3 border-t pt-3">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Slug</span>
@@ -199,8 +200,8 @@ export default async function SettingsPage({
                     </div>
                     <p className="text-[11px] text-muted-foreground">
                       {t(
-                        "Ubah mata uang / pajak default di tab Branding & Invoice.",
-                        "Change default currency / tax in Branding & Invoice tab.",
+                        "Atur default invoice di tab Invoice.",
+                        "Change invoice defaults in the Invoice tab.",
                       )}
                     </p>
                   </div>
@@ -330,7 +331,7 @@ export default async function SettingsPage({
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <ImageIcon className="h-5 w-5" /> {t("Branding & Invoice", "Branding & Invoice")}
+                    <Receipt className="h-5 w-5" /> {t("Default Invoice", "Invoice Defaults")}
                   </CardTitle>
                   <CardDescription>
                     {t(
@@ -351,24 +352,7 @@ export default async function SettingsPage({
                       );
                     })}
                   </div>
-                  <WorkspaceBrandingForm
-                    canEdit={canEditWorkspace}
-                    defaults={{
-                      billingName: workspace.billingName,
-                      billingEmail: workspace.billingEmail,
-                      billingPhone: workspace.billingPhone,
-                      billingAddress: workspace.billingAddress,
-                      taxId: workspace.taxId,
-                      logoUrl: workspace.logoUrl,
-                      defaultCurrency: workspace.defaultCurrency,
-                      defaultTaxRate: workspace.defaultTaxRate,
-                      defaultHourlyRate: workspace.defaultHourlyRate,
-                      defaultInvoiceTerms: workspace.defaultInvoiceTerms,
 
-                      replyToEmail: workspace.replyToEmail,
-                    }}
-                    ownerEmailHint={ownerUser?.email ?? null}
-                  />
                 </CardContent>
               </Card>
             </>

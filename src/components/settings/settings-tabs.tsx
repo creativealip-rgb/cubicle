@@ -31,7 +31,7 @@ const TAB_KEYS: SettingsTabKey[] = [
 ];
 
 function normalizeTab(tab?: string | null): SettingsTabKey {
-  if (tab === "branding") return "invoice";
+  if (tab === "branding") return "workspace";
   if (tab === "more") return "billing";
   if (tab && (TAB_KEYS as string[]).includes(tab)) {
     return tab as SettingsTabKey;

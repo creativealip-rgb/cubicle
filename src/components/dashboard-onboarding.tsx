@@ -83,10 +83,11 @@ export function DashboardOnboarding({ lang, workspaceId, steps }: DashboardOnboa
               </h2>
               <p className="text-xs text-blue-800/70">
                 {t(
-                  `${doneCount} dari ${total} langkah selesai`,
-                  `${doneCount} of ${total} steps done`
+                  "Lengkapi workspace dan pengaturan invoice sebelum membuat proyek pertama.",
+                  "Set up your workspace and invoice defaults before creating your first project.",
                 )}
               </p>
+              <p className="text-xs text-blue-800/70">{t(`${doneCount} dari ${total} langkah selesai`, `${doneCount} of ${total} steps done`)}</p>
             </div>
           </div>
 

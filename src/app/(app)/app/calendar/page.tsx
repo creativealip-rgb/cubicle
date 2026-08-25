@@ -110,14 +110,7 @@ export default async function CalendarPage() {
                 <span>{t("Booking Page", "Booking Page")}</span>
               </Link>
             </Button>
-          ) : (
-            <Button size="sm" className="gap-1" asChild>
-              <Link href="/app/settings">
-                <Calendar className="h-4 w-4" />
-                <span>{t("Aktifkan booking", "Enable booking")}</span>
-              </Link>
-            </Button>
-          )}
+          ) : null}
           <BookingSlugForm defaultSlug={ws.bookingSlug} canEdit={ws.ownerId === user.id} />
         </div>
       </div>
