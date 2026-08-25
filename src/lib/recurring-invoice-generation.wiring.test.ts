@@ -9,6 +9,8 @@ describe("recurring invoice generation wiring", () => {
     const source = read("src/lib/actions/recurring-invoices.ts");
     expect(source).toContain('.for("update")');
     expect(source).toContain("recurringInvoiceGenerations");
+    expect(source).toContain("insertDraftInvoice(tx");
+    expect(source).toContain("isInvoiceNumberUniqueConstraint(error)");
     expect(source).toContain("occurrenceDate: rule.nextRunDate");
     expect(source).toContain("lastSequence: sequence");
     expect(source).toContain("nextRecurringInvoiceDate");

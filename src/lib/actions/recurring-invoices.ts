@@ -6,8 +6,6 @@ import { z } from "zod";
 import { db } from "@/db";
 import {
   clients,
-  invoiceItems,
-  invoices,
   projects,
   recurringInvoiceGenerations,
   recurringInvoiceRules,
@@ -18,6 +16,8 @@ import { assertWorkspaceWritable, requireUser } from "@/lib/access";
 import { auth } from "@/lib/auth";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { nextRecurringInvoiceDate, renderRecurringInvoiceNumber, validateRecurringInvoiceNumberPattern } from "@/lib/recurring-invoice-number";
+import { insertDraftInvoice } from "@/lib/invoice-creation";
+import { invoiceNumberTakenMessage, isInvoiceNumberUniqueConstraint } from "@/lib/invoice-number";
 
 const lineSchema = z.object({
   description: z.string().trim().min(1).max(500),
@@ -148,28 +148,23 @@ async function generateRule(ruleId: string, now: Date, workspaceId?: string) {
     const sequence = rule.lastSequence + 1;
     const invoiceNumber = renderRecurringInvoiceNumber(rule.numberPattern, Number(rule.nextRunDate.slice(0, 4)), sequence);
     const lines = rule.lines as RecurringInvoiceLine[];
-    const subtotal = lines.reduce((sum, line) => sum + line.quantity * line.unitPrice, 0);
-    const [invoice] = await tx.insert(invoices).values({
-      workspaceId: rule.workspaceId,
-      clientId: rule.clientId,
-      projectId: rule.projectId,
-      invoiceNumber,
-      issueDate: rule.nextRunDate,
-      currency: rule.currency,
-      subtotal: subtotal.toFixed(2),
-      total: subtotal.toFixed(2),
-      status: "draft",
-      notes: rule.notes,
-      terms: rule.terms,
-    }).returning({ id: invoices.id });
-    await tx.insert(invoiceItems).values(lines.map((line) => ({
-      invoiceId: invoice.id,
-      description: line.description,
-      quantity: line.quantity.toFixed(2),
-      unitPrice: line.unitPrice.toFixed(2),
-      amount: (line.quantity * line.unitPrice).toFixed(2),
-      sourceType: "manual" as const,
-    })));
+    let invoice;
+    try {
+      invoice = await insertDraftInvoice(tx, {
+        workspaceId: rule.workspaceId,
+        clientId: rule.clientId,
+        projectId: rule.projectId,
+        invoiceNumber,
+        issueDate: rule.nextRunDate,
+        currency: rule.currency,
+        notes: rule.notes,
+        terms: rule.terms,
+        items: lines,
+      });
+    } catch (error) {
+      if (isInvoiceNumberUniqueConstraint(error)) throw new Error(invoiceNumberTakenMessage(invoiceNumber));
+      throw error;
+    }
     await tx.insert(recurringInvoiceGenerations).values({ workspaceId: rule.workspaceId, ruleId: rule.id, occurrenceDate: rule.nextRunDate, invoiceId: invoice.id });
     const nextRunDate = nextRecurringInvoiceDate(rule.nextRunDate, rule.frequency);
     await tx.update(recurringInvoiceRules).set({
