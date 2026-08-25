@@ -109,7 +109,7 @@ const GUIDES = [
     href: "/app/docs/questionnaires",
     icon: ClipboardList,
     category: { id: "Bisnis", en: "Business" },
-    title: { id: "Kuesioner", en: "Questionnaires" },
+    title: { id: "Formulir", en: "Forms" },
     desc: {
       id: "Form intake & brief klien. Jawaban jadi brief proyek.",
       en: "Client intake forms & briefs. Answers become project briefs.",

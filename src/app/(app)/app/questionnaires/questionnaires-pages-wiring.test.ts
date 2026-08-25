@@ -52,10 +52,13 @@ describe("questionnaire pages share the app page chrome", () => {
       "src/components/questionnaires/send-questionnaire-button.tsx",
       "src/components/questionnaires/delete-questionnaire-button.tsx",
       "src/components/calendar/questionnaire-create-dialog.tsx",
+      "src/components/app-topbar.tsx",
+      "src/app/(app)/app/docs/page.tsx",
+      "src/app/(app)/app/docs/[slug]/page.tsx",
     ];
     for (const file of files) {
       const text = readFileSync(join(process.cwd(), file), "utf8");
-      expect(text).not.toMatch(/Kuesioner|kuesioner|Questionnaire:|questionnaire form|Send questionnaire|New questionnaire|Edit questionnaire|Back to questionnaire/);
+      expect(text).not.toMatch(/["'`](?:Kuesioner|kuesioner|Questionnaire:|questionnaire form|Send questionnaire|New questionnaire|Edit questionnaire|Back to questionnaire|Questionnaires)["'`]/);
     }
   });
 });

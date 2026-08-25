@@ -111,16 +111,16 @@ const GUIDES = {
   questionnaires: {
     icon: ClipboardList,
     category: { id: "Bisnis", en: "Business" },
-    title: { id: "Kuesioner", en: "Questionnaires" },
+    title: { id: "Formulir", en: "Forms" },
     description: {
       id: "Form intake & brief klien. Jawaban jadi brief proyek.",
       en: "Client intake forms & briefs. Answers become project briefs.",
     },
     items: [
-      ["1. Buat Kuesioner", "Kuesioner Baru → susun form dengan berbagai tipe kolom: teks pendek, teks panjang, email, URL, angka, tanggal, pilihan tunggal, dan pilihan ganda."],
-      ["2. Detail & Preview", "Klik kuesioner → lihat pratinjau form, jumlah kolom, dan status jawaban (terkirim / menunggu)."],
+      ["1. Buat Formulir", "Formulir Baru → susun form dengan berbagai tipe kolom: teks pendek, teks panjang, email, URL, angka, tanggal, pilihan tunggal, dan pilihan ganda."],
+      ["2. Detail & Preview", "Klik formulir → lihat pratinjau form, jumlah kolom, dan status jawaban (terkirim / menunggu)."],
       ["3. Edit", "Ubah nama, deskripsi, atau susunan kolom kapan saja lewat tombol Edit."],
-      ["4. Kirim ke Klien", "Tombol Kirim → pilih klien & proyek, lalu kirim kuesioner. Jawaban klien masuk ke halaman detail sebagai response."],
+      ["4. Kirim ke Klien", "Tombol Kirim → pilih klien & proyek, lalu kirim formulir. Jawaban klien masuk ke halaman detail sebagai response."],
       ["5. Jawaban", "Lihat semua response di bagian Jawaban — jawaban yang masuk menjadi brief untuk pekerjaan klien."],
     ],
   },
