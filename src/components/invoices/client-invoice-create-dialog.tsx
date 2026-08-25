@@ -10,10 +10,11 @@ import { useT } from "@/lib/i18n-client";
 
 type InvoiceFormProps = Parameters<typeof InvoiceForm>[0];
 
-export function ClientInvoiceCreateDialog({ client, projects, baseCurrency, currencyRates = [] }: {
+export function ClientInvoiceCreateDialog({ client, projects, baseCurrency, proposedInvoiceNumber, currencyRates = [] }: {
   client: InvoiceFormProps["clients"][number];
   projects: NonNullable<InvoiceFormProps["projects"]>;
   baseCurrency: string;
+  proposedInvoiceNumber: string;
   currencyRates?: NonNullable<InvoiceFormProps["currencyRates"]>;
 }) {
   const { t } = useT();
@@ -23,7 +24,7 @@ export function ClientInvoiceCreateDialog({ client, projects, baseCurrency, curr
     <DialogTrigger asChild><Button size="sm" className="gap-1"><Plus className="h-4 w-4" /> {t("Buat Invoice", "Create Invoice")}</Button></DialogTrigger>
     <DialogContent className="max-h-[90dvh] w-[calc(100%-1rem)] overflow-y-auto p-4 sm:max-w-3xl sm:p-6">
       <DialogHeader><DialogTitle>{t("Buat Invoice Klien", "Create Client Invoice")}</DialogTitle></DialogHeader>
-      <InvoiceForm mode="create" scopedClientId={client.id} defaultValues={{ clientId: client.id, currency: baseCurrency }} clients={[client]} projects={projects} baseCurrency={baseCurrency} currencyRates={currencyRates} onSuccess={() => { setOpen(false); refresh(); }} />
+      <InvoiceForm mode="create" scopedClientId={client.id} defaultValues={{ clientId: client.id, currency: baseCurrency, invoiceNumber: proposedInvoiceNumber }} clients={[client]} projects={projects} baseCurrency={baseCurrency} currencyRates={currencyRates} onSuccess={() => { setOpen(false); refresh(); }} />
     </DialogContent>
   </Dialog>;
 }

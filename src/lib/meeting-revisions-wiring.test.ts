@@ -21,7 +21,13 @@ describe("August meeting revision contract", () => {
     const form = read("src/components/forms/invoice-form.tsx");
     const retainer = read("src/components/invoices/retainer-project-invoice-actions.tsx");
     expect(actions).toContain("getProposedInvoiceNumber");
-    expect(form).toContain("getProposedInvoiceNumber().then");
+    const globalPage = read("src/app/(app)/app/invoices/new/page.tsx");
+    const clientDialog = read("src/components/invoices/client-invoice-create-dialog.tsx");
+    const projectDialog = read("src/components/invoices/project-invoice-create-dialog.tsx");
+    expect(globalPage).toContain("invoiceNumber: proposedInvoiceNumber");
+    expect(clientDialog).toContain("invoiceNumber: proposedInvoiceNumber");
+    expect(projectDialog).toContain("invoiceNumber: proposedInvoiceNumber");
+    expect(form).not.toContain("getProposedInvoiceNumber().then");
     expect(form).toContain("invoiceNumber: form.invoiceNumber || undefined");
     expect(retainer).toContain("invoiceNumber: requestedNumber");
   });

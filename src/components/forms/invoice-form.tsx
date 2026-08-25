@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { useT } from "@/lib/i18n-client";
 import { toast } from "sonner";
 import { buildInvoiceDetailUrl } from "@/lib/invoice-origin";
-import { createInvoice, getProposedInvoiceNumber, updateInvoice } from "@/lib/actions/invoices";
+import { createInvoice, updateInvoice } from "@/lib/actions/invoices";
 import { addDaysToIsoDate, calculateDraftItemsSubtotal } from "@/lib/invoice-create-form";
 import { buildRateMap } from "@/lib/currency-base";
 import { convertCurrency, resolveProjectAmount } from "@/lib/invoice-project-items";
@@ -101,15 +101,6 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
     notes: defaultValues?.notes ?? "",
     terms: defaultValues?.terms ?? "",
   });
-
-  useEffect(() => {
-    if (mode !== "create" || defaultValues?.invoiceNumber) return;
-    let active = true;
-    getProposedInvoiceNumber().then((number) => {
-      if (active) setForm((current) => current.invoiceNumber ? current : { ...current, invoiceNumber: number });
-    }).catch(() => undefined);
-    return () => { active = false; };
-  }, [mode, defaultValues?.invoiceNumber]);
 
   // Filter projects by selected client.
   const clientProjects = projects?.filter(p => p.clientId === form.clientId) ?? [];

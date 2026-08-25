@@ -16,13 +16,14 @@ describe("invoice number helpers", () => {
     expect(normalizeInvoiceNumber(undefined)).toBeUndefined();
   });
 
-  it.each(["2026-001", "INV-", "INV- café", "INV-A_B", `INV-${"A".repeat(48)}`])(
+  it.each(["INV- café", "INV-\n001", "INV-\t001", "A".repeat(101)])(
     "rejects malformed invoice number %j",
     (value) => expect(() => normalizeInvoiceNumber(value)).toThrow(),
   );
 
-  it("accepts invoice numbers up to 50 characters", () => {
-    expect(normalizeInvoiceNumber(`INV-${"A".repeat(46)}`)).toHaveLength(50);
+  it("accepts printable custom invoice numbers up to 100 characters", () => {
+    expect(normalizeInvoiceNumber(" acme august 01 ")).toBe("ACME AUGUST 01");
+    expect(normalizeInvoiceNumber("A".repeat(100))).toHaveLength(100);
   });
 
   it("matches direct invoice-number constraint", () => {

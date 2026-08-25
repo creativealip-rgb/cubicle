@@ -11,7 +11,7 @@ import { Plus } from "lucide-react";
 import { useT } from "@/lib/i18n-client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getProposedInvoiceNumber } from "@/lib/actions/invoices";
+
 
 export type RetainerPeriodView = {
   id: string; periodStart: string; periodEnd: string; feeSnapshot: string;
@@ -22,11 +22,11 @@ export type RetainerPeriodView = {
 
 const hours = (value: number) => new Intl.NumberFormat("id-ID", { maximumFractionDigits: 2 }).format(value);
 
-export function RetainerProjectInvoiceActions({ projectId, period, renderSummaryOnly }: { projectId: string; period: RetainerPeriodView | null; renderSummaryOnly?: boolean }) {
+export function RetainerProjectInvoiceActions({ projectId, period, proposedInvoiceNumber = "", renderSummaryOnly }: { projectId: string; period: RetainerPeriodView | null; proposedInvoiceNumber?: string; renderSummaryOnly?: boolean }) {
   const { refresh } = useAppTransition();
   const { t } = useT();
   const [pending, setPending] = useState(false);
-  const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [invoiceNumber, setInvoiceNumber] = useState(proposedInvoiceNumber);
   const summary = period ? getRetainerPeriodUsageSummary({
     periodStart: period.periodStart, periodEnd: period.periodEnd, fee: Number(period.feeSnapshot),
     includedMinutes: period.includedMinutesSnapshot, approvedMinutes: period.approvedMinutes,
@@ -38,7 +38,7 @@ export function RetainerProjectInvoiceActions({ projectId, period, renderSummary
   async function createInvoice() {
     setPending(true);
     try {
-      const requestedNumber = invoiceNumber.trim() || await getProposedInvoiceNumber();
+      const requestedNumber = invoiceNumber.trim() || proposedInvoiceNumber;
       let current = period ?? await createOrGetRetainerPeriod({ projectId, workDate: new Date().toISOString().slice(0, 10) });
       if (current.status === "open") current = await lockRetainerPeriod(current.id);
       if (current.status === "locked") await generateRetainerInvoice({ retainerPeriodId: current.id, issueDate: new Date().toISOString().slice(0, 10), invoiceNumber: requestedNumber });

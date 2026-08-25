@@ -33,6 +33,7 @@ import { ClientEditDialog } from "@/components/clients/client-edit-dialog";
 import { ClientGoogleCalendarPanel } from "@/components/clients/client-google-calendar-panel";
 import { ProjectCreateDialog } from "@/components/projects/project-create-dialog";
 import { billingTypeLabel } from "@/lib/feature-access";
+import { getProposedInvoiceNumber } from "@/lib/actions/invoices";
 import { checkEntityLimit, getUserPlan } from "@/lib/plan";
 import { decryptSecret } from "@/lib/google-calendar";
 import {
@@ -73,7 +74,8 @@ export default async function ClientDetailPage({
   const t = createT(lang);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
-  const workspaceId = await getWorkspaceId();
+  const workspaceId = await getWorkspaceForCurrentUser();
+  const proposedInvoiceNumber = await getProposedInvoiceNumber();
   const { clientId } = await params;
   const { tab: tabParam } = await searchParams;
   const allowedTabs = new Set([
@@ -540,6 +542,7 @@ export default async function ClientDetailPage({
               <div className="flex justify-end">
                 <ClientInvoiceCreateDialog
                   client={{ id: client.id, name: client.name, companyName: client.companyName }}
+                  proposedInvoiceNumber={proposedInvoiceNumber}
                   projects={clientProjects.map((project) => ({
                     id: project.id,
                     name: project.name,

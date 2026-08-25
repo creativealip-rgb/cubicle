@@ -1,11 +1,10 @@
-const INVOICE_NUMBER_PATTERN = /^INV-[A-Z0-9]+(?:-[A-Z0-9]+)*$/;
 const INVOICE_NUMBER_CONSTRAINT = "invoices_workspace_id_invoice_number_unique";
 
 export function normalizeInvoiceNumber(value: string | null | undefined): string | undefined {
   const normalized = value?.trim().toUpperCase();
   if (!normalized) return undefined;
-  if (normalized.length > 50 || !INVOICE_NUMBER_PATTERN.test(normalized)) {
-    throw new Error("Nomor invoice harus berformat INV-... dan maksimal 50 karakter / Invoice number must use INV-... format and be at most 50 characters");
+  if (normalized.length > 100 || /[^\x20-\x7E]/.test(normalized)) {
+    throw new Error("Nomor invoice harus berupa teks yang dapat dicetak dan maksimal 100 karakter / Invoice number must be printable text and at most 100 characters");
   }
   return normalized;
 }

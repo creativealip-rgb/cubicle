@@ -11,11 +11,13 @@ import { InvoiceForm } from "@/components/forms/invoice-form";
 import { parseUuidList } from "@/lib/finance-tabs";
 import { loadInvoiceSourceProjectOptions } from "@/lib/invoice-source-options";
 import { resolveProjectAmount } from "@/lib/invoice-project-items";
+import { getProposedInvoiceNumber } from "@/lib/actions/invoices";
 
 export default async function NewInvoicePage({ searchParams }: { searchParams: Promise<{ timeEntryIds?: string | string[] }> }) {
   const lang = await getCurrentLang();
   const t = createT(lang);
   const { workspaceId } = await requireWorkspaceWritableOrRedirect("/app/invoices");
+  const proposedInvoiceNumber = await getProposedInvoiceNumber();
   const requestedIds = parseUuidList((await searchParams).timeEntryIds);
   const selectedTimeEntries = requestedIds.length ? await db.select({ id: timeEntries.id, clientId: timeEntries.clientId, projectId: timeEntries.projectId, description: timeEntries.description, durationMinutes: timeEntries.durationMinutes, hourlyRate: timeEntries.hourlyRate }).from(timeEntries).where(and(inArray(timeEntries.id, requestedIds), eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.status, "approved"), eq(timeEntries.billable, true), isNotNull(timeEntries.endTime), sql`${timeEntries.durationMinutes} > 0`)) : [];
   const selectedClientId = selectedTimeEntries.length && selectedTimeEntries.every(row => row.clientId === selectedTimeEntries[0].clientId) ? selectedTimeEntries[0].clientId : undefined;
@@ -97,7 +99,7 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: P
               </Link>
             </div>
           ) : (
-            <InvoiceForm mode="create" defaultValues={{ clientId: selectedClientId ?? undefined, projectId: selectedProjectIds.length === 1 ? selectedProjectIds[0] : undefined }} clients={clientOptions} projects={projectOptions.map((project) => ({ ...project, agreedAmount: resolveProjectAmount({ billingType: project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packageCustomPrice ?? project.packagePrice ?? 0) || null }), priorActiveFixedBilledAmount: sourceOptions.get(project.id)?.priorActiveFixedBilledAmount ?? 0, eligibleTimeEntries: sourceOptions.get(project.id)?.eligibleTimeEntries ?? [], initialTimeEntryIds: selectedTimeEntries.filter((entry) => entry.projectId === project.id).map((entry) => entry.id) }))} templates={templateOptions} baseCurrency={workspace?.defaultCurrency || "IDR"} currencyRates={currencyRates} initialItems={selectedTimeEntries.map(row => ({ description: row.description || t("Waktu proyek", "Project time"), quantity: Number(row.durationMinutes) / 60, unitPrice: Number(row.hourlyRate ?? 0), sourceId: row.id }))} />
+            <InvoiceForm mode="create" defaultValues={{ clientId: selectedClientId ?? undefined, projectId: selectedProjectIds.length === 1 ? selectedProjectIds[0] : undefined, invoiceNumber: proposedInvoiceNumber }} clients={clientOptions} projects={projectOptions.map((project) => ({ ...project, agreedAmount: resolveProjectAmount({ billingType: project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packageCustomPrice ?? project.packagePrice ?? 0) || null }), priorActiveFixedBilledAmount: sourceOptions.get(project.id)?.priorActiveFixedBilledAmount ?? 0, eligibleTimeEntries: sourceOptions.get(project.id)?.eligibleTimeEntries ?? [], initialTimeEntryIds: selectedTimeEntries.filter((entry) => entry.projectId === project.id).map((entry) => entry.id) }))} templates={templateOptions} baseCurrency={workspace?.defaultCurrency || "IDR"} currencyRates={currencyRates} initialItems={selectedTimeEntries.map(row => ({ description: row.description || t("Waktu proyek", "Project time"), quantity: Number(row.durationMinutes) / 60, unitPrice: Number(row.hourlyRate ?? 0), sourceId: row.id }))} />
           )}
         </CardContent>
       </Card>
