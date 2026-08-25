@@ -11,6 +11,7 @@ import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { EmptyState } from "@/components/empty-state";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { FileSignature } from "lucide-react";
+import { getProposedContractNumber } from "@/lib/actions/contracts";
 
 export const dynamic = "force-dynamic";
 
@@ -81,6 +82,7 @@ export default async function ContractsPage({
     .where(eq(contractTemplates.workspaceId, workspaceId))
     .orderBy(desc(contractTemplates.isDefault), desc(contractTemplates.updatedAt))
     .limit(100);
+  const proposedContractNumber = canWrite ? await getProposedContractNumber(workspaceId) : "";
 
   const countRows = await db
     .select({
@@ -124,7 +126,7 @@ export default async function ContractsPage({
           </p>
         </div>
         {canWrite && (
-          <CreateContractButton clients={clientsList} templates={templateRows} workspaceId={workspaceId} defaultOpen={params.new === "1"} />
+          <CreateContractButton clients={clientsList} templates={templateRows} workspaceId={workspaceId} proposedContractNumber={proposedContractNumber} defaultOpen={params.new === "1"} />
         )}
       </div>
 

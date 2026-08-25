@@ -199,7 +199,7 @@ export async function createContract(input: z.infer<typeof createContractSchema>
   try {
     [c] = await db.transaction(async (tx) => {
     const contractDate = parsed.contractDate || new Date().toISOString().slice(0, 10);
-    let contractNumber: string | null = parsed.contractNumber?.trim() || null;
+    let contractNumber: string | null = parsed.contractNumber?.trim().toUpperCase() || null;
     if (!parsed.contractNumber?.trim()) {
       const [counter] = await tx
         .select({ nextNumber: workspaceInvoiceCounters.nextNumber })
@@ -251,6 +251,10 @@ export async function createContract(input: z.infer<typeof createContractSchema>
       clientEmail: parsed.clientEmail,
       error,
     });
+    const dbError = error as { constraint?: string; cause?: { constraint?: string } };
+    if ((dbError.cause?.constraint ?? dbError.constraint) === "contracts_workspace_contract_number_unique") {
+      throw new Error("Nomor kontrak sudah dipakai di workspace ini / Contract number already exists in this workspace");
+    }
     throw error;
   }
 
@@ -259,6 +263,21 @@ export async function createContract(input: z.infer<typeof createContractSchema>
   });
   revalidatePath("/app/contracts");
   return c;
+}
+
+export async function getProposedContractNumber(workspaceId: string): Promise<string> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  const [counter] = await db.select({ nextNumber: workspaceInvoiceCounters.nextNumber })
+    .from(workspaceInvoiceCounters).where(eq(workspaceInvoiceCounters.workspaceId, workspaceId)).limit(1);
+  const existing = await db.select({ contractNumber: contracts.contractNumber }).from(contracts)
+    .where(eq(contracts.workspaceId, workspaceId));
+  return buildContractNumber(currentDocumentYear(), nextDocumentSequence(
+    counter?.nextNumber,
+    existing.map((row) => row.contractNumber),
+    contractNumberSequence,
+  ));
 }
 
 export async function updateContract(contractId: string, input: { clientName?: string; clientEmail?: string | null; companyName?: string | null; title?: string; body?: string; validUntil?: string | null; contractNumber?: string | null }) {
