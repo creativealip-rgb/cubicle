@@ -17,7 +17,7 @@ import {
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { getEffectivePlan } from "@/lib/plan";
 import { getPersonalSiteOwnerPlanContext, listPersonalSiteRows } from "@/lib/personal-site/plan-context";
-import { getEffectivePersonalSiteSlug } from "@/lib/personal-site/slug-policy";
+import { canEditPersonalSiteSlug, getEffectivePersonalSiteSlug } from "@/lib/personal-site/slug-policy";
 import { findPersonalSiteByEffectiveSlug, hasEffectiveSlugCollision } from "@/lib/personal-site/slug-records";
 export type PersonalSiteActionState = {
   status: "idle" | "success" | "error";
@@ -35,6 +35,11 @@ async function ownerContext() {
   const planContext = await getPersonalSiteOwnerPlanContext(workspaceId);
   if (!planContext) throw new Error("Personal site owner workspace not found");
   return { userId: user.id, workspaceId, planContext };
+}
+
+export async function getPersonalSiteSlugEntitlement(): Promise<boolean> {
+  const { planContext } = await ownerContext();
+  return canEditPersonalSiteSlug(getEffectivePlan(planContext.plan, planContext.planExpiresAt));
 }
 
 export async function getPersonalSiteForCurrentOwner(): Promise<PersonalSiteInput | null> {

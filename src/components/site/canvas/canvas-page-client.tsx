@@ -26,9 +26,10 @@ type Props = {
   action: (state: PersonalSiteActionState, formData: FormData) => Promise<PersonalSiteActionState>;
   publicSiteBaseUrl: string;
   previewUrl: string;
+  canEditSlug: boolean;
 };
 
-export function CanvasPageClient({ initialSite, action, publicSiteBaseUrl, previewUrl }: Props) {
+export function CanvasPageClient({ initialSite, action, publicSiteBaseUrl, previewUrl, canEditSlug }: Props) {
   const actionRef = useRef(action);
 
   const handleSave = useCallback(async (site: PersonalSiteInput) => {
@@ -48,6 +49,7 @@ export function CanvasPageClient({ initialSite, action, publicSiteBaseUrl, previ
       previewUrl={previewUrl}
       publicSiteBaseUrl={publicSiteBaseUrl}
       onSave={handleSave}
+      canEditSlug={canEditSlug}
     />
   );
 }

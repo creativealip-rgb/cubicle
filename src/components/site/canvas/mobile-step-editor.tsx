@@ -65,6 +65,7 @@ type Props = {
   onUpdateSite: (patch: Partial<PersonalSiteInput>) => void;
   onSetActivePageId: (id: string) => void;
   onSelectSection: (id: string | null) => void;
+  canEditSlug: boolean;
 };
 
 export function MobileStepEditor({
@@ -76,6 +77,7 @@ export function MobileStepEditor({
   onUpdateSite,
   onSetActivePageId,
   onSelectSection,
+  canEditSlug,
 }: Props) {
   const { t } = useT();
   const [step, setStep] = useState<Step>("pages");

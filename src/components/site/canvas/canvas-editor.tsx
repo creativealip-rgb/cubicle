@@ -62,6 +62,7 @@ type Props = {
   previewUrl: string;
   publicSiteBaseUrl: string;
   onSave: (site: PersonalSiteInput) => Promise<void>;
+  canEditSlug: boolean;
 };
 
 function makeId() {
@@ -250,7 +251,7 @@ function matchesSearch(label: string, enLabel: string, query: string): boolean {
   return label.toLowerCase().includes(q) || enLabel.toLowerCase().includes(q);
 }
 
-export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSave }: Props) {
+export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSave, canEditSlug }: Props) {
   const { t } = useT();
   const { refresh } = useAppTransition();
   const [site, setSite] = useState<PersonalSiteInput>(() => ({ ...initialSite, pages: normalizePages(initialSite) }));
@@ -545,6 +546,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
           onUpdateSite={updateSite}
           onSetActivePageId={setActivePageId}
           onSelectSection={setSelectedSectionId}
+          canEditSlug={canEditSlug}
         />
       </div>
 
