@@ -29,11 +29,11 @@ export default async function QuestionnaireEditPage({ params }: { params: Promis
         <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2">
           <Link href={`/app/questionnaires/${q.id}`}>
             <ArrowLeft className="h-3.5 w-3.5" />
-            {t("Kembali ke kuesioner", "Back to questionnaire")}
+            {t("Kembali ke Formulir", "Back to Forms")}
           </Link>
         </Button>
         <h1 className="app-page-title">
-          {t("Edit kuesioner", "Edit questionnaire")}
+          {t("Edit Formulir", "Edit Form")}
         </h1>
         <p className="mt-1 text-sm text-slate-500">
           {t(

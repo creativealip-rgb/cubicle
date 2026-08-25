@@ -74,7 +74,7 @@ export default async function QuestionnaireDetailPage({ params }: { params: Prom
             href="/app/questionnaires"
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
           >
-            <ArrowLeft className="h-3 w-3" /> {t("Kembali ke Kuesioner", "Back to Questionnaires")}
+            <ArrowLeft className="h-3 w-3" /> {t("Kembali ke Formulir", "Back to Forms")}
           </Link>
           <h1 className="app-page-title mt-1">{q.name}</h1>
           {q.description && <p>{q.description}</p>}
@@ -145,8 +145,8 @@ export default async function QuestionnaireDetailPage({ params }: { params: Prom
           <Card>
             <CardContent className="py-8 text-center text-sm text-slate-500">
               {t(
-                "Belum ada jawaban. Kirim kuesioner ke klien untuk mulai.",
-                "No responses yet. Send the questionnaire to a client to get started.",
+                "Belum ada jawaban. Kirim formulir ke klien untuk mulai.",
+                "No responses yet. Send the form to a client to get started.",
               )}
             </CardContent>
           </Card>
