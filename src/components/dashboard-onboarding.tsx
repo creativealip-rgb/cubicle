@@ -13,7 +13,6 @@ export interface OnboardingStep {
 
 interface DashboardOnboardingProps {
   lang: "id" | "en";
-  workspaceId: string;
   steps: OnboardingStep[];
 }
 
@@ -57,7 +56,7 @@ const COPY: Record<
   },
 };
 
-export function DashboardOnboarding({ lang, workspaceId, steps }: DashboardOnboardingProps) {
+export function DashboardOnboarding({ lang, steps }: DashboardOnboardingProps) {
   const [expanded, setExpanded] = useState(false);
   const t = (id: string, en: string) => (lang === "en" ? en : id);
 
