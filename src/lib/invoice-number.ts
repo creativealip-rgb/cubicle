@@ -1,4 +1,5 @@
-const INVOICE_NUMBER_PATTERN = /^INV-[A-Z0-9-]{1,47}$/;
+const INVOICE_NUMBER_PATTERN = /^INV-[A-Z0-9]+(?:-[A-Z0-9]+)*$/;
+const INVOICE_NUMBER_CONSTRAINT = "invoices_workspace_id_invoice_number_unique";
 
 export function normalizeInvoiceNumber(value: string | null | undefined): string | undefined {
   const normalized = value?.trim().toUpperCase();
@@ -15,6 +16,7 @@ export function invoiceNumberTakenMessage(number: string): string {
 
 export function isInvoiceNumberUniqueConstraint(error: unknown): boolean {
   const cause = error as { cause?: { code?: string; constraint?: string }; code?: string; constraint?: string };
-  return (cause?.cause?.code ?? cause?.code) === "23505" ||
-    (cause?.cause?.constraint ?? cause?.constraint) === "invoices_workspace_id_invoice_number_unique";
+  const code = cause?.cause?.code ?? cause?.code;
+  const constraint = cause?.cause?.constraint ?? cause?.constraint;
+  return constraint === INVOICE_NUMBER_CONSTRAINT && (code === undefined || code === "23505");
 }
