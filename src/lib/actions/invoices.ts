@@ -95,6 +95,19 @@ const addItemSchema = z.object({
   unitPrice: z.number().min(0).default(0),
 });
 
+export async function getProposedInvoiceNumber(): Promise<string> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  const [counter] = await db.select({ nextNumber: workspaceInvoiceCounters.nextNumber })
+    .from(workspaceInvoiceCounters).where(eq(workspaceInvoiceCounters.workspaceId, workspaceId)).limit(1);
+  const [maxRow] = await db.select({
+    maxNum: sql<number>`COALESCE(MAX(CAST(SUBSTRING(${invoices.invoiceNumber} FROM 'INV-([0-9]+)$') AS INTEGER)), 0)`,
+  }).from(invoices).where(eq(invoices.workspaceId, workspaceId));
+  return `INV-${String(Math.max(counter?.nextNumber ?? 1, Number(maxRow?.maxNum ?? 0) + 1)).padStart(4, "0")}`;
+}
+
 const addProjectItemSchema = z.object({
   invoiceId: z.string().uuid(),
   projectId: z.string().uuid(),
