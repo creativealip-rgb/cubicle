@@ -37,31 +37,30 @@ export const appNavigation: NavigationEntry[] = [
     direct("clients", "/app/clients", Users, { id: "Klien", en: "Clients" }, { id: "Kelola data, kontak, dan portal klien", en: "Manage client data, contacts, and portals" }),
     direct("projects", "/app/projects", Briefcase, { id: "Proyek", en: "Projects" }, { id: "Kelola engagement, scope, dan progres kerja", en: "Manage engagements, scope, and work progress" }),
     direct("tasks", "/app/tasks", CheckSquare, { id: "Tugas", en: "Tasks" }, { id: "Kelola pekerjaan konkret, assignee, dan deadline", en: "Manage concrete work, assignees, and deadlines" }, "myOpenTasks"),
+    direct("files", "/app/files", FolderOpen, { id: "File", en: "Files" }),
   ]},
   direct("time", "/app/time", Clock, { id: "Waktu", en: "Time" }, undefined, undefined, ["/app/activities"]),
   { kind: "group", id: "business", icon: BriefcaseBusiness, label: { id: "Bisnis", en: "Business" }, children: [
     direct("proposals", "/app/proposals", FileSpreadsheet, { id: "Proposal", en: "Proposals" }, { id: "Kelola penawaran dan proposal", en: "Manage client proposals and estimates" }, "draftProposals"),
     direct("contracts", "/app/contracts", FileCheck2, { id: "Kontrak", en: "Contracts" }, { id: "Kelola kontrak dan kesepakatan", en: "Manage client contracts and agreements" }, "draftContracts"),
     direct("services", "/app/services", Wrench, { id: "Layanan", en: "Services" }, { id: "Kelola katalog layanan milik Anda", en: "Manage your pure service catalog" }),
+    direct("personal-site", "/app/personal-site", FileText, { id: "Landing Page", en: "Landing Page" }, { id: "Kelola halaman personal", en: "Manage your personal page" }),
+    direct("questionnaires", "/app/questionnaires", ClipboardList, { id: "Formulir", en: "Forms" }, { id: "Form intake & brief klien", en: "Client intake forms & briefs" }),
     direct("templates", "/app/templates", ClipboardList, { id: "Template", en: "Templates" }, { id: "Kelola template proposal, kontrak, dan invoice", en: "Manage proposal, contract, and invoice templates" }),
-    direct("questionnaires", "/app/questionnaires", ClipboardList, { id: "Kuesioner", en: "Questionnaires" }, { id: "Form intake & brief klien", en: "Client intake forms & briefs" }),
   ]},
-  direct("calendar", "/app/calendar", Calendar, { id: "Kalender", en: "Calendar" }),
-  direct("files", "/app/files", FolderOpen, { id: "File", en: "Files" }),
-
   { kind: "group", id: "finance", icon: Wallet, label: { id: "Keuangan", en: "Finance" }, children: [
     direct("invoices", "/app/invoices", FileText, { id: "Invoice", en: "Invoices" }, { id: "Kelola tagihan, pembayaran, dan waktu belum ditagihkan", en: "Manage invoices, payments, and uninvoiced time" }, "unpaidInvoices"),
     direct("expenses", "/app/expenses", Wallet, { id: "Pengeluaran", en: "Expenses" }, { id: "Catat biaya operasional", en: "Record operating costs" }),
     direct("reports", "/app/reports", BarChart3, { id: "Laporan", en: "Reports" }, { id: "Analisis keuangan dan performa waktu", en: "Analyze financial and time performance" }),
   ]},
+  direct("calendar", "/app/calendar", Calendar, { id: "Kalender", en: "Calendar" }),
   { kind: "group", id: "personal", icon: NotebookPen, label: { id: "Personal", en: "Personal" }, ownerOnly: true, children: [
     direct("notes", "/app/personal", NotebookPen, { id: "Catatan", en: "Notes" }, { id: "Simpan catatan pribadi", en: "Keep private notes" }),
     direct("journal", "/app/journal", NotebookPen, { id: "Jurnal", en: "Journal" }, { id: "Tulis jurnal pekerjaan", en: "Write your work journal" }),
-    direct("personal-site", "/app/personal-site", FileText, { id: "Landing Page", en: "Landing Page" }, { id: "Kelola halaman personal", en: "Manage your personal page" }),
   ]},
   { kind: "group", id: "ai", icon: Sparkles, label: { id: "AI", en: "AI" }, children: [
-    direct("assistant", "/app/brain", Brain, { id: "Asisten", en: "Assistant" }, { id: "Tanya dan cek data workspace", en: "Ask questions about workspace data" }),
     direct("prompt-studio", "/app/prompts", Sparkles, { id: "Prompt Studio", en: "Prompt Studio" }, { id: "Buat materi campaign dengan AI", en: "Create campaign assets with AI" }),
+    direct("assistant", "/app/brain", Brain, { id: "Asisten AI", en: "AI Assistant" }, { id: "Tanya dan cek data workspace", en: "Ask questions about workspace data" }),
   ]},
 ];
 
