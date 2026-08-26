@@ -29,7 +29,7 @@ import { DeleteInvoiceButton } from "./delete-invoice-button";
 import { VoidInvoiceButton } from "./void-invoice-button";
 
 import { InvoiceMetaForm } from "@/components/invoices/invoice-meta-form";
-import { formatDateID, formatMoney } from "@/lib/utils";
+import { formatMoney } from "@/lib/utils";
 import { invoiceStatusVariant } from "@/lib/status-badge";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { billingTypeLabel } from "@/lib/feature-access";
@@ -57,6 +57,10 @@ export default async function InvoiceDetailPage({
   const { invoiceId } = await params;
   const lang = await getCurrentLang();
   const t = createT(lang);
+  const locale = lang === "en" ? "en-US" : "id-ID";
+  const formatDate = (value: string | Date | null) => value
+    ? new Date(`${String(value).slice(0, 10)}T00:00:00`).toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" })
+    : "—";
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -211,7 +215,7 @@ export default async function InvoiceDetailPage({
     clientName: client?.companyName || client?.name || t("Klien", "Client"),
     invoiceNumber: inv.invoiceNumber,
     amount: formatMoney(inv.total, inv.currency || "IDR"),
-    dueDate: inv.dueDate ? formatDateID(inv.dueDate) : null,
+    dueDate: inv.dueDate ? formatDate(inv.dueDate) : null,
   });
 
   return (
@@ -295,7 +299,7 @@ export default async function InvoiceDetailPage({
           </CardHeader>
           <CardContent>
             <p className="text-sm font-medium">
-              {formatDateID(inv.issueDate)}
+              {formatDate(inv.issueDate)}
             </p>
           </CardContent>
         </Card>
@@ -307,7 +311,7 @@ export default async function InvoiceDetailPage({
           </CardHeader>
           <CardContent>
             <p className="text-sm font-medium">
-              {formatDateID(inv.dueDate)}
+              {formatDate(inv.dueDate)}
             </p>
           </CardContent>
         </Card>

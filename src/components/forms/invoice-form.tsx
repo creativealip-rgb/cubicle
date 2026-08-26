@@ -406,7 +406,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="issueDate">Tanggal Terbit *</Label>
+          <Label htmlFor="issueDate">{t("Tanggal Terbit *", "Issue Date *")}</Label>
           <Input
             id="issueDate"
             type="date"
@@ -466,9 +466,9 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
           ))}
           {items.map((item, index) => (
             <div key={index} className="grid grid-cols-[minmax(0,1fr)_64px_100px_36px] gap-2">
-              <Input aria-label={`Deskripsi item ${index + 1}`} placeholder="Deskripsi" value={item.description} onChange={(e) => setItems((prev) => prev.map((row, i) => i === index ? { ...row, description: e.target.value } : row))} />
-              <Input aria-label={`Jumlah item ${index + 1}`} type="number" min="0.01" step="0.01" value={item.quantity} onChange={(e) => setItems((prev) => prev.map((row, i) => i === index ? { ...row, quantity: Number(e.target.value) } : row))} />
-              <Input aria-label={`Harga item ${index + 1}`} type="number" min="0" step="1" value={item.unitPrice} onChange={(e) => setItems((prev) => prev.map((row, i) => i === index ? { ...row, unitPrice: Number(e.target.value) } : row))} />
+              <Input aria-label={t(`Deskripsi item ${index + 1}`, `Item ${index + 1} description`)} placeholder={t("Deskripsi", "Description")} value={item.description} onChange={(e) => setItems((prev) => prev.map((row, i) => i === index ? { ...row, description: e.target.value } : row))} />
+              <Input aria-label={t(`Jumlah item ${index + 1}`, `Item ${index + 1} quantity`)} type="number" min="0.01" step="0.01" value={item.quantity} onChange={(e) => setItems((prev) => prev.map((row, i) => i === index ? { ...row, quantity: Number(e.target.value) } : row))} />
+              <Input aria-label={t(`Harga item ${index + 1}`, `Item ${index + 1} price`)} type="number" min="0" step="1" value={item.unitPrice} onChange={(e) => setItems((prev) => prev.map((row, i) => i === index ? { ...row, unitPrice: Number(e.target.value) } : row))} />
               <Button type="button" variant="ghost" size="icon" disabled={items.length === 1} onClick={() => setItems((prev) => prev.filter((_, i) => i !== index))}>×</Button>
             </div>
           ))}
@@ -500,11 +500,11 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
       <Button type="submit" disabled={loading} className="w-full">
         {loading
           ? mode === "create"
-            ? "Membuat invoice…"
-            : "Menyimpan…"
+            ? t("Membuat invoice…", "Creating invoice…")
+            : t("Menyimpan…", "Saving…")
           : mode === "create"
-            ? "Buat Invoice"
-            : "Simpan Perubahan"}
+            ? t("Buat Invoice", "Create Invoice")
+            : t("Simpan Perubahan", "Save Changes")}
       </Button>
     </form>
   );

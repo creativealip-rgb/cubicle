@@ -282,7 +282,7 @@ export function WorkspaceBrandingForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="taxId">Tax ID / NPWP</Label>
+          <Label htmlFor="taxId">{t("NPWP / ID Pajak", "Tax ID")}</Label>
           <Input
             id="taxId"
             value={form.taxId}
