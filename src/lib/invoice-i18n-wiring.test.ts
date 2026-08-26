@@ -12,6 +12,8 @@ describe("invoice English localization wiring", () => {
     const share = read("src/app/(app)/app/invoices/[invoiceId]/share-token-section.tsx");
     expect(form).toContain('t("Tanggal Terbit *", "Issue Date *")');
     expect(form).toContain('t("Buat Invoice", "Create Invoice")');
+    expect(form).toContain('t("Mata Uang", "Currency")');
+    expect(form).toContain('t("Item tagihan *", "Invoice items *")');
     expect(item).toContain('t("Tambah Item", "Add Item")');
     expect(payment).toContain('t("Catat Pembayaran", "Record Payment")');
     expect(payment).toContain('t("Sisa", "Remaining")');

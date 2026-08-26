@@ -440,7 +440,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="currency">Mata Uang</Label>
+        <Label htmlFor="currency">{t("Mata Uang", "Currency")}</Label>
         <Select value={form.currency} onValueChange={(v) => set("currency", v)}>
           <SelectTrigger>
             <SelectValue />
@@ -457,7 +457,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
 
       {mode === "create" && (
         <div className="space-y-3 rounded-lg border p-3">
-          <div className="flex items-center justify-between"><Label>Item tagihan *</Label><Button type="button" size="sm" variant="outline" onClick={() => setItems((prev) => [...prev, { description: "", quantity: 1, unitPrice: 0 }])}>+ Item</Button></div>
+          <div className="flex items-center justify-between"><Label>{t("Item tagihan *", "Invoice items *")}</Label><Button type="button" size="sm" variant="outline" onClick={() => setItems((prev) => [...prev, { description: "", quantity: 1, unitPrice: 0 }])}>+ {t("Item", "Item")}</Button></div>
           {projectItems.map((item) => (
             <div key={item.projectId} className="rounded-md border bg-muted/20 p-3 text-sm">
               <div className="flex justify-between gap-3"><span className="font-medium">{item.description}</span><span>{new Intl.NumberFormat("id-ID", { style: "currency", currency: form.currency }).format(item.unitPrice)}</span></div>
