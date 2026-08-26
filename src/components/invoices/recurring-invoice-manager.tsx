@@ -11,6 +11,7 @@ import { useT } from "@/lib/i18n-client";
 import { createRecurringInvoiceRule, deleteRecurringInvoiceRule, updateRecurringInvoiceRule } from "@/lib/actions/recurring-invoices";
 import { renderRecurringInvoiceNumber } from "@/lib/recurring-invoice-number";
 import { useAppTransition } from "@/lib/transition-provider";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export type RecurringInvoiceRuleView = {
   id: string;
@@ -44,6 +45,7 @@ export function RecurringInvoiceManager({ rules, clients, projects, canWrite, de
   const { refresh } = useAppTransition();
   const [pending, setPending] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState({
     clientId: clients[0]?.id ?? "",
     projectId: "",
@@ -125,10 +127,10 @@ export function RecurringInvoiceManager({ rules, clients, projects, canWrite, de
   }
 
   async function remove(ruleId: string) {
-    if (!window.confirm(t("Hapus aturan invoice berulang ini?", "Delete this recurring invoice rule?"))) return;
     setPending(true);
     try {
       await deleteRecurringInvoiceRule(ruleId);
+      setDeleteId(null);
       toast.success(t("Aturan invoice berulang dihapus", "Recurring invoice rule deleted"));
       refresh();
     }
@@ -161,9 +163,19 @@ export function RecurringInvoiceManager({ rules, clients, projects, canWrite, de
         <div className="space-y-2">
           {rules.length === 0 ? <p className="text-sm text-muted-foreground">{t("Belum ada aturan invoice berulang.", "No recurring invoice rules yet.")}</p> : rules.map((rule) => {
             const client = clients.find((item) => item.id === rule.clientId)?.name ?? t("Klien", "Client");
-            return <div key={rule.id} className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-medium">{client} · {rule.numberPattern}</p><p className="text-xs text-muted-foreground">{rule.frequency} · {t("Berikutnya", "Next")}: {rule.nextRunDate} · {rule.currency} · {rule.isActive ? t("Aktif", "Active") : t("Dijeda", "Paused")}</p></div>{canWrite ? <div className="flex gap-2"><Button type="button" size="sm" variant="outline" disabled={pending} onClick={() => edit(rule)}>{t("Edit", "Edit")}</Button><Button type="button" size="sm" variant="outline" disabled={pending} onClick={() => toggle(rule)}>{rule.isActive ? t("Jeda", "Pause") : t("Aktifkan", "Activate")}</Button><Button type="button" size="sm" variant="destructive" disabled={pending} onClick={() => remove(rule.id)}>{t("Hapus", "Delete")}</Button></div> : null}</div>;
+            return <div key={rule.id} className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-medium">{client} · {rule.numberPattern}</p><p className="text-xs text-muted-foreground">{rule.frequency} · {t("Berikutnya", "Next")}: {rule.nextRunDate} · {rule.currency} · {rule.isActive ? t("Aktif", "Active") : t("Dijeda", "Paused")}</p></div>{canWrite ? <div className="flex gap-2"><Button type="button" size="sm" variant="outline" disabled={pending} onClick={() => edit(rule)}>{t("Edit", "Edit")}</Button><Button type="button" size="sm" variant="outline" disabled={pending} onClick={() => toggle(rule)}>{rule.isActive ? t("Jeda", "Pause") : t("Aktifkan", "Activate")}</Button><Button type="button" size="sm" variant="destructive" disabled={pending} onClick={() => setDeleteId(rule.id)}>{t("Hapus", "Delete")}</Button></div> : null}</div>;
           })}
         </div>
+        <Dialog open={deleteId !== null} onOpenChange={(open) => { if (!open && !pending) setDeleteId(null); }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader><DialogTitle>{t("Hapus aturan invoice berulang?", "Delete recurring invoice rule?")}</DialogTitle></DialogHeader>
+            <p className="text-sm text-muted-foreground">{t("Tindakan ini tidak dapat dibatalkan.", "This action cannot be undone.")}</p>
+            <DialogFooter>
+              <Button type="button" variant="outline" disabled={pending} onClick={() => setDeleteId(null)}>{t("Batal", "Cancel")}</Button>
+              <Button type="button" variant="destructive" disabled={pending || deleteId === null} onClick={() => deleteId && remove(deleteId)}>{pending ? t("Menghapus…", "Deleting…") : t("Hapus", "Delete")}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
