@@ -17,6 +17,7 @@ describe("invoice English localization wiring", () => {
     expect(payment).toContain('t("Sisa", "Remaining")');
     expect(share).toContain('t("Cabut", "Revoke")');
     expect(share).toContain('t("Lihat Invoice", "View Invoice")');
+    expect(share).toContain('className="flex flex-wrap gap-2"');
   });
 
   it("formats invoice dates with active locale", () => {

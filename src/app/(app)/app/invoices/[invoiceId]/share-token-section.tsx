@@ -111,7 +111,7 @@ export function ShareTokenSection({
         </div>
       )}
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {token && (
           <Button type="button" variant="outline" size="sm" className="gap-1" asChild>
             <a href={shareInvoiceUrl(token)} target="_blank" rel="noreferrer">
