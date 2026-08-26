@@ -96,13 +96,13 @@ export function PaymentSection({
     <div className="space-y-4">
       <div className="flex items-center justify-between text-sm">
         <span>
-          Total: <strong>{formatMoney(total, currencyCode)}</strong>
+          {t("Total", "Total")}: <strong>{formatMoney(total, currencyCode)}</strong>
         </span>
-        <span>
-          {t("Dibayar", "Paid")}: <strong>{formatMoney(paidSoFar, currencyCode)}</strong>
+        <span aria-label={`${t("Dibayar", "Paid")}: ${formatMoney(paidSoFar, currencyCode)}`}>
+          <span>{t("Dibayar", "Paid")}</span>: <strong>{formatMoney(paidSoFar, currencyCode)}</strong>
         </span>
-        <span>
-          {t("Sisa", "Remaining")}: <strong>{formatMoney(remaining, currencyCode)}</strong>
+        <span aria-label={`${t("Sisa", "Remaining")}: ${formatMoney(remaining, currencyCode)}`}>
+          <span>{t("Sisa", "Remaining")}</span>: <strong>{formatMoney(remaining, currencyCode)}</strong>
         </span>
       </div>
 
