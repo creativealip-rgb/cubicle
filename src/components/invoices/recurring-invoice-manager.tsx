@@ -127,7 +127,11 @@ export function RecurringInvoiceManager({ rules, clients, projects, canWrite, de
   async function remove(ruleId: string) {
     if (!window.confirm(t("Hapus aturan invoice berulang ini?", "Delete this recurring invoice rule?"))) return;
     setPending(true);
-    try { await deleteRecurringInvoiceRule(ruleId); refresh(); }
+    try {
+      await deleteRecurringInvoiceRule(ruleId);
+      toast.success(t("Aturan invoice berulang dihapus", "Recurring invoice rule deleted"));
+      refresh();
+    }
     catch (error) { toast.error(error instanceof Error ? error.message : t("Gagal menghapus aturan", "Failed to delete rule")); }
     finally { setPending(false); }
   }

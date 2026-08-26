@@ -4,6 +4,7 @@ import { useState, forwardRef } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n-client";
 
 type PasswordInputProps = React.ComponentProps<typeof Input>;
 
@@ -14,6 +15,7 @@ type PasswordInputProps = React.ComponentProps<typeof Input>;
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
   function PasswordInput({ className, disabled, ...props }, ref) {
     const [visible, setVisible] = useState(false);
+    const { t } = useT();
 
     return (
       <div className="relative">
@@ -29,7 +31,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           tabIndex={-1}
           onClick={() => setVisible((v) => !v)}
           disabled={disabled}
-          aria-label={visible ? "Sembunyikan password" : "Tampilkan password"}
+          aria-label={visible ? t("Sembunyikan password", "Hide password") : t("Tampilkan password", "Show password")}
           className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {visible ? (
