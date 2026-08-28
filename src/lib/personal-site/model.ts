@@ -319,7 +319,7 @@ export const DEFAULT_PERSONAL_SITE: PersonalSiteInput = {
   subtitle: "Freelancer · Studio · Consultant",
   hero: "Helping businesses look professional and win new clients.",
   about: "Expertise, process, and the clients we work best with.",
-  ctaLabel: "Contact me",
+  ctaLabel: "",
   ctaUrl: "",
   theme: "midnight",
   accent: "#6647F0",
