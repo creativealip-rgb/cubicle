@@ -81,14 +81,6 @@ export default async function SettingsPage({
     .where(eq(workspaceCurrencyRates.workspaceId, workspaceId))
     .orderBy(workspaceCurrencyRates.fromCurrency);
 
-  const [ownerUser] = workspace?.ownerId
-    ? await db
-        .select({ email: users.email })
-        .from(users)
-        .where(eq(users.id, workspace.ownerId))
-        .limit(1)
-    : [null];
-
   const workspaceSetupItems = [
     {
       label: t("Nama bisnis / workspace", "Business / workspace name"),
@@ -182,7 +174,7 @@ export default async function SettingsPage({
                   <WorkspaceNameForm defaultName={workspace.name} canEdit={canEditWorkspace} />
                   <div className="border-t pt-3">
                     <h3 className="mb-3 text-sm font-semibold">{t("Profil workspace & Branding", "Workspace profile & Branding")}</h3>
-                    <WorkspaceBrandingForm section="workspace" canEdit={canEditWorkspace} defaults={{ billingName: workspace.billingName, billingEmail: workspace.billingEmail, billingPhone: workspace.billingPhone, billingAddress: workspace.billingAddress, taxId: workspace.taxId, logoUrl: workspace.logoUrl, defaultCurrency: workspace.defaultCurrency, defaultTaxRate: workspace.defaultTaxRate, defaultHourlyRate: workspace.defaultHourlyRate, defaultInvoiceTerms: workspace.defaultInvoiceTerms, replyToEmail: workspace.replyToEmail }} ownerEmailHint={ownerUser?.email ?? null} />
+                    <WorkspaceBrandingForm section="workspace" canEdit={canEditWorkspace} defaults={{ billingName: workspace.billingName, billingEmail: workspace.billingEmail, billingPhone: workspace.billingPhone, billingAddress: workspace.billingAddress, taxId: workspace.taxId, logoUrl: workspace.logoUrl, defaultCurrency: workspace.defaultCurrency, defaultTaxRate: workspace.defaultTaxRate, defaultHourlyRate: workspace.defaultHourlyRate, defaultInvoiceTerms: workspace.defaultInvoiceTerms, replyToEmail: workspace.replyToEmail }} />
                   </div>
                   <div className="space-y-3 border-t pt-3">
                     <div className="flex justify-between">
@@ -312,7 +304,7 @@ export default async function SettingsPage({
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <WorkspaceBrandingForm section="invoice" canEdit={canEditWorkspace} defaults={{ billingName: workspace.billingName, billingEmail: workspace.billingEmail, billingPhone: workspace.billingPhone, billingAddress: workspace.billingAddress, taxId: workspace.taxId, logoUrl: workspace.logoUrl, defaultCurrency: workspace.defaultCurrency, defaultTaxRate: workspace.defaultTaxRate, defaultHourlyRate: workspace.defaultHourlyRate, defaultInvoiceTerms: workspace.defaultInvoiceTerms, replyToEmail: workspace.replyToEmail }} ownerEmailHint={ownerUser?.email ?? null} />
+                  <WorkspaceBrandingForm section="invoice" canEdit={canEditWorkspace} defaults={{ billingName: workspace.billingName, billingEmail: workspace.billingEmail, billingPhone: workspace.billingPhone, billingAddress: workspace.billingAddress, taxId: workspace.taxId, logoUrl: workspace.logoUrl, defaultCurrency: workspace.defaultCurrency, defaultTaxRate: workspace.defaultTaxRate, defaultHourlyRate: workspace.defaultHourlyRate, defaultInvoiceTerms: workspace.defaultInvoiceTerms, replyToEmail: workspace.replyToEmail }} />
                   <CurrencyRatesForm baseCurrency={workspace.defaultCurrency || "IDR"} rates={currencyRateRows.map((r) => ({ id: r.id, fromCurrency: r.fromCurrency, rate: Number(r.rate) }))} canEdit={canEditWorkspace} showBaseCurrencyApprox={workspace.showBaseCurrencyApprox !== false} />
                   <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-2">
                     {invoiceSetupItems.map((item) => {

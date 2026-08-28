@@ -31,14 +31,11 @@ interface WorkspaceBrandingFormProps {
 
     replyToEmail?: string | null;
   };
-  /** Shown as hint when replyToEmail empty — auto fallback target. */
-  ownerEmailHint?: string | null;
 }
 
 export function WorkspaceBrandingForm({
   section,
   defaults,
-  ownerEmailHint,
   canEdit = true,
 }: WorkspaceBrandingFormProps) {
   const { t } = useT();
@@ -307,7 +304,7 @@ export function WorkspaceBrandingForm({
             type="email"
             value={form.replyToEmail}
             onChange={(e) => setForm((p) => ({ ...p, replyToEmail: e.target.value }))}
-            placeholder={form.billingEmail || ownerEmailHint || "email-kamu@gmail.com"}
+            placeholder={t("nama@contoh.com", "name@example.com")}
           />
           <p className="text-xs text-muted-foreground">
             {t(
@@ -372,6 +369,7 @@ export function WorkspaceBrandingForm({
             rows={3}
             value={form.defaultInvoiceTerms}
             onChange={(e) => setForm((p) => ({ ...p, defaultInvoiceTerms: e.target.value }))}
+            placeholder={t("Contoh: Pembayaran dalam 30 hari", "e.g. Payment due within 30 days")}
           />
         </div>
 

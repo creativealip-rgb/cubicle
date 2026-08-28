@@ -112,7 +112,7 @@ export function BookingSlugForm({
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
             maxLength={64}
-            placeholder="alip-meeting"
+            placeholder="your-meeting"
             className="font-mono text-sm"
           />
           <LoadingButton
