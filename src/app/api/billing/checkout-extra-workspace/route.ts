@@ -4,7 +4,7 @@ import { randomBytes } from "crypto";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { pakasirPayments, users, workspaceMembers } from "@/db/schema";
+import { pakasirPayments, workspaceMembers } from "@/db/schema";
 import { createPakasirTransaction, isPakasirConfigured, pakasirPaymentUrl } from "@/lib/pakasir";
 import { assertSameOrigin } from "@/lib/same-origin";
 import { getExtraWorkspaceAmount, type BillingPeriod } from "@/lib/billing-plans";
