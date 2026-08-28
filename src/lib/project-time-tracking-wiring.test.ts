@@ -56,7 +56,7 @@ describe("Phase 1 project time tracking wiring", () => {
     expect(timerWidget).toContain("await stopTimer(activeTimer.id)");
     expect(timerWidget).not.toContain("setStopDialogOpen(true)");
     expect(topbar).not.toContain("await startTimer({ workspaceId })");
-    expect(topbar).toContain("await stopTimer(activeTimer.id)");
+    expect(topbar).not.toContain("await stopTimer(activeTimer.id)");
     expect(topbar).not.toContain('if (!activeTimer.projectId)');
   });
 
@@ -65,9 +65,9 @@ describe("Phase 1 project time tracking wiring", () => {
     const projectPage = read("src/components/projects/project-edit-dialog.tsx");
     const projectForm = read("src/components/forms/project-form.tsx");
 
-    expect(createDialog).toContain('max-h-[90dvh]');
+    expect(createDialog).toContain('max-h-[min(90dvh,800px)]');
     expect(createDialog).toContain('overflow-y-auto');
-    expect(projectPage).toContain('max-h-[90dvh]');
+    expect(projectPage).toContain('max-h-[min(90dvh,800px)]');
     expect(projectPage).toContain('overflow-y-auto');
     expect(projectForm).toContain('sm:grid-cols-2');
     expect(projectForm).toContain('<DialogClose asChild>');

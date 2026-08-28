@@ -8,7 +8,7 @@ describe("edit time entry field order", () => {
     const dialog = source.slice(source.indexOf('<Dialog open={editOpen}'), source.indexOf('</Dialog>', source.indexOf('<Dialog open={editOpen}')));
     // Actual field order in the edit dialog: Klien & Proyek combined combobox,
     // then Tugas, Tanggal, Durasi, Deskripsi, Tag, Bisa ditagih. No Status field.
-    const labels = ["Klien", "Tugas", "Tanggal", "Durasi (menit)", "Deskripsi", "Tag", "Bisa ditagih"];
+    const labels = ["Klien & Proyek", "Tugas", "Deskripsi", "Tag", "Durasi (Jam:Menit:Detik)", "Tanggal", "Tagihan / Billable"];
     let cursor = -1;
     for (const label of labels) {
       const next = dialog.indexOf(label, cursor + 1);

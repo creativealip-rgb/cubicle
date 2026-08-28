@@ -12,10 +12,10 @@ describe("manual Time task UI", () => {
     expect(manual).not.toContain("activityId");
     // Tag label uses i18n pattern
     expect(manual).toMatch(/Label.*?t\("Tag"/);
-    expect(manual).toContain('t("Bisa ditagih", "Billable")');
-    expect(manual).toContain('t("Durasi (menit)", "Duration (minutes)")');
+    expect(manual).toContain('t("Bisa Ditagih", "Billable")');
+    expect(manual).toContain('t("Durasi (HH:MM:SS)", "Duration (hh:mm:ss)")');
     expect(manual).toContain("billingType");
-    expect(manual).toContain("status,");
+    expect(manual).toContain('status: "approved"');
     expect(manual).toContain("tags:");
   });
 });

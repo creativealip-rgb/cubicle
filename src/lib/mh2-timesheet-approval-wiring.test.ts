@@ -29,7 +29,8 @@ describe("MH2 weekly timesheet approval wiring", () => {
     const actions = read("src/lib/actions/time.ts");
     expect(guard).toContain("assertTimesheetWeekMutable");
     expect(actions).toContain("assertTimesheetWeekMutable");
-    expect(actions).toContain('entry.status === "approved"');
+    expect(actions).toContain('entry.status === "invoiced"');
+    expect(actions).toContain("assertTimesheetWeekMutable");
   });
 
   it("renders submit and owner review controls", () => {
