@@ -380,14 +380,18 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
       try {
         await onSave(site);
         setLastSaved(JSON.stringify(site));
-      } catch {
-        // silent fail for auto-save
+      } catch (error) {
+        toast.error(
+          error instanceof Error && error.message === "PERSONAL_SITE_SLUG_TAKEN"
+            ? t("Slug sudah dipakai. Pilih alamat publik lain.", "Slug is already in use. Choose another public address.")
+            : t("Perubahan belum tersimpan. Coba lagi.", "Changes were not saved. Try again."),
+        );
       } finally {
         setSaving(false);
       }
     }, 2000);
     return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
-  }, [site, isDirty, onSave]);
+  }, [site, isDirty, onSave, t]);
 
   // Warn before leaving with unsaved changes
   useEffect(() => {

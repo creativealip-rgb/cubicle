@@ -38,6 +38,7 @@ export function CanvasPageClient({ initialSite, action, publicSiteBaseUrl, previ
     formData.set("intent", site.published ? "publish" : "draft");
     const result = await actionRef.current({ status: "idle" }, formData);
     if (result.status === "error") {
+      if (result.fieldErrors?.slug?.length) throw new Error("PERSONAL_SITE_SLUG_TAKEN");
       throw new Error(result.message);
     }
   }, []);
