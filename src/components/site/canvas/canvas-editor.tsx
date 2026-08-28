@@ -472,6 +472,10 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   }, [onSave, refresh, site, t]);
 
   const handleSelectReadinessIssue = useCallback((issue: { id: string }) => {
+    if (issue.id.startsWith("cta") || issue.id === "placeholder-example-destination" || issue.id === "no-contact-method") {
+      setShowPublishConfirm(true);
+      return;
+    }
     if (issue.id === "theme-config-missing") {
       setSidebarTab("style");
       return;
@@ -755,7 +759,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
     {/* Publish / Unpublish confirmation dialog */}
     {showPublishConfirm !== null && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div className="bg-background rounded-lg p-6 max-w-sm mx-4 shadow-xl border">
+        <div className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-lg border bg-background p-6 mx-4 shadow-xl">
           <h3 className="font-semibold mb-2">
             {showPublishConfirm
               ? t("Publikasikan halaman ini?", "Publish this page?")
@@ -766,6 +770,20 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
               ? t("Halaman akan bisa diakses publik melalui link ini.", "The page will be publicly accessible at this link.")
               : t("Halaman akan disembunyikan dan tidak bisa diakses publik.", "The page will be hidden and not publicly accessible.")}
           </p>
+          <div className="mb-4 grid gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="publish-cta-label" className="text-xs">{t("Label CTA", "CTA label")}</Label>
+              <Input id="publish-cta-label" value={site.ctaLabel} onChange={(e) => updateSite({ ctaLabel: e.target.value })} placeholder={t("Contoh: Hubungi saya", "e.g. Contact me")} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="publish-cta-url" className="text-xs">{t("Tujuan CTA", "CTA destination")}</Label>
+              <Input id="publish-cta-url" value={site.ctaUrl ?? ""} onChange={(e) => updateSite({ ctaUrl: e.target.value })} placeholder="https://, mailto:, tel:, /booking/..." />
+            </div>
+            {(site.ctaLabel || site.ctaUrl) && (
+              <Button type="button" variant="ghost" size="sm" className="justify-self-start" onClick={() => updateSite({ ctaLabel: "", ctaUrl: "" })}>{t("Hapus CTA", "Clear CTA")}</Button>
+            )}
+            <p className="text-xs text-muted-foreground">{t("Isi keduanya, atau kosongkan keduanya. CTA opsional.", "Fill both fields, or leave both empty. CTA is optional.")}</p>
+          </div>
           {(showPublishConfirm || site.published) && (
             <div className="mb-4 min-w-0 rounded-lg border bg-muted/40 p-3">
               <p className="mb-1 text-xs font-medium text-muted-foreground">{t("Link publik", "Public link")}</p>
@@ -792,6 +810,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                 updateSite({ published: showPublishConfirm });
                 setShowPublishConfirm(null);
               }}
+              disabled={showPublishConfirm && !isReadyToPublish(getPersonalSiteReadiness({ ...site, published: true }))}
               className="flex-1"
             >
               {showPublishConfirm ? t("Publikasikan", "Publish") : t("Sembunyikan", "Unpublish")}
@@ -1242,7 +1261,7 @@ function TemplateTabContent({ site, updateSite, setActivePageId }: { site: Perso
       {/* Confirmation dialog for overwrite warning */}
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-background rounded-lg p-6 max-w-sm mx-4 shadow-xl border">
+          <div className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-lg border bg-background p-6 mx-4 shadow-xl">
             <h3 className="font-semibold mb-2">{t("Ganti template?", "Replace template?")}</h3>
             <p className="text-sm text-muted-foreground mb-4">
               {t(
