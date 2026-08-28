@@ -151,6 +151,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
+  const t = await getT();
 
   // Check plan limits (plan is per-user, not per-workspace)
   const { getUserPlan, checkEntityLimit } = await import("@/lib/plan");
@@ -505,7 +506,12 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
       return inv;
     } catch (err: unknown) {
       // Surface a clean message instead of opaque RSC production digest.
-      if (isInvoiceNumberUniqueConstraint(err)) return { error: invoiceNumberTakenMessage(invoiceNumber) } as const;
+      if (isInvoiceNumberUniqueConstraint(err)) return {
+        error: t(
+          `Nomor invoice ${invoiceNumber} sudah dipakai di workspace ini`,
+          `Invoice number ${invoiceNumber} already exists in this workspace`,
+        ),
+      } as const;
       throw err;
     }
   });
