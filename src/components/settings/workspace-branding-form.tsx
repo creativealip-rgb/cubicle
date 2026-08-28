@@ -261,7 +261,7 @@ export function WorkspaceBrandingForm({
             id="billingName"
             value={form.billingName}
             onChange={(e) => setForm((p) => ({ ...p, billingName: e.target.value }))}
-            placeholder="PT Contoh / Nama freelancermu"
+            placeholder={t("PT Contoh / Nama freelancermu", "Company or freelancer name")}
           />
         </div>
         <div className="space-y-2">
