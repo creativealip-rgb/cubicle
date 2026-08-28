@@ -7,9 +7,7 @@ import { eq, and } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { Settings, Users, Receipt, Calendar, Sparkles, Plug, CheckCircle2, Circle } from "lucide-react";
+import { Settings, Users, Receipt, Calendar, CheckCircle2, Circle } from "lucide-react";
 import { TeamManager } from "@/components/settings/team-manager";
 import { WorkspaceBrandingForm } from "@/components/settings/workspace-branding-form";
 import { WorkspaceNameForm } from "@/components/settings/workspace-name-form";
@@ -25,6 +23,7 @@ import {
 } from "@/lib/google-calendar";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import BillingPage from "@/app/(app)/app/billing/page";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -359,35 +358,7 @@ export default async function SettingsPage({
               </CardContent>
             </Card>
           }
-          billing={
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Plug className="h-5 w-5" /> {t("Akses Cepat", "Quick Access")}
-                </CardTitle>
-                <CardDescription>
-                  {t("Pintasan ke pengaturan lain.", "Shortcuts to other settings.")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-3 md:grid-cols-3">
-                <Button asChild variant="outline" className="justify-start gap-2">
-                  <Link href="/app/billing">
-                    <Receipt className="h-4 w-4" /> {t("Langganan & Tagihan", "Subscription & Billing")}
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="justify-start gap-2">
-                  <Link href="/app/calendar">
-                    <Calendar className="h-4 w-4" /> {t("Booking & Kalender", "Booking & Calendar")}
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="justify-start gap-2">
-                  <Link href="/app/billing">
-                    <Sparkles className="h-4 w-4" /> {t("Penggunaan AI", "AI Usage")}
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          }
+          billing={<BillingPage searchParams={Promise.resolve({})} />}
         />
       </Suspense>
     </div>
