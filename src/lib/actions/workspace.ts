@@ -126,7 +126,7 @@ export async function updateWorkspaceBookingSlug(input: z.infer<typeof bookingSl
       .limit(1);
 
     if (taken && taken.id !== workspaceId) {
-      throw new Error("Booking slug sudah dipakai workspace lain");
+      return { error: "booking_slug_taken" } as const;
     }
   }
 

@@ -52,7 +52,11 @@ export function BookingSlugForm({
     }
     setLoading(true);
     try {
-      await updateWorkspaceBookingSlug({ bookingSlug: next });
+      const result = await updateWorkspaceBookingSlug({ bookingSlug: next });
+      if ("error" in result) {
+        toast.error(t("Booking slug sudah dipakai workspace lain", "Booking slug is already used by another workspace"));
+        return;
+      }
       toast.success(
         next
           ? t("Booking slug disimpan", "Booking slug saved")
