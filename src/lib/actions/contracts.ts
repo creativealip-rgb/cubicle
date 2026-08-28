@@ -253,11 +253,12 @@ export async function createContract(input: z.infer<typeof createContractSchema>
     });
     const dbError = error as { constraint?: string; cause?: { constraint?: string } };
     if ((dbError.cause?.constraint ?? dbError.constraint) === "contracts_workspace_contract_number_unique") {
-      throw new Error("Nomor kontrak sudah dipakai di workspace ini / Contract number already exists in this workspace");
+      return { error: "contract_number_taken" } as const;
     }
     throw error;
   }
 
+  if ("error" in c) return c;
   await writeActivityLog(parsed.workspaceId, user.id, "created_contract", "contract", c.id, {
     title: c.title,
   });

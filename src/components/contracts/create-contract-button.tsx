@@ -83,6 +83,10 @@ export function CreateContractButton({
           templateId: selectedTemplateId,
           validUntil: validUntil || undefined,
         });
+        if ("error" in c) {
+          toast.error(t("Nomor kontrak sudah dipakai di workspace ini", "Contract number already exists in this workspace"));
+          return;
+        }
         setOpen(false);
         toast.success(t("Draf kontrak dibuat", "Contract draft created"));
         router.push(`/app/contracts/${c.id}/edit`);
