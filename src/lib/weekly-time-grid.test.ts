@@ -24,8 +24,8 @@ describe("weekly time grid", () => {
 
   it("formats minutes for compact grid input", () => {
     expect(formatDurationInput(0)).toBe("");
-    expect(formatDurationInput(90)).toBe("1:30");
-    expect(formatDurationInput(120)).toBe("2");
+    expect(formatDurationInput(90)).toBe("01:30");
+    expect(formatDurationInput(120)).toBe("02:00");
   });
 
   it("returns a Monday through Sunday week in UTC", () => {
