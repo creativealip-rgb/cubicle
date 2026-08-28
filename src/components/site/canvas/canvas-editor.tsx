@@ -556,7 +556,20 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
 
       {/* Desktop: DnD canvas + sidebar */}
       <div className="hidden md:block">
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      accessibility={{
+        screenReaderInstructions: {
+          draggable: t(
+            "Untuk mengambil item yang dapat diseret, tekan spasi. Gunakan tombol panah untuk memindahkan. Tekan spasi lagi untuk meletakkan, atau Escape untuk membatalkan.",
+            "To pick up a draggable item, press space. Use the arrow keys to move it. Press space again to drop it, or Escape to cancel.",
+          ),
+        },
+      }}
+    >
       <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
         {/* Mobile sidebar toggle */}
         <Button

@@ -137,7 +137,7 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
         <div className="rounded-lg border bg-muted/30 p-4">
           <div className="mb-3 flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
-            <Label className="text-xs font-medium uppercase text-muted-foreground">AI Copy Generator</Label>
+            <Label className="text-xs font-medium uppercase text-muted-foreground">{t("Generator Copy AI", "AI Copy Generator")}</Label>
           </div>
 
           {section.type === "services" && (
@@ -147,12 +147,12 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
               <Textarea name="targetAudience" placeholder={t("Target audiens (mis: UMKM Jakarta)", "Target audience (e.g. small businesses)")} required maxLength={240} className="min-h-10 resize-none text-xs" />
               <Textarea name="offer" placeholder={t("Penawaran utama (mis: landing page siap diluncurkan)", "Main offer (e.g. launch-ready landing page)")} required maxLength={500} className="min-h-12 resize-none text-xs" />
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Tone</Label>
+                <Label className="text-xs text-muted-foreground">{t("Nada", "Tone")}</Label>
                 <select name="tone" className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary">
-                  <option value="professional">Professional</option>
-                  <option value="friendly">Friendly</option>
-                  <option value="bold">Bold</option>
-                  <option value="minimal">Minimal</option>
+                  <option value="professional">{t("Profesional", "Professional")}</option>
+                  <option value="friendly">{t("Ramah", "Friendly")}</option>
+                  <option value="bold">{t("Tegas", "Bold")}</option>
+                  <option value="minimal">{t("Minimal", "Minimal")}</option>
                 </select>
               </div>
               <Button type="submit" disabled={aiState.isGenerating} className="w-full gap-1 text-xs">
@@ -176,12 +176,12 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
               <Textarea name="targetAudience" placeholder={t("Target audiens (mis: startup Indonesia)", "Target audience (e.g. startups)")} required maxLength={240} className="min-h-10 resize-none text-xs" />
               <Textarea name="offer" placeholder={t("Penawaran utama (mis: jasa pembuatan website kustom)", "Main offer (e.g. custom website development)")} required maxLength={500} className="min-h-12 resize-none text-xs" />
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Tone</Label>
+                <Label className="text-xs text-muted-foreground">{t("Nada", "Tone")}</Label>
                 <select name="tone" className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary">
-                  <option value="professional">Professional</option>
-                  <option value="friendly">Friendly</option>
-                  <option value="bold">Bold</option>
-                  <option value="minimal">Minimal</option>
+                  <option value="professional">{t("Profesional", "Professional")}</option>
+                  <option value="friendly">{t("Ramah", "Friendly")}</option>
+                  <option value="bold">{t("Tegas", "Bold")}</option>
+                  <option value="minimal">{t("Minimal", "Minimal")}</option>
                 </select>
               </div>
               <Button type="submit" disabled={aiState.isGenerating} className="w-full gap-1 text-xs">
@@ -205,12 +205,12 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
               <Textarea name="targetAudience" placeholder={t("Target audiens (mis: tim produk)", "Target audience (e.g. product teams)")} required maxLength={240} className="min-h-10 resize-none text-xs" />
               <Textarea name="offer" placeholder={t("Penawaran utama (mis: konsultasi UX/UI & sistem desain)", "Main offer (e.g. UX/UI and design-system consulting)")} required maxLength={500} className="min-h-12 resize-none text-xs" />
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Tone</Label>
+                <Label className="text-xs text-muted-foreground">{t("Nada", "Tone")}</Label>
                 <select name="tone" className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary">
-                  <option value="professional">Professional</option>
-                  <option value="friendly">Friendly</option>
-                  <option value="bold">Bold</option>
-                  <option value="minimal">Minimal</option>
+                  <option value="professional">{t("Profesional", "Professional")}</option>
+                  <option value="friendly">{t("Ramah", "Friendly")}</option>
+                  <option value="bold">{t("Tegas", "Bold")}</option>
+                  <option value="minimal">{t("Minimal", "Minimal")}</option>
                 </select>
               </div>
               <Button type="submit" disabled={aiState.isGenerating} className="w-full gap-1 text-xs">
@@ -232,7 +232,7 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
         {aiState.preview && (
           <div className="rounded-lg border bg-accent p-4">
             <div className="mb-2 flex items-center justify-between">
-              <Label className="text-xs font-medium">Preview</Label>
+              <Label className="text-xs font-medium">{t("Pratinjau", "Preview")}</Label>
               <div className="flex gap-1">
                 <Button type="button" variant="outline" size="sm" className="h-6 text-xs" onClick={handleDiscardPreview}>
                   <X className="h-3 w-3" /> Discard
@@ -251,24 +251,24 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
         {/* Shared fields */}
         <div className="space-y-3">
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Heading</Label>
+            <Label className="text-xs text-muted-foreground">{t("Judul", "Heading")}</Label>
             <Input
               value={section.heading}
               maxLength={80}
               onChange={(e) => onUpdate({ heading: e.target.value })}
               className="h-8 text-sm"
-              placeholder="Section heading"
+              placeholder={t("Judul bagian", "Section heading")}
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Animation</Label>
+            <Label className="text-xs text-muted-foreground">{t("Animasi", "Animation")}</Label>
             <select
               value={("animation" in section ? section.animation : undefined) ?? "none"}
               onChange={(e) => onUpdate({ animation: e.target.value as (typeof PERSONAL_SITE_ANIMATIONS)[number] })}
               className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
             >
               {PERSONAL_SITE_ANIMATIONS.map((a) => (
-                <option key={a} value={a}>{a === "none" ? "None" : a}</option>
+                <option key={a} value={a}>{a === "none" ? t("Tanpa animasi", "None") : a}</option>
               ))}
             </select>
           </div>
@@ -316,13 +316,14 @@ const FAQ_MAX = 12;
 const GALLERY_MAX = 12;
 
 function ServicesEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "services" }>>) {
+  const { t } = useT();
   const atMax = section.items.length >= SERVICES_MAX;
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <Label className="text-xs font-medium uppercase text-muted-foreground">Services ({section.items.length}/{SERVICES_MAX})</Label>
         <AddItemButton
-          label="Add service"
+          label={t("Tambah layanan", "Add service")}
           disabled={atMax}
           onClick={() => onUpdate({ items: appendItem(section.items, () => ({ id: makeItemId("service"), title: "", description: "" })) })}
         />
@@ -331,23 +332,23 @@ function ServicesEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteS
         <div key={item.id} className="relative space-y-2 rounded-lg border p-3">
           <RemoveItemButton label={`Remove service ${i + 1}`} onClick={() => onUpdate({ items: removeItemAt(section.items, i) })} />
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Title</Label>
+            <Label className="text-xs text-muted-foreground">{t("Judul", "Title")}</Label>
             <Input
               value={item.title}
               maxLength={100}
               onChange={(e) => onUpdate({ items: patchItem(section.items, i, { title: e.target.value }) })}
               className="h-8 text-sm"
-              placeholder="Service name"
+              placeholder={t("Nama layanan", "Service name")}
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Description</Label>
+            <Label className="text-xs text-muted-foreground">{t("Deskripsi", "Description")}</Label>
             <Textarea
               value={item.description}
               maxLength={1000}
               onChange={(e) => onUpdate({ items: patchItem(section.items, i, { description: e.target.value }) })}
               className="min-h-16 resize-none text-sm"
-              placeholder="What does this service include?"
+              placeholder={t("Apa yang termasuk dalam layanan ini?", "What does this service include?")}
             />
           </div>
         </div>
@@ -357,13 +358,14 @@ function ServicesEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteS
 }
 
 function PricingEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "pricing" }>>) {
+  const { t } = useT();
   const atMax = section.offers.length >= PRICING_MAX;
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <Label className="text-xs font-medium uppercase text-muted-foreground">Offers ({section.offers.length}/{PRICING_MAX})</Label>
         <AddItemButton
-          label="Add offer"
+          label={t("Tambah penawaran", "Add offer")}
           disabled={atMax}
           onClick={() => onUpdate({ offers: appendItem(section.offers, () => ({ id: makeItemId("offer"), name: "", price: "", description: "" })) })}
         />
@@ -372,33 +374,33 @@ function PricingEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSe
         <div key={offer.id} className="relative space-y-2 rounded-lg border p-3">
           <RemoveItemButton label={`Remove offer ${i + 1}`} onClick={() => onUpdate({ offers: removeItemAt(section.offers, i) })} />
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Name</Label>
+            <Label className="text-xs text-muted-foreground">{t("Nama", "Name")}</Label>
             <Input
               value={offer.name}
               maxLength={100}
               onChange={(e) => onUpdate({ offers: patchItem(section.offers, i, { name: e.target.value }) })}
               className="h-8 text-sm"
-              placeholder="Package name"
+              placeholder={t("Nama paket", "Package name")}
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Price</Label>
+            <Label className="text-xs text-muted-foreground">{t("Harga", "Price")}</Label>
             <Input
               value={offer.price}
               maxLength={80}
               onChange={(e) => onUpdate({ offers: patchItem(section.offers, i, { price: e.target.value }) })}
               className="h-8 text-sm"
-              placeholder="Rp 2.500.000 / Custom"
+              placeholder={t("Rp2.500.000 / Kustom", "$150 / Custom")}
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Description</Label>
+            <Label className="text-xs text-muted-foreground">{t("Deskripsi", "Description")}</Label>
             <Textarea
               value={offer.description}
               maxLength={1000}
               onChange={(e) => onUpdate({ offers: patchItem(section.offers, i, { description: e.target.value }) })}
               className="min-h-16 resize-none text-sm"
-              placeholder="What is included?"
+              placeholder={t("Apa yang termasuk?", "What is included?")}
             />
           </div>
         </div>
@@ -408,13 +410,14 @@ function PricingEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSe
 }
 
 function FaqEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "faq" }>>) {
+  const { t } = useT();
   const atMax = section.items.length >= FAQ_MAX;
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <Label className="text-xs font-medium uppercase text-muted-foreground">FAQ ({section.items.length}/{FAQ_MAX})</Label>
         <AddItemButton
-          label="Add question"
+          label={t("Tambah pertanyaan", "Add question")}
           disabled={atMax}
           onClick={() => onUpdate({ items: appendItem(section.items, () => ({ id: makeItemId("faq"), question: "", answer: "" })) })}
         />
@@ -423,23 +426,23 @@ function FaqEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSectio
         <div key={item.id} className="relative space-y-2 rounded-lg border p-3">
           <RemoveItemButton label={`Remove question ${i + 1}`} onClick={() => onUpdate({ items: removeItemAt(section.items, i) })} />
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Question</Label>
+            <Label className="text-xs text-muted-foreground">{t("Pertanyaan", "Question")}</Label>
             <Input
               value={item.question}
               maxLength={200}
               onChange={(e) => onUpdate({ items: patchItem(section.items, i, { question: e.target.value }) })}
               className="h-8 text-sm"
-              placeholder="Frequently asked question"
+              placeholder={t("Pertanyaan yang sering diajukan", "Frequently asked question")}
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Answer</Label>
+            <Label className="text-xs text-muted-foreground">{t("Jawaban", "Answer")}</Label>
             <Textarea
               value={item.answer}
               maxLength={2000}
               onChange={(e) => onUpdate({ items: patchItem(section.items, i, { answer: e.target.value }) })}
               className="min-h-16 resize-none text-sm"
-              placeholder="Short, clear answer"
+              placeholder={t("Jawaban singkat dan jelas", "Short, clear answer")}
             />
           </div>
         </div>
@@ -452,9 +455,9 @@ function CtaEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSectio
   const { t } = useT();
   return (
     <div className="space-y-3">
-      <Label className="text-xs font-medium uppercase text-muted-foreground">Call to action</Label>
+      <Label className="text-xs font-medium uppercase text-muted-foreground">{t("Ajakan bertindak", "Call to action")}</Label>
       <div className="space-y-1">
-        <Label className="text-xs text-muted-foreground">Text</Label>
+        <Label className="text-xs text-muted-foreground">{t("Teks", "Text")}</Label>
         <Textarea
           value={section.text}
           maxLength={500}
@@ -464,7 +467,7 @@ function CtaEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSectio
         />
       </div>
       <div className="space-y-1">
-        <Label className="text-xs text-muted-foreground">Button label</Label>
+        <Label className="text-xs text-muted-foreground">{t("Label tombol", "Button label")}</Label>
         <Input
           value={section.buttonLabel}
           maxLength={60}
@@ -474,7 +477,7 @@ function CtaEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSectio
         />
       </div>
       <div className="space-y-1">
-        <Label className="text-xs text-muted-foreground">Button URL</Label>
+        <Label className="text-xs text-muted-foreground">{t("URL tombol", "Button URL")}</Label>
         <Input
           value={section.buttonUrl ?? ""}
           maxLength={2000}
@@ -494,38 +497,38 @@ function GalleryEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSe
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <Label className="text-xs font-medium uppercase text-muted-foreground">Images ({section.images.length}/{GALLERY_MAX})</Label>
+        <Label className="text-xs font-medium uppercase text-muted-foreground">{t("Gambar", "Images")} ({section.images.length}/{GALLERY_MAX})</Label>
         <AddItemButton
-          label="Add image"
+          label={t("Tambah gambar", "Add image")}
           disabled={atMax}
           onClick={() => onUpdate({ images: appendItem(section.images, () => ({ id: makeItemId("image"), url: "", alt: "" })) })}
         />
       </div>
       {section.images.map((image, i) => (
         <div key={image.id} className="relative space-y-2 rounded-lg border p-3">
-          <RemoveItemButton label={`Remove image ${i + 1}`} onClick={() => onUpdate({ images: removeItemAt(section.images, i) })} />
+          <RemoveItemButton label={t(`Hapus gambar ${i + 1}`, `Remove image ${i + 1}`)} onClick={() => onUpdate({ images: removeItemAt(section.images, i) })} />
           {image.url && (
             <div className="relative aspect-video w-full rounded overflow-hidden">
               <Image src={image.url} alt={image.alt ?? ""} fill sizes="300px" className="object-cover" />
             </div>
           )}
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Image</Label>
+            <Label className="text-xs text-muted-foreground">{t("Gambar", "Image")}</Label>
             <ImageUpload
               value={image.url}
               onChange={(url) => onUpdate({ images: patchItem(section.images, i, { url }) })}
-              label="Upload"
+              label={t("Unggah", "Upload")}
             />
             <Input
               value={image.url}
               maxLength={2000}
               onChange={(e) => onUpdate({ images: patchItem(section.images, i, { url: e.target.value }) })}
               className="h-8 text-xs"
-              placeholder="…or paste an image URL"
+              placeholder={t("…atau tempel URL gambar", "…or paste an image URL")}
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Alt text</Label>
+            <Label className="text-xs text-muted-foreground">{t("Teks alternatif", "Alt text")}</Label>
             <Input
               value={image.alt ?? ""}
               maxLength={200}
