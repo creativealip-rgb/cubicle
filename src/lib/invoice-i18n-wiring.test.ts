@@ -14,6 +14,7 @@ describe("invoice English localization wiring", () => {
     expect(form).toContain('t("Buat Invoice", "Create Invoice")');
     expect(form).toContain('t("Mata Uang", "Currency")');
     expect(form).toContain('t("Item tagihan *", "Invoice items *")');
+    expect(form).toContain('if ("error" in invoice)');
     expect(item).toContain('t("Tambah Item", "Add Item")');
     expect(payment).toContain('t("Catat Pembayaran", "Record Payment")');
     expect(payment).toContain('t("Sisa", "Remaining")');

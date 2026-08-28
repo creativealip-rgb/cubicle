@@ -197,6 +197,11 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
 
       if (mode === "create") {
         const invoice = await createInvoice(data);
+        if ("error" in invoice) {
+          toast.error(invoice.error);
+          setLoading(false);
+          return;
+        }
         if (!invoice?.id) {
           throw new Error("Invoice dibuat tapi ID tidak diterima. Coba refresh daftar invoice.");
         }
@@ -493,7 +498,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
           id="terms"
           value={form.terms}
           onChange={(e) => set("terms", e.target.value)}
-          placeholder="contoh: Net 30, jatuh tempo dalam 14 hari..."
+          placeholder={t("contoh: Net 30, jatuh tempo dalam 14 hari...", "e.g. Net 30, due within 14 days...")}
         />
       </div>
 

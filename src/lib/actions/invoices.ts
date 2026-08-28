@@ -505,11 +505,12 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
       return inv;
     } catch (err: unknown) {
       // Surface a clean message instead of opaque RSC production digest.
-      if (isInvoiceNumberUniqueConstraint(err)) throw new Error(invoiceNumberTakenMessage(invoiceNumber));
+      if (isInvoiceNumberUniqueConstraint(err)) return { error: invoiceNumberTakenMessage(invoiceNumber) } as const;
       throw err;
     }
   });
 
+  if ("error" in invoice) return invoice;
   await writeActivityLog(workspaceId, user.id, "created_invoice", "invoice", invoice.id);
   return invoice;
 }
