@@ -38,6 +38,8 @@ import {
   Columns3,
   ChevronDown,
   Search,
+  Copy,
+  ExternalLink,
 } from "lucide-react";
 import { DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, useDraggable, type DragStartEvent, type DragEndEvent } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
@@ -761,9 +763,26 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
           </h3>
           <p className="text-sm text-muted-foreground mb-4">
             {showPublishConfirm
-              ? t("Halaman akan bisa diakses publik melalui URL di atas.", "The page will be publicly accessible at the URL above.")
+              ? t("Halaman akan bisa diakses publik melalui link ini.", "The page will be publicly accessible at this link.")
               : t("Halaman akan disembunyikan dan tidak bisa diakses publik.", "The page will be hidden and not publicly accessible.")}
           </p>
+          {(showPublishConfirm || site.published) && (
+            <div className="mb-4 min-w-0 rounded-lg border bg-muted/40 p-3">
+              <p className="mb-1 text-xs font-medium text-muted-foreground">{t("Link publik", "Public link")}</p>
+              <p data-testid="personal-site-public-url" className="break-all text-sm font-medium">{publicUrl}</p>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={async () => {
+                  await navigator.clipboard.writeText(publicUrl);
+                  toast.success(t("Link disalin", "Link copied"));
+                }}>
+                  <Copy className="h-4 w-4" /> {t("Salin link", "Copy link")}
+                </Button>
+                <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" asChild>
+                  <a href={publicUrl} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" /> {t("Buka situs", "Open site")}</a>
+                </Button>
+              </div>
+            </div>
+          )}
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setShowPublishConfirm(null)} className="flex-1">
               {t("Batal", "Cancel")}
