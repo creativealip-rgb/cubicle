@@ -244,6 +244,7 @@ function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, on
   dragHandleProps?: Record<string, unknown>;
   children: React.ReactNode;
 }) {
+  const { t } = useT();
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -260,10 +261,10 @@ function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, on
     >
       {(hovered || selected) && (
         <div className="absolute -top-3 right-2 z-20 flex items-center gap-0.5 rounded-lg border bg-background px-1 py-0.5 shadow-sm">
-          <button type="button" onClick={(e) => { e.stopPropagation(); onMoveUp(); }} className="p-1 hover:bg-muted rounded" aria-label="Move up">
+          <button type="button" onClick={(e) => { e.stopPropagation(); onMoveUp(); }} className="p-1 hover:bg-muted rounded" aria-label={t("Naikkan", "Move up")}>
             <ChevronUp className="h-3 w-3" />
           </button>
-          <button type="button" onClick={(e) => { e.stopPropagation(); onMoveDown(); }} className="p-1 hover:bg-muted rounded" aria-label="Move down">
+          <button type="button" onClick={(e) => { e.stopPropagation(); onMoveDown(); }} className="p-1 hover:bg-muted rounded" aria-label={t("Turunkan", "Move down")}>
             <ChevronDown className="h-3 w-3" />
           </button>
           <div className="w-px h-3 bg-border mx-0.5" />
@@ -273,21 +274,21 @@ function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, on
               onChange={(e) => { e.stopPropagation(); onAnimationChange(e.target.value); }}
               onClick={(e) => e.stopPropagation()}
               className="h-6 text-[10px] bg-transparent border-none cursor-pointer hover:bg-muted rounded px-0.5"
-              title="Animation"
+              title={t("Animasi", "Animation")}
             >
               {PERSONAL_SITE_ANIMATIONS.map((a) => (
-                <option key={a} value={a}>{a === "none" ? "✦ None" : `✦ ${a}`}</option>
+                <option key={a} value={a}>{a === "none" ? `✦ ${t("Tanpa animasi", "None")}` : `✦ ${a}`}</option>
               ))}
             </select>
           )}
           <div className="w-px h-3 bg-border mx-0.5" />
-          <button type="button" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="p-1 hover:bg-muted rounded" aria-label="Duplicate">
+          <button type="button" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="p-1 hover:bg-muted rounded" aria-label={t("Duplikat", "Duplicate")}>
             <Copy className="h-3 w-3" />
           </button>
-          <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1 hover:bg-muted rounded text-destructive" aria-label="Delete">
+          <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1 hover:bg-muted rounded text-destructive" aria-label={t("Hapus", "Delete")}>
             <Trash2 className="h-3 w-3" />
           </button>
-          <div {...dragHandleProps} className="cursor-grab p-1 hover:bg-muted rounded" aria-label="Drag to reorder">
+          <div {...dragHandleProps} className="cursor-grab p-1 hover:bg-muted rounded" aria-label={t("Seret untuk mengurutkan", "Drag to reorder")}>
             <GripVertical className="h-3 w-3" />
           </div>
         </div>
@@ -298,6 +299,7 @@ function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, on
 }
 
 function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSection; onUpdate: (patch: Partial<PersonalSiteSection>) => void; theme?: ThemeConfig }) {
+  const { t } = useT();
   switch (section.type) {
     case "services":
       return (
@@ -459,7 +461,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
             {section.url ? (
               <iframe src={section.url} className="w-full h-full" title={section.heading} />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">Masukkan URL embed</div>
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">{t("Masukkan URL embed", "Enter an embed URL")}</div>
             )}
           </div>
         </div>
@@ -515,9 +517,9 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
     case "tableOfContents":
       return (
         <div className="py-4">
-          <p className="text-sm font-medium text-muted-foreground mb-2">Daftar Isi</p>
+          <p className="text-sm font-medium text-muted-foreground mb-2">{t("Daftar Isi", "Table of Contents")}</p>
           <div className="space-y-1 text-sm">
-            <p className="text-muted-foreground italic">Auto-generated dari section headings</p>
+            <p className="text-muted-foreground italic">{t("Dibuat otomatis dari judul bagian", "Auto-generated from section headings")}</p>
           </div>
         </div>
       );

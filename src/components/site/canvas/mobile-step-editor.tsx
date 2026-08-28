@@ -283,8 +283,8 @@ function SectionsStep({ sections, selectedSectionId, onSelectSection, addSection
         {sections.map((section, i) => (
           <div key={section.id} className={`flex items-center gap-2 rounded-lg border p-2 text-xs ${selectedSectionId === section.id ? "border-primary/60 bg-primary/5" : ""}`}>
             <div className="flex items-center gap-1">
-              <Button type="button" variant="ghost" size="icon" className="h-6 w-6" disabled={i === 0} onClick={() => reorderSections(i, i - 1)}>↑</Button>
-              <Button type="button" variant="ghost" size="icon" className="h-6 w-6" disabled={i === sections.length - 1} onClick={() => reorderSections(i, i + 1)}>↓</Button>
+              <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label={t("Naikkan bagian", "Move section up")} disabled={i === 0} onClick={() => reorderSections(i, i - 1)}>↑</Button>
+              <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label={t("Turunkan bagian", "Move section down")} disabled={i === sections.length - 1} onClick={() => reorderSections(i, i + 1)}>↓</Button>
             </div>
             <button type="button" className="flex-1 text-left truncate" onClick={() => onSelectSection(section.id)}>
               {section.heading || section.type}

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Upload, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n-client";
 
 type Props = {
   value: string;
@@ -12,7 +13,9 @@ type Props = {
   label?: string;
 };
 
-export function ImageUpload({ value, onChange, label = "Upload gambar" }: Props) {
+export function ImageUpload({ value, onChange, label }: Props) {
+  const { t } = useT();
+  const uploadLabel = label ?? t("Unggah gambar", "Upload image");
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -33,11 +36,11 @@ export function ImageUpload({ value, onChange, label = "Upload gambar" }: Props)
       const res = await fetch("/api/site/upload", { method: "POST", body: fd });
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; url?: string; error?: string };
       if (!res.ok || !data.ok || !data.url) {
-        throw new Error(data.error || "Upload gagal");
+        throw new Error(data.error || t("Unggah gagal", "Upload failed"));
       }
       onChange(data.url);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Upload gagal");
+      toast.error(err instanceof Error ? err.message : t("Unggah gagal", "Upload failed"));
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -59,7 +62,7 @@ export function ImageUpload({ value, onChange, label = "Upload gambar" }: Props)
             <Image src={value} alt="" fill sizes="32px" className="object-cover" />
           </div>
           <span className="text-xs text-muted-foreground truncate flex-1">{value.split("/").pop()}</span>
-          <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => onChange("")}>
+          <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" aria-label={t("Hapus gambar", "Remove image")} onClick={() => onChange("")}>
             <X className="h-3 w-3" />
           </Button>
         </div>
@@ -73,7 +76,7 @@ export function ImageUpload({ value, onChange, label = "Upload gambar" }: Props)
           onClick={() => fileRef.current?.click()}
         >
           {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-          {label}
+          {uploadLabel}
         </Button>
       )}
     </div>

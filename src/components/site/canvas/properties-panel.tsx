@@ -12,6 +12,7 @@ import type { PersonalSiteSection } from "@/lib/personal-site/model";
 import { PERSONAL_SITE_ANIMATIONS } from "@/lib/personal-site/model";
 import { generatePersonalSiteCopy } from "@/lib/actions/personal-site-ai";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n-client";
 
 type PropertiesPanelProps = {
   section: PersonalSiteSection | null;
@@ -57,6 +58,7 @@ interface AiGenerationState {
 }
 
 export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelProps) {
+  const { t } = useT();
   const [aiState, setAiState] = useState<AiGenerationState>({
     isGenerating: false,
     preview: null,
@@ -99,9 +101,9 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
         pendingPatch: result.patch,
       });
 
-      toast.success("Copy berhasil dibuat — klik Apply untuk menerapkannya.");
+      toast.success(t("Copy berhasil dibuat — klik Apply untuk menerapkannya.", "Copy generated — click Apply to use it."));
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Gagal membuat copy.";
+      const msg = err instanceof Error ? err.message : t("Gagal membuat copy.", "Failed to generate copy.");
       toast.error(msg);
       setAiState({ isGenerating: false, preview: null, pendingPatch: null });
     }
@@ -111,7 +113,7 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
     if (!aiState.pendingPatch) return;
     onUpdate(aiState.pendingPatch);
     setAiState({ isGenerating: false, preview: null, pendingPatch: null });
-    toast.success("Copy diterapkan ke section.");
+    toast.success(t("Copy diterapkan ke bagian.", "Copy applied to section."));
   };
 
   const handleDiscardPreview = () => {
@@ -122,10 +124,10 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
     <aside className="hidden md:flex w-80 shrink-0 flex-col border-l bg-background">
       <div className="flex items-center justify-between border-b px-4 py-3">
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold">Section</h2>
+          <h2 className="text-sm font-semibold">{t("Bagian", "Section")}</h2>
           <p className="truncate text-xs text-muted-foreground capitalize">{section.type}</p>
         </div>
-        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} aria-label="Close properties panel">
+        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} aria-label={t("Tutup panel properti", "Close properties panel")}>
           <X className="h-4 w-4" />
         </Button>
       </div>
@@ -140,10 +142,10 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
 
           {section.type === "services" && (
             <form onSubmit={handleGenerateCopy} className="space-y-3">
-              <Input name="businessName" placeholder="Nama bisnis" defaultValue="" required maxLength={80} />
-              <Textarea name="niche" placeholder="Niche/spesialisasi (mis: digital marketing)" required maxLength={160} className="min-h-10 resize-none text-xs" />
-              <Textarea name="targetAudience" placeholder="Target audiens (mis: UMKM Jakarta)" required maxLength={240} className="min-h-10 resize-none text-xs" />
-              <Textarea name="offer" placeholder="Penawaran utama (mis: website landing page siap launch)" required maxLength={500} className="min-h-12 resize-none text-xs" />
+              <Input name="businessName" placeholder={t("Nama bisnis", "Business name")} defaultValue="" required maxLength={80} />
+              <Textarea name="niche" placeholder={t("Niche/spesialisasi (mis: pemasaran digital)", "Niche/specialization (e.g. digital marketing)")} required maxLength={160} className="min-h-10 resize-none text-xs" />
+              <Textarea name="targetAudience" placeholder={t("Target audiens (mis: UMKM Jakarta)", "Target audience (e.g. small businesses)")} required maxLength={240} className="min-h-10 resize-none text-xs" />
+              <Textarea name="offer" placeholder={t("Penawaran utama (mis: landing page siap diluncurkan)", "Main offer (e.g. launch-ready landing page)")} required maxLength={500} className="min-h-12 resize-none text-xs" />
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Tone</Label>
                 <select name="tone" className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary">
@@ -169,10 +171,10 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
 
           {section.type === "faq" && (
             <form onSubmit={handleGenerateCopy} className="space-y-3">
-              <Input name="businessName" placeholder="Nama bisnis" defaultValue="" required maxLength={80} />
-              <Textarea name="niche" placeholder="Niche/spesialisasi (mis: web development)" required maxLength={160} className="min-h-10 resize-none text-xs" />
-              <Textarea name="targetAudience" placeholder="Target audiens (mis: startup Indonesia)" required maxLength={240} className="min-h-10 resize-none text-xs" />
-              <Textarea name="offer" placeholder="Penawaran utama (mis: jasa pembuatan website custom)" required maxLength={500} className="min-h-12 resize-none text-xs" />
+              <Input name="businessName" placeholder={t("Nama bisnis", "Business name")} defaultValue="" required maxLength={80} />
+              <Textarea name="niche" placeholder={t("Niche/spesialisasi (mis: pengembangan web)", "Niche/specialization (e.g. web development)")} required maxLength={160} className="min-h-10 resize-none text-xs" />
+              <Textarea name="targetAudience" placeholder={t("Target audiens (mis: startup Indonesia)", "Target audience (e.g. startups)")} required maxLength={240} className="min-h-10 resize-none text-xs" />
+              <Textarea name="offer" placeholder={t("Penawaran utama (mis: jasa pembuatan website kustom)", "Main offer (e.g. custom website development)")} required maxLength={500} className="min-h-12 resize-none text-xs" />
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Tone</Label>
                 <select name="tone" className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary">
@@ -198,10 +200,10 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
 
           {section.type === "cta" && (
             <form onSubmit={handleGenerateCopy} className="space-y-3">
-              <Input name="businessName" placeholder="Nama bisnis" defaultValue="" required maxLength={80} />
-              <Textarea name="niche" placeholder="Niche/spesialisasi (mis: design consultancy)" required maxLength={160} className="min-h-10 resize-none text-xs" />
-              <Textarea name="targetAudience" placeholder="Target audiens (mis: product teams)" required maxLength={240} className="min-h-10 resize-none text-xs" />
-              <Textarea name="offer" placeholder="Penawaran utama (mis: konsultasi UX/UI & design system)" required maxLength={500} className="min-h-12 resize-none text-xs" />
+              <Input name="businessName" placeholder={t("Nama bisnis", "Business name")} defaultValue="" required maxLength={80} />
+              <Textarea name="niche" placeholder={t("Niche/spesialisasi (mis: konsultasi desain)", "Niche/specialization (e.g. design consultancy)")} required maxLength={160} className="min-h-10 resize-none text-xs" />
+              <Textarea name="targetAudience" placeholder={t("Target audiens (mis: tim produk)", "Target audience (e.g. product teams)")} required maxLength={240} className="min-h-10 resize-none text-xs" />
+              <Textarea name="offer" placeholder={t("Penawaran utama (mis: konsultasi UX/UI & sistem desain)", "Main offer (e.g. UX/UI and design-system consulting)")} required maxLength={500} className="min-h-12 resize-none text-xs" />
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Tone</Label>
                 <select name="tone" className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary">
@@ -241,7 +243,7 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              Klik <strong>Apply</strong> untuk menerapkan copy ke section ini. Existing content tidak akan hilang sebelum Anda konfirmasi.
+              {t("Klik Apply untuk menerapkan copy ke bagian ini. Konten saat ini tidak akan hilang sebelum Anda konfirmasi.", "Click Apply to use this copy in the section. Existing content stays until you confirm.")}
             </p>
           </div>
         )}
@@ -447,6 +449,7 @@ function FaqEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSectio
 }
 
 function CtaEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "cta" }>>) {
+  const { t } = useT();
   return (
     <div className="space-y-3">
       <Label className="text-xs font-medium uppercase text-muted-foreground">Call to action</Label>
@@ -457,7 +460,7 @@ function CtaEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSectio
           maxLength={500}
           onChange={(e) => onUpdate({ text: e.target.value })}
           className="min-h-16 resize-none text-sm"
-          placeholder="Ajakan singkat untuk pengunjung"
+          placeholder={t("Ajakan singkat untuk pengunjung", "A short invitation for visitors")}
         />
       </div>
       <div className="space-y-1">
@@ -467,7 +470,7 @@ function CtaEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSectio
           maxLength={60}
           onChange={(e) => onUpdate({ buttonLabel: e.target.value })}
           className="h-8 text-sm"
-          placeholder="Hubungi saya"
+          placeholder={t("Hubungi saya", "Contact me")}
         />
       </div>
       <div className="space-y-1">
@@ -479,13 +482,14 @@ function CtaEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSectio
           className="h-8 text-sm"
           placeholder="https://… or mailto:…"
         />
-        <p className="text-[11px] text-muted-foreground">Kosongkan untuk mematikan tombol. URL harus publik (http/https/mailto/tel).</p>
+        <p className="text-[11px] text-muted-foreground">{t("Kosongkan untuk mematikan tombol. URL harus publik (http/https/mailto/tel).", "Leave empty to disable the button. URL must be public (http/https/mailto/tel).")}</p>
       </div>
     </div>
   );
 }
 
 function GalleryEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "gallery" }>>) {
+  const { t } = useT();
   const atMax = section.images.length >= GALLERY_MAX;
   return (
     <div className="space-y-3">
@@ -527,7 +531,7 @@ function GalleryEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSe
               maxLength={200}
               onChange={(e) => onUpdate({ images: patchItem(section.images, i, { alt: e.target.value }) })}
               className="h-8 text-sm"
-              placeholder="Deskripsi gambar"
+              placeholder={t("Deskripsi gambar", "Image description")}
             />
           </div>
         </div>
