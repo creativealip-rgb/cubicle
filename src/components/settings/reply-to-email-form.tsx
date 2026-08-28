@@ -35,7 +35,7 @@ export function ReplyToEmailForm({
       <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
       <Input
         type="email"
-        placeholder="email-kamu@gmail.com"
+        placeholder={t("nama@contoh.com", "name@example.com")}
         value={email}
         onChange={(e) => { setEmail(e.target.value); setSaved(false); }}
         className="max-w-xs"

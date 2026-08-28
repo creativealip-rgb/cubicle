@@ -105,7 +105,7 @@ const bookingSlugSchema = z.object({
     .transform((v) => v.toLowerCase())
     .refine(
       (v) => v === "" || /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(v),
-      "Slug hanya huruf kecil, angka, dan strip (contoh: alip-meeting)",
+      "Slug hanya huruf kecil, angka, dan strip (contoh: your-meeting)",
     ),
 });
 
