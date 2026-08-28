@@ -19,14 +19,14 @@ describe("PAGE_TEMPLATES", () => {
     const agency = PAGE_TEMPLATES.find((t) => t.id === "agency-website");
     expect(agency).toBeDefined();
     expect(agency?.label).toBe("Agency Website");
-    expect(agency?.description).toContain("agensi");
+    expect(agency?.description).toContain("agency");
   });
 
   it("should include Service Offer template", () => {
     const service = PAGE_TEMPLATES.find((t) => t.id === "service-offer");
     expect(service).toBeDefined();
     expect(service?.label).toBe("Service Offer");
-    expect(service?.description).toContain("Landing page");
+    expect(service?.description).toContain("landing page");
   });
 
   describe("template building", () => {
@@ -36,10 +36,10 @@ describe("PAGE_TEMPLATES", () => {
       
       const result = freelancer.build(site);
       
-      expect(result.title).toContain("Nama Anda");
+      expect(result.title).toContain("Your Name");
       expect(result.subtitle).toContain("Freelancer");
-      expect(result.hero ?? "").toContain("Saya");
-      expect(result.ctaLabel).toBe("Konsultasi Gratis");
+      expect(result.hero ?? "").toContain("I help");
+      expect(result.ctaLabel).toBe("Free Consultation");
       expect(result.pages).toHaveLength(1);
       expect(result.pages?.[0].sections).toBeDefined();
       expect(result.pages?.[0].sections).toBeInstanceOf(Array);
@@ -51,7 +51,7 @@ describe("PAGE_TEMPLATES", () => {
       
       const result = agency.build(site);
       
-      expect(result.title).toContain("Nama Agensi");
+      expect(result.title).toContain("Your Agency");
       expect(result.subtitle).toContain("Digital Agency");
       expect(result.pages).toHaveLength(2);
       expect(result.pages?.find((p) => p.isHome)).toBeDefined();
@@ -64,7 +64,7 @@ describe("PAGE_TEMPLATES", () => {
       
       const result = service.build(site);
       
-      expect(result.title).toContain("Nama Jasa");
+      expect(result.title).toContain("Your Service");
       expect(result.pages).toHaveLength(2);
       const pricingPage = result.pages?.find((p) => p.slug === "pricing");
       expect(pricingPage).toBeDefined();
@@ -75,7 +75,7 @@ describe("PAGE_TEMPLATES", () => {
       const freelancer = PAGE_TEMPLATES.find((t) => t.id === "freelancer-profile")!;
       const result = freelancer.build(DEFAULT_PERSONAL_SITE as PersonalSiteInput);
       
-      expect(result.title).toBe("Nama Anda – Freelancer");
+      expect(result.title).toBe("Your Name – Freelancer");
     });
 
     it("should preserve original site title if provided", () => {
@@ -88,7 +88,7 @@ describe("PAGE_TEMPLATES", () => {
       // Template uses fixed title, not dynamic from site
       const result = freelancer.build(customSite);
       
-      expect(result.title).toBe("Nama Anda – Freelancer");
+      expect(result.title).toBe("Your Name – Freelancer");
     });
 
     it("should set isHome correctly on home page", () => {

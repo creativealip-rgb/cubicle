@@ -34,22 +34,22 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
   {
     id: "services-3-cards",
     type: "services" as const,
-    label: "Layanan 3 Kartu",
-    description: "Tiga layanan utama dengan manfaat singkat.",
+    label: "Three Service Cards",
+    description: "Three core services with concise benefits.",
     category: "content",
     build: () => ({
       id: makeId(),
       type: "services" as const,
-      heading: "Layanan yang bisa kamu pilih",
+      heading: "Services you can choose",
       items: buildItems(
         { id: "", title: "", description: "" },
         3,
         (i) => ({
-          title: ["Strategi", "Eksekusi", "Optimasi"][i],
+          title: ["Strategy", "Execution", "Optimization"][i],
           description: [
-            "Riset kebutuhan dan susun arah kerja yang jelas.",
-            "Bangun solusi dengan milestone dan review rutin.",
-            "Ukur hasil, perbaiki bottleneck, dan tingkatkan performa.",
+            "Research needs and define a clear direction.",
+            "Build the solution through milestones and regular reviews.",
+            "Measure results, remove bottlenecks, and improve performance.",
           ][i],
         })
       ),
@@ -58,22 +58,22 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
   {
     id: "services-software-dev",
     type: "services" as const,
-    label: "Pengembangan Software",
-    description: "Layanan custom software untuk bisnis Anda.",
+    label: "Software Development",
+    description: "Custom software services for your business.",
     category: "content",
     build: () => ({
       id: makeId(),
       type: "services" as const,
-      heading: "Pengembangan Aplikasi & Web",
+      heading: "Application & Web Development",
       items: buildItems(
         { id: "", title: "", description: "" },
         3,
         (i) => ({
           title: ["Web Apps", "Mobile Apps", "API Integration"][i],
           description: [
-            "Aplikasi web scalable dengan arsitektur modern.",
-            "Aplikasi mobile cross-platform Android & iOS.",
-            "Integrasi sistem dan API pihak ketiga.",
+            "Scalable web applications with modern architecture.",
+            "Cross-platform mobile applications for Android and iOS.",
+            "System and third-party API integration.",
           ][i],
         })
       ),
@@ -84,23 +84,23 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
   {
     id: "pricing-3-packages",
     type: "pricing" as const,
-    label: "Pricing 3 Paket",
-    description: "Paket Basic, Growth, dan Premium.",
+    label: "Three Pricing Plans",
+    description: "Basic, Growth, and Premium plans.",
     category: "conversion",
     build: () => ({
       id: makeId(),
       type: "pricing" as const,
-      heading: "Paket kerja sama",
+      heading: "Engagement plans",
       offers: buildItems(
         { id: "", name: "", price: "", description: "" },
         3,
         (i) => ({
           name: ["Basic", "Growth", "Premium"][i],
-          price: ["Mulai Rp2.500.000", "Mulai Rp7.500.000", "Custom"][i],
+          price: ["Starting at $150", "Starting at $450", "Custom"][i],
           description: [
-            "Cocok untuk validasi cepat dan scope kecil.",
-            "Untuk bisnis yang butuh sistem rapi dan siap jalan.",
-            "Untuk kebutuhan kompleks, integrasi, dan pendampingan.",
+            "Ideal for quick validation and a focused scope.",
+            "For businesses that need an organized, launch-ready system.",
+            "For complex needs, integrations, and ongoing support.",
           ][i],
         })
       ),
@@ -110,22 +110,22 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
     id: "pricing-saas-tier",
     type: "pricing" as const,
     label: "SaaS Pricing Tier",
-    description: "Paket bulanan untuk SaaS produk.",
+    description: "Monthly plans for SaaS products.",
     category: "conversion",
     build: () => ({
       id: makeId(),
       type: "pricing" as const,
-      heading: "Pilih rencana yang tepat",
+      heading: "Choose the right plan",
       offers: buildItems(
         { id: "", name: "", price: "", description: "" },
         3,
         (i) => ({
           name: ["Starter", "Professional", "Enterprise"][i],
-          price: ["$29/bulan", "$79/bulan", "Hubungi kami"][i],
+          price: ["$29/month", "$79/month", "Contact us"][i],
           description: [
-            "Untuk individu dan side projects.",
-            "Untuk tim kecil dan growing businesses.",
-            "Untuk organisasi dengan skala besar.",
+            "For individuals and side projects.",
+            "For small teams and growing businesses.",
+            "For large organizations.",
           ][i],
         })
       ),
@@ -136,30 +136,30 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
   {
     id: "faq-5-items",
     type: "faq" as const,
-    label: "FAQ 5 Pertanyaan",
-    description: "Pertanyaan umum sebelum klien menghubungi.",
+    label: "Five-question FAQ",
+    description: "Common questions before clients get in touch.",
     category: "conversion",
     build: () => ({
       id: makeId(),
       type: "faq" as const,
-      heading: "Pertanyaan umum",
+      heading: "Frequently asked questions",
       items: buildItems(
         { id: "", question: "", answer: "" },
         5,
         (i) => ({
           question: [
-            "Berapa lama proses pengerjaan?",
-            "Apakah bisa konsultasi dulu?",
-            "Apakah revisi termasuk?",
-            "Metode pembayarannya bagaimana?",
-            "Apakah dapat file/source akhir?",
+            "How long does the process take?",
+            "Can we start with a consultation?",
+            "Are revisions included?",
+            "How does payment work?",
+            "Will I receive the final source files?",
           ][i],
           answer: [
-            "Tergantung scope. Project kecil biasanya 1-2 minggu, project kompleks dibuat per milestone.",
-            "Bisa. Kita mulai dari diskusi kebutuhan agar scope dan estimasi jelas.",
-            "Ya, revisi mengikuti paket atau kesepakatan di proposal.",
-            "Umumnya memakai DP dan pelunasan per milestone.",
-            "Ya, aset final diserahkan sesuai scope project.",
+            "It depends on scope. Small projects usually take 1–2 weeks; complex projects are delivered by milestone.",
+            "Yes. We start by discussing your needs so scope and estimates are clear.",
+            "Yes. Revisions follow the selected plan or proposal agreement.",
+            "Payments typically use a deposit followed by milestone installments.",
+            "Yes. Final assets are delivered according to project scope.",
           ][i],
         })
       ),
@@ -169,29 +169,29 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
     id: "faq-freelancer",
     type: "faq" as const,
     label: "FAQ Freelancer",
-    description: "FAQ khusus untuk freelancer profile.",
+    description: "FAQ designed for freelancer profiles.",
     category: "conversion",
     build: () => ({
       id: makeId(),
       type: "faq" as const,
-      heading: "Yang sering ditanyakan",
+      heading: "Common questions",
       items: buildItems(
         { id: "", question: "", answer: "" },
         5,
         (i) => ({
           question: [
-            "Apa pengalaman Anda?",
-            "Bagaimana cara kerja kolaborasi?",
-            "Bagaimana jika ada perubahan kebutuhan?",
-            "Apakah ada garansi setelah delivery?",
-            "Bagaimana biaya tambahan dihitung?",
+            "What experience do you have?",
+            "How does collaboration work?",
+            "What happens if requirements change?",
+            "Is post-delivery support included?",
+            "How are additional costs calculated?",
           ][i],
           answer: [
-            "Saya telah mengerjakan 50+ project untuk berbagai industri sejak 2018.",
-            "Dimulai dengan discovery call, disusul dengan weekly updates dan staging preview.",
-            "Perubahan dipantau di setiap milestone dengan persetujuan tertulis.",
-            "Ada 14 hari bug fix warranty setelah project launch.",
-            "Timewaste dan feature request baru akan dibid terpisah.",
+            "Share relevant experience and industries served.",
+            "We start with discovery, followed by weekly updates and staging previews.",
+            "Changes are tracked at each milestone with written approval.",
+            "A 14-day bug-fix warranty is included after launch.",
+            "New feature requests are estimated separately.",
           ][i],
         })
       ),
@@ -202,8 +202,8 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
   {
     id: "testimonials-3-clients",
     type: "testimonials" as const,
-    label: "Testimoni 3 Klien",
-    description: "Kutipan dari klien sebelumnya.",
+    label: "Client Testimonials",
+    description: "Quotes from previous clients.",
     category: "proof",
     // Starter block inserts an EMPTY proof block — fake testimonials are never
     // auto-generated (P0.3). The section stays hidden on the public page until
@@ -211,7 +211,7 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
     build: () => ({
       id: makeId(),
       type: "testimonials" as const,
-      heading: "Apa kata klien",
+      heading: "What clients say",
       testimonials: [],
     }),
   },
@@ -220,29 +220,29 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
   {
     id: "cta-primary",
     type: "cta" as const,
-    label: "CTA Utama",
-    description: "Call-to-action untuk konversi utama.",
+    label: "Primary CTA",
+    description: "Call to action for the primary conversion.",
     category: "conversion",
     build: () => ({
       id: makeId(),
       type: "cta" as const,
-      heading: "Siap memulai proyek?",
-      text: "Hubungi kami sekarang untuk konsultasi gratis tentang kebutuhan Anda.",
-      buttonLabel: "Konsultasi Gratis",
+      heading: "Ready to start a project?",
+      text: "Contact us for a free consultation about your needs.",
+      buttonLabel: "Free Consultation",
       buttonUrl: "",
     }),
   },
   {
     id: "cta-contact",
     type: "cta" as const,
-    label: "CTA Kontak",
-    description: "CTA untuk mengarahkan ke kontak/wa.",
+    label: "Contact CTA",
+    description: "CTA that directs visitors to your contact channel.",
     category: "conversion",
     build: () => ({
       id: makeId(),
       type: "cta" as const,
-      heading: "Butuh bantuan?",
-      text: "Tim kami siap membantu menjawab pertanyaan Anda 24/7.",
+      heading: "Need help?",
+      text: "Our team is ready to answer your questions.",
       buttonLabel: "Chat via WhatsApp",
       // Left empty on purpose: a template must not point at a dead
       // https://wa.me/ destination. The owner fills in their own number.
@@ -254,22 +254,22 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
   {
     id: "process-3-step",
     type: "process" as const,
-    label: "Proses 3 Langkah",
-    description: "Workflow sederhana dalam 3 langkah.",
+    label: "Three-step Process",
+    description: "A simple three-step workflow.",
     category: "content",
     build: () => ({
       id: makeId(),
       type: "process" as const,
-      heading: "Cara kerja",
+      heading: "How it works",
       steps: buildItems(
         { id: "", title: "", description: "" },
         3,
         (i) => ({
           title: ["Discovery", "Development", "Delivery"][i],
           description: [
-            "Diskusikan kebutuhan dan goals proyek Anda bersama tim kami.",
-            "Kami bangun solusi dengan checkpoint dan review berkala.",
-            "Project selesai dengan testing, training, dan handover lengkap.",
+            "Discuss project needs and goals with our team.",
+            "We build the solution through checkpoints and regular reviews.",
+            "The project concludes with testing, training, and a complete handover.",
           ][i],
         })
       ),
@@ -278,8 +278,8 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
   {
     id: "process-agile",
     type: "process" as const,
-    label: "Metode Agile",
-    description: "Workflow pengembangan dengan agile methodology.",
+    label: "Agile Method",
+    description: "Development workflow based on agile methodology.",
     category: "content",
     build: () => ({
       id: makeId(),
@@ -291,9 +291,9 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
         (i) => ({
           title: ["Sprint Planning", "Development", "Testing & QA", "Deployment"][i],
           description: [
-            "Setiap sprint dimulai dengan planning 2-week iteration.",
-            "Coding dengan code review dan pair programming.",
-            "Automated tests, manual testing, dan user acceptance.",
+            "Each sprint starts with planning for a two-week iteration.",
+            "Development includes code review and pair programming.",
+            "Automated tests, manual testing, and user acceptance.",
             "Staging deployment followed by production rollout.",
           ][i],
         })
@@ -306,12 +306,12 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
     id: "gallery-portfolio",
     type: "gallery" as const,
     label: "Portfolio Gallery",
-    description: "Gallery gambar untuk menampilkan work.",
+    description: "Image gallery for showcasing work.",
     category: "media",
     build: () => ({
       id: makeId(),
       type: "gallery" as const,
-      heading: "Work Terbaru",
+      heading: "Latest Work",
       images: buildItems(
         { id: "", url: "", alt: "" },
         6,
@@ -327,13 +327,13 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
   {
     id: "content-block-2-col",
     type: "contentBlock" as const,
-    label: "Content Block 2 Kolom",
-    description: "Dua kolom konten dengan layout fleksibel.",
+    label: "Two-column Content Block",
+    description: "Two content columns with a flexible layout.",
     category: "layout",
     build: () => ({
       id: makeId(),
       type: "contentBlock" as const,
-      heading: "Keunggulan Kami",
+      heading: "Why choose us",
       columns: 2,
       layout: "equal" as const,
       items: buildItems(
@@ -341,8 +341,8 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
         2,
         (i) => ({
           content: [
-            "Kami menggunakan best practices dan standar industri tertinggi untuk memastikan kualitas dan keamanan.",
-            "Tim kami terdiri dari profesional berpengalaman yang siap membantu mewujudkan visi Anda.",
+            "We use proven practices and high industry standards to ensure quality and security.",
+            "Our experienced team is ready to bring your vision to life.",
           ][i],
         })
       ),
@@ -353,13 +353,13 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
   {
     id: "divider-simple",
     type: "divider" as const,
-    label: "Divider Minimalis",
-    description: "Pemisah horizontal untuk visual break.",
+    label: "Minimal Divider",
+    description: "A horizontal divider for visual separation.",
     category: "layout",
     build: () => ({
       id: makeId(),
       type: "divider" as const,
-      heading: "Pemisah bagian",
+      heading: "Section divider",
     }),
   },
 
@@ -367,13 +367,13 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
   {
     id: "spacer-large",
     type: "spacer" as const,
-    label: "Spacer Besar",
-    description: "Spacing vertikal yang lebih besar.",
+    label: "Large Spacer",
+    description: "Larger vertical spacing.",
     category: "layout",
     build: () => ({
       id: makeId(),
       type: "spacer" as const,
-      heading: "Jarak vertikal",
+      heading: "Vertical spacing",
       height: 80,
     }),
   },
@@ -383,7 +383,7 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
     id: "embed-video",
     type: "embed" as const,
     label: "Embed Video",
-    description: "Embed video dari YouTube atau lainnya.",
+    description: "Embed a video from YouTube or another provider.",
     category: "media",
     build: () => ({
       id: makeId(),
