@@ -28,6 +28,8 @@ import { LandingCurrencySwitch } from "@/components/landing/landing-currency-swi
 import { getCountryFromHeaders, resolveVisitorPreferences } from "@/lib/region-preferences";
 import { getLandingPrice, type DisplayCurrency } from "@/lib/landing-pricing";
 
+export const dynamic = "force-dynamic";
+
 const workflow = [
   {
     number: "01",

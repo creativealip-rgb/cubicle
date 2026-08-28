@@ -33,6 +33,7 @@ vi.mock("@/db", () => {
         from: vi.fn((table: any) => {
           const name = tableNameOf(table);
           if (name && DB_ROW_KEYS.has(name)) return makeChain(dbRows[name as keyof DbRows]);
+          if (name === "workspaces") return makeChain(dbRows.workspace_members.map(({ workspaceId }) => ({ id: workspaceId })));
           throw new Error(`unexpected select().from on table: ${String(name)}`);
         }),
       })),
@@ -61,6 +62,7 @@ vi.mock("@/lib/auth", () => ({
 
 vi.mock("next/headers", () => ({
   headers: vi.fn(async () => new Headers()),
+  cookies: vi.fn(async () => ({ get: vi.fn(() => undefined) })),
 }));
 
 vi.mock("@/lib/pakasir", () => ({
