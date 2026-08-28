@@ -67,7 +67,7 @@ const pricing = [
     audience: "Coba dulu untuk client work kecil.",
     price: "Rp 0",
     suffix: "selamanya",
-    items: ["1 user", "1 workspace", "3 klien", "5 proyek", "10 invoice/month", "Client portal + AI", "10 AI requests/month", "5 MB/file"],
+    items: ["1 pengguna", "1 workspace", "3 klien", "5 proyek", "10 invoice/bulan", "Portal klien + AI", "10 permintaan AI/bulan", "5 MB/file"],
     cta: "Mulai gratis",
     featured: false,
   },
@@ -76,7 +76,7 @@ const pricing = [
     audience: "Untuk freelancer yang mulai serius.",
     price: "Rp 75.000/month",
     suffix: "Billed yearly: Rp 900.000/year",
-    items: ["1 user", "Existing Solo workspace rule", "5 GB/workspace", "Client portal + AI", "100 AI requests/month", "25 MB/file"],
+    items: ["1 pengguna", "1 workspace Solo", "5 GB/workspace", "Portal klien + AI", "100 permintaan AI/bulan", "25 MB/file"],
     cta: "Pilih Solo",
     featured: true,
   },
@@ -85,13 +85,13 @@ const pricing = [
     audience: "Untuk tim kecil yang kerja bareng.",
     price: "Rp 165.000/month",
     suffix: "Billed yearly: Rp 1.980.000/year",
-    items: ["Up to 5 members/workspace", "Up to 3 workspaces", "5 GB/workspace", "Team roles", "1,000 AI requests/month", "50 MB/file"],
+    items: ["Hingga 5 anggota/workspace", "Hingga 3 workspace", "5 GB/workspace", "Peran tim", "1.000 permintaan AI/bulan", "50 MB/file"],
     cta: "Pilih Team",
     featured: false,
   },
 ];
 
-const landingEn: Record<string, string> = { "Client CRM": "Client CRM", "Time & work": "Time & work", Deliverables: "Deliverables", Billing: "Billing", Free: "Free", "1 user": "1 user", "10 invoice/month": "10 invoices/month", "Client portal + AI": "Client portal + AI", "10 AI requests/month": "10 AI requests/month", "5 MB/file": "5 MB/file", "Existing Solo workspace rule": "Solo workspace rule", "100 AI requests/month": "100 AI requests/month", "25 MB/file": "25 MB/file", "Up to 5 members/workspace": "Up to 5 members/workspace", "Up to 3 workspaces": "Up to 3 workspaces", "Team roles": "Team roles", "1,000 AI requests/month": "1,000 AI requests/month", "50 MB/file": "50 MB/file" };
+const landingEn: Record<string, string> = { "Client CRM": "Client CRM", "Time & work": "Time & work", Deliverables: "Deliverables", Billing: "Billing", Free: "Free", "1 pengguna": "1 user", "1 workspace": "1 workspace", "3 klien": "3 clients", "5 proyek": "5 projects", "10 invoice/bulan": "10 invoices/month", "Portal klien + AI": "Client portal + AI", "10 permintaan AI/bulan": "10 AI requests/month", "5 MB/file": "5 MB/file", "1 workspace Solo": "1 Solo workspace", "5 GB/workspace": "5 GB/workspace", "100 permintaan AI/bulan": "100 AI requests/month", "25 MB/file": "25 MB/file", "Hingga 5 anggota/workspace": "Up to 5 members/workspace", "Hingga 3 workspace": "Up to 3 workspaces", "Peran tim": "Team roles", "1.000 permintaan AI/bulan": "1,000 AI requests/month", "50 MB/file": "50 MB/file" };
 
 const comparison = [
   { label: "Harga mulai", honeybook: "$19/mo", bonsai: "$17/mo", cubiqlo: "Gratis" },
