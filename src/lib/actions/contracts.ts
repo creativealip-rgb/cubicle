@@ -200,6 +200,9 @@ export async function createContract(input: z.infer<typeof createContractSchema>
     [c] = await db.transaction(async (tx) => {
     const contractDate = parsed.contractDate || new Date().toISOString().slice(0, 10);
     let contractNumber: string | null = parsed.contractNumber?.trim().toUpperCase() || null;
+    if (contractNumber && (contractNumber.length > 100 || /[^\x20-\x7E]/.test(contractNumber))) {
+      throw new Error("Contract number must be printable text and at most 100 characters");
+    }
     if (!parsed.contractNumber?.trim()) {
       const [counter] = await tx
         .select({ nextNumber: workspaceInvoiceCounters.nextNumber })
@@ -294,8 +297,8 @@ export async function updateContract(contractId: string, input: { clientName?: s
   if (existing.status !== "draft") throw new Error("Can only edit draft contracts");
   if (input.contractNumber !== undefined) {
     const normalized = input.contractNumber?.trim().toUpperCase() || null;
-    if (normalized && !/^CONT-\d{4}-\d{4,}$/.test(normalized)) {
-      throw new Error("Contract number must use format CONT-YYYY-####");
+    if (normalized && (normalized.length > 100 || /[^\x20-\x7E]/.test(normalized))) {
+      throw new Error("Contract number must be printable text and at most 100 characters");
     }
     if (normalized) {
       const [duplicate] = await db.select({ id: contracts.id }).from(contracts)

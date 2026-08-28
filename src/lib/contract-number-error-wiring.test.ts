@@ -13,5 +13,7 @@ describe("contract number duplicate handling", () => {
     expect(form).toContain('if ("error" in c)');
     expect(form).toContain('Contract number already exists in this workspace');
     expect(form.indexOf('if ("error" in c)')).toBeLessThan(form.indexOf("setOpen(false)"));
+    expect(action).not.toContain("Contract number must use format CONT-YYYY-####");
+    expect(action).toContain("Contract number must be printable text and at most 100 characters");
   });
 });
