@@ -17,7 +17,9 @@ describe("detail fixture mobile surfaces", () => {
 
   it("keeps Template Center tabs on one scrollable mobile row", () => {
     const source = read("src/components/template-center-client.tsx");
-    expect(source).toContain('className="inline-flex h-auto max-w-full justify-start gap-1 overflow-x-auto"');
+    const tabs = read("src/components/ui/status-filter-tabs.tsx");
+    expect(source).toContain("StatusFilterTabs");
+    expect(tabs).toContain("inline-flex h-auto w-full items-center justify-start overflow-x-auto");
     expect(source).not.toContain("flex-wrap justify-start");
   });
 

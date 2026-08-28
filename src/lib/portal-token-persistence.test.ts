@@ -9,7 +9,7 @@ describe("portal token persistence", () => {
     const section = read("src/app/(app)/app/clients/[clientId]/portal-section.tsx");
     const portalPage = read("src/app/client-portal/[token]/page.tsx");
 
-    expect(form).toContain("Slug portal");
+    expect(form).toContain('t("Slug Portal", "Portal Slug")');
     expect(form).toContain("portalSlug: form.portalSlug");
     expect(section).toContain("/client-portal/${slug}");
     expect(section).not.toContain("?token=");
