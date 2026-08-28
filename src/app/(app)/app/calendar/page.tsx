@@ -111,13 +111,15 @@ export default async function CalendarPage() {
               </Link>
             </Button>
           ) : null}
-          <BookingSlugForm defaultSlug={ws.bookingSlug} canEdit={ws.ownerId === user.id} />
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Availability Rules */}
-        <Card className="lg:col-span-1">
+        <div className="space-y-4 lg:col-span-1">
+          <BookingSlugForm defaultSlug={ws.bookingSlug} canEdit={ws.ownerId === user.id} />
+
+          {/* Availability Rules */}
+          <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-3">
             <CardTitle className="text-base font-semibold">
               <Clock className="mr-2 inline h-4 w-4" />
@@ -155,7 +157,8 @@ export default async function CalendarPage() {
               </div>
             ))}
           </CardContent>
-        </Card>
+          </Card>
+        </div>
 
         {/* Upcoming Appointments */}
         <Card className="flex h-full flex-col lg:col-span-2">
