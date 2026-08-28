@@ -8,7 +8,7 @@ describe("compact dashboard onboarding", () => {
   it("shows at most three next incomplete actions by default", () => {
     const source = read("src/components/dashboard-onboarding.tsx");
     expect(source).toContain("const pendingSteps = steps.filter((step) => !step.done)");
-    expect(source).toContain("const visibleSteps = expanded ? pendingSteps : pendingSteps.slice(0, 3)");
+    expect(source).toContain("const visibleSteps = expanded ? steps : (pendingSteps.length > 0 ? pendingSteps.slice(0, 3) : steps)");
     expect(source).toContain("visibleSteps.map((step)");
   });
 
