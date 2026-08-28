@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail } from "lucide-react";
+import { useT } from "@/lib/i18n-client";
 
 export function ReplyToEmailForm({
   workspaceId,
@@ -12,6 +13,7 @@ export function ReplyToEmailForm({
   workspaceId: string;
   currentValue: string | null;
 }) {
+  const { t } = useT();
   const [email, setEmail] = useState(currentValue ?? "");
   const [saved, setSaved] = useState(false);
   const [pending, startTransition] = useTransition();
