@@ -14,12 +14,12 @@ export function countryToDefaults(country?: string | null): VisitorPreferences {
 
 const countryHeaders = ["cf-ipcountry", "x-vercel-ip-country", "x-country-code"] as const;
 
-type HeaderSource = Headers | Record<string, string | undefined>;
+type HeaderSource = { get(name: string): string | null } | Record<string, string | undefined>;
 
 export function getCountryFromHeaders(headers: HeaderSource): string | undefined {
   for (const name of countryHeaders) {
-    const value = typeof Headers !== "undefined" && headers instanceof Headers
-      ? headers.get(name)
+    const value = typeof (headers as { get?: unknown }).get === "function"
+      ? (headers as { get(name: string): string | null }).get(name)
       : Object.entries(headers).find(([key]) => key.toLowerCase() === name)?.[1];
     if (value?.trim()) return value;
   }

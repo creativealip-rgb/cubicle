@@ -37,6 +37,11 @@ describe("getCountryFromHeaders", () => {
     expect(getCountryFromHeaders({ "x-country-code": "" , "X-VERCEL-IP-COUNTRY": "US" })).toBe("US");
     expect(getCountryFromHeaders(new Headers())).toBeUndefined();
   });
+
+  it("supports Next ReadonlyHeaders-compatible objects", () => {
+    const readonlyHeaders = { get: (name: string) => name === "cf-ipcountry" ? "ID" : null };
+    expect(getCountryFromHeaders(readonlyHeaders)).toBe("ID");
+  });
 });
 
 describe("resolveVisitorPreferences", () => {
