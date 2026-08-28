@@ -108,13 +108,7 @@ export function getPersonalSiteReadiness(site: PersonalSiteInput): ReadinessIssu
     const hasCtaLabel = site.ctaLabel && site.ctaLabel.trim().length > 0;
     const hasCtaUrl = site.ctaUrl && site.ctaUrl.trim().length > 0;
     
-    if (hasCtaLabel !== hasCtaUrl) {
-      issues.push({
-        id: "cta-unpaired",
-        severity: "error",
-        label: "Label CTA dan URL CTA harus diisi bersamaan",
-      });
-    } else if (hasCtaLabel && hasCtaUrl) {
+    if (hasCtaLabel && hasCtaUrl) {
       // Validate CTA URL is safe
       const url = site.ctaUrl!.trim();
       if (!isSafePublicHref(url)) {
@@ -132,15 +126,6 @@ export function getPersonalSiteReadiness(site: PersonalSiteInput): ReadinessIssu
       }
     }
 
-    // Check for at least one contact link or CTA URL
-    const hasContactLinkOrCta = checkForContactLinksOrCta(site);
-    if (!hasContactLinkOrCta) {
-      issues.push({
-        id: "no-contact-method",
-        severity: "warning",
-        label: "Tambahkan setidaknya satu cara kontak atau CTA untuk pengunjung",
-      });
-    }
   }
 
   // Content check mirrors the public renderer (PersonalSiteRenderer):
@@ -188,80 +173,6 @@ export function getPersonalSiteReadiness(site: PersonalSiteInput): ReadinessIssu
   return issues;
 }
 
-/**
- * Checks if the site has at least one contact link or CTA URL.
- * Looks across:
- * - Top-level links array
- * - CTA URL in main site config
- * - All CTA sections across all pages
- * - Contact sections across all pages
- * - Social/generic links within pages
- * 
- * @param site - The personal site configuration
- * @returns true if contact method found
- */
-function checkForContactLinksOrCta(site: PersonalSiteInput): boolean {
-  // Check top-level links
-  if (site.links && site.links.length > 0) {
-    for (const link of site.links) {
-      if (link.url && isSafePublicHref(link.url)) {
-        return true;
-      }
-    }
-  }
-
-  // Check top-level CTA URL
-  if (site.ctaUrl && isSafePublicHref(site.ctaUrl)) {
-    return true;
-  }
-
-  // Check all pages' sections
-  const pages = site.pages || [];
-  for (const page of pages) {
-    for (const section of page.sections) {
-      switch (section.type) {
-        case "cta":
-          if (section.buttonUrl && isSafePublicHref(section.buttonUrl)) {
-            return true;
-          }
-          break;
-        
-        case "contact":
-          if (section.methods && section.methods.length > 0) {
-            for (const method of section.methods) {
-              if ((method.value && method.value.trim().length > 0) || 
-                  (method.url && isSafePublicHref(method.url))) {
-                return true;
-              }
-            }
-          }
-          break;
-
-        case "social":
-          if (section.links && section.links.length > 0) {
-            for (const link of section.links) {
-              if (link.url && isSafePublicHref(link.url)) {
-                return true;
-              }
-            }
-          }
-          break;
-
-        case "portfolio":
-          if (section.projects && section.projects.length > 0) {
-            for (const project of section.projects) {
-              if (project.url && isSafePublicHref(project.url)) {
-                return true;
-              }
-            }
-          }
-          break;
-      }
-    }
-  }
-
-  return false;
-}
 
 /**
  * Helper to check if an issue list indicates full readiness.

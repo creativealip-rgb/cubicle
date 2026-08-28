@@ -438,18 +438,6 @@ function PublishStep({ site, publicUrl, previewUrl, onUpdateSite, canEditSlug }:
         {site.published ? t("Tayang — ketuk untuk sembunyikan", "Live — tap to unpublish") : t("Draft — ketuk untuk terbitkan", "Draft — tap to publish")}
       </button>
 
-      <div className="space-y-3 rounded-lg border p-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="mobile-cta-label" className="text-xs">{t("Label CTA", "CTA label")}</Label>
-          <Input id="mobile-cta-label" value={site.ctaLabel} onChange={(e) => onUpdateSite({ ctaLabel: e.target.value })} placeholder={t("Contoh: Hubungi saya", "e.g. Contact me")} />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="mobile-cta-url" className="text-xs">{t("Tujuan CTA", "CTA destination")}</Label>
-          <Input id="mobile-cta-url" value={site.ctaUrl ?? ""} onChange={(e) => onUpdateSite({ ctaUrl: e.target.value })} placeholder="https://, mailto:, tel:, /booking/..." />
-        </div>
-        {(site.ctaLabel || site.ctaUrl) && <Button type="button" variant="ghost" size="sm" onClick={() => onUpdateSite({ ctaLabel: "", ctaUrl: "" })}>{t("Hapus CTA", "Clear CTA")}</Button>}
-        <p className="text-xs text-muted-foreground">{t("Isi keduanya, atau kosongkan keduanya. CTA opsional.", "Fill both fields, or leave both empty. CTA is optional.")}</p>
-      </div>
 
       {/* Slug */}
       <div className="space-y-2">

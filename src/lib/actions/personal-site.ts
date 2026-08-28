@@ -129,14 +129,6 @@ export async function savePersonalSite(
   }
   const data = payload.data;
 
-  if (data.published && data.ctaLabel && !data.ctaUrl) {
-    return {
-      status: "error",
-      message: "CTA publik membutuhkan tujuan yang aman.",
-      fieldErrors: { ctaUrl: ["Isi URL booking, email, telepon, atau website publik."] },
-    };
-  }
-
   const rows = await listPersonalSiteRows();
   const currentRow = rows.find((row) => row.workspaceId === workspaceId && row.userId === userId);
   if (hasEffectiveSlugCollision(rows, data.slug, currentRow?.id)) {

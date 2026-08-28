@@ -129,7 +129,7 @@ describe("getPersonalSiteReadiness", () => {
     };
 
     let issues = getPersonalSiteReadiness(siteWithoutUrl);
-    expect(issues.some((i) => i.id === "cta-unpaired")).toBe(true);
+    expect(issues.some((i) => i.id === "cta-unpaired")).toBe(false);
 
     // Has URL but no label
     const siteWithoutLabel = {
@@ -139,7 +139,7 @@ describe("getPersonalSiteReadiness", () => {
     };
 
     issues = getPersonalSiteReadiness(siteWithoutLabel);
-    expect(issues.some((i) => i.id === "cta-unpaired")).toBe(true);
+    expect(issues.some((i) => i.id === "cta-unpaired")).toBe(false);
 
     // Both present - should be OK
     const siteWithBoth = {
@@ -214,7 +214,7 @@ describe("getPersonalSiteReadiness", () => {
 
     issues = getPersonalSiteReadiness(siteTrulyNoContact);
     expect(issues.some((i) => i.id === "cta-unpaired")).toBe(false); // both absent, not unpaired
-    expect(issues.some((i) => i.id === "no-contact-method")).toBe(true);
+    expect(issues.some((i) => i.id === "no-contact-method")).toBe(false);
 
     // Adding a legitimate contact URL clears the warning
     const siteWithContact = {
