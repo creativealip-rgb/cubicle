@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-28 — August meeting revisions completed
+
+- Completed region-aware EN/ID and IDR/USD defaults with persistent overrides while keeping Pakasir checkout amounts authoritative in IDR.
+- Reorganized Settings, onboarding, sidebar navigation, Calendar booking slug placement, Forms/Landing Page labels, and AI menu order.
+- Added tenant-safe custom invoice and contract numbering, invoice detail preview, recurring invoice rules/generation/scheduler, and duplicate-safe user errors.
+- Enforced plan-aware Personal Site slugs, completed Personal Site editor/tab localization, and changed all new Personal Site defaults/templates to English without modifying existing user content.
+- Completed landing pricing localization and moved Booking slug directly above Calendar Availability Rules.
+- Clean release gate: 302/302 test files and 1,530/1,530 tests passed; TypeScript passed; ESLint had zero errors; production build passed.
+- Production application commit: `81af150`; running image `cubiqlo-prod:sha-81af15065cfc3680a585e3d35d7898fbe0c44f28`; health and DB `ok`.
+- Completion evidence: `docs/operations/evidence/meeting-revisions-2026-08-28.md` (`7d21536`).
+- Known runtime limits: destructive live Team→Free→Team Personal Site matrix requires a disposable entitlement fixture; real Pakasir webhook lifecycle requires explicit paid-transaction approval; dependency findings are tracked separately.
+
 ## 2026-08-24 — Booking email date format
 
 - Booking confirmation email now formats appointment time for `Asia/Jakarta` as readable date/time with `GMT+7`.
