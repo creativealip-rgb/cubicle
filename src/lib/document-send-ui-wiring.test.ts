@@ -20,7 +20,7 @@ describe("document-send UI wiring (preview + confirm, recipient/subject, pending
     expect(src).toContain("Proposal:");
     // Sending disabled while pending (no double-click), dialog stays open
     expect(src).toContain("disabled={pending}");
-    expect(src).toMatch(/if \(!pending\) setOpen\(next\)/);
+    expect(src).toMatch(/if \(!pending\) \{[\s\S]*setOpen\(next\)/);
     // Bilingual labels
     expect(src).toContain('t("Batal", "Cancel")');
     expect(src).toContain('t("Kirim ulang proposal", "Resend proposal")');
@@ -39,7 +39,7 @@ describe("document-send UI wiring (preview + confirm, recipient/subject, pending
     expect(src).toContain("Subject");
     expect(src).toContain("Contract for signature:");
     expect(src).toContain("disabled={pending}");
-    expect(src).toMatch(/if \(!pending\) setOpen\(next\)/);
+    expect(src).toMatch(/if \(!pending\) \{[\s\S]*setOpen\(next\)/);
     expect(src).toContain('t("Batal", "Cancel")');
     expect(src).toContain('t("Kirim ulang kontrak", "Resend contract")');
     expect(src).not.toMatch(/under_review|in_review|status: "review"/);
@@ -53,11 +53,11 @@ describe("document-send UI wiring (preview + confirm, recipient/subject, pending
     expect(src).toContain("Recipient");
     expect(src).toContain("Subjek");
     expect(src).toContain("Subject");
-    expect(src).toContain("Questionnaire:");
+    expect(src).toContain("Form:");
     // Client email is available for the recipient display
     expect(src).toContain("email?: string | null");
     expect(src).toContain("disabled={pending || !clientId}");
-    expect(src).toMatch(/if \(!pending\) setOpen\(next\)/);
+    expect(src).toContain("if (!pending) setOpen(next)");
     expect(src).toContain('t("Batal", "Cancel")');
     expect(src).not.toMatch(/under_review|in_review|status: "review"/);
   });
