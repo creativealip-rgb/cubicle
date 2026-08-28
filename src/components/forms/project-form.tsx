@@ -293,6 +293,8 @@ export function ProjectForm({
                   <SelectItem value="USD">USD</SelectItem>
                   <SelectItem value="EUR">EUR</SelectItem>
                   <SelectItem value="SGD">SGD</SelectItem>
+                  <SelectItem value="JPY">JPY</SelectItem>
+                  <SelectItem value="AUD">AUD</SelectItem>
                 </SelectContent>
               </Select>
             </div>

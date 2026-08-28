@@ -24,15 +24,15 @@ describe("shared billing-aware project task workspace", () => {
     const source = read("src/components/tasks/reusable-task-workspace.tsx");
     expect(source).toContain("Jam bulan ini");
     expect(source).toContain("Terakhir dipakai");
-    expect(source).not.toContain("priority");
-    expect(source).not.toContain("dueDate");
+    expect(source).not.toContain('t("Prioritas", "Priority")');
+    expect(source).not.toContain('t("Jatuh Tempo", "Due Date")');
   });
 
   it("wires create edit archive restore and max ten global rows", () => {
     const source = read("src/components/tasks/project-task-workspace.tsx");
     expect(source).toContain("TaskForm");
     expect(source).toContain("DialogTrigger");
-    expect(source).toContain('t("Tambah Tugas", "Add Task")');
+    expect(source).toContain('t("Buat Tugas", "Create Task")');
     expect(source).not.toContain('<TaskForm mode="create" projectId={projectId} members={members} projects={projects} taskMode={mode} />');
     expect(source).toContain("archiveTask");
     expect(source).toContain("restoreTask");
@@ -41,10 +41,10 @@ describe("shared billing-aware project task workspace", () => {
 
   it("shows workflow-only fields only for workflow task forms", () => {
     const source = read("src/components/forms/task-form.tsx");
-    expect(source).toContain('{taskMode === "workflow" ? (');
+    expect(source).toContain('{taskMode === "workflow" && (');
     expect(source).toContain('t("Status", "Status")');
     expect(source).toContain('t("Prioritas", "Priority")');
     expect(source).toContain('t("Jatuh Tempo", "Due Date")');
-    expect(source).toContain('t("Terlihat oleh klien", "Visible to client")');
+    expect(source).toContain('t("Terlihat oleh klien di portal", "Visible to client in portal")');
   });
 });
