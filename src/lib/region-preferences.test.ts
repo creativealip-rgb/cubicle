@@ -51,6 +51,11 @@ describe("resolveVisitorPreferences", () => {
     expect(resolveVisitorPreferences({ country: "ID", accountLang: "en", langCookie: "id" })).toEqual({ lang: "en", currency: "IDR" });
   });
 
+  it("keeps an explicit language cookie ahead of country defaults", () => {
+    expect(resolveVisitorPreferences({ country: "ID", langCookie: "en" }).lang).toBe("en");
+    expect(resolveVisitorPreferences({ country: "US", langCookie: "id" }).lang).toBe("id");
+  });
+
   it("accepts only valid cookie values and resolves currency independently", () => {
     expect(resolveVisitorPreferences({ country: "US", langCookie: "id", currencyCookie: "IDR" })).toEqual({ lang: "id", currency: "IDR" });
     expect(resolveVisitorPreferences({ country: "US", currencyCookie: "IDR" })).toEqual({ lang: "en", currency: "IDR" });

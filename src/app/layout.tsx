@@ -2,7 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Geist_Mono, Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { LangProvider, type Lang } from "@/lib/i18n-client";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { getCountryFromHeaders, resolveVisitorPreferences } from "@/lib/region-preferences";
 import "./globals.css";
 
 // ClickUp spec: Plus Jakarta Sans (display/headings), Inter (body/meta), Geist Mono (technical/code)
@@ -86,8 +87,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const langCookie = (await cookies()).get("cubiqlo_lang")?.value;
-  const lang: Lang = langCookie === "id" ? "id" : "en";
+  const [cookieStore, requestHeaders] = await Promise.all([cookies(), headers()]);
+  const lang: Lang = resolveVisitorPreferences({
+    country: getCountryFromHeaders(requestHeaders),
+    langCookie: cookieStore.get("cubiqlo_lang")?.value,
+  }).lang;
   return (
     <html
       lang={lang}
