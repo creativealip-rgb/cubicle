@@ -25,5 +25,8 @@ it("renders a locked modal over a dashboard backdrop", () => {
   expect(modal).toContain('open={true}');
   expect(modal).toContain('onEscapeKeyDown={(event) => event.preventDefault()}');
   expect(modal).toContain('onPointerDownOutside={(event) => event.preventDefault()}');
-  expect(modal).toContain('t("Buat workspace", "Create workspace")');
+  expect(modal).toContain('{ label: t("Workspace", "Workspace"), icon: Building2 }');
+  expect(modal).toContain('{ label: t("Tim", "Team"), icon: Users }');
+  expect(modal).toContain('{ label: t("Siap", "Ready"), icon: Rocket }');
+  expect(modal).toContain('t("Ke Dashboard", "Enter dashboard")');
 });
