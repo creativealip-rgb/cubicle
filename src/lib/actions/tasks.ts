@@ -297,7 +297,7 @@ export async function assignTask(taskId: string, assigneeId: string | null) {
 
   const [task] = await db.update(tasks)
     .set({ assigneeId, updatedAt: new Date() })
-    .where(eq(tasks.id, taskId))
+    .where(and(eq(tasks.id, taskId), eq(tasks.workspaceId, workspaceId)))
     .returning();
 
   await writeActivityLog(workspaceId, user.id, "assigned_task", "task", taskId);

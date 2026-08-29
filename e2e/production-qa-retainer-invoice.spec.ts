@@ -49,7 +49,7 @@ test("production retainer invoice full amount then duplicate lock", async ({ pag
     await page.getByRole("button", { name: "Buat Invoice" }).click();
     await page.waitForURL(/\/app\/invoices\/[0-9a-f-]{36}/, { timeout: 20000 });
     await expect(page.getByText(/Rp\s*1\.000\.000/).first()).toBeVisible();
-    const dpUrl = page.url();
+    const _dpUrl = page.url();
 
     await page.goto("/app/invoices/new");
     await page.getByRole("combobox").first().click();

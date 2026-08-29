@@ -737,6 +737,20 @@ export async function recalculateInvoice(invoiceId: string) {
   return updated;
 }
 
+type InvoiceTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+async function recalculateInvoiceInTransaction(tx: InvoiceTransaction, invoiceId: string, workspaceId: string) {
+  const [inv] = await tx.select().from(invoices)
+    .where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId)))
+    .for("update").limit(1);
+  if (!inv) throw new Error("Invoice tidak ditemukan");
+  const [result] = await tx.select({ sum: sql<string>`coalesce(sum(${invoiceItems.amount}), '0')` })
+    .from(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId));
+  const totals = calculateInvoiceTotals(Number(result?.sum || 0), Number(inv.discount), Number(inv.tax));
+  await tx.update(invoices).set({ subtotal: String(totals.subtotal), discount: String(totals.discount), tax: String(totals.tax), total: String(totals.total), updatedAt: new Date() })
+    .where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId)));
+}
+
 export async function addInvoiceItem(input: z.infer<typeof addItemSchema>) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
@@ -748,18 +762,14 @@ export async function addInvoiceItem(input: z.infer<typeof addItemSchema>) {
   const parsed = addItemSchema.parse(input);
   const amount = String(parsed.quantity * parsed.unitPrice);
 
-  const [item] = await db
-    .insert(invoiceItems)
-    .values({
-      invoiceId: parsed.invoiceId,
-      description: parsed.description,
-      quantity: String(parsed.quantity),
-      unitPrice: String(parsed.unitPrice),
-      amount,
-    })
-    .returning();
-
-  await recalculateInvoice(parsed.invoiceId);
+  const item = await db.transaction(async (tx) => {
+    const [created] = await tx.insert(invoiceItems).values({
+      invoiceId: parsed.invoiceId, description: parsed.description,
+      quantity: String(parsed.quantity), unitPrice: String(parsed.unitPrice), amount,
+    }).returning();
+    await recalculateInvoiceInTransaction(tx, parsed.invoiceId, workspaceId);
+    return created;
+  });
   await writeActivityLog(workspaceId, user.id, "added_invoice_item", "invoice_item", item.id);
   return item;
 }
@@ -827,13 +837,12 @@ export async function updateInvoiceItem(itemId: string, input: z.infer<typeof up
   if (parsed.unitPrice !== undefined) updateData.unitPrice = String(parsed.unitPrice);
   updateData.amount = String(qty * price);
 
-  const [updated] = await db
-    .update(invoiceItems)
-    .set(updateData)
-    .where(eq(invoiceItems.id, itemId))
-    .returning();
-
-  await recalculateInvoice(item.invoiceId);
+  const updated = await db.transaction(async (tx) => {
+    const [changed] = await tx.update(invoiceItems).set(updateData)
+      .where(and(eq(invoiceItems.id, itemId), eq(invoiceItems.invoiceId, item.invoiceId))).returning();
+    await recalculateInvoiceInTransaction(tx, item.invoiceId, workspaceId);
+    return changed;
+  });
   await writeActivityLog(workspaceId, user.id, "updated_invoice_item", "invoice_item", itemId);
   return updated;
 }
@@ -885,9 +894,9 @@ export async function deleteInvoiceItem(itemId: string) {
           );
       }
     }
+    await recalculateInvoiceInTransaction(tx, item.invoiceId, workspaceId);
   });
 
-  await recalculateInvoice(item.invoiceId);
   await writeActivityLog(workspaceId, user.id, "deleted_invoice_item", "invoice_item", itemId);
   return { success: true };
 }

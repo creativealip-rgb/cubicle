@@ -149,8 +149,8 @@ export function ClientGoogleCalendarPanel({
   pendingInvite,
   email,
   status,
-  lastError,
-  connectedAt,
+  lastError: _lastError,
+  connectedAt: _connectedAt,
   events,
   eventsError,
   appointments,
@@ -160,7 +160,7 @@ export function ClientGoogleCalendarPanel({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
-  const [inviteExpiresAt, setInviteExpiresAt] = useState<string | null>(null);
+  const [, setInviteExpiresAt] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -198,7 +198,7 @@ export function ClientGoogleCalendarPanel({
     }
   }
 
-  async function handleCopy() {
+  async function _handleCopy() {
     if (!inviteUrl) return;
     await navigator.clipboard.writeText(inviteUrl);
     toast.success("Link undangan disalin");

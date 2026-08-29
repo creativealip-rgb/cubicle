@@ -6,7 +6,7 @@ const read = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 
 const contractActions = read("src/lib/actions/contract-templates.ts");
 const proposalActions = read("src/lib/actions/proposal-templates.ts");
-const editor = read("src/components/documents/document-block-editor.tsx");
+const _editor = read("src/components/documents/document-block-editor.tsx");
 const blocksEditor = read("src/components/templates/template-blocks-editor.tsx");
 const center = read("src/components/template-center-client.tsx");
 const contractDetail = read("src/app/(app)/app/contract-templates/[templateId]/page.tsx");

@@ -2,17 +2,21 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "@/app/api/cron/plan-reminders/route";
 import { getExpiringUsers } from "@/lib/subscription";
 import { verifyCronRequest } from "@/lib/cron-auth";
+import { sendNotification } from "@/lib/notifications";
 
 // Mock dependencies properly
 vi.mock("@/lib/subscription");
 vi.mock("@/lib/cron-auth");
+vi.mock("@/lib/notifications");
 
 const mockGetExpiringUsers = vi.mocked(getExpiringUsers);
 const mockVerifyCronRequest = vi.mocked(verifyCronRequest);
+const mockSendNotification = vi.mocked(sendNotification);
 
 describe("POST /api/cron/plan-reminders", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSendNotification.mockResolvedValue({ success: true, id: "email-1" });
   });
 
   it("should return unauthorized when cron authentication fails", async () => {
@@ -30,8 +34,8 @@ describe("POST /api/cron/plan-reminders", () => {
     vi.spyOn(console, "log").mockImplementation(() => {});
     
     const mockUsers = [
-      { id: "user-1", name: "Test User", plan: "pro", planExpiresAt: new Date(), daysUntilExpiry: 3 },
-      { id: "user-2", name: "Another User", plan: "team", planExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), daysUntilExpiry: 7 },
+      { id: "user-1", name: "Test User", email: "one@example.com", plan: "pro", planExpiresAt: new Date(), daysUntilExpiry: 3 },
+      { id: "user-2", name: "Another User", email: "two@example.com", plan: "team", planExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), daysUntilExpiry: 7 },
     ];
     
     mockGetExpiringUsers.mockResolvedValue(mockUsers);
@@ -43,7 +47,9 @@ describe("POST /api/cron/plan-reminders", () => {
     expect(response.status).toBe(200);
     expect(data.ok).toBe(true);
     expect(data.reminders).toBe(2);
-    expect(data.users).toHaveLength(2);
+    expect(data.sent).toBe(2);
+    expect(data.failed).toBe(0);
+    expect(mockSendNotification).toHaveBeenCalledTimes(2);
   });
 
   it("should handle errors gracefully and return 500", async () => {

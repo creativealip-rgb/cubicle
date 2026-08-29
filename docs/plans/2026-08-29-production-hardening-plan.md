@@ -519,3 +519,15 @@ Use one authenticated context, `workers=1`, `retries=0`:
 - Tests, lint, build, dependency audit all meet release gate.
 - Desktop/mobile E2E passes with persistence/log/DB evidence and zero QA leftovers.
 - Production deploy has health, route, image, proxy, and regression proof.
+
+## Implementation ledger — 2026-08-29
+
+- PASS: private raw-file authorization and protected document download URLs.
+- PASS: Personal Site byte-signature validation, safe extension derivation, and `nosniff`.
+- PASS: invoice tenant references; atomic payment, mark-paid, void, item totals, and time import paths.
+- PASS: task status app validation; migration `0082` adds DB check and passed disposable PostgreSQL 16 rehearsal.
+- PASS: timer stop conditional transition, time edit guard, workspace-scoped target mutations.
+- PASS: null-client link guard, proposal numeric validation, recurring dialog shell, signing labels/touch targets.
+- PASS: plan-expiry email delivery through shared Resend helper with sent/failed reporting.
+- PASS: dependency audit and lint gate.
+- PENDING RELEASE: authenticated desktop/mobile browser QA, migration application, production deploy, and live health/log proof require release approval.

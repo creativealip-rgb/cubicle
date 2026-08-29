@@ -456,9 +456,16 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
         reviewedBy: user.id,
         updatedAt: new Date(),
       })
-      .where(eq(timeEntries.id, parsed.entryId))
+      .where(and(
+        eq(timeEntries.id, parsed.entryId),
+        eq(timeEntries.workspaceId, workspaceId),
+        eq(timeEntries.userId, user.id),
+        isNull(timeEntries.endTime),
+      ))
       .returning();
   });
+
+  if (!updated) throw new Error("Timer already stopped");
 
   await writeActivityLog(workspaceId, user.id, "stopped_timer", "time_entry", parsed.entryId);
   return updated;

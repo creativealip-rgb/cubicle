@@ -15,7 +15,7 @@ interface DeleteExpenseButtonProps {
   mobile?: boolean;
 }
 
-export function DeleteExpenseButton({ expenseId, description, mobile = false }: DeleteExpenseButtonProps) {
+export function DeleteExpenseButton({ expenseId, description: _description, mobile = false }: DeleteExpenseButtonProps) {
   const { refresh } = useAppTransition();
   const { t } = useT();
   const [confirming, setConfirming] = useState(false);

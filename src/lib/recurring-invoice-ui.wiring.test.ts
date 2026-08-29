@@ -15,7 +15,9 @@ describe("recurring invoice UI", () => {
     const manager = read("src/components/invoices/recurring-invoice-manager.tsx");
     const page = read("src/app/(app)/app/invoices/page.tsx");
     expect(manager).toContain("DialogDescription");
-    expect(manager).toContain('DialogContent className="max-h-[90vh] overflow-y-auto p-0 sm:max-w-2xl"');
+    expect(manager).toContain('DialogContent className="max-h-[90vh] overflow-hidden p-0 sm:max-w-2xl"');
+    expect(manager).toContain("min-h-0 flex-1 gap-4 overflow-y-auto");
+    expect(manager).toContain("shrink-0 border-t");
     expect(manager).not.toContain("SheetContent");
     expect(manager).toContain('t("Invoice berulang baru", "New recurring invoice")');
     expect(manager).toContain('t("Belum ada invoice berulang", "No recurring invoices yet")');

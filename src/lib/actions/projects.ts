@@ -220,7 +220,7 @@ export async function updateProject(projectId: string, input: z.input<typeof pro
 
   const [project] = await db.update(projects)
     .set(updateData)
-    .where(eq(projects.id, projectId))
+    .where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId)))
     .returning();
 
   if (parsed.billingType === "package" && parsed.selectedPackageId !== undefined) {
@@ -242,7 +242,7 @@ export async function archiveProject(projectId: string) {
 
   const [project] = await db.update(projects)
     .set({ status: "archived", updatedAt: new Date() })
-    .where(eq(projects.id, projectId))
+    .where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId)))
     .returning();
 
   await writeActivityLog(workspaceId, user.id, "archived_project", "project", projectId);

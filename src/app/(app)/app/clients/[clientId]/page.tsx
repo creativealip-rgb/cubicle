@@ -59,7 +59,7 @@ const invoiceStatusLabel: Record<string, string> = {
   archived: "Diarsipkan",
 };
 
-async function getWorkspaceId(): Promise<string> {
+async function _getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
 }
 
