@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppTransition } from "@/lib/transition-provider";
 import { Trash2 } from "lucide-react";
-import { LoadingButton } from "@/components/ui/loading-button";
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { toast } from "sonner";
 import { deleteContract } from "@/lib/actions/contracts";
 import { useT } from "@/lib/i18n-client";
@@ -23,35 +24,36 @@ export function DeleteContractButton({
   const router = useRouter();
   const { t } = useT();
   const { refresh } = useAppTransition();
-  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
 
   async function onDelete() {
-    if (!confirm(confirmText ?? t("Hapus kontrak ini? Tidak bisa dibatalkan.", "Delete this contract? This cannot be undone."))) return;
-    setLoading(true);
     try {
       await deleteContract(contractId);
       toast.success(t("Kontrak dihapus", "Contract deleted"));
       router.push(redirectTo);
       refresh();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : t("Gagal menghapus", "Failed to delete");
-      toast.error(msg);
-      setLoading(false);
+      toast.error(err instanceof Error ? err.message : t("Gagal menghapus", "Failed to delete"));
+      throw err;
     }
   }
 
   return (
-    <LoadingButton
-      type="button"
-      variant="outline"
-      size="sm"
-      onClick={onDelete}
-      loading={loading}
-      loadingText="..."
-      className="text-destructive hover:text-destructive"
-    >
-      <Trash2 className="h-3.5 w-3.5 mr-1" />
-      {label ?? t("Hapus", "Delete")}
-    </LoadingButton>
+    <>
+      <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)} className="text-destructive hover:text-destructive">
+        <Trash2 className="mr-1 h-3.5 w-3.5" />
+        {label ?? t("Hapus", "Delete")}
+      </Button>
+      <ConfirmDialog
+        open={open}
+        onOpenChange={setOpen}
+        title={t("Hapus kontrak?", "Delete contract?")}
+        description={confirmText ?? t("Hapus kontrak ini? Tidak bisa dibatalkan.", "Delete this contract? This cannot be undone.")}
+        confirmLabel={t("Hapus", "Delete")}
+        cancelLabel={t("Batal", "Cancel")}
+        onConfirm={onDelete}
+        destructive
+      />
+    </>
   );
 }
