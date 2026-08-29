@@ -515,17 +515,6 @@ export default async function InvoicesPage({
         </div>
       )}
 
-      <RecurringInvoiceManager
-        rules={recurringRules.map((rule) => ({
-          ...rule,
-          lines: rule.lines.map((line) => ({ ...line, quantity: Number(line.quantity), unitPrice: Number(line.unitPrice) })),
-        }))}
-        clients={clientOptions.map((client) => ({ id: client.id, name: client.companyName || client.name }))}
-        projects={projectOptions}
-        canWrite={canWrite}
-        defaultCurrency={baseCurrency}
-      />
-
       {/* Status tabs */}
       <div className="space-y-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -652,6 +641,17 @@ export default async function InvoicesPage({
           </div>
         </>
       )}
+
+      <RecurringInvoiceManager
+        rules={recurringRules.map((rule) => ({
+          ...rule,
+          lines: rule.lines.map((line) => ({ ...line, quantity: Number(line.quantity), unitPrice: Number(line.unitPrice) })),
+        }))}
+        clients={clientOptions.map((client) => ({ id: client.id, name: client.companyName || client.name }))}
+        projects={projectOptions}
+        canWrite={canWrite}
+        defaultCurrency={baseCurrency}
+      />
     </div>
   );
 }

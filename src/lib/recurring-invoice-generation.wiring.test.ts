@@ -25,7 +25,16 @@ describe("recurring invoice generation wiring", () => {
 
   it("protects cron with shared auth", () => {
     const route = read("src/app/api/cron/recurring-invoices/route.ts");
+    const scheduler = read("scripts/cron-reminders.sh");
     expect(route).toContain("verifyCronRequest(request)");
     expect(route).toContain("generateDueRecurringInvoices()");
+    expect(scheduler).toContain('hit_get "/api/cron/recurring-invoices"');
+  });
+
+  it("isolates failures so one broken rule does not stop the cron batch", () => {
+    const source = read("src/lib/actions/recurring-invoices.ts");
+    expect(source).toContain("errors: Array");
+    expect(source).toContain("errors.push");
+    expect(source).toContain("console.error(\"[recurring-invoices] rule failed\"");
   });
 });

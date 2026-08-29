@@ -69,3 +69,7 @@ fi
 
 # Personal note due reminders (7d/3d/1d, 20h dedupe)
 hit_get "/api/cron/personal-note-reminders"
+
+# Recurring invoice rules are idempotent per rule occurrence. Hourly execution
+# catches workspace-local midnight schedules without relying on host timezone.
+hit_get "/api/cron/recurring-invoices"

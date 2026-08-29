@@ -11,13 +11,20 @@ describe("recurring invoice UI", () => {
     expect(page).toContain("recurringInvoiceRules.workspaceId");
   });
 
-  it("supports create, schedule pattern preview, pause, and delete", () => {
+  it("keeps rule form in a drawer and renders compact rule management", () => {
     const manager = read("src/components/invoices/recurring-invoice-manager.tsx");
+    const page = read("src/app/(app)/app/invoices/page.tsx");
+    expect(manager).toContain("SheetContent");
+    expect(manager).toContain('t("Invoice berulang baru", "New recurring invoice")');
+    expect(manager).toContain('t("Belum ada invoice berulang", "No recurring invoices yet")');
+    expect(manager).toContain('t("Buat draft sekarang", "Generate draft now")');
     expect(manager).toContain("createRecurringInvoiceRule");
     expect(manager).toContain("renderRecurringInvoiceNumber");
     expect(manager).toContain("updateRecurringInvoiceRule(editingId, payload)");
+    expect(page).toContain("<InvoicesListTable");
+    expect(page.indexOf("<InvoicesListTable")).toBeLessThan(page.indexOf("<RecurringInvoiceManager"));
     expect(manager).toContain("setEditingId(rule.id)");
-    expect(manager).toContain('t("Simpan Perubahan", "Save Changes")');
+    expect(manager).toContain('t("Simpan invoice berulang", "Save recurring invoice")');
     expect(manager).toContain("deleteRecurringInvoiceRule");
     expect(manager).toContain("INV-{YYYY}-{SEQ}");
   });

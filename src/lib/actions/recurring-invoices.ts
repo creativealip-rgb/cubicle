@@ -182,11 +182,18 @@ export async function generateDueRecurringInvoices(now = new Date()) {
     .where(and(eq(recurringInvoiceRules.isActive, true), or(isNull(recurringInvoiceRules.endDate), lte(recurringInvoiceRules.nextRunDate, recurringInvoiceRules.endDate))))
     .orderBy(asc(recurringInvoiceRules.nextRunDate));
   const generated: string[] = [];
+  const errors: Array<{ ruleId: string; error: string }> = [];
   for (const rule of due) {
-    const invoiceId = await generateRule(rule.id, now);
-    if (invoiceId) generated.push(invoiceId);
+    try {
+      const invoiceId = await generateRule(rule.id, now);
+      if (invoiceId) generated.push(invoiceId);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      errors.push({ ruleId: rule.id, error: message });
+      console.error("[recurring-invoices] rule failed", { ruleId: rule.id, error: message });
+    }
   }
-  return { processed: due.length, generated: generated.length, invoiceIds: generated };
+  return { processed: due.length, generated: generated.length, failed: errors.length, invoiceIds: generated, errors };
 }
 
 export async function generateRecurringInvoiceNow(ruleId: string) {
