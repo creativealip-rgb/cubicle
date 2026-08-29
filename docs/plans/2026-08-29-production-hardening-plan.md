@@ -530,4 +530,8 @@ Use one authenticated context, `workers=1`, `retries=0`:
 - PASS: null-client link guard, proposal numeric validation, recurring dialog shell, signing labels/touch targets.
 - PASS: plan-expiry email delivery through shared Resend helper with sent/failed reporting.
 - PASS: dependency audit and lint gate.
-- PENDING RELEASE: authenticated desktop/mobile browser QA, migration application, production deploy, and live health/log proof require release approval.
+- PASS RELEASE: migration `0082` applied to production; image `cubiqlo-prod:sha-998795c377f0de6e524cc4ca4db55210f58c86af` live.
+- PASS RELEASE: internal/public health and DB OK; login/root HTTP 200; cron/env auth guards 401; no fresh server errors.
+- PASS RELEASE: authenticated mobile QA at 390×844 passed dashboard, invoices, proposals, contracts, and weekly time with zero overflow/console errors.
+- PASS RELEASE: `dokploy-traefik` remains sole 80/443 owner; app stays internal on `dokploy-network`.
+- EVIDENCE: DB backup `/root/backups/cubiqlo/db/cubicle-20260829T112933Z-pre-0082.dump`; release manifest `/root/releases/cubiqlo/2026-08-29T11-37-24Z-998795c377f0.env`.

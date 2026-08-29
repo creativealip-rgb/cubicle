@@ -31,7 +31,7 @@ Reserve a number here before creating SQL. Recheck remote refs and every worktre
 - `0073` — Storage add-on payment metadata — Coder — `main` (uncommitted) — reserved; not applied anywhere yet; production not applied.
 - `0076` — Unified template content blocks (contract/proposal template `content_blocks`) — Coder — `fix/landing-id-headline-underline` — reserved; not applied anywhere yet; production not applied.
 - `0077` — Disable unfunded add-on auto-renewal (Phase 3 corrective) — Coder — `main` — committed; not applied anywhere yet; production not applied.
-- `0082` — Production hardening task status constraint — Coder — `fix/production-hardening-2026-08-29` — reserved; production not applied.
+- `0082` — Production hardening task status constraint — Coder — `fix/production-hardening-2026-08-29` — committed; applied-production 2026-08-29.
 
 ## Reservation protocol
 
