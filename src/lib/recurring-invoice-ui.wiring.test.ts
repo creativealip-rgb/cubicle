@@ -14,7 +14,9 @@ describe("recurring invoice UI", () => {
   it("keeps rule form in a drawer and renders compact rule management", () => {
     const manager = read("src/components/invoices/recurring-invoice-manager.tsx");
     const page = read("src/app/(app)/app/invoices/page.tsx");
-    expect(manager).toContain("SheetContent");
+    expect(manager).toContain("DialogDescription");
+    expect(manager).toContain('DialogContent className="max-h-[90vh] overflow-y-auto p-0 sm:max-w-2xl"');
+    expect(manager).not.toContain("SheetContent");
     expect(manager).toContain('t("Invoice berulang baru", "New recurring invoice")');
     expect(manager).toContain('t("Belum ada invoice berulang", "No recurring invoices yet")');
     expect(manager).toContain('t("Buat draft sekarang", "Generate draft now")');
