@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { pakasirPayments, workspaceMembers } from "@/db/schema";
@@ -9,6 +9,7 @@ import { createPakasirTransaction, isPakasirConfigured, pakasirPaymentUrl } from
 import { assertSameOrigin } from "@/lib/same-origin";
 import { getExtraWorkspaceAmount, type BillingPeriod } from "@/lib/billing-plans";
 import { canPurchaseExtraWorkspace } from "@/lib/extra-workspace";
+import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -31,10 +32,16 @@ export async function POST(request: Request) {
 
   // Extra-workspace checkout is billed to the workspace owner. Reject any
   // member/viewer before touching the provider or creating a payment row.
+  const activeWsId = await getWorkspaceForCurrentUser();
   const [membership] = await db
     .select({ workspaceId: workspaceMembers.workspaceId, role: workspaceMembers.role })
     .from(workspaceMembers)
-    .where(eq(workspaceMembers.userId, session.user.id))
+    .where(
+      and(
+        eq(workspaceMembers.userId, session.user.id),
+        eq(workspaceMembers.workspaceId, activeWsId),
+      ),
+    )
     .limit(1);
 
   if (!membership?.workspaceId) {

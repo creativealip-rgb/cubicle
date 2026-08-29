@@ -2,8 +2,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { contracts, clients } from "@/db/schema";
-import { listContractTemplates } from "@/lib/actions/contract-templates";
+import { contracts, clients, contractTemplates } from "@/db/schema";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { CreateContractButton } from "@/components/contracts/create-contract-button";
@@ -12,6 +11,9 @@ import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { EmptyState } from "@/components/empty-state";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { FileSignature } from "lucide-react";
+import { getProposedContractNumber } from "@/lib/actions/contracts";
+
+export const dynamic = "force-dynamic";
 
 const STATUS_TABS = [
   "all",
@@ -74,7 +76,13 @@ export default async function ContractsPage({
     .from(clients)
     .where(and(eq(clients.workspaceId, workspaceId), eq(clients.status, "active")))
     .orderBy(clients.name);
-  const contractTemplates = await listContractTemplates();
+  const templateRows = await db
+    .select()
+    .from(contractTemplates)
+    .where(eq(contractTemplates.workspaceId, workspaceId))
+    .orderBy(desc(contractTemplates.isDefault), desc(contractTemplates.updatedAt))
+    .limit(100);
+  const proposedContractNumber = canWrite ? await getProposedContractNumber(workspaceId) : "";
 
   const countRows = await db
     .select({
@@ -118,7 +126,7 @@ export default async function ContractsPage({
           </p>
         </div>
         {canWrite && (
-          <CreateContractButton clients={clientsList} templates={contractTemplates} workspaceId={workspaceId} defaultOpen={params.new === "1"} />
+          <CreateContractButton clients={clientsList} templates={templateRows} workspaceId={workspaceId} proposedContractNumber={proposedContractNumber} defaultOpen={params.new === "1"} />
         )}
       </div>
 

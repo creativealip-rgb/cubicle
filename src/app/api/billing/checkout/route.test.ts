@@ -33,6 +33,7 @@ vi.mock("@/db", () => {
         from: vi.fn((table: any) => {
           const name = tableNameOf(table);
           if (name && DB_ROW_KEYS.has(name)) return makeChain(dbRows[name as keyof DbRows]);
+          if (name === "workspaces") return makeChain(dbRows.workspace_members.map(({ workspaceId }) => ({ id: workspaceId })));
           throw new Error(`unexpected select().from on table: ${String(name)}`);
         }),
       })),
@@ -61,6 +62,7 @@ vi.mock("@/lib/auth", () => ({
 
 vi.mock("next/headers", () => ({
   headers: vi.fn(async () => new Headers()),
+  cookies: vi.fn(async () => ({ get: vi.fn(() => undefined) })),
 }));
 
 vi.mock("@/lib/pakasir", () => ({
@@ -99,7 +101,7 @@ function makeRequest(body: unknown): Request {
 
 const USER_ID = "user-1";
 const WS_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
-const WS_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+const _WS_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 
 describe("POST /api/billing/checkout — request shape and branch ordering", () => {
   beforeEach(() => {

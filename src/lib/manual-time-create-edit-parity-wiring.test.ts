@@ -7,7 +7,7 @@ const action = readFileSync("src/lib/actions/time.ts", "utf8");
 
 describe("manual time create/edit form parity", () => {
   it("uses edit-entry field order and controls in Catat Waktu", () => {
-    const labels = ["Klien", "Project", "Task", "Tanggal", "Durasi (menit)", "Deskripsi", "Tag", "Bisa ditagih", "Status"];
+    const labels = ["Klien & Proyek", "Tugas", "Deskripsi", "Tag", "Durasi (HH:MM:SS)", "Tanggal", "Tagihan / Billable"];
     let cursor = -1;
     for (const label of labels) {
       const next = create.indexOf(label, cursor + 1);
@@ -15,7 +15,7 @@ describe("manual time create/edit form parity", () => {
       cursor = next;
     }
     expect(create).toContain('value={billable ? "yes" : "no"}');
-    expect(create).toContain('value={status}');
+    expect(create).toContain('status: "approved"');
     expect(create).not.toContain("manual-time-hours");
   });
 

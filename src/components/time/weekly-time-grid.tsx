@@ -12,15 +12,15 @@ import { Timesheet } from "@/components/time/timesheet";
 import { localDateIso, weekStartDate } from "@/lib/effective-work-date";
 import { useT } from "@/lib/i18n-client";
 
-type ProjectOption = { id: string; name: string };
-type TaskOption = { id: string; title: string; projectId: string };
+type _ProjectOption = { id: string; name: string };
+type _TaskOption = { id: string; title: string; projectId: string };
 type AddedRow = { projectId: string; taskId: string };
 
 function key(projectId: string, taskId: string | null) {
   return `${projectId}:${taskId ?? "task"}`;
 }
 
-function minutesLabel(minutes: number, hLabel = "j", mLabel = "m") {
+function minutesLabel(minutes: number, _hLabel = "j", _mLabel = "m") {
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
   return `${String(hours).padStart(2, "0")}:${String(rest).padStart(2, "0")}`;
@@ -211,7 +211,7 @@ export function WeeklyTimeGrid({
                             onClick={() => {
                               const existing = cell.entries[0];
                               const projectObj = projects.find((p) => p.id === row.projectId);
-                              const taskObj = tasks.find((t) => t.id === row.taskId);
+                              const _taskObj = tasks.find((t) => t.id === row.taskId);
                               if (existing) {
                                 setEditingEntry({
                                   id: existing.id,

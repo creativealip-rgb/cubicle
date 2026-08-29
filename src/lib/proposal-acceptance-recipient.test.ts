@@ -8,13 +8,14 @@ const body = source.slice(
 );
 
 describe("proposal acceptance recipient guard", () => {
-  it("requires linked Client before creating project and invoice", () => {
-    expect(body).toContain('if (!p.clientId) throw new Error("Proposal recipient is not linked to a Client");');
-    expect(body).toContain("clientId: p.clientId");
+  it("resolves a linked Client before creating project and invoice", () => {
+    expect(body).toContain("let clientId = p.clientId");
+    expect(body).toContain("if (!clientId)");
+    expect(body).toContain("clientId,");
   });
 
-  it("keeps proposal acceptance free of implicit Client creation", () => {
-    expect(body).not.toContain("createClient(");
-    expect(body).not.toContain("createClientFromSignedContract");
+  it("reuses an email-matched Client before creating one", () => {
+    expect(body).toContain("existingClient");
+    expect(body).toContain("tx.insert(clients)");
   });
 });

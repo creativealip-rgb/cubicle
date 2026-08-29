@@ -10,16 +10,16 @@ export type ProjectBillingInvoice = { id: string; invoiceNumber: string; issueDa
 type DialogProject = Parameters<typeof ProjectInvoiceCreateDialog>[0]["project"];
 type DialogClient = Parameters<typeof ProjectInvoiceCreateDialog>[0]["client"];
 
-export async function ProjectBillingTab({ project, client, invoices, baseCurrency, currencyRates, retainerPeriod = null }: { project: DialogProject; client: DialogClient; invoices: ProjectBillingInvoice[]; baseCurrency: string; currencyRates: Array<{ fromCurrency: string; rate: string }>; retainerPeriod?: RetainerPeriodView | null }) {
+export async function ProjectBillingTab({ project, client, invoices, baseCurrency, currencyRates, proposedInvoiceNumber, retainerPeriod = null }: { project: DialogProject; client: DialogClient; invoices: ProjectBillingInvoice[]; baseCurrency: string; currencyRates: Array<{ fromCurrency: string; rate: string }>; proposedInvoiceNumber: string; retainerPeriod?: RetainerPeriodView | null }) {
   const lang = await getCurrentLang();
   const t = createT(lang);
   return <div className="space-y-4">
     <div className="flex items-center justify-between gap-3">
       <h3 className="font-semibold">{t("Invoice terkait", "Related Invoices")}</h3>
       {project.billingType === "retainer" ? (
-        <RetainerProjectInvoiceActions projectId={project.id} period={retainerPeriod} />
+        <RetainerProjectInvoiceActions projectId={project.id} period={retainerPeriod} proposedInvoiceNumber={proposedInvoiceNumber} />
       ) : (
-        <ProjectInvoiceCreateDialog project={project} client={client} baseCurrency={baseCurrency} currencyRates={currencyRates} />
+        <ProjectInvoiceCreateDialog project={project} client={client} baseCurrency={baseCurrency} proposedInvoiceNumber={proposedInvoiceNumber} currencyRates={currencyRates} />
       )}
     </div>
     {project.billingType === "retainer" && retainerPeriod ? (

@@ -57,10 +57,11 @@ export function ProjectEditDialog({
           <Pencil className="h-3 w-3" /> {t("Ubah", "Edit")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90dvh] w-[calc(100%-1rem)] overflow-y-auto p-4 sm:max-w-[500px] sm:p-6">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[min(90dvh,800px)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+        <DialogHeader className="border-b px-6 py-4">
           <DialogTitle>{t("Ubah Proyek", "Edit Project")}</DialogTitle>
         </DialogHeader>
+        <div className="flex-1 overflow-y-auto p-6">
         <ProjectForm
           mode="edit"
           clientId={project.clientId}
@@ -95,6 +96,7 @@ export function ProjectEditDialog({
             refresh();
           }}
         />
+        </div>
       </DialogContent>
     </Dialog>
   );

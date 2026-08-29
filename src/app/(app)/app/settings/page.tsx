@@ -7,13 +7,10 @@ import { eq, and } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { Settings, Users, Receipt, Calendar, Sparkles, ImageIcon, Plug, Coins, CheckCircle2, Circle } from "lucide-react";
+import { Settings, Users, Receipt, Calendar, CheckCircle2, Circle } from "lucide-react";
 import { TeamManager } from "@/components/settings/team-manager";
 import { WorkspaceBrandingForm } from "@/components/settings/workspace-branding-form";
 import { WorkspaceNameForm } from "@/components/settings/workspace-name-form";
-import { BookingSlugForm } from "@/components/settings/booking-slug-form";
 import { GoogleCalendarConnect } from "@/components/settings/google-calendar-connect";
 import { CurrencyRatesForm } from "@/components/settings/currency-rates-form";
 import { SettingsTabs } from "@/components/settings/settings-tabs";
@@ -26,6 +23,7 @@ import {
 } from "@/lib/google-calendar";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import BillingPage from "@/app/(app)/app/billing/page";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -83,14 +81,6 @@ export default async function SettingsPage({
     .where(eq(workspaceCurrencyRates.workspaceId, workspaceId))
     .orderBy(workspaceCurrencyRates.fromCurrency);
 
-  const [ownerUser] = workspace?.ownerId
-    ? await db
-        .select({ email: users.email })
-        .from(users)
-        .where(eq(users.id, workspace.ownerId))
-        .limit(1)
-    : [null];
-
   const workspaceSetupItems = [
     {
       label: t("Nama bisnis / workspace", "Business / workspace name"),
@@ -104,10 +94,7 @@ export default async function SettingsPage({
       label: t("Alamat atau telepon bisnis", "Business address or phone"),
       done: Boolean(workspace.billingAddress || workspace.billingPhone),
     },
-    {
-      label: t("Booking slug / link booking", "Booking slug / booking link"),
-      done: Boolean(workspace.bookingSlug),
-    },
+
   ];
   const invoiceSetupItems = [
     {
@@ -178,18 +165,18 @@ export default async function SettingsPage({
                   </CardTitle>
                   <CardDescription>
                     {t(
-                      "Nama, slug, dan mata uang default workspace kamu.",
-                      "Your workspace name, slug, and default currency.",
+                      "Profil workspace dan branding bisnis kamu.",
+                      "Your workspace profile and business branding.",
                     )}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 text-sm">
                   <WorkspaceNameForm defaultName={workspace.name} canEdit={canEditWorkspace} />
+                  <div className="border-t pt-3">
+                    <h3 className="mb-3 text-sm font-semibold">{t("Profil workspace & Branding", "Workspace profile & Branding")}</h3>
+                    <WorkspaceBrandingForm section="workspace" canEdit={canEditWorkspace} defaults={{ billingName: workspace.billingName, billingEmail: workspace.billingEmail, billingPhone: workspace.billingPhone, billingAddress: workspace.billingAddress, taxId: workspace.taxId, logoUrl: workspace.logoUrl, defaultCurrency: workspace.defaultCurrency, defaultTaxRate: workspace.defaultTaxRate, defaultHourlyRate: workspace.defaultHourlyRate, defaultInvoiceTerms: workspace.defaultInvoiceTerms, replyToEmail: workspace.replyToEmail }} />
+                  </div>
                   <div className="space-y-3 border-t pt-3">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Slug</span>
-                      <Badge variant="secondary">{workspace.slug}</Badge>
-                    </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">{t("Mata Uang", "Currency")}</span>
                       <span>{workspace.defaultCurrency}</span>
@@ -200,12 +187,11 @@ export default async function SettingsPage({
                     </div>
                     <p className="text-[11px] text-muted-foreground">
                       {t(
-                        "Ubah mata uang / pajak default di tab Branding & Invoice.",
-                        "Change default currency / tax in Branding & Invoice tab.",
+                        "Atur default invoice di tab Invoice.",
+                        "Change invoice defaults in the Invoice tab.",
                       )}
                     </p>
                   </div>
-                  <BookingSlugForm defaultSlug={workspace.bookingSlug} canEdit={canEditWorkspace} />
                   <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-2">
                     {workspaceSetupItems.map((item) => {
                       const Icon = item.done ? CheckCircle2 : Circle;
@@ -219,31 +205,7 @@ export default async function SettingsPage({
                   </div>
                 </CardContent>
               </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Coins className="h-5 w-5" /> {t("Kurs finance", "Finance FX rates")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t(
-                      "Konversi multi-currency ke base currency untuk ringkasan dashboard, laporan, dan KPI pengeluaran (manual rate).",
-                      "Convert multi-currency totals into base currency for dashboard, reports, and expense KPIs (manual rates).",
-                    )}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <CurrencyRatesForm
-                    baseCurrency={workspace.defaultCurrency || "IDR"}
-                    rates={currencyRateRows.map((r) => ({
-                      id: r.id,
-                      fromCurrency: r.fromCurrency,
-                      rate: Number(r.rate),
-                    }))}
-                    canEdit={canEditWorkspace}
-                    showBaseCurrencyApprox={workspace.showBaseCurrencyApprox !== false}
-                  />
-                </CardContent>
-              </Card>
+
             </>
           }
           account={
@@ -307,7 +269,7 @@ export default async function SettingsPage({
               </CardContent>
             </Card>
           }
-          branding={
+          invoice={
             <>
               {invoiceSetupDone < invoiceSetupItems.length && (
                 <Card className="border-amber-200 bg-amber-50/70">
@@ -332,7 +294,7 @@ export default async function SettingsPage({
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <ImageIcon className="h-5 w-5" /> {t("Branding & Invoice", "Branding & Invoice")}
+                    <Receipt className="h-5 w-5" /> {t("Default Invoice", "Invoice Defaults")}
                   </CardTitle>
                   <CardDescription>
                     {t(
@@ -342,6 +304,8 @@ export default async function SettingsPage({
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <WorkspaceBrandingForm section="invoice" canEdit={canEditWorkspace} defaults={{ billingName: workspace.billingName, billingEmail: workspace.billingEmail, billingPhone: workspace.billingPhone, billingAddress: workspace.billingAddress, taxId: workspace.taxId, logoUrl: workspace.logoUrl, defaultCurrency: workspace.defaultCurrency, defaultTaxRate: workspace.defaultTaxRate, defaultHourlyRate: workspace.defaultHourlyRate, defaultInvoiceTerms: workspace.defaultInvoiceTerms, replyToEmail: workspace.replyToEmail }} />
+                  <CurrencyRatesForm baseCurrency={workspace.defaultCurrency || "IDR"} rates={currencyRateRows.map((r) => ({ id: r.id, fromCurrency: r.fromCurrency, rate: Number(r.rate) }))} canEdit={canEditWorkspace} showBaseCurrencyApprox={workspace.showBaseCurrencyApprox !== false} />
                   <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-2">
                     {invoiceSetupItems.map((item) => {
                       const Icon = item.done ? CheckCircle2 : Circle;
@@ -353,24 +317,7 @@ export default async function SettingsPage({
                       );
                     })}
                   </div>
-                  <WorkspaceBrandingForm
-                    canEdit={canEditWorkspace}
-                    defaults={{
-                      billingName: workspace.billingName,
-                      billingEmail: workspace.billingEmail,
-                      billingPhone: workspace.billingPhone,
-                      billingAddress: workspace.billingAddress,
-                      taxId: workspace.taxId,
-                      logoUrl: workspace.logoUrl,
-                      defaultCurrency: workspace.defaultCurrency,
-                      defaultTaxRate: workspace.defaultTaxRate,
-                      defaultHourlyRate: workspace.defaultHourlyRate,
-                      defaultInvoiceTerms: workspace.defaultInvoiceTerms,
 
-                      replyToEmail: workspace.replyToEmail,
-                    }}
-                    ownerEmailHint={ownerUser?.email ?? null}
-                  />
                 </CardContent>
               </Card>
             </>
@@ -379,18 +326,21 @@ export default async function SettingsPage({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" /> Google Calendar
+                  <Calendar className="h-5 w-5" /> Google Calendar{" "}
+                  <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 border border-amber-300">
+                    Soon
+                  </span>
                 </CardTitle>
                 <CardDescription>
                   {t(
-                    "Hubungkan Google Calendar biar booking otomatis masuk event.",
-                    "Connect Google Calendar so bookings auto-create events.",
+                    "Integrasi Google Calendar sedang dalam tahap verifikasi oleh Google dan akan segera tersedia.",
+                    "Google Calendar integration is pending Google verification and will be available soon.",
                   )}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <GoogleCalendarConnect
-                  configured={googleStatus.configured}
+                  configured={false}
                   connected={googleStatus.connected}
                   email={googleStatus.connection?.googleAccountEmail ?? null}
                   status={googleStatus.connection?.status ?? null}
@@ -400,35 +350,7 @@ export default async function SettingsPage({
               </CardContent>
             </Card>
           }
-          more={
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Plug className="h-5 w-5" /> {t("Akses Cepat", "Quick Access")}
-                </CardTitle>
-                <CardDescription>
-                  {t("Pintasan ke pengaturan lain.", "Shortcuts to other settings.")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-3 md:grid-cols-3">
-                <Button asChild variant="outline" className="justify-start gap-2">
-                  <Link href="/app/billing">
-                    <Receipt className="h-4 w-4" /> {t("Langganan & Tagihan", "Subscription & Billing")}
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="justify-start gap-2">
-                  <Link href="/app/calendar">
-                    <Calendar className="h-4 w-4" /> {t("Booking & Kalender", "Booking & Calendar")}
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="justify-start gap-2">
-                  <Link href="/app/billing">
-                    <Sparkles className="h-4 w-4" /> {t("Penggunaan AI", "AI Usage")}
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          }
+          billing={<BillingPage searchParams={Promise.resolve({})} />}
         />
       </Suspense>
     </div>

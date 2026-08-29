@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { personalSites } from "@/db/schema";
 import { users } from "@/db/schema";
 import { sendNotification } from "@/lib/notifications";
+import { getPublishedPersonalSiteBySlug } from "@/lib/actions/personal-site";
 import { normalizePersonalSiteSlug } from "@/lib/personal-site/model";
 
 // In-memory rate limiter: max 3 per hour per IP
@@ -62,13 +62,8 @@ export async function POST(
     return NextResponse.json({ error: "Message too long" }, { status: 400 });
   }
 
-  // Find site and owner
-  const [site] = await db
-    .select({ userId: personalSites.userId, title: personalSites.title })
-    .from(personalSites)
-    .where(and(eq(personalSites.slug, clean), eq(personalSites.published, true)))
-    .limit(1);
-
+  // Find effective published site and owner
+  const site = await getPublishedPersonalSiteBySlug(clean);
   if (!site) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

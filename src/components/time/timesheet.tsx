@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
+import { effectiveWorkDate } from "@/lib/effective-work-date";
 import { deleteTimeEntry, updateTimeEntry } from "@/lib/actions/time";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,14 +28,12 @@ import {
   Clock,
   Trash2,
   Filter,
-  Pencil,
   Loader2,
   Tag as TagIcon,
   Calendar as CalendarIcon,
   Hourglass,
 } from "lucide-react";
 import { useT } from "@/lib/i18n-client";
-import { timeEntryStatusVariant } from "@/lib/status-badge";
 import { allowsTimeTrackingProject } from "@/lib/billing-model";
 
 const PAGE_SIZE = 10;
@@ -47,6 +46,7 @@ interface TimeEntry {
   manualMinutes?: number | null;
   billable: boolean;
   hourlyRate: string | number | null;
+  workDate?: string | null;
   startTime: Date | string | null;
   endTime: Date | string | null;
   status: string;
@@ -113,12 +113,12 @@ function toDateInputValue(value: Date | string | null | undefined): string {
   return `${year}-${month}-${day}`;
 }
 
-function localDateKey(value: Date | string | null | undefined): string {
-  return value ? toDateInputValue(value) : "";
+function localDateKey(entry: TimeEntry): string {
+  return effectiveWorkDate(entry);
 }
 
 export function Timesheet({ entries, clients, projects, tasks = [], activities: _activities = [], compact = false, dialogOnly = false, initialEditEntry, onEditClose }: TimesheetProps) {
-  const { t, locale } = useT();
+  const { t } = useT();
   const { refresh } = useAppTransition();
 
   const [clientFilter, setClientFilter] = useState<string>("all");
@@ -136,6 +136,8 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
     if (initialEditEntry) {
       openEdit(initialEditEntry);
     }
+    // openEdit initializes edit state from the new prop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialEditEntry]);
   const [editLoading, setEditLoading] = useState(false);
   const [editDescription, setEditDescription] = useState("");
@@ -148,7 +150,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
   const [editEndTime, setEditEndTime] = useState("");
   const [editMinutes, setEditMinutes] = useState("");
   const [editBillable, setEditBillable] = useState(true);
-  const [editStatus, setEditStatus] = useState<"draft" | "approved">("approved");
+  const [_editStatus, setEditStatus] = useState<"draft" | "approved">("approved");
   const [deleteEntry, setDeleteEntry] = useState<TimeEntry | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -167,11 +169,11 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
       )
         return false;
       if (dateFrom) {
-        const entryDate = localDateKey(e.startTime);
+        const entryDate = localDateKey(e);
         if (entryDate < dateFrom) return false;
       }
       if (dateTo) {
-        const entryDate = localDateKey(e.startTime);
+        const entryDate = localDateKey(e);
         if (entryDate > dateTo) return false;
       }
       return true;
@@ -278,7 +280,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
     return `${h}${hLabel} ${m}${mLabel}`;
   }
 
-  function formatRate(rate: string | number | null, currency: string | null): string | null {
+  function _formatRate(rate: string | number | null, currency: string | null): string | null {
     if (rate === null || rate === "") return null;
     const numericRate = Number(rate);
     if (!Number.isFinite(numericRate) || numericRate <= 0) return null;
@@ -295,9 +297,14 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
     if (!deleteEntry) return;
     setDeleteLoading(true);
     try {
-      await deleteTimeEntry(deleteEntry.id);
+      const result = await deleteTimeEntry(deleteEntry.id);
+      if (result && "success" in result && result.success === false) {
+        toast.error(result.error);
+        return;
+      }
       toast.success(t("Entri dihapus", "Entry deleted"));
       setDeleteEntry(null);
+      setEditEntry(null);
       refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal menghapus", "Failed to delete"));
@@ -337,8 +344,8 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
     setEditTaskSearch(taskTitle);
     setEditTaskSearchOpen(false);
     
-    // Set date from startTime
-    const initialDate = toDateInputValue(entry.startTime);
+    // Set date from workDate or startTime
+    const initialDate = entry.workDate ? String(entry.workDate).slice(0, 10) : toDateInputValue(entry.startTime);
     setEditDate(initialDate);
 
     const sTime = entry.startTime ? new Date(entry.startTime).toTimeString().slice(0, 5) : "";
@@ -689,7 +696,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
 
             <DialogFooter className="shrink-0 items-center justify-between gap-2 border-t bg-background px-5 py-4 sm:gap-3">
               <div>
-                {editEntry && (
+                {editEntry && editEntry.status !== "invoiced" && (
                   <Button
                     variant="ghost"
                     type="button"
@@ -916,9 +923,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                       <span>{entry.userName || t("Tidak diketahui", "Unknown")}</span>
                       <span>·</span>
                       <span>
-                        {entry.startTime
-                          ? new Date(entry.startTime).toLocaleDateString(locale)
-                          : "—"}
+                        {effectiveWorkDate(entry)}
                       </span>
                     </div>
                     {entry.tags && (

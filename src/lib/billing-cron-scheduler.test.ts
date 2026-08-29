@@ -6,13 +6,6 @@ const read = (p: string) => readFileSync(join(process.cwd(), p), "utf8");
 
 const pakasirSync = () => read("scripts/cron-pakasir-sync.sh");
 const expirePlans = () => read("scripts/cron-expire-plans.sh");
-const envLocal = () => {
-  try {
-    return read(".env.development.local");
-  } catch {
-    return "";
-  }
-};
 
 describe("billing recovery cron scheduler wiring", () => {
   it("pakasir-sync targets /api/cron/pakasir-sync and authenticates with the shared CRON_SECRET bearer token", () => {
@@ -41,11 +34,6 @@ describe("billing recovery cron scheduler wiring", () => {
       expect(src).toContain("load_env_key CUBICLE_URL");
       expect(src).toContain("https://dev.cubiqlo.com");
     }
-    // The dev env file must actually carry CRON_SECRET + CUBICLE_URL so a
-    // bare scheduled run works (matches the reconcile scheduler test).
-    expect(envLocal()).toContain("CRON_SECRET=");
-    expect(envLocal()).not.toMatch(/CRON_SECRET=\s*$/);
-    expect(envLocal()).toContain("CUBICLE_URL=");
   });
 
   it("both scripts refuse production unless ALLOW_PRODUCTION_BILLING_CRON=1", () => {

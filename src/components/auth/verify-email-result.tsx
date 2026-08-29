@@ -26,7 +26,7 @@ export function VerifyEmailSuccess() {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          router.push("/app/dashboard");
+          router.push("/onboarding");
           return 0;
         }
         return prev - 1;
@@ -57,7 +57,7 @@ export function VerifyEmailSuccess() {
         </p>
       </CardContent>
       <CardFooter className="flex justify-center">
-        <Button onClick={() => router.push("/app/dashboard")}>
+        <Button onClick={() => router.push("/onboarding")}>
           Masuk ke Dashboard
         </Button>
       </CardFooter>

@@ -22,9 +22,9 @@ export function DeleteProposalButton({
   const router = useRouter();
   const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   async function onDelete() {
-    if (!confirm(confirmText)) return;
     setLoading(true);
     try {
       await deleteProposal(proposalId);
@@ -38,12 +38,26 @@ export function DeleteProposalButton({
     }
   }
 
+  if (confirming) {
+    return (
+      <span className="inline-flex items-center gap-2" role="group" aria-label="Konfirmasi hapus proposal">
+        <span className="text-xs text-muted-foreground">{confirmText}</span>
+        <LoadingButton type="button" variant="destructive" size="sm" onClick={onDelete} loading={loading} loadingText="...">
+          Hapus
+        </LoadingButton>
+        <LoadingButton type="button" variant="outline" size="sm" onClick={() => setConfirming(false)} disabled={loading}>
+          Batal
+        </LoadingButton>
+      </span>
+    );
+  }
+
   return (
     <LoadingButton
       type="button"
       variant="outline"
       size="sm"
-      onClick={onDelete}
+      onClick={() => setConfirming(true)}
       loading={loading}
       loadingText="..."
       className="text-destructive hover:text-destructive"

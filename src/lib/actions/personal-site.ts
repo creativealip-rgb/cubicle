@@ -1,10 +1,10 @@
 "use server";
 
-import { and, eq, ne, or } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { personalSites, workspaces } from "@/db/schema";
+import { personalSites } from "@/db/schema";
 import { assertWorkspaceOwner, requireUser } from "@/lib/access";
 import { auth } from "@/lib/auth";
 import {
@@ -15,7 +15,10 @@ import {
   type PersonalSiteInput,
 } from "@/lib/personal-site/model";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
-
+import { getEffectivePlan } from "@/lib/plan";
+import { getPersonalSiteOwnerPlanContext, listPersonalSiteRows } from "@/lib/personal-site/plan-context";
+import { canEditPersonalSiteSlug, getEffectivePersonalSiteSlug } from "@/lib/personal-site/slug-policy";
+import { findPersonalSiteByEffectiveSlug, hasEffectiveSlugCollision } from "@/lib/personal-site/slug-records";
 export type PersonalSiteActionState = {
   status: "idle" | "success" | "error";
   message?: string;
@@ -29,11 +32,18 @@ async function ownerContext() {
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
   await assertWorkspaceOwner(db, user.id, workspaceId);
-  return { userId: user.id, workspaceId };
+  const planContext = await getPersonalSiteOwnerPlanContext(workspaceId);
+  if (!planContext) throw new Error("Personal site owner workspace not found");
+  return { userId: user.id, workspaceId, planContext };
+}
+
+export async function getPersonalSiteSlugEntitlement(): Promise<boolean> {
+  const { planContext } = await ownerContext();
+  return canEditPersonalSiteSlug(getEffectivePlan(planContext.plan, planContext.planExpiresAt));
 }
 
 export async function getPersonalSiteForCurrentOwner(): Promise<PersonalSiteInput | null> {
-  const { userId, workspaceId } = await ownerContext();
+  const { userId, workspaceId, planContext } = await ownerContext();
   const [site] = await db
     .select()
     .from(personalSites)
@@ -42,6 +52,11 @@ export async function getPersonalSiteForCurrentOwner(): Promise<PersonalSiteInpu
   if (!site) return null;
   return normalizeStoredPersonalSite({
     ...site,
+    slug: getEffectivePersonalSiteSlug(
+      getEffectivePlan(planContext.plan, planContext.planExpiresAt),
+      planContext.workspaceSlug,
+      site.slug,
+    ),
     subtitle: site.subtitle ?? "",
     about: site.about ?? "",
     ctaLabel: site.ctaLabel ?? "",
@@ -50,42 +65,26 @@ export async function getPersonalSiteForCurrentOwner(): Promise<PersonalSiteInpu
 }
 
 export async function getSuggestedPersonalSiteDefaults(): Promise<PersonalSiteInput> {
-  const { userId, workspaceId } = await ownerContext();
-  const [workspace] = await db
-    .select({ slug: workspaces.slug })
-    .from(workspaces)
-    .where(eq(workspaces.id, workspaceId))
-    .limit(1);
-  const base = normalizePersonalSiteSlug(workspace?.slug || "my-studio");
-  const candidates = [base, `${base}-${userId.slice(0, 6).toLowerCase()}`];
-  for (const slug of candidates) {
-    if (slug.length < 2) continue;
-    const [taken] = await db.select({ id: personalSites.id }).from(personalSites).where(eq(personalSites.slug, slug)).limit(1);
-    if (!taken) return { ...DEFAULT_PERSONAL_SITE, slug };
-  }
-  return { ...DEFAULT_PERSONAL_SITE, slug: `site-${userId.replace(/[^a-z0-9]/gi, "").slice(0, 10).toLowerCase()}` };
+  const { planContext } = await ownerContext();
+  const slug = getEffectivePersonalSiteSlug(
+    getEffectivePlan(planContext.plan, planContext.planExpiresAt),
+    planContext.workspaceSlug,
+    null,
+  );
+  return { ...DEFAULT_PERSONAL_SITE, slug };
 }
 
 export async function checkSlugUnique(slug: string): Promise<boolean> {
-  const { userId, workspaceId } = await ownerContext();
-  const clean = normalizePersonalSiteSlug(slug);
-  const parsed = personalSiteInputSchema.shape.slug.safeParse(clean);
-  if (!parsed.success) return false;
-
-  const [taken] = await db
-    .select({ id: personalSites.id })
-    .from(personalSites)
-    .where(
-      and(
-        eq(personalSites.slug, clean),
-        or(
-          ne(personalSites.workspaceId, workspaceId),
-          ne(personalSites.userId, userId),
-        ),
-      ),
-    )
-    .limit(1);
-  return !taken;
+  const { userId, workspaceId, planContext } = await ownerContext();
+  const candidate = getEffectivePersonalSiteSlug(
+    getEffectivePlan(planContext.plan, planContext.planExpiresAt),
+    planContext.workspaceSlug,
+    slug,
+  );
+  if (!personalSiteInputSchema.shape.slug.safeParse(candidate).success) return false;
+  const rows = await listPersonalSiteRows();
+  const current = rows.find((row) => row.workspaceId === workspaceId && row.userId === userId);
+  return !hasEffectiveSlugCollision(rows, candidate, current?.id);
 }
 
 function postgresDetails(error: unknown) {
@@ -110,9 +109,15 @@ export async function savePersonalSite(
     return { status: "error", message: "Data landing page tidak valid. Muat ulang lalu coba lagi." };
   }
 
+  const { userId, workspaceId, planContext } = await ownerContext();
+  const effectiveSlug = getEffectivePersonalSiteSlug(
+    getEffectivePlan(planContext.plan, planContext.planExpiresAt),
+    planContext.workspaceSlug,
+    String((decoded as Record<string, unknown>)?.slug || ""),
+  );
   const payload = personalSiteInputSchema.safeParse({
     ...(decoded as Record<string, unknown>),
-    slug: normalizePersonalSiteSlug(String((decoded as Record<string, unknown>)?.slug || "")),
+    slug: effectiveSlug,
     published: intent === "publish" ? true : intent === "unpublish" || intent === "draft" ? false : false,
   });
   if (!payload.success) {
@@ -124,15 +129,15 @@ export async function savePersonalSite(
   }
   const data = payload.data;
 
-  if (data.published && data.ctaLabel && !data.ctaUrl) {
+  const rows = await listPersonalSiteRows();
+  const currentRow = rows.find((row) => row.workspaceId === workspaceId && row.userId === userId);
+  if (hasEffectiveSlugCollision(rows, data.slug, currentRow?.id)) {
     return {
       status: "error",
-      message: "CTA publik membutuhkan tujuan yang aman.",
-      fieldErrors: { ctaUrl: ["Isi URL booking, email, telepon, atau website publik."] },
+      message: "Slug sudah dipakai. Pilih alamat publik lain.",
+      fieldErrors: { slug: ["Slug sudah dipakai."] },
     };
   }
-
-  const { userId, workspaceId } = await ownerContext();
   let previousSlug: string | null = null;
 
   try {
@@ -195,31 +200,38 @@ export async function savePersonalSite(
   };
 }
 
-export async function getPublishedPersonalSiteBySlug(slug: string): Promise<PersonalSiteInput | null> {
+export async function getPublishedPersonalSiteBySlug(
+  slug: string,
+): Promise<(PersonalSiteInput & { userId: string }) | null> {
   const clean = normalizePersonalSiteSlug(slug);
-  if (clean !== slug) return null;
+  const match = findPersonalSiteByEffectiveSlug(await listPersonalSiteRows(), clean, { publishedOnly: true });
+  if (!match) return null;
   const [site] = await db
     .select()
     .from(personalSites)
-    .where(and(eq(personalSites.slug, clean), eq(personalSites.published, true)))
+    .where(eq(personalSites.id, match.id))
     .limit(1);
   if (!site) return null;
-  return normalizeStoredPersonalSite({
-    ...site,
-    subtitle: site.subtitle ?? "",
-    about: site.about ?? "",
-    ctaLabel: site.ctaLabel ?? "",
-    ctaUrl: site.ctaUrl ?? "",
-  });
+  return {
+    ...normalizeStoredPersonalSite({
+      ...site,
+      subtitle: site.subtitle ?? "",
+      about: site.about ?? "",
+      ctaLabel: site.ctaLabel ?? "",
+      ctaUrl: site.ctaUrl ?? "",
+    }),
+    userId: site.userId,
+  };
 }
 
 export async function getPersonalSiteBySlugForPreview(slug: string): Promise<PersonalSiteInput | null> {
   const clean = normalizePersonalSiteSlug(slug);
-  if (clean !== slug) return null;
+  const match = findPersonalSiteByEffectiveSlug(await listPersonalSiteRows(), clean);
+  if (!match) return null;
   const [site] = await db
     .select()
     .from(personalSites)
-    .where(eq(personalSites.slug, clean))
+    .where(eq(personalSites.id, match.id))
     .limit(1);
   if (!site) return null;
   if (site.published) {

@@ -143,7 +143,8 @@ export function buildContractStarterBlocks(): DocumentBlock[] {
     { id: crypto.randomUUID(), type: "text", content: "" },
     { id: crypto.randomUUID(), type: "heading", level: 2, content: "Services" },
     { id: crypto.randomUUID(), type: "list", items: ["", "", ""], ordered: false },
-    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Payment" },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Contract Value & Payment" },
+    { id: crypto.randomUUID(), type: "table", rows: [["Description", "Amount"], ["Services", "{{contract_value}}"]] },
     { id: crypto.randomUUID(), type: "text", content: "A down payment of 50% is due upon signing; the remaining balance is due upon completion. Invoices are payable within 14 days of receipt." },
     { id: crypto.randomUUID(), type: "heading", level: 2, content: "Term & Termination" },
     { id: crypto.randomUUID(), type: "text", content: "This Agreement begins on {{contract_date}} and remains in effect until {{valid_until}}." },
@@ -181,7 +182,7 @@ export function isSameOriginMediaSrc(src: string): boolean {
 /**
  * Build a media block (`image` or `attachment`) from a workspace file record.
  *
- * The same-origin `src` (`/api/files/...`) is derived from the storage key so
+ * The same-origin `src` (`/api/files/...`) is derived from the file id so
  * the block passes `isSafeImageBlock` / `isSafeAttachmentMeta` and renders in
  * editor preview, public proposal, and (for attachments) the download link.
  * `fileId` is the workspace-scoped `files` row id, so the download route can
@@ -201,9 +202,7 @@ export function buildDocumentMediaBlock(
   if (!file.id || !file.name || !file.storageKey) {
     throw new Error("Uploaded file record is incomplete");
   }
-  const src = file.storageKey.startsWith("/")
-    ? file.storageKey
-    : `/api/files/raw/${file.storageKey}`;
+  const src = `/api/files/${file.id}/download`;
   return {
     id: crypto.randomUUID(),
     type: kind,

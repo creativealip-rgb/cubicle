@@ -44,6 +44,7 @@ import { buildRateMap } from "@/lib/currency-base";
 import { convertCurrency, resolveFixedPriceInvoiceAmount, resolveProjectAmount } from "@/lib/invoice-project-items";
 import { buildProjectServiceDocumentLines } from "@/lib/project-service-lines";
 import { assertBillingModelAllowsTimeInvoice, resolveBillingModel } from "@/lib/billing-model";
+import { invoiceNumberTakenMessage, isInvoiceNumberUniqueConstraint, normalizeInvoiceNumber } from "@/lib/invoice-number";
 import { encryptSecret } from "@/lib/google-calendar";
 import { ProjectInvoiceSourceSchema, billingDateInTimezone, isFixedInvoiceBillingModel, resolveFixedSourceAmount } from "@/lib/project-invoice-sources";
 
@@ -64,6 +65,7 @@ const createInvoiceSchema = z.object({
   currency: z.string().default("USD"),
   notes: z.string().optional(),
   terms: z.string().optional(),
+  invoiceNumber: z.string().optional(),
   items: z.array(z.object({
     description: z.string().min(1),
     quantity: z.number().positive(),
@@ -83,6 +85,7 @@ const updateInvoiceSchema = z.object({
   terms: z.string().optional(),
   discount: z.number().optional(),
   tax: z.number().optional(),
+  invoiceNumber: z.string().optional(),
 });
 
 const addItemSchema = z.object({
@@ -91,6 +94,19 @@ const addItemSchema = z.object({
   quantity: z.number().positive().default(1),
   unitPrice: z.number().min(0).default(0),
 });
+
+export async function getProposedInvoiceNumber(): Promise<string> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  const [counter] = await db.select({ nextNumber: workspaceInvoiceCounters.nextNumber })
+    .from(workspaceInvoiceCounters).where(eq(workspaceInvoiceCounters.workspaceId, workspaceId)).limit(1);
+  const [maxRow] = await db.select({
+    maxNum: sql<number>`COALESCE(MAX(CAST(SUBSTRING(${invoices.invoiceNumber} FROM 'INV-([0-9]+)$') AS INTEGER)), 0)`,
+  }).from(invoices).where(eq(invoices.workspaceId, workspaceId));
+  return `INV-${String(Math.max(counter?.nextNumber ?? 1, Number(maxRow?.maxNum ?? 0) + 1)).padStart(4, "0")}`;
+}
 
 const addProjectItemSchema = z.object({
   invoiceId: z.string().uuid(),
@@ -135,6 +151,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
+  const t = await getT();
 
   // Check plan limits (plan is per-user, not per-workspace)
   const { getUserPlan, checkEntityLimit } = await import("@/lib/plan");
@@ -301,7 +318,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
     const maxExisting = Number(maxRow?.maxNum ?? 0);
     const counterNext = counter?.nextNumber ?? 1;
     const nextNum = Math.max(counterNext, maxExisting + 1);
-    const invoiceNumber = `INV-${String(nextNum).padStart(4, "0")}`;
+    const invoiceNumber = normalizeInvoiceNumber(parsed.invoiceNumber) ?? `INV-${String(nextNum).padStart(4, "0")}`;
 
     if (!counter) {
       await tx.insert(workspaceInvoiceCounters).values({
@@ -489,18 +506,17 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
       return inv;
     } catch (err: unknown) {
       // Surface a clean message instead of opaque RSC production digest.
-      const cause = err as { cause?: { code?: string; constraint?: string }; code?: string; constraint?: string };
-      const code = cause?.cause?.code ?? cause?.code;
-      const constraint = cause?.cause?.constraint ?? cause?.constraint;
-      if (code === "23505" || constraint === "invoices_workspace_id_invoice_number_unique") {
-        throw new Error(
-          `Nomor invoice ${invoiceNumber} sudah dipakai. Coba simpan lagi — nomor berikutnya akan digenerate otomatis.`,
-        );
-      }
+      if (isInvoiceNumberUniqueConstraint(err)) return {
+        error: t(
+          `Nomor invoice ${invoiceNumber} sudah dipakai di workspace ini`,
+          `Invoice number ${invoiceNumber} already exists in this workspace`,
+        ),
+      } as const;
       throw err;
     }
   });
 
+  if ("error" in invoice) return invoice;
   await writeActivityLog(workspaceId, user.id, "created_invoice", "invoice", invoice.id);
   return invoice;
 }
@@ -514,6 +530,17 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
 
   const parsed = updateInvoiceSchema.parse(input);
   const currentInvoice = await assertInvoiceInWorkspace(invoiceId, workspaceId);
+  const nextClientId = parsed.clientId ?? currentInvoice.clientId;
+  if (parsed.clientId !== undefined) {
+    const [validClient] = await db.select({ id: clients.id }).from(clients).where(and(eq(clients.id, parsed.clientId), eq(clients.workspaceId, workspaceId))).limit(1);
+    if (!validClient) throw new Error("Klien tidak ditemukan");
+  }
+  const nextProjectId = parsed.projectId ?? currentInvoice.projectId;
+  if (nextProjectId) {
+    const [validProject] = await db.select({ id: projects.id, clientId: projects.clientId }).from(projects).where(and(eq(projects.id, nextProjectId), eq(projects.workspaceId, workspaceId))).limit(1);
+    if (!validProject) throw new Error("Proyek tidak ditemukan");
+    if (validProject.clientId !== nextClientId) throw new Error("Proyek tidak sesuai dengan klien invoice");
+  }
   if (parsed.status === "cancelled" && currentInvoice.status === "draft") {
     throw new Error("Gunakan aksi Batalkan Invoice untuk membatalkan draft");
   }
@@ -544,34 +571,27 @@ export async function updateInvoice(invoiceId: string, input: z.infer<typeof upd
   if (parsed.terms !== undefined) updateData.terms = parsed.terms;
   if (parsed.discount !== undefined) updateData.discount = String(parsed.discount);
   if (parsed.tax !== undefined) updateData.tax = String(parsed.tax);
+  if (parsed.invoiceNumber !== undefined) {
+    if (currentInvoice.status !== "draft") throw new Error("Nomor invoice hanya dapat diubah saat draft / Invoice number can only be changed while draft");
+    updateData.invoiceNumber = normalizeInvoiceNumber(parsed.invoiceNumber) ?? currentInvoice.invoiceNumber;
+  }
 
-  const [inv] = await db
-    .update(invoices)
-    .set(updateData)
-    .where(eq(invoices.id, invoiceId))
-    .returning();
-
-  // When status is manually set to "paid" but no payment rows cover the
-  // full total, auto-create a payment row for the remaining amount so the
-  // invoice appears in reports (which aggregate from payments, not invoice
-  // status). This mirrors the "mark as paid" intent.
-  if (parsed.status === "paid") {
-    const [paidResult] = await db
-      .select({ total: sql<string>`coalesce(sum(${payments.amount}), '0')` })
-      .from(payments)
-      .where(eq(payments.invoiceId, invoiceId));
-    const paidSoFar = Number(paidResult?.total ?? 0);
-    const invoiceTotal = Number(inv.total ?? 0);
-    const remaining = invoiceTotal - paidSoFar;
-    if (remaining > 0) {
-      await db.insert(payments).values({
-        invoiceId,
-        amount: String(remaining),
-        paidAt: new Date().toISOString().slice(0, 10),
-        method: null,
-        notes: "Penandaan lunas otomatis",
-      });
-    }
+  let inv;
+  try {
+    inv = await db.transaction(async (tx) => {
+      const [locked] = await tx.select().from(invoices).where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId))).for("update").limit(1);
+      if (!locked) throw new Error("Invoice tidak ditemukan");
+      const [updated] = await tx.update(invoices).set(updateData).where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId))).returning();
+      if (parsed.status === "paid") {
+        const [paidResult] = await tx.select({ total: sql<string>`coalesce(sum(${payments.amount}), '0')` }).from(payments).where(eq(payments.invoiceId, invoiceId));
+        const remaining = Number(updated.total ?? 0) - Number(paidResult?.total ?? 0);
+        if (remaining > 0) await tx.insert(payments).values({ invoiceId, amount: String(remaining), paidAt: new Date().toISOString().slice(0, 10), method: null, notes: "Penandaan lunas otomatis" });
+      }
+      return updated;
+    });
+  } catch (err) {
+    if (isInvoiceNumberUniqueConstraint(err)) throw new Error(invoiceNumberTakenMessage(String(updateData.invoiceNumber)));
+    throw err;
   }
 
   await writeActivityLog(workspaceId, user.id, "updated_invoice", "invoice", invoiceId);
@@ -647,16 +667,6 @@ export async function voidInvoice(input: z.infer<typeof voidInvoiceSchema>) {
   if (["cancelled", "archived"].includes(inv.status)) {
     throw new Error("Invoice sudah dibatalkan atau diarsipkan");
   }
-  const [paidResult] = await db
-    .select({ total: sql<string>`coalesce(sum(${payments.amount}), '0')` })
-    .from(payments)
-    .where(eq(payments.invoiceId, parsed.invoiceId));
-  const hasPayments = Number(paidResult?.total ?? 0) > 0;
-  const isPaidOrPartiallyPaid = inv.status === "paid" || hasPayments;
-  if (!isPaidOrPartiallyPaid) {
-    throw new Error("Hanya invoice yang sudah dibayar atau sebagian dibayar yang bisa dibatalkan");
-  }
-
   await db.transaction(async (tx) => {
     const [locked] = await tx
       .select({ status: invoices.status })
@@ -667,6 +677,8 @@ export async function voidInvoice(input: z.infer<typeof voidInvoiceSchema>) {
     if (!locked || ["cancelled", "archived"].includes(locked.status)) {
       throw new Error("Status invoice berubah saat pembatalan");
     }
+    const [paidResult] = await tx.select({ total: sql<string>`coalesce(sum(${payments.amount}), '0')` }).from(payments).where(eq(payments.invoiceId, parsed.invoiceId));
+    if (locked.status !== "paid" && Number(paidResult?.total ?? 0) <= 0) throw new Error("Hanya invoice yang sudah dibayar atau sebagian dibayar yang bisa dibatalkan");
     const updated = await tx
       .update(invoices)
       .set({ status: "cancelled", updatedAt: new Date() })
@@ -725,6 +737,20 @@ export async function recalculateInvoice(invoiceId: string) {
   return updated;
 }
 
+type InvoiceTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+async function recalculateInvoiceInTransaction(tx: InvoiceTransaction, invoiceId: string, workspaceId: string) {
+  const [inv] = await tx.select().from(invoices)
+    .where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId)))
+    .for("update").limit(1);
+  if (!inv) throw new Error("Invoice tidak ditemukan");
+  const [result] = await tx.select({ sum: sql<string>`coalesce(sum(${invoiceItems.amount}), '0')` })
+    .from(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId));
+  const totals = calculateInvoiceTotals(Number(result?.sum || 0), Number(inv.discount), Number(inv.tax));
+  await tx.update(invoices).set({ subtotal: String(totals.subtotal), discount: String(totals.discount), tax: String(totals.tax), total: String(totals.total), updatedAt: new Date() })
+    .where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId)));
+}
+
 export async function addInvoiceItem(input: z.infer<typeof addItemSchema>) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
@@ -736,18 +762,14 @@ export async function addInvoiceItem(input: z.infer<typeof addItemSchema>) {
   const parsed = addItemSchema.parse(input);
   const amount = String(parsed.quantity * parsed.unitPrice);
 
-  const [item] = await db
-    .insert(invoiceItems)
-    .values({
-      invoiceId: parsed.invoiceId,
-      description: parsed.description,
-      quantity: String(parsed.quantity),
-      unitPrice: String(parsed.unitPrice),
-      amount,
-    })
-    .returning();
-
-  await recalculateInvoice(parsed.invoiceId);
+  const item = await db.transaction(async (tx) => {
+    const [created] = await tx.insert(invoiceItems).values({
+      invoiceId: parsed.invoiceId, description: parsed.description,
+      quantity: String(parsed.quantity), unitPrice: String(parsed.unitPrice), amount,
+    }).returning();
+    await recalculateInvoiceInTransaction(tx, parsed.invoiceId, workspaceId);
+    return created;
+  });
   await writeActivityLog(workspaceId, user.id, "added_invoice_item", "invoice_item", item.id);
   return item;
 }
@@ -815,13 +837,12 @@ export async function updateInvoiceItem(itemId: string, input: z.infer<typeof up
   if (parsed.unitPrice !== undefined) updateData.unitPrice = String(parsed.unitPrice);
   updateData.amount = String(qty * price);
 
-  const [updated] = await db
-    .update(invoiceItems)
-    .set(updateData)
-    .where(eq(invoiceItems.id, itemId))
-    .returning();
-
-  await recalculateInvoice(item.invoiceId);
+  const updated = await db.transaction(async (tx) => {
+    const [changed] = await tx.update(invoiceItems).set(updateData)
+      .where(and(eq(invoiceItems.id, itemId), eq(invoiceItems.invoiceId, item.invoiceId))).returning();
+    await recalculateInvoiceInTransaction(tx, item.invoiceId, workspaceId);
+    return changed;
+  });
   await writeActivityLog(workspaceId, user.id, "updated_invoice_item", "invoice_item", itemId);
   return updated;
 }
@@ -873,9 +894,9 @@ export async function deleteInvoiceItem(itemId: string) {
           );
       }
     }
+    await recalculateInvoiceInTransaction(tx, item.invoiceId, workspaceId);
   });
 
-  await recalculateInvoice(item.invoiceId);
   await writeActivityLog(workspaceId, user.id, "deleted_invoice_item", "invoice_item", itemId);
   return { success: true };
 }
@@ -1014,37 +1035,14 @@ export async function recordPayment(input: z.infer<typeof recordPaymentSchema>) 
 
   const parsed = recordPaymentSchema.parse(input);
 
-  const [inv] = await db
-    .select()
-    .from(invoices)
-    .where(eq(invoices.id, parsed.invoiceId))
-    .limit(1);
-  const t = await getT();
-  if (!inv) throw new Error(t("Invoice tidak ditemukan", "Invoice not found"));
-
-  const [paidResult] = await db
-    .select({
-      total: sql<string>`coalesce(sum(${payments.amount}), '0')`,
-    })
-    .from(payments)
-    .where(eq(payments.invoiceId, parsed.invoiceId));
-
-  assertPaymentWithinRemaining(
-    parsed.amount,
-    Number(inv.total),
-    Number(paidResult?.total ?? 0),
-  );
-
-  const [payment] = await db
-    .insert(payments)
-    .values({
-      invoiceId: parsed.invoiceId,
-      amount: String(parsed.amount),
-      paidAt: parsed.paidAt,
-      method: parsed.method || null,
-      notes: parsed.notes || null,
-    })
-    .returning();
+  const payment = await db.transaction(async (tx) => {
+    const [inv] = await tx.select().from(invoices).where(and(eq(invoices.id, parsed.invoiceId), eq(invoices.workspaceId, workspaceId))).for("update").limit(1);
+    if (!inv) throw new Error("Invoice tidak ditemukan");
+    const [paidResult] = await tx.select({ total: sql<string>`coalesce(sum(${payments.amount}), '0')` }).from(payments).where(eq(payments.invoiceId, parsed.invoiceId));
+    assertPaymentWithinRemaining(parsed.amount, Number(inv.total), Number(paidResult?.total ?? 0));
+    const [created] = await tx.insert(payments).values({ invoiceId: parsed.invoiceId, amount: String(parsed.amount), paidAt: parsed.paidAt, method: parsed.method || null, notes: parsed.notes || null }).returning();
+    return created;
+  });
 
   await writeActivityLog(workspaceId, user.id, "recorded_payment", "payment", payment.id);
   return payment;

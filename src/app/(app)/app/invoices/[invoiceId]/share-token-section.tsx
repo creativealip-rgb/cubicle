@@ -7,6 +7,7 @@ import { generateInvoiceShareToken, revokeInvoiceShareToken } from "@/lib/action
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Copy, Check, ExternalLink, RefreshCw, X } from "lucide-react";
+import { useT } from "@/lib/i18n-client";
 
 function shareInvoiceUrl(token: string) {
   const base = typeof window !== "undefined" ? window.location.origin : "";
@@ -25,6 +26,7 @@ export function ShareTokenSection({
   initialToken: string | null;
 }) {
   const { refresh } = useAppTransition();
+  const { t } = useT();
   const [token, setToken] = useState<string | null>(initialToken);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -34,7 +36,7 @@ export function ShareTokenSection({
     try {
       await revokeInvoiceShareToken(invoiceId);
       setToken(null);
-      toast.success("Link berbagi dicabut");
+      toast.success(t("Link berbagi dicabut", "Share link revoked"));
       refresh();
     } finally {
       setLoading(false);
@@ -46,10 +48,10 @@ export function ShareTokenSection({
     try {
       const generated = await generateInvoiceShareToken(invoiceId);
       setToken(generated.token);
-      toast.success("Link invoice dibuat");
+      toast.success(t("Link invoice dibuat", "Invoice link created"));
       refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal buat link");
+      toast.error(err instanceof Error ? err.message : t("Gagal buat link", "Failed to create link"));
     } finally {
       setLoading(false);
     }
@@ -60,7 +62,7 @@ export function ShareTokenSection({
     const url = shareInvoiceUrl(token);
     await navigator.clipboard.writeText(url);
     setCopied(true);
-    toast.success("Link invoice disalin");
+    toast.success(t("Link invoice disalin", "Invoice link copied"));
     setTimeout(() => setCopied(false), 2000);
   }
 
@@ -68,26 +70,26 @@ export function ShareTokenSection({
     <div className="space-y-3">
       {!hasToken && !isExpired && (
         <p className="text-sm text-muted-foreground">
-          Buat link berbagi invoice. Siapa pun yang punya link bisa melihat invoice tanpa login.
+          {t("Buat link berbagi invoice. Siapa pun yang punya link bisa melihat invoice tanpa login.", "Create a share link. Anyone with the link can view the invoice without signing in.")}
         </p>
       )}
 
       {hasToken && !isExpired && (
         <p className="text-sm text-muted-foreground">
-          Invoice ini punya link berbagi aktif. Cabut untuk menonaktifkan akses.
+          {t("Invoice ini punya link berbagi aktif. Cabut untuk menonaktifkan akses.", "This invoice has an active share link. Revoke it to disable access.")}
         </p>
       )}
 
       {isExpired && (
         <p className="text-sm text-amber-600">
-          Link berbagi sudah kedaluwarsa. Buat link baru.
+          {t("Link berbagi sudah kedaluwarsa. Buat link baru.", "The share link has expired. Create a new link.")}
         </p>
       )}
 
       {token && (
         <div className="rounded-lg border bg-muted/50 p-3 space-y-2">
           <p className="text-xs font-medium text-muted-foreground">
-            Link invoice (hanya tampil sekali)
+            {t("Link invoice (hanya tampil sekali)", "Invoice link (shown once)")}
           </p>
           <div className="flex items-center gap-2">
             <code className="flex-1 text-xs bg-background rounded px-2 py-1 break-all">
@@ -109,12 +111,12 @@ export function ShareTokenSection({
         </div>
       )}
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {token && (
           <Button type="button" variant="outline" size="sm" className="gap-1" asChild>
             <a href={shareInvoiceUrl(token)} target="_blank" rel="noreferrer">
               <ExternalLink className="h-3 w-3" />
-              Lihat Invoice
+              {t("Lihat Invoice", "View Invoice")}
             </a>
           </Button>
         )}
@@ -127,7 +129,7 @@ export function ShareTokenSection({
           loading={loading}
         >
           <RefreshCw className="h-3 w-3" />
-          {"Buat Link Invoice"}
+          {t("Buat Link Invoice", "Create Invoice Link")}
         </LoadingButton>
         {hasToken && !isExpired && (
           <Button
@@ -139,7 +141,7 @@ export function ShareTokenSection({
             disabled={loading}
           >
             <X className="h-3 w-3" />
-            Cabut
+            {t("Cabut", "Revoke")}
           </Button>
         )}
       </div>

@@ -1,5 +1,58 @@
 # Changelog
 
+## 2026-08-29 — Dashboard approvals and first-workspace setup
+
+- Expanded the Dashboard Approval card from client-visible task reviews to pending tasks, proposals, and contracts, with a category popover instead of a new page.
+- Restored first-login workspace setup as a locked three-step modal over `/app/dashboard`: Workspace, optional Team, and Ready.
+- Prevented layout/dashboard workspace lookups from auto-creating a workspace before the user confirms its name.
+- Kept team invitations in Settings after workspace creation; the onboarding Team step is optional and does not pretend to send invitations.
+- Production commits: `fce8eb8`, `488ffa2`, `23f17d7`; running image `cubiqlo-prod:sha-23f17d73a739a97649d313da2c74b061648e1146`.
+- Evidence: `docs/operations/evidence/dashboard-approvals-first-workspace-2026-08-29.md`.
+
+## 2026-08-29 — Personal Site new-user publish and optional CTA
+
+- Fixed new-user Personal Site defaults so an empty CTA no longer blocks initial save or publish.
+- Made CTA fully optional in readiness and server validation; incomplete CTA data does not render a public button.
+- Added exact public URL, Copy link, and Open site actions to the publish dialog while keeping Preview separate.
+- Verified dedicated production fixture publish persistence, public HTTP 200, clipboard parity, and zero horizontal overflow at 390×844.
+- Production commit: `278f7de`; running image `cubiqlo-prod:sha-278f7deb9819f5fd5ffc32144ead148a2716329a`; health and DB `ok`.
+- Evidence: `docs/operations/evidence/personal-site-new-user-publish-2026-08-29.md`.
+
+## 2026-08-28 — August meeting revisions completed
+
+- Completed region-aware EN/ID and IDR/USD defaults with persistent overrides while keeping Pakasir checkout amounts authoritative in IDR.
+- Reorganized Settings, onboarding, sidebar navigation, Calendar booking slug placement, Forms/Landing Page labels, and AI menu order.
+- Added tenant-safe custom invoice and contract numbering, invoice detail preview, recurring invoice rules/generation/scheduler, and duplicate-safe user errors.
+- Enforced plan-aware Personal Site slugs, completed Personal Site editor/tab localization, and changed all new Personal Site defaults/templates to English without modifying existing user content.
+- Completed landing pricing localization and moved Booking slug directly above Calendar Availability Rules.
+- Clean release gate: 302/302 test files and 1,530/1,530 tests passed; TypeScript passed; ESLint had zero errors; production build passed.
+- Production application commit: `81af150`; running image `cubiqlo-prod:sha-81af15065cfc3680a585e3d35d7898fbe0c44f28`; health and DB `ok`.
+- Completion evidence: `docs/operations/evidence/meeting-revisions-2026-08-28.md` (`7d21536`).
+- Known runtime limits: destructive live Team→Free→Team Personal Site matrix requires a disposable entitlement fixture; real Pakasir webhook lifecycle requires explicit paid-transaction approval; dependency findings are tracked separately.
+
+## 2026-08-24 — Booking email date format
+
+- Booking confirmation email now formats appointment time for `Asia/Jakarta` as readable date/time with `GMT+7`.
+- Google Calendar add-event link remains included in email.
+- Production commit: `81847cd`.
+
+
+## 2026-08-24 — Proposal acceptance fixes
+
+- Accept proposal now resolves or creates workspace Client from recipient email when no `clientId` exists.
+- Proposal acceptance persists generated `projects.id` and `invoices.id` before creating dependent records, preventing foreign-key failures.
+- Replaced native browser `confirm()` with localized Radix confirmation dialog.
+- Production commit: `7ca8c97`.
+
+
+## 2026-08-22 — Manual release QA checkpoint
+
+- Added `docs/qa-report-2026-08-22-cubiqlo-release.md` with live browser evidence and final PASS/PARTIAL/BLOCKED status.
+- Verified auth/session, workspace isolation, invoice share-link lifecycle, client portal, reports Excel export, booking create/cancel, proposal preview/send/public render, and contract metadata correction.
+- Recorded remaining gaps: payment recording, file picker upload/download, exact 390px viewport, second-account team lifecycle, and untested recovery/auth-provider flows.
+- Confirmed read-only DB prefix audit found zero `QA-BROWSER-*` clients, projects, tasks, expenses, appointments, proposals, and contracts.
+
+
 ## 2026-08-16 — Loading state audit: route skeletons + transition-aware refresh
 
 - Added `loading.tsx` skeletons to 20 server-fetch routes previously missing them (billing, expenses, packages, reports, settings, email, personal, templates, search, support, journal, personal-site, contract/proposal preview+edit, contract/questionnaire/template detail+edit). Route coverage now 39 loading.tsx; remaining routes without one are client-redirect / instant-form / static-docs / time-passthrough and need no skeleton.

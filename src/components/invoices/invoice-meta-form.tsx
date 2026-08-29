@@ -23,6 +23,7 @@ const STATUSES = ["draft", "sent", "viewed", "paid", "overdue", "cancelled", "ar
 interface InvoiceMetaFormProps {
   invoiceId: string;
   defaults: {
+    invoiceNumber: string;
     status: string;
     issueDate: string;
     dueDate?: string | null;
@@ -47,6 +48,7 @@ export function InvoiceMetaForm({ invoiceId, defaults, project }: InvoiceMetaFor
   const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
+    invoiceNumber: defaults.invoiceNumber,
     status: defaults.status || "draft",
     issueDate: defaults.issueDate?.slice?.(0, 10) || String(defaults.issueDate).slice(0, 10),
     dueDate: defaults.dueDate ? String(defaults.dueDate).slice(0, 10) : "",
@@ -62,6 +64,7 @@ export function InvoiceMetaForm({ invoiceId, defaults, project }: InvoiceMetaFor
     setLoading(true);
     try {
       await updateInvoice(invoiceId, {
+        invoiceNumber: form.invoiceNumber,
         status: form.status as (typeof STATUSES)[number],
         issueDate: form.issueDate,
         dueDate: form.dueDate || undefined,
@@ -123,6 +126,21 @@ export function InvoiceMetaForm({ invoiceId, defaults, project }: InvoiceMetaFor
         </div>
       )}
       <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="invoice-number">{t("Nomor Invoice", "Invoice Number")}</Label>
+          <Input
+            id="invoice-number"
+            value={form.invoiceNumber}
+            onChange={(e) => setForm((p) => ({ ...p, invoiceNumber: e.target.value }))}
+            disabled={defaults.status !== "draft"}
+            readOnly={defaults.status !== "draft"}
+          />
+          {defaults.status !== "draft" ? (
+            <p className="text-xs text-muted-foreground">
+              {t("Nomor hanya dapat diubah saat invoice masih draft.", "The number can only be changed while the invoice is a draft.")}
+            </p>
+          ) : null}
+        </div>
         <div className="space-y-2">
           <Label>{t("Status", "Status")}</Label>
           <Select

@@ -6,7 +6,7 @@ const read = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 
 const contractActions = read("src/lib/actions/contract-templates.ts");
 const proposalActions = read("src/lib/actions/proposal-templates.ts");
-const editor = read("src/components/documents/document-block-editor.tsx");
+const _editor = read("src/components/documents/document-block-editor.tsx");
 const blocksEditor = read("src/components/templates/template-blocks-editor.tsx");
 const center = read("src/components/template-center-client.tsx");
 const contractDetail = read("src/app/(app)/app/contract-templates/[templateId]/page.tsx");
@@ -56,11 +56,9 @@ describe("unified template block editor wiring (batch 2)", () => {
     expect(blocksEditor).toMatch(/saveProposalTemplateBlocks\(template\.id, \{ contentBlocks: next \}\)/);
   });
 
-  it("Template Center Edit opens the block editor for proposal/contract, keeps invoice dialog", () => {
+  it("Template Center Edit opens the block editor for proposal and contract", () => {
     expect(center).toMatch(/router\.push\(`\/app\/templates\/\$\{tpl\.id\}\/edit`\)/);
     expect(center).toMatch(/router\.push\(`\/app\/templates\/\$\{tpl\.id\}\/edit\/proposal`\)/);
-    expect(center).toMatch(/type === "invoice"/);
-    // Invoice edit still uses the dialog (setDialogOpen(true) only for invoice)
-    expect(center).toMatch(/setDialogOpen\(true\);\s*\n\s*\}/);
+    expect(center).toMatch(/type === "contract"/);
   });
 });

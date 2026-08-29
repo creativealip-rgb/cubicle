@@ -56,7 +56,7 @@ export default async function QuestionnairesPage() {
     <div className="min-w-0 space-y-4 sm:space-y-6">
       <div className="app-page-header">
         <div>
-          <h1 className="app-page-title">{t("Kuesioner", "Questionnaires")}</h1>
+          <h1 className="app-page-title">{t("Formulir", "Forms")}</h1>
           <p>
             {t(
               "Form intake klien. Jawaban jadi brief proyek.",
@@ -70,7 +70,7 @@ export default async function QuestionnairesPage() {
               trigger={
                 <Button size="sm" className="gap-1">
                   <Plus className="h-4 w-4" />
-                  {t("Kuesioner baru", "New questionnaire")}
+                  {t("Formulir baru", "New form")}
                 </Button>
               }
             />
@@ -81,7 +81,7 @@ export default async function QuestionnairesPage() {
       {rows.length === 0 ? (
         <EmptyState
           icon={ClipboardList}
-          title={t("Belum ada kuesioner", "No questionnaires yet")}
+          title={t("Belum ada formulir", "No forms yet")}
           description={t(
             "Buat satu untuk kumpulkan brief dari klien.",
             "Create one to collect briefs from clients.",

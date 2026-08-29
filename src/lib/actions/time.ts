@@ -11,7 +11,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { timeEntries, timerSegments, clients, projects, tasks, workspaces } from "@/db/schema";
-import { eq, and, isNull, isNotNull, sql } from "drizzle-orm";
+import { eq, and, isNull, isNotNull, sql, ne } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
@@ -112,6 +112,7 @@ const updateTimeEntrySchema = z.object({
   projectId: z.string().uuid().optional(),
   activityId: z.string().uuid().nullable().optional(),
   taskId: z.string().uuid().nullable().optional(),
+  workDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   startTime: z.string().nullable().optional(),
   endTime: z.string().nullable().optional(),
   manualMinutes: z.number().nullable().optional(),
@@ -455,9 +456,16 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
         reviewedBy: user.id,
         updatedAt: new Date(),
       })
-      .where(eq(timeEntries.id, parsed.entryId))
+      .where(and(
+        eq(timeEntries.id, parsed.entryId),
+        eq(timeEntries.workspaceId, workspaceId),
+        eq(timeEntries.userId, user.id),
+        isNull(timeEntries.endTime),
+      ))
       .returning();
   });
+
+  if (!updated) throw new Error("Timer already stopped");
 
   await writeActivityLog(workspaceId, user.id, "stopped_timer", "time_entry", parsed.entryId);
   return updated;
@@ -670,7 +678,7 @@ export async function updateTimeEntry(entryId: string, input: z.infer<typeof upd
     const t = await getT();
     throw new Error(t("Entri sudah di-invoice, tidak bisa diedit", "Entry is invoiced and cannot be edited"));
   }
-  await assertTimesheetWeekMutable(db, workspaceId, entry.userId, entry.startTime ?? entry.createdAt);
+  await assertTimesheetWeekMutable(db, workspaceId, entry.userId, entry.startTime ?? new Date(`${entry.workDate}T00:00:00Z`));
   await assertHistoricalTimeEntryMutable(db, workspaceId, entry.projectId);
 
   const parsed = updateTimeEntrySchema.parse(input);
@@ -712,6 +720,8 @@ export async function updateTimeEntry(entryId: string, input: z.infer<typeof upd
   updateData.activityId = activityPolicy.activityId;
   if (parsed.taskId !== undefined) updateData.taskId = parsed.taskId;
   if (parsed.startTime !== undefined) updateData.startTime = parsed.startTime ? new Date(parsed.startTime) : null;
+  if (parsed.workDate !== undefined) updateData.workDate = parsed.workDate;
+  else if (parsed.startTime !== undefined && parsed.startTime) updateData.workDate = parsed.startTime.slice(0, 10);
   if (parsed.endTime !== undefined) updateData.endTime = parsed.endTime ? new Date(parsed.endTime) : null;
   if (parsed.manualMinutes !== undefined) updateData.manualMinutes = parsed.manualMinutes;
   updateData.billable = timeEntryBillableForMode(projectMode);
@@ -738,8 +748,9 @@ export async function updateTimeEntry(entryId: string, input: z.infer<typeof upd
   const [updated] = await db
     .update(timeEntries)
     .set(updateData)
-    .where(eq(timeEntries.id, entryId))
+    .where(and(eq(timeEntries.id, entryId), eq(timeEntries.workspaceId, workspaceId), ne(timeEntries.status, "invoiced")))
     .returning();
+  if (!updated) throw new Error("Status time entry berubah saat diedit");
 
   await writeActivityLog(workspaceId, user.id, "updated_time_entry", "time_entry", entryId);
   return updated;
@@ -781,10 +792,11 @@ export async function deleteTimeEntry(entryId: string) {
 
   if (!entry) throw new Error("Time entry not found");
   if (entry.status === "invoiced") {
-    throw new Error("Entri sudah di-invoice, tidak bisa dihapus");
+    return { success: false as const, error: "Entri sudah di-invoice, tidak bisa dihapus" };
   }
-  if (entry.status === "approved") throw new Error("Entri sudah disetujui dan terkunci");
-  await assertTimesheetWeekMutable(db, workspaceId, entry.userId, entry.startTime ?? entry.createdAt);
+  if (entry.status !== "approved") {
+    await assertTimesheetWeekMutable(db, workspaceId, entry.userId, entry.startTime ?? entry.createdAt);
+  }
   await assertHistoricalTimeEntryMutable(db, workspaceId, entry.projectId);
 
   await db.delete(timeEntries).where(eq(timeEntries.id, entryId));

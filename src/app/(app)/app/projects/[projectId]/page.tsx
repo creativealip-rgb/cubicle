@@ -19,6 +19,7 @@ import { resolveBillingModel } from "@/lib/billing-model";
 import { resolveProjectTaskMode } from "@/lib/task-work-mode";
 import { loadInvoiceSourceProjectOptions } from "@/lib/invoice-source-options";
 import { resolveProjectAmount } from "@/lib/invoice-project-items";
+import { getProposedInvoiceNumber } from "@/lib/actions/invoices";
 import { PermanentDeleteButton } from "@/components/shared/permanent-delete-button";
 import { ProjectTabsNav } from "@/components/projects/project-tabs-nav";
 import { ProjectEditDialog } from "@/components/projects/project-edit-dialog";
@@ -47,6 +48,7 @@ export default async function ProjectDetailPage({
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
+  const proposedInvoiceNumber = await getProposedInvoiceNumber();
   const { projectId } = await params;
   const { from, tab: tabParam } = await searchParams;
   const allowedTabs = new Set(["work", "files", "time", "billing"]);
@@ -342,6 +344,7 @@ export default async function ProjectDetailPage({
                 )}
               </p>
               <WorkflowTaskWorkspace
+                title={t("Tugas Workflow", "Workflow Tasks")}
                 tasks={projectTasks.filter((task) => task.mode === "workflow")}
                 members={projectMembers}
                 projects={[{ id: project.id, name: project.name }]}
@@ -434,6 +437,7 @@ export default async function ProjectDetailPage({
                 companyName: null,
               }}
               invoices={projectInvoices}
+              proposedInvoiceNumber={proposedInvoiceNumber}
               baseCurrency={workspace?.defaultCurrency ?? "IDR"}
               currencyRates={currencyRates}
               retainerPeriod={retainerPeriod ?? null}

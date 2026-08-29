@@ -8,14 +8,16 @@ import {
   invoices,
   payments,
   projects,
+  recurringInvoiceRules,
   workspaceCurrencyRates,
   workspaceMembers,
+  packages,
 } from "@/db/schema";
 import { eq, desc, and, count, ne, isNull, SQL, sql, inArray, gte, lte } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, FileText, ChevronLeft, ChevronRight, Wallet, AlertCircle, CheckCircle2 } from "lucide-react";
+import { FileText, ChevronLeft, ChevronRight, Wallet, AlertCircle, CheckCircle2 } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
 import { invoiceStatusVariant } from "@/lib/status-badge";
 import { EmptyState } from "@/components/empty-state";
@@ -30,6 +32,9 @@ import {
 } from "@/lib/currency-base";
 import { buildReportPeriod } from "@/lib/report-period";
 import { InvoicePeriodControls } from "@/components/invoices/invoice-period-controls";
+import { RecurringInvoiceManager } from "@/components/invoices/recurring-invoice-manager";
+import { InvoiceCreateDialog } from "@/components/invoices/invoice-create-dialog";
+import { getProposedInvoiceNumber } from "@/lib/actions/invoices";
 
 const PAGE_SIZE = 10;
 
@@ -212,10 +217,25 @@ export default async function InvoicesPage({
     .orderBy(clients.name);
 
   const projectOptions = await db
-    .select({ id: projects.id, name: projects.name })
+    .select({
+      id: projects.id,
+      name: projects.name,
+      clientId: projects.clientId,
+      billingType: projects.billingType,
+      currency: projects.currency,
+      budget: projects.budget,
+      rate: projects.rate,
+      packagePrice: packages.price,
+      packageCustomPrice: packages.customPrice,
+    })
     .from(projects)
+    .leftJoin(packages, eq(projects.selectedPackageId, packages.id))
     .where(eq(projects.workspaceId, workspaceId))
     .orderBy(projects.name);
+
+  const recurringRules = await db.select().from(recurringInvoiceRules)
+    .where(eq(recurringInvoiceRules.workspaceId, workspaceId))
+    .orderBy(recurringInvoiceRules.nextRunDate);
 
   // Counts per status (respect client/billing filters; include archived for badge)
   const statusCountWhere: SQL[] = [eq(invoices.workspaceId, workspaceId)];
@@ -416,13 +436,7 @@ export default async function InvoicesPage({
         </div>
         <div className="flex w-full sm:w-auto">
           {canWrite && (
-            <Link href="/app/invoices/new" className="min-w-0 flex-1 sm:flex-none">
-              <Button size="sm" className="w-full gap-1 sm:w-auto">
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">{t("Invoice Baru", "New Invoice")}</span>
-                <span className="sm:hidden">{t("Baru", "New")}</span>
-              </Button>
-            </Link>
+            <InvoiceCreateDialog clients={clientOptions} projects={projectOptions.map((project) => ({ ...project, agreedAmount: 0, priorActiveFixedBilledAmount: 0, eligibleTimeEntries: [] }))} baseCurrency={baseCurrency} proposedInvoiceNumber={await getProposedInvoiceNumber()} />
           )}
         </div>
       </div>
@@ -546,7 +560,6 @@ export default async function InvoicesPage({
           icon={FileText}
           title={t("Belum ada invoice", "No invoices yet")}
           description={t("Buat invoice pertama untuk mulai tagih klienmu.", "Create your first invoice to start billing clients.")}
-          action={{ label: t("Buat invoice", "Create invoice"), href: "/app/invoices/new" }}
         />
       ) : filteredTotal === 0 ? (
         <EmptyState
@@ -628,6 +641,17 @@ export default async function InvoicesPage({
           </div>
         </>
       )}
+
+      <RecurringInvoiceManager
+        rules={recurringRules.map((rule) => ({
+          ...rule,
+          lines: rule.lines.map((line) => ({ ...line, quantity: Number(line.quantity), unitPrice: Number(line.unitPrice) })),
+        }))}
+        clients={clientOptions.map((client) => ({ id: client.id, name: client.companyName || client.name }))}
+        projects={projectOptions}
+        canWrite={canWrite}
+        defaultCurrency={baseCurrency}
+      />
     </div>
   );
 }

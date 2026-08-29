@@ -105,7 +105,7 @@ const bookingSlugSchema = z.object({
     .transform((v) => v.toLowerCase())
     .refine(
       (v) => v === "" || /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(v),
-      "Slug hanya huruf kecil, angka, dan strip (contoh: alip-meeting)",
+      "Slug hanya huruf kecil, angka, dan strip (contoh: your-meeting)",
     ),
 });
 
@@ -126,7 +126,7 @@ export async function updateWorkspaceBookingSlug(input: z.infer<typeof bookingSl
       .limit(1);
 
     if (taken && taken.id !== workspaceId) {
-      throw new Error("Booking slug sudah dipakai workspace lain");
+      return { error: "booking_slug_taken" } as const;
     }
   }
 

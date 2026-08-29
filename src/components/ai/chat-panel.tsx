@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import {
   Sparkles,
   X,
@@ -36,6 +37,7 @@ import { AssistantEmptyState } from "@/components/ai/assistant-empty-state";
 import { AssistantHistory } from "@/components/ai/assistant-history";
 import { AssistantConfirmationCard } from "@/components/ai/assistant-confirmation";
 import { getAssistantCopy, humanizeToolStatus, sanitizeAssistantError, type AssistantLang } from "@/lib/ai/ui-copy";
+import { normalizeAssistantMarkdown } from "@/lib/ai/markdown";
 
 type Role = "user" | "assistant" | "tool";
 
@@ -76,13 +78,6 @@ type Conv = {
   messageCount: number;
 };
 
-function normalizeAssistantText(text: string): string {
-  return text
-    .replace(/([^\n])\s*\*\s+(?=\*{0,2}(?:Klien|Proyek|Tugas|Invoice|Pengeluaran|Anggota|Keuangan|Tagihan))/g, "$1\n* ")
-    .replace(/(\d)(?=(?:terlambat|belum))/g, "$1 ")
-    .replace(/(proyek|klien|tugas|invoice)(?=(aktif|belum|open|terbuka))/gi, "$1 ")
-    .replace(/\)(?=senilai|total|sebesar)/gi, ") ");
-}
 
 function formatRelativeTime(iso: string): string {
   if (!iso) return "";
@@ -828,8 +823,8 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                               </div>
                             )}
                             {m.content && (
-                              <div className="whitespace-pre-wrap break-words">
-                                {normalizeAssistantText(m.content)}
+                              <div className="prose prose-sm max-w-none break-words prose-headings:my-2 prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5">
+                                <ReactMarkdown>{normalizeAssistantMarkdown(m.content)}</ReactMarkdown>
                               </div>
                             )}
                             {!m.content && m.confirmation && (

@@ -9,6 +9,7 @@ import { TaskCreateDialog } from "@/components/tasks/task-create-dialog";
 import { TasksBoardView } from "@/components/tasks/tasks-board-view";
 import { TasksListTable } from "@/components/tasks/tasks-list-table";
 import { TaskPageTabs } from "@/components/tasks/task-page-tabs";
+import { TaskViewToggle } from "@/components/tasks/task-view-toggle";
 import { TaskTemplateWorkspace } from "@/components/tasks/task-template-workspace";
 import { ActiveFilterSummary } from "@/components/ui/active-filter-summary";
 import { resolveBillingModel } from "@/lib/billing-model";
@@ -57,7 +58,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const templates = templateRows.map((template) => ({ ...template, items: itemRows.filter((item) => item.templateId === template.id) }));
 
   return <div className="min-w-0 space-y-6">
-    <div className="app-page-header"><div><h1 className="app-page-title">{t("Tugas", "Tasks")}</h1><p className="mt-1 text-sm text-muted-foreground">{t("Kelola pekerjaan proyek dan template reusable.", "Manage project work and reusable templates.")}</p></div>{tab === "tasks" ? <TaskCreateDialog projectId={params.projectId} members={members} projects={taskProjects} /> : null}</div>
+    <div className="app-page-header"><div><h1 className="app-page-title">{t("Tugas", "Tasks")}</h1><p className="mt-1 text-sm text-muted-foreground">{t("Kelola pekerjaan proyek dan template reusable.", "Manage project work and reusable templates.")}</p></div>{tab === "tasks" ? <div className="flex flex-wrap items-center gap-2"><TaskViewToggle current={view} /><TaskCreateDialog projectId={params.projectId} members={members} projects={taskProjects} /></div> : null}</div>
     <TaskPageTabs current={tab} />
     {tab === "templates" ? <TaskTemplateWorkspace templates={templates} projects={taskProjects} /> : <>
       <ActiveFilterSummary basePath="/app/tasks" filters={[{ key: "projectId", label: t("Proyek", "Project"), value: taskProjects.find((project) => project.id === params.projectId)?.name }, { key: "assignee", label: t("Petugas", "Assignee"), value: params.assignee }, { key: "priority", label: t("Prioritas", "Priority"), value: params.priority }, { key: "status", label: "Status", value: params.status }]} />

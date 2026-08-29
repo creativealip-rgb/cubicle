@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { r2, R2_BUCKET, R2_CONFIGURED } from "@/lib/r2";
+import { db } from "@/db";
+import { files } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { canAccessFile } from "@/app/api/files/[fileId]/download/route";
 
 export const runtime = "nodejs";
 
@@ -13,7 +17,7 @@ const MIME_MAP: Record<string, string> = {
 };
 
 export async function GET(
-  _req: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ key: string[] }> },
 ) {
   if (!R2_CONFIGURED) return new NextResponse("Storage unavailable", { status: 503 });
@@ -23,6 +27,15 @@ export async function GET(
   if (!objectKey || objectKey.includes("..")) {
     return new NextResponse("Invalid key", { status: 400 });
   }
+
+  const [file] = await db
+    .select()
+    .from(files)
+    .where(eq(files.storageKey, objectKey))
+    .limit(1);
+  if (!file) return new NextResponse("Not found", { status: 404 });
+  const allowed = await canAccessFile(file, request.nextUrl.searchParams.get("token"));
+  if (!allowed) return new NextResponse("Not found", { status: 404 });
 
   try {
     const object = await r2.send(
@@ -34,7 +47,8 @@ export async function GET(
     return new NextResponse(Buffer.from(await object.Body.transformToByteArray()), {
       headers: {
         "Content-Type": object.ContentType || MIME_MAP[ext] || "application/octet-stream",
-        "Cache-Control": "public, max-age=31536000, immutable",
+        "Cache-Control": "private, no-store",
+        "X-Content-Type-Options": "nosniff",
       },
     });
   } catch {

@@ -14,15 +14,15 @@ export function DeleteQuestionnaireButton({ questionnaireId }: { questionnaireId
   const [loading, setLoading] = useState(false);
 
   async function remove() {
-    if (!window.confirm("Hapus kuesioner ini? Tidak bisa dibatalkan.")) return;
+    if (!window.confirm("Hapus formulir ini? Tidak bisa dibatalkan.")) return;
     setLoading(true);
     try {
       await deleteQuestionnaire(questionnaireId);
-      toast.success("Kuesioner dihapus");
+      toast.success("Formulir dihapus");
       router.push("/app/questionnaires");
       refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal menghapus kuesioner");
+      toast.error(error instanceof Error ? error.message : "Gagal menghapus formulir");
       setLoading(false);
     }
   }

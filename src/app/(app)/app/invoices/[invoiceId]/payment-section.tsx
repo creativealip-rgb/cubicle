@@ -23,8 +23,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus } from "lucide-react";
-import { formatDateID, formatMoney } from "@/lib/utils";
+import { formatMoney } from "@/lib/utils";
 import { getInvoicePaymentState } from "@/lib/invoice-payment-rules";
+import { useT } from "@/lib/i18n-client";
 
 interface Payment {
   id: string;
@@ -48,6 +49,7 @@ export function PaymentSection({
   currency: string;
 }) {
   const { refresh } = useAppTransition();
+  const { t, locale } = useT();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -72,7 +74,7 @@ export function PaymentSection({
         method: form.method || undefined,
         notes: form.notes || undefined,
       });
-      toast.success("Pembayaran dicatat");
+      toast.success(t("Pembayaran dicatat", "Payment recorded"));
       setOpen(false);
       setForm({
         amount: "",
@@ -82,7 +84,7 @@ export function PaymentSection({
       });
       refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Gagal");
+      toast.error(err instanceof Error ? err.message : t("Gagal", "Failed"));
     } finally {
       setLoading(false);
     }
@@ -94,13 +96,13 @@ export function PaymentSection({
     <div className="space-y-4">
       <div className="flex items-center justify-between text-sm">
         <span>
-          Total: <strong>{formatMoney(total, currencyCode)}</strong>
+          {t("Total", "Total")}: <strong>{formatMoney(total, currencyCode)}</strong>
         </span>
-        <span>
-          Dibayar: <strong>{formatMoney(paidSoFar, currencyCode)}</strong>
+        <span aria-label={`${t("Dibayar", "Paid")}: ${formatMoney(paidSoFar, currencyCode)}`}>
+          <span>{t("Dibayar", "Paid")}</span>: <strong>{formatMoney(paidSoFar, currencyCode)}</strong>
         </span>
-        <span>
-          Sisa: <strong>{formatMoney(remaining, currencyCode)}</strong>
+        <span aria-label={`${t("Sisa", "Remaining")}: ${formatMoney(remaining, currencyCode)}`}>
+          <span>{t("Sisa", "Remaining")}</span>: <strong>{formatMoney(remaining, currencyCode)}</strong>
         </span>
       </div>
 
@@ -113,7 +115,7 @@ export function PaymentSection({
                   {formatMoney(Number(p.amount), currencyCode)}
                 </span>
                 <span className="text-muted-foreground ml-2">
-                  {formatDateID(p.paidAt)}
+                  {p.paidAt ? new Date(`${p.paidAt}T00:00:00`).toLocaleDateString(locale) : "—"}
                 </span>
               </div>
               <span className="text-xs text-muted-foreground">
@@ -127,16 +129,16 @@ export function PaymentSection({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button variant="outline" size="sm" className="gap-1" disabled={fullyPaid}>
-            <Plus className="h-3.5 w-3.5" /> Catat Pembayaran
+            <Plus className="h-3.5 w-3.5" /> {t("Catat Pembayaran", "Record Payment")}
           </Button>
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Catat Pembayaran</DialogTitle>
+            <DialogTitle>{t("Catat Pembayaran", "Record Payment")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="amount">Jumlah *</Label>
+              <Label htmlFor="amount">{t("Jumlah *", "Amount *")}</Label>
               <Input
                 id="amount"
                 type="number"
@@ -152,7 +154,7 @@ export function PaymentSection({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="paidAt">Tanggal Pembayaran *</Label>
+              <Label htmlFor="paidAt">{t("Tanggal Pembayaran *", "Payment Date *")}</Label>
               <Input
                 id="paidAt"
                 type="date"
@@ -164,7 +166,7 @@ export function PaymentSection({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="method">Metode</Label>
+              <Label htmlFor="method">{t("Metode", "Method")}</Label>
               <Select
                 value={form.method}
                 onValueChange={(v) => setForm((p) => ({ ...p, method: v }))}
@@ -173,34 +175,34 @@ export function PaymentSection({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="bank_transfer">Transfer Bank</SelectItem>
-                  <SelectItem value="credit_card">Kartu Kredit</SelectItem>
-                  <SelectItem value="cash">Tunai</SelectItem>
-                  <SelectItem value="check">Cek</SelectItem>
-                  <SelectItem value="other">Lainnya</SelectItem>
+                  <SelectItem value="bank_transfer">{t("Transfer Bank", "Bank Transfer")}</SelectItem>
+                  <SelectItem value="credit_card">{t("Kartu Kredit", "Credit Card")}</SelectItem>
+                  <SelectItem value="cash">{t("Tunai", "Cash")}</SelectItem>
+                  <SelectItem value="check">{t("Cek", "Check")}</SelectItem>
+                  <SelectItem value="other">{t("Lainnya", "Other")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="pnotes">Catatan</Label>
+              <Label htmlFor="pnotes">{t("Catatan", "Notes")}</Label>
               <Input
                 id="pnotes"
                 value={form.notes}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, notes: e.target.value }))
                 }
-                placeholder="Referensi pembayaran..."
+                placeholder={t("Referensi pembayaran...", "Payment reference...")}
               />
             </div>
-            <LoadingButton type="submit" loading={loading} loadingText="Mencatat..." className="w-full">
-              {"Catat Pembayaran"}
+            <LoadingButton type="submit" loading={loading} loadingText={t("Mencatat...", "Recording...")} className="w-full">
+              {t("Catat Pembayaran", "Record Payment")}
               </LoadingButton>
           </form>
         </DialogContent>
       </Dialog>
       {fullyPaid && (
         <p className="text-xs text-amber-700">
-          Pembayaran sudah penuh. Ubah status invoice menjadi Lunas secara manual jika diperlukan.
+          {t("Pembayaran sudah penuh. Ubah status invoice menjadi Lunas secara manual jika diperlukan.", "Payment is complete. Mark the invoice as Paid manually if needed.")}
         </p>
       )}
     </div>

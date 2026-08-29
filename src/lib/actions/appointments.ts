@@ -296,6 +296,8 @@ export async function createPublicAppointment(
   await writeActivityLog(parsed.workspaceId, null, "booked_appointment_public", "appointment", appointment.id);
 
   const replyTo = await resolveWorkspaceReplyTo(parsed.workspaceId);
+  const formatCalendarDate = (date: Date) => date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(parsed.title)}&dates=${formatCalendarDate(startTime)}/${formatCalendarDate(endTime)}&details=${encodeURIComponent(parsed.notes || "Booked via Cubiqlo")}&location=${encodeURIComponent(ws.name)}`;
   // Notify attendee + workspace owner
   await notifyAppointmentBooked({
     attendeeEmail: parsed.attendeeEmail,
@@ -304,6 +306,7 @@ export async function createPublicAppointment(
     dateTime: startTime.toISOString(),
     workspaceName: ws.name,
     replyTo,
+    calendarUrl,
   });
 
   try {

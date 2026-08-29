@@ -14,8 +14,8 @@ describe("client-scoped Project creation", () => {
   it("passes optional Client scope from shared dialog into shared form", () => {
     expect(dialogSource).toMatch(/clientId\?:\s*string/);
     expect(dialogSource).toMatch(/<ProjectForm[\s\S]*clientId=\{clientId\}/);
-    expect(formSource).toContain("clientId?:string");
-    expect(formSource).toMatch(/!clientId\s*&&/);
+    expect(formSource).toMatch(/clientId\?:\s*string/);
+    expect(formSource).toMatch(/!clientId\s*&&\s*\(/);
   });
 
   it("renders scoped create action in Client Project tab", () => {

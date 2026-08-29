@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   ArrowRight,
@@ -23,6 +24,11 @@ import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { LandingLanguageSwitch } from "@/components/landing/landing-language-switch";
+import { LandingCurrencySwitch } from "@/components/landing/landing-currency-switch";
+import { getCountryFromHeaders, resolveVisitorPreferences } from "@/lib/region-preferences";
+import { getLandingPrice, type DisplayCurrency } from "@/lib/landing-pricing";
+
+export const dynamic = "force-dynamic";
 
 const workflow = [
   {
@@ -61,7 +67,7 @@ const pricing = [
     audience: "Coba dulu untuk client work kecil.",
     price: "Rp 0",
     suffix: "selamanya",
-    items: ["1 user", "1 workspace", "3 klien", "5 proyek", "10 invoice/month", "Client portal + AI", "10 AI requests/month", "5 MB/file"],
+    items: ["1 pengguna", "1 workspace", "3 klien", "5 proyek", "10 invoice/bulan", "Portal klien + AI", "10 permintaan AI/bulan", "5 MB/file"],
     cta: "Mulai gratis",
     featured: false,
   },
@@ -70,7 +76,7 @@ const pricing = [
     audience: "Untuk freelancer yang mulai serius.",
     price: "Rp 75.000/month",
     suffix: "Billed yearly: Rp 900.000/year",
-    items: ["1 user", "Existing Solo workspace rule", "5 GB/workspace", "Client portal + AI", "100 AI requests/month", "25 MB/file"],
+    items: ["1 pengguna", "1 workspace Solo", "5 GB/workspace", "Portal klien + AI", "100 permintaan AI/bulan", "25 MB/file"],
     cta: "Pilih Solo",
     featured: true,
   },
@@ -79,19 +85,19 @@ const pricing = [
     audience: "Untuk tim kecil yang kerja bareng.",
     price: "Rp 165.000/month",
     suffix: "Billed yearly: Rp 1.980.000/year",
-    items: ["Up to 5 members/workspace", "Up to 3 workspaces", "5 GB/workspace", "Team roles", "1,000 AI requests/month", "50 MB/file"],
+    items: ["Hingga 5 anggota/workspace", "Hingga 3 workspace", "5 GB/workspace", "Peran tim", "1.000 permintaan AI/bulan", "50 MB/file"],
     cta: "Pilih Team",
     featured: false,
   },
 ];
 
-const landingEn: Record<string, string> = { "Client CRM": "Client CRM", "Time & work": "Time & work", Deliverables: "Deliverables", Billing: "Billing", Free: "Free", "1 user": "1 user", "10 invoice/month": "10 invoices/month", "Client portal + AI": "Client portal + AI", "10 AI requests/month": "10 AI requests/month", "5 MB/file": "5 MB/file", "Existing Solo workspace rule": "Solo workspace rule", "100 AI requests/month": "100 AI requests/month", "25 MB/file": "25 MB/file", "Up to 5 members/workspace": "Up to 5 members/workspace", "Up to 3 workspaces": "Up to 3 workspaces", "Team roles": "Team roles", "1,000 AI requests/month": "1,000 AI requests/month", "50 MB/file": "50 MB/file" };
+const landingEn: Record<string, string> = { "Client CRM": "Client CRM", "Time & work": "Time & work", Deliverables: "Deliverables", Billing: "Billing", Free: "Free", "1 pengguna": "1 user", "1 workspace": "1 workspace", "3 klien": "3 clients", "5 proyek": "5 projects", "10 invoice/bulan": "10 invoices/month", "Portal klien + AI": "Client portal + AI", "10 permintaan AI/bulan": "10 AI requests/month", "5 MB/file": "5 MB/file", "1 workspace Solo": "1 Solo workspace", "5 GB/workspace": "5 GB/workspace", "100 permintaan AI/bulan": "100 AI requests/month", "25 MB/file": "25 MB/file", "Hingga 5 anggota/workspace": "Up to 5 members/workspace", "Hingga 3 workspace": "Up to 3 workspaces", "Peran tim": "Team roles", "1.000 permintaan AI/bulan": "1,000 AI requests/month", "50 MB/file": "50 MB/file" };
 
 const comparison = [
   { label: "Harga mulai", honeybook: "$19/mo", bonsai: "$17/mo", cubiqlo: "Gratis" },
   { label: "Client portal", honeybook: "Ada", bonsai: "Add-on", cubiqlo: "Termasuk" },
   { label: "Booking page", honeybook: "Ada", bonsai: "Add-on", cubiqlo: "Termasuk" },
-  { label: "Billing IDR", honeybook: "Integration", bonsai: "Integration", cubiqlo: "Native" },
+  { label: "Billing", honeybook: "Integration", bonsai: "Integration", cubiqlo: "Native" },
   { label: "AI assistant", honeybook: "Ada", bonsai: "Ada", cubiqlo: "Termasuk" },
 ];
 
@@ -116,7 +122,15 @@ function BrowserFrame({ src, alt, className = "" }: { src: string; alt: string; 
 export default async function HomePage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (session?.user?.id) redirect("https://app.cubiqlo.com/app/dashboard");
-  const lang = await getCurrentLang("en");
+  const requestHeaders = await headers();
+  const cookieStore = await cookies();
+  const country = getCountryFromHeaders(requestHeaders);
+  const preferences = resolveVisitorPreferences({
+    country,
+    currencyCookie: cookieStore.get("cubiqlo_currency")?.value,
+  });
+  const currency: DisplayCurrency = preferences.currency;
+  const lang = await getCurrentLang(preferences.lang);
   const t = createT(lang);
   const tx = (id: string, en: string) => t(id, en);
   const workflowCopy = [
@@ -140,6 +154,7 @@ export default async function HomePage() {
           </nav>
           <div className="flex items-center gap-2">
             <LandingLanguageSwitch initialLang={lang} />
+            <LandingCurrencySwitch initialCurrency={currency} />
             <details className="relative md:hidden">
               <summary aria-label="Buka menu" className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-xl bg-white ring-1 ring-slate-200 [&::-webkit-details-marker]:hidden">
                 <Menu className="h-5 w-5" />
@@ -178,7 +193,7 @@ export default async function HomePage() {
                 <div className="hidden h-8 w-px bg-slate-200 sm:block" />
                 <div><strong className="block text-lg text-[#292D34] sm:text-xl">7+</strong> {tx("tool diringkas", "tools combined")}</div>
                 <div className="hidden h-8 w-px bg-slate-200 sm:block" />
-                <div><strong className="block text-lg text-[#292D34] sm:text-xl">IDR</strong> {tx("sejak awal", "from day one")}</div>
+                <div><strong className="block text-lg text-[#292D34] sm:text-xl">7+</strong> {tx("fitur terhubung", "connected features")}</div>
               </div>
             </div>
 
@@ -207,7 +222,7 @@ export default async function HomePage() {
           <div className="mx-auto max-w-7xl">
             <div className="grid gap-8 lg:grid-cols-[.8fr_1.2fr] lg:items-end">
               <div><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#6647F0]">{tx("Satu alur kerja", "One workflow")}</p><h2 className="mt-4 max-w-xl text-3xl font-semibold leading-tight tracking-[-.03em] sm:text-5xl">{tx("Data cukup dimasukkan sekali. Sisanya tetap terhubung.", "Enter data once. Everything stays connected.")}</h2></div>
-              <p className="max-w-2xl text-lg leading-8 text-slate-600 lg:justify-self-end">{tx("Informasi klien yang lu masukkan di awal ikut ke proyek, portal, dan invoice tanpa input ulang.", "Client information flows into projects, portals, and invoices without re-entry.")}</p>
+              <p className="max-w-2xl text-lg leading-8 text-slate-600 lg:justify-self-end">{tx("Informasi klien yang Anda masukkan di awal ikut ke proyek, portal, dan invoice tanpa input ulang.", "Client information flows into projects, portals, and invoices without re-entry.")}</p>
             </div>
 
             <div className="mt-14 grid gap-8 lg:grid-cols-[.72fr_1.28fr] lg:items-center">
@@ -234,7 +249,7 @@ export default async function HomePage() {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-violet-200 ring-1 ring-white/15"><ShieldCheck className="h-4 w-4" /> {tx("Portal klien aman", "Secure client portal")}</div>
               <h2 className="mt-6 text-4xl font-semibold leading-[1.08] tracking-[-.035em] sm:text-6xl">{tx("Satu link.", "One link.")}<br /><span className="text-violet-300">{tx("Lebih sedikit “update dong?”", "Fewer “any updates?” messages")}</span></h2>
-              <p className="mt-6 max-w-xl text-lg leading-8 text-slate-300">{tx("Klien melihat progress, hasil kerja, komentar, dan invoice. Mereka hanya melihat yang lu bagikan. Catatan internal tetap aman.", "Clients see progress, deliverables, comments, and invoices. They see only what you share. Internal notes stay private.")}</p>
+              <p className="mt-6 max-w-xl text-lg leading-8 text-slate-300">{tx("Klien melihat progress, hasil kerja, komentar, dan invoice. Mereka hanya melihat yang Anda bagikan. Catatan internal tetap aman.", "Clients see progress, deliverables, comments, and invoices. They see only what you share. Internal notes stay private.")}</p>
               <div className="mt-8 grid gap-3 sm:grid-cols-2">
                 {[["Progress terpilih", "Selected progress"], ["File deliverable", "Deliverable files"], ["Komentar publik", "Public comments"], ["Link invoice", "Invoice link"], ["Token aman", "Secure token"], ["Data internal terlindungi", "Internal data protected"]].map(([id, en]) => <div key={id} className="flex items-center gap-2 text-sm text-slate-200"><Check className="h-4 w-4 text-emerald-400" />{tx(id, en)}</div>)}
               </div>
@@ -253,7 +268,7 @@ export default async function HomePage() {
 
         <section id="compare" className="px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mx-auto max-w-6xl">
-            <div className="mx-auto max-w-3xl text-center"><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#6647F0]">{tx("Dibuat untuk bisnis Indonesia", "Built for Indonesian businesses")}</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.03em] sm:text-5xl">{tx("Dibuat untuk cara kerja dan harga bisnis Indonesia.", "Built for how Indonesian businesses work and price their services.")}</h2><p className="mt-5 text-lg leading-8 text-slate-600">{tx("Mulai gratis, gunakan Rupiah, dan kelola portal klien tanpa membayar add-on tambahan.", "Start free, use Rupiah, and manage your client portal without extra add-ons.")}</p></div>
+            <div className="mx-auto max-w-3xl text-center"><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#6647F0]">{tx("Untuk bisnis berbasis klien", "For client-based businesses")}</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.03em] sm:text-5xl">{tx("Dibuat untuk cara kerja bisnis modern.", "Built for modern client work.")}</h2><p className="mt-5 text-lg leading-8 text-slate-600">{tx("Mulai gratis, kelola pekerjaan klien tanpa add-on tambahan.", "Start free, manage client work without extra add-ons.")}</p></div>
             <div className="mt-12 hidden overflow-hidden rounded-3xl bg-white shadow-[0_20px_60px_rgba(41,45,52,.08)] ring-1 ring-slate-200 md:block">
               <table className="w-full text-left text-sm"><thead className="bg-slate-50"><tr><th className="px-6 py-5" /><th className="px-6 py-5 text-slate-500">HoneyBook</th><th className="px-6 py-5 text-slate-500">Bonsai</th><th className="bg-[#F4F0FF] px-6 py-5 text-[#6647F0]">Cubiqlo</th></tr></thead><tbody>{comparison.map(row => <tr key={row.label} className="border-t border-slate-100"><td className="px-6 py-4 font-medium">{tx(row.label, row.label === "Harga mulai" ? "Starting price" : row.label)}</td><td className="px-6 py-4 text-slate-500">{tx(row.honeybook, row.honeybook === "Ada" ? "Yes" : row.honeybook)}</td><td className="px-6 py-4 text-slate-500">{tx(row.bonsai, row.bonsai === "Ada" ? "Yes" : row.bonsai === "Termasuk" ? "Included" : row.bonsai)}</td><td className="bg-[#F4F0FF]/65 px-6 py-4 font-semibold text-[#6647F0]">{tx(row.cubiqlo, row.cubiqlo === "Gratis" ? "Free" : row.cubiqlo === "Termasuk" ? "Included" : row.cubiqlo)}</td></tr>)}</tbody></table>
             </div>
@@ -272,7 +287,7 @@ export default async function HomePage() {
         <section id="pricing" className="bg-white px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <div className="mx-auto max-w-3xl text-center"><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#6647F0]">{tx("Harga transparan", "Transparent pricing")}</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.03em] sm:text-5xl">{tx("Mulai gratis. Upgrade saat klien bertambah.", "Start free. Upgrade as your client work grows.")}</h2><p className="mt-5 text-lg text-slate-600">{tx("Tidak perlu kartu kredit untuk mulai.", "No credit card required.")}</p></div>
-            <div className="mt-12 grid gap-5 lg:grid-cols-3">{pricing.map(plan => <div key={plan.name} className={`relative flex flex-col rounded-3xl p-6 ${plan.featured ? "bg-[#292D34] text-white shadow-[0_24px_70px_rgba(41,45,52,.22)] lg:-translate-y-3" : "bg-[#FBFAFE] ring-1 ring-slate-200"}`}>{plan.featured && <span className="absolute right-5 top-5 rounded-full bg-[#FF7657] px-3 py-1 text-xs font-semibold">{tx("Paling populer", "Most popular")}</span>}<p className={`text-sm font-semibold ${plan.featured ? "text-violet-300" : "text-[#6647F0]"}`}>{tx(plan.name, plan.name === "Free" ? "Free" : plan.name)}</p><p className={`mt-3 text-sm ${plan.featured ? "text-slate-300" : "text-slate-600"}`}>{plan.name === "Free" ? tx("Coba dulu untuk client work kecil.", "Try it for small client work.") : plan.name === "Solo" ? tx("Untuk freelancer yang mulai serius.", "For freelancers getting serious.") : tx("Untuk tim kecil yang kerja bareng.", "For small teams working together.")}</p><div className="mt-7"><strong className="block text-3xl tracking-[-.03em]">{plan.price}</strong><span className={`mt-1 block text-xs ${plan.featured ? "text-slate-400" : "text-slate-500"}`}>{plan.name === "Solo" || plan.name === "Team" ? tx("Ditagih tahunan", "Billed yearly") : tx(plan.suffix, "forever")}</span></div><div className={`my-6 h-px ${plan.featured ? "bg-white/10" : "bg-slate-200"}`} /><div className="flex-1 space-y-3">{plan.items.map(item => <div key={item} className={`flex items-center gap-2 text-sm ${plan.featured ? "text-slate-200" : "text-slate-700"}`}><Check className={`h-4 w-4 ${plan.featured ? "text-emerald-400" : "text-[#6647F0]"}`} />{tx(item, landingEn[item] ?? item)}</div>)}</div><Button asChild className={`mt-8 h-11 rounded-xl ${plan.featured ? "bg-white text-[#292D34] hover:bg-violet-50" : "bg-[#292D34] text-white hover:bg-[#17191E]"}`}><Link href="/signup">{tx(plan.cta, plan.name === "Free" ? "Start free" : `Choose ${plan.name}`)}<ArrowRight className="ml-1 inline h-4 w-4" /></Link></Button></div>)}</div>
+            <div className="mt-12 grid gap-5 lg:grid-cols-3">{pricing.map(plan => <div key={plan.name} className={`relative flex flex-col rounded-3xl p-6 ${plan.featured ? "bg-[#292D34] text-white shadow-[0_24px_70px_rgba(41,45,52,.22)] lg:-translate-y-3" : "bg-[#FBFAFE] ring-1 ring-slate-200"}`}>{plan.featured && <span className="absolute right-5 top-5 rounded-full bg-[#FF7657] px-3 py-1 text-xs font-semibold">{tx("Paling populer", "Most popular")}</span>}<p className={`text-sm font-semibold ${plan.featured ? "text-violet-300" : "text-[#6647F0]"}`}>{tx(plan.name, plan.name === "Free" ? "Free" : plan.name)}</p><p className={`mt-3 text-sm ${plan.featured ? "text-slate-300" : "text-slate-600"}`}>{plan.name === "Free" ? tx("Coba dulu untuk client work kecil.", "Try it for small client work.") : plan.name === "Solo" ? tx("Untuk freelancer yang mulai serius.", "For freelancers getting serious.") : tx("Untuk tim kecil yang kerja bareng.", "For small teams working together.")}</p><div className="mt-7"><strong className="block text-3xl tracking-[-.03em]">{getLandingPrice(plan.name.toLowerCase() as "free" | "solo" | "team", "monthly", currency)}</strong><span className={`mt-1 block text-xs ${plan.featured ? "text-slate-400" : "text-slate-500"}`}>{plan.name === "Solo" || plan.name === "Team" ? `${getLandingPrice(plan.name.toLowerCase() as "solo" | "team", "yearly", currency)} / ${tx("tahun", "year")}` : tx("selamanya", "forever")}</span>{currency === "USD" && plan.name !== "Free" && <p className="mt-2 text-xs">{tx("Pembayaran diproses dalam IDR.", "Payment processed in IDR.")}</p>}</div><div className={`my-6 h-px ${plan.featured ? "bg-white/10" : "bg-slate-200"}`} /><div className="flex-1 space-y-3">{plan.items.map(item => <div key={item} className={`flex items-center gap-2 text-sm ${plan.featured ? "text-slate-200" : "text-slate-700"}`}><Check className={`h-4 w-4 ${plan.featured ? "text-emerald-400" : "text-[#6647F0]"}`} />{tx(item, landingEn[item] ?? item)}</div>)}</div><Button asChild className={`mt-8 h-11 rounded-xl ${plan.featured ? "bg-white text-[#292D34] hover:bg-violet-50" : "bg-[#292D34] text-white hover:bg-[#17191E]"}`}><Link href="/signup">{tx(plan.cta, plan.name === "Free" ? "Start free" : `Choose ${plan.name}`)}<ArrowRight className="ml-1 inline h-4 w-4" /></Link></Button></div>)}</div>
           </div>
         </section>
 

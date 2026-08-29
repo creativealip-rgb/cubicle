@@ -74,8 +74,8 @@ describe("unified template contentBlocks in real create flows (batch 3)", () => 
   });
 
   it("create pages keep passing workspace-scoped templates into the flows", () => {
-    expect(contractsPage).toMatch(/listContractTemplates\(\)/);
-    expect(contractsPage).toMatch(/templates=\{contractTemplates\}/);
+    expect(contractsPage).toMatch(/\.from\(contractTemplates\)/);
+    expect(contractsPage).toMatch(/templates=\{templateRows\}/);
     expect(proposalsPage).toMatch(/listProposalTemplates\(\)/);
     expect(proposalsPage).toMatch(/templates=\{proposalTemplates\}/);
   });

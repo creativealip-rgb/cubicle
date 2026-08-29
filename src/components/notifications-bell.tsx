@@ -60,6 +60,17 @@ function timeAgo(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
+function localizedNotification(n: NotificationItem, t: (id: string, en: string) => string) {
+  const replace = (suffix: RegExp, id: string, en: string) => n.title.replace(suffix, t(id, en));
+  if (n.type === "portal_report_request") return { title: replace(/ minta report$/, " minta report", " requested a report"), body: n.body === "Request report dari portal" ? t(n.body, "Report request from client portal") : n.body };
+  if (n.type === "portal_meeting_request") return { title: replace(/ minta meeting$/, " minta meeting", " requested a meeting"), body: n.body === "Request meeting dari portal" ? t(n.body, "Meeting request from client portal") : n.body };
+  if (n.type === "client_task_approved") return { title: n.title.replace(" menyetujui: ", t(" menyetujui: ", " approved: ")), body: n.body === "Task disetujui lewat client portal" ? t(n.body, "Task approved through client portal") : n.body };
+  if (n.type === "client_task_revision") return { title: n.title.replace(" minta revisi: ", t(" minta revisi: ", " requested changes: ")), body: n.body === "Client minta revisi lewat client portal" ? t(n.body, "Client requested changes through client portal") : n.body };
+  if (n.type === "file_viewed") return { title: n.title.replace(" melihat ", t(" melihat ", " viewed ")), body: n.body === "File pertama kali dibuka dari portal" ? t(n.body, "File opened from client portal for the first time") : n.body };
+  if (n.type === "client_file_uploaded") return { title: n.title, body: n.body === "Client portal upload" ? t(n.body, "Client portal upload") : n.body === "Client portal upload (root)" ? t(n.body, "Client portal upload (root folder)") : n.body };
+  return { title: n.title, body: n.body };
+}
+
 export function NotificationsBell() {
   const { t } = useT();
   const [open, setOpen] = useState(false);
@@ -178,6 +189,7 @@ export function NotificationsBell() {
             <ul className="divide-y">
               {items.map((n) => {
                 const icon = TYPE_ICON[n.type] ?? "•";
+                const copy = localizedNotification(n, t);
                 const isUnread = !n.readAt;
                 const inner = (
                   <div
@@ -195,15 +207,15 @@ export function NotificationsBell() {
                             isUnread && "text-foreground"
                           )}
                         >
-                          {n.title}
+                          {copy.title}
                         </div>
                         <div className="text-[10px] text-muted-foreground shrink-0 mt-0.5">
                           {mounted ? timeAgo(n.createdAt) : "—"}
                         </div>
                       </div>
-                      {n.body && (
+                      {copy.body && (
                         <div className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-                          {n.body}
+                          {copy.body}
                         </div>
                       )}
                       {isUnread && (

@@ -17,11 +17,11 @@ export default async function NewQuestionnairePage() {
         <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2">
           <Link href="/app/questionnaires">
             <ArrowLeft className="h-3.5 w-3.5" />
-            {t("Semua kuesioner", "All questionnaires")}
+            {t("Semua Formulir", "All Forms")}
           </Link>
         </Button>
         <h1 className="app-page-title">
-          {t("Kuesioner baru", "New questionnaire")}
+          {t("Formulir baru", "New Form")}
         </h1>
         <p className="mt-1 text-sm text-slate-500">
           {t(

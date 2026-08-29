@@ -332,11 +332,12 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
 
             {/* Format hh:mm:ss Duration */}
             <div className="space-y-1.5">
-              <Label className="text-xs">{t("Durasi (HH:MM:SS)", "Duration (hh:mm:ss)")}</Label>
+              <Label htmlFor="manual-time-duration" className="text-xs">{t("Durasi (HH:MM:SS)", "Duration (hh:mm:ss)")}</Label>
               <div className="relative flex items-center">
                 <Hourglass className="absolute left-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  type="text"
+                 id="manual-time-duration"
+                 type="text"
                   placeholder="00:00:00"
                   value={timeFormatted}
                   onChange={(e) => handleTimeChange(e.target.value)}

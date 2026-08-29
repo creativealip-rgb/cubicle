@@ -36,8 +36,8 @@ describe("Billing-aware Waktu route wiring", () => {
   });
 
   it("preserves topbar timer event contract", () => {
-    const topbar = read("src/components/app-topbar.tsx");
-    expect(topbar).toContain('window.addEventListener("cubicle:timer-changed"');
-    expect(topbar).toContain('window.dispatchEvent(new Event("cubicle:timer-changed"))');
+    const widget = read("src/components/time/timer-widget.tsx");
+    expect(widget).toContain('window.addEventListener("cubicle:timer-changed"');
+    expect(widget).toContain('window.dispatchEvent(new CustomEvent("cubicle:timer-changed"))');
   });
 });

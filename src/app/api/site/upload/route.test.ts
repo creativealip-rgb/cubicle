@@ -26,6 +26,13 @@ import { auth } from "@/lib/auth";
 
 const mockGetSession = vi.mocked(auth.api.getSession);
 
+const imageBytes = {
+  png: new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+  jpg: new Uint8Array([0xff, 0xd8, 0xff, 0xdb]),
+  webp: new Uint8Array([0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50]),
+  gif: new Uint8Array([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]),
+};
+
 function makeRequest(file?: File): NextRequest {
   const form = new FormData();
   if (file) form.append("file", file);
@@ -85,9 +92,21 @@ describe("POST /api/site/upload", () => {
     expect(data.error).toContain("PNG");
   });
 
+  it("rejects spoofed image MIME when bytes are active content", async () => {
+    mockGetSession.mockResolvedValue({ user: { id: "u1" } } as any);
+    const response = await POST(makeRequest(new File(["<script>alert(1)</script>"], "evil.png", { type: "image/png" })));
+    expect(response.status).toBe(400);
+  });
+
+  it("rejects extension and MIME mismatch", async () => {
+    mockGetSession.mockResolvedValue({ user: { id: "u1" } } as any);
+    const response = await POST(makeRequest(new File([imageBytes.png], "photo.png", { type: "image/jpeg" })));
+    expect(response.status).toBe(400);
+  });
+
   it("accepts valid image and stores locally when R2 not configured", async () => {
     mockGetSession.mockResolvedValue({ user: { id: "u1" } } as any);
-    const file = new File(["fake-image-bytes"], "photo.webp", { type: "image/webp" });
+    const file = new File([imageBytes.webp], "photo.webp", { type: "image/webp" });
 
     const response = await POST(makeRequest(file));
     const data = await response.json();
@@ -100,14 +119,14 @@ describe("POST /api/site/upload", () => {
   it("accepts all allowed image formats (png, jpeg, webp, gif)", async () => {
     mockGetSession.mockResolvedValue({ user: { id: "u1" } } as any);
     const allowed = [
-      ["a.png", "image/png"],
-      ["b.jpg", "image/jpeg"],
-      ["c.webp", "image/webp"],
-      ["d.gif", "image/gif"],
+      ["a.png", "image/png", imageBytes.png],
+      ["b.jpg", "image/jpeg", imageBytes.jpg],
+      ["c.webp", "image/webp", imageBytes.webp],
+      ["d.gif", "image/gif", imageBytes.gif],
     ] as const;
 
-    for (const [name, type] of allowed) {
-      const response = await POST(makeRequest(new File(["bytes"], name, { type })));
+    for (const [name, type, bytes] of allowed) {
+      const response = await POST(makeRequest(new File([bytes], name, { type })));
       expect(response.status).toBe(200);
     }
   });

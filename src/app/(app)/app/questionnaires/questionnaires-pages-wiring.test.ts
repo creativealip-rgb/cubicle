@@ -18,19 +18,19 @@ describe("questionnaire pages share the app page chrome", () => {
     const page = source("[questionnaireId]/page.tsx");
     expect(page).toContain('className="min-w-0 space-y-6"');
     expect(page).not.toMatch(/<div className="space-y-6 p-6 max-w-4xl">/);
-    expect(page).toContain("Kembali ke Kuesioner");
-    expect(page).toContain("Back to Questionnaires");
+    expect(page).toContain("Kembali ke Formulir");
+    expect(page).toContain("Back to Forms");
   });
 
   it("new and edit pages share the form header pattern (back + title + description, localized)", () => {
     const newPage = source("new/page.tsx");
     const editPage = source("[questionnaireId]/edit/page.tsx");
     expect(newPage).toContain('className="space-y-6 p-6 max-w-4xl"');
-    expect(newPage).toContain("Semua kuesioner");
-    expect(newPage).toContain("All questionnaires");
+    expect(newPage).toContain("Semua Formulir");
+    expect(newPage).toContain("All Forms");
     expect(editPage).toContain('className="space-y-6 p-6 max-w-4xl"');
-    expect(editPage).toContain("Kembali ke kuesioner");
-    expect(editPage).toContain("Back to questionnaire");
+    expect(editPage).toContain("Kembali ke Formulir");
+    expect(editPage).toContain("Back to Forms");
     expect(editPage).not.toContain('max-w-3xl');
   });
 
@@ -40,5 +40,25 @@ describe("questionnaire pages share the app page chrome", () => {
     expect(page).toContain('t("Jawaban", "Responses")');
     expect(page).not.toMatch(/>\s*Back\s*</);
     expect(page).not.toMatch(/>\s*Responses\s*</);
+  });
+
+  it("questionnaire UI source has no old product labels", () => {
+    const files = [
+      "src/app/(app)/app/questionnaires/page.tsx",
+      "src/app/(app)/app/questionnaires/new/page.tsx",
+      "src/app/(app)/app/questionnaires/[questionnaireId]/page.tsx",
+      "src/app/(app)/app/questionnaires/[questionnaireId]/edit/page.tsx",
+      "src/components/questionnaires/questionnaire-builder.tsx",
+      "src/components/questionnaires/send-questionnaire-button.tsx",
+      "src/components/questionnaires/delete-questionnaire-button.tsx",
+      "src/components/calendar/questionnaire-create-dialog.tsx",
+      "src/components/app-topbar.tsx",
+      "src/app/(app)/app/docs/page.tsx",
+      "src/app/(app)/app/docs/[slug]/page.tsx",
+    ];
+    for (const file of files) {
+      const text = readFileSync(join(process.cwd(), file), "utf8");
+      expect(text).not.toMatch(/["'`](?:Kuesioner|kuesioner|Questionnaire:|questionnaire form|Send questionnaire|New questionnaire|Edit questionnaire|Back to questionnaire|Questionnaires)["'`]/);
+    }
   });
 });

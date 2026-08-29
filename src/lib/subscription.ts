@@ -43,7 +43,7 @@ export async function expirePlans(): Promise<string[]> {
  * Find users that need renewal reminders.
  * Returns users with daysUntilExpiry for each.
  */
-export async function getExpiringUsers(): Promise<Array<{ id: string; name: string | null; plan: string; planExpiresAt: Date; daysUntilExpiry: number }>> {
+export async function getExpiringUsers(): Promise<Array<{ id: string; name: string | null; email: string; plan: string; planExpiresAt: Date; daysUntilExpiry: number }>> {
   const now = new Date();
   const lookAhead = new Date();
   lookAhead.setDate(lookAhead.getDate() + 8); // 8 days ahead
@@ -52,6 +52,7 @@ export async function getExpiringUsers(): Promise<Array<{ id: string; name: stri
     .select({
       id: users.id,
       name: users.name,
+      email: users.email,
       plan: users.plan,
       planExpiresAt: users.planExpiresAt,
     })

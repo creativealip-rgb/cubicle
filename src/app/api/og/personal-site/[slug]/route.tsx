@@ -1,8 +1,5 @@
 import { ImageResponse } from "next/og";
-import { eq } from "drizzle-orm";
-import { db } from "@/db";
-import { personalSites } from "@/db/schema";
-import { normalizePersonalSiteSlug, normalizeStoredPersonalSite } from "@/lib/personal-site/model";
+import { getPublishedPersonalSiteBySlug } from "@/lib/actions/personal-site";
 
 // Dynamic OG image for public personal site share cards (Phase 7).
 // Used as a fallback when the site owner has not uploaded a custom OG image.
@@ -14,21 +11,7 @@ type Props = {
 };
 
 async function getSiteForOg(slug: string) {
-  const clean = normalizePersonalSiteSlug(slug);
-  if (clean !== slug) return null;
-  const [site] = await db
-    .select()
-    .from(personalSites)
-    .where(eq(personalSites.slug, clean))
-    .limit(1);
-  if (!site) return null;
-  return normalizeStoredPersonalSite({
-    ...site,
-    subtitle: site.subtitle ?? "",
-    about: site.about ?? "",
-    ctaLabel: site.ctaLabel ?? "",
-    ctaUrl: site.ctaUrl ?? "",
-  });
+  return getPublishedPersonalSiteBySlug(slug);
 }
 
 export async function GET(request: Request, { params }: Props) {

@@ -10,10 +10,11 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { and, eq, inArray, isNotNull, ne, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { z } from "zod";
+import { normalizeInvoiceNumber } from "@/lib/invoice-number";
 
 const periodInputSchema = z.object({ projectId: z.string().uuid(), workDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) });
 const periodIdSchema = z.string().uuid();
-const invoiceInputSchema = z.object({ retainerPeriodId: z.string().uuid(), issueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() });
+const invoiceInputSchema = z.object({ retainerPeriodId: z.string().uuid(), issueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), invoiceNumber: z.string().optional() });
 const retainerInvoiceIdSchema = z.string().uuid();
 
 async function requireWritableWorkspace() {
@@ -108,7 +109,7 @@ export async function generateRetainerInvoice(input: z.infer<typeof invoiceInput
     const [project] = await tx.select({ clientId: projects.clientId }).from(projects).where(and(eq(projects.id, period.projectId), eq(projects.workspaceId, workspaceId))).limit(1);
     if (!project) throw new Error("Project Retainer tidak ditemukan");
 
-    const invoiceNumber = await nextInvoiceNumber(tx, workspaceId);
+    const invoiceNumber = normalizeInvoiceNumber(parsed.invoiceNumber) ?? await nextInvoiceNumber(tx, workspaceId);
     const lines = buildRetainerInvoiceLines({ fee: Number(period.feeSnapshot), currency: period.currencySnapshot, periodStart: period.periodStart, periodEnd: period.periodEnd, overagePolicy: period.overagePolicySnapshot, overageMinutes: period.overageMinutes, overageRate: period.overageRateSnapshot == null ? null : Number(period.overageRateSnapshot) });
     const subtotal = lines.reduce((sum, line) => sum + line.amount, 0);
     const [inv] = await tx.insert(invoices).values({

@@ -17,6 +17,12 @@ const createThemeConfig = () => ({
 });
 
 describe("computeReadinessPreview", () => {
+  it("treats the new-user default as publishable", () => {
+    const preview = computeReadinessPreview({ ...DEFAULT_PERSONAL_SITE, slug: "ws-new-user", published: true });
+    expect(preview.ready).toBe(true);
+    expect(preview.issues.find((issue) => issue.id === "cta-unpaired")).toBeUndefined();
+  });
+
   it("returns ready=true for complete site with errors=0 warnings=0", () => {
     const site: PersonalSiteInput = {
       ...DEFAULT_PERSONAL_SITE,

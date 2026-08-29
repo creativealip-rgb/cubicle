@@ -46,8 +46,8 @@ export function SendQuestionnaireButton({
 
   const selectedClient = clients.find((c) => c.id === clientId);
   const subject = name
-    ? `Questionnaire: ${name}`
-    : t("Kuesioner", "Questionnaire");
+    ? `Form: ${name}`
+    : t("Formulir", "Form");
 
   function handleSend() {
     if (!clientId) {
@@ -126,7 +126,7 @@ export function SendQuestionnaireButton({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {t("Kirim kuesioner", "Send questionnaire")}
+              {t("Kirim formulir", "Send form")}
             </DialogTitle>
             <DialogDescription>
               {t(

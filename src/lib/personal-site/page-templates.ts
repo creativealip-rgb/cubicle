@@ -19,20 +19,20 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
   {
     id: "freelancer-profile",
     label: "Freelancer Profile",
-    description: "Profil profesional untuk freelancer dengan layanan, proses, dan portfolio.",
+    description: "Professional freelancer profile with services, process, and portfolio.",
     category: "individual",
     build: (_site: PersonalSiteInput) => ({
-      title: "Nama Anda – Freelancer",
+      title: "Your Name – Freelancer",
       subtitle: "Freelancer · Consultant · Specialist",
-      hero: "Saya membantu bisnis kecil dan menengah tampil lebih profesional, terpercaya, dan siap menerima klien baru melalui website yang efektif.",
+      hero: "I help small and medium businesses look more professional, build trust, and win new clients through effective websites.",
       about:
-        "Saya adalah freelancer berpengalaman dengan +5 tahun pengalaman membangun website dan solusi digital untuk berbagai industri. Pendekatan saya berfokus pada hasil nyata - bukan hanya desain bagus, tapi website yang benar-benar meningkatkan konversi dan kredibilitas bisnis Anda.\n\nSetiap project dimulai dengan pemahaman mendalam tentang kebutuhan Anda, dilanjutkan dengan eksekusi terstruktur, dan diakhiri dengan handover lengkap termasuk dokumentasi dan panduan maintenance.",
-      ctaLabel: "Konsultasi Gratis",
+        "I am an experienced freelancer with 5+ years building websites and digital solutions across industries. My approach focuses on measurable outcomes—not only polished design, but websites that improve conversion and business credibility.\n\nEvery project starts with a deep understanding of your needs, continues through structured execution, and ends with a complete handover including documentation and maintenance guidance.",
+      ctaLabel: "Free Consultation",
       pages: [
         {
           id: "home",
           slug: "",
-          title: "Beranda",
+          title: "Home",
           isHome: true,
           sections: buildSections([
             "services-software-dev",
@@ -48,20 +48,20 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
   {
     id: "agency-website",
     label: "Agency Website",
-    description: "Website agensi digital lengkap dengan team, services, dan portfolio.",
+    description: "Complete digital agency website with team, services, and portfolio.",
     category: "business",
     build: (_site: PersonalSiteInput) => ({
-      title: "Nama Agensi Anda",
+      title: "Your Agency Name",
       subtitle: "Digital Agency · Web Development · Marketing Solutions",
-      hero: "Kami mengubah visi Anda menjadi kenyataan digital yang measurable dan scalable.",
+      hero: "We turn your vision into measurable, scalable digital experiences.",
       about:
-        "Agensi kami adalah team cross-functional yang terdiri dari strategists, designers, developers, dan marketers yang bekerja sama untuk menghadirkan solusi digital end-to-end.\n\nDengan pengalaman mengerjakan 100+ project untuk klien lokal dan internasional, kami memahami bahwa setiap bisnis unik. Oleh karena itu, pendekatan kami selalu dimulai dari discovery mendalam untuk memastikan solusi yang kami bangun benar-benar sesuai dengan goals dan constraints spesifik Anda.\n\nTim kami mengadopsi agile methodology dengan weekly sprints, transparent communication, dan data-driven decision making untuk memastikan hasil maksimal dan accountability penuh selama project berjalan.",
-      ctaLabel: "Mulai Project",
+        "Our cross-functional team brings strategists, designers, developers, and marketers together to deliver end-to-end digital solutions.\n\nWe start with focused discovery to understand your business, goals, and constraints before designing the right solution.\n\nOur team uses agile delivery, weekly sprints, transparent communication, and data-driven decisions to maintain quality and accountability.",
+      ctaLabel: "Start a Project",
       pages: [
         {
           id: "home",
           slug: "",
-          title: "Beranda",
+          title: "Home",
           isHome: true,
           sections: buildSections([
             "services-3-cards",
@@ -73,7 +73,7 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
         {
           id: "about",
           slug: "about",
-          title: "Tentang Kami",
+          title: "About Us",
           isHome: false,
           sections: buildSections([
             "process-agile",
@@ -89,20 +89,20 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
   {
     id: "service-offer",
     label: "Service Offer",
-    description: "Landing page fokus pada satu atau beberapa jasa utama dengan clear CTA.",
+    description: "A focused landing page for one or more core services with a clear CTA.",
     category: "business",
     build: (_site: PersonalSiteInput) => ({
-      title: "Nama Jasa Anda",
+      title: "Your Service Name",
       subtitle: "Professional Services · Expert Solutions",
-      hero: "Solusi profesional untuk masalah spesifik bisnis Anda — delivered on-time, on-budget, dengan kualitas yang dapat diukur.",
+      hero: "Professional solutions for specific business challenges—delivered on time, on budget, with measurable quality.",
       about:
-        "Jasa kami dirancang khusus untuk menyelesaikan pain point yang paling menghambat pertumbuhan bisnis Anda. Dengan metodologi proven dan tim ahli bersertifikat, kami memberikan hasil yang tidak hanya memenuhi ekspektasi, tapi melampaui harapan.\n\nKeunggulan layanan kami:\n• Tim expert dengan track record terbukti\n• Proses transparent dengan regular updates\n• Quality assurance ketat sebelum delivery\n• Support dan maintenance post-launch\n• Flexible pricing tanpa hidden costs",
-      ctaLabel: "Dapatkan Penawaran",
+        "Our services address the challenges that most limit business growth. With a proven methodology and experienced specialists, we deliver outcomes against clear expectations.\n\nWhat you get:\n• Experienced specialists with a proven track record\n• A transparent process with regular updates\n• Thorough quality assurance before delivery\n• Post-launch support and maintenance\n• Flexible pricing with no hidden costs",
+      ctaLabel: "Request a Quote",
       pages: [
         {
           id: "home",
           slug: "",
-          title: "Beranda",
+          title: "Home",
           isHome: true,
           sections: buildSections([
             "services-software-dev",
@@ -114,7 +114,7 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
         {
           id: "pricing",
           slug: "pricing",
-          title: "Harga & Paket",
+          title: "Pricing & Plans",
           isHome: false,
           sections: buildSections(["pricing-saas-tier"]),
         },

@@ -23,7 +23,7 @@ import { SendProposalButton } from "@/components/proposals/send-proposal-button"
 import DocumentDetailsForm from "@/components/documents/document-details-form";
 import { updateProposal } from "@/lib/actions/proposals";
 import { DeleteProposalButton } from "@/components/proposals/delete-proposal-button";
-import { ArrowLeft, Eye } from "lucide-react";
+import { ArrowLeft, Eye, FileText } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { getCurrentLang, createT } from "@/lib/i18n";
@@ -160,6 +160,14 @@ export default async function ProposalDetailPage({
                 <Eye className="h-3.5 w-3.5" />
                 {t("Lihat proposal", "View proposal")}
               </Link>
+            </Button>
+          ) : null}
+          {canWrite ? (
+            <Button variant="outline" size="sm" asChild>
+              <a href={`/api/proposals/${p.id}/pdf`}>
+                <FileText className="h-3.5 w-3.5" />
+                {t("Unduh PDF", "Download PDF")}
+              </a>
             </Button>
           ) : null}
           {canWrite &&

@@ -17,9 +17,11 @@ import { Calendar, CalendarDays, Clock, User } from "lucide-react";
 import Link from "next/link";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { AvailabilityRuleForm } from "@/components/calendar/availability-rule-form";
-import { QuestionnaireCreateDialog } from "@/components/calendar/questionnaire-create-dialog";
+import { BookingSlugForm } from "@/components/settings/booking-slug-form";
 import { AppointmentActions, DeleteAvailabilityRuleButton } from "@/components/calendar/calendar-item-actions";
 import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
+
+export const dynamic = "force-dynamic";
 
 export default async function CalendarPage() {
   const lang = await getCurrentLang();
@@ -101,30 +103,23 @@ export default async function CalendarPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <QuestionnaireCreateDialog />
           {ws.bookingSlug ? (
             <Button size="sm" className="gap-1" asChild>
               <Link href={`/booking/${ws.bookingSlug}`} target="_blank">
                 <Calendar className="h-4 w-4" />
-                <span className="hidden sm:inline">{t("Halaman Booking Publik", "Public Booking Page")}</span>
-                <span className="sm:hidden">{t("Booking publik", "Public booking")}</span>
+                <span>{t("Booking Page", "Booking Page")}</span>
               </Link>
             </Button>
-          ) : (
-            <Button size="sm" className="gap-1" asChild>
-              <Link href="/app/settings">
-                <Calendar className="h-4 w-4" />
-                <span className="hidden sm:inline">{t("Aktifkan booking publik", "Enable public booking")}</span>
-                <span className="sm:hidden">{t("Aktifkan booking", "Enable booking")}</span>
-              </Link>
-            </Button>
-          )}
+          ) : null}
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Availability Rules */}
-        <Card className="lg:col-span-1">
+        <div className="space-y-4 lg:col-span-1">
+          <BookingSlugForm defaultSlug={ws.bookingSlug} canEdit={ws.ownerId === user.id} />
+
+          {/* Availability Rules */}
+          <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-3">
             <CardTitle className="text-base font-semibold">
               <Clock className="mr-2 inline h-4 w-4" />
@@ -162,7 +157,8 @@ export default async function CalendarPage() {
               </div>
             ))}
           </CardContent>
-        </Card>
+          </Card>
+        </div>
 
         {/* Upcoming Appointments */}
         <Card className="flex h-full flex-col lg:col-span-2">

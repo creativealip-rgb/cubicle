@@ -16,7 +16,7 @@ describe("app navigation registry", () => {
     const routes = allRoutes();
     expect(new Set(routes).size).toBe(routes.length);
     expect(appNavigation.map((entry) => entry.id)).toEqual([
-      "dashboard", "work", "time", "business", "calendar", "files", "finance", "personal", "ai",
+      "dashboard", "work", "time", "business", "finance", "calendar", "personal", "ai",
     ]);
     expect(routes).toContain("/app/services");
     expect(routes).toContain("/app/proposals");
@@ -26,7 +26,7 @@ describe("app navigation registry", () => {
   it("keeps only delivery entities in Work", () => {
     const work = appNavigation.find((entry) => entry.id === "work");
     expect(work?.kind).toBe("group");
-    if (work?.kind === "group") expect(work.children.map((item) => item.id)).toEqual(["clients", "projects", "tasks"]);
+    if (work?.kind === "group") expect(work.children.map((item) => item.id)).toEqual(["clients", "projects", "tasks", "files"]);
     expect(appNavigation.some((entry) => entry.id === "sales")).toBe(false);
   });
 
@@ -35,7 +35,7 @@ describe("app navigation registry", () => {
       const visible = getVisibleNavigation(role);
       expect(visible.some((entry) => entry.id === "personal")).toBe(false);
       expect(visible.some((entry) => entry.id === "sales")).toBe(false);
-      expect(JSON.stringify(visible)).not.toContain("/app/personal");
+      expect(visible.flatMap((entry) => entry.kind === "group" ? entry.children.map((item) => item.href) : [entry.href])).not.toContain("/app/personal");
     }
   });
 

@@ -42,28 +42,19 @@ export function ProjectTaskWorkspace({ projectId, mode, workflowTasks, reusableT
   const createButton = (
     <Dialog open={createOpen} onOpenChange={setCreateOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="default" className="gap-1">
-          <Plus className="h-4 w-4" /> {t("Tambah Tugas", "Add Task")}
-        </Button>
+        <Button size="sm" className="gap-1"><Plus className="h-4 w-4" /> {t("Buat Tugas", "Create Task")}</Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90dvh] w-[calc(100%-1rem)] overflow-y-auto sm:max-w-[520px]">
-        <DialogHeader>
-          <DialogTitle>{t("Tambah Tugas", "Add Task")}</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-h-[90dvh] w-[calc(100%-1rem)] overflow-y-auto sm:max-w-[720px]">
+        <DialogHeader><DialogTitle>{t("Buat Tugas", "Create Task")}</DialogTitle></DialogHeader>
         <TaskForm mode="create" projectId={projectId} members={members} projects={projects} taskMode={mode} onSuccess={() => setCreateOpen(false)} />
       </DialogContent>
     </Dialog>
   );
-
   return (
     <section className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="font-semibold">{titleText}</h3>
-        {createButton}
-      </div>
-      {visibleWorkflow.length > 0 && mode === "workflow" && <WorkflowTaskWorkspace tasks={visibleWorkflow} members={members} projects={projects} currentUserId={currentUserId} />}
-      {visibleReusable.length > 0 && mode === "reusable" && <ReusableTaskWorkspace tasks={visibleReusable} members={members} projects={projects} onMove={projectId ? moveReusable : undefined} />}
-      {visibleWorkflow.length === 0 && visibleReusable.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">{t("Belum ada tugas.", "No tasks yet.")}</p>}
+      <div className="-mt-16 mb-8 flex justify-end">{createButton}</div>
+      {mode === "workflow" && <WorkflowTaskWorkspace title={titleText} tasks={visibleWorkflow} members={members} projects={projects} currentUserId={currentUserId} />}
+      {mode === "reusable" && <ReusableTaskWorkspace tasks={visibleReusable} members={members} projects={projects} onMove={projectId ? moveReusable : undefined} />}
       {!projectId && Math.max(workflowTasks.length, reusableTasks.length) > PAGE_SIZE ? (
         <div className="flex justify-end gap-2">
           <button disabled={page === 1} onClick={() => setPage((value) => value - 1)}>{t("Sebelumnya", "Previous")}</button>

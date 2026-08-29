@@ -31,6 +31,11 @@ describe("Project-scoped Invoice dialog", () => {
     expect(form).toMatch(/!scopedProjectId\s*&&[\s\S]*Proyek \(bisa pilih beberapa\)/);
     expect(form).toContain("onSuccess?.()");
     expect(form).toContain("if (onSuccess)");
+    expect(form).toContain("invoiceNumber?: string;");
+    expect(form).toContain("invoiceNumber: defaultValues?.invoiceNumber ?? \"\"");
+    expect(form).toContain('Nomor Invoice", "Invoice Number');
+    expect(form).toContain('Kosongkan untuk nomor otomatis", "Leave blank for automatic number');
+    expect(form).toContain("invoiceNumber: form.invoiceNumber || undefined");
     expect(read("src/components/invoices/project-invoice-create-dialog.tsx")).toMatch(/setOpen\(false\)[\s\S]*refresh\(\)/);
   });
 

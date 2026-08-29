@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { pakasirPayments, users, workspaceMembers } from "@/db/schema";
@@ -9,6 +9,7 @@ import { createPakasirTransaction, isPakasirConfigured, pakasirPaymentUrl } from
 import { assertSameOrigin } from "@/lib/same-origin";
 import { getEffectivePlan } from "@/lib/plan";
 import { canPurchaseStorageAddon } from "@/lib/storage-addons";
+import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import {
   BILLING_PLANS,
   getPlanAmount,
@@ -74,10 +75,16 @@ export async function POST(request: Request) {
     // Storage add-ons are per-user entitlements, but checkout is billed to
     // the workspace owner. Only the authenticated current-workspace OWNER may
     // start a payment — members/viewers are rejected before the provider call.
+    const activeWsId = await getWorkspaceForCurrentUser();
     const [membership] = await db
       .select({ workspaceId: workspaceMembers.workspaceId, role: workspaceMembers.role })
       .from(workspaceMembers)
-      .where(eq(workspaceMembers.userId, session.user.id))
+      .where(
+        and(
+          eq(workspaceMembers.userId, session.user.id),
+          eq(workspaceMembers.workspaceId, activeWsId),
+        ),
+      )
       .limit(1);
 
     if (!membership?.workspaceId) {
@@ -195,10 +202,16 @@ export async function POST(request: Request) {
   }
 
   // Still need a workspace for orderId generation and payment record
+  const activeWsId = await getWorkspaceForCurrentUser();
   const [membership] = await db
     .select({ workspaceId: workspaceMembers.workspaceId, role: workspaceMembers.role })
     .from(workspaceMembers)
-    .where(eq(workspaceMembers.userId, session.user.id))
+    .where(
+      and(
+        eq(workspaceMembers.userId, session.user.id),
+        eq(workspaceMembers.workspaceId, activeWsId),
+      ),
+    )
     .limit(1);
 
   if (!membership?.workspaceId) {

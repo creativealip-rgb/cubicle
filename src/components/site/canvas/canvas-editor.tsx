@@ -38,6 +38,8 @@ import {
   Columns3,
   ChevronDown,
   Search,
+  Copy,
+  ExternalLink,
 } from "lucide-react";
 import { DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, useDraggable, type DragStartEvent, type DragEndEvent } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
@@ -62,6 +64,7 @@ type Props = {
   previewUrl: string;
   publicSiteBaseUrl: string;
   onSave: (site: PersonalSiteInput) => Promise<void>;
+  canEditSlug: boolean;
 };
 
 function makeId() {
@@ -250,7 +253,7 @@ function matchesSearch(label: string, enLabel: string, query: string): boolean {
   return label.toLowerCase().includes(q) || enLabel.toLowerCase().includes(q);
 }
 
-export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSave }: Props) {
+export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSave, canEditSlug }: Props) {
   const { t } = useT();
   const { refresh } = useAppTransition();
   const [site, setSite] = useState<PersonalSiteInput>(() => ({ ...initialSite, pages: normalizePages(initialSite) }));
@@ -379,14 +382,18 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
       try {
         await onSave(site);
         setLastSaved(JSON.stringify(site));
-      } catch {
-        // silent fail for auto-save
+      } catch (error) {
+        toast.error(
+          error instanceof Error && error.message === "PERSONAL_SITE_SLUG_TAKEN"
+            ? t("Slug sudah dipakai. Pilih alamat publik lain.", "Slug is already in use. Choose another public address.")
+            : t("Perubahan belum tersimpan. Coba lagi.", "Changes were not saved. Try again."),
+        );
       } finally {
         setSaving(false);
       }
     }, 2000);
     return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
-  }, [site, isDirty, onSave]);
+  }, [site, isDirty, onSave, t]);
 
   // Warn before leaving with unsaved changes
   useEffect(() => {
@@ -465,6 +472,10 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   }, [onSave, refresh, site, t]);
 
   const handleSelectReadinessIssue = useCallback((issue: { id: string }) => {
+    if (issue.id.startsWith("cta") || issue.id === "placeholder-example-destination" || issue.id === "no-contact-method") {
+      setShowPublishConfirm(true);
+      return;
+    }
     if (issue.id === "theme-config-missing") {
       setSidebarTab("style");
       return;
@@ -545,12 +556,26 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
           onUpdateSite={updateSite}
           onSetActivePageId={setActivePageId}
           onSelectSection={setSelectedSectionId}
+          canEditSlug={canEditSlug}
         />
       </div>
 
       {/* Desktop: DnD canvas + sidebar */}
       <div className="hidden md:block">
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      accessibility={{
+        screenReaderInstructions: {
+          draggable: t(
+            "Untuk mengambil item yang dapat diseret, tekan spasi. Gunakan tombol panah untuk memindahkan. Tekan spasi lagi untuk meletakkan, atau Escape untuk membatalkan.",
+            "To pick up a draggable item, press space. Use the arrow keys to move it. Press space again to drop it, or Escape to cancel.",
+          ),
+        },
+      }}
+    >
       <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
         {/* Mobile sidebar toggle */}
         <Button
@@ -734,7 +759,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
     {/* Publish / Unpublish confirmation dialog */}
     {showPublishConfirm !== null && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div className="bg-background rounded-lg p-6 max-w-sm mx-4 shadow-xl border">
+        <div className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-lg border bg-background p-6 mx-4 shadow-xl">
           <h3 className="font-semibold mb-2">
             {showPublishConfirm
               ? t("Publikasikan halaman ini?", "Publish this page?")
@@ -742,9 +767,27 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
           </h3>
           <p className="text-sm text-muted-foreground mb-4">
             {showPublishConfirm
-              ? t("Halaman akan bisa diakses publik melalui URL di atas.", "The page will be publicly accessible at the URL above.")
+              ? t("Halaman akan bisa diakses publik melalui link ini.", "The page will be publicly accessible at this link.")
               : t("Halaman akan disembunyikan dan tidak bisa diakses publik.", "The page will be hidden and not publicly accessible.")}
           </p>
+
+          {(showPublishConfirm || site.published) && (
+            <div className="mb-4 min-w-0 rounded-lg border bg-muted/40 p-3">
+              <p className="mb-1 text-xs font-medium text-muted-foreground">{t("Link publik", "Public link")}</p>
+              <p data-testid="personal-site-public-url" className="break-all text-sm font-medium">{publicUrl}</p>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={async () => {
+                  await navigator.clipboard.writeText(publicUrl);
+                  toast.success(t("Link disalin", "Link copied"));
+                }}>
+                  <Copy className="h-4 w-4" /> {t("Salin link", "Copy link")}
+                </Button>
+                <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" asChild>
+                  <a href={publicUrl} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" /> {t("Buka situs", "Open site")}</a>
+                </Button>
+              </div>
+            </div>
+          )}
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setShowPublishConfirm(null)} className="flex-1">
               {t("Batal", "Cancel")}
@@ -754,6 +797,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                 updateSite({ published: showPublishConfirm });
                 setShowPublishConfirm(null);
               }}
+              disabled={showPublishConfirm && !isReadyToPublish(getPersonalSiteReadiness({ ...site, published: true }))}
               className="flex-1"
             >
               {showPublishConfirm ? t("Publikasikan", "Publish") : t("Sembunyikan", "Unpublish")}
@@ -1204,7 +1248,7 @@ function TemplateTabContent({ site, updateSite, setActivePageId }: { site: Perso
       {/* Confirmation dialog for overwrite warning */}
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-background rounded-lg p-6 max-w-sm mx-4 shadow-xl border">
+          <div className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-lg border bg-background p-6 mx-4 shadow-xl">
             <h3 className="font-semibold mb-2">{t("Ganti template?", "Replace template?")}</h3>
             <p className="text-sm text-muted-foreground mb-4">
               {t(

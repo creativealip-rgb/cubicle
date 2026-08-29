@@ -199,7 +199,10 @@ export async function createContract(input: z.infer<typeof createContractSchema>
   try {
     [c] = await db.transaction(async (tx) => {
     const contractDate = parsed.contractDate || new Date().toISOString().slice(0, 10);
-    let contractNumber: string | null = parsed.contractNumber?.trim() || null;
+    let contractNumber: string | null = parsed.contractNumber?.trim().toUpperCase() || null;
+    if (contractNumber && (contractNumber.length > 100 || /[^\x20-\x7E]/.test(contractNumber))) {
+      throw new Error("Contract number must be printable text and at most 100 characters");
+    }
     if (!parsed.contractNumber?.trim()) {
       const [counter] = await tx
         .select({ nextNumber: workspaceInvoiceCounters.nextNumber })
@@ -251,14 +254,34 @@ export async function createContract(input: z.infer<typeof createContractSchema>
       clientEmail: parsed.clientEmail,
       error,
     });
+    const dbError = error as { constraint?: string; cause?: { constraint?: string } };
+    if ((dbError.cause?.constraint ?? dbError.constraint) === "contracts_workspace_contract_number_unique") {
+      return { error: "contract_number_taken" } as const;
+    }
     throw error;
   }
 
+  if ("error" in c) return c;
   await writeActivityLog(parsed.workspaceId, user.id, "created_contract", "contract", c.id, {
     title: c.title,
   });
   revalidatePath("/app/contracts");
   return c;
+}
+
+export async function getProposedContractNumber(workspaceId: string): Promise<string> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  const [counter] = await db.select({ nextNumber: workspaceInvoiceCounters.nextNumber })
+    .from(workspaceInvoiceCounters).where(eq(workspaceInvoiceCounters.workspaceId, workspaceId)).limit(1);
+  const existing = await db.select({ contractNumber: contracts.contractNumber }).from(contracts)
+    .where(eq(contracts.workspaceId, workspaceId));
+  return buildContractNumber(currentDocumentYear(), nextDocumentSequence(
+    counter?.nextNumber,
+    existing.map((row) => row.contractNumber),
+    contractNumberSequence,
+  ));
 }
 
 export async function updateContract(contractId: string, input: { clientName?: string; clientEmail?: string | null; companyName?: string | null; title?: string; body?: string; validUntil?: string | null; contractNumber?: string | null }) {
@@ -274,8 +297,8 @@ export async function updateContract(contractId: string, input: { clientName?: s
   if (existing.status !== "draft") throw new Error("Can only edit draft contracts");
   if (input.contractNumber !== undefined) {
     const normalized = input.contractNumber?.trim().toUpperCase() || null;
-    if (normalized && !/^CONT-\d{4}-\d{4,}$/.test(normalized)) {
-      throw new Error("Contract number must use format CONT-YYYY-####");
+    if (normalized && (normalized.length > 100 || /[^\x20-\x7E]/.test(normalized))) {
+      throw new Error("Contract number must be printable text and at most 100 characters");
     }
     if (normalized) {
       const [duplicate] = await db.select({ id: contracts.id }).from(contracts)
@@ -288,7 +311,7 @@ export async function updateContract(contractId: string, input: { clientName?: s
 
   const [updated] = await db.update(contracts)
     .set({ ...input, updatedAt: new Date() })
-    .where(eq(contracts.id, contractId))
+    .where(and(eq(contracts.id, contractId), eq(contracts.workspaceId, workspaceId)))
     .returning();
   revalidatePath("/app/contracts");
   revalidatePath(`/app/contracts/${contractId}`);

@@ -9,6 +9,9 @@ import { getRetainerPeriodUsageSummary } from "@/lib/retainer-period";
 import { formatMoney } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import { useT } from "@/lib/i18n-client";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
 
 export type RetainerPeriodView = {
   id: string; periodStart: string; periodEnd: string; feeSnapshot: string;
@@ -19,10 +22,11 @@ export type RetainerPeriodView = {
 
 const hours = (value: number) => new Intl.NumberFormat("id-ID", { maximumFractionDigits: 2 }).format(value);
 
-export function RetainerProjectInvoiceActions({ projectId, period, renderSummaryOnly }: { projectId: string; period: RetainerPeriodView | null; renderSummaryOnly?: boolean }) {
+export function RetainerProjectInvoiceActions({ projectId, period, proposedInvoiceNumber = "", renderSummaryOnly }: { projectId: string; period: RetainerPeriodView | null; proposedInvoiceNumber?: string; renderSummaryOnly?: boolean }) {
   const { refresh } = useAppTransition();
   const { t } = useT();
   const [pending, setPending] = useState(false);
+  const [invoiceNumber, setInvoiceNumber] = useState(proposedInvoiceNumber);
   const summary = period ? getRetainerPeriodUsageSummary({
     periodStart: period.periodStart, periodEnd: period.periodEnd, fee: Number(period.feeSnapshot),
     includedMinutes: period.includedMinutesSnapshot, approvedMinutes: period.approvedMinutes,
@@ -34,9 +38,10 @@ export function RetainerProjectInvoiceActions({ projectId, period, renderSummary
   async function createInvoice() {
     setPending(true);
     try {
+      const requestedNumber = invoiceNumber.trim() || proposedInvoiceNumber;
       let current = period ?? await createOrGetRetainerPeriod({ projectId, workDate: new Date().toISOString().slice(0, 10) });
       if (current.status === "open") current = await lockRetainerPeriod(current.id);
-      if (current.status === "locked") await generateRetainerInvoice({ retainerPeriodId: current.id, issueDate: new Date().toISOString().slice(0, 10) });
+      if (current.status === "locked") await generateRetainerInvoice({ retainerPeriodId: current.id, issueDate: new Date().toISOString().slice(0, 10), invoiceNumber: requestedNumber });
       toast.success(t("Invoice Retainer dibuat", "Retainer invoice created"));
       refresh();
     } catch (error) {
@@ -61,8 +66,11 @@ export function RetainerProjectInvoiceActions({ projectId, period, renderSummary
   }
 
   return period?.status !== "invoiced" ? (
-    <LoadingButton size="sm" loading={pending} loadingText={t("Memproses…", "Processing…")} onClick={createInvoice} className="gap-1">
-      <Plus className="h-4 w-4" /> {t("Buat Invoice", "Create Invoice")}
-    </LoadingButton>
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+      <div className="space-y-1"><Label htmlFor={`retainer-invoice-number-${projectId}`}>{t("Nomor Invoice", "Invoice Number")}</Label><Input id={`retainer-invoice-number-${projectId}`} value={invoiceNumber} onChange={(event) => setInvoiceNumber(event.target.value.toUpperCase())} placeholder={t("Kosongkan untuk nomor otomatis", "Leave blank for automatic number")} /></div>
+      <LoadingButton size="sm" loading={pending} loadingText={t("Memproses…", "Processing…")} onClick={createInvoice} className="gap-1">
+        <Plus className="h-4 w-4" /> {t("Buat Invoice", "Create Invoice")}
+      </LoadingButton>
+    </div>
   ) : null;
 }

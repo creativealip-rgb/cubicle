@@ -45,7 +45,12 @@ export function assertSameOrigin(
     throw new Error("Missing Host header");
   }
 
-  const allowed = new Set([expected]);
+  const allowed = new Set([
+    expected,
+    "https://cubiqlo.com",
+    "https://app.cubiqlo.com",
+    "https://www.cubiqlo.com",
+  ]);
   // Development override: NEXT_PUBLIC_APP_URL may point at the canonical
   // production URL while the dev server actually runs on dev.cubiqlo.com.
   if (env === "development" && options.devOrigin) {

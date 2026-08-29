@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Share2 } from "lucide-react";
+import { ArrowLeft, Eye, Share2 } from "lucide-react";
 import { InvoiceItemManager } from "./add-item-button";
 import { DeleteItemButton } from "./delete-item-button";
 import { PaymentSection } from "./payment-section";
@@ -29,7 +29,7 @@ import { DeleteInvoiceButton } from "./delete-invoice-button";
 import { VoidInvoiceButton } from "./void-invoice-button";
 
 import { InvoiceMetaForm } from "@/components/invoices/invoice-meta-form";
-import { formatDateID, formatMoney } from "@/lib/utils";
+import { formatMoney } from "@/lib/utils";
 import { invoiceStatusVariant } from "@/lib/status-badge";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { billingTypeLabel } from "@/lib/feature-access";
@@ -57,6 +57,10 @@ export default async function InvoiceDetailPage({
   const { invoiceId } = await params;
   const lang = await getCurrentLang();
   const t = createT(lang);
+  const locale = lang === "en" ? "en-US" : "id-ID";
+  const formatDate = (value: string | Date | null) => value
+    ? new Date(`${String(value).slice(0, 10)}T00:00:00`).toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" })
+    : "—";
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -211,7 +215,7 @@ export default async function InvoiceDetailPage({
     clientName: client?.companyName || client?.name || t("Klien", "Client"),
     invoiceNumber: inv.invoiceNumber,
     amount: formatMoney(inv.total, inv.currency || "IDR"),
-    dueDate: inv.dueDate ? formatDateID(inv.dueDate) : null,
+    dueDate: inv.dueDate ? formatDate(inv.dueDate) : null,
   });
 
   return (
@@ -248,6 +252,12 @@ export default async function InvoiceDetailPage({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="outline" size="sm" className="gap-1.5">
+            <Link href={`/api/invoices/${invoiceId}/pdf`} target="_blank" rel="noreferrer">
+              <Eye className="h-4 w-4" />
+              {t("Pratinjau Invoice", "Invoice Preview")}
+            </Link>
+          </Button>
           <SendInvoiceButton
             invoiceId={invoiceId}
             defaultMessage={defaultInvoiceMessage}
@@ -289,7 +299,7 @@ export default async function InvoiceDetailPage({
           </CardHeader>
           <CardContent>
             <p className="text-sm font-medium">
-              {formatDateID(inv.issueDate)}
+              {formatDate(inv.issueDate)}
             </p>
           </CardContent>
         </Card>
@@ -301,7 +311,7 @@ export default async function InvoiceDetailPage({
           </CardHeader>
           <CardContent>
             <p className="text-sm font-medium">
-              {formatDateID(inv.dueDate)}
+              {formatDate(inv.dueDate)}
             </p>
           </CardContent>
         </Card>
@@ -418,6 +428,7 @@ export default async function InvoiceDetailPage({
           <InvoiceMetaForm
             invoiceId={invoiceId}
             defaults={{
+              invoiceNumber: inv.invoiceNumber,
               status: inv.status,
               issueDate: String(inv.issueDate),
               dueDate: inv.dueDate ? String(inv.dueDate) : null,

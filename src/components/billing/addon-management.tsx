@@ -59,7 +59,7 @@ export function AddonManagement({
     toast.success(t("Workspace tambahan dibatalkan di akhir periode", "Extra workspace will cancel at period end"));
     refresh();
   }
-  const storageTotal = storageAddons.reduce((sum, addon) => sum + addon.storageBytes, 0);
+  const _storageTotal = storageAddons.reduce((sum, addon) => sum + addon.storageBytes, 0);
   const workspaceSlots = extraWorkspaceEntitlements.reduce((sum, e) => sum + e.quantity, 0);
   return (
     <div className="space-y-3">

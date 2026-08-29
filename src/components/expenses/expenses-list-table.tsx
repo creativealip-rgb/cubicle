@@ -53,6 +53,7 @@ type SortKey =
 
 function ExpenseActions({
   e,
+  mobile = false,
   canWrite,
   workspaceId,
   defaultCurrency,
@@ -61,6 +62,7 @@ function ExpenseActions({
   clients,
 }: {
   e: ExpenseListItem;
+  mobile?: boolean;
   canWrite: boolean;
   workspaceId: string;
   defaultCurrency: string;
@@ -70,7 +72,7 @@ function ExpenseActions({
 }) {
   if (!canWrite) return null;
   return (
-    <div className="flex items-center justify-end gap-0.5 shrink-0">
+    <div className="flex min-w-[96px] items-center justify-end gap-0.5 shrink-0 overflow-visible">
       {e.receiptUrl && <ReceiptLinkButton expenseId={e.id} />}
       <EditExpenseButton
         expense={{
@@ -96,7 +98,7 @@ function ExpenseActions({
         projects={projects}
         clients={clients}
       />
-      <DeleteExpenseButton expenseId={e.id} description={e.description} />
+      <DeleteExpenseButton expenseId={e.id} description={e.description} mobile={mobile} />
     </div>
   );
 }
@@ -192,6 +194,7 @@ export function ExpensesListTable({
             <div className="flex items-center justify-end -mr-1">
               <ExpenseActions
                 e={e}
+                mobile
                 canWrite={canWrite}
                 workspaceId={workspaceId}
                 defaultCurrency={defaultCurrency}

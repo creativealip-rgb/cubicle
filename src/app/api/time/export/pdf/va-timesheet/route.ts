@@ -9,6 +9,7 @@ import { writeActivityLog } from "@/lib/actions/activity";
 import { and, asc, eq, gte, lte } from "drizzle-orm";
 import { createHash } from "crypto";
 import { normalizeInvoiceReportRange, verifyInvoiceReportRangeSignature } from "@/lib/invoice-report-options";
+import { effectiveWorkDateSql } from "@/lib/effective-work-date";
 
 function escapeHtml(value: unknown) {
   return String(value ?? "")
@@ -125,7 +126,7 @@ function renderDuties(description: string | null, dutiesLabel: string): string {
 type BillingType = "fixed_price" | "hourly" | "retainer" | "package" | "project" | "hours";
 
 type Entry = {
-  date: Date | null;
+  date: string | Date | null;
   client: string | null;
   projectId: string | null;
   project: string | null;
@@ -166,8 +167,8 @@ function formatMoney(amount: number, currency: string | null): string {
 //   once at project level (flat fee / package price), shown separately.
 function entryAmount(e: Entry): number {
   if (!e.billable) return 0;
-  const bt = e.billingType ?? "hours";
-  if (bt !== "hours") return 0;
+  const bt = e.billingType ?? "hourly";
+  if (bt !== "hours" && bt !== "hourly") return 0;
   const minutes = Number(e.durationMinutes ?? 0);
   const rate = Number(e.hourlyRate ?? e.projectRate ?? 0);
   return (minutes / 60) * rate;
@@ -239,14 +240,14 @@ export async function GET(request: Request) {
   const showDashboard = reportParam === "dashboard" || reportParam === "full";
 
   const conditions = [eq(timeEntries.workspaceId, workspaceId)];
-  if (dateFrom) conditions.push(gte(timeEntries.startTime, new Date(dateFrom)));
-  if (dateTo) conditions.push(lte(timeEntries.startTime, new Date(dateTo + "T23:59:59")));
+  if (dateFrom) conditions.push(gte(effectiveWorkDateSql(timeEntries), dateFrom));
+  if (dateTo) conditions.push(lte(effectiveWorkDateSql(timeEntries), dateTo));
   if (clientId) conditions.push(eq(timeEntries.clientId, clientId));
   if (projectId) conditions.push(eq(timeEntries.projectId, projectId));
 
-  const entries: Entry[] = await db
+  const entries: Entry[] = (await db
     .select({
-      date: timeEntries.startTime,
+      date: effectiveWorkDateSql(timeEntries),
       client: clients.name,
       projectId: timeEntries.projectId,
       project: projects.name,
@@ -272,8 +273,8 @@ export async function GET(request: Request) {
     .leftJoin(tasks, eq(tasks.id, timeEntries.taskId))
     .leftJoin(users, eq(users.id, timeEntries.userId))
     .where(and(...conditions))
-    .orderBy(asc(timeEntries.startTime))
-    .limit(1000);
+    .orderBy(asc(effectiveWorkDateSql(timeEntries)))
+    .limit(1000)) as unknown as Entry[];
 
   // Totals
   const totalMinutes = entries.reduce((s, e) => s + Number(e.durationMinutes ?? 0), 0);
@@ -287,7 +288,7 @@ export async function GET(request: Request) {
   const flatFeeByCurrency = new Map<string, number>();
   for (const e of entries) {
     const bt = e.billingType ?? "hours";
-    if (bt !== "project" && bt !== "package") continue;
+    if (bt !== "project" && bt !== "package" && bt !== "fixed_price" && bt !== "retainer") continue;
     if (!e.projectId || flatFeeSeen.has(e.projectId)) continue;
     flatFeeSeen.add(e.projectId);
     const fee = bt === "package" ? Number(e.packagePrice ?? 0) : Number(e.projectRate ?? 0);
@@ -333,6 +334,7 @@ export async function GET(request: Request) {
     flatFee: lang === "en" ? "flat fee" : "biaya tetap",
     btProject: lang === "en" ? "flat" : "tetap",
     btPackage: lang === "en" ? "package" : "paket",
+    btRetainer: lang === "en" ? "retainer" : "retainer",
     packageQuota: lang === "en" ? "Package quota" : "Kuota paket",
     packageUsage: lang === "en" ? "Used / quota" : "Terpakai / kuota",
   };
@@ -354,7 +356,7 @@ export async function GET(request: Request) {
     const clientFlatSeen = new Set<string>();
     for (const e of clientEntries) {
       const bt = e.billingType ?? "hours";
-      if (bt !== "project" && bt !== "package") continue;
+      if (bt !== "project" && bt !== "package" && bt !== "fixed_price" && bt !== "retainer") continue;
       if (!e.projectId || clientFlatSeen.has(e.projectId)) continue;
       clientFlatSeen.add(e.projectId);
       const fee = bt === "package" ? Number(e.packagePrice ?? 0) : Number(e.projectRate ?? 0);
@@ -377,18 +379,29 @@ export async function GET(request: Request) {
       // Per-entry cell: hours/package show the computed amount; project (flat fee)
       // shows a "flat fee" tag since the fee is billed once at project level.
       let amountCell: string;
-      if (bt === "project") {
+      if (bt === "project" || bt === "fixed_price") {
         amountCell = `<span class="flat-tag">${escapeHtml(L.flatFee)}</span>`;
+      } else if (bt === "retainer") {
+        amountCell = `<span class="flat-tag">retainer</span>`;
       } else if (bt === "package") {
         amountCell = `<span class="flat-tag">${escapeHtml(L.btPackage)}</span>`;
       } else {
         amountCell = escapeHtml(formatMoney(entryAmount(entry), cur));
       }
 
-      detailedRows += `<tr class="entry-row">
+      const btTag =
+        bt === "project" || bt === "fixed_price"
+          ? L.btProject
+          : bt === "retainer"
+          ? L.btRetainer
+          : bt === "package"
+          ? L.btPackage
+          : null;
+
+      detailedRows += `<tr>
         <td>${entry.date ? escapeHtml(formatDateShort(entry.date, locale)) : "—"}</td>
-        <td>${escapeHtml(entry.user)}</td>
-        <td>${escapeHtml(entry.project)}${bt !== "hours" ? ` <span class="bt-tag">${escapeHtml(bt === "project" ? L.btProject : L.btPackage)}</span>` : ""}</td>
+        <td>${escapeHtml(entry.user || "—")}</td>
+        <td>${escapeHtml(entry.project)}${btTag ? ` <span class="bt-tag">${escapeHtml(btTag)}</span>` : ""}</td>
         <td>${escapeHtml(entry.task)}</td>
         <td>${amountCell}</td>
         <td>${formatTime(entry.startTime)} - ${formatTime(entry.endTime)}</td>
@@ -460,9 +473,15 @@ export async function GET(request: Request) {
       const usedH = (projTotal / 60).toFixed(1);
       pkgNote = ` <span class="pkg-note">(${L.packageUsage}: ${usedH}h / ${meta.packageHours}h)</span>`;
     }
-    const btBadge = meta.billingType !== "hours"
-      ? ` <span class="bt-tag">${escapeHtml(meta.billingType === "project" ? L.btProject : L.btPackage)}</span>`
-      : "";
+    const bt = meta.billingType ?? "hourly";
+    const btBadge =
+      bt === "project" || bt === "fixed_price"
+        ? ` <span class="bt-tag">${escapeHtml(L.btProject)}</span>`
+        : bt === "retainer"
+        ? ` <span class="bt-tag">${escapeHtml(L.btRetainer)}</span>`
+        : bt === "package"
+        ? ` <span class="bt-tag">${escapeHtml(L.btPackage)}</span>`
+        : "";
 
     dashboardRows += `<tr class="proj-row"><td><strong>Project: ${escapeHtml(projName)}</strong>${btBadge}${pkgNote}</td><td>${formatHours(projTotal)}</td><td>${formatHours(projBillable)}</td><td>${escapeHtml(amountStr)}</td></tr>`;
     for (const [taskName, { total, billable }] of taskMap) {

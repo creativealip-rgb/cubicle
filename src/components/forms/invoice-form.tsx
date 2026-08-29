@@ -64,6 +64,7 @@ interface InvoiceFormProps {
     projectId?: string;
     issueDate?: string;
     dueDate?: string;
+    invoiceNumber?: string;
     currency?: string;
     notes?: string;
     terms?: string;
@@ -95,6 +96,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
     projectId: "",
     issueDate: defaultValues?.issueDate ?? new Date().toISOString().split("T")[0],
     dueDate: defaultValues?.dueDate ?? addDaysToIsoDate(defaultValues?.issueDate ?? new Date().toISOString().split("T")[0], 14),
+    invoiceNumber: defaultValues?.invoiceNumber ?? "",
     currency: defaultValues?.currency ?? baseCurrency,
     notes: defaultValues?.notes ?? "",
     terms: defaultValues?.terms ?? "",
@@ -185,6 +187,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         }),
         issueDate: form.issueDate,
         dueDate: form.dueDate || undefined,
+        invoiceNumber: form.invoiceNumber || undefined,
         currency: form.currency,
         notes: form.notes || undefined,
         terms: form.terms || undefined,
@@ -194,6 +197,11 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
 
       if (mode === "create") {
         const invoice = await createInvoice(data);
+        if ("error" in invoice) {
+          toast.error(invoice.error);
+          setLoading(false);
+          return;
+        }
         if (!invoice?.id) {
           throw new Error("Invoice dibuat tapi ID tidak diterima. Coba refresh daftar invoice.");
         }
@@ -403,7 +411,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="issueDate">Tanggal Terbit *</Label>
+          <Label htmlFor="issueDate">{t("Tanggal Terbit *", "Issue Date *")}</Label>
           <Input
             id="issueDate"
             type="date"
@@ -427,7 +435,17 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="currency">Mata Uang</Label>
+        <Label htmlFor="invoiceNumber">{t("Nomor Invoice", "Invoice Number")}</Label>
+        <Input
+          id="invoiceNumber"
+          value={form.invoiceNumber}
+          onChange={(e) => set("invoiceNumber", e.target.value)}
+          placeholder={t("Kosongkan untuk nomor otomatis", "Leave blank for automatic number")}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="currency">{t("Mata Uang", "Currency")}</Label>
         <Select value={form.currency} onValueChange={(v) => set("currency", v)}>
           <SelectTrigger>
             <SelectValue />
@@ -444,7 +462,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
 
       {mode === "create" && (
         <div className="space-y-3 rounded-lg border p-3">
-          <div className="flex items-center justify-between"><Label>Item tagihan *</Label><Button type="button" size="sm" variant="outline" onClick={() => setItems((prev) => [...prev, { description: "", quantity: 1, unitPrice: 0 }])}>+ Item</Button></div>
+          <div className="flex items-center justify-between"><Label>{t("Item tagihan *", "Invoice items *")}</Label><Button type="button" size="sm" variant="outline" onClick={() => setItems((prev) => [...prev, { description: "", quantity: 1, unitPrice: 0 }])}>+ {t("Item", "Item")}</Button></div>
           {projectItems.map((item) => (
             <div key={item.projectId} className="rounded-md border bg-muted/20 p-3 text-sm">
               <div className="flex justify-between gap-3"><span className="font-medium">{item.description}</span><span>{new Intl.NumberFormat("id-ID", { style: "currency", currency: form.currency }).format(item.unitPrice)}</span></div>
@@ -453,9 +471,9 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
           ))}
           {items.map((item, index) => (
             <div key={index} className="grid grid-cols-[minmax(0,1fr)_64px_100px_36px] gap-2">
-              <Input aria-label={`Deskripsi item ${index + 1}`} placeholder="Deskripsi" value={item.description} onChange={(e) => setItems((prev) => prev.map((row, i) => i === index ? { ...row, description: e.target.value } : row))} />
-              <Input aria-label={`Jumlah item ${index + 1}`} type="number" min="0.01" step="0.01" value={item.quantity} onChange={(e) => setItems((prev) => prev.map((row, i) => i === index ? { ...row, quantity: Number(e.target.value) } : row))} />
-              <Input aria-label={`Harga item ${index + 1}`} type="number" min="0" step="1" value={item.unitPrice} onChange={(e) => setItems((prev) => prev.map((row, i) => i === index ? { ...row, unitPrice: Number(e.target.value) } : row))} />
+              <Input aria-label={t(`Deskripsi item ${index + 1}`, `Item ${index + 1} description`)} placeholder={t("Deskripsi", "Description")} value={item.description} onChange={(e) => setItems((prev) => prev.map((row, i) => i === index ? { ...row, description: e.target.value } : row))} />
+              <Input aria-label={t(`Jumlah item ${index + 1}`, `Item ${index + 1} quantity`)} type="number" min="0.01" step="0.01" value={item.quantity} onChange={(e) => setItems((prev) => prev.map((row, i) => i === index ? { ...row, quantity: Number(e.target.value) } : row))} />
+              <Input aria-label={t(`Harga item ${index + 1}`, `Item ${index + 1} price`)} type="number" min="0" step="1" value={item.unitPrice} onChange={(e) => setItems((prev) => prev.map((row, i) => i === index ? { ...row, unitPrice: Number(e.target.value) } : row))} />
               <Button type="button" variant="ghost" size="icon" disabled={items.length === 1} onClick={() => setItems((prev) => prev.filter((_, i) => i !== index))}>×</Button>
             </div>
           ))}
@@ -480,18 +498,18 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
           id="terms"
           value={form.terms}
           onChange={(e) => set("terms", e.target.value)}
-          placeholder="contoh: Net 30, jatuh tempo dalam 14 hari..."
+          placeholder={t("contoh: Net 30, jatuh tempo dalam 14 hari...", "e.g. Net 30, due within 14 days...")}
         />
       </div>
 
       <Button type="submit" disabled={loading} className="w-full">
         {loading
           ? mode === "create"
-            ? "Membuat invoice…"
-            : "Menyimpan…"
+            ? t("Membuat invoice…", "Creating invoice…")
+            : t("Menyimpan…", "Saving…")
           : mode === "create"
-            ? "Buat Invoice"
-            : "Simpan Perubahan"}
+            ? t("Buat Invoice", "Create Invoice")
+            : t("Simpan Perubahan", "Save Changes")}
       </Button>
     </form>
   );

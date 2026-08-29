@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Plus, FileText, Layers, Palette, Eye, ChevronLeft, ChevronRight, Trash2, Home, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +66,7 @@ type Props = {
   onUpdateSite: (patch: Partial<PersonalSiteInput>) => void;
   onSetActivePageId: (id: string) => void;
   onSelectSection: (id: string | null) => void;
+  canEditSlug: boolean;
 };
 
 export function MobileStepEditor({
@@ -76,6 +78,7 @@ export function MobileStepEditor({
   onUpdateSite,
   onSetActivePageId,
   onSelectSection,
+  canEditSlug,
 }: Props) {
   const { t } = useT();
   const [step, setStep] = useState<Step>("pages");
@@ -174,6 +177,7 @@ export function MobileStepEditor({
             publicUrl={publicUrl}
             previewUrl={previewUrl}
             onUpdateSite={onUpdateSite}
+            canEditSlug={canEditSlug}
           />
         )}
       </div>
@@ -279,8 +283,8 @@ function SectionsStep({ sections, selectedSectionId, onSelectSection, addSection
         {sections.map((section, i) => (
           <div key={section.id} className={`flex items-center gap-2 rounded-lg border p-2 text-xs ${selectedSectionId === section.id ? "border-primary/60 bg-primary/5" : ""}`}>
             <div className="flex items-center gap-1">
-              <Button type="button" variant="ghost" size="icon" className="h-6 w-6" disabled={i === 0} onClick={() => reorderSections(i, i - 1)}>↑</Button>
-              <Button type="button" variant="ghost" size="icon" className="h-6 w-6" disabled={i === sections.length - 1} onClick={() => reorderSections(i, i + 1)}>↓</Button>
+              <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label={t("Naikkan bagian", "Move section up")} disabled={i === 0} onClick={() => reorderSections(i, i - 1)}>↑</Button>
+              <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label={t("Turunkan bagian", "Move section down")} disabled={i === sections.length - 1} onClick={() => reorderSections(i, i + 1)}>↓</Button>
             </div>
             <button type="button" className="flex-1 text-left truncate" onClick={() => onSelectSection(section.id)}>
               {section.heading || section.type}
@@ -400,11 +404,12 @@ function ThemeStep({ site, onUpdateSite }: {
   );
 }
 
-function PublishStep({ site, publicUrl, previewUrl, onUpdateSite }: {
+function PublishStep({ site, publicUrl, previewUrl, onUpdateSite, canEditSlug }: {
   site: PersonalSiteInput;
   publicUrl: string;
   previewUrl: string;
   onUpdateSite: (patch: Partial<PersonalSiteInput>) => void;
+  canEditSlug: boolean;
 }) {
   const { t } = useT();
   return (
@@ -433,15 +438,24 @@ function PublishStep({ site, publicUrl, previewUrl, onUpdateSite }: {
         {site.published ? t("Tayang — ketuk untuk sembunyikan", "Live — tap to unpublish") : t("Draft — ketuk untuk terbitkan", "Draft — tap to publish")}
       </button>
 
+
       {/* Slug */}
       <div className="space-y-2">
         <Label className="text-xs">{t("Slug URL", "URL Slug")}</Label>
         <Input
           value={site.slug}
           onChange={(e) => onUpdateSite({ slug: e.target.value })}
+          disabled={!canEditSlug}
+          readOnly={!canEditSlug}
           className="h-9 text-xs"
           placeholder="nama-halaman"
         />
+        {!canEditSlug && (
+          <p className="text-xs text-muted-foreground">
+            {t("Paket Free menggunakan slug workspace. Upgrade untuk memakai slug kustom.", "Free uses your workspace slug. Upgrade to use a custom slug.")} {" "}
+            <Link href="/app/billing" className="font-medium underline">Upgrade</Link>
+          </p>
+        )}
         <p className="text-[10px] text-muted-foreground">{publicUrl}</p>
       </div>
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { ChevronDown, ChevronRight, ChevronUp, X, Sparkles } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronUp, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface OnboardingStep {
@@ -57,30 +57,13 @@ const COPY: Record<
 };
 
 export function DashboardOnboarding({ lang, steps }: DashboardOnboardingProps) {
-  const [dismissed, setDismissed] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const t = (id: string, en: string) => (lang === "en" ? en : id);
 
   const doneCount = steps.filter((s) => s.done).length;
   const total = steps.length;
-  const allDone = doneCount === total;
   const pendingSteps = steps.filter((step) => !step.done);
-  const visibleSteps = expanded ? pendingSteps : pendingSteps.slice(0, 3);
-
-  useEffect(() => {
-    // Show unless the user explicitly dismissed it, and never once all done.
-    const wasDismissed =
-      typeof window !== "undefined" &&
-      window.localStorage.getItem("cubiqlo_onboarding_dismissed") === "1";
-    setDismissed(wasDismissed);
-  }, []);
-
-  if (allDone || dismissed) return null;
-
-  function dismiss() {
-    window.localStorage.setItem("cubiqlo_onboarding_dismissed", "1");
-    setDismissed(true);
-  }
+  const visibleSteps = expanded ? steps : (pendingSteps.length > 0 ? pendingSteps.slice(0, 3) : steps);
 
   const pct = Math.round((doneCount / total) * 100);
 
@@ -95,24 +78,18 @@ export function DashboardOnboarding({ lang, steps }: DashboardOnboardingProps) {
             </div>
             <div>
               <h2 className="text-sm font-semibold tracking-tight text-blue-950">
-                {t("Mulai di sini", "Start here")}
+                {t("Mulai dari Pengaturan", "Start from Settings")}
               </h2>
               <p className="text-xs text-blue-800/70">
                 {t(
-                  `${doneCount} dari ${total} langkah selesai`,
-                  `${doneCount} of ${total} steps done`
+                  "Lengkapi workspace dan pengaturan invoice sebelum membuat proyek pertama.",
+                  "Set up your workspace and invoice defaults before creating your first project.",
                 )}
               </p>
+              <p className="text-xs text-blue-800/70">{t(`${doneCount} dari ${total} langkah selesai`, `${doneCount} of ${total} steps done`)}</p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={dismiss}
-            aria-label={t("Tutup panduan", "Dismiss guide")}
-            className="flex min-h-11 min-w-11 items-center justify-center rounded-md text-blue-900/50 transition-colors hover:bg-blue-100 hover:text-blue-900"
-          >
-            <X className="h-4 w-4" />
-          </button>
+
         </div>
 
         {/* Progress bar */}
@@ -135,9 +112,9 @@ export function DashboardOnboarding({ lang, steps }: DashboardOnboardingProps) {
                   "group flex min-h-11 items-center gap-3 rounded-lg border border-blue-200 bg-white/70 px-3 py-2.5 transition-all hover:border-blue-400 hover:shadow-sm"
                 )}
               >
-                <div
-                  className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-blue-300 text-xs font-semibold text-blue-600"
-                />
+                <div className={cn("flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border text-xs font-semibold", step.done ? "border-emerald-500 bg-emerald-50 text-emerald-600" : "border-blue-300 text-blue-600")}>
+                  {step.done ? "✓" : ""}
+                </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-slate-900">{copy.title}</p>
                   <p className="line-clamp-1 text-xs text-muted-foreground">

@@ -34,7 +34,7 @@ export function QuestionnaireCreateDialog({ trigger }: { trigger?: React.ReactNo
           { id: "field_brief", label: t("Detail Kebutuhan", "Brief Details"), type: "textarea", required: true },
         ],
       });
-      toast.success(t("Formulir kuesioner berhasil dibuat", "Questionnaire form created"));
+      toast.success(t("Formulir berhasil dibuat", "Form created"));
       setOpen(false);
       setName("");
       setDescription("");
@@ -61,8 +61,8 @@ export function QuestionnaireCreateDialog({ trigger }: { trigger?: React.ReactNo
           <DialogTitle>{t("Buat Formulir Baru", "Create New Form")}</DialogTitle>
           <DialogDescription>
             {t(
-              "Buat formulir / kuesioner kustom untuk mengumpulkan brief & informasi dari klien.",
-              "Create a custom form / questionnaire to gather briefs & information from clients."
+              "Buat formulir kustom untuk mengumpulkan brief & informasi dari klien.",
+              "Create a custom form to gather briefs & information from clients.",
             )}
           </DialogDescription>
         </DialogHeader>

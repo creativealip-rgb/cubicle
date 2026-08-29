@@ -94,7 +94,7 @@ export function QuestionnaireBuilder({
 
   function handleSave() {
     if (!name.trim()) {
-      toast.error("Please give the questionnaire a name");
+      toast.error("Please give the form a name");
       return;
     }
     if (fields.length === 0) {
@@ -119,7 +119,7 @@ export function QuestionnaireBuilder({
             description: description.trim() || null,
             schema: cleanFields,
           });
-          toast.success(t("Kuesioner berhasil diperbarui", "Questionnaire updated"));
+          toast.success(t("Formulir berhasil diperbarui", "Form updated"));
         } else {
           const q = await createQuestionnaire({
             workspaceId,
@@ -128,7 +128,7 @@ export function QuestionnaireBuilder({
             schema: cleanFields,
           });
           qId = q.id;
-          toast.success(t("Kuesioner berhasil dibuat", "Questionnaire created"));
+          toast.success(t("Formulir berhasil dibuat", "Form created"));
         }
         router.push(`/app/questionnaires/${qId}`);
         refresh();
@@ -155,7 +155,7 @@ export function QuestionnaireBuilder({
             <label htmlFor="questionnaire-description" className="text-sm font-medium block mb-1">Description (optional)</label>
             <Textarea
               id="questionnaire-description"
-              placeholder="Untuk apa kuesioner ini, dan apa yang kamu lakukan dengan jawabannya"
+              placeholder="Untuk apa formulir ini, dan apa yang kamu lakukan dengan jawabannya"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
@@ -277,7 +277,7 @@ export function QuestionnaireBuilder({
       <div className="flex items-center gap-2 pt-2">
         <Button onClick={handleSave} disabled={pending}>
           {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {questionnaireId ? "Update questionnaire" : "Create questionnaire"}
+          {questionnaireId ? "Update form" : "Create form"}
         </Button>
         <Button variant="ghost" asChild>
           <Link href="/app/questionnaires">Batal</Link>

@@ -6,6 +6,8 @@ import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
 import { taskPriorityColor, taskPriorityLabel } from "@/lib/status-badge";
 import { useT } from "@/lib/i18n-client";
 import { Clock, AlertTriangle } from "lucide-react";
+import { updateTask } from "@/lib/actions/tasks";
+import { useEffect, useState, useTransition } from "react";
 
 interface Task {
   id: string;
@@ -50,6 +52,11 @@ function dueTone(task: Task) {
 
 export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
   const { t, lang, locale } = useT();
+  const [boardTasks, setBoardTasks] = useState(tasks);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  useEffect(() => setBoardTasks(tasks), [tasks]);
 
   const columns = [
     { id: "todo", label: t("Belum Mulai", "To Do"), color: "bg-slate-300" },
@@ -59,7 +66,7 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
   ];
 
   const grouped: Record<string, Task[]> = { todo: [], in_progress: [], review: [], done: [] };
-  for (const task of tasks) {
+  for (const task of boardTasks) {
     const col = task.status in grouped ? task.status : "todo";
     grouped[col].push(task);
   }
@@ -88,10 +95,29 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
                 {colTasks.length}
               </Badge>
             </div>
-            <div className="space-y-2">
+            <div
+              className="min-h-24 space-y-2"
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                event.preventDefault();
+                const taskId = event.dataTransfer.getData("text/task-id") || draggedId;
+                setDraggedId(null);
+                if (!taskId || pending) return;
+                const previous = boardTasks;
+                const nextStatus = col.id as "todo" | "in_progress" | "review" | "done";
+                setBoardTasks((current) => current.map((task) => task.id === taskId ? { ...task, status: nextStatus } : task));
+                startTransition(async () => {
+                  try {
+                    await updateTask(taskId, { status: nextStatus });
+                  } catch {
+                    setBoardTasks(previous);
+                  }
+                });
+              }}
+            >
               {colTasks.map((task) => (
                 <TaskDetailSheet key={task.id} task={task} members={members}>
-                  <Card className="cursor-pointer border-border transition-shadow hover:shadow-md">
+                  <Card draggable onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/task-id", task.id); setDraggedId(task.id); }} onDragEnd={() => setDraggedId(null)} className="cursor-grab border-border transition-shadow hover:shadow-md active:cursor-grabbing">
                     <CardContent className="space-y-2 p-3">
                       <p className="text-sm font-medium leading-snug">{task.title}</p>
                       <Badge variant="outline" className="text-[10px] font-normal">

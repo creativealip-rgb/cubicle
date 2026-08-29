@@ -124,9 +124,22 @@ export function ProjectForm({
 
       if (mode === "create") {
         const result = await createProject(data);
-        if (!result.ok) throw new Error(result.error);
+        if (!result.ok) {
+          throw new Error(
+            result.code === "CURRENCY_NOT_CONFIGURED"
+              ? t(`Currency ${data.currency} belum dikonfigurasi. Atur currency workspace terlebih dahulu.`, `Currency ${data.currency} is not configured. Configure it in workspace settings first.`)
+              : (result as { error?: string }).error ?? t("Gagal menyimpan", "Failed to save"),
+          );
+        }
       } else if (defaultValues?.id) {
-        await updateProject(defaultValues.id, data);
+        const result = await updateProject(defaultValues.id, data);
+        if (!result.ok) {
+          throw new Error(
+            result.code === "CURRENCY_NOT_CONFIGURED"
+              ? t(`Currency ${data.currency} belum dikonfigurasi. Atur currency workspace terlebih dahulu.`, `Currency ${data.currency} is not configured. Configure it in workspace settings first.`)
+              : (result as { error?: string }).error ?? t("Gagal menyimpan", "Failed to save"),
+          );
+        }
       }
 
       toast.success(
@@ -280,6 +293,8 @@ export function ProjectForm({
                   <SelectItem value="USD">USD</SelectItem>
                   <SelectItem value="EUR">EUR</SelectItem>
                   <SelectItem value="SGD">SGD</SelectItem>
+                  <SelectItem value="JPY">JPY</SelectItem>
+                  <SelectItem value="AUD">AUD</SelectItem>
                 </SelectContent>
               </Select>
             </div>
