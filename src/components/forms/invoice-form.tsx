@@ -106,6 +106,10 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
   const clientProjects = projects?.filter(p => p.clientId === form.clientId) ?? [];
   const rateMap = buildRateMap(currencyRates);
   const selectedProjects = clientProjects.filter((project) => selectedProjectIds.includes(project.id));
+  const incompleteTimesheetPeriods = selectedProjects.some((project) => {
+    const source = projectSources[project.id] ?? defaultInvoiceSource(project.billingType, { hasActiveFixedHistory: Boolean(project.priorActiveFixedBilledAmount), hasInitialTimeEntries: Boolean(project.initialTimeEntryIds?.length) });
+    return source?.mode === "hourly_timesheet" && (!source.periodStart || !source.periodEnd);
+  });
   function updateSource(projectId: string, next: Partial<InvoiceSourceDraft> & { mode?: InvoiceSourceMode }) {
     setProjectSources((current) => {
       const project = clientProjects.find((candidate) => candidate.id === projectId);
@@ -157,6 +161,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
       }
       return { project, source };
     });
+    if (incompleteTimesheetPeriods) { toast.error(t("Lengkapi periode timesheet", "Complete the timesheet period")); return; }
     if (missingRateProjects.length) { toast.error(t("Lengkapi kurs workspace sebelum membuat invoice", "Complete workspace exchange rates before creating an invoice")); return; }
     if (selectedProjects.length > 0 && sourcePayload.some(({ source }) => !sourceDraftComplete(source))) { toast.error(t("Lengkapi sumber tagihan setiap proyek", "Complete billing sources for every project")); return; }
     if (mode === "create" && validItems.length === 0 && sourcePayload.length === 0) {
@@ -321,6 +326,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
       {mode === "create" && selectedProjects.map((project) => {
         const source = projectSources[project.id] ?? defaultInvoiceSource(project.billingType, { hasActiveFixedHistory: Boolean(project.priorActiveFixedBilledAmount), hasInitialTimeEntries: Boolean(project.initialTimeEntryIds?.length) });
         const fixedPreview = fixedSourcePreview(project.agreedAmount, project.priorActiveFixedBilledAmount);
+        const periodError = source?.mode === "hourly_timesheet" && (!source.periodStart || !source.periodEnd);
         return <div key={project.id} className="space-y-3 rounded-lg border p-3">
           <div><p className="font-medium">{project.name}</p><p className="text-xs text-muted-foreground">{t("Pilih sumber tagihan", "Select billing source")}</p></div>
           <Select value={source?.mode ?? ""} onValueChange={(value) => updateSource(project.id, { mode: value as InvoiceSourceMode, amountType: undefined, value: undefined, milestoneName: undefined, description: undefined, periodStart: undefined, periodEnd: undefined, timeEntryIds: undefined })}>
@@ -363,9 +369,12 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
                 <p>{t("Semua log jam kerja yang belum ditagih untuk proyek ini akan otomatis ditagihkan.", "All unbilled time entries for this project will be billed automatically.")}</p>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label className="text-xs">{t("Periode Mulai", "Period Start")}</Label>
+                    <Label htmlFor={`period-start-${project.id}`} className="text-xs">{t("Periode Mulai", "Period Start")}</Label>
                     <Input
+                      id={`period-start-${project.id}`}
                       type="date"
+                      required
+                      aria-invalid={Boolean(periodError)}
                       value={source.periodStart ?? ""}
                       onChange={(e) => {
                         const periodStart = e.target.value;
@@ -379,9 +388,12 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
                     />
                   </div>
                   <div>
-                    <Label className="text-xs">{t("Periode Selesai", "Period End")}</Label>
+                    <Label htmlFor={`period-end-${project.id}`} className="text-xs">{t("Periode Selesai", "Period End")}</Label>
                     <Input
+                      id={`period-end-${project.id}`}
                       type="date"
+                      required
+                      aria-invalid={Boolean(periodError)}
                       value={source.periodEnd ?? ""}
                       onChange={(e) => {
                         const periodEnd = e.target.value;
@@ -394,6 +406,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
                     />
                   </div>
                 </div>
+                {periodError && <p className="text-xs text-destructive">{t("Lengkapi periode timesheet", "Complete the timesheet period")}</p>}
               </div>
             ) : null
           ) : (
@@ -502,7 +515,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         />
       </div>
 
-      <Button type="submit" disabled={loading} className="w-full">
+      <Button type="submit" disabled={loading || incompleteTimesheetPeriods} className="w-full">
         {loading
           ? mode === "create"
             ? t("Membuat invoice…", "Creating invoice…")
