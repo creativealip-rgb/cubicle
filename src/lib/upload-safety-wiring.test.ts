@@ -26,7 +26,9 @@ describe("upload safety wiring", () => {
   ])("rejects oversized request before multipart parsing in %s", (path) => {
     const body = read(path);
     expect(body).toContain("validateContentLength");
-    expect(body.indexOf("validateContentLength")).toBeLessThan(body.indexOf("req.formData()"));
+    const multipartParse = body.indexOf("req.formData()") >= 0 ? body.indexOf("req.formData()") : body.indexOf("limitedRequest.formData()");
+    expect(multipartParse).toBeGreaterThan(-1);
+    expect(body.indexOf("validateContentLength")).toBeLessThan(multipartParse);
   });
 
   it("does not expose raw internal upload errors", () => {

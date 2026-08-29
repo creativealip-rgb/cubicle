@@ -19,6 +19,7 @@ export function SignaturePad({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [drawing, setDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
+  const [signatureMode, setSignatureMode] = useState<"draw" | "type">("draw");
   const [name, setName] = useState(defaultName);
   const [email, setEmail] = useState(defaultEmail);
   const [showDecline, setShowDecline] = useState(false);
@@ -86,7 +87,25 @@ export function SignaturePad({
     setHasSignature(false);
   }
 
+  function typedSignatureDataUrl(): string | null {
+    if (!name.trim()) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = 900;
+    canvas.height = 240;
+    const context = canvas.getContext("2d");
+    if (!context) return null;
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = "#0f172a";
+    context.font = "italic 72px serif";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(name.trim(), canvas.width / 2, canvas.height / 2);
+    return canvas.toDataURL("image/png");
+  }
+
   function getDataUrl(): string | null {
+    if (signatureMode === "type") return typedSignatureDataUrl();
     if (!hasSignature) return null;
     return canvasRef.current?.toDataURL("image/png") || null;
   }
@@ -178,6 +197,10 @@ export function SignaturePad({
   return (
     <div className="space-y-4">
       <div>
+        <div className="mb-3 inline-flex rounded-lg border p-1" role="group" aria-label="Signature method">
+          <Button type="button" size="sm" variant={signatureMode === "draw" ? "default" : "ghost"} onClick={() => setSignatureMode("draw")}>Gambar / Draw</Button>
+          <Button type="button" size="sm" variant={signatureMode === "type" ? "default" : "ghost"} onClick={() => setSignatureMode("type")}>Ketik nama / Type name</Button>
+        </div>
         <div className="flex items-center justify-between mb-1.5">
           <label htmlFor="contract-signature" className="text-sm font-medium">Tanda tangan / Sign here</label>
           {hasSignature && (
@@ -187,7 +210,7 @@ export function SignaturePad({
             </Button>
           )}
         </div>
-        <div className="border-2 border-dashed border-slate-300 rounded-lg bg-white">
+        {signatureMode === "draw" ? <div className="border-2 border-dashed border-slate-300 rounded-lg bg-white">
           <canvas
             id="contract-signature"
             role="img"
@@ -200,8 +223,8 @@ export function SignaturePad({
             onPointerUp={endDraw}
             onPointerLeave={endDraw}
           />
-        </div>
-        <p className="text-xs text-slate-500 mt-1">Gambar dengan mouse, trackpad, atau jari. / Draw with your mouse, trackpad, or finger.</p>
+        </div> : <div className="flex h-32 items-center justify-center rounded-lg border-2 border-dashed bg-white px-4 text-center font-serif text-3xl italic text-slate-800">{name.trim() || "Your name"}</div>}
+        <p className="text-xs text-slate-500 mt-1">{signatureMode === "draw" ? "Gambar dengan mouse, trackpad, atau jari. / Draw with your mouse, trackpad, or finger." : "Nama lengkap digunakan sebagai tanda tangan elektronik. / Your full name is used as your electronic signature."}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -236,7 +259,7 @@ export function SignaturePad({
         <Button className="min-h-11" variant="ghost" onClick={() => setShowDecline(true)} disabled={pending}>
           Tolak / Decline
         </Button>
-        <Button className="min-h-11" onClick={handleSign} disabled={pending || !name.trim() || !email.trim() || !hasSignature}>
+        <Button className="min-h-11" onClick={handleSign} disabled={pending || !name.trim() || !email.trim() || (signatureMode === "draw" && !hasSignature)}>
           {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           Tanda tangani / Sign contract
         </Button>

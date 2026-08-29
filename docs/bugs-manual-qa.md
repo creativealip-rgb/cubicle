@@ -1,7 +1,7 @@
 # Cubiqlo — Bugs + Kekurangan (Manual QA Backlog)
 
-Status: **P0–P3 mostly fixed; calendar/booking QA fixed through v0.1.115** (2026-07-24)
-Live: Docker `cubicle-cubicle-1` healthy  
+Status: **Historical backlog; production-hardening findings reconciled through 2026-08-29**
+Live: Docker `cubiqlo-new-app-next` healthy
 Sumber: manual QA Alip + Coder  
 Workspace acuan: **Alip Testing** (`alipdevcom@gmail.com`)
 
@@ -162,6 +162,24 @@ Step portal klien di dashboard checklist.
 - Recent Activity compact 3/5 + group task spam (**v0.1.48**)
 - Contact copy clean (**v0.1.49**)
 - Task approve/revisi di portal (**v0.1.50**)
+
+---
+
+## Production hardening reconciliation — 2026-08-29
+
+Status: **fixed and production verified**.
+
+- Private raw-file access requires authorized resource resolution; storage key alone is insufficient.
+- Personal Site uploads validate actual bytes; portal multipart routes cap declared and streamed aggregate request size.
+- Invoice tenant references, payment/status transitions, item totals, and time-entry import paths are transaction/workspace hardened.
+- Task status has app validation plus production DB constraint `0082`.
+- Null client links, proposal numeric validation, invoice timesheet period validation, mobile recurring dialog, and contract-signing accessibility are fixed.
+- Contract signing supports draw and typed-name fallback.
+- Plan reminder delivery uses Resend and stable provider idempotency keys.
+- Full tests/lint/build/audit passed; authenticated mobile/browser production QA and fixture cleanup passed.
+- Current production release before final follow-up rollout: `d79c7792279de1a68f39b80ff13ce97cd0700c30`.
+
+External-provider/account coverage remains separate: Google OAuth, password-reset inbox receipt, email verification, and second-account invite lifecycle.
 
 ---
 
