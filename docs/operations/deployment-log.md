@@ -1,5 +1,21 @@
 # Deployment Log
 
+## 29 August 2026 — Dashboard approvals and first-workspace setup
+
+- Source: `main` `23f17d7` (feature chain: `fce8eb8`, `488ffa2`, `23f17d7`).
+- Scope:
+  - Approval card aggregates client-visible task reviews plus sent/viewed proposals and contracts, scoped to active workspace.
+  - Clicking Approval opens a category popover; timesheets remain excluded.
+  - First login remains at `/app/dashboard` and shows a locked Workspace → Team → Ready modal over the dashboard shell.
+  - Workspace, owner membership, and default templates are created only after `Enter dashboard`.
+- Release gate: focused Vitest 5/5 passed; TypeScript, ESLint, local production build, Docker build, and `git diff --check` passed.
+- Production deployment:
+  - Image tag: `cubiqlo-prod:sha-23f17d73a739a97649d313da2c74b061648e1146`.
+  - Health: `https://app.cubiqlo.com/api/health` returned app/DB `ok`.
+  - Mobile QA: all three setup steps rendered, no close control, URL stayed `/app/dashboard`, horizontal overflow `0px`.
+  - Proxy safety: `dokploy-traefik` remains sole public 80/443 owner.
+- Evidence: `docs/operations/evidence/dashboard-approvals-first-workspace-2026-08-29.md`.
+
 ## 29 August 2026 — Personal Site new-user publish and optional CTA
 
 - Source: `main` `278f7de` (follow-up chain: `dfe3aa8`, `5ed4265`, `0f6f09c`, `278f7de`).

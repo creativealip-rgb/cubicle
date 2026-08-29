@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-08-29 — Dashboard approvals and first-workspace setup
+
+- Expanded the Dashboard Approval card from client-visible task reviews to pending tasks, proposals, and contracts, with a category popover instead of a new page.
+- Restored first-login workspace setup as a locked three-step modal over `/app/dashboard`: Workspace, optional Team, and Ready.
+- Prevented layout/dashboard workspace lookups from auto-creating a workspace before the user confirms its name.
+- Kept team invitations in Settings after workspace creation; the onboarding Team step is optional and does not pretend to send invitations.
+- Production commits: `fce8eb8`, `488ffa2`, `23f17d7`; running image `cubiqlo-prod:sha-23f17d73a739a97649d313da2c74b061648e1146`.
+- Evidence: `docs/operations/evidence/dashboard-approvals-first-workspace-2026-08-29.md`.
+
 ## 2026-08-29 — Personal Site new-user publish and optional CTA
 
 - Fixed new-user Personal Site defaults so an empty CTA no longer blocks initial save or publish.
