@@ -14,7 +14,8 @@ import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { formatMoneyCompact } from "@/lib/utils";
 import Link from "next/link";
-import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
+import { findWorkspaceFullForCurrentUser } from "@/lib/workspace";
+import { FirstWorkspaceModal } from "@/components/first-workspace-modal";
 import { DashboardGreeting } from "@/components/dashboard-greeting";
 import { DashboardOnboarding } from "@/components/dashboard-onboarding";
 import {
@@ -24,17 +25,23 @@ import {
   groupSumToBase,
 } from "@/lib/currency-base";
 
-async function getWorkspace() {
-  return getWorkspaceFullForCurrentUser();
-}
-
 export default async function DashboardPage() {
   const lang = await getCurrentLang();
   const t = createT(lang);
   const locale = getLocale(lang);
   const session = await requireAppSession("/app/dashboard");
   requireUser(session.user);
-  const workspace = await getWorkspace();
+  const workspace = await findWorkspaceFullForCurrentUser();
+  if (!workspace) {
+    return (
+      <div className="relative space-y-6" aria-hidden="true">
+        <div className="space-y-2"><div className="h-8 w-56 rounded bg-muted" /><div className="h-4 w-72 rounded bg-muted" /></div>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{Array.from({ length: 5 }, (_, index) => <Card key={index}><CardContent className="h-24 p-4" /></Card>)}</div>
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px]"><Card><CardContent className="h-64" /></Card><Card><CardContent className="h-64" /></Card></div>
+        <FirstWorkspaceModal lang={lang} />
+      </div>
+    );
+  }
   const workspaceId = workspace.id;
   const workspaceCurrency = workspace.defaultCurrency || "IDR";
   const workspaceProfileDone = Boolean(

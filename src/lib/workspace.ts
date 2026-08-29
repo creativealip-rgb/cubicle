@@ -35,6 +35,17 @@ export async function getWorkspaceFullForCurrentUser(): Promise<WorkspaceRow> {
   return getWorkspaceRecordForUser(userId);
 }
 
+export async function findWorkspaceFullForCurrentUser(): Promise<WorkspaceRow | null> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const userId = session?.user?.id;
+  if (!userId) throw new Error("Not authenticated");
+
+  const [membership] = await db.select({ workspaceId: workspaceMembers.workspaceId }).from(workspaceMembers).where(eq(workspaceMembers.userId, userId)).limit(1);
+  if (!membership) return null;
+  const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, membership.workspaceId)).limit(1);
+  return workspace ?? null;
+}
+
 /**
  * Get workspace record for a specific user by ID.
  * Priority: cookie → first membership → auto-create.
@@ -88,7 +99,7 @@ export async function getWorkspaceRecordForUser(userId: string): Promise<Workspa
 /**
  * Create a new workspace for a user and add them as owner.
  */
-async function createWorkspaceForUser(userId: string): Promise<WorkspaceRow> {
+export async function createWorkspaceForUser(userId: string, workspaceName?: string): Promise<WorkspaceRow> {
   const [existingOwnedWorkspace] = await db
     .select()
     .from(workspaces)
@@ -107,13 +118,13 @@ async function createWorkspaceForUser(userId: string): Promise<WorkspaceRow> {
     .limit(1);
 
   const baseName = user?.name || user?.email?.split("@")[0] || "My";
-  const workspaceName = `${baseName}'s Workspace`;
+  const resolvedWorkspaceName = workspaceName?.trim() || `${baseName}'s Workspace`;
   const slug = `ws-${userId.slice(0, 8)}`;
 
   const insertedWorkspaces = await db
     .insert(workspaces)
     .values({
-      name: workspaceName,
+      name: resolvedWorkspaceName,
       slug,
       ownerId: userId,
       defaultCurrency: "IDR",

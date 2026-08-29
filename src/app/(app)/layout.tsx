@@ -1,4 +1,4 @@
-import { getWorkspaceForCurrentUser } from "@/lib/workspace";
+import { findWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { getCurrentLang } from "@/lib/i18n";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
@@ -7,7 +7,6 @@ import { auth } from "@/lib/auth";
 import { AppShell } from "@/components/app-shell";
 import { db } from "@/db";
 import {
-  workspaces,
   workspaceMembers,
   tasks,
   invoices,
@@ -30,11 +29,7 @@ export default async function AppLayout({
 
   const lang = await getCurrentLang("en");
 
-  const [workspace] = await db
-    .select({ id: workspaces.id })
-    .from(workspaces)
-    .where(eq(workspaces.id, await getWorkspaceForCurrentUser()))
-    .limit(1);
+  const workspace = await findWorkspaceFullForCurrentUser();
 
   const [member] = workspace
     ? await db
