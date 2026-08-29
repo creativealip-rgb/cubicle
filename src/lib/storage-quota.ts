@@ -4,7 +4,7 @@ import { files, userStorageAddons, users, workspaceMembers, workspaces, workspac
 import { ForbiddenError } from "@/lib/access";
 import { getUploadQuotaLimits, UploadQuotaError } from "@/lib/upload-safety";
 
-const GB = 1024 ** 3;
+const _GB = 1024 ** 3;
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 

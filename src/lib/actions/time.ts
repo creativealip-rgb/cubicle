@@ -11,7 +11,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { timeEntries, timerSegments, clients, projects, tasks, workspaces } from "@/db/schema";
-import { eq, and, isNull, isNotNull, sql } from "drizzle-orm";
+import { eq, and, isNull, isNotNull, sql, ne } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
@@ -456,9 +456,16 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
         reviewedBy: user.id,
         updatedAt: new Date(),
       })
-      .where(eq(timeEntries.id, parsed.entryId))
+      .where(and(
+        eq(timeEntries.id, parsed.entryId),
+        eq(timeEntries.workspaceId, workspaceId),
+        eq(timeEntries.userId, user.id),
+        isNull(timeEntries.endTime),
+      ))
       .returning();
   });
+
+  if (!updated) throw new Error("Timer already stopped");
 
   await writeActivityLog(workspaceId, user.id, "stopped_timer", "time_entry", parsed.entryId);
   return updated;
@@ -671,7 +678,7 @@ export async function updateTimeEntry(entryId: string, input: z.infer<typeof upd
     const t = await getT();
     throw new Error(t("Entri sudah di-invoice, tidak bisa diedit", "Entry is invoiced and cannot be edited"));
   }
-  await assertTimesheetWeekMutable(db, workspaceId, entry.userId, entry.startTime ?? entry.createdAt);
+  await assertTimesheetWeekMutable(db, workspaceId, entry.userId, entry.startTime ?? new Date(`${entry.workDate}T00:00:00Z`));
   await assertHistoricalTimeEntryMutable(db, workspaceId, entry.projectId);
 
   const parsed = updateTimeEntrySchema.parse(input);
@@ -741,8 +748,9 @@ export async function updateTimeEntry(entryId: string, input: z.infer<typeof upd
   const [updated] = await db
     .update(timeEntries)
     .set(updateData)
-    .where(eq(timeEntries.id, entryId))
+    .where(and(eq(timeEntries.id, entryId), eq(timeEntries.workspaceId, workspaceId), ne(timeEntries.status, "invoiced")))
     .returning();
+  if (!updated) throw new Error("Status time entry berubah saat diedit");
 
   await writeActivityLog(workspaceId, user.id, "updated_time_entry", "time_entry", entryId);
   return updated;

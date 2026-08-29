@@ -4,7 +4,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { projects, projectMembers, tasks, timeEntries, invoices, workspaceCurrencyRates, workspaces } from "@/db/schema";
+import { projects, projectMembers, tasks, timeEntries, invoices, workspaceCurrencyRates, workspaces, workspaceMembers } from "@/db/schema";
 import { assignPackageToProject, syncProjectPackageAssignment } from "@/lib/actions/packages";
 import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -220,7 +220,7 @@ export async function updateProject(projectId: string, input: z.input<typeof pro
 
   const [project] = await db.update(projects)
     .set(updateData)
-    .where(eq(projects.id, projectId))
+    .where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId)))
     .returning();
 
   if (parsed.billingType === "package" && parsed.selectedPackageId !== undefined) {
@@ -242,7 +242,7 @@ export async function archiveProject(projectId: string) {
 
   const [project] = await db.update(projects)
     .set({ status: "archived", updatedAt: new Date() })
-    .where(eq(projects.id, projectId))
+    .where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId)))
     .returning();
 
   await writeActivityLog(workspaceId, user.id, "archived_project", "project", projectId);
@@ -302,7 +302,7 @@ export async function setProjectVisibility(projectId: string, clientVisible: boo
 
   const [project] = await db.update(projects)
     .set({ clientVisible, updatedAt: new Date() })
-    .where(eq(projects.id, projectId))
+    .where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId)))
     .returning();
 
   await writeActivityLog(workspaceId, user.id, "updated_project_visibility", "project", projectId);
@@ -316,6 +316,8 @@ export async function addProjectMember(projectId: string, userId: string) {
   await assertWorkspaceWritable(db, user.id, workspaceId);
   await assertProjectInWorkspace(db, user.id, workspaceId, projectId);
 
+  const [workspaceMember] = await db.select({ userId: workspaceMembers.userId }).from(workspaceMembers).where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId))).limit(1);
+  if (!workspaceMember) throw new Error("User bukan anggota workspace");
   const [member] = await db.insert(projectMembers).values({
     projectId,
     userId,

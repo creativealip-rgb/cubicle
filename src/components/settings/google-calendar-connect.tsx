@@ -25,7 +25,7 @@ export function GoogleCalendarConnect({
   email,
   status,
   lastError,
-  redirectUri,
+  redirectUri: _redirectUri,
 }: Props) {
   const { t } = useT();
   const router = useRouter();

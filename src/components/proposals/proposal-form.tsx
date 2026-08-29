@@ -107,7 +107,14 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
     e.preventDefault();
     if (items.length === 0 || items.every((li) => !li.description.trim())) {
       toast.error(t("Tambahkan minimal satu item", "Add at least one line item"));
+      return;
+    }
+    if (items.some((li) => li.description.trim() && (!Number.isFinite(li.quantity) || li.quantity <= 0))) {
       toast.error(t("Jumlah item harus lebih dari 0", "Item quantity must be greater than 0"));
+      return;
+    }
+    if (items.some((li) => li.description.trim() && (!Number.isFinite(li.unitPrice) || li.unitPrice < 0))) {
+      toast.error(t("Harga item tidak valid", "Item price is invalid"));
       return;
     }
     setLoading(true);

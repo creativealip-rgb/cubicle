@@ -17,8 +17,8 @@ describe("auth and recurring QA wiring", () => {
     const manager = read("src/components/invoices/recurring-invoice-manager.tsx");
     expect(manager).toContain("await deleteRecurringInvoiceRule(ruleId)");
     expect(manager).toContain("setDeleteId(rule.id)");
-    expect(manager).toContain('t("Hapus aturan invoice berulang?", "Delete recurring invoice rule?")');
+    expect(manager).toContain('t("Hapus invoice berulang?", "Delete recurring invoice?")');
     expect(manager).not.toContain("window.confirm");
-    expect(manager).toContain('t("Aturan invoice berulang dihapus", "Recurring invoice rule deleted")');
+    expect(manager).toContain('t("Invoice berulang dihapus", "Recurring invoice deleted")');
   });
 });

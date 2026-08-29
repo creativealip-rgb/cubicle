@@ -11,7 +11,7 @@ const CLIENT_NAME = `QA-E2E Invoice Parent Client ${STAMP}`;
 const ITEM_DESC = `QA-E2E invoice item ${STAMP}`;
 const ITEM_QTY = 2;
 const ITEM_RATE = 150000;
-const EXPECTED_TOTAL = ITEM_QTY * ITEM_RATE; // 300000
+const _EXPECTED_TOTAL = ITEM_QTY * ITEM_RATE; // 300000
 const PAYMENT_AMOUNT = 150000;
 
 test("production invoice create / persist / payment / status / reports UI flow", async ({ page }) => {
@@ -43,7 +43,7 @@ test("production invoice create / persist / payment / status / reports UI flow",
   await page.getByRole("button", { name: "Buat Invoice" }).click();
   await page.waitForURL(/\/app\/invoices\/[0-9a-f-]{36}/, { timeout: 20000 });
   const invoiceUrl = page.url();
-  const invoiceId = invoiceUrl.split("/").pop()!;
+  const _invoiceId = invoiceUrl.split("/").pop()!;
   await expect(page.getByRole("heading", { name: /Invoice INV-\d+/i })).toBeVisible({ timeout: 15000 });
   await expect(page.getByText(ITEM_DESC, { exact: true }).first()).toBeVisible();
   await expect(page.getByText("Draf", { exact: true }).first()).toBeVisible();

@@ -118,7 +118,7 @@ function localDateKey(entry: TimeEntry): string {
 }
 
 export function Timesheet({ entries, clients, projects, tasks = [], activities: _activities = [], compact = false, dialogOnly = false, initialEditEntry, onEditClose }: TimesheetProps) {
-  const { t, locale } = useT();
+  const { t } = useT();
   const { refresh } = useAppTransition();
 
   const [clientFilter, setClientFilter] = useState<string>("all");
@@ -136,6 +136,8 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
     if (initialEditEntry) {
       openEdit(initialEditEntry);
     }
+    // openEdit initializes edit state from the new prop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialEditEntry]);
   const [editLoading, setEditLoading] = useState(false);
   const [editDescription, setEditDescription] = useState("");
@@ -148,7 +150,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
   const [editEndTime, setEditEndTime] = useState("");
   const [editMinutes, setEditMinutes] = useState("");
   const [editBillable, setEditBillable] = useState(true);
-  const [editStatus, setEditStatus] = useState<"draft" | "approved">("approved");
+  const [_editStatus, setEditStatus] = useState<"draft" | "approved">("approved");
   const [deleteEntry, setDeleteEntry] = useState<TimeEntry | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -278,7 +280,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
     return `${h}${hLabel} ${m}${mLabel}`;
   }
 
-  function formatRate(rate: string | number | null, currency: string | null): string | null {
+  function _formatRate(rate: string | number | null, currency: string | null): string | null {
     if (rate === null || rate === "") return null;
     const numericRate = Number(rate);
     if (!Number.isFinite(numericRate) || numericRate <= 0) return null;

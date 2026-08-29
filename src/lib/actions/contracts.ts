@@ -311,7 +311,7 @@ export async function updateContract(contractId: string, input: { clientName?: s
 
   const [updated] = await db.update(contracts)
     .set({ ...input, updatedAt: new Date() })
-    .where(eq(contracts.id, contractId))
+    .where(and(eq(contracts.id, contractId), eq(contracts.workspaceId, workspaceId)))
     .returning();
   revalidatePath("/app/contracts");
   revalidatePath(`/app/contracts/${contractId}`);

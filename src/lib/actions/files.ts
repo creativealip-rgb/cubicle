@@ -133,7 +133,7 @@ export async function updateFileMeta(input: z.infer<typeof updateFileMetaSchema>
   const [updated] = await db
     .update(files)
     .set(next)
-    .where(eq(files.id, parsed.fileId))
+    .where(and(eq(files.id, parsed.fileId), eq(files.workspaceId, workspaceId)))
     .returning();
 
   await writeActivityLog(workspaceId, user.id, "updated_file_meta", "file", parsed.fileId, next);
@@ -156,7 +156,7 @@ export async function deleteFile(fileId: string) {
   if (!file) throw new Error("File not found");
 
   await deleteStoredFile(file.storageKey);
-  await db.delete(files).where(eq(files.id, fileId));
+  await db.delete(files).where(and(eq(files.id, fileId), eq(files.workspaceId, workspaceId)));
   await writeActivityLog(workspaceId, user.id, "deleted_file", "file", fileId);
   revalidatePath("/app/files");
   return { success: true };

@@ -13,7 +13,7 @@ import { and, eq } from "drizzle-orm";
 import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
 import { getClientPortalAccess } from "@/lib/actions/portal";
 
-async function canAccessFile(
+export async function canAccessFile(
   file: typeof files.$inferSelect,
   token: string | null,
 ) {

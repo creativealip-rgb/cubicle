@@ -568,6 +568,7 @@ export const tasks = pgTable("tasks", {
   // Migration adds ON DELETE SET NULL (template_item_source_id); Drizzle 0.45
   // cannot represent a column-list SET NULL action on a composite foreign key.
   foreignKey({ columns: [table.templateItemSourceId, table.workspaceId], foreignColumns: [taskTemplateItems.id, taskTemplateItems.workspaceId], name: "tasks_template_item_source_workspace_fk" }),
+  check("tasks_status_check", sql`${table.status} in ('todo', 'in_progress', 'review', 'done')`),
   index("tasks_workspace_mode_lifecycle_idx").on(table.workspaceId, table.mode, table.lifecycle),
   index("tasks_project_mode_lifecycle_position_idx").on(table.projectId, table.mode, table.lifecycle, table.position),
 ]);

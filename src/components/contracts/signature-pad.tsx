@@ -94,16 +94,16 @@ export function SignaturePad({
   function handleSign() {
     setError(null);
     if (!name.trim()) {
-      setError("Please enter your full name");
+      setError("Masukkan nama lengkap / Enter your full name");
       return;
     }
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Please enter a valid email");
+      setError("Masukkan email valid / Enter a valid email");
       return;
     }
     const dataUrl = getDataUrl();
     if (!dataUrl) {
-      setError("Please draw your signature in the box above");
+      setError("Gambar tanda tangan di kotak / Draw your signature in the box");
       return;
     }
     startTransition(async () => {
@@ -179,7 +179,7 @@ export function SignaturePad({
     <div className="space-y-4">
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <label className="text-sm font-medium">Sign here</label>
+          <label htmlFor="contract-signature" className="text-sm font-medium">Tanda tangan / Sign here</label>
           {hasSignature && (
             <Button type="button" variant="ghost" size="sm" onClick={clearSignature}>
               <Trash2 className="h-3 w-3" />
@@ -189,6 +189,10 @@ export function SignaturePad({
         </div>
         <div className="border-2 border-dashed border-slate-300 rounded-lg bg-white">
           <canvas
+            id="contract-signature"
+            role="img"
+            aria-label="Area tanda tangan. Gambar dengan mouse, trackpad, atau jari. / Signature area. Draw with mouse, trackpad, or finger."
+            tabIndex={0}
             ref={canvasRef}
             className="w-full h-32 touch-none cursor-crosshair"
             onPointerDown={startDraw}
@@ -197,21 +201,23 @@ export function SignaturePad({
             onPointerLeave={endDraw}
           />
         </div>
-        <p className="text-xs text-slate-500 mt-1">Draw with your mouse, trackpad, or finger.</p>
+        <p className="text-xs text-slate-500 mt-1">Gambar dengan mouse, trackpad, atau jari. / Draw with your mouse, trackpad, or finger.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className="text-sm font-medium block mb-1">Full name</label>
+          <label htmlFor="contract-signer-name" className="text-sm font-medium block mb-1">Nama lengkap / Full name</label>
           <Input
-            placeholder="Your full legal name"
+            id="contract-signer-name"
+            placeholder="Nama lengkap / Full legal name"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
         </div>
         <div>
-          <label className="text-sm font-medium block mb-1">Email</label>
+          <label htmlFor="contract-signer-email" className="text-sm font-medium block mb-1">Email</label>
           <Input
+            id="contract-signer-email"
             type="email"
             placeholder="you@company.com"
             value={email}
@@ -227,12 +233,12 @@ export function SignaturePad({
       )}
 
       <div className="flex items-center justify-between gap-2 pt-2">
-        <Button variant="ghost" onClick={() => setShowDecline(true)} disabled={pending}>
-          Decline
+        <Button className="min-h-11" variant="ghost" onClick={() => setShowDecline(true)} disabled={pending}>
+          Tolak / Decline
         </Button>
-        <Button onClick={handleSign} disabled={pending}>
+        <Button className="min-h-11" onClick={handleSign} disabled={pending || !name.trim() || !email.trim() || !hasSignature}>
           {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          Sign contract
+          Tanda tangani / Sign contract
         </Button>
       </div>
     </div>

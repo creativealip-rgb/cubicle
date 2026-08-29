@@ -172,7 +172,7 @@ export function TemplateCenterClient({
     setActiveTab(urlTab);
   }, [urlTab]);
 
-  const changeTab = useCallback(
+  const _changeTab = useCallback(
     (tab: string) => {
       const next = normalizeTemplateTab(tab);
       setActiveTab(next);
@@ -187,6 +187,8 @@ export function TemplateCenterClient({
 
   useEffect(() => {
     loadAll();
+    // load once on mount; loadAll only writes local state
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function loadAll() {

@@ -101,7 +101,7 @@ function makeRequest(body: unknown): Request {
 
 const USER_ID = "user-1";
 const WS_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
-const WS_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+const _WS_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 
 describe("POST /api/billing/checkout — request shape and branch ordering", () => {
   beforeEach(() => {

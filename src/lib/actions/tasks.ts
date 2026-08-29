@@ -20,6 +20,7 @@ import { assertTaskModeMutationAllowed } from "@/lib/task-action-policies";
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
 }
+const taskStatusSchema = z.enum(["todo", "in_progress", "review", "done"]);
 
 async function notifyIfAssigneeChanged(
   workspaceId: string,
@@ -224,8 +225,8 @@ export async function updateTaskStatus(taskId: string, status: string, position?
   const pos = position ?? 0;
 
   const [task] = await db.update(tasks)
-    .set({ status: status as any, position: pos, updatedAt: new Date() })
-    .where(eq(tasks.id, taskId))
+    .set({ status: taskStatusSchema.parse(status), position: pos, updatedAt: new Date() })
+    .where(and(eq(tasks.id, taskId), eq(tasks.workspaceId, workspaceId)))
     .returning();
 
   await writeActivityLog(workspaceId, user.id, "updated_task_status", "task", taskId);
@@ -260,11 +261,11 @@ export async function reorderTask(taskId: string, newPosition: number, newStatus
   await assertTaskInWorkspace(db, user.id, workspaceId, taskId);
 
   const updateData: Record<string, unknown> = { position: newPosition, updatedAt: new Date() };
-  if (newStatus) updateData.status = newStatus;
+  if (newStatus) updateData.status = taskStatusSchema.parse(newStatus);
 
   await db.update(tasks)
     .set(updateData)
-    .where(eq(tasks.id, taskId));
+    .where(and(eq(tasks.id, taskId), eq(tasks.workspaceId, workspaceId)));
 
   return { success: true };
 }
@@ -296,7 +297,7 @@ export async function assignTask(taskId: string, assigneeId: string | null) {
 
   const [task] = await db.update(tasks)
     .set({ assigneeId, updatedAt: new Date() })
-    .where(eq(tasks.id, taskId))
+    .where(and(eq(tasks.id, taskId), eq(tasks.workspaceId, workspaceId)))
     .returning();
 
   await writeActivityLog(workspaceId, user.id, "assigned_task", "task", taskId);

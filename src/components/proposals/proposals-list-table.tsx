@@ -191,12 +191,7 @@ export function ProposalsListTable({
                   ) : null}
                 </TableCell>
                 <TableCell className="text-sm">
-                  <Link
-                    href={`/app/clients/${p.clientId}`}
-                    className="text-slate-600 hover:underline"
-                  >
-                    {p.clientName}
-                  </Link>
+                  {p.clientId ? <Link href={`/app/clients/${p.clientId}`} className="text-slate-600 hover:underline">{p.clientName}</Link> : p.clientName}
                 </TableCell>
                 <TableCell>
                   <Badge variant={status.variant}>{status.label}</Badge>

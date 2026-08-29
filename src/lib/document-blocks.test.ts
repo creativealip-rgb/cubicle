@@ -34,7 +34,7 @@ describe("document blocks", () => {
     it("builds a safe image block from an uploaded file record", () => {
       const block = buildDocumentMediaBlock("image", file);
       expect(block.type).toBe("image");
-      expect(block.src).toBe("/api/files/raw/workspaces/ws-1/files/file-1/foto.png");
+      expect(block.src).toBe("/api/files/file-1/download");
       expect(block.fileId).toBe("file-1");
       expect(block.fileName).toBe("foto.png");
       expect(block.mimeType).toBe("image/png");
@@ -47,7 +47,7 @@ describe("document blocks", () => {
     it("builds a safe attachment block from an uploaded file record", () => {
       const block = buildDocumentMediaBlock("attachment", file);
       expect(block.type).toBe("attachment");
-      expect(block.src).toBe("/api/files/raw/workspaces/ws-1/files/file-1/foto.png");
+      expect(block.src).toBe("/api/files/file-1/download");
       expect(isSafeAttachmentMeta(block)).toBe(true);
     });
 
@@ -56,7 +56,7 @@ describe("document blocks", () => {
         ...file,
         storageKey: "/api/files/raw/workspaces/ws-1/files/file-1/foto.png",
       });
-      expect(block.src).toBe("/api/files/raw/workspaces/ws-1/files/file-1/foto.png");
+      expect(block.src).toBe("/api/files/file-1/download");
     });
 
     it("rejects incomplete file records", () => {
