@@ -20,7 +20,7 @@ describe("PersonalSiteRenderer", () => {
     expect(html).toContain('data-section-type="process"');
     expect(html).toContain('data-section-type="faq"');
     expect(html).not.toContain('data-section-type="testimonials"');
-    expect(html).toContain("https://cal.com/owner/book");
+    expect(html).not.toContain("https://cal.com/owner/book");
   });
 
   it("never emits an unsafe CTA", () => {

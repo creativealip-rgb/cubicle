@@ -4,11 +4,19 @@ import { headers } from "next/headers";
 import { randomUUID } from "crypto";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
+import { validateUploadedFile } from "@/lib/file-validation";
 
 export const runtime = "nodejs";
 
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+const MIME_BY_EXTENSION: Record<string, string> = {
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  webp: "image/webp",
+  gif: "image/gif",
+};
 
 /**
  * Site image upload. Uses R2 if configured, otherwise local storage.
@@ -34,9 +42,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Format: PNG, JPG, WebP, GIF" }, { status: 400 });
     }
 
-    const ext = file.name.split(".").pop() || "jpg";
-    const filename = `${randomUUID()}.${ext}`;
     const body = Buffer.from(await file.arrayBuffer());
+    const validation = validateUploadedFile(file.name, body.subarray(0, 16));
+    if (!validation.ok || MIME_BY_EXTENSION[validation.extension] !== file.type) {
+      return NextResponse.json({ error: validation.reason ?? "Format file tidak cocok" }, { status: 400 });
+    }
+    const ext = validation.extension;
+    const contentType = MIME_BY_EXTENSION[ext];
+    const filename = `${randomUUID()}.${ext}`;
 
     // Try R2 first
     const r2Configured = process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID && process.env.R2_BUCKET_NAME;
@@ -51,7 +64,7 @@ export async function POST(req: NextRequest) {
             Bucket: R2_BUCKET,
             Key: key,
             Body: body,
-            ContentType: file.type,
+            ContentType: contentType,
             ContentLength: body.length,
           }),
         );

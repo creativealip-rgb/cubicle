@@ -182,7 +182,7 @@ export function isSameOriginMediaSrc(src: string): boolean {
 /**
  * Build a media block (`image` or `attachment`) from a workspace file record.
  *
- * The same-origin `src` (`/api/files/...`) is derived from the storage key so
+ * The same-origin `src` (`/api/files/...`) is derived from the file id so
  * the block passes `isSafeImageBlock` / `isSafeAttachmentMeta` and renders in
  * editor preview, public proposal, and (for attachments) the download link.
  * `fileId` is the workspace-scoped `files` row id, so the download route can
@@ -202,9 +202,7 @@ export function buildDocumentMediaBlock(
   if (!file.id || !file.name || !file.storageKey) {
     throw new Error("Uploaded file record is incomplete");
   }
-  const src = file.storageKey.startsWith("/")
-    ? file.storageKey
-    : `/api/files/raw/${file.storageKey}`;
+  const src = `/api/files/${file.id}/download`;
   return {
     id: crypto.randomUUID(),
     type: kind,
