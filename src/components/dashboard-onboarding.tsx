@@ -67,6 +67,8 @@ export function DashboardOnboarding({ lang, steps }: DashboardOnboardingProps) {
 
   const pct = Math.round((doneCount / total) * 100);
 
+  if (total > 0 && doneCount === total) return null;
+
   return (
     <div className="relative overflow-hidden rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 via-indigo-50 to-white p-5 shadow-sm">
       <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-blue-200/30 blur-2xl" />
