@@ -10,6 +10,7 @@ import { writeActivityLog } from "@/lib/actions/activity";
 import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
 import { assertUploadQuota, getUploadQuotaLimits, safeUploadErrorResponse, validateContentLength } from "@/lib/upload-safety";
 import { withWorkspaceQuotaReservation } from "@/lib/storage-quota";
+import { readRequestBodyWithinLimit, RequestBodyTooLargeError } from "@/lib/upload-request-limit";
 
 export const runtime = "nodejs";
 
@@ -26,7 +27,8 @@ export async function POST(req: NextRequest) {
   const limited = await enforceRateLimitResponse(req, "portal:file-upload", { limit: 10, windowSec: 300 });
   if (limited) return limited;
   try {
-    const form = await req.formData();
+    const limitedRequest = await readRequestBodyWithinLimit(req, MAX_SIZE + 1024 * 1024);
+    const form = await limitedRequest.formData();
     const token = String(form.get("token") ?? "");
     const projectIdRaw = String(form.get("projectId") ?? "").trim() || null;
     const folderIdRaw = String(form.get("folderId") ?? "").trim() || null;
@@ -201,6 +203,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err) {
+    if (err instanceof RequestBodyTooLargeError) return NextResponse.json({ error: err.message }, { status: err.status });
     if (uploadedObject) await deleteStoredFile(uploadedObject).catch(() => undefined);
     const safe = safeUploadErrorResponse(err);
     return NextResponse.json({ error: safe.error }, { status: safe.status });

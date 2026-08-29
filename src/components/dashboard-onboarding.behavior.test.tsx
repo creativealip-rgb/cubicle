@@ -13,17 +13,16 @@ const steps = [
 ].map(([key, href]) => ({ key, href, done: true }));
 
 describe("DashboardOnboarding completed state", () => {
-  it("renders all seven completed steps with exact copy and links", () => {
-    const html = renderToStaticMarkup(<DashboardOnboarding lang="en" steps={steps} />);
+  it("hides onboarding after every step is complete", () => {
+    expect(renderToStaticMarkup(<DashboardOnboarding lang="en" steps={steps} />)).toBe("");
+  });
 
+  it("keeps pending onboarding actions visible", () => {
+    const html = renderToStaticMarkup(
+      <DashboardOnboarding lang="en" steps={steps.map((step, index) => ({ ...step, done: index !== 0 }))} />,
+    );
     expect(html).toContain("Start from Settings");
-    expect(html).toContain("Set up your workspace and invoice defaults before creating your first project.");
-    expect((html.match(/href=/g) ?? []).length).toBe(7);
-    expect((html.match(/✓/g) ?? []).length).toBe(7);
-    expect(html).toContain('href="/app/settings?tab=workspace"');
-    expect(html).toContain('href="/app/settings?tab=invoice"');
     expect(html).toContain("Complete workspace profile");
-    expect(html).toContain("Set invoice &amp; payment defaults");
   });
 });
 
