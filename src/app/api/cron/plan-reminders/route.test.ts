@@ -50,9 +50,11 @@ describe("POST /api/cron/plan-reminders", () => {
     expect(data.sent).toBe(2);
     expect(data.failed).toBe(0);
     expect(mockSendNotification).toHaveBeenCalledTimes(2);
-    expect(mockSendNotification).toHaveBeenNthCalledWith(1, expect.objectContaining({
-      idempotencyKey: `plan-expiry-${mockUsers[0].id}-${mockUsers[0].planExpiresAt.toISOString().slice(0, 10)}-${mockUsers[0].daysUntilExpiry}d`,
-    }));
+    const expectedKey = `plan-expiry-${mockUsers[0].id}-${mockUsers[0].planExpiresAt.toISOString().slice(0, 10)}-${mockUsers[0].daysUntilExpiry}d`;
+    expect(mockSendNotification).toHaveBeenNthCalledWith(1, expect.objectContaining({ idempotencyKey: expectedKey }));
+
+    await GET(request as any);
+    expect(mockSendNotification).toHaveBeenNthCalledWith(3, expect.objectContaining({ idempotencyKey: expectedKey }));
   });
 
   it("should handle errors gracefully and return 500", async () => {

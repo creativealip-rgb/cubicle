@@ -530,7 +530,7 @@ Use one authenticated context, `workers=1`, `retries=0`:
 - PASS: null-client link guard, proposal numeric validation, recurring dialog shell, signing labels/touch targets.
 - PASS: plan-expiry email delivery through shared Resend helper with sent/failed reporting.
 - PASS: dependency audit and lint gate.
-- PASS RELEASE: migration `0082` applied to production; current image `cubiqlo-prod:sha-d79c7792279de1a68f39b80ff13ce97cd0700c30` live.
+- PASS RELEASE: migration `0082` applied to production; current image `cubiqlo-prod:sha-af3dbdbeb333992adac45614243aa9a45e453133` live.
 - PASS RELEASE: internal/public health and DB OK; login/root HTTP 200; cron/env auth guards 401; no fresh server errors.
 - PASS RELEASE: authenticated mobile QA at 390×844 passed dashboard, invoices, proposals, contracts, and weekly time with zero overflow/console errors.
 - PASS RELEASE: `dokploy-traefik` remains sole 80/443 owner; app stays internal on `dokploy-network`.
@@ -540,3 +540,7 @@ Use one authenticated context, `workers=1`, `retries=0`:
 - PASS FOLLOW-UP: plan reminder sends use stable provider idempotency key `user + expiry + days-before`.
 - PASS FOLLOW-UP: 39 user-facing loading boundaries are present; proposal validation and invoice timesheet period validation are active.
 - PASS FOLLOW-UP: hydration matrix 24/24 and client → project → task → approved time → invoice chain passed; UI cleanup and read-only DB zero-prefix proof completed.
+- PASS CONCURRENCY: disposable `cubicle_dev` clone proved concurrent payment no-overpay, payment/void serialization, time edit/import serialization, duplicate time-source rejection, and concurrent item-total consistency; test DB auto-cleaned.
+- PASS PROXY: Traefik `cubiqlo-request-body-cap` limits canonical production hosts to 52 MiB; a 55 MiB request returned `413` before app processing.
+- PASS REMINDER: cron rerun test proves identical `user + expiry + days-before` provider idempotency key across repeated executions.
+- BLOCKED LIVE-SIGNATURE: source/regression/mobile-shell verification passes, but destructive public signing mutation was not run against existing production contracts; requires a UI-created disposable unsigned contract and cleanup-safe lifecycle.
