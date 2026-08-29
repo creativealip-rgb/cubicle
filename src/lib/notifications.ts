@@ -11,6 +11,7 @@ type SendOpts = {
   text?: string;
   type?: string;
   replyTo?: string;
+  idempotencyKey?: string;
 };
 
 const apiKey = process.env.RESEND_API_KEY;
@@ -81,6 +82,7 @@ export async function sendNotification(opts: SendOpts) {
       html,
       text,
       ...(opts.replyTo ? { replyTo: [opts.replyTo] } : {}),
+      ...(opts.idempotencyKey ? { headers: { "Idempotency-Key": opts.idempotencyKey } } : {}),
     });
     if ((result as { error?: unknown }).error) {
       console.error(`[NOTIFY-FAIL ${opts.type}] Resend error:`, (result as { error: unknown }).error);

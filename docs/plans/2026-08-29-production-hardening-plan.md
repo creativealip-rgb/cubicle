@@ -16,16 +16,16 @@
 
 | Phase | Scope | Status |
 |---|---|---|
-| P0-A | Private file authorization | PENDING |
-| P0-B | Upload content validation | PENDING |
-| P0-C | Invoice tenant integrity | PENDING |
-| P0-D | Atomic payment/status flows | PENDING |
-| P1-A | Time-entry/invoice races | PENDING |
-| P1-B | Task/project mutation validation | PENDING |
-| P1-C | Atomic invoice totals | PENDING |
-| P1-D | Tests, dependencies, lint | PENDING |
-| P2 | Mobile, i18n, loading, docs | PENDING |
-| Release | Full QA, deploy, live proof | PENDING — requires approval |
+| P0-A | Private file authorization | PASS |
+| P0-B | Upload content validation | PASS |
+| P0-C | Invoice tenant integrity | PASS |
+| P0-D | Atomic payment/status flows | PASS |
+| P1-A | Time-entry/invoice races | PASS |
+| P1-B | Task/project mutation validation | PASS |
+| P1-C | Atomic invoice totals | PASS |
+| P1-D | Tests, dependencies, lint | PASS |
+| P2 | Mobile, i18n, loading, docs | PASS |
+| Release | Full QA, deploy, live proof | PASS |
 
 ## Execution rules
 
@@ -530,8 +530,13 @@ Use one authenticated context, `workers=1`, `retries=0`:
 - PASS: null-client link guard, proposal numeric validation, recurring dialog shell, signing labels/touch targets.
 - PASS: plan-expiry email delivery through shared Resend helper with sent/failed reporting.
 - PASS: dependency audit and lint gate.
-- PASS RELEASE: migration `0082` applied to production; image `cubiqlo-prod:sha-998795c377f0de6e524cc4ca4db55210f58c86af` live.
+- PASS RELEASE: migration `0082` applied to production; current image `cubiqlo-prod:sha-d79c7792279de1a68f39b80ff13ce97cd0700c30` live.
 - PASS RELEASE: internal/public health and DB OK; login/root HTTP 200; cron/env auth guards 401; no fresh server errors.
 - PASS RELEASE: authenticated mobile QA at 390×844 passed dashboard, invoices, proposals, contracts, and weekly time with zero overflow/console errors.
 - PASS RELEASE: `dokploy-traefik` remains sole 80/443 owner; app stays internal on `dokploy-network`.
 - EVIDENCE: DB backup `/root/backups/cubiqlo/db/cubicle-20260829T112933Z-pre-0082.dump`; release manifest `/root/releases/cubiqlo/2026-08-29T11-37-24Z-998795c377f0.env`.
+- PASS FOLLOW-UP: portal upload bodies enforce both declared and streamed aggregate limits before multipart parsing; oversized chunked bodies return `413`.
+- PASS FOLLOW-UP: contract signing supports draw and typed-name fallback through one PNG validation/signing path.
+- PASS FOLLOW-UP: plan reminder sends use stable provider idempotency key `user + expiry + days-before`.
+- PASS FOLLOW-UP: 39 user-facing loading boundaries are present; proposal validation and invoice timesheet period validation are active.
+- PASS FOLLOW-UP: hydration matrix 24/24 and client → project → task → approved time → invoice chain passed; UI cleanup and read-only DB zero-prefix proof completed.
