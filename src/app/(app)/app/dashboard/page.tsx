@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { formatMoneyCompact } from "@/lib/utils";
 import Link from "next/link";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
@@ -72,7 +73,9 @@ export default async function DashboardPage() {
       tasksDueSoon: sql<number>`(SELECT count(*)::int FROM tasks WHERE workspace_id = ${workspaceId} AND status != 'done' AND due_date IS NOT NULL AND due_date <= ${in7dDateStr})`,
       noteReminders: sql<number>`(SELECT count(*)::int FROM personal_notes WHERE workspace_id = ${workspaceId} AND user_id = ${session?.user?.id ?? ""} AND status = 'open' AND due_date IS NOT NULL AND due_date <= ${in7d.toISOString()} AND title NOT LIKE ${"[journal]%"} AND title NOT LIKE ${"[site]%"})`,
       invoiceDueSoon: sql<number>`(SELECT count(*)::int FROM invoices WHERE workspace_id = ${workspaceId} AND status NOT IN ('paid','cancelled','archived') AND due_date IS NOT NULL AND due_date <= ${in7dDateStr})`,
-      clientApprovals: sql<number>`(SELECT count(*)::int FROM tasks WHERE workspace_id = ${workspaceId} AND status = 'review' AND client_visible = true)`,
+      taskApprovals: sql<number>`(SELECT count(*)::int FROM tasks WHERE workspace_id = ${workspaceId} AND status = 'review' AND client_visible = true)`,
+      proposalApprovals: sql<number>`(SELECT count(*)::int FROM proposals WHERE workspace_id = ${workspaceId} AND status IN ('sent','viewed'))`,
+      contractApprovals: sql<number>`(SELECT count(*)::int FROM contracts WHERE workspace_id = ${workspaceId} AND status IN ('sent','viewed'))`,
     })
     .from(sql`(select 1) as _`)
     .limit(1);
@@ -80,8 +83,16 @@ export default async function DashboardPage() {
     tasksDueSoon: 0,
     noteReminders: 0,
     invoiceDueSoon: 0,
-    clientApprovals: 0,
+    taskApprovals: 0,
+    proposalApprovals: 0,
+    contractApprovals: 0,
   };
+  const approvalCounts = {
+    tasks: Number(att.taskApprovals) || 0,
+    proposals: Number(att.proposalApprovals) || 0,
+    contracts: Number(att.contractApprovals) || 0,
+  };
+  const approvalTotal = approvalCounts.tasks + approvalCounts.proposals + approvalCounts.contracts;
 
   // Revenue last 30 days only (payments) — convert to base currency
   const rateRows = await db
@@ -284,8 +295,8 @@ export default async function DashboardPage() {
       href: "/app/tasks?status=review",
       tone: "purple",
       group: "action",
-      count: Number(att.clientApprovals) || 0,
-      meta: t("Approval task client", "Client task approval"),
+      count: approvalTotal,
+      meta: t("Approval klien tertunda", "Pending client approvals"),
     },
   ];
 
@@ -323,7 +334,28 @@ export default async function DashboardPage() {
           <Badge variant="secondary">{reminderItems.length}</Badge>
         </div>
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-5">
-          {[...reminderItems].sort((a, b) => Number(b.group === "urgent") - Number(a.group === "urgent")).map((item) => (
+          {[...reminderItems].sort((a, b) => Number(b.group === "urgent") - Number(a.group === "urgent")).map((item) => item.key === "approval" ? (
+            <Popover key={item.key}>
+              <PopoverTrigger asChild>
+                <button type="button" className="group text-left">
+                  <Card className={`h-full border-l-4 ${reminderToneBorder[item.tone]} transition hover:shadow-md`}>
+                    <CardContent className="flex min-h-24 items-start justify-between gap-3 p-4">
+                      <div className="min-w-0"><p className="truncate text-sm font-semibold">{item.label}</p><p className="mt-2 text-xs text-muted-foreground">{item.meta}</p></div>
+                      <Badge variant={approvalTotal > 0 ? "default" : "secondary"}>{approvalTotal}</Badge>
+                    </CardContent>
+                  </Card>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-72 p-2">
+                <p className="px-2 py-1.5 text-sm font-semibold">{t("Approval klien tertunda", "Pending client approvals")}</p>
+                {approvalTotal === 0 ? <p className="px-2 py-4 text-sm text-muted-foreground">{t("Tidak ada approval tertunda", "No pending approvals")}</p> : <div className="space-y-1">
+                  {approvalCounts.tasks > 0 && <Link href="/app/tasks?status=review" className="flex items-center justify-between rounded-md px-2 py-2 text-sm hover:bg-muted"><span>{t("Task", "Tasks")}</span><Badge variant="secondary">{approvalCounts.tasks}</Badge></Link>}
+                  {approvalCounts.proposals > 0 && <Link href="/app/proposals?status=sent" className="flex items-center justify-between rounded-md px-2 py-2 text-sm hover:bg-muted"><span>{t("Proposal", "Proposals")}</span><Badge variant="secondary">{approvalCounts.proposals}</Badge></Link>}
+                  {approvalCounts.contracts > 0 && <Link href="/app/contracts?status=sent" className="flex items-center justify-between rounded-md px-2 py-2 text-sm hover:bg-muted"><span>{t("Kontrak", "Contracts")}</span><Badge variant="secondary">{approvalCounts.contracts}</Badge></Link>}
+                </div>}
+              </PopoverContent>
+            </Popover>
+          ) : (
             <Link key={item.key} href={item.href} className="group">
               <Card className={`h-full border-l-4 ${reminderToneBorder[item.tone]} ${item.group === "urgent" ? "bg-amber-50/40" : ""} transition hover:shadow-md`}>
                 <CardContent className="flex min-h-24 items-start justify-between gap-3 p-4">
