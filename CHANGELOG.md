@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-08-29 — Personal Site new-user publish and optional CTA
+
+- Fixed new-user Personal Site defaults so an empty CTA no longer blocks initial save or publish.
+- Made CTA fully optional in readiness and server validation; incomplete CTA data does not render a public button.
+- Added exact public URL, Copy link, and Open site actions to the publish dialog while keeping Preview separate.
+- Verified dedicated production fixture publish persistence, public HTTP 200, clipboard parity, and zero horizontal overflow at 390×844.
+- Production commit: `278f7de`; running image `cubiqlo-prod:sha-278f7deb9819f5fd5ffc32144ead148a2716329a`; health and DB `ok`.
+- Evidence: `docs/operations/evidence/personal-site-new-user-publish-2026-08-29.md`.
+
 ## 2026-08-28 — August meeting revisions completed
 
 - Completed region-aware EN/ID and IDR/USD defaults with persistent overrides while keeping Pakasir checkout amounts authoritative in IDR.

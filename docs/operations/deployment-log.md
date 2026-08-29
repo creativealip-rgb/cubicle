@@ -1,5 +1,22 @@
 # Deployment Log
 
+## 29 August 2026 — Personal Site new-user publish and optional CTA
+
+- Source: `main` `278f7de` (follow-up chain: `dfe3aa8`, `5ed4265`, `0f6f09c`, `278f7de`).
+- Scope:
+  - New-user default no longer carries a CTA label without destination.
+  - CTA and contact method are optional for save/publish; public CTA renders only when label and safe destination are complete.
+  - Publish dialog shows exact public URL with Copy link and Open site; Preview remains separate.
+- Release gate: focused Vitest 36/36 passed; TypeScript passed; ESLint passed; `git diff --check` passed; production Docker build passed.
+- Production deployment:
+  - Image tag: `cubiqlo-prod:sha-278f7deb9819f5fd5ffc32144ead148a2716329a`.
+  - Container: `cubiqlo-new-app-next`; restart `unless-stopped`; network `dokploy-network`.
+  - Health: `https://app.cubiqlo.com/api/health` returned app/DB `ok`.
+  - Public proof: `https://cubiqlo.com/site/ws-wk19fhr7` and `https://cubiqlo.com/site/alip` returned HTTP 200.
+  - Mobile proof: 390×844, actions visible, horizontal overflow `0px`.
+  - Proxy safety: `dokploy-traefik` sole public 80/443 owner.
+- Evidence: `docs/operations/evidence/personal-site-new-user-publish-2026-08-29.md`.
+
 ## 17 August 2026 — Superadmin control plane (admin.cubiqlo.com) P0+P1
 
 - Source: `main` `f550793` (merge of `feature/admin-dashboard` — 3 commits: `39e13a4` feat, `abe5f7d` fix subquery, `a8e6186` docs).
