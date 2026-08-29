@@ -543,4 +543,4 @@ Use one authenticated context, `workers=1`, `retries=0`:
 - PASS CONCURRENCY: disposable `cubicle_dev` clone proved concurrent payment no-overpay, payment/void serialization, time edit/import serialization, duplicate time-source rejection, and concurrent item-total consistency; test DB auto-cleaned.
 - PASS PROXY: Traefik `cubiqlo-request-body-cap` limits canonical production hosts to 52 MiB; a 55 MiB request returned `413` before app processing.
 - PASS REMINDER: cron rerun test proves identical `user + expiry + days-before` provider idempotency key across repeated executions.
-- BLOCKED LIVE-SIGNATURE: source/regression/mobile-shell verification passes, but destructive public signing mutation was not run against existing production contracts; requires a UI-created disposable unsigned contract and cleanup-safe lifecycle.
+- PASS LIVE-SIGNATURE: UI-created production contract signed through public typed-name flow at 390×844; persisted PNG signature, signed status, and `signed_contract` audit log verified. Signed QA fixture `98e70e4e-cd84-470b-985c-1b5301e9ef51` retained as immutable audit evidence.

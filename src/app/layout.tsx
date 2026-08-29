@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Geist_Mono, Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { GlobalVersionSkewRecovery } from "@/components/global-version-skew-recovery";
 import { LangProvider, type Lang } from "@/lib/i18n-client";
 import { cookies, headers } from "next/headers";
 import { getCountryFromHeaders, resolveVisitorPreferences } from "@/lib/region-preferences";
@@ -101,6 +102,7 @@ export default async function RootLayout({
         <LangProvider lang={lang}>
           {children}
         </LangProvider>
+        <GlobalVersionSkewRecovery />
         <Toaster />
       </body>
     </html>
