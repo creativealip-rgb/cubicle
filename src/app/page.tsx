@@ -24,7 +24,6 @@ import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { LandingLanguageSwitch } from "@/components/landing/landing-language-switch";
-import { LandingCurrencySwitch } from "@/components/landing/landing-currency-switch";
 import { getCountryFromHeaders, resolveVisitorPreferences } from "@/lib/region-preferences";
 import { getLandingPrice, type DisplayCurrency } from "@/lib/landing-pricing";
 
@@ -101,6 +100,10 @@ const comparison = [
   { label: "AI assistant", honeybook: "Ada", bonsai: "Ada", cubiqlo: "Termasuk" },
 ];
 
+function getLandingInvoiceBadge(currency: DisplayCurrency) {
+  return currency === "USD" ? "$550" : "Rp 8.500.000";
+}
+
 function BrowserFrame({ src, alt, className = "" }: { src: string; alt: string; className?: string }) {
   return (
     <div className={`overflow-hidden rounded-[1.35rem] bg-white shadow-[0_28px_90px_rgba(31,24,74,0.22)] ring-1 ring-slate-950/10 ${className}`}>
@@ -154,7 +157,6 @@ export default async function HomePage() {
           </nav>
           <div className="flex items-center gap-2">
             <LandingLanguageSwitch initialLang={lang} />
-            <LandingCurrencySwitch initialCurrency={currency} />
             <details className="relative md:hidden">
               <summary aria-label="Buka menu" className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-xl bg-white ring-1 ring-slate-200 [&::-webkit-details-marker]:hidden">
                 <Menu className="h-5 w-5" />
@@ -202,7 +204,7 @@ export default async function HomePage() {
               <BrowserFrame src="/screenshots/dashboard.png" alt="Dashboard Cubiqlo untuk mengelola klien, proyek, tugas, dan invoice" className="relative" />
               <div className="absolute -bottom-5 left-3 flex items-center gap-3 rounded-2xl bg-white p-3 shadow-xl ring-1 ring-slate-950/10 sm:left-8 sm:p-4">
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><CheckCircle2 className="h-5 w-5" /></span>
-                <div><p className="text-xs text-slate-500">{tx("Invoice terbaru", "Latest invoice")}</p><p className="text-sm font-semibold">Rp 8.500.000 · {tx("Dibayar", "Paid")}</p></div>
+                <div><p className="text-xs text-slate-500">{tx("Invoice terbaru", "Latest invoice")}</p><p className="text-sm font-semibold">{getLandingInvoiceBadge(currency)} · {tx("Dibayar", "Paid")}</p></div>
               </div>
               <div className="absolute -right-1 -top-5 hidden rounded-2xl bg-[#6647F0] px-4 py-3 text-white shadow-xl sm:block">
                 <p className="text-[10px] uppercase tracking-[.16em] text-white/70">{tx("Pembaruan klien", "Client update")}</p><p className="mt-1 text-sm font-semibold">{tx("Portal aktif", "Portal active")}</p>
@@ -287,7 +289,7 @@ export default async function HomePage() {
         <section id="pricing" className="bg-white px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <div className="mx-auto max-w-3xl text-center"><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#6647F0]">{tx("Harga transparan", "Transparent pricing")}</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.03em] sm:text-5xl">{tx("Mulai gratis. Upgrade saat klien bertambah.", "Start free. Upgrade as your client work grows.")}</h2><p className="mt-5 text-lg text-slate-600">{tx("Tidak perlu kartu kredit untuk mulai.", "No credit card required.")}</p></div>
-            <div className="mt-12 grid gap-5 lg:grid-cols-3">{pricing.map(plan => <div key={plan.name} className={`relative flex flex-col rounded-3xl p-6 ${plan.featured ? "bg-[#292D34] text-white shadow-[0_24px_70px_rgba(41,45,52,.22)] lg:-translate-y-3" : "bg-[#FBFAFE] ring-1 ring-slate-200"}`}>{plan.featured && <span className="absolute right-5 top-5 rounded-full bg-[#FF7657] px-3 py-1 text-xs font-semibold">{tx("Paling populer", "Most popular")}</span>}<p className={`text-sm font-semibold ${plan.featured ? "text-violet-300" : "text-[#6647F0]"}`}>{tx(plan.name, plan.name === "Free" ? "Free" : plan.name)}</p><p className={`mt-3 text-sm ${plan.featured ? "text-slate-300" : "text-slate-600"}`}>{plan.name === "Free" ? tx("Coba dulu untuk client work kecil.", "Try it for small client work.") : plan.name === "Solo" ? tx("Untuk freelancer yang mulai serius.", "For freelancers getting serious.") : tx("Untuk tim kecil yang kerja bareng.", "For small teams working together.")}</p><div className="mt-7"><strong className="block text-3xl tracking-[-.03em]">{getLandingPrice(plan.name.toLowerCase() as "free" | "solo" | "team", "monthly", currency)}</strong><span className={`mt-1 block text-xs ${plan.featured ? "text-slate-400" : "text-slate-500"}`}>{plan.name === "Solo" || plan.name === "Team" ? `${getLandingPrice(plan.name.toLowerCase() as "solo" | "team", "yearly", currency)} / ${tx("tahun", "year")}` : tx("selamanya", "forever")}</span>{currency === "USD" && plan.name !== "Free" && <p className="mt-2 text-xs">{tx("Pembayaran diproses dalam IDR.", "Payment processed in IDR.")}</p>}</div><div className={`my-6 h-px ${plan.featured ? "bg-white/10" : "bg-slate-200"}`} /><div className="flex-1 space-y-3">{plan.items.map(item => <div key={item} className={`flex items-center gap-2 text-sm ${plan.featured ? "text-slate-200" : "text-slate-700"}`}><Check className={`h-4 w-4 ${plan.featured ? "text-emerald-400" : "text-[#6647F0]"}`} />{tx(item, landingEn[item] ?? item)}</div>)}</div><Button asChild className={`mt-8 h-11 rounded-xl ${plan.featured ? "bg-white text-[#292D34] hover:bg-violet-50" : "bg-[#292D34] text-white hover:bg-[#17191E]"}`}><Link href="/signup">{tx(plan.cta, plan.name === "Free" ? "Start free" : `Choose ${plan.name}`)}<ArrowRight className="ml-1 inline h-4 w-4" /></Link></Button></div>)}</div>
+            <div className="mt-12 grid gap-5 lg:grid-cols-3">{pricing.map(plan => <div key={plan.name} className={`relative flex flex-col rounded-3xl p-6 ${plan.featured ? "bg-[#292D34] text-white shadow-[0_24px_70px_rgba(41,45,52,.22)] lg:-translate-y-3" : "bg-[#FBFAFE] ring-1 ring-slate-200"}`}>{plan.featured && <span className="absolute right-5 top-5 rounded-full bg-[#FF7657] px-3 py-1 text-xs font-semibold">{tx("Paling populer", "Most popular")}</span>}<p className={`text-sm font-semibold ${plan.featured ? "text-violet-300" : "text-[#6647F0]"}`}>{tx(plan.name, plan.name === "Free" ? "Free" : plan.name)}</p><p className={`mt-3 text-sm ${plan.featured ? "text-slate-300" : "text-slate-600"}`}>{plan.name === "Free" ? tx("Coba dulu untuk client work kecil.", "Try it for small client work.") : plan.name === "Solo" ? tx("Untuk freelancer yang mulai serius.", "For freelancers getting serious.") : tx("Untuk tim kecil yang kerja bareng.", "For small teams working together.")}</p><div className="mt-7"><strong className="block text-3xl tracking-[-.03em]">{getLandingPrice(plan.name.toLowerCase() as "free" | "solo" | "team", "monthly", currency)}</strong><span className={`mt-1 block text-xs ${plan.featured ? "text-slate-400" : "text-slate-500"}`}>{plan.name === "Solo" || plan.name === "Team" ? `${getLandingPrice(plan.name.toLowerCase() as "solo" | "team", "yearly", currency)} / ${tx("tahun", "year")}` : tx("selamanya", "forever")}</span></div><div className={`my-6 h-px ${plan.featured ? "bg-white/10" : "bg-slate-200"}`} /><div className="flex-1 space-y-3">{plan.items.map(item => <div key={item} className={`flex items-center gap-2 text-sm ${plan.featured ? "text-slate-200" : "text-slate-700"}`}><Check className={`h-4 w-4 ${plan.featured ? "text-emerald-400" : "text-[#6647F0]"}`} />{tx(item, landingEn[item] ?? item)}</div>)}</div><Button asChild className={`mt-8 h-11 rounded-xl ${plan.featured ? "bg-white text-[#292D34] hover:bg-violet-50" : "bg-[#292D34] text-white hover:bg-[#17191E]"}`}><Link href="/signup">{tx(plan.cta, plan.name === "Free" ? "Start free" : `Choose ${plan.name}`)}<ArrowRight className="ml-1 inline h-4 w-4" /></Link></Button></div>)}</div>
           </div>
         </section>
 
