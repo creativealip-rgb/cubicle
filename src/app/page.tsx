@@ -262,7 +262,7 @@ export default async function HomePage() {
                 <div className="mt-6 grid gap-4 sm:grid-cols-2">
                   {[[LayoutDashboard,"Project","12 dari 18 task selesai","12 of 18 tasks complete"],[FolderOpen,"Deliverable","3 file siap direview","3 files ready for review"],[MessageSquareText,"Update","2 komentar baru","2 new comments"],[FileText,"Invoice","INV-2026-004 siap dikirim","INV-2026-004 ready to send"]].map(([Icon,title,idText,enText]) => { const C = Icon as typeof LayoutDashboard; return <div key={title as string} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70"><C className="h-5 w-5 text-[#6647F0]" /><p className="mt-4 text-sm font-semibold">{tx(title as string, title as string)}</p><p className="mt-1 text-xs text-slate-500">{tx(idText as string, enText as string)}</p></div>; })}
                 </div>
-                <div className="mt-4 flex items-center justify-between rounded-2xl bg-[#292D34] p-4 text-white"><div><p className="text-xs text-white/60">{tx("Status invoice", "Invoice status")}</p><p className="mt-1 font-semibold">Rp 8.500.000</p></div><span className="rounded-xl bg-[#FF7657] px-4 py-2 text-xs font-semibold">{tx("Lihat invoice", "View invoice")}</span></div>
+                <div className="mt-4 flex items-center justify-between rounded-2xl bg-[#292D34] p-4 text-white"><div><p className="text-xs text-white/60">{tx("Status invoice", "Invoice status")}</p><p className="mt-1 font-semibold">{getLandingInvoiceBadge(currency)}</p></div><span className="rounded-xl bg-[#FF7657] px-4 py-2 text-xs font-semibold">{tx("Lihat invoice", "View invoice")}</span></div>
               </div>
             </div>
           </div>

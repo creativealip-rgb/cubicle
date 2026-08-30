@@ -10,6 +10,7 @@ describe("landing regional wiring", () => {
     expect(pageSource).toContain("currencyCookie: cookieStore.get(\"cubiqlo_currency\")?.value");
     expect(pageSource).toContain("getCurrentLang(preferences.lang)");
     expect(pageSource).toContain("getLandingPrice(plan.name.toLowerCase() as");
+    expect(pageSource.match(/\{getLandingInvoiceBadge\(currency\)\}/g)).toHaveLength(2);
     expect(pageSource).toContain('"monthly", currency');
     expect(pageSource).toContain('"yearly", currency');
     expect(pageSource).not.toContain("Payment processed in IDR.");
