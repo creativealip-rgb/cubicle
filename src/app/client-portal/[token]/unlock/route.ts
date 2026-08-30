@@ -7,6 +7,11 @@ import { enforceRateLimit } from "@/lib/distributed-rate-limit";
 import { createPortalSession, PORTAL_COOKIE } from "@/lib/portal-password";
 import { portalPublicUrl } from "@/lib/portal-redirect";
 
+export async function GET(request: Request, { params }: { params: Promise<{ token: string }> }) {
+  const { token: slug } = await params;
+  return NextResponse.redirect(portalPublicUrl(request, `/client-portal/${slug}`), 303);
+}
+
 export async function POST(request: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token: slug } = await params;
   const form = await request.formData();
