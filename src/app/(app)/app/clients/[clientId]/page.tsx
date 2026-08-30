@@ -49,16 +49,6 @@ import { ClientInvoiceCreateDialog } from "@/components/invoices/client-invoice-
 import { loadInvoiceSourceProjectOptions } from "@/lib/invoice-source-options";
 import { resolveProjectAmount } from "@/lib/invoice-project-items";
 
-const invoiceStatusLabel: Record<string, string> = {
-  draft: "Draf",
-  sent: "Terkirim",
-  viewed: "Dilihat",
-  paid: "Lunas",
-  overdue: "Jatuh tempo",
-  cancelled: "Dibatalkan",
-  archived: "Diarsipkan",
-};
-
 async function _getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
 }
@@ -72,6 +62,10 @@ export default async function ClientDetailPage({
 }) {
   const lang = await getCurrentLang();
   const t = createT(lang);
+  const invoiceStatusLabel: Record<string, string> = {
+    draft: t("Draf", "Draft"), sent: t("Terkirim", "Sent"), viewed: t("Dilihat", "Viewed"),
+    paid: t("Lunas", "Paid"), overdue: t("Jatuh tempo", "Overdue"), cancelled: t("Dibatalkan", "Cancelled"), archived: t("Diarsipkan", "Archived"),
+  };
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
@@ -349,7 +343,7 @@ export default async function ClientDetailPage({
                   <p className="mt-1 text-xl font-bold">{activeProjects}</p>
                 </div>
                 <div className="rounded-lg border bg-muted/30 p-3">
-                  <p className="text-[11px] text-muted-foreground"> {t("Invoice Belum Lunas","Outstanding Invoices")}</p>
+                  <p className="text-[11px] text-muted-foreground">{t("Invoice", "Invoice")}</p>
                   <p className="mt-1 text-xl font-bold">
                     {clientInvoices.filter((i) => i.status !== "paid" && i.status !== "cancelled").length}
                   </p>
