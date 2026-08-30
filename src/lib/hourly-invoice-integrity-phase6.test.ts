@@ -33,6 +33,11 @@ describe("Phase 6 hourly invoice source integrity", () => {
     expect(actions).toContain("eq(timeEntries.status, \"invoiced\")");
     expect(actions).toContain("export async function cancelDraftInvoice");
     expect(actions).toContain("revertInvoiceTimeEntrySources");
+
+    const deleteStart = actions.indexOf("export async function deleteInvoice(invoiceId");
+    const deleteBody = actions.slice(deleteStart);
+    expect(deleteBody.indexOf("revertInvoiceTimeEntrySources")).toBeGreaterThan(-1);
+    expect(deleteBody.indexOf("revertInvoiceTimeEntrySources")).toBeLessThan(deleteBody.indexOf("tx.delete(invoiceItems)"));
     expect(actions).toContain("eq(invoiceItems.sourceType, \"time_entry\")");
   });
 

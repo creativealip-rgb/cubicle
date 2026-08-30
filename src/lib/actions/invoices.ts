@@ -1441,7 +1441,8 @@ export async function deleteInvoice(invoiceId: string) {
   }
 
   await db.transaction(async (tx) => {
-    // Delete invoice items first
+    await revertInvoiceTimeEntrySources(tx, workspaceId, invoiceId);
+    // Delete invoice items after restoring linked time entries.
     await tx.delete(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId));
     // Delete payments if any
     await tx.delete(payments).where(eq(payments.invoiceId, invoiceId));
