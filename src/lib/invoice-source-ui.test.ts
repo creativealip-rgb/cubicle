@@ -25,17 +25,18 @@ describe("invoice source UI state", () => {
     expect(fixedSourcePreview(100, 140).remainingAmount).toBe(0);
   });
 
-  it("filters eligible Time Entries using half-open period and totals preview", () => {
-    expect(eligibleTimeEntriesInPeriod(entries, "2026-08-01", "2026-09-01")).toEqual({
+  it("includes both start and end dates in Time Entry periods", () => {
+    expect(eligibleTimeEntriesInPeriod(entries, "2026-08-01", "2026-08-31")).toEqual({
       entries: entries.slice(0, 2),
       totalMinutes: 120,
       totalAmount: 450_000,
     });
+    expect(eligibleTimeEntriesInPeriod(entries, "2026-08-01", "2026-08-01").entries).toEqual([entries[0]]);
   });
 
   it("clears period results for missing or invalid bounds", () => {
     expect(eligibleTimeEntriesInPeriod(entries, "", "2026-09-01").entries).toEqual([]);
-    expect(eligibleTimeEntriesInPeriod(entries, "2026-09-01", "2026-09-01").entries).toEqual([]);
+    expect(eligibleTimeEntriesInPeriod(entries, "2026-09-02", "2026-09-01").entries).toEqual([]);
   });
 
   it("requires mode-specific fields", () => {

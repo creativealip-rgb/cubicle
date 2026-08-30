@@ -375,7 +375,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
         if (selected.length !== source.timeEntryIds.length || selected.some((entry) => entry.projectId !== source.projectId)) throw new Error("Time Entry tidak sesuai proyek Hourly");
         if (selected.some((entry) => {
           const billingDate = billingDateInTimezone(entry.workDate, entry.startTime, ws?.timezone ?? "UTC");
-          return !billingDate || billingDate < source.periodStart || billingDate >= source.periodEnd;
+          return !billingDate || billingDate < source.periodStart || billingDate > source.periodEnd;
         })) throw new Error("Time Entry berada di luar periode invoice");
       }
       if ((parsed.items?.length || projectItemValues.length || projectServiceItemValues.length || hourlyEntries.length) && inv) {
