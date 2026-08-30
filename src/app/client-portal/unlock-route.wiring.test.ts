@@ -6,7 +6,9 @@ const source = readFileSync(new URL("./[token]/unlock/route.ts", import.meta.url
 describe("client portal unlock route", () => {
   it("redirects accidental GET visits back to the portal page", () => {
     expect(source).toContain("export async function GET");
-    expect(source).toContain("/client-portal/${slug}");
-    expect(source).toContain(", 303)");
+    expect(source).toContain("function portalRedirect");
+    expect(source).toContain("Redirecting to client portal");
+    expect(source.match(/portalRedirect\(/g)?.length).toBeGreaterThanOrEqual(4);
+    expect(source).not.toContain("NextResponse.redirect");
   });
 });
