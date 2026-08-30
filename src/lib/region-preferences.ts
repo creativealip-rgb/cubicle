@@ -6,6 +6,10 @@ export type VisitorPreferences = {
   currency: DisplayCurrency;
 };
 
+export function languageToCurrency(lang: Lang): DisplayCurrency {
+  return lang === "id" ? "IDR" : "USD";
+}
+
 export function countryToDefaults(country?: string | null): VisitorPreferences {
   return country?.trim().toLowerCase() === "id"
     ? { lang: "id", currency: "IDR" }

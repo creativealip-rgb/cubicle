@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   countryToDefaults,
   getCountryFromHeaders,
+  languageToCurrency,
   resolveVisitorPreferences,
 } from "./region-preferences";
 
@@ -41,6 +42,13 @@ describe("getCountryFromHeaders", () => {
   it("supports Next ReadonlyHeaders-compatible objects", () => {
     const readonlyHeaders = { get: (name: string) => name === "cf-ipcountry" ? "ID" : null };
     expect(getCountryFromHeaders(readonlyHeaders)).toBe("ID");
+  });
+});
+
+describe("languageToCurrency", () => {
+  it("maps the landing language to its display currency", () => {
+    expect(languageToCurrency("id")).toBe("IDR");
+    expect(languageToCurrency("en")).toBe("USD");
   });
 });
 
