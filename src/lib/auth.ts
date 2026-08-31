@@ -31,6 +31,11 @@ export const auth = betterAuth({
         input: false,
         required: false,
       },
+      mfaEnrollmentDeadline: {
+        type: "date",
+        input: false,
+        required: false,
+      },
     },
   },
   socialProviders: {

@@ -28,7 +28,7 @@ export default async function AppLayout({
     redirect("/login");
   }
 
-  if (shouldRequireMfaSetup({ route: "/app/dashboard", enrolled: Boolean(session.user.twoFactorEnabled), isNewUser: false })) {
+  if (shouldRequireMfaSetup({ route: "/app/dashboard", enrolled: Boolean(session.user.twoFactorEnabled), isNewUser: false, graceDeadline: session.user.mfaEnrollmentDeadline ? new Date(session.user.mfaEnrollmentDeadline) : null })) {
     redirect("/mfa/setup");
   }
 

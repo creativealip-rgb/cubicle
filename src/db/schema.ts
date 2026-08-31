@@ -38,6 +38,7 @@ export const users = pgTable("users", {
   bannedReason: text("banned_reason"),
   preferredLanguage: text("preferred_language", { enum: ["id", "en"] }),
   twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
+  mfaEnrollmentDeadline: timestamp("mfa_enrollment_deadline", { withTimezone: true }),
 });
 
 export const twoFactor = pgTable("two_factor", {
