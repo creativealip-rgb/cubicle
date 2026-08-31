@@ -37,6 +37,26 @@ export const users = pgTable("users", {
   bannedAt: timestamp("banned_at", { withTimezone: true }),
   bannedReason: text("banned_reason"),
   preferredLanguage: text("preferred_language", { enum: ["id", "en"] }),
+  twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
+});
+
+export const twoFactor = pgTable("two_factor", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  secret: text("secret").notNull(),
+  backupCodes: text("backup_codes").notNull(),
+});
+
+export const passkey = pgTable("passkey", {
+  id: text("id").primaryKey(),
+  name: text("name"),
+  publicKey: text("public_key").notNull(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  credentialID: text("credential_id").notNull().unique(),
+  counter: integer("counter").notNull(),
+  deviceType: text("device_type").notNull(),
+  backedUp: boolean("backed_up").notNull(),
+  transports: text("transports"),
 });
 
 // ─── Admin audit trail (superadmin control plane) ───

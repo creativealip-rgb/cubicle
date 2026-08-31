@@ -1,4 +1,6 @@
 import { betterAuth, APIError } from "better-auth";
+import { twoFactor } from "better-auth/plugins/two-factor";
+import { passkey } from "@better-auth/passkey";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db";
 import { sessions, users } from "@/db/schema";
@@ -235,4 +237,6 @@ export const auth = betterAuth({
     cookiePrefix: authEnvironment.cookiePrefix,
     crossSubDomainCookies: authEnvironment.crossSubDomainCookies,
   },
+  // twoFactor plugin manages backupCodes storage in two_factor.backup_codes.
+  plugins: [twoFactor(), passkey({ rpID: "cubiqlo.com", rpName: "Cubiqlo", origin: "https://app.cubiqlo.com" })],
 });

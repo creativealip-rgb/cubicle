@@ -1,0 +1,4 @@
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "two_factor_enabled" boolean NOT NULL DEFAULT false;
+-- CREATE TABLE "two_factor" (idempotent additive migration)
+CREATE TABLE IF NOT EXISTS "two_factor" ("id" text PRIMARY KEY NOT NULL, "user_id" text NOT NULL REFERENCES "users"("id") ON DELETE CASCADE, "secret" text NOT NULL, "backup_codes" text NOT NULL);
+CREATE TABLE "passkey" ("id" text PRIMARY KEY NOT NULL, "name" text, "public_key" text NOT NULL, "user_id" text NOT NULL REFERENCES "users"("id") ON DELETE CASCADE, "credential_id" text NOT NULL UNIQUE, "counter" integer NOT NULL, "device_type" text NOT NULL, "backed_up" boolean NOT NULL, "transports" text);
