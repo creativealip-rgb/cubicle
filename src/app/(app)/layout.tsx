@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { and, eq, ne, count, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { shouldRequireMfaSetup } from "@/lib/mfa/enforcement";
 import { AppShell } from "@/components/app-shell";
 import { db } from "@/db";
 import {
@@ -25,6 +26,10 @@ export default async function AppLayout({
 
   if (!session?.user) {
     redirect("/login");
+  }
+
+  if (shouldRequireMfaSetup({ route: "/app/dashboard", enrolled: Boolean(session.user.twoFactorEnabled), isNewUser: false })) {
+    redirect("/mfa/setup");
   }
 
   const lang = await getCurrentLang("en");
