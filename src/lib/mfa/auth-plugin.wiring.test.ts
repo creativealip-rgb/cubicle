@@ -24,8 +24,8 @@ it("adds Better Auth MFA tables to schema and migration", () => {
   const schema = readFileSync(new URL("../../db/schema.ts", import.meta.url), "utf8");
   const migration = readFileSync(new URL("../../../drizzle/0083_mandatory_mfa.sql", import.meta.url), "utf8");
   for (const name of ["twoFactor", "passkey", "backupCodes"]) expect(schema).toContain(name);
-  expect(migration).toContain('CREATE TABLE "two_factor"');
-  expect(migration).toContain('CREATE TABLE "passkey"');
+  expect(migration).toContain('CREATE TABLE IF NOT EXISTS "two_factor"');
+  expect(migration).toContain('CREATE TABLE IF NOT EXISTS "passkey"');
 });
 
 it("keeps email OTP out of MFA plugin configuration", () => {

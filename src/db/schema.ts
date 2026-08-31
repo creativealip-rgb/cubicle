@@ -45,6 +45,9 @@ export const twoFactor = pgTable("two_factor", {
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   secret: text("secret").notNull(),
   backupCodes: text("backup_codes").notNull(),
+  verified: boolean("verified").notNull().default(true),
+  failedVerificationCount: integer("failed_verification_count").notNull().default(0),
+  lockedUntil: timestamp("locked_until", { withTimezone: true }),
 });
 
 export const passkey = pgTable("passkey", {
@@ -57,6 +60,8 @@ export const passkey = pgTable("passkey", {
   deviceType: text("device_type").notNull(),
   backedUp: boolean("backed_up").notNull(),
   transports: text("transports"),
+  createdAt: timestamp("created_at", { withTimezone: true }),
+  aaguid: text("aaguid"),
 });
 
 // ─── Admin audit trail (superadmin control plane) ───
