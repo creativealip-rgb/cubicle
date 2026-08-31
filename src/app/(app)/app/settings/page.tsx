@@ -176,22 +176,7 @@ export default async function SettingsPage({
                     <h3 className="mb-3 text-sm font-semibold">{t("Profil workspace & Branding", "Workspace profile & Branding")}</h3>
                     <WorkspaceBrandingForm section="workspace" canEdit={canEditWorkspace} defaults={{ billingName: workspace.billingName, billingEmail: workspace.billingEmail, billingPhone: workspace.billingPhone, billingAddress: workspace.billingAddress, taxId: workspace.taxId, logoUrl: workspace.logoUrl, defaultCurrency: workspace.defaultCurrency, defaultTaxRate: workspace.defaultTaxRate, defaultHourlyRate: workspace.defaultHourlyRate, defaultInvoiceTerms: workspace.defaultInvoiceTerms, replyToEmail: workspace.replyToEmail }} />
                   </div>
-                  <div className="space-y-3 border-t pt-3">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">{t("Mata Uang", "Currency")}</span>
-                      <span>{workspace.defaultCurrency}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">{t("Pajak", "Tax")}</span>
-                      <span>{workspace.defaultTaxRate}%</span>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground">
-                      {t(
-                        "Atur default invoice di tab Invoice.",
-                        "Change invoice defaults in the Invoice tab.",
-                      )}
-                    </p>
-                  </div>
+
                   <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-2">
                     {workspaceSetupItems.map((item) => {
                       const Icon = item.done ? CheckCircle2 : Circle;
