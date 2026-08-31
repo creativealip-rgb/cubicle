@@ -4,8 +4,8 @@ SET "mfa_enrollment_deadline" = COALESCE("mfa_enrollment_deadline", now() + inte
 WHERE "two_factor_enabled" = false;
 CREATE INDEX IF NOT EXISTS "users_mfa_enrollment_deadline_idx" ON "users" ("mfa_enrollment_deadline");
 
-INSERT INTO public."cubiqlo_migrations" (name, applied_at)
-SELECT '0084_mfa_enrollment_deadline', now()
+INSERT INTO public."cubiqlo_migrations" (id, checksum, applied_at, execution_ms)
+SELECT '0084_mfa_enrollment_deadline.sql', 'manual-mfa-enrollment-deadline', now(), 0
 WHERE NOT EXISTS (
-  SELECT 1 FROM public."cubiqlo_migrations" WHERE name = '0084_mfa_enrollment_deadline'
+  SELECT 1 FROM public."cubiqlo_migrations" WHERE id = '0084_mfa_enrollment_deadline.sql'
 );
