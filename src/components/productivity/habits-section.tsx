@@ -4,7 +4,7 @@ import {
   togglePersonalHabitCheckin,
   updatePersonalHabit,
 } from "@/lib/actions/personal-habits";
-import { dateOffset, habitStats } from "@/lib/personal-productivity/habits";
+import { dateOffset, habitStats, isHabitScheduled } from "@/lib/personal-productivity/habits";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { HabitDialog } from "@/components/productivity/habit-dialog";
@@ -87,6 +87,11 @@ export async function HabitsSection({
       {/* Active Habits List */}
       <div className="grid gap-4">
         {activeHabits.map((h) => {
+          const scheduledToday = today >= h.startDate && isHabitScheduled(
+            h.frequency as "daily" | "specific_weekdays",
+            h.weekdays,
+            today,
+          );
           const done = h.checkins.some((c) => c.localDate === today);
           const stats = habitStats(
             h.frequency as "daily" | "specific_weekdays",
@@ -150,6 +155,7 @@ export async function HabitsSection({
                       <input type="hidden" name="habitId" value={h.id} />
                       <Button
                         type="submit"
+                        disabled={!scheduledToday}
                         variant={done ? "default" : "outline"}
                         className={`h-10 rounded-2xl px-4 font-semibold transition ${
                           done
@@ -162,11 +168,13 @@ export async function HabitsSection({
                             <Check className="mr-1.5 size-4" />
                             {t("Selesai Hari Ini", "Done Today")}
                           </>
-                        ) : (
+                        ) : scheduledToday ? (
                           <>
                             <span className="mr-1.5 inline-block size-3 rounded-full border-2 border-current" />
                             {t("Tandai Hari Ini", "Check Today")}
                           </>
+                        ) : (
+                          t("Tidak dijadwalkan hari ini", "Not scheduled today")
                         )}
                       </Button>
                     </form>
