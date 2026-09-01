@@ -1,14 +1,32 @@
 "use server";
 
 import { and, eq, sql } from "drizzle-orm";
+import { headers } from "next/headers";
 import { z } from "zod";
 import { db } from "@/db";
 import { adminAuditLogs, mfaRecoveryApprovals, mfaRecoveryRequests, passkeys, sessions, twoFactors, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
+import { auth } from "@/lib/auth";
+import { requireUser } from "@/lib/access";
 import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
-import { canExecuteRecovery } from "@/lib/mfa/manual-recovery-policy";
+import { canExecuteRecovery, recoveryCoolingUntil } from "@/lib/mfa/manual-recovery-policy";
+import { sendNotification } from "@/lib/notifications";
 
 const decisionSchema = z.object({ requestId: z.string().uuid(), decision: z.enum(["approved", "rejected"]), note: z.string().trim().max(1000).optional() });
+const requestSchema = z.object({ reason: z.string().trim().min(20).max(1000) });
+
+export async function requestMfaRecovery(input: z.infer<typeof requestSchema>) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  await enforceServerActionRateLimit("user:mfa-recovery", user.id, { limit: 3, windowSec: 86400 });
+  const { reason } = requestSchema.parse(input);
+  const [existing] = await db.select({ id: mfaRecoveryRequests.id }).from(mfaRecoveryRequests).where(and(eq(mfaRecoveryRequests.userId, user.id), eq(mfaRecoveryRequests.status, "pending"))).limit(1);
+  if (existing) return { ok: true, requestId: existing.id };
+  const createdAt = new Date();
+  const [request] = await db.insert(mfaRecoveryRequests).values({ userId: user.id, reason, coolingUntil: recoveryCoolingUntil(createdAt), evidence: { source: "authenticated-session" }, createdAt, updatedAt: createdAt }).returning({ id: mfaRecoveryRequests.id, coolingUntil: mfaRecoveryRequests.coolingUntil });
+  if (user.email) await sendNotification({ to: user.email, subject: "Cubiqlo MFA recovery requested", text: `A manual MFA recovery was requested. No account change can happen before ${request.coolingUntil.toISOString()} and two administrators must approve it. If this was not you, contact support immediately.`, type: "mfa-recovery", idempotencyKey: `mfa-recovery-${request.id}` });
+  return { ok: true, requestId: request.id };
+}
 
 export async function decideMfaRecovery(input: z.infer<typeof decisionSchema>) {
   const admin = await requireAdmin();
