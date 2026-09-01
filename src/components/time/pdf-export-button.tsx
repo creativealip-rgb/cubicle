@@ -19,21 +19,27 @@ type ReportType = "detailed" | "dashboard" | "full";
 type ClientOpt = { id: string; name: string | null };
 type ProjectOpt = { id: string; name: string | null; clientId: string };
 
-const REPORT_OPTIONS: { value: ReportType; label: string; desc: string }[] = [
+const REPORT_OPTIONS: { value: ReportType; label: string; labelEn: string; desc: string; descEn: string }[] = [
   {
     value: "detailed",
-    label: "Detailed Report",
-    desc: "Rincian per entry: hari, tugas, tags, duties, jam, & amount per klien.",
+    label: "Laporan Detail",
+    labelEn: "Detailed Report",
+    desc: "Rincian per entry: hari, tugas, tags, duties, jam, dan amount per klien.",
+    descEn: "Entry details: date, task, tags, duties, hours, and amount per client.",
   },
   {
     value: "dashboard",
-    label: "Dashboard Report",
-    desc: "Ringkasan visual: donut chart per project & task + subtotal jam.",
+    label: "Laporan Dashboard",
+    labelEn: "Dashboard Report",
+    desc: "Ringkasan visual: donut chart per proyek dan task + subtotal jam.",
+    descEn: "Visual summary: donut chart by project and task plus hour subtotals.",
   },
   {
     value: "full",
-    label: "Full Report (keduanya)",
-    desc: "Detailed + Dashboard dalam satu dokumen.",
+    label: "Laporan Lengkap (keduanya)",
+    labelEn: "Full Report (both)",
+    desc: "Detail + Dashboard dalam satu dokumen.",
+    descEn: "Detailed + Dashboard in one document.",
   },
 ];
 
@@ -57,7 +63,7 @@ export function PdfExportButton({
   clients?: ClientOpt[];
   projects?: ProjectOpt[];
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [open, setOpen] = useState(false);
   const [report, setReport] = useState<ReportType>("full");
   const [from, setFrom] = useState("");
@@ -111,21 +117,21 @@ export function PdfExportButton({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="h-11 w-full gap-1 sm:h-8 sm:w-auto">
-          <Download className="h-3 w-3" /> Ekspor PDF
+          <Download className="h-3 w-3" /> {t("Ekspor PDF", "Export PDF")}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("Ekspor PDF Lembar Waktu", "Export Timesheet PDF")}</DialogTitle>
           <DialogDescription>
-            Pilih jenis laporan, periode, dan filter klien/project.
+            {t("Pilih jenis laporan, periode, dan filter klien/proyek.", "Pick report type, period, and client/project filters.")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-1">
           {/* Report type */}
           <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">Jenis laporan</label>
+            <label className="text-xs font-medium text-muted-foreground">{t("Jenis laporan", "Report type")}</label>
             {REPORT_OPTIONS.map((opt) => {
               const active = report === opt.value;
               return (
@@ -147,8 +153,8 @@ export function PdfExportButton({
                     {active && <span className="h-2 w-2 rounded-full bg-primary" />}
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-sm font-medium">{opt.label}</span>
-                    <span className="block text-xs text-muted-foreground">{opt.desc}</span>
+                    <span className="block text-sm font-medium">{lang === "en" ? opt.labelEn : opt.label}</span>
+                    <span className="block text-xs text-muted-foreground">{lang === "en" ? opt.descEn : opt.desc}</span>
                   </span>
                 </button>
               );
@@ -157,16 +163,16 @@ export function PdfExportButton({
 
           {/* Period */}
           <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">Periode</label>
+            <label className="text-xs font-medium text-muted-foreground">{t("Periode", "Period")}</label>
             <div className="flex flex-wrap gap-2">
               <Button type="button" variant="outline" size="sm" onClick={() => applyPreset("this")}>
-                Bulan ini
+                {t("Bulan ini", "This month")}
               </Button>
               <Button type="button" variant="outline" size="sm" onClick={() => applyPreset("last")}>
-                Bulan lalu
+                {t("Bulan lalu", "Last month")}
               </Button>
               <Button type="button" variant="ghost" size="sm" onClick={() => applyPreset("clear")}>
-                Semua waktu
+                {t("Semua waktu", "All time")}
               </Button>
             </div>
             <div className="flex items-center gap-2">
@@ -187,47 +193,47 @@ export function PdfExportButton({
               />
             </div>
             {rangeInvalid && (
-              <p className="text-xs text-destructive">Tanggal awal harus sebelum tanggal akhir.</p>
+              <p className="text-xs text-destructive">{t("Tanggal awal harus sebelum tanggal akhir.", "Start date must be before end date.")}</p>
             )}
             {!from && !to && (
-              <p className="text-xs text-muted-foreground">Kosong = semua waktu.</p>
+              <p className="text-xs text-muted-foreground">{t("Kosong = semua waktu.", "Empty = all time.")}</p>
             )}
           </div>
 
           {/* Client + Project */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Klien</label>
+              <label className="text-xs font-medium text-muted-foreground">{t("Klien", "Client")}</label>
               <select
                 value={clientId}
                 onChange={(e) => handleClientChange(e.target.value)}
                 className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
               >
-                <option value="">Semua klien</option>
+                <option value="">{t("Semua klien", "All clients")}</option>
                 {clients.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name || "(tanpa nama)"}
+                    {c.name || t("(tanpa nama)", "(unnamed)")}
                   </option>
                 ))}
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Proyek</label>
+              <label className="text-xs font-medium text-muted-foreground">{t("Proyek", "Project")}</label>
               <select
                 value={projectId}
                 onChange={(e) => setProjectId(e.target.value)}
                 disabled={!clientId}
                 className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <option value="">Semua project</option>
+                <option value="">{t("Semua proyek", "All projects")}</option>
                 {filteredProjects.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name || "(tanpa nama)"}
+                    {p.name || t("(tanpa nama)", "(unnamed)")}
                   </option>
                 ))}
               </select>
               {!clientId && (
-                <p className="text-[11px] text-muted-foreground">Pilih klien dulu.</p>
+                <p className="text-[11px] text-muted-foreground">{t("Pilih klien dulu.", "Pick a client first.")}</p>
               )}
             </div>
           </div>
@@ -235,7 +241,7 @@ export function PdfExportButton({
 
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={() => setOpen(false)}>
-            Batal
+            {t("Batal", "Cancel")}
           </Button>
           <Button size="sm" className="gap-1" onClick={handleExport} disabled={rangeInvalid}>
             <Download className="h-3 w-3" /> Export

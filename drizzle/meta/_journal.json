@@ -2,40 +2,12 @@
   "version": "7",
   "dialect": "postgresql",
   "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1781527523030,
-      "tag": "0000_fantastic_red_wolf",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1781588836023,
-      "tag": "0001_simple_karma",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1781661930054,
-      "tag": "0003_finance",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1781663332384,
-      "tag": "0004_proposals_recurring",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1783487303051,
-      "tag": "0005_brief_zzzax",
-      "breakpoints": true
-    }
+    {"idx": 0, "version": "7", "when": 1781527523030, "tag": "0000_fantastic_red_wolf", "breakpoints": true},
+    {"idx": 1, "version": "7", "when": 1781588836023, "tag": "0001_simple_karma", "breakpoints": true},
+    {"idx": 3, "version": "7", "when": 1781661930054, "tag": "0003_finance", "breakpoints": true},
+    {"idx": 4, "version": "7", "when": 1781663332384, "tag": "0004_proposals_recurring", "breakpoints": true},
+    {"idx": 5, "version": "7", "when": 1783487303051, "tag": "0005_brief_zzzax", "breakpoints": true},
+    {"idx": 6, "version": "7", "when": 1788214597826, "tag": "0083_mandatory_mfa", "breakpoints": true},
+    {"idx": 7, "version": "7", "when": 1788214597827, "tag": "0086_mfa_manual_recovery", "breakpoints": true}
   ]
 }

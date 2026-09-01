@@ -38,6 +38,53 @@ export const users = pgTable("users", {
   bannedReason: text("banned_reason"),
   preferredLanguage: text("preferred_language", { enum: ["id", "en"] }),
   timezone: text("timezone").notNull().default("Asia/Jakarta"),
+  twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
+  mfaEnrollmentDeadline: timestamp("mfa_enrollment_deadline", { withTimezone: true }),
+});
+
+export const twoFactors = pgTable("two_factor", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  secret: text("secret").notNull(),
+  backupCodes: text("backup_codes").notNull(),
+  verified: boolean("verified").notNull().default(true),
+  failedVerificationCount: integer("failed_verification_count").notNull().default(0),
+  lockedUntil: timestamp("locked_until", { withTimezone: true }),
+});
+
+export const mfaRecoveryRequests = pgTable("mfa_recovery_requests", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("pending"),
+  reason: text("reason").notNull(),
+  evidence: jsonb("evidence").notNull().default(sql`'{}'::jsonb`),
+  coolingUntil: timestamp("cooling_until", { withTimezone: true }).notNull(),
+  executedAt: timestamp("executed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const mfaRecoveryApprovals = pgTable("mfa_recovery_approvals", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  requestId: uuid("request_id").notNull().references(() => mfaRecoveryRequests.id, { onDelete: "cascade" }),
+  adminUserId: text("admin_user_id").notNull().references(() => users.id, { onDelete: "restrict" }),
+  decision: text("decision").notNull(),
+  note: text("note"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [unique().on(table.requestId, table.adminUserId)]);
+
+export const passkeys = pgTable("passkey", {
+  id: text("id").primaryKey(),
+  name: text("name"),
+  publicKey: text("public_key").notNull(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  credentialID: text("credential_id").notNull().unique(),
+  counter: integer("counter").notNull(),
+  deviceType: text("device_type").notNull(),
+  backedUp: boolean("backed_up").notNull(),
+  transports: text("transports"),
+  createdAt: timestamp("created_at", { withTimezone: true }),
+  aaguid: text("aaguid"),
 });
 
 export const personalGoals = pgTable(
@@ -418,6 +465,7 @@ export const accounts = pgTable("accounts", {
   id: text("id").primaryKey(),
   accountId: text("account_id").notNull(),
   providerId: text("provider_id").notNull(),
+  issuer: text("issuer"),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   accessToken: text("access_token"),
   refreshToken: text("refresh_token"),

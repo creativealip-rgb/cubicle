@@ -250,10 +250,12 @@ export function WorkspaceBrandingForm({
         ) : null}
       </div> : null}
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {section === "workspace" ? <>
+      {section === "workspace" ? (
+      <div data-testid="workspace-business-group" className="space-y-4 rounded-lg border p-4">
+        <h4 className="font-semibold">{t("Bisnis", "Business")}</h4>
+        <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="billingName">{t("Nama tagihan", "Billing name")}</Label>
+          <Label htmlFor="billingName">{t("Nama", "Name")}</Label>
           <Input
             id="billingName"
             value={form.billingName}
@@ -262,7 +264,7 @@ export function WorkspaceBrandingForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="billingEmail">{t("Email tagihan", "Billing email")}</Label>
+          <Label htmlFor="billingEmail">{t("Email", "Email")}</Label>
           <Input
             id="billingEmail"
             type="email"
@@ -295,8 +297,11 @@ export function WorkspaceBrandingForm({
             onChange={(e) => setForm((p) => ({ ...p, billingAddress: e.target.value }))}
           />
         </div>
-        </> : null}
-        {section === "invoice" ? <>
+        </div>
+      </div>
+      ) : null}
+      {section === "invoice" ? (
+      <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2 md:col-span-2">
           <Label htmlFor="replyToEmail">{t("Email balasan klien", "Client reply-to email")}</Label>
           <Input
@@ -373,8 +378,8 @@ export function WorkspaceBrandingForm({
           />
         </div>
 
-        </> : null}
       </div>
+      ) : null}
 
       <LoadingButton
         type="submit"

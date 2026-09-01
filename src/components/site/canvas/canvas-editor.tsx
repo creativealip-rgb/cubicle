@@ -771,6 +771,27 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
               : t("Halaman akan disembunyikan dan tidak bisa diakses publik.", "The page will be hidden and not publicly accessible.")}
           </p>
 
+          <div className="mb-4 space-y-2">
+            <Label htmlFor="desktop-personal-site-slug" className="text-xs">
+              {t("Slug URL", "URL Slug")}
+            </Label>
+            <Input
+              id="desktop-personal-site-slug"
+              data-testid="personal-site-slug-input"
+              value={site.slug}
+              onChange={(event) => updateSite({ slug: event.target.value })}
+              disabled={!canEditSlug}
+              readOnly={!canEditSlug}
+              placeholder="nama-halaman"
+            />
+            {!canEditSlug && (
+              <p className="text-xs text-muted-foreground">
+                {t("Paket Free menggunakan slug workspace. Upgrade untuk memakai slug kustom.", "Free uses your workspace slug. Upgrade to use a custom slug.")} {" "}
+                <a href="/app/billing" className="font-medium underline">Upgrade</a>
+              </p>
+            )}
+          </div>
+
           {(showPublishConfirm || site.published) && (
             <div className="mb-4 min-w-0 rounded-lg border bg-muted/40 p-3">
               <p className="mb-1 text-xs font-medium text-muted-foreground">{t("Link publik", "Public link")}</p>

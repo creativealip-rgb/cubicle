@@ -375,7 +375,7 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
         if (selected.length !== source.timeEntryIds.length || selected.some((entry) => entry.projectId !== source.projectId)) throw new Error("Time Entry tidak sesuai proyek Hourly");
         if (selected.some((entry) => {
           const billingDate = billingDateInTimezone(entry.workDate, entry.startTime, ws?.timezone ?? "UTC");
-          return !billingDate || billingDate < source.periodStart || billingDate >= source.periodEnd;
+          return !billingDate || billingDate < source.periodStart || billingDate > source.periodEnd;
         })) throw new Error("Time Entry berada di luar periode invoice");
       }
       if ((parsed.items?.length || projectItemValues.length || projectServiceItemValues.length || hourlyEntries.length) && inv) {
@@ -1441,7 +1441,8 @@ export async function deleteInvoice(invoiceId: string) {
   }
 
   await db.transaction(async (tx) => {
-    // Delete invoice items first
+    await revertInvoiceTimeEntrySources(tx, workspaceId, invoiceId);
+    // Delete invoice items after restoring linked time entries.
     await tx.delete(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId));
     // Delete payments if any
     await tx.delete(payments).where(eq(payments.invoiceId, invoiceId));

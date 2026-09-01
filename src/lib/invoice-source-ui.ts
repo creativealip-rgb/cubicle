@@ -45,8 +45,8 @@ export function fixedSourcePreview(agreedAmount: number, previouslyInvoiced: num
 }
 
 export function eligibleTimeEntriesInPeriod(entries: EligibleInvoiceTimeEntry[], periodStart?: string, periodEnd?: string) {
-  const filtered = periodStart && periodEnd && periodStart < periodEnd
-    ? entries.filter((entry) => entry.workDate >= periodStart && entry.workDate < periodEnd)
+  const filtered = periodStart && periodEnd && periodStart <= periodEnd
+    ? entries.filter((entry) => entry.workDate >= periodStart && entry.workDate <= periodEnd)
     : [];
   return {
     entries: filtered,

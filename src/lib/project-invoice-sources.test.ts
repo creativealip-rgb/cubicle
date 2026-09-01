@@ -28,7 +28,8 @@ describe("ProjectInvoiceSource contract", () => {
     expect(() => ProjectInvoiceSourceSchema.parse({ mode: "fixed_milestone", projectId, amount: 100 })).toThrow();
     expect(() => ProjectInvoiceSourceSchema.parse({ mode: "fixed_dp", projectId, amount: 0 })).toThrow();
     expect(() => ProjectInvoiceSourceSchema.parse({ mode: "hourly_timesheet", projectId, timeEntryIds: [], periodStart: "2026-01-01", periodEnd: "2026-02-01" })).toThrow();
-    expect(() => ProjectInvoiceSourceSchema.parse({ mode: "hourly_timesheet", projectId, timeEntryIds: [entryId], periodStart: "2026-02-01", periodEnd: "2026-02-01" })).toThrow();
+    expect(ProjectInvoiceSourceSchema.parse({ mode: "hourly_timesheet", projectId, timeEntryIds: [entryId], periodStart: "2026-02-01", periodEnd: "2026-02-01" }).mode).toBe("hourly_timesheet");
+    expect(() => ProjectInvoiceSourceSchema.parse({ mode: "hourly_timesheet", projectId, timeEntryIds: [entryId], periodStart: "2026-02-02", periodEnd: "2026-02-01" })).toThrow();
     expect(() => ProjectInvoiceSourceSchema.parse({ mode: "fixed_full", projectId, surprise: true })).toThrow();
     expect(() => ProjectInvoiceSourceSchema.parse({ mode: "retainer_period", projectId })).toThrow();
   });

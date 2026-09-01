@@ -30,13 +30,14 @@ function monthRange(offset: number): { from: string; to: string } {
 export function ExportTimesheetButton({
   clientId,
   projectId,
-  label = "Ekspor Timesheet",
+  label,
 }: {
   clientId: string;
   projectId?: string | null;
   label?: string;
 }) {
   const { t } = useT();
+  const triggerLabel = label ?? t("Ekspor Timesheet", "Export Timesheet");
   const [open, setOpen] = useState(false);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -75,7 +76,7 @@ export function ExportTimesheetButton({
       <DialogTrigger asChild>
         <Button size="sm" variant="outline" className="gap-2">
           <Clock className="h-4 w-4" />
-          {label}
+          {triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

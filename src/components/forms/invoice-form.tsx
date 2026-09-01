@@ -380,8 +380,8 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
                         const periodStart = e.target.value;
                         updateSource(project.id, {
                           periodStart,
-                          ...(source?.periodEnd && source.periodEnd <= periodStart
-                            ? { periodEnd: addDaysToIsoDate(periodStart, 1) }
+                          ...(source?.periodEnd && source.periodEnd < periodStart
+                            ? { periodEnd: periodStart }
                             : {}),
                         });
                       }}
@@ -398,8 +398,8 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
                       onChange={(e) => {
                         const periodEnd = e.target.value;
                         updateSource(project.id, {
-                          periodEnd: source?.periodStart && periodEnd <= source.periodStart
-                            ? addDaysToIsoDate(periodEnd, 1)
+                          periodEnd: source?.periodStart && periodEnd < source.periodStart
+                            ? source.periodStart
                             : periodEnd,
                         });
                       }}

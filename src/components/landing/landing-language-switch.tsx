@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useT } from "@/lib/i18n-client";
 import type { Lang } from "@/lib/i18n";
+import { languageToCurrency } from "@/lib/region-preferences";
 
 export function LandingLanguageSwitch({ initialLang }: { initialLang: Lang }) {
   const { pending, setLang } = useT();
   const [lang, setLandingLang] = useState<Lang>(initialLang);
   const changeLanguage = (next: Lang) => {
     setLandingLang(next);
+    document.cookie = `cubiqlo_currency=${languageToCurrency(next)}; path=/; max-age=31536000; samesite=lax`;
     setLang(next);
   };
   return (
