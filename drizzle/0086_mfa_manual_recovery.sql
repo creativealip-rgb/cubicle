@@ -23,4 +23,6 @@ CREATE TABLE IF NOT EXISTS "mfa_recovery_approvals" (
   CONSTRAINT "mfa_recovery_approvals_unique_admin" UNIQUE ("request_id", "admin_user_id")
 );
 CREATE INDEX IF NOT EXISTS "mfa_recovery_approvals_request_idx" ON "mfa_recovery_approvals" ("request_id");
-INSERT INTO cubiqlo_migrations (name) VALUES ('0086_mfa_manual_recovery') ON CONFLICT (name) DO NOTHING;
+INSERT INTO cubiqlo_migrations (id, checksum, operator_name)
+VALUES ('0086_mfa_manual_recovery.sql', 'manual-mfa-recovery', current_user)
+ON CONFLICT (id) DO NOTHING;
