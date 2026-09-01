@@ -4,22 +4,21 @@ import { and, eq, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { db } from "@/db";
-import { adminAuditLogs, mfaRecoveryApprovals, mfaRecoveryRequests, passkeys, sessions, twoFactors, users } from "@/db/schema";
+import { accounts, adminAuditLogs, mfaRecoveryApprovals, mfaRecoveryRequests, passkeys, sessions, twoFactors, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
-import { auth } from "@/lib/auth";
-import { requireUser } from "@/lib/access";
+import { verifyPassword } from "@better-auth/utils/password";
 import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
 import { canExecuteRecovery, recoveryCoolingUntil } from "@/lib/mfa/manual-recovery-policy";
 import { sendNotification } from "@/lib/notifications";
 
 const decisionSchema = z.object({ requestId: z.string().uuid(), decision: z.enum(["approved", "rejected"]), note: z.string().trim().max(1000).optional() });
-const requestSchema = z.object({ reason: z.string().trim().min(20).max(1000) });
+const requestSchema = z.object({ email: z.string().trim().email().transform((value) => value.toLowerCase()), password: z.string().min(8).max(200), reason: z.string().trim().min(20).max(1000) });
 
 export async function requestMfaRecovery(input: z.infer<typeof requestSchema>) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const user = requireUser(session?.user);
-  await enforceServerActionRateLimit("user:mfa-recovery", user.id, { limit: 3, windowSec: 86400 });
-  const { reason } = requestSchema.parse(input);
+  const { email, password, reason } = requestSchema.parse(input);
+  await enforceServerActionRateLimit("user:mfa-recovery", email, { limit: 3, windowSec: 86400 });
+  const [user] = await db.select({ id: users.id, email: users.email, password: accounts.password }).from(users).innerJoin(accounts, and(eq(accounts.userId, users.id), eq(accounts.providerId, "credential"))).where(eq(users.email, email)).limit(1);
+  if (!user?.password || !(await verifyPassword(password, user.password))) throw new Error("Unable to create recovery request");
   const [existing] = await db.select({ id: mfaRecoveryRequests.id }).from(mfaRecoveryRequests).where(and(eq(mfaRecoveryRequests.userId, user.id), eq(mfaRecoveryRequests.status, "pending"))).limit(1);
   if (existing) return { ok: true, requestId: existing.id };
   const createdAt = new Date();
