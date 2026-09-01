@@ -15,6 +15,20 @@ export function MfaSetupForm() {
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  async function addPasskey() {
+    setError("");
+    setLoading(true);
+    try {
+      const result = await authClient.passkey.addPasskey({ name: "Cubiqlo passkey", createSession: false });
+      if (result.error) setError(result.error.message ?? "Could not register passkey");
+      else setDone(true);
+    } catch {
+      setError("Could not register passkey");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function start() {
     setError("");
     setLoading(true);
@@ -46,6 +60,8 @@ export function MfaSetupForm() {
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         {done ? <p role="status" className="text-sm font-medium">Two-step verification enabled.</p> : !uri ? (
           <div className="space-y-3">
+            <Button type="button" variant="outline" onClick={addPasskey} disabled={loading}>{loading ? "Registering…" : "Register a passkey"}</Button>
+            <p className="text-center text-xs text-muted-foreground">or use an authenticator app</p>
             <Label htmlFor="mfa-password">Current password</Label>
             <Input id="mfa-password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
             <Button type="button" onClick={start} disabled={loading || !password}>{loading ? "Loading…" : "Continue"}</Button>
