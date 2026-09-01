@@ -43,6 +43,8 @@ import {
 } from "@/components/ui/page-header";
 import { Suspense } from "react";
 import { PersonalExpensesSection } from "@/components/expenses/personal-expenses-section";
+import { listPersonalTransactions } from "@/lib/actions/personal-transactions";
+import { mergeUnifiedExpenses } from "@/lib/personal-productivity/unified-expenses";
 import {
   aggregateToBase,
   buildRateMap,
@@ -99,6 +101,10 @@ export default async function ExpensesPage({
     params.tab === "personal"
       ? params.tab
       : "list";
+  const scope =
+    params.scope === "personal" || params.scope === "business"
+      ? params.scope
+      : "all";
   const { start: monthStart, end: monthEnd } = monthBounds(month);
 
   // Categories
@@ -271,6 +277,28 @@ export default async function ExpensesPage({
         : null;
       return { ...e, amountBase };
     });
+  const personalForMerge = await listPersonalTransactions();
+  const unifiedRows = mergeUnifiedExpenses(
+    personalForMerge.map((row) => ({
+      id: row.id,
+      source: "personal" as const,
+      date: row.date,
+      createdAt: row.createdAt,
+      description: row.description,
+      amount: row.amount,
+      currency: row.currency,
+    })),
+    allForFilter.map((row) => ({
+      id: row.id,
+      source: "business" as const,
+      date: row.date,
+      createdAt: row.createdAt,
+      description: row.description,
+      amount: row.amount,
+      currency: row.currency,
+    })),
+    PAGE_SIZE,
+  ).rows;
 
   // Recurring
   const recurringRaw = await db
@@ -551,104 +579,158 @@ export default async function ExpensesPage({
 
           {tab === "list" && (
             <>
-              {expenseRows.length === 0 ? (
-                <div className="py-8 text-center space-y-3">
-                  <p className="text-sm text-muted-foreground">
-                    {q || categoryId
-                      ? t(
-                          "Tidak ada pengeluaran cocok filter.",
-                          "No expenses match filters.",
-                        )
-                      : t(
-                          "Belum ada pengeluaran bulan ini.",
-                          "No expenses this month.",
-                        )}
-                  </p>
-                  {canWrite && !q && !categoryId && (
-                    <AddExpenseButton
-                      workspaceId={ws.id}
-                      defaultCurrency={ws.defaultCurrency}
-                      categories={categories}
-                      projects={projectOpts}
-                      clients={clientOpts}
-                      variant="outline"
-                    />
-                  )}
-                </div>
-              ) : (
-                <>
-                  <ExpensesListTable
-                    rows={expenseRows}
-                    canWrite={canWrite}
-                    workspaceId={ws.id}
-                    defaultCurrency={ws.defaultCurrency}
-                    baseCurrency={baseCurrency}
-                    categories={categories}
-                    projects={projectOpts}
-                    clients={clientOpts}
-                  />
-
-                  {totalPages > 1 && (
-                    <div className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-                      <span className="text-xs sm:text-sm">
-                        {t(
-                          `Menampilkan ${rangeStart}–${rangeEnd} dari ${totalCount}`,
-                          `Showing ${rangeStart}–${rangeEnd} of ${totalCount}`,
-                        )}
-                      </span>
-                      <div className="flex gap-1 self-end sm:self-auto">
-                        {safePage <= 1 ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-10 w-10 p-0"
-                            disabled
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-10 w-10 p-0"
-                            asChild
-                          >
-                            <Link href={pageHref(safePage - 1)}>
-                              <ChevronLeft className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                        )}
-                        {safePage >= totalPages ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-10 w-10 p-0"
-                            disabled
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-10 w-10 p-0"
-                            asChild
-                          >
-                            <Link href={pageHref(safePage + 1)}>
-                              <ChevronRight className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                        )}
+              <div
+                className="mb-4 flex flex-wrap gap-2"
+                aria-label={t(
+                  "Filter sumber transaksi",
+                  "Transaction source filter",
+                )}
+              >
+                {(["all", "personal", "business"] as const).map((value) => (
+                  <Button
+                    key={value}
+                    size="sm"
+                    variant={scope === value ? "default" : "outline"}
+                    asChild
+                  >
+                    <Link href={`/app/expenses?month=${month}&scope=${value}`}>
+                      {value === "all"
+                        ? t("Semua", "All")
+                        : value === "personal"
+                          ? t("Pribadi", "Personal")
+                          : t("Bisnis", "Business")}
+                    </Link>
+                  </Button>
+                ))}
+              </div>
+              {scope === "all" && unifiedRows.length > 0 && (
+                <div className="mb-4 divide-y rounded-lg border">
+                  {unifiedRows.map((row) => (
+                    <div
+                      key={`${row.source}:${row.id}`}
+                      className="flex flex-wrap items-center justify-between gap-2 p-3"
+                    >
+                      <div>
+                        <p className="font-medium">{row.description}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {row.date} ·{" "}
+                          {row.source === "personal"
+                            ? t("Pribadi", "Personal")
+                            : t("Bisnis", "Business")}
+                        </p>
                       </div>
+                      <span className="font-medium">
+                        {row.currency} {row.amount}
+                      </span>
                     </div>
-                  )}
-                  {totalPages <= 1 && totalCount > 0 && (
-                    <p className="text-xs text-slate-400 mt-3 text-right">
-                      {t(
-                        `Menampilkan ${rangeStart}–${rangeEnd} dari ${totalCount}`,
-                        `Showing ${rangeStart}–${rangeEnd} of ${totalCount}`,
+                  ))}
+                </div>
+              )}
+              {scope === "personal" && (
+                <PersonalExpensesSection month={month} t={t} />
+              )}
+              {scope === "business" && (
+                <>
+                  {expenseRows.length === 0 ? (
+                    <div className="py-8 text-center space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        {q || categoryId
+                          ? t(
+                              "Tidak ada pengeluaran cocok filter.",
+                              "No expenses match filters.",
+                            )
+                          : t(
+                              "Belum ada pengeluaran bulan ini.",
+                              "No expenses this month.",
+                            )}
+                      </p>
+                      {canWrite && !q && !categoryId && (
+                        <AddExpenseButton
+                          workspaceId={ws.id}
+                          defaultCurrency={ws.defaultCurrency}
+                          categories={categories}
+                          projects={projectOpts}
+                          clients={clientOpts}
+                          variant="outline"
+                        />
                       )}
-                    </p>
+                    </div>
+                  ) : (
+                    <>
+                      <ExpensesListTable
+                        rows={expenseRows}
+                        canWrite={canWrite}
+                        workspaceId={ws.id}
+                        defaultCurrency={ws.defaultCurrency}
+                        baseCurrency={baseCurrency}
+                        categories={categories}
+                        projects={projectOpts}
+                        clients={clientOpts}
+                      />
+
+                      {totalPages > 1 && (
+                        <div className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+                          <span className="text-xs sm:text-sm">
+                            {t(
+                              `Menampilkan ${rangeStart}–${rangeEnd} dari ${totalCount}`,
+                              `Showing ${rangeStart}–${rangeEnd} of ${totalCount}`,
+                            )}
+                          </span>
+                          <div className="flex gap-1 self-end sm:self-auto">
+                            {safePage <= 1 ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-10 w-10 p-0"
+                                disabled
+                              >
+                                <ChevronLeft className="h-4 w-4" />
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-10 w-10 p-0"
+                                asChild
+                              >
+                                <Link href={pageHref(safePage - 1)}>
+                                  <ChevronLeft className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                            )}
+                            {safePage >= totalPages ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-10 w-10 p-0"
+                                disabled
+                              >
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-10 w-10 p-0"
+                                asChild
+                              >
+                                <Link href={pageHref(safePage + 1)}>
+                                  <ChevronRight className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {totalPages <= 1 && totalCount > 0 && (
+                        <p className="text-xs text-slate-400 mt-3 text-right">
+                          {t(
+                            `Menampilkan ${rangeStart}–${rangeEnd} dari ${totalCount}`,
+                            `Showing ${rangeStart}–${rangeEnd} of ${totalCount}`,
+                          )}
+                        </p>
+                      )}
+                    </>
                   )}
                 </>
               )}

@@ -4,7 +4,7 @@
 
 - Added user-scoped Goals with lifecycle status, manual/step progress, linked habits, and exact-title deletion.
 - Added daily/scheduled Habits with timezone-local check-ins, completion rate, and current/best streaks.
-- Added isolated personal transactions, categories, private receipt key contracts, and Personal tab without changing business expense KPIs or reports.
+- Added isolated personal transactions, categories, private receipt lifecycle, and canonical All / Personal / Business source filters without changing business expense KPIs or reports.
 - Added monthly 50/30/20 budgets, exact-decimal targets, actual bucket summaries, currency exclusions, and concurrency-safe previous-month copy.
 - Added ID/EN responsive UI under Productivity and Expenses plus ownership, domain, navigation, and business-isolation regression tests.
 

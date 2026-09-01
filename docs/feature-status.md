@@ -1,5 +1,13 @@
 # Cubiqlo Full Feature Status
 
+## Personal productivity and 50/30/20 budget — shipped to dev (2026-09-01)
+
+- Goals: lifecycle, steps, progress, rewards, supporting habits, exact-title delete.
+- Habits: schedules, timezone-aware check-ins, streaks, notes, calendar history, goal links, archive/restore.
+- Finance: personal transaction/category CRUD, private receipts, All / Personal / Business source filters, and per-currency monthly 50/30/20 budgets.
+- Isolation: personal storage remains user-scoped; business reports, exports, dashboard, AI, recurring, and activity consumers remain workspace-scoped.
+- Migration: `0087_personal_productivity_contract.sql`, after mandatory-MFA migrations `0083`–`0086`.
+
 Last updated: 2026-08-05
 Production app: https://app.cubiqlo.com
 Dev app: https://dev.cubiqlo.com
