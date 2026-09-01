@@ -41,12 +41,20 @@ if [[ "$DRY_RUN" == "1" ]]; then
 fi
 
 tmp_env="$PROJECT_DIR/.env.development.local"
-created_tmp_env=0
-if [[ ! -e "$tmp_env" ]]; then
-  ln -s "$ENV_FILE" "$tmp_env"
-  created_tmp_env=1
+backup_env=""
+if [[ -e "$tmp_env" || -L "$tmp_env" ]]; then
+  backup_env="$(mktemp)"
+  cp -a "$tmp_env" "$backup_env"
+  rm -f "$tmp_env"
 fi
-cleanup() { [[ "$created_tmp_env" == 0 ]] || rm -f "$tmp_env"; }
+ln -s "$ENV_FILE" "$tmp_env"
+cleanup() {
+  rm -f "$tmp_env"
+  if [[ -n "$backup_env" ]]; then
+    cp -a "$backup_env" "$tmp_env"
+    rm -f "$backup_env"
+  fi
+}
 trap cleanup EXIT
 
 old_prod=$(docker inspect cubicle-cubicle-1 --format '{{.Image}}|{{.State.StartedAt}}' 2>/dev/null || true)
