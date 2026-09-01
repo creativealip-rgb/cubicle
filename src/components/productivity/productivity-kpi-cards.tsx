@@ -7,6 +7,7 @@ interface ProductivityKpiProps {
   habitsCompletedToday: number;
   habitsScheduledToday: number;
   bestStreak: number;
+  completedDays: number;
   t: (id: string, en: string) => string;
 }
 
@@ -16,6 +17,7 @@ export function ProductivityKpiCards({
   habitsCompletedToday,
   habitsScheduledToday,
   bestStreak,
+  completedDays,
   t,
 }: ProductivityKpiProps) {
   const habitRatio =
@@ -90,6 +92,7 @@ export function ProductivityKpiCards({
           <span className="text-xs text-muted-foreground">
             {t("hari", "days")}
           </span>
+          <span className="text-xs text-muted-foreground">· {completedDays} {t("hari selesai", "days completed")}</span>
         </div>
       </Card>
     </div>

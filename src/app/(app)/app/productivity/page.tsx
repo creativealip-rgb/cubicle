@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import {
   createPersonalGoal,
   listPersonalGoals,
+  togglePersonalGoalStep,
   updatePersonalGoal,
 } from "@/lib/actions/personal-goals";
 import { listPersonalHabits, togglePersonalHabitCheckin } from "@/lib/actions/personal-habits";
@@ -23,8 +24,9 @@ import { TodayFocusCard, GoalStarterLinks } from "@/components/productivity/toda
 import { Target, ArrowRight } from "lucide-react";
 import { WeeklyReviewCard } from "@/components/productivity/weekly-review-card";
 import { QuickCaptureCard } from "@/components/productivity/quick-capture-card";
-import { calculateHealthyStreak, weeklyReview } from "@/lib/personal-productivity/retention";
+import { healthyHabitStats, weeklyReview } from "@/lib/personal-productivity/retention";
 import { dateOffset, isHabitScheduled } from "@/lib/personal-productivity/habits";
+import { calculateGoalProgress } from "@/lib/personal-productivity/goals";
 
 export default async function ProductivityPage({
   searchParams,
@@ -46,7 +48,9 @@ export default async function ProductivityPage({
     h.checkins.some((c) => c.localDate === today),
   ).length;
 
-  const bestStreak = activeHabits.reduce((max, h) => Math.max(max, calculateHealthyStreak(h.frequency as "daily" | "specific_weekdays", h.weekdays, today, h.checkins.map((c) => c.localDate)).streak), 0);
+  const habitRetentionStats = activeHabits.map((h) => healthyHabitStats(h.frequency as "daily" | "specific_weekdays", h.weekdays, today, h.checkins.map((c) => c.localDate)));
+  const bestStreak = habitRetentionStats.reduce((max, stats) => Math.max(max, stats.bestStreak), 0);
+  const completedDays = new Set(activeHabits.flatMap((h) => h.checkins.map((c) => c.localDate))).size;
 
   const heatmapCells = calculateHabitHeatmap(habits, today, 35);
   const weeklyTrends = calculateWeeklyConsistency(habits, today, 5);
@@ -92,7 +96,14 @@ export default async function ProductivityPage({
     "use server";
     const id = String(formData.get("goalId"));
     const goal = goals.find((item) => item.id === id);
-    if (!goal) return;
+    if (!goal) throw new Error("Goal not found");
+    const stepId = String(formData.get("stepId") || "");
+    if (stepId) {
+      const step = goal.steps.find((item) => item.id === stepId && !item.isCompleted);
+      if (!step) throw new Error("Step not found");
+      await togglePersonalGoalStep(step.id, true);
+      return;
+    }
     await updatePersonalGoal(id, {
       title: goal.title,
       description: goal.description,
@@ -110,9 +121,11 @@ export default async function ProductivityPage({
   );
   const attentionHabit = activeHabits.map((h) => ({ h, rate: calculateWeeklyConsistency([h], today, 1)[0]?.rate ?? 0 })).sort((a, b) => a.rate - b.rate)[0]?.h.name ?? null;
   const staleThreshold = new Date(`${dateOffset(today, -7)}T00:00:00Z`);
-  const staleGoal = activeGoals.find((g) => g.updatedAt <= staleThreshold)?.title ?? null;
-  const focusGoal = staleGoal ?? activeGoals.find((g) => g.manualProgress < 100)?.title ?? null;
-  const review = weeklyReview(weeklyTrends[4]?.completed ?? 0, weeklyTrends[4]?.totalScheduled ?? 0, goalMetrics.active, activeGoals.filter((g) => g.manualProgress > 0 || g.steps.some((s) => s.isCompleted)).length);
+  const staleGoal = activeGoals.find((g) => g.progressUpdatedAt <= staleThreshold)?.title ?? null;
+  const stagnantGoals = activeGoals.filter((g) => g.progressUpdatedAt <= staleThreshold).length;
+  const movingGoals = activeGoals.filter((g) => g.progressUpdatedAt > staleThreshold).length;
+  const focusGoal = staleGoal ?? activeGoals.find((g) => calculateGoalProgress(g.steps.map((step) => step.isCompleted), g.manualProgress) < 100)?.title ?? null;
+  const review = weeklyReview(weeklyTrends[4]?.completed ?? 0, weeklyTrends[4]?.totalScheduled ?? 0, goalMetrics.active, movingGoals);
 
   return (
     <div className="space-y-6">
@@ -140,7 +153,7 @@ export default async function ProductivityPage({
 
       {tab === "overview" && <>
         <TodayFocusCard activeGoals={goalMetrics.active} scheduledHabits={activeHabits.length} completedHabits={habitsCompletedToday} t={t} />
-        <div className="grid gap-4 lg:grid-cols-2"><WeeklyReviewCard {...review} attentionHabit={attentionHabit} focusGoal={focusGoal} t={t} /><QuickCaptureCard habits={activeHabits.filter((h) => today >= h.startDate && isHabitScheduled(h.frequency as "daily" | "specific_weekdays", h.weekdays, today) && !h.checkins.some((c) => c.localDate === today)).map((h) => ({ id: h.id, name: h.name }))} goals={activeGoals.map((g) => ({ id: g.id, title: g.title, progress: g.manualProgress }))} checkHabit={quickCheckHabit} updateGoal={quickUpdateGoal} t={t} /></div>
+        <div className="grid gap-4 lg:grid-cols-2"><WeeklyReviewCard {...review} attentionHabit={attentionHabit} focusGoal={focusGoal} stagnantGoals={stagnantGoals} t={t} /><QuickCaptureCard habits={activeHabits.filter((h) => today >= h.startDate && isHabitScheduled(h.frequency as "daily" | "specific_weekdays", h.weekdays, today) && !h.checkins.some((c) => c.localDate === today)).map((h) => ({ id: h.id, name: h.name }))} goals={activeGoals.map((g) => ({ id: g.id, title: g.title, progress: g.manualProgress, nextStep: g.steps.find((step) => !step.isCompleted) ? { id: g.steps.find((step) => !step.isCompleted)!.id, title: g.steps.find((step) => !step.isCompleted)!.title } : null }))} checkHabit={quickCheckHabit} updateGoal={quickUpdateGoal} t={t} /></div>
       </>}
 
       {/* KPI Top Cards Banner */}
@@ -150,6 +163,7 @@ export default async function ProductivityPage({
         habitsCompletedToday={habitsCompletedToday}
         habitsScheduledToday={activeHabits.length}
         bestStreak={bestStreak}
+        completedDays={completedDays}
         t={t}
       />
 

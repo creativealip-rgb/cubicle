@@ -100,6 +100,7 @@ export const personalGoals = pgTable(
     reward: text("reward"),
     status: text("status").notNull().default("not_started"),
     manualProgress: integer("manual_progress").notNull().default(0),
+    progressUpdatedAt: timestamp("progress_updated_at", { withTimezone: true }).notNull().defaultNow(),
     sortOrder: integer("sort_order").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

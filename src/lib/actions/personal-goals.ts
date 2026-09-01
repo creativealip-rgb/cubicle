@@ -109,9 +109,11 @@ export async function updatePersonalGoal(
 ) {
   const id = await userId(),
     data = goalInput.parse(input);
+  const [current] = await db.select({ manualProgress: personalGoals.manualProgress }).from(personalGoals).where(and(eq(personalGoals.id, goalId), eq(personalGoals.userId, id))).limit(1);
+  if (!current) throw new Error("Goal not found");
   const [row] = await db
     .update(personalGoals)
-    .set({ ...data, deadline: data.deadline || null, updatedAt: new Date() })
+    .set({ ...data, deadline: data.deadline || null, updatedAt: new Date(), ...(current.manualProgress !== data.manualProgress ? { progressUpdatedAt: new Date() } : {}) })
     .where(and(eq(personalGoals.id, goalId), eq(personalGoals.userId, id)))
     .returning();
   if (!row) throw new Error("Goal not found");
@@ -130,6 +132,7 @@ export async function addPersonalGoalStep(
     .insert(personalGoalSteps)
     .values({ goalId, userId: id, title: data.title })
     .returning();
+  await db.update(personalGoals).set({ progressUpdatedAt: new Date(), updatedAt: new Date() }).where(and(eq(personalGoals.id, goalId), eq(personalGoals.userId, id)));
   refresh();
   return row;
 }
@@ -150,6 +153,24 @@ export async function togglePersonalGoalStep(
     )
     .returning();
   if (!row) throw new Error("Step not found");
+  await db.update(personalGoals).set({ progressUpdatedAt: new Date(), updatedAt: new Date() }).where(and(eq(personalGoals.id, row.goalId), eq(personalGoals.userId, id)));
+  refresh();
+  return row;
+}
+
+export async function renamePersonalGoalStep(stepId: string, input: z.input<typeof stepInput>) {
+  const id = await userId(), data = stepInput.parse(input);
+  const [row] = await db.update(personalGoalSteps).set({ title: data.title, updatedAt: new Date() }).where(and(eq(personalGoalSteps.id, stepId), eq(personalGoalSteps.userId, id))).returning();
+  if (!row) throw new Error("Step not found");
+  refresh();
+  return row;
+}
+
+export async function deletePersonalGoalStep(stepId: string) {
+  const id = await userId();
+  const [row] = await db.delete(personalGoalSteps).where(and(eq(personalGoalSteps.id, stepId), eq(personalGoalSteps.userId, id))).returning();
+  if (!row) throw new Error("Step not found");
+  await db.update(personalGoals).set({ progressUpdatedAt: new Date(), updatedAt: new Date() }).where(and(eq(personalGoals.id, row.goalId), eq(personalGoals.userId, id)));
   refresh();
   return row;
 }

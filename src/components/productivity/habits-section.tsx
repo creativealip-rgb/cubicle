@@ -159,7 +159,7 @@ export async function HabitsSection({
                       <div className="flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400">
                         <Flame className="size-3.5" />
                         <span>
-                          {stats.currentStreak} {t("hari beruntun", "day streak")}
+                          {healthyStreak.streak} {t("hari beruntun", "day streak")}
                         </span>
                       </div>
                       <span>•</span>

@@ -2,8 +2,10 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
   addPersonalGoalStep,
+  deletePersonalGoalStep,
   getPersonalGoal,
   hardDeletePersonalGoal,
+  renamePersonalGoalStep,
   togglePersonalGoalStep,
   updatePersonalGoal,
 } from "@/lib/actions/personal-goals";
@@ -52,6 +54,14 @@ export default async function GoalDetail({
       String(fd.get("stepId")),
       fd.get("completed") !== "true",
     );
+  }
+  async function renameStep(fd: FormData) {
+    "use server";
+    await renamePersonalGoalStep(String(fd.get("stepId")), { title: String(fd.get("title")) });
+  }
+  async function deleteStep(fd: FormData) {
+    "use server";
+    await deletePersonalGoalStep(String(fd.get("stepId")));
   }
   async function remove(fd: FormData) {
     "use server";
@@ -151,17 +161,22 @@ export default async function GoalDetail({
             </form>
             <ul className="space-y-2">
               {goal.steps.map((s) => (
-                <li key={s.id}>
-                  <form action={toggle}>
+                <li key={s.id} className="flex flex-col gap-2 rounded-xl border p-2 sm:flex-row">
+                  <form action={toggle} className="sm:w-44">
                     <input type="hidden" name="stepId" value={s.id} />
-                    <input
-                      type="hidden"
-                      name="completed"
-                      value={String(s.isCompleted)}
-                    />
-                    <Button variant="outline" className="w-full justify-start">
+                    <input type="hidden" name="completed" value={String(s.isCompleted)} />
+                    <Button variant="outline" className="w-full justify-start rounded-lg">
                       {s.isCompleted ? "✓" : "○"} {s.title}
                     </Button>
+                  </form>
+                  <form action={renameStep} className="flex min-w-0 flex-1 gap-2">
+                    <input type="hidden" name="stepId" value={s.id} />
+                    <Input name="title" defaultValue={s.title} required aria-label={t("Edit langkah", "Edit step")} className="h-9 min-w-0" />
+                    <Button size="sm" variant="outline">{t("Simpan", "Save")}</Button>
+                  </form>
+                  <form action={deleteStep}>
+                    <input type="hidden" name="stepId" value={s.id} />
+                    <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive">{t("Hapus", "Delete")}</Button>
                   </form>
                 </li>
               ))}
