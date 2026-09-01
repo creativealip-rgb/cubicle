@@ -6,8 +6,9 @@ import {
 } from "@/lib/actions/personal-habits";
 import { dateOffset, habitStats } from "@/lib/personal-productivity/habits";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { HabitDialog } from "@/components/productivity/habit-dialog";
+import { Flame, CheckCircle, Check, Archive, RotateCcw } from "lucide-react";
 
 export async function HabitsSection({
   t,
@@ -17,8 +18,9 @@ export async function HabitsSection({
   goals?: { id: string; title: string }[];
 }) {
   const habits = await listPersonalHabits();
-  const today = habits[0]?.today ?? "1970-01-01",
-    from = dateOffset(today, -29);
+  const today = habits[0]?.today ?? new Date().toISOString().slice(0, 10);
+  const from = dateOffset(today, -29);
+
   async function create(fd: FormData) {
     "use server";
     const weekdays = fd.getAll("weekdays").map(Number);
@@ -34,10 +36,12 @@ export async function HabitsSection({
       status: "active",
     });
   }
+
   async function toggle(fd: FormData) {
     "use server";
     await togglePersonalHabitCheckin(String(fd.get("habitId")));
   }
+
   async function archive(fd: FormData) {
     "use server";
     const h = habits.find((x) => x.id === String(fd.get("habitId")));
@@ -54,124 +58,203 @@ export async function HabitsSection({
       status: h.status === "active" ? "archived" : "active",
     });
   }
+
+  const activeHabits = habits.filter((h) => h.status === "active");
+  const archivedHabits = habits.filter((h) => h.status === "archived");
+
   return (
-    <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("Tambah kebiasaan", "Add habit")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form action={create} className="space-y-3">
-            <Input
-              name="name"
-              required
-              placeholder={t("Nama kebiasaan", "Habit name")}
-            />
-            <Input name="startDate" type="date" required defaultValue={today} />
-            <select
-              name="goalId"
-              className="h-10 w-full rounded-md border bg-background px-3"
-            >
-              <option value="">{t("Tanpa tujuan", "No goal")}</option>
-              {goals.map((goal) => (
-                <option key={goal.id} value={goal.id}>
-                  {goal.title}
-                </option>
-              ))}
-            </select>
-            <Input
-              name="color"
-              type="color"
-              defaultValue="#6366f1"
-              aria-label={t("Warna", "Color")}
-            />
-            <select
-              name="frequency"
-              className="h-10 w-full rounded-md border bg-background px-3"
-            >
-              <option value="daily">{t("Setiap hari", "Daily")}</option>
-              <option value="specific_weekdays">
-                {t("Hari tertentu", "Specific weekdays")}
-              </option>
-            </select>
-            <fieldset>
-              <legend className="text-sm">{t("Hari", "Weekdays")}</legend>
-              <div className="flex flex-wrap gap-2">
-                {["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"].map(
-                  (d, i) => (
-                    <label key={d} className="rounded border px-2 py-1 text-sm">
-                      <input
-                        className="mr-1"
-                        type="checkbox"
-                        name="weekdays"
-                        value={i}
-                      />
-                      {d}
-                    </label>
-                  ),
-                )}
-              </div>
-            </fieldset>
-            <Button className="w-full">
-              {t("Tambah kebiasaan", "Add habit")}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-      <div className="space-y-3">
-        {habits.map((h) => {
-          const done = h.checkins.some((c) => c.localDate === today),
-            stats = habitStats(
-              h.frequency as "daily" | "specific_weekdays",
-              h.weekdays,
-              from,
-              today,
-              h.checkins.map((c) => c.localDate),
-            );
+    <div className="space-y-6">
+      {/* Top Header Bar for Habits Tab */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold">
+            {t("Daftar Kebiasaan", "Habits Tracker")}
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            {activeHabits.length} {t("kebiasaan aktif hari ini", "active habits tracked")}
+          </p>
+        </div>
+        <HabitDialog
+          t={t}
+          goals={goals}
+          today={today}
+          createHabitAction={create}
+        />
+      </div>
+
+      {/* Active Habits List */}
+      <div className="grid gap-4">
+        {activeHabits.map((h) => {
+          const done = h.checkins.some((c) => c.localDate === today);
+          const stats = habitStats(
+            h.frequency as "daily" | "specific_weekdays",
+            h.weekdays,
+            from,
+            today,
+            h.checkins.map((c) => c.localDate),
+          );
+
+          // 14-day history dots
+          const recentDays = Array.from({ length: 14 }).map((_, idx) => {
+            const d = dateOffset(today, -13 + idx);
+            const isChecked = h.checkins.some((c) => c.localDate === d);
+            return { date: d, isChecked };
+          });
+
           return (
             <Card
               key={h.id}
-              className={h.status === "archived" ? "opacity-60" : ""}
+              className="overflow-hidden rounded-3xl border bg-card shadow-sm transition hover:shadow-md"
             >
-              <CardContent className="space-y-3 pt-6">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="font-semibold">{h.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {t("Beruntun", "Streak")}: {stats.currentStreak} ·{" "}
-                      {stats.completionRate}%
-                    </p>
+              <CardContent className="space-y-4 p-5 sm:p-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="size-3 rounded-full"
+                        style={{ backgroundColor: h.color || "#6366f1" }}
+                      />
+                      <h3 className="text-base font-bold tracking-tight text-foreground">
+                        {h.name}
+                      </h3>
+                      {h.frequency === "daily" ? (
+                        <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground uppercase">
+                          {t("Setiap Hari", "Daily")}
+                        </span>
+                      ) : (
+                        <span className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground uppercase">
+                          {t("Hari Tertentu", "Custom Days")}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400">
+                        <Flame className="size-3.5" />
+                        <span>
+                          {stats.currentStreak} {t("hari beruntun", "day streak")}
+                        </span>
+                      </div>
+                      <span>•</span>
+                      <span>
+                        {stats.completionRate}% {t("dalam 30 hari", "30-day rate")}
+                      </span>
+                    </div>
                   </div>
-                  {h.status === "active" && (
+
+                  {/* Right Actions: Today Check-in & Archive */}
+                  <div className="flex items-center gap-2">
                     <form action={toggle}>
                       <input type="hidden" name="habitId" value={h.id} />
-                      <Button variant={done ? "default" : "outline"}>
-                        {done ? "✓ " : "○ "}
-                        {t("Hari ini", "Today")}
+                      <Button
+                        type="submit"
+                        variant={done ? "default" : "outline"}
+                        className={`h-10 rounded-2xl px-4 font-semibold transition ${
+                          done
+                            ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                            : "border-muted-foreground/30 hover:border-emerald-500"
+                        }`}
+                      >
+                        {done ? (
+                          <>
+                            <Check className="mr-1.5 size-4" />
+                            {t("Selesai Hari Ini", "Done Today")}
+                          </>
+                        ) : (
+                          <>
+                            <span className="mr-1.5 inline-block size-3 rounded-full border-2 border-current" />
+                            {t("Tandai Hari Ini", "Check Today")}
+                          </>
+                        )}
                       </Button>
                     </form>
-                  )}
+
+                    <form action={archive}>
+                      <input type="hidden" name="habitId" value={h.id} />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-10 rounded-2xl text-muted-foreground hover:text-foreground"
+                      >
+                        <Archive className="size-4" />
+                      </Button>
+                    </form>
+                  </div>
                 </div>
-                <form action={archive}>
-                  <input type="hidden" name="habitId" value={h.id} />
-                  <Button size="sm" variant="ghost">
-                    {h.status === "active"
-                      ? t("Arsipkan", "Archive")
-                      : t("Aktifkan", "Restore")}
-                  </Button>
-                </form>
+
+                {/* 14-Day Micro Sparkline / Dots */}
+                <div className="flex items-center justify-between border-t pt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground">
+                    {t("14 Hari Terakhir:", "Last 14 Days:")}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {recentDays.map((d) => (
+                      <span
+                        key={d.date}
+                        title={d.date}
+                        className={`size-3 rounded-full transition-all ${
+                          d.isChecked
+                            ? "bg-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-900"
+                            : "bg-muted"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
               </CardContent>
             </Card>
           );
         })}
-        {!habits.length && (
-          <Card>
-            <CardContent className="pt-6">
-              {t("Belum ada kebiasaan.", "No habits yet.")}
-            </CardContent>
+
+        {!activeHabits.length && (
+          <Card className="rounded-3xl border border-dashed p-10 text-center">
+            <CheckCircle className="mx-auto size-10 text-muted-foreground/50" />
+            <h3 className="mt-3 font-bold text-foreground">
+              {t("Belum Ada Kebiasaan", "No Habits Tracked")}
+            </h3>
+            <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+              {t(
+                "Mulai bangun kebiasaan positif harian dengan menambahkan aktivitas pertama.",
+                "Start building daily positive habits by adding your first routine.",
+              )}
+            </p>
+            <div className="mt-4">
+              <HabitDialog
+                t={t}
+                goals={goals}
+                today={today}
+                createHabitAction={create}
+              />
+            </div>
           </Card>
         )}
       </div>
+
+      {/* Archived Habits Section */}
+      {archivedHabits.length > 0 && (
+        <div className="border-t pt-6 space-y-3">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            {t("Kebiasaan Diarsipkan", "Archived Habits")}
+          </h3>
+          <div className="grid gap-2">
+            {archivedHabits.map((h) => (
+              <div
+                key={h.id}
+                className="flex items-center justify-between rounded-2xl border bg-muted/20 px-4 py-2.5 text-sm"
+              >
+                <span className="line-through text-muted-foreground">{h.name}</span>
+                <form action={archive}>
+                  <input type="hidden" name="habitId" value={h.id} />
+                  <Button size="sm" variant="ghost" className="h-8 gap-1 text-xs">
+                    <RotateCcw className="size-3.5" />
+                    {t("Aktifkan Kembali", "Restore")}
+                  </Button>
+                </form>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
