@@ -64,7 +64,11 @@ export function LoginForm() {
         return;
       }
 
-      router.push(redirect);
+      if ((result.data as { twoFactorRedirect?: boolean } | null)?.twoFactorRedirect) {
+        router.push("/two-factor");
+      } else {
+        router.push(redirect);
+      }
       refresh();
     } catch {
       setError(t("Terjadi kesalahan. Coba lagi.", "An error occurred. Try again."));
