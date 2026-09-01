@@ -55,7 +55,7 @@ export function HabitHeatmap({ cells, weeklyTrends, t }: HabitHeatmapProps) {
           </div>
 
           <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-            <span>{cells[0]?.date}</span>
+            <span>{cells[0]?.date ? new Date(`${cells[0].date}T12:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""}</span>
             <div className="flex items-center gap-1">
               <span>{t("Sedikit", "Less")}</span>
               <div className="flex gap-1">

@@ -70,7 +70,7 @@ export function ProductivityKpiCards({
           <span className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             {habitsCompletedToday}/{habitsScheduledToday}
           </span>
-          <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+          <span className={habitRatio > 0 ? "text-xs font-medium text-emerald-600 dark:text-emerald-400" : "text-xs font-medium text-muted-foreground"}>
             ({habitRatio}%)
           </span>
         </div>

@@ -121,7 +121,7 @@ export default async function ProductivityPage({
 
       {/* Navigation Tabs Track */}
       <nav
-        className="flex gap-2 border-b pb-3"
+        className="flex gap-2 overflow-x-auto border-b pb-3"
         aria-label={t("Navigasi produktivitas", "Productivity navigation")}
       >
         {[
@@ -181,9 +181,6 @@ export default async function ProductivityPage({
                   <p className="text-sm font-medium">
                     {t("Belum ada tujuan aktif.", "No active goals yet.")}
                   </p>
-                  <div className="mt-3">
-                    <GoalDialog lang={lang} createGoalAction={createGoal} />
-                  </div>
                 </div>
               )}
             </CardContent>
@@ -207,7 +204,6 @@ export default async function ProductivityPage({
             <p className="text-sm font-medium text-muted-foreground">
               {goals.length} {t("tujuan terdaftar", "registered goals")}
             </p>
-            <GoalDialog lang={lang} createGoalAction={createGoal} />
           </div>
 
           <div className="grid gap-4">
