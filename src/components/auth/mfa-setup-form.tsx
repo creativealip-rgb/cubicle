@@ -76,10 +76,17 @@ export function MfaSetupForm() {
       <section className="w-full space-y-6 rounded-xl border bg-card p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-semibold">
-            {done ? "Two-step verification is ready" : "Set up two-step verification"}
+            {done
+              ? "Two-step verification is ready"
+              : "Set up two-step verification"}
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Use an authenticator app. Keep recovery codes in a safe place.
+          <p
+            role={done ? "status" : undefined}
+            className="mt-2 text-sm text-muted-foreground"
+          >
+            {done
+              ? "Your passkey or authenticator is active. Continue to your dashboard."
+              : "Use an authenticator app. Keep recovery codes in a safe place."}
           </p>
         </div>
         {error && (
@@ -89,12 +96,6 @@ export function MfaSetupForm() {
         )}
         {done ? (
           <div className="space-y-4">
-            <p role="status" className="text-sm font-medium">
-              Two-step verification enabled.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Setup is complete. Continue to your workspace.
-            </p>
             <Button
               type="button"
               onClick={() => router.replace("/app/dashboard")}
