@@ -41,7 +41,7 @@ export const users = pgTable("users", {
   mfaEnrollmentDeadline: timestamp("mfa_enrollment_deadline", { withTimezone: true }),
 });
 
-export const twoFactor = pgTable("two_factor", {
+export const twoFactors = pgTable("two_factor", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   secret: text("secret").notNull(),
@@ -51,7 +51,7 @@ export const twoFactor = pgTable("two_factor", {
   lockedUntil: timestamp("locked_until", { withTimezone: true }),
 });
 
-export const passkey = pgTable("passkey", {
+export const passkeys = pgTable("passkey", {
   id: text("id").primaryKey(),
   name: text("name"),
   publicKey: text("public_key").notNull(),
