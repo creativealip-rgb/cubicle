@@ -1,8 +1,8 @@
 # Cubiqlo — Personal Productivity & 50/30/20 Budget Plan
 
-**Status:** IMPLEMENTATION-READY DRAFT — arah produk disetujui; implementasi tetap menunggu seluruh Phase 0A gate lulus  
-**Target branch:** `dev/integration` melalui feature worktree terpisah  
-**Scope:** Habit Tracker, Goal Tracker, dan anggaran 50/30/20  
+**Status:** CONTRACT-READY DRAFT — arah produk disetujui; **NO-GO untuk coding** sampai seluruh artifact Phase 0A tersedia dan lolos review mekanis.
+**Target branch:** `dev/integration` melalui feature worktree terpisah
+**Scope:** Habit Tracker, Goal Tracker, dan anggaran 50/30/20
 **Prinsip:** tidak menambah menu sidebar kecuali satu submenu `Produktivitas / Productivity`; seluruh UI bilingual melalui `cubiqlo_lang`.
 
 ## 1. Keputusan produk terkunci
@@ -34,8 +34,8 @@ PERSONAL
 ├─ Catatan / Notes
 └─ Produktivitas / Productivity
    ├─ Ringkasan / Overview
-   ├─ Goal / Goals
-   └─ Habit / Habits
+   ├─ Tujuan / Goals
+   └─ Kebiasaan / Habits
 
 KEUANGAN / FINANCE
 └─ Pengeluaran / Expenses
@@ -118,6 +118,8 @@ personal_goal_steps
 
 Goal memakai status sebagai lifecycle utama. Hard delete adalah aksi eksplisit dan menghapus seluruh step terkait.
 
+Default UX untuk goal yang tidak diteruskan adalah status `cancelled`, bukan hard delete. Hard delete hanya tersedia melalui menu destruktif, meminta konfirmasi dengan nama goal, dan wajib memverifikasi ownership dari session. Histori check-in habit tetap ada, tetapi konteks goal yang dihapus tidak dapat dipulihkan.
+
 - Pemilik user; tidak memiliki `workspace_id`
 - Judul / Title
 - Deskripsi / Description, opsional
@@ -182,7 +184,7 @@ personal_habits
 - color text nullable
 - icon text nullable
 - frequency: daily | specific_weekdays
-- weekdays smallint[] NOT NULL default '{}', CHECK setiap nilai 0–6
+- weekdays smallint[] NOT NULL default '{}'
 - start_date date NOT NULL
 - status: active | archived
 - created_at timestamptz
@@ -224,6 +226,8 @@ Constraint jadwal:
 
 - `daily` wajib memiliki `weekdays = '{}'`.
 - `specific_weekdays` wajib memiliki minimal satu weekday unik bernilai 0–6.
+- Array weekday disimpan canonical: urut ascending dan tanpa duplikat.
+- Phase 0A wajib memilih serta menuliskan satu enforcement DB konkret: normalized child table dengan `UNIQUE (habit_id, weekday)`, atau immutable PostgreSQL validation function yang dipakai `CHECK`. Validasi action saja tidak cukup untuk klaim DB guarantee.
 - Check-in sebelum `start_date` atau setelah tanggal lokal user saat ini ditolak.
 - Archive dapat dibatalkan; histori check-in tetap ada.
 
@@ -286,7 +290,7 @@ Validasi dan DB checks:
 
 - `month` disimpan sebagai tanggal hari pertama bulan.
 - `income` memakai `numeric(18,2)` dan harus lebih dari nol.
-- Currency wajib uppercase ISO 4217 tiga karakter.
+- Currency wajib berupa uppercase currency code tiga karakter. Aplikasi memvalidasi terhadap whitelist ISO 4217; DB menjaga format `[A-Z]{3}`.
 - Persentase masing-masing 0–100 dengan DB CHECK.
 - Total persentase wajib tepat 100 dengan DB CHECK.
 - Satu konfigurasi per user, bulan, dan mata uang
@@ -319,10 +323,10 @@ Aturan server:
 Role matrix:
 
 | Workspace role | Personal read/write | Business read | Business write |
-|---|---:|---:|---:|
-| Owner | Ya | Ya | Ya |
-| Member | Ya | Ya | Ya |
-| Viewer | Ya | Ya | Tidak |
+| -------------- | ------------------: | ------------: | -------------: |
+| Owner          |                  Ya |            Ya |             Ya |
+| Member         |                  Ya |            Ya |             Ya |
+| Viewer         |                  Ya |            Ya |          Tidak |
 
 Viewer tetap mendapat CTA tambah transaksi personal. Opsi Business disembunyikan atau disabled dengan penjelasan izin.
 
@@ -335,8 +339,10 @@ Filter daftar:
 Kontrak daftar gabungan:
 
 - DTO presentasi dinormalisasi, tetapi mutation tetap menuju action personal atau business terpisah.
-- Sort canonical lintas storage: `date DESC, created_at DESC, source DESC, id DESC`, dengan `source = personal | business` untuk mencegah collision ID.
-- Mode `All` memakai keyset cursor `{date, createdAt, source, id}`. Server mengambil maksimal 100 kandidat setelah cursor dari masing-masing storage, merge + sort, memotong sesuai page size, lalu mengembalikan cursor row terakhir. Jangan gunakan offset pada mode `All`.
+- Sort canonical lintas storage: `date DESC, created_at DESC, source_rank DESC, id DESC`, dengan `source_rank = 1` untuk personal dan `0` untuk business. DTO tetap mengekspos `source = personal | business` untuk mencegah collision ID.
+- Mode `All` memakai keyset cursor `{date, createdAt, sourceRank, id}`. Server mengambil maksimal 100 kandidat setelah cursor dari masing-masing storage, merge + sort, memotong sesuai page size, lalu mengembalikan cursor row terakhir. Jangan gunakan offset pada mode `All`.
+- Cursor bersifat eksklusif. Comparator SQL pada masing-masing storage wajib identik dengan comparator merge. Urutan `source` dikunci eksplisit sebagai `personal` sebelum `business`, bukan bergantung pada urutan string atau locale.
+- Semua row lama setelah cursor wajib tetap reachable tanpa duplicate atau skip pada page berikutnya. Insert baru yang mengurut sebelum cursor boleh tidak muncul pada sesi pagination berjalan; insert tidak boleh menyebabkan row lama hilang atau muncul dua kali.
 - Mode Personal dan Business boleh memakai pagination native masing-masing storage.
 - `ponytail:` bounded merge dibatasi 100 kandidat per storage per request; ganti dengan authorized SQL `UNION ALL` bila volume atau latency nyata melewati batas.
 - Filter project/client hanya aktif pada mode Bisnis.
@@ -391,6 +397,9 @@ personal_transactions
 - description varchar(500) NOT NULL
 - merchant varchar(200) nullable
 - receipt_key text nullable
+- receipt_mime varchar(100) nullable
+- receipt_size_bytes bigint nullable, CHECK receipt_size_bytes > 0 when present
+- receipt_checksum text nullable
 - created_at timestamptz NOT NULL default now()
 - updated_at timestamptz NOT NULL default now()
 - UNIQUE (id, user_id)
@@ -408,6 +417,7 @@ Constraint minimum:
 - `expense` tidak boleh memakai bucket `savings`.
 - Unique kategori personal `(user_id, lower(name))` atau padanan case-insensitive.
 - Receipt key canonical: `personal/{user_id}/receipts/{transaction_id}/{uuid}.{ext}` dan selalu dibuat server.
+- Receipt metadata (`receipt_mime`, `receipt_size_bytes`, `receipt_checksum`) diisi server setelah object write dan menjadi expected artifact reconciliation. Metadata harus seluruhnya `NULL` saat `receipt_key` null dan lengkap saat key terisi.
 - Upload hanya menerima PDF/JPEG/PNG/WebP, maksimal 10 MiB, serta memvalidasi declared MIME, extension, dan magic bytes. Transaction harus sudah dibuat sebelum upload. Kegagalan DB setelah object write wajib melakukan compensating delete; replace/delete transaksi wajib membersihkan object lama. Download mengambil transaksi dengan `id + session user_id`, memverifikasi prefix canonical, lalu membuat signed URL 300 detik. Browser tidak boleh memilih object key bebas atau external URL.
 - Data personal tidak masuk laporan bisnis, dashboard bisnis, AI workspace, activity log workspace, recurring business, maupun export bisnis.
 
@@ -418,11 +428,11 @@ personal_budgets
 - id UUID PK default random
 - user_id text NOT NULL FK → users(id) ON DELETE CASCADE
 - month date NOT NULL, CHECK first day of month
-- currency char(3) NOT NULL, CHECK uppercase ISO-like `[A-Z]{3}`
-- income numeric(18,2), CHECK income > 0
-- needs_pct numeric(5,2)
-- wants_pct numeric(5,2)
-- savings_pct numeric(5,2)
+- currency char(3) NOT NULL, CHECK uppercase `[A-Z]{3}`; application whitelist ISO 4217
+- income numeric(18,2) NOT NULL, CHECK income > 0
+- needs_pct numeric(5,2) NOT NULL default 50
+- wants_pct numeric(5,2) NOT NULL default 30
+- savings_pct numeric(5,2) NOT NULL default 20
 - CHECK setiap percentage 0–100
 - CHECK needs_pct + wants_pct + savings_pct = 100
 - enabled boolean NOT NULL default true
@@ -489,29 +499,31 @@ Wajib bilingual:
 
 Tidak boleh ada formatter hardcoded `id-ID`. Gunakan locale aktif.
 
-Timezone user-level disimpan sebagai `users.timezone text NOT NULL DEFAULT 'Asia/Jakarta'`. Migration backfill seluruh user existing ke `Asia/Jakarta`. Mutation memvalidasi nama IANA lewat runtime `Intl.DateTimeFormat`; nilai invalid ditolak. Server menentukan `local_date` check-in dari timezone user; browser tidak menjadi source of truth. Saat timezone berubah, histori lama tidak digeser dan check-in baru memakai timezone terbaru. Workspace timezone tidak menjadi fallback fitur personal.
+Timezone user-level disimpan sebagai `users.timezone text NOT NULL DEFAULT 'Asia/Jakarta'`. Mutation memvalidasi nama IANA lewat runtime `Intl.DateTimeFormat`; nilai invalid ditolak. Server menentukan `local_date` check-in dari timezone user; browser tidak menjadi source of truth. Saat timezone berubah, histori lama tidak digeser dan check-in baru memakai timezone terbaru. Setelah migration, workspace timezone tidak menjadi runtime fallback fitur personal.
+
+Repo belum memiliki timezone user-level. Migration backfill memakai timezone workspace yang dimiliki user (`workspaces.owner_id = users.id`) dengan urutan deterministik `workspaces.created_at ASC, workspaces.id ASC`; jika user tidak memiliki workspace, gunakan `Asia/Jakarta`. Membership workspace lain tidak dipakai karena repo tidak menyimpan workspace aktif secara durable. Reconciliation mencatat jumlah row dari owner-workspace dan fallback.
 
 Label inti:
 
-| Indonesia | English |
-|---|---|
-| Produktivitas | Productivity |
-| Ringkasan | Overview |
-| Tujuan | Goals |
-| Kebiasaan | Habits |
-| Kebiasaan hari ini | Today's habits |
-| Tujuan aktif | Active goals |
+| Indonesia           | English              |
+| ------------------- | -------------------- |
+| Produktivitas       | Productivity         |
+| Ringkasan           | Overview             |
+| Tujuan              | Goals                |
+| Kebiasaan           | Habits               |
+| Kebiasaan hari ini  | Today's habits       |
+| Tujuan aktif        | Active goals         |
 | Progress minggu ini | This week's progress |
-| Streak aktif | Current streak |
-| Streak terbaik | Best streak |
-| Pengeluaran | Expenses |
-| Anggaran | Budget |
-| Kebutuhan | Needs |
-| Keinginan | Wants |
-| Tabungan | Savings |
-| Di luar anggaran | Unbudgeted |
-| Pribadi | Personal |
-| Bisnis | Business |
+| Streak aktif        | Current streak       |
+| Streak terbaik      | Best streak          |
+| Pengeluaran         | Expenses             |
+| Anggaran            | Budget               |
+| Kebutuhan           | Needs                |
+| Keinginan           | Wants                |
+| Tabungan            | Savings              |
+| Di luar anggaran    | Unbudgeted           |
+| Pribadi             | Personal             |
+| Bisnis              | Business             |
 
 ## 6. Mobile UX dan accessibility
 
@@ -577,7 +589,20 @@ Tambah hanya setelah pemakaian MVP menunjukkan kebutuhan.
 4. Navigation role wiring tests untuk owner/member/viewer.
 5. Habit delete-goal transaction test dan concurrent check-in test.
 6. Cursor contract tests: tie timestamp, ID collision lintas source, page boundary, dan insert di antara request.
-7. Receipt lifecycle tests: invalid content, cross-user download, upload failure cleanup, replace cleanup, delete cleanup.
+7. Currency whitelist tests: kode ISO 4217 valid diterima; kode tiga huruf non-ISO ditolak aplikasi.
+8. Budget nullability/default tests: income dan ketiga percentage tidak dapat `NULL`; default 50/30/20 menghasilkan total tepat 100.
+9. Weekday DB enforcement tests: daily-array mismatch, empty specific weekdays, nilai di luar 0–6, dan duplikat ditolak DB.
+10. Receipt lifecycle tests: invalid content, cross-user download, upload failure cleanup, replace cleanup, delete cleanup.
+
+Artifact desain Phase 0A:
+
+- `docs/plans/personal-productivity-phase0a-schema.md` — urutan migration, kontrak tabel, ledger constraint/index, transaction boundary, dan rollback.
+- `docs/plans/personal-productivity-phase0a-reconciliation.sql` — row count, orphan/ownership mismatch, invalid domain, duplicate, receipt prefix, dan object inspection.
+- `docs/plans/personal-productivity-phase0a-object-reconciliation.md` — kontrak audit read-only object storage; script executable dibuat bersama migration Phase 0A, bukan dipalsukan sebagai artifact siap jalan.
+- `docs/plans/personal-productivity-phase0a-negative-matrix.md` — role/navigation serta positive-negative matrix user A/B.
+- `docs/plans/personal-productivity-phase0a-test-contract.md` — migration, DB invariant, action, cursor, navigation, receipt, dan approval gates.
+
+Artifact desain ini menyelesaikan contract lock, tetapi belum meluluskan gate coding. Gate baru lulus setelah migration SQL slot terbaru dan Drizzle schema ditulis, reconciliation dijalankan pada disposable clone, seluruh behavioral test menghasilkan bukti hijau, lalu direview mekanis.
 
 ### Phase 1 — Goal Tracker
 
@@ -670,7 +695,7 @@ Tambah hanya setelah pemakaian MVP menunjukkan kebutuhan.
 
 ### Goal
 
-- Create/edit/archive goal
+- Create/edit/defer/cancel/hard-delete goal; hard delete meminta konfirmasi nama goal
 - Goal tanpa steps memakai manual progress
 - Goal dengan steps menghitung progress otomatis
 - Ownership user A/B
@@ -741,17 +766,17 @@ Runtime proof:
 
 ## 11. Risiko utama
 
-| Risiko | Mitigasi |
-|---|---|
-| Personal expense bocor ke workspace | tabel personal terpisah + session-derived user ID + negative tests |
-| Laporan bisnis berubah | jangan ubah semantik/query tabel expense bisnis |
+| Risiko                                  | Mitigasi                                                               |
+| --------------------------------------- | ---------------------------------------------------------------------- |
+| Personal expense bocor ke workspace     | tabel personal terpisah + session-derived user ID + negative tests     |
+| Laporan bisnis berubah                  | jangan ubah semantik/query tabel expense bisnis                        |
 | Persentase/streak salah karena timezone | timezone user-level IANA; server-derived local date; test boundary/DST |
-| Sidebar membengkak | satu submenu Productivity, navigasi internal |
-| Produktivitas hanya terlihat owner | role contract eksplisit; semua authenticated roles dapat Productivity |
-| Savings salah dianggap spending | tipe `allocation`; ringkasan spending dan saving dihitung terpisah |
-| ID/EN tidak konsisten | kamus i18n + EN screenshot QA |
-| Referensi berlisensi personal disalin | gunakan konsep generik saja; desain/copy/formula original Cubiqlo |
-| Mata uang tercampur | query dan UI selalu group/filter per currency |
+| Sidebar membengkak                      | satu submenu Productivity, navigasi internal                           |
+| Produktivitas hanya terlihat owner      | role contract eksplisit; semua authenticated roles dapat Productivity  |
+| Savings salah dianggap spending         | tipe `allocation`; ringkasan spending dan saving dihitung terpisah     |
+| ID/EN tidak konsisten                   | kamus i18n + EN screenshot QA                                          |
+| Referensi berlisensi personal disalin   | gunakan konsep generik saja; desain/copy/formula original Cubiqlo      |
+| Mata uang tercampur                     | query dan UI selalu group/filter per currency                          |
 
 ## 12. Definition of done
 

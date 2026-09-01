@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-01 — Personal productivity Phase 0A contract lock
+
+- Locked user-level Goals, Habits, personal transactions, receipts, and 50/30/20 budget contracts without changing existing business Expense semantics.
+- Added deterministic user-timezone backfill, named DB-object ledger, ownership/role negative matrix, bounded unified-list cursor rules, and advisory-lock budget-copy semantics.
+- Added reconciliation contracts for row/domain violations, missing and unexpected DB objects, plus read-only object-storage reconciliation backed by required receipt MIME, size, and checksum metadata.
+- Phase remains NO-GO for feature coding until migration `0083` is re-confirmed and reserved, Drizzle parity exists, disposable-DB reconciliation passes through a fail-closed runner, and behavioral tests are green.
+
 ## 2026-08-29 — Dashboard approvals and first-workspace setup
 
 - Expanded the Dashboard Approval card from client-visible task reviews to pending tasks, proposals, and contracts, with a category popover instead of a new page.
