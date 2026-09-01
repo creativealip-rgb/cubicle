@@ -4,13 +4,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export function QuickCaptureCard({ habits, goals, checkHabit, updateGoal, t }: {
+export function QuickCaptureCard({ habits, goals, checkHabit, updateGoal, lang }: {
   habits: { id: string; name: string }[];
   goals: { id: string; title: string; progress: number; nextStep: { id: string; title: string } | null }[];
   checkHabit: (formData: FormData) => Promise<void>;
   updateGoal: (formData: FormData) => Promise<void>;
-  t: (id: string, en: string) => string;
+  lang: "id" | "en";
 }) {
+  const t = (id: string, en: string) => lang === "id" ? id : en;
   const [goalId, setGoalId] = useState(goals[0]?.id ?? "");
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);

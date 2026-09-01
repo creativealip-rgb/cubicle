@@ -10,6 +10,9 @@ describe("quick capture", () => {
     expect(component).toContain("submit(updateGoal, formData)");
     expect(component).toContain('role="status"');
     expect(component).toContain("selectedGoal?.nextStep");
+    expect(component).toContain('lang: "id" | "en"');
+    expect(page).toContain("lang={lang}");
+    expect(page).not.toContain("updateGoal={quickUpdateGoal} t={t}");
     expect(page).toContain("togglePersonalHabitCheckin");
     expect(page).toContain("manualProgress: Number(formData.get(\"progress\"))");
     expect(page).toContain("togglePersonalGoalStep(step.id, true)");
