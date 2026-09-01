@@ -2,7 +2,7 @@
 
 **Status:** review gate; no feature coding until artifacts and disposable-DB tests pass.
 **Canonical product plan:** `docs/PERSONAL_PRODUCTIVITY_AND_503020_BUDGET_PLAN.md`
-**Migration slot:** current next free slot is `0083`; re-check immediately before creation and reserve `<next>_personal_productivity_contract.sql`. Jangan bergantung pada nomor yang tertulis di dokumen ini jika migration baru sudah masuk.
+**Migration slot:** `0087_personal_productivity_contract.sql`, moved from the stale `0083` draft after MFA migrations `0083`–`0086` landed on `main`; re-check immediately before merge and fail on collision.
 
 ## Migration order
 

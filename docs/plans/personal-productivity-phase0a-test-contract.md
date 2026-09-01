@@ -11,7 +11,7 @@
 
 ## Mechanical gates
 
-1. Re-check latest migration number (`0083` is next at this review) and reserve one slot; fail if filename collides.
+1. Re-check latest migration number and reserve one slot; `0087_personal_productivity_contract.sql` follows MFA migrations `0083`–`0086`; fail if filename collides.
 2. `git diff --check` and Markdown formatting pass.
 3. Migration applies once to fresh DB and cloned dev DB.
 4. Retry behavior is either safe or runner ledger prevents replay with checksum proof.

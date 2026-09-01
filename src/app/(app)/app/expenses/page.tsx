@@ -42,6 +42,7 @@ import {
   PageHeaderTitle,
 } from "@/components/ui/page-header";
 import { Suspense } from "react";
+import { PersonalExpensesSection } from "@/components/expenses/personal-expenses-section";
 import {
   aggregateToBase,
   buildRateMap,
@@ -73,6 +74,7 @@ export default async function ExpensesPage({
     q?: string;
     page?: string;
     tab?: string;
+    scope?: "all" | "business" | "personal";
   }>;
 }) {
   const lang = await getCurrentLang();
@@ -92,7 +94,9 @@ export default async function ExpensesPage({
   const q = (params.q ?? "").trim();
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
   const tab =
-    params.tab === "categories" || params.tab === "recurring"
+    params.tab === "categories" ||
+    params.tab === "recurring" ||
+    params.tab === "personal"
       ? params.tab
       : "list";
   const { start: monthStart, end: monthEnd } = monthBounds(month);
@@ -484,6 +488,12 @@ export default async function ExpensesPage({
                 alwaysShow: true,
               },
               {
+                value: "personal",
+                label: t("Pribadi", "Personal"),
+                href: tabHref("personal"),
+                alwaysShow: true,
+              },
+              {
                 value: "recurring",
                 label: t("Rutin", "Recurring"),
                 href: tabHref("recurring"),
@@ -509,6 +519,10 @@ export default async function ExpensesPage({
           )}
         </CardHeader>
         <CardContent>
+          {tab === "personal" && (
+            <PersonalExpensesSection month={month} t={t} />
+          )}
+
           {tab === "categories" && (
             <CategoryManager
               workspaceId={ws.id}

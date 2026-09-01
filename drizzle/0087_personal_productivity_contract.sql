@@ -1,9 +1,9 @@
-ALTER TABLE users ADD COLUMN timezone text;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone text;
 
 UPDATE users u SET timezone = COALESCE((
   SELECT w.timezone FROM workspaces w WHERE w.owner_id = u.id
   ORDER BY w.created_at ASC, w.id ASC LIMIT 1
-), 'Asia/Jakarta');
+), 'Asia/Jakarta') WHERE timezone IS NULL OR btrim(timezone) = '';
 
 ALTER TABLE users ALTER COLUMN timezone SET DEFAULT 'Asia/Jakarta';
 ALTER TABLE users ALTER COLUMN timezone SET NOT NULL;
@@ -122,5 +122,5 @@ CREATE TABLE personal_budgets (
 CREATE INDEX personal_budgets_user_month_currency_idx ON personal_budgets(user_id,month DESC,currency);
 
 INSERT INTO cubiqlo_migrations (id,checksum,operator_name)
-VALUES ('0083_personal_productivity_contract.sql','personal-productivity-phase0a',current_user)
+VALUES ('0087_personal_productivity_contract.sql','personal-productivity-phase0a',current_user)
 ON CONFLICT (id) DO NOTHING;

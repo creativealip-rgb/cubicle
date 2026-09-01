@@ -1,11 +1,19 @@
 # Changelog
 
+## 2026-09-01 — Personal productivity and 50/30/20 budget
+
+- Added user-scoped Goals with lifecycle status, manual/step progress, linked habits, and exact-title deletion.
+- Added daily/scheduled Habits with timezone-local check-ins, completion rate, and current/best streaks.
+- Added isolated personal transactions, categories, private receipt key contracts, and Personal tab without changing business expense KPIs or reports.
+- Added monthly 50/30/20 budgets, exact-decimal targets, actual bucket summaries, currency exclusions, and concurrency-safe previous-month copy.
+- Added ID/EN responsive UI under Productivity and Expenses plus ownership, domain, navigation, and business-isolation regression tests.
+
 ## 2026-09-01 — Personal productivity Phase 0A contract lock
 
 - Locked user-level Goals, Habits, personal transactions, receipts, and 50/30/20 budget contracts without changing existing business Expense semantics.
 - Added deterministic user-timezone backfill, named DB-object ledger, ownership/role negative matrix, bounded unified-list cursor rules, and advisory-lock budget-copy semantics.
 - Added reconciliation contracts for row/domain violations, missing and unexpected DB objects, plus read-only object-storage reconciliation backed by required receipt MIME, size, and checksum metadata.
-- Reserved migration `0083_personal_productivity_contract.sql`, added matching Drizzle tables and named objects, and added a fail-closed reconciliation runner restricted to disposable `cubicle_phase0a_it*` databases.
+- Reserved migration `0087_personal_productivity_contract.sql`, added matching Drizzle tables and named objects, and added a fail-closed reconciliation runner restricted to disposable `cubicle_phase0a_it*` databases.
 - Verification: migration applied on disposable PostgreSQL with deterministic timezone assertions and negative constraint cases; reconciliation and production-DB guard passed; 320 test files / 1,581 tests, TypeScript, ESLint, and production build passed.
 - Phase 0A foundation is implementation-complete but not deployed. Feature actions/UI and production migration remain separate reviewed phases.
 

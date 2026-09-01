@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const migration = readFileSync(
-  "drizzle/0083_personal_productivity_contract.sql",
+  "drizzle/0087_personal_productivity_contract.sql",
   "utf8",
 );
 const schema = readFileSync("src/db/schema.ts", "utf8");
@@ -25,8 +25,8 @@ const objects = [
 ];
 
 describe("personal productivity Phase 0A schema contract", () => {
-  it("reserves migration 0083 with timezone backfill and seven tables", () => {
-    expect(migration).toContain("ADD COLUMN timezone");
+  it("reserves migration 0087 with timezone backfill and seven tables", () => {
+    expect(migration).toContain("ADD COLUMN IF NOT EXISTS timezone");
     expect(migration).toContain("ORDER BY w.created_at ASC, w.id ASC");
     for (const table of tables)
       expect(migration).toContain(`CREATE TABLE ${table}`);
