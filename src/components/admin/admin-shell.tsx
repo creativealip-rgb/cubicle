@@ -18,6 +18,7 @@ const NAV = [
   { href: "/workspaces", label: "Workspaces", icon: Building2 },
   { href: "/payments", label: "Payments", icon: CreditCard },
   { href: "/audit", label: "Audit Log", icon: ScrollText },
+  { href: "/mfa-recovery", label: "MFA Recovery", icon: ShieldCheck },
 ];
 
 /**
