@@ -19,6 +19,7 @@ import { ProductivityKpiCards } from "@/components/productivity/productivity-kpi
 import { GoalProgressCard } from "@/components/productivity/goal-progress-card";
 import { HabitHeatmap } from "@/components/productivity/habit-heatmap";
 import { GoalDialog } from "@/components/productivity/goal-dialog";
+import { TodayFocusCard, GoalStarterLinks } from "@/components/productivity/today-focus-card";
 import { Target, ArrowRight } from "lucide-react";
 
 export default async function ProductivityPage({
@@ -109,6 +110,8 @@ export default async function ProductivityPage({
         </div>
       </div>
 
+      {tab === "overview" && <TodayFocusCard activeGoals={goalMetrics.active} scheduledHabits={activeHabits.length} completedHabits={habitsCompletedToday} t={t} />}
+
       {/* KPI Top Cards Banner */}
       <ProductivityKpiCards
         activeGoals={goalMetrics.active}
@@ -181,6 +184,10 @@ export default async function ProductivityPage({
                   <p className="text-sm font-medium">
                     {t("Belum ada tujuan aktif.", "No active goals yet.")}
                   </p>
+                  <p className="mt-1 max-w-xs text-xs text-muted-foreground">
+                    {t("Mulai dari target kecil yang ingin kamu jaga setiap minggu.", "Start with a small target you want to keep each week.")}
+                  </p>
+                  <div className="mt-3"><GoalStarterLinks t={t} /></div>
                 </div>
               )}
             </CardContent>
