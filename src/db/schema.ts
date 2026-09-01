@@ -37,7 +37,351 @@ export const users = pgTable("users", {
   bannedAt: timestamp("banned_at", { withTimezone: true }),
   bannedReason: text("banned_reason"),
   preferredLanguage: text("preferred_language", { enum: ["id", "en"] }),
+  timezone: text("timezone").notNull().default("Asia/Jakarta"),
 });
+
+export const personalGoals = pgTable(
+  "personal_goals",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id").notNull(),
+    title: text("title").notNull(),
+    description: text("description"),
+    lifeArea: text("life_area").notNull(),
+    deadline: date("deadline"),
+    priority: text("priority").notNull().default("medium"),
+    reward: text("reward"),
+    status: text("status").notNull().default("not_started"),
+    manualProgress: integer("manual_progress").notNull().default(0),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    foreignKey({
+      columns: [t.userId],
+      foreignColumns: [users.id],
+      name: "personal_goals_user_fk",
+    }).onDelete("cascade"),
+    unique("personal_goals_id_user_uq").on(t.id, t.userId),
+    check("personal_goals_title_ck", sql`length(btrim(${t.title})) > 0`),
+    check("personal_goals_life_area_ck", sql`length(btrim(${t.lifeArea})) > 0`),
+    check(
+      "personal_goals_priority_ck",
+      sql`${t.priority} in ('low','medium','high')`,
+    ),
+    check(
+      "personal_goals_status_ck",
+      sql`${t.status} in ('not_started','in_progress','achieved','deferred','cancelled')`,
+    ),
+    check(
+      "personal_goals_progress_ck",
+      sql`${t.manualProgress} between 0 and 100`,
+    ),
+    index("personal_goals_user_status_idx").on(t.userId, t.status),
+    index("personal_goals_user_deadline_idx").on(t.userId, t.deadline),
+  ],
+);
+
+export const personalGoalSteps = pgTable(
+  "personal_goal_steps",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    goalId: uuid("goal_id").notNull(),
+    userId: text("user_id").notNull(),
+    title: text("title").notNull(),
+    isCompleted: boolean("is_completed").notNull().default(false),
+    sortOrder: integer("sort_order").notNull().default(0),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    foreignKey({
+      columns: [t.goalId, t.userId],
+      foreignColumns: [personalGoals.id, personalGoals.userId],
+      name: "personal_goal_steps_goal_user_fk",
+    }).onDelete("cascade"),
+    check("personal_goal_steps_title_ck", sql`length(btrim(${t.title})) > 0`),
+    index("personal_goal_steps_goal_sort_idx").on(t.goalId, t.sortOrder),
+  ],
+);
+
+export const personalHabits = pgTable(
+  "personal_habits",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id").notNull(),
+    goalId: uuid("goal_id"),
+    name: text("name").notNull(),
+    description: text("description"),
+    color: text("color"),
+    icon: text("icon"),
+    frequency: text("frequency").notNull().default("daily"),
+    weekdays: integer("weekdays")
+      .array()
+      .notNull()
+      .default(sql`'{}'::integer[]`),
+    startDate: date("start_date").notNull(),
+    status: text("status").notNull().default("active"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    foreignKey({
+      columns: [t.userId],
+      foreignColumns: [users.id],
+      name: "personal_habits_user_fk",
+    }).onDelete("cascade"),
+    unique("personal_habits_id_user_uq").on(t.id, t.userId),
+    foreignKey({
+      columns: [t.goalId, t.userId],
+      foreignColumns: [personalGoals.id, personalGoals.userId],
+      name: "personal_habits_goal_user_fk",
+    }),
+    check("personal_habits_name_ck", sql`length(btrim(${t.name})) > 0`),
+    check(
+      "personal_habits_frequency_ck",
+      sql`${t.frequency} in ('daily','specific_weekdays')`,
+    ),
+    check(
+      "personal_habits_status_ck",
+      sql`${t.status} in ('active','archived')`,
+    ),
+    check(
+      "personal_habits_schedule_ck",
+      sql`personal_weekdays_valid(${t.frequency},${t.weekdays})`,
+    ),
+    index("personal_habits_user_status_idx").on(t.userId, t.status),
+    index("personal_habits_user_goal_idx").on(t.userId, t.goalId),
+  ],
+);
+
+export const personalHabitCheckins = pgTable(
+  "personal_habit_checkins",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    habitId: uuid("habit_id").notNull(),
+    userId: text("user_id").notNull(),
+    localDate: date("local_date").notNull(),
+    note: text("note"),
+    completedAt: timestamp("completed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    foreignKey({
+      columns: [t.habitId, t.userId],
+      foreignColumns: [personalHabits.id, personalHabits.userId],
+      name: "personal_habit_checkins_habit_user_fk",
+    }).onDelete("cascade"),
+    unique("personal_habit_checkins_habit_date_uq").on(t.habitId, t.localDate),
+    index("personal_habit_checkins_user_date_idx").on(t.userId, t.localDate),
+  ],
+);
+
+export const personalTransactionCategories = pgTable(
+  "personal_transaction_categories",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id").notNull(),
+    name: text("name").notNull(),
+    color: text("color").notNull().default("#64748b"),
+    icon: text("icon"),
+    defaultBucket: text("default_bucket").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    foreignKey({
+      columns: [t.userId],
+      foreignColumns: [users.id],
+      name: "personal_categories_user_fk",
+    }).onDelete("cascade"),
+    unique("personal_categories_id_user_uq").on(t.id, t.userId),
+    uniqueIndex("personal_categories_user_lower_name_uq").on(
+      t.userId,
+      sql`lower(${t.name})`,
+    ),
+    index("personal_categories_user_name_idx").on(t.userId, t.name),
+    check("personal_categories_name_ck", sql`length(btrim(${t.name})) > 0`),
+    check(
+      "personal_categories_color_ck",
+      sql`${t.color} ~ '^#[0-9A-Fa-f]{6}$'`,
+    ),
+    check(
+      "personal_categories_bucket_ck",
+      sql`${t.defaultBucket} in ('needs','wants','savings','unbudgeted')`,
+    ),
+  ],
+);
+
+export const personalTransactions = pgTable(
+  "personal_transactions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id").notNull(),
+    categoryId: uuid("category_id"),
+    transactionType: text("transaction_type").notNull(),
+    budgetBucket: text("budget_bucket").notNull(),
+    amount: numeric("amount", { precision: 18, scale: 2 }).notNull(),
+    currency: text("currency").notNull(),
+    date: date("date").notNull(),
+    description: text("description").notNull(),
+    merchant: text("merchant"),
+    receiptKey: text("receipt_key"),
+    receiptMime: text("receipt_mime"),
+    receiptSizeBytes: bigint("receipt_size_bytes", { mode: "number" }),
+    receiptChecksum: text("receipt_checksum"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    foreignKey({
+      columns: [t.userId],
+      foreignColumns: [users.id],
+      name: "personal_transactions_user_fk",
+    }).onDelete("cascade"),
+    unique("personal_transactions_id_user_uq").on(t.id, t.userId),
+    foreignKey({
+      columns: [t.categoryId, t.userId],
+      foreignColumns: [
+        personalTransactionCategories.id,
+        personalTransactionCategories.userId,
+      ],
+      name: "personal_transactions_category_user_fk",
+    }),
+    check(
+      "personal_transactions_type_ck",
+      sql`${t.transactionType} in ('expense','allocation')`,
+    ),
+    check(
+      "personal_transactions_bucket_ck",
+      sql`${t.budgetBucket} in ('needs','wants','savings','unbudgeted')`,
+    ),
+    check(
+      "personal_transactions_type_bucket_ck",
+      sql`(${t.transactionType}='allocation' and ${t.budgetBucket}='savings') or (${t.transactionType}='expense' and ${t.budgetBucket} in ('needs','wants','unbudgeted'))`,
+    ),
+    check("personal_transactions_amount_ck", sql`${t.amount}>0`),
+    check(
+      "personal_transactions_currency_ck",
+      sql`${t.currency} ~ '^[A-Z]{3}$'`,
+    ),
+    check(
+      "personal_transactions_description_ck",
+      sql`length(btrim(${t.description}))>0`,
+    ),
+    check(
+      "personal_transactions_receipt_prefix_ck",
+      sql`${t.receiptKey} is null or ${t.receiptKey} like ('personal/'||${t.userId}||'/receipts/'||${t.id}||'/%')`,
+    ),
+    check(
+      "personal_transactions_receipt_metadata_ck",
+      sql`(${t.receiptKey} is null and ${t.receiptMime} is null and ${t.receiptSizeBytes} is null and ${t.receiptChecksum} is null) or (${t.receiptKey} is not null and ${t.receiptMime} is not null and ${t.receiptSizeBytes}>0 and ${t.receiptChecksum} is not null)`,
+    ),
+    index("personal_transactions_user_date_created_id_idx").on(
+      t.userId,
+      t.date.desc(),
+      t.createdAt.desc(),
+      t.id.desc(),
+    ),
+    index("personal_transactions_user_currency_date_idx").on(
+      t.userId,
+      t.currency,
+      t.date,
+    ),
+  ],
+);
+
+export const personalBudgets = pgTable(
+  "personal_budgets",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id").notNull(),
+    month: date("month").notNull(),
+    currency: text("currency").notNull(),
+    income: numeric("income", { precision: 18, scale: 2 }).notNull(),
+    needsPct: numeric("needs_pct", { precision: 5, scale: 2 })
+      .notNull()
+      .default("50"),
+    wantsPct: numeric("wants_pct", { precision: 5, scale: 2 })
+      .notNull()
+      .default("30"),
+    savingsPct: numeric("savings_pct", { precision: 5, scale: 2 })
+      .notNull()
+      .default("20"),
+    enabled: boolean("enabled").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    foreignKey({
+      columns: [t.userId],
+      foreignColumns: [users.id],
+      name: "personal_budgets_user_fk",
+    }).onDelete("cascade"),
+    unique("personal_budgets_id_user_uq").on(t.id, t.userId),
+    unique("personal_budgets_user_month_currency_uq").on(
+      t.userId,
+      t.month,
+      t.currency,
+    ),
+    check(
+      "personal_budgets_month_ck",
+      sql`${t.month}=date_trunc('month',${t.month})::date`,
+    ),
+    check("personal_budgets_currency_ck", sql`${t.currency} ~ '^[A-Z]{3}$'`),
+    check("personal_budgets_income_ck", sql`${t.income}>0`),
+    check(
+      "personal_budgets_needs_pct_ck",
+      sql`${t.needsPct} between 0 and 100`,
+    ),
+    check(
+      "personal_budgets_wants_pct_ck",
+      sql`${t.wantsPct} between 0 and 100`,
+    ),
+    check(
+      "personal_budgets_savings_pct_ck",
+      sql`${t.savingsPct} between 0 and 100`,
+    ),
+    check(
+      "personal_budgets_percent_total_ck",
+      sql`${t.needsPct}+${t.wantsPct}+${t.savingsPct}=100`,
+    ),
+    index("personal_budgets_user_month_currency_idx").on(
+      t.userId,
+      t.month.desc(),
+      t.currency,
+    ),
+  ],
+);
+
+
 
 // ─── Admin audit trail (superadmin control plane) ───
 export const adminAuditLogs = pgTable(

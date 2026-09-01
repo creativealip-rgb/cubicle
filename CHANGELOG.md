@@ -5,7 +5,9 @@
 - Locked user-level Goals, Habits, personal transactions, receipts, and 50/30/20 budget contracts without changing existing business Expense semantics.
 - Added deterministic user-timezone backfill, named DB-object ledger, ownership/role negative matrix, bounded unified-list cursor rules, and advisory-lock budget-copy semantics.
 - Added reconciliation contracts for row/domain violations, missing and unexpected DB objects, plus read-only object-storage reconciliation backed by required receipt MIME, size, and checksum metadata.
-- Phase remains NO-GO for feature coding until migration `0083` is re-confirmed and reserved, Drizzle parity exists, disposable-DB reconciliation passes through a fail-closed runner, and behavioral tests are green.
+- Reserved migration `0083_personal_productivity_contract.sql`, added matching Drizzle tables and named objects, and added a fail-closed reconciliation runner restricted to disposable `cubicle_phase0a_it*` databases.
+- Verification: migration applied on disposable PostgreSQL with deterministic timezone assertions and negative constraint cases; reconciliation and production-DB guard passed; 320 test files / 1,581 tests, TypeScript, ESLint, and production build passed.
+- Phase 0A foundation is implementation-complete but not deployed. Feature actions/UI and production migration remain separate reviewed phases.
 
 ## 2026-08-29 — Dashboard approvals and first-workspace setup
 
