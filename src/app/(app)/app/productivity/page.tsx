@@ -21,6 +21,8 @@ import { HabitHeatmap } from "@/components/productivity/habit-heatmap";
 import { GoalDialog } from "@/components/productivity/goal-dialog";
 import { TodayFocusCard, GoalStarterLinks } from "@/components/productivity/today-focus-card";
 import { Target, ArrowRight } from "lucide-react";
+import { WeeklyReviewCard, QuickCaptureCard } from "@/components/productivity/weekly-review-card";
+import { weeklyReview } from "@/lib/personal-productivity/retention";
 
 export default async function ProductivityPage({
   searchParams,
@@ -85,6 +87,7 @@ export default async function ProductivityPage({
   const activeGoals = goals.filter(
     (x) => x.status === "not_started" || x.status === "in_progress",
   );
+  const review = weeklyReview(weeklyTrends[4]?.completed ?? 0, weeklyTrends[4]?.totalScheduled ?? 0, goalMetrics.active, activeGoals.filter((g) => g.manualProgress > 0 || g.steps.some((s) => s.isCompleted)).length);
 
   return (
     <div className="space-y-6">
@@ -110,7 +113,10 @@ export default async function ProductivityPage({
         </div>
       </div>
 
-      {tab === "overview" && <TodayFocusCard activeGoals={goalMetrics.active} scheduledHabits={activeHabits.length} completedHabits={habitsCompletedToday} t={t} />}
+      {tab === "overview" && <>
+        <TodayFocusCard activeGoals={goalMetrics.active} scheduledHabits={activeHabits.length} completedHabits={habitsCompletedToday} t={t} />
+        <div className="grid gap-4 lg:grid-cols-2"><WeeklyReviewCard {...review} t={t} /><QuickCaptureCard t={t} /></div>
+      </>}
 
       {/* KPI Top Cards Banner */}
       <ProductivityKpiCards
