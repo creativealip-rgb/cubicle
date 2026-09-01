@@ -245,5 +245,12 @@ export const auth = betterAuth({
     crossSubDomainCookies: authEnvironment.crossSubDomainCookies,
   },
   // twoFactor plugin manages backupCodes storage in two_factor.backup_codes.
-  plugins: [twoFactor(), passkey({ rpID: "cubiqlo.com", rpName: "Cubiqlo", origin: "https://app.cubiqlo.com" })],
+  plugins: [
+    twoFactor(),
+    passkey({
+      rpID: "cubiqlo.com",
+      rpName: "Cubiqlo",
+      origin: process.env.BETTER_AUTH_URL ?? "https://app.cubiqlo.com",
+    }),
+  ],
 });
