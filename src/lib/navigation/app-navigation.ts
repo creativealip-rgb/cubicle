@@ -54,8 +54,8 @@ export const appNavigation: NavigationEntry[] = [
     direct("reports", "/app/reports", BarChart3, { id: "Laporan", en: "Reports" }, { id: "Analisis keuangan dan performa waktu", en: "Analyze financial and time performance" }),
   ]},
   direct("calendar", "/app/calendar", Calendar, { id: "Kalender", en: "Calendar" }),
-  direct("productivity", "/app/productivity", CheckSquare, { id: "Produktivitas", en: "Productivity" }, { id: "Kelola tujuan dan kebiasaan pribadi", en: "Manage personal goals and habits" }),
   { kind: "group", id: "personal", icon: NotebookPen, label: { id: "Personal", en: "Personal" }, ownerOnly: true, children: [
+    direct("productivity", "/app/productivity", CheckSquare, { id: "Produktivitas", en: "Productivity" }, { id: "Kelola tujuan dan kebiasaan pribadi", en: "Manage personal goals and habits" }),
     direct("notes", "/app/personal", NotebookPen, { id: "Catatan", en: "Notes" }, { id: "Simpan catatan pribadi", en: "Keep private notes" }),
     direct("journal", "/app/journal", NotebookPen, { id: "Jurnal", en: "Journal" }, { id: "Tulis jurnal pekerjaan", en: "Write your work journal" }),
   ]},

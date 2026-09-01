@@ -16,7 +16,7 @@ describe("app navigation registry", () => {
     const routes = allRoutes();
     expect(new Set(routes).size).toBe(routes.length);
     expect(appNavigation.map((entry) => entry.id)).toEqual([
-      "dashboard", "work", "time", "business", "finance", "calendar", "productivity", "personal", "ai",
+      "dashboard", "work", "time", "business", "finance", "calendar", "personal", "ai",
     ]);
     expect(routes).toContain("/app/services");
     expect(routes).toContain("/app/proposals");
