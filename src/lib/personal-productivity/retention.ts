@@ -39,14 +39,3 @@ export function weeklyReview(
     goalSummary: activeGoals ? `${progressingGoals}/${activeGoals} goals moving` : "No active goals yet",
   };
 }
-
-export function quickCaptureLinks() {
-  return [
-    { href: "/app/productivity?tab=habits", label: "Check a habit" },
-    { href: "/app/productivity?tab=goals", label: "Update a goal" },
-  ];
-}
-
-export function habitReviewLabel(rate: number) {
-  return rate >= 80 ? "On track" : rate >= 40 ? "Needs attention" : "Start small";
-}

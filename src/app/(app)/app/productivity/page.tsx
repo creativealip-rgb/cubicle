@@ -5,7 +5,7 @@ import {
   listPersonalGoals,
   updatePersonalGoal,
 } from "@/lib/actions/personal-goals";
-import { listPersonalHabits } from "@/lib/actions/personal-habits";
+import { listPersonalHabits, togglePersonalHabitCheckin } from "@/lib/actions/personal-habits";
 import {
   calculateGoalMetrics,
   calculateHabitHeatmap,
@@ -21,8 +21,10 @@ import { HabitHeatmap } from "@/components/productivity/habit-heatmap";
 import { GoalDialog } from "@/components/productivity/goal-dialog";
 import { TodayFocusCard, GoalStarterLinks } from "@/components/productivity/today-focus-card";
 import { Target, ArrowRight } from "lucide-react";
-import { WeeklyReviewCard, QuickCaptureCard } from "@/components/productivity/weekly-review-card";
+import { WeeklyReviewCard } from "@/components/productivity/weekly-review-card";
+import { QuickCaptureCard } from "@/components/productivity/quick-capture-card";
 import { calculateHealthyStreak, weeklyReview } from "@/lib/personal-productivity/retention";
+import { dateOffset, isHabitScheduled } from "@/lib/personal-productivity/habits";
 
 export default async function ProductivityPage({
   searchParams,
@@ -81,11 +83,35 @@ export default async function ProductivityPage({
     });
   }
 
+  async function quickCheckHabit(formData: FormData) {
+    "use server";
+    await togglePersonalHabitCheckin(String(formData.get("habitId")));
+  }
+
+  async function quickUpdateGoal(formData: FormData) {
+    "use server";
+    const id = String(formData.get("goalId"));
+    const goal = goals.find((item) => item.id === id);
+    if (!goal) return;
+    await updatePersonalGoal(id, {
+      title: goal.title,
+      description: goal.description,
+      lifeArea: goal.lifeArea,
+      deadline: goal.deadline,
+      priority: goal.priority as "low" | "medium" | "high",
+      reward: goal.reward,
+      status: goal.status as "not_started" | "in_progress" | "achieved" | "deferred" | "cancelled",
+      manualProgress: Number(formData.get("progress")),
+    });
+  }
+
   const activeGoals = goals.filter(
     (x) => x.status === "not_started" || x.status === "in_progress",
   );
   const attentionHabit = activeHabits.map((h) => ({ h, rate: calculateWeeklyConsistency([h], today, 1)[0]?.rate ?? 0 })).sort((a, b) => a.rate - b.rate)[0]?.h.name ?? null;
-  const focusGoal = activeGoals.find((g) => g.manualProgress < 100)?.title ?? null;
+  const staleThreshold = new Date(`${dateOffset(today, -7)}T00:00:00Z`);
+  const staleGoal = activeGoals.find((g) => g.updatedAt <= staleThreshold)?.title ?? null;
+  const focusGoal = staleGoal ?? activeGoals.find((g) => g.manualProgress < 100)?.title ?? null;
   const review = weeklyReview(weeklyTrends[4]?.completed ?? 0, weeklyTrends[4]?.totalScheduled ?? 0, goalMetrics.active, activeGoals.filter((g) => g.manualProgress > 0 || g.steps.some((s) => s.isCompleted)).length);
 
   return (
@@ -114,7 +140,7 @@ export default async function ProductivityPage({
 
       {tab === "overview" && <>
         <TodayFocusCard activeGoals={goalMetrics.active} scheduledHabits={activeHabits.length} completedHabits={habitsCompletedToday} t={t} />
-        <div className="grid gap-4 lg:grid-cols-2"><WeeklyReviewCard {...review} attentionHabit={attentionHabit} focusGoal={focusGoal} t={t} /><QuickCaptureCard t={t} /></div>
+        <div className="grid gap-4 lg:grid-cols-2"><WeeklyReviewCard {...review} attentionHabit={attentionHabit} focusGoal={focusGoal} t={t} /><QuickCaptureCard habits={activeHabits.filter((h) => today >= h.startDate && isHabitScheduled(h.frequency as "daily" | "specific_weekdays", h.weekdays, today) && !h.checkins.some((c) => c.localDate === today)).map((h) => ({ id: h.id, name: h.name }))} goals={activeGoals.map((g) => ({ id: g.id, title: g.title, progress: g.manualProgress }))} checkHabit={quickCheckHabit} updateGoal={quickUpdateGoal} t={t} /></div>
       </>}
 
       {/* KPI Top Cards Banner */}
