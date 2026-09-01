@@ -4,6 +4,7 @@ import { passkey } from "@better-auth/passkey";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db";
 import { sessions, users } from "@/db/schema";
+import * as authSchema from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { sendNotification } from "@/lib/notifications";
 import { resolveBetterAuthSecret } from "@/lib/auth-secret";
@@ -23,6 +24,7 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
     usePlural: true,
+    schema: authSchema,
   }),
   user: {
     additionalFields: {
