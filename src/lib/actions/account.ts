@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { eq, and } from "drizzle-orm";
 import { hashPassword, verifyPassword } from "@better-auth/utils/password";
 import { db } from "@/db";
-import { accounts, users } from "@/db/schema";
+import { accounts, sessions, users } from "@/db/schema";
 import { requireAppSession } from "@/lib/app-auth";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -70,5 +70,22 @@ export async function updateAccountPassword(
 
   await auth.api.revokeOtherSessions({ headers: await headers() });
 
+  return { ok: true };
+}
+
+export async function revokeAccountSession(id: string): Promise<AccountActionResult> {
+  const session = await requireAppSession("/app/settings?tab=account");
+  const deleted = await db.delete(sessions)
+    .where(and(eq(sessions.id, id), eq(sessions.userId, session.user.id)))
+    .returning({ id: sessions.id });
+  if (!deleted.length) return { ok: false, error: "Sesi tidak ditemukan." };
+  revalidatePath("/app/settings");
+  return { ok: true };
+}
+
+export async function signOutOtherSessions(): Promise<AccountActionResult> {
+  await requireAppSession("/app/settings?tab=account");
+  await auth.api.revokeOtherSessions({ headers: await headers() });
+  revalidatePath("/app/settings");
   return { ok: true };
 }

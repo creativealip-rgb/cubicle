@@ -2,7 +2,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { workspaces, workspaceMembers, users, workspaceCurrencyRates } from "@/db/schema";
+import { accounts, passkeys, sessions, twoFactors, workspaces, workspaceMembers, users, workspaceCurrencyRates } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import { GoogleCalendarConnect } from "@/components/settings/google-calendar-con
 import { CurrencyRatesForm } from "@/components/settings/currency-rates-form";
 import { SettingsTabs } from "@/components/settings/settings-tabs";
 import { AccountSettingsForm } from "@/components/settings/account-settings-form";
+import { AccountSecuritySettings } from "@/components/settings/account-security-settings";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { canInviteMember } from "@/lib/plan";
 import {
@@ -51,10 +52,17 @@ export default async function SettingsPage({
 
   const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
   const [currentUser] = await db
-    .select({ name: users.name, email: users.email, emailVerified: users.emailVerified })
+    .select({ name: users.name, email: users.email, emailVerified: users.emailVerified, twoFactorEnabled: users.twoFactorEnabled })
     .from(users)
     .where(eq(users.id, user.id))
     .limit(1);
+
+  const [credentialPassword, passkeyRows, twoFactorRows, sessionRows] = await Promise.all([
+    db.select({ id: accounts.id }).from(accounts).where(and(eq(accounts.userId, user.id), eq(accounts.providerId, "credential"))).limit(1),
+    db.select({ id: passkeys.id, name: passkeys.name, deviceType: passkeys.deviceType, createdAt: passkeys.createdAt }).from(passkeys).where(eq(passkeys.userId, user.id)).orderBy(passkeys.createdAt),
+    db.select({ id: twoFactors.id }).from(twoFactors).where(eq(twoFactors.userId, user.id)).limit(1),
+    db.select({ id: sessions.id, updatedAt: sessions.updatedAt, ipAddress: sessions.ipAddress, userAgent: sessions.userAgent }).from(sessions).where(eq(sessions.userId, user.id)).orderBy(sessions.updatedAt),
+  ]);
 
   const members = await db
     .select({
@@ -194,6 +202,7 @@ export default async function SettingsPage({
             </>
           }
           account={
+            <div className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle>{t("Akun", "Account")}</CardTitle>
@@ -212,6 +221,14 @@ export default async function SettingsPage({
                 />
               </CardContent>
             </Card>
+            <AccountSecuritySettings
+              twoFactorEnabled={Boolean(currentUser?.twoFactorEnabled)}
+              hasAuthenticator={twoFactorRows.length > 0}
+              hasCredentialPassword={credentialPassword.length > 0}
+              passkeys={passkeyRows}
+              sessions={sessionRows}
+            />
+            </div>
           }
           team={
             <Card>
