@@ -18,7 +18,7 @@ export async function requestMfaRecovery(input: z.infer<typeof requestSchema>) {
   const { email, password, reason } = requestSchema.parse(input);
   await enforceServerActionRateLimit("user:mfa-recovery", email, { limit: 3, windowSec: 86400 });
   const [user] = await db.select({ id: users.id, email: users.email, password: accounts.password }).from(users).innerJoin(accounts, and(eq(accounts.userId, users.id), eq(accounts.providerId, "credential"))).where(eq(users.email, email)).limit(1);
-  if (!user?.password || !(await verifyPassword(password, user.password))) throw new Error("Unable to create recovery request");
+  if (!user?.password || !(await verifyPassword(user.password, password))) throw new Error("Unable to create recovery request");
   const [existing] = await db.select({ id: mfaRecoveryRequests.id }).from(mfaRecoveryRequests).where(and(eq(mfaRecoveryRequests.userId, user.id), eq(mfaRecoveryRequests.status, "pending"))).limit(1);
   if (existing) return { ok: true, requestId: existing.id };
   const createdAt = new Date();
