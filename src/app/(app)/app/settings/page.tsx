@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { accounts, passkeys, sessions, twoFactors, workspaces, workspaceMembers, users, workspaceCurrencyRates } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -61,7 +61,7 @@ export default async function SettingsPage({
     db.select({ id: accounts.id }).from(accounts).where(and(eq(accounts.userId, user.id), eq(accounts.providerId, "credential"))).limit(1),
     db.select({ id: passkeys.id, name: passkeys.name, deviceType: passkeys.deviceType, createdAt: passkeys.createdAt }).from(passkeys).where(eq(passkeys.userId, user.id)).orderBy(passkeys.createdAt),
     db.select({ id: twoFactors.id }).from(twoFactors).where(eq(twoFactors.userId, user.id)).limit(1),
-    db.select({ id: sessions.id, updatedAt: sessions.updatedAt, ipAddress: sessions.ipAddress, userAgent: sessions.userAgent }).from(sessions).where(eq(sessions.userId, user.id)).orderBy(sessions.updatedAt),
+    db.select({ id: sessions.id, updatedAt: sessions.updatedAt, ipAddress: sessions.ipAddress, userAgent: sessions.userAgent }).from(sessions).where(eq(sessions.userId, user.id)).orderBy(desc(sessions.updatedAt)).limit(5),
   ]);
 
   const members = await db

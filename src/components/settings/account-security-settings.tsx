@@ -14,6 +14,13 @@ import { useT } from "@/lib/i18n-client";
 type PasskeyItem = { id: string; name: string | null; deviceType: string; createdAt: Date | null };
 type SessionItem = { id: string; updatedAt: Date; ipAddress: string | null; userAgent: string | null };
 
+function friendlyDeviceName(userAgent: string | null) {
+  if (!userAgent) return null;
+  const browser = userAgent.includes("Edg/") ? "Edge" : userAgent.includes("Chrome/") ? "Chrome" : userAgent.includes("Firefox/") ? "Firefox" : userAgent.includes("Safari/") ? "Safari" : userAgent.startsWith("curl/") ? "Command line" : "Browser";
+  const device = /Android|iPhone|iPad|Mobile/i.test(userAgent) ? "Mobile" : /Windows/i.test(userAgent) ? "Windows" : /Macintosh|Mac OS/i.test(userAgent) ? "Mac" : /Linux/i.test(userAgent) ? "Linux" : "Device";
+  return `${browser} · ${device}`;
+}
+
 export function AccountSecuritySettings({ twoFactorEnabled, hasAuthenticator, hasCredentialPassword, passkeys, sessions }: { twoFactorEnabled: boolean; hasAuthenticator: boolean; hasCredentialPassword: boolean; passkeys: PasskeyItem[]; sessions: SessionItem[] }) {
   const { t } = useT();
   const [adding, setAdding] = useState(false);
@@ -65,8 +72,8 @@ export function AccountSecuritySettings({ twoFactorEnabled, hasAuthenticator, ha
       </CardContent>
     </Card>
     <Card>
-      <CardHeader><CardTitle className="flex items-center gap-2"><Laptop className="h-5 w-5" />{t("Sesi & perangkat", "Sessions & devices")}</CardTitle><CardDescription>{t("Tinjau perangkat aktif dan keluarkan akses yang tidak dikenal.", "Review active devices and remove unrecognized access.")}</CardDescription></CardHeader>
-      <CardContent className="space-y-3">{sessions.map((item, index) => <div key={item.id} className="flex flex-col justify-between gap-3 rounded-lg border p-3 sm:flex-row sm:items-center"><div><p className="text-sm font-medium">{item.userAgent?.split(" ").slice(0, 3).join(" ") || t("Perangkat tidak dikenal", "Unknown device")} {index === 0 && <Badge variant="secondary" className="ml-2">{t("Terbaru", "Latest")}</Badge>}</p><p className="text-xs text-muted-foreground">{item.ipAddress || t("IP tidak tersedia", "IP unavailable")} · {new Date(item.updatedAt).toLocaleString()}</p></div><Button type="button" variant="outline" size="sm" onClick={() => revoke(item.id)} disabled={pending}>{t("Keluar", "Sign out")}</Button></div>)}<Button type="button" variant="outline" onClick={revokeOthers} disabled={pending || sessions.length < 2}>{t("Keluarkan perangkat lain", "Sign out other devices")}</Button></CardContent>
+      <CardHeader className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><div><CardTitle className="flex items-center gap-2"><Laptop className="h-5 w-5" />{t("Sesi & perangkat", "Sessions & devices")}</CardTitle><CardDescription>{t("Menampilkan 5 sesi terbaru.", "Showing 5 latest sessions.")}</CardDescription></div><Button type="button" variant="outline" onClick={revokeOthers} disabled={pending || sessions.length < 2}>{t("Keluarkan perangkat lain", "Sign out other devices")}</Button></CardHeader>
+      <CardContent className="space-y-3">{sessions.map((item, index) => <div key={item.id} className="flex flex-col justify-between gap-3 rounded-lg border p-3 sm:flex-row sm:items-center"><div><p className="text-sm font-medium">{friendlyDeviceName(item.userAgent) || t("Perangkat tidak dikenal", "Unknown device")} {index === 0 && <Badge variant="secondary" className="ml-2">{t("Terbaru", "Latest")}</Badge>}</p><p className="text-xs text-muted-foreground">{item.ipAddress || t("IP tidak tersedia", "IP unavailable")} · {new Date(item.updatedAt).toLocaleString()}</p></div><Button type="button" variant="outline" size="sm" onClick={() => revoke(item.id)} disabled={pending}>{t("Keluar", "Sign out")}</Button></div>)}</CardContent>
     </Card>
   </>;
 }

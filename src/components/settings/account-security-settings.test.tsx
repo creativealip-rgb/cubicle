@@ -21,4 +21,10 @@ describe("account security settings", () => {
     expect(page).toContain("passkeyRows");
     expect(page).toContain("sessionRows");
   });
+
+  it("limits sessions and keeps the bulk action above the list", () => {
+    expect(page).toMatch(/sessionRows[\s\S]*?orderBy\(desc\(sessions\.updatedAt\)\)[\s\S]*?limit\(5\)/);
+    expect(component.indexOf("signOutOtherSessions")).toBeLessThan(component.indexOf("sessions.map"));
+    expect(component).toContain("friendlyDeviceName");
+  });
 });
