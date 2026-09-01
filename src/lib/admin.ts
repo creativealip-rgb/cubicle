@@ -11,7 +11,10 @@ export type AdminAction =
   | "user.password_reset"
   | "user.ban"
   | "user.unban"
-  | "user.plan_change";
+  | "user.plan_change"
+  | "mfa.recovery.approve"
+  | "mfa.recovery.reject"
+  | "mfa.recovery.execute";
 
 export interface AdminAuditInput {
   targetUserId?: string;
