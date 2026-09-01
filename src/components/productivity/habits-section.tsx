@@ -85,6 +85,15 @@ export async function HabitsSection({
       </div>
 
       {/* Active Habits List */}
+      {activeHabits.some((h) => {
+        const scheduled = today >= h.startDate && isHabitScheduled(h.frequency as "daily" | "specific_weekdays", h.weekdays, today);
+        return scheduled && !h.checkins.some((c) => c.localDate === today);
+      }) && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+          <p className="font-semibold">{t("Masih ada kebiasaan yang belum selesai hari ini.", "Still to do today")}</p>
+          <p className="mt-0.5 text-xs opacity-80">{t("Satu check-in kecil sudah cukup untuk menjaga ritme.", "One small check-in is enough to keep your rhythm.")}</p>
+        </div>
+      )}
       <div className="grid gap-4">
         {activeHabits.map((h) => {
           const scheduledToday = today >= h.startDate && isHabitScheduled(

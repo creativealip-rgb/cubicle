@@ -15,6 +15,7 @@ export function TodayFocusCard({
   t: (id: string, en: string) => string;
 }) {
   const habitLabel = scheduledHabits ? `${completedHabits}/${scheduledHabits}` : t("Belum ada", "None yet");
+  const recap = scheduledHabits === 0 ? t("Siap mulai", "Ready when you are") : completedHabits === scheduledHabits ? t("Great work", "Great work") : completedHabits > 0 ? t("Teruskan", "Keep going") : t("Mulai dari satu", "Start with one");
   return (
     <Card className="rounded-3xl border-violet-100 bg-gradient-to-br from-violet-50/80 via-card to-card shadow-sm">
       <CardHeader className="pb-3">
@@ -23,6 +24,7 @@ export function TodayFocusCard({
           {t("Fokus Hari Ini", "Today's focus")}
         </CardTitle>
         <p className="text-xs text-muted-foreground">{t("Selesaikan satu langkah kecil sebelum hari berakhir.", "Finish one small step before the day ends.")}</p>
+        <p className="text-sm font-semibold text-violet-700 dark:text-violet-300">{t("Rekap Hari Ini", "Daily recap")}: {recap}</p>
       </CardHeader>
       <CardContent className="grid gap-3 sm:grid-cols-2">
         <Link href="/app/productivity?tab=habits" className="group rounded-2xl border bg-background/80 p-4 transition hover:border-violet-300 hover:shadow-sm">
