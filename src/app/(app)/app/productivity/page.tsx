@@ -104,7 +104,7 @@ export default async function ProductivityPage({
         {/* Global Action Header */}
         <div className="flex items-center gap-2">
           {tab === "goals" && (
-            <GoalDialog t={t} createGoalAction={createGoal} />
+            <GoalDialog lang={lang} createGoalAction={createGoal} />
           )}
         </div>
       </div>
@@ -182,7 +182,7 @@ export default async function ProductivityPage({
                     {t("Belum ada tujuan aktif.", "No active goals yet.")}
                   </p>
                   <div className="mt-3">
-                    <GoalDialog t={t} createGoalAction={createGoal} />
+                    <GoalDialog lang={lang} createGoalAction={createGoal} />
                   </div>
                 </div>
               )}
@@ -207,7 +207,7 @@ export default async function ProductivityPage({
             <p className="text-sm font-medium text-muted-foreground">
               {goals.length} {t("tujuan terdaftar", "registered goals")}
             </p>
-            <GoalDialog t={t} createGoalAction={createGoal} />
+            <GoalDialog lang={lang} createGoalAction={createGoal} />
           </div>
 
           <div className="grid gap-4">
@@ -234,7 +234,7 @@ export default async function ProductivityPage({
                   )}
                 </p>
                 <div className="mt-4">
-                  <GoalDialog t={t} createGoalAction={createGoal} />
+                  <GoalDialog lang={lang} createGoalAction={createGoal} />
                 </div>
               </Card>
             )}
@@ -246,6 +246,7 @@ export default async function ProductivityPage({
       {tab === "habits" && (
         <HabitsSection
           t={t}
+          lang={lang}
           goals={goals.map((g) => ({ id: g.id, title: g.title }))}
         />
       )}

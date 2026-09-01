@@ -13,18 +13,19 @@ import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
 
 interface HabitDialogProps {
-  t: (id: string, en: string) => string;
+  lang?: string;
   goals: { id: string; title: string }[];
   today: string;
   createHabitAction: (fd: FormData) => Promise<void>;
 }
 
 export function HabitDialog({
-  t,
+  lang = "id",
   goals,
   today,
   createHabitAction,
 }: HabitDialogProps) {
+  const isEn = lang === "en";
   const [open, setOpen] = useState(false);
   const [frequency, setFrequency] = useState<"daily" | "specific_weekdays">("daily");
 
@@ -33,13 +34,13 @@ export function HabitDialog({
       <DialogTrigger asChild>
         <Button className="rounded-xl bg-violet-600 font-semibold text-white shadow-sm transition hover:bg-violet-700">
           <Plus className="mr-1.5 size-4" />
-          {t("Tambah Kebiasaan", "Add Habit")}
+          {isEn ? "Add Habit" : "Tambah Kebiasaan"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md rounded-3xl p-6 sm:p-8">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">
-            {t("Buat Kebiasaan Baru", "Create New Habit")}
+            {isEn ? "Create New Habit" : "Buat Kebiasaan Baru"}
           </DialogTitle>
         </DialogHeader>
         <form
@@ -51,12 +52,12 @@ export function HabitDialog({
         >
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {t("Nama Kebiasaan", "Habit Name")}
+              {isEn ? "Habit Name" : "Nama Kebiasaan"}
             </label>
             <Input
               name="name"
               required
-              placeholder={t("Contoh: Olahraga Pagi 30 Menit", "e.g. 30-Min Morning Workout")}
+              placeholder={isEn ? "e.g. 30-Min Morning Workout" : "Contoh: Olahraga Pagi 30 Menit"}
               className="rounded-xl"
             />
           </div>
@@ -64,7 +65,7 @@ export function HabitDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                {t("Mulai Tanggal", "Start Date")}
+                {isEn ? "Start Date" : "Mulai Tanggal"}
               </label>
               <Input
                 name="startDate"
@@ -76,7 +77,7 @@ export function HabitDialog({
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                {t("Warna Aksen", "Accent Color")}
+                {isEn ? "Accent Color" : "Warna Aksen"}
               </label>
               <Input
                 name="color"
@@ -89,13 +90,13 @@ export function HabitDialog({
 
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {t("Hubungkan ke Tujuan", "Link to Goal (Optional)")}
+              {isEn ? "Link to Goal (Optional)" : "Hubungkan ke Tujuan"}
             </label>
             <select
               name="goalId"
               className="h-10 w-full rounded-xl border bg-background px-3 text-sm"
             >
-              <option value="">{t("Tanpa tujuan", "No goal linked")}</option>
+              <option value="">{isEn ? "No goal linked" : "Tanpa tujuan"}</option>
               {goals.map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.title}
@@ -106,7 +107,7 @@ export function HabitDialog({
 
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {t("Frekuensi", "Frequency")}
+              {isEn ? "Frequency" : "Frekuensi"}
             </label>
             <select
               name="frequency"
@@ -114,9 +115,9 @@ export function HabitDialog({
               onChange={(e) => setFrequency(e.target.value as "daily" | "specific_weekdays")}
               className="h-10 w-full rounded-xl border bg-background px-3 text-sm"
             >
-              <option value="daily">{t("Setiap Hari (Daily)", "Every Day (Daily)")}</option>
+              <option value="daily">{isEn ? "Every Day (Daily)" : "Setiap Hari (Daily)"}</option>
               <option value="specific_weekdays">
-                {t("Hari Tertentu (Specific Weekdays)", "Specific Weekdays")}
+                {isEn ? "Specific Weekdays" : "Hari Tertentu (Specific Weekdays)"}
               </option>
             </select>
           </div>
@@ -124,17 +125,17 @@ export function HabitDialog({
           {frequency === "specific_weekdays" && (
             <div className="space-y-2 rounded-2xl border bg-muted/30 p-3.5">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                {t("Pilih Hari Aktif", "Select Active Days")}
+                {isEn ? "Select Active Days" : "Pilih Hari Aktif"}
               </span>
               <div className="grid grid-cols-7 gap-1 text-center">
                 {[
-                  { label: "Min", val: 0 },
-                  { label: "Sen", val: 1 },
-                  { label: "Sel", val: 2 },
-                  { label: "Rab", val: 3 },
-                  { label: "Kam", val: 4 },
-                  { label: "Jum", val: 5 },
-                  { label: "Sab", val: 6 },
+                  { label: isEn ? "Sun" : "Min", val: 0 },
+                  { label: isEn ? "Mon" : "Sen", val: 1 },
+                  { label: isEn ? "Tue" : "Sel", val: 2 },
+                  { label: isEn ? "Wed" : "Rab", val: 3 },
+                  { label: isEn ? "Thu" : "Kam", val: 4 },
+                  { label: isEn ? "Fri" : "Jum", val: 5 },
+                  { label: isEn ? "Sat" : "Sab", val: 6 },
                 ].map((d) => (
                   <label
                     key={d.val}
@@ -156,7 +157,7 @@ export function HabitDialog({
 
           <div className="pt-2">
             <Button type="submit" className="w-full rounded-xl bg-violet-600 font-semibold text-white hover:bg-violet-700">
-              {t("Simpan Kebiasaan", "Save Habit")}
+              {isEn ? "Save Habit" : "Simpan Kebiasaan"}
             </Button>
           </div>
         </form>

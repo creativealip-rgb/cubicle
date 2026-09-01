@@ -14,11 +14,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
 
 interface GoalDialogProps {
-  t: (id: string, en: string) => string;
+  lang?: string;
   createGoalAction: (fd: FormData) => Promise<void>;
 }
 
-export function GoalDialog({ t, createGoalAction }: GoalDialogProps) {
+export function GoalDialog({ lang = "id", createGoalAction }: GoalDialogProps) {
+  const isEn = lang === "en";
   const [open, setOpen] = useState(false);
 
   return (
@@ -26,13 +27,13 @@ export function GoalDialog({ t, createGoalAction }: GoalDialogProps) {
       <DialogTrigger asChild>
         <Button className="rounded-xl bg-violet-600 font-semibold text-white shadow-sm transition hover:bg-violet-700">
           <Plus className="mr-1.5 size-4" />
-          {t("Tambah Tujuan", "Add Goal")}
+          {isEn ? "Add Goal" : "Tambah Tujuan"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md rounded-3xl p-6 sm:p-8">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">
-            {t("Buat Tujuan Baru", "Create New Goal")}
+            {isEn ? "Create New Goal" : "Buat Tujuan Baru"}
           </DialogTitle>
         </DialogHeader>
         <form
@@ -44,26 +45,23 @@ export function GoalDialog({ t, createGoalAction }: GoalDialogProps) {
         >
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {t("Judul Tujuan", "Goal Title")}
+              {isEn ? "Goal Title" : "Judul Tujuan"}
             </label>
             <Input
               name="title"
               required
-              placeholder={t("Contoh: Dana Darurat 6 Bulan", "e.g. 6-Month Emergency Fund")}
+              placeholder={isEn ? "e.g. 6-Month Emergency Fund" : "Contoh: Dana Darurat 6 Bulan"}
               className="rounded-xl"
             />
           </div>
 
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {t("Deskripsi", "Description")}
+              {isEn ? "Description" : "Deskripsi"}
             </label>
             <Textarea
               name="description"
-              placeholder={t(
-                "Rincian target atau motivasi (opsional)",
-                "Target details or motivation (optional)",
-              )}
+              placeholder={isEn ? "Target details or motivation (optional)" : "Rincian target atau motivasi (opsional)"}
               className="rounded-xl"
               rows={3}
             />
@@ -72,18 +70,18 @@ export function GoalDialog({ t, createGoalAction }: GoalDialogProps) {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                {t("Area Hidup", "Life Area")}
+                {isEn ? "Life Area" : "Area Hidup"}
               </label>
               <Input
                 name="lifeArea"
                 required
-                placeholder={t("Keuangan / Karir", "Finance / Career")}
+                placeholder={isEn ? "Finance / Career" : "Keuangan / Karir"}
                 className="rounded-xl"
               />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                {t("Tenggat Waktu", "Target Deadline")}
+                {isEn ? "Target Deadline" : "Tenggat Waktu"}
               </label>
               <Input name="deadline" type="date" className="rounded-xl" />
             </div>
@@ -92,21 +90,21 @@ export function GoalDialog({ t, createGoalAction }: GoalDialogProps) {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                {t("Prioritas", "Priority")}
+                {isEn ? "Priority" : "Prioritas"}
               </label>
               <select
                 name="priority"
                 defaultValue="medium"
                 className="h-10 w-full rounded-xl border bg-background px-3 text-sm"
               >
-                <option value="low">{t("Rendah", "Low")}</option>
-                <option value="medium">{t("Sedang", "Medium")}</option>
-                <option value="high">{t("Tinggi", "High")}</option>
+                <option value="low">{isEn ? "Low" : "Rendah"}</option>
+                <option value="medium">{isEn ? "Medium" : "Sedang"}</option>
+                <option value="high">{isEn ? "High" : "Tinggi"}</option>
               </select>
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                {t("Progress Manual (%)", "Manual Progress (%)")}
+                {isEn ? "Manual Progress (%)" : "Progress Manual (%)"}
               </label>
               <Input
                 name="manualProgress"
@@ -121,7 +119,7 @@ export function GoalDialog({ t, createGoalAction }: GoalDialogProps) {
 
           <div className="pt-2">
             <Button type="submit" className="w-full rounded-xl bg-violet-600 font-semibold text-white hover:bg-violet-700">
-              {t("Simpan Tujuan", "Save Goal")}
+              {isEn ? "Save Goal" : "Simpan Tujuan"}
             </Button>
           </div>
         </form>

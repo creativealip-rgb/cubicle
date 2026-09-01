@@ -12,9 +12,11 @@ import { Flame, CheckCircle, Check, Archive, RotateCcw } from "lucide-react";
 
 export async function HabitsSection({
   t,
+  lang = "id",
   goals = [],
 }: {
   t: (id: string, en: string) => string;
+  lang?: string;
   goals?: { id: string; title: string }[];
 }) {
   const habits = await listPersonalHabits();
@@ -75,7 +77,7 @@ export async function HabitsSection({
           </p>
         </div>
         <HabitDialog
-          t={t}
+          lang={lang}
           goals={goals}
           today={today}
           createHabitAction={create}
@@ -220,7 +222,7 @@ export async function HabitsSection({
             </p>
             <div className="mt-4">
               <HabitDialog
-                t={t}
+                lang={lang}
                 goals={goals}
                 today={today}
                 createHabitAction={create}
