@@ -22,7 +22,7 @@ import { GoalDialog } from "@/components/productivity/goal-dialog";
 import { TodayFocusCard, GoalStarterLinks } from "@/components/productivity/today-focus-card";
 import { Target, ArrowRight } from "lucide-react";
 import { WeeklyReviewCard, QuickCaptureCard } from "@/components/productivity/weekly-review-card";
-import { weeklyReview } from "@/lib/personal-productivity/retention";
+import { calculateHealthyStreak, weeklyReview } from "@/lib/personal-productivity/retention";
 
 export default async function ProductivityPage({
   searchParams,
@@ -44,10 +44,7 @@ export default async function ProductivityPage({
     h.checkins.some((c) => c.localDate === today),
   ).length;
 
-  const bestStreak = habits.reduce((max, h) => {
-    const done = new Set(h.checkins.map((c) => c.localDate));
-    return Math.max(max, done.size > 0 ? 1 : 0);
-  }, 0);
+  const bestStreak = activeHabits.reduce((max, h) => Math.max(max, calculateHealthyStreak(h.frequency as "daily" | "specific_weekdays", h.weekdays, today, h.checkins.map((c) => c.localDate)).streak), 0);
 
   const heatmapCells = calculateHabitHeatmap(habits, today, 35);
   const weeklyTrends = calculateWeeklyConsistency(habits, today, 5);
@@ -87,6 +84,8 @@ export default async function ProductivityPage({
   const activeGoals = goals.filter(
     (x) => x.status === "not_started" || x.status === "in_progress",
   );
+  const attentionHabit = activeHabits.map((h) => ({ h, rate: calculateWeeklyConsistency([h], today, 1)[0]?.rate ?? 0 })).sort((a, b) => a.rate - b.rate)[0]?.h.name ?? null;
+  const focusGoal = activeGoals.find((g) => g.manualProgress < 100)?.title ?? null;
   const review = weeklyReview(weeklyTrends[4]?.completed ?? 0, weeklyTrends[4]?.totalScheduled ?? 0, goalMetrics.active, activeGoals.filter((g) => g.manualProgress > 0 || g.steps.some((s) => s.isCompleted)).length);
 
   return (
@@ -115,7 +114,7 @@ export default async function ProductivityPage({
 
       {tab === "overview" && <>
         <TodayFocusCard activeGoals={goalMetrics.active} scheduledHabits={activeHabits.length} completedHabits={habitsCompletedToday} t={t} />
-        <div className="grid gap-4 lg:grid-cols-2"><WeeklyReviewCard {...review} t={t} /><QuickCaptureCard t={t} /></div>
+        <div className="grid gap-4 lg:grid-cols-2"><WeeklyReviewCard {...review} attentionHabit={attentionHabit} focusGoal={focusGoal} t={t} /><QuickCaptureCard t={t} /></div>
       </>}
 
       {/* KPI Top Cards Banner */}

@@ -5,6 +5,8 @@ import {
   updatePersonalHabit,
 } from "@/lib/actions/personal-habits";
 import { dateOffset, habitStats, isHabitScheduled } from "@/lib/personal-productivity/habits";
+import { calculateHealthyStreak } from "@/lib/personal-productivity/retention";
+import { StreakRecoveryCard } from "@/components/productivity/weekly-review-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { HabitDialog } from "@/components/productivity/habit-dialog";
@@ -63,6 +65,7 @@ export async function HabitsSection({
 
   const activeHabits = habits.filter((h) => h.status === "active");
   const archivedHabits = habits.filter((h) => h.status === "archived");
+  const hasRecovery = activeHabits.some((h) => calculateHealthyStreak(h.frequency as "daily" | "specific_weekdays", h.weekdays, today, h.checkins.map((c) => c.localDate)).inRecovery);
 
   return (
     <div className="space-y-6">
@@ -83,6 +86,8 @@ export async function HabitsSection({
           createHabitAction={create}
         />
       </div>
+
+      {hasRecovery && <StreakRecoveryCard t={t} />}
 
       {/* Active Habits List */}
       {activeHabits.some((h) => {
@@ -106,6 +111,12 @@ export async function HabitsSection({
             h.frequency as "daily" | "specific_weekdays",
             h.weekdays,
             from,
+            today,
+            h.checkins.map((c) => c.localDate),
+          );
+          const healthyStreak = calculateHealthyStreak(
+            h.frequency as "daily" | "specific_weekdays",
+            h.weekdays,
             today,
             h.checkins.map((c) => c.localDate),
           );
@@ -155,6 +166,7 @@ export async function HabitsSection({
                       <span>
                         {stats.completionRate}% {t("dalam 30 hari", "30-day rate")}
                       </span>
+                      {healthyStreak.inRecovery && <><span>•</span><span className="font-semibold text-amber-600 dark:text-amber-400">{t("Mode pemulihan", "Recovery mode")}</span></>}
                     </div>
                   </div>
 
