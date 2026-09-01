@@ -343,7 +343,7 @@ export default async function ClientDetailPage({
                   <p className="mt-1 text-xl font-bold">{activeProjects}</p>
                 </div>
                 <div className="rounded-lg border bg-muted/30 p-3">
-                  <p className="text-[11px] text-muted-foreground">{t("Invoice", "Invoice")}</p>
+                  <p className="text-[11px] text-muted-foreground">{t("Invoice Belum Lunas", "Unpaid Invoices")}</p>
                   <p className="mt-1 text-xl font-bold">
                     {clientInvoices.filter((i) => i.status !== "paid" && i.status !== "cancelled").length}
                   </p>

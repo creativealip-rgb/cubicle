@@ -1,7 +1,6 @@
 "use server";
 
 import { and, eq, sql } from "drizzle-orm";
-import { headers } from "next/headers";
 import { z } from "zod";
 import { db } from "@/db";
 import { accounts, adminAuditLogs, mfaRecoveryApprovals, mfaRecoveryRequests, passkeys, sessions, twoFactors, users } from "@/db/schema";
@@ -69,5 +68,5 @@ export async function executeMfaRecovery(requestId: string) {
 
 export async function listPendingMfaRecoveries() {
   await requireAdmin();
-  return db.select({ id: mfaRecoveryRequests.id, userId: mfaRecoveryRequests.userId, email: users.email, status: mfaRecoveryRequests.status, reason: mfaRecoveryRequests.reason, coolingUntil: mfaRecoveryRequests.coolingUntil, createdAt: mfaRecoveryRequests.createdAt, approvals: sql<number>`(select count(*)::int from mfa_recovery_approvals a where a.request_id = ${mfaRecoveryRequests.id} and a.decision = 'approved')` }).from(mfaRecoveryRequests).innerJoin(users, eq(users.id, mfaRecoveryRequests.userId)).where(eq(mfaRecoveryRequests.status, "pending"));
+  return db.select({ id: mfaRecoveryRequests.id, userId: mfaRecoveryRequests.userId, email: users.email, status: mfaRecoveryRequests.status, reason: mfaRecoveryRequests.reason, coolingUntil: mfaRecoveryRequests.coolingUntil, createdAt: mfaRecoveryRequests.createdAt, ready: sql<boolean>`${mfaRecoveryRequests.coolingUntil} <= now()`, approvals: sql<number>`(select count(*)::int from mfa_recovery_approvals a where a.request_id = ${mfaRecoveryRequests.id} and a.decision = 'approved')` }).from(mfaRecoveryRequests).innerJoin(users, eq(users.id, mfaRecoveryRequests.userId)).where(eq(mfaRecoveryRequests.status, "pending"));
 }
