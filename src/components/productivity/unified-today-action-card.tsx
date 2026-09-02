@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Sparkles, Check } from "lucide-react";
+import { CheckCircle2, Sparkles, Check, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -61,38 +61,45 @@ export function UnifiedTodayActionCard({
   }
 
   return (
-    <Card className="overflow-hidden rounded-3xl border border-violet-100 bg-gradient-to-br from-violet-50/70 via-card to-card shadow-sm dark:border-violet-900/30">
-      <CardContent className="space-y-3.5 p-4 sm:p-5">
+    <Card className="overflow-hidden rounded-3xl border border-violet-100 bg-gradient-to-br from-violet-50/60 via-card to-card shadow-sm dark:border-violet-900/30">
+      <CardContent className="space-y-4 p-4 sm:p-5">
         {/* Top Header Strip */}
         <div className="flex items-center justify-between gap-2 border-b pb-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm">
               <Sparkles className="size-4" />
             </div>
             <div>
               <h2 className="text-sm font-bold tracking-tight text-foreground">
                 {t("Aksi & Fokus Hari Ini", "Today's Action & Focus")}
               </h2>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {allHabitsDone
-                  ? t("Semua kebiasaan tuntas!", "All habits complete today!")
-                  : t("Selesaikan target kecilmu.", "Complete your daily targets.")}
+                  ? t("Semua kebiasaan tuntas hari ini!", "All habits complete today!")
+                  : t("Selesaikan target kecilmu hari ini.", "Complete your daily targets.")}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5 text-xs font-semibold">
-            <span className="rounded-xl border bg-background/80 px-2.5 py-1 text-violet-700 dark:text-violet-300">
+            <span className="rounded-xl border border-violet-200/80 bg-white px-2.5 py-1 text-violet-700 shadow-sm dark:bg-card dark:text-violet-300">
               {completedHabitsCount}/{scheduledHabitsCount} {t("kebiasaan", "habits")}
             </span>
           </div>
         </div>
 
-        {/* Uncompleted Habits Quick Check-in Chips */}
-        <div className="space-y-1.5">
-          <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-            {t("Check-in Kebiasaan", "Habit Check-in")}
-          </span>
+        {/* Interactive Habit Check-in Chips */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              {t("Check-in Kebiasaan Harian", "Habit Quick Check-in")}
+            </span>
+            {statusMsg && (
+              <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                {statusMsg}
+              </span>
+            )}
+          </div>
 
           {uncompletedHabits.length > 0 ? (
             <div className="flex flex-wrap gap-2">
@@ -102,105 +109,90 @@ export function UnifiedTodayActionCard({
                   action={(fd) => handleAction(checkHabit, fd)}
                 >
                   <input type="hidden" name="habitId" value={h.id} />
-                  <Button
+                  <button
                     type="submit"
-                    size="sm"
                     disabled={pending}
-                    className="h-8 gap-1.5 rounded-xl bg-violet-600 text-xs font-medium text-white shadow-sm transition hover:bg-violet-700"
+                    className="group inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-violet-400 hover:bg-violet-50/50 hover:text-violet-700 active:scale-95 disabled:opacity-50 dark:bg-card dark:text-slate-200"
                   >
-                    <Check className="size-3.5" />
+                    <div className="flex size-4 items-center justify-center rounded-full border border-slate-300 transition group-hover:border-violet-500 group-hover:bg-violet-500 group-hover:text-white">
+                      <Check className="size-2.5 opacity-0 transition group-hover:opacity-100" />
+                    </div>
                     <span>{h.name}</span>
-                  </Button>
+                  </button>
                 </form>
               ))}
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 rounded-xl border border-emerald-200/80 bg-emerald-50/50 px-3 py-1.5 text-xs text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
-              <CheckCircle2 className="size-3.5 text-emerald-600" />
-              <span>{t("Semua kebiasaan hari ini sudah dicentang.", "All scheduled habits for today are done.")}</span>
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-200/80 bg-emerald-50/60 px-3.5 py-2 text-xs text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
+              <CheckCircle2 className="size-4 text-emerald-600" />
+              <span className="font-medium">{t("Hebat! Semua kebiasaan hari ini sudah tuntas.", "Great job! All scheduled habits for today are done.")}</span>
             </div>
           )}
         </div>
 
-        {/* Compact Goal Progress Update */}
+        {/* Clean Goal Stepper Action */}
         {goals.length > 0 && (
-          <div className="space-y-1.5 border-t pt-2.5">
+          <div className="space-y-2 border-t pt-3">
             <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-              {t("Progres Tujuan Cepat", "Quick Goal Progress")}
+              {t("Langkah Tujuan Berikutnya", "Next Goal Step")}
             </span>
 
-            <form
-              action={(fd) => handleAction(updateGoal, fd)}
-              className="flex flex-wrap items-center gap-2"
-            >
-              <select
-                name="goalId"
-                required
-                value={selectedGoalId}
-                onChange={(e) => setSelectedGoalId(e.target.value)}
-                className="h-8 min-w-[140px] flex-1 rounded-xl border bg-background px-2.5 text-xs font-medium"
-              >
-                {goals.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.title}
-                  </option>
-                ))}
-              </select>
+            <div className="rounded-2xl border bg-white p-3 shadow-sm dark:bg-card">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+                    <Target className="size-3.5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <select
+                      value={selectedGoalId}
+                      onChange={(e) => setSelectedGoalId(e.target.value)}
+                      className="w-full truncate bg-transparent text-xs font-bold text-slate-800 outline-none hover:text-violet-600 dark:text-slate-100 cursor-pointer"
+                    >
+                      {goals.map((g) => (
+                        <option key={g.id} value={g.id}>
+                          {g.title} ({g.progress}%)
+                        </option>
+                      ))}
+                    </select>
+                    {selectedGoal?.nextStep ? (
+                      <p className="truncate text-[11px] text-muted-foreground mt-0.5">
+                        <span className="font-medium text-slate-600 dark:text-slate-300">{t("Langkah:", "Next:")}</span> {selectedGoal.nextStep.title}
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-emerald-600 font-medium mt-0.5">
+                        {t("Semua langkah pada tujuan ini selesai!", "All steps for this goal completed!")}
+                      </p>
+                    )}
+                  </div>
+                </div>
 
-              {selectedGoal?.nextStep ? (
-                <>
-                  <input
-                    type="hidden"
-                    name="stepId"
-                    value={selectedGoal.nextStep.id}
-                  />
-                  <span
-                    className="h-8 max-w-[180px] truncate rounded-xl border bg-muted/40 px-2.5 py-1.5 text-xs text-muted-foreground"
-                    title={selectedGoal.nextStep.title}
+                {selectedGoal?.nextStep && (
+                  <form
+                    action={(fd) => handleAction(updateGoal, fd)}
+                    className="shrink-0"
                   >
-                    {selectedGoal.nextStep.title}
-                  </span>
-                  <Button
-                    type="submit"
-                    size="sm"
-                    disabled={pending}
-                    variant="outline"
-                    className="h-8 rounded-xl text-xs font-semibold"
-                  >
-                    {t("Selesaikan Langkah", "Done Step")}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <input
-                    name="progress"
-                    type="number"
-                    min="0"
-                    max="100"
-                    defaultValue={selectedGoal?.progress ?? 0}
-                    key={selectedGoalId}
-                    className="h-8 w-16 rounded-xl border bg-background px-2 text-center text-xs font-medium"
-                    aria-label="Progress %"
-                  />
-                  <Button
-                    type="submit"
-                    size="sm"
-                    disabled={pending}
-                    variant="outline"
-                    className="h-8 rounded-xl text-xs font-semibold"
-                  >
-                    {t("Simpan %", "Save %")}
-                  </Button>
-                </>
-              )}
-            </form>
+                    <input type="hidden" name="goalId" value={selectedGoal.id} />
+                    <input
+                      type="hidden"
+                      name="stepId"
+                      value={selectedGoal.nextStep.id}
+                    />
+                    <input type="hidden" name="actionType" value="complete_step" />
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={pending}
+                      className="h-7 gap-1 rounded-lg bg-emerald-600 px-2.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
+                    >
+                      <Check className="size-3" />
+                      <span>{t("Tandai Selesai", "Done Step")}</span>
+                    </Button>
+                  </form>
+                )}
+              </div>
+            </div>
           </div>
-        )}
-
-        {statusMsg && (
-          <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-            {statusMsg}
-          </p>
         )}
       </CardContent>
     </Card>

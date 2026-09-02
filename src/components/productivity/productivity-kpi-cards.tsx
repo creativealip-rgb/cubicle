@@ -90,7 +90,7 @@ export function ProductivityKpiCards({
             {bestStreak}
           </span>
           <span className="text-xs text-muted-foreground">
-            {t("hari", "days")}
+            {bestStreak === 1 ? t("hari", "day") : t("hari", "days")}
           </span>
           <span className="basis-full text-[11px] text-muted-foreground">{completedDays} {t("hari check-in", "completed days")}</span>
         </div>

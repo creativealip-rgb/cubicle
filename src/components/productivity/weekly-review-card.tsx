@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarCheck, ArrowRight } from "lucide-react";
+import { CalendarCheck, ArrowRight, AlertCircle, Target, CheckCircle2 } from "lucide-react";
 
 export function WeeklyReviewCard({
   rate,
@@ -9,7 +9,7 @@ export function WeeklyReviewCard({
   headline,
   attentionHabit,
   focusGoal,
-  stagnantGoals,
+  stagnantGoals: _stagnantGoals,
   t,
 }: {
   rate: number;
@@ -22,18 +22,18 @@ export function WeeklyReviewCard({
 }) {
   return (
     <Card className="rounded-3xl border bg-card shadow-sm">
-      <CardContent className="space-y-3 p-4 sm:p-5">
+      <CardContent className="space-y-4 p-4 sm:p-5">
         {/* Header Strip */}
         <div className="flex items-center justify-between gap-2 border-b pb-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-muted text-foreground shadow-sm">
-              <CalendarCheck className="size-4 text-violet-600" />
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-50 text-violet-700 dark:bg-violet-950 dark:text-violet-300 shadow-sm">
+              <CalendarCheck className="size-4" />
             </div>
             <div>
               <h2 className="text-sm font-bold tracking-tight text-foreground">
                 {t("Review & Ritme Mingguan", "Weekly Rhythm & Review")}
               </h2>
-              <p className="text-[11px] font-semibold text-violet-600 dark:text-violet-400">
+              <p className="text-xs font-semibold text-violet-600 dark:text-violet-400">
                 {headline}
               </p>
             </div>
@@ -41,44 +41,59 @@ export function WeeklyReviewCard({
 
           <Button asChild size="sm" variant="ghost" className="h-7 text-xs font-semibold text-violet-600 hover:text-violet-700 p-0">
             <Link href="/app/productivity?tab=habits">
-              {t("Detail", "Details")} <ArrowRight className="ml-0.5 size-3" />
+              {t("Lihat Semua", "View All")} <ArrowRight className="ml-1 size-3" />
             </Link>
           </Button>
         </div>
 
         {/* Consistency Bar */}
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 rounded-2xl border bg-muted/20 p-3">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">{t("Konsistensi Kebiasaan", "Habit Consistency")}</span>
+            <span className="font-medium text-slate-600 dark:text-slate-300">{t("Konsistensi Kebiasaan Mingguan", "Weekly Habit Consistency")}</span>
             <span className="font-bold text-foreground">{rate}%</span>
           </div>
-          <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted">
+          <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
             <div
-              className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-              style={{ width: `${rate}%` }}
+              className={`h-full rounded-full transition-all duration-500 ${
+                rate >= 80
+                  ? "bg-emerald-500"
+                  : rate >= 50
+                    ? "bg-violet-600"
+                    : "bg-amber-500"
+              }`}
+              style={{ width: `${Math.max(rate, 3)}%` }}
             />
           </div>
         </div>
 
-        {/* Quick Insight Chips */}
-        <div className="flex flex-wrap gap-1.5 pt-1 text-xs">
-          <span className="rounded-xl border bg-muted/30 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-            {goalSummary}
-          </span>
-          {stagnantGoals > 0 && (
-            <span className="rounded-xl border border-amber-200/80 bg-amber-50/50 px-2.5 py-1 text-[11px] font-medium text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300">
-              {stagnantGoals} {t("stagnan 7 hari", "stagnant (7d)")}
-            </span>
-          )}
-          {attentionHabit && (
-            <span className="rounded-xl border border-red-200/80 bg-red-50/50 px-2.5 py-1 text-[11px] font-medium text-red-800 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
-              ⚠️ {attentionHabit}
-            </span>
-          )}
+        {/* Structured Insight Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <div className="flex items-start gap-2 rounded-xl border border-slate-200/80 bg-slate-50/50 p-2.5 dark:bg-card">
+            <CheckCircle2 className="size-4 text-emerald-600 shrink-0 mt-0.5" />
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] font-semibold uppercase text-slate-500 block">{t("Momentum Tujuan", "Goal Momentum")}</span>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-200">{goalSummary}</span>
+            </div>
+          </div>
+
           {focusGoal && (
-            <span className="rounded-xl border border-violet-200/80 bg-violet-50/50 px-2.5 py-1 text-[11px] font-medium text-violet-800 dark:border-violet-900/40 dark:bg-violet-950/20 dark:text-violet-300">
-              🎯 {focusGoal}
-            </span>
+            <div className="flex items-start gap-2 rounded-xl border border-violet-200/80 bg-violet-50/40 p-2.5 dark:bg-violet-950/20">
+              <Target className="size-4 text-violet-600 shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-semibold uppercase text-violet-600 dark:text-violet-400 block">{t("Fokus Utama", "Primary Focus")}</span>
+                <span className="text-xs font-semibold text-violet-900 dark:text-violet-200 truncate block">{focusGoal}</span>
+              </div>
+            </div>
+          )}
+
+          {attentionHabit && (
+            <div className="flex items-start gap-2 rounded-xl border border-amber-200/80 bg-amber-50/40 p-2.5 dark:bg-amber-950/20 sm:col-span-2">
+              <AlertCircle className="size-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-semibold uppercase text-amber-700 dark:text-amber-400 block">{t("Perlu Perhatian", "Needs Attention")}</span>
+                <span className="text-xs font-medium text-amber-900 dark:text-amber-200">{attentionHabit} {t("belum konsisten minggu ini", "needs attention this week")}</span>
+              </div>
+            </div>
           )}
         </div>
       </CardContent>
@@ -88,11 +103,14 @@ export function WeeklyReviewCard({
 
 export function StreakRecoveryCard({ t }: { t: (id: string, en: string) => string }) {
   return (
-    <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-      {t(
-        "Satu hari terlewat bukan gagal. Kembali hari ini untuk menjaga ritme.",
-        "One missed day is not failure. Come back today to keep your rhythm.",
-      )}
-    </p>
+    <div className="flex items-center gap-2.5 rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200 shadow-sm">
+      <AlertCircle className="size-4 text-amber-600 shrink-0" />
+      <span>
+        {t(
+          "Satu hari terlewat bukan gagal. Check-in hari ini untuk menjaga ritme konsistensi!",
+          "One missed day is not failure. Check in today to keep your consistency rhythm!",
+        )}
+      </span>
+    </div>
   );
 }

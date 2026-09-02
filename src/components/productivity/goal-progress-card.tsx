@@ -99,7 +99,8 @@ export function GoalProgressCard({
             href={`/app/productivity/goals/${goal.id}`}
             className="font-medium text-violet-600 hover:underline flex items-center gap-0.5"
           >
-            {t("Detail", "Details")} <ArrowRight className="size-3" />
+            <span>{t("Detail", "Details")}</span>
+            <ArrowRight className="size-3" />
           </Link>
         </div>
       </div>
@@ -107,17 +108,16 @@ export function GoalProgressCard({
   }
 
   return (
-    <Card className="overflow-hidden rounded-3xl border bg-card shadow-sm transition hover:shadow-md">
-      <CardContent className="space-y-4 p-5 sm:p-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
+    <Card className="rounded-3xl border bg-card shadow-sm hover:shadow-md transition-shadow">
+      <CardContent className="space-y-4 p-5">
+        {/* Header with Title & Direct Status Pill */}
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+          <div className="space-y-1.5 min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
                 {goal.lifeArea || t("Umum", "General")}
               </span>
-              <span
-                className={`rounded-md border px-2 py-0.5 text-xs font-semibold uppercase tracking-wider ${priorityClass}`}
-              >
+              <span className={`rounded-md border px-2 py-0.5 text-xs font-semibold uppercase tracking-wider ${priorityClass}`}>
                 {t(
                   goal.priority === "high"
                     ? "Tinggi"
@@ -128,52 +128,47 @@ export function GoalProgressCard({
                 )}
               </span>
             </div>
+
             <Link
               href={`/app/productivity/goals/${goal.id}`}
-              className="text-lg font-bold tracking-tight text-foreground transition hover:text-violet-600 hover:underline"
+              className="block text-base font-bold tracking-tight text-foreground hover:text-violet-600 hover:underline transition-colors"
             >
               {goal.title}
             </Link>
           </div>
 
-          <div className="flex items-center gap-3">
-            <form action={setStatusAction} className="flex items-center gap-2">
-              <input type="hidden" name="id" value={goal.id} />
-              <select
-                name="status"
-                defaultValue={effectiveStatus}
-                className="h-9 rounded-xl border bg-background px-2.5 text-xs font-medium"
-              >
-                <option value="not_started">
-                  {t("Belum Mulai", "Not Started")}
-                </option>
-                <option value="in_progress">
-                  {t("Berjalan", "In Progress")}
-                </option>
-                <option value="achieved">{t("Tercapai", "Achieved")}</option>
-                <option value="deferred">{t("Ditunda", "Deferred")}</option>
-                <option value="cancelled">{t("Batal", "Cancelled")}</option>
-              </select>
-              <Button size="sm" variant="outline" className="h-9 rounded-xl">
-                {t("Ubah", "Update")}
-              </Button>
-            </form>
-          </div>
+          {/* Quick Interactive Status Pill Form */}
+          <form action={setStatusAction} className="shrink-0 flex items-center gap-1.5">
+            <input type="hidden" name="goalId" value={goal.id} />
+            <select
+              name="status"
+              defaultValue={effectiveStatus}
+              className="h-8 rounded-xl border bg-background px-2.5 text-xs font-semibold text-foreground shadow-sm cursor-pointer hover:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-500"
+            >
+              <option value="not_started">{t("Belum Mulai", "Not Started")}</option>
+              <option value="in_progress">{t("Sedang Berjalan", "In Progress")}</option>
+              <option value="achieved">{t("Tercapai", "Achieved")}</option>
+              <option value="deferred">{t("Ditunda", "Deferred")}</option>
+              <option value="cancelled">{t("Dibatalkan", "Cancelled")}</option>
+            </select>
+            <Button size="sm" variant="outline" className="h-8 rounded-xl px-2.5 text-xs font-semibold">
+              {t("Update", "Update")}
+            </Button>
+          </form>
         </div>
 
-        {/* Visual Progress Bar & Milestones indicator */}
+        {/* Progress Bar & Steps Count */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs font-medium">
-            <span className="text-muted-foreground">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-medium text-muted-foreground">
               {goal.steps.length > 0
                 ? `${goal.steps.filter((s) => s.isCompleted).length}/${goal.steps.length} ${t("langkah selesai", "steps completed")}`
-                : t("Progress target", "Target Progress")}
+                : t("Progres target", "Goal progress")}
             </span>
-            <span className="font-bold text-foreground">{progress}%</span>
+            <span className="font-bold text-foreground text-sm">{progress}%</span>
           </div>
 
-          {/* Progress bar */}
-          <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted/60">
+          <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
             <div
               className={`h-full rounded-full transition-all duration-500 ${
                 progress >= 100
@@ -187,30 +182,20 @@ export function GoalProgressCard({
           </div>
         </div>
 
-        {/* Footer Meta: Deadline & Link */}
-        <div className="flex items-center justify-between border-t pt-3 text-xs text-muted-foreground">
+        {/* Footer info: Deadline & Action */}
+        <div className="flex items-center justify-between pt-1 border-t text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5">
-            <Clock className="size-3.5" />
-            <span
-              className={
-                deadline.isOverdue
-                  ? "font-semibold text-red-600 dark:text-red-400"
-                  : deadline.isUrgent
-                    ? "font-semibold text-amber-600 dark:text-amber-400"
-                    : ""
-              }
-            >
+            <Clock className="size-3.5 text-slate-400" />
+            <span className={deadline.isOverdue ? "font-semibold text-red-600" : deadline.isUrgent ? "font-semibold text-amber-600" : "font-medium text-slate-600 dark:text-slate-300"}>
               {deadline.label}
             </span>
           </div>
 
-          <Link
-            href={`/app/productivity/goals/${goal.id}`}
-            className="flex items-center gap-1 font-semibold text-violet-600 hover:text-violet-700 dark:text-violet-400"
-          >
-            <span>{t("Detail & Langkah", "Details & Steps")}</span>
-            <ArrowRight className="size-3.5" />
-          </Link>
+          <Button asChild size="sm" variant="ghost" className="h-8 text-xs font-semibold text-violet-600 hover:text-violet-700 hover:bg-violet-50 dark:hover:bg-violet-950/40 rounded-xl px-2.5">
+            <Link href={`/app/productivity/goals/${goal.id}`}>
+              {t("Kelola Langkah & Detail", "Manage Steps & Details")} <ArrowRight className="ml-1 size-3.5" />
+            </Link>
+          </Button>
         </div>
       </CardContent>
     </Card>
