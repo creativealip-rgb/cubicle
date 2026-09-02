@@ -44,7 +44,16 @@ export default async function ProductivityPage({
   // Aggregated Visual Metrics
   const goalMetrics = calculateGoalMetrics(goals);
   const activeHabits = habits.filter((h) => h.status === "active");
-  const habitsCompletedToday = activeHabits.filter((h) =>
+  const scheduledHabitsToday = activeHabits.filter(
+    (h) =>
+      today >= h.startDate &&
+      isHabitScheduled(
+        h.frequency as "daily" | "specific_weekdays",
+        h.weekdays,
+        today,
+      ),
+  );
+  const habitsCompletedToday = scheduledHabitsToday.filter((h) =>
     h.checkins.some((c) => c.localDate === today),
   ).length;
 
@@ -164,7 +173,7 @@ export default async function ProductivityPage({
         activeGoals={goalMetrics.active}
         avgGoalProgress={goalMetrics.avgActiveProgress}
         habitsCompletedToday={habitsCompletedToday}
-        habitsScheduledToday={activeHabits.length}
+        habitsScheduledToday={scheduledHabitsToday.length}
         bestStreak={bestStreak}
         completedDays={completedDays}
         t={t}

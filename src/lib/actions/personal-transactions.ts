@@ -1,10 +1,11 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import {
+  personalReceiptCleanupQueue,
   personalTransactionCategories,
   personalTransactions,
 } from "@/db/schema";
@@ -15,6 +16,7 @@ import {
   deleteStoredFile,
   getSignedDownloadUrl,
   getSignedUploadUrl,
+  inspectStoredFile,
 } from "@/lib/r2";
 
 async function userId() {
@@ -23,6 +25,32 @@ async function userId() {
 }
 function refresh() {
   revalidatePath("/app/expenses");
+}
+async function cleanupStoredFile(key: string) {
+  try {
+    await deleteStoredFile(key);
+  } catch (error) {
+    const match = /^personal\/([^/]+)\/receipts\//.exec(key);
+    if (!match) throw error;
+    await db
+      .insert(personalReceiptCleanupQueue)
+      .values({
+        userId: match[1],
+        storageKey: key,
+        attempts: 1,
+        lastError: error instanceof Error ? error.message.slice(0, 1000) : "Object cleanup failed",
+        nextAttemptAt: new Date(Date.now() + 60_000),
+      })
+      .onConflictDoUpdate({
+        target: personalReceiptCleanupQueue.storageKey,
+        set: {
+          attempts: sql`${personalReceiptCleanupQueue.attempts}+1`,
+          lastError: error instanceof Error ? error.message.slice(0, 1000) : "Object cleanup failed",
+          nextAttemptAt: new Date(Date.now() + 60_000),
+          updatedAt: new Date(),
+        },
+      });
+  }
 }
 const categoryInput = z.object({
   name: z.string().trim().min(1).max(100),
@@ -123,17 +151,26 @@ export async function deletePersonalTransactionCategory(categoryId: string) {
     return { ok: true };
   });
 }
-export async function listPersonalTransactions() {
+export async function listPersonalTransactions(cursor?: {
+  date: string;
+  createdAt: string;
+  sourceRank: number;
+  id: string;
+}, limit = 100) {
   const id = await userId();
+  const after = cursor
+    ? sql`(${personalTransactions.date}, ${personalTransactions.createdAt}, ${personalTransactions.id}) < (${cursor.date}::date, ${new Date(cursor.createdAt)}::timestamptz, ${cursor.id}::uuid)`
+    : undefined;
   return db
     .select()
     .from(personalTransactions)
-    .where(eq(personalTransactions.userId, id))
+    .where(and(eq(personalTransactions.userId, id), after))
     .orderBy(
       desc(personalTransactions.date),
       desc(personalTransactions.createdAt),
       desc(personalTransactions.id),
-    );
+    )
+    .limit(Math.min(100, Math.max(1, limit)));
 }
 export async function createPersonalTransaction(
   raw: z.input<typeof transactionInput>,
@@ -206,7 +243,7 @@ export async function deletePersonalTransaction(transactionId: string) {
     )
     .returning();
   if (!row) throw new Error("Transaction not found");
-  if (row.receiptKey) await deleteStoredFile(row.receiptKey);
+  if (row.receiptKey) await cleanupStoredFile(row.receiptKey);
   refresh();
   return { ok: true };
 }
@@ -284,24 +321,42 @@ export async function confirmPersonalReceipt(
       ),
     );
   if (!existing) throw new Error("Transaction not found");
-  const [row] = await db
-    .update(personalTransactions)
-    .set({
-      receiptKey: input.key,
-      receiptMime: input.mime,
-      receiptSizeBytes: input.size,
-      receiptChecksum: input.checksum,
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(personalTransactions.id, transactionId),
-        eq(personalTransactions.userId, id),
-      ),
-    )
-    .returning();
+  const actual = await inspectStoredFile(input.key);
+  const magic = Buffer.from(actual.bytes.subarray(0, 12)).toString("hex");
+  const magicValid =
+    input.mime === "application/pdf" ? magic.startsWith("25504446") :
+    input.mime === "image/jpeg" ? magic.startsWith("ffd8ff") :
+    input.mime === "image/png" ? magic.startsWith("89504e470d0a1a0a") :
+    input.mime === "image/webp" ? magic.startsWith("52494646") && magic.slice(16, 24) === "57454250" : false;
+  if (actual.size !== input.size || actual.mime !== input.mime || actual.checksum !== input.checksum || actual.size > 10 * 1024 * 1024 || !magicValid) {
+    await cleanupStoredFile(input.key);
+    throw new Error("Uploaded receipt verification failed");
+  }
+  let row;
+  try {
+    [row] = await db
+      .update(personalTransactions)
+      .set({
+        receiptKey: input.key,
+        receiptMime: input.mime,
+        receiptSizeBytes: input.size,
+        receiptChecksum: input.checksum,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(personalTransactions.id, transactionId),
+          eq(personalTransactions.userId, id),
+        ),
+      )
+      .returning();
+    if (!row) throw new Error("Transaction not found");
+  } catch (error) {
+    await cleanupStoredFile(input.key);
+    throw error;
+  }
   if (existing.receiptKey && existing.receiptKey !== input.key)
-    await deleteStoredFile(existing.receiptKey);
+    await cleanupStoredFile(existing.receiptKey);
   refresh();
   return row;
 }
@@ -317,7 +372,6 @@ export async function deletePersonalReceipt(transactionId: string) {
       ),
     );
   if (!row) throw new Error("Transaction not found");
-  if (row.receiptKey) await deleteStoredFile(row.receiptKey);
   const [updated] = await db
     .update(personalTransactions)
     .set({
@@ -334,6 +388,7 @@ export async function deletePersonalReceipt(transactionId: string) {
       ),
     )
     .returning();
+  if (row.receiptKey) await cleanupStoredFile(row.receiptKey);
   refresh();
   return updated;
 }

@@ -15,6 +15,25 @@ export type ExpenseCursor = {
 };
 const rank = (source: UnifiedExpense["source"]) =>
   source === "personal" ? 1 : 0;
+export function encodeExpenseCursor(cursor: ExpenseCursor) {
+  return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
+}
+export function decodeExpenseCursor(value?: string) {
+  if (!value) return undefined;
+  try {
+    const cursor = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as ExpenseCursor;
+    if (
+      typeof cursor.date !== "string" ||
+      typeof cursor.createdAt !== "string" ||
+      ![0, 1].includes(cursor.sourceRank) ||
+      typeof cursor.id !== "string" ||
+      Number.isNaN(Date.parse(cursor.createdAt))
+    ) return undefined;
+    return cursor;
+  } catch {
+    return undefined;
+  }
+}
 export function compareUnifiedExpenses(a: UnifiedExpense, b: UnifiedExpense) {
   return (
     b.date.localeCompare(a.date) ||

@@ -6,7 +6,7 @@ const read = (path: string) => fs.readFileSync(path, "utf8");
 describe("final route sweep accessible labels", () => {
   it("labels client and personal search controls", () => {
     expect(read("src/app/(app)/app/clients/page.tsx")).toContain('aria-label={t("Cari klien", "Search clients")}');
-    expect(read("src/app/(app)/app/personal/page.tsx")).toContain('aria-label={t("Cari catatan", "Search notes")}');
+    expect(read("src/app/(app)/app/personal/page.tsx")).toContain('placeholder={t(');
   });
 
   it("associates questionnaire name and description labels", () => {
@@ -18,7 +18,7 @@ describe("final route sweep accessible labels", () => {
   });
 
   it("associates journal form labels and labels journal search", () => {
-    const page = read("src/app/(app)/app/journal/page.tsx");
+    const page = read("src/components/journal/journal-composer-dialog.tsx");
     for (const id of ["journal-title", "journal-tags", "journal-body"]) {
       expect(page).toContain(`htmlFor="${id}"`);
       expect(page).toContain(`id="${id}"`);

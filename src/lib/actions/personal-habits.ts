@@ -115,6 +115,16 @@ export async function updatePersonalHabit(
   refresh();
   return row;
 }
+export async function deletePersonalHabit(id: string) {
+  const { userId } = await context();
+  const [row] = await db
+    .delete(personalHabits)
+    .where(and(eq(personalHabits.id, id), eq(personalHabits.userId, userId)))
+    .returning();
+  if (!row) throw new Error("Habit not found");
+  refresh();
+  return { ok: true };
+}
 export async function setPersonalHabitCheckinNote(
   habitId: string,
   note: string,

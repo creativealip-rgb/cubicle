@@ -31,7 +31,17 @@ function cents(value: string) {
   return BigInt(whole) * HUNDRED + BigInt((fraction + "00").slice(0, 2));
 }
 function amount(value: bigint) {
-  return `${value / HUNDRED}.${String(value % HUNDRED).padStart(2, "0")}`;
+  const sign = value < ZERO ? "-" : "";
+  const absolute = value < ZERO ? -value : value;
+  return `${sign}${absolute / HUNDRED}.${String(absolute % HUNDRED).padStart(2, "0")}`;
+}
+export function budgetProgress(actual: string, target: string) {
+  const actualCents = cents(actual), targetCents = cents(target);
+  return {
+    percent: targetCents > ZERO ? Number((actualCents * BigInt(100)) / targetCents > BigInt(100) ? BigInt(100) : (actualCents * BigInt(100)) / targetCents) : 0,
+    remaining: amount(targetCents - actualCents),
+    over: actualCents > targetCents,
+  };
 }
 export function summarizeBudget(
   rows: {

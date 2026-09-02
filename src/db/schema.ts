@@ -362,6 +362,26 @@ export const personalTransactions = pgTable(
   ],
 );
 
+export const personalReceiptCleanupQueue = pgTable(
+  "personal_receipt_cleanup_queue",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id").notNull(),
+    storageKey: text("storage_key").notNull().unique(),
+    attempts: integer("attempts").notNull().default(0),
+    lastError: text("last_error"),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({ columns: [t.userId], foreignColumns: [users.id], name: "personal_receipt_cleanup_queue_user_fk" }).onDelete("cascade"),
+    check("personal_receipt_cleanup_queue_prefix_ck", sql`${t.storageKey} like ('personal/'||${t.userId}||'/receipts/%')`),
+    check("personal_receipt_cleanup_queue_attempts_ck", sql`${t.attempts}>=0`),
+    index("personal_receipt_cleanup_queue_due_idx").on(t.nextAttemptAt, t.id),
+  ],
+);
+
 export const personalBudgets = pgTable(
   "personal_budgets",
   {

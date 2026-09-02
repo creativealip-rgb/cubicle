@@ -13,7 +13,7 @@ export type WorkspaceRole = "owner" | "member" | "viewer";
 
 export type DirectNavItem = {
   kind: "direct"; id: string; href: string; aliases?: string[]; icon: LucideIcon; label: LocalizedText;
-  description?: LocalizedText; badgeKey?: SidebarBadgeKey;
+  description?: LocalizedText; badgeKey?: SidebarBadgeKey; ownerOnly?: boolean;
 };
 export type NavGroup = {
   kind: "group"; id: SidebarGroupId; icon: LucideIcon; label: LocalizedText;
@@ -29,7 +29,8 @@ const direct = (
   description?: LocalizedText,
   badgeKey?: SidebarBadgeKey,
   aliases?: string[],
-): DirectNavItem => ({ kind: "direct", id, href, aliases, icon, label, description, badgeKey });
+  ownerOnly?: boolean,
+): DirectNavItem => ({ kind: "direct", id, href, aliases, icon, label, description, badgeKey, ownerOnly });
 
 export const appNavigation: NavigationEntry[] = [
   direct("dashboard", "/app/dashboard", LayoutDashboard, { id: "Dashboard", en: "Dashboard" }),
@@ -54,10 +55,10 @@ export const appNavigation: NavigationEntry[] = [
     direct("reports", "/app/reports", BarChart3, { id: "Laporan", en: "Reports" }, { id: "Analisis keuangan dan performa waktu", en: "Analyze financial and time performance" }),
   ]},
   direct("calendar", "/app/calendar", Calendar, { id: "Kalender", en: "Calendar" }),
-  { kind: "group", id: "personal", icon: NotebookPen, label: { id: "Personal", en: "Personal" }, ownerOnly: true, children: [
+  { kind: "group", id: "personal", icon: NotebookPen, label: { id: "Personal", en: "Personal" }, children: [
     direct("productivity", "/app/productivity", CheckSquare, { id: "Produktivitas", en: "Productivity" }, { id: "Kelola tujuan dan kebiasaan pribadi", en: "Manage personal goals and habits" }),
-    direct("notes", "/app/personal", NotebookPen, { id: "Catatan", en: "Notes" }, { id: "Simpan catatan pribadi", en: "Keep private notes" }),
-    direct("journal", "/app/journal", NotebookPen, { id: "Jurnal", en: "Journal" }, { id: "Tulis jurnal pekerjaan", en: "Write your work journal" }),
+    direct("notes", "/app/personal", NotebookPen, { id: "Catatan", en: "Notes" }, { id: "Simpan catatan pribadi", en: "Keep private notes" }, undefined, undefined, true),
+    direct("journal", "/app/journal", NotebookPen, { id: "Jurnal", en: "Journal" }, { id: "Tulis jurnal pekerjaan", en: "Write your work journal" }, undefined, undefined, true),
   ]},
   { kind: "group", id: "ai", icon: Sparkles, label: { id: "AI", en: "AI" }, children: [
     direct("prompt-studio", "/app/prompts", Sparkles, { id: "Prompt Studio", en: "Prompt Studio" }, { id: "Buat materi campaign dengan AI", en: "Create campaign assets with AI" }),
@@ -65,8 +66,18 @@ export const appNavigation: NavigationEntry[] = [
   ]},
 ];
 
-export function getVisibleNavigation(role?: WorkspaceRole) {
-  return appNavigation.filter((entry) => entry.kind !== "group" || !entry.ownerOnly || role === "owner");
+export function getVisibleNavigation(role?: WorkspaceRole): NavigationEntry[] {
+  const visible: NavigationEntry[] = [];
+  for (const entry of appNavigation) {
+    if (entry.kind !== "group") {
+      visible.push(entry);
+      continue;
+    }
+    if (entry.ownerOnly && role !== "owner") continue;
+    const children = entry.children.filter((child) => !child.ownerOnly || role === "owner");
+    if (children.length) visible.push({ ...entry, children });
+  }
+  return visible;
 }
 
 function matchesRoute(path: string, route: string) {

@@ -30,13 +30,26 @@ describe("app navigation registry", () => {
     expect(appNavigation.some((entry) => entry.id === "sales")).toBe(false);
   });
 
-  it("hides Personal from member and viewer", () => {
+  it("shows only Productivity in Personal for member and viewer", () => {
     for (const role of ["member", "viewer"] as const) {
       const visible = getVisibleNavigation(role);
-      expect(visible.some((entry) => entry.id === "personal")).toBe(false);
+      const personal = visible.find((entry) => entry.id === "personal");
+      expect(personal?.kind).toBe("group");
+      if (personal?.kind === "group")
+        expect(personal.children.map((item) => item.href)).toEqual(["/app/productivity"]);
       expect(visible.some((entry) => entry.id === "sales")).toBe(false);
-      expect(visible.flatMap((entry) => entry.kind === "group" ? entry.children.map((item) => item.href) : [entry.href])).not.toContain("/app/personal");
     }
+  });
+
+  it("shows Productivity, Notes, and Journal in Personal for owner", () => {
+    const personal = getVisibleNavigation("owner").find((entry) => entry.id === "personal");
+    expect(personal?.kind).toBe("group");
+    if (personal?.kind === "group")
+      expect(personal.children.map((item) => item.href)).toEqual([
+        "/app/productivity",
+        "/app/personal",
+        "/app/journal",
+      ]);
   });
 
   it.each([

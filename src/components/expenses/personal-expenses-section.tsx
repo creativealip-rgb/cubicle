@@ -2,6 +2,9 @@ import {
   createPersonalTransaction,
   createPersonalTransactionCategory,
   deletePersonalTransaction,
+  deletePersonalTransactionCategory,
+  updatePersonalTransaction,
+  updatePersonalTransactionCategory,
   listPersonalTransactionCategories,
   listPersonalTransactions,
 } from "@/lib/actions/personal-transactions";
@@ -24,11 +27,15 @@ export async function PersonalExpensesSection({
   ]);
   async function create(fd: FormData) {
     "use server";
+    const categoryId = String(fd.get("categoryId") || "") || null;
+    const defaultBucketByCategory = Object.fromEntries(
+      categories.map((item) => [item.id, item.defaultBucket]),
+    );
     await createPersonalTransaction({
-      categoryId: String(fd.get("categoryId") || "") || null,
+      categoryId,
       transactionType: String(fd.get("transactionType")) as
         "expense" | "allocation",
-      budgetBucket: String(fd.get("budgetBucket")) as
+      budgetBucket: ((categoryId ? defaultBucketByCategory[categoryId] : null) ?? String(fd.get("budgetBucket"))) as
         "needs" | "wants" | "savings" | "unbudgeted",
       amount: String(fd.get("amount")),
       currency: String(fd.get("currency")),
@@ -50,6 +57,33 @@ export async function PersonalExpensesSection({
     "use server";
     await deletePersonalTransaction(String(fd.get("id")));
   }
+  async function editTransaction(fd: FormData) {
+    "use server";
+    await updatePersonalTransaction(String(fd.get("id")), {
+      categoryId: String(fd.get("categoryId") || "") || null,
+      transactionType: String(fd.get("transactionType")) as "expense" | "allocation",
+      budgetBucket: String(fd.get("budgetBucket")) as "needs" | "wants" | "savings" | "unbudgeted",
+      amount: String(fd.get("amount")),
+      currency: String(fd.get("currency")),
+      date: String(fd.get("date")),
+      description: String(fd.get("description")),
+      merchant: String(fd.get("merchant") || "") || null,
+    });
+  }
+  async function editCategory(fd: FormData) {
+    "use server";
+    await updatePersonalTransactionCategory(String(fd.get("id")), {
+      name: String(fd.get("name")),
+      color: String(fd.get("color")),
+      defaultBucket: String(fd.get("defaultBucket")) as "needs" | "wants" | "savings" | "unbudgeted",
+    });
+  }
+  async function removeCategory(fd: FormData) {
+    "use server";
+    await deletePersonalTransactionCategory(String(fd.get("id")));
+  }
+  const locale = t("id-ID", "en-US");
+  const money = (amount: string, currency: string) => new Intl.NumberFormat(locale, { style: "currency", currency }).format(Number(amount));
   const today = new Date().toISOString().slice(0, 10);
   return (
     <div className="space-y-6">
@@ -145,6 +179,18 @@ export async function PersonalExpensesSection({
               </select>
               <Button>{t("Tambah kategori", "Add category")}</Button>
             </form>
+            <div className="mt-4 space-y-2">
+              {categories.map((category) => (
+                <form key={category.id} action={editCategory} className="grid gap-2 rounded-xl border p-2 sm:grid-cols-[1fr_auto_auto]">
+                  <input type="hidden" name="id" value={category.id} />
+                  <input type="hidden" name="color" value={category.color} />
+                  <input type="hidden" name="defaultBucket" value={category.defaultBucket} />
+                  <Input name="name" defaultValue={category.name} required />
+                  <Button variant="outline">{t("Simpan", "Save")}</Button>
+                  <Button formAction={removeCategory} variant="destructive">{t("Hapus", "Delete")}</Button>
+                </form>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -162,12 +208,32 @@ export async function PersonalExpensesSection({
                   key={r.id}
                   className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div>
-                    <p className="font-medium">{r.description}</p>
+                  <details className="min-w-0 flex-1">
+                    <summary className="cursor-pointer font-medium">{r.description}</summary>
                     <p className="text-sm text-muted-foreground">
-                      {r.date} · {r.budgetBucket} · {r.currency} {r.amount}
+                      {new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${r.date}T00:00:00Z`))} · {r.budgetBucket} · {money(r.amount, r.currency)}
                     </p>
-                  </div>
+                    <form action={editTransaction} className="mt-2 grid gap-2 sm:grid-cols-3">
+                      <input type="hidden" name="id" value={r.id} />
+                      <Input name="description" defaultValue={r.description} required />
+                      <Input name="merchant" defaultValue={r.merchant || ""} />
+                      <Input name="amount" defaultValue={r.amount} required />
+                      <Input name="currency" defaultValue={r.currency} required maxLength={3} />
+                      <Input name="date" type="date" defaultValue={r.date} required />
+                      <select name="categoryId" defaultValue={r.categoryId || ""} className="h-10 rounded-md border bg-background px-3">
+                        <option value="">{t("Tanpa kategori", "No category")}</option>
+                        {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+                      </select>
+                      <select name="transactionType" defaultValue={r.transactionType} className="h-10 rounded-md border bg-background px-3">
+                        <option value="expense">{t("Pengeluaran", "Expense")}</option>
+                        <option value="allocation">{t("Alokasi", "Allocation")}</option>
+                      </select>
+                      <select name="budgetBucket" defaultValue={r.budgetBucket} className="h-10 rounded-md border bg-background px-3">
+                        {["needs", "wants", "savings", "unbudgeted"].map((bucket) => <option key={bucket} value={bucket}>{bucket}</option>)}
+                      </select>
+                      <Button variant="outline">{t("Simpan perubahan", "Save changes")}</Button>
+                    </form>
+                  </details>
                   <div className="flex flex-wrap items-center gap-2">
                     <PersonalReceiptControl
                       transactionId={r.id}

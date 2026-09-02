@@ -1,7 +1,7 @@
 # Cubiqlo — Personal Productivity & 50/30/20 Budget Plan
 
-**Status:** CONTRACT-READY DRAFT — arah produk disetujui; **NO-GO untuk coding** sampai seluruh artifact Phase 0A tersedia dan lolos review mekanis.
-**Target branch:** `dev/integration` melalui feature worktree terpisah
+**Status:** IMPLEMENTED — RELEASE HARDENING IN PROGRESS. Source utama sudah berada di `main`; runtime/browser/release gates di bawah tetap harus dibuktikan sebelum handoff.
+**Current branch:** `main`. Production tidak boleh dipromosikan tanpa approval eksplisit.
 **Scope:** Habit Tracker, Goal Tracker, dan anggaran 50/30/20
 **Prinsip:** tidak menambah menu sidebar kecuali satu submenu `Produktivitas / Productivity`; seluruh UI bilingual melalui `cubiqlo_lang`.
 
@@ -553,6 +553,19 @@ Tambah hanya setelah pemakaian MVP menunjukkan kebutuhan.
 
 ## 8. Fase implementasi
 
+### Live implementation ledger
+
+| Phase | Source | Automated evidence | Runtime/browser | Release |
+| --- | --- | --- | --- | --- |
+| 0/0A Contract + migration | PASS | PARTIAL — disposable DB hijau; negative A/B, concurrent budget copy, cursor SQL, dan receipt behavioral matrix belum penuh | OPEN | BLOCKED |
+| 1 Goal Tracker | PASS | PARTIAL — domain/unit ada; browser CRUD/isolation/i18n/mobile belum terbukti | OPEN | BLOCKED |
+| 2 Habit Tracker | PARTIAL — edit/delete UI, kalender bulanan, touch target, dan today's-count semantics belum lengkap | PARTIAL — schedule/streak tests ada | OPEN | BLOCKED |
+| 3 Personal Expense + receipt | PARTIAL — transaction/category edit-delete UI, auto bucket, locale/feedback, keyset route wiring, dan durable cleanup retry belum lengkap | PARTIAL — focused navigation/receipt wiring hijau; behavior/runtime belum penuh | OPEN | BLOCKED |
+| 4 Budget 50/30/20 | PARTIAL — UI masih memakai float, belum compact enable/manage dialog, currency selector, disabled hiding, copy-confirmation, dan ARIA lengkap | PARTIAL — decimal domain tests ada | OPEN | BLOCKED |
+| 5 QA, docs, release | IN PROGRESS | PARTIAL — typecheck, changed-file ESLint, build hijau; full Vitest 1649/1653 dengan 4 baseline wiring failure Notes/Journal | OPEN | BLOCKED |
+
+Status `PASS` pada kolom Source berarti wiring utama ditemukan di repo, bukan bukti runtime. Handoff hanya boleh setelah seluruh kolom Runtime/browser dan Release hijau.
+
 ### Phase 0 — Audit dan baseline
 
 - Audit sidebar Personal dan route Personal saat ini.
@@ -598,7 +611,7 @@ Artifact desain Phase 0A:
 
 - `docs/plans/personal-productivity-phase0a-schema.md` — urutan migration, kontrak tabel, ledger constraint/index, transaction boundary, dan rollback.
 - `docs/plans/personal-productivity-phase0a-reconciliation.sql` — row count, orphan/ownership mismatch, invalid domain, duplicate, receipt prefix, dan object inspection.
-- `docs/plans/personal-productivity-phase0a-object-reconciliation.md` — kontrak audit read-only object storage; script executable dibuat bersama migration Phase 0A, bukan dipalsukan sebagai artifact siap jalan.
+- `docs/plans/personal-productivity-phase0a-object-reconciliation.md` — kontrak audit read-only object storage; executable `scripts/reconcile-personal-receipts.ts` memakai prefix user-level eksplisit, read-only, output JSON empat kelompok, dan exit non-zero saat temuan ada.
 - `docs/plans/personal-productivity-phase0a-negative-matrix.md` — role/navigation serta positive-negative matrix user A/B.
 - `docs/plans/personal-productivity-phase0a-test-contract.md` — migration, DB invariant, action, cursor, navigation, receipt, dan approval gates.
 
@@ -808,4 +821,4 @@ Audit implementation-readiness diselesaikan pada revisi ini:
 - Goal archive inconsistency dihapus.
 - Viewer personal-vs-business permission matrix dikunci.
 
-Dokumen ini tetap **NO-GO untuk coding** sampai Phase 0A deliverables konkret pada bagian 8 tersedia dan lolos review mekanis.
+Dokumen ini sekarang menjadi live implementation/release ledger. Source implementation sudah berjalan; release tetap **BLOCKED** sampai full gates, authenticated desktop/mobile browser QA, isolation proof, screenshot QA, dan dev health/revision hijau.

@@ -5,6 +5,7 @@ import {
   upsertPersonalBudget,
 } from "@/lib/actions/personal-budget";
 import { budgetTargets } from "@/lib/personal-productivity/budget";
+import { budgetProgress } from "@/lib/personal-productivity/money";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,7 +18,7 @@ export async function PersonalBudgetSection({
   t: (id: string, en: string) => string;
 }) {
   const data = await getPersonalBudget(month),
-    targets = data.budget
+    targets = data.budget?.enabled
       ? budgetTargets(
           data.budget.income,
           data.budget.needsPct,
@@ -79,12 +80,9 @@ export async function PersonalBudgetSection({
               defaultValue={data.budget?.income || "0.00"}
               placeholder={t("Pendapatan bulanan", "Monthly income")}
             />
-            <Input
-              name="currency"
-              required
-              maxLength={3}
-              defaultValue={data.budget?.currency || "IDR"}
-            />
+            <select name="currency" required defaultValue={data.budget?.currency || data.currencies[0] || "IDR"} className="h-10 w-full rounded-md border bg-background px-3">
+              {[...new Set(["IDR", "USD", ...data.currencies])].map((currency) => <option key={currency} value={currency}>{currency}</option>)}
+            </select>
             <div className="grid grid-cols-3 gap-2">
               <Input
                 name="needsPercent"
@@ -118,6 +116,16 @@ export async function PersonalBudgetSection({
             </Button>
           </form>
           {data.budget && (
+            <form action={copy} className="mt-2">
+              <input type="hidden" name="month" value={month} />
+              <input type="hidden" name="currency" value={data.budget.currency} />
+              <input type="hidden" name="replace" value="true" />
+              <Button variant="destructive" className="w-full">
+                {t("Konfirmasi ganti dengan bulan sebelumnya", "Confirm replace from previous month")}
+              </Button>
+            </form>
+          )}
+          {data.budget && (
             <form action={toggle} className="mt-2">
               <input type="hidden" name="month" value={month} />
               <input
@@ -147,14 +155,7 @@ export async function PersonalBudgetSection({
           {rows.length ? (
             <div className="space-y-4">
               {rows.map((row) => {
-                const percent = Number(row.target)
-                  ? Math.min(
-                      100,
-                      Math.round(
-                        (Number(row.actual) / Number(row.target)) * 100,
-                      ),
-                    )
-                  : 0;
+                const progress = budgetProgress(row.actual, row.target);
                 return (
                   <div key={row.key}>
                     <div className="flex justify-between text-sm">
@@ -166,15 +167,19 @@ export async function PersonalBudgetSection({
                     <div className="mt-1 h-2 rounded bg-muted">
                       <div
                         className="h-2 rounded bg-primary"
-                        style={{ width: `${percent}%` }}
+                        role="progressbar"
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={progress.percent}
+                        style={{ width: `${progress.percent}%` }}
                       />
                     </div>
                     <p
-                      className={`mt-1 text-xs ${Number(row.actual) > Number(row.target) ? "text-destructive" : "text-muted-foreground"}`}
+                      className={`mt-1 text-xs ${progress.over ? "text-destructive" : "text-muted-foreground"}`}
                     >
-                      {Number(row.actual) > Number(row.target)
+                      {progress.over
                         ? t("Melebihi target", "Over budget")
-                        : `${t("Sisa", "Remaining")}: ${data.budget?.currency} ${(Number(row.target) - Number(row.actual)).toFixed(2)}`}
+                        : `${t("Sisa", "Remaining")}: ${data.budget?.currency} ${progress.remaining}`}
                     </p>
                   </div>
                 );

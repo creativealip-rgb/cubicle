@@ -83,6 +83,7 @@ WITH expected(name) AS (VALUES
  ('personal_habit_checkins_habit_user_fk'),('personal_habit_checkins_habit_date_uq'),
  ('personal_categories_user_fk'),('personal_categories_id_user_uq'),('personal_categories_name_ck'),('personal_categories_color_ck'),('personal_categories_bucket_ck'),
  ('personal_transactions_user_fk'),('personal_transactions_id_user_uq'),('personal_transactions_category_user_fk'),('personal_transactions_type_ck'),('personal_transactions_bucket_ck'),('personal_transactions_type_bucket_ck'),('personal_transactions_amount_ck'),('personal_transactions_currency_ck'),('personal_transactions_description_ck'),('personal_transactions_receipt_prefix_ck'),('personal_transactions_receipt_metadata_ck'),
+ ('personal_receipt_cleanup_queue_user_id_fkey'),('personal_receipt_cleanup_queue_key_uq'),('personal_receipt_cleanup_queue_prefix_ck'),('personal_receipt_cleanup_queue_attempts_ck'),
  ('personal_budgets_user_fk'),('personal_budgets_id_user_uq'),('personal_budgets_user_month_currency_uq'),('personal_budgets_month_ck'),('personal_budgets_currency_ck'),('personal_budgets_income_ck'),('personal_budgets_needs_pct_ck'),('personal_budgets_wants_pct_ck'),('personal_budgets_savings_pct_ck'),('personal_budgets_percent_total_ck')
 )
 SELECT 'missing_constraint' AS check_name, e.name
@@ -93,7 +94,7 @@ WITH expected(name) AS (VALUES
  ('personal_goals_user_status_idx'),('personal_goals_user_deadline_idx'),('personal_goal_steps_goal_sort_idx'),
  ('personal_habits_user_status_idx'),('personal_habits_user_goal_idx'),('personal_habit_checkins_user_date_idx'),
  ('personal_categories_user_lower_name_uq'),('personal_categories_user_name_idx'),('personal_transactions_user_date_created_id_idx'),
- ('personal_transactions_user_currency_date_idx'),('personal_budgets_user_month_currency_idx')
+ ('personal_transactions_user_currency_date_idx'),('personal_receipt_cleanup_queue_due_idx'),('personal_receipt_cleanup_queue_key_uq'),('personal_budgets_user_month_currency_idx')
 )
 SELECT 'missing_index' AS check_name, e.name
 FROM expected e LEFT JOIN pg_indexes i ON i.schemaname=current_schema() AND i.indexname=e.name
@@ -105,6 +106,7 @@ WITH expected(name) AS (VALUES
  ('personal_goal_steps_goal_user_fk'),('personal_goal_steps_title_ck'),('personal_habits_user_fk'),('personal_habits_id_user_uq'),('personal_habits_goal_user_fk'),('personal_habits_name_ck'),('personal_habits_frequency_ck'),('personal_habits_status_ck'),('personal_habits_schedule_ck'),
  ('personal_habit_checkins_habit_user_fk'),('personal_habit_checkins_habit_date_uq'),('personal_categories_user_fk'),('personal_categories_id_user_uq'),('personal_categories_name_ck'),('personal_categories_color_ck'),('personal_categories_bucket_ck'),
  ('personal_transactions_user_fk'),('personal_transactions_id_user_uq'),('personal_transactions_category_user_fk'),('personal_transactions_type_ck'),('personal_transactions_bucket_ck'),('personal_transactions_type_bucket_ck'),('personal_transactions_amount_ck'),('personal_transactions_currency_ck'),('personal_transactions_description_ck'),('personal_transactions_receipt_prefix_ck'),('personal_transactions_receipt_metadata_ck'),
+ ('personal_receipt_cleanup_queue_user_id_fkey'),('personal_receipt_cleanup_queue_key_uq'),('personal_receipt_cleanup_queue_prefix_ck'),('personal_receipt_cleanup_queue_attempts_ck'),
  ('personal_budgets_user_fk'),('personal_budgets_id_user_uq'),('personal_budgets_user_month_currency_uq'),('personal_budgets_month_ck'),('personal_budgets_currency_ck'),('personal_budgets_income_ck'),('personal_budgets_needs_pct_ck'),('personal_budgets_wants_pct_ck'),('personal_budgets_savings_pct_ck'),('personal_budgets_percent_total_ck')
 ), managed AS (
  SELECT c.conname AS name FROM pg_constraint c JOIN pg_class t ON t.oid=c.conrelid
@@ -114,7 +116,7 @@ SELECT 'unexpected_constraint' AS check_name, m.name
 FROM managed m LEFT JOIN expected e USING(name) WHERE e.name IS NULL ORDER BY m.name;
 
 WITH expected(name) AS (VALUES
- ('personal_goals_user_status_idx'),('personal_goals_user_deadline_idx'),('personal_goal_steps_goal_sort_idx'),('personal_habits_user_status_idx'),('personal_habits_user_goal_idx'),('personal_habit_checkins_user_date_idx'),('personal_categories_user_lower_name_uq'),('personal_categories_user_name_idx'),('personal_transactions_user_date_created_id_idx'),('personal_transactions_user_currency_date_idx'),('personal_budgets_user_month_currency_idx')
+ ('personal_goals_user_status_idx'),('personal_goals_user_deadline_idx'),('personal_goal_steps_goal_sort_idx'),('personal_habits_user_status_idx'),('personal_habits_user_goal_idx'),('personal_habit_checkins_user_date_idx'),('personal_categories_user_lower_name_uq'),('personal_categories_user_name_idx'),('personal_transactions_user_date_created_id_idx'),('personal_transactions_user_currency_date_idx'),('personal_receipt_cleanup_queue_due_idx'),('personal_receipt_cleanup_queue_key_uq'),('personal_budgets_user_month_currency_idx')
 ), managed AS (
  SELECT indexname AS name FROM pg_indexes WHERE schemaname=current_schema()
  AND tablename LIKE 'personal_%' AND indexname !~ '(_pkey|_id_user_uq|_habit_date_uq|_user_month_currency_uq)$'

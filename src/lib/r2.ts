@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
@@ -63,4 +64,17 @@ export async function getSignedUploadUrl(storageKey: string, contentType: string
 export async function deleteStoredFile(storageKey: string) {
   assertR2Configured();
   await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: storageKey }));
+}
+
+export async function inspectStoredFile(storageKey: string) {
+  assertR2Configured();
+  const object = await r2.send(new GetObjectCommand({ Bucket: R2_BUCKET, Key: storageKey }));
+  if (!object.Body) throw new Error("Stored file is empty");
+  const bytes = await object.Body.transformToByteArray();
+  return {
+    bytes,
+    size: bytes.byteLength,
+    mime: object.ContentType ?? "",
+    checksum: createHash("sha256").update(bytes).digest("hex"),
+  };
 }

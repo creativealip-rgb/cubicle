@@ -10,7 +10,7 @@ import {
   clients,
   workspaceCurrencyRates,
 } from "@/db/schema";
-import { eq, desc, and, gte, lte } from "drizzle-orm";
+import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -44,7 +44,7 @@ import {
 import { Suspense } from "react";
 import { PersonalExpensesSection } from "@/components/expenses/personal-expenses-section";
 import { listPersonalTransactions } from "@/lib/actions/personal-transactions";
-import { mergeUnifiedExpenses } from "@/lib/personal-productivity/unified-expenses";
+import { decodeExpenseCursor, encodeExpenseCursor, mergeUnifiedExpenses } from "@/lib/personal-productivity/unified-expenses";
 import {
   aggregateToBase,
   buildRateMap,
@@ -77,6 +77,7 @@ export default async function ExpensesPage({
     page?: string;
     tab?: string;
     scope?: "all" | "business" | "personal";
+    cursor?: string;
   }>;
 }) {
   const lang = await getCurrentLang();
@@ -105,6 +106,7 @@ export default async function ExpensesPage({
     params.scope === "personal" || params.scope === "business"
       ? params.scope
       : "all";
+  const expenseCursor = decodeExpenseCursor(params.cursor);
   const { start: monthStart, end: monthEnd } = monthBounds(month);
 
   // Categories
@@ -220,6 +222,10 @@ export default async function ExpensesPage({
   listConditions.push(gte(expenses.date, monthStart));
   listConditions.push(lte(expenses.date, monthEnd));
   if (categoryId) listConditions.push(eq(expenses.categoryId, categoryId));
+  if (expenseCursor)
+    listConditions.push(
+      sql`(${expenses.date}, ${expenses.createdAt}, 0, ${expenses.id}) < (${expenseCursor.date}::date, ${new Date(expenseCursor.createdAt)}::timestamptz, ${expenseCursor.sourceRank}, ${expenseCursor.id}::uuid)`,
+    );
 
   const allForFilter = await db
     .select({
@@ -246,7 +252,8 @@ export default async function ExpensesPage({
     .leftJoin(projects, eq(projects.id, expenses.projectId))
     .leftJoin(clients, eq(clients.id, expenses.clientId))
     .where(and(...listConditions))
-    .orderBy(desc(expenses.date), desc(expenses.createdAt));
+    .orderBy(desc(expenses.date), desc(expenses.createdAt), desc(expenses.id))
+    .limit(100);
 
   const qLower = q.toLowerCase();
   const filtered = q
@@ -277,8 +284,8 @@ export default async function ExpensesPage({
         : null;
       return { ...e, amountBase };
     });
-  const personalForMerge = await listPersonalTransactions();
-  const unifiedRows = mergeUnifiedExpenses(
+  const personalForMerge = await listPersonalTransactions(expenseCursor, 100);
+  const unifiedPage = mergeUnifiedExpenses(
     personalForMerge.map((row) => ({
       id: row.id,
       source: "personal" as const,
@@ -298,7 +305,9 @@ export default async function ExpensesPage({
       currency: row.currency,
     })),
     PAGE_SIZE,
-  ).rows;
+    expenseCursor,
+  );
+  const unifiedRows = unifiedPage.rows;
 
   // Recurring
   const recurringRaw = await db
@@ -624,6 +633,15 @@ export default async function ExpensesPage({
                       </span>
                     </div>
                   ))}
+                  {unifiedPage.cursor && (
+                    <div className="p-3 text-center">
+                      <Button variant="outline" asChild>
+                        <Link href={`/app/expenses?month=${month}&scope=all&cursor=${encodeExpenseCursor(unifiedPage.cursor)}`}>
+                          {t("Muat lebih lama", "Load older")}
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
               {scope === "personal" && (

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mergeUnifiedExpenses, type UnifiedExpense } from "./unified-expenses";
+import { decodeExpenseCursor, encodeExpenseCursor, mergeUnifiedExpenses, type UnifiedExpense } from "./unified-expenses";
 const row = (
   id: string,
   source: UnifiedExpense["source"],
@@ -21,6 +21,11 @@ describe("unified expense ordering", () => {
       [row("z", "business", "2026-09-01", "2026-09-01T00:00:00Z")],
     ).rows;
     expect(rows.map((x) => x.source)).toEqual(["personal", "business"]);
+  });
+  it("round-trips an opaque cursor and rejects malformed input", () => {
+    const cursor = { date: "2026-09-01", createdAt: "2026-09-01T00:00:00.000Z", sourceRank: 1, id: "3" };
+    expect(decodeExpenseCursor(encodeExpenseCursor(cursor))).toEqual(cursor);
+    expect(decodeExpenseCursor("invalid")).toBeUndefined();
   });
   it("uses exclusive cursor without duplicate or skipped old rows", () => {
     const all = [

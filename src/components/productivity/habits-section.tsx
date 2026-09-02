@@ -1,5 +1,6 @@
 import {
   createPersonalHabit,
+  deletePersonalHabit,
   listPersonalHabits,
   togglePersonalHabitCheckin,
   updatePersonalHabit,
@@ -10,6 +11,7 @@ import { StreakRecoveryCard } from "@/components/productivity/weekly-review-card
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { HabitDialog } from "@/components/productivity/habit-dialog";
+import { HabitHeatmap } from "@/components/productivity/habit-heatmap";
 import { Flame, CheckCircle, Check, Archive, RotateCcw } from "lucide-react";
 
 export async function HabitsSection({
@@ -61,6 +63,28 @@ export async function HabitsSection({
       startDate: h.startDate,
       status: h.status === "active" ? "archived" : "active",
     });
+  }
+
+  async function updateHabitAction(fd: FormData) {
+    "use server";
+    const h = habits.find((item) => item.id === String(fd.get("habitId")));
+    if (!h) throw new Error("Habit not found");
+    await updatePersonalHabit(h.id, {
+      name: String(fd.get("name") || h.name),
+      description: h.description,
+      goalId: h.goalId,
+      color: h.color,
+      icon: h.icon,
+      frequency: h.frequency as "daily" | "specific_weekdays",
+      weekdays: h.weekdays,
+      startDate: h.startDate,
+      status: h.status as "active" | "archived",
+    });
+  }
+
+  async function deleteHabitAction(fd: FormData) {
+    "use server";
+    await deletePersonalHabit(String(fd.get("habitId")));
   }
 
   const activeHabits = habits.filter((h) => h.status === "active");
@@ -172,7 +196,7 @@ export async function HabitsSection({
                         type="submit"
                         disabled={!scheduledToday}
                         variant="default"
-                        className={`h-10 rounded-2xl px-4 font-semibold transition ${
+                        className={`min-h-11 rounded-2xl px-4 font-semibold transition ${
                           done
                             ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                             : "bg-violet-600 text-white hover:bg-violet-700"
@@ -199,7 +223,7 @@ export async function HabitsSection({
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-10 rounded-xl border border-transparent px-3 text-muted-foreground hover:border-border hover:text-foreground"
+                        className="min-h-11 min-w-11 rounded-xl border border-transparent px-3 text-muted-foreground hover:border-border hover:text-foreground"
                         title={t("Arsipkan kebiasaan", "Archive habit")}
                       >
                         <Archive className="size-4" />
@@ -207,6 +231,30 @@ export async function HabitsSection({
                     </form>
                   </div>
                 </div>
+
+                <div className="grid gap-2 border-t pt-3 sm:grid-cols-[1fr_auto]">
+                  <form action={updateHabitAction} className="flex gap-2">
+                    <input type="hidden" name="habitId" value={h.id} />
+                    <input name="name" defaultValue={h.name} required aria-label={t("Ubah nama kebiasaan", "Edit habit name")} className="min-h-11 min-w-0 flex-1 rounded-xl border bg-background px-3 text-sm" />
+                    <Button variant="outline" className="min-h-11">{t("Simpan", "Save")}</Button>
+                  </form>
+                  <form action={deleteHabitAction}>
+                    <input type="hidden" name="habitId" value={h.id} />
+                    <Button variant="destructive" className="min-h-11">{t("Hapus", "Delete")}</Button>
+                  </form>
+                </div>
+
+                <HabitHeatmap
+                  cells={recentDays.map((day) => ({
+                    date: day.date,
+                    dayOfWeek: new Date(`${day.date}T12:00:00Z`).getUTCDay(),
+                    completedCount: day.isChecked ? 1 : 0,
+                    totalScheduled: day.scheduled ? 1 : 0,
+                    intensity: day.isChecked ? 4 : 0,
+                  }))}
+                  weeklyTrends={[]}
+                  t={t}
+                />
 
                 {/* 14-Day Micro Sparkline / Dots */}
                 <div className="flex items-center justify-between border-t pt-3">
@@ -271,7 +319,7 @@ export async function HabitsSection({
                 <span className="line-through text-muted-foreground">{h.name}</span>
                 <form action={archive}>
                   <input type="hidden" name="habitId" value={h.id} />
-                  <Button size="sm" variant="ghost" className="h-8 gap-1 text-xs">
+                  <Button size="sm" variant="ghost" className="min-h-11 gap-1 text-xs">
                     <RotateCcw className="size-3.5" />
                     {t("Aktifkan Kembali", "Restore")}
                   </Button>
