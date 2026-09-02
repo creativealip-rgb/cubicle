@@ -246,7 +246,7 @@ export default async function ProductivityPage({
                   </Link>
                 </Button>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-2.5">
                 {activeGoals.length ? (
                   activeGoals.slice(0, 4).map((g) => (
                     <GoalProgressCard
@@ -254,6 +254,7 @@ export default async function ProductivityPage({
                       goal={g}
                       today={today}
                       setStatusAction={setStatus}
+                      compact
                       t={t}
                     />
                   ))

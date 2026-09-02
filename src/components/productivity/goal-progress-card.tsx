@@ -9,6 +9,7 @@ interface GoalProgressCardProps {
   goal: GoalItemLike;
   today: string;
   setStatusAction: (fd: FormData) => Promise<void>;
+  compact?: boolean;
   t: (id: string, en: string) => string;
 }
 
@@ -22,6 +23,7 @@ export function GoalProgressCard({
   goal,
   today,
   setStatusAction,
+  compact = false,
   t,
 }: GoalProgressCardProps) {
   const progress = calculateGoalProgress(
@@ -32,6 +34,77 @@ export function GoalProgressCard({
   const effectiveStatus = goal.status === "not_started" && progress > 0 ? "in_progress" : goal.status;
   const priorityClass =
     PRIORITY_COLORS[(goal.priority as "high" | "medium" | "low") || "medium"];
+
+  if (compact) {
+    return (
+      <div className="group rounded-2xl border bg-muted/20 p-3.5 transition hover:border-violet-200 hover:bg-muted/40 dark:hover:border-violet-900/50">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1 space-y-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                {goal.lifeArea || t("Umum", "General")}
+              </span>
+              <span className={`rounded-md border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${priorityClass}`}>
+                {t(
+                  goal.priority === "high"
+                    ? "Tinggi"
+                    : goal.priority === "low"
+                      ? "Rendah"
+                      : "Sedang",
+                  goal.priority || "Medium",
+                )}
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                {goal.steps.length > 0
+                  ? `${goal.steps.filter((s) => s.isCompleted).length}/${goal.steps.length} ${t("langkah", "steps")}`
+                  : null}
+              </span>
+            </div>
+            <Link
+              href={`/app/productivity/goals/${goal.id}`}
+              className="block truncate text-sm font-semibold tracking-tight text-foreground transition group-hover:text-violet-600 hover:underline"
+            >
+              {goal.title}
+            </Link>
+          </div>
+
+          <div className="text-right shrink-0">
+            <span className="text-sm font-bold text-foreground">{progress}%</span>
+          </div>
+        </div>
+
+        {/* Compact Progress Bar */}
+        <div className="mt-2.5 relative h-2 w-full overflow-hidden rounded-full bg-muted/70">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${
+              progress >= 100
+                ? "bg-emerald-500"
+                : progress >= 50
+                  ? "bg-gradient-to-r from-violet-600 to-emerald-500"
+                  : "bg-gradient-to-r from-violet-700 to-violet-500"
+            }`}
+            style={{ width: `${Math.max(progress, 2)}%` }}
+          />
+        </div>
+
+        <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <Clock className="size-3" />
+            <span className={deadline.isOverdue ? "font-semibold text-red-600" : deadline.isUrgent ? "font-semibold text-amber-600" : ""}>
+              {deadline.label}
+            </span>
+          </div>
+
+          <Link
+            href={`/app/productivity/goals/${goal.id}`}
+            className="font-medium text-violet-600 hover:underline flex items-center gap-0.5"
+          >
+            {t("Detail", "Details")} <ArrowRight className="size-3" />
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Card className="overflow-hidden rounded-3xl border bg-card shadow-sm transition hover:shadow-md">
