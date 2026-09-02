@@ -16,12 +16,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { authClient } from "@/lib/auth-client";
+import { useT } from "@/lib/i18n-client";
 
 export function ForgotPasswordForm() {
+  const { t } = useT();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
-  // i18n labels hardcoded for auth flows
-  // const { t } = useT();
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -36,13 +36,13 @@ export function ForgotPasswordForm() {
       });
 
       if (result.error) {
-        setError(result.error.message ?? "Gagal memproses permintaan");
+        setError(result.error.message ?? t("Gagal memproses permintaan", "Failed to process request"));
         return;
       }
 
       setSent(true);
     } catch {
-      setError("Terjadi kesalahan. Coba lagi.");
+      setError(t("Terjadi kesalahan. Coba lagi.", "An error occurred. Try again."));
     } finally {
       setLoading(false);
     }
@@ -53,9 +53,9 @@ export function ForgotPasswordForm() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <CheckCircle className="mx-auto h-12 w-12 text-primary" />
-          <CardTitle className="text-2xl">Cek email kamu</CardTitle>
+          <CardTitle className="text-2xl">{t("Cek email kamu", "Check your email")}</CardTitle>
           <CardDescription>
-            Kami sudah mengirim link reset password ke{" "}
+            {t("Kami sudah mengirim link reset password ke", "We sent a password reset link to")}{" "}
             <span className="font-medium text-foreground">{email}</span>
           </CardDescription>
         </CardHeader>
@@ -64,7 +64,7 @@ export function ForgotPasswordForm() {
             href="/login"
             className="text-sm text-muted-foreground underline-offset-4 hover:underline"
           >
-            Kembali ke halaman masuk
+            {t("Kembali ke halaman masuk", "Back to sign in")}
           </Link>
         </CardFooter>
       </Card>
@@ -75,9 +75,9 @@ export function ForgotPasswordForm() {
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1 text-center">
         <Image src="/logo-icon.png" alt="Cubiqlo" width={40} height={40} className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover" />
-        <CardTitle className="text-2xl">Reset password</CardTitle>
+        <CardTitle className="text-2xl">{t("Reset password", "Reset password")}</CardTitle>
         <CardDescription>
-          Masukkan email kamu dan kami kirim link reset-nya
+          {t("Masukkan email kamu dan kami kirim link reset-nya", "Enter your email and we will send you a reset link")}
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -88,7 +88,7 @@ export function ForgotPasswordForm() {
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("Email", "Email")}</Label>
             <Input
               id="email"
               type="email"
@@ -101,7 +101,7 @@ export function ForgotPasswordForm() {
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Kirim link reset
+            {t("Kirim link reset", "Send reset link")}
           </Button>
         </CardContent>
       </form>
@@ -111,16 +111,25 @@ export function ForgotPasswordForm() {
           className="flex items-center gap-1 text-xs text-muted-foreground underline-offset-4 hover:underline"
         >
           <ArrowLeft className="h-3 w-3" />
-          Kembali ke halaman masuk
+          {t("Kembali ke halaman masuk", "Back to sign in")}
         </Link>
-        <div className="w-full border-t pt-3 text-center">
+        <div className="w-full border-t pt-3 text-center space-y-1">
           <p className="text-[11px] text-muted-foreground">
-            Lupa email atau kehilangan akses ke akun?{" "}
+            {t("Lupa password atau tidak bisa akses email?", "Forgot password or lost email access?")}{" "}
             <Link
-              href="/mfa/recovery"
+              href="/two-factor"
               className="font-medium text-primary hover:underline"
             >
-              Ajukan pemulihan manual
+              {t("Masuk dengan 2FA / Passkey", "Sign in with 2FA / Passkey")}
+            </Link>
+          </p>
+          <p className="text-[10px] text-muted-foreground">
+            {t("Kehilangan semua akses akun?", "Lost all account access?")}{" "}
+            <Link
+              href="/mfa/recovery"
+              className="hover:underline text-muted-foreground"
+            >
+              {t("Ajukan pemulihan manual", "Request manual recovery")}
             </Link>
           </p>
         </div>

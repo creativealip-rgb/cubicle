@@ -2,8 +2,12 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { MfaRecoveryForm } from "@/components/auth/mfa-recovery-form";
 import { ShieldAlert, ArrowLeft, KeyRound } from "lucide-react";
+import { getCurrentLang, createT } from "@/lib/i18n";
 
-export default function MfaRecoveryPage() {
+export default async function MfaRecoveryPage() {
+  const lang = await getCurrentLang();
+  const t = createT(lang);
+
   return (
     <main className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 bg-slate-950 overflow-hidden">
       {/* Ambient background glow */}
@@ -16,17 +20,20 @@ export default function MfaRecoveryPage() {
         <div className="rounded-2xl border border-primary/20 bg-slate-900/80 backdrop-blur-md p-3.5 text-xs text-slate-300 space-y-2">
           <p className="font-semibold text-white flex items-center gap-1.5">
             <KeyRound className="h-4 w-4 text-primary" />
-            <span>Punya Passkey atau Recovery Backup Code?</span>
+            <span>{t("Punya Passkey atau Recovery Backup Code?", "Have a Passkey or Recovery Backup Code?")}</span>
           </p>
           <p className="text-[11px] text-slate-400">
-            Jika kamu masih punya akses ke sidik jari/Face ID atau 10 kode cadangan, kamu bisa langsung masuk tanpa menunggu review admin 72 jam.
+            {t(
+              "Jika kamu masih punya akses ke sidik jari/Face ID atau 10 kode cadangan, kamu bisa langsung masuk tanpa menunggu review admin 72 jam.",
+              "If you still have fingerprint/Face ID access or your 10 backup codes, you can sign in immediately without waiting for a 72-hour admin review.",
+            )}
           </p>
           <div className="flex gap-2 pt-1">
             <Link
               href="/two-factor"
               className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline"
             >
-              <span>← Coba verifikasi dengan Passkey / Backup Code</span>
+              <span>{t("← Coba verifikasi dengan Passkey / Backup Code", "← Try verifying with Passkey / Backup Code")}</span>
             </Link>
           </div>
         </div>
@@ -38,16 +45,23 @@ export default function MfaRecoveryPage() {
             <ShieldAlert className="h-6 w-6 text-white" />
           </div>
           <CardTitle className="text-xl font-bold tracking-tight">
-            Pemulihan Akun Manual (MFA)
+            {t("Pemulihan Akun Manual (MFA)", "Manual Account Recovery (MFA)")}
           </CardTitle>
           <CardDescription className="text-xs text-white/85">
-            Gunakan jalur ini jika kamu kehilangan semua akses Passkey, Authenticator App, dan Recovery Code.
+            {t(
+              "Gunakan jalur ini jika kamu kehilangan semua akses Passkey, Authenticator App, dan Recovery Code.",
+              "Use this path only if you have lost all access to your Passkey, Authenticator App, and Recovery Codes.",
+            )}
           </CardDescription>
         </CardHeader>
 
         <CardContent className="p-6 space-y-4">
           <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-[11px] text-amber-700 dark:text-amber-400">
-            ⚠️ <strong>Prosedur Keamanan:</strong> Pemulihan manual memerlukan masa tenang (*cooling period*) 72 jam dan persetujuan dari 2 administrator untuk mencegah pembajakan akun.
+            ⚠️ <strong>{t("Prosedur Keamanan:", "Security Procedure:")}</strong>{" "}
+            {t(
+              "Pemulihan manual memerlukan masa tenang (cooling period) 72 jam dan persetujuan dari 2 administrator untuk mencegah pembajakan akun.",
+              "Manual recovery requires a 72-hour cooling period and approval from 2 administrators to prevent unauthorized takeovers.",
+            )}
           </div>
 
           <MfaRecoveryForm />
@@ -59,7 +73,7 @@ export default function MfaRecoveryPage() {
             className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-medium transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            <span>Kembali ke Verifikasi 2FA</span>
+            <span>{t("Kembali ke Verifikasi 2FA", "Back to 2FA Verification")}</span>
           </Link>
         </CardFooter>
       </Card>

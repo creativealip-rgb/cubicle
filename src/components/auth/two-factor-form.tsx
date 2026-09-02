@@ -9,11 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Fingerprint, KeyRound, ShieldAlert, Smartphone, ArrowLeft, Loader2 } from "lucide-react";
+import { useT } from "@/lib/i18n-client";
 
 type Method = "totp" | "passkey" | "backup" | "recovery";
 
 export function TwoFactorForm() {
   const router = useRouter();
+  const { t } = useT();
   const [method, setMethod] = useState<Method>("totp");
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
@@ -25,12 +27,12 @@ export function TwoFactorForm() {
     try {
       const result = await authClient.signIn.passkey();
       if (result.error) {
-        setError(result.error.message ?? "Verifikasi Passkey gagal");
+        setError(result.error.message ?? t("Verifikasi Passkey gagal", "Passkey verification failed"));
       } else {
         router.push("/app/dashboard");
       }
     } catch {
-      setError("Verifikasi Passkey gagal atau dibatalkan");
+      setError(t("Verifikasi Passkey gagal atau dibatalkan", "Passkey verification failed or cancelled"));
     } finally {
       setLoading(false);
     }
@@ -47,12 +49,12 @@ export function TwoFactorForm() {
           : await authClient.twoFactor.verifyTotp({ code: code.trim(), trustDevice: false });
 
       if (result.error) {
-        setError(result.error.message ?? "Kode verifikasi tidak valid");
+        setError(result.error.message ?? t("Kode verifikasi tidak valid", "Invalid verification code"));
       } else {
         router.push("/app/dashboard");
       }
     } catch {
-      setError("Kode verifikasi salah atau kedaluwarsa");
+      setError(t("Kode verifikasi salah atau kedaluwarsa", "Invalid or expired verification code"));
     } finally {
       setLoading(false);
     }
@@ -78,17 +80,17 @@ export function TwoFactorForm() {
           </div>
           <CardTitle className="text-xl font-bold tracking-tight">
             {method === "passkey"
-              ? "Verifikasi dengan Passkey"
+              ? t("Verifikasi dengan Passkey", "Verify with Passkey")
               : method === "backup"
-                ? "Gunakan Recovery Backup Code"
-                : "Verifikasi 2 Langkah"}
+                ? t("Gunakan Recovery Backup Code", "Use Recovery Backup Code")
+                : t("Verifikasi 2 Langkah", "Two-step verification")}
           </CardTitle>
           <CardDescription className="text-xs text-white/85">
             {method === "passkey"
-              ? "Gunakan sidik jari, Face ID, atau PIN perangkatmu"
+              ? t("Gunakan sidik jari, Face ID, atau PIN perangkatmu", "Use fingerprint, Face ID, or your device PIN")
               : method === "backup"
-                ? "Masukkan salah satu dari 10 kode cadangan yang pernah kamu simpan"
-                : "Masukkan 6 digit kode dari aplikasi Authenticator (Google / Microsoft Auth)"}
+                ? t("Masukkan salah satu dari 10 kode cadangan yang pernah kamu simpan", "Enter one of the 10 backup recovery codes you saved")
+                : t("Masukkan 6 digit kode dari aplikasi Authenticator (Google / Microsoft Auth)", "Enter the 6-digit code from your Authenticator app (Google / Microsoft Auth)")}
           </CardDescription>
         </CardHeader>
 
@@ -109,14 +111,14 @@ export function TwoFactorForm() {
               className="w-full h-11 rounded-xl border-primary/30 bg-primary/5 hover:bg-primary/10 text-xs font-semibold flex items-center justify-center gap-2"
             >
               <Fingerprint className="h-4 w-4 text-primary" />
-              <span>Verifikasi cepat dengan Passkey / Biometrik</span>
+              <span>{t("Verifikasi cepat dengan Passkey / Biometrik", "Quick verify with Passkey / Biometrics")}</span>
             </Button>
           )}
 
           {method === "passkey" ? (
             <div className="space-y-3 py-2 text-center">
               <p className="text-xs text-muted-foreground">
-                Klik tombol di bawah untuk memunculkan prompt biometrik pada browsermu.
+                {t("Klik tombol di bawah untuk memunculkan prompt biometrik pada browsermu.", "Click the button below to prompt biometrics on your browser.")}
               </p>
               <Button
                 type="button"
@@ -125,14 +127,14 @@ export function TwoFactorForm() {
                 className="w-full h-11 rounded-xl text-xs font-semibold"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Fingerprint className="h-4 w-4 mr-2" />}
-                {loading ? "Menunggu respon perangkat…" : "Buka Prompt Passkey"}
+                {loading ? t("Menunggu respon perangkat…", "Waiting for device response…") : t("Buka Prompt Passkey", "Open Passkey Prompt")}
               </Button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="two-factor-code" className="text-xs">
-                  {method === "backup" ? "Recovery Backup Code (10 Karakter)" : "6-Digit Authenticator Code"}
+                  {method === "backup" ? t("Recovery Backup Code (10 Karakter)", "Recovery Backup Code (10 Characters)") : t("6-Digit Authenticator Code", "6-Digit Authenticator Code")}
                 </Label>
                 <Input
                   id="two-factor-code"
@@ -150,14 +152,14 @@ export function TwoFactorForm() {
               </div>
               <Button type="submit" disabled={loading || !code} className="w-full h-11 rounded-xl text-xs font-semibold">
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                {loading ? "Memverifikasi…" : "Verifikasi & Masuk"}
+                {loading ? t("Memverifikasi…", "Verifying…") : t("Verifikasi & Masuk", "Verify & Sign in")}
               </Button>
             </form>
           )}
 
           {/* Alternative Verification Methods Selector */}
           <div className="border-t pt-3 space-y-2 text-center text-xs">
-            <p className="text-muted-foreground font-medium text-[11px]">Pilihan metode lain:</p>
+            <p className="text-muted-foreground font-medium text-[11px]">{t("Pilihan metode lain:", "Alternative methods:")}</p>
             <div className="flex flex-wrap items-center justify-center gap-2">
               {method !== "totp" && (
                 <button
@@ -165,7 +167,7 @@ export function TwoFactorForm() {
                   onClick={() => { setMethod("totp"); setCode(""); setError(""); }}
                   className="text-primary hover:underline font-medium text-xs px-2 py-1 rounded-lg bg-muted/50"
                 >
-                  Gunakan Authenticator App
+                  {t("Gunakan Authenticator App", "Use Authenticator App")}
                 </button>
               )}
               {method !== "passkey" && (
@@ -174,7 +176,7 @@ export function TwoFactorForm() {
                   onClick={() => { setMethod("passkey"); setError(""); }}
                   className="text-primary hover:underline font-medium text-xs px-2 py-1 rounded-lg bg-muted/50"
                 >
-                  Gunakan Passkey
+                  {t("Gunakan Passkey", "Use Passkey")}
                 </button>
               )}
               {method !== "backup" && (
@@ -183,7 +185,7 @@ export function TwoFactorForm() {
                   onClick={() => { setMethod("backup"); setCode(""); setError(""); }}
                   className="text-primary hover:underline font-medium text-xs px-2 py-1 rounded-lg bg-muted/50"
                 >
-                  Gunakan Recovery Code (Kode Cadangan)
+                  {t("Gunakan Recovery Code (Kode Cadangan)", "Use Recovery Code (Backup Code)")}
                 </button>
               )}
             </div>
@@ -196,14 +198,14 @@ export function TwoFactorForm() {
             className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-medium transition-colors"
           >
             <ShieldAlert className="h-3.5 w-3.5 text-amber-500" />
-            <span>Kehilangan semua akses 2FA? Ajukan Pemulihan Manual</span>
+            <span>{t("Kehilangan semua akses 2FA? Ajukan Pemulihan Manual", "Lost all 2FA access? Request Manual Recovery")}</span>
           </Link>
           <Link
             href="/login"
             className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:underline mt-1"
           >
             <ArrowLeft className="h-3 w-3" />
-            <span>Kembali ke halaman login</span>
+            <span>{t("Kembali ke halaman login", "Back to login page")}</span>
           </Link>
         </CardFooter>
       </Card>

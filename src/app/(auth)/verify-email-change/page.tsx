@@ -5,12 +5,15 @@ import { eq, and, gt } from "drizzle-orm";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle } from "lucide-react";
+import { getCurrentLang, createT } from "@/lib/i18n";
 
 export default async function VerifyEmailChangePage({
   searchParams,
 }: {
   searchParams: Promise<{ token?: string }>;
 }) {
+  const lang = await getCurrentLang();
+  const t = createT(lang);
   const { token } = await searchParams;
 
   if (!token) {
@@ -21,14 +24,17 @@ export default async function VerifyEmailChangePage({
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/10 text-rose-600 mb-2">
               <XCircle className="h-6 w-6" />
             </div>
-            <CardTitle className="text-lg">Token Tidak Valid</CardTitle>
+            <CardTitle className="text-lg">{t("Token Tidak Valid", "Invalid Token")}</CardTitle>
             <CardDescription className="text-xs">
-              Link verifikasi ganti email tidak ditemukan atau rusak.
+              {t(
+                "Link verifikasi ganti email tidak ditemukan atau rusak.",
+                "Email change verification link is missing or corrupted.",
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full rounded-xl">
-              <Link href="/app/settings?tab=account">Kembali ke Pengaturan</Link>
+              <Link href="/app/settings?tab=account">{t("Kembali ke Pengaturan", "Back to Settings")}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -52,14 +58,17 @@ export default async function VerifyEmailChangePage({
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/10 text-rose-600 mb-2">
               <XCircle className="h-6 w-6" />
             </div>
-            <CardTitle className="text-lg">Link Kedaluwarsa</CardTitle>
+            <CardTitle className="text-lg">{t("Link Kedaluwarsa", "Expired Link")}</CardTitle>
             <CardDescription className="text-xs">
-              Link verifikasi ganti email sudah kedaluwarsa atau sudah pernah digunakan.
+              {t(
+                "Link verifikasi ganti email sudah kedaluwarsa atau sudah pernah digunakan.",
+                "Email change verification link has expired or was already used.",
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full rounded-xl">
-              <Link href="/app/settings?tab=account">Kembali ke Pengaturan</Link>
+              <Link href="/app/settings?tab=account">{t("Kembali ke Pengaturan", "Back to Settings")}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -88,14 +97,17 @@ export default async function VerifyEmailChangePage({
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/10 text-rose-600 mb-2">
               <XCircle className="h-6 w-6" />
             </div>
-            <CardTitle className="text-lg">Email Sudah Terdaftar</CardTitle>
+            <CardTitle className="text-lg">{t("Email Sudah Terdaftar", "Email Already Registered")}</CardTitle>
             <CardDescription className="text-xs">
-              Alamat email {newEmail} sudah dipakai oleh akun lain.
+              {t(
+                `Alamat email ${newEmail} sudah dipakai oleh akun lain.`,
+                `The email address ${newEmail} is already in use by another account.`,
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full rounded-xl">
-              <Link href="/app/settings?tab=account">Kembali ke Pengaturan</Link>
+              <Link href="/app/settings?tab=account">{t("Kembali ke Pengaturan", "Back to Settings")}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -132,14 +144,18 @@ export default async function VerifyEmailChangePage({
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 mb-2">
             <CheckCircle2 className="h-6 w-6" />
           </div>
-          <CardTitle className="text-lg">Email Berhasil Diubah!</CardTitle>
+          <CardTitle className="text-lg">{t("Email Berhasil Diubah!", "Email Successfully Changed!")}</CardTitle>
           <CardDescription className="text-xs">
-            Alamat email login akun kamu sekarang adalah <span className="font-semibold text-foreground">{newEmail}</span>.
+            {t(
+              "Alamat email login akun kamu sekarang adalah",
+              "Your account login email address is now",
+            )}{" "}
+            <span className="font-semibold text-foreground">{newEmail}</span>.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <Button asChild className="w-full rounded-xl">
-            <Link href="/app/settings?tab=account">Lanjut ke Akun</Link>
+            <Link href="/app/settings?tab=account">{t("Lanjut ke Akun", "Continue to Account")}</Link>
           </Button>
         </CardContent>
       </Card>
