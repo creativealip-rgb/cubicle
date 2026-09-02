@@ -13,9 +13,11 @@ import { Input } from "@/components/ui/input";
 export async function PersonalBudgetSection({
   month,
   t,
+  compact = false,
 }: {
   month: string;
   t: (id: string, en: string) => string;
+  compact?: boolean;
 }) {
   const data = await getPersonalBudget(month),
     targets = data.budget?.enabled
@@ -65,7 +67,7 @@ export async function PersonalBudgetSection({
       ]
     : [];
   return (
-    <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
+    <div className={compact ? "space-y-4" : "grid gap-6 lg:grid-cols-[360px_1fr]"}>
       <Card>
         <CardHeader>
           <CardTitle>{t("Anggaran 50/30/20", "50/30/20 budget")}</CardTitle>

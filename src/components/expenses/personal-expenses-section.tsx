@@ -13,6 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PersonalBudgetSection } from "./personal-budget-section";
 import { PersonalReceiptControl } from "./personal-receipt-control";
+import { PersonalFinanceDialog } from "./personal-finance-dialog";
+import { getPersonalBudget } from "@/lib/actions/personal-budget";
 
 export async function PersonalExpensesSection({
   month,
@@ -21,9 +23,10 @@ export async function PersonalExpensesSection({
   month: string;
   t: (id: string, en: string) => string;
 }) {
-  const [rows, categories] = await Promise.all([
+  const [rows, categories, budget] = await Promise.all([
     listPersonalTransactions(),
     listPersonalTransactionCategories(),
+    getPersonalBudget(month),
   ]);
   async function create(fd: FormData) {
     "use server";
@@ -85,9 +88,39 @@ export async function PersonalExpensesSection({
   const locale = t("id-ID", "en-US");
   const money = (amount: string, currency: string) => new Intl.NumberFormat(locale, { style: "currency", currency }).format(Number(amount));
   const today = new Date().toISOString().slice(0, 10);
+  const monthRows = rows.filter((row) => row.date.startsWith(month));
+  const spent = monthRows.filter((row) => row.transactionType === "expense").reduce((sum, row) => sum + Number(row.amount), 0);
+  const savings = monthRows.filter((row) => row.transactionType === "allocation").reduce((sum, row) => sum + Number(row.amount), 0);
+  const income = Number(budget.budget?.income || 0);
+  const categoryTotals = monthRows.reduce<Record<string, number>>((totals, row) => {
+    const name = categories.find((category) => category.id === row.categoryId)?.name || t("Tanpa kategori", "Uncategorized");
+    totals[name] = (totals[name] || 0) + Number(row.amount);
+    return totals;
+  }, {});
+  const topCategory = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
   return (
     <div className="space-y-6">
-      <PersonalBudgetSection month={month} t={t} />
+      <div>
+        <h2 className="text-xl font-bold">{t("Keuangan pribadi", "Personal Finance")}</h2>
+        <p className="text-sm text-muted-foreground">{t("Pengeluaran dan tabungan pribadi tetap terpisah dari pengeluaran bisnis.", "Personal spending and savings stay separate from business expenses.")}</p>
+      </div>
+      <div data-ui="personal-finance-kpis" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          [t("Pengeluaran bulan ini", "Spent this month"), money(String(spent), budget.budget?.currency || "IDR")],
+          [t("Sisa anggaran", "Remaining budget"), budget.budget ? money(String(Math.max(0, income - spent)), budget.budget.currency) : "—"],
+          [t("Tabungan dialokasikan", "Savings allocated"), money(String(savings), budget.budget?.currency || "IDR")],
+          [t("Kategori terbesar", "Top category"), topCategory],
+        ].map(([label, value]) => <Card key={label} className="rounded-xl"><CardContent className="p-4"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p><p className="mt-2 truncate text-xl font-bold">{value}</p></CardContent></Card>)}
+      </div>
+      <PersonalFinanceDialog trigger={t("Kelola anggaran", "Manage budget")} title={t("Kelola anggaran", "Manage budget")} description={t("Atur pendapatan dan pembagian 50/30/20.", "Set income and your 50/30/20 split.")}>
+        <PersonalBudgetSection month={month} t={t} compact />
+      </PersonalFinanceDialog>
+      <Card>
+        <CardHeader><CardTitle>{t("Transaksi terbaru", "Recent transactions")}</CardTitle></CardHeader>
+        <CardContent>
+          {rows.length ? <div className="divide-y">{rows.slice(0, 5).map((row) => <div key={row.id} className="flex items-center justify-between gap-3 py-3"><div className="min-w-0"><p className="truncate font-medium">{row.description}</p><p className="text-xs text-muted-foreground">{row.date} · {row.budgetBucket}</p></div><span className="shrink-0 font-semibold tabular-nums">{money(row.amount, row.currency)}</span></div>)}</div> : <p className="text-sm text-muted-foreground">{t("Belum ada transaksi pribadi.", "No personal transactions yet.")}</p>}
+        </CardContent>
+      </Card>
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -96,29 +129,20 @@ export async function PersonalExpensesSection({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form action={create} className="grid gap-3 sm:grid-cols-2">
+            <form action={create} className="grid gap-3" data-ui="personal-quick-add">
               <Input
                 name="description"
                 required
                 placeholder={t("Deskripsi", "Description")}
               />
-              <Input
-                name="merchant"
-                placeholder={t("Merchant (opsional)", "Merchant (optional)")}
-              />
+
               <Input
                 name="amount"
                 inputMode="decimal"
                 required
                 placeholder="0.00"
               />
-              <Input
-                name="currency"
-                required
-                defaultValue="IDR"
-                maxLength={3}
-              />
-              <Input name="date" type="date" required defaultValue={today} />
+
               <select
                 name="categoryId"
                 className="h-10 rounded-md border bg-background px-3"
@@ -130,31 +154,24 @@ export async function PersonalExpensesSection({
                   </option>
                 ))}
               </select>
-              <select
-                name="transactionType"
-                className="h-10 rounded-md border bg-background px-3"
-              >
-                <option value="expense">{t("Pengeluaran", "Expense")}</option>
-                <option value="allocation">
-                  {t("Alokasi tabungan", "Savings allocation")}
-                </option>
-              </select>
-              <select
-                name="budgetBucket"
-                className="h-10 rounded-md border bg-background px-3"
-              >
-                <option value="needs">Needs</option>
-                <option value="wants">Wants</option>
-                <option value="savings">Savings</option>
-                <option value="unbudgeted">Unbudgeted</option>
-              </select>
-              <Button className="sm:col-span-2">
+              <details className="rounded-xl border p-3">
+                <summary className="cursor-pointer text-sm font-medium">{t("Detail lainnya", "More details")}</summary>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <Input name="merchant" placeholder={t("Merchant (opsional)", "Merchant (optional)")} />
+                  <Input name="currency" required defaultValue={budget.budget?.currency || "IDR"} maxLength={3} />
+                  <Input name="date" type="date" required defaultValue={today} />
+                  <select name="transactionType" className="h-10 rounded-md border bg-background px-3"><option value="expense">{t("Pengeluaran", "Expense")}</option><option value="allocation">{t("Alokasi tabungan", "Savings allocation")}</option></select>
+                  <select name="budgetBucket" className="h-10 rounded-md border bg-background px-3"><option value="needs">Needs</option><option value="wants">Wants</option><option value="savings">Savings</option><option value="unbudgeted">Unbudgeted</option></select>
+                </div>
+              </details>
+              <Button className="rounded-xl">
                 {t("Simpan transaksi", "Save transaction")}
               </Button>
             </form>
           </CardContent>
         </Card>
-        <Card>
+        <PersonalFinanceDialog trigger={t("Kelola kategori", "Manage categories")} title={t("Kategori pribadi", "Personal categories")} description={t("Atur kategori dan bucket default.", "Manage categories and default buckets.")}>
+        <Card className="border-0 shadow-none">
           <CardHeader>
             <CardTitle>
               {t("Kategori pribadi", "Personal categories")}
@@ -196,6 +213,7 @@ export async function PersonalExpensesSection({
             </div>
           </CardContent>
         </Card>
+        </PersonalFinanceDialog>
       </div>
       <Card>
         <CardHeader>
