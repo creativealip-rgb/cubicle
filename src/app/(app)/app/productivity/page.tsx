@@ -13,8 +13,7 @@ import {
   calculateWeeklyConsistency,
 } from "@/lib/personal-productivity/visuals";
 import { getCurrentLang, createT } from "@/lib/i18n";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { HabitsSection } from "@/components/productivity/habits-section";
 import { ProductivityKpiCards } from "@/components/productivity/productivity-kpi-cards";
 import { GoalProgressCard } from "@/components/productivity/goal-progress-card";
@@ -27,6 +26,7 @@ import { Target, ArrowRight } from "lucide-react";
 import { healthyHabitStats, weeklyReview } from "@/lib/personal-productivity/retention";
 import { dateOffset, isHabitScheduled } from "@/lib/personal-productivity/habits";
 import { calculateGoalProgress } from "@/lib/personal-productivity/goals";
+import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 
 export default async function ProductivityPage({
   searchParams,
@@ -137,38 +137,23 @@ export default async function ProductivityPage({
   const review = weeklyReview(weeklyTrends[4]?.completed ?? 0, weeklyTrends[4]?.totalScheduled ?? 0, goalMetrics.active, movingGoals);
 
   return (
-    <div className="space-y-6">
-      {/* Header with Title & Action */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-4">
+      {/* Header with Title */}
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          <h1 className="text-xl font-bold tracking-tight">
             {t("Produktivitas Pribadi", "Personal Productivity")}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {t(
               "Pantau progres tujuan hidup dan konsistensi kebiasaan harian.",
               "Track life goals progress and daily habits consistency.",
             )}
           </p>
         </div>
-
-        {/* Global Action Header */}
-        <div className="flex items-center gap-2">
-          {tab === "goals" && (
-            <GoalDialog lang={lang} createGoalAction={createGoal} />
-          )}
-        </div>
       </div>
 
-      <nav className="flex gap-1 overflow-x-auto rounded-2xl bg-muted/60 p-1" aria-label={t("Navigasi produktivitas", "Productivity navigation")}>
-        {[["overview", t("Ringkasan & Visual", "Overview & Visuals")], ["goals", t("Tujuan Hidup", "Life Goals")], ["habits", t("Kebiasaan", "Daily Habits")]].map(([key, label]) => (
-          <Button key={key} size="sm" variant="ghost" className={`shrink-0 rounded-xl px-4 ${tab === key ? "bg-background text-foreground shadow-sm hover:bg-background" : "text-muted-foreground"}`} asChild>
-            <Link href={`/app/productivity?tab=${key}`}>{label}</Link>
-          </Button>
-        ))}
-      </nav>
-
-      {/* KPI Top Cards Banner */}
+      {/* KPI Top Cards Banner - Compact 4 Strip */}
       <ProductivityKpiCards
         activeGoals={goalMetrics.active}
         avgGoalProgress={goalMetrics.avgActiveProgress}
@@ -179,168 +164,186 @@ export default async function ProductivityPage({
         t={t}
       />
 
-      {/* TAB 1: OVERVIEW & CHARTS */}
-      {tab === "overview" && (
-        <div className="space-y-6">
-          {/* Action Row: Unified Today Action & Weekly Rhythm */}
-          <div className="grid gap-4 lg:grid-cols-2">
-            <UnifiedTodayActionCard
-              scheduledHabitsCount={activeHabits.length}
-              completedHabitsCount={habitsCompletedToday}
-              uncompletedHabits={activeHabits
-                .filter(
-                  (h) =>
-                    today >= h.startDate &&
-                    isHabitScheduled(
-                      h.frequency as "daily" | "specific_weekdays",
-                      h.weekdays,
-                      today,
-                    ) &&
-                    !h.checkins.some((c) => c.localDate === today),
-                )
-                .map((h) => ({ id: h.id, name: h.name }))}
-              activeGoalsCount={goalMetrics.active}
-              goals={activeGoals.map((g) => ({
-                id: g.id,
-                title: g.title,
-                progress: g.manualProgress,
-                nextStep: g.steps.find((step) => !step.isCompleted)
-                  ? {
-                      id: g.steps.find((step) => !step.isCompleted)!.id,
-                      title: g.steps.find((step) => !step.isCompleted)!.title,
-                    }
-                  : null,
-              }))}
-              checkHabit={quickCheckHabit}
-              updateGoal={quickUpdateGoal}
-              lang={lang as "id" | "en"}
+      {/* Main Single Card Container with Integrated Tab Header */}
+      <Card className="rounded-xl border shadow-none bg-card">
+        <CardHeader className="pb-3 border-b">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <StatusFilterTabs
+              activeValue={tab}
+              hideEmpty={false}
+              tabs={[
+                { value: "overview", label: t("Ringkasan & Visual", "Overview & Visuals"), href: "/app/productivity?tab=overview", alwaysShow: true },
+                { value: "goals", label: t("Tujuan Hidup", "Life Goals"), count: goals.length, href: "/app/productivity?tab=goals", alwaysShow: true },
+                { value: "habits", label: t("Kebiasaan", "Daily Habits"), count: activeHabits.length, href: "/app/productivity?tab=habits", alwaysShow: true },
+              ]}
             />
 
-            <WeeklyReviewCard
-              {...review}
-              attentionHabit={attentionHabit}
-              focusGoal={focusGoal}
-              stagnantGoals={stagnantGoals}
-              t={t}
-            />
+            {tab === "goals" && (
+              <div className="shrink-0">
+                <GoalDialog lang={lang} createGoalAction={createGoal} />
+              </div>
+            )}
           </div>
+        </CardHeader>
 
-          {/* Progress Row: Priority Goals (Left) & Habit Heatmap (Right) */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Priority Goals Progress Visual List */}
-            <Card className="rounded-3xl border bg-card shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between pb-3">
-                <div>
-                  <CardTitle className="text-base font-semibold">
-                    {t("Progres Tujuan Prioritas", "Priority Goals Progress")}
-                  </CardTitle>
-                  <p className="text-xs text-muted-foreground">
-                    {t("Tujuan aktif teratas", "Top active goals")}
-                  </p>
+        <CardContent className="pt-4">
+          {/* TAB 1: OVERVIEW & CHARTS */}
+          {tab === "overview" && (
+            <div className="space-y-4">
+              {/* Action Row: Unified Today Action & Weekly Rhythm */}
+              <div className="grid gap-3 lg:grid-cols-2">
+                <UnifiedTodayActionCard
+                  scheduledHabitsCount={activeHabits.length}
+                  completedHabitsCount={habitsCompletedToday}
+                  uncompletedHabits={activeHabits
+                    .filter(
+                      (h) =>
+                        today >= h.startDate &&
+                        isHabitScheduled(
+                          h.frequency as "daily" | "specific_weekdays",
+                          h.weekdays,
+                          today,
+                        ) &&
+                        !h.checkins.some((c) => c.localDate === today),
+                    )
+                    .map((h) => ({ id: h.id, name: h.name }))}
+                  activeGoalsCount={goalMetrics.active}
+                  goals={activeGoals.map((g) => ({
+                    id: g.id,
+                    title: g.title,
+                    progress: g.manualProgress,
+                    nextStep: g.steps.find((step) => !step.isCompleted)
+                      ? {
+                          id: g.steps.find((step) => !step.isCompleted)!.id,
+                          title: g.steps.find((step) => !step.isCompleted)!.title,
+                        }
+                      : null,
+                  }))}
+                  checkHabit={quickCheckHabit}
+                  updateGoal={quickUpdateGoal}
+                  lang={lang as "id" | "en"}
+                />
+
+                <WeeklyReviewCard
+                  {...review}
+                  attentionHabit={attentionHabit}
+                  focusGoal={focusGoal}
+                  stagnantGoals={stagnantGoals}
+                  t={t}
+                />
+              </div>
+
+              {/* Progress Row: Priority Goals (Left) & Habit Heatmap (Right) */}
+              <div className="grid gap-4 lg:grid-cols-2">
+                {/* Priority Goals Progress Visual List */}
+                <div className="rounded-lg border bg-slate-50/40 dark:bg-card p-3.5 space-y-3">
+                  <div className="flex items-center justify-between pb-1">
+                    <div>
+                      <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">
+                        {t("Progres Tujuan Prioritas", "Priority Goals Progress")}
+                      </h3>
+                      <p className="text-[11px] text-muted-foreground">
+                        {t("Tujuan aktif teratas", "Top active goals")}
+                      </p>
+                    </div>
+                    <Link
+                      href="/app/productivity?tab=goals"
+                      className="text-xs font-semibold text-violet-600 hover:text-violet-700 flex items-center"
+                    >
+                      {t("Lihat Semua", "View All")}
+                      <ArrowRight className="ml-1 size-3" />
+                    </Link>
+                  </div>
+
+                  <div className="space-y-2">
+                    {activeGoals.length ? (
+                      activeGoals.slice(0, 4).map((g) => (
+                        <GoalProgressCard
+                          key={g.id}
+                          goal={g}
+                          today={today}
+                          setStatusAction={setStatus}
+                          compact
+                          t={t}
+                        />
+                      ))
+                    ) : (
+                      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-6 text-center">
+                        <Target className="mb-1.5 size-6 text-muted-foreground/50" />
+                        <p className="text-xs font-medium">
+                          {t("Belum ada tujuan aktif.", "No active goals yet.")}
+                        </p>
+                        <div className="mt-2">
+                          <GoalStarterLinks t={t} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link
-                    href="/app/productivity?tab=goals"
-                    className="text-xs font-semibold text-violet-600 hover:text-violet-700"
-                  >
-                    {t("Lihat Semua", "View All")}
-                    <ArrowRight className="ml-1 size-3" />
-                  </Link>
-                </Button>
-              </CardHeader>
-              <CardContent className="space-y-2.5">
-                {activeGoals.length ? (
-                  activeGoals.slice(0, 4).map((g) => (
+
+                {/* Habit Consistency Heatmap & Trends */}
+                <div className="space-y-3">
+                  <HabitHeatmap
+                    cells={heatmapCells}
+                    weeklyTrends={weeklyTrends}
+                    t={t}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: GOALS LIST */}
+          {tab === "goals" && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs text-muted-foreground pb-1">
+                <span>
+                  {goals.length} {goals.length === 1 ? t("tujuan terdaftar", "registered goal") : t("tujuan terdaftar", "registered goals")}
+                </span>
+              </div>
+
+              <div className="grid gap-2.5 sm:grid-cols-2">
+                {goals.length ? (
+                  goals.map((g) => (
                     <GoalProgressCard
                       key={g.id}
                       goal={g}
                       today={today}
                       setStatusAction={setStatus}
-                      compact
                       t={t}
                     />
                   ))
                 ) : (
-                  <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-8 text-center">
-                    <Target className="mb-2 size-8 text-muted-foreground/50" />
-                    <p className="text-sm font-medium">
-                      {t("Belum ada tujuan aktif.", "No active goals yet.")}
-                    </p>
-                    <p className="mt-1 max-w-xs text-xs text-muted-foreground">
+                  <div className="sm:col-span-2 rounded-xl border border-dashed p-8 text-center">
+                    <Target className="mx-auto size-8 text-muted-foreground/50" />
+                    <h3 className="mt-2 text-sm font-bold text-foreground">
+                      {t("Belum Ada Tujuan", "No Goals Created")}
+                    </h3>
+                    <p className="mx-auto mt-1 max-w-sm text-xs text-muted-foreground">
                       {t(
-                        "Mulai dari target kecil yang ingin kamu jaga setiap minggu.",
-                        "Start with a small target you want to keep each week.",
+                        "Buat tujuan hidup atau keuangan pertama Anda untuk mulai memantau progres visual.",
+                        "Create your first life or financial goal to start tracking visual progress.",
                       )}
                     </p>
                     <div className="mt-3">
-                      <GoalStarterLinks t={t} />
+                      <GoalDialog lang={lang} createGoalAction={createGoal} />
                     </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-
-            {/* Habit Consistency Heatmap & Trends */}
-            <div className="space-y-6">
-              <HabitHeatmap
-                cells={heatmapCells}
-                weeklyTrends={weeklyTrends}
-                t={t}
-              />
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      {/* TAB 2: GOALS LIST */}
-      {tab === "goals" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-muted-foreground">
-              {goals.length} {goals.length === 1 ? t("tujuan terdaftar", "registered goal") : t("tujuan terdaftar", "registered goals")}
-            </p>
-          </div>
-
-          <div className="grid gap-4 xl:grid-cols-2">
-            {goals.length ? (
-              goals.map((g) => (
-                <GoalProgressCard
-                  key={g.id}
-                  goal={g}
-                  today={today}
-                  setStatusAction={setStatus}
-                  t={t}
-                />
-              ))
-            ) : (
-              <Card className="rounded-3xl border border-dashed p-10 text-center">
-                <Target className="mx-auto size-10 text-muted-foreground/50" />
-                <h3 className="mt-3 font-bold text-foreground">
-                  {t("Belum Ada Tujuan", "No Goals Created")}
-                </h3>
-                <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-                  {t(
-                    "Buat tujuan hidup atau keuangan pertama Anda untuk mulai memantau progres visual.",
-                    "Create your first life or financial goal to start tracking visual progress.",
-                  )}
-                </p>
-                <div className="mt-4">
-                  <GoalDialog lang={lang} createGoalAction={createGoal} />
-                </div>
-              </Card>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 3: HABITS SECTION */}
-      {tab === "habits" && (
-        <HabitsSection
-          t={t}
-          lang={lang}
-          goals={goals.map((g) => ({ id: g.id, title: g.title }))}
-        />
-      )}
+          {/* TAB 3: HABITS SECTION */}
+          {tab === "habits" && (
+            <HabitsSection
+              t={t}
+              lang={lang}
+              goals={goals.map((g) => ({ id: g.id, title: g.title }))}
+            />
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
