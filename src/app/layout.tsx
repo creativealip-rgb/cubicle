@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { GlobalVersionSkewRecovery } from "@/components/global-version-skew-recovery";
 import { LangProvider, type Lang } from "@/lib/i18n-client";
 import { cookies, headers } from "next/headers";
+import { auth } from "@/lib/auth";
 import { getCountryFromHeaders, resolveVisitorPreferences } from "@/lib/region-preferences";
 import "./globals.css";
 
@@ -89,9 +90,11 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const [cookieStore, requestHeaders] = await Promise.all([cookies(), headers()]);
+  const session = await auth.api.getSession({ headers: requestHeaders }).catch(() => null);
   const lang: Lang = resolveVisitorPreferences({
     country: getCountryFromHeaders(requestHeaders),
     langCookie: cookieStore.get("cubiqlo_lang")?.value,
+    accountLang: session?.user?.preferredLanguage,
   }).lang;
   return (
     <html
