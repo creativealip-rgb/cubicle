@@ -4,29 +4,17 @@ import { describe, expect, it } from "vitest";
 const read = (path: string) => readFileSync(path, "utf8");
 
 describe("personal finance action dashboard", () => {
-  it("uses a four-metric pulse and clear personal boundary", () => {
-    const page = read("src/app/(app)/app/expenses/page.tsx");
-    const source = read("src/components/expenses/personal-expenses-section.tsx");
-    expect(source).toContain('data-ui="personal-finance-kpis"');
-    expect(source).toContain("Spent this month");
-    expect(source).toContain("Remaining budget");
-    expect(source).toContain("Savings allocated");
-    expect(source).toContain("Top category");
-    expect(page).toContain("separate from business");
-  });
-
-  it("moves settings behind dialogs and keeps quick add primary", () => {
-    const source = read("src/components/expenses/personal-expenses-section.tsx");
-    expect(source).toContain("PersonalFinanceDialog");
-    expect(source).toContain("Manage budget");
-    expect(source).toContain("Manage categories");
-    expect(source).toContain("More details");
-    expect(source).toContain('data-ui="personal-quick-add"');
-  });
-
-  it("shows recent transactions before category settings", () => {
+  it("uses consistent toolbar and dialogs matching expenses tab pattern", () => {
     const source = read("src/components/expenses/personal-expenses-section.tsx");
     expect(source).toContain('data-ui="personal-finance-actions"');
+    expect(source).toContain("PersonalFinanceDialog");
+    expect(source).toContain("Atur Budget");
+    expect(source).toContain("Kategori");
+  });
+
+  it("renders transaction history in unified flat list style", () => {
+    const source = read("src/components/expenses/personal-expenses-section.tsx");
     expect(source).toContain('data-ui="personal-finance-history"');
+    expect(source).toContain("PersonalReceiptControl");
   });
 });

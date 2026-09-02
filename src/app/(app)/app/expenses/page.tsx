@@ -375,7 +375,7 @@ export default async function ExpensesPage({
   return (
     <div className="space-y-4 sm:space-y-6">
       <PageHeader
-        actions={tab !== "personal" ? (
+        actions={
           <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             {canWrite && (
               <AddExpenseButton
@@ -393,13 +393,14 @@ export default async function ExpensesPage({
               q={q || undefined}
             />
           </div>
-        ) : undefined}
+        }
       >
-        <PageHeaderTitle>{tab === "personal" ? t("Keuangan Pribadi", "Personal Finance") : t("Pengeluaran", "Expenses")}</PageHeaderTitle>
+        <PageHeaderTitle>{t("Pengeluaran", "Expenses")}</PageHeaderTitle>
         <PageHeaderDescription>
-          {tab === "personal"
-            ? t("Kelola pengeluaran dan tabungan pribadi, terpisah dari bisnis.", "Manage personal spending and savings, separate from business.")
-            : t("Catat dan kelola biaya bisnis.", "Record and manage business expenses.")}
+          {t(
+            "Catat dan kelola biaya bisnis.",
+            "Record and manage business expenses.",
+          )}
         </PageHeaderDescription>
       </PageHeader>
 
@@ -419,7 +420,7 @@ export default async function ExpensesPage({
       )}
 
       {/* Operational summary */}
-      {tab !== "personal" && <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_auto]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_auto]">
         <Card className="min-w-0">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">
@@ -458,10 +459,10 @@ export default async function ExpensesPage({
             </Button>
           </CardContent>
         </Card>
-      </div>}
+      </div>
 
       {/* Category breakdown */}
-      {tab !== "personal" && categoryBreakdown.length > 0 && (
+      {categoryBreakdown.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">

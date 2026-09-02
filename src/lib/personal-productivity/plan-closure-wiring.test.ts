@@ -25,7 +25,7 @@ describe("personal productivity plan closure", () => {
     expect(section).toContain("updatePersonalTransactionCategory");
     expect(section).toContain("deletePersonalTransactionCategory");
     expect(section).toContain("defaultBucketByCategory");
-    expect(section).toContain("Intl.NumberFormat");
+    expect(section).toContain("formatMoney");
   });
 
   it("uses decimal-safe budget progress, disabled hiding, currency selection, confirmation, and ARIA", () => {
