@@ -28,12 +28,12 @@ export function PersonalFinanceDialog({
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="rounded-xl">{trigger}</Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[85dvh] w-[calc(100%-2rem)] max-w-xl flex flex-col rounded-2xl p-6">
+      <DialogContent className="max-h-[88dvh] w-[calc(100%-2rem)] max-w-xl flex flex-col rounded-2xl p-6 overflow-y-auto">
         <DialogHeader className="shrink-0 pb-2">
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <div className="flex-1 min-h-0 overflow-y-auto pr-2 pb-2">
+        <div className="pt-2 pb-6">
           {children}
         </div>
       </DialogContent>

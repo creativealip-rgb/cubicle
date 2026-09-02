@@ -299,7 +299,7 @@ export async function PersonalExpensesSection({
                 <Button size="sm" className="w-full rounded-lg text-xs h-8">{t("Tambah Kategori", "Add Category")}</Button>
               </form>
 
-              <div className="space-y-2 max-h-48 overflow-y-auto pr-1 pb-2">
+              <div className="space-y-2 pt-1 pb-4">
                 <p className="text-[11px] font-medium text-muted-foreground uppercase">{t("Daftar Kategori Tersedia", "Category List")}</p>
                 {categories.map((category) => (
                   <form key={category.id} action={editCategory} className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto] items-center gap-2 rounded-lg border p-2 bg-background">
