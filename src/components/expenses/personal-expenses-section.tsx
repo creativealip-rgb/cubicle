@@ -280,7 +280,7 @@ export async function PersonalExpensesSection({
             title={t("Kategori Pengeluaran Pribadi", "Personal Categories")}
             description={t("Tambah atau edit kategori pengeluaran pribadi serta pos anggarannya.", "Manage custom personal categories and default buckets.")}
           >
-            <div className="space-y-4 pt-1 max-h-[70vh] overflow-y-auto pr-1">
+            <div className="space-y-4 pt-1">
               <form action={createCategory} className="space-y-3 rounded-xl border p-3.5 bg-muted/20">
                 <p className="text-xs font-semibold">{t("Tambah Kategori Baru", "Add New Category")}</p>
                 <Input name="name" required placeholder={t("Nama kategori...", "Category name...")} className="h-9 text-xs" />
