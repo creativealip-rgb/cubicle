@@ -20,10 +20,10 @@ import { ProductivityKpiCards } from "@/components/productivity/productivity-kpi
 import { GoalProgressCard } from "@/components/productivity/goal-progress-card";
 import { HabitHeatmap } from "@/components/productivity/habit-heatmap";
 import { GoalDialog } from "@/components/productivity/goal-dialog";
-import { TodayFocusCard, GoalStarterLinks } from "@/components/productivity/today-focus-card";
-import { Target, ArrowRight } from "lucide-react";
+import { UnifiedTodayActionCard } from "@/components/productivity/unified-today-action-card";
 import { WeeklyReviewCard } from "@/components/productivity/weekly-review-card";
-import { QuickCaptureCard } from "@/components/productivity/quick-capture-card";
+import { GoalStarterLinks } from "@/components/productivity/today-focus-card";
+import { Target, ArrowRight } from "lucide-react";
 import { healthyHabitStats, weeklyReview } from "@/lib/personal-productivity/retention";
 import { dateOffset, isHabitScheduled } from "@/lib/personal-productivity/habits";
 import { calculateGoalProgress } from "@/lib/personal-productivity/goals";
@@ -173,54 +173,48 @@ export default async function ProductivityPage({
       {/* TAB 1: OVERVIEW & CHARTS */}
       {tab === "overview" && (
         <div className="space-y-6">
-          {/* Action Row: Today Focus / Quick Capture (Left) & Weekly Rhythm (Right) */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="space-y-4">
-              <TodayFocusCard
-                activeGoals={goalMetrics.active}
-                scheduledHabits={activeHabits.length}
-                completedHabits={habitsCompletedToday}
-                t={t}
-              />
-              <QuickCaptureCard
-                habits={activeHabits
-                  .filter(
-                    (h) =>
-                      today >= h.startDate &&
-                      isHabitScheduled(
-                        h.frequency as "daily" | "specific_weekdays",
-                        h.weekdays,
-                        today,
-                      ) &&
-                      !h.checkins.some((c) => c.localDate === today),
-                  )
-                  .map((h) => ({ id: h.id, name: h.name }))}
-                goals={activeGoals.map((g) => ({
-                  id: g.id,
-                  title: g.title,
-                  progress: g.manualProgress,
-                  nextStep: g.steps.find((step) => !step.isCompleted)
-                    ? {
-                        id: g.steps.find((step) => !step.isCompleted)!.id,
-                        title: g.steps.find((step) => !step.isCompleted)!.title,
-                      }
-                    : null,
-                }))}
-                checkHabit={quickCheckHabit}
-                updateGoal={quickUpdateGoal}
-                lang={lang}
-              />
-            </div>
+          {/* Action Row: Unified Today Action & Weekly Rhythm */}
+          <div className="grid gap-4 lg:grid-cols-2">
+            <UnifiedTodayActionCard
+              scheduledHabitsCount={activeHabits.length}
+              completedHabitsCount={habitsCompletedToday}
+              uncompletedHabits={activeHabits
+                .filter(
+                  (h) =>
+                    today >= h.startDate &&
+                    isHabitScheduled(
+                      h.frequency as "daily" | "specific_weekdays",
+                      h.weekdays,
+                      today,
+                    ) &&
+                    !h.checkins.some((c) => c.localDate === today),
+                )
+                .map((h) => ({ id: h.id, name: h.name }))}
+              activeGoalsCount={goalMetrics.active}
+              goals={activeGoals.map((g) => ({
+                id: g.id,
+                title: g.title,
+                progress: g.manualProgress,
+                nextStep: g.steps.find((step) => !step.isCompleted)
+                  ? {
+                      id: g.steps.find((step) => !step.isCompleted)!.id,
+                      title: g.steps.find((step) => !step.isCompleted)!.title,
+                    }
+                  : null,
+              }))}
+              checkHabit={quickCheckHabit}
+              updateGoal={quickUpdateGoal}
+              lang={lang as "id" | "en"}
+              t={t}
+            />
 
-            <div>
-              <WeeklyReviewCard
-                {...review}
-                attentionHabit={attentionHabit}
-                focusGoal={focusGoal}
-                stagnantGoals={stagnantGoals}
-                t={t}
-              />
-            </div>
+            <WeeklyReviewCard
+              {...review}
+              attentionHabit={attentionHabit}
+              focusGoal={focusGoal}
+              stagnantGoals={stagnantGoals}
+              t={t}
+            />
           </div>
 
           {/* Progress Row: Priority Goals (Left) & Habit Heatmap (Right) */}
