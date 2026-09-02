@@ -10,7 +10,7 @@ import {
   clients,
   workspaceCurrencyRates,
 } from "@/db/schema";
-import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, lte } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -43,8 +43,6 @@ import {
 } from "@/components/ui/page-header";
 import { Suspense } from "react";
 import { PersonalExpensesSection } from "@/components/expenses/personal-expenses-section";
-import { listPersonalTransactions } from "@/lib/actions/personal-transactions";
-import { decodeExpenseCursor, encodeExpenseCursor, mergeUnifiedExpenses } from "@/lib/personal-productivity/unified-expenses";
 import {
   aggregateToBase,
   buildRateMap,
@@ -104,11 +102,6 @@ export default async function ExpensesPage({
           params.tab === "personal"
         ? params.tab
         : "list";
-  const scope =
-    params.scope === "personal" || params.scope === "business"
-      ? params.scope
-      : "all";
-  const expenseCursor = decodeExpenseCursor(params.cursor);
   const { start: monthStart, end: monthEnd } = monthBounds(month);
 
   // Categories
@@ -224,10 +217,6 @@ export default async function ExpensesPage({
   listConditions.push(gte(expenses.date, monthStart));
   listConditions.push(lte(expenses.date, monthEnd));
   if (categoryId) listConditions.push(eq(expenses.categoryId, categoryId));
-  if (expenseCursor)
-    listConditions.push(
-      sql`(${expenses.date}, ${expenses.createdAt}, 0, ${expenses.id}) < (${expenseCursor.date}::date, ${new Date(expenseCursor.createdAt)}::timestamptz, ${expenseCursor.sourceRank}, ${expenseCursor.id}::uuid)`,
-    );
 
   const allForFilter = await db
     .select({
@@ -286,30 +275,6 @@ export default async function ExpensesPage({
         : null;
       return { ...e, amountBase };
     });
-  const personalForMerge = await listPersonalTransactions(expenseCursor, 100);
-  const unifiedPage = mergeUnifiedExpenses(
-    personalForMerge.map((row) => ({
-      id: row.id,
-      source: "personal" as const,
-      date: row.date,
-      createdAt: row.createdAt,
-      description: row.description,
-      amount: row.amount,
-      currency: row.currency,
-    })),
-    allForFilter.map((row) => ({
-      id: row.id,
-      source: "business" as const,
-      date: row.date,
-      createdAt: row.createdAt,
-      description: row.description,
-      amount: row.amount,
-      currency: row.currency,
-    })),
-    PAGE_SIZE,
-    expenseCursor,
-  );
-  const unifiedRows = unifiedPage.rows;
 
   // Recurring
   const recurringRaw = await db
@@ -419,42 +384,62 @@ export default async function ExpensesPage({
         </div>
       )}
 
-      {/* Operational summary */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_auto]">
-        <Card className="min-w-0">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">
-              {t("Pengeluaran bulan ini", "This month spent")}
-            </CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold tabular-nums whitespace-nowrap">
-              {formatMoney(spentTotal, baseCurrency)}
+      {/* Operational summary - Compact & Engaging */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <Card className="rounded-xl border shadow-none bg-card">
+          <CardContent className="p-4 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                {t("Pengeluaran Bulan Ini", "This Month Spent")}
+              </p>
+              <p className="mt-1 text-2xl font-bold tabular-nums tracking-tight text-foreground truncate">
+                {formatMoney(spentTotal, baseCurrency)}
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {t("Bulan terpilih", "Selected month")} · {baseCurrency}
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {t(
-                `Bulan terpilih · setara ${baseCurrency}`,
-                `Selected month · equiv. ${baseCurrency}`,
-              )}
-            </p>
+            <div className="h-10 w-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+              <TrendingDown className="h-5 w-5" />
+            </div>
           </CardContent>
         </Card>
-        <Card className="lg:w-72">
-          <CardContent className="flex h-full flex-col justify-center gap-3 p-5">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <BarChart3 className="h-4 w-4 text-blue-600" />
-              {t("Butuh gambaran keuangan?", "Need a financial overview?")}
+
+        <Card className="rounded-xl border shadow-none bg-card">
+          <CardContent className="p-4 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                {t("Kategori Terbesar", "Top Category")}
+              </p>
+              <p className="mt-1 text-2xl font-bold tracking-tight text-foreground truncate">
+                {categoryBreakdown[0]?.name || "—"}
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {categoryBreakdown[0]
+                  ? `${formatMoney(categoryBreakdown[0].primary, baseCurrency)} (${((categoryBreakdown[0].primary / (barTotal || 1)) * 100).toFixed(0)}%)`
+                  : t("Belum ada pengeluaran", "No expenses yet")}
+              </p>
             </div>
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              {t(
-                "Pemasukan, bersih, tren, dan piutang tersedia di Laporan.",
-                "Income, net, trends, and receivables are available in Reports.",
-              )}
-            </p>
-            <Button asChild variant="outline" size="sm" className="w-full">
+            <div className="h-10 w-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+              <Tag className="h-5 w-5" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-xl border shadow-none bg-card sm:col-span-2 lg:col-span-1">
+          <CardContent className="p-4 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                {t("Analisis & Laporan", "Analytics & Reports")}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                {t("Lihat tren arus kas, laba bersih, dan piutang.", "View cash flow trends, net profit & receivables.")}
+              </p>
+            </div>
+            <Button asChild variant="outline" size="sm" className="shrink-0 rounded-lg text-xs">
               <Link href="/app/reports">
-                {t("Lihat laporan lengkap", "View full report")}
+                <BarChart3 className="h-3.5 w-3.5 mr-1 text-blue-600" />
+                {t("Buka", "View")}
               </Link>
             </Button>
           </CardContent>
@@ -590,92 +575,31 @@ export default async function ExpensesPage({
 
           {tab === "list" && (
             <>
-              <div
-                className="mb-4 flex flex-wrap gap-2"
-                aria-label={t(
-                  "Filter sumber transaksi",
-                  "Transaction source filter",
-                )}
-              >
-                {(["all", "personal", "business"] as const).map((value) => (
-                  <Button
-                    key={value}
-                    size="sm"
-                    variant={scope === value ? "default" : "outline"}
-                    asChild
-                  >
-                    <Link href={`/app/expenses?month=${month}&scope=${value}`}>
-                      {value === "all"
-                        ? t("Semua", "All")
-                        : value === "personal"
-                          ? t("Pribadi", "Personal")
-                          : t("Bisnis", "Business")}
-                    </Link>
-                  </Button>
-                ))}
-              </div>
-              {scope === "all" && unifiedRows.length > 0 && (
-                <div className="mb-4 divide-y rounded-lg border">
-                  {unifiedRows.map((row) => (
-                    <div
-                      key={`${row.source}:${row.id}`}
-                      className="flex flex-wrap items-center justify-between gap-2 p-3"
-                    >
-                      <div>
-                        <p className="font-medium">{row.description}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {row.date} ·{" "}
-                          {row.source === "personal"
-                            ? t("Pribadi", "Personal")
-                            : t("Bisnis", "Business")}
-                        </p>
-                      </div>
-                      <span className="font-medium">
-                        {row.currency} {row.amount}
-                      </span>
-                    </div>
-                  ))}
-                  {unifiedPage.cursor && (
-                    <div className="p-3 text-center">
-                      <Button variant="outline" asChild>
-                        <Link href={`/app/expenses?month=${month}&scope=all&cursor=${encodeExpenseCursor(unifiedPage.cursor)}`}>
-                          {t("Muat lebih lama", "Load older")}
-                        </Link>
-                      </Button>
-                    </div>
+              {expenseRows.length === 0 ? (
+                <div className="py-8 text-center space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    {q || categoryId
+                      ? t(
+                          "Tidak ada pengeluaran cocok filter.",
+                          "No expenses match filters.",
+                        )
+                      : t(
+                          "Belum ada pengeluaran bulan ini.",
+                          "No expenses this month.",
+                        )}
+                  </p>
+                  {canWrite && !q && !categoryId && (
+                    <AddExpenseButton
+                      workspaceId={ws.id}
+                      defaultCurrency={ws.defaultCurrency}
+                      categories={categories}
+                      projects={projectOpts}
+                      clients={clientOpts}
+                      variant="outline"
+                    />
                   )}
                 </div>
-              )}
-              {scope === "personal" && (
-                <PersonalExpensesSection month={month} t={t} />
-              )}
-              {scope === "business" && (
-                <>
-                  {expenseRows.length === 0 ? (
-                    <div className="py-8 text-center space-y-3">
-                      <p className="text-sm text-muted-foreground">
-                        {q || categoryId
-                          ? t(
-                              "Tidak ada pengeluaran cocok filter.",
-                              "No expenses match filters.",
-                            )
-                          : t(
-                              "Belum ada pengeluaran bulan ini.",
-                              "No expenses this month.",
-                            )}
-                      </p>
-                      {canWrite && !q && !categoryId && (
-                        <AddExpenseButton
-                          workspaceId={ws.id}
-                          defaultCurrency={ws.defaultCurrency}
-                          categories={categories}
-                          projects={projectOpts}
-                          clients={clientOpts}
-                          variant="outline"
-                        />
-                      )}
-                    </div>
-                  ) : (
+              ) : (
                     <>
                       <ExpensesListTable
                         rows={expenseRows}
@@ -752,8 +676,6 @@ export default async function ExpensesPage({
                       )}
                     </>
                   )}
-                </>
-              )}
             </>
           )}
         </CardContent>
