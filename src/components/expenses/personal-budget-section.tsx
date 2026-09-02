@@ -84,21 +84,16 @@ export async function PersonalBudgetSection({
               {[...new Set(["IDR", "USD", ...data.currencies])].map((currency) => <option key={currency} value={currency}>{currency}</option>)}
             </select>
             <div className="grid grid-cols-3 gap-2">
-              <Input
-                name="needsPercent"
-                required
-                defaultValue={data.budget?.needsPct || "50.00"}
-              />
-              <Input
-                name="wantsPercent"
-                required
-                defaultValue={data.budget?.wantsPct || "30.00"}
-              />
-              <Input
-                name="savingsPercent"
-                required
-                defaultValue={data.budget?.savingsPct || "20.00"}
-              />
+              {[
+                ["needs-percent", "needsPercent", t("Kebutuhan", "Needs"), data.budget?.needsPct || "50.00"],
+                ["wants-percent", "wantsPercent", t("Keinginan", "Wants"), data.budget?.wantsPct || "30.00"],
+                ["savings-percent", "savingsPercent", t("Tabungan", "Savings"), data.budget?.savingsPct || "20.00"],
+              ].map(([id, name, label, value]) => (
+                <label key={id} htmlFor={id} className="space-y-1 text-xs font-medium text-muted-foreground">
+                  <span>{label} (%)</span>
+                  <Input id={id} name={name} required inputMode="decimal" defaultValue={value} />
+                </label>
+              ))}
             </div>
             <Button className="w-full">
               {t("Simpan anggaran", "Save budget")}

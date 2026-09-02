@@ -155,8 +155,11 @@ export function HabitDialog({
             </div>
           )}
 
-          <div className="pt-2">
-            <Button type="submit" className="w-full rounded-xl bg-violet-600 font-semibold text-white hover:bg-violet-700">
+          <div className="flex gap-2 pt-2">
+            <Button type="button" variant="outline" className="flex-1 rounded-xl" onClick={() => setOpen(false)}>
+              {isEn ? "Cancel" : "Batal"}
+            </Button>
+            <Button type="submit" className="flex-1 rounded-xl bg-violet-600 font-semibold text-white hover:bg-violet-700">
               {isEn ? "Save Habit" : "Simpan Kebiasaan"}
             </Button>
           </div>

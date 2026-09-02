@@ -232,7 +232,11 @@ export async function HabitsSection({
                   </div>
                 </div>
 
-                <div className="grid gap-2 border-t pt-3 sm:grid-cols-[1fr_auto]">
+                <details className="border-t pt-3">
+                  <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium text-muted-foreground">
+                    {t("Kelola kebiasaan", "Manage habit")}
+                  </summary>
+                  <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
                   <form action={updateHabitAction} className="flex gap-2">
                     <input type="hidden" name="habitId" value={h.id} />
                     <input name="name" defaultValue={h.name} required aria-label={t("Ubah nama kebiasaan", "Edit habit name")} className="min-h-11 min-w-0 flex-1 rounded-xl border bg-background px-3 text-sm" />
@@ -242,7 +246,8 @@ export async function HabitsSection({
                     <input type="hidden" name="habitId" value={h.id} />
                     <Button variant="destructive" className="min-h-11">{t("Hapus", "Delete")}</Button>
                   </form>
-                </div>
+                  </div>
+                </details>
 
                 <HabitHeatmap
                   cells={recentDays.map((day) => ({
@@ -256,25 +261,7 @@ export async function HabitsSection({
                   t={t}
                 />
 
-                {/* 14-Day Micro Sparkline / Dots */}
-                <div className="flex items-center justify-between border-t pt-3">
-                  <span className="text-[11px] font-medium text-muted-foreground">
-                    {t("14 Hari Terakhir:", "Last 14 Days:")}
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    {recentDays.map((d) => (
-                      <span
-                        key={d.date}
-                        title={d.date}
-                        className={`size-3 rounded-full transition-all ${
-                          d.isChecked
-                            ? "bg-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-900"
-                            : d.scheduled ? "bg-amber-200 dark:bg-amber-900" : "bg-muted/60"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
+
               </CardContent>
             </Card>
           );

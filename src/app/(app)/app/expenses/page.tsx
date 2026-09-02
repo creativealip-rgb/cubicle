@@ -97,11 +97,13 @@ export default async function ExpensesPage({
   const q = (params.q ?? "").trim();
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
   const tab =
-    params.tab === "categories" ||
-    params.tab === "recurring" ||
-    params.tab === "personal"
-      ? params.tab
-      : "list";
+    !params.tab && params.scope === "personal"
+      ? "personal"
+      : params.tab === "categories" ||
+          params.tab === "recurring" ||
+          params.tab === "personal"
+        ? params.tab
+        : "list";
   const scope =
     params.scope === "personal" || params.scope === "business"
       ? params.scope

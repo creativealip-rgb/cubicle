@@ -167,7 +167,10 @@ export async function PersonalExpensesSection({
                 required
                 placeholder={t("Nama kategori", "Category name")}
               />
-              <Input name="color" type="color" defaultValue="#64748b" />
+              <div className="flex items-center gap-3">
+                <Input name="color" type="color" defaultValue="#64748b" aria-label={t("Warna kategori", "Category color")} className="h-10 w-14 shrink-0 cursor-pointer rounded-lg border p-1" />
+                <span className="text-sm text-muted-foreground">{t("Warna kategori", "Category color")}</span>
+              </div>
               <select
                 name="defaultBucket"
                 className="h-10 w-full rounded-md border bg-background px-3"
@@ -177,7 +180,7 @@ export async function PersonalExpensesSection({
                 <option value="savings">Savings</option>
                 <option value="unbudgeted">Unbudgeted</option>
               </select>
-              <Button>{t("Tambah kategori", "Add category")}</Button>
+              <Button className="w-full rounded-xl">{t("Tambah kategori", "Add category")}</Button>
             </form>
             <div className="mt-4 space-y-2">
               {categories.map((category) => (
