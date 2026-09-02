@@ -7,7 +7,6 @@ import {
   updatePersonalGoal,
 } from "@/lib/actions/personal-goals";
 import { listPersonalHabits, togglePersonalHabitCheckin } from "@/lib/actions/personal-habits";
-import { listPersonalNotes } from "@/lib/actions/personal-notes";
 import {
   calculateGoalMetrics,
   calculateHabitHeatmap,
@@ -24,7 +23,7 @@ import { GoalDialog } from "@/components/productivity/goal-dialog";
 import { TodayFocusCard, GoalStarterLinks } from "@/components/productivity/today-focus-card";
 import { Target, ArrowRight } from "lucide-react";
 import { WeeklyReviewCard } from "@/components/productivity/weekly-review-card";
-import { PersonalHubQuickCards } from "@/components/productivity/personal-hub-quick-cards";
+import { QuickCaptureCard } from "@/components/productivity/quick-capture-card";
 import { healthyHabitStats, weeklyReview } from "@/lib/personal-productivity/retention";
 import { dateOffset, isHabitScheduled } from "@/lib/personal-productivity/habits";
 import { calculateGoalProgress } from "@/lib/personal-productivity/goals";
@@ -41,20 +40,6 @@ export default async function ProductivityPage({
   const goals = await listPersonalGoals();
   const habits = await listPersonalHabits();
   const today = habits[0]?.today ?? new Date().toISOString().slice(0, 10);
-
-  const [notesData, journalData] = await Promise.all([
-    listPersonalNotes(undefined, { status: "open", limit: 5 }),
-    listPersonalNotes(undefined, { titlePrefix: "[journal]", limit: 1 }),
-  ]);
-  const pinnedNotes = notesData.filter((n) => n.pinned);
-  const lastJournal = journalData[0]
-    ? {
-        id: journalData[0].id,
-        title: journalData[0].title.replace(/^\[journal\]\s*/, ""),
-        mood: journalData[0].title.match(/[\u{1F300}-\u{1F9FF}]/u)?.[0] || null,
-        createdAt: journalData[0].createdAt,
-      }
-    : null;
 
   // Aggregated Visual Metrics
   const goalMetrics = calculateGoalMetrics(goals);
@@ -174,26 +159,6 @@ export default async function ProductivityPage({
         ))}
       </nav>
 
-      {tab === "overview" && <>
-        <TodayFocusCard activeGoals={goalMetrics.active} scheduledHabits={activeHabits.length} completedHabits={habitsCompletedToday} t={t} />
-        <div className="grid gap-4 lg:grid-cols-2">
-          <WeeklyReviewCard {...review} attentionHabit={attentionHabit} focusGoal={focusGoal} stagnantGoals={stagnantGoals} t={t} />
-          <PersonalHubQuickCards
-            quickCaptureProps={{
-              habits: activeHabits.filter((h) => today >= h.startDate && isHabitScheduled(h.frequency as "daily" | "specific_weekdays", h.weekdays, today) && !h.checkins.some((c) => c.localDate === today)).map((h) => ({ id: h.id, name: h.name })),
-              goals: activeGoals.map((g) => ({ id: g.id, title: g.title, progress: g.manualProgress, nextStep: g.steps.find((step) => !step.isCompleted) ? { id: g.steps.find((step) => !step.isCompleted)!.id, title: g.steps.find((step) => !step.isCompleted)!.title } : null })),
-              checkHabit: quickCheckHabit,
-              updateGoal: quickUpdateGoal,
-              lang,
-            }}
-            pinnedNotes={pinnedNotes.map((n: { id: string; title: string; dueDate: string | Date | null }) => ({ id: n.id, title: n.title, dueDate: n.dueDate ? String(n.dueDate) : null }))}
-            lastJournal={lastJournal}
-            lang={lang}
-            t={t}
-          />
-        </div>
-      </>}
-
       {/* KPI Top Cards Banner */}
       <ProductivityKpiCards
         activeGoals={goalMetrics.active}
@@ -207,61 +172,119 @@ export default async function ProductivityPage({
 
       {/* TAB 1: OVERVIEW & CHARTS */}
       {tab === "overview" && (
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Priority Goals Progress Visual List */}
-          <Card className="rounded-3xl border bg-card shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <div>
-                <CardTitle className="text-base font-semibold">
-                  {t("Progres Tujuan Prioritas", "Priority Goals Progress")}
-                </CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  {t("Tujuan aktif teratas", "Top active goals")}
-                </p>
-              </div>
-              <Button variant="ghost" size="sm" asChild>
-                <Link
-                  href="/app/productivity?tab=goals"
-                  className="text-xs font-semibold text-violet-600 hover:text-violet-700"
-                >
-                  {t("Lihat Semua", "View All")}
-                  <ArrowRight className="ml-1 size-3" />
-                </Link>
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {activeGoals.length ? (
-                activeGoals.slice(0, 4).map((g) => (
-                  <GoalProgressCard
-                    key={g.id}
-                    goal={g}
-                    today={today}
-                    setStatusAction={setStatus}
-                    t={t}
-                  />
-                ))
-              ) : (
-                <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-8 text-center">
-                  <Target className="mb-2 size-8 text-muted-foreground/50" />
-                  <p className="text-sm font-medium">
-                    {t("Belum ada tujuan aktif.", "No active goals yet.")}
-                  </p>
-                  <p className="mt-1 max-w-xs text-xs text-muted-foreground">
-                    {t("Mulai dari target kecil yang ingin kamu jaga setiap minggu.", "Start with a small target you want to keep each week.")}
-                  </p>
-                  <div className="mt-3"><GoalStarterLinks t={t} /></div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        <div className="space-y-6">
+          {/* Action Row: Today Focus / Quick Capture (Left) & Weekly Rhythm (Right) */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="space-y-4">
+              <TodayFocusCard
+                activeGoals={goalMetrics.active}
+                scheduledHabits={activeHabits.length}
+                completedHabits={habitsCompletedToday}
+                t={t}
+              />
+              <QuickCaptureCard
+                habits={activeHabits
+                  .filter(
+                    (h) =>
+                      today >= h.startDate &&
+                      isHabitScheduled(
+                        h.frequency as "daily" | "specific_weekdays",
+                        h.weekdays,
+                        today,
+                      ) &&
+                      !h.checkins.some((c) => c.localDate === today),
+                  )
+                  .map((h) => ({ id: h.id, name: h.name }))}
+                goals={activeGoals.map((g) => ({
+                  id: g.id,
+                  title: g.title,
+                  progress: g.manualProgress,
+                  nextStep: g.steps.find((step) => !step.isCompleted)
+                    ? {
+                        id: g.steps.find((step) => !step.isCompleted)!.id,
+                        title: g.steps.find((step) => !step.isCompleted)!.title,
+                      }
+                    : null,
+                }))}
+                checkHabit={quickCheckHabit}
+                updateGoal={quickUpdateGoal}
+                lang={lang}
+              />
+            </div>
 
-          {/* Habit Consistency Heatmap & Trends */}
-          <div className="space-y-6">
-            <HabitHeatmap
-              cells={heatmapCells}
-              weeklyTrends={weeklyTrends}
-              t={t}
-            />
+            <div>
+              <WeeklyReviewCard
+                {...review}
+                attentionHabit={attentionHabit}
+                focusGoal={focusGoal}
+                stagnantGoals={stagnantGoals}
+                t={t}
+              />
+            </div>
+          </div>
+
+          {/* Progress Row: Priority Goals (Left) & Habit Heatmap (Right) */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Priority Goals Progress Visual List */}
+            <Card className="rounded-3xl border bg-card shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between pb-3">
+                <div>
+                  <CardTitle className="text-base font-semibold">
+                    {t("Progres Tujuan Prioritas", "Priority Goals Progress")}
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground">
+                    {t("Tujuan aktif teratas", "Top active goals")}
+                  </p>
+                </div>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link
+                    href="/app/productivity?tab=goals"
+                    className="text-xs font-semibold text-violet-600 hover:text-violet-700"
+                  >
+                    {t("Lihat Semua", "View All")}
+                    <ArrowRight className="ml-1 size-3" />
+                  </Link>
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {activeGoals.length ? (
+                  activeGoals.slice(0, 4).map((g) => (
+                    <GoalProgressCard
+                      key={g.id}
+                      goal={g}
+                      today={today}
+                      setStatusAction={setStatus}
+                      t={t}
+                    />
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-8 text-center">
+                    <Target className="mb-2 size-8 text-muted-foreground/50" />
+                    <p className="text-sm font-medium">
+                      {t("Belum ada tujuan aktif.", "No active goals yet.")}
+                    </p>
+                    <p className="mt-1 max-w-xs text-xs text-muted-foreground">
+                      {t(
+                        "Mulai dari target kecil yang ingin kamu jaga setiap minggu.",
+                        "Start with a small target you want to keep each week.",
+                      )}
+                    </p>
+                    <div className="mt-3">
+                      <GoalStarterLinks t={t} />
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Habit Consistency Heatmap & Trends */}
+            <div className="space-y-6">
+              <HabitHeatmap
+                cells={heatmapCells}
+                weeklyTrends={weeklyTrends}
+                t={t}
+              />
+            </div>
           </div>
         </div>
       )}
