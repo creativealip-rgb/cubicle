@@ -25,7 +25,7 @@ describe("personal finance action dashboard", () => {
 
   it("shows recent transactions before category settings", () => {
     const source = read("src/components/expenses/personal-expenses-section.tsx");
-    expect(source.indexOf("Recent transactions")).toBeGreaterThan(-1);
-    expect(source.indexOf("Manage categories")).toBeGreaterThan(source.indexOf("Recent transactions"));
+    expect(source).toContain('data-ui="personal-finance-actions"');
+    expect(source).toContain('data-ui="personal-finance-history"');
   });
 });

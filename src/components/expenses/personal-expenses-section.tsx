@@ -115,13 +115,7 @@ export async function PersonalExpensesSection({
       <PersonalFinanceDialog trigger={t("Kelola anggaran", "Manage budget")} title={t("Kelola anggaran", "Manage budget")} description={t("Atur pendapatan dan pembagian 50/30/20.", "Set income and your 50/30/20 split.")}>
         <PersonalBudgetSection month={month} t={t} compact />
       </PersonalFinanceDialog>
-      <Card>
-        <CardHeader><CardTitle>{t("Transaksi terbaru", "Recent transactions")}</CardTitle></CardHeader>
-        <CardContent>
-          {rows.length ? <div className="divide-y">{rows.slice(0, 5).map((row) => <div key={row.id} className="flex items-center justify-between gap-3 py-3"><div className="min-w-0"><p className="truncate font-medium">{row.description}</p><p className="text-xs text-muted-foreground">{row.date} · {row.budgetBucket}</p></div><span className="shrink-0 font-semibold tabular-nums">{money(row.amount, row.currency)}</span></div>)}</div> : <p className="text-sm text-muted-foreground">{t("Belum ada transaksi pribadi.", "No personal transactions yet.")}</p>}
-        </CardContent>
-      </Card>
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2" data-ui="personal-finance-actions">
         <Card>
           <CardHeader>
             <CardTitle>
@@ -215,10 +209,10 @@ export async function PersonalExpensesSection({
         </Card>
         </PersonalFinanceDialog>
       </div>
-      <Card>
+      <Card data-ui="personal-finance-history">
         <CardHeader>
           <CardTitle>
-            {t("Transaksi pribadi", "Personal transactions")}
+            {t("Transaksi terbaru", "Recent transactions")}
           </CardTitle>
         </CardHeader>
         <CardContent>
