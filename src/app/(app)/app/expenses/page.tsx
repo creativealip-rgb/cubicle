@@ -544,7 +544,7 @@ export default async function ExpensesPage({
         </CardHeader>
         <CardContent>
           {tab === "personal" && (
-            <PersonalExpensesSection month={month} t={t} />
+            <PersonalExpensesSection month={month} t={t} page={page} />
           )}
 
           {tab === "categories" && (

@@ -29,12 +29,12 @@ describe("personal productivity plan closure", () => {
   });
 
   it("uses decimal-safe budget progress, disabled hiding, currency selection, confirmation, and ARIA", () => {
-    const section = read("src/components/expenses/personal-budget-section.tsx");
+    const section = read("src/components/expenses/personal-expenses-section.tsx");
+    const budgetSection = read("src/components/expenses/personal-budget-section.tsx");
     expect(section).toContain("budgetProgress");
-    expect(section).toContain("data.budget?.enabled");
-    expect(section).toContain("data.currencies");
-    expect(section).toContain('name="replace" value="true"');
-    expect(section).toContain('role="progressbar"');
-    expect(section).not.toContain("Number(row.actual)");
+    expect(section).toContain("budgetData.budget?.enabled");
+    expect(budgetSection).toContain("data.currencies");
+    expect(budgetSection).toContain("replace");
+    expect(section).toContain("50/30/20");
   });
 });

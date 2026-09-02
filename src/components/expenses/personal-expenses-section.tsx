@@ -17,16 +17,21 @@ import { getPersonalBudget } from "@/lib/actions/personal-budget";
 import { budgetTargets } from "@/lib/personal-productivity/budget";
 import { budgetProgress } from "@/lib/personal-productivity/money";
 import { formatMoney } from "@/lib/utils";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
+
+const PAGE_SIZE = 10;
 
 export async function PersonalExpensesSection({
   month,
   t,
+  page = 1,
 }: {
   month: string;
   t: (id: string, en: string) => string;
+  page?: number;
 }) {
-  const [rows, categories, budgetData] = await Promise.all([
+  const [allRows, categories, budgetData] = await Promise.all([
     listPersonalTransactions(),
     listPersonalTransactionCategories(),
     getPersonalBudget(month),
@@ -97,9 +102,18 @@ export async function PersonalExpensesSection({
 
   const currencyCode = budgetData.budget?.currency || "IDR";
   const today = new Date().toISOString().slice(0, 10);
-  const monthRows = rows.filter((row) => row.date.startsWith(month));
+
+  // Filter month rows
+  const monthRows = allRows.filter((row) => row.date.startsWith(month));
   const spent = monthRows.filter((row) => row.transactionType === "expense").reduce((sum, row) => sum + Number(row.amount), 0);
   const income = Number(budgetData.budget?.income || 0);
+
+  // Pagination calculation
+  const totalRecords = monthRows.length;
+  const totalPages = Math.ceil(totalRecords / PAGE_SIZE) || 1;
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const offset = (safePage - 1) * PAGE_SIZE;
+  const paginatedRows = monthRows.slice(offset, offset + PAGE_SIZE);
 
   const targets = budgetData.budget?.enabled
     ? budgetTargets(
@@ -181,7 +195,7 @@ export async function PersonalExpensesSection({
       {/* Toolbar / Action Row matching Recurring/Categories tab */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1" data-ui="personal-finance-actions">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span>{rows.length} {t("transaksi pribadi", "personal records")}</span>
+          <span>{totalRecords} {t("transaksi pribadi", "personal records")}</span>
           <span>·</span>
           <span>{t("Total pengeluaran", "Spent")}: <strong className="text-slate-800">{formatMoney(String(spent), currencyCode)}</strong></span>
         </div>
@@ -189,23 +203,28 @@ export async function PersonalExpensesSection({
         <div className="flex flex-wrap items-center gap-2">
           <PersonalFinanceDialog
             trigger={`+ ${t("Tambah Pengeluaran Pribadi", "Add Personal Expense")}`}
-            title={t("Catat Transaksi Pribadi", "Add Personal Transaction")}
+            title={t("Catat Pengeluaran Pribadi", "Add Personal Expense")}
             description={t("Masukkan detail pengeluaran atau alokasi tabungan pribadi.", "Enter expense or savings allocation details.")}
           >
             <form action={create} className="space-y-4 pt-2" data-ui="personal-quick-add">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">{t("Deskripsi", "Description")}</label>
+                <label className="text-xs font-medium text-muted-foreground">{t("Deskripsi Pengeluaran *", "Description *")}</label>
                 <Input name="description" required placeholder={t("Contoh: Makan siang, Belanja bulanan", "e.g. Lunch, Groceries")} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">{t("Jumlah", "Amount")}</label>
-                  <Input name="amount" inputMode="decimal" required placeholder="0" />
+                  <label className="text-xs font-medium text-muted-foreground">{t("Jumlah (Nominal) *", "Amount *")}</label>
+                  <Input name="amount" inputMode="decimal" required placeholder="Contoh: 50000" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">{t("Tanggal *", "Date *")}</label>
+                  <Input name="date" type="date" required defaultValue={today} />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-muted-foreground">{t("Kategori", "Category")}</label>
                   <select name="categoryId" className="h-10 w-full rounded-md border bg-background px-3 text-sm">
-                    <option value="">{t("Tanpa kategori", "No category")}</option>
+                    <option value="">{t("Pilih Kategori", "Select Category")}</option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
@@ -215,30 +234,26 @@ export async function PersonalExpensesSection({
 
               <details className="rounded-xl border p-3">
                 <summary className="cursor-pointer text-xs font-medium text-muted-foreground hover:text-foreground">
-                  {t("Detail lainnya (Tanggal, Tipe, Pos Budget)", "More details (Date, Type, Bucket)")}
+                  {t("Detail Tambahan (Merchant, Tipe, Pos Budget)", "Additional details (Merchant, Type, Bucket)")}
                 </summary>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">{t("Tanggal", "Date")}</label>
-                    <Input name="date" type="date" required defaultValue={today} />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">{t("Merchant (Opsional)", "Merchant (Optional)")}</label>
+                    <label className="text-xs text-muted-foreground">{t("Merchant / Tempat (Opsional)", "Merchant (Optional)")}</label>
                     <Input name="merchant" placeholder="e.g. Supermarket, Cafe" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs text-muted-foreground">{t("Tipe Transaksi", "Transaction Type")}</label>
                     <select name="transactionType" className="h-10 w-full rounded-md border bg-background px-3 text-sm">
                       <option value="expense">{t("Pengeluaran (Expense)", "Expense")}</option>
-                      <option value="allocation">{t("Alokasi Tabungan", "Savings Allocation")}</option>
+                      <option value="allocation">{t("Alokasi Tabungan (Savings)", "Savings Allocation")}</option>
                     </select>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">{t("Pos 50/30/20", "50/30/20 Bucket")}</label>
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="text-xs text-muted-foreground">{t("Pos Alokasi 50/30/20", "50/30/20 Budget Bucket")}</label>
                     <select name="budgetBucket" className="h-10 w-full rounded-md border bg-background px-3 text-sm">
-                      <option value="needs">Needs (Kebutuhan)</option>
-                      <option value="wants">Wants (Keinginan)</option>
-                      <option value="savings">Savings (Tabungan)</option>
+                      <option value="needs">Needs (Kebutuhan Pokok - 50%)</option>
+                      <option value="wants">Wants (Keinginan & Hiburan - 30%)</option>
+                      <option value="savings">Savings (Tabungan & Investasi - 20%)</option>
                       <option value="unbudgeted">Unbudgeted</option>
                     </select>
                   </div>
@@ -247,7 +262,7 @@ export async function PersonalExpensesSection({
               </details>
 
               <Button className="w-full rounded-xl">
-                {t("Simpan Transaksi", "Save Transaction")}
+                {t("Simpan Pengeluaran", "Save Expense")}
               </Button>
             </form>
           </PersonalFinanceDialog>
@@ -263,7 +278,7 @@ export async function PersonalExpensesSection({
           <PersonalFinanceDialog
             trigger={t("Kategori", "Manage categories")}
             title={t("Kategori Pengeluaran Pribadi", "Personal Categories")}
-            description={t("Tambah atau edit kategori pengeluaran pribadi.", "Manage custom personal categories.")}
+            description={t("Tambah atau edit kategori pengeluaran pribadi serta pos anggarannya.", "Manage custom personal categories and default buckets.")}
           >
             <div className="space-y-4 pt-2">
               <form action={createCategory} className="space-y-3 rounded-xl border p-4 bg-muted/20">
@@ -272,29 +287,36 @@ export async function PersonalExpensesSection({
                 <div className="grid grid-cols-2 gap-3 items-center">
                   <div className="flex items-center gap-2">
                     <Input name="color" type="color" defaultValue="#64748b" className="h-9 w-12 cursor-pointer p-0.5 rounded" />
-                    <span className="text-xs text-muted-foreground">{t("Warna", "Color")}</span>
+                    <span className="text-xs text-muted-foreground">{t("Warna Label", "Color")}</span>
                   </div>
                   <select name="defaultBucket" className="h-9 w-full rounded-md border bg-background px-2 text-xs">
-                    <option value="needs">Needs</option>
-                    <option value="wants">Wants</option>
-                    <option value="savings">Savings</option>
+                    <option value="needs">Needs (Kebutuhan)</option>
+                    <option value="wants">Wants (Keinginan)</option>
+                    <option value="savings">Savings (Tabungan)</option>
                     <option value="unbudgeted">Unbudgeted</option>
                   </select>
                 </div>
                 <Button size="sm" className="w-full rounded-lg">{t("Tambah Kategori", "Add Category")}</Button>
               </form>
 
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                <p className="text-xs font-medium text-muted-foreground uppercase">{t("Daftar Kategori", "Category List")}</p>
+              <div className="space-y-2 max-h-72 overflow-y-auto pb-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase">{t("Daftar Kategori Tersedia", "Category List")}</p>
                 {categories.map((category) => (
-                  <form key={category.id} action={editCategory} className="flex items-center gap-2 rounded-lg border p-2 bg-background">
+                  <form key={category.id} action={editCategory} className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto] items-center gap-2 rounded-lg border p-2 bg-background">
                     <input type="hidden" name="id" value={category.id} />
                     <input type="hidden" name="color" value={category.color} />
-                    <input type="hidden" name="defaultBucket" value={category.defaultBucket} />
-                    <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: category.color }} />
-                    <Input name="name" defaultValue={category.name} required className="h-8 text-xs flex-1" />
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: category.color }} />
+                      <Input name="name" defaultValue={category.name} required className="h-8 text-xs min-w-[120px]" />
+                    </div>
+                    <select name="defaultBucket" defaultValue={category.defaultBucket} className="h-8 rounded-md border bg-background px-2 text-xs">
+                      <option value="needs">Needs</option>
+                      <option value="wants">Wants</option>
+                      <option value="savings">Savings</option>
+                      <option value="unbudgeted">Unbudgeted</option>
+                    </select>
                     <Button variant="outline" size="sm" className="h-8 px-2 text-xs">{t("Simpan", "Save")}</Button>
-                    <Button formAction={removeCategory} variant="ghost" size="sm" className="h-8 px-2 text-xs text-destructive hover:text-destructive">{t("Hapus", "Delete")}</Button>
+                    <Button formAction={removeCategory} variant="ghost" size="sm" className="h-8 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10">{t("Hapus", "Delete")}</Button>
                   </form>
                 ))}
               </div>
@@ -303,15 +325,15 @@ export async function PersonalExpensesSection({
         </div>
       </div>
 
-      {/* Flat List matching RecurringManager layout */}
+      {/* Flat List matching RecurringManager layout with Max 10 Pagination */}
       <div data-ui="personal-finance-history">
-        {rows.length === 0 ? (
+        {totalRecords === 0 ? (
           <p className="text-sm text-slate-500 py-8 text-center">
             {t("Belum ada transaksi pribadi bulan ini.", "No personal expenses this month.")}
           </p>
         ) : (
           <div className="space-y-2">
-            {rows.map((r) => {
+            {paginatedRows.map((r) => {
               const category = categories.find((c) => c.id === r.categoryId);
               return (
                 <div
@@ -321,7 +343,7 @@ export async function PersonalExpensesSection({
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium truncate">{r.description}</span>
-                      <span className="text-[10px] uppercase tracking-wide text-slate-500 bg-slate-100 rounded px-1.5 py-0.5">
+                      <span className="text-[10px] uppercase tracking-wide text-slate-500 bg-slate-100 rounded px-1.5 py-0.5 font-semibold">
                         {r.budgetBucket}
                       </span>
                     </div>
@@ -397,6 +419,56 @@ export async function PersonalExpensesSection({
                 </div>
               );
             })}
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-3 border-t text-xs text-muted-foreground">
+                <span>
+                  {t("Halaman", "Page")} {safePage} {t("dari", "of")} {totalPages}
+                </span>
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-2.5 text-xs"
+                    disabled={safePage <= 1}
+                    asChild={safePage > 1}
+                  >
+                    {safePage > 1 ? (
+                      <Link href={`/app/expenses?tab=personal&month=${month}&page=${safePage - 1}`}>
+                        <ChevronLeft className="h-3.5 w-3.5 mr-1" />
+                        {t("Sebelumnya", "Previous")}
+                      </Link>
+                    ) : (
+                      <span className="flex items-center">
+                        <ChevronLeft className="h-3.5 w-3.5 mr-1" />
+                        {t("Sebelumnya", "Previous")}
+                      </span>
+                    )}
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-2.5 text-xs"
+                    disabled={safePage >= totalPages}
+                    asChild={safePage < totalPages}
+                  >
+                    {safePage < totalPages ? (
+                      <Link href={`/app/expenses?tab=personal&month=${month}&page=${safePage + 1}`}>
+                        {t("Berikutnya", "Next")}
+                        <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                      </Link>
+                    ) : (
+                      <span className="flex items-center">
+                        {t("Berikutnya", "Next")}
+                        <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                      </span>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

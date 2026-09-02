@@ -4,30 +4,19 @@ import {
   setPersonalBudgetEnabled,
   upsertPersonalBudget,
 } from "@/lib/actions/personal-budget";
-import { budgetTargets } from "@/lib/personal-productivity/budget";
-import { budgetProgress } from "@/lib/personal-productivity/money";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
 export async function PersonalBudgetSection({
   month,
   t,
-  compact = false,
 }: {
   month: string;
   t: (id: string, en: string) => string;
   compact?: boolean;
 }) {
-  const data = await getPersonalBudget(month),
-    targets = data.budget?.enabled
-      ? budgetTargets(
-          data.budget.income,
-          data.budget.needsPct,
-          data.budget.wantsPct,
-          data.budget.savingsPct,
-        )
-      : null;
+  const data = await getPersonalBudget(month);
+
   async function save(fd: FormData) {
     "use server";
     await upsertPersonalBudget({
@@ -39,6 +28,7 @@ export async function PersonalBudgetSection({
       savingsPercent: String(fd.get("savingsPercent")),
     });
   }
+
   async function copy(fd: FormData) {
     "use server";
     await copyPreviousPersonalBudget(
@@ -47,6 +37,7 @@ export async function PersonalBudgetSection({
       fd.get("replace") === "true",
     );
   }
+
   async function toggle(fd: FormData) {
     "use server";
     await setPersonalBudgetEnabled(
@@ -55,152 +46,113 @@ export async function PersonalBudgetSection({
       fd.get("enabled") === "true",
     );
   }
-  const rows = targets
-    ? [
-        { key: "needs", target: targets.needs, actual: data.actual.needs },
-        { key: "wants", target: targets.wants, actual: data.actual.wants },
-        {
-          key: "savings",
-          target: targets.savings,
-          actual: data.actual.savings,
-        },
-      ]
-    : [];
+
   return (
-    <div className={compact ? "space-y-4" : "grid gap-6 lg:grid-cols-[360px_1fr]"}>
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("Anggaran 50/30/20", "50/30/20 budget")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form action={save} className="space-y-3">
-            <Input name="month" type="month" required defaultValue={month} />
-            <Input
-              name="monthlyIncome"
-              required
-              inputMode="decimal"
-              defaultValue={data.budget?.income || "0.00"}
-              placeholder={t("Pendapatan bulanan", "Monthly income")}
-            />
-            <select name="currency" required defaultValue={data.budget?.currency || data.currencies[0] || "IDR"} className="h-10 w-full rounded-md border bg-background px-3">
-              {[...new Set(["IDR", "USD", ...data.currencies])].map((currency) => <option key={currency} value={currency}>{currency}</option>)}
-            </select>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                ["needs-percent", "needsPercent", t("Kebutuhan", "Needs"), data.budget?.needsPct || "50.00"],
-                ["wants-percent", "wantsPercent", t("Keinginan", "Wants"), data.budget?.wantsPct || "30.00"],
-                ["savings-percent", "savingsPercent", t("Tabungan", "Savings"), data.budget?.savingsPct || "20.00"],
-              ].map(([id, name, label, value]) => (
-                <label key={id} htmlFor={id} className="space-y-1 text-xs font-medium text-muted-foreground">
-                  <span>{label} (%)</span>
-                  <Input id={id} name={name} required inputMode="decimal" defaultValue={value} />
-                </label>
-              ))}
-            </div>
-            <Button className="w-full">
-              {t("Simpan anggaran", "Save budget")}
-            </Button>
-          </form>
-          <form action={copy} className="mt-2">
-            <input type="hidden" name="month" value={month} />
-            <input
-              type="hidden"
+    <div className="space-y-4 pt-1">
+      <form action={save} className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">{t("Bulan", "Month")}</label>
+            <Input name="month" type="month" required defaultValue={month} className="h-9 text-sm" />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">{t("Mata Uang", "Currency")}</label>
+            <select
               name="currency"
-              value={data.budget?.currency || "IDR"}
-            />
-            <Button variant="outline" className="w-full">
-              {t("Salin bulan sebelumnya", "Copy previous month")}
-            </Button>
-          </form>
-          {data.budget && (
-            <form action={copy} className="mt-2">
+              required
+              defaultValue={data.budget?.currency || data.currencies[0] || "IDR"}
+              className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+            >
+              {[...new Set(["IDR", "USD", ...data.currencies])].map((currency) => (
+                <option key={currency} value={currency}>{currency}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">{t("Target Pendapatan Bulanan", "Monthly Income Target")}</label>
+          <Input
+            name="monthlyIncome"
+            required
+            inputMode="decimal"
+            defaultValue={data.budget?.income ? Number(data.budget.income).toString() : ""}
+            placeholder="e.g. 12000000"
+            className="h-9 text-sm"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">{t("Pembagian Alokasi 50/30/20", "50/30/20 Allocation Split")}</label>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              ["needs-percent", "needsPercent", t("Kebutuhan (Needs)", "Needs"), data.budget?.needsPct || "50.00"],
+              ["wants-percent", "wantsPercent", t("Keinginan (Wants)", "Wants"), data.budget?.wantsPct || "30.00"],
+              ["savings-percent", "savingsPercent", t("Tabungan (Savings)", "Savings"), data.budget?.savingsPct || "20.00"],
+            ].map(([id, name, label, value]) => (
+              <div key={id} className="space-y-1 rounded-lg border p-2 bg-muted/20 text-center">
+                <span className="text-[11px] font-medium text-muted-foreground block truncate">{label}</span>
+                <div className="flex items-center justify-center gap-1">
+                  <Input
+                    id={id}
+                    name={name}
+                    required
+                    inputMode="decimal"
+                    defaultValue={value}
+                    className="h-8 text-xs text-center px-1 font-semibold"
+                  />
+                  <span className="text-xs text-muted-foreground">%</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <Button className="w-full rounded-xl">
+          {t("Simpan Pengaturan Anggaran", "Save Budget Settings")}
+        </Button>
+      </form>
+
+      <div className="border-t pt-3 space-y-2">
+        <details className="text-xs">
+          <summary className="cursor-pointer text-muted-foreground hover:text-foreground font-medium py-1">
+            {t("Opsi Lanjutan & Salin Bulan Lalu", "Advanced & Copy Options")}
+          </summary>
+          <div className="pt-2 space-y-2">
+            <form action={copy}>
               <input type="hidden" name="month" value={month} />
-              <input type="hidden" name="currency" value={data.budget.currency} />
-              <input type="hidden" name="replace" value="true" />
-              <Button variant="destructive" className="w-full">
-                {t("Konfirmasi ganti dengan bulan sebelumnya", "Confirm replace from previous month")}
+              <input type="hidden" name="currency" value={data.budget?.currency || "IDR"} />
+              <Button variant="outline" size="sm" className="w-full text-xs">
+                {t("Salin konfigurasi dari bulan sebelumnya", "Copy from previous month")}
               </Button>
             </form>
-          )}
-          {data.budget && (
-            <form action={toggle} className="mt-2">
-              <input type="hidden" name="month" value={month} />
-              <input
-                type="hidden"
-                name="currency"
-                value={data.budget.currency}
-              />
-              <input
-                type="hidden"
-                name="enabled"
-                value={String(!data.budget.enabled)}
-              />
-              <Button variant="ghost" className="w-full">
-                {data.budget.enabled
-                  ? t("Nonaktifkan anggaran", "Disable budget")
-                  : t("Aktifkan anggaran", "Enable budget")}
-              </Button>
-            </form>
-          )}
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("Target dan aktual", "Targets and actuals")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {rows.length ? (
-            <div className="space-y-4">
-              {rows.map((row) => {
-                const progress = budgetProgress(row.actual, row.target);
-                return (
-                  <div key={row.key}>
-                    <div className="flex justify-between text-sm">
-                      <span className="capitalize">{row.key}</span>
-                      <span>
-                        {data.budget?.currency} {row.actual} / {row.target}
-                      </span>
-                    </div>
-                    <div className="mt-1 h-2 rounded bg-muted">
-                      <div
-                        className="h-2 rounded bg-primary"
-                        role="progressbar"
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-valuenow={progress.percent}
-                        style={{ width: `${progress.percent}%` }}
-                      />
-                    </div>
-                    <p
-                      className={`mt-1 text-xs ${progress.over ? "text-destructive" : "text-muted-foreground"}`}
-                    >
-                      {progress.over
-                        ? t("Melebihi target", "Over budget")
-                        : `${t("Sisa", "Remaining")}: ${data.budget?.currency} ${progress.remaining}`}
-                    </p>
-                  </div>
-                );
-              })}
-              {data.actual.unbudgeted !== "0.00" && (
-                <p className="text-sm text-amber-600">
-                  Unbudgeted: {data.budget?.currency} {data.actual.unbudgeted}
-                </p>
-              )}
-              {data.excludedCurrencies.length > 0 && (
-                <p className="text-sm text-muted-foreground">
-                  {t(
-                    "Mata uang lain tidak dihitung:",
-                    "Other currencies excluded:",
-                  )}{" "}
-                  {data.excludedCurrencies.join(", ")}
-                </p>
-              )}
-            </div>
-          ) : (
-            <p>{t("Atur anggaran bulan ini.", "Set this month's budget.")}</p>
-          )}
-        </CardContent>
-      </Card>
+
+            {data.budget && (
+              <form action={copy}>
+                <input type="hidden" name="month" value={month} />
+                <input type="hidden" name="currency" value={data.budget.currency} />
+                <input type="hidden" name="replace" value="true" />
+                <Button variant="destructive" size="sm" className="w-full text-xs">
+                  {t("Ganti paksa dengan data bulan sebelumnya", "Force replace with previous month")}
+                </Button>
+              </form>
+            )}
+
+            {data.budget && (
+              <form action={toggle}>
+                <input type="hidden" name="month" value={month} />
+                <input type="hidden" name="currency" value={data.budget.currency} />
+                <input type="hidden" name="enabled" value={String(!data.budget.enabled)} />
+                <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground">
+                  {data.budget.enabled
+                    ? t("Nonaktifkan pantauan anggaran", "Disable budget tracking")
+                    : t("Aktifkan pantauan anggaran", "Enable budget tracking")}
+                </Button>
+              </form>
+            )}
+          </div>
+        </details>
+      </div>
     </div>
   );
 }
