@@ -12,7 +12,7 @@ export function WeeklyReviewCard({ rate, goalSummary, headline, attentionHabit, 
       <div className="flex items-end justify-between"><span className="text-sm text-muted-foreground">{t("Konsistensi kebiasaan", "Habit consistency")}</span><strong className="text-2xl">{rate}%</strong></div>
       <div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-emerald-500" style={{ width: `${rate}%` }} /></div>
       <p className="text-sm text-muted-foreground">{goalSummary}</p>
-      <p className="text-xs text-muted-foreground">{stagnantGoals} {t("tujuan tanpa progress 7 hari", "goals without progress for 7 days")}</p>
+      <p className="text-xs text-muted-foreground">{stagnantGoals} {stagnantGoals === 1 ? t("tujuan tanpa progress 7 hari", "goal without progress for 7 days") : t("tujuan tanpa progress 7 hari", "goals without progress for 7 days")}</p>
       {attentionHabit && <p className="text-xs text-amber-700 dark:text-amber-300">{t("Perlu perhatian", "Needs attention")}: {attentionHabit}</p>}
       {focusGoal && <p className="text-xs text-violet-700 dark:text-violet-300">{t("Fokus berikutnya", "Next focus")}: {focusGoal}</p>}
       <Button asChild variant="outline" className="rounded-xl"><Link href="/app/productivity?tab=habits">{t("Lihat aktivitas", "Review activity")} →</Link></Button>

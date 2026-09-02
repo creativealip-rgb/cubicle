@@ -59,6 +59,6 @@ export function weeklyReview(
   return {
     rate,
     headline: scheduled === 0 ? "Start with one habit" : rate >= 80 ? "Strong week" : rate >= 40 ? "Keep going" : "One small step counts",
-    goalSummary: activeGoals ? `${progressingGoals}/${activeGoals} goals moving` : "No active goals yet",
+    goalSummary: activeGoals ? `${progressingGoals}/${activeGoals} ${activeGoals === 1 ? "goal" : "goals"} moving` : "No active goals yet",
   };
 }
