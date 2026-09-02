@@ -453,10 +453,59 @@ export default async function ReportsPage({
     return (
       <div className="space-y-4 sm:space-y-6">
         <div className="app-page-header">
-          <div className="min-w-0"><h1 className="app-page-title">{t("Laporan", "Reports")}</h1><p className="app-page-description">{t("Analisis waktu lintas proyek dan anggota.", "Time analysis across projects and members.")}</p></div>
-          <ReportControls lang={lang} preset={period.preset} from={period.start} to={period.end} />
+          <div className="min-w-0">
+            <h1 className="app-page-title">{t("Laporan", "Reports")}</h1>
+            <p className="app-page-description">
+              {t(
+                "Analisis waktu lintas proyek dan anggota.",
+                "Time analysis across projects and members.",
+              )}
+            </p>
+          </div>
+          <div className="app-page-actions">
+            <ReportControls
+              lang={lang}
+              preset={period.preset}
+              from={period.start}
+              to={period.end}
+            />
+          </div>
         </div>
-        <ReportTabs active="time" financeHref={reportHref("finance")} timeHref={reportHref("time")} financeLabel={t("Keuangan", "Finance")} timeLabel={t("Waktu", "Time")} />
+
+        {/* Scope Switcher Bar & Business Tabs on same row */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="inline-flex rounded-xl bg-muted/70 p-1 border shadow-xs self-start sm:self-auto">
+            <Button
+              asChild
+              size="sm"
+              variant="ghost"
+              className="h-8 rounded-lg px-3.5 text-xs font-semibold bg-background text-foreground shadow-sm hover:bg-background"
+            >
+              <Link href={scopeHref("business")}>
+                {t("🏢 Bisnis / Tim", "🏢 Business / Team")}
+              </Link>
+            </Button>
+            <Button
+              asChild
+              size="sm"
+              variant="ghost"
+              className="h-8 rounded-lg px-3.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
+            >
+              <Link href={scopeHref("personal")}>
+                {t("👤 Pribadi (50/30/20)", "👤 Personal (50/30/20)")}
+              </Link>
+            </Button>
+          </div>
+
+          <ReportTabs
+            active="time"
+            financeHref={reportHref("finance")}
+            timeHref={reportHref("time")}
+            financeLabel={t("Keuangan", "Finance")}
+            timeLabel={t("Waktu", "Time")}
+          />
+        </div>
+
         <Card className="rounded-xl border shadow-none"><CardHeader className="pb-3"><CardTitle className="text-base">{t("Kinerja Waktu", "Time performance")}</CardTitle><CardDescription className="text-xs">{reportPeriodLabel(period, lang)}</CardDescription></CardHeader><CardContent className="grid grid-cols-2 gap-4 sm:grid-cols-4 pt-1">
           {[[t("Total Waktu", "Total Time"), timeReport.summary.totalMinutes], ["Billable", timeReport.summary.billableMinutes], ["Non-billable", timeReport.summary.nonBillableMinutes]].map(([label, minutes]) => <div key={String(label)} className="p-3 rounded-lg bg-muted/40 border"><p className="text-xs text-muted-foreground font-medium">{label}</p><p className="text-xl font-bold tabular-nums mt-0.5">{(Number(minutes) / 60).toFixed(1)}h</p></div>)}
           <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20"><p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">{t("Estimasi Nilai", "Estimated Value")}</p><p className="text-xl font-bold tabular-nums mt-0.5 text-emerald-700 dark:text-emerald-300">{formatMoney(timeReport.summary.billableValue, baseCurrency)}</p></div>
