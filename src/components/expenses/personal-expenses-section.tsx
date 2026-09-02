@@ -280,27 +280,27 @@ export async function PersonalExpensesSection({
             title={t("Kategori Pengeluaran Pribadi", "Personal Categories")}
             description={t("Tambah atau edit kategori pengeluaran pribadi serta pos anggarannya.", "Manage custom personal categories and default buckets.")}
           >
-            <div className="space-y-4 pt-2">
-              <form action={createCategory} className="space-y-3 rounded-xl border p-4 bg-muted/20">
-                <p className="text-sm font-semibold">{t("Tambah Kategori Baru", "Add New Category")}</p>
-                <Input name="name" required placeholder={t("Nama kategori...", "Category name...")} />
-                <div className="grid grid-cols-2 gap-3 items-center">
+            <div className="space-y-4 pt-1 max-h-[70vh] overflow-y-auto pr-1">
+              <form action={createCategory} className="space-y-3 rounded-xl border p-3.5 bg-muted/20">
+                <p className="text-xs font-semibold">{t("Tambah Kategori Baru", "Add New Category")}</p>
+                <Input name="name" required placeholder={t("Nama kategori...", "Category name...")} className="h-9 text-xs" />
+                <div className="grid grid-cols-2 gap-2.5 items-center">
                   <div className="flex items-center gap-2">
-                    <Input name="color" type="color" defaultValue="#64748b" className="h-9 w-12 cursor-pointer p-0.5 rounded" />
-                    <span className="text-xs text-muted-foreground">{t("Warna Label", "Color")}</span>
+                    <Input name="color" type="color" defaultValue="#64748b" className="h-8 w-10 cursor-pointer p-0.5 rounded" />
+                    <span className="text-[11px] text-muted-foreground">{t("Warna Label", "Color")}</span>
                   </div>
-                  <select name="defaultBucket" className="h-9 w-full rounded-md border bg-background px-2 text-xs">
+                  <select name="defaultBucket" className="h-8 w-full rounded-md border bg-background px-2 text-xs">
                     <option value="needs">Needs (Kebutuhan)</option>
                     <option value="wants">Wants (Keinginan)</option>
                     <option value="savings">Savings (Tabungan)</option>
                     <option value="unbudgeted">Unbudgeted</option>
                   </select>
                 </div>
-                <Button size="sm" className="w-full rounded-lg">{t("Tambah Kategori", "Add Category")}</Button>
+                <Button size="sm" className="w-full rounded-lg text-xs h-8">{t("Tambah Kategori", "Add Category")}</Button>
               </form>
 
-              <div className="space-y-2 max-h-40 overflow-y-auto pr-1 pb-6">
-                <p className="text-xs font-medium text-muted-foreground uppercase">{t("Daftar Kategori Tersedia", "Category List")}</p>
+              <div className="space-y-2">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase">{t("Daftar Kategori Tersedia", "Category List")}</p>
                 {categories.map((category) => (
                   <form key={category.id} action={editCategory} className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto] items-center gap-2 rounded-lg border p-2 bg-background">
                     <input type="hidden" name="id" value={category.id} />
