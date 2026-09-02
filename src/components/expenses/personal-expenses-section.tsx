@@ -299,7 +299,7 @@ export async function PersonalExpensesSection({
                 <Button size="sm" className="w-full rounded-lg">{t("Tambah Kategori", "Add Category")}</Button>
               </form>
 
-              <div className="space-y-2 max-h-60 overflow-y-auto pr-1 pb-4">
+              <div className="space-y-2 max-h-52 overflow-y-auto pr-1 pb-4">
                 <p className="text-xs font-medium text-muted-foreground uppercase">{t("Daftar Kategori Tersedia", "Category List")}</p>
                 {categories.map((category) => (
                   <form key={category.id} action={editCategory} className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto] items-center gap-2 rounded-lg border p-2 bg-background">
@@ -316,7 +316,7 @@ export async function PersonalExpensesSection({
                       <option value="unbudgeted">Unbudgeted</option>
                     </select>
                     <Button variant="outline" size="sm" className="h-8 px-2 text-xs">{t("Simpan", "Save")}</Button>
-                    <Button formAction={removeCategory} variant="destructive" size="sm" className="h-8 px-2.5 text-xs">{t("Hapus", "Delete")}</Button>
+                    <Button formAction={removeCategory} variant="destructive" size="sm" className="h-8 px-2.5 text-xs bg-red-600 text-white hover:bg-red-700">{t("Hapus", "Delete")}</Button>
                   </form>
                 ))}
               </div>
