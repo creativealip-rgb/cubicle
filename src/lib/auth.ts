@@ -57,6 +57,7 @@ export const auth = betterAuth({
   session: {
     expiresIn: IDLE_SESSION_SECONDS,
     updateAge: SESSION_UPDATE_AGE_SECONDS,
+    freshAge: 0, // Disable strict session age rejection on passkey/MFA setup
   },
   databaseHooks: {
     session: {
