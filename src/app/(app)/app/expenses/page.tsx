@@ -374,56 +374,58 @@ export default async function ExpensesPage({
           </PageHeaderDescription>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Scope Switcher: Business vs Personal */}
-          <div className="inline-flex rounded-xl bg-muted/60 p-1">
-            <Button
-              asChild
-              size="sm"
-              variant="ghost"
-              className={`h-8 rounded-lg px-3 text-xs font-semibold ${
-                scope === "business"
-                  ? "bg-background text-foreground shadow-sm hover:bg-background"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Link href={scopeHref("business")}>
-                {t("🏢 Bisnis / Tim", "🏢 Business / Team")}
-              </Link>
-            </Button>
-            <Button
-              asChild
-              size="sm"
-              variant="ghost"
-              className={`h-8 rounded-lg px-3 text-xs font-semibold ${
-                scope === "personal"
-                  ? "bg-background text-foreground shadow-sm hover:bg-background"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Link href={scopeHref("personal")}>
-                {t("👤 Pribadi (50/30/20)", "👤 Personal (50/30/20)")}
-              </Link>
-            </Button>
-          </div>
-
-          {scope === "business" && canWrite && (
-            <AddExpenseButton
-              workspaceId={ws.id}
-              defaultCurrency={ws.defaultCurrency}
-              categories={categories}
-              projects={projectOpts}
-              clients={clientOpts}
-              triggerClassName="h-8 text-xs font-semibold rounded-lg gap-1"
-            />
-          )}
-          {scope === "business" && (
+        {scope === "business" && (
+          <div className="flex flex-wrap items-center gap-2">
+            {canWrite && (
+              <AddExpenseButton
+                workspaceId={ws.id}
+                defaultCurrency={ws.defaultCurrency}
+                categories={categories}
+                projects={projectOpts}
+                clients={clientOpts}
+                triggerClassName="h-8 text-xs font-semibold rounded-lg gap-1"
+              />
+            )}
             <ExpenseExcelExportButton
               month={month}
               categoryId={categoryId || undefined}
               q={q || undefined}
             />
-          )}
+          </div>
+        )}
+      </div>
+
+      {/* Scope Switcher: Segmented Control Bar di Bawah Deskripsi Header */}
+      <div className="flex items-center">
+        <div className="inline-flex rounded-xl bg-muted/70 p-1 border shadow-xs">
+          <Button
+            asChild
+            size="sm"
+            variant="ghost"
+            className={`h-8 rounded-lg px-3.5 text-xs font-semibold transition-all ${
+              scope === "business"
+                ? "bg-background text-foreground shadow-sm hover:bg-background"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Link href={scopeHref("business")}>
+              {t("🏢 Bisnis / Tim", "🏢 Business / Team")}
+            </Link>
+          </Button>
+          <Button
+            asChild
+            size="sm"
+            variant="ghost"
+            className={`h-8 rounded-lg px-3.5 text-xs font-semibold transition-all ${
+              scope === "personal"
+                ? "bg-background text-foreground shadow-sm hover:bg-background"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Link href={scopeHref("personal")}>
+              {t("👤 Pribadi (50/30/20)", "👤 Personal (50/30/20)")}
+            </Link>
+          </Button>
         </div>
       </div>
 
