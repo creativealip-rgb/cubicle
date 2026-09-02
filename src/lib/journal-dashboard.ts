@@ -78,6 +78,7 @@ export function calculateJournalSummary(
     currentStreak: streak,
     topMood,
     totalEntries,
+    moodCounts,
     scope: "loaded-page" as const,
   };
 }

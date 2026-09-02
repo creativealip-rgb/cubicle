@@ -7,6 +7,7 @@ import {
   updatePersonalGoal,
 } from "@/lib/actions/personal-goals";
 import { listPersonalHabits, togglePersonalHabitCheckin } from "@/lib/actions/personal-habits";
+import { listPersonalNotes } from "@/lib/actions/personal-notes";
 import {
   calculateGoalMetrics,
   calculateHabitHeatmap,
@@ -23,7 +24,7 @@ import { GoalDialog } from "@/components/productivity/goal-dialog";
 import { TodayFocusCard, GoalStarterLinks } from "@/components/productivity/today-focus-card";
 import { Target, ArrowRight } from "lucide-react";
 import { WeeklyReviewCard } from "@/components/productivity/weekly-review-card";
-import { QuickCaptureCard } from "@/components/productivity/quick-capture-card";
+import { PersonalHubQuickCards } from "@/components/productivity/personal-hub-quick-cards";
 import { healthyHabitStats, weeklyReview } from "@/lib/personal-productivity/retention";
 import { dateOffset, isHabitScheduled } from "@/lib/personal-productivity/habits";
 import { calculateGoalProgress } from "@/lib/personal-productivity/goals";
@@ -40,6 +41,20 @@ export default async function ProductivityPage({
   const goals = await listPersonalGoals();
   const habits = await listPersonalHabits();
   const today = habits[0]?.today ?? new Date().toISOString().slice(0, 10);
+
+  const [notesData, journalData] = await Promise.all([
+    listPersonalNotes(undefined, { status: "open", limit: 5 }),
+    listPersonalNotes(undefined, { titlePrefix: "[journal]", limit: 1 }),
+  ]);
+  const pinnedNotes = notesData.filter((n) => n.pinned);
+  const lastJournal = journalData[0]
+    ? {
+        id: journalData[0].id,
+        title: journalData[0].title.replace(/^\[journal\]\s*/, ""),
+        mood: journalData[0].title.match(/[\u{1F300}-\u{1F9FF}]/u)?.[0] || null,
+        createdAt: journalData[0].createdAt,
+      }
+    : null;
 
   // Aggregated Visual Metrics
   const goalMetrics = calculateGoalMetrics(goals);
@@ -161,7 +176,22 @@ export default async function ProductivityPage({
 
       {tab === "overview" && <>
         <TodayFocusCard activeGoals={goalMetrics.active} scheduledHabits={activeHabits.length} completedHabits={habitsCompletedToday} t={t} />
-        <div className="grid gap-4 lg:grid-cols-2"><WeeklyReviewCard {...review} attentionHabit={attentionHabit} focusGoal={focusGoal} stagnantGoals={stagnantGoals} t={t} /><QuickCaptureCard habits={activeHabits.filter((h) => today >= h.startDate && isHabitScheduled(h.frequency as "daily" | "specific_weekdays", h.weekdays, today) && !h.checkins.some((c) => c.localDate === today)).map((h) => ({ id: h.id, name: h.name }))} goals={activeGoals.map((g) => ({ id: g.id, title: g.title, progress: g.manualProgress, nextStep: g.steps.find((step) => !step.isCompleted) ? { id: g.steps.find((step) => !step.isCompleted)!.id, title: g.steps.find((step) => !step.isCompleted)!.title } : null }))} checkHabit={quickCheckHabit} updateGoal={quickUpdateGoal} lang={lang} /></div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <WeeklyReviewCard {...review} attentionHabit={attentionHabit} focusGoal={focusGoal} stagnantGoals={stagnantGoals} t={t} />
+          <PersonalHubQuickCards
+            quickCaptureProps={{
+              habits: activeHabits.filter((h) => today >= h.startDate && isHabitScheduled(h.frequency as "daily" | "specific_weekdays", h.weekdays, today) && !h.checkins.some((c) => c.localDate === today)).map((h) => ({ id: h.id, name: h.name })),
+              goals: activeGoals.map((g) => ({ id: g.id, title: g.title, progress: g.manualProgress, nextStep: g.steps.find((step) => !step.isCompleted) ? { id: g.steps.find((step) => !step.isCompleted)!.id, title: g.steps.find((step) => !step.isCompleted)!.title } : null })),
+              checkHabit: quickCheckHabit,
+              updateGoal: quickUpdateGoal,
+              lang,
+            }}
+            pinnedNotes={pinnedNotes.map((n: { id: string; title: string; dueDate: string | Date | null }) => ({ id: n.id, title: n.title, dueDate: n.dueDate ? String(n.dueDate) : null }))}
+            lastJournal={lastJournal}
+            lang={lang}
+            t={t}
+          />
+        </div>
       </>}
 
       {/* KPI Top Cards Banner */}

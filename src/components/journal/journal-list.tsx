@@ -13,7 +13,6 @@ import {
   Pencil,
   RotateCcw,
   Search,
-  SmilePlus,
   Trash2,
 } from "lucide-react";
 
@@ -44,6 +43,21 @@ function moodLabel(emoji: string, isId: boolean) {
   const m = MOODS.find((x) => x.emoji === emoji);
   if (!m) return emoji;
   return isId ? m.idLabel : m.en;
+}
+
+function getReadingTime(text: string, isId: boolean) {
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  const minutes = Math.max(1, Math.ceil(words / 200));
+  return {
+    words,
+    label: isId ? `${words} kata · ${minutes} mnt baca` : `${words} words · ${minutes} min read`
+  };
+}
+
+function getMonthYearHeader(dateStr: string, isId: boolean) {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(isId ? "id-ID" : "en-US", { month: "long", year: "numeric" });
 }
 
 export function JournalList({
@@ -229,267 +243,287 @@ export function JournalList({
           </p>
         </div>
       ) : (
-        <div className="divide-y" data-ui="journal-timeline-list">
-          {filtered.map((entry) => {
+        <div className="space-y-6" data-ui="journal-timeline-list">
+          {filtered.map((entry, idx) => {
             const editing = editingId === entry.id;
             const expanded = expandedId === entry.id || editing;
+            const currentMonth = getMonthYearHeader(entry.createdAt, isId);
+            const prevMonth = idx > 0 ? getMonthYearHeader(filtered[idx - 1].createdAt, isId) : null;
+            const showMonthHeader = currentMonth && currentMonth !== prevMonth;
+            const readingInfo = getReadingTime(entry.content, isId);
+
             return (
-              <article
-                key={entry.id}
-                className="relative py-2.5 pl-7 pr-1 sm:pl-9"
-              >
-                <span className="absolute left-1.5 top-4 h-2.5 w-2.5 rounded-full bg-primary sm:left-2.5" />
-                <span className="absolute bottom-0 left-[10px] top-7 w-px bg-border sm:left-[14px]" />
-                <div
-                  className="block w-full cursor-pointer text-left"
-                  onClick={() => setExpandedId(expanded ? null : entry.id)}
-                  role="button"
-                  tabIndex={0}
-                  aria-expanded={expanded}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      setExpandedId(expanded ? null : entry.id);
-                    }
-                  }}
-                >
-                  <CardHeader className="p-0 pb-1">
-                    <div className="flex items-start justify-between gap-3">
-                      <CardTitle className="flex min-w-0 items-center gap-2 text-base">
-                        {entry.mood ? (
-                          <span
-                            className="text-lg"
-                            title={moodLabel(entry.mood, isId)}
-                          >
-                            {entry.mood}
-                          </span>
-                        ) : null}
-                        <span className="truncate">{entry.title}</span>
-                        {entry.status === "archived" ? (
-                          <Badge variant="outline" className="text-[10px]">
-                            {isId ? "Arsip" : "Archived"}
-                          </Badge>
-                        ) : null}
-                      </CardTitle>
-                      <div
-                        className="flex shrink-0 items-center gap-1"
-                        onClick={(event) => event.stopPropagation()}
-                      >
-                        <span className="mr-1 text-xs text-muted-foreground">
-                          {new Date(entry.createdAt).toLocaleDateString(
-                            isId ? "id-ID" : "en-US",
-                            { dateStyle: "medium" },
-                          )}
-                        </span>
-                        {expanded && tab !== "archived" ? (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            aria-label={isId ? "Ubah" : "Edit"}
-                            onClick={() =>
-                              setEditingId(editing ? null : entry.id)
-                            }
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        ) : null}
-                        {expanded && tab === "archived" ? (
-                          <form action={actions.restore}>
-                            <input
-                              type="hidden"
-                              name="noteId"
-                              value={entry.id}
-                            />
-                            <input type="hidden" name="tab" value="archived" />
-                            <Button
-                              type="submit"
-                              size="sm"
-                              variant="outline"
-                              className="gap-1"
+              <div key={entry.id} className="space-y-3">
+                {showMonthHeader && (
+                  <div className="flex items-center gap-3 py-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-violet-700 dark:text-violet-400">
+                      {currentMonth}
+                    </span>
+                    <div className="h-px flex-1 bg-border/60" />
+                  </div>
+                )}
+
+                <article className="relative py-2 pl-7 pr-1 sm:pl-9 transition rounded-2xl hover:bg-muted/20">
+                  <span className="absolute left-1.5 top-3.5 h-3 w-3 rounded-full border-2 border-background bg-violet-600 sm:left-2.5" />
+                  <span className="absolute bottom-0 left-[9px] top-6 w-px bg-border sm:left-[13px]" />
+                  <div
+                    className="block w-full cursor-pointer text-left"
+                    onClick={() => setExpandedId(expanded ? null : entry.id)}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={expanded}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setExpandedId(expanded ? null : entry.id);
+                      }
+                    }}
+                  >
+                    <CardHeader className="p-0 pb-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <CardTitle className="flex min-w-0 flex-wrap items-center gap-2 text-base">
+                          {entry.mood ? (
+                            <span
+                              className="text-lg"
+                              title={moodLabel(entry.mood, isId)}
                             >
-                              <RotateCcw className="h-3.5 w-3.5" />
-                              <span className="hidden sm:inline">
-                                {isId ? "Pulihkan" : "Restore"}
-                              </span>
-                            </Button>
-                          </form>
-                        ) : expanded ? (
-                          <ConfirmSubmitButton
-                            action={actions.archive}
-                            fields={{ noteId: entry.id, tab: "active" }}
-                            label={isId ? "Arsipkan" : "Archive"}
-                            title={isId ? "Arsipkan entri?" : "Archive entry?"}
-                            description={
-                              isId
-                                ? "Entri dipindahkan ke arsip dan dapat dipulihkan nanti."
-                                : "Entry moves to archive and can be restored later."
-                            }
-                          >
-                            <Archive className="h-4 w-4" />
-                          </ConfirmSubmitButton>
-                        ) : null}
-                        {expanded ? (
-                          <ConfirmSubmitButton
-                            action={actions.remove}
-                            fields={{ noteId: entry.id, tab }}
-                            label={
-                              isId ? "Hapus permanen" : "Delete permanently"
-                            }
-                            title={
-                              isId
-                                ? `Hapus “${entry.title}”?`
-                                : `Delete “${entry.title}”?`
-                            }
-                            description={
-                              isId
-                                ? "Tindakan ini tidak dapat dibatalkan."
-                                : "This action cannot be undone."
-                            }
-                            destructive
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </ConfirmSubmitButton>
-                        ) : null}
-                      </div>
-                    </div>
-                    {entry.tags.length > 0 && (
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {entry.tags.map((tag) => (
-                          <Badge
-                            key={tag}
-                            variant="outline"
-                            className="cursor-pointer text-[10px] hover:bg-muted"
-                            onClick={() => setSelectedTag(tag)}
-                          >
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                    <p className="text-[11px] text-muted-foreground sm:hidden">
-                      {new Date(entry.createdAt).toLocaleDateString(
-                        isId ? "id-ID" : "en-US",
-                        { dateStyle: "medium" },
-                      )}
-                    </p>
-                  </CardHeader>
-                  {!expanded ? (
-                    <p className="truncate text-xs text-muted-foreground">
-                      {entry.content}
-                    </p>
-                  ) : null}
-                  {expanded ? (
-                    <CardContent className="space-y-3 p-0 pt-2">
-                      {editing ? (
-                        <form
-                          action={async (fd) => {
-                            await actions.update(fd);
-                            setEditingId(null);
-                          }}
-                          className="space-y-3 rounded-md border bg-muted/30 p-3"
+                              {entry.mood}
+                            </span>
+                          ) : null}
+                          <span className="font-semibold tracking-tight text-foreground truncate">
+                            {entry.title}
+                          </span>
+                          {entry.status === "archived" ? (
+                            <Badge variant="outline" className="text-[10px]">
+                              {isId ? "Arsip" : "Archived"}
+                            </Badge>
+                          ) : null}
+                          <span className="text-[11px] font-normal text-muted-foreground">
+                            · {readingInfo.label}
+                          </span>
+                        </CardTitle>
+                        <div
+                          className="flex shrink-0 items-center gap-1"
+                          onClick={(event) => event.stopPropagation()}
                         >
-                          <input type="hidden" name="noteId" value={entry.id} />
-                          <input type="hidden" name="tab" value={tab} />
-                          <Input
-                            name="title"
-                            defaultValue={entry.title}
-                            required
-                            placeholder={isId ? "Judul" : "Title"}
-                          />
-                          <Input
-                            name="tags"
-                            defaultValue={entry.tags.join(", ")}
-                            placeholder={
-                              isId
-                                ? "kerja, rapat, blocker"
-                                : "work, meeting, blocker"
-                            }
-                          />
-                          <MoodPicker
-                            name="mood"
-                            defaultValue={entry.mood}
-                            lang={lang}
-                          />
-                          <Textarea
-                            name="body"
-                            rows={6}
-                            defaultValue={entry.content}
-                            required
-                          />
-                          <div className="flex gap-2">
-                            <Button type="submit" size="sm">
-                              {isId ? "Simpan" : "Save"}
-                            </Button>
+                          <span className="mr-1 text-xs text-muted-foreground">
+                            {new Date(entry.createdAt).toLocaleDateString(
+                              isId ? "id-ID" : "en-US",
+                              { dateStyle: "medium" },
+                            )}
+                          </span>
+                          {expanded && tab !== "archived" ? (
                             <Button
                               type="button"
                               size="sm"
                               variant="ghost"
-                              onClick={() => setEditingId(null)}
+                              aria-label={isId ? "Ubah" : "Edit"}
+                              onClick={() =>
+                                setEditingId(editing ? null : entry.id)
+                              }
                             >
-                              {isId ? "Batal" : "Cancel"}
+                              <Pencil className="h-4 w-4" />
                             </Button>
-                          </div>
-                        </form>
-                      ) : (
-                        <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-                          {entry.content}
-                        </p>
+                          ) : null}
+                          {expanded && tab === "archived" ? (
+                            <form action={actions.restore}>
+                              <input
+                                type="hidden"
+                                name="noteId"
+                                value={entry.id}
+                              />
+                              <input type="hidden" name="tab" value="archived" />
+                              <Button
+                                type="submit"
+                                size="sm"
+                                variant="outline"
+                                className="gap-1"
+                              >
+                                <RotateCcw className="h-3.5 w-3.5" />
+                                <span className="hidden sm:inline">
+                                  {isId ? "Pulihkan" : "Restore"}
+                                </span>
+                              </Button>
+                            </form>
+                          ) : expanded ? (
+                            <ConfirmSubmitButton
+                              action={actions.archive}
+                              fields={{ noteId: entry.id, tab: "active" }}
+                              label={isId ? "Arsipkan" : "Archive"}
+                              title={isId ? "Arsipkan entri?" : "Archive entry?"}
+                              description={
+                                isId
+                                  ? "Entri dipindahkan ke arsip dan dapat dipulihkan nanti."
+                                  : "Entry moves to archive and can be restored later."
+                              }
+                            >
+                              <Archive className="h-4 w-4" />
+                            </ConfirmSubmitButton>
+                          ) : null}
+                          {expanded ? (
+                            <ConfirmSubmitButton
+                              action={actions.remove}
+                              fields={{ noteId: entry.id, tab }}
+                              label={
+                                isId ? "Hapus permanen" : "Delete permanently"
+                              }
+                              title={
+                                isId
+                                  ? `Hapus “${entry.title}”?`
+                                  : `Delete “${entry.title}”?`
+                              }
+                              description={
+                                isId
+                                  ? "Tindakan ini tidak dapat dibatalkan."
+                                  : "This action cannot be undone."
+                              }
+                              destructive
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </ConfirmSubmitButton>
+                          ) : null}
+                        </div>
+                      </div>
+                    </CardHeader>
+
+                    {/* Preview / Content */}
+                    {!expanded ? (
+                      <p className="line-clamp-2 text-xs text-muted-foreground leading-relaxed pt-0.5">
+                        {entry.content}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  {/* Expanded Body Content */}
+                  {expanded && !editing ? (
+                    <CardContent className="space-y-3 p-0 pt-2 text-sm text-foreground leading-relaxed">
+                      <p className="whitespace-pre-wrap">{entry.content}</p>
+
+                      {entry.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {entry.tags.map((tag) => (
+                            <Badge
+                              key={tag}
+                              variant="secondary"
+                              className="text-[11px] font-normal"
+                            >
+                              #{tag}
+                            </Badge>
+                          ))}
+                        </div>
                       )}
                     </CardContent>
                   ) : null}
-                </div>
-              </article>
+
+                  {/* Inline Edit Form */}
+                  {editing ? (
+                    <CardContent className="p-0 pt-3">
+                      <form
+                        action={async (formData) => {
+                          await actions.update(formData);
+                          setEditingId(null);
+                        }}
+                        className="space-y-3 rounded-2xl border bg-muted/20 p-4"
+                      >
+                        <input type="hidden" name="noteId" value={entry.id} />
+                        <input type="hidden" name="tab" value={tab} />
+                        <div className="space-y-1">
+                          <label
+                            htmlFor={`edit-title-${entry.id}`}
+                            className="text-xs font-semibold"
+                          >
+                            {isId ? "Judul" : "Title"}
+                          </label>
+                          <Input
+                            id={`edit-title-${entry.id}`}
+                            name="title"
+                            defaultValue={entry.title}
+                            required
+                            className="rounded-xl"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label
+                            htmlFor={`edit-tags-${entry.id}`}
+                            className="text-xs font-semibold"
+                          >
+                            {isId ? "Tag (pisahkan koma)" : "Tags (comma separated)"}
+                          </label>
+                          <Input
+                            id={`edit-tags-${entry.id}`}
+                            name="tags"
+                            defaultValue={entry.tags.join(", ")}
+                            className="rounded-xl"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold">
+                            {isId ? "Mood" : "Mood"}
+                          </label>
+                          <div className="flex flex-wrap gap-1.5">
+                            {MOODS.map((m) => (
+                              <label
+                                key={m.emoji}
+                                className="flex cursor-pointer items-center gap-1 rounded-lg border px-2 py-1 text-xs"
+                              >
+                                <input
+                                  type="radio"
+                                  name="mood"
+                                  value={m.emoji}
+                                  defaultChecked={entry.mood === m.emoji}
+                                  className="sr-only"
+                                />
+                                <span>{m.emoji}</span>
+                                <span className="text-[11px]">
+                                  {isId ? m.idLabel : m.en}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label
+                            htmlFor={`edit-body-${entry.id}`}
+                            className="text-xs font-semibold"
+                          >
+                            {isId ? "Isi Jurnal" : "Content"}
+                          </label>
+                          <Textarea
+                            id={`edit-body-${entry.id}`}
+                            name="body"
+                            defaultValue={entry.content}
+                            rows={6}
+                            required
+                            className="rounded-xl"
+                          />
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-1">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="rounded-xl"
+                            onClick={() => setEditingId(null)}
+                          >
+                            {isId ? "Batal" : "Cancel"}
+                          </Button>
+                          <Button size="sm" className="rounded-xl bg-violet-600 text-white hover:bg-violet-700">
+                            {isId ? "Simpan Perubahan" : "Save Changes"}
+                          </Button>
+                        </div>
+                      </form>
+                    </CardContent>
+                  ) : null}
+                </article>
+              </div>
             );
           })}
         </div>
       )}
-    </div>
-  );
-}
-
-export function MoodPicker({
-  name,
-  defaultValue = "",
-  lang = "id",
-}: {
-  name: string;
-  defaultValue?: string;
-  lang?: string;
-}) {
-  const [selected, setSelected] = useState(defaultValue);
-  const isId = lang !== "en";
-
-  return (
-    <div className="space-y-2">
-      <label className="flex items-center gap-1.5 text-sm font-medium">
-        <SmilePlus className="h-4 w-4" />
-        {isId ? "Suasana" : "Mood"}
-      </label>
-      <div
-        className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap"
-        role="radiogroup"
-      >
-        {MOODS.map((m) => (
-          <button
-            key={m.emoji}
-            type="button"
-            className={`inline-flex min-h-11 items-center justify-center gap-1 rounded-full border px-3 py-2 text-xs transition-colors ${
-              selected === m.emoji
-                ? "border-primary bg-primary text-primary-foreground"
-                : "bg-background hover:bg-muted"
-            }`}
-            onClick={() => setSelected(selected === m.emoji ? "" : m.emoji)}
-            role="radio"
-            aria-checked={selected === m.emoji}
-            title={isId ? m.idLabel : m.en}
-          >
-            <span>{m.emoji}</span>
-            <span className="hidden sm:inline">{isId ? m.idLabel : m.en}</span>
-          </button>
-        ))}
-      </div>
-      <input type="hidden" name={name} value={selected} />
     </div>
   );
 }

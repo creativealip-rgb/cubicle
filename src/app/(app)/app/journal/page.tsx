@@ -204,6 +204,7 @@ export default async function JournalPage({
         currentStreak={summary.currentStreak}
         topMood={summary.topMood}
         totalEntries={summary.totalEntries}
+        moodCounts={summary.moodCounts}
         t={t}
       />
 

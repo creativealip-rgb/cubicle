@@ -6,14 +6,21 @@ export function JournalSummaryStrip({
   currentStreak,
   topMood,
   totalEntries,
+  moodCounts = {},
   t,
 }: {
   thisWeek: number;
   currentStreak: number;
   topMood: string | null;
   totalEntries: number;
+  moodCounts?: Record<string, number>;
   t: (id: string, en: string) => string;
 }) {
+  const moodBreakdown = Object.entries(moodCounts)
+    .filter(([_, c]) => c > 0)
+    .slice(0, 3)
+    .map(([m, c]) => `${m} ${c}x`)
+    .join(" · ");
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       <Card className="rounded-2xl border bg-card p-3 shadow-sm transition hover:shadow-md sm:p-4">
@@ -61,8 +68,8 @@ export function JournalSummaryStrip({
           <span className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             {topMood || "—"}
           </span>
-          <span className="text-xs text-muted-foreground">
-            {topMood ? t("tersering", "frequent") : t("belum ada", "none")}
+          <span className="text-xs text-muted-foreground truncate" title={moodBreakdown || undefined}>
+            {moodBreakdown ? moodBreakdown : topMood ? t("tersering", "frequent") : t("belum ada", "none")}
           </span>
         </div>
       </Card>

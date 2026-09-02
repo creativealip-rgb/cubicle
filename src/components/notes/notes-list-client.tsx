@@ -11,6 +11,8 @@ import {
 import {
   Archive,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   ExternalLink,
   ListTodo,
   Loader2,
@@ -70,9 +72,37 @@ function formatDateTimeLocal(value: string | null) {
     .slice(0, 16);
 }
 
-function isOverdue(due: string | null, status: string) {
-  if (!due || status !== "open") return false;
-  return new Date(due).getTime() < Date.now();
+function formatRelativeDue(due: string | null, lang: string, t: (id: string, en: string) => string) {
+  if (!due) return null;
+  const now = new Date();
+  const dueDate = new Date(due);
+  if (isNaN(dueDate.getTime())) return null;
+
+  const diffMs = dueDate.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    const overdueDays = Math.abs(diffDays);
+    return {
+      text: overdueDays === 1 ? t("Lewat 1 hari", "1 day overdue") : t(`Lewat ${overdueDays} hari`, `${overdueDays} days overdue`),
+      isOverdue: true,
+      isDueSoon: false
+    };
+  }
+  if (diffDays === 0) {
+    return { text: t("Hari ini", "Today"), isOverdue: false, isDueSoon: true };
+  }
+  if (diffDays === 1) {
+    return { text: t("Besok", "Tomorrow"), isOverdue: false, isDueSoon: true };
+  }
+  if (diffDays <= 7) {
+    return { text: t(`${diffDays} hari lagi`, `In ${diffDays} days`), isOverdue: false, isDueSoon: true };
+  }
+  return {
+    text: formatDate(due, lang),
+    isOverdue: false,
+    isDueSoon: false
+  };
 }
 
 function recurrenceLabel(rule: string, t: (id: string, en: string) => string) {
@@ -176,8 +206,6 @@ export function NotesListClient({
     }
   }, [hasMore, loadingMore, offset, pageSize, query, tab, total]);
 
-  // Explicit load-more keeps the compact list predictable and capped per batch.
-
   const shownLabel = useMemo(() => {
     if (notes.length === 0) return t("0 tampil", "0 shown");
     return t(
@@ -202,26 +230,30 @@ export function NotesListClient({
   }
 
   return (
-    <div className="space-y-1" data-ui="todoist-note-list">
+    <div className="space-y-2" data-ui="todoist-note-list">
       <p className="px-1 pb-1 text-xs text-muted-foreground">{shownLabel}</p>
       {notes.map((note) => {
-        const overdue = isOverdue(note.dueDate, note.status);
+        const relDue = formatRelativeDue(note.dueDate, lang, t);
+        const overdue = note.status === "open" && relDue?.isOverdue;
+        const dueSoon = note.status === "open" && relDue?.isDueSoon;
         const rule = note.recurrenceRule || "none";
         const expanded = expandedIds.has(note.id);
         const bodyPreview =
           note.body && note.body.length > 160
             ? `${note.body.slice(0, 160).trimEnd()}…`
             : note.body;
+
         return (
           <div
             key={note.id}
             className={cn(
-              "border-b px-1 py-2.5 last:border-b-0 sm:px-2",
-              note.pinned && "bg-primary/[0.04]",
-              overdue && "bg-destructive/[0.03]",
+              "group relative rounded-2xl border border-transparent px-3 py-3 transition hover:border-border hover:bg-muted/30 sm:px-4",
+              note.pinned && "border-amber-200/70 bg-amber-50/40 dark:border-amber-900/40 dark:bg-amber-950/20",
+              overdue && "border-red-200/70 bg-red-50/40 dark:border-red-900/40 dark:bg-red-950/20",
             )}
           >
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-3">
+              {/* Checkbox Complete */}
               <form action={actions.setStatus} className="pt-0.5">
                 <input type="hidden" name="noteId" value={note.id} />
                 <input type="hidden" name="tab" value={tab} />
@@ -236,8 +268,8 @@ export function NotesListClient({
                   className={cn(
                     "flex h-5 w-5 items-center justify-center rounded-full border transition-colors",
                     note.status === "done"
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-muted-foreground/50 hover:border-primary",
+                      ? "border-emerald-600 bg-emerald-600 text-white"
+                      : "border-muted-foreground/50 hover:border-violet-600",
                   )}
                   aria-label={
                     note.status === "done"
@@ -250,229 +282,163 @@ export function NotesListClient({
                   ) : null}
                 </button>
               </form>
-              <button
-                type="button"
-                className="min-w-0 flex-1 space-y-0.5 text-left"
+
+              {/* Title & Meta Header */}
+              <div
+                className="min-w-0 flex-1 cursor-pointer space-y-1"
                 onClick={() => toggleExpanded(note.id)}
+                role="button"
+                tabIndex={0}
                 aria-expanded={expanded}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    toggleExpanded(note.id);
+                  }
+                }}
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="font-medium">{note.title}</h3>
+                  <h3 className={cn("text-sm font-semibold tracking-tight text-foreground", note.status === "done" && "line-through opacity-70")}>
+                    {note.title}
+                  </h3>
                   {overdue ? (
-                    <Badge variant="destructive">
-                      {t("Terlambat", "Overdue")}
+                    <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                      {relDue?.text || t("Terlambat", "Overdue")}
+                    </Badge>
+                  ) : dueSoon ? (
+                    <Badge variant="outline" className="border-amber-500/50 bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 text-[10px] px-1.5 py-0">
+                      {relDue?.text}
                     </Badge>
                   ) : null}
-                  {note.pinned && expanded ? (
-                    <Badge variant="secondary">
-                      {t("Disematkan", "Pinned")}
+                  {note.pinned && (
+                    <Badge variant="secondary" className="border border-amber-300 bg-amber-100 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200 text-[10px] px-1.5 py-0">
+                      {t("Pinned", "Pinned")}
                     </Badge>
-                  ) : null}
+                  )}
                   {expanded && note.status === "done" ? (
-                    <Badge>{t("Selesai", "Done")}</Badge>
+                    <Badge className="bg-emerald-600 text-[10px] px-1.5 py-0">{t("Selesai", "Done")}</Badge>
                   ) : null}
                   {expanded && note.status === "archived" ? (
-                    <Badge variant="outline">{t("Arsip", "Archived")}</Badge>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">{t("Arsip", "Archived")}</Badge>
                   ) : null}
                   {expanded && rule !== "none" ? (
-                    <Badge variant="outline">{recurrenceLabel(rule, t)}</Badge>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">{recurrenceLabel(rule, t)}</Badge>
                   ) : null}
                   {expanded && note.convertedTaskId ? (
-                    <Badge variant="secondary">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                       {t("Jadi task", "Converted")}
                     </Badge>
                   ) : null}
                 </div>
+
                 {!expanded && bodyPreview ? (
-                  <p className="truncate text-xs text-muted-foreground">
+                  <p className="line-clamp-1 text-xs text-muted-foreground">
                     {bodyPreview}
                   </p>
                 ) : null}
-                {note.dueDate ? (
-                  <p
-                    className={cn(
-                      "text-xs",
-                      overdue
-                        ? "font-medium text-destructive"
-                        : "text-muted-foreground",
-                    )}
-                  >
-                    {t("Tenggat", "Due")} {formatDate(note.dueDate, lang)}
+
+                {!expanded && note.dueDate && !overdue && !dueSoon ? (
+                  <p className="text-[11px] text-muted-foreground">
+                    {t("Tenggat:", "Due:")} {formatDate(note.dueDate, lang)}
                   </p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    {t("Tanpa tenggat", "No due date")}
-                  </p>
-                )}
-                {expanded ? (
-                  <>
-                    <p className="text-xs text-muted-foreground">
-                      {t("Diperbarui", "Updated")}{" "}
-                      {formatDate(note.updatedAt, lang)}
-                    </p>
-                    {(note.notify7d || note.notify3d || note.notify1d) && (
-                      <p className="text-xs text-muted-foreground">
-                        {t("Ingatkan", "Remind")}{" "}
-                        {[
-                          note.notify7d && "7d",
-                          note.notify3d && "3d",
-                          note.notify1d && "1d",
-                        ]
-                          .filter(Boolean)
-                          .join(" / ")}{" "}
-                        {t("sebelum tenggat", "before due")}
-                      </p>
-                    )}
-                    {note.convertedTaskId ? (
-                      <p className="text-xs">
-                        <Link
-                          href={`/app/tasks?focus=${note.convertedTaskId}`}
-                          className="inline-flex items-center gap-1 text-primary hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                          {t("Buka task terkait", "Open linked task")}
-                        </Link>
-                      </p>
-                    ) : null}
-                  </>
                 ) : null}
-              </button>
-              <div className="flex flex-wrap justify-end gap-1">
+              </div>
+
+              {/* Quick Actions Buttons on Right */}
+              <div className="flex shrink-0 items-center gap-1">
+                <form action={actions.togglePinned}>
+                  <input type="hidden" name="noteId" value={note.id} />
+                  <input type="hidden" name="tab" value={tab} />
+                  <input type="hidden" name="q" value={query} />
+                  <input
+                    type="hidden"
+                    name="pinned"
+                    value={note.pinned ? "false" : "true"}
+                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className={cn(
+                      "h-8 w-8 p-0 rounded-lg text-muted-foreground transition hover:text-foreground",
+                      note.pinned && "text-amber-600 dark:text-amber-400"
+                    )}
+                    title={note.pinned ? t("Lepas sematan", "Unpin note") : t("Sematkan catatan", "Pin note")}
+                  >
+                    <Pin className="h-3.5 w-3.5" />
+                  </Button>
+                </form>
+
                 <Button
-                  type="button"
                   size="sm"
                   variant="ghost"
+                  className="h-8 w-8 p-0 rounded-lg text-muted-foreground transition hover:text-foreground"
                   onClick={() => toggleExpanded(note.id)}
-                  aria-expanded={expanded}
+                  title={expanded ? t("Tutup", "Collapse") : t("Buka detail", "Expand")}
                 >
-                  {expanded ? t("Tutup", "Collapse") : t("Buka", "Expand")}
+                  {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 </Button>
-                {expanded ? (
-                  <>
-                    <form action={actions.togglePinned}>
-                      <input type="hidden" name="noteId" value={note.id} />
-                      <input type="hidden" name="tab" value={tab} />
-                      <input type="hidden" name="q" value={query} />
-                      <input
-                        type="hidden"
-                        name="pinned"
-                        value={(!note.pinned).toString()}
-                      />
-                      <Button
-                        type="submit"
-                        size="sm"
-                        variant="ghost"
-                        aria-label={t("Toggle pin", "Toggle pin")}
-                      >
-                        <Pin className="h-4 w-4" />
-                      </Button>
-                    </form>
-                    {note.status !== "done" ? (
-                      <form action={actions.setStatus}>
-                        <input type="hidden" name="noteId" value={note.id} />
-                        <input type="hidden" name="tab" value={tab} />
-                        <input type="hidden" name="q" value={query} />
-                        <input type="hidden" name="status" value="done" />
-                        <Button
-                          type="submit"
-                          size="sm"
-                          variant="ghost"
-                          title={
-                            rule !== "none"
-                              ? t(
-                                  "Selesai + majukan tenggat berikutnya",
-                                  "Complete + advance next due",
-                                )
-                              : t("Tandai selesai", "Mark done")
-                          }
-                          aria-label={
-                            rule !== "none"
-                              ? t("Selesai & roll next", "Done & roll next")
-                              : t("Tandai selesai", "Mark done")
-                          }
-                        >
-                          <CheckCircle2 className="h-4 w-4" />
-                        </Button>
-                      </form>
-                    ) : (
-                      <form action={actions.setStatus}>
-                        <input type="hidden" name="noteId" value={note.id} />
-                        <input type="hidden" name="tab" value={tab} />
-                        <input type="hidden" name="q" value={query} />
-                        <input type="hidden" name="status" value="open" />
-                        <Button type="submit" size="sm" variant="outline">
-                          <RotateCcw className="h-3.5 w-3.5" />
-                          {t("Buka lagi", "Reopen")}
-                        </Button>
-                      </form>
-                    )}
-                    {note.status !== "archived" ? (
-                      <form action={actions.setStatus}>
-                        <input type="hidden" name="noteId" value={note.id} />
-                        <input type="hidden" name="tab" value={tab} />
-                        <input type="hidden" name="q" value={query} />
-                        <input type="hidden" name="status" value="archived" />
-                        <Button type="submit" size="sm" variant="outline">
-                          <Archive className="h-3.5 w-3.5" />
-                          {t("Arsipkan", "Archive")}
-                        </Button>
-                      </form>
-                    ) : (
-                      <form action={actions.setStatus}>
-                        <input type="hidden" name="noteId" value={note.id} />
-                        <input type="hidden" name="tab" value={tab} />
-                        <input type="hidden" name="q" value={query} />
-                        <input type="hidden" name="status" value="open" />
-                        <Button type="submit" size="sm" variant="outline">
-                          <RotateCcw className="h-3.5 w-3.5" />
-                          {t("Pulihkan", "Restore")}
-                        </Button>
-                      </form>
-                    )}
-                    <ConfirmDeleteNoteButton
-                      noteId={note.id}
-                      tab={tab}
-                      action={actions.removeNote}
-                      label={t("Hapus", "Delete")}
-                      confirmMessage={t(
-                        "Hapus catatan ini permanen?",
-                        "Delete this note permanently?",
-                      )}
-                    />
-                  </>
-                ) : null}
               </div>
             </div>
 
-            {expanded && note.body ? (
-              <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-                {note.body}
-              </p>
-            ) : null}
-
+            {/* Expanded Content Details */}
             {expanded ? (
-              <>
+              <div className="mt-3 space-y-3 border-t pt-3 pl-8">
+                {note.body && (
+                  <p className="whitespace-pre-wrap text-xs text-foreground/90 leading-relaxed">
+                    {note.body}
+                  </p>
+                )}
+
+                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                  <p>
+                    {t("Diperbarui", "Updated")}: {formatDate(note.updatedAt, lang)}
+                  </p>
+                  {(note.notify7d || note.notify3d || note.notify1d) && (
+                    <p>
+                      • {t("Ingatkan", "Remind")}:{" "}
+                      {[
+                        note.notify7d && "7d",
+                        note.notify3d && "3d",
+                        note.notify1d && "1d",
+                      ]
+                        .filter(Boolean)
+                        .join(" / ")}{" "}
+                      {t("sebelum tenggat", "before due")}
+                    </p>
+                  )}
+                  {note.convertedTaskId ? (
+                    <p>
+                      •{" "}
+                      <Link
+                        href={`/app/tasks?focus=${note.convertedTaskId}`}
+                        className="inline-flex items-center gap-1 text-primary hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        {t("Buka task terkait", "Open linked task")}
+                      </Link>
+                    </p>
+                  ) : null}
+                </div>
+
+                {/* Convert to Task Form */}
                 {!note.convertedTaskId &&
                 note.status !== "archived" &&
                 projects.length > 0 ? (
                   <form
                     action={actions.convertToTask}
-                    className="flex flex-wrap items-end gap-2 rounded-md border border-dashed p-3"
+                    className="flex flex-wrap items-end gap-2 rounded-2xl border border-dashed p-3"
                   >
                     <input type="hidden" name="noteId" value={note.id} />
                     <div className="min-w-[140px] flex-1 space-y-1">
                       <label className="text-xs font-medium text-muted-foreground">
-                        {t(
-                          "Jadikan task di project",
-                          "Convert to project task",
-                        )}
+                        {t("Jadikan task di project", "Convert to project task")}
                       </label>
                       <select
                         name="projectId"
                         required
                         defaultValue=""
-                        className="flex h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                        className="flex h-9 w-full rounded-xl border border-input bg-background px-2 text-xs"
                       >
                         <option value="" disabled>
                           {t("Pilih project…", "Select project…")}
@@ -484,14 +450,14 @@ export function NotesListClient({
                         ))}
                       </select>
                     </div>
-                    <div className="w-[130px] space-y-1">
+                    <div className="w-[120px] space-y-1">
                       <label className="text-xs font-medium text-muted-foreground">
                         {t("Prioritas", "Priority")}
                       </label>
                       <select
                         name="priority"
                         defaultValue="medium"
-                        className="flex h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                        className="flex h-9 w-full rounded-xl border border-input bg-background px-2 text-xs"
                       >
                         {PRIORITIES.map((p) => (
                           <option key={p} value={p}>
@@ -500,111 +466,127 @@ export function NotesListClient({
                         ))}
                       </select>
                     </div>
-                    <Button
-                      type="submit"
-                      size="sm"
-                      variant="secondary"
-                      disabled={pending}
-                    >
-                      <ListTodo className="h-3.5 w-3.5" />
-                      {t("Buat task", "Create task")}
+                    <Button type="submit" size="sm" variant="secondary" className="rounded-xl text-xs">
+                      <ListTodo className="h-3.5 w-3.5 mr-1" />
+                      {t("Convert", "Convert")}
                     </Button>
-                    <p className="w-full text-[11px] text-muted-foreground">
-                      {t(
-                        "Membuat task todo + arsipkan catatan + tautkan balik.",
-                        "Creates a todo task + archives note + reverse-links.",
-                      )}
-                    </p>
                   </form>
                 ) : null}
 
-                <details className="rounded-md bg-muted/40 p-3">
-                  <summary className="cursor-pointer text-sm font-medium">
-                    {t("Ubah", "Edit")}
+                {/* Edit Form Disclosure */}
+                <details className="w-full">
+                  <summary className="cursor-pointer text-xs font-semibold text-primary hover:underline">
+                    {t("Ubah / Edit Catatan", "Edit Note")}
                   </summary>
-                  <form action={actions.updateNote} className="mt-3 space-y-3">
+                  <form
+                    action={actions.updateNote}
+                    className="mt-2 space-y-3 rounded-2xl border bg-muted/20 p-4"
+                  >
                     <input type="hidden" name="noteId" value={note.id} />
                     <input type="hidden" name="tab" value={tab} />
                     <input type="hidden" name="q" value={query} />
-                    <Input
-                      name="title"
-                      defaultValue={note.title}
-                      required
-                      className="max-w-md"
-                    />
-                    <Textarea
-                      name="body"
-                      defaultValue={note.body ?? ""}
-                      rows={4}
-                    />
-                    <Input
-                      name="dueDate"
-                      type="datetime-local"
-                      defaultValue={formatDateTimeLocal(note.dueDate)}
-                    />
-                    <select
-                      name="recurrenceRule"
-                      defaultValue={
-                        (RECURRENCE_OPTIONS as readonly string[]).includes(rule)
-                          ? rule
-                          : "none"
-                      }
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      {RECURRENCE_OPTIONS.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {recurrenceLabel(opt, t)}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="grid grid-cols-3 gap-2 text-sm sm:max-w-md">
-                      <label className="flex h-10 items-center gap-2 rounded-md border px-2.5 py-2">
-                        <input
-                          type="checkbox"
-                          name="notify7d"
-                          defaultChecked={note.notify7d}
-                        />
-                        7d
-                      </label>
-                      <label className="flex h-10 items-center gap-2 rounded-md border px-2.5 py-2">
-                        <input
-                          type="checkbox"
-                          name="notify3d"
-                          defaultChecked={note.notify3d}
-                        />
-                        3d
-                      </label>
-                      <label className="flex h-10 items-center gap-2 rounded-md border px-2.5 py-2">
-                        <input
-                          type="checkbox"
-                          name="notify1d"
-                          defaultChecked={note.notify1d}
-                        />
-                        1d
-                      </label>
-                    </div>
-                    <label className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        name="pinned"
-                        defaultChecked={note.pinned}
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium">{t("Judul", "Title")}</label>
+                      <Input
+                        name="title"
+                        defaultValue={note.title}
+                        required
+                        className="rounded-xl text-xs"
                       />
-                      {t("Sematkan catatan", "Pin note")}
-                    </label>
-                    <Button type="submit" size="sm">
-                      {t("Simpan perubahan", "Save changes")}
-                    </Button>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium">{t("Isi Catatan", "Content")}</label>
+                      <Textarea
+                        name="body"
+                        defaultValue={note.body || ""}
+                        rows={4}
+                        className="rounded-xl text-xs"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium">{t("Tenggat Waktu", "Due Date")}</label>
+                        <Input
+                          name="dueDate"
+                          type="datetime-local"
+                          defaultValue={formatDateTimeLocal(note.dueDate)}
+                          className="rounded-xl text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium">{t("Perulangan", "Recurrence")}</label>
+                        <select
+                          name="recurrenceRule"
+                          defaultValue={note.recurrenceRule || "none"}
+                          className="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-xs"
+                        >
+                          {RECURRENCE_OPTIONS.map((r) => (
+                            <option key={r} value={r}>
+                              {recurrenceLabel(r, t)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-1">
+                      <Button size="sm" className="rounded-xl bg-violet-600 text-white hover:bg-violet-700">
+                        {t("Simpan", "Save")}
+                      </Button>
+                    </div>
                   </form>
                 </details>
-              </>
-            ) : note.body && note.body.length > 160 ? (
-              <button
-                type="button"
-                className="text-xs font-medium text-primary hover:underline"
-                onClick={() => toggleExpanded(note.id)}
-              >
-                {t("Baca selengkapnya", "Read more")}
-              </button>
+
+                {/* Action Bar */}
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  {note.status !== "done" ? (
+                    <form action={actions.setStatus}>
+                      <input type="hidden" name="noteId" value={note.id} />
+                      <input type="hidden" name="tab" value={tab} />
+                      <input type="hidden" name="q" value={query} />
+                      <input type="hidden" name="status" value="done" />
+                      <Button type="submit" size="sm" variant="outline" className="h-8 gap-1 text-xs rounded-xl">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                        {t("Tandai Selesai", "Mark Done")}
+                      </Button>
+                    </form>
+                  ) : (
+                    <form action={actions.setStatus}>
+                      <input type="hidden" name="noteId" value={note.id} />
+                      <input type="hidden" name="tab" value={tab} />
+                      <input type="hidden" name="q" value={query} />
+                      <input type="hidden" name="status" value="open" />
+                      <Button type="submit" size="sm" variant="outline" className="h-8 gap-1 text-xs rounded-xl">
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        {t("Buka Lagi", "Reopen")}
+                      </Button>
+                    </form>
+                  )}
+
+                  {note.status !== "archived" ? (
+                    <form action={actions.setStatus}>
+                      <input type="hidden" name="noteId" value={note.id} />
+                      <input type="hidden" name="tab" value={tab} />
+                      <input type="hidden" name="q" value={query} />
+                      <input type="hidden" name="status" value="archived" />
+                      <Button type="submit" size="sm" variant="ghost" className="h-8 gap-1 text-xs rounded-xl text-muted-foreground hover:text-foreground">
+                        <Archive className="h-3.5 w-3.5" />
+                        {t("Arsipkan", "Archive")}
+                      </Button>
+                    </form>
+                  ) : null}
+
+                  <ConfirmDeleteNoteButton
+                    noteId={note.id}
+                    tab={tab}
+                    action={actions.removeNote}
+                    label={t("Hapus", "Delete")}
+                    confirmMessage={t(
+                      "Hapus catatan ini permanen?",
+                      "Delete this note permanently?",
+                    )}
+                  />
+                </div>
+              </div>
             ) : null}
           </div>
         );
@@ -618,10 +600,11 @@ export function NotesListClient({
             variant="outline"
             onClick={() => startTransition(() => void loadMore())}
             disabled={loadingMore || pending}
+            className="rounded-xl"
           >
             {loadingMore ? (
               <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
                 {t("Memuat…", "Loading…")}
               </>
             ) : (
