@@ -189,7 +189,7 @@ export function JournalList({
               key={m.emoji}
               variant={selectedMood === m.emoji ? "default" : "outline"}
               size="sm"
-              className="min-h-11 gap-1 text-xs"
+              className="min-h-8 gap-1 rounded-xl text-xs"
               onClick={() =>
                 setSelectedMood(selectedMood === m.emoji ? null : m.emoji)
               }
@@ -221,7 +221,7 @@ export function JournalList({
                   ? "Belum ada arsip jurnal."
                   : "No archived journal entries."
                 : isId
-                  ? "Belum ada jurnal. Tulis entri pertama di atas."
+                  ? "Belum ada jurnal. Tulis entri pertama dengan tombol di atas."
                   : "No journal entries yet. Write your first entry above."
               : isId
                 ? "Tidak ada entri yang cocok."

@@ -9,25 +9,25 @@ import {
   updatePersonalNoteStatus,
 } from "@/lib/actions/personal-notes";
 import { requireWorkspaceOwnerOrRedirect } from "@/lib/require-workspace-owner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { JournalList, MoodPicker } from "@/components/journal/journal-list";
-import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
+import { JournalList } from "@/components/journal/journal-list";
+import { JournalComposerDialog } from "@/components/journal/journal-composer-dialog";
+import { JournalSummaryStrip } from "@/components/journal/journal-summary-strip";
+import { calculateJournalSummary } from "@/lib/journal-dashboard";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import {
   buildJournalBody,
   parseJournalBody,
   stripJournalPrefix,
 } from "@/lib/journal-format";
+import type { Metadata } from "next";
 
-/**
- * Body format (v2):
- *   ---tags: work, meeting\nmood: 😊---\nActual content here
- *
- * Legacy (v1): plain text body (no tags/mood)
- */
+export const metadata: Metadata = {
+  title: "Jurnal",
+  description: "Catatan harian, refleksi, dan insight workspace Cubiqlo.",
+};
+
 export default async function JournalPage({
   searchParams,
 }: {
@@ -73,6 +73,8 @@ export default async function JournalPage({
         updatedAt: String(note.updatedAt),
       };
     });
+
+  const summary = calculateJournalSummary(entries, totalEntries);
 
   async function createEntry(formData: FormData) {
     "use server";
@@ -151,151 +153,104 @@ export default async function JournalPage({
   }
 
   return (
-    <div className="space-y-4" data-ui="journal-compact-timeline">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="space-y-6" data-ui="journal-timeline-dashboard">
+      {/* Header Bar */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="app-page-title">{t("Jurnal", "Journal")}</h1>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            {t("Jurnal Pribadi", "Personal Journal")}
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {t(
-              "Catatan harian — insight, blockers, keputusan, refleksi.",
-              "Daily notes — insights, blockers, decisions, reflections.",
+              "Catatan harian — insight, blockers, keputusan, dan refleksi berkala.",
+              "Daily notes — insights, blockers, decisions, and periodic reflections.",
             )}
           </p>
         </div>
+
+        <JournalComposerDialog lang={lang} createAction={createEntry} />
       </div>
 
-      <div
-        className="grid items-start gap-4 lg:grid-cols-[400px_minmax(0,1fr)]"
-        data-ui="journal-split-view"
+      {/* Modern Status Tabs Track (Matching Productivity / Notes style) */}
+      <nav
+        className="flex gap-1 overflow-x-auto rounded-2xl bg-muted/60 p-1"
+        aria-label={t("Navigasi status jurnal", "Journal status navigation")}
       >
-        {tab === "active" ? (
-          <Card id="new-journal" className="h-fit lg:sticky lg:top-4">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">
-                {t("Entri jurnal baru", "New journal entry")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form action={createEntry} className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="journal-title" className="text-sm font-medium">
-                    {t("Judul", "Title")}
-                  </label>
-                  <Input
-                    id="journal-title"
-                    name="title"
-                    placeholder={t("Judul hari ini", "Today's title")}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="journal-tags" className="text-sm font-medium">
-                    {t("Tag", "Tags")}
-                  </label>
-                  <Input
-                    id="journal-tags"
-                    name="tags"
-                    placeholder={t(
-                      "kerja, rapat, blocker",
-                      "work, meeting, blocker",
-                    )}
-                  />
-                </div>
-                <MoodPicker name="mood" lang={lang} />
-                <div className="space-y-2">
-                  <label htmlFor="journal-body" className="text-sm font-medium">
-                    {t("Isi", "Content")}
-                  </label>
-                  <Textarea
-                    id="journal-body"
-                    name="body"
-                    rows={10}
-                    placeholder={t(
-                      "Tulis update, insight, blocker, keputusan…",
-                      "Write updates, insights, blockers, decisions…",
-                    )}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full">
-                  {t("Simpan entri", "Save entry")}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="hidden lg:block" />
-        )}
+        {[
+          { id: "active", label: t("Entri Aktif", "Active Entries") },
+          { id: "archived", label: t("Arsip", "Archived") },
+        ].map((tabItem) => (
+          <Button
+            key={tabItem.id}
+            size="sm"
+            variant="ghost"
+            className={`shrink-0 rounded-xl px-4 ${
+              tab === tabItem.id
+                ? "bg-background text-foreground shadow-sm hover:bg-background"
+                : "text-muted-foreground"
+            }`}
+            asChild
+          >
+            <Link href={`/app/journal?tab=${tabItem.id}`}>
+              <span>{tabItem.label}</span>
+            </Link>
+          </Button>
+        ))}
+      </nav>
 
-        <div className="min-w-0 space-y-3">
-          <StatusFilterTabs
-            activeValue={tab}
-            hideEmpty={false}
-            tabs={[
-              {
-                value: "active",
-                label: t("Aktif", "Active"),
-                href: "/app/journal?tab=active",
-                alwaysShow: true,
-              },
-              {
-                value: "archived",
-                label: t("Arsip", "Archived"),
-                href: "/app/journal?tab=archived",
-                alwaysShow: true,
-              },
-            ]}
+      {/* Summary KPI Strip */}
+      <JournalSummaryStrip
+        thisWeek={summary.thisWeek}
+        currentStreak={summary.currentStreak}
+        topMood={summary.topMood}
+        totalEntries={summary.totalEntries}
+        t={t}
+      />
+
+      {/* Main Content: Chronological Timeline Area */}
+      <Card className="rounded-3xl border bg-card shadow-sm">
+        <CardContent className="p-4 sm:p-6">
+          <JournalList
+            entries={entries}
+            tab={tab}
+            lang={lang}
+            actions={{
+              archive: archiveEntry,
+              restore: restoreEntry,
+              update: updateEntry,
+              remove: removeEntry,
+            }}
           />
 
-          <Card className="overflow-hidden">
-            <CardHeader className="border-b pb-3">
-              <CardTitle className="text-base">
-                {tab === "archived"
-                  ? t("Arsip jurnal", "Archived journal")
-                  : t("Entri jurnal", "Journal entries")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              <JournalList
-                entries={entries}
-                tab={tab}
-                lang={lang}
-                actions={{
-                  archive: archiveEntry,
-                  restore: restoreEntry,
-                  update: updateEntry,
-                  remove: removeEntry,
-                }}
-              />
-              {totalEntries > pageSize ? (
-                <div className="mt-5 flex items-center justify-between border-t pt-4 text-sm">
-                  {page > 1 ? (
-                    <Button variant="outline" asChild>
-                      <Link href={`/app/journal?tab=${tab}&page=${page - 1}`}>
-                        {t("Sebelumnya", "Previous")}
-                      </Link>
-                    </Button>
-                  ) : (
-                    <span />
-                  )}
-                  <span className="text-muted-foreground">
-                    {t("Halaman", "Page")} {Math.min(page, totalPages)} /{" "}
-                    {totalPages}
-                  </span>
-                  {page < totalPages ? (
-                    <Button variant="outline" asChild>
-                      <Link href={`/app/journal?tab=${tab}&page=${page + 1}`}>
-                        {t("Berikutnya", "Next")}
-                      </Link>
-                    </Button>
-                  ) : (
-                    <span />
-                  )}
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-6 flex items-center justify-between border-t pt-4">
+              <span className="text-xs text-muted-foreground">
+                {t(
+                  `Halaman ${page} dari ${totalPages}`,
+                  `Page ${page} of ${totalPages}`,
+                )}
+              </span>
+              <div className="flex gap-2">
+                {page > 1 && (
+                  <Button variant="outline" size="sm" className="rounded-xl" asChild>
+                    <Link href={`/app/journal?tab=${tab}&page=${page - 1}`}>
+                      {t("Sebelumnya", "Previous")}
+                    </Link>
+                  </Button>
+                )}
+                {page < totalPages && (
+                  <Button variant="outline" size="sm" className="rounded-xl" asChild>
+                    <Link href={`/app/journal?tab=${tab}&page=${page + 1}`}>
+                      {t("Berikutnya", "Next")}
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

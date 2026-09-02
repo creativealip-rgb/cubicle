@@ -18,16 +18,18 @@ import { db } from "@/db";
 import { projects } from "@/db/schema";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { requireWorkspaceOwnerOrRedirect } from "@/lib/require-workspace-owner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import {
   NotesListClient,
   type NoteItem,
 } from "@/components/notes/notes-list-client";
+import { NoteEditorDialog } from "@/components/notes/note-editor-dialog";
+import { NotesSummaryStrip } from "@/components/notes/notes-summary-strip";
+import { calculateNotesSummary } from "@/lib/personal-notes-dashboard";
+import { Search } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -36,36 +38,6 @@ export const metadata: Metadata = {
 };
 
 type Tab = "open" | "done" | "archived" | "all";
-
-const RECURRENCE_OPTIONS: PersonalNoteRecurrence[] = [
-  "none",
-  "daily",
-  "weekly",
-  "monthly",
-  "yearly",
-];
-
-function recurrenceLabel(rule: string, t: (id: string, en: string) => string) {
-  switch (rule) {
-    case "daily":
-      return t("Harian", "Daily");
-    case "weekly":
-      return t("Mingguan", "Weekly");
-    case "monthly":
-      return t("Bulanan", "Monthly");
-    case "yearly":
-      return t("Tahunan", "Yearly");
-    default:
-      return t("Tidak berulang", "Does not repeat");
-  }
-}
-
-function buildHref(tab: Tab, query: string) {
-  const params = new URLSearchParams();
-  params.set("tab", tab);
-  if (query) params.set("q", query);
-  return `/app/personal?${params.toString()}`;
-}
 
 function toNoteItem(note: {
   id: string;
@@ -138,6 +110,16 @@ export default async function PersonalPage({
       .limit(100),
   ]);
 
+  const summary = calculateNotesSummary(
+    notes.map((n) => ({
+      id: n.id,
+      dueDate: n.dueDate,
+      status: n.status,
+      pinned: n.pinned,
+    })),
+    counts
+  );
+
   const tabTotal =
     tab === "all"
       ? counts.all
@@ -178,9 +160,9 @@ export default async function PersonalPage({
     });
     const back = String(formData.get("tab") ?? "open");
     const q = String(formData.get("q") ?? "");
-    const params = new URLSearchParams({ tab: back });
-    if (q) params.set("q", q);
-    redirect(`/app/personal?${params.toString()}`);
+    const urlParams = new URLSearchParams({ tab: back });
+    if (q) urlParams.set("q", q);
+    redirect(`/app/personal?${urlParams.toString()}`);
   }
 
   async function setStatus(formData: FormData) {
@@ -191,9 +173,9 @@ export default async function PersonalPage({
     );
     const back = String(formData.get("tab") ?? "open");
     const q = String(formData.get("q") ?? "");
-    const params = new URLSearchParams({ tab: back });
-    if (q) params.set("q", q);
-    redirect(`/app/personal?${params.toString()}`);
+    const urlParams = new URLSearchParams({ tab: back });
+    if (q) urlParams.set("q", q);
+    redirect(`/app/personal?${urlParams.toString()}`);
   }
 
   async function togglePinned(formData: FormData) {
@@ -204,9 +186,9 @@ export default async function PersonalPage({
     );
     const back = String(formData.get("tab") ?? "open");
     const q = String(formData.get("q") ?? "");
-    const params = new URLSearchParams({ tab: back });
-    if (q) params.set("q", q);
-    redirect(`/app/personal?${params.toString()}`);
+    const urlParams = new URLSearchParams({ tab: back });
+    if (q) urlParams.set("q", q);
+    redirect(`/app/personal?${urlParams.toString()}`);
   }
 
   async function removeNote(formData: FormData) {
@@ -214,9 +196,9 @@ export default async function PersonalPage({
     await deletePersonalNote(String(formData.get("noteId") ?? ""));
     const back = String(formData.get("tab") ?? "open");
     const q = String(formData.get("q") ?? "");
-    const params = new URLSearchParams({ tab: back });
-    if (q) params.set("q", q);
-    redirect(`/app/personal?${params.toString()}`);
+    const urlParams = new URLSearchParams({ tab: back });
+    if (q) urlParams.set("q", q);
+    redirect(`/app/personal?${urlParams.toString()}`);
   }
 
   async function convertToTask(formData: FormData) {
@@ -239,168 +221,127 @@ export default async function PersonalPage({
   ];
 
   return (
-    <div className="space-y-4" data-ui="notes-todoist-compact">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="space-y-6" data-ui="notes-action-dashboard">
+      {/* Header with Title & Action */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="app-page-title">{t("Catatan", "Notes")}</h1>
-          <p className="app-page-description">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            {t("Catatan Pribadi", "Personal Notes")}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {t(
-              "Catatan pribadi di workspace ini. Tidak tampil ke client.",
-              "Private notes in this workspace. Hidden from clients.",
+              "Catatan cepat, to-do pribadi, dan pengingat internal workspace.",
+              "Private notes, quick to-dos, and reminders in this workspace.",
             )}
           </p>
         </div>
+
+        <NoteEditorDialog lang={lang} createAction={createNote} />
       </div>
 
-      <div
-        className="grid min-w-0 items-start gap-4 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)]"
-        data-ui="notes-split-view"
+      {/* Modern Status Tabs Track (Matching Productivity style) */}
+      <nav
+        className="flex gap-1 overflow-x-auto rounded-2xl bg-muted/60 p-1"
+        aria-label={t("Navigasi status catatan", "Notes status navigation")}
       >
-        <Card id="new-note" className="h-fit lg:sticky lg:top-4">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">
-              {t("Catatan baru", "New note")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form action={createNote} className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="title" className="text-sm font-medium">
-                  {t("Judul", "Title")}
-                </label>
-                <Input
-                  id="title"
-                  name="title"
-                  placeholder={t("Follow up client…", "Follow up client…")}
-                  required
-                  className="max-w-md"
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="body" className="text-sm font-medium">
-                  {t("Isi", "Body")}
-                </label>
-                <Textarea
-                  id="body"
-                  name="body"
-                  rows={6}
-                  placeholder={t(
-                    "Catatan, ide, reminder personal…",
-                    "Notes, ideas, personal reminders…",
-                  )}
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="dueDate" className="text-sm font-medium">
-                  {t("Tenggat", "Due date")}
-                </label>
-                <Input id="dueDate" name="dueDate" type="datetime-local" className="max-w-md" />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="recurrenceRule" className="text-sm font-medium">
-                  {t("Pengulangan", "Recurrence")}
-                </label>
-                <select
-                  id="recurrenceRule"
-                  name="recurrenceRule"
-                  defaultValue="none"
-                  className="flex h-10 w-full max-w-md rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  {RECURRENCE_OPTIONS.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {recurrenceLabel(opt, t)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm font-medium">
-                  {t("Ingatkan sebelum tenggat", "Remind before due")}
-                </p>
-                <div className="grid grid-cols-3 gap-2 sm:max-w-md">
-                  <label className="flex h-10 items-center gap-2 rounded-md border px-2.5 py-2 text-sm">
-                    <input type="checkbox" name="notify7d" />
-                    7d
-                  </label>
-                  <label className="flex h-10 items-center gap-2 rounded-md border px-2.5 py-2 text-sm">
-                    <input type="checkbox" name="notify3d" />
-                    3d
-                  </label>
-                  <label className="flex h-10 items-center gap-2 rounded-md border px-2.5 py-2 text-sm">
-                    <input type="checkbox" name="notify1d" />
-                    1d
-                  </label>
-                </div>
-              </div>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" name="pinned" />
-                {t("Sematkan catatan", "Pin note")}
-              </label>
-              <Button type="submit" className="w-full">
-                {t("Simpan catatan", "Save note")}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        {tabs.map((tabItem) => (
+          <Button
+            key={tabItem.id}
+            size="sm"
+            variant="ghost"
+            className={`shrink-0 rounded-xl px-4 ${
+              tab === tabItem.id
+                ? "bg-background text-foreground shadow-sm hover:bg-background"
+                : "text-muted-foreground"
+            }`}
+            asChild
+          >
+            <Link
+              href={`/app/personal?tab=${tabItem.id}${
+                query ? `&q=${encodeURIComponent(query)}` : ""
+              }`}
+            >
+              <span>{tabItem.label}</span>
+              <span className="ml-1.5 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold">
+                {tabItem.count}
+              </span>
+            </Link>
+          </Button>
+        ))}
+      </nav>
 
-        <div className="min-w-0 space-y-3">
-          <StatusFilterTabs
-            activeValue={tab}
-            hideEmpty={false}
-            tabs={tabs.map((item) => ({
-              value: item.id,
-              label: item.label,
-              count: item.count,
-              href: buildHref(item.id, query),
-              alwaysShow: true,
-            }))}
-          />
-          <form action="/app/personal" className="flex flex-wrap gap-2 sm:max-w-lg sm:flex-nowrap">
+      {/* Summary KPI Strip */}
+      <NotesSummaryStrip
+        open={summary.open}
+        dueSoon={summary.dueSoon}
+        pinned={summary.pinned}
+        done={summary.done}
+        t={t}
+      />
+
+      {/* Main Content: Notes List Workspace */}
+      <Card className="rounded-3xl border bg-card shadow-sm">
+        <CardContent className="space-y-4 p-4 sm:p-6">
+          {/* Internal Search Bar */}
+          <form
+            method="get"
+            action="/app/personal"
+            className="flex items-center gap-2"
+          >
             <input type="hidden" name="tab" value={tab} />
-            <Input
-              name="q"
-              aria-label={t("Cari catatan", "Search notes")}
-              placeholder={t("Cari catatan…", "Search notes…")}
-              defaultValue={query}
-              className="min-w-[200px] flex-1"
-            />
-            <Button type="submit" variant="outline" className="sr-only">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                name="q"
+                defaultValue={query}
+                placeholder={t(
+                  "Cari catatan berdasarkan judul atau isi…",
+                  "Search notes by title or content…",
+                )}
+                className="rounded-2xl pl-9"
+              />
+            </div>
+            <Button
+              type="submit"
+              variant="outline"
+              size="sm"
+              className="rounded-2xl"
+            >
               {t("Cari", "Search")}
             </Button>
-            {query || tab !== "open" ? (
-              <Button type="button" variant="ghost" asChild className="h-10">
-                <Link href={buildHref("open", "")}>{t("Reset", "Clear")}</Link>
+            {query && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-2xl"
+                asChild
+              >
+                <Link href={`/app/personal?tab=${tab}`}>
+                  {t("Reset", "Reset")}
+                </Link>
               </Button>
-            ) : null}
+            )}
           </form>
 
-          <Card className="overflow-hidden">
-            <CardHeader className="border-b pb-3">
-              <CardTitle className="text-base">
-                {t("Daftar catatan", "Note list")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              <NotesListClient
-                initialNotes={notes.map(toNoteItem)}
-                total={tabTotal}
-                pageSize={pageSize}
-                tab={tab}
-                query={query}
-                projects={projectList}
-                lang={lang}
-                actions={{
-                  setStatus,
-                  togglePinned,
-                  removeNote,
-                  updateNote,
-                  convertToTask,
-                }}
-              />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+          {/* List Client Component */}
+          <NotesListClient
+            initialNotes={notes.map(toNoteItem)}
+            total={tabTotal}
+            pageSize={pageSize}
+            tab={tab}
+            query={query}
+            projects={projectList}
+            lang={lang}
+            actions={{
+              setStatus,
+              togglePinned,
+              removeNote,
+              updateNote,
+              convertToTask,
+            }}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }
