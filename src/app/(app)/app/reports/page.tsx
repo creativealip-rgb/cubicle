@@ -507,9 +507,9 @@ export default async function ReportsPage({
         </div>
       </div>
 
-      {/* Scope Switcher Bar */}
-      <div className="flex items-center">
-        <div className="inline-flex rounded-xl bg-muted/70 p-1 border shadow-xs">
+      {/* Scope Switcher Bar & Business Tabs on same row */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="inline-flex rounded-xl bg-muted/70 p-1 border shadow-xs self-start sm:self-auto">
           <Button
             asChild
             size="sm"
@@ -539,14 +539,22 @@ export default async function ReportsPage({
             </Link>
           </Button>
         </div>
+
+        {scope === "business" && (
+          <ReportTabs
+            active={activeTab}
+            financeHref={reportHref("finance")}
+            timeHref={reportHref("time")}
+            financeLabel={t("Keuangan", "Finance")}
+            timeLabel={t("Waktu", "Time")}
+          />
+        )}
       </div>
 
       {scope === "personal" ? (
         <PersonalReportSection month={currentMonthKey} t={t} />
       ) : (
         <>
-          <ReportTabs active="finance" financeHref={reportHref("finance")} timeHref={reportHref("time")} financeLabel={t("Keuangan", "Finance")} timeLabel={t("Waktu", "Time")} />
-
           {missingFxList.length > 0 && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
               {t(
