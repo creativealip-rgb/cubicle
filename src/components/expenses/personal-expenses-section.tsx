@@ -280,8 +280,8 @@ export async function PersonalExpensesSection({
             title={t("Kategori Pengeluaran Pribadi", "Personal Categories")}
             description={t("Tambah atau edit kategori pengeluaran pribadi serta pos anggarannya.", "Manage custom personal categories and default buckets.")}
           >
-            <div className="space-y-4 pt-1">
-              <form action={createCategory} className="space-y-3 rounded-xl border p-3.5 bg-muted/20">
+            <div className="flex flex-col gap-4 pt-1">
+              <form action={createCategory} className="shrink-0 space-y-3 rounded-xl border p-3.5 bg-muted/20">
                 <p className="text-xs font-semibold">{t("Tambah Kategori Baru", "Add New Category")}</p>
                 <Input name="name" required placeholder={t("Nama kategori...", "Category name...")} className="h-9 text-xs" />
                 <div className="grid grid-cols-2 gap-2.5 items-center">
@@ -299,7 +299,7 @@ export async function PersonalExpensesSection({
                 <Button size="sm" className="w-full rounded-lg text-xs h-8">{t("Tambah Kategori", "Add Category")}</Button>
               </form>
 
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-1 pb-2">
                 <p className="text-[11px] font-medium text-muted-foreground uppercase">{t("Daftar Kategori Tersedia", "Category List")}</p>
                 {categories.map((category) => (
                   <form key={category.id} action={editCategory} className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto_auto] items-center gap-2 rounded-lg border p-2 bg-background">
