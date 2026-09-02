@@ -100,21 +100,56 @@ export async function PersonalExpensesSection({
   const topCategory = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold">{t("Keuangan pribadi", "Personal Finance")}</h2>
-        <p className="text-sm text-muted-foreground">{t("Pengeluaran dan tabungan pribadi tetap terpisah dari pengeluaran bisnis.", "Personal spending and savings stay separate from business expenses.")}</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div data-ui="personal-finance-kpis" className="grid flex-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            [t("Pengeluaran bulan ini", "Spent this month"), money(String(spent), budget.budget?.currency || "IDR")],
+            [t("Sisa anggaran", "Remaining budget"), budget.budget ? money(String(Math.max(0, income - spent)), budget.budget.currency) : "—"],
+            [t("Tabungan dialokasikan", "Savings allocated"), money(String(savings), budget.budget?.currency || "IDR")],
+            [t("Kategori terbesar", "Top category"), topCategory],
+          ].map(([label, value]) => <Card key={label} className="rounded-xl"><CardContent className="p-4"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p><p className="mt-2 truncate text-xl font-bold">{value}</p></CardContent></Card>)}
+        </div>
       </div>
-      <div data-ui="personal-finance-kpis" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          [t("Pengeluaran bulan ini", "Spent this month"), money(String(spent), budget.budget?.currency || "IDR")],
-          [t("Sisa anggaran", "Remaining budget"), budget.budget ? money(String(Math.max(0, income - spent)), budget.budget.currency) : "—"],
-          [t("Tabungan dialokasikan", "Savings allocated"), money(String(savings), budget.budget?.currency || "IDR")],
-          [t("Kategori terbesar", "Top category"), topCategory],
-        ].map(([label, value]) => <Card key={label} className="rounded-xl"><CardContent className="p-4"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p><p className="mt-2 truncate text-xl font-bold">{value}</p></CardContent></Card>)}
+      <div className="flex flex-wrap items-center gap-2">
+        <PersonalFinanceDialog trigger={t("Kelola anggaran", "Manage budget")} title={t("Kelola anggaran", "Manage budget")} description={t("Atur pendapatan dan pembagian 50/30/20.", "Set income and your 50/30/20 split.")}>
+          <PersonalBudgetSection month={month} t={t} compact />
+        </PersonalFinanceDialog>
+        <PersonalFinanceDialog trigger={t("Kelola kategori", "Manage categories")} title={t("Kategori pribadi", "Personal categories")} description={t("Atur kategori dan bucket default.", "Manage categories and default buckets.")}>
+          <Card className="border-0 shadow-none">
+            <CardHeader className="px-0 pt-0">
+              <CardTitle className="text-base">{t("Tambah kategori", "Add category")}</CardTitle>
+            </CardHeader>
+            <CardContent className="px-0 pb-0">
+              <form action={createCategory} className="space-y-3">
+                <Input name="name" required placeholder={t("Nama kategori", "Category name")} />
+                <div className="flex items-center gap-3">
+                  <Input name="color" type="color" defaultValue="#64748b" aria-label={t("Warna kategori", "Category color")} className="h-10 w-14 shrink-0 cursor-pointer rounded-lg border p-1" />
+                  <span className="text-sm text-muted-foreground">{t("Warna kategori", "Category color")}</span>
+                </div>
+                <select name="defaultBucket" className="h-10 w-full rounded-md border bg-background px-3">
+                  <option value="needs">Needs</option>
+                  <option value="wants">Wants</option>
+                  <option value="savings">Savings</option>
+                  <option value="unbudgeted">Unbudgeted</option>
+                </select>
+                <Button className="w-full rounded-xl">{t("Tambah kategori", "Add category")}</Button>
+              </form>
+              <div className="mt-4 space-y-2">
+                {categories.map((category) => (
+                  <form key={category.id} action={editCategory} className="grid gap-2 rounded-xl border p-2 sm:grid-cols-[1fr_auto_auto]">
+                    <input type="hidden" name="id" value={category.id} />
+                    <input type="hidden" name="color" value={category.color} />
+                    <input type="hidden" name="defaultBucket" value={category.defaultBucket} />
+                    <Input name="name" defaultValue={category.name} required />
+                    <Button variant="outline">{t("Simpan", "Save")}</Button>
+                    <Button formAction={removeCategory} variant="destructive">{t("Hapus", "Delete")}</Button>
+                  </form>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </PersonalFinanceDialog>
       </div>
-      <PersonalFinanceDialog trigger={t("Kelola anggaran", "Manage budget")} title={t("Kelola anggaran", "Manage budget")} description={t("Atur pendapatan dan pembagian 50/30/20.", "Set income and your 50/30/20 split.")}>
-        <PersonalBudgetSection month={month} t={t} compact />
-      </PersonalFinanceDialog>
       <div className="grid gap-6 lg:grid-cols-2" data-ui="personal-finance-actions">
         <Card>
           <CardHeader>
@@ -129,14 +164,12 @@ export async function PersonalExpensesSection({
                 required
                 placeholder={t("Deskripsi", "Description")}
               />
-
               <Input
                 name="amount"
                 inputMode="decimal"
                 required
                 placeholder="0.00"
               />
-
               <select
                 name="categoryId"
                 className="h-10 rounded-md border bg-background px-3"
@@ -164,50 +197,6 @@ export async function PersonalExpensesSection({
             </form>
           </CardContent>
         </Card>
-        <PersonalFinanceDialog trigger={t("Kelola kategori", "Manage categories")} title={t("Kategori pribadi", "Personal categories")} description={t("Atur kategori dan bucket default.", "Manage categories and default buckets.")}>
-        <Card className="border-0 shadow-none">
-          <CardHeader>
-            <CardTitle>
-              {t("Kategori pribadi", "Personal categories")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form action={createCategory} className="space-y-3">
-              <Input
-                name="name"
-                required
-                placeholder={t("Nama kategori", "Category name")}
-              />
-              <div className="flex items-center gap-3">
-                <Input name="color" type="color" defaultValue="#64748b" aria-label={t("Warna kategori", "Category color")} className="h-10 w-14 shrink-0 cursor-pointer rounded-lg border p-1" />
-                <span className="text-sm text-muted-foreground">{t("Warna kategori", "Category color")}</span>
-              </div>
-              <select
-                name="defaultBucket"
-                className="h-10 w-full rounded-md border bg-background px-3"
-              >
-                <option value="needs">Needs</option>
-                <option value="wants">Wants</option>
-                <option value="savings">Savings</option>
-                <option value="unbudgeted">Unbudgeted</option>
-              </select>
-              <Button className="w-full rounded-xl">{t("Tambah kategori", "Add category")}</Button>
-            </form>
-            <div className="mt-4 space-y-2">
-              {categories.map((category) => (
-                <form key={category.id} action={editCategory} className="grid gap-2 rounded-xl border p-2 sm:grid-cols-[1fr_auto_auto]">
-                  <input type="hidden" name="id" value={category.id} />
-                  <input type="hidden" name="color" value={category.color} />
-                  <input type="hidden" name="defaultBucket" value={category.defaultBucket} />
-                  <Input name="name" defaultValue={category.name} required />
-                  <Button variant="outline">{t("Simpan", "Save")}</Button>
-                  <Button formAction={removeCategory} variant="destructive">{t("Hapus", "Delete")}</Button>
-                </form>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-        </PersonalFinanceDialog>
       </div>
       <Card data-ui="personal-finance-history">
         <CardHeader>

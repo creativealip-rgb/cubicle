@@ -5,13 +5,14 @@ const read = (path: string) => readFileSync(path, "utf8");
 
 describe("personal finance action dashboard", () => {
   it("uses a four-metric pulse and clear personal boundary", () => {
+    const page = read("src/app/(app)/app/expenses/page.tsx");
     const source = read("src/components/expenses/personal-expenses-section.tsx");
     expect(source).toContain('data-ui="personal-finance-kpis"');
     expect(source).toContain("Spent this month");
     expect(source).toContain("Remaining budget");
     expect(source).toContain("Savings allocated");
     expect(source).toContain("Top category");
-    expect(source).toContain("separate from business expenses");
+    expect(page).toContain("separate from business");
   });
 
   it("moves settings behind dialogs and keeps quick add primary", () => {
