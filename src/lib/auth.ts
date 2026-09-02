@@ -248,7 +248,7 @@ export const auth = betterAuth({
   plugins: [
     twoFactor(),
     passkey({
-      rpID: "cubiqlo.com",
+      rpID: process.env.NODE_ENV === "production" ? "app.cubiqlo.com" : "localhost",
       rpName: "Cubiqlo",
       origin: process.env.BETTER_AUTH_URL ?? "https://app.cubiqlo.com",
     }),

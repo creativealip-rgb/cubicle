@@ -63,7 +63,26 @@ export function AccountSecuritySettings({ twoFactorEnabled, hasAuthenticator, ha
     <Card>
       <CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" />{t("Keamanan", "Security")}</CardTitle><CardDescription>{t("Kelola verifikasi dua langkah dan metode pemulihan.", "Manage two-step verification and recovery methods.")}</CardDescription></CardHeader>
       <CardContent className="space-y-5">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4"><div><p className="font-medium">Two-step verification</p><p className="text-sm text-muted-foreground">{hasAuthenticator ? t("Authenticator aktif", "Authenticator active") : passkeys.length ? t("Passkey aktif", "Passkey active") : t("Setup belum lengkap", "Setup incomplete")}</p></div><Badge variant={twoFactorEnabled ? "default" : "destructive"}>{twoFactorEnabled ? t("Aktif", "Active") : t("Tidak aktif", "Inactive")}</Badge></div>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
+          <div>
+            <p className="font-medium text-xs">Two-step verification (2FA)</p>
+            <p className="text-[11px] text-muted-foreground">
+              {twoFactorEnabled
+                ? (hasAuthenticator ? t("Authenticator aktif", "Authenticator active") : t("2FA Aktif", "2FA Active"))
+                : t("Proteksi login dengan Authenticator App atau Passkey.", "Protect login with Authenticator App or Passkey.")}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant={twoFactorEnabled ? "default" : "secondary"} className="text-[10px] px-2 py-0.5">
+              {twoFactorEnabled ? t("Aktif", "Active") : t("Tidak aktif", "Inactive")}
+            </Badge>
+            <Button asChild size="sm" variant={twoFactorEnabled ? "outline" : "default"} className="h-7 text-xs">
+              <Link href="/mfa/setup?force=1">
+                {twoFactorEnabled ? t("Kelola", "Manage") : t("Setup 2FA", "Setup 2FA")}
+              </Link>
+            </Button>
+          </div>
+        </div>
         <div><div className="mb-2 flex flex-col justify-between gap-2 sm:flex-row sm:items-center"><div><p className="font-medium">Passkeys</p><p className="text-xs text-muted-foreground">{t("Gunakan sidik jari, wajah, atau kunci keamanan.", "Use fingerprint, face, or a security key.")}</p></div><Button type="button" size="sm" variant="outline" onClick={addPasskey} disabled={adding}>{adding ? t("Menambahkan…", "Adding…") : t("Tambah passkey", "Add passkey")}</Button></div>
           <div className="space-y-1.5">{passkeys.length ? passkeys.map((item) => <div key={item.id} className="flex items-center gap-2.5 rounded-lg border p-2.5"><KeyRound className="h-4 w-4 text-muted-foreground" /><div><p className="text-xs font-medium">{item.name || "Passkey"}</p><p className="text-[10px] text-muted-foreground">{item.deviceType} · {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : t("Tanggal tidak tersedia", "Date unavailable")}</p></div></div>) : <p className="text-xs text-muted-foreground">{t("Belum ada passkey.", "No passkeys yet.")}</p>}</div>
         </div>

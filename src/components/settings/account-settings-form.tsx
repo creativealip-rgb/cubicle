@@ -3,12 +3,21 @@
 import { useState, useTransition } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
-import { updateAccountName, updateAccountPassword } from "@/lib/actions/account";
+import { Eye, EyeOff, Mail, CheckCircle2 } from "lucide-react";
+import { updateAccountName, updateAccountPassword, requestAccountEmailChange } from "@/lib/actions/account";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useT } from "@/lib/i18n-client";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 type AccountSettingsFormProps = {
   name: string;
@@ -27,6 +36,13 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
   const [pendingName, startNameTransition] = useTransition();
   const [pendingPassword, startPasswordTransition] = useTransition();
 
+  // Change Email Modal state
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailPassword, setEmailPassword] = useState("");
+  const [pendingEmail, startEmailTransition] = useTransition();
+  const [emailSentSuccess, setEmailSentSuccess] = useState(false);
+
   function saveName() {
     startNameTransition(async () => {
       const res = await updateAccountName(displayName);
@@ -36,6 +52,19 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
       }
       toast.success(t("Nama akun diperbarui", "Account name updated"));
       refresh();
+    });
+  }
+
+  function handleEmailChange(e: React.FormEvent) {
+    e.preventDefault();
+    startEmailTransition(async () => {
+      const res = await requestAccountEmailChange(newEmail, emailPassword);
+      if (!res.ok) {
+        toast.error(res.error ?? t("Gagal mengirim email konfirmasi", "Failed to send confirmation email"));
+        return;
+      }
+      setEmailSentSuccess(true);
+      toast.success(t("Email konfirmasi dikirim", "Confirmation email sent"));
     });
   }
 
@@ -70,7 +99,114 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="account-email">{t("Email login", "Login email")}</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="account-email">{t("Email login", "Login email")}</Label>
+            <Dialog open={emailDialogOpen} onOpenChange={(open) => {
+              setEmailDialogOpen(open);
+              if (!open) {
+                setEmailSentSuccess(false);
+                setNewEmail("");
+                setEmailPassword("");
+              }
+            }}>
+              <DialogTrigger asChild>
+                <button
+                  type="button"
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  {t("Ganti email", "Change email")}
+                </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md rounded-2xl">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-base">
+                    <Mail className="h-4 w-4 text-primary" />
+                    {t("Ganti Email Login", "Change Login Email")}
+                  </DialogTitle>
+                  <DialogDescription className="text-xs">
+                    {t(
+                      "Masukkan alamat email baru dan password akunmu. Link konfirmasi akan dikirim ke email baru.",
+                      "Enter your new email address and account password. A confirmation link will be sent to the new email.",
+                    )}
+                  </DialogDescription>
+                </DialogHeader>
+
+                {emailSentSuccess ? (
+                  <div className="py-4 text-center space-y-2">
+                    <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
+                      <CheckCircle2 className="h-5 w-5" />
+                    </div>
+                    <p className="text-sm font-semibold">{t("Link Konfirmasi Terkirim!", "Confirmation Link Sent!")}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {t(
+                        `Kami telah mengirim link verifikasi ke ${newEmail}. Buka email tersebut untuk menyelesaikan pergantian.`,
+                        `We sent a verification link to ${newEmail}. Open that email to complete the change.`,
+                      )}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="mt-3 rounded-xl w-full"
+                      onClick={() => setEmailDialogOpen(false)}
+                    >
+                      {t("Tutup", "Close")}
+                    </Button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleEmailChange} className="space-y-3.5 pt-1">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="current-email-val" className="text-xs">{t("Email saat ini", "Current email")}</Label>
+                      <Input id="current-email-val" value={email} disabled className="h-9 text-xs bg-muted/40" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="new-email-val" className="text-xs">{t("Email baru", "New email")}</Label>
+                      <Input
+                        id="new-email-val"
+                        type="email"
+                        required
+                        value={newEmail}
+                        onChange={(e) => setNewEmail(e.target.value)}
+                        placeholder="new-email@example.com"
+                        className="h-9 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="email-password-val" className="text-xs">{t("Password akun", "Account password")}</Label>
+                      <Input
+                        id="email-password-val"
+                        type="password"
+                        required
+                        value={emailPassword}
+                        onChange={(e) => setEmailPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="h-9 text-xs"
+                      />
+                    </div>
+                    <DialogFooter className="pt-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEmailDialogOpen(false)}
+                        className="text-xs h-8"
+                      >
+                        {t("Batal", "Cancel")}
+                      </Button>
+                      <Button
+                        type="submit"
+                        size="sm"
+                        disabled={pendingEmail || !newEmail || !emailPassword}
+                        className="text-xs h-8"
+                      >
+                        {pendingEmail ? t("Mengirim…", "Sending…") : t("Kirim Konfirmasi", "Send Confirmation")}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                )}
+              </DialogContent>
+            </Dialog>
+          </div>
           <Input id="account-email" value={email} disabled />
           <p className="text-[11px] text-muted-foreground">
             {emailVerified ? t("Email terverifikasi.", "Email verified.") : t("Email belum terverifikasi.", "Email unverified.")}
