@@ -190,7 +190,7 @@ export async function HabitsSection({
                         <Button
                           type="submit"
                           size="sm"
-                          className={`min-h-11 min-w-28 gap-1 rounded-lg text-xs font-semibold shadow-none transition active:scale-95 ${
+                          className={`h-7 px-2.5 min-h-11 min-w-0 sm:min-h-0 sm:h-7 sm:px-2.5 gap-1 rounded-md text-[11px] font-semibold shadow-none transition active:scale-95 ${
                             doneToday
                               ? "bg-emerald-600 text-white hover:bg-emerald-700"
                               : "bg-violet-600 text-white hover:bg-violet-700"
@@ -198,13 +198,13 @@ export async function HabitsSection({
                         >
                           {doneToday ? (
                             <>
-                              <CheckCircle2 className="size-3.5" />
-                              <span>{t("Selesai Hari Ini", "Done Today")}</span>
+                              <CheckCircle2 className="size-3" />
+                              <span>{t("Selesai", "Done")}</span>
                             </>
                           ) : (
                             <>
-                              <Check className="size-3.5" />
-                              <span>{t("Check Hari Ini", "Check Today")}</span>
+                              <Check className="size-3" />
+                              <span>{t("Check", "Check")}</span>
                             </>
                           )}
                         </Button>
@@ -216,7 +216,7 @@ export async function HabitsSection({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground rounded-lg"
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground rounded-md"
                         title={t("Arsipkan", "Archive habit")}
                       >
                         <Archive className="size-3.5" />
