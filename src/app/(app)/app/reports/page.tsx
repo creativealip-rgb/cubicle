@@ -6,9 +6,12 @@ import {
   AlertCircle,
   BarChart3,
   ChevronDown,
+  Clock,
+  Sparkles,
   TrendingDown,
   TrendingUp,
   Users,
+  Wallet,
 } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
@@ -82,14 +85,14 @@ function convert(
 function deltaText(current: number, previous: number, lang: string) {
   if (Math.abs(previous) < 0.000001)
     return lang === "en"
-      ? "No previous-period comparison"
-      : "Belum ada pembanding periode lalu";
+      ? "No previous comparison"
+      : "Belum ada pembanding lalu";
   const percent = Math.round(((current - previous) / Math.abs(previous)) * 100);
   if (percent === 0)
     return lang === "en"
-      ? "Same as previous period"
-      : "Sama dengan periode lalu";
-  return `${percent > 0 ? "+" : "−"}${Math.abs(percent)}% ${lang === "en" ? "vs previous period" : "dari periode lalu"}`;
+      ? "Same as previous"
+      : "Sama dengan lalu";
+  return `${percent > 0 ? "+" : "−"}${Math.abs(percent)}% ${lang === "en" ? "vs last period" : "vs periode lalu"}`;
 }
 
 function ReportTabs({ active, financeHref, timeHref, financeLabel, timeLabel }: { active: "finance" | "time"; financeHref: string; timeHref: string; financeLabel: string; timeLabel: string }) {
@@ -407,6 +410,26 @@ export default async function ReportsPage({
     to: query.to,
   }, { tab: tab === "finance" ? undefined : tab });
 
+  // Compute smart financial insights
+  const insights: string[] = [];
+  if (income > 0 && previousIncome > 0) {
+    const incDiff = Math.round(((income - previousIncome) / previousIncome) * 100);
+    if (incDiff > 0) {
+      insights.push(t(`Pemasukan naik +${incDiff}% dibandingkan periode lalu.`, `Income increased +${incDiff}% vs previous period.`));
+    } else if (incDiff < 0) {
+      insights.push(t(`Pemasukan turun ${incDiff}% dibandingkan periode lalu.`, `Income decreased ${incDiff}% vs previous period.`));
+    }
+  }
+  if (topCategories.length > 0 && expenseTotal > 0) {
+    const topPct = Math.round((topCategories[0].total / expenseTotal) * 100);
+    insights.push(t(`Kategori "${topCategories[0].name}" adalah pengeluaran terbesar (${topPct}% dari total biaya).`, `Category "${topCategories[0].name}" is the largest expense (${topPct}% of total costs).`));
+  }
+  if (overdueItems.length > 0) {
+    insights.push(t(`Terdapat ${overdueItems.length} invoice jatuh tempo (${formatMoney(overdueTotal, baseCurrency)}) yang butuh segera ditagih.`, `${overdueItems.length} invoices are overdue (${formatMoney(overdueTotal, baseCurrency)}) requiring prompt collection.`));
+  } else if (receivables.length > 0) {
+    insights.push(t(`Seluruh ${receivables.length} invoice yang belum lunas masih dalam masa tenggat yang aman.`, `All ${receivables.length} unpaid invoices are currently within healthy payment terms.`));
+  }
+
   if (activeTab === "time") {
     const sections = [
       [t("Per Klien", "By client"), timeReport.byClient],
@@ -421,12 +444,12 @@ export default async function ReportsPage({
           <ReportControls lang={lang} preset={period.preset} from={period.start} to={period.end} />
         </div>
         <ReportTabs active="time" financeHref={reportHref("finance")} timeHref={reportHref("time")} financeLabel={t("Keuangan", "Finance")} timeLabel={t("Waktu", "Time")} />
-        <Card><CardHeader><CardTitle>{t("Kinerja Waktu", "Time performance")}</CardTitle><CardDescription>{reportPeriodLabel(period, lang)}</CardDescription></CardHeader><CardContent className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {[[t("Total", "Total"), timeReport.summary.totalMinutes], ["Billable", timeReport.summary.billableMinutes], ["Non-billable", timeReport.summary.nonBillableMinutes]].map(([label, minutes]) => <div key={String(label)}><p className="text-xs text-muted-foreground">{label}</p><p className="text-xl font-semibold tabular-nums">{(Number(minutes) / 60).toFixed(1)}h</p></div>)}
-          <div><p className="text-xs text-muted-foreground">{t("Estimasi nilai", "Estimated value")}</p><p className="text-xl font-semibold tabular-nums">{formatMoney(timeReport.summary.billableValue, baseCurrency)}</p></div>
+        <Card className="rounded-xl border shadow-none"><CardHeader className="pb-3"><CardTitle className="text-base">{t("Kinerja Waktu", "Time performance")}</CardTitle><CardDescription className="text-xs">{reportPeriodLabel(period, lang)}</CardDescription></CardHeader><CardContent className="grid grid-cols-2 gap-4 sm:grid-cols-4 pt-1">
+          {[[t("Total Waktu", "Total Time"), timeReport.summary.totalMinutes], ["Billable", timeReport.summary.billableMinutes], ["Non-billable", timeReport.summary.nonBillableMinutes]].map(([label, minutes]) => <div key={String(label)} className="p-3 rounded-lg bg-muted/40 border"><p className="text-xs text-muted-foreground font-medium">{label}</p><p className="text-xl font-bold tabular-nums mt-0.5">{(Number(minutes) / 60).toFixed(1)}h</p></div>)}
+          <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20"><p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">{t("Estimasi Nilai", "Estimated Value")}</p><p className="text-xl font-bold tabular-nums mt-0.5 text-emerald-700 dark:text-emerald-300">{formatMoney(timeReport.summary.billableValue, baseCurrency)}</p></div>
         </CardContent></Card>
-        <div className="grid gap-4 md:grid-cols-2">{sections.map(([title, rows]) => <Card key={title}><CardHeader><CardTitle className="text-base">{title}</CardTitle></CardHeader><CardContent>{rows.length === 0 ? <p className="text-sm text-muted-foreground">{t("Belum ada waktu tercatat.", "No tracked time yet.")}</p> : <div className="divide-y">{rows.slice(0, 10).map(row => <div key={row.id} className="flex justify-between gap-3 py-2 text-sm"><span className="truncate">{row.name}</span><span className="tabular-nums">{(row.minutes / 60).toFixed(1)}h</span></div>)}</div>}</CardContent></Card>)}</div>
-        <div className="flex flex-wrap gap-2"><Button asChild variant="outline"><Link href="/app/time/history">{t("Riwayat dan ekspor PDF", "History and PDF export")}</Link></Button><Button asChild><Link href="/app/invoices?tab=uninvoiced">{t("Buat invoice dari waktu", "Invoice tracked time")}</Link></Button></div>
+        <div className="grid gap-4 md:grid-cols-2">{sections.map(([title, rows]) => <Card key={title} className="rounded-xl border shadow-none"><CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">{title}</CardTitle></CardHeader><CardContent className="pt-2">{rows.length === 0 ? <p className="text-xs py-4 text-center text-muted-foreground">{t("Belum ada waktu tercatat.", "No tracked time yet.")}</p> : <div className="divide-y text-xs">{rows.slice(0, 10).map(row => <div key={row.id} className="flex justify-between items-center gap-3 py-2.5"><span className="truncate font-medium">{row.name}</span><span className="tabular-nums font-semibold shrink-0">{(row.minutes / 60).toFixed(1)}h</span></div>)}</div>}</CardContent></Card>)}</div>
+        <div className="flex flex-wrap gap-2"><Button asChild variant="outline" size="sm" className="rounded-lg text-xs"><Link href="/app/time/history">{t("Riwayat dan ekspor PDF", "History and PDF export")}</Link></Button><Button asChild size="sm" className="rounded-lg text-xs"><Link href="/app/invoices?tab=uninvoiced">{t("Buat invoice dari waktu", "Invoice tracked time")}</Link></Button></div>
       </div>
     );
   }
@@ -435,11 +458,11 @@ export default async function ReportsPage({
     <div className="space-y-4 sm:space-y-6">
       <div className="app-page-header">
         <div className="min-w-0">
-          <h1 className="app-page-title">{t("Laporan", "Reports")}</h1>
+          <h1 className="app-page-title">{t("Laporan Keuangan", "Financial Reports")}</h1>
           <p className="app-page-description">
             {t(
-              "Ringkasan pemasukan dan pengeluaran bisnismu.",
-              "A summary of your business income and expenses.",
+              "Pantau arus kas, kinerja laba bersih, piutang, dan tren pendapatan bisnismu.",
+              "Track cash flow, net profitability, receivables, and revenue trends.",
             )}
           </p>
         </div>
@@ -470,74 +493,122 @@ export default async function ReportsPage({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+      {/* 4-KPI Strip: Pemasukan, Pengeluaran, Bersih, Piutang */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
           {
-            label: t("Pemasukan", "Income"),
+            label: t("Pemasukan Diterima", "Income Received"),
             value: income,
             previous: previousIncome,
             icon: TrendingUp,
-            tone: "text-emerald-600",
+            tone: "text-emerald-600 dark:text-emerald-400",
+            bg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
           },
           {
-            label: t("Pengeluaran", "Expenses"),
+            label: t("Biaya Operasional", "Expenses"),
             value: expenseTotal,
             previous: previousExpense,
             icon: TrendingDown,
-            tone: "text-red-600",
+            tone: "text-rose-600 dark:text-rose-400",
+            bg: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
           },
           {
-            label: t("Bersih", "Net"),
+            label: t("Laba Bersih (Net)", "Net Profit"),
             value: net,
             previous: previousNet,
             icon: BarChart3,
-            tone: net >= 0 ? "text-emerald-600" : "text-red-600",
+            tone: net >= 0 ? "text-blue-600 dark:text-blue-400" : "text-amber-600 dark:text-amber-400",
+            bg: net >= 0 ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+          },
+          {
+            label: t("Sisa Piutang", "Outstanding AR"),
+            value: unpaidTotal,
+            previous: 0,
+            icon: Wallet,
+            tone: overdueTotal > 0 ? "text-amber-600 dark:text-amber-400" : "text-foreground",
+            bg: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+            subtitle: overdueTotal > 0 ? `${overdueItems.length} ${t("terlambat", "overdue")}` : `${receivables.length} ${t("invoice aktif", "active invoices")}`,
           },
         ].map((item) => {
-          const hasValue = item.value !== 0;
           return (
-          <Card
-            key={item.label}
-            className={item.label === t("Bersih", "Net") ? "col-span-2 border-primary/20 bg-primary/[0.03] md:col-span-1" : undefined}
-          >
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {item.label}
-              </CardTitle>
-              <item.icon className={`h-4 w-4 ${hasValue ? item.tone : "text-muted-foreground"}`} />
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6">
-              <div
-                className={`text-xl font-semibold tabular-nums sm:text-2xl ${hasValue ? item.tone : "text-slate-700"}`}
-              >
-                {formatMoney(item.value, baseCurrency)}
-              </div>
-              {(item.value !== 0 || item.previous !== 0) && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {deltaText(item.value, item.previous, lang)}
-                </p>
-              )}
-              {item.label === t("Bersih", "Net") && income > 0 && (
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {t("Margin", "Margin")} {Math.round((net / income) * 100)}%
-                </p>
-              )}
-            </CardContent>
-          </Card>
+            <Card
+              key={item.label}
+              className="rounded-xl border shadow-none bg-card transition-all"
+            >
+              <CardContent className="p-4 flex flex-col justify-between h-full">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">
+                    {item.label}
+                  </span>
+                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${item.bg}`}>
+                    <item.icon className="h-4 w-4" />
+                  </div>
+                </div>
+
+                <div className="mt-2">
+                  <div className={`text-xl font-bold tabular-nums tracking-tight truncate sm:text-2xl ${item.tone}`}>
+                    {formatMoney(item.value, baseCurrency)}
+                  </div>
+                  {item.subtitle ? (
+                    <p className="mt-1 text-[11px] font-medium text-muted-foreground truncate">
+                      {item.subtitle}
+                    </p>
+                  ) : item.value !== 0 || item.previous !== 0 ? (
+                    <p className="mt-1 text-[11px] text-muted-foreground truncate">
+                      {deltaText(item.value, item.previous, lang)}
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {t("Periode ini", "This period")}
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           );
         })}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">
-            {t("Pemasukan vs pengeluaran", "Income vs expenses")}
-          </CardTitle>
-          <CardDescription>
-            {reportPeriodLabel(period, lang)} · {baseCurrency}
-          </CardDescription>
+      {/* Smart Automated Insight Strip */}
+      {insights.length > 0 && (
+        <div className="rounded-xl border border-primary/20 bg-primary/[0.04] p-3.5 flex items-start gap-3 text-xs sm:text-sm">
+          <div className="h-7 w-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+            <Sparkles className="h-4 w-4" />
+          </div>
+          <div className="min-w-0 flex-1 space-y-1">
+            <p className="font-semibold text-foreground">{t("Ringkasan Insight Bisnis", "Business Insight Summary")}</p>
+            <div className="space-y-0.5 text-xs text-muted-foreground">
+              {insights.map((ins, idx) => (
+                <p key={idx} className="flex items-center gap-1.5">
+                  <span className="h-1 w-1 rounded-full bg-primary shrink-0" />
+                  <span>{ins}</span>
+                </p>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Combined Cash Flow Trend Chart */}
+      <Card className="rounded-xl border shadow-none bg-card">
+        <CardHeader className="pb-3 border-b">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle className="text-base font-semibold">
+                {t("Tren Arus Kas & Margin", "Cash Flow & Margin Trend")}
+              </CardTitle>
+              <CardDescription className="text-xs">
+                {reportPeriodLabel(period, lang)} · {baseCurrency}
+              </CardDescription>
+            </div>
+            {income > 0 && (
+              <Badge variant="outline" className="self-start sm:self-auto font-medium text-xs">
+                {t("Margin Keseluruhan", "Overall Margin")}: {Math.round((net / income) * 100)}%
+              </Badge>
+            )}
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           <IncomeExpenseChart
             points={chartPoints}
             currency={baseCurrency}
@@ -546,195 +617,223 @@ export default async function ReportsPage({
         </CardContent>
       </Card>
 
+      {/* Breakdown Grid: Income Sources & Largest Expenses with Visual Bar Gauges */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Users className="h-4 w-4" />
-              {t("Sumber pemasukan", "Income sources")}
-            </CardTitle>
-            <CardDescription>
-              {t(
-                "Pembayaran diterima pada periode ini",
-                "Payments received in this period",
-              )}
-            </CardDescription>
+        {/* Income Sources */}
+        <Card className="rounded-xl border shadow-none bg-card">
+          <CardHeader className="pb-3 border-b">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                  <Users className="h-4 w-4 text-emerald-600" />
+                  {t("Sumber Pemasukan Terbesar", "Top Income Sources")}
+                </CardTitle>
+                <CardDescription className="text-xs mt-0.5">
+                  {t("Pembayaran masuk berdasarkan klien", "Payments received by client")}
+                </CardDescription>
+              </div>
+              <Button asChild variant="ghost" size="sm" className="text-xs h-7 px-2">
+                <Link href="/app/invoices">{t("Semua", "View all")}</Link>
+              </Button>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
             {topClients.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                {t("Belum ada pembayaran masuk.", "No payments received yet.")}
+              <p className="py-8 text-center text-xs text-muted-foreground">
+                {t("Belum ada pembayaran masuk pada periode ini.", "No payments received in this period.")}
               </p>
             ) : (
-              <div className="divide-y">
-                {topClients.map((client) => (
-                  <div
-                    key={client.id}
-                    className="flex items-center justify-between gap-3 py-3"
-                  >
-                    <div className="min-w-0">
-                      <Link
-                        href={`/app/clients/${client.id}`}
-                        className="font-medium hover:underline"
-                      >
-                        {client.name}
-                      </Link>
-                      <p className="text-xs text-muted-foreground">
-                        {client.count} {t("pembayaran", "payments")}
+              <div className="space-y-3.5">
+                {topClients.map((client) => {
+                  const pct = income > 0 ? (client.total / income) * 100 : 0;
+                  return (
+                    <div key={client.id} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs gap-2">
+                        <Link
+                          href={`/app/clients/${client.id}`}
+                          className="font-semibold text-foreground hover:underline truncate"
+                        >
+                          {client.name}
+                        </Link>
+                        <div className="flex items-center gap-2 shrink-0 font-medium">
+                          <span className="tabular-nums font-bold text-emerald-600">
+                            {formatMoney(client.total, baseCurrency)}
+                          </span>
+                          <span className="text-muted-foreground w-10 text-right text-[11px]">
+                            {pct.toFixed(0)}%
+                          </span>
+                        </div>
+                      </div>
+                      {/* Visual Progress Bar */}
+                      <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                          style={{ width: `${Math.min(100, Math.max(4, pct))}%` }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">
+                        {client.count} {t("transaksi pembayaran", "payment transactions")}
                       </p>
                     </div>
-                    <span className="shrink-0 font-medium tabular-nums">
-                      {formatMoney(client.total, baseCurrency)}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
-            <Button asChild variant="link" className="mt-2 h-auto px-0">
-              <Link href="/app/invoices">
-                {t("Lihat semua pemasukan", "View all income")}
-              </Link>
-            </Button>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              {t("Pengeluaran terbesar", "Largest expenses")}
-            </CardTitle>
-            <CardDescription>
-              {t(
-                "Berdasarkan kategori pada periode ini",
-                "By category in this period",
-              )}
-            </CardDescription>
+
+        {/* Largest Expense Categories */}
+        <Card className="rounded-xl border shadow-none bg-card">
+          <CardHeader className="pb-3 border-b">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                  <TagIcon className="h-4 w-4 text-rose-600" />
+                  {t("Pengeluaran per Kategori", "Expenses by Category")}
+                </CardTitle>
+                <CardDescription className="text-xs mt-0.5">
+                  {t("Alokasi biaya operasional periode ini", "Operating expense allocation")}
+                </CardDescription>
+              </div>
+              <Button asChild variant="ghost" size="sm" className="text-xs h-7 px-2">
+                <Link href={`/app/expenses?from=${period.start}&to=${period.end}`}>{t("Semua", "View all")}</Link>
+              </Button>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
             {topCategories.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                {t("Belum ada pengeluaran.", "No expenses yet.")}
+              <p className="py-8 text-center text-xs text-muted-foreground">
+                {t("Belum ada catatan pengeluaran pada periode ini.", "No expenses recorded in this period.")}
               </p>
             ) : (
-              <div className="divide-y">
-                {topCategories.map((category) => (
-                  <div
-                    key={category.name}
-                    className="flex items-center justify-between gap-3 py-3"
-                  >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <i
-                          className="h-2 w-2 shrink-0 rounded-full"
+              <div className="space-y-3.5">
+                {topCategories.map((category) => {
+                  const pct = expenseTotal > 0 ? (category.total / expenseTotal) * 100 : 0;
+                  return (
+                    <div key={category.name} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs gap-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span
+                            className="h-2.5 w-2.5 rounded-full shrink-0"
+                            style={{ backgroundColor: category.color ?? "#f43f5e" }}
+                          />
+                          <span className="font-semibold text-foreground truncate">
+                            {category.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 font-medium">
+                          <span className="tabular-nums font-bold text-rose-600">
+                            {formatMoney(category.total, baseCurrency)}
+                          </span>
+                          <span className="text-muted-foreground w-10 text-right text-[11px]">
+                            {pct.toFixed(0)}%
+                          </span>
+                        </div>
+                      </div>
+                      {/* Visual Progress Bar */}
+                      <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
                           style={{
-                            backgroundColor: category.color ?? "#64748b",
+                            width: `${Math.min(100, Math.max(4, pct))}%`,
+                            backgroundColor: category.color ?? "#f43f5e",
                           }}
                         />
-                        <span className="truncate font-medium">
-                          {category.name}
-                        </span>
                       </div>
-                      <p className="ml-4 text-xs text-muted-foreground">
-                        {expenseTotal > 0
-                          ? Math.round((category.total / expenseTotal) * 100)
-                          : 0}
-                        % {t("dari pengeluaran", "of expenses")}
+                      <p className="text-[10px] text-muted-foreground">
+                        {category.count} {t("catatan biaya", "expense entries")}
                       </p>
                     </div>
-                    <span className="shrink-0 font-medium tabular-nums">
-                      {formatMoney(category.total, baseCurrency)}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
-            <Button asChild variant="link" className="mt-2 h-auto px-0">
-              <Link
-                href={`/app/expenses?from=${period.start}&to=${period.end}`}
-              >
-                {t("Lihat semua pengeluaran", "View all expenses")}
-              </Link>
-            </Button>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-start justify-between gap-4">
+      {/* Receivables & Aging Block */}
+      <Card className="rounded-xl border shadow-none bg-card">
+        <CardHeader className="flex flex-row items-start justify-between gap-4 pb-3 border-b">
           <div>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <AlertCircle className="h-4 w-4" />
-              {t("Piutang perlu ditagih", "Receivables requiring attention")}
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+              <AlertCircle className="h-4 w-4 text-amber-600" />
+              {t("Status Piutang & Penagihan", "Receivables & Collection Health")}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs">
               {t(
-                "Invoice belum lunas sampai hari ini",
-                "Invoices unpaid as of today",
+                "Monitor invoice yang belum lunas serta keterlambatan pembayaran",
+                "Monitor unpaid invoices and payment delays",
               )}
             </CardDescription>
           </div>
-          <Button asChild variant="link" className="h-auto shrink-0 p-0">
+          <Button asChild variant="outline" size="sm" className="h-7 text-xs rounded-lg shrink-0">
             <Link href="/app/invoices?status=overdue">
-              {t("Lihat semua invoice", "View all invoices")}
+              {t("Buka Invoice", "View Invoices")}
             </Link>
           </Button>
         </CardHeader>
-        <CardContent>
-          <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <CardContent className="pt-4">
+          <div className="mb-4 grid grid-cols-3 gap-2.5 rounded-xl bg-muted/40 p-3 border text-center">
             <div>
-              <p className="text-xs text-muted-foreground">
-                {t("Belum dibayar", "Unpaid")}
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                {t("Total Belum Lunas", "Total Outstanding")}
               </p>
-              <p className="mt-1 text-lg font-semibold tabular-nums">
+              <p className="mt-0.5 text-base sm:text-lg font-bold tabular-nums">
                 {formatMoney(unpaidTotal, baseCurrency)}
               </p>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground">
-                {t("Terlambat", "Overdue")}
+            <div className="border-x border-border/80">
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                {t("Total Terlambat", "Total Overdue")}
               </p>
-              <p className="mt-1 text-lg font-semibold text-red-600 tabular-nums">
+              <p className={`mt-0.5 text-base sm:text-lg font-bold tabular-nums ${overdueTotal > 0 ? "text-rose-600" : "text-emerald-600"}`}>
                 {formatMoney(overdueTotal, baseCurrency)}
               </p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">
-                {t("Invoice", "Invoices")}
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                {t("Rasio Overdue", "Overdue Ratio")}
               </p>
-              <p className="mt-1 text-lg font-semibold">{receivables.length}</p>
+              <p className="mt-0.5 text-base sm:text-lg font-bold tabular-nums">
+                {unpaidTotal > 0 ? `${Math.round((overdueTotal / unpaidTotal) * 100)}%` : "0%"}
+              </p>
             </div>
           </div>
+
           {overdueItems.length === 0 ? (
-            <p className="border-t py-4 text-sm text-muted-foreground">
-              {t("Tidak ada invoice terlambat.", "No overdue invoices.")}
+            <p className="py-4 text-center text-xs text-muted-foreground">
+              {t("Tidak ada invoice yang melewati jatuh tempo. Kondisi piutang sangat sehat!", "No overdue invoices. Receivables are fully healthy!")}
             </p>
           ) : (
-            <div className="divide-y border-t">
-              {overdueItems.slice(0, 3).map((item) => (
+            <div className="divide-y text-xs">
+              {overdueItems.slice(0, 5).map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between gap-3 py-3"
+                  className="flex items-center justify-between gap-3 py-2.5 hover:bg-muted/30 px-1 rounded-md transition-colors"
                 >
                   <div className="min-w-0">
                     <Link
                       href={buildInvoiceDetailUrl(item.id, { type: "global" })}
-                      className="font-medium hover:underline"
+                      className="font-semibold text-foreground hover:underline truncate flex items-center gap-1.5"
                     >
-                      {item.invoiceNumber} · {item.client}
+                      <span>{item.invoiceNumber}</span>
+                      <span className="text-muted-foreground font-normal">· {item.client}</span>
                     </Link>
-                    <p className="text-xs text-red-600">
+                    <p className="text-[11px] font-medium text-rose-600 mt-0.5">
                       {t(
-                        `Terlambat ${item.daysOverdue} hari`,
-                        `${item.daysOverdue} days overdue`,
+                        `Terlambat ${item.daysOverdue} hari (Jatuh tempo: ${item.dueDate})`,
+                        `Overdue ${item.daysOverdue} days (Due: ${item.dueDate})`,
                       )}
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
-                    <div className="font-medium tabular-nums">
+                    <div className="font-bold tabular-nums text-foreground">
                       {formatMoney(item.remaining, item.currency)}
                     </div>
                     {item.remainingBase !== null &&
                       normalizeCurrency(item.currency) !== baseCurrency && (
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-[10px] text-muted-foreground">
                           ≈ {formatMoney(item.remainingBase, baseCurrency)}
                         </div>
                       )}
@@ -746,39 +845,43 @@ export default async function ReportsPage({
         </CardContent>
       </Card>
 
-      <details className="group overflow-hidden rounded-lg border bg-card">
-        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 py-3 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-          <span>{t("Analisis lainnya", "Other analysis")}</span>
-          <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+      {/* Collapsible Progressive Disclosure for Deep Details */}
+      <details className="group overflow-hidden rounded-xl border bg-card shadow-none">
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 py-3 font-medium text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          <span className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            {t("Detail Umur Piutang & Pengeluaran Proyek", "Detailed Aging & Project Expenses")}
+          </span>
+          <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180 text-muted-foreground" />
         </summary>
         <div className="space-y-6 border-t p-4">
           <section>
-            <h2 className="mb-1 font-semibold">
-              {t("Umur invoice", "Invoice aging")}
+            <h2 className="text-sm font-semibold mb-1">
+              {t("Umur Invoice (Invoice Aging)", "Invoice Aging Breakdown")}
             </h2>
             <p className="mb-3 text-xs text-muted-foreground">
               {t(
-                "Rincian invoice belum dibayar berdasarkan keterlambatan.",
-                "Unpaid invoices grouped by age.",
+                "Rincian invoice belum lunas dikelompokkan berdasarkan umur jatuh tempo.",
+                "Unpaid invoices grouped by aging overdue status.",
               )}
             </p>
             {receivables.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {t("Tidak ada piutang aktif.", "No active receivables.")}
               </p>
             ) : (
               <div className="overflow-x-auto rounded-lg border">
-                <Table className="min-w-[600px]">
+                <Table className="min-w-[600px] text-xs">
                   <TableHeader>
-                    <TableRow>
+                    <TableRow className="bg-muted/40">
                       <TableHead>{t("Invoice", "Invoice")}</TableHead>
                       <TableHead>{t("Klien", "Client")}</TableHead>
                       <TableHead>{t("Jatuh tempo", "Due date")}</TableHead>
                       <TableHead className="text-right">
-                        {t("Umur", "Age")}
+                        {t("Status Umur", "Aging Status")}
                       </TableHead>
                       <TableHead className="text-right">
-                        {t("Sisa", "Remaining")}
+                        {t("Sisa Tagihan", "Remaining")}
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -788,7 +891,7 @@ export default async function ReportsPage({
                         <TableCell>
                           <Link
                             href={buildInvoiceDetailUrl(item.id, { type: "global" })}
-                            className="font-medium hover:underline"
+                            className="font-semibold text-foreground hover:underline"
                           >
                             {item.invoiceNumber}
                           </Link>
@@ -796,19 +899,18 @@ export default async function ReportsPage({
                         <TableCell>{item.client}</TableCell>
                         <TableCell>{item.dueDate || "—"}</TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end">
-                            <Badge
+                          <Badge
                             variant={
                               item.daysOverdue > 0 ? "destructive" : "secondary"
                             }
+                            className="text-[10px] px-1.5 py-0"
                           >
                             {item.daysOverdue > 0
-                              ? `${item.daysOverdue}d`
-                              : t("Berjalan", "Current")}
-                            </Badge>
-                          </div>
+                              ? `${item.daysOverdue}h lewat`
+                              : t("Lancar", "Current")}
+                          </Badge>
                         </TableCell>
-                        <TableCell className="text-right tabular-nums">
+                        <TableCell className="text-right tabular-nums font-semibold">
                           {formatMoney(item.remaining, item.currency)}
                         </TableCell>
                       </TableRow>
@@ -818,22 +920,23 @@ export default async function ReportsPage({
               </div>
             )}
           </section>
+
           <section>
-            <h2 className="mb-1 font-semibold">
-              {t("Pengeluaran per proyek", "Expenses by project")}
+            <h2 className="text-sm font-semibold mb-1">
+              {t("Pengeluaran per Proyek", "Expenses by Project")}
             </h2>
             <p className="mb-3 text-xs text-muted-foreground">
               {reportPeriodLabel(period, lang)}
             </p>
             {projectExpenses.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {t(
-                  "Belum ada pengeluaran bertanda proyek.",
-                  "No project-tagged expenses yet.",
+                  "Belum ada pengeluaran bertanda proyek pada periode ini.",
+                  "No project-tagged expenses in this period.",
                 )}
               </p>
             ) : (
-              <div className="divide-y rounded-lg border">
+              <div className="divide-y rounded-lg border text-xs">
                 {projectExpenses.map((project) => (
                   <div
                     key={project.id}
@@ -842,15 +945,15 @@ export default async function ReportsPage({
                     <div>
                       <Link
                         href={`/app/projects/${project.id}`}
-                        className="font-medium hover:underline"
+                        className="font-semibold text-foreground hover:underline"
                       >
                         {project.name}
                       </Link>
-                      <p className="text-xs text-muted-foreground">
-                        {project.client ?? "—"} · {project.count}x
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {project.client ?? "—"} · {project.count} {t("transaksi", "transactions")}
                       </p>
                     </div>
-                    <span className="font-medium tabular-nums">
+                    <span className="font-bold tabular-nums">
                       {formatMoney(project.total, baseCurrency)}
                     </span>
                   </div>
@@ -858,19 +961,28 @@ export default async function ReportsPage({
               </div>
             )}
           </section>
-          <section>
-            <h2 className="mb-1 font-semibold">
-              {t("Proyeksi arus kas", "Cash flow forecast")}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {t(
-                "Proyeksi detail disederhanakan. Piutang aktif di atas menjadi dasar pemasukan yang masih mungkin diterima.",
-                "Detailed forecasting is simplified. Active receivables above represent income that may still be collected.",
-              )}
-            </p>
-          </section>
         </div>
       </details>
     </div>
+  );
+}
+
+function TagIcon(props: React.ComponentProps<"svg">) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+      <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
   );
 }
