@@ -59,8 +59,8 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2 sm:max-w-md">
+      <div className="grid gap-3 sm:grid-cols-1">
+        <div className="space-y-1.5">
           <Label htmlFor="account-name">{t("Nama / username", "Name / username")}</Label>
           <Input
             id="account-name"
@@ -69,11 +69,11 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
             placeholder={t("Nama tampil", "Display name")}
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <Label htmlFor="account-email">{t("Email login", "Login email")}</Label>
           <Input id="account-email" value={email} disabled />
-          <p className="text-xs text-muted-foreground">
-            {emailVerified ? t("Email sudah terverifikasi.", "Email is verified.") : t("Email belum terverifikasi.", "Email is not verified.")} {t("Edit email belum dibuka demi keamanan login.", "Email editing is unavailable to protect login security.")}
+          <p className="text-[11px] text-muted-foreground">
+            {emailVerified ? t("Email terverifikasi.", "Email verified.") : t("Email belum terverifikasi.", "Email unverified.")}
           </p>
         </div>
       </div>
@@ -99,8 +99,8 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
             {showPasswords ? t("Sembunyikan", "Hide") : t("Tampilkan", "Show")}
           </Button>
         </div>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="space-y-2">
+        <div className="grid gap-3 sm:grid-cols-1">
+          <div className="space-y-1.5">
             <Label htmlFor="current-password">{t("Password sekarang", "Current password")}</Label>
             <Input
               id="current-password"
@@ -111,7 +111,7 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
               required
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="new-password">{t("Password baru", "New password")}</Label>
             <Input
               id="new-password"
@@ -123,7 +123,7 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
               minLength={8}
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="confirm-password">{t("Konfirmasi password", "Confirm password")}</Label>
             <Input id="confirm-password" type={showPasswords ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" required minLength={8} />
           </div>

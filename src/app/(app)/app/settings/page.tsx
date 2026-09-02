@@ -202,32 +202,37 @@ export default async function SettingsPage({
             </>
           }
           account={
-            <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("Akun", "Account")}</CardTitle>
-                <CardDescription>
-                  {t(
-                    "Ubah nama tampilan dan password akun. Email login tampil sebagai referensi.",
-                    "Update display name and account password. Login email is shown for reference.",
-                  )}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <AccountSettingsForm
-                  name={currentUser?.name ?? ""}
-                  email={currentUser?.email ?? user.email ?? ""}
-                  emailVerified={Boolean(currentUser?.emailVerified)}
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t("Akun", "Account")}</CardTitle>
+                    <CardDescription>
+                      {t(
+                        "Ubah nama tampilan dan password akun.",
+                        "Update display name and account password.",
+                      )}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <AccountSettingsForm
+                      name={currentUser?.name ?? ""}
+                      email={currentUser?.email ?? user.email ?? ""}
+                      emailVerified={Boolean(currentUser?.emailVerified)}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="space-y-4">
+                <AccountSecuritySettings
+                  twoFactorEnabled={Boolean(currentUser?.twoFactorEnabled)}
+                  hasAuthenticator={twoFactorRows.length > 0}
+                  hasCredentialPassword={credentialPassword.length > 0}
+                  passkeys={passkeyRows}
+                  sessions={sessionRows}
                 />
-              </CardContent>
-            </Card>
-            <AccountSecuritySettings
-              twoFactorEnabled={Boolean(currentUser?.twoFactorEnabled)}
-              hasAuthenticator={twoFactorRows.length > 0}
-              hasCredentialPassword={credentialPassword.length > 0}
-              passkeys={passkeyRows}
-              sessions={sessionRows}
-            />
+              </div>
             </div>
           }
           team={
@@ -352,7 +357,7 @@ export default async function SettingsPage({
               </CardContent>
             </Card>
           }
-          billing={<BillingPage searchParams={Promise.resolve({})} />}
+          billing={<BillingPage searchParams={Promise.resolve({})} showHeader={false} />}
         />
       </Suspense>
     </div>

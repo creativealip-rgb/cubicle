@@ -44,8 +44,10 @@ const plans = [
 
 export default async function BillingPage({
   searchParams,
+  showHeader = true,
 }: {
   searchParams: Promise<{ checkout?: string }>;
+  showHeader?: boolean;
 }) {
   const lang = await getCurrentLang();
   const t = createT(lang);
@@ -85,16 +87,18 @@ export default async function BillingPage({
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="app-page-title">{t("Billing", "Billing")}</h1>
-        <p className="mt-2 text-slate-600">
-          {t(
-            "Bayar bulanan atau tahunan via Pakasir QRIS, tanpa pajak. Plan aktif otomatis setelah webhook payment diterima.",
-            "Pay monthly or yearly via Pakasir QRIS, tax-free. Plan activates automatically after payment webhook is received.",
-          )}
-        </p>
-      </div>
+    <div className="space-y-6">
+      {showHeader && (
+        <div>
+          <h1 className="app-page-title">{t("Billing", "Billing")}</h1>
+          <p className="mt-2 text-slate-600">
+            {t(
+              "Bayar bulanan atau tahunan via Pakasir QRIS, tanpa pajak. Plan aktif otomatis setelah webhook payment diterima.",
+              "Pay monthly or yearly via Pakasir QRIS, tax-free. Plan activates automatically after payment webhook is received.",
+            )}
+          </p>
+        </div>
+      )}
 
       {checkoutStatus && (
         <BillingCheckoutStatusCard
