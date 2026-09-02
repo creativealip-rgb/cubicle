@@ -119,8 +119,8 @@ export function MfaSetupForm() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-[520px] items-start px-4 py-6 sm:min-h-[70vh] sm:items-center sm:py-8">
-      <section className="w-full overflow-hidden rounded-3xl border bg-card shadow-[0_24px_70px_-32px_rgba(76,29,149,0.45)]">
+    <main className="mx-auto flex w-full max-w-[520px] items-center justify-center">
+      <section className="w-full overflow-hidden rounded-3xl border border-slate-800 bg-card shadow-[0_24px_70px_-32px_rgba(76,29,149,0.55)]">
         <header className="bg-gradient-to-br from-violet-700 via-purple-600 to-fuchsia-500 p-6 text-white sm:p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/75">
             Account security
