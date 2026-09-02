@@ -105,14 +105,25 @@ export function ForgotPasswordForm() {
           </Button>
         </CardContent>
       </form>
-      <CardFooter className="flex justify-center">
+      <CardFooter className="flex flex-col items-center gap-3 pt-2">
         <Link
           href="/login"
-          className="flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:underline"
+          className="flex items-center gap-1 text-xs text-muted-foreground underline-offset-4 hover:underline"
         >
           <ArrowLeft className="h-3 w-3" />
           Kembali ke halaman masuk
         </Link>
+        <div className="w-full border-t pt-3 text-center">
+          <p className="text-[11px] text-muted-foreground">
+            Lupa email atau kehilangan akses ke akun?{" "}
+            <Link
+              href="/mfa/recovery"
+              className="font-medium text-primary hover:underline"
+            >
+              Ajukan pemulihan manual
+            </Link>
+          </p>
+        </div>
       </CardFooter>
     </Card>
   );
