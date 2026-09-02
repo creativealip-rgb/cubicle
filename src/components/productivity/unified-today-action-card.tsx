@@ -30,8 +30,8 @@ export function UnifiedTodayActionCard({
   checkHabit,
   updateGoal,
   lang,
-  t,
-}: UnifiedTodayActionCardProps) {
+}: Omit<UnifiedTodayActionCardProps, "t">) {
+  const t = (id: string, en: string) => (lang === "id" ? id : en);
   const [selectedGoalId, setSelectedGoalId] = useState(goals[0]?.id ?? "");
   const [statusMsg, setStatusMsg] = useState("");
   const [pending, setPending] = useState(false);

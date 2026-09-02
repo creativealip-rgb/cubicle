@@ -205,7 +205,6 @@ export default async function ProductivityPage({
               checkHabit={quickCheckHabit}
               updateGoal={quickUpdateGoal}
               lang={lang as "id" | "en"}
-              t={t}
             />
 
             <WeeklyReviewCard
