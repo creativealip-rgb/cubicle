@@ -76,7 +76,7 @@ export async function HabitsSection({
             {t("Daftar Kebiasaan", "Habits Tracker")}
           </h2>
           <p className="text-xs text-muted-foreground">
-            {activeHabits.length} {t("kebiasaan aktif hari ini", "active habits tracked")}
+            {activeHabits.length} {activeHabits.length === 1 ? t("kebiasaan aktif", "active habit tracked") : t("kebiasaan aktif", "active habits tracked")}
           </p>
         </div>
         <HabitDialog
@@ -90,15 +90,7 @@ export async function HabitsSection({
       {hasRecovery && <StreakRecoveryCard t={t} />}
 
       {/* Active Habits List */}
-      {activeHabits.some((h) => {
-        const scheduled = today >= h.startDate && isHabitScheduled(h.frequency as "daily" | "specific_weekdays", h.weekdays, today);
-        return scheduled && !h.checkins.some((c) => c.localDate === today);
-      }) && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-          <p className="font-semibold">{t("Masih ada kebiasaan yang belum selesai hari ini.", "Still to do today")}</p>
-          <p className="mt-0.5 text-xs opacity-80">{t("Satu check-in kecil sudah cukup untuk menjaga ritme.", "One small check-in is enough to keep your rhythm.")}</p>
-        </div>
-      )}
+
       <div className="grid gap-4">
         {activeHabits.map((h) => {
           const scheduledToday = today >= h.startDate && isHabitScheduled(
@@ -125,7 +117,8 @@ export async function HabitsSection({
           const recentDays = Array.from({ length: 14 }).map((_, idx) => {
             const d = dateOffset(today, -13 + idx);
             const isChecked = h.checkins.some((c) => c.localDate === d);
-            return { date: d, isChecked };
+            const scheduled = d >= h.startDate && isHabitScheduled(h.frequency as "daily" | "specific_weekdays", h.weekdays, d);
+            return { date: d, isChecked, scheduled };
           });
 
           return (
@@ -168,6 +161,7 @@ export async function HabitsSection({
                       </span>
                       {healthyStreak.inRecovery && <><span>•</span><span className="font-semibold text-amber-600 dark:text-amber-400">{t("Mode pemulihan", "Recovery mode")}</span></>}
                     </div>
+                    {scheduledToday && !done && <p className="text-xs font-medium text-amber-700 dark:text-amber-300">{t("Masih perlu diselesaikan hari ini", "Still to do today")}</p>}
                   </div>
 
                   {/* Right Actions: Today Check-in & Archive */}
@@ -177,11 +171,11 @@ export async function HabitsSection({
                       <Button
                         type="submit"
                         disabled={!scheduledToday}
-                        variant={done ? "default" : "outline"}
+                        variant="default"
                         className={`h-10 rounded-2xl px-4 font-semibold transition ${
                           done
                             ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                            : "border-muted-foreground/30 hover:border-emerald-500"
+                            : "bg-violet-600 text-white hover:bg-violet-700"
                         }`}
                       >
                         {done ? (
@@ -205,7 +199,8 @@ export async function HabitsSection({
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-10 rounded-2xl text-muted-foreground hover:text-foreground"
+                        className="h-10 rounded-xl border border-transparent px-3 text-muted-foreground hover:border-border hover:text-foreground"
+                        title={t("Arsipkan kebiasaan", "Archive habit")}
                       >
                         <Archive className="size-4" />
                       </Button>
@@ -226,7 +221,7 @@ export async function HabitsSection({
                         className={`size-3 rounded-full transition-all ${
                           d.isChecked
                             ? "bg-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-900"
-                            : "bg-muted"
+                            : d.scheduled ? "bg-amber-200 dark:bg-amber-900" : "bg-muted/60"
                         }`}
                       />
                     ))}

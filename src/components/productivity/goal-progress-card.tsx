@@ -29,6 +29,7 @@ export function GoalProgressCard({
     goal.manualProgress,
   );
   const deadline = getDeadlineStatus(goal.deadline, today);
+  const effectiveStatus = goal.status === "not_started" && progress > 0 ? "in_progress" : goal.status;
   const priorityClass =
     PRIORITY_COLORS[(goal.priority as "high" | "medium" | "low") || "medium"];
 
@@ -67,7 +68,7 @@ export function GoalProgressCard({
               <input type="hidden" name="id" value={goal.id} />
               <select
                 name="status"
-                defaultValue={goal.status}
+                defaultValue={effectiveStatus}
                 className="h-9 rounded-xl border bg-background px-2.5 text-xs font-medium"
               >
                 <option value="not_started">

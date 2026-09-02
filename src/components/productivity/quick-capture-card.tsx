@@ -43,9 +43,9 @@ export function QuickCaptureCard({ habits, goals, checkHabit, updateGoal, lang }
         </select>
         {selectedGoal?.nextStep ? <>
           <input type="hidden" name="stepId" value={selectedGoal.nextStep.id} />
-          <div className="flex h-10 items-center rounded-xl border bg-muted/30 px-3 text-xs" title={selectedGoal.nextStep.title}>{t("Selesaikan langkah", "Complete step")}</div>
+          <div className="flex h-10 min-w-0 items-center truncate rounded-xl border bg-muted/30 px-3 text-xs" title={selectedGoal.nextStep.title}>{t("Langkah berikut", "Next step")}: {selectedGoal.nextStep.title}</div>
         </> : <input name="progress" type="number" min="0" max="100" defaultValue={selectedGoal?.progress ?? 0} key={goalId} className="h-10 rounded-xl border bg-background px-3 text-sm" aria-label={t("Progress tujuan", "Goal progress")} />}
-        <Button disabled={!goals.length || pending} variant="outline" className="rounded-xl">{pending ? t("Menyimpan...", "Saving...") : selectedGoal?.nextStep ? t("Selesai", "Complete") : t("Update", "Update")}</Button>
+        <Button disabled={!goals.length || pending} variant="outline" className="rounded-xl">{pending ? t("Menyimpan...", "Saving...") : selectedGoal?.nextStep ? t("Tandai selesai", "Mark complete") : t("Update", "Update")}</Button>
       </form>
       {message && <p role="status" className="text-xs text-muted-foreground">{message}</p>}
       {!habits.length && !goals.length && <p className="text-xs text-muted-foreground">{t("Tambahkan kebiasaan atau tujuan untuk mulai.", "Add a habit or goal to get started.")}</p>}

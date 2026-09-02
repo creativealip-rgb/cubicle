@@ -151,6 +151,14 @@ export default async function ProductivityPage({
         </div>
       </div>
 
+      <nav className="flex gap-1 overflow-x-auto rounded-2xl bg-muted/60 p-1" aria-label={t("Navigasi produktivitas", "Productivity navigation")}>
+        {[["overview", t("Ringkasan & Visual", "Overview & Visuals")], ["goals", t("Tujuan Hidup", "Life Goals")], ["habits", t("Kebiasaan", "Daily Habits")]].map(([key, label]) => (
+          <Button key={key} size="sm" variant="ghost" className={`shrink-0 rounded-xl px-4 ${tab === key ? "bg-background text-foreground shadow-sm hover:bg-background" : "text-muted-foreground"}`} asChild>
+            <Link href={`/app/productivity?tab=${key}`}>{label}</Link>
+          </Button>
+        ))}
+      </nav>
+
       {tab === "overview" && <>
         <TodayFocusCard activeGoals={goalMetrics.active} scheduledHabits={activeHabits.length} completedHabits={habitsCompletedToday} t={t} />
         <div className="grid gap-4 lg:grid-cols-2"><WeeklyReviewCard {...review} attentionHabit={attentionHabit} focusGoal={focusGoal} stagnantGoals={stagnantGoals} t={t} /><QuickCaptureCard habits={activeHabits.filter((h) => today >= h.startDate && isHabitScheduled(h.frequency as "daily" | "specific_weekdays", h.weekdays, today) && !h.checkins.some((c) => c.localDate === today)).map((h) => ({ id: h.id, name: h.name }))} goals={activeGoals.map((g) => ({ id: g.id, title: g.title, progress: g.manualProgress, nextStep: g.steps.find((step) => !step.isCompleted) ? { id: g.steps.find((step) => !step.isCompleted)!.id, title: g.steps.find((step) => !step.isCompleted)!.title } : null }))} checkHabit={quickCheckHabit} updateGoal={quickUpdateGoal} lang={lang} /></div>
@@ -166,27 +174,6 @@ export default async function ProductivityPage({
         completedDays={completedDays}
         t={t}
       />
-
-      {/* Navigation Tabs Track */}
-      <nav
-        className="flex gap-2 overflow-x-auto border-b pb-3"
-        aria-label={t("Navigasi produktivitas", "Productivity navigation")}
-      >
-        {[
-          ["overview", t("Ringkasan & Visual", "Overview & Visuals")],
-          ["goals", t("Tujuan Hidup", "Life Goals")],
-          ["habits", t("Kebiasaan", "Daily Habits")],
-        ].map(([key, label]) => (
-          <Button
-            key={key}
-            variant={tab === key ? "default" : "outline"}
-            className="rounded-xl font-medium"
-            asChild
-          >
-            <Link href={`/app/productivity?tab=${key}`}>{label}</Link>
-          </Button>
-        ))}
-      </nav>
 
       {/* TAB 1: OVERVIEW & CHARTS */}
       {tab === "overview" && (
@@ -254,11 +241,11 @@ export default async function ProductivityPage({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-muted-foreground">
-              {goals.length} {t("tujuan terdaftar", "registered goals")}
+              {goals.length} {goals.length === 1 ? t("tujuan terdaftar", "registered goal") : t("tujuan terdaftar", "registered goals")}
             </p>
           </div>
 
-          <div className="grid gap-4">
+          <div className="grid gap-4 xl:grid-cols-2">
             {goals.length ? (
               goals.map((g) => (
                 <GoalProgressCard

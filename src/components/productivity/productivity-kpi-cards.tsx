@@ -26,7 +26,7 @@ export function ProductivityKpiCards({
       : 0;
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       <Card className="rounded-2xl border bg-card p-4 shadow-sm transition hover:shadow-md">
         <div className="flex items-center justify-between gap-2 text-muted-foreground">
           <span className="text-xs font-medium uppercase tracking-wider">
@@ -39,7 +39,7 @@ export function ProductivityKpiCards({
             {activeGoals}
           </span>
           <span className="text-xs text-muted-foreground">
-            {t("tujuan", "goals")}
+            {activeGoals === 1 ? t("tujuan", "goal") : t("tujuan", "goals")}
           </span>
         </div>
       </Card>
@@ -85,14 +85,14 @@ export function ProductivityKpiCards({
           </span>
           <Flame className="size-4 text-amber-500" />
         </div>
-        <div className="mt-2 flex items-baseline gap-2">
+        <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             {bestStreak}
           </span>
           <span className="text-xs text-muted-foreground">
             {t("hari", "days")}
           </span>
-          <span className="text-xs text-muted-foreground">· {completedDays} {t("hari selesai", "days completed")}</span>
+          <span className="basis-full text-[11px] text-muted-foreground">{completedDays} {t("hari check-in", "completed days")}</span>
         </div>
       </Card>
     </div>
