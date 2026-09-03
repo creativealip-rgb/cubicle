@@ -12,6 +12,7 @@ import {
   Tag,
   ArrowRight,
   ReceiptText,
+  PieChart as PieChartIcon,
 } from "lucide-react";
 import {
   listPersonalTransactions,
@@ -20,6 +21,7 @@ import {
 import { getPersonalBudget } from "@/lib/actions/personal-budget";
 import { budgetTargets } from "@/lib/personal-productivity/budget";
 import { budgetProgress } from "@/lib/personal-productivity/money";
+import { BudgetDonutChart } from "@/components/reports/budget-donut-chart";
 
 interface PersonalReportSectionProps {
   month: string;
@@ -209,17 +211,17 @@ export async function PersonalReportSection({ month, t }: PersonalReportSectionP
         </div>
       </Card>
 
-      {/* Visual 50/30/20 Gauge Cards */}
+      {/* Visual 50/30/20 Pie / Donut Chart & Allocation Health */}
       <Card className="rounded-xl border shadow-none bg-card">
         <CardHeader className="pb-3 border-b">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-                <Wallet className="h-4 w-4 text-primary" />
-                {t("Kesehatan Alokasi Anggaran 50/30/20", "50/30/20 Budget Allocation Health")}
+                <PieChartIcon className="h-4 w-4 text-primary" />
+                {t("Komposisi Anggaran 50/30/20", "50/30/20 Budget Allocation Breakdown")}
               </CardTitle>
               <CardDescription className="text-xs mt-0.5">
-                {t("Perbandingan realisasi pengeluaran terhadap target alokasi ideal", "Actual spending vs ideal budget allocation benchmark")}
+                {t("Visualisasi porsi belanja riil terhadap rasio ideal Needs, Wants, dan Savings", "Visual breakdown of actual spending against ideal Needs, Wants, and Savings ratio")}
               </CardDescription>
             </div>
             <Button asChild variant="outline" size="sm" className="text-xs h-7 gap-1">
@@ -230,81 +232,14 @@ export async function PersonalReportSection({ month, t }: PersonalReportSectionP
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4 pt-4">
-          {/* Needs Progress Bar */}
-          <div className="space-y-1.5 rounded-xl border p-3 bg-muted/20">
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
-                <span className="font-semibold text-foreground">{t("Kebutuhan Pokok (Needs)", "Essential Needs")}</span>
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-normal">Target: 50%</Badge>
-              </div>
-              <div className="flex items-center gap-2 font-medium">
-                <span className="tabular-nums font-bold text-foreground">{formatMoney(String(actualNeeds), currencyCode)}</span>
-                {targets && <span className="text-muted-foreground text-[11px]">/ {formatMoney(targets.needs, currencyCode)}</span>}
-              </div>
-            </div>
-            <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${needsProgress.over ? "bg-rose-500" : "bg-blue-500"}`}
-                style={{ width: `${Math.min(100, Math.max(2, needsProgress.percent))}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-[11px] text-muted-foreground pt-0.5">
-              <span>{t("Realisasi:", "Realization:")} {needsProgress.percent}%</span>
-              <span>{needsProgress.over ? t("⚠️ Melebihi Kuota", "⚠️ Over Budget") : t("✓ Dalam Batas Aman", "✓ Within Safe Limit")}</span>
-            </div>
-          </div>
-
-          {/* Wants Progress Bar */}
-          <div className="space-y-1.5 rounded-xl border p-3 bg-muted/20">
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
-                <span className="font-semibold text-foreground">{t("Gaya Hidup & Keinginan (Wants)", "Lifestyle & Wants")}</span>
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-normal">Target: 30%</Badge>
-              </div>
-              <div className="flex items-center gap-2 font-medium">
-                <span className="tabular-nums font-bold text-foreground">{formatMoney(String(actualWants), currencyCode)}</span>
-                {targets && <span className="text-muted-foreground text-[11px]">/ {formatMoney(targets.wants, currencyCode)}</span>}
-              </div>
-            </div>
-            <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${wantsProgress.over ? "bg-rose-500" : "bg-amber-500"}`}
-                style={{ width: `${Math.min(100, Math.max(2, wantsProgress.percent))}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-[11px] text-muted-foreground pt-0.5">
-              <span>{t("Realisasi:", "Realization:")} {wantsProgress.percent}%</span>
-              <span>{wantsProgress.over ? t("⚠️ Melebihi Kuota", "⚠️ Over Budget") : t("✓ Dalam Batas Aman", "✓ Within Safe Limit")}</span>
-            </div>
-          </div>
-
-          {/* Savings Progress Bar */}
-          <div className="space-y-1.5 rounded-xl border p-3 bg-muted/20">
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                <span className="font-semibold text-foreground">{t("Tabungan & Investasi (Savings)", "Savings & Investments")}</span>
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-normal">Target: 20%</Badge>
-              </div>
-              <div className="flex items-center gap-2 font-medium">
-                <span className="tabular-nums font-bold text-emerald-600">{formatMoney(String(actualSavings), currencyCode)}</span>
-                {targets && <span className="text-muted-foreground text-[11px]">/ {formatMoney(targets.savings, currencyCode)}</span>}
-              </div>
-            </div>
-            <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
-              <div
-                className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                style={{ width: `${Math.min(100, Math.max(2, savingsProgress.percent))}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-[11px] text-muted-foreground pt-0.5">
-              <span>{t("Tercapai:", "Achieved:")} {savingsProgress.percent}%</span>
-              <span className="text-emerald-600 font-semibold">{savingsRate >= 20 ? t("✓ Target Terpenuhi", "✓ Target Met") : t("Perlu Ditambah", "Needs Boost")}</span>
-            </div>
-          </div>
+        <CardContent className="pt-4">
+          <BudgetDonutChart
+            needs={actualNeeds}
+            wants={actualWants}
+            savings={actualSavings}
+            currencyCode={currencyCode}
+            t={t}
+          />
         </CardContent>
       </Card>
 
