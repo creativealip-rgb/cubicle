@@ -10,7 +10,9 @@ import {
   Plus,
   Search,
   Download,
+  Users,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
@@ -114,31 +116,45 @@ export default async function ClientsPage({
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="app-page-header">
-        <div className="min-w-0">
-          <h1 className="app-page-title">{t("Klien", "Clients")}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t("Kelola hubungan klienmu", "Manage your client relationships")}
-          </p>
-        </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <Button size="sm" variant="outline" className="gap-1" asChild>
-            <a href="/api/clients/export/xlsx" download>
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("Export Excel", "Export Excel")}</span>
-              <span className="sm:hidden">XLSX</span>
-            </a>
-          </Button>
-          {canWrite && (
-            isAtLimit ? (
-              <Button size="sm" className="gap-1" disabled>
-                <Plus className="h-4 w-4" />
-                {t("Upgrade dulu", "Upgrade first")}
-              </Button>
-            ) : (
-              <ClientCreateDialog />
-            )
-          )}
+      <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-r from-primary/[0.06] via-violet-500/[0.03] to-transparent p-5 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20">
+              <Users className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                  {t("Klien", "Clients")}
+                </h1>
+                <Badge variant="secondary" className="px-2 py-0.5 text-xs font-semibold">
+                  {tabCounts.active} {t("Aktif", "Active")}
+                </Badge>
+              </div>
+              <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                {t("Kelola data kontak, kolaborasi proyek, dan portal klien secara terpusat.", "Manage client contacts, project collaborations, and client portals in one place.")}
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 flex-wrap items-center gap-2.5">
+            <Button size="sm" variant="outline" className="h-9 gap-1.5 shadow-none" asChild>
+              <a href="/api/clients/export/xlsx" download>
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">{t("Export Excel", "Export Excel")}</span>
+                <span className="sm:hidden">XLSX</span>
+              </a>
+            </Button>
+            {canWrite && (
+              isAtLimit ? (
+                <Button size="sm" className="h-9 gap-1.5" disabled>
+                  <Plus className="h-4 w-4" />
+                  {t("Upgrade dulu", "Upgrade first")}
+                </Button>
+              ) : (
+                <ClientCreateDialog />
+              )
+            )}
+          </div>
         </div>
       </div>
 

@@ -424,17 +424,17 @@ export default async function InvoicesPage({
 
   return (
     <div className="min-w-0 space-y-4 sm:space-y-6">
-      <div className="app-page-header">
-        <div className="min-w-0">
-          <h1 className="app-page-title">{t("Invoice", "Invoices")}</h1>
-          <p className="text-sm text-muted-foreground">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("Invoice", "Invoices")}</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
             {t(
-              `Baris total tetap currency invoice. Ringkasan setara ${baseCurrency}.`,
-              `Row totals keep invoice currency. Summaries in ${baseCurrency}.`,
+              `Kelola penagihan klien. Ringkasan disetarakan ke ${baseCurrency}.`,
+              `Manage client billings. Summary approximated to ${baseCurrency}.`,
             )}
           </p>
         </div>
-        <div className="flex w-full sm:w-auto">
+        <div className="flex items-center gap-2">
           {canWrite && (
             <InvoiceCreateDialog clients={clientOptions} projects={projectOptions.map((project) => ({ ...project, agreedAmount: 0, priorActiveFixedBilledAmount: 0, eligibleTimeEntries: [] }))} baseCurrency={baseCurrency} proposedInvoiceNumber={await getProposedInvoiceNumber()} />
           )}

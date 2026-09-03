@@ -7,6 +7,7 @@ import { eq, and, desc, sql, SQL, inArray } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ProjectCreateDialog } from "@/components/projects/project-create-dialog";
 import { ProjectsListTable } from "@/components/projects/projects-list-table";
 import { getCurrentLang, createT } from "@/lib/i18n";
@@ -156,21 +157,33 @@ export default async function ProjectsPage({
 
   return (
     <div className="min-w-0 space-y-4 sm:space-y-6">
-      <div className="app-page-header">
-        <div className="min-w-0">
-          <h1 className="app-page-title">{t("Proyek", "Projects")}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t("Pantau pipeline proyekmu", "Track your project pipeline")}
-          </p>
+      <div className="space-y-1.5 border-b pb-4">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+          <span>{t("Pekerjaan", "Work")}</span>
+          <span>/</span>
+          <span className="text-foreground">{t("Proyek", "Projects")}</span>
         </div>
-        {canWrite && (
-          <ProjectCreateDialog
-            clients={clientOptions}
-            isAtLimit={isAtLimit}
-            projectCount={projectCount}
-            projectLimit={projectLimit}
-          />
-        )}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              {t("Proyek", "Projects")}
+            </h1>
+            <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary text-xs font-semibold px-2 py-0.5">
+              {statusCounts.active} {t("Berjalan", "Running")}
+            </Badge>
+          </div>
+          {canWrite && (
+            <ProjectCreateDialog
+              clients={clientOptions}
+              isAtLimit={isAtLimit}
+              projectCount={projectCount}
+              projectLimit={projectLimit}
+            />
+          )}
+        </div>
+        <p className="text-xs sm:text-sm text-muted-foreground">
+          {t("Pantau alur kerja, alokasi jam, dan progres milestone proyek tim kamu.", "Track workflow pipeline, tracked hours, and milestone progress.")}
+        </p>
       </div>
 
       <StatusFilterTabs
