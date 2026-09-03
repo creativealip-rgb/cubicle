@@ -10,7 +10,7 @@ describe("questionnaire pages share the app page chrome", () => {
   it("list page uses the shared app page header (no double padding)", () => {
     const page = source("page.tsx");
     expect(page).toContain('className="min-w-0 space-y-4 sm:space-y-6"');
-    expect(page).toContain('className="app-page-header"');
+    expect(page).toContain('<PageHeader');
     expect(page).not.toMatch(/<div className="space-y-6 p-4 sm:p-6">/);
   });
 

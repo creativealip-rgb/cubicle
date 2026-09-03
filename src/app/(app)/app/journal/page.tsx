@@ -11,6 +11,8 @@ import {
 import { requireWorkspaceOwnerOrRedirect } from "@/lib/require-workspace-owner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
+import { BookOpen } from "lucide-react";
 import { JournalList } from "@/components/journal/journal-list";
 import { JournalComposerDialog } from "@/components/journal/journal-composer-dialog";
 import { JournalSummaryStrip } from "@/components/journal/journal-summary-strip";
@@ -155,21 +157,17 @@ export default async function JournalPage({
   return (
     <div className="space-y-6" data-ui="journal-timeline-dashboard">
       {/* Header Bar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            {t("Jurnal Pribadi", "Personal Journal")}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t(
-              "Catatan harian — insight, blockers, keputusan, dan refleksi berkala.",
-              "Daily notes — insights, blockers, decisions, and periodic reflections.",
-            )}
-          </p>
-        </div>
-
-        <JournalComposerDialog lang={lang} createAction={createEntry} />
-      </div>
+      <PageHeader
+        icon={BookOpen}
+        title={t("Jurnal Pribadi", "Personal Journal")}
+        description={t(
+          "Catatan harian — insight, blockers, keputusan, dan refleksi berkala.",
+          "Daily notes — insights, blockers, decisions, and periodic reflections.",
+        )}
+        actions={
+          <JournalComposerDialog lang={lang} createAction={createEntry} />
+        }
+      />
 
       {/* Modern Status Tabs Track (Matching Productivity / Notes style) */}
       <nav

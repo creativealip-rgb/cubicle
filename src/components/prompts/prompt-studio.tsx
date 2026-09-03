@@ -15,6 +15,7 @@ import { toneOptions, styleOptions, platformOptions, ratioOptions } from "@/lib/
 import { validateField } from "@/lib/prompts/prompt-studio-validation";
 import { PromptResult } from "./prompt-result";
 import { PromptHistoryDrawer, type PromptHistoryItem } from "./prompt-history-drawer";
+import { PageHeader } from "@/components/ui/page-header";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n-client";
 import { toast } from "sonner";
@@ -211,21 +212,22 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="app-page-title">Prompt Studio</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("Buat materi campaign dari brief sederhana.", "Create campaign material from a simple brief.")}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground">{t("Generate", "Generated")} {usage.totalGenerations}/{usage.generationLimit}</span>
-          {/* Desktop CTA so Generate stays visible in the first fold without scrolling */}
-          <Button className="hidden h-9 xl:inline-flex" disabled={!valid || loading} onClick={generate}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            {loading ? t("Menyusun materi…", "Generating…") : t("Generate", "Generate")}
-          </Button>
-          <PromptHistoryDrawer items={generations} onSelect={setResult} />
-        </div>
-      </div>
+      <PageHeader
+        icon={Sparkles}
+        title="Prompt Studio"
+        description={t("Buat materi visual, brief campaign, dan konten iklan instan dari AI.", "Create visual assets, campaign briefs, and marketing content instantly with AI.")}
+        actions={
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground">{t("Generate", "Generated")} {usage.totalGenerations}/{usage.generationLimit}</span>
+            {/* Desktop CTA so Generate stays visible in the first fold without scrolling */}
+            <Button size="sm" className="hidden h-8 text-xs xl:inline-flex" disabled={!valid || loading} onClick={generate}>
+              {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+              {loading ? t("Menyusun materi…", "Generating…") : t("Generate", "Generate")}
+            </Button>
+            <PromptHistoryDrawer items={generations} onSelect={setResult} />
+          </div>
+        }
+      />
 
       {/* Compact type selector */}
       <section className="rounded-2xl border bg-white p-3 sm:p-4">

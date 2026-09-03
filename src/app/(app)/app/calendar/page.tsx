@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import { Calendar, CalendarDays, Clock, User } from "lucide-react";
 import Link from "next/link";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
@@ -95,24 +96,24 @@ export default async function CalendarPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="app-page-title">{t("Kalender", "Calendar")}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t("Kelola janji temu dan ketersediaan", "Manage appointments and availability")}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {ws.bookingSlug ? (
-            <Button size="sm" className="gap-1" asChild>
+      <PageHeader
+        icon={Calendar}
+        title={t("Kalender", "Calendar")}
+        description={t(
+          "Kelola janji temu klien, ketersediaan jadwal mingguan, dan integrasi link booking publik.",
+          "Manage client appointments, weekly availability rules, and public booking link.",
+        )}
+        actions={
+          ws.bookingSlug ? (
+            <Button size="sm" className="h-8 gap-1.5 text-xs" asChild>
               <Link href={`/booking/${ws.bookingSlug}`} target="_blank">
-                <Calendar className="h-4 w-4" />
+                <Calendar className="h-3.5 w-3.5" />
                 <span>{t("Booking Page", "Booking Page")}</span>
               </Link>
             </Button>
-          ) : null}
-        </div>
-      </div>
+          ) : null
+        }
+      />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-1">

@@ -43,7 +43,7 @@ describe("batch 1 i18n wiring", () => {
 
   it("questionnaires page keeps shared chrome and localized copy", () => {
     const page = source("src/app/(app)/app/questionnaires/page.tsx");
-    expect(page).toContain('className="app-page-header"');
+    expect(page).toContain('<PageHeader');
     expect(page).not.toMatch(/<div className="space-y-6 p-4 sm:p-6">/);
   });
 

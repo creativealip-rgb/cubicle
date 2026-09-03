@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Mail, Send, Save, Trash2 } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 import { getCurrentLang, createT } from "@/lib/i18n";
 
 function formatDate(value: Date | string | null) {
@@ -86,17 +87,19 @@ export default async function EmailPage() {
 
   return (
     <div className="min-w-0 space-y-4 sm:space-y-6">
-      <div className="app-page-header">
-        <div className="min-w-0">
-          <h1 className="app-page-title">{t("Email", "Email")}</h1>
-          <p className="app-page-description">
-            {t(
-              "Tulis, simpan draf, dan kirim email ke klien langsung dari workspace.",
-              "Write, save drafts, and send emails to clients directly from the workspace.",
-            )}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Mail}
+        title={t("Email Suite", "Email Suite")}
+        description={t(
+          "Tulis pesan, simpan draf, dan kirim korespondensi ke klien langsung dari workspace.",
+          "Compose messages, manage drafts, and send client correspondence directly from the workspace.",
+        )}
+        badge={
+          <Badge variant="secondary" className="px-1.5 py-0 text-[11px] font-semibold">
+            {messages.length} {t("Pesan", "Messages")}
+          </Badge>
+        }
+      />
 
       <Card>
         <CardHeader>

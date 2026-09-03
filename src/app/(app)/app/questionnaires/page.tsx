@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { QuestionnairesListTable } from "@/components/questionnaires/questionnaires-list-table";
 import { QuestionnaireCreateDialog } from "@/components/calendar/questionnaire-create-dialog";
 import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import { Plus, ClipboardList, ChevronRight } from "lucide-react";
 
 async function getWorkspaceId(): Promise<string> {
@@ -54,29 +55,31 @@ export default async function QuestionnairesPage() {
 
   return (
     <div className="min-w-0 space-y-4 sm:space-y-6">
-      <div className="app-page-header">
-        <div>
-          <h1 className="app-page-title">{t("Formulir", "Forms")}</h1>
-          <p>
-            {t(
-              "Form intake klien. Jawaban jadi brief proyek.",
-              "Client intake forms. Answers become project briefs.",
-            )}
-          </p>
-        </div>
-        {canWrite && (
-          <div className="app-page-actions">
+      <PageHeader
+        icon={ClipboardList}
+        title={t("Formulir", "Forms")}
+        description={t(
+          "Form intake klien & brief terstruktur. Jawaban otomatis terintegrasi ke project.",
+          "Client intake forms & structured briefs. Responses auto-integrate into project briefs.",
+        )}
+        badge={
+          <Badge variant="secondary" className="px-1.5 py-0 text-[11px] font-semibold">
+            {rows.length} {t("Form", "Forms")}
+          </Badge>
+        }
+        actions={
+          canWrite ? (
             <QuestionnaireCreateDialog
               trigger={
-                <Button size="sm" className="gap-1">
-                  <Plus className="h-4 w-4" />
+                <Button size="sm" className="h-8 gap-1.5 text-xs">
+                  <Plus className="h-3.5 w-3.5" />
                   {t("Formulir baru", "New form")}
                 </Button>
               }
             />
-          </div>
-        )}
-      </div>
+          ) : null
+        }
+      />
 
       {rows.length === 0 ? (
         <EmptyState

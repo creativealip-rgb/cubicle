@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import { useT } from "@/lib/i18n-client";
 import { formatMoney } from "@/lib/utils";
 import {
@@ -224,23 +225,25 @@ export function PackageCatalog({
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="app-page-header">
-        <div className="min-w-0">
-          <h1 className="app-page-title">{t("Paket", "Packages")}</h1>
-          <p className="app-page-description">
-            {t(
-              "Katalog paket jam lama yang bisa dipakai ulang di banyak proyek.",
-              "Legacy reusable hour packages you can assign across projects."
-            )}
-          </p>
-        </div>
-        <div className="app-page-actions">
-          <Button size="sm" className="gap-1" onClick={openCreate}>
-            <Plus className="h-4 w-4" />
+      <PageHeader
+        icon={Package}
+        title={t("Paket", "Packages")}
+        description={t(
+          "Katalog paket jam kerja dan layanan yang bisa dipakai ulang di banyak proyek.",
+          "Reusable hour and service packages you can assign across projects.",
+        )}
+        badge={
+          <Badge variant="secondary" className="px-1.5 py-0 text-[11px] font-semibold">
+            {packages.length} {t("Paket", "Packages")}
+          </Badge>
+        }
+        actions={
+          <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={openCreate}>
+            <Plus className="h-3.5 w-3.5" />
             {t("Paket Baru", "New Package")}
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       {packages.length === 0 ? (
         <EmptyState

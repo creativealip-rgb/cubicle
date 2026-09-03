@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
-import { BriefcaseBusiness, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { BriefcaseBusiness, Loader2, Pencil, Plus, Trash2, Wrench } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -190,23 +191,25 @@ export function ServiceCatalog({
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="app-page-header">
-        <div className="min-w-0">
-          <h1 className="app-page-title">{t("Layanan", "Services")}</h1>
-          <p className="app-page-description">
-            {t(
-              "Katalog layanan dasar untuk dipakai di proyek, paket, invoice, dan time tracking.",
-              "Base service catalog for projects, packages, invoices, and time tracking.",
-            )}
-          </p>
-        </div>
-        <div className="app-page-actions">
-          <Button size="sm" className="gap-1" onClick={openCreate}>
-            <Plus className="h-4 w-4" />
+      <PageHeader
+        icon={Wrench}
+        title={t("Layanan", "Services")}
+        description={t(
+          "Katalog layanan dasar untuk dipakai di proyek, paket, proposal, invoice, dan time tracking.",
+          "Base service catalog for projects, packages, proposals, invoices, and time tracking.",
+        )}
+        badge={
+          <Badge variant="secondary" className="px-1.5 py-0 text-[11px] font-semibold">
+            {services.length} {t("Layanan", "Services")}
+          </Badge>
+        }
+        actions={
+          <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={openCreate}>
+            <Plus className="h-3.5 w-3.5" />
             {t("Layanan Baru", "New Service")}
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       <Card>
         <CardContent className="grid gap-3 p-4 sm:grid-cols-[1fr_auto] sm:items-end">

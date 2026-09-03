@@ -27,7 +27,9 @@ import {
   Star,
   Copy,
   ScrollText,
+  Layers,
 } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   listContractTemplates,
   createContractTemplate,
@@ -367,17 +369,14 @@ export function TemplateCenterClient({
 
   return (
     <div className="space-y-6">
-      <div className="app-page-header">
-        <div className="min-w-0">
-          <h1 className="app-page-title">{t("Pusat Template", "Template Center")}</h1>
-          <p className="app-page-description">
-            {t(
-              "Simpan sekali, pakai ulang di proposal, kontrak, dan invoice.",
-              "Save once, reuse across proposals, contracts, and invoices.",
-            )}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Layers}
+        title={t("Pusat Template", "Template Center")}
+        description={t(
+          "Simpan sekali, pakai ulang di proposal, kontrak, dan invoice.",
+          "Save once, reuse across proposals, contracts, and invoices.",
+        )}
+      />
 
       <StatusFilterTabs
         activeValue={activeTab}

@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n-client";
+import { PageHeader } from "@/components/ui/page-header";
 
 export function TimeHeader({ actions }: { actions?: React.ReactNode }) {
   const pathname = usePathname();
@@ -17,19 +19,12 @@ export function TimeHeader({ actions }: { actions?: React.ReactNode }) {
 
   return (
     <header className="space-y-3 sm:space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="app-page-title">{t("Waktu", "Time")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("Catat waktu dan isi timesheet mingguan.", "Log time and fill weekly timesheets.")}
-          </p>
-        </div>
-        {actions && (
-          <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
-            {actions}
-          </div>
-        )}
-      </div>
+      <PageHeader
+        icon={Clock}
+        title={t("Waktu", "Time")}
+        description={t("Catat durasi kerja harian dan kelola timesheet mingguan proyek.", "Log daily work hours and manage weekly project timesheets.")}
+        actions={actions}
+      />
 
       <div className="border-b">
         <nav aria-label={t("Navigasi waktu", "Time navigation")} className="flex min-w-0 gap-0.5 sm:gap-1">
@@ -41,7 +36,7 @@ export function TimeHeader({ actions }: { actions?: React.ReactNode }) {
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "min-h-11 shrink-0 border-b-2 px-2.5 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:px-3",
+                  "min-h-10 shrink-0 border-b-2 px-3 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                   active
                     ? "border-primary text-foreground"
                     : "border-transparent text-muted-foreground hover:text-foreground",
