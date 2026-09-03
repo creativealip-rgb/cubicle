@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
-import { Calendar, CalendarDays, Clock, User, Link as LinkIcon, CheckCircle2, Video } from "lucide-react";
+import { Calendar, CalendarDays, Clock, User, Link as LinkIcon, CheckCircle2, Video, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { AvailabilityRuleForm } from "@/components/calendar/availability-rule-form";
@@ -81,9 +81,10 @@ export default async function CalendarPage() {
     : ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
   function formatTime(d: string | Date): string {
-    return new Date(d).toLocaleTimeString(locale, {
+    return new Date(d).toLocaleTimeString("id-ID", {
       hour: "2-digit",
       minute: "2-digit",
+      hour12: false,
     });
   }
 
@@ -175,7 +176,7 @@ export default async function CalendarPage() {
         <div className="space-y-4 lg:col-span-1">
           <BookingSlugForm defaultSlug={ws.bookingSlug} canEdit={ws.ownerId === user.id} />
 
-          {/* Availability Rules Card */}
+          {/* Availability Rules */}
           <Card className="rounded-xl border shadow-none bg-card">
             <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3 border-b">
               <div>
@@ -225,7 +226,7 @@ export default async function CalendarPage() {
           </Card>
         </div>
 
-        {/* Upcoming Appointments Card */}
+        {/* Upcoming Appointments */}
         <Card className="flex h-full flex-col lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between pb-3 border-b">
             <div>
@@ -274,29 +275,42 @@ export default async function CalendarPage() {
                       </div>
 
                       {/* Detail Janji Temu */}
-                      <div className="min-w-0 space-y-1">
+                      <div className="min-w-0 space-y-1.5">
                         <p className="text-sm font-bold text-foreground tracking-tight leading-tight">
                           {apt.title}
                         </p>
-                        <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
-                          <Clock className="h-3 w-3 shrink-0" aria-hidden />
-                          {formatTime(apt.startTime)} – {formatTime(apt.endTime)}
-                        </p>
+                        
+                        {/* 24-Hour Time & Host Badge */}
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                          <span className="inline-flex items-center gap-1 font-mono font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                            <Clock className="h-3 w-3 shrink-0" aria-hidden />
+                            {formatTime(apt.startTime)} – {formatTime(apt.endTime)} WIB
+                          </span>
+
+                          {apt.userName && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md">
+                              <ShieldCheck className="h-3 w-3 text-violet-600" />
+                              <span>Host: <strong className="text-foreground">{apt.userName}</strong></span>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Attendee Client Info */}
                         {apt.attendeeName && (
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <User className="h-3 w-3 inline shrink-0" aria-hidden />
-                            <span className="font-medium text-foreground">{apt.attendeeName}</span>
-                            {apt.attendeeEmail && <span className="text-[11px] text-muted-foreground truncate">({apt.attendeeEmail})</span>}
-                          </p>
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                            <User className="h-3 w-3 inline shrink-0 text-foreground/70" aria-hidden />
+                            <span className="font-semibold text-foreground">{apt.attendeeName}</span>
+                            {apt.attendeeEmail && (
+                              <span className="text-[11px] text-muted-foreground truncate">
+                                &lt;{apt.attendeeEmail}&gt;
+                              </span>
+                            )}
+                          </div>
                         )}
+
                         {apt.notes && (
-                          <p className="rounded-md bg-muted/50 px-2 py-1 text-[11px] text-muted-foreground line-clamp-2 mt-1">
+                          <p className="rounded-md bg-muted/40 border border-border/50 px-2.5 py-1.5 text-[11px] text-muted-foreground leading-relaxed mt-1">
                             {apt.notes}
-                          </p>
-                        )}
-                        {apt.userName && (
-                          <p className="text-[11px] text-muted-foreground mt-0.5">
-                            {t("Ditugaskan ke", "Assigned to")}: <span className="font-medium text-foreground">{apt.userName}</span>
                           </p>
                         )}
                       </div>
@@ -306,7 +320,7 @@ export default async function CalendarPage() {
                     <div className="flex flex-wrap items-center justify-end gap-2 shrink-0 self-end sm:self-start">
                       <Badge
                         variant="outline"
-                        className="text-[10px] font-semibold border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 gap-1"
+                        className="text-[10px] font-semibold border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 gap-1 h-6"
                       >
                         <CheckCircle2 className="h-3 w-3" />
                         {t("Terjadwal", "Scheduled")}
