@@ -28,14 +28,18 @@ export async function GET(
     return new NextResponse("Invalid key", { status: 400 });
   }
 
-  const [file] = await db
-    .select()
-    .from(files)
-    .where(eq(files.storageKey, objectKey))
-    .limit(1);
-  if (!file) return new NextResponse("Not found", { status: 404 });
-  const allowed = await canAccessFile(file, request.nextUrl.searchParams.get("token"));
-  if (!allowed) return new NextResponse("Not found", { status: 404 });
+  const isPublicSiteImage = objectKey.startsWith("site-images/");
+
+  if (!isPublicSiteImage) {
+    const [file] = await db
+      .select()
+      .from(files)
+      .where(eq(files.storageKey, objectKey))
+      .limit(1);
+    if (!file) return new NextResponse("Not found", { status: 404 });
+    const allowed = await canAccessFile(file, request.nextUrl.searchParams.get("token"));
+    if (!allowed) return new NextResponse("Not found", { status: 404 });
+  }
 
   try {
     const object = await r2.send(
@@ -47,7 +51,7 @@ export async function GET(
     return new NextResponse(Buffer.from(await object.Body.transformToByteArray()), {
       headers: {
         "Content-Type": object.ContentType || MIME_MAP[ext] || "application/octet-stream",
-        "Cache-Control": "private, no-store",
+        "Cache-Control": isPublicSiteImage ? "public, max-age=31536000, immutable" : "private, no-store",
         "X-Content-Type-Options": "nosniff",
       },
     });
