@@ -238,7 +238,6 @@ export async function PersonalReportSection({ month, t }: PersonalReportSectionP
             wants={actualWants}
             savings={actualSavings}
             currencyCode={currencyCode}
-            t={t}
           />
         </CardContent>
       </Card>

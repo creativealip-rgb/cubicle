@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { formatMoney } from "@/lib/utils";
+import { useT } from "@/lib/i18n-client";
 
 interface BudgetDonutChartProps {
   needs: number;
   wants: number;
   savings: number;
   currencyCode: string;
-  t: (id: string, en: string) => string;
 }
 
 export function BudgetDonutChart({
@@ -16,8 +16,8 @@ export function BudgetDonutChart({
   wants,
   savings,
   currencyCode,
-  t,
 }: BudgetDonutChartProps) {
+  const { t } = useT();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const totalSpent = needs + wants + savings;
