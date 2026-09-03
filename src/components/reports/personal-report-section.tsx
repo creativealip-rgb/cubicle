@@ -7,8 +7,8 @@ import {
   Sparkles,
   Wallet,
   PiggyBank,
-  ShoppingBag,
-  HeartHandshake,
+  TrendingDown,
+  Scale,
   Tag,
   ArrowRight,
   ReceiptText,
@@ -19,8 +19,6 @@ import {
   listPersonalTransactionCategories,
 } from "@/lib/actions/personal-transactions";
 import { getPersonalBudget } from "@/lib/actions/personal-budget";
-import { budgetTargets } from "@/lib/personal-productivity/budget";
-import { budgetProgress } from "@/lib/personal-productivity/money";
 import { BudgetDonutChart } from "@/components/reports/budget-donut-chart";
 
 interface PersonalReportSectionProps {
@@ -43,28 +41,14 @@ export async function PersonalReportSection({ month, t }: PersonalReportSectionP
   const expenseTransactions = monthTransactions.filter((tx) => tx.transactionType === "expense");
   const totalSpent = expenseTransactions.reduce((acc, tx) => acc + Number(tx.amount), 0);
 
-  // 50/30/20 Targets & Actuals
-  const targets = budgetData.budget?.enabled
-    ? budgetTargets(
-        budgetData.budget.income,
-        budgetData.budget.needsPct,
-        budgetData.budget.wantsPct,
-        budgetData.budget.savingsPct,
-      )
-    : null;
-
   const actualNeeds = Number(budgetData.actual.needs || 0);
   const actualWants = Number(budgetData.actual.wants || 0);
   const actualSavings = Number(budgetData.actual.savings || 0);
 
-  const needsProgress = targets ? budgetProgress(String(actualNeeds), targets.needs) : { percent: 0, over: false };
-  const wantsProgress = targets ? budgetProgress(String(actualWants), targets.wants) : { percent: 0, over: false };
-  const savingsProgress = targets ? budgetProgress(String(actualSavings), targets.savings) : { percent: 0, over: false };
-
-  // Savings rate calculation
+  // Net Cashflow & Savings Rate
+  const netCashflow = income - totalSpent - actualSavings;
   const savingsRate = income > 0 ? Math.round((actualSavings / income) * 100) : 0;
-  const needsRate = income > 0 ? Math.round((actualNeeds / income) * 100) : 0;
-  const wantsRate = income > 0 ? Math.round((actualWants / income) * 100) : 0;
+  const expenseRate = income > 0 ? Math.round((totalSpent / income) * 100) : 0;
 
   // Category Breakdown for Personal Expenses
   const categoryMap = new Map<string, { id: string; name: string; color: string; total: number; count: number }>();
@@ -96,80 +80,63 @@ export async function PersonalReportSection({ month, t }: PersonalReportSectionP
       insights.push(t(`Tingkat tabunganmu baru ${savingsRate}% (target ideal: 20%). Alokasikan lebih banyak ke tabungan/investasi.`, `Your current savings rate is ${savingsRate}% (target: 20%). Try allocating more towards savings/investments.`));
     }
 
-    if (wantsRate > 30) {
-      insights.push(t(`Perhatian: Pos Keinginan (Wants) mencapai ${wantsRate}% (melebihi batas aman 30%).`, `Warning: Wants spending is at ${wantsRate}% (exceeding the 30% safe threshold).`));
+    if (actualWants / income > 0.3) {
+      insights.push(t(`Perhatian: Pos Keinginan (Wants) melebihi batas aman 30%.`, `Warning: Wants spending exceeds the 30% safe threshold.`));
     }
 
-    if (needsRate <= 50) {
-      insights.push(t(`Pengeluaran Kebutuhan Pokok (Needs) terkontrol sangat baik di angka ${needsRate}%.`, `Essential Needs spending is very well controlled at ${needsRate}%.`));
+    if (actualNeeds / income <= 0.5) {
+      insights.push(t(`Pengeluaran Kebutuhan Pokok (Needs) terkontrol sangat baik di bawah batas 50%.`, `Essential Needs spending is very well controlled below 50%.`));
     } else {
-      insights.push(t(`Kebutuhan Pokok mencapai ${needsRate}% (melebihi alokasi 50%). Evaluasi pengeluaran wajib.`, `Essential Needs spending is at ${needsRate}% (above 50% target). Review fixed expenses.`));
+      insights.push(t(`Kebutuhan Pokok melebihi alokasi 50%. Evaluasi pengeluaran rutin.`, `Essential Needs spending is above the 50% target. Review recurring expenses.`));
     }
   } else {
     insights.push(t("Atur target pemasukan bulanan di menu Personal Expenses > Budget 50/30/20 untuk mengaktifkan analisa otomatis.", "Set your monthly income target in Personal Expenses > Budget 50/30/20 to enable automated health analysis."));
   }
 
-  // 5 Recent Transactions for the report summary
+  // 6 Recent Transactions for the report summary
   const recentTransactions = [...monthTransactions]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 6);
 
   return (
     <div className="space-y-4">
-      {/* 4-KPI Strip: Income Target, Needs (50%), Wants (30%), Savings (20%) */}
+      {/* 4-KPI Overview: Distinct Financial Summary (No Duplicate 50/30/20 buckets) */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {/* Income / Target KPI */}
+        {/* Total Income */}
         <Card className="rounded-xl border shadow-none bg-card p-4 space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground font-medium">{t("Target Pemasukan", "Income Target")}</span>
+            <span className="text-xs text-muted-foreground font-medium">{t("Target Pemasukan", "Total Income")}</span>
             <Wallet className="h-4 w-4 text-primary" />
           </div>
           <p className="text-xl font-bold tracking-tight text-foreground tabular-nums">
             {formatMoney(String(income), currencyCode)}
           </p>
           <p className="text-[11px] text-muted-foreground">
-            {t("Budget bulanan total", "Monthly total budget")}
+            {t("Budget / pemasukan bulanan", "Monthly income / target")}
           </p>
         </Card>
 
-        {/* Needs (50%) KPI */}
+        {/* Total Expenses */}
         <Card className="rounded-xl border shadow-none bg-card p-4 space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground font-medium">{t("Kebutuhan (Needs 50%)", "Needs (50%)")}</span>
-            <HeartHandshake className="h-4 w-4 text-blue-500" />
+            <span className="text-xs text-muted-foreground font-medium">{t("Total Pengeluaran", "Total Expenses")}</span>
+            <TrendingDown className="h-4 w-4 text-rose-500" />
           </div>
           <p className="text-xl font-bold tracking-tight text-foreground tabular-nums">
-            {formatMoney(String(actualNeeds), currencyCode)}
+            {formatMoney(String(totalSpent), currencyCode)}
           </p>
           <div className="flex items-center justify-between text-[11px]">
-            <span className="text-muted-foreground">{needsRate}% {t("dari total", "of total")}</span>
-            <Badge variant={needsProgress.over ? "destructive" : "secondary"} className="text-[10px] px-1.5 py-0 font-normal">
-              {needsProgress.over ? t("Over", "Over") : `${needsProgress.percent}%`}
+            <span className="text-muted-foreground">{expenseRate}% {t("dari income", "of income")}</span>
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-normal">
+              {expenseTransactions.length} tx
             </Badge>
           </div>
         </Card>
 
-        {/* Wants (30%) KPI */}
+        {/* Total Savings & Investments */}
         <Card className="rounded-xl border shadow-none bg-card p-4 space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground font-medium">{t("Keinginan (Wants 30%)", "Wants (30%)")}</span>
-            <ShoppingBag className="h-4 w-4 text-amber-500" />
-          </div>
-          <p className="text-xl font-bold tracking-tight text-foreground tabular-nums">
-            {formatMoney(String(actualWants), currencyCode)}
-          </p>
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="text-muted-foreground">{wantsRate}% {t("dari total", "of total")}</span>
-            <Badge variant={wantsProgress.over ? "destructive" : "secondary"} className="text-[10px] px-1.5 py-0 font-normal">
-              {wantsProgress.over ? t("Over", "Over") : `${wantsProgress.percent}%`}
-            </Badge>
-          </div>
-        </Card>
-
-        {/* Savings (20%) KPI */}
-        <Card className="rounded-xl border shadow-none bg-card p-4 space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground font-medium">{t("Tabungan (Savings 20%)", "Savings (20%)")}</span>
+            <span className="text-xs text-muted-foreground font-medium">{t("Tabungan & Investasi", "Savings & Invest")}</span>
             <PiggyBank className="h-4 w-4 text-emerald-500" />
           </div>
           <p className="text-xl font-bold tracking-tight text-foreground tabular-nums">
@@ -178,9 +145,23 @@ export async function PersonalReportSection({ month, t }: PersonalReportSectionP
           <div className="flex items-center justify-between text-[11px]">
             <span className="text-muted-foreground">{savingsRate}% {t("Savings Rate", "Savings Rate")}</span>
             <Badge variant={savingsRate >= 20 ? "default" : "secondary"} className="text-[10px] px-1.5 py-0 font-normal">
-              {savingsRate >= 20 ? t("Ideal", "Ideal") : `${savingsProgress.percent}%`}
+              {savingsRate >= 20 ? t("Ideal (≥20%)", "Ideal (≥20%)") : t("Kurang", "Low")}
             </Badge>
           </div>
+        </Card>
+
+        {/* Sisa Kas / Net Cashflow */}
+        <Card className="rounded-xl border shadow-none bg-card p-4 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground font-medium">{t("Sisa Kas Bebas", "Net Free Cash")}</span>
+            <Scale className="h-4 w-4 text-violet-500" />
+          </div>
+          <p className={`text-xl font-bold tracking-tight tabular-nums ${netCashflow >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+            {formatMoney(String(netCashflow), currencyCode)}
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            {netCashflow >= 0 ? t("Surplus anggaran", "Budget surplus") : t("Defisit anggaran", "Budget deficit")}
+          </p>
         </Card>
       </div>
 
