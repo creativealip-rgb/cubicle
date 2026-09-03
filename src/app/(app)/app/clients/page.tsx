@@ -125,7 +125,7 @@ export default async function ClientsPage({
           <Button size="sm" variant="outline" className="gap-1" asChild>
             <a href="/api/clients/export/xlsx" download>
               <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("Unduh Excel", "Download Excel")}</span>
+              <span className="hidden sm:inline">{t("Export Excel", "Export Excel")}</span>
               <span className="sm:hidden">XLSX</span>
             </a>
           </Button>

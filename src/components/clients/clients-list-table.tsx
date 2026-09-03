@@ -176,9 +176,9 @@ export function ClientsListTable({
               {client.portalEnabled ? (
                 <Badge
                   variant="outline"
-                  className="gap-1 text-xs border-green-200 text-green-700"
+                  className="gap-1 text-[11px] font-medium border-emerald-500/30 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
                 >
-                  <Globe className="h-3 w-3" /> {t("Nyala", "On")}
+                  <Globe className="h-3 w-3" /> {t("Portal Aktif", "Portal Active")}
                 </Badge>
               ) : (
                 <span className="text-xs text-muted-foreground">—</span>
