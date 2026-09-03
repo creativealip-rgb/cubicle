@@ -50,6 +50,7 @@ import { IncomeExpenseChart } from "@/components/reports/income-expense-chart";
 import { PersonalReportSection } from "@/components/reports/personal-report-section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import {
   Card,
@@ -518,43 +519,29 @@ export default async function ReportsPage({
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="app-page-header">
-        <div className="min-w-0">
-          <h1 className="app-page-title">
-            {scope === "personal"
-              ? t("Laporan Keuangan Pribadi", "Personal Financial Reports")
-              : t("Laporan Keuangan Bisnis", "Business Financial Reports")}
-          </h1>
-          <p className="app-page-description">
-            {scope === "personal"
-              ? t(
-                  "Evaluasi alokasi 50/30/20, tingkat tabungan (savings rate), dan kebiasaan belanja pribadimu.",
-                  "Evaluate 50/30/20 allocation, savings rate, and personal spending habits.",
-                )
-              : t(
-                  "Pantau arus kas, kinerja laba bersih, piutang, dan tren pendapatan bisnismu.",
-                  "Track cash flow, net profitability, receivables, and revenue trends.",
-                )}
-          </p>
-        </div>
-        <div className="app-page-actions">
-          {scope === "business" ? (
-            <ReportControls
-              lang={lang}
-              preset={period.preset}
-              from={period.start}
-              to={period.end}
-            />
-          ) : (
-            <ReportControls
-              lang={lang}
-              preset={period.preset}
-              from={period.start}
-              to={period.end}
-            />
-          )}
-        </div>
-      </div>
+      <PageHeader
+        icon={BarChart3}
+        title={scope === "personal"
+          ? t("Laporan Keuangan Pribadi", "Personal Financial Reports")
+          : t("Laporan Keuangan Bisnis", "Business Financial Reports")}
+        description={scope === "personal"
+          ? t(
+              "Evaluasi alokasi 50/30/20, tingkat tabungan (savings rate), dan kebiasaan belanja pribadimu.",
+              "Evaluate 50/30/20 allocation, savings rate, and personal spending habits.",
+            )
+          : t(
+              "Pantau arus kas, kinerja laba bersih, piutang, dan tren pendapatan bisnismu.",
+              "Track cash flow, net profitability, receivables, and revenue trends.",
+            )}
+        actions={
+          <ReportControls
+            lang={lang}
+            preset={period.preset}
+            from={period.start}
+            to={period.end}
+          />
+        }
+      />
 
       {/* Scope Switcher Bar & Business Tabs on same row */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

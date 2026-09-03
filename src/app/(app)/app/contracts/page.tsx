@@ -10,7 +10,8 @@ import { ContractsListTable } from "@/components/contracts/contracts-list-table"
 import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { EmptyState } from "@/components/empty-state";
 import { getCurrentLang, createT } from "@/lib/i18n";
-import { FileSignature } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { FileCheck2, FileSignature } from "lucide-react";
 import { getProposedContractNumber } from "@/lib/actions/contracts";
 
 export const dynamic = "force-dynamic";
@@ -113,22 +114,19 @@ export default async function ContractsPage({
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="app-page-header">
-        <div>
-          <h1 className="app-page-title">
-            {t("Kontrak", "Contracts")}
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            {t(
-              "Kirim kontrak ke klien. Mereka tanda tangan di browser. Kamu dapat jejak audit.",
-              "Send contracts to clients. They sign in browser. You get an audit trail.",
-            )}
-          </p>
-        </div>
-        {canWrite && (
-          <CreateContractButton clients={clientsList} templates={templateRows} workspaceId={workspaceId} proposedContractNumber={proposedContractNumber} defaultOpen={params.new === "1"} />
+      <PageHeader
+        icon={FileCheck2}
+        title={t("Kontrak", "Contracts")}
+        description={t(
+          "Kirim kontrak ke klien. Mereka tanda tangan di browser dan kamu dapat jejak audit lengkap.",
+          "Send contracts to clients. They sign in browser and you get a complete audit trail.",
         )}
-      </div>
+        actions={
+          canWrite ? (
+            <CreateContractButton clients={clientsList} templates={templateRows} workspaceId={workspaceId} proposedContractNumber={proposedContractNumber} defaultOpen={params.new === "1"} />
+          ) : null
+        }
+      />
 
       <StatusFilterTabs
         activeValue={statusFilter}

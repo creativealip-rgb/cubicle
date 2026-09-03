@@ -15,6 +15,8 @@ import { ActiveFilterSummary } from "@/components/ui/active-filter-summary";
 import { resolveBillingModel } from "@/lib/billing-model";
 import { defaultTaskWorkMode } from "@/lib/task-work-mode";
 import { getCurrentLang, createT } from "@/lib/i18n";
+import { PageHeader } from "@/components/ui/page-header";
+import { CheckSquare } from "lucide-react";
 import Link from "next/link";
 
 export const PAGE_SIZE = 10;
@@ -58,7 +60,19 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const templates = templateRows.map((template) => ({ ...template, items: itemRows.filter((item) => item.templateId === template.id) }));
 
   return <div className="min-w-0 space-y-6">
-    <div className="app-page-header"><div><h1 className="app-page-title">{t("Tugas", "Tasks")}</h1><p className="mt-1 text-sm text-muted-foreground">{t("Kelola pekerjaan proyek dan template reusable.", "Manage project work and reusable templates.")}</p></div>{tab === "tasks" ? <div className="flex flex-wrap items-center gap-2"><TaskViewToggle current={view} /><TaskCreateDialog projectId={params.projectId} members={members} projects={taskProjects} /></div> : null}</div>
+    <PageHeader
+      icon={CheckSquare}
+      title={t("Tugas", "Tasks")}
+      description={t("Kelola pekerjaan proyek, prioritas, dan template tugas reusable.", "Manage project work, priorities, and reusable task templates.")}
+      actions={
+        tab === "tasks" ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <TaskViewToggle current={view} />
+            <TaskCreateDialog projectId={params.projectId} members={members} projects={taskProjects} />
+          </div>
+        ) : null
+      }
+    />
     <TaskPageTabs current={tab} />
     {tab === "templates" ? <TaskTemplateWorkspace templates={templates} projects={taskProjects} /> : <>
       <ActiveFilterSummary basePath="/app/tasks" filters={[{ key: "projectId", label: t("Proyek", "Project"), value: taskProjects.find((project) => project.id === params.projectId)?.name }, { key: "assignee", label: t("Petugas", "Assignee"), value: params.assignee }, { key: "priority", label: t("Prioritas", "Priority"), value: params.priority }, { key: "status", label: "Status", value: params.status }]} />

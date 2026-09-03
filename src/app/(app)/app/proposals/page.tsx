@@ -6,7 +6,8 @@ import { proposals, clients, services } from "@/db/schema";
 import { listProposalTemplates } from "@/lib/actions/proposal-templates";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
-import { FileText } from "lucide-react";
+import { FileText, FileSpreadsheet } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 import { ProposalsListTable } from "@/components/proposals/proposals-list-table";
 import { CreateProposalButton } from "@/components/proposals/create-proposal-button";
 import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
@@ -110,36 +111,33 @@ export default async function ProposalsPage({
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="app-page-header">
-        <div>
-          <h1 className="app-page-title">
-            {t("Proposal", "Proposals")}
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            {t(
-              "Kirim scope + harga ke calon klien. Setelah diterima, kerja bisa dimulai.",
-              "Send scope + pricing to prospects. Once accepted, work can begin.",
-            )}
-          </p>
-        </div>
-        {canWrite && (
-          <CreateProposalButton
-            workspaceId={workspaceId}
-            defaultCurrency={ws.defaultCurrency}
-            defaultTaxRate={ws.defaultTaxRate ?? "0"}
-            clients={clientRows}
-            services={serviceRows.map((s) => ({
-              id: s.id,
-              name: s.name,
-              description: s.description ?? "",
-              defaultPrice: s.defaultPrice ? Number(s.defaultPrice) : 0,
-              defaultUnit: s.defaultUnit ?? "service",
-            }))}
-            templates={proposalTemplates}
-            defaultOpen={params.new === "1"}
-          />
+      <PageHeader
+        icon={FileSpreadsheet}
+        title={t("Proposal", "Proposals")}
+        description={t(
+          "Kirim penawaran scope dan harga ke prospek. Setelah disetujui, proyek siap dieksekusi.",
+          "Send scope and pricing estimates to prospects. Once accepted, project execution can begin.",
         )}
-      </div>
+        actions={
+          canWrite ? (
+            <CreateProposalButton
+              workspaceId={workspaceId}
+              defaultCurrency={ws.defaultCurrency}
+              defaultTaxRate={ws.defaultTaxRate ?? "0"}
+              clients={clientRows}
+              services={serviceRows.map((s) => ({
+                id: s.id,
+                name: s.name,
+                description: s.description ?? "",
+                defaultPrice: s.defaultPrice ? Number(s.defaultPrice) : 0,
+                defaultUnit: s.defaultUnit ?? "service",
+              }))}
+              templates={proposalTemplates}
+              defaultOpen={params.new === "1"}
+            />
+          ) : null
+        }
+      />
 
       <StatusFilterTabs
         activeValue={statusFilter}

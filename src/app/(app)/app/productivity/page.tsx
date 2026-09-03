@@ -22,7 +22,8 @@ import { GoalDialog } from "@/components/productivity/goal-dialog";
 import { UnifiedTodayActionCard } from "@/components/productivity/unified-today-action-card";
 import { WeeklyReviewCard } from "@/components/productivity/weekly-review-card";
 import { GoalStarterLinks } from "@/components/productivity/today-focus-card";
-import { Target, ArrowRight } from "lucide-react";
+import { Target, ArrowRight, CheckSquare } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 import { healthyHabitStats, weeklyReview } from "@/lib/personal-productivity/retention";
 import { dateOffset, isHabitScheduled } from "@/lib/personal-productivity/habits";
 import { calculateGoalProgress } from "@/lib/personal-productivity/goals";
@@ -138,20 +139,15 @@ export default async function ProductivityPage({
 
   return (
     <div className="space-y-4">
-      {/* Header with Title */}
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight">
-            {t("Produktivitas Pribadi", "Personal Productivity")}
-          </h1>
-          <p className="text-xs text-muted-foreground">
-            {t(
-              "Pantau progres tujuan hidup dan konsistensi kebiasaan harian.",
-              "Track life goals progress and daily habits consistency.",
-            )}
-          </p>
-        </div>
-      </div>
+      {/* Compact Page Header with Gradient & Icon */}
+      <PageHeader
+        icon={CheckSquare}
+        title={t("Produktivitas Pribadi", "Personal Productivity")}
+        description={t(
+          "Pantau progres tujuan hidup, streak konsistensi, dan kebiasaan harianmu.",
+          "Track life goals progress, consistency streaks, and daily personal habits.",
+        )}
+      />
 
       {/* KPI Top Cards Banner - Compact 4 Strip */}
       <ProductivityKpiCards

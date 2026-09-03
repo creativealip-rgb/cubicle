@@ -36,10 +36,8 @@ import { getCurrentLang, createT } from "@/lib/i18n";
 import { formatMoney } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
-import {
-  PageHeaderDescription,
-  PageHeaderTitle,
-} from "@/components/ui/page-header";
+import { PageHeader } from "@/components/ui/page-header";
+import { Wallet } from "lucide-react";
 import { Suspense } from "react";
 import { PersonalExpensesSection } from "@/components/expenses/personal-expenses-section";
 import {
@@ -354,46 +352,42 @@ export default async function ExpensesPage({
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
-        <div>
-          <PageHeaderTitle>
-            {scope === "personal"
-              ? t("Keuangan Pribadi", "Personal Finance")
-              : t("Pengeluaran Bisnis", "Business Expenses")}
-          </PageHeaderTitle>
-          <PageHeaderDescription>
-            {scope === "personal"
-              ? t(
-                  "Pantau alokasi anggaran 50/30/20 dan transaksi belanja harian Anda.",
-                  "Track your 50/30/20 budget allocation and daily personal transactions.",
-                )
-              : t(
-                  "Catat dan kelola biaya operasional serta pengeluaran workspace.",
-                  "Record and manage business and workspace expenses.",
-                )}
-          </PageHeaderDescription>
-        </div>
-
-        {scope === "business" && (
-          <div className="flex flex-wrap items-center gap-2">
-            {canWrite && (
-              <AddExpenseButton
-                workspaceId={ws.id}
-                defaultCurrency={ws.defaultCurrency}
-                categories={categories}
-                projects={projectOpts}
-                clients={clientOpts}
-                triggerClassName="h-8 text-xs font-semibold rounded-lg gap-1"
-              />
+      <PageHeader
+        icon={Wallet}
+        title={scope === "personal"
+          ? t("Keuangan Pribadi", "Personal Finance")
+          : t("Pengeluaran Bisnis", "Business Expenses")}
+        description={scope === "personal"
+          ? t(
+              "Pantau alokasi anggaran 50/30/20 dan transaksi belanja harian Anda.",
+              "Track your 50/30/20 budget allocation and daily personal transactions.",
+            )
+          : t(
+              "Catat dan kelola biaya operasional serta pengeluaran workspace.",
+              "Record and manage business and workspace expenses.",
             )}
-            <ExpenseExcelExportButton
-              month={month}
-              categoryId={categoryId || undefined}
-              q={q || undefined}
-            />
-          </div>
-        )}
-      </div>
+        actions={
+          scope === "business" ? (
+            <div className="flex flex-wrap items-center gap-2">
+              {canWrite && (
+                <AddExpenseButton
+                  workspaceId={ws.id}
+                  defaultCurrency={ws.defaultCurrency}
+                  categories={categories}
+                  projects={projectOpts}
+                  clients={clientOpts}
+                  triggerClassName="h-8 text-xs font-semibold rounded-lg gap-1"
+                />
+              )}
+              <ExpenseExcelExportButton
+                month={month}
+                categoryId={categoryId || undefined}
+                q={q || undefined}
+              />
+            </div>
+          ) : null
+        }
+      />
 
       {/* Scope Switcher: Segmented Control Bar di Bawah Deskripsi Header */}
       <div className="flex items-center">

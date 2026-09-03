@@ -1,9 +1,10 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import { FolderOpen } from "lucide-react";
 import { NewFolderButton } from "@/components/files/folder-actions";
 import { UploadButton } from "@/components/files/upload-button";
-import { PageHeader, PageHeaderDescription, PageHeaderTitle } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/ui/page-header";
 
 export function FilesPageHeader({
   workspaceId,
@@ -23,25 +24,27 @@ export function FilesPageHeader({
 
   return (
     <PageHeader
-      actions={canWrite ? (
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
-          <NewFolderButton
-            workspaceId={workspaceId}
-            clientId={clientId}
-            projectId={projectId}
-            parentId={folderId}
-          />
-          <UploadButton
-            workspaceId={workspaceId}
-            clientId={clientId}
-            projectId={projectId}
-            folderId={folderId}
-          />
-        </div>
-      ) : undefined}
-    >
-      <PageHeaderTitle>{title}</PageHeaderTitle>
-      <PageHeaderDescription>{subtitle}</PageHeaderDescription>
-    </PageHeader>
+      icon={FolderOpen}
+      title={title}
+      description={subtitle}
+      actions={
+        canWrite ? (
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
+            <NewFolderButton
+              workspaceId={workspaceId}
+              clientId={clientId}
+              projectId={projectId}
+              parentId={folderId}
+            />
+            <UploadButton
+              workspaceId={workspaceId}
+              clientId={clientId}
+              projectId={projectId}
+              folderId={folderId}
+            />
+          </div>
+        ) : undefined
+      }
+    />
   );
 }
