@@ -189,16 +189,9 @@ export function InvoicesListTable({
               </TableHead>
               <TableHead>
                 <SortableHeader
-                  label={t("Tanggal Terbit", "Issue Date")}
+                  label={t("Tanggal", "Dates")}
                   dir={dirFor("issueDate")}
                   onClick={() => toggle("issueDate")}
-                />
-              </TableHead>
-              <TableHead>
-                <SortableHeader
-                  label={t("Jatuh Tempo", "Due Date")}
-                  dir={dirFor("dueDate")}
-                  onClick={() => toggle("dueDate")}
                 />
               </TableHead>
               <TableHead className="text-right">
@@ -225,47 +218,56 @@ export function InvoicesListTable({
               return (
                 <TableRow
                   key={inv.id}
-                  className={`border-b border-border hover:bg-muted/50 ${index % 2 === 1 ? "bg-muted/20" : "bg-card"}`}
+                  className={`border-b border-border/70 hover:bg-muted/40 transition-colors ${index % 2 === 1 ? "bg-muted/10" : "bg-card"}`}
                 >
-                  <TableCell className="font-mono text-sm font-medium">
-                    <Link href={buildInvoiceDetailUrl(inv.id, { type: "global" })} className="hover:underline">
+                  <TableCell className="font-mono text-xs font-semibold py-3">
+                    <Link href={buildInvoiceDetailUrl(inv.id, { type: "global" })} className="text-primary hover:underline font-bold">
                       {formatInvoiceId(inv.invoiceNumber)}
                     </Link>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="py-3">
                     {inv.clientId ? (
-                      <Link href={`/app/clients/${inv.clientId}`} className="hover:underline">
+                      <Link href={`/app/clients/${inv.clientId}`} className="font-medium text-foreground hover:underline text-xs sm:text-sm">
                         {inv.clientCompany || inv.clientName}
                       </Link>
-                    ) : inv.clientCompany || inv.clientName}
+                    ) : (
+                      <span className="font-medium text-foreground text-xs sm:text-sm">
+                        {inv.clientCompany || inv.clientName}
+                      </span>
+                    )}
                   </TableCell>
-                  <TableCell className="max-w-[12rem] truncate text-sm text-muted-foreground">
+                  <TableCell className="max-w-[10rem] truncate text-xs text-muted-foreground py-3">
                     {inv.projectName || "—"}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="py-3">
                     {inv.billingType ? (
-                      <Badge variant="outline" className="font-normal">
+                      <Badge variant="outline" className="font-medium text-[10px] px-1.5 py-0">
                         {billingTypeLabel(inv.billingType, lang)}
                       </Badge>
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>
                     )}
                   </TableCell>
-                  <TableCell>{formatDate(inv.issueDate, locale)}</TableCell>
-                  <TableCell>{formatDate(inv.dueDate, locale)}</TableCell>
-                  <TableCell className="text-right tabular-nums font-medium">
-                    <div>{formatMoney(inv.total, inv.currency)}</div>
+                  <TableCell className="py-3">
+                    <div className="text-xs font-medium text-foreground">{formatDate(inv.issueDate, locale)}</div>
+                    <div className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                      {t("Jatuh tempo", "Due")}: {formatDate(inv.dueDate, locale)}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums font-bold text-xs sm:text-sm py-3">
+                    <div className="text-foreground">{formatMoney(inv.total, inv.currency)}</div>
                     {inv.totalBase != null &&
                       inv.currency?.toUpperCase() !== base && (
-                        <div className="text-xs font-normal text-muted-foreground">
+                        <div className="text-[10px] font-normal text-muted-foreground mt-0.5 font-mono">
                           ≈ {formatMoney(inv.totalBase, base)}
                         </div>
                       )}
                   </TableCell>
-                  <TableCell>
-                    <Badge variant={status.variant}>{status.label}</Badge>
+                  <TableCell className="py-3">
+                    <Badge variant={status.variant} className="text-[10px] font-semibold">
+                      {status.label}
+                    </Badge>
                   </TableCell>
-
                 </TableRow>
               );
             })}

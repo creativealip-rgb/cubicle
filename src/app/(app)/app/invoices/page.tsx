@@ -17,7 +17,7 @@ import { eq, desc, and, count, ne, isNull, SQL, sql, inArray, gte, lte } from "d
 import { requireUser } from "@/lib/access";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { FileText, ChevronLeft, ChevronRight, Wallet, AlertCircle, CheckCircle2 } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
 import { invoiceStatusVariant } from "@/lib/status-badge";
@@ -447,60 +447,68 @@ export default async function InvoicesPage({
       {/* KPI summary — base currency */}
       {totalAllIncludingArchived > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {t("Belum Dibayar", "Outstanding")}
-              </CardTitle>
-              <AlertCircle className="h-4 w-4 text-amber-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl font-semibold tabular-nums">
-                {formatMoney(outstandingBase, baseCurrency)}
+          <Card className="rounded-xl border shadow-none bg-card">
+            <CardContent className="p-3.5 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  {t("Belum Dibayar", "Outstanding")}
+                </p>
+                <div className="mt-0.5 text-xl font-bold tracking-tight text-foreground tabular-nums">
+                  {formatMoney(outstandingBase, baseCurrency)}
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {outstandingCount}{" "}
+                  {outstandingCount === 1
+                    ? t("invoice belum lunas", "open invoice")
+                    : t("invoice belum lunas", "open invoices")}
+                  {` · ${baseCurrency}`}
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {outstandingCount}{" "}
-                {outstandingCount === 1
-                  ? t("invoice sisa", "invoice open")
-                  : t("invoice sisa", "invoices open")}
-                {` · ${baseCurrency}`}
-              </p>
+              <div className="h-9 w-9 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+                <AlertCircle className="h-4 w-4" />
+              </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {t("Dibayar", "Paid")}
-              </CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl font-semibold tabular-nums text-emerald-700">
-                {formatMoney(paidBase, baseCurrency)}
+
+          <Card className="rounded-xl border shadow-none bg-card">
+            <CardContent className="p-3.5 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  {t("Sudah Diterima", "Paid & Collected")}
+                </p>
+                <div className="mt-0.5 text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 tabular-nums">
+                  {formatMoney(paidBase, baseCurrency)}
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {paidCount}{" "}
+                  {paidCount === 1
+                    ? t("invoice telah dibayar", "invoice paid")
+                    : t("invoice telah dibayar", "invoices paid")}
+                  {` · ${baseCurrency}`}
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {paidCount}{" "}
-                {paidCount === 1
-                  ? t("invoice ada bayar", "invoice with payment")
-                  : t("invoice ada bayar", "invoices with payment")}
-                {` · ${baseCurrency}`}
-              </p>
+              <div className="h-9 w-9 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="h-4 w-4" />
+              </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {t("Ditagihkan", "Billed")}
-              </CardTitle>
-              <Wallet className="h-4 w-4 text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl font-semibold tabular-nums">
-                {formatMoney(billedBase, baseCurrency)}
+
+          <Card className="rounded-xl border shadow-none bg-card">
+            <CardContent className="p-3.5 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  {t("Total Ditagihkan", "Total Billed")}
+                </p>
+                <div className="mt-0.5 text-xl font-bold tracking-tight text-foreground tabular-nums">
+                  {formatMoney(billedBase, baseCurrency)}
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                  {t("Terkirim, dilihat, terlambat, & lunas", "Sent, viewed, overdue, & paid")}
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {t("Invoice terkirim, dilihat, terlambat, dan lunas", "Sent, viewed, overdue, and paid invoices")}
-              </p>
+              <div className="h-9 w-9 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
+                <Wallet className="h-4 w-4" />
+              </div>
             </CardContent>
           </Card>
         </div>
