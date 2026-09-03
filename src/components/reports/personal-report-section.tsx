@@ -11,6 +11,7 @@ import {
   HeartHandshake,
   Tag,
   ArrowRight,
+  ReceiptText,
 } from "lucide-react";
 import {
   listPersonalTransactions,
@@ -98,146 +99,138 @@ export async function PersonalReportSection({ month, t }: PersonalReportSectionP
     }
 
     if (needsRate <= 50) {
-      insights.push(t(`Pos Kebutuhan pokok (Needs) terkontrol dengan sangat baik di angka ${needsRate}%.`, `Essential Needs spending is very well controlled at ${needsRate}%.`));
+      insights.push(t(`Pengeluaran Kebutuhan Pokok (Needs) terkontrol sangat baik di angka ${needsRate}%.`, `Essential Needs spending is very well controlled at ${needsRate}%.`));
+    } else {
+      insights.push(t(`Kebutuhan Pokok mencapai ${needsRate}% (melebihi alokasi 50%). Evaluasi pengeluaran wajib.`, `Essential Needs spending is at ${needsRate}% (above 50% target). Review fixed expenses.`));
     }
   } else {
-    insights.push(t("Target pemasukan bulanan belum diatur di menu Pengeluaran > Pribadi.", "Monthly income target is not configured yet under Expenses > Personal."));
+    insights.push(t("Atur target pemasukan bulanan di menu Personal Expenses > Budget 50/30/20 untuk mengaktifkan analisa otomatis.", "Set your monthly income target in Personal Expenses > Budget 50/30/20 to enable automated health analysis."));
   }
 
+  // 5 Recent Transactions for the report summary
+  const recentTransactions = [...monthTransactions]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 6);
+
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* 4-KPI Strip: Target Pemasukan, Needs, Wants, Savings */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {/* Target Income */}
-        <Card className="rounded-xl border shadow-none bg-card">
-          <CardContent className="p-4 flex flex-col justify-between h-full">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">
-                {t("Target Pemasukan", "Income Target")}
-              </span>
-              <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
-                <Wallet className="h-4 w-4" />
-              </div>
-            </div>
-            <div className="mt-2">
-              <div className="text-xl font-bold tabular-nums tracking-tight text-foreground truncate sm:text-2xl">
-                {formatMoney(String(income), currencyCode)}
-              </div>
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                {t("Total budget bulanan", "Monthly total budget")}
-              </p>
-            </div>
-          </CardContent>
+    <div className="space-y-4">
+      {/* 4-KPI Strip: Income Target, Needs (50%), Wants (30%), Savings (20%) */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {/* Income / Target KPI */}
+        <Card className="rounded-xl border shadow-none bg-card p-4 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground font-medium">{t("Target Pemasukan", "Income Target")}</span>
+            <Wallet className="h-4 w-4 text-primary" />
+          </div>
+          <p className="text-xl font-bold tracking-tight text-foreground tabular-nums">
+            {formatMoney(String(income), currencyCode)}
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            {t("Budget bulanan total", "Monthly total budget")}
+          </p>
         </Card>
 
-        {/* Needs (50%) */}
-        <Card className="rounded-xl border shadow-none bg-card">
-          <CardContent className="p-4 flex flex-col justify-between h-full">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">
-                {t("Kebutuhan (Needs)", "Needs (50%)")}
-              </span>
-              <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
-                <HeartHandshake className="h-4 w-4" />
-              </div>
-            </div>
-            <div className="mt-2">
-              <div className="text-xl font-bold tabular-nums tracking-tight text-foreground truncate sm:text-2xl">
-                {formatMoney(String(actualNeeds), currencyCode)}
-              </div>
-              <p className="mt-1 text-[11px] font-medium text-blue-600 truncate">
-                {needsRate}% {t("dari total income", "of total income")}
-              </p>
-            </div>
-          </CardContent>
+        {/* Needs (50%) KPI */}
+        <Card className="rounded-xl border shadow-none bg-card p-4 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground font-medium">{t("Kebutuhan (Needs 50%)", "Needs (50%)")}</span>
+            <HeartHandshake className="h-4 w-4 text-blue-500" />
+          </div>
+          <p className="text-xl font-bold tracking-tight text-foreground tabular-nums">
+            {formatMoney(String(actualNeeds), currencyCode)}
+          </p>
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-muted-foreground">{needsRate}% {t("dari total", "of total")}</span>
+            <Badge variant={needsProgress.over ? "destructive" : "secondary"} className="text-[10px] px-1.5 py-0 font-normal">
+              {needsProgress.over ? t("Over", "Over") : `${needsProgress.percent}%`}
+            </Badge>
+          </div>
         </Card>
 
-        {/* Wants (30%) */}
-        <Card className="rounded-xl border shadow-none bg-card">
-          <CardContent className="p-4 flex flex-col justify-between h-full">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">
-                {t("Keinginan (Wants)", "Wants (30%)")}
-              </span>
-              <div className="h-8 w-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
-                <ShoppingBag className="h-4 w-4" />
-              </div>
-            </div>
-            <div className="mt-2">
-              <div className={`text-xl font-bold tabular-nums tracking-tight truncate sm:text-2xl ${wantsProgress.over ? "text-rose-600" : "text-foreground"}`}>
-                {formatMoney(String(actualWants), currencyCode)}
-              </div>
-              <p className={`mt-1 text-[11px] font-medium truncate ${wantsProgress.over ? "text-rose-600" : "text-amber-600"}`}>
-                {wantsRate}% {t("dari total income", "of total income")}
-              </p>
-            </div>
-          </CardContent>
+        {/* Wants (30%) KPI */}
+        <Card className="rounded-xl border shadow-none bg-card p-4 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground font-medium">{t("Keinginan (Wants 30%)", "Wants (30%)")}</span>
+            <ShoppingBag className="h-4 w-4 text-amber-500" />
+          </div>
+          <p className="text-xl font-bold tracking-tight text-foreground tabular-nums">
+            {formatMoney(String(actualWants), currencyCode)}
+          </p>
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-muted-foreground">{wantsRate}% {t("dari total", "of total")}</span>
+            <Badge variant={wantsProgress.over ? "destructive" : "secondary"} className="text-[10px] px-1.5 py-0 font-normal">
+              {wantsProgress.over ? t("Over", "Over") : `${wantsProgress.percent}%`}
+            </Badge>
+          </div>
         </Card>
 
-        {/* Savings (20%) */}
-        <Card className="rounded-xl border shadow-none bg-card">
-          <CardContent className="p-4 flex flex-col justify-between h-full">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">
-                {t("Tabungan (Savings)", "Savings (20%)")}
-              </span>
-              <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
-                <PiggyBank className="h-4 w-4" />
-              </div>
-            </div>
-            <div className="mt-2">
-              <div className="text-xl font-bold tabular-nums tracking-tight text-emerald-600 truncate sm:text-2xl">
-                {formatMoney(String(actualSavings), currencyCode)}
-              </div>
-              <p className="mt-1 text-[11px] font-medium text-emerald-600 truncate">
-                {savingsRate}% {t("Savings Rate", "Savings Rate")}
-              </p>
-            </div>
-          </CardContent>
+        {/* Savings (20%) KPI */}
+        <Card className="rounded-xl border shadow-none bg-card p-4 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground font-medium">{t("Tabungan (Savings 20%)", "Savings (20%)")}</span>
+            <PiggyBank className="h-4 w-4 text-emerald-500" />
+          </div>
+          <p className="text-xl font-bold tracking-tight text-foreground tabular-nums">
+            {formatMoney(String(actualSavings), currencyCode)}
+          </p>
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-muted-foreground">{savingsRate}% {t("Savings Rate", "Savings Rate")}</span>
+            <Badge variant={savingsRate >= 20 ? "default" : "secondary"} className="text-[10px] px-1.5 py-0 font-normal">
+              {savingsRate >= 20 ? t("Ideal", "Ideal") : `${savingsProgress.percent}%`}
+            </Badge>
+          </div>
         </Card>
       </div>
 
-      {/* Smart Financial Health Insight Strip */}
-      {insights.length > 0 && (
-        <div className="rounded-xl border border-primary/20 bg-primary/[0.04] p-3.5 flex items-start gap-3 text-xs sm:text-sm">
-          <div className="h-7 w-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+      {/* Smart Health Insights Banner */}
+      <Card className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-violet-500/5 to-transparent shadow-none p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary mt-0.5">
             <Sparkles className="h-4 w-4" />
           </div>
-          <div className="min-w-0 flex-1 space-y-1">
-            <p className="font-semibold text-foreground">{t("Insight Keuangan Pribadi (50/30/20)", "Personal Finance Insight (50/30/20)")}</p>
-            <div className="space-y-0.5 text-xs text-muted-foreground">
-              {insights.map((ins, idx) => (
-                <p key={idx} className="flex items-center gap-1.5">
-                  <span className="h-1 w-1 rounded-full bg-primary shrink-0" />
-                  <span>{ins}</span>
-                </p>
-              ))}
+          <div className="space-y-1 flex-1">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-foreground">
+                {t("Analisa Kesehatan Keuangan Pribadi", "Personal Financial Health Insights")}
+              </p>
+              <Badge variant="outline" className="text-[10px] bg-background">
+                {month}
+              </Badge>
             </div>
+            <ul className="space-y-0.5 text-xs text-muted-foreground">
+              {insights.map((msg, i) => (
+                <li key={i} className="flex items-start gap-1.5">
+                  <span className="text-primary font-bold">•</span>
+                  <span>{msg}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
-      )}
+      </Card>
 
-      {/* Visual 50/30/20 Allocation Card */}
+      {/* Visual 50/30/20 Gauge Cards */}
       <Card className="rounded-xl border shadow-none bg-card">
         <CardHeader className="pb-3 border-b">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-base font-semibold">
-                {t("Kepatuhan Anggaran 50/30/20", "50/30/20 Budget Allocation Health")}
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <Wallet className="h-4 w-4 text-primary" />
+                {t("Kesehatan Alokasi Anggaran 50/30/20", "50/30/20 Budget Allocation Health")}
               </CardTitle>
-              <CardDescription className="text-xs">
-                {t("Perbandingan realisasi pengeluaran terhadap batas maksimal anggaran", "Actual spending vs maximum budget threshold")}
+              <CardDescription className="text-xs mt-0.5">
+                {t("Perbandingan realisasi pengeluaran terhadap target alokasi ideal", "Actual spending vs ideal budget allocation benchmark")}
               </CardDescription>
             </div>
-            <Button asChild variant="outline" size="sm" className="h-7 text-xs rounded-lg self-start sm:self-auto">
+            <Button asChild variant="outline" size="sm" className="text-xs h-7 gap-1">
               <Link href="/app/expenses?scope=personal">
-                {t("Kelola Anggaran", "Manage Budget")}
-                <ArrowRight className="h-3 w-3 ml-1" />
+                <span>{t("Kelola Budget", "Manage Budget")}</span>
+                <ArrowRight className="h-3 w-3" />
               </Link>
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="pt-4 space-y-4">
+        <CardContent className="space-y-4 pt-4">
           {/* Needs Progress Bar */}
           <div className="space-y-1.5 rounded-xl border p-3 bg-muted/20">
             <div className="flex items-center justify-between text-xs">
@@ -268,7 +261,7 @@ export async function PersonalReportSection({ month, t }: PersonalReportSectionP
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
-                <span className="font-semibold text-foreground">{t("Keinginan & Gaya Hidup (Wants)", "Lifestyle & Wants")}</span>
+                <span className="font-semibold text-foreground">{t("Gaya Hidup & Keinginan (Wants)", "Lifestyle & Wants")}</span>
                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-normal">Target: 30%</Badge>
               </div>
               <div className="flex items-center gap-2 font-medium">
@@ -315,74 +308,143 @@ export async function PersonalReportSection({ month, t }: PersonalReportSectionP
         </CardContent>
       </Card>
 
-      {/* Breakdown Kategori Belanja Pribadi */}
-      <Card className="rounded-xl border shadow-none bg-card">
-        <CardHeader className="pb-3 border-b">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-                <Tag className="h-4 w-4 text-primary" />
-                {t("Kategori Pengeluaran Pribadi Terbesar", "Top Personal Expense Categories")}
-              </CardTitle>
-              <CardDescription className="text-xs mt-0.5">
-                {t("Rincian belanja dan pos pengeluaran harian", "Daily shopping and expense breakdown")}
-              </CardDescription>
+      {/* 2-Column Grid: Top Categories & Recent Transactions */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Breakdown Kategori Belanja Pribadi */}
+        <Card className="rounded-xl border shadow-none bg-card">
+          <CardHeader className="pb-3 border-b">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                  <Tag className="h-4 w-4 text-primary" />
+                  {t("Kategori Pengeluaran Pribadi Terbesar", "Top Personal Expense Categories")}
+                </CardTitle>
+                <CardDescription className="text-xs mt-0.5">
+                  {t("Rincian belanja dan pos pengeluaran harian", "Daily shopping and expense breakdown")}
+                </CardDescription>
+              </div>
             </div>
-            <Button asChild variant="ghost" size="sm" className="text-xs h-7 px-2">
-              <Link href="/app/expenses?scope=personal">{t("Semua Transaksi", "All Transactions")}</Link>
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-4">
-          {topPersonalCategories.length === 0 ? (
-            <p className="py-8 text-center text-xs text-muted-foreground">
-              {t("Belum ada transaksi belanja pribadi pada bulan ini.", "No personal expenses recorded this month.")}
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-              {topPersonalCategories.map((category) => {
-                const pct = totalSpent > 0 ? (category.total / totalSpent) * 100 : 0;
-                return (
-                  <div key={category.id} className="space-y-1.5 rounded-xl border p-3 bg-muted/10">
-                    <div className="flex items-center justify-between text-xs gap-2">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span
-                          className="h-2.5 w-2.5 rounded-full shrink-0"
-                          style={{ backgroundColor: category.color }}
+          </CardHeader>
+          <CardContent className="pt-4">
+            {topPersonalCategories.length === 0 ? (
+              <p className="py-8 text-center text-xs text-muted-foreground">
+                {t("Belum ada transaksi belanja pribadi pada bulan ini.", "No personal expenses recorded this month.")}
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {topPersonalCategories.map((category) => {
+                  const pct = totalSpent > 0 ? (category.total / totalSpent) * 100 : 0;
+                  return (
+                    <div key={category.id} className="space-y-1 rounded-lg border p-2.5 bg-muted/10">
+                      <div className="flex items-center justify-between text-xs gap-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span
+                            className="h-2 w-2 rounded-full shrink-0"
+                            style={{ backgroundColor: category.color }}
+                          />
+                          <span className="font-semibold text-foreground truncate">
+                            {category.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 font-medium">
+                          <span className="tabular-nums font-bold text-foreground">
+                            {formatMoney(String(category.total), currencyCode)}
+                          </span>
+                          <span className="text-muted-foreground w-8 text-right text-[11px]">
+                            {pct.toFixed(0)}%
+                          </span>
+                        </div>
+                      </div>
+                      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${Math.min(100, Math.max(4, pct))}%`,
+                            backgroundColor: category.color,
+                          }}
                         />
-                        <span className="font-semibold text-foreground truncate">
-                          {category.name}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0 font-medium">
-                        <span className="tabular-nums font-bold text-foreground">
-                          {formatMoney(String(category.total), currencyCode)}
-                        </span>
-                        <span className="text-muted-foreground w-8 text-right text-[11px]">
-                          {pct.toFixed(0)}%
-                        </span>
                       </div>
                     </div>
-                    {/* Visual Progress Bar */}
-                    <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{
-                          width: `${Math.min(100, Math.max(4, pct))}%`,
-                          backgroundColor: category.color,
-                        }}
-                      />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground">
-                      {category.count} {t("transaksi", "transactions")} · {pct.toFixed(1)}% {t("dari total belanja", "of total spent")}
-                    </p>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Transaksi Terbaru Personal */}
+        <Card className="rounded-xl border shadow-none bg-card">
+          <CardHeader className="pb-3 border-b">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                  <ReceiptText className="h-4 w-4 text-primary" />
+                  {t("Transaksi Terbaru", "Recent Transactions")}
+                </CardTitle>
+                <CardDescription className="text-xs mt-0.5">
+                  {t("Riwayat mutasi keuangan personal terbaru", "Latest personal transaction history")}
+                </CardDescription>
+              </div>
+              <Button asChild variant="ghost" size="sm" className="text-xs h-7 px-2">
+                <Link href="/app/expenses?scope=personal">{t("Semua Transaksi", "All Transactions")}</Link>
+              </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent className="pt-4">
+            {recentTransactions.length === 0 ? (
+              <p className="py-8 text-center text-xs text-muted-foreground">
+                {t("Belum ada mutasi transaksi personal pada bulan ini.", "No personal transactions recorded this month.")}
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {recentTransactions.map((tx) => {
+                  const cat = categories.find((c) => c.id === tx.categoryId);
+                  const isIncome = tx.transactionType === "income";
+                  const isSavings = tx.budgetBucket === "savings";
+                  const isWants = tx.budgetBucket === "wants";
+
+                  return (
+                    <div
+                      key={tx.id}
+                      className="flex items-center justify-between p-2.5 rounded-lg border bg-muted/10 text-xs"
+                    >
+                      <div className="min-w-0 flex-1 pr-2">
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-semibold text-foreground truncate">{tx.description || t("Tanpa Keterangan", "No description")}</p>
+                          <Badge
+                            variant="outline"
+                            className="text-[9px] px-1 py-0 uppercase font-mono shrink-0"
+                          >
+                            {isIncome
+                              ? "Income"
+                              : isSavings
+                                ? "Savings"
+                                : isWants
+                                  ? "Wants"
+                                  : "Needs"}
+                          </Badge>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {tx.date} · {cat?.name || t("Tanpa Kategori", "Uncategorized")}
+                        </p>
+                      </div>
+                      <span
+                        className={`font-mono font-bold shrink-0 tabular-nums ${
+                          isIncome
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : "text-foreground"
+                        }`}
+                      >
+                        {isIncome ? "+" : "-"}{formatMoney(String(tx.amount), currencyCode)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
