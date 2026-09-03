@@ -378,10 +378,10 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
-        <div>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
+        <div className="h-full">
+          <Card className="h-full flex flex-col">
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
               <CardTitle className="text-base font-semibold">
                 {t("Aktivitas Terbaru", "Recent Activity")}
               </CardTitle>
@@ -392,13 +392,13 @@ export default async function DashboardPage() {
                 </Link>
               </Button>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3.5 flex-1">
               {activityRows.length === 0 && (
-                <p className="text-sm text-muted-foreground py-4 text-center">
+                <p className="text-sm text-muted-foreground py-8 text-center">
                   {t("Belum ada aktivitas", "No activity yet")}
                 </p>
               )}
-              {activityRows.slice(0, 5).map((item, i) => (
+              {activityRows.slice(0, 6).map((item, i) => (
                 <div key={item.id}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 space-y-0.5">
@@ -412,14 +412,14 @@ export default async function DashboardPage() {
                       {formatRelative(item.createdAt)}
                     </span>
                   </div>
-                  {i < Math.min(activityRows.length, 5) - 1 && <Separator className="mt-3" />}
+                  {i < Math.min(activityRows.length, 6) - 1 && <Separator className="mt-2.5" />}
                 </div>
               ))}
             </CardContent>
           </Card>
         </div>
 
-        <div className="xl:self-start">
+        <div className="space-y-4">
           {/* Finance sidebar: 30d revenue only */}
           <Card className="border-primary/15 bg-primary/[0.03]">
             <CardHeader className="pb-1">
