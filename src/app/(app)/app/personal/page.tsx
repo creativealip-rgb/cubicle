@@ -29,7 +29,8 @@ import {
 import { NoteEditorDialog } from "@/components/notes/note-editor-dialog";
 import { NotesSummaryStrip } from "@/components/notes/notes-summary-strip";
 import { calculateNotesSummary } from "@/lib/personal-notes-dashboard";
-import { Search } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { NotebookPen, Search } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -223,21 +224,17 @@ export default async function PersonalPage({
   return (
     <div className="space-y-6" data-ui="notes-action-dashboard">
       {/* Header with Title & Action */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            {t("Catatan Pribadi", "Personal Notes")}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t(
-              "Catatan cepat, to-do pribadi, dan pengingat internal workspace.",
-              "Private notes, quick to-dos, and reminders in this workspace.",
-            )}
-          </p>
-        </div>
-
-        <NoteEditorDialog lang={lang} createAction={createNote} />
-      </div>
+      <PageHeader
+        icon={NotebookPen}
+        title={t("Catatan Pribadi", "Personal Notes")}
+        description={t(
+          "Catatan cepat, to-do pribadi, dan pengingat internal workspace.",
+          "Private notes, quick to-dos, and reminders in this workspace.",
+        )}
+        actions={
+          <NoteEditorDialog lang={lang} createAction={createNote} />
+        }
+      />
 
       {/* Modern Status Tabs Track (Matching Productivity style) */}
       <nav

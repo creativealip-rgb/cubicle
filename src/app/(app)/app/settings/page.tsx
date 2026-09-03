@@ -7,7 +7,8 @@ import { eq, and, desc } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Settings, Users, Receipt, Calendar, CheckCircle2, Circle } from "lucide-react";
+import { Settings, Users, Receipt, Calendar, CheckCircle2, Circle, Sliders } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 import { TeamManager } from "@/components/settings/team-manager";
 import { WorkspaceBrandingForm } from "@/components/settings/workspace-branding-form";
 import { WorkspaceNameForm } from "@/components/settings/workspace-name-form";
@@ -131,15 +132,14 @@ export default async function SettingsPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="app-page-title">{t("Pengaturan", "Settings")}</h1>
-        <p className="app-page-description">
-          {t(
-            "Kelompokkan konfigurasi workspace per tab biar gampang dicari.",
-            "Group workspace settings into tabs so they stay easy to find.",
-          )}
-        </p>
-      </div>
+      <PageHeader
+        icon={Sliders}
+        title={t("Pengaturan", "Settings")}
+        description={t(
+          "Kelompokkan konfigurasi workspace, profil akun, keamanan 2FA, tim, dan integrasi.",
+          "Group workspace settings, account profile, 2FA security, team members, and integrations.",
+        )}
+      />
 
       <Suspense fallback={<div className="space-y-3"><Skeleton className="h-24 w-full" /><Skeleton className="h-48 w-full" /></div>}>
         <SettingsTabs
