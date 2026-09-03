@@ -8,6 +8,8 @@ import { requireUser } from "@/lib/access";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/ui/page-header";
+import { Briefcase } from "lucide-react";
 import { ProjectCreateDialog } from "@/components/projects/project-create-dialog";
 import { ProjectsListTable } from "@/components/projects/projects-list-table";
 import { getCurrentLang, createT } from "@/lib/i18n";
@@ -157,34 +159,26 @@ export default async function ProjectsPage({
 
   return (
     <div className="min-w-0 space-y-4 sm:space-y-6">
-      <div className="space-y-1.5 border-b pb-4">
-        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-          <span>{t("Pekerjaan", "Work")}</span>
-          <span>/</span>
-          <span className="text-foreground">{t("Proyek", "Projects")}</span>
-        </div>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              {t("Proyek", "Projects")}
-            </h1>
-            <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary text-xs font-semibold px-2 py-0.5">
-              {statusCounts.active} {t("Berjalan", "Running")}
-            </Badge>
-          </div>
-          {canWrite && (
+      <PageHeader
+        icon={Briefcase}
+        title={t("Proyek", "Projects")}
+        description={t("Pantau alur kerja, alokasi jam, dan progres milestone proyek tim kamu.", "Track workflow pipeline, tracked hours, and milestone progress.")}
+        badge={
+          <Badge variant="secondary" className="px-1.5 py-0 text-[11px] font-semibold">
+            {statusCounts.active} {t("Aktif", "Active")}
+          </Badge>
+        }
+        actions={
+          canWrite ? (
             <ProjectCreateDialog
               clients={clientOptions}
               isAtLimit={isAtLimit}
               projectCount={projectCount}
               projectLimit={projectLimit}
             />
-          )}
-        </div>
-        <p className="text-xs sm:text-sm text-muted-foreground">
-          {t("Pantau alur kerja, alokasi jam, dan progres milestone proyek tim kamu.", "Track workflow pipeline, tracked hours, and milestone progress.")}
-        </p>
-      </div>
+          ) : null
+        }
+      />
 
       <StatusFilterTabs
         activeValue={statusTab}

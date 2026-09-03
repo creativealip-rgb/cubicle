@@ -15,6 +15,7 @@ import {
 } from "@/db/schema";
 import { eq, desc, and, count, ne, isNull, SQL, sql, inArray, gte, lte } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
+import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, ChevronLeft, ChevronRight, Wallet, AlertCircle, CheckCircle2 } from "lucide-react";
@@ -424,22 +425,24 @@ export default async function InvoicesPage({
 
   return (
     <div className="min-w-0 space-y-4 sm:space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("Invoice", "Invoices")}</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-            {t(
-              `Kelola penagihan klien. Ringkasan disetarakan ke ${baseCurrency}.`,
-              `Manage client billings. Summary approximated to ${baseCurrency}.`,
-            )}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {canWrite && (
-            <InvoiceCreateDialog clients={clientOptions} projects={projectOptions.map((project) => ({ ...project, agreedAmount: 0, priorActiveFixedBilledAmount: 0, eligibleTimeEntries: [] }))} baseCurrency={baseCurrency} proposedInvoiceNumber={await getProposedInvoiceNumber()} />
-          )}
-        </div>
-      </div>
+      <PageHeader
+        icon={FileText}
+        title={t("Invoice", "Invoices")}
+        description={t(
+          `Kelola penagihan klien. Ringkasan disetarakan ke ${baseCurrency}.`,
+          `Manage client billings. Summary approximated to ${baseCurrency}.`,
+        )}
+        actions={
+          canWrite ? (
+            <InvoiceCreateDialog
+              clients={clientOptions}
+              projects={projectOptions.map((project) => ({ ...project, agreedAmount: 0, priorActiveFixedBilledAmount: 0, eligibleTimeEntries: [] }))}
+              baseCurrency={baseCurrency}
+              proposedInvoiceNumber={await getProposedInvoiceNumber()}
+            />
+          ) : null
+        }
+      />
 
       {/* KPI summary — base currency */}
       {totalAllIncludingArchived > 0 && (
