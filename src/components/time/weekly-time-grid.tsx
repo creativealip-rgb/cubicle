@@ -7,7 +7,8 @@ import { setWeeklyTimeCell } from "@/lib/actions/time";
 import { buildWeeklyGrid, formatDurationInput, getWeekDates, parseDurationInput, type WeeklyGridEntry } from "@/lib/weekly-time-grid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Copy, Pencil } from "lucide-react";
+import { Plus, Copy, Pencil, Clock } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
 import { Timesheet } from "@/components/time/timesheet";
 import { localDateIso, weekStartDate } from "@/lib/effective-work-date";
 import { useT } from "@/lib/i18n-client";
@@ -170,9 +171,14 @@ export function WeeklyTimeGrid({
     <section className="rounded-lg border bg-card">
       <div className="p-3">
         {!rows.length ? (
-          <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-            {t("Belum ada baris minggu ini. Tambah Project/Task atau salin struktur minggu lalu.", "No rows for this week yet. Add a Project/Task or copy last week's structure.")}
-          </div>
+          <EmptyState
+            icon={Clock}
+            title={t("Belum ada baris minggu ini", "No rows for this week yet")}
+            description={t(
+              "Tambah Project/Task baru di atas atau salin struktur baris dari minggu lalu untuk mulai mengisi jam kerja mingguan.",
+              "Add a Project/Task above or copy last week's row structure to start logging weekly hours.",
+            )}
+          />
         ) : (
           <>
             <div className="hidden overflow-x-auto lg:block">

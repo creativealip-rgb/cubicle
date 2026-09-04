@@ -102,7 +102,11 @@ export function WaktuNavigation({
         </Button>
       </div>
 
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
+      {actions && (
+        <div className="grid w-full grid-cols-2 gap-2 [&>*:last-child]:col-span-2 sm:flex sm:w-auto sm:items-center">
+          {actions}
+        </div>
+      )}
     </div>
   );
 }

@@ -18,14 +18,14 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon: Icon, title, description, action, actionNode }: EmptyStateProps) {
   return (
-    <div className="flex min-h-56 flex-col items-center justify-center rounded-xl bg-muted/35 px-6 py-12 text-center">
-      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-        <Icon className="h-6 w-6 text-primary" />
+    <div className="flex min-h-56 flex-col items-center justify-center rounded-xl border border-border/70 bg-card p-6 py-12 text-center shadow-xs">
+      <div className="mb-3.5 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+        <Icon className="h-6 w-6" />
       </div>
-      <h3 className="font-medium">{title}</h3>
-      <p className="mt-2 max-w-sm text-sm text-muted-foreground">{description}</p>
+      <h3 className="font-semibold text-base text-foreground">{title}</h3>
+      <p className="mt-1.5 max-w-sm text-xs sm:text-sm text-muted-foreground">{description}</p>
       {action ? (
-        <Button asChild className="mt-4">
+        <Button asChild size="sm" className="mt-4 rounded-lg">
           <Link href={action.href}>{action.label}</Link>
         </Button>
       ) : actionNode ? (
