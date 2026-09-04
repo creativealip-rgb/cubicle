@@ -442,31 +442,31 @@ export default async function ExpensesPage({
       {scope === "business" && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Card className="rounded-xl border shadow-none bg-card">
-            <CardContent className="p-4 flex items-center justify-between gap-3">
+            <CardContent className="p-3.5 flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
                   {t("Pengeluaran Bulan Ini", "This Month Spent")}
                 </p>
-                <p className="mt-1 text-2xl font-bold tabular-nums tracking-tight text-foreground truncate">
+                <p className="mt-0.5 text-xl font-bold tabular-nums tracking-tight text-foreground truncate">
                   {formatMoney(spentTotal, baseCurrency)}
                 </p>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
                   {t("Bulan terpilih", "Selected month")} · {baseCurrency}
                 </p>
               </div>
-              <div className="h-10 w-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
-                <TrendingDown className="h-5 w-5" />
+              <div className="h-9 w-9 rounded-lg bg-red-500/10 text-red-600 flex items-center justify-center shrink-0">
+                <TrendingDown className="h-4 w-4" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="rounded-xl border shadow-none bg-card">
-            <CardContent className="p-4 flex items-center justify-between gap-3">
+            <CardContent className="p-3.5 flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
                   {t("Kategori Terbesar", "Top Category")}
                 </p>
-                <p className="mt-1 text-2xl font-bold tracking-tight text-foreground truncate">
+                <p className="mt-0.5 text-xl font-bold tracking-tight text-foreground truncate">
                   {categoryBreakdown[0]?.name || "—"}
                 </p>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -475,25 +475,25 @@ export default async function ExpensesPage({
                     : t("Belum ada pengeluaran", "No expenses yet")}
                 </p>
               </div>
-              <div className="h-10 w-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-                <Tag className="h-5 w-5" />
+              <div className="h-9 w-9 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0">
+                <Tag className="h-4 w-4" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="rounded-xl border shadow-none bg-card sm:col-span-2 lg:col-span-1">
-            <CardContent className="p-4 flex items-center justify-between gap-3">
+            <CardContent className="p-3.5 flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
                   {t("Analisis & Laporan", "Analytics & Reports")}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
                   {t("Lihat tren arus kas, laba bersih, dan piutang.", "View cash flow trends, net profit & receivables.")}
                 </p>
               </div>
-              <Button asChild variant="outline" size="sm" className="shrink-0 rounded-lg text-xs">
+              <Button asChild variant="outline" size="sm" className="h-8 shrink-0 rounded-lg text-xs gap-1">
                 <Link href="/app/reports">
-                  <BarChart3 className="h-3.5 w-3.5 mr-1 text-blue-600" />
+                  <BarChart3 className="h-3.5 w-3.5 text-primary" />
                   {t("Buka", "View")}
                 </Link>
               </Button>
@@ -505,41 +505,41 @@ export default async function ExpensesPage({
       {/* Category breakdown (Business only) */}
       {scope === "business" && categoryBreakdown.length > 0 && (
         <Card className="rounded-xl border shadow-none bg-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
+          <CardHeader className="pb-3 border-b">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Tag className="h-4 w-4 text-purple-600" />
-              {t("Bulan ini per kategori", "This month by category")}
+              {t("Distribusi Biaya Operasional per Kategori", "Operational Expenses by Category")}
               <span className="text-xs font-normal text-muted-foreground">
                 ({baseCurrency})
               </span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+          <CardContent className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3.5">
               {categoryBreakdown.map((c) => {
                 const pct = barTotal > 0 ? (c.primary / barTotal) * 100 : 0;
                 return (
-                  <div key={c.name} className="space-y-1.5">
+                  <div key={c.name} className="space-y-1.5 rounded-lg bg-muted/20 border border-border/50 p-2.5">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex min-w-0 items-center gap-2">
                         <span
-                          className="h-2 w-2 rounded-full shrink-0"
+                          className="h-2.5 w-2.5 rounded-full shrink-0 shadow-xs"
                           style={{ backgroundColor: c.color }}
                         />
-                        <span className="text-sm truncate">{c.name}</span>
+                        <span className="text-xs font-semibold text-foreground truncate">{c.name}</span>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
-                        <span className="text-sm tabular-nums whitespace-nowrap">
+                        <span className="text-xs font-bold text-foreground tabular-nums">
                           {formatMoney(c.primary, baseCurrency)}
                         </span>
-                        <span className="text-xs text-muted-foreground w-8 text-right">
+                        <span className="text-[11px] font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded">
                           {pct.toFixed(0)}%
                         </span>
                       </div>
                     </div>
-                    <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded overflow-hidden">
+                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                       <div
-                        className="h-full rounded"
+                        className="h-full rounded-full transition-all"
                         style={{
                           width: `${Math.min(100, pct)}%`,
                           backgroundColor: c.color,

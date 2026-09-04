@@ -72,7 +72,7 @@ function ExpenseActions({
 }) {
   if (!canWrite) return null;
   return (
-    <div className="flex min-w-[96px] items-center justify-end gap-0.5 shrink-0 overflow-visible">
+    <div className="flex min-w-[96px] items-center justify-end gap-1 shrink-0 overflow-visible">
       {e.receiptUrl && <ReceiptLinkButton expenseId={e.id} />}
       <EditExpenseButton
         expense={{
@@ -124,15 +124,15 @@ export function ExpensesListTable({
   clients: ClientOption[];
 }) {
   const { t } = useT();
-  const base = (baseCurrency || defaultCurrency || "IDR").toUpperCase();
+  const base = (baseCurrency || "IDR").toUpperCase();
 
   const getters = useMemo(
     () => ({
       date: (r: ExpenseListItem) => r.date,
-      description: (r: ExpenseListItem) => r.description,
-      category: (r: ExpenseListItem) => r.categoryName ?? "",
-      project: (r: ExpenseListItem) => r.projectName ?? "",
-      client: (r: ExpenseListItem) => r.clientName ?? "",
+      description: (r: ExpenseListItem) => r.description.toLowerCase(),
+      category: (r: ExpenseListItem) => (r.categoryName ?? "").toLowerCase(),
+      project: (r: ExpenseListItem) => (r.projectName ?? "").toLowerCase(),
+      client: (r: ExpenseListItem) => (r.clientName ?? "").toLowerCase(),
       amount: (r: ExpenseListItem) => Number(r.amount) || 0,
     }),
     [],
@@ -144,54 +144,52 @@ export function ExpensesListTable({
   );
 
   return (
-    <>
-      {/* Mobile cards */}
-      <div className="md:hidden space-y-3">
+    <div className="space-y-4">
+      {/* Mobile card view */}
+      <div className="space-y-3 md:hidden">
         {sorted.map((e) => (
           <div
             key={e.id}
-            className="rounded-lg border bg-card p-4 space-y-3"
+            className="rounded-xl border border-border/80 bg-card p-3.5 shadow-xs space-y-2.5 transition-all hover:border-primary/40"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 space-y-1">
-                <div className="text-xs text-muted-foreground tabular-nums">{e.date}</div>
-                <div className="font-medium text-sm leading-snug">{e.description}</div>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="font-semibold text-sm text-foreground">{e.description}</div>
                 {e.vendor && (
-                  <div className="text-xs text-muted-foreground truncate">{e.vendor}</div>
+                  <div className="text-xs text-muted-foreground">{e.vendor}</div>
                 )}
               </div>
               <div className="text-right shrink-0">
-                <div className="tabular-nums text-sm font-medium whitespace-nowrap">
+                <div className="font-bold text-sm text-foreground tabular-nums">
                   {formatMoney(e.amount, e.currency)}
                 </div>
                 {e.amountBase != null && e.currency?.toUpperCase() !== base && (
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-[10px] text-muted-foreground font-mono">
                     ≈ {formatMoney(e.amountBase, base)}
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-              {e.categoryName ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <span
-                    className="h-2 w-2 rounded-full shrink-0"
-                    style={{ backgroundColor: e.categoryColor ?? "#64748b" }}
-                  />
-                  <span className="truncate max-w-[10rem]">{e.categoryName}</span>
-                </span>
-              ) : (
-                <span className="text-muted-foreground">—</span>
-              )}
-              {(e.projectName || e.clientName) && (
-                <span className="min-w-0 break-words">
-                  {[e.projectName, e.clientName].filter(Boolean).join(" · ")}
-                </span>
-              )}
-            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/60 text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-mono text-[11px]">{e.date}</span>
+                {e.categoryName && (
+                  <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium bg-muted/60">
+                    <span
+                      className="h-2 w-2 rounded-full shrink-0"
+                      style={{ backgroundColor: e.categoryColor ?? "#64748b" }}
+                    />
+                    {e.categoryName}
+                  </span>
+                )}
+                {(e.projectName || e.clientName) && (
+                  <span className="text-[11px]">
+                    {[e.projectName, e.clientName].filter(Boolean).join(" · ")}
+                  </span>
+                )}
+              </div>
 
-            <div className="flex items-center justify-end -mr-1">
               <ExpenseActions
                 e={e}
                 mobile
@@ -208,11 +206,11 @@ export function ExpensesListTable({
       </div>
 
       {/* Desktop table */}
-      <div className="hidden md:block overflow-hidden rounded-lg border bg-card">
+      <div className="hidden md:block overflow-hidden rounded-xl border border-border/80 bg-card shadow-xs">
         <Table className="[&_td]:p-3 [&_th]:px-3">
           <TableHeader>
-            <TableRow>
-              <TableHead className="w-28">
+            <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border/80">
+              <TableHead className="w-32">
                 <SortableHeader
                   label={t("Tanggal", "Date")}
                   dir={dirFor("date")}
@@ -255,34 +253,36 @@ export function ExpensesListTable({
                   align="right"
                 />
               </TableHead>
-              {canWrite && <TableHead className="w-28"></TableHead>}
+              {canWrite && <TableHead className="w-28 text-right"></TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sorted.map((e) => (
+            {sorted.map((e, index) => (
               <TableRow
                 key={e.id}
-                className="border-b transition-colors hover:bg-muted/50 last:border-0"
+                className={`border-b border-border/70 hover:bg-muted/40 transition-colors ${
+                  index % 2 === 1 ? "bg-muted/10" : "bg-card"
+                }`}
               >
-                <TableCell className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+                <TableCell className="text-xs text-muted-foreground font-mono tabular-nums whitespace-nowrap">
                   {e.date}
                 </TableCell>
                 <TableCell>
-                  <div className="font-medium text-sm">{e.description}</div>
+                  <div className="font-semibold text-xs sm:text-sm text-foreground">{e.description}</div>
                   {e.vendor && (
-                    <div className="text-xs text-muted-foreground">{e.vendor}</div>
+                    <div className="text-[11px] text-muted-foreground">{e.vendor}</div>
                   )}
                   {(e.projectName || e.clientName) && (
-                    <div className="mt-0.5 text-xs text-muted-foreground lg:hidden">
+                    <div className="mt-0.5 text-[11px] text-muted-foreground lg:hidden">
                       {[e.projectName, e.clientName].filter(Boolean).join(" · ")}
                     </div>
                   )}
                 </TableCell>
                 <TableCell>
                   {e.categoryName ? (
-                    <span className="inline-flex items-center gap-1.5 text-xs">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-muted/50 px-2 py-0.5 rounded-md border border-border/50">
                       <span
-                        className="h-2 w-2 rounded-full"
+                        className="h-2 w-2 rounded-full shrink-0"
                         style={{ backgroundColor: e.categoryColor ?? "#64748b" }}
                       />
                       {e.categoryName}
@@ -291,23 +291,22 @@ export function ExpensesListTable({
                     <span className="text-xs text-muted-foreground">—</span>
                   )}
                 </TableCell>
-                <TableCell className="text-xs text-slate-600 hidden lg:table-cell">
+                <TableCell className="text-xs text-foreground/80 hidden lg:table-cell">
                   {e.projectName ?? <span className="text-muted-foreground">—</span>}
                 </TableCell>
-                <TableCell className="text-xs text-slate-600 hidden xl:table-cell">
+                <TableCell className="text-xs text-foreground/80 hidden xl:table-cell">
                   {e.clientName ?? <span className="text-muted-foreground">—</span>}
                 </TableCell>
-                <TableCell className="text-right tabular-nums text-sm font-medium whitespace-nowrap">
+                <TableCell className="text-right tabular-nums font-bold text-xs sm:text-sm text-foreground whitespace-nowrap">
                   <div>{formatMoney(e.amount, e.currency)}</div>
-                  {e.amountBase != null &&
-                    e.currency?.toUpperCase() !== base && (
-                      <div className="text-xs font-normal text-muted-foreground">
-                        ≈ {formatMoney(e.amountBase, base)}
-                      </div>
-                    )}
+                  {e.amountBase != null && e.currency?.toUpperCase() !== base && (
+                    <div className="text-[10px] font-normal text-muted-foreground font-mono mt-0.5">
+                      ≈ {formatMoney(e.amountBase, base)}
+                    </div>
+                  )}
                 </TableCell>
                 {canWrite && (
-                  <TableCell>
+                  <TableCell className="text-right">
                     <ExpenseActions
                       e={e}
                       canWrite={canWrite}
@@ -324,6 +323,6 @@ export function ExpensesListTable({
           </TableBody>
         </Table>
       </div>
-    </>
+    </div>
   );
 }
